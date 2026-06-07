@@ -12,6 +12,12 @@ import {
   SESSION_COOKIE,
 } from "../../lib/auth";
 
+// The `secure` flag must be false when HTTP_ONLY=true (plain-HTTP mode, e.g.
+// behind a TLS-terminating proxy). A secure cookie over plain HTTP is silently
+// dropped by the browser, which makes login appear to succeed but immediately
+// redirects back to /login. When the server runs HTTPS (the default), set secure.
+const secureCookie = (process.env.HTTP_ONLY ?? "false").toLowerCase() !== "true";
+
 export async function completeOnboarding(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) throw new Error("password must be at least 8 characters");
@@ -21,7 +27,7 @@ export async function completeOnboarding(formData: FormData): Promise<void> {
   cookies().set(SESSION_COOKIE, await signSession("admin", getConfig().APP_KEY), {
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: secureCookie,
     path: "/",
   });
   redirect("/dashboard");
@@ -34,7 +40,7 @@ export async function login(formData: FormData): Promise<void> {
   cookies().set(SESSION_COOKIE, await signSession("admin", getConfig().APP_KEY), {
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: secureCookie,
     path: "/",
   });
   redirect("/dashboard");

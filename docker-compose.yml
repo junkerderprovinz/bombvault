@@ -1,0 +1,21 @@
+# Local dev / Unraid-equivalent compose. The socket + path mounts grant
+# root-equivalent host control — see .env.example for the security warnings.
+services:
+  bombvault:
+    build: .
+    image: ghcr.io/junkerderprovinz/bombvault:latest
+    container_name: bombvault
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000" # HTTP (only used when HTTP_ONLY=true)
+      - "3443:3443" # HTTPS (default)
+    volumes:
+      - ./data:/data # restic local repos, self-signed certs
+      - ./config:/config # SQLite DB
+      # --- host integration mounts (powerful: root-equivalent) ---------------
+      - /var/run/docker.sock:/var/run/docker.sock # list/stop/start/create containers
+      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock # manage VMs
+      - /mnt/user/appdata:/mnt/user/appdata # container app-data
+      - /mnt/user/domains:/mnt/user/domains # VM vdisks
+      - /boot:/boot:ro # Unraid flash config + templates (read-only)
