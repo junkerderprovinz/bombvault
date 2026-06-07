@@ -30,13 +30,13 @@ export interface AppConfig {
 }
 
 /** Parse + validate an environment object into a typed, frozen config. Throws on invalid input. */
-export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
+export function loadConfig(env: Record<string, string | undefined> = process.env): Readonly<AppConfig> {
   const parsed = schema.parse(env);
   const CONFIG_DIR = parsed.CONFIG_DIR ?? parsed.DATA_DIR;
   const DB_PATH = join(CONFIG_DIR, "bombvault.sqlite");
 
   let dirsReady = false;
-  return {
+  return Object.freeze({
     APP_KEY: parsed.APP_KEY,
     DATA_DIR: parsed.DATA_DIR,
     CONFIG_DIR,
@@ -51,12 +51,12 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       }
       dirsReady = true;
     },
-  };
+  });
 }
 
 // Lazily-built singleton for app runtime. Tests call loadConfig() directly with
 // an explicit env, so they never touch this.
-let cached: AppConfig | null = null;
-export function getConfig(): AppConfig {
+let cached: Readonly<AppConfig> | null = null;
+export function getConfig(): Readonly<AppConfig> {
   return (cached ??= loadConfig());
 }

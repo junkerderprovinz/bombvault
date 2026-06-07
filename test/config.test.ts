@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../lib/config";
@@ -46,5 +46,7 @@ test("ensureDataDirs creates the data and config directories", () => {
     CONFIG_DIR: join(base, "config"),
   });
   cfg.ensureDataDirs();
+  assert.ok(statSync(join(base, "data")).isDirectory(), "data dir should exist");
+  assert.ok(statSync(join(base, "config")).isDirectory(), "config dir should exist");
   assert.doesNotThrow(() => cfg.ensureDataDirs()); // idempotent
 });
