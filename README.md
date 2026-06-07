@@ -1,0 +1,75 @@
+<h1 align="center">BombVault</h1>
+
+<!-- Banner placeholder — .github/assets/bombvault-banner.png does not exist yet (P0 stub). -->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner.png" alt="BombVault" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/junkerderprovinz/bombvault/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/junkerderprovinz/bombvault/build.yml?branch=main&label=Build&style=for-the-badge&logo=githubactions&logoColor=white" alt="Build" height="36"></a>&nbsp;
+  <a href="https://github.com/junkerderprovinz/bombvault/actions/workflows/lint.yml"><img src="https://img.shields.io/github/actions/workflow/status/junkerderprovinz/bombvault/lint.yml?branch=main&label=Lint&style=for-the-badge&logo=githubactions&logoColor=white" alt="Lint" height="36"></a>&nbsp;
+  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://img.shields.io/badge/Arch-amd64%20%7C%20arm64-success?style=for-the-badge&logo=linux&logoColor=white" alt="Arch" height="36"></a>&nbsp;
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" height="36"></a>&nbsp;
+  <a href="https://restic.net"><img src="https://img.shields.io/badge/Engine-restic-CE4844?style=for-the-badge&logo=restic&logoColor=white" alt="restic" height="36"></a>&nbsp;
+  <a href="https://unraid.net"><img src="https://img.shields.io/badge/Unraid-Template-f15a2c?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid" height="36"></a>&nbsp;
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License" height="36"></a>
+</p>
+
+<br>
+
+<p align="center">
+BombVault is a self-hosted, Unraid-native web app for <b>backup and full disaster recovery</b>
+of Docker containers and KVM/libvirt VMs — app-data, container/VM definitions, vdisks and the
+Unraid flash config — restoring them so containers reappear in the Docker tab and VMs in the
+VM tab with no manual steps. Powered by <a href="https://restic.net">restic</a>.
+</p>
+
+<br>
+
+## Table of Contents
+
+1. [Status](#1-status)
+2. [What is this?](#2-what-is-this)
+3. [Host integration spike](#3-host-integration-spike)
+4. [Development](#4-development)
+
+<br>
+
+## 1. Status
+
+**P0 — Foundation.** This is the buildable, tested skeleton: Next.js + SQLite + auth/onboarding,
+a thin restic adapter, the AES-256-GCM secrets util, and the host-integration spike. Backup and
+restore features (P1+) are not implemented yet.
+
+<br>
+
+## 2. What is this?
+
+A single Docker container that backs up and restores Docker containers and KVM/libvirt VMs,
+delegating the heavy lifting to restic (deduplicated, incremental, always-encrypted). See
+`docs/superpowers/specs/2026-06-07-bombvault-design.md` for the full design.
+
+<br>
+
+## 3. Host integration spike
+
+Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unraid on runners).
+The **spike is the real-host validation step**: run it inside the container on your actual host to
+confirm every mount and CLI is reachable. It degrades gracefully — a failed check is a finding,
+never a crash.
+
+- Web: open **`/spike`** (after onboarding/login).
+- CLI: `npm run spike` (or `docker exec bombvault npm run spike`).
+
+It probes: docker socket, libvirt (`virsh`), appdata readability, `restic`, `qemu-img`, `rclone`.
+
+<br>
+
+## 4. Development
+
+```bash
+cp .env.example .env        # set APP_KEY (openssl rand -hex 32)
+npm install
+npm test                    # unit + restic integration tests
+npm run dev                 # https://localhost:3443 (self-signed)
+```

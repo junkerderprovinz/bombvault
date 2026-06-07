@@ -1,0 +1,19 @@
+:root {
+  --bg: #161616;
+  --fg: #f4f4f4;
+  --accent: #4589ff;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-monospace, "IBM Plex Mono", "Cascadia Code", monospace;
+}
+a {
+  color: var(--accent);
+}
