@@ -1,23 +1,16 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import argon2 from "argon2";
 import type Database from "better-sqlite3";
 
-export const SESSION_COOKIE = "bombvault_session";
+// Re-export Edge-safe session helpers from lib/session.ts so callers use a
+// single import. middleware.ts imports directly from lib/session.ts to avoid
+// pulling argon2 (a Node-only native module) into the Edge runtime.
+export { SESSION_COOKIE, signSession, verifySession } from "./session";
 
 // Precomputed argon2id hash of the string "dummy" — used to equalise timing
 // when a username lookup misses, preventing user-enumeration via response time.
 // Regenerate with: argon2.hash("dummy", { type: argon2.argon2id })
 const DUMMY_HASH =
   "$argon2id$v=19$m=65536,t=3,p=4$aaaaaaaaaaaaaaaaaaaaaa$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-
-// --- key validation ----------------------------------------------------------
-// APP_KEY must be exactly 64 lowercase-hex chars (32 bytes). Buffer.from(key,"hex")
-// silently truncates on malformed input, which would make tokens cross-forgeable.
-function assertValidKey(appKey: string): void {
-  if (!/^[0-9a-f]{64}$/.test(appKey)) {
-    throw new Error("appKey must be exactly 64 lowercase-hex characters (32 bytes)");
-  }
-}
 
 // --- password hashing (argon2id) --------------------------------------------
 export function hashPassword(password: string): Promise<string> {
@@ -78,36 +71,4 @@ export async function authenticate(
   }
 
   return verifyPassword(password, row.password_hash);
-}
-
-// --- stateless signed session token -----------------------------------------
-// "<username-b64>.<hmacHex>" signed with APP_KEY. Stateless: no session table in
-// P0; rotating APP_KEY invalidates all sessions.
-function sign(value: string, appKey: string): string {
-  return createHmac("sha256", Buffer.from(appKey, "hex")).update(value).digest("hex");
-}
-
-export function signSession(username: string, appKey: string): string {
-  if (!username || !username.trim()) {
-    throw new Error("username must not be empty or whitespace");
-  }
-  assertValidKey(appKey);
-  const payload = Buffer.from(username, "utf8").toString("base64url");
-  return `${payload}.${sign(payload, appKey)}`;
-}
-
-export function verifySession(token: string, appKey: string): string | null {
-  assertValidKey(appKey);
-  const dot = token.lastIndexOf(".");
-  if (dot <= 0) return null;
-  const payload = token.slice(0, dot);
-  const mac = token.slice(dot + 1);
-  // SHA-256 HMAC is always 32 bytes = 64 lowercase hex chars. Reject anything
-  // that doesn't match exactly — Buffer.from silently truncates on invalid hex.
-  if (!/^[0-9a-f]{64}$/.test(mac)) return null;
-  const expected = sign(payload, appKey);
-  const a = Buffer.from(mac, "hex");
-  const b = Buffer.from(expected, "hex");
-  if (!timingSafeEqual(a, b)) return null;
-  return Buffer.from(payload, "base64url").toString("utf8");
 }
