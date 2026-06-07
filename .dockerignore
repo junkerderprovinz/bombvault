@@ -1,0 +1,10 @@
+node_modules
+.next
+data
+config
+.git
+*.sqlite
+*.sqlite-*
+.env
+.env.*
+!.env.example
