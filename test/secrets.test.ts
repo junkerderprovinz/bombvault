@@ -35,3 +35,31 @@ test("decrypting with the wrong key throws", () => {
 test("rejects a malformed token", () => {
   assert.throws(() => decryptSecret("not-a-valid-token", KEY), /token/i);
 });
+
+// --- Negative tests: segment-length and format guards ---
+
+test("rejects a token with an 8-byte (16-hex-char) tag — truncated tag must not authenticate", () => {
+  const token = encryptSecret("secret", KEY);
+  const parts = token.split(":");
+  // Replace the 32-hex-char (16-byte) tag with a 16-hex-char (8-byte) truncation.
+  const truncatedTag = parts[3].slice(0, 16);
+  const tampered = [parts[0], parts[1], parts[2], truncatedTag].join(":");
+  assert.throws(() => decryptSecret(tampered, KEY), /malformed secret token/i);
+});
+
+test("rejects a token with a wrong-length IV (8 bytes)", () => {
+  const token = encryptSecret("secret", KEY);
+  const parts = token.split(":");
+  // Replace the 24-hex-char (12-byte) IV with a 16-hex-char (8-byte) one.
+  const shortIv = parts[1].slice(0, 16);
+  const tampered = [parts[0], shortIv, parts[2], parts[3]].join(":");
+  assert.throws(() => decryptSecret(tampered, KEY), /malformed secret token/i);
+});
+
+test("rejects a token with a non-hex segment", () => {
+  const token = encryptSecret("secret", KEY);
+  const parts = token.split(":");
+  // Replace the ciphertext segment with clearly non-hex characters.
+  const tampered = [parts[0], parts[1], "not-hex!!", parts[3]].join(":");
+  assert.throws(() => decryptSecret(tampered, KEY), /malformed secret token/i);
+});
