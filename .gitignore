@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Next.js / build
+.next/
+out/
+dist/
+build/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Local data
+*.sqlite
+*.sqlite-*
+data/
+config/
+
+# Brainstorm / tooling
+.superpowers/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*conflicted copy*
