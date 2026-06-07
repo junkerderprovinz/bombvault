@@ -1,0 +1,47 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  eslint-typecheck:
+    name: ESLint + Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # --ignore-scripts skips native builds — not needed to lint/typecheck.
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      # Fail CI on any new High/Critical advisory in production dependencies.
+      - name: npm audit (production deps, high+)
+        run: npm audit --omit=dev --audit-level=high
+
+  test:
+    name: Unit + restic integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Install restic so the adapter integration tests run for real (not skipped).
+      - name: Install restic
+        run: sudo apt-get update && sudo apt-get install -y restic
+      # Full install (builds better-sqlite3 + argon2 native addons) so DB/auth
+      # tests run for real.
+      - run: npm install --no-audit --no-fund
+      - run: npm test
