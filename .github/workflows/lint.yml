@@ -26,6 +26,9 @@ jobs:
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
+      # Fail CI on any new High/Critical advisory in production dependencies.
+      - name: npm audit (production deps, high+)
+        run: npm audit --omit=dev --audit-level=high
 
   test:
     name: Unit + restic integration tests

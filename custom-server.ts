@@ -1,7 +1,7 @@
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, chmodSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "node:url";
 import next from "next";
@@ -27,6 +27,9 @@ function ensureSelfSigned(): { key: Buffer; cert: Buffer } {
       "-keyout", keyPath, "-out", certPath, "-days", "3650",
       "-subj", "/CN=bombvault",
     ]);
+    // SEC-003: the private key must not be world/group-readable. chmod is a
+    // no-op on Windows; skip there to avoid odd ACL behaviour (dev only).
+    if (process.platform !== "win32") chmodSync(keyPath, 0o600);
   }
   return { key: readFileSync(keyPath), cert: readFileSync(certPath) };
 }

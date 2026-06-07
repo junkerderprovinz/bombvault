@@ -56,6 +56,17 @@ test("runMigrations is idempotent and records applied versions", { skip }, () =>
   db.close();
 });
 
+test("migration seeds session_version = 0 (SEC-002 revocation epoch)", { skip }, () => {
+  const db = freshDb();
+  runMigrations(db);
+  const row = db.prepare("SELECT value FROM setting WHERE key = ?").get("session_version") as
+    | { value: string }
+    | undefined;
+  assert.ok(row, "session_version setting row should be seeded");
+  assert.equal(row!.value, "0");
+  db.close();
+});
+
 test("a setting row survives a second migration run", { skip }, () => {
   const db = freshDb();
   runMigrations(db);

@@ -27,6 +27,16 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    // Session revocation epoch. Tokens carry the session_version at sign time;
+    // requireSession() (Node-side) rejects tokens whose sv != the stored value.
+    // logout() and any future password change bump it, invalidating old tokens.
+    version: 2,
+    name: "session_version_setting",
+    sql: `
+      INSERT OR IGNORE INTO setting (key, value) VALUES ('session_version', '0');
+    `,
+  },
 ];
 
 /** Apply every not-yet-applied migration, in order, inside transactions. Idempotent. */

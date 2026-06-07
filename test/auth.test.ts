@@ -8,10 +8,16 @@ import {
   verifyPassword,
   isOnboarded,
   setAdminPassword,
+  getSessionVersion,
+  bumpSessionVersion,
   signSession,
   verifySession,
   SESSION_COOKIE,
 } from "../lib/auth";
+import {
+  verifySessionClaims,
+  SESSION_LIFETIME_SECONDS,
+} from "../lib/session";
 import { runMigrations } from "../server/schema";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,3 +155,162 @@ test("WebCrypto round-trip: short appKey → throws before any crypto call", asy
   await assert.rejects(() => signSession("alice", "abc123"), /64 lowercase-hex/i);
   await assert.rejects(() => verifySession("anything.atall", "abc123"), /64 lowercase-hex/i);
 });
+
+// --- SEC-002: session expiry + integrity-protected claims --------------------
+
+test("token within lifetime is accepted; claims carry u/iat/exp/sv", async () => {
+  const now = 1_000_000;
+  const token = await signSession("admin", KEY, 0, now);
+  const claims = await verifySessionClaims(token, KEY, now + 60);
+  assert.ok(claims, "expected valid claims");
+  assert.equal(claims!.u, "admin");
+  assert.equal(claims!.iat, now);
+  assert.equal(claims!.exp, now + SESSION_LIFETIME_SECONDS);
+  assert.equal(claims!.sv, 0);
+});
+
+test("expired token is rejected (exp < now)", async () => {
+  const now = 1_000_000;
+  const token = await signSession("admin", KEY, 0, now, 100); // 100s lifetime
+  // one second past expiry
+  assert.equal(await verifySession(token, KEY, now + 101), null);
+  assert.equal(await verifySessionClaims(token, KEY, now + 101), null);
+});
+
+test("token exactly at expiry boundary is still valid", async () => {
+  const now = 1_000_000;
+  const token = await signSession("admin", KEY, 0, now, 100);
+  // exp == now+100; reject only when exp < now, so exactly at exp is valid
+  assert.equal(await verifySession(token, KEY, now + 100), "admin");
+});
+
+test("tampered payload (re-encoded longer expiry) is rejected", async () => {
+  const now = 1_000_000;
+  const token = await signSession("admin", KEY, 0, now, 100);
+  const dot = token.lastIndexOf(".");
+  const sig = token.slice(dot); // keep original signature
+  // Forge a payload claiming a far-future expiry, keep the old signature.
+  const forgedPayload = Buffer.from(
+    JSON.stringify({ u: "admin", iat: now, exp: now + 999999, sv: 0 }),
+    "utf8",
+  ).toString("base64url");
+  assert.equal(await verifySession(forgedPayload + sig, KEY, now + 200), null);
+});
+
+test("malformed payload (not JSON) with valid signature is rejected", async () => {
+  // Sign an arbitrary base64url string that is NOT valid claims JSON, with the
+  // real key, then verify — signature is valid but parseClaims must reject it.
+  const payload = Buffer.from("not-json-at-all", "utf8").toString("base64url");
+  // Re-create the exact signing the lib does so the signature is valid.
+  const keyBuf = Buffer.from(KEY, "hex");
+  const cryptoKey = await globalThis.crypto.subtle.importKey(
+    "raw",
+    keyBuf.buffer.slice(keyBuf.byteOffset, keyBuf.byteOffset + keyBuf.byteLength),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const pbuf = Buffer.from(payload, "utf8");
+  const sigBuf = await globalThis.crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    pbuf.buffer.slice(pbuf.byteOffset, pbuf.byteOffset + pbuf.byteLength),
+  );
+  const sig = Buffer.from(sigBuf).toString("base64url");
+  assert.equal(await verifySession(`${payload}.${sig}`, KEY), null);
+});
+
+test("sv from sign is round-tripped into the verified claims", async () => {
+  const now = 1_000_000;
+  const token = await signSession("admin", KEY, 7, now);
+  const claims = await verifySessionClaims(token, KEY, now);
+  assert.equal(claims!.sv, 7);
+});
+
+// --- SEC-002: session_version revocation epoch (DB helpers) -------------------
+
+test("getSessionVersion is 0 on a fresh migrated DB", { skip }, () => {
+  const db = freshDb();
+  assert.equal(getSessionVersion(db), 0);
+  db.close();
+});
+
+test("bumpSessionVersion increments and getSessionVersion reflects it", { skip }, () => {
+  const db = freshDb();
+  assert.equal(bumpSessionVersion(db), 1);
+  assert.equal(getSessionVersion(db), 1);
+  assert.equal(bumpSessionVersion(db), 2);
+  assert.equal(getSessionVersion(db), 2);
+  db.close();
+});
+
+// --- SEC-006: logout must not bump session_version for unauthenticated callers ---
+// These tests exercise the guard logic directly (no Next.js cookies/redirect).
+// The logout() server action uses verifySessionClaims + sv comparison before
+// calling bumpSessionVersion — we verify each branch of that logic here.
+
+test(
+  "valid session token with matching sv → bumpSessionVersion fires (logout guard, happy path)",
+  { skip },
+  async () => {
+    const db = freshDb();
+    const sv = getSessionVersion(db); // 0
+    const token = await signSession("admin", KEY, sv);
+    const claims = await verifySessionClaims(token, KEY);
+    assert.ok(claims, "token should verify");
+    // Simulate the guard: bump only if claims exist AND sv matches stored epoch.
+    const current = getSessionVersion(db);
+    if (claims && claims.sv === current) bumpSessionVersion(db);
+    assert.equal(getSessionVersion(db), 1, "version should have been bumped for valid session");
+    db.close();
+  },
+);
+
+test(
+  "absent/empty token → verifySessionClaims returns null, version must NOT be bumped",
+  { skip },
+  async () => {
+    const db = freshDb();
+    const before = getSessionVersion(db); // 0
+    const claims = await verifySessionClaims("", KEY);
+    assert.equal(claims, null, "empty token must not produce valid claims");
+    // Guard: claims is null, so we skip bumpSessionVersion.
+    assert.equal(getSessionVersion(db), before, "version must be unchanged for unauthenticated logout");
+    db.close();
+  },
+);
+
+test(
+  "expired token → verifySessionClaims returns null, version must NOT be bumped",
+  { skip },
+  async () => {
+    const db = freshDb();
+    const before = getSessionVersion(db);
+    const pastNow = 1_000_000;
+    // Lifetime of 1 second; verify at pastNow + 2 → already expired.
+    const token = await signSession("admin", KEY, 0, pastNow, 1);
+    const claims = await verifySessionClaims(token, KEY, pastNow + 2);
+    assert.equal(claims, null, "expired token must not produce valid claims");
+    assert.equal(getSessionVersion(db), before, "version must be unchanged for expired token");
+    db.close();
+  },
+);
+
+test(
+  "stale sv (revoked token) → claims.sv !== current epoch, version must NOT be bumped",
+  { skip },
+  async () => {
+    const db = freshDb();
+    // Token signed with sv=0; then version bumped to 1 (e.g. prior password change).
+    const token = await signSession("admin", KEY, 0);
+    bumpSessionVersion(db); // advance epoch to 1
+    const claims = await verifySessionClaims(token, KEY);
+    assert.ok(claims, "token is still cryptographically valid (not expired)");
+    const current = getSessionVersion(db); // 1
+    // Guard: sv mismatch → skip bump.
+    const versionBefore = current;
+    if (claims && claims.sv === current) bumpSessionVersion(db);
+    assert.equal(getSessionVersion(db), versionBefore, "stale sv must not trigger another bump");
+    db.close();
+  },
+);

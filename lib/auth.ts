@@ -54,6 +54,41 @@ export async function setAdminPassword(
   insert();
 }
 
+// --- session revocation (session_version) ------------------------------------
+// The session_version is a monotonically-increasing revocation epoch stored in
+// the `setting` table (seeded to 0 by migration 2). Tokens embed the value at
+// sign time; requireSession() rejects tokens whose embedded sv != the stored one.
+// Bumping it (logout, future password change) invalidates every existing token.
+
+/** Read the current session_version. Lazily seeds the row to 0 if absent. */
+export function getSessionVersion(db: Database.Database): number {
+  const row = db.prepare("SELECT value FROM setting WHERE key = 'session_version'").get() as
+    | { value: string }
+    | undefined;
+  if (!row) {
+    db.prepare(
+      "INSERT OR IGNORE INTO setting (key, value) VALUES ('session_version', '0')",
+    ).run();
+    return 0;
+  }
+  const n = Number.parseInt(row.value, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Atomically increment session_version, returning the new value. */
+export function bumpSessionVersion(db: Database.Database): number {
+  const tx = db.transaction(() => {
+    const current = getSessionVersion(db);
+    const next = current + 1;
+    db.prepare(
+      "INSERT INTO setting (key, value) VALUES ('session_version', ?) " +
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    ).run(String(next));
+    return next;
+  });
+  return tx();
+}
+
 export async function authenticate(
   db: Database.Database,
   username: string,

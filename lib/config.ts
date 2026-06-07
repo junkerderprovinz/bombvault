@@ -46,8 +46,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     DB_PATH,
     ensureDataDirs() {
       if (dirsReady) return;
+      // SEC-003: owner-only (0o700) — these dirs hold the SQLite DB, certs and
+      // restic repos. mode is honoured on POSIX and ignored on Windows.
       for (const dir of [parsed.DATA_DIR, CONFIG_DIR]) {
-        mkdirSync(dir, { recursive: true });
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
       }
       dirsReady = true;
     },

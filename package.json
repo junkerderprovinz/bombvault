@@ -9,7 +9,7 @@
     "dev": "tsx watch custom-server.ts",
     "build": "next build",
     "start": "tsx custom-server.ts",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test \"test/**/*.test.ts\"",
     "spike": "tsx scripts/spike.ts"
@@ -17,8 +17,8 @@
   "dependencies": {
     "argon2": "^0.41.1",
     "better-sqlite3": "^12.10.0",
-    "dockerode": "^4.0.4",
-    "next": "^14.2.23",
+    "dockerode": "^5.0.0",
+    "next": "^16.2.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tsx": "^4.19.2",
@@ -30,9 +30,9 @@
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.23",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.7",
+    "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.4.2",
     "typescript": "^5.7.3"
   }

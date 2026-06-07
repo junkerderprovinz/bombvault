@@ -19,13 +19,37 @@ interface RunResult {
   stderr: string;
 }
 
+// Extract the restic subcommand from an argv for a sanitized error message.
+// Skips leading flags (and the value after the only flag we pass with one, -r),
+// returning the first bare token; falls back to "command".
+function subcommandOf(args: string[]): string {
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === "-r") {
+      i++; // skip the repo path value
+      continue;
+    }
+    if (a.startsWith("-")) continue;
+    return a;
+  }
+  return "command";
+}
+
 function run(args: string[], password?: string): Promise<RunResult> {
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
     if (password !== undefined) env.RESTIC_PASSWORD = password;
     execFile("restic", args, { env, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) {
-        reject(new Error(`restic ${args.join(" ")} failed: ${stderr || err.message}`));
+        // SEC-006: never interpolate the full argv (which may carry a repo path,
+        // host detail or secret) into a thrown/propagated error. Log the details
+        // server-side; throw a message scoped to the subcommand only. The
+        // subcommand is the first non-flag, non-flag-value token (e.g. for
+        // ["-r", localPath, "init"] it is "init").
+        const subcommand = subcommandOf(args);
+        // eslint-disable-next-line no-console
+        console.error(`restic ${args.join(" ")} failed: ${stderr || err.message}`);
+        reject(new Error(`restic ${subcommand} failed`));
         return;
       }
       resolve({ stdout, stderr });
