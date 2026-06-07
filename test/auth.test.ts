@@ -59,12 +59,12 @@ test("setAdminPassword refuses a second admin", { skip }, async () => {
   await assert.rejects(() => setAdminPassword(db, "admin2", "second"), /already onboarded/i);
 });
 
-test("session sign + verify roundtrip; tampered/forged tokens rejected", () => {
-  const token = signSession("admin", KEY);
-  assert.equal(verifySession(token, KEY), "admin");
-  assert.equal(verifySession(token + "x", KEY), null);
-  assert.equal(verifySession("garbage", KEY), null);
-  assert.equal(verifySession(token, "e".repeat(64)), null);
+test("session sign + verify roundtrip; tampered/forged tokens rejected", async () => {
+  const token = await signSession("admin", KEY);
+  assert.equal(await verifySession(token, KEY), "admin");
+  assert.equal(await verifySession(token + "x", KEY), null);
+  assert.equal(await verifySession("garbage", KEY), null);
+  assert.equal(await verifySession(token, "e".repeat(64)), null);
 });
 
 test("SESSION_COOKIE has the app-namespaced name", () => {
@@ -73,30 +73,30 @@ test("SESSION_COOKIE has the app-namespaced name", () => {
 
 // --- new negative tests (security hardening) ---------------------------------
 
-test("signSession throws on empty username", () => {
-  assert.throws(() => signSession("", KEY), /empty/i);
+test("signSession throws on empty username", async () => {
+  await assert.rejects(() => signSession("", KEY), /empty/i);
 });
 
-test("signSession throws on whitespace-only username", () => {
-  assert.throws(() => signSession("   ", KEY), /empty/i);
+test("signSession throws on whitespace-only username", async () => {
+  await assert.rejects(() => signSession("   ", KEY), /empty/i);
 });
 
-test("signSession throws on malformed appKey (too short)", () => {
-  assert.throws(() => signSession("admin", "deadbeef"), /64 lowercase-hex/i);
+test("signSession throws on malformed appKey (too short)", async () => {
+  await assert.rejects(() => signSession("admin", "deadbeef"), /64 lowercase-hex/i);
 });
 
-test("signSession throws on appKey with uppercase hex", () => {
-  assert.throws(() => signSession("admin", "D".repeat(64)), /64 lowercase-hex/i);
+test("signSession throws on appKey with uppercase hex", async () => {
+  await assert.rejects(() => signSession("admin", "D".repeat(64)), /64 lowercase-hex/i);
 });
 
-test("verifySession throws on malformed appKey (too short)", () => {
-  const token = signSession("admin", KEY);
-  assert.throws(() => verifySession(token, "short"), /64 lowercase-hex/i);
+test("verifySession throws on malformed appKey (too short)", async () => {
+  const token = await signSession("admin", KEY);
+  await assert.rejects(() => verifySession(token, "short"), /64 lowercase-hex/i);
 });
 
-test("verifySession rejects token signed with a different valid key", () => {
-  const token = signSession("admin", KEY);
-  assert.equal(verifySession(token, "e".repeat(64)), null);
+test("verifySession rejects token signed with a different valid key", async () => {
+  const token = await signSession("admin", KEY);
+  assert.equal(await verifySession(token, "e".repeat(64)), null);
 });
 
 test("setAdminPassword called twice throws on same username", { skip }, async () => {
@@ -113,4 +113,39 @@ test("setAdminPassword called twice throws on different username", { skip }, asy
     () => setAdminPassword(db, "superuser", "second"),
     /already onboarded/i,
   );
+});
+
+// --- WebCrypto round-trip regression (guards against "builds but throws on Edge") ---
+// These tests run in Node (which exposes globalThis.crypto since Node 19+) and
+// verify the full sign→verify cycle using the same WebCrypto path that Edge uses.
+
+test("WebCrypto round-trip: signSession → verifySession returns username", async () => {
+  const token = await signSession("alice", KEY);
+  assert.equal(await verifySession(token, KEY), "alice");
+});
+
+test("WebCrypto round-trip: tampered payload → null", async () => {
+  const token = await signSession("alice", KEY);
+  // Flip one char in the payload (before the dot)
+  const dot = token.lastIndexOf(".");
+  const tampered = token.slice(0, dot - 1) + "X" + token.slice(dot);
+  assert.equal(await verifySession(tampered, KEY), null);
+});
+
+test("WebCrypto round-trip: tampered signature → null", async () => {
+  const token = await signSession("alice", KEY);
+  const dot = token.lastIndexOf(".");
+  // Flip one char inside the base64url signature
+  const badSig = token.slice(dot + 1, -1) + "X";
+  assert.equal(await verifySession(token.slice(0, dot + 1) + badSig, KEY), null);
+});
+
+test("WebCrypto round-trip: wrong appKey (valid hex) → null", async () => {
+  const token = await signSession("alice", KEY);
+  assert.equal(await verifySession(token, "f".repeat(64)), null);
+});
+
+test("WebCrypto round-trip: short appKey → throws before any crypto call", async () => {
+  await assert.rejects(() => signSession("alice", "abc123"), /64 lowercase-hex/i);
+  await assert.rejects(() => verifySession("anything.atall", "abc123"), /64 lowercase-hex/i);
 });

@@ -18,7 +18,7 @@ export async function completeOnboarding(formData: FormData): Promise<void> {
   const db = getDb();
   if (isOnboarded(db)) redirect("/login");
   await setAdminPassword(db, "admin", password);
-  cookies().set(SESSION_COOKIE, signSession("admin", getConfig().APP_KEY), {
+  cookies().set(SESSION_COOKIE, await signSession("admin", getConfig().APP_KEY), {
     httpOnly: true,
     sameSite: "lax",
     secure: true,
@@ -31,7 +31,7 @@ export async function login(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
   const db = getDb();
   if (!(await authenticate(db, "admin", password))) redirect("/login?error=1");
-  cookies().set(SESSION_COOKIE, signSession("admin", getConfig().APP_KEY), {
+  cookies().set(SESSION_COOKIE, await signSession("admin", getConfig().APP_KEY), {
     httpOnly: true,
     sameSite: "lax",
     secure: true,
