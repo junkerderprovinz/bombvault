@@ -7,20 +7,9 @@ export const en = {
   "language.label": "Language",
   "theme.toggle": "Toggle theme",
 
-  "onboarding.title": "Welcome to BombVault",
-  "onboarding.subtitle": "Set the admin password to finish setup.",
-  "onboarding.passwordPlaceholder": "Admin password (min 8 chars)",
-  "onboarding.submit": "Create admin",
-
-  "login.title": "BombVault — Sign in",
-  "login.error": "Invalid password.",
-  "login.passwordPlaceholder": "Admin password",
-  "login.submit": "Sign in",
-
   "dashboard.title": "BombVault — Dashboard",
   "dashboard.body": "P0 foundation is running.",
   "dashboard.spikeLink": "Run the host-integration spike",
-  "dashboard.signOut": "Sign out",
 
   "spike.title": "Host Integration Spike",
   "spike.overall": "Overall:",
