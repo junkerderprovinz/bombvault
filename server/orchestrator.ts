@@ -19,6 +19,13 @@ export interface DockerDeps {
   createAndStartFromDefinition(inspect: ContainerInspect): Promise<unknown>;
   /** Pull the image only (used by restore before stop+remove). */
   pullImage(image: string): Promise<void>;
+  /**
+   * SEC-106: inspect the live container by id/name and return its Name
+   * (dockerode form, e.g. "/plex"), or null if no such container exists.
+   * Used by restore to re-verify the live target before the destructive
+   * stop/remove step.
+   */
+  inspectName(id: string): Promise<string | null>;
 }
 
 /** Injected adapter for restic operations. */
@@ -198,6 +205,20 @@ export async function restoreContainer(deps: RestoreDeps): Promise<void> {
   const run = deps.runs.recordRunStart(deps.targetId, "restore");
 
   try {
+    // SEC-106: re-verify the live container matches the target BEFORE the
+    // destructive stop/remove. If a container by this ref exists, its name must
+    // match the expected target name; abort on mismatch (wrong-target hazard).
+    // A missing container is acceptable (a fresh restore recreates it).
+    const liveName = await deps.docker.inspectName(deps.containerRef);
+    if (liveName !== null) {
+      const normalize = (n: string) => (n.startsWith("/") ? n.slice(1) : n);
+      if (normalize(liveName) !== normalize(deps.containerName)) {
+        throw new Error(
+          `restore aborted: live container "${normalize(liveName)}" does not match target "${normalize(deps.containerName)}"`,
+        );
+      }
+    }
+
     // Pull the image before touching the running container.
     await deps.docker.pullImage(deps.inspect.Config.Image);
 
@@ -278,6 +299,7 @@ export async function makeBackupDeps(
       removeContainer: async () => { /* not used in backup */ },
       createAndStartFromDefinition: async () => { /* not used in backup */ },
       pullImage: async () => { /* not used in backup */ },
+      inspectName: async () => null, /* not used in backup */
     },
     restic: {
       backup: (repo, paths, tags, password) => backup(repo, paths, tags, password),
@@ -304,7 +326,7 @@ export async function makeRestoreDeps(
   > & { runs: RunRecorder },
 ): Promise<RestoreDeps> {
   const [
-    { stopContainer, startContainer, removeContainer, createAndStartFromDefinition, pullImage, createDockerClient },
+    { stopContainer, startContainer, removeContainer, createAndStartFromDefinition, pullImage, inspectContainer, createDockerClient },
     { restore },
     { readTemplate, writeTemplate },
   ] = await Promise.all([
@@ -322,6 +344,19 @@ export async function makeRestoreDeps(
       removeContainer: (id) => removeContainer(docker, id),
       createAndStartFromDefinition: (inspect) => createAndStartFromDefinition(docker, inspect),
       pullImage: (image) => pullImage(docker, image),
+      // SEC-106: re-verify the live container before the destructive step.
+      // A missing container surfaces as null (dockerode throws "no such
+      // container"); any other inspect error propagates and aborts the restore.
+      inspectName: async (id) => {
+        try {
+          const info = await inspectContainer(docker, id);
+          return info.Name ?? null;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (/no such container/i.test(msg)) return null;
+          throw err;
+        }
+      },
     },
     restic: {
       backup: async () => { throw new Error("not used in restore"); },

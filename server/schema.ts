@@ -58,6 +58,18 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_run_target ON run (target_id);
     `,
   },
+  {
+    version: 3,
+    name: "unique_target_container",
+    // SEC-106: a container maps to at most one backup_target. A UNIQUE index on
+    // container_name prevents duplicate/ambiguous targets that could send a
+    // restore to the wrong container (wrong-target hazard). Forward-only — never
+    // edit v1/v2.
+    sql: `
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_target_container_name
+        ON backup_target (container_name);
+    `,
+  },
 ];
 
 /** Apply every not-yet-applied migration, in order, inside transactions. Idempotent. */

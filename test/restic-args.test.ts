@@ -20,6 +20,7 @@ test("buildBackupArgs: produces correct argv for repo, paths and tags", () => {
     "--json",
     "--tag", "container:plex",
     "--tag", "p1",
+    "--",
     "/data/a",
     "/data/b",
   ]);
@@ -31,8 +32,17 @@ test("buildBackupArgs: works with a single path and no tags", () => {
     "-r", "/myrepo",
     "backup",
     "--json",
+    "--",
     "/single/path",
   ]);
+});
+
+test("buildBackupArgs: places -- before any path that begins with a dash (SEC-103)", () => {
+  const args = buildBackupArgs("/repo", ["--malicious-flag"], []);
+  const dashIdx = args.indexOf("--");
+  const pathIdx = args.indexOf("--malicious-flag");
+  assert.ok(dashIdx >= 0, "end-of-options -- must be present");
+  assert.ok(pathIdx > dashIdx, "the dash-leading path must come after --");
 });
 
 // --- buildRestoreArgs ---
@@ -42,9 +52,17 @@ test("buildRestoreArgs: produces correct argv for repo, snapshotId and targetDir
   assert.deepEqual(args, [
     "-r", "/repo",
     "restore",
-    "abc123",
     "--target", "/restore/here",
+    "--", "abc123",
   ]);
+});
+
+test("buildRestoreArgs: places -- before the snapshotId so it cannot be read as a flag (SEC-103)", () => {
+  const args = buildRestoreArgs("/repo", "deadbeef", "/");
+  const dashIdx = args.indexOf("--");
+  const snapIdx = args.indexOf("deadbeef");
+  assert.ok(dashIdx >= 0, "end-of-options -- must be present");
+  assert.ok(snapIdx > dashIdx, "snapshotId must come after --");
 });
 
 // --- parseBackupSummary ---

@@ -103,6 +103,78 @@ test("buildCreateOptions: RestartPolicy defaults to {Name:'no'} when null", () =
 });
 
 // ---------------------------------------------------------------------------
+// buildCreateOptions — SEC-105 security-relevant fields survive a round-trip
+// ---------------------------------------------------------------------------
+
+const SECURE_INSPECT: ContainerInspect = {
+  ...BASE_INSPECT,
+  Config: { ...BASE_INSPECT.Config, User: "1000:1000" },
+  HostConfig: {
+    ...BASE_INSPECT.HostConfig,
+    CapAdd: ["NET_ADMIN"],
+    CapDrop: ["MKNOD"],
+    Privileged: true,
+    SecurityOpt: ["no-new-privileges:true"],
+    ReadonlyRootfs: true,
+    NetworkMode: "host",
+    Devices: [
+      { PathOnHost: "/dev/dri", PathInContainer: "/dev/dri", CgroupPermissions: "rwm" },
+    ],
+  },
+};
+
+test("buildCreateOptions: SEC-105 preserves User", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.equal(opts.User, "1000:1000");
+});
+
+test("buildCreateOptions: SEC-105 preserves CapAdd / CapDrop", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.deepEqual(opts.HostConfig.CapAdd, ["NET_ADMIN"]);
+  assert.deepEqual(opts.HostConfig.CapDrop, ["MKNOD"]);
+});
+
+test("buildCreateOptions: SEC-105 preserves Privileged", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.equal(opts.HostConfig.Privileged, true);
+});
+
+test("buildCreateOptions: SEC-105 preserves SecurityOpt", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.deepEqual(opts.HostConfig.SecurityOpt, ["no-new-privileges:true"]);
+});
+
+test("buildCreateOptions: SEC-105 preserves ReadonlyRootfs", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.equal(opts.HostConfig.ReadonlyRootfs, true);
+});
+
+test("buildCreateOptions: SEC-105 preserves NetworkMode", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.equal(opts.HostConfig.NetworkMode, "host");
+});
+
+test("buildCreateOptions: SEC-105 preserves Devices", () => {
+  const opts = buildCreateOptions(SECURE_INSPECT);
+  assert.deepEqual(opts.HostConfig.Devices, [
+    { PathOnHost: "/dev/dri", PathInContainer: "/dev/dri", CgroupPermissions: "rwm" },
+  ]);
+});
+
+test("buildCreateOptions: SEC-105 omits security fields not present in inspect (keeps docker defaults)", () => {
+  // BASE_INSPECT has none of the SEC-105 fields set.
+  const opts = buildCreateOptions(BASE_INSPECT);
+  assert.equal(opts.User, undefined, "User absent");
+  assert.equal(opts.HostConfig.CapAdd, undefined, "CapAdd absent");
+  assert.equal(opts.HostConfig.CapDrop, undefined, "CapDrop absent");
+  assert.equal(opts.HostConfig.Privileged, undefined, "Privileged absent");
+  assert.equal(opts.HostConfig.SecurityOpt, undefined, "SecurityOpt absent");
+  assert.equal(opts.HostConfig.ReadonlyRootfs, undefined, "ReadonlyRootfs absent");
+  assert.equal(opts.HostConfig.NetworkMode, undefined, "NetworkMode absent");
+  assert.equal(opts.HostConfig.Devices, undefined, "Devices absent");
+});
+
+// ---------------------------------------------------------------------------
 // stopContainer — passes {t: timeoutSec} to container.stop
 // ---------------------------------------------------------------------------
 

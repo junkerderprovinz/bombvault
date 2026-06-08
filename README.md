@@ -30,16 +30,18 @@ VM tab with no manual steps. Powered by <a href="https://restic.net">restic</a>.
 
 1. [Status](#1-status)
 2. [What is this?](#2-what-is-this)
-3. [Host integration spike](#3-host-integration-spike)
-4. [Development](#4-development)
+3. [Security / trust model](#3-security--trust-model)
+4. [Host integration spike](#4-host-integration-spike)
+5. [Development](#5-development)
 
 <br>
 
 ## 1. Status
 
-**P0 — Foundation.** This is the buildable, tested skeleton: Next.js + SQLite + auth/onboarding,
-a thin restic adapter, the AES-256-GCM secrets util, and the host-integration spike. Backup and
-restore features (P1+) are not implemented yet.
+**P0 — Foundation.** This is the buildable, tested skeleton: Next.js + SQLite,
+a thin restic adapter, the AES-256-GCM secrets util, and the host-integration spike.
+There is **no authentication yet** — see [Security / trust model](#3-security--trust-model).
+Backup and restore features (P1+) are landing on the P1 branch.
 
 <br>
 
@@ -51,7 +53,22 @@ delegating the heavy lifting to restic (deduplicated, incremental, always-encryp
 
 <br>
 
-## 3. Host integration spike
+## 3. Security / trust model
+
+> [!WARNING]
+> **BombVault has no built-in authentication.** It is a trusted-LAN tool that holds
+> **root-equivalent control of the host** via the Docker and libvirt sockets: it can
+> stop, remove and recreate containers and VMs, and it reads/writes appdata and the
+> Unraid flash config. Anyone who can reach its web UI effectively has root on the host.
+
+Run BombVault **only on a trusted, non-exposed network** — never publish it directly to
+the internet. If you need remote access, put it **behind a reverse proxy that adds
+authentication** (and TLS). An optional built-in authentication layer is planned before
+any public release.
+
+<br>
+
+## 4. Host integration spike
 
 Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unraid on runners).
 The **spike is the real-host validation step**: run it inside the container on your actual host to
@@ -65,7 +82,7 @@ It probes: docker socket, libvirt (`virsh`), appdata readability, `restic`, `qem
 
 <br>
 
-## 4. Development
+## 5. Development
 
 ```bash
 cp .env.example .env        # set APP_KEY (openssl rand -hex 32)
