@@ -116,11 +116,13 @@ export function buildBackupArgs(
   for (const tag of tags) {
     tagArgs.push("--tag", tag);
   }
-  return ["-r", repo, "backup", "--json", ...tagArgs, ...paths];
+  // SEC-103: `--` (end-of-options) before the positional paths so a path that
+  // begins with `-` can never be reinterpreted as a restic flag (arg injection).
+  return ["-r", repo, "backup", "--json", ...tagArgs, "--", ...paths];
 }
 
 /**
- * Build the argv for `restic restore <snapshotId> --target <dir>`.
+ * Build the argv for `restic restore --target <dir> -- <snapshotId>`.
  * Pure — no I/O, no password in argv.
  */
 export function buildRestoreArgs(
@@ -128,7 +130,10 @@ export function buildRestoreArgs(
   snapshotId: string,
   targetDir: string,
 ): string[] {
-  return ["-r", repo, "restore", snapshotId, "--target", targetDir];
+  // SEC-103: `--` (end-of-options) before the positional snapshotId so a value
+  // beginning with `-` can never be reinterpreted as a restic flag. The
+  // snapshotId is additionally hex-validated at the action layer (SEC-103/104).
+  return ["-r", repo, "restore", "--target", targetDir, "--", snapshotId];
 }
 
 /**

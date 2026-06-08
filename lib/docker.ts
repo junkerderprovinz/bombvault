@@ -5,6 +5,13 @@ import type { ContainerCreateOptions, ContainerInfo, ContainerInspectInfo } from
 // Narrow types
 // ---------------------------------------------------------------------------
 
+/** A single device mapping (HostConfig.Devices entry). */
+export interface DeviceMapping {
+  PathOnHost: string;
+  PathInContainer: string;
+  CgroupPermissions: string;
+}
+
 /** The subset of ContainerInspectInfo that the docker adapter uses. */
 export interface ContainerInspect {
   Id: string;
@@ -14,11 +21,22 @@ export interface ContainerInspect {
     Image: string;
     Env: string[] | null;
     Cmd: string[] | null;
+    /** SEC-105: the user the process runs as (e.g. "1000:1000"). */
+    User?: string | null;
   };
   HostConfig: {
     Binds: string[] | null;
     PortBindings: Record<string, Array<{ HostIp: string; HostPort: string }>> | null;
     RestartPolicy: { Name: string; MaximumRetryCount?: number } | null;
+    // SEC-105: security-relevant fields — preserved on recreate so a restored
+    // container never silently runs with MORE privilege than the original.
+    CapAdd?: string[] | null;
+    CapDrop?: string[] | null;
+    Privileged?: boolean | null;
+    SecurityOpt?: string[] | null;
+    ReadonlyRootfs?: boolean | null;
+    NetworkMode?: string | null;
+    Devices?: DeviceMapping[] | null;
   };
   Mounts: Array<{
     Type: string;
@@ -33,10 +51,20 @@ export interface CreateOptions {
   Image: string;
   Env: string[];
   Cmd: string[];
+  /** SEC-105: present only when the source container set a non-default User. */
+  User?: string;
   HostConfig: {
     Binds: string[];
     PortBindings: Record<string, Array<{ HostIp: string; HostPort: string }>>;
     RestartPolicy: { Name: string; MaximumRetryCount?: number };
+    // SEC-105: security-relevant fields — only emitted when present in inspect.
+    CapAdd?: string[];
+    CapDrop?: string[];
+    Privileged?: boolean;
+    SecurityOpt?: string[];
+    ReadonlyRootfs?: boolean;
+    NetworkMode?: string;
+    Devices?: DeviceMapping[];
   };
 }
 
@@ -107,21 +135,45 @@ export function createDockerClient(socketPath = "/var/run/docker.sock"): DockerL
 /**
  * Build a minimal ContainerCreateOptions from a container's inspect data.
  * Strips the leading `/` from the container name (dockerode convention).
- * YAGNI: only maps Image, name, Env, Cmd, Binds, PortBindings, RestartPolicy.
+ * Maps Image, name, Env, Cmd, Binds, PortBindings, RestartPolicy, plus the
+ * SEC-105 security-relevant fields (User, CapAdd, CapDrop, Privileged,
+ * SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) so a recreated container
+ * never gains privilege over the original. Security fields are only emitted
+ * when present in the source inspect — absent fields keep docker's defaults.
  */
 export function buildCreateOptions(inspect: ContainerInspect): CreateOptions {
   const name = inspect.Name.startsWith("/") ? inspect.Name.slice(1) : inspect.Name;
-  return {
+  const hc = inspect.HostConfig;
+
+  const hostConfig: CreateOptions["HostConfig"] = {
+    Binds: hc.Binds ?? [],
+    PortBindings: hc.PortBindings ?? {},
+    RestartPolicy: hc.RestartPolicy ?? { Name: "no" },
+  };
+
+  // SEC-105: carry security-relevant HostConfig fields when the source set them.
+  if (hc.CapAdd != null) hostConfig.CapAdd = hc.CapAdd;
+  if (hc.CapDrop != null) hostConfig.CapDrop = hc.CapDrop;
+  if (hc.Privileged != null) hostConfig.Privileged = hc.Privileged;
+  if (hc.SecurityOpt != null) hostConfig.SecurityOpt = hc.SecurityOpt;
+  if (hc.ReadonlyRootfs != null) hostConfig.ReadonlyRootfs = hc.ReadonlyRootfs;
+  if (hc.NetworkMode != null) hostConfig.NetworkMode = hc.NetworkMode;
+  if (hc.Devices != null) hostConfig.Devices = hc.Devices;
+
+  const opts: CreateOptions = {
     name,
     Image: inspect.Config.Image,
     Env: inspect.Config.Env ?? [],
     Cmd: inspect.Config.Cmd ?? [],
-    HostConfig: {
-      Binds: inspect.HostConfig.Binds ?? [],
-      PortBindings: inspect.HostConfig.PortBindings ?? {},
-      RestartPolicy: inspect.HostConfig.RestartPolicy ?? { Name: "no" },
-    },
+    HostConfig: hostConfig,
   };
+
+  // SEC-105: preserve the process User when the source container set one.
+  if (inspect.Config.User != null && inspect.Config.User !== "") {
+    opts.User = inspect.Config.User;
+  }
+
+  return opts;
 }
 
 // ---------------------------------------------------------------------------

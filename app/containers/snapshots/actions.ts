@@ -9,28 +9,41 @@ import type { ContainerInspect } from "../../../lib/docker";
 import { restoreContainer, makeRestoreDeps } from "../../../server/orchestrator";
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
+import { assertValidSnapshotId, resolveSnapshotTemplatePath } from "./validate";
 
 /**
  * Server action: restore a container from a given snapshot.
  *
- * @param targetId   - The backup_target id.
- * @param snapshotId - The restic snapshot id to restore from.
- * @param confirmed  - MUST be exactly `true`. The action throws immediately if
- *                     this is false (the two-step confirm form enforces this in
- *                     the UI layer, and the orchestrator enforces it at the
- *                     operation layer).
+ * @param targetId   - The backup_target id (bound via the form action).
+ * @param snapshotId - The restic snapshot id to restore from (bound via the
+ *                     form action). Must be a hex id of 8–64 chars (SEC-103/104).
+ * @param formData   - The submitted form data. The restore only proceeds when
+ *                     the required `confirm` checkbox was actually ticked
+ *                     (`confirm === "on"`); otherwise the action throws. This is
+ *                     a guard against accidental/scripted-without-confirm
+ *                     destructive restores — it is NOT an authentication layer.
  *
  * Throws on any failure (surfaces via Next.js error boundary).
  */
 export async function restoreAction(
   targetId: string,
   snapshotId: string,
-  confirmed: boolean,
+  formData: FormData,
 ): Promise<void> {
+  // The confirm checkbox (name="confirm", required) submits the value "on" only
+  // when ticked. Derive the real confirmation from the submitted form, never a
+  // hardcoded constant.
+  const confirmed = formData.get("confirm") === "on";
+
   // Guard: never overwrite without an explicit user confirmation.
   if (confirmed !== true) {
     throw new Error("restore requires confirmed: true");
   }
+
+  // SEC-103/104: snapshotId is used in argv and in a template filename. Reject
+  // anything that is not a plain restic hex id BEFORE doing any work — this
+  // blocks both restic arg injection and path traversal at the source.
+  assertValidSnapshotId(snapshotId);
 
   const cfg = getConfig();
   const repo = createRepo(getDb(), cfg.APP_KEY);
@@ -47,15 +60,20 @@ export async function restoreAction(
 
   // ── Load the snapshot template copy (captured at backup time) ────────────
   // Snapshot templates are stored as <DATA_DIR>/templates/<snapshotId>-my-<Name>.xml
+  // SEC-104: build + verify the template path stays inside the templates dir
+  // (defence-in-depth on top of the hex validation above).
   const snapshotTemplatesDir = join(cfg.DATA_DIR, "templates");
-  const templateFileName = `${snapshotId}-my-${parsed.container_name}.xml`;
-  const templatePath = join(snapshotTemplatesDir, templateFileName);
+  const templatePath = resolveSnapshotTemplatePath(
+    snapshotTemplatesDir,
+    snapshotId,
+    parsed.container_name,
+  );
 
   let templateXml: string;
   try {
     templateXml = readFileSync(templatePath, "utf-8");
   } catch {
-    throw new Error(`snapshot template not found at ${templateFileName}`);
+    throw new Error("snapshot template not found");
   }
 
   // ── Inspect the current container (to get image + create options) ─────────
@@ -63,6 +81,7 @@ export async function restoreAction(
   // our ContainerInspect shape (the orchestrator only touches the fields we map).
   const docker = createDockerClient();
   const rawInspect = await inspectContainer(docker, parsed.container_name);
+  const rawHost = rawInspect.HostConfig;
   const inspect: ContainerInspect = {
     Id: rawInspect.Id,
     Name: rawInspect.Name,
@@ -71,13 +90,25 @@ export async function restoreAction(
       Image: rawInspect.Config?.Image ?? "",
       Env: rawInspect.Config?.Env ?? null,
       Cmd: rawInspect.Config?.Cmd ?? null,
+      // SEC-105: preserve the process user.
+      User: rawInspect.Config?.User ?? null,
     },
     HostConfig: {
-      Binds: rawInspect.HostConfig?.Binds ?? null,
+      Binds: rawHost?.Binds ?? null,
       PortBindings:
-        (rawInspect.HostConfig?.PortBindings as ContainerInspect["HostConfig"]["PortBindings"]) ??
+        (rawHost?.PortBindings as ContainerInspect["HostConfig"]["PortBindings"]) ??
         null,
-      RestartPolicy: rawInspect.HostConfig?.RestartPolicy ?? null,
+      RestartPolicy: rawHost?.RestartPolicy ?? null,
+      // SEC-105: preserve security-relevant fields so the recreated container
+      // does not silently run with more privilege than the original.
+      CapAdd: rawHost?.CapAdd ?? null,
+      CapDrop: rawHost?.CapDrop ?? null,
+      Privileged: rawHost?.Privileged ?? null,
+      SecurityOpt: rawHost?.SecurityOpt ?? null,
+      ReadonlyRootfs: rawHost?.ReadonlyRootfs ?? null,
+      NetworkMode: rawHost?.NetworkMode ?? null,
+      Devices:
+        (rawHost?.Devices as ContainerInspect["HostConfig"]["Devices"]) ?? null,
     },
     Mounts: (rawInspect.Mounts ?? []).map((m) => ({
       Type: m.Type ?? "",
@@ -93,14 +124,21 @@ export async function restoreAction(
   };
 
   // ── Wire deps + run ───────────────────────────────────────────────────────
+  // SEC-102: restic backs up ABSOLUTE paths (e.g. /sources/appdata/<name> under
+  // APPDATA_DIR). Restoring with `--target <APPDATA_DIR>` would double-nest the
+  // absolute path under the target (…/appdata/sources/appdata/<name>) and leave
+  // the container pointing at the un-restored origin. We MUST restore to `/` so
+  // the backed-up absolute paths land back at their origin.
+  // NOTE: the appdata mount must therefore be writable (rw) for restore to
+  // succeed — the original files at APPDATA_DIR are overwritten in place.
   const deps = await makeRestoreDeps({
-    confirmed: true,
+    confirmed,
     containerRef: parsed.container_name,
     containerName: parsed.container_name,
     repoPath: destRow.repo_path,
     repoPassword,
     snapshotId,
-    restoreTargetDir: cfg.APPDATA_DIR,
+    restoreTargetDir: "/",
     templateXml,
     flashTemplatesDir: cfg.FLASH_TEMPLATES_DIR,
     inspect,

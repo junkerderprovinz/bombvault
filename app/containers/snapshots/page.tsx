@@ -106,7 +106,10 @@ export default async function SnapshotsPage({
           </thead>
           <tbody>
             {rows.map((row) => {
-              const doRestore = restoreAction.bind(null, targetId, row.id, true);
+              // Bind only the identifiers; `confirmed` is derived from the
+              // submitted FormData (the required `confirm` checkbox) inside the
+              // action — never baked to a constant here.
+              const doRestore = restoreAction.bind(null, targetId, row.id);
               return (
                 <tr key={row.id} style={{ borderBottom: "1px solid var(--border)" }}>
                   {/* ID */}
@@ -197,7 +200,7 @@ export default async function SnapshotsPage({
                           >
                             <input
                               type="checkbox"
-                              name="confirmCheck"
+                              name="confirm"
                               required
                               style={{ accentColor: "var(--accent)" }}
                             />

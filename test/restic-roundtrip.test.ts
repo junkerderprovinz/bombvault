@@ -67,7 +67,11 @@ test(
     // 4. Wipe the source directory so there is nothing left to confuse the restore.
     rmSync(srcDir, { recursive: true, force: true });
 
-    // 5. Restore to targetDir.
+    // 5. Restore into a temp ROOT (stand-in for "/" — see SEC-102). In
+    //    production the real restore target is "/", so the backed-up ABSOLUTE
+    //    paths land back at their origin. Here we use targetDir as that root so
+    //    the test is hermetic; the invariant is identical: the file reappears at
+    //    <root>/<original-abs-path>, NOT double-nested under an appdata dir.
     await restore(repoDir, summary.snapshotId, targetDir, PW);
 
     // 6. restic nests the absolute source path under --target.
@@ -76,7 +80,8 @@ test(
     //    On Windows the drive letter becomes e.g. <targetDir>/C/tmp/.../hello.txt
     //    but CI runs on Linux so we handle the POSIX case.
     //
-    //    Strip the leading separator from srcDir to build the nested path.
+    //    Strip the leading separator from srcDir to build the nested path —
+    //    asserting the file reappears at <root>/<original-abs-path> (SEC-102).
     const srcDirRelative = srcDir.replace(/^[/\\]+/, "");
     const restoredFile = join(targetDir, srcDirRelative, FILE_NAME);
 

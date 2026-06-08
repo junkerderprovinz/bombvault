@@ -68,7 +68,10 @@ function makeRunRow(targetId: string, kind: "backup" | "restore"): RunRow {
 // Mock factories
 // ---------------------------------------------------------------------------
 
-function makeDockerMock(log: string[], opts?: { stopThrows?: boolean; startThrows?: boolean }): DockerDeps {
+function makeDockerMock(
+  log: string[],
+  opts?: { stopThrows?: boolean; startThrows?: boolean; liveName?: string | null },
+): DockerDeps {
   return {
     async stopContainer(id, timeoutSec) {
       log.push(`stop:${id}:${timeoutSec}`);
@@ -86,6 +89,12 @@ function makeDockerMock(log: string[], opts?: { stopThrows?: boolean; startThrow
     },
     async pullImage(image) {
       log.push(`pull:${image}`);
+    },
+    async inspectName(id) {
+      // Default: the live container matches the target (Name "/plex").
+      const name = opts?.liveName === undefined ? "/plex" : opts.liveName;
+      log.push(`inspectName:${id}:${name ?? "null"}`);
+      return name;
     },
   };
 }
@@ -170,11 +179,15 @@ function makeRestoreDeps(
   return {
     confirmed: overrides?.confirmed ?? true,
     containerRef: "plex",
-    containerName: "Plex",
+    // containerName matches the mocked live container name ("/plex") so the
+    // SEC-106 wrong-target guard passes on the happy path.
+    containerName: "plex",
     repoPath: "/repo",
     repoPassword: "secret",
     snapshotId: "deadbeef12345678",
-    restoreTargetDir: "/mnt/user/appdata",
+    // SEC-102: restore MUST target "/" so backed-up absolute paths land at
+    // their origin (not double-nested under APPDATA_DIR).
+    restoreTargetDir: "/",
     templateXml: "<xml>restored</xml>",
     flashTemplatesDir: "/boot/templates",
     inspect: INSPECT,
@@ -395,7 +408,28 @@ test("restoreContainer: passes correct snapshotId and targetDir to restic.restor
   const restoreEntry = log.find((e) => e.startsWith("restore:"));
   assert.ok(restoreEntry, "restore must be called");
   assert.ok(restoreEntry.includes("deadbeef12345678"), "snapshotId must be passed");
-  assert.ok(restoreEntry.includes("/mnt/user/appdata"), "restoreTargetDir must be passed");
+});
+
+test("restoreContainer: SEC-102 — restore target is '/', never APPDATA_DIR (double-nest)", async () => {
+  const log: string[] = [];
+  let capturedTarget: string | undefined;
+  const deps = makeRestoreDeps(log, {
+    restic: {
+      async backup() { throw new Error("not used"); },
+      async restore(_repo, _snapshotId, targetDir, _password) {
+        capturedTarget = targetDir;
+      },
+    },
+  });
+
+  await restoreContainer(deps);
+
+  assert.equal(capturedTarget, "/", "restic restore --target must be '/'");
+  assert.notEqual(
+    capturedTarget,
+    "/mnt/user/appdata",
+    "must NOT restore into APPDATA_DIR (would double-nest the absolute paths)",
+  );
 });
 
 test("restoreContainer: writes template to flashTemplatesDir with containerName", async () => {
@@ -407,7 +441,7 @@ test("restoreContainer: writes template to flashTemplatesDir with containerName"
   const writeEntry = log.find((e) => e.startsWith("writeTemplate:"));
   assert.ok(writeEntry, "writeTemplate must be called");
   assert.ok(writeEntry.includes("/boot/templates"), "must write to flashTemplatesDir");
-  assert.ok(writeEntry.includes("Plex"), "must use containerName");
+  assert.ok(writeEntry.includes("plex"), "must use containerName");
 });
 
 test("restoreContainer: calls createAndStartFromDefinition with the stored inspect", async () => {
@@ -480,4 +514,51 @@ test("restoreContainer: records runFinish:failed and re-throws when restic.resto
   const finishEntry = log.find((e) => e.startsWith("runFinish:"));
   assert.ok(finishEntry, "runFinish must be recorded");
   assert.ok(finishEntry.includes(":failed"), "status must be failed");
+});
+
+// ---------------------------------------------------------------------------
+// restoreContainer — SEC-106 wrong-target guard
+// ---------------------------------------------------------------------------
+
+test("restoreContainer: SEC-106 — aborts before stop/remove when the live container name does not match the target", async () => {
+  const log: string[] = [];
+  const deps = makeRestoreDeps(log, {
+    docker: makeDockerMock(log, { liveName: "/some-other-container" }),
+  });
+
+  await assert.rejects(
+    () => restoreContainer(deps),
+    /does not match target/,
+    "must abort on a wrong-target mismatch",
+  );
+
+  // The destructive steps must NOT have run.
+  assert.equal(log.find((e) => e.startsWith("stop:")), undefined, "stop must not run");
+  assert.equal(log.find((e) => e.startsWith("remove:")), undefined, "remove must not run");
+  assert.equal(log.find((e) => e.startsWith("restore:")), undefined, "restore must not run");
+
+  // The failure is recorded.
+  const finishEntry = log.find((e) => e.startsWith("runFinish:"));
+  assert.ok(finishEntry?.includes(":failed"), "run must be recorded as failed");
+});
+
+test("restoreContainer: SEC-106 — proceeds when the live container is absent (null inspectName)", async () => {
+  const log: string[] = [];
+  const deps = makeRestoreDeps(log, {
+    docker: makeDockerMock(log, { liveName: null }),
+  });
+
+  await assert.doesNotReject(() => restoreContainer(deps));
+  assert.ok(log.find((e) => e.startsWith("restore:")), "restore must proceed for a fresh restore");
+});
+
+test("restoreContainer: SEC-106 — proceeds when the live container name matches the target", async () => {
+  const log: string[] = [];
+  // liveName "/plex" matches containerName "plex" after normalization.
+  const deps = makeRestoreDeps(log, {
+    docker: makeDockerMock(log, { liveName: "/plex" }),
+  });
+
+  await assert.doesNotReject(() => restoreContainer(deps));
+  assert.ok(log.find((e) => e.startsWith("restore:")), "restore must proceed on a match");
 });
