@@ -18,21 +18,21 @@ func FileName(name string) string {
 	return "my-" + name + ".xml"
 }
 
-// Read returns the template XML for name from dir. The second return value is
-// false (and the string empty) when the template file does not exist.
-func Read(dir, name string) (string, bool) {
+// Read returns the template XML for name from dir as (xml, found, err):
+//   - a genuine not-exist is ("", false, nil);
+//   - any other I/O error (e.g. permission) is returned so the caller can
+//     distinguish "no template here" from "could not read the template" and
+//     never silently treats a real failure as absence.
+func Read(dir, name string) (string, bool, error) {
 	path := filepath.Join(dir, FileName(name))
 	data, err := os.ReadFile(path) //nolint:gosec // G304: dir is an operator-configured templates dir; name is a docker container name, not attacker-controlled free path
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return "", false
+			return "", false, nil
 		}
-		// A non-not-exist error (e.g. permission) is reported as absent so the
-		// caller treats it as "no template to flash back" rather than crashing;
-		// the underlying error surfaces via Write/other I/O paths.
-		return "", false
+		return "", false, fmt.Errorf("template: read %s: %w", path, err)
 	}
-	return string(data), true
+	return string(data), true, nil
 }
 
 // Write writes the template XML for name into dir, creating dir (and parents)
