@@ -15,7 +15,6 @@
     "spike": "tsx scripts/spike.ts"
   },
   "dependencies": {
-    "argon2": "^0.41.1",
     "better-sqlite3": "^12.10.0",
     "dockerode": "^5.0.0",
     "flag-icons": "^7.5.0",

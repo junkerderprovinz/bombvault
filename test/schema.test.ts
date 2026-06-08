@@ -22,26 +22,26 @@ function freshDb() {
   return new Database(join(dir, "bombvault.sqlite"));
 }
 
-test("runMigrations creates the setting and user tables", { skip }, () => {
+test("runMigrations creates the setting table", { skip }, () => {
   const db = freshDb();
   runMigrations(db);
   const tables = (
     db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]
   ).map((t) => t.name);
   assert.ok(tables.includes("setting"), "missing setting table");
-  assert.ok(tables.includes("user"), "missing user table");
   assert.ok(tables.includes("schema_migrations"), "missing migrations bookkeeping table");
+  assert.ok(!tables.includes("user"), "user table should not exist");
   db.close();
 });
 
-test("user table has the expected columns", { skip }, () => {
+test("setting table has the expected columns", { skip }, () => {
   const db = freshDb();
   runMigrations(db);
-  const cols = (db.prepare("PRAGMA table_info(user)").all() as { name: string }[]).map(
+  const cols = (db.prepare("PRAGMA table_info(setting)").all() as { name: string }[]).map(
     (c) => c.name,
   );
-  for (const c of ["id", "username", "password_hash", "created_at"]) {
-    assert.ok(cols.includes(c), `missing user column ${c}`);
+  for (const c of ["key", "value"]) {
+    assert.ok(cols.includes(c), `missing setting column ${c}`);
   }
   db.close();
 });
@@ -53,17 +53,6 @@ test("runMigrations is idempotent and records applied versions", { skip }, () =>
   assert.doesNotThrow(() => runMigrations(db));
   const after = db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get() as { n: number };
   assert.equal(after.n, before.n, "re-running must not re-apply migrations");
-  db.close();
-});
-
-test("migration seeds session_version = 0 (SEC-002 revocation epoch)", { skip }, () => {
-  const db = freshDb();
-  runMigrations(db);
-  const row = db.prepare("SELECT value FROM setting WHERE key = ?").get("session_version") as
-    | { value: string }
-    | undefined;
-  assert.ok(row, "session_version setting row should be seeded");
-  assert.equal(row!.value, "0");
   db.close();
 });
 
