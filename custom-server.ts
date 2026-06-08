@@ -35,17 +35,14 @@ function ensureSelfSigned(): { key: Buffer; cert: Buffer } {
 }
 
 function banner(scheme: string, port: number): void {
+  const proto = scheme.toUpperCase();
   // eslint-disable-next-line no-console
   console.log(
     [
       "",
-      "  ============================================================",
-      "  ||                                                        ||",
-      "  ||                 BOMBVAULT IS READY                     ||",
-      "  ||                                                        ||",
-      `  ||   WebUI: ${scheme}://${hostname}:${port}`.padEnd(58) + "||",
-      "  ||                                                        ||",
-      "  ============================================================",
+      "  ############################################################",
+      `   BOMBVAULT IS READY  ->  open the WebUI now (${proto} ${port})`,
+      "  ############################################################",
       "",
     ].join("\n"),
   );

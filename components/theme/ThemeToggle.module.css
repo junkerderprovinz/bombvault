@@ -1,12 +1,15 @@
 .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   background: var(--surface);
   color: var(--fg);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 0.25rem 0.5rem;
-  font-size: 1rem;
+  padding: 0;
   cursor: pointer;
-  line-height: 1;
   transition: background 0.15s ease;
 }
 
