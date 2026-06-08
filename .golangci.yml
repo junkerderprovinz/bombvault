@@ -1,0 +1,5 @@
+# .golangci.yml
+run:
+  timeout: 5m
+linters:
+  enable: [errcheck, govet, staticcheck, ineffassign, unused, gosec]
