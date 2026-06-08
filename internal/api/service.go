@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -198,7 +199,8 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 
 	tg, err := s.store.GetTargetByContainer(name)
 	if err != nil {
-		return fmt.Errorf("unknown target %q (back it up first): %w", name, err)
+		log.Printf("api: restore: unknown target %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
+		return errors.New("container has not been backed up yet")
 	}
 
 	in, err := s.docker.Inspect(ctx, name)
@@ -243,8 +245,13 @@ func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot
 	mode := s.ModeFor(settings)
 	// A listing before any backup has run (repo not yet initialised) is "no
 	// snapshots yet", not an error — the SPA shows an empty list, not a failure.
+	// A non-ErrNotExist stat error (e.g. permission denied on the repo dir) is
+	// logged as a warning but does not block the engine call: restic will surface
+	// the real failure with better context.
 	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
 		return nil, nil
+	} else if statErr != nil {
+		log.Printf("api: snapshots: WARN could not stat repo config for %q: %v", name, statErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 	}
 	all, err := s.engine.Snapshots(ctx, repo, mode)
 	if err != nil {
