@@ -16,6 +16,8 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+
+	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
 // Client is the real Docker adapter over the official SDK, talking to the
@@ -68,10 +70,10 @@ func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
 }
 
 // Inspect returns the captured inspect subset for a container by name or ID.
-func (c *Client) Inspect(ctx context.Context, name string) (ContainerInspect, error) {
+func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error) {
 	resp, err := c.api.ContainerInspect(ctx, name)
 	if err != nil {
-		return ContainerInspect{}, fmt.Errorf("dockercli: inspect: %w", err)
+		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
 	return mapInspect(resp), nil
 }
@@ -127,7 +129,7 @@ func (c *Client) Pull(ctx context.Context, img string) error {
 // ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/RestartPolicy/
 // Env/Cmd/Image are preserved so the recreated container never gains privilege
 // over the original.
-func (c *Client) CreateAndStart(ctx context.Context, in ContainerInspect) error {
+func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect) error {
 	cfg, hostCfg := buildCreateConfig(in)
 	name := normalizeName(in.Name)
 	resp, err := c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, name)
@@ -164,8 +166,8 @@ func isNoSuchContainer(err error) bool {
 // ---- mapping helpers -------------------------------------------------------
 
 // mapInspect converts the SDK inspect response into our captured subset.
-func mapInspect(resp container.InspectResponse) ContainerInspect {
-	out := ContainerInspect{}
+func mapInspect(resp container.InspectResponse) model.Inspect {
+	out := model.Inspect{}
 	if resp.ContainerJSONBase != nil {
 		out.ID = resp.ID
 		out.Name = resp.Name
@@ -175,7 +177,7 @@ func mapInspect(resp container.InspectResponse) ContainerInspect {
 		}
 	}
 	if resp.Config != nil {
-		out.Config = ContainerConfig{
+		out.Config = model.Config{
 			Image: resp.Config.Image,
 			Env:   resp.Config.Env,
 			Cmd:   []string(resp.Config.Cmd),
@@ -183,7 +185,7 @@ func mapInspect(resp container.InspectResponse) ContainerInspect {
 		}
 	}
 	for _, m := range resp.Mounts {
-		out.Mounts = append(out.Mounts, Mount{
+		out.Mounts = append(out.Mounts, model.Mount{
 			Type:        string(m.Type),
 			Source:      m.Source,
 			Destination: m.Destination,
@@ -193,8 +195,8 @@ func mapInspect(resp container.InspectResponse) ContainerInspect {
 }
 
 // mapHostConfig maps the SDK HostConfig into our preserved subset.
-func mapHostConfig(hc *container.HostConfig) HostConfig {
-	out := HostConfig{
+func mapHostConfig(hc *container.HostConfig) model.HostConfig {
+	out := model.HostConfig{
 		Binds:          hc.Binds,
 		CapAdd:         []string(hc.CapAdd),
 		CapDrop:        []string(hc.CapDrop),
@@ -202,23 +204,23 @@ func mapHostConfig(hc *container.HostConfig) HostConfig {
 		SecurityOpt:    hc.SecurityOpt,
 		ReadonlyRootfs: hc.ReadonlyRootfs,
 		NetworkMode:    string(hc.NetworkMode),
-		RestartPolicy: RestartPolicy{
+		RestartPolicy: model.RestartPolicy{
 			Name:              string(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
 	}
 	if len(hc.PortBindings) > 0 {
-		out.PortBindings = make(map[string][]PortBinding, len(hc.PortBindings))
+		out.PortBindings = make(map[string][]model.PortBinding, len(hc.PortBindings))
 		for port, bindings := range hc.PortBindings {
-			pb := make([]PortBinding, 0, len(bindings))
+			pb := make([]model.PortBinding, 0, len(bindings))
 			for _, b := range bindings {
-				pb = append(pb, PortBinding{HostIP: b.HostIP, HostPort: b.HostPort})
+				pb = append(pb, model.PortBinding{HostIP: b.HostIP, HostPort: b.HostPort})
 			}
 			out.PortBindings[string(port)] = pb
 		}
 	}
 	for _, d := range hc.Devices {
-		out.Devices = append(out.Devices, DeviceMapping{
+		out.Devices = append(out.Devices, model.DeviceMapping{
 			PathOnHost:        d.PathOnHost,
 			PathInContainer:   d.PathInContainer,
 			CgroupPermissions: d.CgroupPermissions,
@@ -229,7 +231,7 @@ func mapHostConfig(hc *container.HostConfig) HostConfig {
 
 // buildCreateConfig builds the SDK create config/hostconfig from our captured
 // inspect, preserving the security-relevant fields (SEC parity).
-func buildCreateConfig(in ContainerInspect) (*container.Config, *container.HostConfig) {
+func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConfig) {
 	cfg := &container.Config{
 		Image: in.Config.Image,
 		Env:   in.Config.Env,
