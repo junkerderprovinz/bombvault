@@ -63,17 +63,17 @@ export interface GetSettingsResponse {
   settings: Settings;
 }
 
-/** A run record from GET /api/runs */
+/** A run record from GET /api/runs — camelCase matches store.Run JSON tags */
 export interface Run {
-  ID: string;
-  TargetID: string;
-  Kind: string;
-  Status: string;
-  StartedAt: number;
-  FinishedAt: number | null;
-  SnapshotID: string;
-  Bytes: number;
-  Error: string;
+  id: string;
+  targetId: string;
+  kind: string;
+  status: string;
+  startedAt: number;
+  finishedAt: number | null;
+  snapshotId: string;
+  bytes: number;
+  error: string;
 }
 
 export interface ListRunsResponse {
