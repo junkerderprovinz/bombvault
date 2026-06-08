@@ -7,13 +7,6 @@ import { z } from "zod";
 // as 64 lowercase hex chars. DATA_DIR holds bulk data (restic local repos, certs);
 // CONFIG_DIR holds the small SQLite DB and defaults to DATA_DIR (single-volume
 // installs keep working). APPDATA_DIR is the host appdata mount probed by the spike.
-// DISABLE_AUTH=true bypasses all authentication (trusted-LAN use only).
-
-/** Coerce a string env value to boolean: "true"/"1" → true; anything else → false. */
-const boolFlag = z
-  .string()
-  .optional()
-  .transform((v) => v === "true" || v === "1");
 
 const schema = z.object({
   APP_KEY: z
@@ -24,7 +17,6 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   HTTPS_PORT: z.coerce.number().int().positive().default(3443),
   APPDATA_DIR: z.string().min(1).default("/mnt/user/appdata"),
-  DISABLE_AUTH: boolFlag,
 });
 
 export interface AppConfig {
@@ -34,7 +26,6 @@ export interface AppConfig {
   PORT: number;
   HTTPS_PORT: number;
   APPDATA_DIR: string;
-  DISABLE_AUTH: boolean;
   DB_PATH: string;
   ensureDataDirs(): void;
 }
@@ -53,7 +44,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     PORT: parsed.PORT,
     HTTPS_PORT: parsed.HTTPS_PORT,
     APPDATA_DIR: parsed.APPDATA_DIR,
-    DISABLE_AUTH: parsed.DISABLE_AUTH ?? false,
     DB_PATH,
     ensureDataDirs() {
       if (dirsReady) return;

@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import "./globals.css";
 import "flag-icons/css/flag-icons.min.css";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ControlsBar } from "@/components/ControlsBar";
 import { resolveTheme, THEME_COOKIE } from "@/lib/theme";
-import { pickLanguage, COOKIE as LANG_COOKIE } from "@/lib/i18n/detect";
+import { resolveLanguage, COOKIE as LANG_COOKIE } from "@/lib/i18n/detect";
 import { SUPPORTED, DEFAULT_LANGUAGE, isRtl } from "@/lib/i18n/locales";
 
 export const metadata = {
@@ -20,11 +20,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const themeCookie = cookieStore.get(THEME_COOKIE)?.value;
   const theme = resolveTheme(themeCookie);
 
-  // ── Language: cookie wins, then Accept-Language, then fallback ─────────
-  const headerStore = await headers();
+  // ── Language: cookie wins; when no cookie is set default to "en".
+  // Accept-Language is intentionally NOT used so the default experience
+  // is always English regardless of the browser's locale.
   const langCookie = cookieStore.get(LANG_COOKIE)?.value;
-  const acceptLanguage = headerStore.get("accept-language");
-  const lang = pickLanguage(langCookie, acceptLanguage, SUPPORTED, DEFAULT_LANGUAGE);
+  const candidates = langCookie ? [langCookie] : [];
+  const lang = resolveLanguage(candidates, SUPPORTED, DEFAULT_LANGUAGE);
   const dir = isRtl(lang) ? "rtl" : "ltr";
 
   // Blocking inline script: sets data-theme before first paint so first-time

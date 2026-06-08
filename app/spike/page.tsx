@@ -1,20 +1,17 @@
 import { assembleReport } from "../../server/spike-report";
 import { DEFAULT_PROBES } from "../../server/host-probes";
-import { requireSession } from "../../lib/auth-server";
 import { getTranslator } from "../../lib/i18n/server";
 
 // Server component: runs the probes on each request and renders the report.
-// Protected by middleware (first gate) AND requireSession() (defense-in-depth,
-// SEC-005). This is the artifact the user opens on the real Unraid host to
+// This is the artifact the user opens on the real Unraid host to
 // confirm every mount/CLI is reachable.
 export const dynamic = "force-dynamic";
 
 export default async function SpikePage() {
-  await requireSession();
   const { t } = await getTranslator();
   const report = await assembleReport(DEFAULT_PROBES);
 
-  // SEC-006: never render raw probe error text to the UI (a future probe error
+  // Never render raw probe error text to the UI (a future probe error
   // could echo a repo path, host detail, or secret). Keep the detail in the
   // server log; show a generic message in the browser.
   for (const c of report.checks) {

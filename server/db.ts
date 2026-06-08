@@ -13,8 +13,8 @@ export function initDb(): Database.Database {
   cfg.ensureDataDirs();
   db = new Database(cfg.DB_PATH);
   db.pragma("journal_mode = WAL");
-  // SEC-003: the DB holds the argon2 password hash and (later) encrypted repo
-  // secrets — restrict it to the owner. chmod is meaningless on Windows and can
+  // SEC-003: the DB holds encrypted repo secrets — restrict it to the owner.
+  // chmod is meaningless on Windows and can
   // behave oddly, so skip it there; wrap in try/catch so a chmod failure on an
   // exotic FS never crashes startup.
   // The WAL (-wal) and SHM (-shm) sidecars hold the same sensitive pages as
