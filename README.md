@@ -38,10 +38,13 @@ VM tab with no manual steps. Powered by <a href="https://restic.net">restic</a>.
 
 ## 1. Status
 
-**P0 — Foundation.** This is the buildable, tested skeleton: Next.js + SQLite,
-a thin restic adapter, the AES-256-GCM secrets util, and the host-integration spike.
-There is **no authentication yet** — see [Security / trust model](#3-security--trust-model).
-Backup and restore features (P1+) are landing on the P1 branch.
+**P1 — Container backup & restore (one-click).** On top of the Next.js + SQLite
+foundation (thin restic adapter, AES-256-GCM secrets util, host-integration spike),
+BombVault now backs up and restores Docker containers with a single click: the backup
+destination is the template-mounted repo and the restic password is **derived from
+`APP_KEY`** — no destination to configure, no password to type. There is **no
+authentication yet** — see [Security / trust model](#3-security--trust-model).
+VMs, flash config, off-site backends and scheduling are the next phases.
 
 <br>
 
@@ -75,7 +78,7 @@ The **spike is the real-host validation step**: run it inside the container on y
 confirm every mount and CLI is reachable. It degrades gracefully — a failed check is a finding,
 never a crash.
 
-- Web: open **`/spike`** (after onboarding/login).
+- Web: open **`/spike`**.
 - CLI: `npm run spike` (or `docker exec bombvault npm run spike`).
 
 It probes: docker socket, libvirt (`virsh`), appdata readability, `restic`, `qemu-img`, `rclone`.
