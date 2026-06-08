@@ -48,3 +48,19 @@ func TestResolveDeepPath(t *testing.T) {
 		t.Fatalf("unexpected result: %s", got)
 	}
 }
+
+func TestResolveRejectsEmptySub(t *testing.T) {
+	// sub="" cleans to root itself — must be rejected (not a strict child).
+	_, err := paths.Resolve("/host/user", "")
+	if err == nil {
+		t.Fatal("must reject empty sub (resolves to root, not a strict child)")
+	}
+}
+
+func TestResolveRejectsDotSub(t *testing.T) {
+	// sub="." cleans to root itself — must be rejected (not a strict child).
+	_, err := paths.Resolve("/host/user", ".")
+	if err == nil {
+		t.Fatal("must reject sub='.' (resolves to root, not a strict child)")
+	}
+}

@@ -18,9 +18,10 @@ import (
 
 // Check is the result of a single probe.
 type Check struct {
-	Name   string
-	OK     bool
-	Detail string
+	Name       string
+	OK         bool
+	Detail     string
+	BestEffort bool // true when this probe does not gate AllOK
 }
 
 // ProbeFn is a probe implementation. It receives the shared Deps and returns a
@@ -32,6 +33,10 @@ type ProbeFn func(deps Deps) (detail string, err error)
 type Probe struct {
 	Name string
 	Fn   ProbeFn
+	// BestEffort marks optional probes (e.g. libvirt, qemu-img, rclone) that
+	// are reported but do NOT count against AllOK when they fail. Only the
+	// gating probes (docker, restic, path-writable) gate AllOK.
+	BestEffort bool
 }
 
 // Deps carries the shared dependencies that real probes use. All fields are
@@ -47,6 +52,9 @@ type Deps struct {
 // Run executes each probe in order, collects results, and returns them along
 // with an overall AllOK flag. Panics inside a probe are caught and converted
 // into a failed check — Run itself never panics.
+//
+// A failing best-effort probe is included in checks with OK=false but does NOT
+// lower AllOK. Only gating probes (BestEffort=false) affect AllOK.
 func Run(deps Deps, probes []Probe) (checks []Check, allOK bool) {
 	allOK = true
 	checks = make([]Check, 0, len(probes))
@@ -54,7 +62,7 @@ func Run(deps Deps, probes []Probe) (checks []Check, allOK bool) {
 	for _, p := range probes {
 		c := runProbe(deps, p)
 		checks = append(checks, c)
-		if !c.OK {
+		if !c.OK && !p.BestEffort {
 			allOK = false
 		}
 	}
@@ -64,6 +72,7 @@ func Run(deps Deps, probes []Probe) (checks []Check, allOK bool) {
 // runProbe executes a single probe, catching any panic.
 func runProbe(deps Deps, p Probe) (c Check) {
 	c.Name = p.Name
+	c.BestEffort = p.BestEffort
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -89,14 +98,23 @@ func runProbe(deps Deps, p Probe) (c Check) {
 
 // DefaultProbes returns the standard set of host-integration probes used in
 // production. Each probe is independently injectable in tests via Run.
+//
+// Gating probes (BestEffort=false) — their failure lowers AllOK:
+//   - docker reachable
+//   - restic ≥0.17
+//   - path-writable
+//
+// Best-effort probes (BestEffort=true) — reported but do not gate AllOK; they
+// are needed only for later VM/Flash phases, not Phase-1 container backup:
+//   - qemu-img, rclone, libvirt
 func DefaultProbes() []Probe {
 	return []Probe{
 		{Name: "docker", Fn: probeDocker},
 		{Name: "restic", Fn: probeRestic},
-		{Name: "qemu-img", Fn: probeQemuImg},
-		{Name: "rclone", Fn: probeRclone},
+		{Name: "qemu-img", Fn: probeQemuImg, BestEffort: true},
+		{Name: "rclone", Fn: probeRclone, BestEffort: true},
 		{Name: "path-writable", Fn: probePathWritable},
-		{Name: "libvirt", Fn: probeLibvirt},
+		{Name: "libvirt", Fn: probeLibvirt, BestEffort: true},
 	}
 }
 
@@ -156,7 +174,7 @@ func probeRclone(_ Deps) (string, error) {
 		// the binary is present. Fall back to plain "rclone version".
 		out2, err2 := exec.Command("rclone", "version").CombinedOutput() //nolint:gosec
 		if err2 != nil {
-			return "", fmt.Errorf("rclone not found: %w", err)
+			return "", fmt.Errorf("rclone not found: %w", err2)
 		}
 		first := strings.SplitN(strings.TrimSpace(string(out2)), "\n", 2)[0]
 		return first, nil
@@ -175,7 +193,7 @@ func probePathWritable(deps Deps) (string, error) {
 	if err := os.MkdirAll(p, 0o700); err != nil {
 		return "", fmt.Errorf("cannot create backup dir %q: %w", p, err)
 	}
-	//nolint:gosec // G304: path comes from validated app settings, not user HTTP input
+	//nolint:gosec // G304: caller must pass a path already validated by paths.Resolve under the mount root; this is not a user-supplied HTTP value
 	f, err := os.CreateTemp(p, ".spike-probe-*")
 	if err != nil {
 		return "", fmt.Errorf("path not writable: %w", err)

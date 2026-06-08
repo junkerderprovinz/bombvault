@@ -98,6 +98,48 @@ func TestRunEmptyProbesReturnsAllOK(t *testing.T) {
 	}
 }
 
+// TestRunBestEffortFailDoesNotGateAllOK verifies that a failing best-effort
+// probe (e.g. libvirt / qemu-img / rclone) is recorded as OK=false but does
+// not lower AllOK when all gating probes pass.
+func TestRunBestEffortFailDoesNotGateAllOK(t *testing.T) {
+	probes := []spike.Probe{
+		{Name: "docker", Fn: alwaysOK},                       // gating
+		{Name: "restic", Fn: alwaysOK},                       // gating
+		{Name: "libvirt", Fn: alwaysFail, BestEffort: true},  // optional
+		{Name: "qemu-img", Fn: alwaysFail, BestEffort: true}, // optional
+		{Name: "path-writable", Fn: alwaysOK},                // gating
+	}
+	checks, allOK := spike.Run(spike.Deps{}, probes)
+	if !allOK {
+		t.Fatal("expected AllOK=true: failing best-effort probes must not gate health")
+	}
+	if len(checks) != 5 {
+		t.Fatalf("expected 5 checks, got %d", len(checks))
+	}
+	// Verify the best-effort failures are still reported as !OK.
+	for _, c := range checks {
+		if (c.Name == "libvirt" || c.Name == "qemu-img") && c.OK {
+			t.Fatalf("best-effort probe %q must be reported as OK=false", c.Name)
+		}
+		if !c.BestEffort && !c.OK {
+			t.Fatalf("gating probe %q must be OK=true in this scenario", c.Name)
+		}
+	}
+}
+
+// TestRunGatingFailStillLowersAllOK confirms that a non-best-effort probe
+// failure does lower AllOK even when best-effort probes also pass.
+func TestRunGatingFailStillLowersAllOK(t *testing.T) {
+	probes := []spike.Probe{
+		{Name: "docker", Fn: alwaysFail},                  // gating — fails
+		{Name: "libvirt", Fn: alwaysOK, BestEffort: true}, // optional — passes
+	}
+	_, allOK := spike.Run(spike.Deps{}, probes)
+	if allOK {
+		t.Fatal("expected AllOK=false: a failing gating probe must lower AllOK")
+	}
+}
+
 func TestRunNameAndDetailPopulated(t *testing.T) {
 	probes := []spike.Probe{
 		{Name: "my-probe", Fn: func(_ spike.Deps) (string, error) { return "detail-text", nil }},
