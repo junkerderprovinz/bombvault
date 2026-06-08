@@ -8,6 +8,12 @@ dist/
 build/
 tsconfig.tsbuildinfo
 
+# Keep the embedded-SPA placeholder so `//go:embed all:web/dist` compiles
+# before the Vite build exists; real build artifacts under web/dist stay ignored.
+!web/dist/
+web/dist/*
+!web/dist/index.html
+
 # Env & secrets
 .env
 .env.*
@@ -16,8 +22,8 @@ tsconfig.tsbuildinfo
 # Local data
 *.sqlite
 *.sqlite-*
-data/
-config/
+/data/
+/config/
 
 # Brainstorm / tooling
 .superpowers/

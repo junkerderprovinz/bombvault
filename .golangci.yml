@@ -1,0 +1,18 @@
+version: "2"
+run:
+  timeout: 5m
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gosec
+  exclusions:
+    rules:
+      - path: internal/(template|paths)/
+        linters: [gosec]
+        text: "G304|G306"
+      - path: node_modules/
+        linters: [govet]

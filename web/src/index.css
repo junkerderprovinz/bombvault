@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background-color: #161616;
+  color: #f4f4f4;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="light"] body {
+  background-color: #f4f4f4;
+  color: #161616;
+}
+
+* {
+  box-sizing: border-box;
+}

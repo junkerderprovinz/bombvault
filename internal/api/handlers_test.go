@@ -1,0 +1,336 @@
+package api_test
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/spike"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+// newTestRouter wires a handler over fakes and returns the http.Handler plus the
+// underlying fakes for assertions.
+func newTestRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo) {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, d, eng)
+	sched := schedule.New(
+		func(string) error { return nil },
+		st.ListTargets,
+	)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes())
+	return h.Router(), st
+}
+
+func doJSON(t *testing.T, h http.Handler, method, path, body string) (*httptest.ResponseRecorder, map[string]any) {
+	t.Helper()
+	var r *http.Request
+	if body == "" {
+		r = httptest.NewRequest(method, path, nil)
+	} else {
+		r = httptest.NewRequest(method, path, strings.NewReader(body))
+		r.Header.Set("Content-Type", "application/json")
+	}
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	var m map[string]any
+	if w.Body.Len() > 0 {
+		_ = json.Unmarshal(w.Body.Bytes(), &m)
+	}
+	return w, m
+}
+
+func TestHealth(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodGet, "/api/health", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	if m["ok"] != true {
+		t.Fatalf("health body = %v", m)
+	}
+}
+
+func TestListContainers(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{ID: "abc", Name: "plex", Image: "plex:latest", State: "running", Status: "Up 2h"},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	// Mark plex as included to exercise the include flag.
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetInclude("plex", true); err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/containers", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Containers []struct {
+			Name    string `json:"name"`
+			Image   string `json:"image"`
+			Status  string `json:"status"`
+			Include bool   `json:"includeInSchedule"`
+		} `json:"containers"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if len(resp.Containers) != 1 || resp.Containers[0].Name != "plex" {
+		t.Fatalf("containers = %+v", resp.Containers)
+	}
+	if !resp.Containers[0].Include {
+		t.Fatalf("expected include flag true: %+v", resp.Containers[0])
+	}
+}
+
+func TestBackupOK(t *testing.T) {
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest"}}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/containers/plex/backup", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", m)
+	}
+	if m["snapshotId"] != "deadbeef12345678" {
+		t.Fatalf("expected snapshotId, got %v", m)
+	}
+}
+
+func TestBackupFailureGraceful(t *testing.T) {
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest"}}
+	eng := &fakeResticEngine{backupErr: errors.New("restic backup failed: /secret/repo/path")}
+	h, _ := newTestRouter(t, d, eng)
+	w, m := doJSON(t, h, http.MethodPost, "/api/containers/plex/backup", "")
+	// Operational failure → still HTTP 200, {ok:false,error}.
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false, got %v", m)
+	}
+	errStr, _ := m["error"].(string)
+	if errStr == "" {
+		t.Fatalf("expected an error message, got %v", m)
+	}
+	// Error must be scrubbed — must not leak the repo path.
+	if strings.Contains(errStr, "/secret/repo/path") {
+		t.Fatalf("error leaked the repo path: %q", errStr)
+	}
+}
+
+func TestSnapshots(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersPath = "backups/c"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Initialise the repo marker so Snapshots calls the engine.
+	repo := filepath.Join(dir, "backups", "c")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &fakeServiceDocker{}
+	// Two snapshots in the shared repo; only the plex-tagged one must come back.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-06-09T00:00:00Z", Tags: []string{"container:plex", "p1"}},
+		{ID: "cafebabe87654321", Time: "2026-06-09T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, d, eng)
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/snapshots", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok, got %v", m)
+	}
+	snaps, _ := m["snapshots"].([]any)
+	if len(snaps) != 1 {
+		t.Fatalf("expected 1 plex snapshot (filtered by tag), got %v", m)
+	}
+}
+
+func TestRestoreNotConfirmed(t *testing.T) {
+	d := &fakeServiceDocker{liveName: "/plex"}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/containers/plex/restore",
+		`{"snapshotId":"deadbeef12345678","confirm":false}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false, got %v", m)
+	}
+	errStr, _ := m["error"].(string)
+	if !strings.Contains(strings.ToLower(errStr), "confirm") {
+		t.Fatalf("expected a confirm message, got %q", errStr)
+	}
+}
+
+func TestPatchInclude(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	w, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex",
+		`{"includeInSchedule":true}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok, got %v", m)
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !tg.IncludeInSchedule {
+		t.Fatal("include flag not persisted")
+	}
+}
+
+func TestSettingsGetPut(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	// GET defaults — settings are nested under "settings" (symmetric with PUT).
+	w, m := doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status = %d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	if settings["containersPath"] == nil {
+		t.Fatalf("settings missing containersPath: %v", settings)
+	}
+
+	// PUT a valid update.
+	body := `{
+		"encryptionEnabled": false,
+		"containersEnabled": true,
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "daily 02:30",
+		"vmsSchedule": "off",
+		"flashSchedule": "off"
+	}`
+	w, m = doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("put status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok, got %v", m)
+	}
+}
+
+func TestSettingsPutRejectsBadCadence(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	body := `{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+		"containersSchedule":"daily 99:99","vmsSchedule":"off","flashSchedule":"off"}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false for bad cadence, got %v", m)
+	}
+}
+
+func TestSettingsPutRejectsTraversalPath(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	body := `{"containersPath":"../../etc","vmsPath":"backups/v","flashPath":"backups/f",
+		"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off"}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false for traversal path, got %v", m)
+	}
+}
+
+func TestSpike(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "plex"}}}
+	// Inject a single stub probe so the test does not depend on a real restic.
+	h := newSpikeRouter(t, d)
+	w, m := doJSON(t, h, http.MethodPost, "/api/spike", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	checks, _ := m["checks"].([]any)
+	if len(checks) == 0 {
+		t.Fatalf("expected spike checks, got %v", m)
+	}
+}
+
+func newSpikeRouter(t *testing.T, d *fakeServiceDocker) http.Handler {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, d, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	probes := []spike.Probe{
+		{Name: "stub", Fn: func(spike.Deps) (string, error) { return "ok", nil }},
+	}
+	h := api.NewHandler(cfg, st, d, svc, sched, probes)
+	return h.Router()
+}
+
+func TestRuns(t *testing.T) {
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest"}}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	// Drive one backup so a run exists.
+	doJSON(t, h, http.MethodPost, "/api/containers/plex/backup", "")
+	w, m := doJSON(t, h, http.MethodGet, "/api/runs", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	runs, _ := m["runs"].([]any)
+	if len(runs) == 0 {
+		t.Fatalf("expected at least one run, got %v", m)
+	}
+}
+
+// ensure context import is used (Router handlers run under request context).
+var _ = context.Background

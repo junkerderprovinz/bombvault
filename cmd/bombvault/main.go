@@ -1,0 +1,79 @@
+// Command bombvault is the single static binary: it loads config, opens the
+// SQLite store, wires the real adapters into the backup service, starts the
+// per-domain scheduler, and serves the JSON API + embedded React SPA.
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+
+	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/spike"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+	web "github.com/junkerderprovinz/bombvault/web"
+)
+
+func main() {
+	if err := run(); err != nil {
+		log.Printf("fatal: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		return err
+	}
+
+	db, err := store.Open(cfg.DBPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = db.Close() }()
+	if err := store.Migrate(db); err != nil {
+		return err
+	}
+	st := store.New(db)
+
+	// Real Docker adapter over the mounted docker.sock.
+	dc, err := dockercli.New()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = dc.Close() }()
+
+	// Real restic CLI adapter.
+	engine := &restic.Restic{Bin: "restic"}
+
+	// Backup service bridges the adapters into the DI orchestrator.
+	svc := api.NewService(cfg, st, dc, engine)
+
+	// Per-domain scheduler; the containers job calls the service's Backup.
+	scheduler := schedule.New(
+		func(name string) error {
+			_, bErr := svc.Backup(context.Background(), name)
+			return bErr
+		},
+		st.ListTargets,
+	)
+	if settings, sErr := st.GetSettings(); sErr == nil {
+		if rErr := scheduler.Reload(settings); rErr != nil {
+			log.Printf("scheduler: initial reload failed: %v", rErr)
+		}
+	} else {
+		log.Printf("scheduler: could not read settings: %v", sErr)
+	}
+	scheduler.Start()
+	defer scheduler.Stop()
+
+	// JSON API + embedded SPA.
+	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	return server.Run()
+}
