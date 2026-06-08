@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cookies, headers } from "next/headers";
 import "./globals.css";
+import "flag-icons/css/flag-icons.min.css";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ControlsBar } from "@/components/ControlsBar";

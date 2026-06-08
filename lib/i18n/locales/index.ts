@@ -35,37 +35,38 @@ export type { TranslationKey, Translation };
 export interface Language {
   code: string;
   label: string; // endonym — the language's own name
+  flag: string; // ISO 3166-1 alpha-2 region code used to pick the flag SVG
   rtl?: boolean; // true for RTL languages (Arabic, Hebrew, …)
 }
 
 // Order here is the order shown in the language menu.
 export const LANGUAGES: Language[] = [
-  { code: "en", label: "English" },
-  { code: "de", label: "Deutsch" },
-  { code: "fr", label: "Français" },
-  { code: "es", label: "Español" },
-  { code: "it", label: "Italiano" },
-  { code: "pt", label: "Português" },
-  { code: "nl", label: "Nederlands" },
-  { code: "pl", label: "Polski" },
-  { code: "ru", label: "Русский" },
-  { code: "uk", label: "Українська" },
-  { code: "cs", label: "Čeština" },
-  { code: "sv", label: "Svenska" },
-  { code: "da", label: "Dansk" },
-  { code: "fi", label: "Suomi" },
-  { code: "no", label: "Norsk" },
-  { code: "tr", label: "Türkçe" },
-  { code: "el", label: "Ελληνικά" },
-  { code: "hu", label: "Magyar" },
-  { code: "ro", label: "Română" },
-  { code: "ja", label: "日本語" },
-  { code: "ko", label: "한국어" },
-  { code: "zh", label: "中文" },
-  { code: "ar", label: "العربية", rtl: true },
-  { code: "he", label: "עברית", rtl: true },
-  { code: "th", label: "ไทย" },
-  { code: "vi", label: "Tiếng Việt" },
+  { code: "en", label: "English", flag: "gb" },
+  { code: "de", label: "Deutsch", flag: "de" },
+  { code: "fr", label: "Français", flag: "fr" },
+  { code: "es", label: "Español", flag: "es" },
+  { code: "it", label: "Italiano", flag: "it" },
+  { code: "pt", label: "Português", flag: "pt" },
+  { code: "nl", label: "Nederlands", flag: "nl" },
+  { code: "pl", label: "Polski", flag: "pl" },
+  { code: "ru", label: "Русский", flag: "ru" },
+  { code: "uk", label: "Українська", flag: "ua" },
+  { code: "cs", label: "Čeština", flag: "cz" },
+  { code: "sv", label: "Svenska", flag: "se" },
+  { code: "da", label: "Dansk", flag: "dk" },
+  { code: "fi", label: "Suomi", flag: "fi" },
+  { code: "no", label: "Norsk", flag: "no" },
+  { code: "tr", label: "Türkçe", flag: "tr" },
+  { code: "el", label: "Ελληνικά", flag: "gr" },
+  { code: "hu", label: "Magyar", flag: "hu" },
+  { code: "ro", label: "Română", flag: "ro" },
+  { code: "ja", label: "日本語", flag: "jp" },
+  { code: "ko", label: "한국어", flag: "kr" },
+  { code: "zh", label: "中文", flag: "cn" },
+  { code: "ar", label: "العربية", flag: "sa", rtl: true },
+  { code: "he", label: "עברית", flag: "il", rtl: true },
+  { code: "th", label: "ไทย", flag: "th" },
+  { code: "vi", label: "Tiếng Việt", flag: "vn" },
 ];
 
 export const DEFAULT_LANGUAGE = "en";
