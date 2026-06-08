@@ -9,15 +9,15 @@ import (
 
 // Run represents a single backup or restore operation.
 type Run struct {
-	ID         string
-	TargetID   string
-	Kind       string
-	Status     string
-	StartedAt  int64
-	FinishedAt *int64
-	SnapshotID string
-	Bytes      int64
-	Error      string
+	ID         string `json:"id"`
+	TargetID   string `json:"targetId"`
+	Kind       string `json:"kind"`
+	Status     string `json:"status"`
+	StartedAt  int64  `json:"startedAt"`
+	FinishedAt *int64 `json:"finishedAt"`
+	SnapshotID string `json:"snapshotId"`
+	Bytes      int64  `json:"bytes"`
+	Error      string `json:"error"`
 }
 
 // StartRun records the beginning of a run and returns its ID.

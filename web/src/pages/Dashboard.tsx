@@ -183,16 +183,16 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {recent.length > 0 && (
         <div className="divide-y divide-carbon-border">
           {recent.map((run) => (
-            <div key={run.ID} className="flex items-center gap-3 py-2.5 text-sm">
-              <StatusChip status={run.Status} />
+            <div key={run.id} className="flex items-center gap-3 py-2.5 text-sm">
+              <StatusChip status={run.status} />
               <span className="text-carbon-text font-medium w-16 shrink-0">
-                {run.Kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
+                {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
               </span>
               <span className="text-carbon-textMuted flex-1 truncate text-xs font-mono">
-                {run.TargetID.slice(0, 12)}…
+                {run.targetId.slice(0, 12)}…
               </span>
               <span className="text-carbon-textMuted text-xs shrink-0">
-                {relativeTime(run.StartedAt)}
+                {relativeTime(run.startedAt)}
               </span>
             </div>
           ))}
