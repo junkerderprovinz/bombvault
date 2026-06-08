@@ -2,7 +2,7 @@ import type Database from "better-sqlite3";
 
 // Forward-only migration runner. Each migration has a unique ascending integer
 // version and idempotent-as-a-set SQL (it runs once, tracked in schema_migrations).
-// P0 ships only the setting + user tables; later phases append new migrations —
+// P0 ships only the setting table; later phases append new migrations —
 // never edit an existing one.
 export interface Migration {
   version: number;
@@ -13,28 +13,12 @@ export interface Migration {
 export const MIGRATIONS: Migration[] = [
   {
     version: 1,
-    name: "init_setting_user",
+    name: "init_setting",
     sql: `
       CREATE TABLE IF NOT EXISTS setting (
         key   TEXT PRIMARY KEY,
         value TEXT NOT NULL
       );
-      CREATE TABLE IF NOT EXISTS user (
-        id            INTEGER PRIMARY KEY AUTOINCREMENT,
-        username      TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at    INTEGER NOT NULL
-      );
-    `,
-  },
-  {
-    // Session revocation epoch. Tokens carry the session_version at sign time;
-    // requireSession() (Node-side) rejects tokens whose sv != the stored value.
-    // logout() and any future password change bump it, invalidating old tokens.
-    version: 2,
-    name: "session_version_setting",
-    sql: `
-      INSERT OR IGNORE INTO setting (key, value) VALUES ('session_version', '0');
     `,
   },
 ];
