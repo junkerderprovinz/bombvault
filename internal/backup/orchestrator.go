@@ -19,22 +19,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
 // ---------------------------------------------------------------------------
 // DI types & interfaces (the seam — no concrete adapters imported)
 // ---------------------------------------------------------------------------
 
-// Inspect is the captured container definition used to recreate a container on
-// restore. It mirrors dockercli.ContainerInspect structurally so the real
-// adapter can convert between them without this package importing dockercli.
-type Inspect struct {
-	Name  string // may carry a leading slash (e.g. "/plex")
-	Image string
-}
+// Sentinel errors returned by the restore guards so the API layer can branch on
+// them with errors.Is (e.g. to map to a 4xx) without string matching.
+var (
+	// ErrNotConfirmed is returned when a restore is attempted without the
+	// explicit confirmation flag set.
+	ErrNotConfirmed = errors.New("restore: not confirmed (confirm must be true)")
+	// ErrInvalidSnapshotID is returned when the snapshot id fails the strict
+	// hex validation (arg-injection guard).
+	ErrInvalidSnapshotID = errors.New("restore: invalid snapshot id (must be 8–64 lowercase hex)")
+)
 
 // Summary is the result of a successful backup.
 type Summary struct {
@@ -42,13 +48,16 @@ type Summary struct {
 	Bytes      int64
 }
 
-// Docker is the subset of host control the orchestrator needs.
+// Docker is the subset of host control the orchestrator needs. The rich
+// container profile travels as model.Inspect so all security-relevant fields
+// reach the real adapter on recreate (SEC §8). The orchestrator imports only
+// the model types — never the concrete dockercli adapter (the DI seam).
 type Docker interface {
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 	Start(ctx context.Context, name string) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
-	CreateAndStart(ctx context.Context, in Inspect) error
+	CreateAndStart(ctx context.Context, in model.Inspect) error
 	// InspectName returns the live container's name (the adapter normalizes it),
 	// or "" when no such container exists.
 	InspectName(ctx context.Context, name string) (string, error)
@@ -60,9 +69,12 @@ type Restic interface {
 	Restore(ctx context.Context, repo, snapshotID, target string) error
 }
 
-// Templates reads and writes Unraid container templates.
+// Templates reads and writes Unraid container templates. Read returns
+// (xml, found, err): a genuine not-exist is (\"\", false, nil); a real I/O
+// error (e.g. permission) is surfaced so the caller never silently treats it as
+// "no template".
 type Templates interface {
-	Read(dir, name string) (string, bool)
+	Read(dir, name string) (string, bool, error)
 	Write(dir, name, xml string) error
 }
 
@@ -121,8 +133,9 @@ type RestoreDeps struct {
 	TemplateXML string
 	// FlashTemplatesDir is where the live Unraid templates live.
 	FlashTemplatesDir string
-	// Inspect is the captured definition used to recreate the container.
-	Inspect Inspect
+	// Inspect is the captured definition used to recreate the container. The
+	// full profile (incl. security fields) flows through CreateAndStart.
+	Inspect model.Inspect
 	// TargetID is the run-recording target id.
 	TargetID string
 
@@ -207,7 +220,18 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// Capture and persist the live Unraid template alongside the snapshot.
 		// Templates.Write prepends "my-", so the snapshot copy lands at
 		// "my-<snapshotID>-<ContainerName>.xml" (a single, snapshot-scoped name).
-		if xml, ok := d.Templates.Read(d.FlashTemplatesDir, d.ContainerName); ok {
+		//
+		// A genuine "no template" (ok==false, err==nil) is fine — not every
+		// container has an Unraid template. A real I/O error must NOT silently
+		// pass: the snapshot itself is valid, so the backup still succeeds, but
+		// we surface the template-capture failure in the log rather than
+		// pretending a template was never there.
+		xml, ok, readErr := d.Templates.Read(d.FlashTemplatesDir, d.ContainerName)
+		switch {
+		case readErr != nil:
+			log.Printf("backup: capture template for %q failed (snapshot still valid): %v",
+				d.ContainerName, readErr)
+		case ok:
 			snapName := summary.SnapshotID + "-" + d.ContainerName
 			if backupErr = d.Templates.Write(d.SnapshotTemplatesDir, snapName, xml); backupErr != nil {
 				backupErr = fmt.Errorf("backup: persist template: %w", backupErr)
@@ -217,7 +241,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	}()
 
 	if backupErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, scrub(backupErr))
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
 		return Summary{}, backupErr
 	}
 
@@ -248,10 +272,10 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 // id is invalid (nothing destructive has happened yet).
 func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	if !d.Confirmed {
-		return errors.New("restore: not confirmed (confirm must be true)")
+		return ErrNotConfirmed
 	}
 	if !snapshotIDRe.MatchString(d.SnapshotID) {
-		return errors.New("restore: invalid snapshot id (must be 8–64 lowercase hex)")
+		return ErrInvalidSnapshotID
 	}
 
 	runID, err := d.Runs.Start(d.TargetID, kindRestore)
@@ -261,7 +285,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 
 	restoreErr := runRestore(ctx, d)
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, scrub(restoreErr))
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(restoreErr))
 		return restoreErr
 	}
 
@@ -273,6 +297,12 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 
 // runRestore performs the destructive restore sequence after the guards pass.
 func runRestore(ctx context.Context, d RestoreDeps) error {
+	// SEC-102: the restore target MUST be "/" so backed-up absolute appdata
+	// paths land back at origin and never double-nest under an appdata root.
+	if d.RestoreTargetDir != "/" {
+		return fmt.Errorf("restore: target must be \"/\", got %q (SEC-102)", d.RestoreTargetDir)
+	}
+
 	// Wrong-target guard: re-verify the LIVE container matches the target before
 	// the destructive stop/remove. A missing container ("") is fine — a fresh
 	// restore recreates it. Any other mismatch aborts.
@@ -317,10 +347,11 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	return nil
 }
 
-// scrub returns an error message safe to persist/return to clients. The
-// adapters (restic/dockercli) already scrub secrets/paths from their own
-// errors; this is a final guard that trims the message length.
-func scrub(err error) string {
+// truncateErr returns an error message bounded to the DB column length. It is a
+// length-only guard: the adapters (restic/dockercli) already scrub
+// secrets/paths from their own errors, so this only trims the message so it fits
+// the runs.error_message column.
+func truncateErr(err error) string {
 	if err == nil {
 		return ""
 	}
