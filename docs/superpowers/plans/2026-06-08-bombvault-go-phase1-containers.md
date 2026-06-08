@@ -399,7 +399,7 @@ Handlers depend on: `*store.Repo`, `dockercli.Docker`, a `backupService` (wires 
   - `POST /api/containers/plex/backup` (fake restic ok) → `{"ok":true}`; on failure → `{"ok":false,"error":...}` with HTTP 200 (graceful) and the error scrubbed.
   - `GET/PUT /api/settings` round-trips; PUT validates the path stays under the mount root and rejects bad cadence.
   - `POST /api/spike` returns checks.
-- [ ] **Step 2: FAIL. Step 3: Implement** — `net/http` + `http.ServeMux` (Go 1.22 method+path patterns, e.g. `mux.HandleFunc("POST /api/containers/{name}/backup", ...)`). JSON encode/decode helpers; consistent `{ok,error}` envelope for mutations. The backup/restore handlers call the orchestrator via the `backupService`. Settings PUT calls `scheduler.Reload`.
+- [ ] **Step 2: FAIL. Step 3: Implement** — `net/http` + `http.ServeMux` (Go 1.22 method+path patterns, e.g. `mux.HandleFunc("POST /api/containers/{name}/backup", ...)`). JSON encode/decode helpers; consistent `{ok,error}` envelope for mutations. The backup/restore handlers call the orchestrator via the `backupService`. Settings PUT calls `scheduler.Reload`. Implement **all** spec §5 endpoints: `GET /api/containers`, `POST /api/containers/{name}/backup`, `GET /api/containers/{name}/snapshots`, `POST /api/containers/{name}/restore` (body `{snapshotId, confirm}`), `PATCH /api/containers/{name}` (body `{includeInSchedule}`), `GET /api/settings`, `PUT /api/settings`, `POST /api/spike`, `GET /api/runs`, `GET /api/health`.
 - [ ] **Step 4: PASS. Commit** — `git commit -am "feat(api): JSON handlers (containers, settings, spike, runs)"`
 
 ### Task 14: embed SPA + HTTPS server + banners
