@@ -22,6 +22,15 @@ test("every language has a non-empty label", () => {
   }
 });
 
+test("every language has a non-empty flag code", () => {
+  for (const lang of LANGUAGES) {
+    assert.ok(
+      typeof lang.flag === "string" && lang.flag.trim().length >= 2,
+      `missing or empty flag for ${lang.code}`,
+    );
+  }
+});
+
 test("language codes are unique", () => {
   assert.equal(new Set(codes).size, codes.length);
 });
