@@ -67,3 +67,90 @@ test("a setting row survives a second migration run", { skip }, () => {
   assert.equal(row.value, "false");
   db.close();
 });
+
+// ── v2 tests ────────────────────────────────────────────────────────────────
+
+test("v2 creates destination, backup_target and run tables", { skip }, () => {
+  const db = freshDb();
+  runMigrations(db);
+  const tables = (
+    db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]
+  ).map((t) => t.name);
+  for (const tbl of ["destination", "backup_target", "run"]) {
+    assert.ok(tables.includes(tbl), `missing table ${tbl}`);
+  }
+  db.close();
+});
+
+test("run table has the expected columns", { skip }, () => {
+  const db = freshDb();
+  runMigrations(db);
+  const cols = (db.prepare("PRAGMA table_info(run)").all() as { name: string }[]).map(
+    (c) => c.name,
+  );
+  for (const c of [
+    "id",
+    "target_id",
+    "kind",
+    "status",
+    "started_at",
+    "finished_at",
+    "snapshot_id",
+    "bytes",
+    "error",
+    "log_ref",
+  ]) {
+    assert.ok(cols.includes(c), `missing run column ${c}`);
+  }
+  db.close();
+});
+
+test("FK from backup_target.destination_id to destination is enforced", { skip }, () => {
+  const db = freshDb();
+  runMigrations(db);
+  db.pragma("foreign_keys = ON");
+  assert.throws(
+    () => {
+      db
+        .prepare(
+          "INSERT INTO backup_target (id, destination_id, container_name, appdata_paths, options, created_at) VALUES (?,?,?,?,?,?)",
+        )
+        .run("bt1", "nonexistent-dest-id", "mycontainer", "[]", "{}", Date.now());
+    },
+    /FOREIGN KEY constraint failed/i,
+    "inserting a backup_target with a bad destination_id must throw",
+  );
+  db.close();
+});
+
+test("runMigrations is idempotent at version 3", { skip }, () => {
+  const db = freshDb();
+  runMigrations(db);
+  const before = db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get() as { n: number };
+  assert.doesNotThrow(() => runMigrations(db));
+  const after = db.prepare("SELECT COUNT(*) AS n FROM schema_migrations").get() as { n: number };
+  assert.equal(after.n, before.n, "re-running must not re-apply migrations");
+  assert.equal(after.n, 3, "exactly three migrations should be recorded");
+  db.close();
+});
+
+// ── v3 tests (SEC-106) ────────────────────────────────────────────────────────
+
+test("v3 enforces a UNIQUE index on backup_target.container_name", { skip }, () => {
+  const db = freshDb();
+  runMigrations(db);
+  // Insert a destination to satisfy the FK.
+  db.prepare(
+    "INSERT INTO destination (id, name, repo_path, password_ref, created_at) VALUES (?,?,?,?,?)",
+  ).run("dest1", "d", "/repo", "ref", Date.now());
+  const insertTarget = db.prepare(
+    "INSERT INTO backup_target (id, destination_id, container_name, appdata_paths, options, created_at) VALUES (?,?,?,?,?,?)",
+  );
+  insertTarget.run("bt1", "dest1", "plex", "[]", "{}", Date.now());
+  assert.throws(
+    () => insertTarget.run("bt2", "dest1", "plex", "[]", "{}", Date.now()),
+    /UNIQUE constraint failed/i,
+    "a second target for the same container_name must be rejected",
+  );
+  db.close();
+});
