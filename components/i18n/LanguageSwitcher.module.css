@@ -44,6 +44,25 @@
   padding: 4px 0;
 }
 
+/* Scrollbar theming — follows light/dark CSS variables */
+.dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Each language row */
 .item {
   display: flex;
