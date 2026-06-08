@@ -2,25 +2,27 @@ import { redirect } from "next/navigation";
 import { getDb } from "../../server/db";
 import { isOnboarded } from "../../lib/auth";
 import { completeOnboarding } from "../actions/auth";
+import { getTranslator } from "../../lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
   if (isOnboarded(getDb())) redirect("/login");
+  const { t } = await getTranslator();
   return (
     <main style={{ padding: "2rem", maxWidth: 420 }}>
-      <h1>Welcome to BombVault</h1>
-      <p>Set the admin password to finish setup.</p>
+      <h1>{t("onboarding.title")}</h1>
+      <p>{t("onboarding.subtitle")}</p>
       <form action={completeOnboarding}>
         <input
           type="password"
           name="password"
-          placeholder="Admin password (min 8 chars)"
+          placeholder={t("onboarding.passwordPlaceholder")}
           minLength={8}
           required
           style={{ display: "block", width: "100%", padding: 8, marginBottom: 12 }}
         />
-        <button type="submit">Create admin</button>
+        <button type="submit">{t("onboarding.submit")}</button>
       </form>
     </main>
   );
