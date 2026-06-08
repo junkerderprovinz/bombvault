@@ -38,6 +38,20 @@ test("rejects a missing APP_KEY", () => {
   assert.throws(() => loadConfig({ DATA_DIR: "/data" }), /APP_KEY/);
 });
 
+test("FLASH_TEMPLATES_DIR defaults to the Unraid templates path when unset", () => {
+  const cfg = loadConfig({ APP_KEY: VALID_KEY, DATA_DIR: "/data" });
+  assert.equal(cfg.FLASH_TEMPLATES_DIR, "/boot/config/plugins/dockerMan/templates-user");
+});
+
+test("FLASH_TEMPLATES_DIR takes the override value when set", () => {
+  const cfg = loadConfig({
+    APP_KEY: VALID_KEY,
+    DATA_DIR: "/data",
+    FLASH_TEMPLATES_DIR: "/custom/templates",
+  });
+  assert.equal(cfg.FLASH_TEMPLATES_DIR, "/custom/templates");
+});
+
 test("ensureDataDirs creates the data and config directories", () => {
   const base = mkdtempSync(join(tmpdir(), "bv-cfg-"));
   const cfg = loadConfig({

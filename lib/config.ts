@@ -17,6 +17,10 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   HTTPS_PORT: z.coerce.number().int().positive().default(3443),
   APPDATA_DIR: z.string().min(1).default("/mnt/user/appdata"),
+  FLASH_TEMPLATES_DIR: z
+    .string()
+    .min(1)
+    .default("/boot/config/plugins/dockerMan/templates-user"),
 });
 
 export interface AppConfig {
@@ -26,6 +30,7 @@ export interface AppConfig {
   PORT: number;
   HTTPS_PORT: number;
   APPDATA_DIR: string;
+  FLASH_TEMPLATES_DIR: string;
   DB_PATH: string;
   ensureDataDirs(): void;
 }
@@ -44,6 +49,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     PORT: parsed.PORT,
     HTTPS_PORT: parsed.HTTPS_PORT,
     APPDATA_DIR: parsed.APPDATA_DIR,
+    FLASH_TEMPLATES_DIR: parsed.FLASH_TEMPLATES_DIR,
     DB_PATH,
     ensureDataDirs() {
       if (dirsReady) return;
