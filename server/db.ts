@@ -13,6 +13,7 @@ export function initDb(): Database.Database {
   cfg.ensureDataDirs();
   db = new Database(cfg.DB_PATH);
   db.pragma("journal_mode = WAL");
+  db.pragma("foreign_keys = ON");
   // SEC-003: the DB holds encrypted repo secrets — restrict it to the owner.
   // chmod is meaningless on Windows and can
   // behave oddly, so skip it there; wrap in try/catch so a chmod failure on an
