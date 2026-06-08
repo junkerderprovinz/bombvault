@@ -1,6 +1,5 @@
 <h1 align="center">BombVault</h1>
 
-<!-- Banner placeholder — .github/assets/bombvault-banner.png does not exist yet (P0 stub). -->
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner.png" alt="BombVault" width="100%">
 </p>
@@ -18,10 +17,12 @@
 <br>
 
 <p align="center">
-BombVault is a self-hosted, Unraid-native web app for <b>backup and full disaster recovery</b>
-of Docker containers and KVM/libvirt VMs — app-data, container/VM definitions, vdisks and the
-Unraid flash config — restoring them so containers reappear in the Docker tab and VMs in the
-VM tab with no manual steps. Powered by <a href="https://restic.net">restic</a>.
+Your Unraid data, <b>locked in a vault</b>. Armed with a fuse.<br>
+BombVault backs up Docker containers, KVM VMs, appdata and the flash config — and
+restores everything with a single click, so containers reappear in the Docker tab
+and VMs in the VM tab with zero manual steps.<br>
+Drop a backup, detonate a restore. <b>Data loss doesn't stand a chance.</b><br>
+Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental, always encrypted.
 </p>
 
 <br>
