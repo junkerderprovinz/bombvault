@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Plex</Name>
+  <Repository>plexinc/pms-docker</Repository>
+  <Registry>https://hub.docker.com/r/plexinc/pms-docker/</Registry>
+  <Network>host</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project/>
+  <Overview>Plex Media Server</Overview>
+  <Category/>
+  <WebUI>http://[IP]:32400/web</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/plexinc/pms-docker/master/img/plex-logo.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1748000000</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Description>Plex Media Server</Description>
+  <Networking>
+    <Mode>host</Mode>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/appdata/plex</HostDir>
+      <ContainerDir>/config</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment/>
+  <Labels/>
+  <Config Name="AppData Config Path" Target="/config" Default="" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/plex</Config>
+</Container>

@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 
 // Thin typed wrapper around the restic CLI. P0 implements only version(),
-// initRepo() and snapshots(); backup/restore/check/forget arrive in later phases.
+// initRepo() and snapshots(); backup/restore/stats arrive in P1.
 // The repo password is passed via RESTIC_PASSWORD in the child env (never argv,
 // so it stays out of the process list). --json is parsed where restic emits it.
 
@@ -91,4 +91,102 @@ export function parseSnapshotsJson(stdout: string): ResticSnapshot[] {
 export async function snapshots(repo: string, password: string): Promise<ResticSnapshot[]> {
   const { stdout } = await run(["-r", repo, "snapshots", "--json"], password);
   return parseSnapshotsJson(stdout);
+}
+
+// ---------------------------------------------------------------------------
+// P1 — backup / restore / stats
+// ---------------------------------------------------------------------------
+
+export interface BackupSummary {
+  snapshotId: string;
+  bytesAdded: number;
+  totalBytesProcessed: number;
+}
+
+/**
+ * Build the argv for `restic backup --json`.
+ * Pure — no I/O, no password in argv.
+ */
+export function buildBackupArgs(
+  repo: string,
+  paths: string[],
+  tags: string[],
+): string[] {
+  const tagArgs: string[] = [];
+  for (const tag of tags) {
+    tagArgs.push("--tag", tag);
+  }
+  // SEC-103: `--` (end-of-options) before the positional paths so a path that
+  // begins with `-` can never be reinterpreted as a restic flag (arg injection).
+  return ["-r", repo, "backup", "--json", ...tagArgs, "--", ...paths];
+}
+
+/**
+ * Build the argv for `restic restore --target <dir> -- <snapshotId>`.
+ * Pure — no I/O, no password in argv.
+ */
+export function buildRestoreArgs(
+  repo: string,
+  snapshotId: string,
+  targetDir: string,
+): string[] {
+  // SEC-103: `--` (end-of-options) before the positional snapshotId so a value
+  // beginning with `-` can never be reinterpreted as a restic flag. The
+  // snapshotId is additionally hex-validated at the action layer (SEC-103/104).
+  return ["-r", repo, "restore", "--target", targetDir, "--", snapshotId];
+}
+
+/**
+ * Parse a multi-line `restic backup --json` stdout stream.
+ * Each line is tried independently (malformed lines are skipped).
+ * Picks the line with `message_type === "summary"` and maps its fields.
+ * Throws if no summary line is found.
+ */
+export function parseBackupSummary(stdout: string): BackupSummary {
+  for (const line of stdout.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    let obj: Record<string, unknown>;
+    try {
+      obj = JSON.parse(trimmed) as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+    if (obj["message_type"] !== "summary") continue;
+    return {
+      snapshotId: obj["snapshot_id"] as string,
+      bytesAdded: obj["data_added"] as number,
+      totalBytesProcessed: obj["total_bytes_processed"] as number,
+    };
+  }
+  throw new Error("restic backup: no summary line found in output");
+}
+
+/** Run a restic backup and return the parsed summary. */
+export async function backup(
+  repo: string,
+  paths: string[],
+  tags: string[],
+  password: string,
+): Promise<BackupSummary> {
+  const args = buildBackupArgs(repo, paths, tags);
+  const { stdout } = await run(args, password);
+  return parseBackupSummary(stdout);
+}
+
+/** Restore a snapshot to a local directory. */
+export async function restore(
+  repo: string,
+  snapshotId: string,
+  targetDir: string,
+  password: string,
+): Promise<void> {
+  const args = buildRestoreArgs(repo, snapshotId, targetDir);
+  await run(args, password);
+}
+
+/** Return raw stats JSON string for `repo`. */
+export async function stats(repo: string, password: string): Promise<string> {
+  const { stdout } = await run(["-r", repo, "stats", "--json"], password);
+  return stdout;
 }
