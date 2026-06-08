@@ -16,8 +16,11 @@ type Target struct {
 }
 
 // UpsertTarget inserts or updates the target by container name.
-// If the container already exists, its appdata_paths is updated.
-// Returns the resulting Target (with ID populated).
+// On conflict (container already exists), only appdata_paths is refreshed via
+// the ON CONFLICT … DO UPDATE SET clause. id, created_at, and
+// include_in_schedule are preserved from the original row — include_in_schedule
+// is owned exclusively by SetInclude and must never be reset here.
+// Returns the authoritative Target (with the original ID when a conflict fires).
 func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	if t.ID == "" {
 		t.ID = newID()
@@ -78,11 +81,14 @@ func (r *Repo) ListTargets() ([]Target, error) {
 
 // SetInclude updates the include_in_schedule flag for a container.
 func (r *Repo) SetInclude(containerName string, include bool) error {
-	_, err := r.db.Exec(`
+	res, err := r.db.Exec(`
 		UPDATE targets SET include_in_schedule = ? WHERE container_name = ?`,
 		boolInt(include), containerName)
 	if err != nil {
 		return fmt.Errorf("SetInclude: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetInclude: container %q not found", containerName)
 	}
 	return nil
 }

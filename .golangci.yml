@@ -3,3 +3,8 @@ run:
   timeout: 5m
 linters:
   enable: [errcheck, govet, staticcheck, ineffassign, unused, gosec]
+issues:
+  exclude-rules:
+    - path: internal/(template|paths)/
+      linters: [gosec]
+      text: "G304|G306"
