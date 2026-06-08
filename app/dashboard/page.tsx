@@ -15,9 +15,6 @@ export default async function DashboardPage() {
       <p>
         <Link href="/containers">{t("nav.containers")} →</Link>
       </p>
-      <p>
-        <Link href="/destinations">{t("nav.destinations")} →</Link>
-      </p>
     </main>
   );
 }

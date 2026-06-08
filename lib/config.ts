@@ -17,6 +17,10 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   HTTPS_PORT: z.coerce.number().int().positive().default(3443),
   APPDATA_DIR: z.string().min(1).default("/mnt/user/appdata"),
+  // The container-backup restic repo. This is the template-mounted backup
+  // destination — backups go here automatically (no per-backup destination
+  // setup, no password: see CONTAINERS_REPO usage + deriveResticPassword).
+  CONTAINERS_REPO: z.string().min(1).default("/backups/containers"),
   FLASH_TEMPLATES_DIR: z
     .string()
     .min(1)
@@ -30,6 +34,7 @@ export interface AppConfig {
   PORT: number;
   HTTPS_PORT: number;
   APPDATA_DIR: string;
+  CONTAINERS_REPO: string;
   FLASH_TEMPLATES_DIR: string;
   DB_PATH: string;
   ensureDataDirs(): void;
@@ -49,6 +54,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     PORT: parsed.PORT,
     HTTPS_PORT: parsed.HTTPS_PORT,
     APPDATA_DIR: parsed.APPDATA_DIR,
+    CONTAINERS_REPO: parsed.CONTAINERS_REPO,
     FLASH_TEMPLATES_DIR: parsed.FLASH_TEMPLATES_DIR,
     DB_PATH,
     ensureDataDirs() {
