@@ -66,7 +66,7 @@ func (r *Repo) ListTargets() ([]Target, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
 	var out []Target
 	for rows.Next() {

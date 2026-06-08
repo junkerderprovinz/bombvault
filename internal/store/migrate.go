@@ -83,7 +83,7 @@ func Migrate(db *sql.DB) error {
 			return fmt.Errorf("migrate: begin v%d: %w", m.version, err)
 		}
 		if _, err := tx.Exec(m.sql); err != nil {
-			tx.Rollback() //nolint:errcheck
+			tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 			return fmt.Errorf("migrate: apply v%d (%s): %w", m.version, m.name, err)
 		}
 		_, err = tx.Exec(
@@ -91,7 +91,7 @@ func Migrate(db *sql.DB) error {
 			m.version, m.name, time.Now().Unix(),
 		)
 		if err != nil {
-			tx.Rollback() //nolint:errcheck
+			tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 			return fmt.Errorf("migrate: record v%d: %w", m.version, err)
 		}
 		if err := tx.Commit(); err != nil {
