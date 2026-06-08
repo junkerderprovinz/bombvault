@@ -70,7 +70,8 @@ only**). No authentication yet (trusted-LAN; optional auth is a pre-public backl
 ## 4. Data model (SQLite, forward-only migrations)
 
 - **`settings`** — single-row (or key/value) app settings:
-  `encryption_enabled` (bool), `schedule` (off | daily HH:MM | weekly DOW HH:MM | cron expr),
+  `encryption_enabled` (bool),
+  `containers_schedule` / `vms_schedule` / `flash_schedule` (each: off | daily HH:MM | weekly DOW HH:MM | cron expr),
   `containers_enabled` / `vms_enabled` / `flash_enabled` (bool),
   `containers_path` / `vms_path` / `flash_path` (subpaths under the host-mount root),
   `default_language`.
@@ -110,8 +111,10 @@ errors **inline** (never a full-page crash). Errors are scrubbed of secrets/path
   `/mnt/user` → container `/host/user`). In Settings you pick a **subpath per domain**
   (e.g. `backups/bombvault/containers`). BombVault creates the folder and `restic init`s it.
   Paths are validated to stay **within** the mount root (no traversal).
-- **Schedule:** a global default cadence in Settings; the scheduler backs up every container
-  with `include_in_schedule = true`. (Per-domain / per-container schedule overrides = later.)
+- **Schedule (per domain):** each domain has its **own** schedule, configured in that domain's
+  tab (not a single global cadence). The scheduler runs each enabled domain on its own cadence;
+  for containers it backs up every container with `include_in_schedule = true`. (Per-*container*
+  overrides within a domain = later.)
 - **Domain toggles:** `containers/vms/flash_enabled`; enabling one reveals its sidebar tab.
   Phase 1 implements **containers**; VM/Flash toggles exist but their tabs show a
   "coming in a later phase" placeholder until built.
@@ -133,9 +136,10 @@ and a **live container re-check** before the destructive stop/remove (wrong-targ
 
 ## 9. Scheduler
 
-In-process (Go `time` ticker evaluating the cron/cadence each minute). On trigger: back up all
-`include_in_schedule` containers sequentially (one restic run at a time), record each run.
-Survives restarts (schedule lives in the DB; next due time recomputed on boot).
+In-process (Go `time` ticker evaluating **each domain's** cadence every minute). On a domain's
+trigger: back up that domain's due items sequentially (one restic run at a time) — for
+containers, every `include_in_schedule` container — and record each run. Survives restarts
+(per-domain schedules live in the DB; next due times recomputed on boot).
 
 ## 10. Host-integration spike
 
@@ -190,9 +194,10 @@ The image prints the ASCII init banner and a loud **"BOMBVAULT IS READY"** log b
 - **Later:** off-site backends, retention/prune, file-level restore, `restic check`, hooks,
   notifications, optional authentication, non-root container.
 
-## 15. Open questions (deferred, sensible defaults chosen)
+## 15. Decisions locked
 
-- Per-domain/per-container schedule overrides — Phase 1 uses a single global cadence.
-- Whether to keep a self-signed-HTTPS-at-boot (as TS) or HTTP-only behind a proxy — keep HTTPS
-  default for browser-clipboard parity, openssl bundled.
-- Styling tokens: Tailwind with the IBM-Carbon palette (chosen).
+- **Scheduling is per domain** — each domain tab has its own cadence (`containers_schedule`,
+  `vms_schedule`, `flash_schedule`). Per-*container* overrides within a domain = later.
+- **HTTPS by default** — self-signed cert generated at first boot (openssl bundled); HTTP-only
+  is the `HTTP_ONLY` fallback for running behind a TLS-terminating reverse proxy.
+- Styling: Tailwind with the IBM-Carbon monochrome palette.
