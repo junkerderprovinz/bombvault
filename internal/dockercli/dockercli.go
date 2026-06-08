@@ -77,8 +77,14 @@ func (c *Client) Inspect(ctx context.Context, name string) (ContainerInspect, er
 }
 
 // Stop stops a container, sending SIGKILL after timeout if it has not exited.
+// The Docker API expresses the grace period in whole seconds; a positive
+// sub-second timeout is rounded up to 1s so it never collapses to an immediate
+// SIGKILL.
 func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) error {
 	secs := int(timeout.Seconds())
+	if secs == 0 && timeout > 0 {
+		secs = 1
+	}
 	if err := c.api.ContainerStop(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: stop: %w", err)
 	}
