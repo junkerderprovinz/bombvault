@@ -16,8 +16,8 @@ tsconfig.tsbuildinfo
 # Local data
 *.sqlite
 *.sqlite-*
-data/
-config/
+/data/
+/config/
 
 # Brainstorm / tooling
 .superpowers/
