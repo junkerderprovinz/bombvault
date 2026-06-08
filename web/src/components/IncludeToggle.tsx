@@ -9,35 +9,51 @@ interface IncludeToggleProps {
 export function IncludeToggle({ name, initial }: IncludeToggleProps) {
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleChange(next: boolean) {
     setBusy(true);
+    setError(null);
     try {
-      await setInclude(name, next);
-      setEnabled(next);
-    } catch {
-      // revert on network error — the value stays unchanged
+      const res = await setInclude(name, next);
+      if (res.ok) {
+        setEnabled(next);
+      } else {
+        // Server returned a graceful failure — revert and show the message.
+        setError(res.error ?? "Failed to update schedule");
+      }
+    } catch (err) {
+      // Network error — revert and show a brief message.
+      setError(err instanceof Error ? err.message : "Failed to update schedule");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <button
-      role="switch"
-      aria-checked={enabled}
-      disabled={busy}
-      onClick={() => void handleChange(!enabled)}
-      title="Include in schedule"
-      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
-        enabled ? "bg-[#6fdc8c]" : "bg-carbon-surface3"
-      }`}
-    >
-      <span
-        className={`inline-block h-3.5 w-3.5 rounded-full bg-[#161616] transition-transform ${
-          enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+    <div className="flex flex-col items-end gap-1">
+      <button
+        role="switch"
+        aria-label="Include in schedule"
+        aria-checked={enabled}
+        disabled={busy}
+        onClick={() => void handleChange(!enabled)}
+        title="Include in schedule"
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+          enabled ? "bg-[#6fdc8c]" : "bg-carbon-surface3"
         }`}
-      />
-    </button>
+      >
+        <span
+          className={`inline-block h-3.5 w-3.5 rounded-full bg-[#161616] transition-transform ${
+            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+          }`}
+        />
+      </button>
+      {error && (
+        <span className="text-xs text-[#ff8389] max-w-[12rem] text-right leading-tight">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }

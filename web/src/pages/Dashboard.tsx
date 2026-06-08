@@ -79,14 +79,18 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
   const [allOk, setAllOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function check() {
     setLoading(true);
+    setError(null);
     try {
       const res = await runSpike();
       setChecks(res.checks);
       setAllOk(res.allOk);
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Check failed";
+      setError(msg);
       setChecks(null);
       setAllOk(false);
     } finally {
@@ -129,6 +133,10 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <StatusChip status={overallStatus} />
         <span className="text-sm text-carbon-text">{overallLabel}</span>
       </div>
+
+      {error && (
+        <p className="text-xs text-[#ff8389]">{error}</p>
+      )}
 
       {checks && checks.length > 0 && (
         <div className="divide-y divide-carbon-border">

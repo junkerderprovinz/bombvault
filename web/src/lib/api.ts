@@ -61,6 +61,8 @@ export interface Settings {
 export interface GetSettingsResponse {
   ok: boolean;
   settings: Settings;
+  /** The resolved host mount root (e.g. "/host/user"), sourced from cfg.HostMountRoot. */
+  hostMountRoot: string;
 }
 
 /** A run record from GET /api/runs — camelCase matches store.Run JSON tags */

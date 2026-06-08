@@ -125,7 +125,7 @@ export function RestorePanel({ name, t }: RestorePanelProps) {
     listSnapshots(name)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.ok === false ? "Failed to load snapshots" : null);
+        else setError("Failed to load snapshots");
       })
       .catch(() => setError("Failed to load snapshots"))
       .finally(() => setLoading(false));
