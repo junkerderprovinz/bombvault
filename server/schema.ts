@@ -21,6 +21,43 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: "init_p1_backup",
+    sql: `
+      CREATE TABLE IF NOT EXISTS destination (
+        id           TEXT PRIMARY KEY,
+        name         TEXT NOT NULL,
+        repo_path    TEXT NOT NULL,
+        password_ref TEXT NOT NULL,
+        created_at   INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS backup_target (
+        id             TEXT PRIMARY KEY,
+        destination_id TEXT NOT NULL REFERENCES destination(id),
+        container_name TEXT NOT NULL,
+        appdata_paths  TEXT NOT NULL,
+        options        TEXT NOT NULL DEFAULT '{}',
+        created_at     INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS run (
+        id          TEXT PRIMARY KEY,
+        target_id   TEXT NOT NULL REFERENCES backup_target(id),
+        kind        TEXT NOT NULL,
+        status      TEXT NOT NULL,
+        started_at  INTEGER NOT NULL,
+        finished_at INTEGER,
+        snapshot_id TEXT,
+        bytes       INTEGER,
+        error       TEXT,
+        log_ref     TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_run_target ON run (target_id);
+    `,
+  },
 ];
 
 /** Apply every not-yet-applied migration, in order, inside transactions. Idempotent. */
