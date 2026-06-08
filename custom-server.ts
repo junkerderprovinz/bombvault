@@ -54,6 +54,14 @@ function banner(scheme: string, port: number): void {
 async function main(): Promise<void> {
   cfg.ensureDataDirs();
   initDb();
+
+  if (cfg.DISABLE_AUTH) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "⚠  AUTH DISABLED — anyone who can reach the WebUI has root-equivalent control of this host. Use only on a trusted, non-exposed network.",
+    );
+  }
+
   const port = httpOnly ? cfg.PORT : cfg.HTTPS_PORT;
   const app = next({ dev, hostname, port });
   const handle = app.getRequestHandler();

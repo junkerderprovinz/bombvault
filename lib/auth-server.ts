@@ -5,6 +5,10 @@
 // still matches the stored revocation epoch — so logout / password change
 // instantly invalidate old tokens even if the cookie is still presented.
 //
+// When DISABLE_AUTH=true the entire auth stack is short-circuited: requireSession()
+// returns a synthetic "admin" username immediately without touching the DB or cookie.
+// This mode is intended for trusted-LAN deployments only.
+//
 // This file is Node-only (imports better-sqlite3 transitively via server/db).
 // Never import it from middleware.ts or any Edge code.
 import { cookies } from "next/headers";
@@ -14,11 +18,19 @@ import { getConfig } from "./config";
 import { getSessionVersion } from "./auth";
 import { verifySessionClaims, SESSION_COOKIE } from "./session";
 
+/** Synthetic username returned when DISABLE_AUTH bypasses the normal auth stack. */
+export const DISABLED_AUTH_USER = "admin";
+
 /**
  * Require a valid, non-revoked session. Returns the authenticated username, or
  * redirects to /login (which throws, so the caller never falls through).
+ *
+ * When DISABLE_AUTH=true, returns DISABLED_AUTH_USER immediately without any
+ * cookie or DB check.
  */
 export async function requireSession(): Promise<string> {
+  if (getConfig().DISABLE_AUTH) return DISABLED_AUTH_USER;
+
   const token = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
   const appKey = getConfig().APP_KEY;
 
