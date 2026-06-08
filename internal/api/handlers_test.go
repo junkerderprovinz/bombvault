@@ -224,6 +224,36 @@ func TestPatchInclude(t *testing.T) {
 	}
 }
 
+// TestPatchIncludeBeforeFirstBackup exercises the find-or-create path: the
+// container toggle must succeed even when no target row exists yet.
+func TestPatchIncludeBeforeFirstBackup(t *testing.T) {
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name:  "/sonarr",
+		Image: "sonarr:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/host/user/appdata/sonarr", Destination: "/config"},
+		},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+
+	// No target row exists yet — the PATCH must still succeed.
+	w, m := doJSON(t, h, http.MethodPatch, "/api/containers/sonarr",
+		`{"includeInSchedule":true}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok (find-or-create path), got %v", m)
+	}
+	tg, err := st.GetTargetByContainer("sonarr")
+	if err != nil {
+		t.Fatalf("target must have been created: %v", err)
+	}
+	if !tg.IncludeInSchedule {
+		t.Fatal("include flag not set on new target")
+	}
+}
+
 func TestSettingsGetPut(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})
