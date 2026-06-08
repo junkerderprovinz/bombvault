@@ -125,6 +125,14 @@ export function createRepo(
     return db.prepare<[], DestinationRow>("SELECT * FROM destination ORDER BY created_at ASC").all();
   }
 
+  /** Find the destination whose repo_path matches, or undefined. Used to reuse
+   *  the auto-managed per-domain destination instead of creating duplicates. */
+  function findDestinationByRepoPath(repoPath: string): DestinationRow | undefined {
+    return db
+      .prepare<[string], DestinationRow>("SELECT * FROM destination WHERE repo_path = ? LIMIT 1")
+      .get(repoPath);
+  }
+
   // ── Backup targets ──────────────────────────────────────────────────────────
 
   const insertTarget = db.prepare<[string, string, string, string, string, number]>(
@@ -158,6 +166,16 @@ export function createRepo(
     return db
       .prepare<[string], BackupTargetRow>("SELECT * FROM backup_target WHERE id = ?")
       .get(id);
+  }
+
+  /** Find the backup_target for a container by name, or undefined. A container
+   *  maps to at most one target (UNIQUE index on container_name, SEC-106). */
+  function findTargetByContainer(containerName: string): BackupTargetRow | undefined {
+    return db
+      .prepare<[string], BackupTargetRow>(
+        "SELECT * FROM backup_target WHERE container_name = ? LIMIT 1",
+      )
+      .get(containerName);
   }
 
   function parseTarget(row: BackupTargetRow): ParsedTarget {
@@ -233,9 +251,11 @@ export function createRepo(
     getDestinationRow,
     getDestinationPassword,
     listDestinations,
+    findDestinationByRepoPath,
     // targets
     createTarget,
     getTarget,
+    findTargetByContainer,
     parseTarget,
     // runs
     createRun,

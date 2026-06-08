@@ -4,7 +4,7 @@ import { getConfig } from "../../lib/config";
 import { createRepo } from "../../lib/backup-repo";
 import { createDockerClient, listContainers } from "../../lib/docker";
 import { toContainerRows } from "./view";
-import { backupNowAction } from "./actions";
+import { BackupButton } from "@/components/BackupButton";
 
 // Reads the Docker socket + DB on every request — must not be cached.
 export const dynamic = "force-dynamic";
@@ -18,6 +18,9 @@ export default async function ContainersPage() {
   // show a friendly message instead of crashing, matching the spike-page pattern.
   let rows: Awaited<ReturnType<typeof toContainerRows>> = [];
   let dockerError: string | null = null;
+  // container name → backup_target id (present only once a container has been
+  // backed up at least once) — drives the per-row "Snapshots/Restore" link.
+  const targetIdByName = new Map<string, string>();
 
   try {
     const docker = createDockerClient();
@@ -39,6 +42,7 @@ export default async function ContainersPage() {
 
     const lastBackupByName = new Map<string, string | null>();
     for (const target of allTargets) {
+      targetIdByName.set(target.container_name, target.id);
       const run = repo.lastBackupRun(target.id);
       // Convert epoch-ms timestamp to ISO string for display.
       lastBackupByName.set(
@@ -168,28 +172,17 @@ export default async function ContainersPage() {
                     : t("containers.never")}
                 </td>
                 <td style={{ padding: 8 }}>
-                  <form
-                    action={async () => {
-                      "use server";
-                      await backupNowAction(row.name);
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      style={{
-                        background: "var(--accent)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 2,
-                        padding: "0.35rem 0.9rem",
-                        fontSize: "0.875rem",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                      }}
-                    >
-                      {t("containers.backupNow")}
-                    </button>
-                  </form>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <BackupButton containerName={row.name} label={t("containers.backupNow")} />
+                    {targetIdByName.has(row.name) && (
+                      <a
+                        href={`/containers/snapshots?targetId=${targetIdByName.get(row.name)}`}
+                        style={{ color: "var(--accent)", fontSize: "0.8rem" }}
+                      >
+                        {t("snapshots.title")} →
+                      </a>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
