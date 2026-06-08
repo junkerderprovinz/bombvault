@@ -4,7 +4,6 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"testing"
 
 	_ "modernc.org/sqlite" // register "sqlite" driver
 )
@@ -26,16 +25,4 @@ func Open(path string) (*sql.DB, error) {
 		return nil, fmt.Errorf("store.Open foreign_keys: %w", err)
 	}
 	return db, nil
-}
-
-// OpenMem opens an in-memory SQLite database suitable for tests.
-// The database is closed automatically when t finishes.
-func OpenMem(t *testing.T) *sql.DB {
-	t.Helper()
-	db, err := Open(":memory:")
-	if err != nil {
-		t.Fatalf("store.OpenMem: %v", err)
-	}
-	t.Cleanup(func() { db.Close() })
-	return db
 }

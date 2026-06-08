@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -43,13 +44,16 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	if errMsg != "" {
 		errCol = errMsg
 	}
-	_, err := r.db.Exec(`
+	res, err := r.db.Exec(`
 		UPDATE runs SET status = ?, finished_at = ?, snapshot_id = ?, bytes = ?, error = ?
 		WHERE id = ?`,
 		status, now, snap, bytes, errCol, id,
 	)
 	if err != nil {
 		return fmt.Errorf("FinishRun: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("FinishRun: run %s not found", id)
 	}
 	return nil
 }
@@ -63,7 +67,7 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 		ORDER BY started_at DESC
 		LIMIT 1`, targetID)
 	run, err := scanRun(row)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
