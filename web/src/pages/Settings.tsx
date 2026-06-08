@@ -73,21 +73,21 @@ function ToggleRow({
 // Path row with preview
 // ---------------------------------------------------------------------------
 
-const HOST_MOUNT_ROOT = "/host/user"; // kept in sync with server default
-
 function PathRow({
   label,
   value,
+  hostMountRoot,
   onChange,
 }: {
   label: string;
   value: string;
+  hostMountRoot: string;
   onChange: (v: string) => void;
 }) {
   const trimmed = value.trim();
   const resolved =
     trimmed && !trimmed.startsWith("/") && !trimmed.includes("..")
-      ? `${HOST_MOUNT_ROOT}/${trimmed}`
+      ? `${hostMountRoot}/${trimmed}`
       : "";
 
   return (
@@ -166,6 +166,7 @@ export function SettingsPage() {
   const { t } = useT();
 
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Per-section save state
@@ -181,8 +182,12 @@ export function SettingsPage() {
   useEffect(() => {
     getSettings()
       .then((res) => {
-        if (res.ok) setSettings(res.settings);
-        else setLoadError("Failed to load settings");
+        if (res.ok) {
+          setSettings(res.settings);
+          if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+        } else {
+          setLoadError("Failed to load settings");
+        }
       })
       .catch(() => setLoadError("Failed to load settings"));
   }, []);
@@ -282,12 +287,13 @@ export function SettingsPage() {
       <Card title={t("settings.paths")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           Relative subpaths under the host mount root (
-          <span className="font-mono">{HOST_MOUNT_ROOT}</span>). The resolved
+          <span className="font-mono">{hostMountRoot}</span>). The resolved
           absolute path is shown as a preview.
         </p>
         <PathRow
           label={t("settings.containersPath")}
           value={settings.containersPath}
+          hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, containersPath: v } : prev)
           }
@@ -295,6 +301,7 @@ export function SettingsPage() {
         <PathRow
           label={t("settings.vmsPath")}
           value={settings.vmsPath}
+          hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev)
           }
@@ -302,6 +309,7 @@ export function SettingsPage() {
         <PathRow
           label={t("settings.flashPath")}
           value={settings.flashPath}
+          hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, flashPath: v } : prev)
           }
