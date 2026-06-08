@@ -291,3 +291,44 @@ test("lastBackupRun ignores restore runs even if successful", { skip }, () => {
 
   db.close();
 });
+
+// ── Lookup helpers (one-click backup) ───────────────────────────────────────
+
+test("findDestinationByRepoPath returns the destination for a known repo path", { skip }, () => {
+  const db = freshDb();
+  const repo = createRepo(db, APP_KEY);
+
+  const created = repo.createDestination({
+    name: "containers",
+    repoPath: "/backups/containers",
+    password: "pw",
+  });
+
+  const found = repo.findDestinationByRepoPath("/backups/containers");
+  assert.ok(found, "should find the destination by repo path");
+  assert.equal(found.id, created.id);
+
+  assert.equal(repo.findDestinationByRepoPath("/backups/other"), undefined);
+
+  db.close();
+});
+
+test("findTargetByContainer returns the target for a known container", { skip }, () => {
+  const db = freshDb();
+  const repo = createRepo(db, APP_KEY);
+
+  const dest = repo.createDestination({ name: "c", repoPath: "/backups/containers", password: "pw" });
+  const created = repo.createTarget({
+    containerRef: "plex",
+    appdataPaths: ["/mnt/user/appdata/plex"],
+    destinationId: dest.id,
+  });
+
+  const found = repo.findTargetByContainer("plex");
+  assert.ok(found, "should find the target by container name");
+  assert.equal(found.id, created.id);
+
+  assert.equal(repo.findTargetByContainer("unknown"), undefined);
+
+  db.close();
+});
