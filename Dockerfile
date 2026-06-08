@@ -53,7 +53,7 @@ RUN apt-get update \
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
-COPY package.json package-lock.json next.config.mjs tsconfig.json next-env.d.ts custom-server.ts middleware.ts ./
+COPY package.json package-lock.json next.config.mjs tsconfig.json next-env.d.ts custom-server.ts ./
 COPY lib ./lib
 COPY server ./server
 COPY app ./app
