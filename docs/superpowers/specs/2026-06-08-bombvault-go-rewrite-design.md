@@ -200,4 +200,6 @@ The image prints the ASCII init banner and a loud **"BOMBVAULT IS READY"** log b
   `vms_schedule`, `flash_schedule`). Per-*container* overrides within a domain = later.
 - **HTTPS by default** — self-signed cert generated at first boot (openssl bundled); HTTP-only
   is the `HTTP_ONLY` fallback for running behind a TLS-terminating reverse proxy.
-- Styling: Tailwind with the IBM-Carbon monochrome palette.
+- Styling: Tailwind with the IBM-Carbon monochrome palette; overall layout/feel **inspired by
+  VolumeVault's dashboard** (clean, card-based, modern):
+  https://github.com/Darkdragon14/VolumeVault/blob/main/public/previews/dashboard.png
