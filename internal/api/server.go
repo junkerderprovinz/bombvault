@@ -34,8 +34,22 @@ type Server struct {
 }
 
 // NewServer wires the SPA handler over the embedded FS and the API router.
+// The combined handler is wrapped in securityHeaders so every response —
+// both API and SPA — carries the baseline HTTP security headers.
 func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
-	return &Server{cfg: cfg, handler: NewSPAHandler(spaFS, apiRouter)}
+	return &Server{cfg: cfg, handler: securityHeaders(NewSPAHandler(spaFS, apiRouter))}
+}
+
+// securityHeaders is a middleware that sets minimal HTTP security headers on
+// every response served by the handler.
+//
+// TODO(pre-public): add CSP once the SPA build is final
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Run starts the server, blocking until it stops. It serves HTTPS with a

@@ -241,8 +241,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// Validate each domain subpath stays under the mount root.
 	for _, sub := range []string{v.ContainersPath, v.VMsPath, v.FlashPath} {
 		if _, err := paths.Resolve(h.cfg.HostMountRoot, sub); err != nil {
+			log.Printf("api: settings: rejected path %q: %v", sub, err)
 			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": "invalid backup path (must stay under the mount root): " + sub,
+				"ok": false, "error": "invalid backup path: must be a relative subpath under the mount root",
 			})
 			return
 		}
