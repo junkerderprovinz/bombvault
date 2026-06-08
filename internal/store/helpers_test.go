@@ -13,6 +13,6 @@ func OpenMem(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("store.OpenMem: %v", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { db.Close() }) //nolint:errcheck,gosec // test cleanup; error not actionable
 	return db
 }

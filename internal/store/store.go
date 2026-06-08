@@ -17,11 +17,11 @@ func Open(path string) (*sql.DB, error) {
 	// Single writer to avoid SQLITE_BUSY; WAL for concurrent reads.
 	db.SetMaxOpenConns(1)
 	if _, err := db.Exec(`PRAGMA journal_mode=WAL`); err != nil {
-		db.Close()
+		db.Close() //nolint:errcheck,gosec // cleanup on error path; original error takes priority
 		return nil, fmt.Errorf("store.Open WAL: %w", err)
 	}
 	if _, err := db.Exec(`PRAGMA foreign_keys=ON`); err != nil {
-		db.Close()
+		db.Close() //nolint:errcheck,gosec // cleanup on error path; original error takes priority
 		return nil, fmt.Errorf("store.Open foreign_keys: %w", err)
 	}
 	return db, nil

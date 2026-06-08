@@ -8,7 +8,7 @@ import (
 
 func TestTargetRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
-	store.Migrate(db) //nolint:errcheck
+	store.Migrate(db) //nolint:errcheck,gosec // test helper; errors caught by subsequent test assertions
 	r := store.New(db)
 	tg, _ := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}})
 	got, _ := r.GetTargetByContainer("plex")

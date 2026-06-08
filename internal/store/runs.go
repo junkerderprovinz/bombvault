@@ -86,7 +86,7 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ListRuns: %w", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
 	var out []Run
 	for rows.Next() {

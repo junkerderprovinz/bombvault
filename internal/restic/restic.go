@@ -120,14 +120,16 @@ func SnapshotsArgs(repo string, m Mode) []string {
 // argv.  On failure, full stderr is logged server-side but only a scrubbed
 // error is returned to the caller.
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, r.bin(), args...)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 
 	// Inject auth env — password never in argv.
+	env := cmd.Environ()
 	if m.Encrypted {
-		cmd.Env = append(cmd.Environ(), "RESTIC_PASSWORD="+m.Password)
+		env = append(env, "RESTIC_PASSWORD="+m.Password)
 	} else {
-		cmd.Env = append(cmd.Environ(), "RESTIC_INSECURE_NO_PASSWORD=true")
+		env = append(env, "RESTIC_INSECURE_NO_PASSWORD=true")
 	}
+	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -152,7 +154,7 @@ func subcommand(args []string) string {
 			skip = false
 			continue
 		}
-		if a == "-r" || a == "--repo" {
+		if a == "-r" {
 			skip = true
 			continue
 		}

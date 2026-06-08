@@ -22,10 +22,10 @@ func TestRoundtrip(t *testing.T) {
 	dir := t.TempDir()
 	repo := filepath.Join(dir, "repo")
 	src := filepath.Join(dir, "src")
-	if err := os.MkdirAll(src, 0o755); err != nil {
+	if err := os.MkdirAll(src, 0o755); err != nil { //nolint:gosec // G301: test temp dir, relaxed permissions intentional
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(src, "f.txt"), []byte("hi"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(src, "f.txt"), []byte("hi"), 0o644); err != nil { //nolint:gosec // G306: test file, relaxed permissions intentional
 		t.Fatal(err)
 	}
 
