@@ -4,7 +4,6 @@
 package schedule
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -34,7 +33,8 @@ type ListTargetsFunc func() ([]store.Target, error)
 func ParseCadence(s string) (spec string, enabled bool, err error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return "", false, errors.New("schedule: empty cadence string")
+		// Treat empty string as "off" — defensive against a settings PUT passing "".
+		return "", false, nil
 	}
 
 	parts := strings.Fields(s)
@@ -108,7 +108,12 @@ var dowMap = map[string]int{
 }
 
 func parseDOW(s string) (int, error) {
-	n, ok := dowMap[s]
+	// Normalize to title-case so "mon", "MON", "Mon" all work.
+	var normalized string
+	if len(s) > 0 {
+		normalized = strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+	}
+	n, ok := dowMap[normalized]
 	if !ok {
 		return 0, fmt.Errorf("unknown day %q (expected Sun Mon Tue Wed Thu Fri Sat)", s)
 	}
@@ -142,9 +147,12 @@ func (s *Scheduler) Start() {
 	s.c.Start()
 }
 
-// Stop halts the scheduler and waits for running jobs to finish.
+// Stop halts the scheduler and blocks until all in-flight jobs finish.
+// robfig/cron v3's Stop() returns a context that is cancelled when the last
+// running job exits — we wait on it so main.go can shut down gracefully.
 func (s *Scheduler) Stop() {
-	s.c.Stop()
+	ctx := s.c.Stop()
+	<-ctx.Done()
 }
 
 // Reload re-reads the schedule settings and re-registers all domain entries.
