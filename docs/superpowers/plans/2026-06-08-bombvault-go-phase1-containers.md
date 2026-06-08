@@ -429,7 +429,7 @@ Handlers depend on: `*store.Repo`, `dockercli.Docker`, a `backupService` (wires 
 
 **Files:** Create `web/src/app/Layout.tsx`, `web/src/app/router.tsx`, `web/src/pages/Dashboard.tsx`, `web/src/components/Sidebar.tsx`, `TopBar.tsx`
 
-- [ ] **Step 1:** `Sidebar` (Dashboard, Containers, VMs*, Flash*, Settings — VMs/Flash shown only when their setting is enabled; `*` items disabled with a "later" tooltip). `TopBar` (theme toggle + language switcher). IBM-Carbon dark default.
+- [ ] **Step 1:** `Sidebar` (Dashboard, Containers, VMs*, Flash*, Settings — VMs/Flash shown only when their setting is enabled; `*` items disabled with a "later" tooltip). `TopBar` (theme toggle + language switcher). IBM-Carbon dark default. **Visual style: match the clean, card-based feel of VolumeVault's dashboard — the implementer should open the reference image** https://github.com/Darkdragon14/VolumeVault/blob/main/public/previews/dashboard.png (rounded cards, generous spacing, muted surfaces, a left sidebar, status chips).
 - [ ] **Step 2:** `Dashboard` shows last backups + run history (`listRuns`) + spike status chip.
 - [ ] **Step 3:** `npm run build` ok; eyeball via dev server. **Commit** — `git commit -am "feat(web): sidebar layout + dashboard"`
 
