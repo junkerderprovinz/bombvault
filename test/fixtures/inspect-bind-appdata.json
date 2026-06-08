@@ -1,0 +1,20 @@
+{
+  "Name": "/plex",
+  "Mounts": [
+    {
+      "Type": "bind",
+      "Source": "/mnt/user/appdata/plex",
+      "Destination": "/config"
+    },
+    {
+      "Type": "bind",
+      "Source": "/mnt/user/Media",
+      "Destination": "/media"
+    },
+    {
+      "Type": "volume",
+      "Source": "/var/lib/docker/volumes/plex_transcode/_data",
+      "Destination": "/transcode"
+    }
+  ]
+}
