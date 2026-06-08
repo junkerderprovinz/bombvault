@@ -15,6 +15,10 @@ import {
 } from "../../lib/auth";
 import { SESSION_LIFETIME_SECONDS, verifySessionClaims } from "../../lib/session";
 
+// When DISABLE_AUTH is on, onboarding and login are meaningless — all three
+// server actions redirect to /dashboard (onboarding/login) or /login (logout)
+// immediately without touching the DB or cookie jar.
+
 // The `secure` flag must be false when HTTP_ONLY=true (plain-HTTP mode, e.g.
 // behind a TLS-terminating proxy). A secure cookie over plain HTTP is silently
 // dropped by the browser, which makes login appear to succeed but immediately
@@ -34,6 +38,7 @@ function sessionCookieOptions() {
 }
 
 export async function completeOnboarding(formData: FormData): Promise<void> {
+  if (getConfig().DISABLE_AUTH) redirect("/dashboard");
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) throw new Error("password must be at least 8 characters");
   const db = getDb();
@@ -45,6 +50,7 @@ export async function completeOnboarding(formData: FormData): Promise<void> {
 }
 
 export async function login(formData: FormData): Promise<void> {
+  if (getConfig().DISABLE_AUTH) redirect("/dashboard");
   const password = String(formData.get("password") ?? "");
   const db = getDb();
   if (!(await authenticate(db, "admin", password))) redirect("/login?error=1");
@@ -59,6 +65,10 @@ export async function logout(): Promise<void> {
   // invocation must NOT be able to invalidate the admin's tokens — that would
   // be a denial-of-service vector. We still clear the (absent) cookie and
   // redirect so the caller's UX is identical either way.
+  //
+  // When auth is disabled there is no real session; just redirect to /login
+  // (which will itself bounce to /dashboard). We do NOT touch the DB.
+  if (getConfig().DISABLE_AUTH) redirect("/login");
   const token = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
   const appKey = getConfig().APP_KEY;
   const claims = await verifySessionClaims(token, appKey);

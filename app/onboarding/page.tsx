@@ -3,10 +3,12 @@ import { getDb } from "../../server/db";
 import { isOnboarded } from "../../lib/auth";
 import { completeOnboarding } from "../actions/auth";
 import { getTranslator } from "../../lib/i18n/server";
+import { getConfig } from "../../lib/config";
 
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
+  if (getConfig().DISABLE_AUTH) redirect("/dashboard");
   if (isOnboarded(getDb())) redirect("/login");
   const { t } = await getTranslator();
   return (

@@ -3,6 +3,7 @@ import { getDb } from "../../server/db";
 import { isOnboarded } from "../../lib/auth";
 import { login } from "../actions/auth";
 import { getTranslator } from "../../lib/i18n/server";
+import { getConfig } from "../../lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  if (getConfig().DISABLE_AUTH) redirect("/dashboard");
   if (!isOnboarded(getDb())) redirect("/onboarding");
   const { t } = await getTranslator();
   const params = await searchParams;

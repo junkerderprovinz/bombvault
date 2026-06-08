@@ -141,9 +141,13 @@ test("WebCrypto round-trip: tampered payload → null", async () => {
 test("WebCrypto round-trip: tampered signature → null", async () => {
   const token = await signSession("alice", KEY);
   const dot = token.lastIndexOf(".");
-  // Flip one char inside the base64url signature
-  const badSig = token.slice(dot + 1, -1) + "X";
-  assert.equal(await verifySession(token.slice(0, dot + 1) + badSig, KEY), null);
+  // Decode the signature, flip a byte, re-encode — a guaranteed change to the 32
+  // signature bytes. (Flipping a trailing base64url char can be a no-op, because its
+  // low bits fall outside the 32 decoded bytes — that made this test flaky.)
+  const sigBytes = Buffer.from(token.slice(dot + 1), "base64url");
+  sigBytes[0] ^= 0xff;
+  const tampered = token.slice(0, dot + 1) + sigBytes.toString("base64url");
+  assert.equal(await verifySession(tampered, KEY), null);
 });
 
 test("WebCrypto round-trip: wrong appKey (valid hex) → null", async () => {
