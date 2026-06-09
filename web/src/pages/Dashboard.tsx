@@ -79,14 +79,18 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
   const [allOk, setAllOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function check() {
     setLoading(true);
+    setError(null);
     try {
       const res = await runSpike();
       setChecks(res.checks);
       setAllOk(res.allOk);
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Check failed";
+      setError(msg);
       setChecks(null);
       setAllOk(false);
     } finally {
@@ -129,6 +133,10 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <StatusChip status={overallStatus} />
         <span className="text-sm text-carbon-text">{overallLabel}</span>
       </div>
+
+      {error && (
+        <p className="text-xs text-[#ff8389]">{error}</p>
+      )}
 
       {checks && checks.length > 0 && (
         <div className="divide-y divide-carbon-border">
@@ -183,16 +191,16 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {recent.length > 0 && (
         <div className="divide-y divide-carbon-border">
           {recent.map((run) => (
-            <div key={run.ID} className="flex items-center gap-3 py-2.5 text-sm">
-              <StatusChip status={run.Status} />
+            <div key={run.id} className="flex items-center gap-3 py-2.5 text-sm">
+              <StatusChip status={run.status} />
               <span className="text-carbon-text font-medium w-16 shrink-0">
-                {run.Kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
+                {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
               </span>
               <span className="text-carbon-textMuted flex-1 truncate text-xs font-mono">
-                {run.TargetID.slice(0, 12)}…
+                {run.targetId.slice(0, 12)}…
               </span>
               <span className="text-carbon-textMuted text-xs shrink-0">
-                {relativeTime(run.StartedAt)}
+                {relativeTime(run.startedAt)}
               </span>
             </div>
           ))}

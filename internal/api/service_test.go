@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -143,6 +144,77 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	// Container must be restarted (orchestrator always-start contract).
 	if !d.started {
 		t.Fatal("container must be restarted after backup")
+	}
+}
+
+// TestServiceSetIncludeFindOrCreate verifies that SetInclude creates the target
+// row when it does not exist yet, rather than returning an error.
+func TestServiceSetIncludeFindOrCreate(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: "/host/user"}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name:  "/radarr",
+		Image: "radarr:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/host/user/appdata/radarr", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, &fakeResticEngine{})
+
+	// No target exists — SetInclude must find-or-create it.
+	if err := svc.SetInclude(context.Background(), "radarr", true); err != nil {
+		t.Fatalf("SetInclude (find-or-create): %v", err)
+	}
+	tg, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("target must have been created: %v", err)
+	}
+	if !tg.IncludeInSchedule {
+		t.Fatal("include flag must be true after SetInclude")
+	}
+	if !contains(tg.AppdataPaths, "/host/user/appdata/radarr") {
+		t.Fatalf("expected appdata path from inspect, got %v", tg.AppdataPaths)
+	}
+
+	// Calling again (target already exists) must be idempotent.
+	if err := svc.SetInclude(context.Background(), "radarr", false); err != nil {
+		t.Fatalf("SetInclude (already exists): %v", err)
+	}
+	tg2, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tg2.IncludeInSchedule {
+		t.Fatal("include flag must be false after second SetInclude")
+	}
+}
+
+// TestServiceSetIncludeInspectFailFallback verifies that SetInclude still
+// succeeds when docker inspect fails (a fallback path is used).
+func TestServiceSetIncludeInspectFailFallback(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: "/host/user"}
+	st := newMemStore(t)
+
+	d := &fakeServiceDocker{inspectErr: errors.New("no such container")}
+	svc := api.NewService(cfg, st, d, &fakeResticEngine{})
+
+	if err := svc.SetInclude(context.Background(), "unknown", true); err != nil {
+		t.Fatalf("SetInclude must not fail when inspect errors: %v", err)
+	}
+	tg, err := st.GetTargetByContainer("unknown")
+	if err != nil {
+		t.Fatalf("target must have been created via fallback: %v", err)
+	}
+	if !tg.IncludeInSchedule {
+		t.Fatal("include flag must be true")
 	}
 }
 

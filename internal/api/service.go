@@ -270,6 +270,31 @@ func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot
 	return out, nil
 }
 
+// SetInclude sets the include_in_schedule flag for a container, creating the
+// target row first if it does not exist yet (the first backup has not run).
+// It inspects the container to resolve appdata paths exactly like Backup does,
+// so the target is fully populated from the start. If docker inspect fails the
+// operation is still completed: a placeholder target is upserted with a
+// conventional appdata path so the toggle is never silently lost.
+func (s *Service) SetInclude(ctx context.Context, name string, include bool) error {
+	if _, err := s.store.GetTargetByContainer(name); err != nil {
+		// Target does not exist yet — find-or-create it before calling SetInclude.
+		appdata := []string{path.Join(s.cfg.HostMountRoot, "appdata", name)}
+		if in, inspErr := s.docker.Inspect(ctx, name); inspErr == nil {
+			appdata = s.resolveAppdataPaths(name, in)
+		} else {
+			log.Printf("api: SetInclude: inspect %q failed (using fallback path): %v", name, inspErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
+		}
+		if _, upsertErr := s.store.UpsertTarget(store.Target{
+			ContainerName: name,
+			AppdataPaths:  appdata,
+		}); upsertErr != nil {
+			return fmt.Errorf("ensure target: %w", upsertErr)
+		}
+	}
+	return s.store.SetInclude(name, include)
+}
+
 // ContainerPath returns the resolved absolute containers backup path, used by
 // the spike's path-writable probe. Returns "" if it cannot be resolved.
 func (s *Service) ContainerPath() string {
