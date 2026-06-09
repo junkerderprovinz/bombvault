@@ -362,5 +362,118 @@ func TestRuns(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Browse handler tests
+// ---------------------------------------------------------------------------
+
+// newBrowseRouter builds a minimal router whose HostMountRoot points to
+// the supplied temp dir, making it easy to test the browse handler in isolation.
+func newBrowseRouter(t *testing.T, mountRoot string) http.Handler {
+	t.Helper()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: mountRoot}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes())
+	return h.Router()
+}
+
+func TestBrowseListsMountRoot(t *testing.T) {
+	root := t.TempDir()
+	// Create some subdirectories in the mount root.
+	for _, d := range []string{"appdata", "downloads", "media"} {
+		if err := os.MkdirAll(filepath.Join(root, d), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Also create a file (must NOT appear in results) and a hidden dir.
+	if err := os.WriteFile(filepath.Join(root, "readme.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, ".hidden"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	h := newBrowseRouter(t, root)
+	w, m := doJSON(t, h, http.MethodGet, "/api/browse", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", m)
+	}
+	dirsRaw, _ := m["dirs"].([]any)
+	names := make([]string, 0, len(dirsRaw))
+	for _, d := range dirsRaw {
+		dm, _ := d.(map[string]any)
+		names = append(names, dm["name"].(string))
+	}
+	// Should contain the three dirs but not the file or the hidden dir.
+	if len(names) != 3 {
+		t.Fatalf("expected 3 dirs, got %v", names)
+	}
+	for i, want := range []string{"appdata", "downloads", "media"} {
+		if names[i] != want {
+			t.Fatalf("dir[%d]: expected %q, got %q", i, want, names[i])
+		}
+	}
+}
+
+func TestBrowseListsSubpath(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "appdata", "plex"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "appdata", "sonarr"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	h := newBrowseRouter(t, root)
+	w, m := doJSON(t, h, http.MethodGet, "/api/browse?path=appdata", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", m)
+	}
+	dirsRaw, _ := m["dirs"].([]any)
+	if len(dirsRaw) != 2 {
+		t.Fatalf("expected 2 dirs under appdata, got %v", dirsRaw)
+	}
+	// paths must be relative to mount root.
+	first, _ := dirsRaw[0].(map[string]any)
+	if first["path"] != "appdata/plex" {
+		t.Fatalf("expected path 'appdata/plex', got %v", first["path"])
+	}
+}
+
+func TestBrowseRejectsTraversal(t *testing.T) {
+	root := t.TempDir()
+	h := newBrowseRouter(t, root)
+
+	for _, bad := range []string{"../etc", "../../etc"} {
+		w, m := doJSON(t, h, http.MethodGet, "/api/browse?path="+bad, "")
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected graceful 200 for %q, got %d", bad, w.Code)
+		}
+		if m["ok"] != false {
+			t.Fatalf("expected ok:false for traversal %q, got %v", bad, m)
+		}
+	}
+}
+
+func TestBrowseRejectsAbsolutePath(t *testing.T) {
+	root := t.TempDir()
+	h := newBrowseRouter(t, root)
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/browse?path=%2Fetc", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false for absolute path, got %v", m)
+	}
+}
+
 // ensure context import is used (Router handlers run under request context).
 var _ = context.Background
