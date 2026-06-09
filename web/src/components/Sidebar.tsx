@@ -55,14 +55,13 @@ function IconFlash() {
 }
 
 function IconSettings() {
+  // Standard 8-tooth cog/gear — conventional settings symbol
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path
-        d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 0 1-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 0 1 .947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 0 1 2.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 0 1 2.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 0 1 .947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 0 1-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 0 1-2.287-.947zM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
       />
     </svg>
   );
