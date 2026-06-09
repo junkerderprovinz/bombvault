@@ -151,6 +151,55 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 }
 
+// TestServiceBackupTranslatesHostAppdataPath pins the host→container path fix:
+// Docker reports the bind source as the HOST path (/mnt/user/appdata/<x>), which
+// BombVault must translate to the container-visible HostMountRoot path before
+// handing it to restic — using the real, correctly cased directory, not a guess.
+func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey:         strings.Repeat("a", 64),
+		DataDir:        dir,
+		HostMountRoot:  root,        // container side of the broad mount
+		HostSourceRoot: "/mnt/user", // host side reported by docker inspect
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	// Real dir is lowercase though the container name is mixed-case — a guess
+	// (<root>/appdata/Pingvin-Share-X) would be wrong; the translation is right.
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name:  "/Pingvin-Share-X",
+		Image: "smp46/pingvin-share-x:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/pingvin-share-x", Destination: "/data"},
+			{Type: "bind", Source: "/mnt/user/Media", Destination: "/media"}, // not appdata → excluded
+			{Type: "bind", Source: "/etc/localtime", Destination: "/etc/localtime"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, eng)
+
+	if _, err := svc.Backup(context.Background(), "Pingvin-Share-X"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	want := root + "/appdata/pingvin-share-x"
+	if !contains(eng.lastPaths, want) {
+		t.Fatalf("expected translated container path %q, got %v", want, eng.lastPaths)
+	}
+	for _, p := range eng.lastPaths {
+		if strings.Contains(p, "Media") || p == "/etc/localtime" {
+			t.Fatalf("non-appdata mount must be excluded, got %v", eng.lastPaths)
+		}
+	}
+}
+
 // TestServiceSetIncludeFindOrCreate verifies that SetInclude creates the target
 // row when it does not exist yet, rather than returning an error.
 func TestServiceSetIncludeFindOrCreate(t *testing.T) {
