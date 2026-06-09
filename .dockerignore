@@ -1,10 +1,20 @@
-node_modules
-.next
-data
-config
+# Build context hygiene for the multi-stage Go + React image.
+# The Dockerfile only needs: go.mod/go.sum, cmd/, internal/, web/ (source).
 .git
+.github
+**/node_modules
+web/dist
+docs
+templates
+*.md
+LICENSE
+.golangci.yml
+.gitattributes
+.gitignore
+.dockerignore
 *.sqlite
 *.sqlite-*
 .env
 .env.*
-!.env.example
+/data/
+/config/
