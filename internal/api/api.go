@@ -12,12 +12,14 @@ import (
 
 // Handler bundles the JSON API dependencies and builds the router.
 type Handler struct {
-	cfg       config.Config
-	store     *store.Repo
-	docker    dockercli.Docker
-	svc       *Service
-	scheduler *schedule.Scheduler
-	probes    []spike.Probe
+	cfg               config.Config
+	store             *store.Repo
+	docker            dockercli.Docker
+	svc               *Service
+	scheduler         *schedule.Scheduler
+	probes            []spike.Probe
+	// containersLastRun is used by the everyN due-gate in ReloadWithDueChecks.
+	containersLastRun schedule.LastRunFunc
 }
 
 // NewHandler constructs the API handler.
@@ -30,12 +32,13 @@ func NewHandler(
 	probes []spike.Probe,
 ) *Handler {
 	return &Handler{
-		cfg:       cfg,
-		store:     st,
-		docker:    d,
-		svc:       svc,
-		scheduler: scheduler,
-		probes:    probes,
+		cfg:               cfg,
+		store:             st,
+		docker:            d,
+		svc:               svc,
+		scheduler:         scheduler,
+		probes:            probes,
+		containersLastRun: schedule.LastRunFunc(st.LastSuccessfulContainerBackup),
 	}
 }
 

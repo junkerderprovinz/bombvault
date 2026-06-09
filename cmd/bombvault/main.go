@@ -62,8 +62,12 @@ func run() error {
 		},
 		st.ListTargets,
 	)
+	// Build the containers LastRunFunc: the everyN due-gate queries the most
+	// recent successful backup across all container targets.
+	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
+
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		if rErr := scheduler.Reload(settings); rErr != nil {
+		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, nil, nil); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {
