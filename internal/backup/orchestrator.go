@@ -66,7 +66,9 @@ type Docker interface {
 // Restic is the subset of the backup engine the orchestrator needs.
 type Restic interface {
 	Backup(ctx context.Context, repo string, paths, tags []string) (Summary, error)
-	Restore(ctx context.Context, repo, snapshotID, target string) error
+	// RestorePaths restores each backed-up path back to its own location as a
+	// subtree, so restic never reconciles shared parent dirs (SEC §8 / DR).
+	RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error
 }
 
 // Templates reads and writes Unraid container templates. Read returns
@@ -126,9 +128,10 @@ type RestoreDeps struct {
 	RepoPath string
 	// SnapshotID is the snapshot to restore (validated hex).
 	SnapshotID string
-	// RestoreTargetDir is the restic --target; MUST be "/" so absolute appdata
-	// paths land back at origin (SEC: never double-nest under an appdata root).
-	RestoreTargetDir string
+	// AppdataPaths are the backed-up absolute paths; each is restored as its own
+	// subtree back to origin (restic restore <id>:<path> --target <path>), so
+	// restic never tries to reconcile (and fail on) the shared appdata parent.
+	AppdataPaths []string
 	// TemplateXML is the captured template flashed back on restore.
 	TemplateXML string
 	// FlashTemplatesDir is where the live Unraid templates live.
@@ -308,10 +311,18 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 
 // runRestore performs the destructive restore sequence after the guards pass.
 func runRestore(ctx context.Context, d RestoreDeps) error {
-	// SEC-102: the restore target MUST be "/" so backed-up absolute appdata
-	// paths land back at origin and never double-nest under an appdata root.
-	if d.RestoreTargetDir != "/" {
-		return fmt.Errorf("restore: target must be \"/\", got %q (SEC-102)", d.RestoreTargetDir)
+	// SEC: every appdata path must be absolute and traversal-free. Each is
+	// restored as its own subtree back to origin (restore <id>:<path> --target
+	// <path>), so restic never reconciles the shared appdata parent directory
+	// (which fails on a populated dir: "failed to remove stale item ... is a
+	// directory"). This replaces the old single "--target /" restore (SEC-102).
+	if len(d.AppdataPaths) == 0 {
+		return errors.New("restore: no appdata paths to restore")
+	}
+	for _, p := range d.AppdataPaths {
+		if !strings.HasPrefix(p, "/") || strings.Contains(p, "..") {
+			return fmt.Errorf("restore: unsafe appdata path %q (SEC)", p)
+		}
 	}
 
 	// Wrong-target guard: re-verify the LIVE container matches the target before
@@ -346,8 +357,8 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		_ = err
 	}
 
-	// Restore appdata from the snapshot to "/" (SEC: absolute paths land at origin).
-	if err := d.Restic.Restore(ctx, d.RepoPath, d.SnapshotID, d.RestoreTargetDir); err != nil {
+	// Restore each appdata path back to its origin as its own subtree.
+	if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, d.AppdataPaths); err != nil {
 		return fmt.Errorf("restore: restic restore: %w", err)
 	}
 

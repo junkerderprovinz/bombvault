@@ -41,6 +41,18 @@ func Resolve(root, sub string) (string, error) {
 	return cleaned, nil
 }
 
+// Within reports whether absPath is an absolute path that lies strictly inside
+// root (after slash-clean). Used to re-validate stored absolute appdata paths
+// before a restore writes to them (defense-in-depth).
+func Within(root, absPath string) bool {
+	if !strings.HasPrefix(absPath, "/") {
+		return false
+	}
+	cleanRoot := path.Clean(root)
+	cleaned := path.Clean(absPath)
+	return strings.HasPrefix(cleaned, cleanRoot+"/")
+}
+
 // EnsureDir creates path and all parents with mode 0o700.
 func EnsureDir(path string) error {
 	return os.MkdirAll(path, 0o700)

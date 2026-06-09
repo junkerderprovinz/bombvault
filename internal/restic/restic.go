@@ -104,6 +104,22 @@ func RestoreArgs(repo string, snapshotID string, target string, m Mode) []string
 	return args
 }
 
+// RestorePathArgs returns the argv slice for restoring a single path back to its
+// own location as a subtree: `restic restore <id>:<path> --target <path>`. This
+// restores the path's contents to origin WITHOUT restic walking/reconciling the
+// shared parent directories (which fails on a populated appdata share). The
+// snapshot selector goes after -- (arg-injection guard).
+func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--target", p)
+	args = append(args, "--", snapshotID+":"+p)
+	return args
+}
+
 // SnapshotsArgs returns the argv slice for `restic snapshots --json`.
 func SnapshotsArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
@@ -228,6 +244,13 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 // Restore restores the snapshot identified by snapshotID into target directory.
 func (r Restic) Restore(ctx context.Context, repo string, snapshotID string, target string, m Mode) error {
 	_, err := r.run(ctx, RestoreArgs(repo, snapshotID, target, m), m)
+	return err
+}
+
+// RestorePath restores a single backed-up path (p) back to its own location as a
+// subtree, so restic never reconciles the shared parent directory.
+func (r Restic) RestorePath(ctx context.Context, repo, snapshotID, p string, m Mode) error {
+	_, err := r.run(ctx, RestorePathArgs(repo, snapshotID, p, m), m)
 	return err
 }
 

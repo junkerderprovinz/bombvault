@@ -379,11 +379,12 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 // successfully recreates the container from it.
 func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	dir := t.TempDir()
-	root := filepath.ToSlash(dir)
+	// Container paths are Linux-absolute under the host mount root; the restore
+	// uses fakes (no real FS access to these paths), so a fixed Linux root is fine.
 	cfg := config.Config{
 		AppKey:        strings.Repeat("a", 64),
 		DataDir:       dir,
-		HostMountRoot: root,
+		HostMountRoot: "/host/user",
 		// FlashTemplatesDir must be writable — use a temp subdir.
 		FlashTemplatesDir: filepath.Join(dir, "flash"),
 	}
@@ -409,7 +410,7 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	}
 	tg, err := st.UpsertTarget(store.Target{
 		ContainerName: "Pingvin-Share-X",
-		AppdataPaths:  []string{root + "/user/appdata/pingvin_share_x"},
+		AppdataPaths:  []string{"/host/user/user/appdata/pingvin_share_x"},
 		Definition:    string(defBytes),
 	})
 	if err != nil {
@@ -497,8 +498,8 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []str
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
 }
 
-func (f *fakeResticEngine) Restore(_ context.Context, repo, snapshotID, target string, _ restic.Mode) error {
-	f.restored = append(f.restored, repo+":"+snapshotID+":"+target)
+func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path string, _ restic.Mode) error {
+	f.restored = append(f.restored, repo+":"+snapshotID+":"+path)
 	return nil
 }
 
