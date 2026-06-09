@@ -11,15 +11,22 @@
 # Multi-arch amd64 + arm64; buildx provides TARGETOS/TARGETARCH for cross-build.
 # =============================================================================
 
+# buildx injects BUILDPLATFORM (the runner's native platform). Pinning the web
+# and build stages to it makes them run NATIVELY and cross-compile, instead of
+# being emulated under slow QEMU for the arm64 target.
+ARG BUILDPLATFORM
+
 # ---- Stage 1: web (build the React SPA → web/dist) --------------------------
-FROM node:24-slim AS web
+# Arch-independent JS output: build once on the native runner platform.
+FROM --platform=$BUILDPLATFORM node:24-slim AS web
 WORKDIR /src
 COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
 RUN npm --prefix web run build
 
 # ---- Stage 2: build (cross-compile the static Go binary) --------------------
-FROM golang:1.26-bookworm AS build
+# Runs natively on BUILDPLATFORM and cross-compiles via GOOS/GOARCH (set below).
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm AS build
 WORKDIR /src
 
 # Module graph first so `go mod download` is cached across source changes.
