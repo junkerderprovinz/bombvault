@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listRuns, runSpike, listContainers } from "../lib/api";
+import { listRuns, runSpike, getSpike, listContainers } from "../lib/api";
 import type { Run, SpikeCheck, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 
@@ -82,11 +82,11 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function check() {
+  async function fetchSpike(fn: typeof runSpike) {
     setLoading(true);
     setError(null);
     try {
-      const res = await runSpike();
+      const res = await fn();
       setChecks(res.checks);
       setAllOk(res.allOk);
     } catch (err) {
@@ -99,7 +99,10 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     }
   }
 
-  // Button-driven: the check runs only when the user clicks (no auto-run).
+  // The check is warmed at container startup; load the cached result on mount so
+  // the green list shows immediately. The button re-runs the probes fresh.
+  const check = () => fetchSpike(runSpike);
+  useEffect(() => { void fetchSpike(getSpike); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const hasRun = !loading && allOk !== null;
   const overallStatus = allOk ? "ok" : "degraded";
   const overallLabel = allOk ? t("dashboard.allOk") : t("dashboard.degraded");

@@ -202,8 +202,14 @@ export function putSettings(settings: Settings): Promise<OkEnvelope> {
   });
 }
 
+/** Re-run the host-integration probes fresh (the "Host Integration Check" button). */
 export function runSpike(): Promise<SpikeResponse> {
   return fetchJSON("/api/spike", { method: "POST" });
+}
+
+/** Return the cached host-integration result (warmed at container startup) for an instant view. */
+export function getSpike(): Promise<SpikeResponse> {
+  return fetchJSON("/api/spike");
 }
 
 export function listRuns(): Promise<ListRunsResponse> {

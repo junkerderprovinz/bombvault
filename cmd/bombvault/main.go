@@ -78,6 +78,9 @@ func run() error {
 
 	// JSON API + embedded SPA.
 	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+	// Warm the host-integration check at startup so the dashboard shows the
+	// green result list immediately on first load (no manual click needed).
+	go handler.WarmSpike()
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	return server.Run()
 }

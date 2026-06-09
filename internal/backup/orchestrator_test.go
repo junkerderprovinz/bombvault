@@ -141,8 +141,10 @@ func (r *fakeRuns) Finish(runID, status, snapshotID string, bytes int64, errMsg 
 // the DI seam (CreateAndStart) unchanged.
 func sampleInspect() model.Inspect {
 	return model.Inspect{
-		Name:  "/plex",
-		Image: "lscr.io/linuxserver/plex:latest",
+		Name: "/plex",
+		// Top-level Image is the image ID (sha256:…), as real Docker reports it —
+		// NOT pullable from a registry. The pullable reference is Config.Image.
+		Image: "sha256:1111111111111111111111111111111111111111111111111111111111111111",
 		Config: model.Config{
 			Image: "lscr.io/linuxserver/plex:latest",
 			User:  "1000:1000", // SEC: non-root process user

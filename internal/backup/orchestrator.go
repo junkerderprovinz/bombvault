@@ -167,6 +167,17 @@ func normalizeName(n string) string {
 	return strings.TrimPrefix(n, "/")
 }
 
+// pullRef returns the registry reference to pull when recreating a container.
+// The inspect's top-level Image is the image ID (sha256:…) which cannot be
+// pulled from a registry; the human reference lives in Config.Image. The
+// top-level Image is used only as a fallback when Config.Image is empty.
+func pullRef(in model.Inspect) string {
+	if in.Config.Image != "" {
+		return in.Config.Image
+	}
+	return in.Image
+}
+
 // ---------------------------------------------------------------------------
 // BackupContainer
 // ---------------------------------------------------------------------------
@@ -317,8 +328,11 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		)
 	}
 
-	// Pull the image before touching the running container.
-	if err := d.Docker.Pull(ctx, d.Inspect.Image); err != nil {
+	// Pull the image before touching the running container. Pull the human
+	// registry REFERENCE (Config.Image), never the inspect's top-level Image —
+	// that is the image ID (sha256:…), which is not pullable from a registry
+	// ("pull access denied for sha256").
+	if err := d.Docker.Pull(ctx, pullRef(d.Inspect)); err != nil {
 		return fmt.Errorf("restore: pull image: %w", err)
 	}
 
