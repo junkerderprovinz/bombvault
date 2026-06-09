@@ -61,7 +61,7 @@ ARG RESTIC_VERSION=0.17.3
 ARG TARGETARCH
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates bzip2 wget; \
+    apt-get install -y --no-install-recommends ca-certificates qemu-utils rclone bzip2 wget; \
     rm -rf /var/lib/apt/lists/*; \
     case "${TARGETARCH}" in \
         amd64) restic_arch="amd64" ;; \

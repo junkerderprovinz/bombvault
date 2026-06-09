@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -322,6 +323,101 @@ func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 			t.Fatalf("returned a non-plex snapshot: %+v", s)
 		}
 	}
+}
+
+// TestRestoreUsesStoredDefinitionWhenContainerDeleted verifies the core
+// disaster-recovery fix: if the container no longer exists on the host,
+// Restore falls back to the definition persisted at backup time and
+// successfully recreates the container from it.
+func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey:        strings.Repeat("a", 64),
+		DataDir:       dir,
+		HostMountRoot: root,
+		// FlashTemplatesDir must be writable — use a temp subdir.
+		FlashTemplatesDir: filepath.Join(dir, "flash"),
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	// Seed a target with a stored definition containing the recreate recipe.
+	storedInspect := model.Inspect{
+		Name:  "/Pingvin-Share-X",
+		Image: "sha256:abc123",
+		Config: model.Config{
+			Image: "smp46/pingvin-share-x:latest",
+		},
+	}
+	defBytes, err := marshalDefinition(storedInspect, "<xml/>")
+	if err != nil {
+		t.Fatalf("marshal definition: %v", err)
+	}
+	tg, err := st.UpsertTarget(store.Target{
+		ContainerName: "Pingvin-Share-X",
+		AppdataPaths:  []string{root + "/user/appdata/pingvin_share_x"},
+		Definition:    string(defBytes),
+	})
+	if err != nil {
+		t.Fatalf("seed target: %v", err)
+	}
+
+	// Seed a dummy run so Start/Finish have a valid target_id reference.
+	_ = tg
+
+	// Docker fake: Inspect returns an error (container deleted); InspectName
+	// returns ("", nil) meaning "container absent — fresh restore is fine".
+	d := &fakeServiceDocker{
+		inspectErr: errors.New("No such container: Pingvin-Share-X"),
+		liveName:   "", // absent
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, eng)
+
+	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
+	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true)
+	if restoreErr != nil {
+		t.Fatalf("restore must succeed with stored definition: %v", restoreErr)
+	}
+
+	// CreateAndStart must have been called.
+	if d.createdIn.Config.Image == "" {
+		t.Fatal("CreateAndStart was not called")
+	}
+	// The image must come from the STORED definition, not the live (failed) inspect.
+	if d.createdIn.Config.Image != "smp46/pingvin-share-x:latest" {
+		t.Fatalf("recreated with wrong image %q; want smp46/pingvin-share-x:latest", d.createdIn.Config.Image)
+	}
+	// The live Inspect must NOT have been called (container is deleted).
+	for _, c := range d.calls {
+		if c == "inspect:Pingvin-Share-X" {
+			t.Fatal("live Inspect must not be called when stored definition is available")
+		}
+	}
+	// Restic restore must have been called with the correct snapshot id.
+	if len(eng.restored) == 0 {
+		t.Fatal("restic restore was not called")
+	}
+	if !strings.Contains(eng.restored[0], "deadbeef") {
+		t.Fatalf("restic restore called with wrong snapshot id: %v", eng.restored)
+	}
+}
+
+// marshalDefinition is a test helper that encodes a containerDefinition JSON
+// blob without importing the unexported type from package api.
+// The struct layout mirrors api.containerDefinition exactly.
+func marshalDefinition(inspect model.Inspect, templateXML string) ([]byte, error) {
+	type def struct {
+		Inspect     model.Inspect `json:"inspect"`
+		TemplateXML string        `json:"template_xml"`
+	}
+	return json.Marshal(def{Inspect: inspect, TemplateXML: templateXML})
 }
 
 // ---------------------------------------------------------------------------
