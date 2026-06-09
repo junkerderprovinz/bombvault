@@ -81,26 +81,16 @@ function LanguageSwitcher() {
 
   return (
     <div className="relative" ref={ref}>
-      {/* Trigger button — shows current flag + label */}
+      {/* Trigger button — shows only the current flag; name is in aria-label/title */}
       <button
-        aria-label={t("language.label")}
+        aria-label={`${t("language.label")}: ${current.label}`}
+        title={`${t("language.label")}: ${current.label}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-carbon-textSub border border-carbon-border bg-carbon-surface hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+        className="flex items-center px-2 py-1.5 rounded-lg text-xs font-medium text-carbon-textSub border border-carbon-border bg-carbon-surface hover:bg-carbon-hover hover:text-carbon-text transition-colors"
       >
         <Flag code={current.flag} />
-        <span className="hidden sm:inline">{current.label}</span>
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 10 10"
-          fill="none"
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-          aria-hidden="true"
-        >
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
       </button>
 
       {/* Dropdown */}
