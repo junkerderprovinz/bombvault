@@ -60,7 +60,7 @@ function ToggleRow({
         }`}
       >
         <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-[#161616] transition-transform ${
+          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
             checked ? "translate-x-[18px]" : "translate-x-[3px]"
           }`}
         />
@@ -340,7 +340,10 @@ function parseCadenceString(raw: string): CadenceState {
 
   const weeklyM = /^weekly\s+([\w,]+)\s+(\d{1,2}:\d{2})$/.exec(s);
   if (weeklyM) {
-    const days = weeklyM[1].split(",").map((d) => d.trim());
+    const days = weeklyM[1]
+      .split(",")
+      .map((d) => d.trim())
+      .map((d) => d.charAt(0).toUpperCase() + d.slice(1).toLowerCase());
     return { mode: "weekly", time: weeklyM[2], weekdays: days, intervalDays: 3 };
   }
 
