@@ -58,12 +58,20 @@ func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
 		if len(s.Names) > 0 {
 			name = normalizeName(s.Names[0])
 		}
+		ip := ""
+		for _, net := range s.NetworkSettings.Networks {
+			if net != nil && net.IPAddress != "" {
+				ip = net.IPAddress
+				break
+			}
+		}
 		out = append(out, ContainerInfo{
 			ID:     s.ID,
 			Name:   name,
 			Image:  s.Image,
 			State:  string(s.State),
 			Status: s.Status,
+			IP:     ip,
 		})
 	}
 	return out, nil
