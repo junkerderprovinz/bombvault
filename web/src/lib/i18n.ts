@@ -71,6 +71,9 @@ const en = {
   "containers.notInstalledHint": "These containers are no longer installed but still have backups. Restore them, or delete their backups to free space.",
   "containers.deleteBackups": "Delete all backups",
   "containers.deleteBackupsConfirm": "Delete ALL backups of this container? The snapshots are permanently removed from the repository and cannot be undone.",
+  "containers.filter": "Filter:",
+  "containers.filterAll": "All",
+  "containers.filterInstalled": "Installed",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",
@@ -189,6 +192,9 @@ const de: Translations = {
   "containers.notInstalledHint": "Diese Container sind nicht mehr installiert, haben aber noch Backups. Stelle sie wieder her oder lösche ihre Backups, um Platz freizugeben.",
   "containers.deleteBackups": "Alle Backups löschen",
   "containers.deleteBackupsConfirm": "ALLE Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
+  "containers.filter": "Filter:",
+  "containers.filterAll": "Alle",
+  "containers.filterInstalled": "Installiert",
 
   "snapshots.title": "Backups",
   "snapshots.colId": "ID",

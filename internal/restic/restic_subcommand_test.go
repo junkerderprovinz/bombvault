@@ -24,3 +24,23 @@ func TestSubcommand(t *testing.T) {
 		}
 	})
 }
+
+func TestLastReason(t *testing.T) {
+	t.Run("picks last non-empty line", func(t *testing.T) {
+		got := lastReason("starting restore\n\nFatal: something broke\n")
+		if got != "Fatal: something broke" {
+			t.Fatalf("got %q", got)
+		}
+	})
+	t.Run("scrubs absolute paths", func(t *testing.T) {
+		got := lastReason("Fatal: unable to open repository at /host/user/backups/containers")
+		if got != "Fatal: unable to open repository at [path]" {
+			t.Fatalf("got %q", got)
+		}
+	})
+	t.Run("empty stderr yields empty reason", func(t *testing.T) {
+		if got := lastReason("   \n\n"); got != "" {
+			t.Fatalf("got %q", got)
+		}
+	})
+}
