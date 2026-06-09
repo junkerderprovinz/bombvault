@@ -325,6 +325,54 @@ func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 	}
 }
 
+// TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
+// backups forgets only that container's snapshots (tag-filtered) and removes its
+// target from the store — the path used to clean up no-longer-installed containers.
+func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Mark the repo initialised so Snapshots reaches the engine.
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"container:sonarr", "p1"}}, // other container — must be left alone
+		{ID: "cccc3333", Tags: []string{"container:plex", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, eng)
+
+	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+
+	// Only plex's snapshots are forgotten.
+	if len(eng.forgotten) != 2 || !contains(eng.forgotten, "aaaa1111") || !contains(eng.forgotten, "cccc3333") {
+		t.Fatalf("expected aaaa1111+cccc3333 forgotten, got %v", eng.forgotten)
+	}
+	if contains(eng.forgotten, "bbbb2222") {
+		t.Fatalf("forgot another container's snapshot: %v", eng.forgotten)
+	}
+	// Target is gone.
+	if _, err := st.GetTargetByContainer("plex"); err == nil {
+		t.Fatal("expected target to be deleted")
+	}
+}
+
 // TestRestoreUsesStoredDefinitionWhenContainerDeleted verifies the core
 // disaster-recovery fix: if the container no longer exists on the host,
 // Restore falls back to the definition persisted at backup time and
@@ -429,6 +477,7 @@ type fakeResticEngine struct {
 	backedUp  []string
 	lastPaths []string
 	restored  []string
+	forgotten []string
 	snaps     []restic.Snapshot
 	initErr   error
 	backupErr error
@@ -455,6 +504,11 @@ func (f *fakeResticEngine) Restore(_ context.Context, repo, snapshotID, target s
 
 func (f *fakeResticEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
 	return f.snaps, nil
+}
+
+func (f *fakeResticEngine) Forget(_ context.Context, _ string, snapshotIDs []string, _ bool, _ restic.Mode) error {
+	f.forgotten = append(f.forgotten, snapshotIDs...)
+	return nil
 }
 
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {

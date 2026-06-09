@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { listContainers } from "../lib/api";
+import { listContainers, deleteBackups } from "../lib/api";
 import type { Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
 import { IncludeToggle } from "../components/IncludeToggle";
+
+type T = ReturnType<typeof useT>["t"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -130,13 +132,59 @@ function SortControl({
 // Container row
 // ---------------------------------------------------------------------------
 
+// DeleteBackupsButton permanently forgets all backups of a (usually
+// no-longer-installed) container and refreshes the list on success.
+function DeleteBackupsButton({
+  name,
+  t,
+  onDeleted,
+}: {
+  name: string;
+  t: T;
+  onDeleted: () => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!window.confirm(t("containers.deleteBackupsConfirm"))) return;
+    setPending(true);
+    setError(null);
+    try {
+      const res = await deleteBackups(name);
+      if (res.ok) onDeleted();
+      else setError(res.error ?? "Delete failed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        onClick={() => void handleDelete()}
+        disabled={pending}
+        className="inline-flex items-center gap-2 rounded-lg bg-[#3a1c1c] px-3 py-1.5 text-xs font-medium text-[#ff8389] hover:bg-[#4a2424] transition-colors disabled:opacity-50"
+      >
+        {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
+      </button>
+      {error && <p className="text-xs text-[#ff8389]">{error}</p>}
+    </div>
+  );
+}
+
 function ContainerRow({
   container,
   t,
+  onDeleted,
 }: {
   container: Container;
-  t: ReturnType<typeof useT>["t"];
+  t: T;
+  onDeleted: () => void;
 }) {
+  const installed = container.installed;
   return (
     <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
       {/* Top row */}
@@ -147,12 +195,20 @@ function ContainerRow({
             <span className="font-semibold text-carbon-text text-sm truncate">
               {container.name}
             </span>
-            <StateChip state={container.state} />
+            {installed ? (
+              <StateChip state={container.state} />
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+                {t("containers.notInstalled")}
+              </span>
+            )}
             {container.ip && (
               <span className="text-xs text-carbon-textMuted font-mono">{container.ip}</span>
             )}
           </div>
-          <p className="text-xs text-carbon-textMuted mt-0.5 truncate">{container.image}</p>
+          {container.image && (
+            <p className="text-xs text-carbon-textMuted mt-0.5 truncate">{container.image}</p>
+          )}
         </div>
 
         {/* Last backup */}
@@ -166,19 +222,26 @@ function ContainerRow({
 
       {/* Actions row */}
       <div className="flex items-start gap-4 flex-wrap">
-        {/* Include toggle */}
-        <label className="flex items-center gap-2 cursor-pointer">
-          <IncludeToggle name={container.name} initial={container.includeInSchedule} />
-          <span className="text-xs text-carbon-textSub">
-            {t("containers.includeInSchedule")}
-          </span>
-        </label>
+        {installed ? (
+          <>
+            {/* Include toggle */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <IncludeToggle name={container.name} initial={container.includeInSchedule} />
+              <span className="text-xs text-carbon-textSub">
+                {t("containers.includeInSchedule")}
+              </span>
+            </label>
 
-        {/* Backup button */}
-        <BackupButton name={container.name} t={t} />
+            {/* Backup button */}
+            <BackupButton name={container.name} t={t} />
+          </>
+        ) : (
+          /* Not installed: can't back up; offer delete-all-backups instead. */
+          <DeleteBackupsButton name={container.name} t={t} onDeleted={onDeleted} />
+        )}
       </div>
 
-      {/* Snapshots / Restore disclosure */}
+      {/* Backups / Restore disclosure (works even when not installed) */}
       <RestorePanel name={container.name} t={t} />
     </div>
   );
@@ -195,15 +258,18 @@ export function Containers() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
 
-  useEffect(() => {
-    listContainers()
+  function loadContainers() {
+    return listContainers()
       .then((res) => {
         if (res.ok) setContainers(res.containers ?? []);
         else setError("Failed to load containers");
       })
-      .catch(() => setError("Failed to load containers"))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(() => setError("Failed to load containers"));
+  }
+
+  useEffect(() => {
+    void loadContainers().finally(() => setLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);
@@ -211,6 +277,8 @@ export function Containers() {
   }
 
   const sorted = sortContainers(containers, sortKey);
+  const live = sorted.filter((c) => c.installed);
+  const orphans = sorted.filter((c) => !c.installed);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -238,11 +306,28 @@ export function Containers() {
           </p>
         </div>
       )}
-      {!loading && containers.length > 0 && (
+      {!loading && live.length > 0 && (
         <div className="flex flex-col gap-3">
           <SortControl value={sortKey} onChange={handleSortChange} />
-          {sorted.map((c) => (
-            <ContainerRow key={c.name} container={c} t={t} />
+          {live.map((c) => (
+            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
+          ))}
+        </div>
+      )}
+
+      {/* Not-installed containers that still have backups. */}
+      {!loading && orphans.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
+              {t("containers.notInstalledTitle")}
+            </h2>
+            <p className="mt-1 text-xs text-carbon-textMuted">
+              {t("containers.notInstalledHint")}
+            </p>
+          </div>
+          {orphans.map((c) => (
+            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
           ))}
         </div>
       )}

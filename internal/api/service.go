@@ -46,6 +46,7 @@ type ResticEngine interface {
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode) (restic.Summary, error)
 	Restore(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
+	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -327,6 +328,46 @@ func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot
 		}
 	}
 	return out, nil
+}
+
+// DeleteBackups removes ALL backups of a container — every restic snapshot
+// tagged container:<name>, pruning the freed data — and forgets the container
+// from the store (target + run history). Used to clean up containers that are no
+// longer installed. The repo is shared, so only this container's snapshots
+// (filtered by tag in Snapshots) are forgotten; prune never touches data still
+// referenced by other containers' snapshots.
+func (s *Service) DeleteBackups(ctx context.Context, name string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.containersRepoPath(settings)
+	if err != nil {
+		return err
+	}
+	mode := s.ModeFor(settings)
+
+	// Collect this container's snapshot IDs (tag-filtered) and forget them.
+	snaps, err := s.Snapshots(ctx, name)
+	if err != nil {
+		return err
+	}
+	ids := make([]string, 0, len(snaps))
+	for _, snap := range snaps {
+		ids = append(ids, snap.ID)
+	}
+	if len(ids) > 0 {
+		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+			return fmt.Errorf("forget snapshots: %w", err)
+		}
+	}
+
+	// Remove the target row + its run history so the container disappears from
+	// the "not installed" list once its backups are gone.
+	if err := s.store.DeleteTarget(name); err != nil {
+		return fmt.Errorf("delete target: %w", err)
+	}
+	return nil
 }
 
 // SetInclude sets the include_in_schedule flag for a container, creating the
