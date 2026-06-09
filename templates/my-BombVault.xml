@@ -62,13 +62,13 @@
   <Config
     Name="Host Data"
     Target="/host/user"
-    Default="/mnt/user"
+    Default="/mnt"
     Mode="rw"
-    Description="Your Unraid share root. Backup SOURCES and DESTINATIONS both live here; pick the exact subpaths in the WebUI under Settings. Read for backup, written on restore."
+    Description="Your Unraid storage root /mnt — covers the user share AND cache/pool mounts, so any container's appdata (wherever it lives) is reachable. Backup SOURCES (container appdata) and DESTINATIONS both live here; pick the exact subpaths in the WebUI under Settings. Read for backup, written on restore."
     Type="Path"
     Display="always"
     Required="true"
-    Mask="false">/mnt/user</Config>
+    Mask="false">/mnt</Config>
   <Config
     Name="Docker Socket"
     Target="/var/run/docker.sock"
@@ -89,6 +89,16 @@
     Display="advanced"
     Required="false"
     Mask="false">/var/run/libvirt/libvirt-sock</Config>
+  <Config
+    Name="HOST_SOURCE_ROOT"
+    Target="HOST_SOURCE_ROOT"
+    Default="/mnt"
+    Mode=""
+    Description="The HOST path mounted as 'Host Data' (default /mnt). BombVault translates the bind-mount sources Docker reports (e.g. /mnt/user/appdata/x) into paths under this mount. Change only if you mounted a different host root than /mnt."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">/mnt</Config>
   <Config
     Name="HTTP_ONLY"
     Target="HTTP_ONLY"

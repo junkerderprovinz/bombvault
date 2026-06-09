@@ -151,18 +151,20 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 }
 
-// TestServiceBackupTranslatesHostAppdataPath pins the host→container path fix:
-// Docker reports the bind source as the HOST path (/mnt/user/appdata/<x>), which
-// BombVault must translate to the container-visible HostMountRoot path before
-// handing it to restic — using the real, correctly cased directory, not a guess.
+// TestServiceBackupTranslatesHostAppdataPath pins the box-gate fix: the broad
+// mount is host /mnt → container /host/user, so host /mnt/user/appdata/<x> is
+// reachable at /host/user/USER/appdata/<x> (note the extra "user" segment). Docker
+// reports the bind source as the HOST path; BombVault translates it via
+// HOST_SOURCE_ROOT (=/mnt) → HOST_MOUNT_ROOT and backs up the real, correctly
+// cased dir — not a guess. Non-appdata binds (media) are excluded.
 func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
 	cfg := config.Config{
 		AppKey:         strings.Repeat("a", 64),
 		DataDir:        dir,
-		HostMountRoot:  root,        // container side of the broad mount
-		HostSourceRoot: "/mnt/user", // host side reported by docker inspect
+		HostMountRoot:  root,   // container side; the whole host /mnt is mounted here
+		HostSourceRoot: "/mnt", // the full /mnt is mounted (covers /mnt/user + cache pools)
 	}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
@@ -172,13 +174,15 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Real dir is lowercase though the container name is mixed-case — a guess
-	// (<root>/appdata/Pingvin-Share-X) would be wrong; the translation is right.
+	// Exactly the box-gate container: appdata binds under /mnt/user/appdata (real
+	// lowercase dir though the name is mixed-case) + a media bind that must NOT be
+	// backed up. Translation must yield <root>/user/appdata/... (the extra "user").
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name:  "/Pingvin-Share-X",
 		Image: "smp46/pingvin-share-x:latest",
 		Mounts: []model.Mount{
-			{Type: "bind", Source: "/mnt/user/appdata/pingvin-share-x", Destination: "/data"},
+			{Type: "bind", Source: "/mnt/user/appdata/pingvin_share_x/data", Destination: "/opt/app/backend/data"},
+			{Type: "bind", Source: "/mnt/user/appdata/pingvin_share_x/images", Destination: "/opt/app/frontend/public/img"},
 			{Type: "bind", Source: "/mnt/user/Media", Destination: "/media"}, // not appdata → excluded
 			{Type: "bind", Source: "/etc/localtime", Destination: "/etc/localtime"},
 		},
@@ -189,9 +193,13 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 	if _, err := svc.Backup(context.Background(), "Pingvin-Share-X"); err != nil {
 		t.Fatalf("backup: %v", err)
 	}
-	want := root + "/appdata/pingvin-share-x"
-	if !contains(eng.lastPaths, want) {
-		t.Fatalf("expected translated container path %q, got %v", want, eng.lastPaths)
+	for _, want := range []string{
+		root + "/user/appdata/pingvin_share_x/data",
+		root + "/user/appdata/pingvin_share_x/images",
+	} {
+		if !contains(eng.lastPaths, want) {
+			t.Fatalf("expected translated container path %q, got %v", want, eng.lastPaths)
+		}
 	}
 	for _, p := range eng.lastPaths {
 		if strings.Contains(p, "Media") || p == "/etc/localtime" {

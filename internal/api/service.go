@@ -103,47 +103,63 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 
 // resolveAppdataPaths returns the CONTAINER-VISIBLE paths to back up for a
 // container. Docker reports bind-mount sources as HOST paths (e.g.
-// /mnt/user/appdata/<x>), but BombVault can only read them through the broad
-// host mount (default host HostSourceRoot=/mnt/user → container
-// HostMountRoot=/host/user). So we TRANSLATE every appdata bind source from the
-// host share root to the container mount root and back up the real, correctly
-// cased path — not a guess. Non-appdata binds (media libraries, /etc/localtime,
-// cache pools outside the share) are skipped.
+// /mnt/user/appdata/<x>/data); BombVault reaches them only through the broad host
+// mount (HostSourceRoot mounted at HostMountRoot — e.g. host /mnt → container
+// /host/user, so host /mnt/user/appdata/x is reachable at /host/user/user/appdata/x).
+// We TRANSLATE every appdata bind source from the host root to the container mount
+// root and back up the real, correctly cased path — not a guess. Only binds with
+// an "appdata" path segment are kept (container config); media libraries, the
+// flash, /etc/localtime and other shares are skipped.
 //
-// Fallback (no appdata bind found): the conventional <HostMountRoot>/appdata/<name>.
+// Fallback (no appdata bind found): the conventional /mnt/user/appdata/<name>,
+// translated if reachable.
 func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
-	hostAppdata := path.Join(path.Clean(s.cfg.HostSourceRoot), "appdata") // /mnt/user/appdata
-	hostPrefix := hostAppdata + "/"
-	containerAppdata := path.Join(s.cfg.HostMountRoot, "appdata") // /host/user/appdata
-	containerPrefix := containerAppdata + "/"
+	srcRoot := path.Clean(s.cfg.HostSourceRoot)  // host path mounted into the container, e.g. /mnt
+	mountRoot := path.Clean(s.cfg.HostMountRoot) // its container path, e.g. /host/user
+
+	// translate maps a HOST path under srcRoot to its container-visible path.
+	translate := func(host string) (string, bool) {
+		p := path.Clean(host)
+		if p == srcRoot {
+			return mountRoot, true
+		}
+		if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
+			return mountRoot + "/" + rest, true
+		}
+		return "", false // not reachable through the mount
+	}
 
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range in.Mounts {
-		if m.Source == "" {
-			continue
+		if m.Source == "" || !hasSegment(path.Clean(m.Source), "appdata") {
+			continue // only appdata binds (container config), not media/other shares
 		}
-		src := path.Clean(m.Source)
-		var container string
-		switch {
-		case src == hostAppdata:
-			container = containerAppdata
-		case strings.HasPrefix(src, hostPrefix):
-			container = containerAppdata + "/" + strings.TrimPrefix(src, hostPrefix)
-		case src == containerAppdata || strings.HasPrefix(src, containerPrefix):
-			container = src // already container-visible (odd setups / tests)
-		default:
-			continue // not an appdata bind under the user share — skip
-		}
-		if !seen[container] {
+		if container, ok := translate(m.Source); ok && !seen[container] {
 			out = append(out, container)
 			seen[container] = true
 		}
 	}
 	if len(out) == 0 {
-		out = append(out, path.Join(containerAppdata, name))
+		// Last resort: the conventional appdata dir for this container.
+		if c, ok := translate(path.Join("/mnt/user/appdata", name)); ok {
+			out = append(out, c)
+		} else {
+			out = append(out, path.Join(mountRoot, "appdata", name))
+		}
 	}
 	return out
+}
+
+// hasSegment reports whether slash-separated path p contains seg as a full path
+// segment (so "/mnt/user/appdata/x" matches "appdata" but "/mnt/appdataX" does not).
+func hasSegment(p, seg string) bool {
+	for _, s := range strings.Split(p, "/") {
+		if s == seg {
+			return true
+		}
+	}
+	return false
 }
 
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
