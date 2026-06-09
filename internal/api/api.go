@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
@@ -20,6 +21,13 @@ type Handler struct {
 	probes            []spike.Probe
 	// containersLastRun is used by the everyN due-gate in ReloadWithDueChecks.
 	containersLastRun schedule.LastRunFunc
+
+	// Cached host-integration check, warmed once at startup so the dashboard
+	// shows the result list instantly. Guarded by spikeMu; refreshed on POST.
+	spikeMu     sync.RWMutex
+	spikeChecks any
+	spikeAllOK  bool
+	spikeRan    bool
 }
 
 // NewHandler constructs the API handler.
@@ -55,7 +63,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PATCH /api/containers/{name}", h.handlePatchContainer)
 	mux.HandleFunc("GET /api/settings", h.handleGetSettings)
 	mux.HandleFunc("PUT /api/settings", h.handlePutSettings)
-	mux.HandleFunc("POST /api/spike", h.handleSpike)
+	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
+	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 

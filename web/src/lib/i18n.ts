@@ -67,19 +67,19 @@ const en = {
   "containers.includeInSchedule": "Include in schedule",
   "containers.schedule": "Schedule",
 
-  // Snapshots
-  "snapshots.title": "Snapshots",
+  // Backups (restic snapshots, shown to the user as "Backups")
+  "snapshots.title": "Backups",
   "snapshots.colId": "ID",
   "snapshots.colTime": "Time",
   "snapshots.colTags": "Tags",
   "snapshots.colSize": "Size",
   "snapshots.restore": "Restore",
-  "snapshots.none": "No snapshots found",
+  "snapshots.none": "No backups found",
 
   // Restore
   "restore.confirmTitle": "Confirm restore",
   "restore.confirmBody":
-    "This will stop the container, replace its appdata and recreate it from the snapshot. Continue?",
+    "This will stop the container, replace its appdata and recreate it from the backup. Continue?",
   "restore.confirm": "Confirm",
   "restore.cancel": "Cancel",
   "restore.preview": "Preview",
@@ -180,17 +180,17 @@ const de: Translations = {
   "containers.includeInSchedule": "Im Zeitplan einschließen",
   "containers.schedule": "Zeitplan",
 
-  "snapshots.title": "Snapshots",
+  "snapshots.title": "Backups",
   "snapshots.colId": "ID",
   "snapshots.colTime": "Zeitpunkt",
   "snapshots.colTags": "Tags",
   "snapshots.colSize": "Größe",
   "snapshots.restore": "Wiederherstellen",
-  "snapshots.none": "Keine Snapshots gefunden",
+  "snapshots.none": "Keine Backups gefunden",
 
   "restore.confirmTitle": "Wiederherstellung bestätigen",
   "restore.confirmBody":
-    "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Snapshot neu erstellt. Fortfahren?",
+    "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
   "restore.confirm": "Bestätigen",
   "restore.cancel": "Abbrechen",
   "restore.preview": "Vorschau",

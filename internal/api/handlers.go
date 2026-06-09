@@ -294,12 +294,44 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-func (h *Handler) handleSpike(w http.ResponseWriter, _ *http.Request) {
+// runSpikeAndCache executes the host-integration probes and stores the result
+// so the dashboard can render it instantly. The probes are read-only.
+func (h *Handler) runSpikeAndCache() (any, bool) {
 	deps := spike.Deps{
 		Docker:        h.docker,
 		ContainerPath: h.svc.ContainerPath(),
 	}
 	checks, allOK := spike.Run(deps, h.probes)
+	h.spikeMu.Lock()
+	h.spikeChecks, h.spikeAllOK, h.spikeRan = checks, allOK, true
+	h.spikeMu.Unlock()
+	return checks, allOK
+}
+
+// WarmSpike runs the host-integration check once at startup so the cached result
+// is ready the instant the dashboard loads — no manual click required.
+func (h *Handler) WarmSpike() { _, _ = h.runSpikeAndCache() }
+
+// handleSpikeFresh (POST /api/spike) always re-runs the probes — the dashboard's
+// "Host Integration Check" button — and refreshes the cache.
+func (h *Handler) handleSpikeFresh(w http.ResponseWriter, _ *http.Request) {
+	checks, allOK := h.runSpikeAndCache()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":     true,
+		"allOk":  allOK,
+		"checks": checks,
+	})
+}
+
+// handleSpikeCached (GET /api/spike) returns the cached result for an instant
+// view, running the probes once if they have never run (cold start).
+func (h *Handler) handleSpikeCached(w http.ResponseWriter, _ *http.Request) {
+	h.spikeMu.RLock()
+	ran, checks, allOK := h.spikeRan, h.spikeChecks, h.spikeAllOK
+	h.spikeMu.RUnlock()
+	if !ran {
+		checks, allOK = h.runSpikeAndCache()
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":     true,
 		"allOk":  allOK,

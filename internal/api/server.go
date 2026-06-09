@@ -182,8 +182,13 @@ const (
 //	<blank>
 func printBanner() {
 	sep := "  " + bannerSep
+	// TrimRight makes the spacing deterministic regardless of the embedded file's
+	// trailing newline: exactly one newline after the wordmark, then a clear gap
+	// (two blank lines) before the name block.
+	art := strings.TrimRight(brandArt, "\n")
 	fmt.Println()
-	fmt.Print(brandArt)
+	fmt.Println(art)
+	fmt.Println()
 	fmt.Println()
 	fmt.Println(sep)
 	fmt.Println("  " + bannerName)
