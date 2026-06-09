@@ -92,12 +92,15 @@ func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 }
 
 // containerView is the per-container row returned by GET /api/containers.
+// Installed is false for "orphan" rows: containers that are no longer installed
+// on the host but still have backups (so the user can restore or delete them).
 type containerView struct {
 	Name              string `json:"name"`
 	Image             string `json:"image"`
 	State             string `json:"state"`
 	Status            string `json:"status"`
 	IP                string `json:"ip"`
+	Installed         bool   `json:"installed"`
 	IncludeInSchedule bool   `json:"includeInSchedule"`
 	LastBackup        *int64 `json:"lastBackup"`
 }
@@ -116,14 +119,17 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		byName[t.ContainerName] = t
 	}
 
-	views := make([]containerView, 0, len(infos))
+	live := make(map[string]bool, len(infos))
+	views := make([]containerView, 0, len(infos)+len(targets))
 	for _, c := range infos {
+		live[c.Name] = true
 		v := containerView{
-			Name:   c.Name,
-			Image:  c.Image,
-			State:  c.State,
-			Status: c.Status,
-			IP:     c.IP,
+			Name:      c.Name,
+			Image:     c.Image,
+			State:     c.State,
+			Status:    c.Status,
+			IP:        c.IP,
+			Installed: true,
 		}
 		if t, ok := byName[c.Name]; ok {
 			v.IncludeInSchedule = t.IncludeInSchedule
@@ -133,7 +139,43 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		}
 		views = append(views, v)
 	}
+
+	// Orphans: targets with backups whose container is no longer installed. The
+	// image comes from the stored recreate definition (so the row is recognisable
+	// even though the container is gone).
+	for _, t := range targets {
+		if live[t.ContainerName] {
+			continue
+		}
+		v := containerView{
+			Name:              t.ContainerName,
+			State:             "not-installed",
+			Installed:         false,
+			IncludeInSchedule: t.IncludeInSchedule,
+		}
+		if t.Definition != "" {
+			var def containerDefinition
+			if json.Unmarshal([]byte(t.Definition), &def) == nil {
+				v.Image = def.Inspect.Config.Image
+			}
+		}
+		if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
+			v.LastBackup = run.FinishedAt
+		}
+		views = append(views, v)
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
+}
+
+// handleDeleteBackups removes ALL backups of a container and forgets it from the
+// store. Used for containers that are no longer installed.
+func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	if err := h.svc.DeleteBackups(r.Context(), name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {

@@ -113,6 +113,22 @@ func SnapshotsArgs(repo string, m Mode) []string {
 	return args
 }
 
+// ForgetArgs returns the argv slice for `restic forget` of specific snapshot IDs,
+// optionally pruning the freed data. IDs are placed after -- (arg-injection guard).
+func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "forget")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	if prune {
+		args = append(args, "--prune")
+	}
+	args = append(args, "--")
+	args = append(args, snapshotIDs...)
+	return args
+}
+
 // ---- execution helper ------------------------------------------------------
 
 // run executes restic with the given args and mode.  The password is injected
@@ -200,6 +216,16 @@ func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot,
 		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
 	}
 	return snaps, nil
+}
+
+// Forget removes the given snapshots from the repo, optionally pruning the freed
+// data. A nil/empty ID list is a no-op (nothing to forget).
+func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, m Mode) error {
+	if len(snapshotIDs) == 0 {
+		return nil
+	}
+	_, err := r.run(ctx, ForgetArgs(repo, snapshotIDs, prune, m), m)
+	return err
 }
 
 // ---- JSON parsing ----------------------------------------------------------

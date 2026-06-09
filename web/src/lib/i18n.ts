@@ -66,6 +66,11 @@ const en = {
   "containers.noDestination": "No destination configured",
   "containers.includeInSchedule": "Include in schedule",
   "containers.schedule": "Schedule",
+  "containers.notInstalled": "Not installed",
+  "containers.notInstalledTitle": "Not installed (backups only)",
+  "containers.notInstalledHint": "These containers are no longer installed but still have backups. Restore them, or delete their backups to free space.",
+  "containers.deleteBackups": "Delete all backups",
+  "containers.deleteBackupsConfirm": "Delete ALL backups of this container? The snapshots are permanently removed from the repository and cannot be undone.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",
@@ -179,6 +184,11 @@ const de: Translations = {
   "containers.noDestination": "Kein Ziel konfiguriert",
   "containers.includeInSchedule": "Im Zeitplan einschließen",
   "containers.schedule": "Zeitplan",
+  "containers.notInstalled": "Nicht installiert",
+  "containers.notInstalledTitle": "Nicht installiert (nur Backups)",
+  "containers.notInstalledHint": "Diese Container sind nicht mehr installiert, haben aber noch Backups. Stelle sie wieder her oder lösche ihre Backups, um Platz freizugeben.",
+  "containers.deleteBackups": "Alle Backups löschen",
+  "containers.deleteBackupsConfirm": "ALLE Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
 
   "snapshots.title": "Backups",
   "snapshots.colId": "ID",

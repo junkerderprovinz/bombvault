@@ -98,6 +98,29 @@ func (r *Repo) SetInclude(containerName string, include bool) error {
 	return nil
 }
 
+// DeleteTarget removes a target and ALL its run history by container name, in a
+// single transaction. It is a no-op (no error) if the target does not exist.
+// Used to forget a container that is no longer installed once its backups have
+// been deleted from the restic repo.
+func (r *Repo) DeleteTarget(name string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("DeleteTarget begin: %w", err)
+	}
+	// Child runs first (runs.target_id references targets.id).
+	if _, err := tx.Exec(
+		`DELETE FROM runs WHERE target_id IN (SELECT id FROM targets WHERE container_name = ?)`, name,
+	); err != nil {
+		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+		return fmt.Errorf("DeleteTarget runs: %w", err)
+	}
+	if _, err := tx.Exec(`DELETE FROM targets WHERE container_name = ?`, name); err != nil {
+		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+		return fmt.Errorf("DeleteTarget: %w", err)
+	}
+	return tx.Commit()
+}
+
 // scanner abstracts *sql.Row and *sql.Rows so scanTarget works for both.
 type scanner interface {
 	Scan(dest ...any) error

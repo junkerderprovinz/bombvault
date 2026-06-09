@@ -16,6 +16,8 @@ export interface Container {
   status: string;
   /** First non-empty IP from the container's network settings. Empty string when none. */
   ip: string;
+  /** False for "orphan" rows: not installed on the host, but has backups. */
+  installed: boolean;
   includeInSchedule: boolean;
   lastBackup: number | null;
 }
@@ -178,6 +180,13 @@ export function restore(
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm }),
+  });
+}
+
+/** Delete ALL backups of a container and forget it from the store. */
+export function deleteBackups(name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups`, {
+    method: "DELETE",
   });
 }
 

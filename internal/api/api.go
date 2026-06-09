@@ -60,6 +60,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/containers/{name}/backup", h.handleBackup)
 	mux.HandleFunc("GET /api/containers/{name}/snapshots", h.handleSnapshots)
 	mux.HandleFunc("POST /api/containers/{name}/restore", h.handleRestore)
+	mux.HandleFunc("DELETE /api/containers/{name}/backups", h.handleDeleteBackups)
 	mux.HandleFunc("PATCH /api/containers/{name}", h.handlePatchContainer)
 	mux.HandleFunc("GET /api/settings", h.handleGetSettings)
 	mux.HandleFunc("PUT /api/settings", h.handlePutSettings)

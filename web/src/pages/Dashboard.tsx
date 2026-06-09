@@ -111,22 +111,25 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const chipFor = (c: SpikeCheck) => (c.OK ? "ok" : c.BestEffort ? "info" : "failed");
 
   return (
-    <Card title={t("spike.title")}>
-      <button
-        onClick={() => void check()}
-        disabled={loading}
-        className="inline-flex w-fit items-center gap-2 rounded-lg bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
-      >
-        {loading ? (
-          <>
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
-            {t("dashboard.checking")}
-          </>
-        ) : (
-          t("dashboard.hostIntegrationCheck")
-        )}
-      </button>
-
+    <Card
+      title={t("spike.title")}
+      action={
+        <button
+          onClick={() => void check()}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-md bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <span className="h-3 w-3 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
+              {t("dashboard.checking")}
+            </>
+          ) : (
+            t("dashboard.hostIntegrationCheck")
+          )}
+        </button>
+      }
+    >
       {hasRun && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>
