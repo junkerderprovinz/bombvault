@@ -129,6 +129,54 @@ function SortControl({
 }
 
 // ---------------------------------------------------------------------------
+// Installed / not-installed filter
+// ---------------------------------------------------------------------------
+
+type FilterKey = "all" | "installed" | "notInstalled";
+
+const FILTER_STORAGE_KEY = "bv-containers-filter";
+
+function loadFilterKey(): FilterKey {
+  const v = localStorage.getItem(FILTER_STORAGE_KEY);
+  if (v === "all" || v === "installed" || v === "notInstalled") return v;
+  return "all";
+}
+
+function FilterControl({
+  value,
+  onChange,
+  t,
+}: {
+  value: FilterKey;
+  onChange: (k: FilterKey) => void;
+  t: T;
+}) {
+  const labels: Record<FilterKey, string> = {
+    all: t("containers.filterAll"),
+    installed: t("containers.filterInstalled"),
+    notInstalled: t("containers.notInstalled"),
+  };
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-carbon-textMuted">{t("containers.filter")}</span>
+      {(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => (
+        <button
+          key={k}
+          onClick={() => onChange(k)}
+          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+            value === k
+              ? "bg-carbon-surface3 text-carbon-text"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
+        >
+          {labels[k]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Container row
 // ---------------------------------------------------------------------------
 
@@ -257,6 +305,7 @@ export function Containers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
+  const [filterKey, setFilterKey] = useState<FilterKey>(loadFilterKey);
 
   function loadContainers() {
     return listContainers()
@@ -274,6 +323,11 @@ export function Containers() {
   function handleSortChange(k: SortKey) {
     setSortKey(k);
     localStorage.setItem(SORT_STORAGE_KEY, k);
+  }
+
+  function handleFilterChange(k: FilterKey) {
+    setFilterKey(k);
+    localStorage.setItem(FILTER_STORAGE_KEY, k);
   }
 
   const sorted = sortContainers(containers, sortKey);
@@ -306,9 +360,16 @@ export function Containers() {
           </p>
         </div>
       )}
-      {!loading && live.length > 0 && (
-        <div className="flex flex-col gap-3">
+      {/* Controls: filter (installed / not installed) + sort. */}
+      {!loading && containers.length > 0 && (
+        <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
+          <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
           <SortControl value={sortKey} onChange={handleSortChange} />
+        </div>
+      )}
+
+      {!loading && filterKey !== "notInstalled" && live.length > 0 && (
+        <div className="flex flex-col gap-3">
           {live.map((c) => (
             <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
           ))}
@@ -316,7 +377,7 @@ export function Containers() {
       )}
 
       {/* Not-installed containers that still have backups. */}
-      {!loading && orphans.length > 0 && (
+      {!loading && filterKey !== "installed" && orphans.length > 0 && (
         <div className="flex flex-col gap-3">
           <div>
             <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">

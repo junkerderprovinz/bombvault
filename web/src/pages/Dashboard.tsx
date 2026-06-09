@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listRuns, runSpike, getSpike, listContainers } from "../lib/api";
+import { listRuns, getSpike, listContainers } from "../lib/api";
 import type { Run, SpikeCheck, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 
@@ -82,27 +82,30 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchSpike(fn: typeof runSpike) {
+  // Display-only on the dashboard: load the cached result (warmed at container
+  // startup). Running the check lives in Settings, not here.
+  useEffect(() => {
+    let active = true;
     setLoading(true);
-    setError(null);
-    try {
-      const res = await fn();
-      setChecks(res.checks);
-      setAllOk(res.allOk);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Check failed";
-      setError(msg);
-      setChecks(null);
-      setAllOk(false);
-    } finally {
-      setLoading(false);
-    }
-  }
+    getSpike()
+      .then((res) => {
+        if (!active) return;
+        setChecks(res.checks);
+        setAllOk(res.allOk);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : "Check failed");
+        setAllOk(false);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  // The check is warmed at container startup; load the cached result on mount so
-  // the green list shows immediately. The button re-runs the probes fresh.
-  const check = () => fetchSpike(runSpike);
-  useEffect(() => { void fetchSpike(getSpike); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const hasRun = !loading && allOk !== null;
   const overallStatus = allOk ? "ok" : "degraded";
   const overallLabel = allOk ? t("dashboard.allOk") : t("dashboard.degraded");
@@ -111,25 +114,11 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const chipFor = (c: SpikeCheck) => (c.OK ? "ok" : c.BestEffort ? "info" : "failed");
 
   return (
-    <Card
-      title={t("spike.title")}
-      action={
-        <button
-          onClick={() => void check()}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-md bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <span className="h-3 w-3 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
-              {t("dashboard.checking")}
-            </>
-          ) : (
-            t("dashboard.hostIntegrationCheck")
-          )}
-        </button>
-      }
-    >
+    <Card title={t("spike.title")}>
+      {loading && (
+        <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>
+      )}
+
       {hasRun && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>

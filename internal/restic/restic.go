@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"regexp"
+	"strings"
 )
 
 // Mode describes how the restic repository is secured.
@@ -152,13 +154,37 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		// Log the full stderr for server-side diagnostics; never expose it to
-		// the caller (may contain paths or other sensitive details).
+		// Log the full stderr for server-side diagnostics, and surface a concise,
+		// path-scrubbed reason to the caller so the UI shows WHY restic failed
+		// (e.g. "repository is already locked") instead of a generic message.
 		sub := subcommand(args)
 		log.Printf("restic %s stderr: %s", sub, stderr.String())
+		if reason := lastReason(stderr.String()); reason != "" {
+			return nil, fmt.Errorf("restic %s failed: %s", sub, reason)
+		}
 		return nil, fmt.Errorf("restic %s failed", sub)
 	}
 	return stdout.Bytes(), nil
+}
+
+// reasonPathRe matches absolute-path-like tokens so they can be stripped from a
+// surfaced restic error (defense-in-depth: repo/appdata paths must not leak).
+var reasonPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
+
+// lastReason returns the last non-empty line of stderr with absolute paths
+// scrubbed and the length capped — a concise failure cause for the UI.
+func lastReason(stderr string) string {
+	reason := ""
+	for _, line := range strings.Split(stderr, "\n") {
+		if s := strings.TrimSpace(line); s != "" {
+			reason = s
+		}
+	}
+	reason = reasonPathRe.ReplaceAllString(reason, "[path]")
+	if len(reason) > 200 {
+		reason = reason[:200]
+	}
+	return reason
 }
 
 // subcommand extracts the subcommand name from an args slice for use in error
