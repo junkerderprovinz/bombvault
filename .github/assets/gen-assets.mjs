@@ -16,7 +16,24 @@ const globalNodeModules = execSync("npm root -g").toString().trim();
 const { Resvg } = require(`${globalNodeModules}/@resvg/resvg-js`);
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const svg = readFileSync(join(__dir, "icon.svg"), "utf8");
+const rawSvg = readFileSync(join(__dir, "icon.svg"), "utf8");
+
+// resvg-js may not honour <style> CSS class selectors.
+// Pre-process: extract fill declarations from <style> and apply them as inline
+// style attributes so the renderer sees the colours regardless of CSS support.
+function inlineStyles(svgStr) {
+  // Parse: .cls-N { fill: #XXXXXX; }
+  const classMap = {};
+  for (const m of svgStr.matchAll(/\.(cls-\d+)\s*\{[^}]*fill:\s*(#[0-9a-fA-F]+)[^}]*\}/g)) {
+    classMap[m[1]] = m[2];
+  }
+  // Replace class="cls-N" with style="fill:#XXXXXX"
+  return svgStr.replace(/class="(cls-\d+)"/g, (_, cls) =>
+    classMap[cls] ? `style="fill:${classMap[cls]}"` : `class="${cls}"`
+  );
+}
+
+const svg = inlineStyles(rawSvg);
 
 // icon.png — 512×512, white background (CA icon)
 const iconResvg = new Resvg(svg, {
