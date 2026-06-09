@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	_ "embed"
 	"encoding/pem"
 	"fmt"
 	"io/fs"
@@ -21,6 +22,12 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
+
+// brandArt is the shared Junker der Provinz brand ASCII art, embedded from
+// banner.txt (which mirrors .github/assets/banner-raw.txt at build time).
+//
+//go:embed banner.txt
+var brandArt string
 
 // bindAddr is the listen address. We bind 0.0.0.0 explicitly (NOT $HOSTNAME) —
 // binding to the container hostname was a real boot bug in the old version that
@@ -154,18 +161,36 @@ func fileExists(p string) bool {
 // banners
 // ---------------------------------------------------------------------------
 
-// printBanner prints the shared ASCII init header.
-func printBanner() {
-	const banner = `
-   ____                 _   __     __        _ _
-  | __ )  ___  _ __ ___ | |__\ \   / /_ _ _   _| | |_
-  |  _ \ / _ \| '_ ` + "`" + ` _ \| '_ \\ \ / / _` + "`" + ` | | | | | __|
-  | |_) | (_) | | | | | | |_) |\ V / (_| | |_| | | |_
-  |____/ \___/|_| |_| |_|_.__/  \_/ \__,_|\__,_|_|\__|
+const (
+	bannerSep      = "───────────────────────────────────────────────────────────────────"
+	bannerName     = "bombvault"
+	bannerSubtitle = "Backup & disaster recovery for Docker containers and KVM/libvirt VMs"
+)
 
-  BombVault — one-click Docker backup & restore (restic)
-`
-	log.Print(banner)
+// printBanner prints the shared brand ASCII art followed by the app name and
+// subtitle, matching the house print-banner.sh format used by all own-image
+// containers.
+//
+// Output format (mirrors print-banner.sh exactly):
+//
+//	<blank>
+//	<brand ASCII art>
+//	<blank>
+//	  ───×67
+//	  bombvault
+//	  Backup & disaster recovery for Docker containers and KVM/libvirt VMs
+//	  ───×67
+//	<blank>
+func printBanner() {
+	sep := "  " + bannerSep
+	fmt.Println()
+	fmt.Print(brandArt)
+	fmt.Println()
+	fmt.Println(sep)
+	fmt.Println("  " + bannerName)
+	fmt.Println("  " + bannerSubtitle)
+	fmt.Println(sep)
+	fmt.Println()
 }
 
 // printReady prints the loud READY box once the server is about to listen.
