@@ -14,6 +14,8 @@ export interface Container {
   image: string;
   state: string;
   status: string;
+  /** First non-empty IP from the container's network settings. Empty string when none. */
+  ip: string;
   includeInSchedule: boolean;
   lastBackup: number | null;
 }
@@ -95,6 +97,24 @@ export interface SpikeResponse {
   ok: boolean;
   allOk: boolean;
   checks: SpikeCheck[];
+}
+
+/** A single subdirectory entry from GET /api/browse */
+export interface BrowseDirEntry {
+  name: string;
+  /** Relative path from HostMountRoot, e.g. "appdata/plex" */
+  path: string;
+}
+
+/** Response from GET /api/browse?path=<subpath> */
+export interface BrowseResponse {
+  ok: boolean;
+  /** The server's HostMountRoot (absolute path inside the container). */
+  root?: string;
+  /** The subpath that was listed (mirrors the ?path= query parameter). */
+  path?: string;
+  dirs?: BrowseDirEntry[];
+  error?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,4 +208,13 @@ export function runSpike(): Promise<SpikeResponse> {
 
 export function listRuns(): Promise<ListRunsResponse> {
   return fetchJSON("/api/runs");
+}
+
+/**
+ * Lists the immediate subdirectories of <HostMountRoot>/<path>.
+ * Pass an empty string (or omit) to list the mount root itself.
+ */
+export function browse(path: string = ""): Promise<BrowseResponse> {
+  const qs = path ? `?path=${encodeURIComponent(path)}` : "";
+  return fetchJSON(`/api/browse${qs}`);
 }

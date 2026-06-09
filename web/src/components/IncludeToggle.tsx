@@ -44,7 +44,7 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
         }`}
       >
         <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-[#161616] transition-transform ${
+          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
             enabled ? "translate-x-[18px]" : "translate-x-[3px]"
           }`}
         />
