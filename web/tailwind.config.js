@@ -5,17 +5,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        // IBM Carbon monochrome palette
+        // IBM Carbon palette — values are CSS custom properties so that
+        // toggling data-theme on <html> instantly re-colours the whole app.
         carbon: {
-          background: "#161616",   // deepest bg
-          surface:    "#262626",   // card / sidebar surface
-          surface2:   "#393939",   // elevated surface / border
-          surface3:   "#525252",   // subtle accent / selected
-          text:       "#f4f4f4",   // primary text
-          textSub:    "#c6c6c6",   // secondary text
-          textMuted:  "#8d8d8d",   // muted / placeholder
-          border:     "#393939",   // border
-          hover:      "#353535",   // hover state
+          background: "var(--carbon-bg)",
+          surface:    "var(--carbon-surface)",
+          surface2:   "var(--carbon-surface2)",
+          surface3:   "var(--carbon-surface3)",
+          text:       "var(--carbon-text)",
+          textSub:    "var(--carbon-text-sub)",
+          textMuted:  "var(--carbon-text-muted)",
+          border:     "var(--carbon-border)",
+          hover:      "var(--carbon-hover)",
         },
       },
       borderRadius: {
