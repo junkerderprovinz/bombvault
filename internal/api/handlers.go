@@ -182,7 +182,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.store.SetInclude(name, body.IncludeInSchedule); err != nil {
+	if err := h.svc.SetInclude(r.Context(), name, body.IncludeInSchedule); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -229,7 +229,13 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// Nest under "settings" so the GET response is shape-symmetric with the PUT
 	// body: a client can GET, edit, and PUT back the same settings object without
 	// the envelope's "ok" leaking into the strict PUT decoder.
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "settings": toView(s)})
+	// hostMountRoot is a sibling (not inside settings) so the strict PUT decoder
+	// never sees it and cannot reject it as an unknown field.
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":            true,
+		"settings":      toView(s),
+		"hostMountRoot": h.cfg.HostMountRoot,
+	})
 }
 
 func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {

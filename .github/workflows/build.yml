@@ -4,10 +4,11 @@ name: Build Docker Image
 # Unraid box (e.g. for the integration spike). Pull requests build only (no push).
 on:
   push:
-    branches: [main]
+    branches: [main, feat/go-rewrite]
     paths-ignore:
       - "**.md"
       - "LICENSE"
+      - "docs/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -44,8 +45,9 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=go-preview,enable=${{ github.ref == 'refs/heads/feat/go-rewrite' }}
 
       - name: Build multi-arch image
         uses: docker/build-push-action@v6
