@@ -286,7 +286,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.scheduler.Reload(s); err != nil {
+	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, nil, nil); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
