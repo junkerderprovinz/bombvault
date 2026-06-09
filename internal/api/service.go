@@ -101,35 +101,47 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	return nil
 }
 
-// resolveAppdataPaths returns the host paths to back up for a container. It uses
-// the inspect's bind mounts whose source lives under <HostMountRoot>/appdata
-// (the Unraid convention). If none match, it falls back to the conventional
-// per-container appdata directory <HostMountRoot>/appdata/<name>.
+// resolveAppdataPaths returns the CONTAINER-VISIBLE paths to back up for a
+// container. Docker reports bind-mount sources as HOST paths (e.g.
+// /mnt/user/appdata/<x>), but BombVault can only read them through the broad
+// host mount (default host HostSourceRoot=/mnt/user → container
+// HostMountRoot=/host/user). So we TRANSLATE every appdata bind source from the
+// host share root to the container mount root and back up the real, correctly
+// cased path — not a guess. Non-appdata binds (media libraries, /etc/localtime,
+// cache pools outside the share) are skipped.
 //
-// ASSUMPTION (documented): appdata lives at <HostMountRoot>/appdata. The broad
-// host mount (default host /mnt/user → /host/user) makes the container's own
-// appdata reachable at that path for the backup.
+// Fallback (no appdata bind found): the conventional <HostMountRoot>/appdata/<name>.
 func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
-	appdataRoot := path.Join(s.cfg.HostMountRoot, "appdata")
-	prefix := appdataRoot + "/"
+	hostAppdata := path.Join(path.Clean(s.cfg.HostSourceRoot), "appdata") // /mnt/user/appdata
+	hostPrefix := hostAppdata + "/"
+	containerAppdata := path.Join(s.cfg.HostMountRoot, "appdata") // /host/user/appdata
+	containerPrefix := containerAppdata + "/"
 
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range in.Mounts {
-		src := m.Source
-		if src == "" {
+		if m.Source == "" {
 			continue
 		}
-		clean := path.Clean(src)
-		if clean == appdataRoot || strings.HasPrefix(clean, prefix) {
-			if !seen[clean] {
-				out = append(out, clean)
-				seen[clean] = true
-			}
+		src := path.Clean(m.Source)
+		var container string
+		switch {
+		case src == hostAppdata:
+			container = containerAppdata
+		case strings.HasPrefix(src, hostPrefix):
+			container = containerAppdata + "/" + strings.TrimPrefix(src, hostPrefix)
+		case src == containerAppdata || strings.HasPrefix(src, containerPrefix):
+			container = src // already container-visible (odd setups / tests)
+		default:
+			continue // not an appdata bind under the user share — skip
+		}
+		if !seen[container] {
+			out = append(out, container)
+			seen[container] = true
 		}
 	}
 	if len(out) == 0 {
-		out = append(out, path.Join(appdataRoot, name))
+		out = append(out, path.Join(containerAppdata, name))
 	}
 	return out
 }
