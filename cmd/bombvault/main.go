@@ -26,6 +26,11 @@ func main() {
 }
 
 func run() error {
+	// Send the standard logger to stdout so all runtime logs share ONE stream
+	// with the ASCII banner (printed via fmt to stdout). Otherwise Docker/Unraid
+	// interleaves stderr (log default) above the stdout banner.
+	log.SetOutput(os.Stdout)
+
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
 		return err

@@ -180,15 +180,15 @@ const (
 //	  Backup & disaster recovery for Docker containers and KVM/libvirt VMs
 //	  ───×67
 //	<blank>
+// printBanner prints the shared Junker-der-Provinz brand banner exactly like the
+// other containers' print-banner.sh: a leading blank, the brand art, ONE blank
+// line, then the name/subtitle block framed by the ─ rule. TrimRight makes the
+// spacing deterministic regardless of the embedded file's trailing newline.
 func printBanner() {
 	sep := "  " + bannerSep
-	// TrimRight makes the spacing deterministic regardless of the embedded file's
-	// trailing newline: exactly one newline after the wordmark, then a clear gap
-	// (two blank lines) before the name block.
 	art := strings.TrimRight(brandArt, "\n")
 	fmt.Println()
 	fmt.Println(art)
-	fmt.Println()
 	fmt.Println()
 	fmt.Println(sep)
 	fmt.Println("  " + bannerName)
@@ -197,11 +197,15 @@ func printBanner() {
 	fmt.Println()
 }
 
-// printReady prints the loud READY box once the server is about to listen.
-// Writes to stdout (via fmt) so it shares the banner's stream and always
-// appears after the ASCII art, never interleaved with log timestamps.
+// readyHashes is the 60-char '#' rule used by the house "<APP> IS READY" box
+// (matches the jdownloader/krusader/matrix init banners).
+const readyHashes = "############################################################"
+
+// printReady prints the loud READY box once the server is about to listen, in the
+// shared house format ('#' box). Writes to stdout (via fmt) so it shares the
+// banner's stream and always appears after the ASCII art.
 func printReady(scheme string, port int) {
-	line := fmt.Sprintf("BOMBVAULT IS READY -> open the WebUI now (%s %d)", scheme, port)
-	border := strings.Repeat("=", len(line)+4)
-	fmt.Printf("\n%s\n  %s\n%s\n", border, line, border)
+	fmt.Println("  " + readyHashes)
+	fmt.Printf("   BOMBVAULT IS READY  ->  open the WebUI now (%s %d)\n", scheme, port)
+	fmt.Println("  " + readyHashes)
 }

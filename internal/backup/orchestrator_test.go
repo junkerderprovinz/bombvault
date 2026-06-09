@@ -70,10 +70,10 @@ func (d *fakeDocker) InspectName(_ context.Context, name string) (string, error)
 type fakeRestic struct {
 	log []string
 
-	backupErr      error
-	restoreErr     error
-	summary        backup.Summary
-	capturedTarget string
+	backupErr     error
+	restoreErr    error
+	summary       backup.Summary
+	capturedPaths []string
 }
 
 func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string) (backup.Summary, error) {
@@ -84,9 +84,9 @@ func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string
 	return r.summary, nil
 }
 
-func (r *fakeRestic) Restore(_ context.Context, repo, snapshotID, target string) error {
-	r.log = append(r.log, "restore:"+repo+":"+snapshotID+":"+target)
-	r.capturedTarget = target
+func (r *fakeRestic) RestorePaths(_ context.Context, repo, snapshotID string, paths []string) error {
+	r.log = append(r.log, "restore:"+repo+":"+snapshotID+":"+strings.Join(paths, ","))
+	r.capturedPaths = paths
 	return r.restoreErr
 }
 
@@ -295,7 +295,7 @@ func restoreDeps(d *fakeDocker, r *fakeRestic, tpl *fakeTemplates, runs *fakeRun
 		ContainerName:     "plex",
 		RepoPath:          "/repo",
 		SnapshotID:        "deadbeef12345678",
-		RestoreTargetDir:  "/",
+		AppdataPaths:      []string{"/host/user/user/appdata/plex"},
 		TemplateXML:       "<xml>restored</xml>",
 		FlashTemplatesDir: "/boot/templates",
 		Inspect:           sampleInspect(),
@@ -392,9 +392,9 @@ func TestRestoreHappyPathOrder(t *testing.T) {
 			t.Fatalf("docker log[%d] = %q, want %q (full %v)", i, d.log[i], want[i], d.log)
 		}
 	}
-	// restic restore target is "/"
-	if r.capturedTarget != "/" {
-		t.Fatalf("restore target = %q, want /", r.capturedTarget)
+	// restic restored each appdata path back to its origin (per-path subtree).
+	if len(r.capturedPaths) != 1 || r.capturedPaths[0] != "/host/user/user/appdata/plex" {
+		t.Fatalf("restored paths = %v, want [/host/user/user/appdata/plex]", r.capturedPaths)
 	}
 	// template written to flash dir
 	if !contains(tpl.log, "writeTemplate:/boot/templates:plex") {
@@ -490,20 +490,20 @@ func TestRestoreRecordsFailedWhenResticThrows(t *testing.T) {
 	_ = combinedLog(d, r, tpl, runs) // touch helper
 }
 
-// I1 / SEC-102: a restore target other than "/" must be rejected before any
-// destructive step runs, and the run recorded failed.
-func TestRestoreRejectsNonRootTarget(t *testing.T) {
+// I1 / SEC: an unsafe appdata path (traversal / non-absolute) must be rejected
+// before any destructive step runs, and the run recorded failed.
+func TestRestoreRejectsUnsafePath(t *testing.T) {
 	d := &fakeDocker{liveName: "/plex"}
 	r := &fakeRestic{}
 	tpl := &fakeTemplates{}
 	runs := &fakeRuns{}
 
 	deps := restoreDeps(d, r, tpl, runs)
-	deps.RestoreTargetDir = "/mnt/user/appdata"
+	deps.AppdataPaths = []string{"/host/user/user/appdata/../../etc"}
 
 	err := backup.RestoreContainer(t.Context(), deps)
-	if err == nil || !strings.Contains(err.Error(), "SEC-102") {
-		t.Fatalf("expected SEC-102 target rejection, got %v", err)
+	if err == nil || !strings.Contains(err.Error(), "SEC") {
+		t.Fatalf("expected unsafe-path rejection, got %v", err)
 	}
 	// nothing destructive may have run
 	if contains(d.log, "stop:") || contains(d.log, "remove:") || contains(r.log, "restore:") || contains(d.log, "createAndStart:") {

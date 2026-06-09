@@ -56,6 +56,23 @@ func TestRestoreArgsNoPassword(t *testing.T) {
 	}
 }
 
+func TestRestorePathArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := restic.RestorePathArgs("/repo", "abc123", "/host/user/user/appdata/plex", restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "restore", "--target", "/host/user/user/appdata/plex", "--", "abc123:/host/user/user/appdata/plex"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted", func(t *testing.T) {
+		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--target", "/p", "--", "abc123:/p"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestSnapshotsArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: true})

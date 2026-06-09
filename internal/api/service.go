@@ -44,7 +44,7 @@ type containerDefinition struct {
 type ResticEngine interface {
 	Init(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode) (restic.Summary, error)
-	Restore(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
+	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 }
@@ -249,6 +249,18 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		return errors.New("container has not been backed up yet")
 	}
 
+	// Re-validate the stored appdata paths stay within the host mount root before
+	// restoring (defense-in-depth in case the DB was tampered with).
+	if len(tg.AppdataPaths) == 0 {
+		return errors.New("no backup paths recorded for this container — run a backup once, then restore")
+	}
+	for _, p := range tg.AppdataPaths {
+		if !paths.Within(s.cfg.HostMountRoot, p) {
+			log.Printf("api: restore: appdata path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
+			return errors.New("a stored backup path is outside the host mount — refusing to restore")
+		}
+	}
+
 	// Resolve recreate recipe: prefer the stored definition (works for deleted
 	// containers), fall back to live inspect (for old targets without a stored
 	// definition), fail with a clear message if both are unavailable.
@@ -277,7 +289,7 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		ContainerName:     name,
 		RepoPath:          repo,
 		SnapshotID:        snapshotID,
-		RestoreTargetDir:  "/", // ALWAYS "/" (SEC-102)
+		AppdataPaths:      tg.AppdataPaths, // restored per-path back to origin
 		TemplateXML:       xml,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           in,
@@ -430,8 +442,13 @@ func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []s
 	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
 }
 
-func (a *resticAdapter) Restore(ctx context.Context, repo, snapshotID, target string) error {
-	return a.engine.Restore(ctx, repo, snapshotID, target, a.mode)
+func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error {
+	for _, p := range paths {
+		if err := a.engine.RestorePath(ctx, repo, snapshotID, p, a.mode); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // templatesAdapter satisfies backup.Templates over the template package funcs.
