@@ -1,11 +1,8 @@
 import { NavLink } from "react-router-dom";
 import type { Settings } from "../lib/api";
-import type { useT } from "../lib/i18n";
-
-type T = ReturnType<typeof useT>["t"];
+import { useT } from "../lib/i18n";
 
 interface SidebarProps {
-  t: T;
   settings: Settings | null;
 }
 
@@ -110,7 +107,8 @@ function NavItem({ to, label, icon, disabled, comingSoon }: NavItem) {
   );
 }
 
-export function Sidebar({ t, settings }: SidebarProps) {
+export function Sidebar({ settings }: SidebarProps) {
+  const { t } = useT();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
 
