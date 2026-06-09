@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>BombVault</Name>
+  <Repository>ghcr.io/junkerderprovinz/bombvault:latest</Repository>
+  <Registry>https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/junkerderprovinz/bombvault/issues</Support>
+  <Project>https://github.com/junkerderprovinz/bombvault</Project>
+  <ReadMe>https://github.com/junkerderprovinz/bombvault/blob/main/README.md</ReadMe>
+  <Overview>BombVault is a single-binary, Unraid-native app for one-click backup &amp; restore of your Docker containers, powered by restic. Back up a container's appdata + definition with one click; restore it just as easily and the container reappears in the Docker tab exactly as before. Backup paths, encryption on/off, and the schedule are set IN the WebUI under Settings — not as container variables. WARNING: BombVault holds root-equivalent control of your host. Through the mounted docker.sock it can stop/start/recreate containers, and through the broad /mnt/user mount it reads appdata for backup and writes it back on restore. Run it ONLY on a trusted, non-exposed network — there is no authentication yet. Generate the required APP_KEY with: openssl rand -hex 32 (keep it safe — it derives the restic password, so losing it makes encrypted backups unrecoverable).</Overview>
+  <Category>Backup:</Category>
+  <WebUI>https://[IP]:[PORT:3443]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-docker-templates/main/bombvault/my-BombVault.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png</Icon>
+  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <DateInstalled/>
+  <DonateText>If this template helps you, consider buying me a coffee.</DonateText>
+  <DonateLink>https://buymeacoffee.com/junkerderprovinz</DonateLink>
+  <Config
+    Name="WebUI Port (HTTPS)"
+    Target="3443"
+    Default="3443"
+    Mode="tcp"
+    Description="The BombVault WebUI (HTTPS, self-signed cert out of the box). This is the port you open."
+    Type="Port"
+    Display="always"
+    Required="true"
+    Mask="false">3443</Config>
+  <Config
+    Name="WebUI Port (HTTP)"
+    Target="3000"
+    Default="3000"
+    Mode="tcp"
+    Description="Plain-HTTP port. Only used when HTTP_ONLY is set to true (i.e. behind a TLS-terminating reverse proxy). Leave at the default otherwise."
+    Type="Port"
+    Display="always"
+    Required="false"
+    Mask="false">3000</Config>
+  <Config
+    Name="APP_KEY"
+    Target="APP_KEY"
+    Default=""
+    Mode=""
+    Description="REQUIRED. 64 lowercase hex chars: openssl rand -hex 32. Master key for secrets + the derived restic password — losing it makes encrypted backups unrecoverable."
+    Type="Variable"
+    Display="always"
+    Required="true"
+    Mask="true"></Config>
+  <Config
+    Name="Config"
+    Target="/config"
+    Default="/mnt/user/appdata/bombvault"
+    Mode="rw"
+    Description="BombVault's own state (SQLite DB, TLS cert, restic cache)."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user/appdata/bombvault</Config>
+  <Config
+    Name="Host Data"
+    Target="/host/user"
+    Default="/mnt/user"
+    Mode="rw"
+    Description="Your Unraid share root. Backup SOURCES and DESTINATIONS both live here; pick the exact subpaths in the WebUI under Settings. Read for backup, written on restore."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user</Config>
+  <Config
+    Name="Docker Socket"
+    Target="/var/run/docker.sock"
+    Default="/var/run/docker.sock"
+    Mode="rw"
+    Description="Root-equivalent host control: stop/start/recreate containers around backup/restore."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/var/run/docker.sock</Config>
+  <Config
+    Name="libvirt Socket"
+    Target="/var/run/libvirt/libvirt-sock"
+    Default="/var/run/libvirt/libvirt-sock"
+    Mode="rw"
+    Description="For VM backup (a later phase)."
+    Type="Path"
+    Display="advanced"
+    Required="false"
+    Mask="false">/var/run/libvirt/libvirt-sock</Config>
+  <Config
+    Name="HTTP_ONLY"
+    Target="HTTP_ONLY"
+    Default="false"
+    Mode=""
+    Description="Set true to serve plain HTTP behind a TLS-terminating reverse proxy."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">false</Config>
+</Container>
