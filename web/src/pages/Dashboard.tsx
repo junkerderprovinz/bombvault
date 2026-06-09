@@ -36,6 +36,7 @@ function StatusChip({
     degraded:"bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]",
     running: "bg-[#1c2a3a] text-[#78a9ff] border border-[#2a3a5a]",
     checking:"bg-[#1c2a3a] text-[#78a9ff] border border-[#2a3a5a]",
+    info:    "bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]",
   };
   const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
@@ -98,41 +99,38 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     }
   }
 
-  // Run on mount
-  useEffect(() => { void check(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Button-driven: the check runs only when the user clicks (no auto-run).
+  const hasRun = !loading && allOk !== null;
+  const overallStatus = allOk ? "ok" : "degraded";
+  const overallLabel = allOk ? t("dashboard.allOk") : t("dashboard.degraded");
 
-  const overallStatus = loading
-    ? "checking"
-    : allOk === null
-    ? "checking"
-    : allOk
-    ? "ok"
-    : "degraded";
-
-  const overallLabel = loading
-    ? t("dashboard.checking")
-    : allOk
-    ? t("dashboard.allOk")
-    : t("dashboard.degraded");
+  // A best-effort (optional) check that fails is informational, not a failure.
+  const chipFor = (c: SpikeCheck) => (c.OK ? "ok" : c.BestEffort ? "info" : "failed");
 
   return (
-    <Card
-      title={t("dashboard.spikeStatus")}
-      action={
-        <button
-          onClick={() => void check()}
-          disabled={loading}
-          className="text-xs text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-40"
-        >
-          {loading ? t("dashboard.checking") : t("dashboard.spikeLink")}
-        </button>
-      }
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>
-        <StatusChip status={overallStatus} />
-        <span className="text-sm text-carbon-text">{overallLabel}</span>
-      </div>
+    <Card title={t("spike.title")}>
+      <button
+        onClick={() => void check()}
+        disabled={loading}
+        className="inline-flex w-fit items-center gap-2 rounded-lg bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <span className="h-3.5 w-3.5 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
+            {t("dashboard.checking")}
+          </>
+        ) : (
+          t("dashboard.hostIntegrationCheck")
+        )}
+      </button>
+
+      {hasRun && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>
+          <StatusChip status={overallStatus} />
+          <span className="text-sm text-carbon-text">{overallLabel}</span>
+        </div>
+      )}
 
       {error && (
         <p className="text-xs text-[#ff8389]">{error}</p>
@@ -142,7 +140,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="divide-y divide-carbon-border">
           {checks.map((c) => (
             <div key={c.Name} className="flex items-center gap-3 py-2 text-sm">
-              <StatusChip status={c.OK ? "ok" : "failed"} />
+              <StatusChip status={chipFor(c)} />
               <span className="font-mono text-carbon-text w-32 shrink-0">{c.Name}</span>
               <span className="text-carbon-textMuted truncate flex-1">{c.Detail}</span>
               {c.BestEffort && (
