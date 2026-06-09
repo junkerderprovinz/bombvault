@@ -1,38 +1,36 @@
 /**
- * Generate icon.png and bombvault-banner.png from icon.svg.
- * Step 1 (this script): render SVG at two sizes with @resvg/resvg-js.
- * Step 2: Python (gen-assets.py) composites the banner logo onto a white canvas.
- *
- * Run via gen-assets.sh (or gen-assets.cmd).
+ * Render icon.svg using a real Chromium browser via Playwright.
+ * This gives pixel-perfect output identical to how a browser displays it.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRequire } from "node:module";
-import { execSync } from "node:child_process";
-
-const require = createRequire(import.meta.url);
-const globalNodeModules = execSync("npm root -g").toString().trim();
-const { Resvg } = require(`${globalNodeModules}/@resvg/resvg-js`);
+import { chromium } from "playwright";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const svg = readFileSync(join(__dir, "icon.svg"), "utf8");
 
-// icon.png — 512×512, white background (CA icon)
-const iconResvg = new Resvg(svg, {
-  fitTo: { mode: "width", value: 512 },
-  background: "white",
-});
-writeFileSync(join(__dir, "icon.png"), iconResvg.render().asPng());
-console.log("icon.png written (512×512)");
+// SVG viewBox dimensions
+const VB_W = 914.72, VB_H = 886.45;
 
-// banner-logo.png — logo at 460px height for Pillow to composite
-// SVG aspect: 914.72 / 886.45 ≈ 1.032 (slightly wider than tall)
-const LOGO_H = 460;
-const LOGO_W = Math.round(LOGO_H * (914.72 / 886.45));
-const logoResvg = new Resvg(svg, {
-  fitTo: { mode: "height", value: LOGO_H },
-  background: "white",
-});
-writeFileSync(join(__dir, "_banner-logo-tmp.png"), logoResvg.render().asPng());
-console.log(`_banner-logo-tmp.png written (~${LOGO_W}×${LOGO_H})`);
+async function renderAt(outFile, pxW) {
+  const pxH = Math.round(pxW * VB_H / VB_W);
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>*{margin:0;padding:0;background:white;}
+svg{width:${pxW}px;height:${pxH}px;display:block;}</style>
+</head><body>${svg}</body></html>`;
+
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: pxW + 20, height: pxH + 20 });
+  await page.setContent(html, { waitUntil: "networkidle" });
+  const clip = { x: 0, y: 0, width: pxW, height: pxH };
+  const buf = await page.screenshot({ clip, omitBackground: false });
+  writeFileSync(join(__dir, outFile), buf);
+  console.log(`${outFile} written (${pxW}×${pxH})`);
+  await browser.close();
+}
+
+await renderAt("icon.png", 512);
+await renderAt("_banner-logo-tmp.png", Math.round(460 * VB_W / VB_H));

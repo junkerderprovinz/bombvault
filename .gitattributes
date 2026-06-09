@@ -1,0 +1,13 @@
+# Normalize line endings: store LF in the repo, check out LF on every platform.
+# This kills the CRLF noise that Windows checkouts otherwise introduce.
+* text=auto eol=lf
+
+# Explicit LF for the source we ship.
+*.go  text eol=lf
+*.ts  text eol=lf
+*.tsx text eol=lf
+*.sh  text eol=lf
+
+# Binary assets — never touch line endings or attempt diffs.
+*.png binary
+*.ico binary

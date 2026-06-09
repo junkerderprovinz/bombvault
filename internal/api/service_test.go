@@ -87,9 +87,13 @@ func TestServiceModeEncryptionOff(t *testing.T) {
 
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	dir := t.TempDir()
-	// HostMountRoot is a container-internal Linux path (always slash-separated),
-	// independent of the OS the test runs on.
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: "/host/user"}
+	// HostMountRoot must be writable so EnsureRepo can create the repo dir, and
+	// slash-separated so it matches the service's slash-based path logic on every
+	// OS (Go's file ops accept forward slashes on Windows too). A literal
+	// "/host/..." would hit a permission-denied mkdir on CI. Mount sources below
+	// are placed under it so appdata resolution matches.
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
@@ -99,7 +103,7 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 
 	// A container whose mount source is under <root>/appdata/plex.
-	appdata := "/host/user/appdata/plex"
+	appdata := root + "/appdata/plex"
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name:  "/plex",
 		Image: "plex:latest",
