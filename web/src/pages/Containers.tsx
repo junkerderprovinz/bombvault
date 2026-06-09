@@ -57,11 +57,14 @@ function ipToTuple(ip: string): number[] {
 }
 
 function compareIPs(a: string, b: string): number {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
   const ta = ipToTuple(a);
   const tb = ipToTuple(b);
-  for (let i = 0; i < Math.max(ta.length, tb.length); i++) {
-    const diff = (ta[i] ?? 0) - (tb[i] ?? 0);
-    if (diff !== 0) return diff;
+  for (let i = 0; i < 4; i++) {
+    const d = (ta[i] ?? 0) - (tb[i] ?? 0);
+    if (d !== 0) return d;
   }
   return 0;
 }
