@@ -13,11 +13,15 @@ type Target struct {
 	AppdataPaths      []string
 	IncludeInSchedule bool
 	CreatedAt         int64
+	// Definition is an opaque JSON blob persisted at backup time. It carries the
+	// container's recreate recipe (inspect + template XML) so restore works even
+	// after the container has been deleted from the host.
+	Definition string
 }
 
 // UpsertTarget inserts or updates the target by container name.
-// On conflict (container already exists), only appdata_paths is refreshed via
-// the ON CONFLICT … DO UPDATE SET clause. id, created_at, and
+// On conflict (container already exists), appdata_paths and definition are
+// refreshed via the ON CONFLICT … DO UPDATE SET clause. id, created_at, and
 // include_in_schedule are preserved from the original row — include_in_schedule
 // is owned exclusively by SetInclude and must never be reset here.
 // Returns the authoritative Target (with the original ID when a conflict fires).
@@ -35,12 +39,13 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	}
 
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition)
+		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
-		  appdata_paths = excluded.appdata_paths`,
+		  appdata_paths = excluded.appdata_paths,
+		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -53,7 +58,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -61,7 +66,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -102,7 +107,7 @@ func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON string
 	var include int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}

@@ -10,7 +10,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/fs"
-	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -194,8 +193,10 @@ func printBanner() {
 }
 
 // printReady prints the loud READY box once the server is about to listen.
+// Writes to stdout (via fmt) so it shares the banner's stream and always
+// appears after the ASCII art, never interleaved with log timestamps.
 func printReady(scheme string, port int) {
 	line := fmt.Sprintf("BOMBVAULT IS READY -> open the WebUI now (%s %d)", scheme, port)
 	border := strings.Repeat("=", len(line)+4)
-	log.Printf("\n%s\n  %s\n%s", border, line, border)
+	fmt.Printf("\n%s\n  %s\n%s\n", border, line, border)
 }

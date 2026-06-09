@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -28,6 +29,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
 )
+
+// containerDefinition is the recreate recipe persisted at backup time so that
+// restore works even after the container has been deleted from the host.
+type containerDefinition struct {
+	Inspect     model.Inspect `json:"inspect"`
+	TemplateXML string        `json:"template_xml"`
+}
 
 // ResticEngine is the subset of *restic.Restic the service depends on. Defining
 // it here (with the real restic.Mode/Summary/Snapshot types) lets the service be
@@ -184,7 +192,15 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	}
 	appdata := s.resolveAppdataPaths(name, in)
 
-	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: appdata})
+	// Persist the recreate recipe alongside the appdata paths so restore works
+	// even after the container has been deleted from the host.
+	xml, _, _ := template.Read(s.cfg.FlashTemplatesDir, name)
+	defJSON := ""
+	if defBytes, jsonErr := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml}); jsonErr == nil {
+		defJSON = string(defBytes)
+	}
+
+	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: appdata, Definition: defJSON})
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("upsert target: %w", err)
 	}
@@ -206,9 +222,10 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 }
 
 // Restore runs a full container restore. The recreate profile is taken from the
-// live container inspect (Phase 1 same-host disaster-recovery assumption: the
-// container definition still exists on the host) and the captured Unraid
-// template is read back from the flash templates dir.
+// persisted definition (stored at backup time) so restore works even after the
+// container has been deleted. For old targets without a stored definition the
+// live inspect is used as a fallback; if that also fails a clear error is
+// returned prompting the user to run one backup first.
 func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm bool) error {
 	// Guard confirmation before touching the store/docker so an unconfirmed
 	// restore surfaces the sentinel (and never errors on a missing target first).
@@ -231,13 +248,27 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		return errors.New("container has not been backed up yet")
 	}
 
-	in, err := s.docker.Inspect(ctx, name)
-	if err != nil {
-		return fmt.Errorf("inspect container: %w", err)
+	// Resolve recreate recipe: prefer the stored definition (works for deleted
+	// containers), fall back to live inspect (for old targets without a stored
+	// definition), fail with a clear message if both are unavailable.
+	var in model.Inspect
+	var xml string
+	if tg.Definition != "" {
+		var def containerDefinition
+		if jsonErr := json.Unmarshal([]byte(tg.Definition), &def); jsonErr != nil {
+			return fmt.Errorf("restore: unmarshal stored definition: %w", jsonErr)
+		}
+		in = def.Inspect
+		xml = def.TemplateXML
+	} else {
+		// Fallback: target was backed up before this feature; try live inspect.
+		liveIn, liveErr := s.docker.Inspect(ctx, name)
+		if liveErr != nil {
+			return errors.New("no stored definition for this container — run a backup once after upgrading, then restore is possible even after deletion")
+		}
+		in = liveIn
+		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
 	}
-
-	// Read back the live Unraid template (if any) to flash on recreate.
-	xml, _, _ := template.Read(s.cfg.FlashTemplatesDir, name)
 
 	return backup.RestoreContainer(ctx, backup.RestoreDeps{
 		Confirmed:         confirm,

@@ -53,6 +53,11 @@ CREATE TABLE runs (
 CREATE INDEX idx_runs_target ON runs(target_id);
 `,
 	},
+	{
+		version: 2,
+		name:    "target_definition",
+		sql:     "ALTER TABLE targets ADD COLUMN definition TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
