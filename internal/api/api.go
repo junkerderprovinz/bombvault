@@ -54,6 +54,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/settings", h.handlePutSettings)
 	mux.HandleFunc("POST /api/spike", h.handleSpike)
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
+	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 
 	return mux
 }
