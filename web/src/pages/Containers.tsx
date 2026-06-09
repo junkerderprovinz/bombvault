@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listContainers, getSettings, putSettings } from "../lib/api";
-import type { Container, Settings } from "../lib/api";
+import { listContainers } from "../lib/api";
+import type { Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
@@ -35,184 +35,90 @@ function StateChip({ state }: { state: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Schedule editor card
+// Sort control
 // ---------------------------------------------------------------------------
 
-type SchedulePreset = "off" | "daily" | "weekly" | "cron";
+type SortKey = "name" | "status" | "ip";
 
-function parsePreset(value: string): SchedulePreset {
-  if (value === "off" || value === "") return "off";
-  if (/^daily\s+\d{1,2}:\d{2}$/.test(value)) return "daily";
-  if (/^weekly\s+\w+\s+\d{1,2}:\d{2}$/.test(value)) return "weekly";
-  return "cron";
+const SORT_STORAGE_KEY = "bv-containers-sort";
+
+function loadSortKey(): SortKey {
+  const v = localStorage.getItem(SORT_STORAGE_KEY);
+  if (v === "name" || v === "status" || v === "ip") return v;
+  return "name";
 }
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-interface ScheduleCardProps {
-  t: ReturnType<typeof useT>["t"];
+/** Parse an IP like "192.168.1.5" into a numeric tuple for numeric-aware sort. */
+function ipToTuple(ip: string): number[] {
+  if (!ip) return [Infinity];
+  const parts = ip.split(".").map(Number);
+  if (parts.length !== 4 || parts.some(isNaN)) return [Infinity];
+  return parts;
 }
 
-function ScheduleCard({ t }: ScheduleCardProps) {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [preset, setPreset] = useState<SchedulePreset>("off");
-  const [dailyTime, setDailyTime] = useState("02:00");
-  const [weeklyDay, setWeeklyDay] = useState("Mon");
-  const [weeklyTime, setWeeklyTime] = useState("02:00");
-  const [cronExpr, setCronExpr] = useState("");
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getSettings()
-      .then((res) => {
-        if (!res.ok) return;
-        setSettings(res.settings);
-        const sched = res.settings.containersSchedule ?? "off";
-        const p = parsePreset(sched);
-        setPreset(p);
-        if (p === "daily") {
-          const m = /^daily\s+(\d{1,2}:\d{2})$/.exec(sched);
-          if (m) setDailyTime(m[1]);
-        } else if (p === "weekly") {
-          const m = /^weekly\s+(\w+)\s+(\d{1,2}:\d{2})$/.exec(sched);
-          if (m) { setWeeklyDay(m[1]); setWeeklyTime(m[2]); }
-        } else if (p === "cron") {
-          setCronExpr(sched);
-        }
-      })
-      .catch(() => {/* non-fatal */});
-  }, []);
-
-  function buildValue(): string {
-    if (preset === "off") return "off";
-    if (preset === "daily") return `daily ${dailyTime}`;
-    if (preset === "weekly") return `weekly ${weeklyDay} ${weeklyTime}`;
-    return cronExpr.trim() || "off";
+function compareIPs(a: string, b: string): number {
+  const ta = ipToTuple(a);
+  const tb = ipToTuple(b);
+  for (let i = 0; i < Math.max(ta.length, tb.length); i++) {
+    const diff = (ta[i] ?? 0) - (tb[i] ?? 0);
+    if (diff !== 0) return diff;
   }
+  return 0;
+}
 
-  async function handleSave() {
-    if (!settings) return;
-    setSaveState("saving");
-    setSaveError(null);
-    const updated: Settings = { ...settings, containersSchedule: buildValue() };
-    try {
-      const res = await putSettings(updated);
-      if (res.ok) {
-        setSettings(updated);
-        setSaveState("saved");
-        setTimeout(() => setSaveState("idle"), 3000);
-      } else {
-        setSaveError(res.error ?? "Save failed");
-        setSaveState("error");
-      }
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Save failed");
-      setSaveState("error");
+function sortContainers(containers: Container[], key: SortKey): Container[] {
+  const copy = [...containers];
+  switch (key) {
+    case "name":
+      return copy.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+      );
+    case "status": {
+      const rank = (c: Container) => (c.state.toLowerCase() === "running" ? 0 : 1);
+      return copy.sort((a, b) => {
+        const r = rank(a) - rank(b);
+        if (r !== 0) return r;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
     }
+    case "ip":
+      return copy.sort((a, b) => {
+        const cmp = compareIPs(a.ip, b.ip);
+        if (cmp !== 0) return cmp;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
   }
+}
 
+const SORT_LABELS: Record<SortKey, string> = {
+  name: "Name (A–Z)",
+  status: "Status",
+  ip: "IP",
+};
+
+function SortControl({
+  value,
+  onChange,
+}: {
+  value: SortKey;
+  onChange: (k: SortKey) => void;
+}) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("containers.schedule")}
-        </h2>
-      </div>
-
-      {/* Preset selector */}
-      <div className="flex flex-wrap gap-2">
-        {(["off", "daily", "weekly", "cron"] as SchedulePreset[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPreset(p)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              preset === p
-                ? "bg-carbon-surface3 text-carbon-text"
-                : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-            }`}
-          >
-            {p === "off" ? t("settings.scheduleOff") : p}
-          </button>
-        ))}
-      </div>
-
-      {/* Fields */}
-      {preset === "daily" && (
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textSub w-16">Time</label>
-          <input
-            type="time"
-            value={dailyTime}
-            onChange={(e) => setDailyTime(e.target.value)}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]"
-          />
-        </div>
-      )}
-
-      {preset === "weekly" && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <label className="text-xs text-carbon-textSub w-16">Day</label>
-          <select
-            value={weeklyDay}
-            onChange={(e) => setWeeklyDay(e.target.value)}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]"
-          >
-            {DAYS.map((d) => <option key={d}>{d}</option>)}
-          </select>
-          <label className="text-xs text-carbon-textSub">at</label>
-          <input
-            type="time"
-            value={weeklyTime}
-            onChange={(e) => setWeeklyTime(e.target.value)}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]"
-          />
-        </div>
-      )}
-
-      {preset === "cron" && (
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textSub w-16">Cron</label>
-          <input
-            type="text"
-            value={cronExpr}
-            onChange={(e) => setCronExpr(e.target.value)}
-            placeholder="30 2 * * *"
-            spellCheck={false}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff] w-44"
-          />
-          <span className="text-xs text-carbon-textMuted">standard 5-field cron</span>
-        </div>
-      )}
-
-      {/* Preview */}
-      <p className="text-xs text-carbon-textMuted">
-        Value: <span className="font-mono text-carbon-textSub">{buildValue()}</span>
-      </p>
-
-      {/* Save */}
-      <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-carbon-textMuted">Sort:</span>
+      {(["name", "status", "ip"] as SortKey[]).map((k) => (
         <button
-          onClick={() => void handleSave()}
-          disabled={saveState === "saving" || !settings}
-          className="inline-flex items-center gap-2 rounded-lg bg-carbon-surface3 px-4 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+          key={k}
+          onClick={() => onChange(k)}
+          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+            value === k
+              ? "bg-carbon-surface3 text-carbon-text"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
         >
-          {saveState === "saving" ? (
-            <>
-              <span className="h-3 w-3 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
-              Saving…
-            </>
-          ) : (
-            t("settings.save")
-          )}
+          {SORT_LABELS[k]}
         </button>
-        {saveState === "saved" && (
-          <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>
-        )}
-        {saveState === "error" && saveError && (
-          <span className="text-xs text-[#ff8389]">{saveError}</span>
-        )}
-      </div>
+      ))}
     </div>
   );
 }
@@ -239,6 +145,9 @@ function ContainerRow({
               {container.name}
             </span>
             <StateChip state={container.state} />
+            {container.ip && (
+              <span className="text-xs text-carbon-textMuted font-mono">{container.ip}</span>
+            )}
           </div>
           <p className="text-xs text-carbon-textMuted mt-0.5 truncate">{container.image}</p>
         </div>
@@ -281,6 +190,7 @@ export function Containers() {
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
 
   useEffect(() => {
     listContainers()
@@ -291,6 +201,13 @@ export function Containers() {
       .catch(() => setError("Failed to load containers"))
       .finally(() => setLoading(false));
   }, []);
+
+  function handleSortChange(k: SortKey) {
+    setSortKey(k);
+    localStorage.setItem(SORT_STORAGE_KEY, k);
+  }
+
+  const sorted = sortContainers(containers, sortKey);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -303,9 +220,6 @@ export function Containers() {
           Manage container backups, schedules, and restores.
         </p>
       </div>
-
-      {/* Schedule card */}
-      <ScheduleCard t={t} />
 
       {/* Container list */}
       {loading && (
@@ -323,7 +237,8 @@ export function Containers() {
       )}
       {!loading && containers.length > 0 && (
         <div className="flex flex-col gap-3">
-          {containers.map((c) => (
+          <SortControl value={sortKey} onChange={handleSortChange} />
+          {sorted.map((c) => (
             <ContainerRow key={c.name} container={c} t={t} />
           ))}
         </div>
