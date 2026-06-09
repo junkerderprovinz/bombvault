@@ -18,6 +18,7 @@ type Config struct {
 	AppKey            string
 	DataDir           string
 	HostMountRoot     string
+	HostSourceRoot    string
 	Port              int
 	HTTPSPort         int
 	HTTPOnly          bool
@@ -37,6 +38,7 @@ func Load(env map[string]string) (Config, error) {
 		AppKey:            key,
 		DataDir:           stringOr(env["DATA_DIR"], "/config"),
 		HostMountRoot:     stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
+		HostSourceRoot:    stringOr(env["HOST_SOURCE_ROOT"], "/mnt/user"),
 		Port:              intOr(env["PORT"], 3000),
 		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),
