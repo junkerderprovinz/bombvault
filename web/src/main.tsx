@@ -1,11 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
+import "flag-icons/css/flag-icons.min.css";
 import { AppRouter } from "./app/router";
 import { applyStoredTheme } from "./lib/theme";
 import { applyStoredLanguage } from "./lib/i18n";
 
-// Apply persisted preferences before first paint.
+// Apply persisted preferences before first paint (flash prevention).
 applyStoredTheme();
 applyStoredLanguage();
 

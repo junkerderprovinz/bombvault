@@ -1,12 +1,13 @@
 // ---------------------------------------------------------------------------
-// Minimal i18n — en + de; other locales stub to English.
-// useT() returns a translation function. Language state is in localStorage.
+// i18n — React Context-based, 26 locales, flag switcher support
 // ---------------------------------------------------------------------------
 
-import { useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
+import type { ReactNode } from "react";
+import { createElement } from "react";
 
 // ---------------------------------------------------------------------------
-// Locale strings — en is the source of truth
+// Translation key set — en is the source of truth
 // ---------------------------------------------------------------------------
 
 const en = {
@@ -119,11 +120,11 @@ const en = {
   "settings.error": "Error saving settings",
 } as const;
 
-type TranslationKey = keyof typeof en;
+export type TranslationKey = keyof typeof en;
 type Translations = Record<TranslationKey, string>;
 
 // ---------------------------------------------------------------------------
-// German locale
+// German locale (full)
 // ---------------------------------------------------------------------------
 
 const de: Translations = {
@@ -228,66 +229,129 @@ const de: Translations = {
 };
 
 // ---------------------------------------------------------------------------
-// Locale registry
+// Locale registry — 26 languages. Only en + de are fully translated;
+// all others stub to English (full translations are a separate backlog item).
 // ---------------------------------------------------------------------------
 
-type LangCode = "en" | "de";
-
-const locales: Record<LangCode, Translations> = { en, de };
-
-const SUPPORTED_LANGS: LangCode[] = ["en", "de"];
-const LANG_NAMES: Record<LangCode, string> = { en: "English", de: "Deutsch" };
-const STORAGE_KEY = "bv-lang";
-const DEFAULT_LANG: LangCode = "en";
-
-function resolveCode(raw: string | null): LangCode {
-  if (raw === "en" || raw === "de") return raw;
-  const browser = navigator.language.slice(0, 2);
-  if (browser === "en" || browser === "de") return browser;
-  return DEFAULT_LANG;
+export interface Language {
+  /** BCP-47 language code used as the locale key. */
+  code: string;
+  /** Endonym — the language's own name, shown in the picker. */
+  label: string;
+  /** ISO 3166-1 alpha-2 region code used by flag-icons (fi fi-XX). */
+  flag: string;
+  /** true for right-to-left languages (Arabic, Hebrew, …). */
+  rtl?: boolean;
 }
 
-function getLang(): LangCode {
+export const LANGUAGES: Language[] = [
+  { code: "en", label: "English",      flag: "gb" },
+  { code: "de", label: "Deutsch",      flag: "de" },
+  { code: "fr", label: "Français",     flag: "fr" },
+  { code: "es", label: "Español",      flag: "es" },
+  { code: "it", label: "Italiano",     flag: "it" },
+  { code: "pt", label: "Português",    flag: "pt" },
+  { code: "nl", label: "Nederlands",   flag: "nl" },
+  { code: "pl", label: "Polski",       flag: "pl" },
+  { code: "ru", label: "Русский",      flag: "ru" },
+  { code: "uk", label: "Українська",   flag: "ua" },
+  { code: "cs", label: "Čeština",      flag: "cz" },
+  { code: "sv", label: "Svenska",      flag: "se" },
+  { code: "da", label: "Dansk",        flag: "dk" },
+  { code: "fi", label: "Suomi",        flag: "fi" },
+  { code: "no", label: "Norsk",        flag: "no" },
+  { code: "tr", label: "Türkçe",       flag: "tr" },
+  { code: "el", label: "Ελληνικά",     flag: "gr" },
+  { code: "hu", label: "Magyar",       flag: "hu" },
+  { code: "ro", label: "Română",       flag: "ro" },
+  { code: "ja", label: "日本語",        flag: "jp" },
+  { code: "ko", label: "한국어",        flag: "kr" },
+  { code: "zh", label: "中文",          flag: "cn" },
+  { code: "ar", label: "العربية",       flag: "sa", rtl: true },
+  { code: "he", label: "עברית",         flag: "il", rtl: true },
+  { code: "th", label: "ไทย",           flag: "th" },
+  { code: "vi", label: "Tiếng Việt",   flag: "vn" },
+];
+
+export const SUPPORTED = LANGUAGES.map((l) => l.code);
+const DEFAULT_CODE = "en";
+const STORAGE_KEY = "bv-lang";
+
+/** Whether a language code is right-to-left. */
+export const isRtl = (code: string): boolean =>
+  LANGUAGES.find((l) => l.code === code)?.rtl ?? false;
+
+// Fully translated locales — all others fall back to English at runtime.
+const locales: Record<string, Translations> = { en, de };
+
+function resolveCode(raw: string | null): string {
+  if (raw && SUPPORTED.includes(raw)) return raw;
+  const browser = navigator.language.slice(0, 2);
+  if (SUPPORTED.includes(browser)) return browser;
+  return DEFAULT_CODE;
+}
+
+function storedCode(): string {
   return resolveCode(localStorage.getItem(STORAGE_KEY));
 }
 
-function setLang(code: LangCode): void {
-  localStorage.setItem(STORAGE_KEY, code);
-}
-
-/** Called at boot in main.tsx. */
+/** Called at boot in main.tsx before first React render (flash prevention). */
 export function applyStoredLanguage(): void {
-  const code = getLang();
+  const code = storedCode();
   document.documentElement.setAttribute("lang", code);
+  if (isRtl(code)) document.documentElement.setAttribute("dir", "rtl");
 }
 
 // ---------------------------------------------------------------------------
-// useT() hook
+// React Context
 // ---------------------------------------------------------------------------
 
-/** Returns [t, currentLang, setLanguage, supportedLangs, langNames]. */
-export function useT(): {
+export interface I18nContextValue {
+  lang: string;
+  setLanguage: (code: string) => void;
   t: (key: TranslationKey) => string;
-  lang: LangCode;
-  setLanguage: (code: LangCode) => void;
-  supportedLangs: LangCode[];
-  langNames: Record<LangCode, string>;
-} {
-  const [lang, setLangState] = useState<LangCode>(getLang);
+  languages: Language[];
+}
 
-  const setLanguage = useCallback((code: LangCode) => {
-    setLang(code);
+// Provide a safe default so `useT()` never throws outside a Provider during tests.
+const I18nContext = createContext<I18nContextValue>({
+  lang: DEFAULT_CODE,
+  setLanguage: () => undefined,
+  t: (key) => en[key] ?? key,
+  languages: LANGUAGES,
+});
+
+/** Mount once at the app root (Layout or main). Children share one language state. */
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<string>(storedCode);
+
+  const setLanguage = useCallback((code: string) => {
+    if (!SUPPORTED.includes(code)) return;
+    localStorage.setItem(STORAGE_KEY, code);
     document.documentElement.setAttribute("lang", code);
+    document.documentElement.setAttribute("dir", isRtl(code) ? "rtl" : "ltr");
     setLangState(code);
   }, []);
 
   const t = useCallback(
     (key: TranslationKey): string => {
-      const locale = locales[lang] ?? locales[DEFAULT_LANG];
+      const locale = locales[lang] ?? locales[DEFAULT_CODE];
       return locale[key] ?? en[key] ?? key;
     },
     [lang]
   );
 
-  return { t, lang, setLanguage, supportedLangs: SUPPORTED_LANGS, langNames: LANG_NAMES };
+  return createElement(
+    I18nContext.Provider,
+    { value: { lang, setLanguage, t, languages: LANGUAGES } },
+    children
+  );
+}
+
+/**
+ * useT() — reads from the shared I18nContext.
+ * Must be called inside <I18nProvider>. Any setLanguage call re-renders the whole tree.
+ */
+export function useT(): I18nContextValue {
+  return useContext(I18nContext);
 }

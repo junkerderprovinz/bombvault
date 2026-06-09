@@ -76,6 +76,30 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 	return &run, nil
 }
 
+// LastSuccessfulContainerBackup returns the time of the most recent successful
+// backup run across ALL container targets, or a zero time when there has been
+// none. This is used by the scheduler's everyN due-gate to decide whether the
+// containers domain is due for a run.
+func (r *Repo) LastSuccessfulContainerBackup() (time.Time, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success'
+		ORDER BY started_at DESC
+		LIMIT 1`)
+	var ts sql.NullInt64
+	if err := row.Scan(&ts); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return time.Time{}, nil
+		}
+		return time.Time{}, fmt.Errorf("LastSuccessfulContainerBackup: %w", err)
+	}
+	if !ts.Valid {
+		return time.Time{}, nil
+	}
+	return time.Unix(ts.Int64, 0), nil
+}
+
 // ListRuns returns up to limit recent runs across all targets, newest first.
 func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	rows, err := r.db.Query(`

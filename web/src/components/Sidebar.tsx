@@ -1,11 +1,8 @@
 import { NavLink } from "react-router-dom";
 import type { Settings } from "../lib/api";
-import type { useT } from "../lib/i18n";
-
-type T = ReturnType<typeof useT>["t"];
+import { useT } from "../lib/i18n";
 
 interface SidebarProps {
-  t: T;
   settings: Settings | null;
 }
 
@@ -110,7 +107,8 @@ function NavItem({ to, label, icon, disabled, comingSoon }: NavItem) {
   );
 }
 
-export function Sidebar({ t, settings }: SidebarProps) {
+export function Sidebar({ settings }: SidebarProps) {
+  const { t } = useT();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
 
@@ -118,10 +116,10 @@ export function Sidebar({ t, settings }: SidebarProps) {
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
       {/* Logo / brand */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-carbon-border">
-        <div className="w-7 h-7 rounded-lg bg-carbon-surface3 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-lg bg-carbon-surface3 text-carbon-text flex items-center justify-center">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="5" stroke="#f4f4f4" strokeWidth="1.5" />
-            <path d="M8 5v3l2 1.5" stroke="#f4f4f4" strokeWidth="1.3" strokeLinecap="round" />
+            <circle cx="8" cy="8" r="5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
         </div>
         <span className="text-carbon-text font-semibold text-sm tracking-wide">

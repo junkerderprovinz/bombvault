@@ -5,7 +5,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -95,6 +97,7 @@ type containerView struct {
 	Image             string `json:"image"`
 	State             string `json:"state"`
 	Status            string `json:"status"`
+	IP                string `json:"ip"`
 	IncludeInSchedule bool   `json:"includeInSchedule"`
 	LastBackup        *int64 `json:"lastBackup"`
 }
@@ -120,6 +123,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			Image:  c.Image,
 			State:  c.State,
 			Status: c.Status,
+			IP:     c.IP,
 		}
 		if t, ok := byName[c.Name]; ok {
 			v.IncludeInSchedule = t.IncludeInSchedule
@@ -257,7 +261,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Validate each cadence parses.
 	for _, cad := range []string{v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule} {
-		if _, _, err := schedule.ParseCadence(cad); err != nil {
+		if _, err := schedule.ParseCadence(cad); err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok": false, "error": scrubError(err),
 			})
@@ -282,7 +286,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.scheduler.Reload(s); err != nil {
+	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, nil, nil); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
@@ -313,4 +317,81 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 		runs = []store.Run{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": runs})
+}
+
+// browseDirEntry is a single subdirectory entry in the browse response.
+type browseDirEntry struct {
+	Name string `json:"name"`
+	Path string `json:"path"` // relative to HostMountRoot (e.g. "appdata/plex")
+}
+
+// handleBrowse serves GET /api/browse?path=<subpath>.
+// It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
+// excluding hidden entries (dot-prefixed names), sorted alphabetically.
+//
+// The response is always HTTP 200; errors use {ok:false,error} so the UI can
+// display a graceful message. A missing or empty `path` query parameter lists
+// the mount root itself.
+func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
+	subpath := r.URL.Query().Get("path")
+
+	// Resolve the absolute path to read.
+	// An empty subpath lists the mount root itself — paths.Resolve requires a
+	// non-empty child (strict containment), so we use the root directly.
+	var abs string
+	if subpath == "" {
+		abs = h.cfg.HostMountRoot
+	} else {
+		var err error
+		abs, err = paths.Resolve(h.cfg.HostMountRoot, subpath)
+		if err != nil {
+			// paths.Resolve returns ErrTraversal or ErrAbsoluteSub — neither
+			// leaks host paths; report a generic message for defense-in-depth.
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok":    false,
+				"error": "invalid path: must be a relative subpath under the mount root",
+			})
+			return
+		}
+	}
+
+	entries, err := os.ReadDir(abs)
+	if err != nil {
+		log.Printf("api: browse: ReadDir %q: %v", abs, err) //nolint:gosec // G706: abs is always either cfg.HostMountRoot or a Resolve-validated child path; no raw user bytes reach the log formatter
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "could not read directory",
+		})
+		return
+	}
+
+	dirs := make([]browseDirEntry, 0, len(entries))
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasPrefix(name, ".") {
+			continue // skip hidden entries
+		}
+		// Build the relative path from HostMountRoot to this entry.
+		var rel string
+		if subpath == "" {
+			rel = name
+		} else {
+			rel = subpath + "/" + name
+		}
+		dirs = append(dirs, browseDirEntry{Name: name, Path: rel})
+	}
+
+	// os.ReadDir returns entries in directory order (usually alphabetical on
+	// most filesystems), but sort explicitly to guarantee it.
+	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name < dirs[j].Name })
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":   true,
+		"root": h.cfg.HostMountRoot,
+		"path": subpath,
+		"dirs": dirs,
+	})
 }

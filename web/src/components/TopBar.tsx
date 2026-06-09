@@ -1,17 +1,10 @@
 import { getTheme, toggleTheme } from "../lib/theme";
-import { useState } from "react";
-import type { useT } from "../lib/i18n";
+import { useState, useRef, useEffect } from "react";
+import { useT } from "../lib/i18n";
 
-type T = ReturnType<typeof useT>["t"];
-type LangCode = "en" | "de";
-
-interface TopBarProps {
-  t: T;
-  lang: LangCode;
-  setLanguage: (code: LangCode) => void;
-  supportedLangs: LangCode[];
-  langNames: Record<LangCode, string>;
-}
+// ---------------------------------------------------------------------------
+// Icons
+// ---------------------------------------------------------------------------
 
 function IconSun() {
   return (
@@ -40,13 +33,115 @@ function IconMoon() {
   );
 }
 
-export function TopBar({
-  t,
-  lang,
-  setLanguage,
-  supportedLangs,
-  langNames,
-}: TopBarProps) {
+// ---------------------------------------------------------------------------
+// Flag helper — renders a flag-icons span for the given ISO 3166-1 alpha-2 code
+// ---------------------------------------------------------------------------
+
+function Flag({ code }: { code: string }) {
+  return (
+    <span
+      className={`fi fi-${code}`}
+      style={{ width: "1.25em", height: "1em", display: "inline-block", flexShrink: 0 }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LanguageSwitcher
+// ---------------------------------------------------------------------------
+
+function LanguageSwitcher() {
+  const { lang, setLanguage, languages, t } = useT();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const current = languages.find((l) => l.code === lang) ?? languages[0];
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Trigger button — shows current flag + label */}
+      <button
+        aria-label={t("language.label")}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-carbon-textSub border border-carbon-border bg-carbon-surface hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+      >
+        <Flag code={current.flag} />
+        <span className="hidden sm:inline">{current.label}</span>
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        >
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          role="listbox"
+          aria-label={t("language.label")}
+          className="absolute right-0 top-full mt-1 z-50 w-48 max-h-72 overflow-y-auto rounded-xl border border-carbon-border bg-carbon-surface shadow-lg"
+          style={{ scrollbarColor: "var(--carbon-border) transparent" }}
+        >
+          {languages.map((l) => (
+            <button
+              key={l.code}
+              role="option"
+              aria-selected={l.code === lang}
+              onClick={() => {
+                setLanguage(l.code);
+                setOpen(false);
+              }}
+              className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors ${
+                l.code === lang
+                  ? "bg-carbon-surface3 text-carbon-text"
+                  : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              }`}
+            >
+              <Flag code={l.flag} />
+              <span>{l.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TopBar
+// ---------------------------------------------------------------------------
+
+export function TopBar() {
+  const { t } = useT();
   const [theme, setThemeState] = useState(getTheme);
 
   function handleToggleTheme() {
@@ -56,26 +151,8 @@ export function TopBar({
 
   return (
     <header className="flex items-center justify-end gap-2 px-4 py-2.5 bg-carbon-surface border-b border-carbon-border shrink-0">
-      {/* Language switcher */}
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-carbon-textMuted mr-1">{t("language.label")}:</span>
-        <div className="flex rounded-lg overflow-hidden border border-carbon-border">
-          {supportedLangs.map((code) => (
-            <button
-              key={code}
-              onClick={() => setLanguage(code)}
-              className={`px-2 py-1 text-xs font-medium transition-colors ${
-                lang === code
-                  ? "bg-carbon-surface3 text-carbon-text"
-                  : "bg-carbon-surface text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              }`}
-              title={langNames[code]}
-            >
-              {langNames[code]}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Flag-based language switcher */}
+      <LanguageSwitcher />
 
       {/* Theme toggle */}
       <button
