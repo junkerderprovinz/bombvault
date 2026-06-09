@@ -14,6 +14,11 @@ type ContainerInfo struct {
 	Image  string
 	State  string
 	Status string
+	// IP is the first non-empty IP address found in the container's network
+	// settings. Empty when the container has no network (e.g. host networking
+	// configured without an explicit IP, or a stopped container whose network
+	// state is not stored in the list summary).
+	IP string
 }
 
 // Docker is the host-control surface consumed by the backup orchestrator.
