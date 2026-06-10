@@ -3,6 +3,7 @@ import { getSettings, putSettings, browse } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
+import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
 
 // ---------------------------------------------------------------------------
 // Card wrapper
@@ -91,11 +92,14 @@ function SaveBar({
       <button
         onClick={onSave}
         disabled={state === "saving"}
-        className="inline-flex items-center gap-2 rounded-lg bg-carbon-surface3 px-4 py-1.5 text-sm font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {state === "saving" ? (
           <>
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
+            <span
+              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
             Saving…
           </>
         ) : (
@@ -481,6 +485,18 @@ function CadenceBuilder({
 }
 
 // ---------------------------------------------------------------------------
+// Accent preset swatches
+// ---------------------------------------------------------------------------
+
+const ACCENT_PRESETS = [
+  { hex: "#FCC419", label: "Sunflower" },
+  { hex: "#1D99F3", label: "Blue" },
+  { hex: "#6FDC8C", label: "Green" },
+  { hex: "#FF8389", label: "Red" },
+  { hex: "#BE95FF", label: "Purple" },
+] as const;
+
+// ---------------------------------------------------------------------------
 // Settings page
 // ---------------------------------------------------------------------------
 
@@ -490,6 +506,9 @@ export function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Accent color state — synced from/to localStorage via accent.ts
+  const [accentHex, setAccentHex] = useState<string>(() => getAccent());
 
   // Per-section save state
   const [encSaveState, setEncSaveState] = useState<SaveState>("idle");
@@ -601,6 +620,63 @@ export function SettingsPage() {
           BombVault configuration — changes take effect immediately.
         </p>
       </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Appearance                                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.appearance")}>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Native color picker */}
+              <input
+                type="color"
+                value={accentHex}
+                onChange={(e) => {
+                  setAccentHex(e.target.value);
+                  setAccent(e.target.value);
+                }}
+                className="h-8 w-14 cursor-pointer rounded border border-carbon-border bg-carbon-surface2 p-0.5"
+                title={t("settings.accentColor")}
+              />
+              {/* Preset swatches */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
+                {ACCENT_PRESETS.map((p) => (
+                  <button
+                    key={p.hex}
+                    title={p.label}
+                    onClick={() => {
+                      setAccentHex(p.hex);
+                      setAccent(p.hex);
+                    }}
+                    className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+                    style={{
+                      backgroundColor: p.hex,
+                      borderColor: accentHex.toLowerCase() === p.hex.toLowerCase()
+                        ? "var(--carbon-text)"
+                        : "var(--carbon-border)",
+                    }}
+                  />
+                ))}
+                {/* Reset to default */}
+                {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
+                  <button
+                    onClick={() => {
+                      setAccentHex(DEFAULT_ACCENT);
+                      setAccent(DEFAULT_ACCENT);
+                    }}
+                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* ------------------------------------------------------------------ */}
       {/* Encryption                                                           */}

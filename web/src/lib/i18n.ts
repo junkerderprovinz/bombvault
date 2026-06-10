@@ -136,6 +136,37 @@ const en = {
   "settings.save": "Save",
   "settings.saved": "Settings saved",
   "settings.error": "Error saving settings",
+
+  // Appearance / Accent
+  "settings.appearance": "Appearance",
+  "settings.accentColor": "Accent color",
+  "settings.accentPresets": "Presets",
+
+  // Dashboard stat cards
+  "dashboard.statContainers": "Containers",
+  "dashboard.statVMs": "VMs",
+  "dashboard.statActiveJobs": "Active jobs",
+  "dashboard.statPausedJobs": "Paused jobs",
+  "dashboard.statErrors": "Errors",
+  "dashboard.statMissingContainers": "Missing containers",
+  "dashboard.statMissingVMs": "Missing VMs",
+
+  // Jobs page
+  "nav.jobs": "Jobs",
+  "jobs.title": "Jobs",
+  "jobs.subtitle": "Backup plans by domain",
+  "jobs.configureInSettings": "Configure schedules in Settings",
+  "jobs.containersSection": "Containers",
+  "jobs.vmsSection": "VMs",
+  "jobs.flashSection": "Flash",
+  "jobs.active": "Active",
+  "jobs.paused": "Paused",
+  "jobs.notScheduled": "Not scheduled",
+  "jobs.noVMs": "No VMs yet",
+  "jobs.noContainersIncluded": "No containers included in schedule.",
+  "jobs.flashRow": "Unraid flash config",
+  "jobs.flashPlanned": "planned",
+  "jobs.vmPlanned": "VM backup executor not yet implemented.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -262,6 +293,37 @@ const de: Translations = {
   "settings.save": "Speichern",
   "settings.saved": "Einstellungen gespeichert",
   "settings.error": "Fehler beim Speichern",
+
+  // Appearance / Accent
+  "settings.appearance": "Erscheinungsbild",
+  "settings.accentColor": "Akzentfarbe",
+  "settings.accentPresets": "Voreinstellungen",
+
+  // Dashboard stat cards
+  "dashboard.statContainers": "Container",
+  "dashboard.statVMs": "VMs",
+  "dashboard.statActiveJobs": "Aktive Jobs",
+  "dashboard.statPausedJobs": "Pausierte Jobs",
+  "dashboard.statErrors": "Fehler",
+  "dashboard.statMissingContainers": "Fehlende Container",
+  "dashboard.statMissingVMs": "Fehlende VMs",
+
+  // Jobs page
+  "nav.jobs": "Jobs",
+  "jobs.title": "Jobs",
+  "jobs.subtitle": "Backup-Pläne nach Domäne",
+  "jobs.configureInSettings": "Zeitpläne in den Einstellungen konfigurieren",
+  "jobs.containersSection": "Container",
+  "jobs.vmsSection": "VMs",
+  "jobs.flashSection": "Flash",
+  "jobs.active": "Aktiv",
+  "jobs.paused": "Pausiert",
+  "jobs.notScheduled": "Kein Zeitplan",
+  "jobs.noVMs": "Noch keine VMs",
+  "jobs.noContainersIncluded": "Keine Container im Zeitplan enthalten.",
+  "jobs.flashRow": "Unraid Flash-Konfiguration",
+  "jobs.flashPlanned": "geplant",
+  "jobs.vmPlanned": "VM-Backup-Executor noch nicht implementiert.",
 };
 
 // ---------------------------------------------------------------------------
@@ -310,6 +372,12 @@ export const LANGUAGES: Language[] = [
 ];
 
 export const SUPPORTED = LANGUAGES.map((l) => l.code);
+
+/** Locales offered in the language switcher UI — only fully-translated ones. */
+export const OFFERED_LANGUAGES: Language[] = LANGUAGES.filter((l) =>
+  ["en", "de"].includes(l.code)
+);
+
 const DEFAULT_CODE = "en";
 const STORAGE_KEY = "bv-lang";
 
@@ -320,10 +388,12 @@ export const isRtl = (code: string): boolean =>
 // Fully translated locales — all others fall back to English at runtime.
 const locales: Record<string, Translations> = { en, de };
 
+/** Resolve a raw locale code to one offered in the switcher (en or de only). */
 function resolveCode(raw: string | null): string {
-  if (raw && SUPPORTED.includes(raw)) return raw;
+  const offered = OFFERED_LANGUAGES.map((l) => l.code);
+  if (raw && offered.includes(raw)) return raw;
   const browser = navigator.language.slice(0, 2);
-  if (SUPPORTED.includes(browser)) return browser;
+  if (offered.includes(browser)) return browser;
   return DEFAULT_CODE;
 }
 
@@ -354,7 +424,7 @@ const I18nContext = createContext<I18nContextValue>({
   lang: DEFAULT_CODE,
   setLanguage: () => undefined,
   t: (key) => en[key] ?? key,
-  languages: LANGUAGES,
+  languages: OFFERED_LANGUAGES,
 });
 
 /** Mount once at the app root (Layout or main). Children share one language state. */
@@ -362,7 +432,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<string>(storedCode);
 
   const setLanguage = useCallback((code: string) => {
-    if (!SUPPORTED.includes(code)) return;
+    const offered = OFFERED_LANGUAGES.map((l) => l.code);
+    if (!offered.includes(code)) return;
     localStorage.setItem(STORAGE_KEY, code);
     document.documentElement.setAttribute("lang", code);
     document.documentElement.setAttribute("dir", isRtl(code) ? "rtl" : "ltr");
@@ -379,7 +450,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   return createElement(
     I18nContext.Provider,
-    { value: { lang, setLanguage, t, languages: LANGUAGES } },
+    { value: { lang, setLanguage, t, languages: OFFERED_LANGUAGES } },
     children
   );
 }

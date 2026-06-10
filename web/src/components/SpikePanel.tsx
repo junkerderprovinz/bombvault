@@ -74,11 +74,14 @@ export function SpikePanel({ t }: SpikePanelProps) {
         <button
           onClick={() => void handleCheck()}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {loading ? (
             <>
-              <span className="h-3.5 w-3.5 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
+              <span
+                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              />
               {t("dashboard.checking")}
             </>
           ) : (

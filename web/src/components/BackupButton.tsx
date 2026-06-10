@@ -42,11 +42,14 @@ export function BackupButton({ name, t }: BackupButtonProps) {
       <button
         onClick={() => void handleBackup()}
         disabled={isPending}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>
-            <span className="h-3 w-3 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin inline-block" />
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
             Backing up…
           </>
         ) : (

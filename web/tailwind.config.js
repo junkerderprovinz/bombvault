@@ -18,6 +18,8 @@ export default {
           border:     "var(--carbon-border)",
           hover:      "var(--carbon-hover)",
         },
+        accent:         "var(--accent)",
+        accentContrast: "var(--accent-contrast)",
       },
       borderRadius: {
         card: "0.75rem",

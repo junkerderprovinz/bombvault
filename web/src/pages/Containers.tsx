@@ -117,7 +117,7 @@ function SortControl({
           onClick={() => onChange(k)}
           className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             value === k
-              ? "bg-carbon-surface3 text-carbon-text"
+              ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
@@ -165,7 +165,7 @@ function FilterControl({
           onClick={() => onChange(k)}
           className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             value === k
-              ? "bg-carbon-surface3 text-carbon-text"
+              ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
@@ -248,7 +248,8 @@ function ContainerRow({
             checked={!!selected}
             onChange={onToggleSelect}
             aria-label={`Select ${container.name}`}
-            className="mt-1 h-4 w-4 shrink-0 accent-[#78a9ff] cursor-pointer"
+            className="mt-1 h-4 w-4 shrink-0 cursor-pointer"
+            style={{ accentColor: "var(--accent)" }}
           />
         )}
         {/* Name + image */}
@@ -435,7 +436,7 @@ export function Containers() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("containers.discoverHint")}
-            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -467,7 +468,8 @@ export function Containers() {
                 type="checkbox"
                 checked={allLiveSelected}
                 onChange={toggleSelectAll}
-                className="h-4 w-4 accent-[#78a9ff] cursor-pointer"
+                className="h-4 w-4 cursor-pointer"
+                style={{ accentColor: "var(--accent)" }}
               />
               {t("containers.selectAll")}
             </label>
@@ -484,14 +486,14 @@ export function Containers() {
           <button
             onClick={backupSelected}
             disabled={bulkBusy}
-            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("containers.backupSelected")}
           </button>
           <button
             onClick={restoreSelected}
             disabled={bulkBusy}
-            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("containers.restoreSelected")}
           </button>

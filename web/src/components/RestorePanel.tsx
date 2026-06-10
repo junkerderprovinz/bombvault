@@ -71,7 +71,8 @@ function SnapshotRow({
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
             disabled={isPending || restoreState.phase === "success"}
-            className="rounded border-carbon-border bg-carbon-surface2 text-[#6fdc8c] focus:ring-[#6fdc8c] focus:ring-offset-0"
+            className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+            style={{ accentColor: "var(--accent)" }}
           />
           {t("restore.confirm")}
         </label>
@@ -80,11 +81,14 @@ function SnapshotRow({
         <button
           onClick={() => void handleRestore()}
           disabled={!confirmed || isPending || restoreState.phase === "success"}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#3a1c1c] border border-[#5a2a2a] px-2.5 py-1 text-xs font-medium text-[#ff8389] hover:bg-[#4a2020] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
           {isPending ? (
             <>
-              <span className="h-2.5 w-2.5 rounded-full border-2 border-[#ff8389] border-t-transparent animate-spin inline-block" />
+              <span
+                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              />
               Restoring…
             </>
           ) : (
