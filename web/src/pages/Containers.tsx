@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups } from "../lib/api";
+import { listContainers, deleteBackups, backupNow, restore } from "../lib/api";
 import type { Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
@@ -227,16 +227,30 @@ function ContainerRow({
   container,
   t,
   onDeleted,
+  selected,
+  onToggleSelect,
 }: {
   container: Container;
   t: T;
   onDeleted: () => void;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const installed = container.installed;
   return (
     <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
+        {/* Multi-select checkbox (installed containers only) */}
+        {onToggleSelect && (
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={onToggleSelect}
+            aria-label={`Select ${container.name}`}
+            className="mt-1 h-4 w-4 shrink-0 accent-[#78a9ff] cursor-pointer"
+          />
+        )}
         {/* Name + image */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -306,6 +320,9 @@ export function Containers() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
   const [filterKey, setFilterKey] = useState<FilterKey>(loadFilterKey);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
   function loadContainers() {
     return listContainers()
@@ -333,6 +350,50 @@ export function Containers() {
   const sorted = sortContainers(containers, sortKey);
   const live = sorted.filter((c) => c.installed);
   const orphans = sorted.filter((c) => !c.installed);
+
+  function toggleSelect(name: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  const allLiveSelected = live.length > 0 && live.every((c) => selected.has(c.name));
+  function toggleSelectAll() {
+    setSelected(allLiveSelected ? new Set() : new Set(live.map((c) => c.name)));
+  }
+
+  // Run an action over every selected container, then refresh + clear.
+  async function runBulk(action: (name: string) => Promise<{ ok: boolean }>) {
+    setBulkBusy(true);
+    setBulkMsg(null);
+    let ok = 0;
+    let fail = 0;
+    for (const name of selected) {
+      try {
+        const res = await action(name);
+        if (res.ok) ok++;
+        else fail++;
+      } catch {
+        fail++;
+      }
+    }
+    setBulkBusy(false);
+    setBulkMsg(`${ok} ok, ${fail} failed`);
+    setSelected(new Set());
+    void loadContainers();
+  }
+
+  function backupSelected() {
+    void runBulk((name) => backupNow(name));
+  }
+
+  function restoreSelected() {
+    if (!window.confirm(t("containers.restoreSelectedConfirm"))) return;
+    void runBulk((name) => restore(name, "latest", true));
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -365,13 +426,63 @@ export function Containers() {
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
           <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
           <SortControl value={sortKey} onChange={handleSortChange} />
+          {filterKey !== "notInstalled" && live.length > 0 && (
+            <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
+              <input
+                type="checkbox"
+                checked={allLiveSelected}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 accent-[#78a9ff] cursor-pointer"
+              />
+              {t("containers.selectAll")}
+            </label>
+          )}
+        </div>
+      )}
+
+      {/* Bulk action bar — appears when one or more containers are selected. */}
+      {!loading && selected.size > 0 && (
+        <div className="flex items-center gap-3 flex-wrap rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2">
+          <span className="text-xs text-carbon-textSub">
+            {selected.size} {t("containers.selectedCount")}
+          </span>
+          <button
+            onClick={backupSelected}
+            disabled={bulkBusy}
+            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+          >
+            {t("containers.backupSelected")}
+          </button>
+          <button
+            onClick={restoreSelected}
+            disabled={bulkBusy}
+            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+          >
+            {t("containers.restoreSelected")}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            disabled={bulkBusy}
+            className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors disabled:opacity-50"
+          >
+            {t("containers.clearSelection")}
+          </button>
+          {bulkBusy && <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>}
+          {!bulkBusy && bulkMsg && <span className="text-xs text-carbon-textSub">{bulkMsg}</span>}
         </div>
       )}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3">
           {live.map((c) => (
-            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
+            <ContainerRow
+              key={c.name}
+              container={c}
+              t={t}
+              onDeleted={() => void loadContainers()}
+              selected={selected.has(c.name)}
+              onToggleSelect={() => toggleSelect(c.name)}
+            />
           ))}
         </div>
       )}

@@ -40,6 +40,16 @@
     Required="false"
     Mask="false">3000</Config>
   <Config
+    Name="HTTP_ONLY"
+    Target="HTTP_ONLY"
+    Default="false|true"
+    Mode=""
+    Description="Serve plain HTTP instead of HTTPS — only for use behind a TLS-terminating reverse proxy. false = HTTPS (recommended); true = plain HTTP on the HTTP port above."
+    Type="Variable"
+    Display="always"
+    Required="false"
+    Mask="false">false</Config>
+  <Config
     Name="APP_KEY"
     Target="APP_KEY"
     Default=""
@@ -86,7 +96,7 @@
     Mode="rw"
     Description="Root-equivalent host control: stop/start/recreate containers around backup/restore."
     Type="Path"
-    Display="always"
+    Display="advanced"
     Required="true"
     Mask="false">/var/run/docker.sock</Config>
   <Config
@@ -109,14 +119,4 @@
     Display="advanced"
     Required="false"
     Mask="false">/mnt</Config>
-  <Config
-    Name="HTTP_ONLY"
-    Target="HTTP_ONLY"
-    Default="false"
-    Mode=""
-    Description="Set true to serve plain HTTP behind a TLS-terminating reverse proxy."
-    Type="Variable"
-    Display="advanced"
-    Required="false"
-    Mask="false">false</Config>
 </Container>

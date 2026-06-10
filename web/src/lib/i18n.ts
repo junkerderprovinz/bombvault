@@ -74,6 +74,13 @@ const en = {
   "containers.filter": "Filter:",
   "containers.filterAll": "All",
   "containers.filterInstalled": "Installed",
+  "containers.selectAll": "Select all",
+  "containers.selectedCount": "selected",
+  "containers.backupSelected": "Back up selected",
+  "containers.restoreSelected": "Restore selected (latest)",
+  "containers.restoreSelectedConfirm": "Restore the LATEST backup of the selected containers? Each is stopped, its appdata replaced, and the container recreated.",
+  "containers.clearSelection": "Clear",
+  "containers.working": "Working…",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",
@@ -195,6 +202,13 @@ const de: Translations = {
   "containers.filter": "Filter:",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installiert",
+  "containers.selectAll": "Alle auswählen",
+  "containers.selectedCount": "ausgewählt",
+  "containers.backupSelected": "Auswahl sichern",
+  "containers.restoreSelected": "Auswahl wiederherstellen (neuestes)",
+  "containers.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten Container wiederherstellen? Jeder wird gestoppt, seine Appdata ersetzt und neu erstellt.",
+  "containers.clearSelection": "Leeren",
+  "containers.working": "Arbeite…",
 
   "snapshots.title": "Backups",
   "snapshots.colId": "ID",
