@@ -200,6 +200,20 @@ const en = {
   "vms.restoreSelected": "Restore selected (latest)",
   "vms.restoreSelectedConfirm": "Restore the LATEST backup of the selected VMs? Each VM is shut off, its disk files replaced, and the VM restored.",
   "vms.notInstalledHint": "These VMs are no longer defined on the host but still have backups. Restore them to recover, or use the Backups panel to browse their snapshots.",
+
+  // Container / VM state badge labels
+  "state.created":      "Created",
+  "state.running":      "Running",
+  "state.paused":       "Paused",
+  "state.restarting":   "Restarting",
+  "state.removing":     "Removing",
+  "state.exited":       "Exited",
+  "state.dead":         "Dead",
+  "state.shutoff":      "Shut off",
+  "state.inshutdown":   "Shutting down",
+  "state.crashed":      "Crashed",
+  "state.pmsuspended":  "Suspended",
+  "state.notInstalled": "Not installed",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -390,6 +404,20 @@ const de: Translations = {
   "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "vms.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten VMs wiederherstellen? Jede VM wird heruntergefahren, ihre Disk-Dateien ersetzt und die VM wiederhergestellt.",
   "vms.notInstalledHint": "Diese VMs sind nicht mehr auf dem Host definiert, haben aber noch Backups. Stelle sie wieder her oder sieh ihre Snapshots im Backups-Panel ein.",
+
+  // Container / VM state badge labels
+  "state.created":      "Erstellt",
+  "state.running":      "Läuft",
+  "state.paused":       "Pausiert",
+  "state.restarting":   "Neustart",
+  "state.removing":     "Wird entfernt",
+  "state.exited":       "Beendet",
+  "state.dead":         "Tot",
+  "state.shutoff":      "Ausgeschaltet",
+  "state.inshutdown":   "Fährt herunter",
+  "state.crashed":      "Abgestürzt",
+  "state.pmsuspended":  "Suspendiert",
+  "state.notInstalled": "Nicht installiert",
 };
 
 // ---------------------------------------------------------------------------
@@ -527,4 +555,43 @@ export function I18nProvider({ children }: { children: ReactNode }) {
  */
 export function useT(): I18nContextValue {
   return useContext(I18nContext);
+}
+
+// ---------------------------------------------------------------------------
+// stateLabel — maps a raw Docker / libvirt state string to a translated label.
+// Normalises the raw value (lowercase, spaces→"", dashes→"") then looks up
+// the matching state.* key.  Falls back to the raw string for unknown states.
+// ---------------------------------------------------------------------------
+
+const STATE_KEY_MAP: Record<string, TranslationKey> = {
+  created:      "state.created",
+  running:      "state.running",
+  paused:       "state.paused",
+  restarting:   "state.restarting",
+  removing:     "state.removing",
+  exited:       "state.exited",
+  dead:         "state.dead",
+  // Docker "stopped" → reuse exited colour/label
+  stopped:      "state.exited",
+  // libvirt
+  shutoff:      "state.shutoff",
+  "shut off":   "state.shutoff",
+  inshutdown:   "state.inshutdown",
+  "in shutdown":"state.inshutdown",
+  crashed:      "state.crashed",
+  pmsuspended:  "state.pmsuspended",
+  // not-installed sentinel
+  "not-installed": "state.notInstalled",
+  notinstalled:    "state.notInstalled",
+};
+
+/**
+ * Returns the translated display label for a container or VM state.
+ * The `t` function must come from `useT()`.
+ * Falls back to the original raw string when no mapping is found.
+ */
+export function stateLabel(t: (key: TranslationKey) => string, rawState: string): string {
+  const norm = rawState.toLowerCase().trim();
+  const key = STATE_KEY_MAP[norm];
+  return key ? t(key) : rawState;
 }

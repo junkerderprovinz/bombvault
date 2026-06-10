@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude } from "../lib/api";
 import type { VM, Snapshot } from "../lib/api";
-import { useT } from "../lib/i18n";
+import { useT, stateLabel } from "../lib/i18n";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -19,6 +19,7 @@ function formatTs(unix: number | null | undefined): string {
 // ---------------------------------------------------------------------------
 
 function StateChip({ state }: { state: string }) {
+  const { t } = useT();
   const lower = state.toLowerCase();
   const cls =
     lower === "running"
@@ -28,7 +29,7 @@ function StateChip({ state }: { state: string }) {
       : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}>
-      {state}
+      {stateLabel(t, state)}
     </span>
   );
 }
