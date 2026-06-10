@@ -7,6 +7,8 @@ type T = ReturnType<typeof useT>["t"];
 interface BackupButtonProps {
   name: string;
   t: T;
+  /** Called after a successful backup so the caller can refresh (e.g. last-backup time). */
+  onBackedUp?: () => void;
 }
 
 type BackupState =
@@ -15,7 +17,7 @@ type BackupState =
   | { phase: "success"; snapshotId?: string }
   | { phase: "error"; message: string };
 
-export function BackupButton({ name, t }: BackupButtonProps) {
+export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
   const [state, setState] = useState<BackupState>({ phase: "idle" });
 
   async function handleBackup() {
@@ -24,6 +26,7 @@ export function BackupButton({ name, t }: BackupButtonProps) {
       const res = await backupNow(name);
       if (res.ok) {
         setState({ phase: "success", snapshotId: res.snapshotId });
+        onBackedUp?.(); // refresh the list so "last backup" updates
         // Auto-clear success after 4 s
         setTimeout(() => setState({ phase: "idle" }), 4000);
       } else {

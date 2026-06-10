@@ -38,6 +38,24 @@ type Config struct {
 	Cmd   []string
 	// User is the process user (e.g. "1000:1000"). SEC: preserved on recreate.
 	User string
+	// Labels carries the container labels. Unraid uses net.unraid.docker.*
+	// labels (managed, icon, webui, shell) to treat the container as a managed,
+	// editable app rather than a "third-party" one — so they MUST be preserved.
+	Labels map[string]string
+}
+
+// NetworkEndpoint captures the primary network attachment so a recreated
+// container keeps its original IP/MAC (e.g. an Unraid br0.x static IP) instead
+// of being reassigned a new one.
+type NetworkEndpoint struct {
+	// Name is the docker network name (e.g. "br0.20", "bridge").
+	Name string
+	// IPv4Address is the statically-requested IPv4 (empty for DHCP/auto).
+	IPv4Address string
+	// MACAddress is the requested MAC (empty for auto).
+	MACAddress string
+	// Aliases are the network-scoped aliases.
+	Aliases []string
 }
 
 // HostConfig holds the host-side configuration we preserve on recreate.
@@ -69,4 +87,7 @@ type Inspect struct {
 	Config     Config
 	HostConfig HostConfig
 	Mounts     []Mount
+	// Network is the primary network attachment, preserved so the recreated
+	// container keeps its original (often static) IP.
+	Network NetworkEndpoint
 }

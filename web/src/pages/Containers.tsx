@@ -283,8 +283,8 @@ function ContainerRow({
         </div>
       </div>
 
-      {/* Actions row */}
-      <div className="flex items-start gap-4 flex-wrap">
+      {/* Actions row — include toggle on the left, backup button on the right. */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         {installed ? (
           <>
             {/* Include toggle */}
@@ -295,8 +295,10 @@ function ContainerRow({
               </span>
             </label>
 
-            {/* Backup button */}
-            <BackupButton name={container.name} t={t} />
+            {/* Backup button (right) — refreshes the list so "last backup" updates */}
+            <div className="ml-auto flex flex-col items-end">
+              <BackupButton name={container.name} t={t} onBackedUp={onDeleted} />
+            </div>
           </>
         ) : (
           /* Not installed: can't back up; offer delete-all-backups instead. */
