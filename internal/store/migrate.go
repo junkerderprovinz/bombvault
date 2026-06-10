@@ -75,6 +75,33 @@ CREATE INDEX idx_runs_target ON runs(target_id);
   created_at          INTEGER NOT NULL
 );`,
 	},
+	{
+		// Relax the runs.target_id FK so VM targets can record runs in the same
+		// table without a separate runs_vms table. SQLite cannot drop constraints
+		// in place, so we recreate runs without the REFERENCES clause (data is
+		// preserved via INSERT INTO ... SELECT). The idx_runs_target index is
+		// recreated after the table swap.
+		version: 5,
+		name:    "runs_relax_fk",
+		sql: `
+PRAGMA foreign_keys=OFF;
+CREATE TABLE runs_new (
+  id          TEXT    PRIMARY KEY,
+  target_id   TEXT    NOT NULL,
+  kind        TEXT    NOT NULL,
+  status      TEXT    NOT NULL,
+  started_at  INTEGER NOT NULL,
+  finished_at INTEGER,
+  snapshot_id TEXT,
+  bytes       INTEGER,
+  error       TEXT
+);
+INSERT INTO runs_new SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error FROM runs;
+DROP TABLE runs;
+ALTER TABLE runs_new RENAME TO runs;
+CREATE INDEX IF NOT EXISTS idx_runs_target ON runs(target_id);
+PRAGMA foreign_keys=ON;`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
