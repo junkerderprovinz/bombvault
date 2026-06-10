@@ -63,6 +63,18 @@ CREATE INDEX idx_runs_target ON runs(target_id);
 		name:    "auth_password",
 		sql:     "ALTER TABLE settings ADD COLUMN auth_password_hash TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		version: 4,
+		name:    "vms_table",
+		sql: `CREATE TABLE vms (
+  id                  TEXT    PRIMARY KEY,
+  name                TEXT    NOT NULL UNIQUE,
+  method              TEXT    NOT NULL DEFAULT 'graceful',
+  include_in_schedule INTEGER NOT NULL DEFAULT 0,
+  definition          TEXT    NOT NULL DEFAULT '',
+  created_at          INTEGER NOT NULL
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
