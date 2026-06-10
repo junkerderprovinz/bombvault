@@ -166,8 +166,8 @@ function SidebarControls() {
   }, [open]);
 
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 border-t border-carbon-border mt-1">
-      {/* Language picker */}
+    <div className="flex flex-col gap-1">
+      {/* Language picker — flag + name, dropdown opens upward */}
       <div className="relative" ref={ref}>
         <button
           aria-label={`${t("language.label")}: ${current.label}`}
@@ -175,9 +175,15 @@ function SidebarControls() {
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center px-2 py-1.5 rounded-lg text-xs font-medium text-carbon-textSub border border-carbon-border bg-carbon-surface2 hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className={`${navBase} ${navInactive} w-full justify-between`}
         >
-          <Flag code={current.flag} />
+          <span className="flex items-center gap-3">
+            <Flag code={current.flag} />
+            <span>{current.label}</span>
+          </span>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}>
+            <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
         {open && (
           <div
@@ -206,28 +212,29 @@ function SidebarControls() {
         )}
       </div>
 
-      {/* Theme toggle */}
+      {/* Dark / Light mode — icon + current-mode label */}
       <button
         onClick={handleToggleTheme}
         title={t("theme.toggle")}
-        className="p-1.5 rounded-lg text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+        className={`${navBase} ${navInactive} w-full`}
       >
         {theme === "dark" ? (
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
+            <path
+              d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
+              stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
             <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5" />
             <path
               d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
               stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
             />
           </svg>
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
-              stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
-            />
-          </svg>
         )}
+        <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
       </button>
     </div>
   );
@@ -280,16 +287,17 @@ export function Sidebar({ settings }: SidebarProps) {
           disabled={!flashEnabled}
           comingSoon
         />
-
-        <div className="mt-auto pt-3 border-t border-carbon-border">
-          <NavItem
-            to="/settings"
-            label={t("nav.settings")}
-            icon={<IconSettings />}
-          />
-        </div>
       </nav>
-      <SidebarControls />
+
+      {/* Bottom group: language, then dark/light, then settings */}
+      <div className="flex flex-col gap-1 p-3 border-t border-carbon-border">
+        <SidebarControls />
+        <NavItem
+          to="/settings"
+          label={t("nav.settings")}
+          icon={<IconSettings />}
+        />
+      </div>
     </aside>
   );
 }
