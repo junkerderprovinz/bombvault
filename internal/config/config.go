@@ -19,6 +19,8 @@ type Config struct {
 	DataDir           string
 	HostMountRoot     string
 	HostSourceRoot    string
+	NVRAMMountRoot    string
+	NVRAMSourceRoot   string
 	Port              int
 	HTTPSPort         int
 	HTTPOnly          bool
@@ -39,6 +41,8 @@ func Load(env map[string]string) (Config, error) {
 		DataDir:           stringOr(env["DATA_DIR"], "/config"),
 		HostMountRoot:     stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
 		HostSourceRoot:    stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
+		NVRAMMountRoot:    stringOr(env["NVRAM_MOUNT_ROOT"], "/host/nvram"),
+		NVRAMSourceRoot:   stringOr(env["NVRAM_SOURCE_ROOT"], "/etc/libvirt/qemu/nvram"),
 		Port:              intOr(env["PORT"], 3000),
 		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),

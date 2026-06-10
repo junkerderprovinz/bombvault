@@ -467,10 +467,9 @@ export const LANGUAGES: Language[] = [
 
 export const SUPPORTED = LANGUAGES.map((l) => l.code);
 
-/** Locales offered in the language switcher UI — only fully-translated ones. */
-export const OFFERED_LANGUAGES: Language[] = LANGUAGES.filter((l) =>
-  ["en", "de"].includes(l.code)
-);
+/** Locales offered in the language switcher UI. All locales are selectable;
+ *  any without a full translation fall back to English at runtime (see `t`). */
+export const OFFERED_LANGUAGES: Language[] = LANGUAGES;
 
 const DEFAULT_CODE = "en";
 const STORAGE_KEY = "bv-lang";
@@ -482,7 +481,7 @@ export const isRtl = (code: string): boolean =>
 // Fully translated locales — all others fall back to English at runtime.
 const locales: Record<string, Translations> = { en, de };
 
-/** Resolve a raw locale code to one offered in the switcher (en or de only). */
+/** Resolve a raw locale code to one offered in the switcher (else the default). */
 function resolveCode(raw: string | null): string {
   const offered = OFFERED_LANGUAGES.map((l) => l.code);
   if (raw && offered.includes(raw)) return raw;
