@@ -70,6 +70,16 @@
     Required="true"
     Mask="false">/mnt</Config>
   <Config
+    Name="Unraid Templates"
+    Target="/host/boot/config/plugins/dockerMan/templates-user"
+    Default="/boot/config/plugins/dockerMan/templates-user"
+    Mode="rw"
+    Description="Unraid's user-template folder on the USB flash. BombVault captures a container's template here at backup and writes it back on restore, so a restored container reappears as a NORMAL, editable Unraid app instead of a 'third-party' container. Leave at the default. Without this mount, restores still work but the container shows as third-party and cannot be edited from the Docker tab."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/boot/config/plugins/dockerMan/templates-user</Config>
+  <Config
     Name="Docker Socket"
     Target="/var/run/docker.sock"
     Default="/var/run/docker.sock"

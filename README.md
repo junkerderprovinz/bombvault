@@ -147,6 +147,7 @@ Backup encryption is always on (restic). You can export the repository key/passw
 | **KVM VMs** | Only for VM backup/restore — not required if you only use containers |
 | **Restic repo location** | Local path (recommended: your array or cache), SMB, NFS, or any rclone backend |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`) |
+| **Unraid templates** | Mounted by the template automatically (`/boot/config/plugins/dockerMan/templates-user`) — lets a restored container reappear as a normal, editable Unraid app instead of a "third-party" container |
 | **libvirt socket** | Mounted by the template automatically — only needed for VM backup |
 
 <br>
