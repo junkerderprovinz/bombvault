@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -507,6 +507,14 @@ export function SettingsPage() {
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Auth state for the Security card.
+  const [authEnabled, setAuthEnabled] = useState(false);
+  const [authAuthed, setAuthAuthed] = useState(false);
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
+  const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
+
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
 
@@ -547,6 +555,16 @@ export function SettingsPage() {
         }
       })
       .catch(() => setLoadError("Failed to load settings"));
+
+    // Load auth status for the Security card.
+    getAuth()
+      .then((res) => {
+        setAuthEnabled(res.enabled);
+        setAuthAuthed(res.authed);
+      })
+      .catch(() => {
+        // Non-fatal: Security card shows auth as off.
+      });
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -592,6 +610,43 @@ export function SettingsPage() {
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       </div>
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Auth / Security helpers
+  // ---------------------------------------------------------------------------
+
+  async function handleSetPassword() {
+    if (pwNew !== pwConfirm) {
+      setPwSaveMsg(t("auth.passwordMismatch"));
+      setPwSaveState("error");
+      return;
+    }
+    setPwSaveState("saving");
+    setPwSaveMsg(null);
+    try {
+      const res = await setAuthPassword(pwNew);
+      if (res.ok) {
+        setAuthEnabled(res.enabled ?? false);
+        setPwSaveState("saved");
+        setPwSaveMsg(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"));
+        setPwNew("");
+        setPwConfirm("");
+        setTimeout(() => { setPwSaveState("idle"); setPwSaveMsg(null); }, 3000);
+      } else {
+        setPwSaveMsg(res.error ?? t("auth.saveError"));
+        setPwSaveState("error");
+      }
+    } catch {
+      setPwSaveMsg(t("auth.saveError"));
+      setPwSaveState("error");
+    }
+  }
+
+  async function handleLogout() {
+    await logout().catch(() => undefined);
+    // Reload so the auth gate re-checks and shows the login screen.
+    window.location.reload();
   }
 
   // Build the schedule patch (used by the Schedule save button)
@@ -896,6 +951,95 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       <Card title={t("spike.title")}>
         <SpikePanel t={t} />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Security                                                             */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("auth.security")}>
+        {/* Status badge */}
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-[#6fdc8c]" : "bg-carbon-textMuted"}`}
+          />
+          <span className="text-sm text-carbon-text">
+            {authEnabled ? t("auth.authOn") : t("auth.authOff")}
+          </span>
+        </div>
+
+        {/* Password hint */}
+        <p className="text-xs text-carbon-textMuted leading-relaxed">
+          {t("auth.passwordHint")}
+        </p>
+
+        {/* Set / Change password form */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">
+              {authEnabled ? t("auth.changePassword") : t("auth.setPassword")}
+            </label>
+            <input
+              type="password"
+              value={pwNew}
+              onChange={(e) => setPwNew(e.target.value)}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">
+              {t("auth.confirmPassword")}
+            </label>
+            <input
+              type="password"
+              value={pwConfirm}
+              onChange={(e) => setPwConfirm(e.target.value)}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            />
+          </div>
+
+          {/* Save / status row */}
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              onClick={() => void handleSetPassword()}
+              disabled={pwSaveState === "saving"}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {pwSaveState === "saving" ? (
+                <>
+                  <span
+                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+                  />
+                  {t("auth.saving")}
+                </>
+              ) : (
+                t("settings.save")
+              )}
+            </button>
+            {pwSaveState === "saved" && pwSaveMsg && (
+              <span className="text-sm text-[#6fdc8c]">{pwSaveMsg}</span>
+            )}
+            {pwSaveState === "error" && pwSaveMsg && (
+              <span className="text-sm text-[#ff8389]">{pwSaveMsg}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Logout button — only shown when currently signed in */}
+        {authEnabled && authAuthed && (
+          <div className="pt-2 border-t border-carbon-border">
+            <button
+              onClick={() => void handleLogout()}
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+            >
+              {t("auth.logout")}
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );

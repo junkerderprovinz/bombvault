@@ -58,6 +58,11 @@ CREATE INDEX idx_runs_target ON runs(target_id);
 		name:    "target_definition",
 		sql:     "ALTER TABLE targets ADD COLUMN definition TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		version: 3,
+		name:    "auth_password",
+		sql:     "ALTER TABLE settings ADD COLUMN auth_password_hash TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

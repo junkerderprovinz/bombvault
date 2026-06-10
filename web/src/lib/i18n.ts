@@ -167,6 +167,30 @@ const en = {
   "jobs.flashRow": "Unraid flash config",
   "jobs.flashPlanned": "planned",
   "jobs.vmPlanned": "VM backup executor not yet implemented.",
+
+  // Auth / Login
+  "auth.loginTitle": "BombVault",
+  "auth.passwordLabel": "Password",
+  "auth.signIn": "Sign in",
+  "auth.signingIn": "Signing in…",
+  "auth.invalidPassword": "Invalid password",
+  "auth.loginError": "Login failed",
+
+  // Settings — Security card
+  "auth.security": "Security",
+  "auth.authOff": "Authentication is off — all LAN users have full access.",
+  "auth.authOn": "Authentication is enabled.",
+  "auth.setPassword": "Set password",
+  "auth.changePassword": "Change password",
+  "auth.confirmPassword": "Confirm password",
+  "auth.passwordMismatch": "Passwords do not match",
+  "auth.passwordSaved": "Password saved",
+  "auth.passwordCleared": "Authentication disabled",
+  "auth.passwordHint":
+    "Leave both fields empty to disable authentication. BombVault has root-equivalent host control — a password is recommended if this instance is reachable by untrusted LAN users.",
+  "auth.logout": "Sign out",
+  "auth.saving": "Saving…",
+  "auth.saveError": "Failed to save",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -324,6 +348,30 @@ const de: Translations = {
   "jobs.flashRow": "Unraid Flash-Konfiguration",
   "jobs.flashPlanned": "geplant",
   "jobs.vmPlanned": "VM-Backup-Executor noch nicht implementiert.",
+
+  // Auth / Login
+  "auth.loginTitle": "BombVault",
+  "auth.passwordLabel": "Passwort",
+  "auth.signIn": "Anmelden",
+  "auth.signingIn": "Anmeldung läuft…",
+  "auth.invalidPassword": "Falsches Passwort",
+  "auth.loginError": "Anmeldung fehlgeschlagen",
+
+  // Settings — Security card
+  "auth.security": "Sicherheit",
+  "auth.authOff": "Authentifizierung ist deaktiviert — alle LAN-Nutzer haben vollen Zugriff.",
+  "auth.authOn": "Authentifizierung ist aktiviert.",
+  "auth.setPassword": "Passwort setzen",
+  "auth.changePassword": "Passwort ändern",
+  "auth.confirmPassword": "Passwort bestätigen",
+  "auth.passwordMismatch": "Passwörter stimmen nicht überein",
+  "auth.passwordSaved": "Passwort gespeichert",
+  "auth.passwordCleared": "Authentifizierung deaktiviert",
+  "auth.passwordHint":
+    "Beide Felder leer lassen, um die Authentifizierung zu deaktivieren. BombVault hat root-ähnliche Host-Kontrolle — ein Passwort ist empfohlen, wenn diese Instanz für nicht vertrauenswürdige LAN-Nutzer erreichbar ist.",
+  "auth.logout": "Abmelden",
+  "auth.saving": "Speichern…",
+  "auth.saveError": "Speichern fehlgeschlagen",
 };
 
 // ---------------------------------------------------------------------------

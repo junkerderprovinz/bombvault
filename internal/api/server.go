@@ -46,14 +46,30 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 	return &Server{cfg: cfg, handler: securityHeaders(NewSPAHandler(spaFS, apiRouter))}
 }
 
-// securityHeaders is a middleware that sets minimal HTTP security headers on
-// every response served by the handler.
+// securityHeaders is a middleware that sets baseline HTTP security headers on
+// every response served by the handler (both API and SPA).
 //
-// TODO(pre-public): add CSP once the SPA build is final
+// CSP notes: the SPA has no inline scripts (bundled JS/CSS only) but uses React
+// inline style= props and CSS variables → style-src needs 'unsafe-inline'.
+// 'unsafe-eval' is intentionally absent.  img-src and font-src allow data: for
+// flag-icons and any inline SVG/font the SPA embeds.
 func securityHeaders(next http.Handler) http.Handler {
+	const csp = "default-src 'self'; " +
+		"script-src 'self'; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"img-src 'self' data:; " +
+		"font-src 'self' data:; " +
+		"connect-src 'self'; " +
+		"object-src 'none'; " +
+		"base-uri 'self'; " +
+		"frame-ancestors 'none'"
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Content-Security-Policy", csp)
 		next.ServeHTTP(w, r)
 	})
 }
