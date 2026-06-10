@@ -128,14 +128,19 @@ Restore is the star: after copying data back from the restic snapshot, BombVault
 ## 4. Security / trust model
 
 > [!WARNING]
-> **BombVault has no built-in authentication yet.** It is a trusted-LAN tool that holds
-> **root-equivalent control of the host** via the Docker and libvirt sockets: it can stop,
-> remove and recreate containers and VMs, and reads/writes appdata and the Unraid flash config.
-> Anyone who can reach its web UI effectively has root on the host.
+> **BombVault holds root-equivalent control of the host** via the Docker (and, later,
+> libvirt) sockets: it can stop, remove and recreate containers, and reads/writes appdata
+> and the Unraid flash config. Anyone who can reach its web UI effectively has root on the host.
 
-Run BombVault **only on a trusted, non-exposed network** — never publish it directly to the internet. If you need remote access, put it **behind a reverse proxy that adds authentication** (and TLS). An optional built-in authentication layer is planned before v1.0.
+BombVault has **optional built-in password protection** (Settings → Security): set a password
+to require login, clear it to disable. It is **off by default** for trusted-LAN use. Sessions are
+signed (HMAC, derived from `APP_KEY`) and changing the password invalidates them. Regardless,
+run BombVault **only on a trusted, non-exposed network** — never publish it directly to the
+internet; for remote access put it behind a reverse proxy that adds authentication and TLS.
+Responses carry baseline security headers (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 
-Backup encryption is always on (restic). You can export the repository key/password from the UI in case you ever need to access the restic repo directly.
+Backups are encrypted by restic when encryption is enabled (Settings; on by default), with the
+key derived from `APP_KEY`.
 
 <br>
 
