@@ -1,13 +1,13 @@
 """
-Compose step for the BombVault assets (run after gen-assets.mjs).
+Compose step for the BombVault container/CA icon (run after gen-assets.mjs).
 
-  icon.png             : the hand-made transparent icon (icon-source.png),
-                         premultiplied-alpha downscaled to 512px wide so the
-                         transparent edges stay clean (NO white halo) on Unraid's
-                         dark Docker tab. The user wants the container logo
-                         transparent — see the ca-icon-background note.
-  bombvault-banner.png : logo centered on a white 1600x500 banner (white per the
-                         GitHub style guide).
+  icon.png : the hand-made transparent icon (icon-source.png), premultiplied-alpha
+             downscaled to 512px wide so the transparent edges stay clean (NO white
+             halo) on Unraid's dark Docker tab. The user wants the container logo
+             transparent — see the ca-icon-background note.
+
+The banner (bombvault-banner.png) is rendered from the self-contained
+bombvault-banner.svg by gen-assets.mjs; it is no longer composed here.
 
 Requires Pillow.
 """
@@ -44,15 +44,3 @@ def premultiplied_resize(src: Image.Image, width: int) -> Image.Image:
 icon = premultiplied_resize(Image.open(A / "icon-source.png"), 512)
 icon.save(A / "icon.png")
 print(f"icon.png written {icon.size} (transparent, from icon-source.png)")
-
-# bombvault-banner.png — logo centered on white 1600x500
-logo = Image.open(A / "_banner-logo-tmp.png").convert("RGBA")
-BW, BH = 1600, 500
-banner = Image.new("RGBA", (BW, BH), (255, 255, 255, 255))
-banner.paste(logo, ((BW - logo.width) // 2, (BH - logo.height) // 2), logo)
-banner.convert("RGB").save(A / "bombvault-banner.png", "PNG", optimize=True)
-print(f"bombvault-banner.png written ({BW}x{BH})")
-
-# clean temps
-(A / "_banner-logo-tmp.png").unlink(missing_ok=True)
-print("temps removed")
