@@ -1,5 +1,3 @@
-<h1 align="center">BombVault</h1>
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner.png" alt="BombVault" width="100%">
 </p>
@@ -18,13 +16,13 @@
 <br>
 
 <p align="center">
-Your Unraid data, <b>locked in a vault</b>. Armed with a fuse.<br>
+Your Unraid data, <b>sealed in a vault</b>. Armed with a fuse.<br>
 BombVault backs up Docker containers, KVM VMs, appdata and the Unraid flash config —
 and restores everything with a single click. Containers <b>automatically reappear in the
 Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
 reconfiguration, no drama.<br>
 <br>
-Drop a backup. Detonate a restore. <b>Data loss doesn't stand a chance.</b><br>
+<b>Your data, locked in. Loss, locked out.</b> Data loss doesn't stand a chance.<br>
 Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental, always encrypted.
 </p>
 
@@ -32,7 +30,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" height="40">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="220">
   </a>
 </p>
 
