@@ -460,6 +460,29 @@ func TestRestoreProceedsWhenLiveAbsent(t *testing.T) {
 	}
 }
 
+func TestRestoreSkipsEmptyTemplate(t *testing.T) {
+	d := &fakeDocker{liveName: "/plex"}
+	r := &fakeRestic{}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	deps := restoreDeps(d, r, tpl, runs)
+	deps.TemplateXML = "" // no template captured (e.g. backup before flash mount)
+
+	if err := backup.RestoreContainer(t.Context(), deps); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	// restore still proceeds, but no (empty) template is flashed.
+	if !contains(r.log, "restore:") {
+		t.Fatalf("restore must proceed: %v", r.log)
+	}
+	for _, e := range tpl.log {
+		if strings.HasPrefix(e, "writeTemplate:") {
+			t.Fatalf("must NOT write an empty template: %v", tpl.log)
+		}
+	}
+}
+
 func TestRestoreIgnoresStopRemoveErrors(t *testing.T) {
 	d := &fakeDocker{liveName: "/plex", stopErr: errors.New("no such container"), removeErr: errors.New("no such container")}
 	r := &fakeRestic{}

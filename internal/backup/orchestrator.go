@@ -362,9 +362,14 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: restic restore: %w", err)
 	}
 
-	// Flash the captured template back, then recreate+start the container.
-	if err := d.Templates.Write(d.FlashTemplatesDir, d.ContainerName, d.TemplateXML); err != nil {
-		return fmt.Errorf("restore: write template: %w", err)
+	// Flash the captured template back, then recreate+start the container. Only
+	// write when a template was actually captured: writing an empty placeholder
+	// would make Unraid treat the app as broken/third-party (e.g. for backups
+	// taken before the flash templates dir was mounted).
+	if d.TemplateXML != "" {
+		if err := d.Templates.Write(d.FlashTemplatesDir, d.ContainerName, d.TemplateXML); err != nil {
+			return fmt.Errorf("restore: write template: %w", err)
+		}
 	}
 	if err := d.Docker.CreateAndStart(ctx, d.Inspect); err != nil {
 		return fmt.Errorf("restore: recreate container: %w", err)
