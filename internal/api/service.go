@@ -29,6 +29,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // containerDefinition is the recreate recipe persisted at backup time so that
@@ -62,12 +63,13 @@ type Service struct {
 	cfg    config.Config
 	store  *store.Repo
 	docker dockercli.Docker
+	virsh  virshcli.Virsh
 	engine ResticEngine
 }
 
 // NewService constructs the backup service.
-func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, eng ResticEngine) *Service {
-	return &Service{cfg: cfg, store: st, docker: d, engine: eng}
+func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
+	return &Service{cfg: cfg, store: st, docker: d, virsh: v, engine: eng}
 }
 
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
@@ -87,6 +89,34 @@ func (s *Service) containersRepoPath(settings store.Settings) (string, error) {
 		return "", fmt.Errorf("resolve containers path: %w", err)
 	}
 	return repo, nil
+}
+
+// vmsRepoPath resolves the absolute restic repo path for the vms domain under
+// the host mount root, rejecting traversal.
+func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
+	repo, err := paths.Resolve(s.cfg.HostMountRoot, settings.VMsPath)
+	if err != nil {
+		return "", fmt.Errorf("resolve vms path: %w", err)
+	}
+	return repo, nil
+}
+
+// toContainerPath translates a HOST path under HostSourceRoot to its
+// container-visible equivalent under HostMountRoot. Returns ("", false) when
+// the host path is not reachable through the mount.
+// Used for both appdata (containers) and VM disk/NVRAM paths so the same
+// host→container translation is applied consistently across both domains.
+func (s *Service) toContainerPath(host string) (string, bool) {
+	srcRoot := path.Clean(s.cfg.HostSourceRoot)
+	mountRoot := path.Clean(s.cfg.HostMountRoot)
+	p := path.Clean(host)
+	if p == srcRoot {
+		return mountRoot, true
+	}
+	if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
+		return mountRoot + "/" + rest, true
+	}
+	return "", false // not reachable through the mount
 }
 
 // EnsureRepo creates the repo directory and initialises the restic repo on first
@@ -128,20 +158,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 // Fallback (no appdata bind found): the conventional /mnt/user/appdata/<name>,
 // translated if reachable.
 func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
-	srcRoot := path.Clean(s.cfg.HostSourceRoot)  // host path mounted into the container, e.g. /mnt
 	mountRoot := path.Clean(s.cfg.HostMountRoot) // its container path, e.g. /host/user
-
-	// translate maps a HOST path under srcRoot to its container-visible path.
-	translate := func(host string) (string, bool) {
-		p := path.Clean(host)
-		if p == srcRoot {
-			return mountRoot, true
-		}
-		if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
-			return mountRoot + "/" + rest, true
-		}
-		return "", false // not reachable through the mount
-	}
 
 	var out []string
 	seen := map[string]bool{}
@@ -149,14 +166,14 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 		if m.Source == "" || !hasSegment(path.Clean(m.Source), "appdata") {
 			continue // only appdata binds (container config), not media/other shares
 		}
-		if container, ok := translate(m.Source); ok && !seen[container] {
+		if container, ok := s.toContainerPath(m.Source); ok && !seen[container] {
 			out = append(out, container)
 			seen[container] = true
 		}
 	}
 	if len(out) == 0 {
 		// Last resort: the conventional appdata dir for this container.
-		if c, ok := translate(path.Join("/mnt/user/appdata", name)); ok {
+		if c, ok := s.toContainerPath(path.Join("/mnt/user/appdata", name)); ok {
 			out = append(out, c)
 		} else {
 			out = append(out, path.Join(mountRoot, "appdata", name))
@@ -619,4 +636,284 @@ func (r runsAdapter) Start(targetID, kind string) (string, error) {
 
 func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
 	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+}
+
+// ---------------------------------------------------------------------------
+// VM service methods
+// ---------------------------------------------------------------------------
+
+// vmDefinition is the recreate recipe persisted at VM backup time so restore
+// works even after the VM has been deleted or BombVault's /config is lost
+// (full DR). It carries container-visible paths so the restore orchestrator
+// can pass them directly to restic.
+type vmDefinition struct {
+	DomainXML    string   `json:"domain_xml"`
+	DiskPaths    []string `json:"disk_paths"`  // container-visible absolute paths
+	NVRAMPath    string   `json:"nvram_path"`  // container-visible (empty for BIOS)
+	Method       string   `json:"method"`
+	WasAutostart bool     `json:"was_autostart"`
+}
+
+// VMView is the per-VM row returned by ListVMs.
+type VMView struct {
+	Name              string `json:"name"`
+	State             string `json:"state"`
+	Method            string `json:"method"`
+	IncludeInSchedule bool   `json:"includeInSchedule"`
+	LastBackup        *int64 `json:"lastBackup"`
+}
+
+// ListVMs returns all known VMs (from virsh) merged with the DB targets.
+// VMs with no virsh entry but with backup history appear as state="not-installed".
+func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
+	infos, err := s.virsh.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list vms: virsh: %w", err)
+	}
+	targets, _ := s.store.ListVMTargets()
+	byName := make(map[string]store.VMTarget, len(targets))
+	for _, t := range targets {
+		byName[t.Name] = t
+	}
+
+	live := make(map[string]bool, len(infos))
+	views := make([]VMView, 0, len(infos)+len(targets))
+	for _, vm := range infos {
+		live[vm.Name] = true
+		v := VMView{Name: vm.Name, State: vm.State, Method: "graceful"}
+		if t, ok := byName[vm.Name]; ok {
+			v.Method = t.Method
+			v.IncludeInSchedule = t.IncludeInSchedule
+			if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
+				v.LastBackup = run.FinishedAt
+			}
+		}
+		views = append(views, v)
+	}
+	// Orphans: targets whose VM is no longer defined on the host.
+	for _, t := range targets {
+		if live[t.Name] {
+			continue
+		}
+		v := VMView{Name: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule}
+		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
+			v.LastBackup = run.FinishedAt
+		}
+		views = append(views, v)
+	}
+	return views, nil
+}
+
+// BackupVM orchestrates a full VM backup: resolve repo + mode, ensure repo,
+// dump XML, parse domain, translate paths, upsert VM target, run orchestrator.
+func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.vmsRepoPath(settings)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	mode := s.ModeFor(settings)
+	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+		return backup.Summary{}, err
+	}
+
+	// Capture the domain XML and parse disk/NVRAM paths.
+	xmlStr, err := s.virsh.DumpXML(ctx, name)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("backup vm: dumpxml: %w", err)
+	}
+	domain, err := virshcli.ParseDomain(xmlStr)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("backup vm: parse domain: %w", err)
+	}
+
+	// Guard: refuse to back up a VM with no disk images (would produce an
+	// empty restic snapshot that restores nothing useful).
+	if len(domain.DiskPaths) == 0 {
+		return backup.Summary{}, fmt.Errorf("backup vm: no disk paths found in domain XML for %q", name)
+	}
+
+	// Translate HOST paths to container-visible paths via the shared helper.
+	var diskPaths []string
+	for _, hp := range domain.DiskPaths {
+		if cp, ok := s.toContainerPath(hp); ok {
+			diskPaths = append(diskPaths, cp)
+		} else {
+			// Path is not under HostSourceRoot — use as-is and log a warning.
+			log.Printf("api: BackupVM: disk path %q not reachable via mount; using as-is", hp) //nolint:gosec // G706: %q-quoted
+			diskPaths = append(diskPaths, hp)
+		}
+	}
+	nvramPath := ""
+	if domain.NVRAMPath != "" {
+		if cp, ok := s.toContainerPath(domain.NVRAMPath); ok {
+			nvramPath = cp
+		} else {
+			nvramPath = domain.NVRAMPath
+		}
+	}
+
+	// Default autostart to true (safe: most Unraid-managed VMs have autostart on).
+	// TODO: parse virsh dominfo output to capture the real flag in a future wave.
+	wasAutostart := true
+
+	// Get method from existing target (default graceful).
+	method := "graceful"
+	if existing, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+		method = existing.Method
+	}
+
+	def := vmDefinition{
+		DomainXML: xmlStr, DiskPaths: diskPaths, NVRAMPath: nvramPath,
+		Method: method, WasAutostart: wasAutostart,
+	}
+	defBytes, _ := json.Marshal(def)
+
+	tg, err := s.store.UpsertVMTarget(store.VMTarget{
+		Name: name, Method: method, Definition: string(defBytes),
+	})
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("upsert vm target: %w", err)
+	}
+
+	return backup.BackupVMGraceful(ctx, backup.VMBackupDeps{
+		Name:      name,
+		DiskPaths: diskPaths,
+		NVRAMPath: nvramPath,
+		RepoPath:  repo,
+		TargetID:  tg.ID,
+		DataDir:   s.cfg.DataDir,
+		VM:        s.virsh,
+		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Runs:      runsAdapter{s.store},
+	})
+}
+
+// RestoreVM orchestrates a VM restore from a stored definition.
+func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confirm bool) error {
+	if !confirm {
+		return backup.ErrNotConfirmed
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.vmsRepoPath(settings)
+	if err != nil {
+		return err
+	}
+	mode := s.ModeFor(settings)
+
+	tg, err := s.store.GetVMTargetByName(name)
+	if err != nil {
+		return errors.New("vm has not been backed up yet")
+	}
+
+	// "latest" (or empty) resolves to the VM's newest snapshot.
+	if snapshotID == "latest" || snapshotID == "" {
+		snaps, snapErr := s.SnapshotsVM(ctx, name)
+		if snapErr != nil {
+			return snapErr
+		}
+		if len(snaps) == 0 {
+			return errors.New("no backups found for this vm")
+		}
+		snapshotID = snaps[len(snaps)-1].ID
+	}
+
+	if tg.Definition == "" {
+		return errors.New("no stored definition for this vm — run a backup once first")
+	}
+	var def vmDefinition
+	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
+		return fmt.Errorf("restore vm: unmarshal definition: %w", err)
+	}
+
+	// Re-validate stored paths stay within the mount root (defense-in-depth in
+	// case the DB was tampered with — mirrors the container restore guard).
+	allPaths := append([]string(nil), def.DiskPaths...)
+	if def.NVRAMPath != "" {
+		allPaths = append(allPaths, def.NVRAMPath)
+	}
+	for _, p := range allPaths {
+		if !paths.Within(s.cfg.HostMountRoot, p) {
+			log.Printf("api: RestoreVM: path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
+			return errors.New("a stored backup path is outside the host mount — refusing to restore")
+		}
+	}
+
+	return backup.RestoreVM(ctx, backup.VMRestoreDeps{
+		Confirmed:    confirm,
+		Name:         name,
+		SnapshotID:   snapshotID,
+		DiskPaths:    def.DiskPaths,
+		NVRAMPath:    def.NVRAMPath,
+		DomainXML:    def.DomainXML,
+		WasAutostart: def.WasAutostart,
+		StartAfter:   true,
+		RepoPath:     repo,
+		TargetID:     tg.ID,
+		DataDir:      s.cfg.DataDir,
+		VM:           s.virsh,
+		Restic:       &resticAdapter{engine: s.engine, mode: mode},
+		Runs:         runsAdapter{s.store},
+	})
+}
+
+// SnapshotsVM lists restic snapshots for a single VM, filtered by the
+// "vm:<name>" tag the backup writes.
+func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapshot, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.vmsRepoPath(settings)
+	if err != nil {
+		return nil, err
+	}
+	mode := s.ModeFor(settings)
+	// A listing before any backup has run is "no snapshots yet", not an error.
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+		return nil, nil
+	}
+	all, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return nil, err
+	}
+	tag := "vm:" + name
+	out := make([]restic.Snapshot, 0, len(all))
+	for _, snap := range all {
+		for _, t := range snap.Tags {
+			if t == tag {
+				out = append(out, snap)
+				break
+			}
+		}
+	}
+	return out, nil
+}
+
+// SetVMMethod updates the backup method for a VM, creating the target if absent.
+func (s *Service) SetVMMethod(_ context.Context, name, method string) error {
+	if _, err := s.store.GetVMTargetByName(name); err != nil {
+		if _, uErr := s.store.UpsertVMTarget(store.VMTarget{Name: name, Method: method}); uErr != nil {
+			return fmt.Errorf("ensure vm target: %w", uErr)
+		}
+		return nil
+	}
+	return s.store.SetVMMethod(name, method)
+}
+
+// SetVMInclude updates the include_in_schedule flag for a VM, creating the
+// target if absent.
+func (s *Service) SetVMInclude(_ context.Context, name string, include bool) error {
+	if _, err := s.store.GetVMTargetByName(name); err != nil {
+		if _, uErr := s.store.UpsertVMTarget(store.VMTarget{Name: name, Method: "graceful"}); uErr != nil {
+			return fmt.Errorf("ensure vm target: %w", uErr)
+		}
+	}
+	return s.store.SetVMInclude(name, include)
 }

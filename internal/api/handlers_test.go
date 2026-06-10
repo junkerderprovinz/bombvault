@@ -28,7 +28,7 @@ func newTestRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (h
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
-	svc := api.NewService(cfg, st, d, eng)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 	sched := schedule.New(
 		func(string) error { return nil },
 		st.ListTargets,
@@ -167,7 +167,7 @@ func TestSnapshots(t *testing.T) {
 		{ID: "deadbeef12345678", Time: "2026-06-09T00:00:00Z", Tags: []string{"container:plex", "p1"}},
 		{ID: "cafebabe87654321", Time: "2026-06-09T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
 	}}
-	svc := api.NewService(cfg, st, d, eng)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 
@@ -338,7 +338,7 @@ func newSpikeRouter(t *testing.T, d *fakeServiceDocker) http.Handler {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
-	svc := api.NewService(cfg, st, d, &fakeResticEngine{})
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	probes := []spike.Probe{
 		{Name: "stub", Fn: func(spike.Deps) (string, error) { return "ok", nil }},
@@ -372,7 +372,7 @@ func newBrowseRouter(t *testing.T, mountRoot string) http.Handler {
 	t.Helper()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: mountRoot}
 	st := newMemStore(t)
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, &fakeResticEngine{})
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes())
 	return h.Router()

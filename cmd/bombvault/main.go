@@ -15,6 +15,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 	web "github.com/junkerderprovinz/bombvault/web"
 )
 
@@ -53,11 +54,14 @@ func run() error {
 	}
 	defer func() { _ = dc.Close() }()
 
+	// Real virsh adapter over the mounted libvirt socket.
+	vc := virshcli.New()
+
 	// Real restic CLI adapter.
 	engine := &restic.Restic{Bin: "restic"}
 
 	// Backup service bridges the adapters into the DI orchestrator.
-	svc := api.NewService(cfg, st, dc, engine)
+	svc := api.NewService(cfg, st, dc, vc, engine)
 
 	// Per-domain scheduler; the containers job calls the service's Backup.
 	scheduler := schedule.New(

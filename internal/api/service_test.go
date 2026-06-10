@@ -24,7 +24,7 @@ func TestServiceEnsureRepoIsIdempotent(t *testing.T) {
 	st := newMemStore(t)
 
 	eng := &fakeResticEngine{}
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, eng)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	repo := filepath.Join(dir, "repo")
 	mode := restic.Mode{Encrypted: false}
@@ -57,7 +57,7 @@ func TestServiceModeEncryptionOn(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, &fakeResticEngine{})
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 
 	mode := svc.ModeFor(s)
 	if !mode.Encrypted {
@@ -76,7 +76,7 @@ func TestServiceModeEncryptionOff(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, &fakeResticEngine{})
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 
 	mode := svc.ModeFor(s)
 	if mode.Encrypted {
@@ -115,7 +115,7 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 		},
 	}}
 	eng := &fakeResticEngine{}
-	svc := api.NewService(cfg, st, d, eng)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	sum, err := svc.Backup(context.Background(), "plex")
 	if err != nil {
@@ -190,7 +190,7 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 		},
 	}}
 	eng := &fakeResticEngine{}
-	svc := api.NewService(cfg, st, d, eng)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	if _, err := svc.Backup(context.Background(), "Pingvin-Share-X"); err != nil {
 		t.Fatalf("backup: %v", err)
@@ -229,7 +229,7 @@ func TestServiceSetIncludeFindOrCreate(t *testing.T) {
 			{Type: "bind", Source: "/host/user/appdata/radarr", Destination: "/config"},
 		},
 	}}
-	svc := api.NewService(cfg, st, d, &fakeResticEngine{})
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 
 	// No target exists — SetInclude must find-or-create it.
 	if err := svc.SetInclude(context.Background(), "radarr", true); err != nil {
@@ -267,7 +267,7 @@ func TestServiceSetIncludeInspectFailFallback(t *testing.T) {
 	st := newMemStore(t)
 
 	d := &fakeServiceDocker{inspectErr: errors.New("no such container")}
-	svc := api.NewService(cfg, st, d, &fakeResticEngine{})
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 
 	if err := svc.SetInclude(context.Background(), "unknown", true); err != nil {
 		t.Fatalf("SetInclude must not fail when inspect errors: %v", err)
@@ -310,7 +310,7 @@ func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 		{ID: "cccc3333", Tags: []string{"container:plex", "p1"}},
 		{ID: "dddd4444", Tags: nil}, // untagged → excluded
 	}}
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, eng)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	got, err := svc.Snapshots(context.Background(), "plex")
 	if err != nil {
@@ -355,7 +355,7 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 		{ID: "bbbb2222", Tags: []string{"container:sonarr", "p1"}}, // other container — must be left alone
 		{ID: "cccc3333", Tags: []string{"container:plex", "p1"}},
 	}}
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, eng)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
@@ -428,7 +428,7 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 		liveName:   "", // absent
 	}
 	eng := &fakeResticEngine{}
-	svc := api.NewService(cfg, st, d, eng)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
 	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true)
@@ -504,7 +504,7 @@ func TestDiscoverRebuildsTargetsFromStorage(t *testing.T) {
 		{ID: "aaaa1111", Tags: []string{"container:plex", "p1"}},
 		{ID: "bbbb2222", Tags: []string{"container:ghost", "p1"}}, // no def file → skipped
 	}}
-	svc := api.NewService(cfg, st, &fakeServiceDocker{}, eng)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	n, err := svc.Discover(context.Background())
 	if err != nil {
