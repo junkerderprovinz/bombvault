@@ -737,22 +737,25 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	}
 
 	// Translate HOST paths to container-visible paths via the shared helper.
+	// A disk MUST be reachable through the mount (else restic can't read it and
+	// the snapshot would be incomplete) — fail clearly rather than store an
+	// un-restorable path. NVRAM that is not reachable (Unraid keeps OVMF vars
+	// under /etc/libvirt, not /mnt) is SKIPPED with a warning so the backup still
+	// succeeds; the VM simply restores without its UEFI nvram.
 	var diskPaths []string
 	for _, hp := range domain.DiskPaths {
-		if cp, ok := s.toContainerPath(hp); ok {
-			diskPaths = append(diskPaths, cp)
-		} else {
-			// Path is not under HostSourceRoot — use as-is and log a warning.
-			log.Printf("api: BackupVM: disk path %q not reachable via mount; using as-is", hp) //nolint:gosec // G706: %q-quoted
-			diskPaths = append(diskPaths, hp)
+		cp, ok := s.toContainerPath(hp)
+		if !ok {
+			return backup.Summary{}, fmt.Errorf("backup vm: disk %q is not under the host mount and can't be reached for backup — the VM disk must live under your Host Data mount (/mnt)", hp)
 		}
+		diskPaths = append(diskPaths, cp)
 	}
 	nvramPath := ""
 	if domain.NVRAMPath != "" {
 		if cp, ok := s.toContainerPath(domain.NVRAMPath); ok {
 			nvramPath = cp
 		} else {
-			nvramPath = domain.NVRAMPath
+			log.Printf("api: BackupVM: NVRAM %q is not under the host mount; skipping it — the VM will restore without UEFI nvram", domain.NVRAMPath) //nolint:gosec // G706: %q-quoted
 		}
 	}
 
@@ -832,25 +835,33 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		return fmt.Errorf("restore vm: unmarshal definition: %w", err)
 	}
 
-	// Re-validate stored paths stay within the mount root (defense-in-depth in
-	// case the DB was tampered with — mirrors the container restore guard).
-	allPaths := append([]string(nil), def.DiskPaths...)
-	if def.NVRAMPath != "" {
-		allPaths = append(allPaths, def.NVRAMPath)
-	}
-	for _, p := range allPaths {
-		if !paths.Within(s.cfg.HostMountRoot, p) {
-			log.Printf("api: RestoreVM: path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
-			return errors.New("a stored backup path is outside the host mount — refusing to restore")
+	// Keep only paths that stay within the mount root; SKIP (with a warning) any
+	// that don't — e.g. an older backup that stored a UEFI nvram path under
+	// /etc/libvirt. Restore the disks rather than refusing the whole VM. Skipping
+	// an out-of-mount path is safe: it is never restored to a dangerous location.
+	var diskPaths []string
+	for _, p := range def.DiskPaths {
+		if paths.Within(s.cfg.HostMountRoot, p) {
+			diskPaths = append(diskPaths, p)
+		} else {
+			log.Printf("api: RestoreVM: skipping disk path %q outside mount root", p) //nolint:gosec // G706: %q-quoted
 		}
+	}
+	nvramPath := def.NVRAMPath
+	if nvramPath != "" && !paths.Within(s.cfg.HostMountRoot, nvramPath) {
+		log.Printf("api: RestoreVM: skipping NVRAM %q outside mount root", nvramPath) //nolint:gosec // G706: %q-quoted
+		nvramPath = ""
+	}
+	if len(diskPaths) == 0 {
+		return errors.New("no restorable disk paths found in this backup")
 	}
 
 	return backup.RestoreVM(ctx, backup.VMRestoreDeps{
 		Confirmed:    confirm,
 		Name:         name,
 		SnapshotID:   snapshotID,
-		DiskPaths:    def.DiskPaths,
-		NVRAMPath:    def.NVRAMPath,
+		DiskPaths:    diskPaths,
+		NVRAMPath:    nvramPath,
 		DomainXML:    def.DomainXML,
 		WasAutostart: def.WasAutostart,
 		StartAfter:   true,
