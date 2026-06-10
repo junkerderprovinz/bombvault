@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers } from "../lib/api";
-import type { Run, SpikeCheck, Container } from "../lib/api";
+import { listRuns, getSpike, listContainers, getSettings } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
@@ -18,6 +18,99 @@ function relativeTime(unix: number): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+// ---------------------------------------------------------------------------
+// Stat cards row
+// ---------------------------------------------------------------------------
+
+interface StatData {
+  containers: number;
+  vms: number;
+  activeJobs: number;
+  pausedJobs: number;
+  errors: number;
+  missingContainers: number;
+  missingVMs: number;
+}
+
+function StatCard({
+  label,
+  value,
+  danger,
+}: {
+  label: string;
+  value: number;
+  danger?: boolean;
+}) {
+  return (
+    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-1">
+      <span
+        className={`text-2xl font-bold tabular-nums ${
+          danger && value > 0 ? "text-[#ff8389]" : "text-carbon-text"
+        }`}
+      >
+        {value}
+      </span>
+      <span className="text-xs text-carbon-textMuted">{label}</span>
+    </div>
+  );
+}
+
+function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [data, setData] = useState<StatData | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([listContainers(), getSettings(), listRuns()])
+      .then(([contRes, settingsRes, runsRes]) => {
+        if (!active) return;
+        const containers = contRes.ok ? (contRes.containers ?? []) : [];
+        const settings: Settings | null = settingsRes.ok ? settingsRes.settings : null;
+        const runs = runsRes.ok ? (runsRes.runs ?? []) : [];
+
+        const installed = containers.filter((c) => c.installed);
+        const notInstalled = containers.filter((c) => !c.installed);
+        const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
+        const activeJobs = schedEnabled
+          ? installed.filter((c) => c.includeInSchedule).length
+          : 0;
+        const pausedJobs = !schedEnabled
+          ? installed.filter((c) => c.includeInSchedule).length
+          : 0;
+        const errors = runs.filter((r) => r.status === "failed").length;
+
+        setData({
+          containers: installed.length,
+          vms: 0,
+          activeJobs,
+          pausedJobs,
+          errors,
+          missingContainers: notInstalled.length,
+          missingVMs: 0,
+        });
+      })
+      .catch(() => {
+        // Non-fatal: stat cards stay null (not rendered)
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!data) return null;
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+      <StatCard label={t("dashboard.statContainers")} value={data.containers} />
+      <StatCard label={t("dashboard.statVMs")} value={data.vms} />
+      <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
+      <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
+      <StatCard label={t("dashboard.statErrors")} value={data.errors} danger />
+      <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
+      <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -287,6 +380,9 @@ export function Dashboard() {
           BombVault — container backup overview
         </p>
       </div>
+
+      {/* Stat cards — compact summary row */}
+      <StatCardsRow t={t} />
 
       {/* 2-column grid for last backups + run history */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -22,6 +22,10 @@
   --carbon-text-muted:#8d8d8d;
   --carbon-border:    #393939;
   --carbon-hover:     #353535;
+
+  /* Accent — default sunflower yellow; overridden at runtime via accent.ts */
+  --accent:           #FCC419;
+  --accent-contrast:  #161616;
 }
 
 [data-theme="light"] {
@@ -36,6 +40,9 @@
   --carbon-text-muted:#6f6f6f;
   --carbon-border:    #e0e0e0;
   --carbon-hover:     #e8e8e8;
+
+  /* Accent inherits from :root; override here only if light theme needs adjustment */
+  --accent-contrast:  #161616;
 }
 
 body {
