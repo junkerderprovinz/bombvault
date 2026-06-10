@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupNow, restore } from "../lib/api";
+import { listContainers, deleteBackups, backupNow, restore, discover } from "../lib/api";
 import type { Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
@@ -323,6 +323,8 @@ export function Containers() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
 
   function loadContainers() {
     return listContainers()
@@ -395,16 +397,49 @@ export function Containers() {
     void runBulk((name) => restore(name, "latest", true));
   }
 
+  async function handleDiscover() {
+    setDiscovering(true);
+    setDiscoverMsg(null);
+    try {
+      const res = await discover();
+      if (res.ok) {
+        setDiscoverMsg(`+${res.discovered ?? 0}`);
+        await loadContainers();
+      } else {
+        setDiscoverMsg(res.error ?? "Discover failed");
+      }
+    } catch (err) {
+      setDiscoverMsg(err instanceof Error ? err.message : "Discover failed");
+    } finally {
+      setDiscovering(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-      {/* Page heading */}
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">
-          {t("containers.title")}
-        </h1>
-        <p className="mt-1 text-sm text-carbon-textSub">
-          Manage container backups, schedules, and restores.
-        </p>
+      {/* Page heading + Discover (disaster-recovery) action */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold text-carbon-text">
+            {t("containers.title")}
+          </h1>
+          <p className="mt-1 text-sm text-carbon-textSub">
+            Manage container backups, schedules, and restores.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {discoverMsg && (
+            <span className="text-xs text-carbon-textSub">{discoverMsg}</span>
+          )}
+          <button
+            onClick={() => void handleDiscover()}
+            disabled={discovering}
+            title={t("containers.discoverHint")}
+            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+          >
+            {discovering ? t("containers.discovering") : t("containers.discover")}
+          </button>
+        </div>
       </div>
 
       {/* Container list */}

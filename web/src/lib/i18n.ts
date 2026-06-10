@@ -53,7 +53,9 @@ const en = {
 
   // Containers
   "containers.title": "Containers",
-  "containers.discover": "Discover",
+  "containers.discover": "Discover backups",
+  "containers.discovering": "Discovering…",
+  "containers.discoverHint": "Lost /config? Rebuild the backup list from storage.",
   "containers.backupNow": "Back up now",
   "containers.lastBackup": "Last backup",
   "containers.never": "Never",
@@ -181,7 +183,9 @@ const de: Translations = {
   "spike.probeFailed": "Prüfung fehlgeschlagen (siehe Server-Logs)",
 
   "containers.title": "Container",
-  "containers.discover": "Erkennen",
+  "containers.discover": "Backups entdecken",
+  "containers.discovering": "Suche…",
+  "containers.discoverHint": "/config verloren? Backup-Liste aus dem Speicher wiederherstellen.",
   "containers.backupNow": "Jetzt sichern",
   "containers.lastBackup": "Letztes Backup",
   "containers.never": "Nie",

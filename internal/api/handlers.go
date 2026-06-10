@@ -183,6 +183,17 @@ func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleDiscover rebuilds the target list from the backup storage (disaster
+// recovery after a fresh install / loss of /config).
+func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
+	n, err := h.svc.Discover(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
+}
+
 func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 	sum, err := h.svc.Backup(r.Context(), name)

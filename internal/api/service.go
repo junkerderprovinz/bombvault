@@ -26,15 +26,20 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
 )
 
 // containerDefinition is the recreate recipe persisted at backup time so that
-// restore works even after the container has been deleted from the host.
+// restore works even after the container has been deleted from the host — and,
+// when written (encrypted) to the backup storage, after BombVault's own /config
+// is lost (full disaster recovery via Discover). It is self-contained: Inspect +
+// the Unraid template + the appdata paths that were backed up.
 type containerDefinition struct {
-	Inspect     model.Inspect `json:"inspect"`
-	TemplateXML string        `json:"template_xml"`
+	Inspect      model.Inspect `json:"inspect"`
+	TemplateXML  string        `json:"template_xml"`
+	AppdataPaths []string      `json:"appdata_paths"`
 }
 
 // ResticEngine is the subset of *restic.Restic the service depends on. Defining
@@ -193,20 +198,18 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	}
 	appdata := s.resolveAppdataPaths(name, in)
 
-	// Persist the recreate recipe alongside the appdata paths so restore works
-	// even after the container has been deleted from the host.
+	// Persist the recreate recipe (self-contained: inspect + template + appdata
+	// paths) so restore works even after the container has been deleted.
 	xml, _, _ := template.Read(s.cfg.FlashTemplatesDir, name)
-	defJSON := ""
-	if defBytes, jsonErr := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml}); jsonErr == nil {
-		defJSON = string(defBytes)
-	}
+	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: appdata})
+	defJSON := string(defBytes)
 
 	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: appdata, Definition: defJSON})
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("upsert target: %w", err)
 	}
 
-	return backup.BackupContainer(ctx, backup.BackupDeps{
+	sum, err := backup.BackupContainer(ctx, backup.BackupDeps{
 		ContainerRef:         name,
 		ContainerName:        name,
 		RepoPath:             repo,
@@ -220,6 +223,138 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		Templates:            templatesAdapter{},
 		Runs:                 runsAdapter{s.store},
 	})
+	if err != nil {
+		return backup.Summary{}, err
+	}
+
+	// Mirror the definition (encrypted) onto the backup storage so a freshly
+	// installed BombVault can rebuild its state via Discover after losing
+	// /config. Best-effort: a write failure must never fail a good backup.
+	if wErr := s.writeDefToStorage(settings, name, defBytes); wErr != nil {
+		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
+	}
+	return sum, nil
+}
+
+// defsDir returns the directory (a sibling of the containers repo, on the same
+// backup storage) where encrypted container definitions are mirrored for
+// disaster recovery.
+func (s *Service) defsDir(settings store.Settings) (string, error) {
+	repo, err := s.containersRepoPath(settings)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(filepath.Dir(repo), "bombvault-defs"), nil
+}
+
+// writeDefToStorage encrypts the definition with the APP_KEY-derived key and
+// writes it to <defsDir>/<name>.def (0600). The env vars inside the definition
+// are sensitive, so the file is always encrypted regardless of the restic
+// encryption setting.
+func (s *Service) writeDefToStorage(settings store.Settings, name string, defJSON []byte) error {
+	fn, err := defFileName(name)
+	if err != nil {
+		return err
+	}
+	dir, err := s.defsDir(settings)
+	if err != nil {
+		return err
+	}
+	if err := paths.EnsureDir(dir); err != nil {
+		return fmt.Errorf("ensure defs dir: %w", err)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
+	if err != nil {
+		return fmt.Errorf("encrypt definition: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, fn), enc, 0o600); err != nil { //nolint:gosec // G703: fn validated by defFileName (no separators/..); dir is operator-configured
+		return fmt.Errorf("write definition: %w", err)
+	}
+	return nil
+}
+
+// defFileName returns the filesystem-safe definition filename for a container,
+// rejecting any name with a path separator or "" so it can never escape the
+// defs dir (defense-in-depth; docker names never contain a separator anyway).
+func defFileName(name string) (string, error) {
+	if name == "" || strings.ContainsAny(name, `/\`) || strings.Contains(name, "..") {
+		return "", fmt.Errorf("unsafe container name %q", name)
+	}
+	return name + ".def", nil
+}
+
+// Discover rebuilds BombVault's target list from the backup storage — used after
+// a fresh install / loss of /config. It lists the containers repo's snapshots
+// (tagged container:<name>), reads + decrypts each container's mirrored
+// definition, and upserts a target so the container can be restored. Returns the
+// number of containers discovered. Containers whose definition is missing or
+// undecryptable are skipped (logged).
+func (s *Service) Discover(ctx context.Context) (int, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return 0, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.containersRepoPath(settings)
+	if err != nil {
+		return 0, err
+	}
+	mode := s.ModeFor(settings)
+	// No repo yet → nothing to discover (not an error).
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+		return 0, nil
+	}
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return 0, err
+	}
+
+	// Collect the distinct container names from the container:<name> tags.
+	names := map[string]bool{}
+	for _, snap := range snaps {
+		for _, tag := range snap.Tags {
+			if rest, ok := strings.CutPrefix(tag, "container:"); ok && rest != "" {
+				names[rest] = true
+			}
+		}
+	}
+
+	dir, err := s.defsDir(settings)
+	if err != nil {
+		return 0, err
+	}
+	discovered := 0
+	for name := range names {
+		fn, fnErr := defFileName(name)
+		if fnErr != nil {
+			log.Printf("api: discover: skipping unsafe container name %q: %v", name, fnErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		enc, rErr := os.ReadFile(filepath.Join(dir, fn)) //nolint:gosec // G304: fn validated by defFileName; dir is operator-configured
+		if rErr != nil {
+			log.Printf("api: discover: no stored definition for %q — skipping (cannot recreate): %v", name, rErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		plain, dErr := secret.Decrypt(s.cfg.AppKey, enc)
+		if dErr != nil {
+			log.Printf("api: discover: definition for %q is undecryptable (wrong APP_KEY?) — skipping: %v", name, dErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		var def containerDefinition
+		if jErr := json.Unmarshal(plain, &def); jErr != nil {
+			log.Printf("api: discover: definition for %q is corrupt — skipping: %v", name, jErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		if _, uErr := s.store.UpsertTarget(store.Target{
+			ContainerName: name,
+			AppdataPaths:  def.AppdataPaths,
+			Definition:    string(plain),
+		}); uErr != nil {
+			log.Printf("api: discover: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		discovered++
+	}
+	return discovered, nil
 }
 
 // Restore runs a full container restore. The recreate profile is taken from the

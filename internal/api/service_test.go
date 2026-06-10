@@ -14,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -458,15 +459,82 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	}
 }
 
+// TestDiscoverRebuildsTargetsFromStorage verifies full disaster recovery: with
+// an empty store (fresh install), Discover reads the encrypted definitions from
+// the backup storage + the repo's container tags and rebuilds the targets.
+func TestDiscoverRebuildsTargetsFromStorage(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Repo exists (config marker) so Discover reaches the engine.
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Encrypted definition mirrored to the defs dir (sibling of the repo).
+	defsDir := filepath.Join(dir, "backups", "bombvault-defs")
+	if err := os.MkdirAll(defsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	defJSON, err := marshalDefinition(
+		model.Inspect{Name: "/plex", Config: model.Config{Image: "plex:latest"}},
+		"<xml/>", "/host/user/appdata/plex",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(cfg.AppKey, defJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(defsDir, "plex.def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// The repo reports a data snapshot tagged container:plex (+ one with no def).
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"container:ghost", "p1"}}, // no def file → skipped
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, eng)
+
+	n, err := svc.Discover(context.Background())
+	if err != nil {
+		t.Fatalf("discover: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("discovered = %d, want 1 (ghost has no def, skipped)", n)
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatalf("plex target not rebuilt: %v", err)
+	}
+	if len(tg.AppdataPaths) != 1 || tg.AppdataPaths[0] != "/host/user/appdata/plex" {
+		t.Fatalf("rebuilt appdata = %v", tg.AppdataPaths)
+	}
+	if tg.Definition == "" {
+		t.Fatal("rebuilt target has no definition")
+	}
+}
+
 // marshalDefinition is a test helper that encodes a containerDefinition JSON
 // blob without importing the unexported type from package api.
 // The struct layout mirrors api.containerDefinition exactly.
-func marshalDefinition(inspect model.Inspect, templateXML string) ([]byte, error) {
+func marshalDefinition(inspect model.Inspect, templateXML string, appdata ...string) ([]byte, error) {
 	type def struct {
-		Inspect     model.Inspect `json:"inspect"`
-		TemplateXML string        `json:"template_xml"`
+		Inspect      model.Inspect `json:"inspect"`
+		TemplateXML  string        `json:"template_xml"`
+		AppdataPaths []string      `json:"appdata_paths"`
 	}
-	return json.Marshal(def{Inspect: inspect, TemplateXML: templateXML})
+	return json.Marshal(def{Inspect: inspect, TemplateXML: templateXML, AppdataPaths: appdata})
 }
 
 // ---------------------------------------------------------------------------

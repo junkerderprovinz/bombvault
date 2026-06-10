@@ -183,6 +183,11 @@ export function restore(
   });
 }
 
+/** Rebuild the target list from the backup storage (disaster recovery after a fresh install). */
+export function discover(): Promise<OkEnvelope & { discovered?: number }> {
+  return fetchJSON("/api/discover", { method: "POST" });
+}
+
 /** Delete ALL backups of a container and forget it from the store. */
 export function deleteBackups(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups`, {
