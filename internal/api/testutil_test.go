@@ -8,6 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // newMemStore opens an in-memory SQLite store, migrates it, and returns a Repo.
@@ -92,3 +93,20 @@ func (f *fakeServiceDocker) InspectName(_ context.Context, name string) (string,
 	f.calls = append(f.calls, "inspectName:"+name)
 	return f.liveName, f.inspNameErr
 }
+
+// fakeVirsh is a no-op virshcli.Virsh implementation for service/handler tests.
+// All methods return empty values and nil errors unless the test configures otherwise.
+type fakeVirsh struct{}
+
+var _ virshcli.Virsh = fakeVirsh{}
+
+func (fakeVirsh) List(_ context.Context) ([]virshcli.VMInfo, error)           { return nil, nil }
+func (fakeVirsh) State(_ context.Context, _ string) (string, error)           { return "", nil }
+func (fakeVirsh) DumpXML(_ context.Context, _ string) (string, error)         { return "<domain/>", nil }
+func (fakeVirsh) Shutdown(_ context.Context, _ string) error                  { return nil }
+func (fakeVirsh) Destroy(_ context.Context, _ string) error                   { return nil }
+func (fakeVirsh) Start(_ context.Context, _ string) error                     { return nil }
+func (fakeVirsh) Define(_ context.Context, _ string) error                    { return nil }
+func (fakeVirsh) Undefine(_ context.Context, _ string) error                  { return nil }
+func (fakeVirsh) Autostart(_ context.Context, _ string, _ bool) error         { return nil }
+func (fakeVirsh) IsActive(_ context.Context, _ string) (bool, error)          { return false, nil }
