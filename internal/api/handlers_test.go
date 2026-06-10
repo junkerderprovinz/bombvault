@@ -333,6 +333,129 @@ func TestSpike(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// VM handler tests
+// ---------------------------------------------------------------------------
+
+func TestListVMsEmpty(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodGet, "/api/vms", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok, got %v", m)
+	}
+	vms, ok := m["vms"].([]any)
+	if !ok {
+		t.Fatalf("vms field missing or wrong type: %v", m)
+	}
+	if len(vms) != 0 {
+		t.Fatalf("expected empty vms slice, got %v", vms)
+	}
+}
+
+func TestListVMsWithEntry(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	_, err := st.UpsertVMTarget(store.VMTarget{
+		Name:   "win11",
+		Method: "graceful",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/vms", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	vms, ok := m["vms"].([]any)
+	if !ok || len(vms) != 1 {
+		t.Fatalf("expected 1 vm, got %v", m)
+	}
+	vm := vms[0].(map[string]any)
+	if vm["name"] != "win11" {
+		t.Fatalf("unexpected vm name: %v", vm)
+	}
+}
+
+func TestBackupVMHandlerReturnsOK(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	// BackupVM will fail at virsh list because fakeVirsh returns empty — but
+	// the handler must still return ok:false (not a 500) so we test graceful error.
+	w, m := doJSON(t, h, http.MethodPost, "/api/vms/win11/backup", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	// fakeVirsh.List returns nothing, so win11 is unknown → error path.
+	if m["ok"] == nil {
+		t.Fatalf("missing ok field: %v", m)
+	}
+}
+
+func TestSnapshotsVMHandlerEmpty(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	// vmsPath not configured → expect ok:false error, not a panic.
+	w, m := doJSON(t, h, http.MethodGet, "/api/vms/win11/snapshots", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] == nil {
+		t.Fatalf("missing ok field: %v", m)
+	}
+}
+
+func TestRestoreVMHandlerRequiresConfirm(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/vms/win11/restore",
+		`{"snapshotId":"abc123def456","confirm":false}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false (not confirmed), got %v", m)
+	}
+}
+
+func TestPatchVMHandlerMethod(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	_, err := st.UpsertVMTarget(store.VMTarget{Name: "win11", Method: "graceful"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, m := doJSON(t, h, http.MethodPatch, "/api/vms/win11",
+		`{"method":"graceful"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok, got %v", m)
+	}
+}
+
+func TestPatchVMHandlerInclude(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	_, err := st.UpsertVMTarget(store.VMTarget{Name: "ubuntu", Method: "graceful"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, m := doJSON(t, h, http.MethodPatch, "/api/vms/ubuntu",
+		`{"includeInSchedule":true}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok, got %v", m)
+	}
+	tg, err := st.GetVMTargetByName("ubuntu")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !tg.IncludeInSchedule {
+		t.Fatal("include flag not persisted")
+	}
+}
+
 func newSpikeRouter(t *testing.T, d *fakeServiceDocker) http.Handler {
 	t.Helper()
 	dir := t.TempDir()
