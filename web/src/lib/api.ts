@@ -119,6 +119,21 @@ export interface BrowseResponse {
   error?: string;
 }
 
+/** Response from GET /api/auth */
+export interface AuthStatusResponse {
+  ok: boolean;
+  /** Whether authentication is currently enabled (a password has been set). */
+  enabled: boolean;
+  /** Whether the current request carries a valid session cookie. */
+  authed: boolean;
+}
+
+/** Response from POST /api/auth/password */
+export interface SetPasswordResponse extends OkEnvelope {
+  /** Whether auth is now enabled after the change. */
+  enabled?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // fetchJSON — base wrapper
 // ---------------------------------------------------------------------------
@@ -237,4 +252,37 @@ export function listRuns(): Promise<ListRunsResponse> {
 export function browse(path: string = ""): Promise<BrowseResponse> {
   const qs = path ? `?path=${encodeURIComponent(path)}` : "";
   return fetchJSON(`/api/browse${qs}`);
+}
+
+// ---------------------------------------------------------------------------
+// Auth API
+// ---------------------------------------------------------------------------
+
+/** GET /api/auth — returns current auth state (enabled, authed). */
+export function getAuth(): Promise<AuthStatusResponse> {
+  return fetchJSON("/api/auth");
+}
+
+/** POST /api/login — attempt password login; sets bv_session cookie on success. */
+export function login(password: string): Promise<OkEnvelope> {
+  return fetchJSON("/api/login", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
+/** POST /api/logout — clears the bv_session cookie. */
+export function logout(): Promise<OkEnvelope> {
+  return fetchJSON("/api/logout", { method: "POST" });
+}
+
+/**
+ * POST /api/auth/password — set or change the auth password.
+ * Passing an empty string disables authentication.
+ */
+export function setAuthPassword(password: string): Promise<SetPasswordResponse> {
+  return fetchJSON("/api/auth/password", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
 }

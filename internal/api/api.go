@@ -51,11 +51,20 @@ func NewHandler(
 }
 
 // Router returns the API mux with Go 1.22 method+path patterns. All routes are
-// under /api/.
+// under /api/.  The entire mux is wrapped with authGate so that when
+// authentication is enabled every request (other than the public allow-listed
+// paths) requires a valid session cookie.
 func (h *Handler) Router() http.Handler {
 	mux := http.NewServeMux()
 
+	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)
+	mux.HandleFunc("GET /api/auth", h.handleAuthStatus)
+	mux.HandleFunc("POST /api/login", h.handleLogin)
+	mux.HandleFunc("POST /api/logout", h.handleLogout)
+	mux.HandleFunc("POST /api/auth/password", h.handleSetPassword)
+
+	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
 	mux.HandleFunc("POST /api/containers/{name}/backup", h.handleBackup)
 	mux.HandleFunc("GET /api/containers/{name}/snapshots", h.handleSnapshots)
@@ -70,5 +79,5 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 
-	return mux
+	return h.authGate(mux)
 }

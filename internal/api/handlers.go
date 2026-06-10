@@ -9,11 +9,13 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -422,6 +424,161 @@ type browseDirEntry struct {
 // The response is always HTTP 200; errors use {ok:false,error} so the UI can
 // display a graceful message. A missing or empty `path` query parameter lists
 // the mount root itself.
+// ---------------------------------------------------------------------------
+// Authentication
+// ---------------------------------------------------------------------------
+
+const (
+	sessionCookieName = "bv_session"
+	sessionTTL        = 7 * 24 * time.Hour // 7 days
+)
+
+// authEnabled reads the stored password hash and reports whether authentication
+// is enabled.  On a store error it logs and treats auth as OFF (safe default for
+// a trusted-LAN tool — a transient DB error should not lock everyone out).
+func (h *Handler) authEnabled() (hash string, on bool) {
+	s, err := h.store.GetSettings()
+	if err != nil {
+		log.Printf("api: authEnabled: GetSettings: %v", err)
+		return "", false
+	}
+	return s.AuthPasswordHash, s.AuthPasswordHash != ""
+}
+
+// newSessionCookie constructs the bv_session cookie with the correct attributes.
+// Secure is set to true when the server is in HTTPS mode (cfg.HTTPOnly == false)
+// and false for plain HTTP — which is intentional for local/LAN HTTP-only
+// deployments.
+func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
+	return &http.Cookie{ //nolint:gosec // G124: Secure is conditionally false only in HTTP-only (cfg.HTTPOnly) mode; intentional for LAN deployments
+		Name:     sessionCookieName,
+		Value:    value,
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   !h.cfg.HTTPOnly,
+	}
+}
+
+// handleAuthStatus handles GET /api/auth.
+// Returns {ok, enabled, authed} so the SPA can decide whether to show the
+// login screen.
+func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
+	hash, on := h.authEnabled()
+	authed := false
+	if on {
+		if c, err := r.Cookie(sessionCookieName); err == nil {
+			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, c.Value)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":      true,
+		"enabled": on,
+		"authed":  authed,
+	})
+}
+
+// handleLogin handles POST /api/login.
+// Body: {password string}
+func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	hash, on := h.authEnabled()
+	if !on {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
+		return
+	}
+
+	var body struct {
+		Password string `json:"password"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+
+	if !secret.VerifyPassword(h.cfg.AppKey, body.Password, hash) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid password"})
+		return
+	}
+
+	tok := secret.NewSessionToken(h.cfg.AppKey, hash, sessionTTL)
+	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleLogout handles POST /api/logout.
+// Clears the session cookie unconditionally.
+func (h *Handler) handleLogout(w http.ResponseWriter, _ *http.Request) {
+	http.SetCookie(w, h.newSessionCookie("", -1))
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleSetPassword handles POST /api/auth/password.
+// Body: {password string} — empty string disables auth.
+func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Password string `json:"password"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+
+	if body.Password == "" {
+		s.AuthPasswordHash = ""
+	} else {
+		s.AuthPasswordHash = secret.HashPassword(h.cfg.AppKey, body.Password)
+	}
+
+	if err := h.store.UpdateSettings(s); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"enabled": s.AuthPasswordHash != "",
+	}))
+}
+
+// authGate is a middleware that enforces authentication when auth is enabled.
+// When auth is OFF it is a no-op passthrough, preserving today's behaviour.
+// The following paths are always permitted (so the SPA and health-check work):
+//   - GET  /api/auth
+//   - POST /api/login
+//   - GET  /api/health
+func (h *Handler) authGate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hash, on := h.authEnabled()
+		if !on {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Always allow the public auth + health endpoints.
+		switch r.URL.Path {
+		case "/api/auth", "/api/login", "/api/health":
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// All other /api/* routes require a valid session cookie.
+		c, err := r.Cookie(sessionCookieName)
+		if err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, c.Value) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"ok":    false,
+				"error": "authentication required",
+			})
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
 

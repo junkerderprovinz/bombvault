@@ -3,6 +3,10 @@
 // (so they survive a loss of BombVault's own /config) without leaking the
 // container env vars and other secrets they contain. The key derivation is
 // domain-separated from the restic-password derivation in package restickey.
+//
+// The package also contains authentication helpers (HashPassword, VerifyPassword,
+// NewSessionToken, ValidSessionToken) that follow the same HMAC-SHA256/APP_KEY
+// pattern.
 package secret
 
 import (
@@ -15,6 +19,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // deriveKey returns a 32-byte AES-256 key from appKey, domain-separated from the
@@ -60,6 +67,91 @@ func Decrypt(appKey string, data []byte) ([]byte, error) {
 	}
 	return pt, nil
 }
+
+// ---------------------------------------------------------------------------
+// Authentication helpers
+// ---------------------------------------------------------------------------
+
+// hmacHex returns hex(HMAC-SHA256(hexDecode(appKey), message)).
+// It panics on an invalid (non-hex) appKey — the caller must have validated it.
+func hmacHex(appKey, message string) string {
+	keyBytes, err := hex.DecodeString(appKey)
+	if err != nil {
+		panic(fmt.Sprintf("secret: invalid hex APP_KEY: %v", err))
+	}
+	mac := hmac.New(sha256.New, keyBytes)
+	mac.Write([]byte(message))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+// HashPassword derives a stored password hash from appKey and password using
+// HMAC-SHA256.  The result is deterministic and domain-separated so that an
+// offline brute-force also requires knowledge of APP_KEY.
+//
+// It panics on an invalid (non-hex) appKey.
+func HashPassword(appKey, password string) string {
+	return hmacHex(appKey, "bombvault:auth:"+password)
+}
+
+// VerifyPassword returns true when password hashes to storedHash under appKey.
+// The comparison is constant-time to resist timing attacks.
+//
+// It panics on an invalid (non-hex) appKey.
+func VerifyPassword(appKey, password, storedHash string) bool {
+	got := HashPassword(appKey, password)
+	a, _ := hex.DecodeString(got)
+	b, _ := hex.DecodeString(storedHash)
+	return hmac.Equal(a, b)
+}
+
+// NewSessionToken creates a signed, time-limited session token.
+//
+// Format: "<expiryUnix>.<hex-HMAC>"
+//
+// The MAC is bound to both the expiry timestamp and the current passwordHash so
+// that changing or clearing the password instantly invalidates all existing
+// sessions.
+//
+// It panics on an invalid (non-hex) appKey.
+func NewSessionToken(appKey, passwordHash string, ttl time.Duration) string {
+	expiry := strconv.FormatInt(time.Now().Add(ttl).Unix(), 10)
+	sig := hmacHex(appKey, "bombvault:session:"+expiry+":"+passwordHash)
+	return expiry + "." + sig
+}
+
+// ValidSessionToken verifies a token produced by NewSessionToken.  It returns
+// false for any parse error, expired token, wrong APP_KEY, or tampered value.
+//
+// It panics on an invalid (non-hex) appKey.
+func ValidSessionToken(appKey, passwordHash, token string) bool {
+	// Split on the LAST "." so that the expiry part can never contain a dot.
+	dot := strings.LastIndex(token, ".")
+	if dot < 0 {
+		return false
+	}
+	expStr, gotSig := token[:dot], token[dot+1:]
+
+	expiry, err := strconv.ParseInt(expStr, 10, 64)
+	if err != nil {
+		return false
+	}
+	if time.Now().Unix() > expiry {
+		return false // expired
+	}
+
+	wantSig := hmacHex(appKey, "bombvault:session:"+expStr+":"+passwordHash)
+	// Constant-time hex comparison.
+	a, err1 := hex.DecodeString(gotSig)
+	b, err2 := hex.DecodeString(wantSig)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	return hmac.Equal(a, b)
+}
+
+// ---------------------------------------------------------------------------
+// AES-256-GCM encryption
+// ---------------------------------------------------------------------------
 
 func newGCM(appKey string) (cipher.AEAD, error) {
 	key, err := deriveKey(appKey)

@@ -19,6 +19,9 @@ type Settings struct {
 	VMsSchedule        string
 	FlashSchedule      string
 	DefaultLanguage    string
+	// AuthPasswordHash is the HMAC-SHA256 password hash set by the admin.
+	// An empty string means authentication is disabled (the default).
+	AuthPasswordHash string
 }
 
 // GetSettings returns the current app settings.
@@ -27,7 +30,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled,
 		       containers_path, vms_path, flash_path,
 		       containers_schedule, vms_schedule, flash_schedule,
-		       default_language
+		       default_language, auth_password_hash
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -36,7 +39,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
-		&s.DefaultLanguage,
+		&s.DefaultLanguage, &s.AuthPasswordHash,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -65,7 +68,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  containers_schedule = ?,
 		  vms_schedule        = ?,
 		  flash_schedule      = ?,
-		  default_language    = ?
+		  default_language    = ?,
+		  auth_password_hash  = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -73,7 +77,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.FlashEnabled),
 		s.ContainersPath, s.VMsPath, s.FlashPath,
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
-		s.DefaultLanguage,
+		s.DefaultLanguage, s.AuthPasswordHash,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
