@@ -14,6 +14,7 @@ import (
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
@@ -140,7 +141,8 @@ func (c *Client) Pull(ctx context.Context, img string) error {
 func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect) error {
 	cfg, hostCfg := buildCreateConfig(in)
 	name := normalizeName(in.Name)
-	resp, err := c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, name)
+	netCfg := buildNetworkingConfig(in)
+	resp, err := c.api.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)
 	if err != nil {
 		return fmt.Errorf("dockercli: create: %w", err)
 	}
@@ -186,10 +188,11 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 	}
 	if resp.Config != nil {
 		out.Config = model.Config{
-			Image: resp.Config.Image,
-			Env:   resp.Config.Env,
-			Cmd:   []string(resp.Config.Cmd),
-			User:  resp.Config.User,
+			Image:  resp.Config.Image,
+			Env:    resp.Config.Env,
+			Cmd:    []string(resp.Config.Cmd),
+			User:   resp.Config.User,
+			Labels: resp.Config.Labels, // SEC/Unraid: keep net.unraid.docker.* labels
 		}
 	}
 	for _, m := range resp.Mounts {
@@ -198,6 +201,39 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 			Source:      m.Source,
 			Destination: m.Destination,
 		})
+	}
+	out.Network = mapPrimaryNetwork(resp)
+	return out
+}
+
+// mapPrimaryNetwork extracts the primary network attachment (the one matching
+// NetworkMode, else the first) so a recreated container keeps its original
+// static IP / MAC.
+func mapPrimaryNetwork(resp container.InspectResponse) model.NetworkEndpoint {
+	if resp.NetworkSettings == nil || len(resp.NetworkSettings.Networks) == 0 {
+		return model.NetworkEndpoint{}
+	}
+	netMode := ""
+	if resp.HostConfig != nil {
+		netMode = string(resp.HostConfig.NetworkMode)
+	}
+	name, ep := "", (*network.EndpointSettings)(nil)
+	if e, ok := resp.NetworkSettings.Networks[netMode]; ok && e != nil {
+		name, ep = netMode, e
+	} else {
+		for n, e := range resp.NetworkSettings.Networks {
+			if e != nil {
+				name, ep = n, e
+				break
+			}
+		}
+	}
+	if ep == nil {
+		return model.NetworkEndpoint{}
+	}
+	out := model.NetworkEndpoint{Name: name, MACAddress: ep.MacAddress, Aliases: ep.Aliases}
+	if ep.IPAMConfig != nil {
+		out.IPv4Address = ep.IPAMConfig.IPv4Address
 	}
 	return out
 }
@@ -241,10 +277,11 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 // inspect, preserving the security-relevant fields (SEC parity).
 func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConfig) {
 	cfg := &container.Config{
-		Image: in.Config.Image,
-		Env:   in.Config.Env,
-		Cmd:   in.Config.Cmd,
-		User:  in.Config.User,
+		Image:  in.Config.Image,
+		Env:    in.Config.Env,
+		Cmd:    in.Config.Cmd,
+		User:   in.Config.User,
+		Labels: in.Config.Labels,
 	}
 
 	hc := in.HostConfig
@@ -279,4 +316,25 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 		})
 	}
 	return cfg, hostCfg
+}
+
+// buildNetworkingConfig recreates the primary network attachment with its
+// original static IP/MAC/aliases so the container comes back with the SAME IP
+// (e.g. an Unraid br0.x static IP) instead of a freshly-assigned one. Returns
+// nil when no static IPv4 was set (DHCP/bridge), letting docker assign normally.
+func buildNetworkingConfig(in model.Inspect) *network.NetworkingConfig {
+	n := in.Network
+	if n.Name == "" || n.IPv4Address == "" {
+		return nil
+	}
+	ep := &network.EndpointSettings{
+		IPAMConfig: &network.EndpointIPAMConfig{IPv4Address: n.IPv4Address},
+		Aliases:    n.Aliases,
+	}
+	if n.MACAddress != "" {
+		ep.MacAddress = n.MACAddress
+	}
+	return &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{n.Name: ep},
+	}
 }
