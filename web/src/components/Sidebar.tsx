@@ -159,7 +159,6 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.vms")}
           icon={<IconVM />}
           disabled={!vmsEnabled}
-          comingSoon
         />
         <NavItem
           to="/flash"

@@ -255,6 +255,64 @@ export function browse(path: string = ""): Promise<BrowseResponse> {
 }
 
 // ---------------------------------------------------------------------------
+// VM API types — match VMView in internal/api/service.go exactly
+// ---------------------------------------------------------------------------
+
+/** A VM row from GET /api/vms */
+export interface VM {
+  name: string;
+  state: string;
+  /** Backup method — currently always "graceful". */
+  method: string;
+  includeInSchedule: boolean;
+  lastBackup: number | null;
+}
+
+export interface ListVMsResponse {
+  ok: boolean;
+  vms: VM[];
+}
+
+// ---------------------------------------------------------------------------
+// VM API functions
+// ---------------------------------------------------------------------------
+
+export function listVMs(): Promise<ListVMsResponse> {
+  return fetchJSON("/api/vms");
+}
+
+export function backupVMNow(name: string): Promise<BackupResponse> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/backup`, {
+    method: "POST",
+  });
+}
+
+export function listVMSnapshots(name: string): Promise<ListSnapshotsResponse> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/snapshots`);
+}
+
+export function restoreVM(
+  name: string,
+  snapshotId: string,
+  confirm: boolean
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, confirm }),
+  });
+}
+
+export function setVMInclude(
+  name: string,
+  includeInSchedule: boolean
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ includeInSchedule }),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Auth API
 // ---------------------------------------------------------------------------
 
