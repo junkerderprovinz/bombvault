@@ -63,6 +63,11 @@ func scrubError(err error) string {
 		return "invalid snapshot id (must be 8–64 lowercase hex)"
 	}
 	msg := err.Error()
+	// Map restic's password/key mismatch to an actionable hint: the repo was
+	// created with a different APP_KEY or a different encryption setting.
+	if strings.Contains(msg, "wrong password or no key found") {
+		return "backup repository can't be opened — the APP_KEY differs from when this repo was first created (or encryption was toggled). Use the original APP_KEY, or point Settings at a fresh, empty backup path."
+	}
 	msg = absPathRe.ReplaceAllString(msg, "[path]")
 	return strings.TrimSpace(msg)
 }

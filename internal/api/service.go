@@ -249,6 +249,20 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		return errors.New("container has not been backed up yet")
 	}
 
+	// "latest" (or empty) resolves to the container's newest snapshot — used by
+	// the bulk "restore selected" action. restic returns snapshots oldest-first,
+	// so the last tag-matching one is the newest.
+	if snapshotID == "latest" || snapshotID == "" {
+		snaps, snapErr := s.Snapshots(ctx, name)
+		if snapErr != nil {
+			return snapErr
+		}
+		if len(snaps) == 0 {
+			return errors.New("no backups found for this container")
+		}
+		snapshotID = snaps[len(snaps)-1].ID
+	}
+
 	// Re-validate the stored appdata paths stay within the host mount root before
 	// restoring (defense-in-depth in case the DB was tampered with).
 	if len(tg.AppdataPaths) == 0 {
