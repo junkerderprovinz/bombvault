@@ -8,10 +8,29 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
 )
+
+// parentDirs returns the deduplicated parent directories of the given absolute
+// file paths (slash semantics — these are container Linux paths). Used to
+// restore VM disk/NVRAM FILES via restic's directory-subtree restore. The root
+// "/" is never returned (defensive: never restore the whole filesystem).
+func parentDirs(paths []string) []string {
+	seen := map[string]bool{}
+	var dirs []string
+	for _, p := range paths {
+		d := path.Dir(p)
+		if d == "" || d == "/" || d == "." || seen[d] {
+			continue
+		}
+		seen[d] = true
+		dirs = append(dirs, d)
+	}
+	return dirs
+}
 
 // ---------------------------------------------------------------------------
 // VM DI interface (the seam — no concrete virshcli imported here)
@@ -280,8 +299,15 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 
-	// Restore each path back to its origin (per-path subtree, like containers).
-	if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, allPaths); err != nil {
+	// VM disk images and NVRAM are FILES; restic's <id>:<subpath> subtree form
+	// needs a DIRECTORY (a file path fails with "not a directory"). Restore each
+	// file's PARENT directory instead (deduplicated): restic restores only the
+	// snapshot's files in that dir and never deletes existing siblings.
+	restoreDirs := parentDirs(allPaths)
+	if len(restoreDirs) == 0 {
+		return fmt.Errorf("vm restore: no restorable directories derived from paths")
+	}
+	if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, restoreDirs); err != nil {
 		return fmt.Errorf("vm restore: restic restore: %w", err)
 	}
 
