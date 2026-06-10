@@ -191,6 +191,15 @@ const en = {
   "auth.logout": "Sign out",
   "auth.saving": "Saving…",
   "auth.saveError": "Failed to save",
+
+  // VMs page
+  "vms.title": "Virtual Machines",
+  "vms.subtitle": "Manage VM backups, schedules, and restores.",
+  "vms.empty": "No VMs found. Is libvirt/KVM running?",
+  "vms.backupSelected": "Back up selected",
+  "vms.restoreSelected": "Restore selected (latest)",
+  "vms.restoreSelectedConfirm": "Restore the LATEST backup of the selected VMs? Each VM is shut off, its disk files replaced, and the VM restored.",
+  "vms.notInstalledHint": "These VMs are no longer defined on the host but still have backups. Restore them to recover, or use the Backups panel to browse their snapshots.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -372,6 +381,15 @@ const de: Translations = {
   "auth.logout": "Abmelden",
   "auth.saving": "Speichern…",
   "auth.saveError": "Speichern fehlgeschlagen",
+
+  // VMs page
+  "vms.title": "Virtuelle Maschinen",
+  "vms.subtitle": "VM-Backups, Zeitpläne und Wiederherstellungen verwalten.",
+  "vms.empty": "Keine VMs gefunden. Läuft libvirt/KVM?",
+  "vms.backupSelected": "Auswahl sichern",
+  "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
+  "vms.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten VMs wiederherstellen? Jede VM wird heruntergefahren, ihre Disk-Dateien ersetzt und die VM wiederhergestellt.",
+  "vms.notInstalledHint": "Diese VMs sind nicht mehr auf dem Host definiert, haben aber noch Backups. Stelle sie wieder her oder sieh ihre Snapshots im Backups-Panel ein.",
 };
 
 // ---------------------------------------------------------------------------
