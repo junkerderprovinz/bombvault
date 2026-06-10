@@ -101,22 +101,53 @@ func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
 	return repo, nil
 }
 
-// toContainerPath translates a HOST path under HostSourceRoot to its
-// container-visible equivalent under HostMountRoot. Returns ("", false) when
-// the host path is not reachable through the mount.
-// Used for both appdata (containers) and VM disk/NVRAM paths so the same
-// host→container translation is applied consistently across both domains.
+// mountPair maps a HOST source root to the container path it is mounted at.
+type mountPair struct{ src, mount string }
+
+// hostMounts returns the host→container bind mappings BombVault can reach, in
+// priority order: the broad Host Data mount (appdata + VM disks under /mnt) and
+// the libvirt NVRAM mount (UEFI var stores under /etc/libvirt/qemu/nvram, which
+// live OUTSIDE /mnt and so need their own bind). A mapping with an empty source
+// or mount is skipped, which disables it.
+func (s *Service) hostMounts() []mountPair {
+	pairs := []mountPair{{s.cfg.HostSourceRoot, s.cfg.HostMountRoot}}
+	if s.cfg.NVRAMSourceRoot != "" && s.cfg.NVRAMMountRoot != "" {
+		pairs = append(pairs, mountPair{s.cfg.NVRAMSourceRoot, s.cfg.NVRAMMountRoot})
+	}
+	return pairs
+}
+
+// toContainerPath translates a HOST path to its container-visible equivalent
+// through one of the bind mounts in hostMounts. Returns ("", false) when the
+// host path is not reachable through any mount. Used for appdata (containers)
+// and VM disk/NVRAM paths so the same host→container translation is applied
+// consistently across every domain.
 func (s *Service) toContainerPath(host string) (string, bool) {
-	srcRoot := path.Clean(s.cfg.HostSourceRoot)
-	mountRoot := path.Clean(s.cfg.HostMountRoot)
 	p := path.Clean(host)
-	if p == srcRoot {
-		return mountRoot, true
+	for _, m := range s.hostMounts() {
+		srcRoot := path.Clean(m.src)
+		mountRoot := path.Clean(m.mount)
+		if p == srcRoot {
+			return mountRoot, true
+		}
+		if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
+			return mountRoot + "/" + rest, true
+		}
 	}
-	if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
-		return mountRoot + "/" + rest, true
+	return "", false // not reachable through any mount
+}
+
+// withinAnyMount reports whether a CONTAINER-visible path lies inside one of the
+// bind mounts' container roots (Host Data or NVRAM). Used to validate stored
+// restore paths before writing them back.
+func (s *Service) withinAnyMount(p string) bool {
+	if paths.Within(s.cfg.HostMountRoot, p) {
+		return true
 	}
-	return "", false // not reachable through the mount
+	if s.cfg.NVRAMMountRoot != "" && paths.Within(s.cfg.NVRAMMountRoot, p) {
+		return true
+	}
+	return false
 }
 
 // EnsureRepo creates the repo directory and initialises the restic repo on first
@@ -739,9 +770,11 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// Translate HOST paths to container-visible paths via the shared helper.
 	// A disk MUST be reachable through the mount (else restic can't read it and
 	// the snapshot would be incomplete) — fail clearly rather than store an
-	// un-restorable path. NVRAM that is not reachable (Unraid keeps OVMF vars
-	// under /etc/libvirt, not /mnt) is SKIPPED with a warning so the backup still
-	// succeeds; the VM simply restores without its UEFI nvram.
+	// un-restorable path. NVRAM (UEFI var store, kept by Unraid under
+	// /etc/libvirt/qemu/nvram) is reachable via the dedicated NVRAM mount; if
+	// that mount is absent it is SKIPPED with a warning so the backup still
+	// succeeds — but the UEFI VM will then fail to start on restore ("unable to
+	// find any master var store for loader"), so the NVRAM mount is recommended.
 	var diskPaths []string
 	for _, hp := range domain.DiskPaths {
 		cp, ok := s.toContainerPath(hp)
@@ -755,7 +788,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		if cp, ok := s.toContainerPath(domain.NVRAMPath); ok {
 			nvramPath = cp
 		} else {
-			log.Printf("api: BackupVM: NVRAM %q is not under the host mount; skipping it — the VM will restore without UEFI nvram", domain.NVRAMPath) //nolint:gosec // G706: %q-quoted
+			log.Printf("api: BackupVM: NVRAM %q is not reachable (add the NVRAM mount: host /etc/libvirt/qemu/nvram → /host/nvram); skipping it — a UEFI VM will not start on restore without it", domain.NVRAMPath) //nolint:gosec // G706: %q-quoted
 		}
 	}
 
@@ -848,8 +881,8 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		}
 	}
 	nvramPath := def.NVRAMPath
-	if nvramPath != "" && !paths.Within(s.cfg.HostMountRoot, nvramPath) {
-		log.Printf("api: RestoreVM: skipping NVRAM %q outside mount root", nvramPath) //nolint:gosec // G706: %q-quoted
+	if nvramPath != "" && !s.withinAnyMount(nvramPath) {
+		log.Printf("api: RestoreVM: skipping NVRAM %q outside any mount root", nvramPath) //nolint:gosec // G706: %q-quoted
 		nvramPath = ""
 	}
 	if len(diskPaths) == 0 {

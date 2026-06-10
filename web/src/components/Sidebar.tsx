@@ -175,15 +175,10 @@ function SidebarControls() {
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className={`${navBase} ${navInactive} w-full justify-between`}
+          className={`${navBase} ${navInactive} w-full`}
         >
-          <span className="flex items-center gap-3">
-            <Flag code={current.flag} />
-            <span>{current.label}</span>
-          </span>
-          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}>
-            <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Flag code={current.flag} />
+          <span>{current.label}</span>
         </button>
         {open && (
           <div
@@ -246,14 +241,14 @@ export function Sidebar({ settings }: SidebarProps) {
 
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
-      {/* Logo / brand */}
-      <div className="flex items-center gap-2.5 px-4 py-5 border-b border-carbon-border">
+      {/* Logo / brand — sized to echo the README banner */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-carbon-border">
         <img
           src="/logo.png"
           alt="BombVault"
-          className="h-7 w-7 rounded object-contain shrink-0"
+          className="h-11 w-11 rounded-lg object-contain shrink-0"
         />
-        <span className="text-carbon-text font-semibold text-sm tracking-wide">
+        <span className="text-carbon-text font-bold text-2xl tracking-tight leading-none">
           BombVault
         </span>
       </div>
