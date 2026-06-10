@@ -579,6 +579,88 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 	})
 }
 
+// ---------------------------------------------------------------------------
+// VM handlers
+// ---------------------------------------------------------------------------
+
+func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
+	views, err := h.svc.ListVMs(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if views == nil {
+		views = []VMView{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
+}
+
+func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	sum, err := h.svc.BackupVM(r.Context(), name)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"snapshotId": sum.SnapshotID,
+		"bytes":      sum.Bytes,
+	}))
+}
+
+func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	snaps, err := h.svc.SnapshotsVM(r.Context(), name)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if snaps == nil {
+		snaps = []restic.Snapshot{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
+}
+
+func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	var body struct {
+		SnapshotID string `json:"snapshotId"`
+		Confirm    bool   `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.RestoreVM(r.Context(), name, body.SnapshotID, body.Confirm); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	var body struct {
+		Method            *string `json:"method"`
+		IncludeInSchedule *bool   `json:"includeInSchedule"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.Method != nil {
+		if err := h.svc.SetVMMethod(r.Context(), name, *body.Method); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.IncludeInSchedule != nil {
+		if err := h.svc.SetVMInclude(r.Context(), name, *body.IncludeInSchedule); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
 

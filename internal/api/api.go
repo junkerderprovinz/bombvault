@@ -79,5 +79,12 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 
+	// VM endpoints.
+	mux.HandleFunc("GET /api/vms", h.handleListVMs)
+	mux.HandleFunc("POST /api/vms/{name}/backup", h.handleBackupVM)
+	mux.HandleFunc("GET /api/vms/{name}/snapshots", h.handleSnapshotsVM)
+	mux.HandleFunc("POST /api/vms/{name}/restore", h.handleRestoreVM)
+	mux.HandleFunc("PATCH /api/vms/{name}", h.handlePatchVM)
+
 	return h.authGate(mux)
 }
