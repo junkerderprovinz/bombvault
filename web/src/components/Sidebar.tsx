@@ -1,6 +1,8 @@
 import { NavLink } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { getTheme, toggleTheme } from "../lib/theme";
 
 interface SidebarProps {
   settings: Settings | null;
@@ -17,7 +19,7 @@ interface NavItem {
 // Simple inline SVG icons (monochrome, 20×20)
 function IconDashboard() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
       <rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" />
       <rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".6" />
       <rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".6" />
@@ -29,7 +31,7 @@ function IconDashboard() {
 // Docker whale mark — Simple Icons path, scaled to 20×20 viewport
 function IconContainers() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path d="M13.983 11.078h2.119a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.119a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 0 0 .186-.186V3.574a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.888c0 .103.082.185.185.185m0 2.716h2.118a.187.187 0 0 0 .186-.186V6.29a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.887c0 .102.082.185.185.185m-2.93 0h2.12a.186.186 0 0 0 .184-.186V6.29a.185.185 0 0 0-.185-.185H8.1a.185.185 0 0 0-.185.185v1.887c0 .102.083.185.185.185m-2.964 0h2.119a.186.186 0 0 0 .185-.186V6.29a.185.185 0 0 0-.185-.185H5.136a.186.186 0 0 0-.186.185v1.887c0 .102.084.185.186.185m5.893 2.715h2.118a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 0 0 .185-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.186.186 0 0 0-.186.185v1.888c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 0 0-.75.75c-.007 1.73.425 3.43 1.25 4.977.892 1.679 2.22 2.922 3.836 3.592 1.973.799 5.146.985 7.325.985 1.815.001 3.626-.19 5.392-.573 2.483-.556 4.649-1.932 6.2-3.967a15.024 15.024 0 0 0 2.203-5.09c.048-.165.087-.336.122-.512.054-.234.086-.473.095-.714a4.81 4.81 0 0 0-.66-2.352" />
     </svg>
   );
@@ -38,7 +40,7 @@ function IconContainers() {
 // Desktop/monitor icon — matches Unraid's "VMs" tab glyph (screen + stand + base)
 function IconVM() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
       <rect x="2" y="3" width="16" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M7 17h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M10 13v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -48,7 +50,7 @@ function IconVM() {
 
 function IconFlash() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
       <path d="M11 2L4 11h6l-1 7 7-9h-6l1-7z" fill="currentColor" />
     </svg>
   );
@@ -57,7 +59,7 @@ function IconFlash() {
 function IconSettings() {
   // Standard 8-tooth cog/gear — conventional settings symbol
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -70,7 +72,7 @@ function IconSettings() {
 // Calendar/list icon for Jobs
 function IconJobs() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
       <rect x="3" y="4" width="14" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M7 2v4M13 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M3 8h14" stroke="currentColor" strokeWidth="1.5" />
@@ -80,7 +82,7 @@ function IconJobs() {
 }
 
 const navBase =
-  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 select-none";
+  "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 select-none";
 const navActive =
   "bg-accent text-accentContrast";
 const navInactive =
@@ -117,6 +119,120 @@ function NavItem({ to, label, icon, disabled, comingSoon }: NavItem) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// SidebarControls — theme toggle + language switcher in the sidebar footer
+// ---------------------------------------------------------------------------
+
+function Flag({ code }: { code: string }) {
+  return (
+    <span
+      className={`fi fi-${code}`}
+      style={{ width: "1.25em", height: "1em", display: "inline-block", flexShrink: 0 }}
+    />
+  );
+}
+
+function SidebarControls() {
+  const { t, lang, setLanguage, languages } = useT();
+  const [theme, setThemeState] = useState(getTheme);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const current = languages.find((l) => l.code === lang) ?? languages[0];
+
+  function handleToggleTheme() {
+    const next = toggleTheme();
+    setThemeState(next);
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <div className="flex items-center justify-between px-3 py-2.5 border-t border-carbon-border mt-1">
+      {/* Language picker */}
+      <div className="relative" ref={ref}>
+        <button
+          aria-label={`${t("language.label")}: ${current.label}`}
+          title={`${t("language.label")}: ${current.label}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center px-2 py-1.5 rounded-lg text-xs font-medium text-carbon-textSub border border-carbon-border bg-carbon-surface2 hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+        >
+          <Flag code={current.flag} />
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            aria-label={t("language.label")}
+            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-xl border border-carbon-border bg-carbon-surface shadow-lg"
+            style={{ scrollbarColor: "var(--carbon-border) transparent" }}
+          >
+            {languages.map((l) => (
+              <button
+                key={l.code}
+                role="option"
+                aria-selected={l.code === lang}
+                onClick={() => { setLanguage(l.code); setOpen(false); }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors ${
+                  l.code === lang
+                    ? "bg-carbon-surface3 text-carbon-text"
+                    : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                }`}
+              >
+                <Flag code={l.flag} />
+                <span>{l.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Theme toggle */}
+      <button
+        onClick={handleToggleTheme}
+        title={t("theme.toggle")}
+        className="p-1.5 rounded-lg text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+      >
+        {theme === "dark" ? (
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+            />
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
+              stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function Sidebar({ settings }: SidebarProps) {
   const { t } = useT();
   const flashEnabled = settings?.flashEnabled ?? false;
@@ -125,12 +241,11 @@ export function Sidebar({ settings }: SidebarProps) {
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
       {/* Logo / brand */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-carbon-border">
-        <div className="w-7 h-7 rounded-lg bg-carbon-surface3 text-carbon-text flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M8 5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-        </div>
+        <img
+          src="/logo.png"
+          alt="BombVault"
+          className="h-7 w-7 rounded object-contain shrink-0"
+        />
         <span className="text-carbon-text font-semibold text-sm tracking-wide">
           BombVault
         </span>
@@ -174,6 +289,7 @@ export function Sidebar({ settings }: SidebarProps) {
           />
         </div>
       </nav>
+      <SidebarControls />
     </aside>
   );
 }

@@ -1,6 +1,5 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
-import { TopBar } from "../components/TopBar";
 import { useEffect, useState, useCallback } from "react";
 import { getSettings, getAuth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
@@ -59,12 +58,9 @@ export function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-carbon-background">
       <Sidebar settings={settings} />
-      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        <TopBar />
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 overflow-y-auto p-6 min-w-0">
+        <Outlet />
+      </main>
     </div>
   );
 }
