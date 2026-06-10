@@ -119,7 +119,6 @@ function NavItem({ to, label, icon, disabled, comingSoon }: NavItem) {
 
 export function Sidebar({ settings }: SidebarProps) {
   const { t } = useT();
-  const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
 
   return (
@@ -158,7 +157,6 @@ export function Sidebar({ settings }: SidebarProps) {
           to="/vms"
           label={t("nav.vms")}
           icon={<IconVM />}
-          disabled={!vmsEnabled}
         />
         <NavItem
           to="/flash"
