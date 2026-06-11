@@ -54,7 +54,14 @@ func run() error {
 	}
 	defer func() { _ = dc.Close() }()
 
-	// Real virsh adapter over the mounted libvirt socket.
+	// Real virsh adapter over the mounted libvirt socket. The container mounts the
+	// host run PARENT (HostRunRoot) — not /var/run/libvirt directly, which would
+	// pin that dir and break the host VM Manager on toggle — so symlink the socket
+	// to where virsh expects it. Best-effort: a missing mount just means no VM
+	// backup, surfaced by the host-integration probe, not a fatal error.
+	if err := virshcli.LinkSocket(cfg.HostRunRoot, "/var/run/libvirt"); err != nil {
+		log.Printf("libvirt: link socket: %v", err)
+	}
 	vc := virshcli.New()
 
 	// Real restic CLI adapter.
