@@ -100,15 +100,15 @@
     Required="true"
     Mask="false">/var/run/docker.sock</Config>
   <Config
-    Name="libvirt Socket"
-    Target="/var/run/libvirt/libvirt-sock"
-    Default="/var/run/libvirt/libvirt-sock"
+    Name="libvirt Run Dir"
+    Target="/var/run/libvirt"
+    Default="/var/run/libvirt"
     Mode="rw"
-    Description="For VM backup (a later phase)."
+    Description="libvirt runtime socket DIRECTORY, for VM backup/restore (virsh). IMPORTANT: mount the directory /var/run/libvirt — NOT the socket file /var/run/libvirt/libvirt-sock. If you mount the socket file and this container starts before libvirtd at boot, Docker creates a phantom file/dir at that path, which then stops the host VM Manager from starting ('Failed to bind socket to /var/run/libvirt/libvirt-sock: Address already in use'). Mounting the directory avoids that race (libvirtd just creates its sockets inside it). Leave at the default; only needed for VM backup."
     Type="Path"
     Display="advanced"
     Required="false"
-    Mask="false">/var/run/libvirt/libvirt-sock</Config>
+    Mask="false">/var/run/libvirt</Config>
   <Config
     Name="VM NVRAM"
     Target="/host/nvram"

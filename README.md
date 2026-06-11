@@ -152,7 +152,7 @@ key derived from `APP_KEY`.
 | **Restic repo location** | Local path (recommended: your array or cache), SMB, NFS, or any rclone backend |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`) |
 | **Unraid templates** | Mounted by the template automatically (`/boot/config/plugins/dockerMan/templates-user`) — lets a restored container reappear as a normal, editable Unraid app instead of a "third-party" container |
-| **libvirt socket** | Mounted by the template automatically — only needed for VM backup |
+| **libvirt run dir** | The template mounts the libvirt runtime **directory** (`/var/run/libvirt`), not the socket file — this avoids a boot race that could otherwise stop the host VM Manager. Only needed for VM backup |
 
 <br>
 
