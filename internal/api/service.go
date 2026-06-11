@@ -771,10 +771,11 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// A disk MUST be reachable through the mount (else restic can't read it and
 	// the snapshot would be incomplete) — fail clearly rather than store an
 	// un-restorable path. NVRAM (UEFI var store, kept by Unraid under
-	// /etc/libvirt/qemu/nvram) is reachable via the dedicated NVRAM mount; if
-	// that mount is absent it is SKIPPED with a warning so the backup still
-	// succeeds — but the UEFI VM will then fail to start on restore ("unable to
-	// find any master var store for loader"), so the NVRAM mount is recommended.
+	// /etc/libvirt) is NOT captured by default: mounting under /etc/libvirt from a
+	// container is unsafe (it blocks the host libvirt.img mount). It is skipped
+	// unless an operator configures a SAFE NVRAM source; either way the UEFI VM
+	// still boots on restore via virshcli.EnsureNVRAMTemplate (the firmware var
+	// store is regenerated), though custom UEFI boot entries may reset.
 	var diskPaths []string
 	for _, hp := range domain.DiskPaths {
 		cp, ok := s.toContainerPath(hp)
@@ -788,7 +789,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		if cp, ok := s.toContainerPath(domain.NVRAMPath); ok {
 			nvramPath = cp
 		} else {
-			log.Printf("api: BackupVM: NVRAM %q is not reachable (add the NVRAM mount: host /etc/libvirt/qemu/nvram → /host/nvram); skipping it — a UEFI VM will not start on restore without it", domain.NVRAMPath) //nolint:gosec // G706: %q-quoted
+			log.Printf("api: BackupVM: NVRAM %q not captured (kept out of /etc/libvirt for host safety); the UEFI VM still boots on restore via firmware template regeneration, though custom UEFI boot entries may reset", domain.NVRAMPath) //nolint:gosec // G706: %q-quoted
 		}
 	}
 

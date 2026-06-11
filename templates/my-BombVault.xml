@@ -110,16 +110,6 @@
     Required="false"
     Mask="false">/var/run/libvirt</Config>
   <Config
-    Name="VM NVRAM"
-    Target="/host/nvram"
-    Default="/etc/libvirt/qemu/nvram"
-    Mode="rw"
-    Description="UEFI/OVMF var stores for VMs. Unraid keeps these OUTSIDE /mnt (under /etc/libvirt/qemu/nvram), so they need their own mount. Without it, a UEFI VM backs up but cannot start on restore ('unable to find any master var store for loader'). Leave at the default; only needed for VM backup of UEFI VMs."
-    Type="Path"
-    Display="advanced"
-    Required="false"
-    Mask="false">/etc/libvirt/qemu/nvram</Config>
-  <Config
     Name="HOST_SOURCE_ROOT"
     Target="HOST_SOURCE_ROOT"
     Default="/mnt"
