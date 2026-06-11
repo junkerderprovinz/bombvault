@@ -32,6 +32,10 @@ type fakeDocker struct {
 	// createdInspect captures the full profile passed to CreateAndStart so tests
 	// can assert the security-relevant fields flow through the DI seam unchanged.
 	createdInspect model.Inspect
+
+	// allocations is what Allocations returns (restore pre-flight conflict check).
+	allocations []model.Allocation
+	allocErr    error
 }
 
 func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
@@ -65,6 +69,11 @@ func (d *fakeDocker) CreateAndStart(_ context.Context, in model.Inspect) error {
 func (d *fakeDocker) InspectName(_ context.Context, name string) (string, error) {
 	d.log = append(d.log, "inspectName:"+name)
 	return d.liveName, d.inspectErr
+}
+
+func (d *fakeDocker) Allocations(_ context.Context) ([]model.Allocation, error) {
+	d.log = append(d.log, "allocations")
+	return d.allocations, d.allocErr
 }
 
 type fakeRestic struct {
@@ -364,6 +373,82 @@ func TestRestoreAbortsOnLiveNameMismatch(t *testing.T) {
 	// the run was recorded failed
 	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
 		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+// restoreDepsWithNet gives the restored container a static IP + a published
+// host port so the pre-flight conflict check has something to compare.
+func restoreDepsWithNet(d *fakeDocker, r *fakeRestic, tpl *fakeTemplates, runs *fakeRuns) backup.RestoreDeps {
+	deps := restoreDeps(d, r, tpl, runs)
+	in := deps.Inspect
+	in.Network = model.NetworkEndpoint{Name: "br0.20", IPv4Address: "192.168.20.51"}
+	in.HostConfig.PortBindings = map[string][]model.PortBinding{
+		"80/tcp": {{HostIP: "0.0.0.0", HostPort: "8080"}},
+	}
+	deps.Inspect = in
+	return deps
+}
+
+func TestRestoreAbortsOnIPConflict(t *testing.T) {
+	d := &fakeDocker{liveName: "", allocations: []model.Allocation{
+		{Name: "featherdrop", IPv4: "192.168.20.51"},
+	}}
+	r := &fakeRestic{}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	err := backup.RestoreContainer(t.Context(), restoreDepsWithNet(d, r, tpl, runs))
+	if !errors.Is(err, backup.ErrRestoreConflict) {
+		t.Fatalf("expected ErrRestoreConflict, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "192.168.20.51") || !strings.Contains(err.Error(), "featherdrop") {
+		t.Fatalf("error must name the IP and conflicting container: %v", err)
+	}
+	// Reported BEFORE anything is pulled or destroyed.
+	if contains(d.log, "pull:") || contains(d.log, "stop:") || contains(d.log, "remove:") || contains(r.log, "restore:") {
+		t.Fatalf("no pull/destructive op allowed on conflict: docker=%v restic=%v", d.log, r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+func TestRestoreAbortsOnPortConflict(t *testing.T) {
+	d := &fakeDocker{liveName: "", allocations: []model.Allocation{
+		{Name: "nginx", HostPorts: []string{"8080/tcp"}},
+	}}
+	r := &fakeRestic{}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	err := backup.RestoreContainer(t.Context(), restoreDepsWithNet(d, r, tpl, runs))
+	if !errors.Is(err, backup.ErrRestoreConflict) {
+		t.Fatalf("expected ErrRestoreConflict, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "8080/tcp") || !strings.Contains(err.Error(), "nginx") {
+		t.Fatalf("error must name the port and conflicting container: %v", err)
+	}
+	if contains(d.log, "pull:") || contains(d.log, "remove:") {
+		t.Fatalf("no pull/destructive op allowed on conflict: %v", d.log)
+	}
+}
+
+// The container being restored may still exist and hold its own IP/port — that
+// is NOT a conflict (it frees up on remove), so the restore must proceed.
+func TestRestoreIgnoresOwnAllocation(t *testing.T) {
+	d := &fakeDocker{liveName: "/plex", allocations: []model.Allocation{
+		{Name: "plex", IPv4: "192.168.20.51", HostPorts: []string{"8080/tcp"}},
+	}}
+	r := &fakeRestic{}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	err := backup.RestoreContainer(t.Context(), restoreDepsWithNet(d, r, tpl, runs))
+	if err != nil {
+		t.Fatalf("own allocation must not block restore: %v", err)
+	}
+	if !contains(d.log, "createAndStart:") {
+		t.Fatalf("restore should complete through recreate: %v", d.log)
 	}
 }
 

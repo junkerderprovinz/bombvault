@@ -37,6 +37,9 @@ type fakeServiceDocker struct {
 	liveName    string
 	inspNameErr error
 
+	allocations []model.Allocation
+	allocErr    error
+
 	stopErr   error
 	startErr  error
 	removeErr error
@@ -92,6 +95,11 @@ func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect) 
 func (f *fakeServiceDocker) InspectName(_ context.Context, name string) (string, error) {
 	f.calls = append(f.calls, "inspectName:"+name)
 	return f.liveName, f.inspNameErr
+}
+
+func (f *fakeServiceDocker) Allocations(_ context.Context) ([]model.Allocation, error) {
+	f.calls = append(f.calls, "allocations")
+	return f.allocations, f.allocErr
 }
 
 // fakeVirsh is a no-op virshcli.Virsh implementation for service/handler tests.

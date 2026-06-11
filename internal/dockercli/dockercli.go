@@ -78,6 +78,50 @@ func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
 	return out, nil
 }
 
+// Allocations reports each container's current IPv4 and published host ports,
+// used by the restore pre-flight conflict check. It reads the list summary only
+// (no per-container inspect): a running container reports its assigned IP and
+// active published ports there; a stopped container reports neither, so it
+// never produces a false conflict (it holds no live resource).
+func (c *Client) Allocations(ctx context.Context) ([]model.Allocation, error) {
+	summaries, err := c.api.ContainerList(ctx, container.ListOptions{All: true})
+	if err != nil {
+		return nil, fmt.Errorf("dockercli: allocations: %w", err)
+	}
+	out := make([]model.Allocation, 0, len(summaries))
+	for _, s := range summaries {
+		name := ""
+		if len(s.Names) > 0 {
+			name = normalizeName(s.Names[0])
+		}
+		ip := ""
+		for _, net := range s.NetworkSettings.Networks {
+			if net != nil && net.IPAddress != "" {
+				ip = net.IPAddress
+				break
+			}
+		}
+		var ports []string
+		seen := map[string]bool{}
+		for _, p := range s.Ports {
+			if p.PublicPort == 0 {
+				continue // not published to the host
+			}
+			proto := p.Type
+			if proto == "" {
+				proto = "tcp"
+			}
+			key := fmt.Sprintf("%d/%s", p.PublicPort, proto)
+			if !seen[key] {
+				seen[key] = true
+				ports = append(ports, key)
+			}
+		}
+		out = append(out, model.Allocation{Name: name, IPv4: ip, HostPorts: ports})
+	}
+	return out, nil
+}
+
 // Inspect returns the captured inspect subset for a container by name or ID.
 func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error) {
 	resp, err := c.api.ContainerInspect(ctx, name)

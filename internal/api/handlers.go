@@ -63,6 +63,10 @@ func scrubError(err error) string {
 		return "restore not confirmed — set confirm:true to proceed"
 	case errors.Is(err, backup.ErrInvalidSnapshotID):
 		return "invalid snapshot id (must be 8–64 lowercase hex)"
+	case errors.Is(err, backup.ErrRestoreConflict):
+		// Already user-safe (IP / host-port / container names, no host paths) and
+		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
+		return err.Error()
 	}
 	msg := err.Error()
 	// Map restic's password/key mismatch to an actionable hint: the repo was
