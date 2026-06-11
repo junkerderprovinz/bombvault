@@ -11,3 +11,9 @@
 # Binary assets — never touch line endings or attempt diffs.
 *.png binary
 *.ico binary
+
+# Bulk UI translations: machine-translated locale data, not hand-written source.
+# Mark them generated so GitHub Linguist excludes them from the language stats
+# (they would otherwise dwarf the Go code) and collapses their diffs. en + de
+# live inline in i18n.ts and still count.
+web/src/lib/locales/*.ts linguist-generated=true
