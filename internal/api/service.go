@@ -889,13 +889,19 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		return errors.New("no restorable disk paths found in this backup")
 	}
 
+	// Make UEFI domains bootable even if the nvram var store is absent (older
+	// backup, or NVRAM mount not configured): add a template= to <nvram> so
+	// libvirt regenerates it from the OVMF master. A restored nvram is still
+	// used when present (its boot entries are preserved).
+	domainXML := virshcli.EnsureNVRAMTemplate(def.DomainXML)
+
 	return backup.RestoreVM(ctx, backup.VMRestoreDeps{
 		Confirmed:    confirm,
 		Name:         name,
 		SnapshotID:   snapshotID,
 		DiskPaths:    diskPaths,
 		NVRAMPath:    nvramPath,
-		DomainXML:    def.DomainXML,
+		DomainXML:    domainXML,
 		WasAutostart: def.WasAutostart,
 		StartAfter:   true,
 		RepoPath:     repo,
