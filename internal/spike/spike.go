@@ -208,7 +208,10 @@ func probePathWritable(deps Deps) (string, error) {
 // in Phase 1 since VM backup is not yet implemented).
 func probeLibvirt(_ Deps) (string, error) {
 	sockets := []string{
-		"/var/run/libvirt/libvirt-sock",
+		"/var/run/libvirt/libvirt-sock",    // symlinked to the host run mount at startup
+		"/var/run/libvirt/virtqemud-sock",  // libvirt 12.x modular daemon
+		"/host/run/libvirt/libvirt-sock",   // host run parent mount, direct
+		"/host/run/libvirt/virtqemud-sock", //
 		"/run/libvirt/libvirt-sock",
 	}
 	for _, s := range sockets {
@@ -216,5 +219,5 @@ func probeLibvirt(_ Deps) (string, error) {
 			return fmt.Sprintf("socket present (%s)", s), nil
 		}
 	}
-	return "", fmt.Errorf("libvirt socket not found (VM backup not available; expected in /var/run/libvirt/ or /run/libvirt/)")
+	return "", fmt.Errorf("libvirt socket not found (VM backup not available; mount the host run dir so /host/run/libvirt is reachable)")
 }

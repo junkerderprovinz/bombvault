@@ -100,15 +100,15 @@
     Required="true"
     Mask="false">/var/run/docker.sock</Config>
   <Config
-    Name="libvirt Run Dir"
-    Target="/var/run/libvirt"
-    Default="/var/run/libvirt"
+    Name="Host Run Dir (libvirt)"
+    Target="/host/run"
+    Default="/var/run"
     Mode="rw"
-    Description="libvirt runtime socket DIRECTORY, for VM backup/restore (virsh). IMPORTANT: mount the directory /var/run/libvirt — NOT the socket file /var/run/libvirt/libvirt-sock. If you mount the socket file and this container starts before libvirtd at boot, Docker creates a phantom file/dir at that path, which then stops the host VM Manager from starting ('Failed to bind socket to /var/run/libvirt/libvirt-sock: Address already in use'). Mounting the directory avoids that race (libvirtd just creates its sockets inside it). Leave at the default; only needed for VM backup."
+    Description="Host runtime directory, for VM backup/restore (virsh). IMPORTANT: this mounts the host /var/run at /host/run — do NOT change it to /var/run/libvirt. Mounting /var/run/libvirt directly PINS that directory, so the Unraid VM Manager can no longer recreate it when you enable/disable VMs (or at boot) and libvirtd fails to start ('Address already in use' / VM Manager dead). Mounting the parent lets libvirt freely manage /run/libvirt; BombVault symlinks the socket internally so virsh finds it. Leave at the default; only needed for VM backup."
     Type="Path"
     Display="advanced"
     Required="false"
-    Mask="false">/var/run/libvirt</Config>
+    Mask="false">/var/run</Config>
   <Config
     Name="HOST_SOURCE_ROOT"
     Target="HOST_SOURCE_ROOT"
