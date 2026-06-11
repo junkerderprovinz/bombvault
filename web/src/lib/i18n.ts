@@ -6,6 +6,32 @@ import { createContext, useContext, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
+// Translated locales (en + de are defined inline below as the source of truth).
+import fr from "./locales/fr";
+import es from "./locales/es";
+import it from "./locales/it";
+import pt from "./locales/pt";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import ru from "./locales/ru";
+import uk from "./locales/uk";
+import cs from "./locales/cs";
+import sv from "./locales/sv";
+import da from "./locales/da";
+import fi from "./locales/fi";
+import no from "./locales/no";
+import tr from "./locales/tr";
+import el from "./locales/el";
+import hu from "./locales/hu";
+import ro from "./locales/ro";
+import ja from "./locales/ja";
+import ko from "./locales/ko";
+import zh from "./locales/zh";
+import ar from "./locales/ar";
+import he from "./locales/he";
+import th from "./locales/th";
+import vi from "./locales/vi";
+
 // ---------------------------------------------------------------------------
 // Translation key set — en is the source of truth
 // ---------------------------------------------------------------------------
@@ -217,7 +243,7 @@ const en = {
 } as const;
 
 export type TranslationKey = keyof typeof en;
-type Translations = Record<TranslationKey, string>;
+export type Translations = Record<TranslationKey, string>;
 
 // ---------------------------------------------------------------------------
 // German locale (full)
@@ -478,8 +504,37 @@ const STORAGE_KEY = "bv-lang";
 export const isRtl = (code: string): boolean =>
   LANGUAGES.find((l) => l.code === code)?.rtl ?? false;
 
-// Fully translated locales — all others fall back to English at runtime.
-const locales: Record<string, Translations> = { en, de };
+// Translated locales. en + de live inline above; the other 24 are imported from
+// ./locales/<code>.ts (each typed as Translations, so a missing/renamed key
+// fails the build). Any locale still absent from this map falls back to English.
+const locales: Record<string, Translations> = {
+  en,
+  de,
+  fr,
+  es,
+  it,
+  pt,
+  nl,
+  pl,
+  ru,
+  uk,
+  cs,
+  sv,
+  da,
+  fi,
+  no,
+  tr,
+  el,
+  hu,
+  ro,
+  ja,
+  ko,
+  zh,
+  ar,
+  he,
+  th,
+  vi,
+};
 
 /** Resolve a raw locale code to one offered in the switcher (else the default). */
 function resolveCode(raw: string | null): string {
