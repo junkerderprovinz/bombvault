@@ -40,6 +40,11 @@ var (
 	// ErrInvalidSnapshotID is returned when the snapshot id fails the strict
 	// hex validation (arg-injection guard).
 	ErrInvalidSnapshotID = errors.New("restore: invalid snapshot id (must be 8–64 lowercase hex)")
+	// ErrRestoreConflict is returned by the pre-flight check when the container's
+	// static IP or a published host port is already held by another container.
+	// It wraps a human-readable list of the conflicts; nothing destructive has
+	// run yet, so the user can free the resources and retry.
+	ErrRestoreConflict = errors.New("restore: ip/port conflict")
 )
 
 // Summary is the result of a successful backup.
@@ -61,6 +66,9 @@ type Docker interface {
 	// InspectName returns the live container's name (the adapter normalizes it),
 	// or "" when no such container exists.
 	InspectName(ctx context.Context, name string) (string, error)
+	// Allocations reports the static IP / published host ports every container
+	// currently holds, for the restore pre-flight conflict check.
+	Allocations(ctx context.Context) ([]model.Allocation, error)
 }
 
 // Restic is the subset of the backup engine the orchestrator needs.
@@ -339,6 +347,14 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		)
 	}
 
+	// Pre-flight: refuse to start a destructive restore that we already know will
+	// fail because the container's static IP or a published host port is held by
+	// ANOTHER running container. Reported BEFORE pull/stop/remove so nothing is
+	// changed — the user frees the resource and retries.
+	if err := checkRestoreConflicts(ctx, d); err != nil {
+		return err
+	}
+
 	// Pull the image before touching the running container. Pull the human
 	// registry REFERENCE (Config.Image), never the inspect's top-level Image —
 	// that is the image ID (sha256:…), which is not pullable from a registry
@@ -375,6 +391,65 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: recreate container: %w", err)
 	}
 	return nil
+}
+
+// checkRestoreConflicts runs the restore pre-flight: it refuses to proceed when
+// the container's requested static IP or a published host port is already held
+// by ANOTHER container (the container being restored is excluded — its own
+// resources free up when it is removed). It returns ErrRestoreConflict wrapping
+// a human-readable, actionable list. A container with no static IP and no
+// published ports (DHCP / host networking / no ports) has nothing to conflict
+// on and skips the Docker call entirely.
+func checkRestoreConflicts(ctx context.Context, d RestoreDeps) error {
+	targetIP := d.Inspect.Network.IPv4Address
+	targetPorts := publishedHostPorts(d.Inspect)
+	if targetIP == "" && len(targetPorts) == 0 {
+		return nil
+	}
+
+	allocs, err := d.Docker.Allocations(ctx)
+	if err != nil {
+		return fmt.Errorf("restore: check ip/port conflicts: %w", err)
+	}
+
+	self := normalizeName(d.ContainerName)
+	var conflicts []string
+	for _, a := range allocs {
+		if normalizeName(a.Name) == self {
+			continue // the container being restored — its resources free on remove
+		}
+		if targetIP != "" && a.IPv4 == targetIP {
+			conflicts = append(conflicts, fmt.Sprintf("IP %s is already used by container %q", targetIP, normalizeName(a.Name)))
+		}
+		for _, hp := range a.HostPorts {
+			if targetPorts[hp] {
+				conflicts = append(conflicts, fmt.Sprintf("host port %s is already used by container %q", hp, normalizeName(a.Name)))
+			}
+		}
+	}
+	if len(conflicts) > 0 {
+		return fmt.Errorf("%w — free these and retry: %s", ErrRestoreConflict, strings.Join(conflicts, "; "))
+	}
+	return nil
+}
+
+// publishedHostPorts returns the set of host ports the inspect publishes, keyed
+// as "<hostPort>/<proto>" (e.g. "8080/tcp"). Bindings without a host port
+// (container-internal only) are ignored — they never collide on the host.
+func publishedHostPorts(in model.Inspect) map[string]bool {
+	out := map[string]bool{}
+	for portProto, binds := range in.HostConfig.PortBindings {
+		proto := "tcp"
+		if i := strings.LastIndex(portProto, "/"); i >= 0 && i+1 < len(portProto) {
+			proto = portProto[i+1:]
+		}
+		for _, b := range binds {
+			if b.HostPort != "" {
+				out[b.HostPort+"/"+proto] = true
+			}
+		}
+	}
+	return out
 }
 
 // truncateErr returns an error message bounded to the DB column length. It is a

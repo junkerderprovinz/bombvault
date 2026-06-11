@@ -84,6 +84,7 @@ Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2
 - **Containers are automatically reinstalled**: the container definition is replayed against the Docker API so the container reappears in the Unraid Docker tab exactly as it was — same image, same settings, same port mappings.
 - **VMs are automatically recreated** *(planned)*: the XML definition is re-imported so the VM reappears in the VM Manager with its disk attached.
 - **Individual restore** — restore one container without touching the others (VM/group restore *(planned)*).
+- **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
 - **File-level restore** *(planned)* — browse a snapshot and restore individual files.
 
 ### Storage & scheduling

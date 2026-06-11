@@ -31,6 +31,9 @@ type ContainerInfo struct {
 type Docker interface {
 	List(ctx context.Context) ([]ContainerInfo, error)
 	Inspect(ctx context.Context, name string) (model.Inspect, error)
+	// Allocations reports the static IP / published host ports every container
+	// currently holds, for the restore pre-flight conflict check.
+	Allocations(ctx context.Context) ([]model.Allocation, error)
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 	Start(ctx context.Context, name string) error
 	Remove(ctx context.Context, name string) error

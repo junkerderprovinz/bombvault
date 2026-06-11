@@ -11,6 +11,20 @@ type PortBinding struct {
 	HostPort string
 }
 
+// Allocation describes the network resources a live container currently holds.
+// The restore pre-flight conflict check compares a container being restored
+// against the Allocations of all other containers to catch an in-use static IP
+// or published host port BEFORE the destructive stop/remove.
+type Allocation struct {
+	// Name is the normalized container name (no leading slash).
+	Name string
+	// IPv4 is the container's current IPv4, empty when it holds none (DHCP not
+	// yet assigned, host networking, or a stopped container).
+	IPv4 string
+	// HostPorts are the published host ports as "<port>/<proto>" (e.g. "8080/tcp").
+	HostPorts []string
+}
+
 // DeviceMapping is a single HostConfig.Devices entry (host device → container device).
 type DeviceMapping struct {
 	PathOnHost        string
