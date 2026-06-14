@@ -148,11 +148,21 @@ key derived from `APP_KEY`.
 | Requirement | Notes |
 |---|---|
 | **Unraid 6.12+** | Earlier versions not tested |
-| **KVM VMs** | Only for VM backup/restore — not required if you only use containers |
 | **Restic repo location** | Local path (recommended: your array or cache), SMB, NFS, or any rclone backend |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`) |
 | **Unraid templates** | Mounted by the template automatically (`/boot/config/plugins/dockerMan/templates-user`) — lets a restored container reappear as a normal, editable Unraid app instead of a "third-party" container |
-| **host run dir** | The template mounts the host **run parent** (`/var/run` → `/host/run`), never `/var/run/libvirt` directly — pinning that dir would stop the host VM Manager from recreating it on toggle/boot. BombVault symlinks the libvirt socket internally. Only needed for VM backup |
+| **KVM VMs** *(opt-in)* | VM backup is **off by default** and **experimental** — see below |
+
+> [!WARNING]
+> **VM backup is experimental and opt-in.** Giving a container access to the host
+> libvirt socket on Unraid has proven fragile: the VM Manager owns those runtime
+> paths and toggling "Enable VMs" can leave libvirt unable to start. BombVault
+> ships **without** any libvirt mount by default, so it can never affect your host
+> VM Manager. To try VM backup, add a path mount **host `/var/run` → container
+> `/host/run`** (the run *parent*, never `/var/run/libvirt` itself) and set
+> `HOST_RUN_ROOT=/host/run`. If your VM Manager ever fails to start, recover with
+> the GUI (Settings → VM Manager → Enable VMs No→Yes) or a reboot — **never** a
+> manual `mount …/libvirt.img`, which leaves a stale loop device.
 
 <br>
 
