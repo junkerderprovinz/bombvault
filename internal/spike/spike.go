@@ -47,6 +47,9 @@ type Deps struct {
 	// ContainerPath is the resolved absolute backup path for the path-writable
 	// probe. May be empty; the probe skips the write if it is.
 	ContainerPath string
+	// LibvirtTest checks that libvirt is reachable over SSH (qemu+ssh). nil when
+	// SSH is not wired; the libvirt probe then reports "not configured".
+	LibvirtTest func() error
 }
 
 // Run executes each probe in order, collects results, and returns them along
@@ -204,20 +207,17 @@ func probePathWritable(deps Deps) (string, error) {
 	return fmt.Sprintf("writable (%s)", p), nil
 }
 
-// probeLibvirt checks for the libvirt socket (best-effort; absence is not fatal
-// in Phase 1 since VM backup is not yet implemented).
-func probeLibvirt(_ Deps) (string, error) {
-	sockets := []string{
-		"/var/run/libvirt/libvirt-sock",    // symlinked to the host run mount at startup
-		"/var/run/libvirt/virtqemud-sock",  // libvirt 12.x modular daemon
-		"/host/run/libvirt/libvirt-sock",   // host run parent mount, direct
-		"/host/run/libvirt/virtqemud-sock", //
-		"/run/libvirt/libvirt-sock",
+// probeLibvirt checks that libvirt is reachable over SSH (qemu+ssh). VM backup
+// uses NO local libvirt mount, so there is no socket file to look for — the
+// check is the SSH connection itself (best-effort; not gating). "not configured"
+// means the SSH public key has not been authorized on the host yet (Settings →
+// VM Backup over SSH).
+func probeLibvirt(d Deps) (string, error) {
+	if d.LibvirtTest == nil {
+		return "", fmt.Errorf("VM backup over SSH not configured — authorize the key in Settings → VM Backup over SSH")
 	}
-	for _, s := range sockets {
-		if _, err := os.Stat(s); err == nil {
-			return fmt.Sprintf("socket present (%s)", s), nil
-		}
+	if err := d.LibvirtTest(); err != nil {
+		return "", fmt.Errorf("libvirt not reachable over SSH: %v", err)
 	}
-	return "", fmt.Errorf("libvirt socket not found (VM backup not available; mount the host run dir so /host/run/libvirt is reachable)")
+	return "reachable over SSH (qemu+ssh)", nil
 }

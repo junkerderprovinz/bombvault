@@ -948,6 +948,18 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 	return s.ssh.Test(ctx)
 }
 
+// LibvirtReachable reports whether libvirt is reachable over SSH, for the
+// host-integration spike's (best-effort) libvirt probe. Bounded by a timeout so
+// a hung SSH attempt can't stall the spike.
+func (s *Service) LibvirtReachable() error {
+	if s.ssh == nil {
+		return errors.New("vm backup over SSH is not configured")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return s.ssh.Test(ctx)
+}
+
 // SnapshotsVM lists restic snapshots for a single VM, filtered by the
 // "vm:<name>" tag the backup writes.
 func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapshot, error) {
