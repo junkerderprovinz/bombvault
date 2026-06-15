@@ -110,33 +110,33 @@
     Required="false"
     Mask="false">/mnt</Config>
   <Config
-    Name="LIBVIRT_HOST"
+    Name="VM Backup: Host"
     Target="LIBVIRT_HOST"
     Default="host.docker.internal"
     Mode=""
-    Description="For VM backup ONLY: the host BombVault reaches libvirt on over SSH (qemu+ssh). Default host.docker.internal resolves to the Unraid host via the --add-host gateway. NO libvirt mount is used — set up VM backup in the WebUI under Settings (authorize the shown SSH public key on Unraid in /root/.ssh/authorized_keys). Set this to your Unraid LAN IP only if host.docker.internal does not resolve."
+    Description="VM backup only. Unraid host address, reached over SSH. Leave default on bridge networking; on a custom (br0.x) network set your Unraid LAN IP (e.g. 192.168.10.10)."
     Type="Variable"
-    Display="advanced"
+    Display="always"
     Required="false"
     Mask="false">host.docker.internal</Config>
   <Config
-    Name="LIBVIRT_SSH_USER"
-    Target="LIBVIRT_SSH_USER"
-    Default="root"
-    Mode=""
-    Description="SSH user for VM-backup libvirt access (default root, as Unraid uses). Leave at the default unless you authorized the key for a different user."
-    Type="Variable"
-    Display="advanced"
-    Required="false"
-    Mask="false">root</Config>
-  <Config
-    Name="LIBVIRT_SSH_PORT"
+    Name="VM Backup: SSH Port"
     Target="LIBVIRT_SSH_PORT"
     Default="22"
     Mode=""
-    Description="SSH port of the Unraid host (default 22). If you changed Unraid's SSH port (Settings - Management Access), set it here — e.g. 1004 — so VM-backup can reach the host."
+    Description="VM backup only. Unraid's SSH port. Change only if you changed it from 22."
     Type="Variable"
-    Display="advanced"
+    Display="always"
     Required="false"
     Mask="false">22</Config>
+  <Config
+    Name="VM Backup: SSH User"
+    Target="LIBVIRT_SSH_USER"
+    Default="root"
+    Mode=""
+    Description="VM backup only. SSH user on the host. Leave as root."
+    Type="Variable"
+    Display="always"
+    Required="false"
+    Mask="false">root</Config>
 </Container>
