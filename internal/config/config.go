@@ -19,7 +19,6 @@ type Config struct {
 	DataDir           string
 	HostMountRoot     string
 	HostSourceRoot    string
-	HostRunRoot       string
 	NVRAMMountRoot    string
 	NVRAMSourceRoot   string
 	LibvirtHost       string
@@ -44,11 +43,6 @@ func Load(env map[string]string) (Config, error) {
 		DataDir:        stringOr(env["DATA_DIR"], "/config"),
 		HostMountRoot:  stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
 		HostSourceRoot: stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
-		// HostRunRoot is where the host /var/run is mounted (for libvirt access).
-		// BombVault mounts the run PARENT, never /var/run/libvirt directly —
-		// pinning that dir stops the Unraid VM Manager from recreating it on
-		// toggle. The libvirt socket is symlinked from here at startup.
-		HostRunRoot: stringOr(env["HOST_RUN_ROOT"], "/host/run"),
 		// NVRAM translation is OFF by default (empty roots). Mounting under
 		// /etc/libvirt — a loopback (libvirt.img) mount point on Unraid — from a
 		// container races and blocks the host libvirt.img mount, taking down the
