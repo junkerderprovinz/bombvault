@@ -940,11 +940,14 @@ func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 }
 
 // VMSSHTest checks that libvirt is reachable over SSH (used by the Settings
-// "Test connection" button).
+// "Test connection" button). Bounded by a timeout so an unreachable host
+// (e.g. a macvlan container with no route) fails fast instead of hanging.
 func (s *Service) VMSSHTest(ctx context.Context) error {
 	if s.ssh == nil {
 		return errors.New("vm backup over SSH is not configured")
 	}
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
 	return s.ssh.Test(ctx)
 }
 

@@ -56,17 +56,23 @@ func (c *Conn) PublicKey() (string, error) {
 // VirshURI is the libvirt connection URI for `virsh -c`. The keyfile/known_hosts
 // are container (Linux) paths, so they are always forward-slash (ToSlash is a
 // no-op on the Linux runtime target; it only matters for tests on Windows).
+// known_hosts_verify=auto accepts + pins the host key on first connect WITHOUT
+// an interactive prompt — `normal` would hang the (non-interactive) virsh call
+// the first time the host key is unknown.
 func (c *Conn) VirshURI() string {
-	return fmt.Sprintf("qemu+ssh://%s@%s/system?keyfile=%s&known_hosts=%s&known_hosts_verify=normal",
+	return fmt.Sprintf("qemu+ssh://%s@%s/system?keyfile=%s&known_hosts=%s&known_hosts_verify=auto",
 		c.User, c.Host, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
 }
 
 // sshArgs are the common ssh options (key, pinned known_hosts, no prompts).
+// ConnectTimeout fails fast instead of hanging when the host is unreachable
+// (e.g. a macvlan/br0 container that cannot route to the host).
 func (c *Conn) sshArgs() []string {
 	return []string{
 		"-i", c.keyPath(),
 		"-o", "BatchMode=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "ConnectTimeout=10",
 		"-o", "UserKnownHostsFile=" + c.knownHostsPath(),
 		c.User + "@" + c.Host,
 	}
