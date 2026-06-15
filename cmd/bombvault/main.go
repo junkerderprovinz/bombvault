@@ -70,6 +70,7 @@ func run() error {
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
+	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
 
 	// Per-domain scheduler; the containers job calls the service's Backup.
 	scheduler := schedule.New(

@@ -95,7 +95,7 @@ func TestTargetDefinitionRoundtrip(t *testing.T) {
 }
 
 // TestTargetDefinitionEmptyDefault verifies that a target upserted without a
-// definition has an empty Definition field (migration v2 DEFAULT '' applies).
+// definition has an empty Definition field (migration v2 DEFAULT ” applies).
 func TestTargetDefinitionEmptyDefault(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

@@ -12,10 +12,12 @@ type VMInfo struct {
 }
 
 // DomainInfo contains the artifacts parsed from a libvirt domain XML:
-// the disk image path(s) and the NVRAM path (empty for BIOS VMs).
+// the disk image path(s), the NVRAM path (empty for BIOS VMs), and the first
+// disk's target device (e.g. "vda") used as the live-backup blockcommit target.
 type DomainInfo struct {
-	DiskPaths []string
-	NVRAMPath string
+	DiskPaths  []string
+	NVRAMPath  string
+	DiskDevice string
 }
 
 // Virsh is the host-control surface the VM backup orchestrator depends on.
@@ -45,4 +47,12 @@ type Virsh interface {
 	Autostart(ctx context.Context, name string, on bool) error
 	// IsActive reports whether the domain is in the "running" state.
 	IsActive(ctx context.Context, name string) (bool, error)
+	// SnapshotCreateDiskOnly creates an external, atomic, disk-only snapshot
+	// (the VM keeps running, writing to a fresh overlay).
+	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool) error
+	// BlockCommitActivePivot merges the active overlay back into its base and
+	// pivots the running VM onto the base (blockcommit --active --pivot --wait).
+	BlockCommitActivePivot(ctx context.Context, name, device string) error
+	// GuestAgentPing reports whether the qemu guest agent answers in the VM.
+	GuestAgentPing(ctx context.Context, name string) bool
 }

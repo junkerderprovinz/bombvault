@@ -19,8 +19,6 @@ type Config struct {
 	DataDir           string
 	HostMountRoot     string
 	HostSourceRoot    string
-	NVRAMMountRoot    string
-	NVRAMSourceRoot   string
 	LibvirtHost       string
 	LibvirtSSHUser    string
 	Port              int
@@ -43,14 +41,6 @@ func Load(env map[string]string) (Config, error) {
 		DataDir:        stringOr(env["DATA_DIR"], "/config"),
 		HostMountRoot:  stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
 		HostSourceRoot: stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
-		// NVRAM translation is OFF by default (empty roots). Mounting under
-		// /etc/libvirt — a loopback (libvirt.img) mount point on Unraid — from a
-		// container races and blocks the host libvirt.img mount, taking down the
-		// VM Manager. Left empty unless an operator points these at a SAFE source
-		// (e.g. a /mnt path populated by a host script). UEFI VMs still boot via
-		// virshcli.EnsureNVRAMTemplate (firmware var store regenerated on restore).
-		NVRAMMountRoot:  env["NVRAM_MOUNT_ROOT"],
-		NVRAMSourceRoot: env["NVRAM_SOURCE_ROOT"],
 		// libvirt is reached over SSH (qemu+ssh://) — no filesystem mount.
 		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
 		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),

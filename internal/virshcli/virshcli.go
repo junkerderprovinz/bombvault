@@ -181,6 +181,29 @@ func (c *Client) IsActive(ctx context.Context, name string) (bool, error) {
 	return state == "running", nil
 }
 
+// SnapshotCreateDiskOnly creates an external, atomic, disk-only snapshot.
+func (c *Client) SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool) error {
+	args := []string{"snapshot-create-as", "--domain", name, snapName,
+		"--disk-only", "--atomic", "--no-metadata"}
+	if quiesce {
+		args = append(args, "--quiesce")
+	}
+	_, err := c.run(ctx, args...)
+	return err
+}
+
+// BlockCommitActivePivot merges the active overlay back into the base and pivots.
+func (c *Client) BlockCommitActivePivot(ctx context.Context, name, device string) error {
+	_, err := c.run(ctx, "blockcommit", name, device, "--active", "--pivot", "--wait")
+	return err
+}
+
+// GuestAgentPing reports whether the qemu guest agent answers inside the VM.
+func (c *Client) GuestAgentPing(ctx context.Context, name string) bool {
+	_, err := c.run(ctx, "qemu-agent-command", name, `{"execute":"guest-ping"}`)
+	return err == nil
+}
+
 // ---------------------------------------------------------------------------
 // Domain XML parsing
 // ---------------------------------------------------------------------------
@@ -197,6 +220,9 @@ type domainXML struct {
 			Source struct {
 				File string `xml:"file,attr"`
 			} `xml:"source"`
+			Target struct {
+				Dev string `xml:"dev,attr"`
+			} `xml:"target"`
 		} `xml:"disk"`
 	} `xml:"devices"`
 	OS struct {
@@ -214,11 +240,15 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		return DomainInfo{}, fmt.Errorf("virshcli: parse domain xml: %w", err)
 	}
 	var disks []string
+	device := ""
 	for _, disk := range d.Devices.Disks {
 		if disk.Type == "file" && disk.Device == "disk" && disk.Source.File != "" {
 			disks = append(disks, disk.Source.File)
+			if device == "" {
+				device = disk.Target.Dev // first disk's target dev = blockcommit target
+			}
 		}
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
-	return DomainInfo{DiskPaths: disks, NVRAMPath: nvram}, nil
+	return DomainInfo{DiskPaths: disks, NVRAMPath: nvram, DiskDevice: device}, nil
 }

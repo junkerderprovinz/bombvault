@@ -58,6 +58,17 @@ type ResticEngine interface {
 // compile-time check: the real adapter satisfies the seam.
 var _ ResticEngine = (*restic.Restic)(nil)
 
+// HostSSH is the subset of sshconn the service uses: NVRAM transfer for VM
+// backup/restore plus the public key and reachability test for the UI. A nil
+// HostSSH means VM-over-SSH features degrade gracefully (NVRAM is skipped; the
+// UEFI restore falls back to EnsureNVRAMTemplate).
+type HostSSH interface {
+	ReadFile(ctx context.Context, path string) ([]byte, error)
+	WriteFile(ctx context.Context, path string, data []byte) error
+	PublicKey() (string, error)
+	Test(ctx context.Context) error
+}
+
 // Service bridges the real adapters to the backup orchestrator's interfaces.
 type Service struct {
 	cfg    config.Config
@@ -65,12 +76,17 @@ type Service struct {
 	docker dockercli.Docker
 	virsh  virshcli.Virsh
 	engine ResticEngine
+	ssh    HostSSH // optional; nil = no SSH (VM NVRAM transfer skipped)
 }
 
 // NewService constructs the backup service.
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
 	return &Service{cfg: cfg, store: st, docker: d, virsh: v, engine: eng}
 }
+
+// SetHostSSH wires the SSH connection used for VM NVRAM transfer + the UI's
+// key/test endpoints. Called from main after the key is ensured.
+func (s *Service) SetHostSSH(ssh HostSSH) { s.ssh = ssh }
 
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
 // derives the password from APP_KEY; OFF uses a password-less repo.
@@ -101,53 +117,22 @@ func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
 	return repo, nil
 }
 
-// mountPair maps a HOST source root to the container path it is mounted at.
-type mountPair struct{ src, mount string }
-
-// hostMounts returns the host→container bind mappings BombVault can reach, in
-// priority order: the broad Host Data mount (appdata + VM disks under /mnt) and
-// the libvirt NVRAM mount (UEFI var stores under /etc/libvirt/qemu/nvram, which
-// live OUTSIDE /mnt and so need their own bind). A mapping with an empty source
-// or mount is skipped, which disables it.
-func (s *Service) hostMounts() []mountPair {
-	pairs := []mountPair{{s.cfg.HostSourceRoot, s.cfg.HostMountRoot}}
-	if s.cfg.NVRAMSourceRoot != "" && s.cfg.NVRAMMountRoot != "" {
-		pairs = append(pairs, mountPair{s.cfg.NVRAMSourceRoot, s.cfg.NVRAMMountRoot})
-	}
-	return pairs
-}
-
-// toContainerPath translates a HOST path to its container-visible equivalent
-// through one of the bind mounts in hostMounts. Returns ("", false) when the
-// host path is not reachable through any mount. Used for appdata (containers)
-// and VM disk/NVRAM paths so the same host→container translation is applied
-// consistently across every domain.
+// toContainerPath translates a HOST path under HostSourceRoot to its
+// container-visible equivalent under HostMountRoot (the broad Host Data mount,
+// e.g. /mnt → /host/user). Returns ("", false) when the host path is not
+// reachable through the mount. Used for appdata (containers) and VM disk paths;
+// NVRAM is NOT translated here — it travels over SSH (see BackupVM/RestoreVM).
 func (s *Service) toContainerPath(host string) (string, bool) {
+	srcRoot := path.Clean(s.cfg.HostSourceRoot)
+	mountRoot := path.Clean(s.cfg.HostMountRoot)
 	p := path.Clean(host)
-	for _, m := range s.hostMounts() {
-		srcRoot := path.Clean(m.src)
-		mountRoot := path.Clean(m.mount)
-		if p == srcRoot {
-			return mountRoot, true
-		}
-		if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
-			return mountRoot + "/" + rest, true
-		}
+	if p == srcRoot {
+		return mountRoot, true
 	}
-	return "", false // not reachable through any mount
-}
-
-// withinAnyMount reports whether a CONTAINER-visible path lies inside one of the
-// bind mounts' container roots (Host Data or NVRAM). Used to validate stored
-// restore paths before writing them back.
-func (s *Service) withinAnyMount(p string) bool {
-	if paths.Within(s.cfg.HostMountRoot, p) {
-		return true
+	if rest := strings.TrimPrefix(p, srcRoot+"/"); rest != p {
+		return mountRoot + "/" + rest, true
 	}
-	if s.cfg.NVRAMMountRoot != "" && paths.Within(s.cfg.NVRAMMountRoot, p) {
-		return true
-	}
-	return false
+	return "", false // not reachable through the mount
 }
 
 // EnsureRepo creates the repo directory and initialises the restic repo on first
@@ -678,11 +663,16 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 // (full DR). It carries container-visible paths so the restore orchestrator
 // can pass them directly to restic.
 type vmDefinition struct {
-	DomainXML    string   `json:"domain_xml"`
-	DiskPaths    []string `json:"disk_paths"`  // container-visible absolute paths
-	NVRAMPath    string   `json:"nvram_path"`  // container-visible (empty for BIOS)
-	Method       string   `json:"method"`
-	WasAutostart bool     `json:"was_autostart"`
+	DomainXML string   `json:"domain_xml"`
+	DiskPaths []string `json:"disk_paths"` // container-visible absolute paths (under the Host Data mount)
+	// NVRAM travels in the definition (read/written over SSH), NOT via a libvirt
+	// mount. NVRAMHostPath is the host path from the domain XML; NVRAMBytes is the
+	// captured var store (base64 in JSON). Empty for BIOS VMs or when SSH capture
+	// failed — EnsureNVRAMTemplate then regenerates on restore.
+	NVRAMHostPath string `json:"nvram_host_path"`
+	NVRAMBytes    []byte `json:"nvram_bytes,omitempty"`
+	Method        string `json:"method"`
+	WasAutostart  bool   `json:"was_autostart"`
 }
 
 // VMView is the per-VM row returned by ListVMs.
@@ -767,15 +757,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		return backup.Summary{}, fmt.Errorf("backup vm: no disk paths found in domain XML for %q", name)
 	}
 
-	// Translate HOST paths to container-visible paths via the shared helper.
-	// A disk MUST be reachable through the mount (else restic can't read it and
-	// the snapshot would be incomplete) — fail clearly rather than store an
-	// un-restorable path. NVRAM (UEFI var store, kept by Unraid under
-	// /etc/libvirt) is NOT captured by default: mounting under /etc/libvirt from a
-	// container is unsafe (it blocks the host libvirt.img mount). It is skipped
-	// unless an operator configures a SAFE NVRAM source; either way the UEFI VM
-	// still boots on restore via virshcli.EnsureNVRAMTemplate (the firmware var
-	// store is regenerated), though custom UEFI boot entries may reset.
+	// Disks are read by restic through the broad Host Data mount (/mnt →
+	// /host/user). A disk MUST be reachable there — fail clearly otherwise rather
+	// than store an un-restorable path.
 	var diskPaths []string
 	for _, hp := range domain.DiskPaths {
 		cp, ok := s.toContainerPath(hp)
@@ -784,12 +768,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		}
 		diskPaths = append(diskPaths, cp)
 	}
-	nvramPath := ""
-	if domain.NVRAMPath != "" {
-		if cp, ok := s.toContainerPath(domain.NVRAMPath); ok {
-			nvramPath = cp
+
+	// NVRAM (UEFI var store) lives under /etc/libvirt on the host. Read it over
+	// SSH and keep it IN the definition (no mount, no restic staging). On restore
+	// it is written back over SSH; if it is missing, EnsureNVRAMTemplate
+	// regenerates it from the OVMF master. A read failure is non-fatal.
+	var nvramBytes []byte
+	if domain.NVRAMPath != "" && s.ssh != nil {
+		if b, rerr := s.ssh.ReadFile(ctx, domain.NVRAMPath); rerr == nil {
+			nvramBytes = b
 		} else {
-			log.Printf("api: BackupVM: NVRAM %q not captured (kept out of /etc/libvirt for host safety); the UEFI VM still boots on restore via firmware template regeneration, though custom UEFI boot entries may reset", domain.NVRAMPath) //nolint:gosec // G706: %q-quoted
+			log.Printf("api: BackupVM: NVRAM read over SSH failed (%v); UEFI restore will regenerate it", rerr)
 		}
 	}
 
@@ -804,8 +793,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	}
 
 	def := vmDefinition{
-		DomainXML: xmlStr, DiskPaths: diskPaths, NVRAMPath: nvramPath,
-		Method: method, WasAutostart: wasAutostart,
+		DomainXML:     xmlStr,
+		DiskPaths:     diskPaths,
+		NVRAMHostPath: domain.NVRAMPath,
+		NVRAMBytes:    nvramBytes,
+		Method:        method,
+		WasAutostart:  wasAutostart,
 	}
 	defBytes, _ := json.Marshal(def)
 
@@ -816,17 +809,21 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		return backup.Summary{}, fmt.Errorf("upsert vm target: %w", err)
 	}
 
-	return backup.BackupVMGraceful(ctx, backup.VMBackupDeps{
-		Name:      name,
-		DiskPaths: diskPaths,
-		NVRAMPath: nvramPath,
-		RepoPath:  repo,
-		TargetID:  tg.ID,
-		DataDir:   s.cfg.DataDir,
-		VM:        s.virsh,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{s.store},
-	})
+	deps := backup.VMBackupDeps{
+		Name:       name,
+		DiskPaths:  diskPaths,
+		DiskDevice: domain.DiskDevice,
+		RepoPath:   repo,
+		TargetID:   tg.ID,
+		DataDir:    s.cfg.DataDir,
+		VM:         s.virsh,
+		Restic:     &resticAdapter{engine: s.engine, mode: mode},
+		Runs:       runsAdapter{s.store},
+	}
+	if method == "live" {
+		return backup.BackupVMLive(ctx, deps)
+	}
+	return backup.BackupVMGraceful(ctx, deps)
 }
 
 // RestoreVM orchestrates a VM restore from a stored definition.
@@ -869,10 +866,8 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		return fmt.Errorf("restore vm: unmarshal definition: %w", err)
 	}
 
-	// Keep only paths that stay within the mount root; SKIP (with a warning) any
-	// that don't — e.g. an older backup that stored a UEFI nvram path under
-	// /etc/libvirt. Restore the disks rather than refusing the whole VM. Skipping
-	// an out-of-mount path is safe: it is never restored to a dangerous location.
+	// Disks must live within the Host Data mount (that is how restic reaches
+	// them). SKIP any that don't rather than refusing the whole VM.
 	var diskPaths []string
 	for _, p := range def.DiskPaths {
 		if paths.Within(s.cfg.HostMountRoot, p) {
@@ -881,30 +876,39 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 			log.Printf("api: RestoreVM: skipping disk path %q outside mount root", p) //nolint:gosec // G706: %q-quoted
 		}
 	}
-	nvramPath := def.NVRAMPath
-	if nvramPath != "" && !s.withinAnyMount(nvramPath) {
-		log.Printf("api: RestoreVM: skipping NVRAM %q outside any mount root", nvramPath) //nolint:gosec // G706: %q-quoted
-		nvramPath = ""
-	}
 	if len(diskPaths) == 0 {
 		return errors.New("no restorable disk paths found in this backup")
 	}
 
-	// Make UEFI domains bootable even if the nvram var store is absent (older
-	// backup, or NVRAM mount not configured): add a template= to <nvram> so
-	// libvirt regenerates it from the OVMF master. A restored nvram is still
-	// used when present (its boot entries are preserved).
+	// Make UEFI domains bootable even if the captured NVRAM is absent: add a
+	// template= to <nvram> so libvirt regenerates it from the OVMF master. When
+	// NVRAM bytes were captured, PreDefine writes them back over SSH first, so
+	// libvirt uses the real var store (boot entries preserved).
 	domainXML := virshcli.EnsureNVRAMTemplate(def.DomainXML)
+
+	// preDefine writes the captured NVRAM back to the host over SSH AFTER the old
+	// domain is undefined (which removes its nvram) and BEFORE `virsh define`, so
+	// the restored VM boots with its original UEFI variables. No-op when there is
+	// nothing to write or SSH is unavailable.
+	var preDefine func(context.Context) error
+	if len(def.NVRAMBytes) > 0 && def.NVRAMHostPath != "" && s.ssh != nil {
+		preDefine = func(ctx context.Context) error {
+			if err := s.ssh.WriteFile(ctx, def.NVRAMHostPath, def.NVRAMBytes); err != nil {
+				log.Printf("api: RestoreVM: NVRAM write over SSH failed (%v); libvirt will regenerate it from the firmware template", err)
+			}
+			return nil // never block the restore on NVRAM — the template fallback covers it
+		}
+	}
 
 	return backup.RestoreVM(ctx, backup.VMRestoreDeps{
 		Confirmed:    confirm,
 		Name:         name,
 		SnapshotID:   snapshotID,
 		DiskPaths:    diskPaths,
-		NVRAMPath:    nvramPath,
 		DomainXML:    domainXML,
 		WasAutostart: def.WasAutostart,
 		StartAfter:   true,
+		PreDefine:    preDefine,
 		RepoPath:     repo,
 		TargetID:     tg.ID,
 		DataDir:      s.cfg.DataDir,
