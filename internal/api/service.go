@@ -821,7 +821,14 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		Runs:       runsAdapter{s.store},
 	}
 	if method == "live" {
-		return backup.BackupVMLive(ctx, deps)
+		// Live snapshot only works on a RUNNING VM (blockcommit --active --pivot
+		// needs an active domain). For a shut-off VM, fall back to graceful — which
+		// for an already-off VM just backs up the disks and leaves it off. This
+		// avoids creating an overlay we then cannot commit.
+		if running, _ := s.virsh.IsActive(ctx, name); running {
+			return backup.BackupVMLive(ctx, deps)
+		}
+		log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name)
 	}
 	return backup.BackupVMGraceful(ctx, deps)
 }
