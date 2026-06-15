@@ -1,6 +1,6 @@
 import type { Translations } from "../i18n";
 
-const da: Translations = {
+const da: Partial<Translations> = {
   // General
   "language.label": "Sprog",
   "theme.toggle": "Skift tema",

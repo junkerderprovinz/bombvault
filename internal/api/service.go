@@ -918,6 +918,29 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 	})
 }
 
+// VMSSHInfo returns the libvirt SSH host and BombVault's public key for the user
+// to authorize on the Unraid host (Settings → VM Backup). Errors when SSH is not
+// wired (no key yet).
+func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
+	if s.ssh == nil {
+		return "", "", errors.New("vm backup over SSH is not configured")
+	}
+	pub, err := s.ssh.PublicKey()
+	if err != nil {
+		return "", "", err
+	}
+	return s.cfg.LibvirtHost, pub, nil
+}
+
+// VMSSHTest checks that libvirt is reachable over SSH (used by the Settings
+// "Test connection" button).
+func (s *Service) VMSSHTest(ctx context.Context) error {
+	if s.ssh == nil {
+		return errors.New("vm backup over SSH is not configured")
+	}
+	return s.ssh.Test(ctx)
+}
+
 // SnapshotsVM lists restic snapshots for a single VM, filtered by the
 // "vm:<name>" tag the backup writes.
 func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapshot, error) {

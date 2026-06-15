@@ -1,6 +1,6 @@
 import type { Translations } from "../i18n";
 
-const ko: Translations = {
+const ko: Partial<Translations> = {
   // General
   "language.label": "언어",
   "theme.toggle": "테마 전환",

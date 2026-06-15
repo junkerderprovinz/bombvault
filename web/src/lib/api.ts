@@ -312,6 +312,26 @@ export function setVMInclude(
   });
 }
 
+/** PATCH /api/vms/{name} — set the backup method ("graceful" | "live"). */
+export function setVMMethod(name: string, method: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ method }),
+  });
+}
+
+/** GET /api/vm/ssh — the libvirt SSH host + BombVault's public key to authorize. */
+export function getVMSSH(): Promise<
+  OkEnvelope & { host?: string; publicKey?: string }
+> {
+  return fetchJSON("/api/vm/ssh");
+}
+
+/** POST /api/vm/ssh/test — check libvirt is reachable over SSH. */
+export function testVMSSH(): Promise<OkEnvelope> {
+  return fetchJSON("/api/vm/ssh/test", { method: "POST" });
+}
+
 // ---------------------------------------------------------------------------
 // Auth API
 // ---------------------------------------------------------------------------

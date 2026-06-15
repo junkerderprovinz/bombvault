@@ -1,6 +1,6 @@
 import type { Translations } from "../i18n";
 
-const zh: Translations = {
+const zh: Partial<Translations> = {
   // General
   "language.label": "语言",
   "theme.toggle": "切换主题",
