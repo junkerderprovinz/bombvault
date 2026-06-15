@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod } from "../lib/api";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 
@@ -101,6 +101,46 @@ function SortControl({
 // ---------------------------------------------------------------------------
 // VM-aware IncludeToggle variant
 // ---------------------------------------------------------------------------
+
+// VMMethodSelect picks the per-VM backup method (graceful shutdown vs live
+// snapshot) via PATCH /api/vms/{name}.
+function VMMethodSelect({
+  name,
+  initial,
+  t,
+}: {
+  name: string;
+  initial: string;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const [method, setMethod] = useState(initial || "graceful");
+  const [busy, setBusy] = useState(false);
+
+  async function handleChange(next: string) {
+    setBusy(true);
+    try {
+      const res = await setVMMethod(name, next);
+      if (res.ok) setMethod(next);
+    } catch {
+      /* ignore — keep previous selection */
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <select
+      value={method}
+      disabled={busy}
+      onChange={(e) => void handleChange(e.target.value)}
+      title={t("vm.method.live") + " — qemu-guest-agent + /mnt/cache"}
+      className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
+    >
+      <option value="graceful">{t("vm.method.graceful")}</option>
+      <option value="live">{t("vm.method.live")}</option>
+    </select>
+  );
+}
 
 function VMIncludeToggle({
   name,
@@ -457,12 +497,18 @@ function VMRow({
       {/* Actions row */}
       {installed && (
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <VMIncludeToggle name={vm.name} initial={vm.includeInSchedule} />
-            <span className="text-xs text-carbon-textSub">
-              {t("containers.includeInSchedule")}
-            </span>
-          </label>
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <VMIncludeToggle name={vm.name} initial={vm.includeInSchedule} />
+              <span className="text-xs text-carbon-textSub">
+                {t("containers.includeInSchedule")}
+              </span>
+            </label>
+            <label className="flex items-center gap-2">
+              <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
+              <VMMethodSelect name={vm.name} initial={vm.method} t={t} />
+            </label>
+          </div>
           <div className="ml-auto flex flex-col items-end">
             <VMBackupButton name={vm.name} t={t} onBackedUp={onRefresh} />
           </div>

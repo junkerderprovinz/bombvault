@@ -240,6 +240,21 @@ const en = {
   "state.crashed":      "Crashed",
   "state.pmsuspended":  "Suspended",
   "state.notInstalled": "Not installed",
+
+  // VM backup (SSH)
+  "vm.method": "Method",
+  "vm.method.graceful": "Graceful (shutdown)",
+  "vm.method.live": "Live snapshot",
+  "vm.ssh.title": "VM Backup over SSH",
+  "vm.ssh.desc": "VM backup reaches libvirt over SSH (no mount). Authorize this key on Unraid, then test.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Public key — append to Unraid /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Copy",
+  "vm.ssh.copied": "Copied",
+  "vm.ssh.test": "Test connection",
+  "vm.ssh.testing": "Testing…",
+  "vm.ssh.testOk": "Connected — libvirt reachable",
+  "vm.ssh.testFail": "Connection failed",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -444,6 +459,21 @@ const de: Translations = {
   "state.crashed":      "Abgestürzt",
   "state.pmsuspended":  "Suspendiert",
   "state.notInstalled": "Nicht installiert",
+
+  // VM-Backup (SSH)
+  "vm.method": "Methode",
+  "vm.method.graceful": "Graceful (Herunterfahren)",
+  "vm.method.live": "Live-Snapshot",
+  "vm.ssh.title": "VM-Backup über SSH",
+  "vm.ssh.desc": "VM-Backup erreicht libvirt über SSH (ohne Mount). Diesen Schlüssel auf Unraid autorisieren, dann testen.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Public Key — an Unraids /root/.ssh/authorized_keys anhängen",
+  "vm.ssh.copy": "Kopieren",
+  "vm.ssh.copied": "Kopiert",
+  "vm.ssh.test": "Verbindung testen",
+  "vm.ssh.testing": "Teste…",
+  "vm.ssh.testOk": "Verbunden — libvirt erreichbar",
+  "vm.ssh.testFail": "Verbindung fehlgeschlagen",
 };
 
 // ---------------------------------------------------------------------------
@@ -507,7 +537,9 @@ export const isRtl = (code: string): boolean =>
 // Translated locales. en + de live inline above; the other 24 are imported from
 // ./locales/<code>.ts (each typed as Translations, so a missing/renamed key
 // fails the build). Any locale still absent from this map falls back to English.
-const locales: Record<string, Translations> = {
+// en + de are the complete source of truth; the other 24 are Partial and fall
+// back to en at runtime for any missing key (see the t() lookup).
+const locales: Record<string, Partial<Translations>> = {
   en,
   de,
   fr,

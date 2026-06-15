@@ -665,6 +665,23 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+func (h *Handler) handleVMSSHInfo(w http.ResponseWriter, r *http.Request) {
+	host, pub, err := h.svc.VMSSHInfo()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"host": host, "publicKey": pub}))
+}
+
+func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.VMSSHTest(r.Context()); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
 

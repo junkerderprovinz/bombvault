@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -500,6 +500,96 @@ const ACCENT_PRESETS = [
 // Settings page
 // ---------------------------------------------------------------------------
 
+// VMSSHCard shows BombVault's SSH public key (to authorize on the Unraid host)
+// and a connection test. Self-contained: fetches its own data so the large
+// SettingsPage doesn't need extra state.
+function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [host, setHost] = useState("");
+  const [pub, setPub] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [testMsg, setTestMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    getVMSSH()
+      .then((r) => {
+        if (r.ok) {
+          setHost(r.host ?? "");
+          setPub(r.publicKey ?? "");
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  async function handleTest() {
+    setTestState("testing");
+    setTestMsg(null);
+    try {
+      const r = await testVMSSH();
+      if (r.ok) {
+        setTestState("ok");
+      } else {
+        setTestState("fail");
+        setTestMsg(r.error ?? t("vm.ssh.testFail"));
+      }
+    } catch {
+      setTestState("fail");
+      setTestMsg(t("vm.ssh.testFail"));
+    }
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(pub);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable (non-HTTPS) — the key is selectable in the box */
+    }
+  }
+
+  return (
+    <Card title={t("vm.ssh.title")}>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-carbon-textSub">{t("vm.ssh.desc")}</p>
+        <div className="text-sm text-carbon-text">
+          {t("vm.ssh.host")}: <span className="font-mono">{host || "—"}</span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
+          <div className="flex items-start gap-2">
+            <code className="flex-1 break-all rounded border border-carbon-border bg-carbon-surface2 p-2 text-xs text-carbon-text">
+              {pub || "—"}
+            </code>
+            <button
+              onClick={handleCopy}
+              disabled={!pub}
+              className="shrink-0 rounded bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
+            >
+              {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleTest}
+            disabled={testState === "testing"}
+            className="rounded border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+          >
+            {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
+          </button>
+          {testState === "ok" && (
+            <span className="text-sm text-green-500">{t("vm.ssh.testOk")}</span>
+          )}
+          {testState === "fail" && (
+            <span className="text-sm text-red-400">{testMsg ?? t("vm.ssh.testFail")}</span>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export function SettingsPage() {
   const { t } = useT();
 
@@ -732,6 +822,11 @@ export function SettingsPage() {
           </div>
         </div>
       </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* VM Backup over SSH                                                   */}
+      {/* ------------------------------------------------------------------ */}
+      <VMSSHCard t={t} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Encryption                                                           */}

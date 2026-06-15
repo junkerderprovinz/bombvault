@@ -1,6 +1,6 @@
 import type { Translations } from "../i18n";
 
-const vi: Translations = {
+const vi: Partial<Translations> = {
   // General
   "language.label": "Ngôn ngữ",
   "theme.toggle": "Chuyển giao diện",
