@@ -168,6 +168,8 @@ key derived from `APP_KEY`.
 > SSH key grants root on the host — the same trust level as the docker.sock
 > BombVault already uses. **Live snapshots** additionally need the qemu guest
 > agent in the VM and the disk on `/mnt/cache` (not `/mnt/user`).
+>
+> **Full setup + networking guide:** [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
 
 <br>
 
