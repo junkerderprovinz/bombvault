@@ -5,6 +5,7 @@
 package sshconn
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -91,17 +92,19 @@ func (c *Conn) ReadFile(ctx context.Context, path string) ([]byte, error) {
 	return out, nil
 }
 
-// WriteFile writes data to a file on the host (used to restore NVRAM). It pipes
-// data to `cat > path` over SSH, creating the parent dir first. The path is
-// single-quoted into the remote shell; libvirt nvram paths contain no quotes.
+// WriteFile writes data to a file on the host (used to restore NVRAM) by piping
+// it to `tee <path>` over SSH. tee takes the path as a separate argv argument —
+// no remote shell, so the path can never be interpreted (defence even though
+// nvram paths come from libvirt, not the user). The nvram directory already
+// exists on the host (libvirt owns it), so no mkdir is needed.
 func (c *Conn) WriteFile(ctx context.Context, path string, data []byte) error {
-	dir := filepath.Dir(path)
-	sh := fmt.Sprintf("mkdir -p '%s' && cat > '%s'", dir, path)
-	full := append(c.sshArgs(), "--", "sh", "-c", sh)
-	cmd := exec.CommandContext(ctx, "ssh", full...) //nolint:gosec // argv-separated; path quoted in remote sh
-	cmd.Stdin = strings.NewReader(string(data))
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("sshconn: write %q: %s", filepath.Base(path), strings.TrimSpace(string(out)))
+	full := append(c.sshArgs(), "--", "tee", path)
+	cmd := exec.CommandContext(ctx, "ssh", full...) //nolint:gosec // argv-separated; no shell
+	cmd.Stdin = bytes.NewReader(data)
+	var stderr strings.Builder
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil { // stdout (tee's echo) is discarded
+		return fmt.Errorf("sshconn: write %q: %s", filepath.Base(path), strings.TrimSpace(stderr.String()))
 	}
 	return nil
 }
