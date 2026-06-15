@@ -15,7 +15,7 @@
   <WebUI>https://[IP]:[PORT:3443]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-docker-templates/main/bombvault/my-BombVault.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png</Icon>
-  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <ExtraParams>--restart unless-stopped --add-host=host.docker.internal:host-gateway</ExtraParams>
   <DateInstalled/>
   <DonateText>If this template helps you, consider buying me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/junkerderprovinz</DonateLink>
@@ -109,4 +109,24 @@
     Display="advanced"
     Required="false"
     Mask="false">/mnt</Config>
+  <Config
+    Name="LIBVIRT_HOST"
+    Target="LIBVIRT_HOST"
+    Default="host.docker.internal"
+    Mode=""
+    Description="For VM backup ONLY: the host BombVault reaches libvirt on over SSH (qemu+ssh). Default host.docker.internal resolves to the Unraid host via the --add-host gateway. NO libvirt mount is used — set up VM backup in the WebUI under Settings (authorize the shown SSH public key on Unraid in /root/.ssh/authorized_keys). Set this to your Unraid LAN IP only if host.docker.internal does not resolve."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">host.docker.internal</Config>
+  <Config
+    Name="LIBVIRT_SSH_USER"
+    Target="LIBVIRT_SSH_USER"
+    Default="root"
+    Mode=""
+    Description="SSH user for VM-backup libvirt access (default root, as Unraid uses). Leave at the default unless you authorized the key for a different user."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">root</Config>
 </Container>

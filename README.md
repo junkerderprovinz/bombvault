@@ -151,18 +151,21 @@ key derived from `APP_KEY`.
 | **Restic repo location** | Local path (recommended: your array or cache), SMB, NFS, or any rclone backend |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`) |
 | **Unraid templates** | Mounted by the template automatically (`/boot/config/plugins/dockerMan/templates-user`) — lets a restored container reappear as a normal, editable Unraid app instead of a "third-party" container |
-| **KVM VMs** *(opt-in)* | VM backup is **off by default** and **experimental** — see below |
+| **KVM VMs** *(opt-in)* | VM backup talks to libvirt **over SSH** — no libvirt mount. Set it up in Settings → see below |
 
-> [!WARNING]
-> **VM backup is experimental and opt-in.** Giving a container access to the host
-> libvirt socket on Unraid has proven fragile: the VM Manager owns those runtime
-> paths and toggling "Enable VMs" can leave libvirt unable to start. BombVault
-> ships **without** any libvirt mount by default, so it can never affect your host
-> VM Manager. To try VM backup, add a path mount **host `/var/run` → container
-> `/host/run`** (the run *parent*, never `/var/run/libvirt` itself) and set
-> `HOST_RUN_ROOT=/host/run`. If your VM Manager ever fails to start, recover with
-> the GUI (Settings → VM Manager → Enable VMs No→Yes) or a reboot — **never** a
-> manual `mount …/libvirt.img`, which leaves a stale loop device.
+> [!IMPORTANT]
+> **VM backup uses SSH, not a libvirt mount.** BombVault never bind-mounts any
+> libvirt path (mounting the host's libvirt socket/runtime on Unraid is fragile —
+> the VM Manager owns those paths and toggling "Enable VMs" can leave libvirt
+> unable to start). Instead it runs `virsh` **on the host over SSH**
+> (`qemu+ssh://`), so it can never affect your host VM Manager. Setup:
+> **Settings → VM Backup over SSH** → copy the shown public key → append it to
+> Unraid's `/root/.ssh/authorized_keys` → click **Test connection**. The template
+> adds `--add-host=host.docker.internal:host-gateway` so the container reaches the
+> host; set `LIBVIRT_HOST` to your Unraid LAN IP if that name doesn't resolve. The
+> SSH key grants root on the host — the same trust level as the docker.sock
+> BombVault already uses. **Live snapshots** additionally need the qemu guest
+> agent in the VM and the disk on `/mnt/cache` (not `/mnt/user`).
 
 <br>
 
