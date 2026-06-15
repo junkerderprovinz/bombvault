@@ -21,6 +21,7 @@ type Config struct {
 	HostSourceRoot    string
 	LibvirtHost       string
 	LibvirtSSHUser    string
+	LibvirtSSHPort    string
 	Port              int
 	HTTPSPort         int
 	HTTPOnly          bool
@@ -44,6 +45,7 @@ func Load(env map[string]string) (Config, error) {
 		// libvirt is reached over SSH (qemu+ssh://) — no filesystem mount.
 		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
 		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),
+		LibvirtSSHPort:    stringOr(env["LIBVIRT_SSH_PORT"], "22"),
 		Port:              intOr(env["PORT"], 3000),
 		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),
