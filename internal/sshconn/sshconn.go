@@ -84,6 +84,30 @@ func (c *Conn) sshArgs() []string {
 	}
 }
 
+// WriteSSHConfig writes ~/.ssh/config so libvirt's qemu+ssh transport — which
+// uses the EXTERNAL ssh binary and ignores the URI's keyfile/known_hosts/
+// known_hosts_verify params — still picks up our key, our known_hosts, and an
+// accept-new host-key policy. Without this, virsh fails with "Host key
+// verification failed" because the bare ssh binary uses ~/.ssh defaults (empty)
+// and strict checking. (libssh/libssh2 builds honour the URI params instead;
+// this covers the ssh-binary builds, e.g. Unraid.)
+func (c *Conn) WriteSSHConfig() error {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		home = "/root"
+	}
+	dir := filepath.Join(home, ".ssh")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("sshconn: mkdir %s: %w", dir, err)
+	}
+	cfg := fmt.Sprintf("Host *\n  IdentityFile %s\n  UserKnownHostsFile %s\n  StrictHostKeyChecking accept-new\n  BatchMode yes\n  ConnectTimeout 10\n",
+		filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
+	if err := os.WriteFile(filepath.Join(dir, "config"), []byte(cfg), 0o600); err != nil {
+		return fmt.Errorf("sshconn: write %s/config: %w", dir, err)
+	}
+	return nil
+}
+
 // EnsureKnownHost opens a throwaway SSH connection so the host key is pinned in
 // known_hosts BEFORE libvirt's qemu+ssh transport verifies it. Some libvirt
 // builds (e.g. Unraid 12.2) do NOT self-populate known_hosts even with
