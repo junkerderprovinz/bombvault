@@ -84,6 +84,20 @@ func (c *Conn) sshArgs() []string {
 	}
 }
 
+// EnsureKnownHost opens a throwaway SSH connection so the host key is pinned in
+// known_hosts BEFORE libvirt's qemu+ssh transport verifies it. Some libvirt
+// builds (e.g. Unraid 12.2) do NOT self-populate known_hosts even with
+// known_hosts_verify=auto, so virsh fails with "Host key verification failed"
+// on an empty file. The raw ssh client uses StrictHostKeyChecking=accept-new,
+// which auto-accepts + writes the key on first use; afterwards virsh's auto
+// verify finds the entry and connects. This also confirms key auth works.
+func (c *Conn) EnsureKnownHost(ctx context.Context) error {
+	if _, err := c.Run(ctx, "true"); err != nil {
+		return fmt.Errorf("ssh to %s@%s:%s failed (key authorized? host reachable?): %w", c.User, c.Host, c.Port, err)
+	}
+	return nil
+}
+
 // Run executes a command on the host over SSH and returns trimmed stdout.
 func (c *Conn) Run(ctx context.Context, args ...string) (string, error) {
 	full := append(c.sshArgs(), append([]string{"--"}, args...)...)

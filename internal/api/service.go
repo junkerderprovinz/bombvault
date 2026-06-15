@@ -67,6 +67,10 @@ type HostSSH interface {
 	WriteFile(ctx context.Context, path string, data []byte) error
 	PublicKey() (string, error)
 	Test(ctx context.Context) error
+	// EnsureKnownHost pins the host key (raw ssh accept-new) before libvirt's
+	// qemu+ssh transport verifies it, so virsh doesn't fail on an empty
+	// known_hosts. Also confirms key auth.
+	EnsureKnownHost(ctx context.Context) error
 }
 
 // Service bridges the real adapters to the backup orchestrator's interfaces.
@@ -741,6 +745,15 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		return backup.Summary{}, err
 	}
 
+	// Pin the host key before any virsh-over-SSH call (libvirt's qemu+ssh won't
+	// self-populate known_hosts). Best-effort: a failure here surfaces again on
+	// the virsh call below with full context.
+	if s.ssh != nil {
+		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
+			return backup.Summary{}, fmt.Errorf("backup vm: ssh: %w", err)
+		}
+	}
+
 	// Capture the domain XML and parse disk/NVRAM paths.
 	xmlStr, err := s.virsh.DumpXML(ctx, name)
 	if err != nil {
@@ -907,6 +920,13 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		}
 	}
 
+	// Pin the host key before the orchestrator's virsh-over-SSH calls.
+	if s.ssh != nil {
+		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
+			return fmt.Errorf("restore vm: ssh: %w", err)
+		}
+	}
+
 	return backup.RestoreVM(ctx, backup.VMRestoreDeps{
 		Confirmed:    confirm,
 		Name:         name,
@@ -948,6 +968,9 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
+	if err := s.ssh.EnsureKnownHost(ctx); err != nil {
+		return err // SSH/auth/reachability problem — clearer than libvirt's error
+	}
 	return s.ssh.Test(ctx)
 }
 
@@ -958,8 +981,11 @@ func (s *Service) LibvirtReachable() error {
 	if s.ssh == nil {
 		return errors.New("vm backup over SSH is not configured")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()
+	if err := s.ssh.EnsureKnownHost(ctx); err != nil {
+		return err
+	}
 	return s.ssh.Test(ctx)
 }
 
