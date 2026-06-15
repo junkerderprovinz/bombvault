@@ -828,7 +828,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		if running, _ := s.virsh.IsActive(ctx, name); running {
 			return backup.BackupVMLive(ctx, deps)
 		}
-		log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name)
+		log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name) //nolint:gosec // G706: %q-quoted
 	}
 	return backup.BackupVMGraceful(ctx, deps)
 }
