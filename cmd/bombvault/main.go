@@ -14,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
+	"github.com/junkerderprovinz/bombvault/internal/sshconn"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 	web "github.com/junkerderprovinz/bombvault/web"
@@ -54,15 +55,15 @@ func run() error {
 	}
 	defer func() { _ = dc.Close() }()
 
-	// Real virsh adapter over the mounted libvirt socket. The container mounts the
-	// host run PARENT (HostRunRoot) — not /var/run/libvirt directly, which would
-	// pin that dir and break the host VM Manager on toggle — so symlink the socket
-	// to where virsh expects it. Best-effort: a missing mount just means no VM
-	// backup, surfaced by the host-integration probe, not a fatal error.
-	if err := virshcli.LinkSocket(cfg.HostRunRoot, "/var/run/libvirt"); err != nil {
-		log.Printf("libvirt: link socket: %v", err)
+	// libvirt over SSH (qemu+ssh://) — NO filesystem mount, so the container can
+	// never interfere with the host VM Manager. Generate the SSH key on first run;
+	// the user authorizes the public key on the host (shown in Settings). virsh
+	// then runs ON the host over SSH.
+	sc := sshconn.New(cfg.LibvirtHost, cfg.LibvirtSSHUser, cfg.DataDir)
+	if err := sc.EnsureKey(); err != nil {
+		log.Printf("sshconn: ensure key: %v", err) // non-fatal: VM backup stays unavailable until fixed
 	}
-	vc := virshcli.New()
+	vc := virshcli.New(sc.VirshURI())
 
 	// Real restic CLI adapter.
 	engine := &restic.Restic{Bin: "restic"}

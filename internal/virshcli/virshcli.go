@@ -11,18 +11,28 @@ import (
 	"strings"
 )
 
-// Client is the real virsh adapter that shells out to the virsh CLI.
-// It connects to qemu:///system (virsh's default when run inside a container
-// with the libvirt socket mounted at /var/run/libvirt/libvirt-sock).
+// Client is the real virsh adapter that shells out to the virsh CLI. It connects
+// over the configured URI — qemu+ssh://root@<host>/system — so virsh runs ON the
+// Unraid host (no libvirt socket is bind-mounted into the container).
 type Client struct {
 	bin string // "virsh" normally
+	uri string // qemu+ssh://… ("" = virsh's local default; used only in tests)
 }
 
 // compile-time interface check.
 var _ Virsh = (*Client)(nil)
 
-// New returns a Client using the "virsh" binary on PATH.
-func New() *Client { return &Client{bin: "virsh"} }
+// New returns a Client that connects via the given libvirt URI (qemu+ssh://…).
+// An empty URI uses virsh's default (local) connection.
+func New(uri string) *Client { return &Client{bin: "virsh", uri: uri} }
+
+// baseArgs prefixes "-c <uri>" when a connection URI is configured.
+func (c *Client) baseArgs(args ...string) []string {
+	if c.uri == "" {
+		return args
+	}
+	return append([]string{"-c", c.uri}, args...)
+}
 
 // absPathRe strips absolute paths from error messages so host paths do not
 // leak to the caller (mirrors restic's lastReason scrubbing).
@@ -32,7 +42,7 @@ var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
 // on success. On failure it logs the full stderr server-side and returns a
 // scrubbed error containing only the last non-empty stderr line (paths stripped).
 func (c *Client) run(ctx context.Context, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, c.bin, args...) //nolint:gosec // G204: args are separate (never shell-interpolated); virsh name/path args come from libvirt, not raw user input
+	cmd := exec.CommandContext(ctx, c.bin, c.baseArgs(args...)...) //nolint:gosec // G204: args are separate (never shell-interpolated); virsh name/path args come from libvirt, not raw user input
 	out, err := cmd.Output()
 	if err != nil {
 		stderr := ""
