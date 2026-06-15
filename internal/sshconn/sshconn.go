@@ -18,12 +18,17 @@ import (
 type Conn struct {
 	Host string // e.g. "host.docker.internal"
 	User string // e.g. "root"
+	Port string // SSH port on the host, e.g. "22" or "1004"
 	dir  string // <dataDir>/ssh
 }
 
-// New returns a Conn storing its key material under dataDir/ssh.
-func New(host, user, dataDir string) *Conn {
-	return &Conn{Host: host, User: user, dir: filepath.Join(dataDir, "ssh")}
+// New returns a Conn storing its key material under dataDir/ssh. An empty port
+// defaults to 22.
+func New(host, user, port, dataDir string) *Conn {
+	if port == "" {
+		port = "22"
+	}
+	return &Conn{Host: host, User: user, Port: port, dir: filepath.Join(dataDir, "ssh")}
 }
 
 func (c *Conn) keyPath() string        { return filepath.Join(c.dir, "id_ed25519") }
@@ -60,8 +65,8 @@ func (c *Conn) PublicKey() (string, error) {
 // an interactive prompt — `normal` would hang the (non-interactive) virsh call
 // the first time the host key is unknown.
 func (c *Conn) VirshURI() string {
-	return fmt.Sprintf("qemu+ssh://%s@%s/system?keyfile=%s&known_hosts=%s&known_hosts_verify=auto",
-		c.User, c.Host, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
+	return fmt.Sprintf("qemu+ssh://%s@%s:%s/system?keyfile=%s&known_hosts=%s&known_hosts_verify=auto",
+		c.User, c.Host, c.Port, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
 }
 
 // sshArgs are the common ssh options (key, pinned known_hosts, no prompts).
@@ -70,6 +75,7 @@ func (c *Conn) VirshURI() string {
 func (c *Conn) sshArgs() []string {
 	return []string{
 		"-i", c.keyPath(),
+		"-p", c.Port,
 		"-o", "BatchMode=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "ConnectTimeout=10",

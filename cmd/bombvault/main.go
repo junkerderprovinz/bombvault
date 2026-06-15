@@ -59,7 +59,7 @@ func run() error {
 	// never interfere with the host VM Manager. Generate the SSH key on first run;
 	// the user authorizes the public key on the host (shown in Settings). virsh
 	// then runs ON the host over SSH.
-	sc := sshconn.New(cfg.LibvirtHost, cfg.LibvirtSSHUser, cfg.DataDir)
+	sc := sshconn.New(cfg.LibvirtHost, cfg.LibvirtSSHUser, cfg.LibvirtSSHPort, cfg.DataDir)
 	if err := sc.EnsureKey(); err != nil {
 		log.Printf("sshconn: ensure key: %v", err) // non-fatal: VM backup stays unavailable until fixed
 	}

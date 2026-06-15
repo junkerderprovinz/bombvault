@@ -34,16 +34,16 @@ func TestEnsureKeyGeneratesAndReuses(t *testing.T) {
 }
 
 func TestVirshURI(t *testing.T) {
-	c := &Conn{Host: "1.2.3.4", User: "root", dir: "/config/ssh"}
+	c := &Conn{Host: "1.2.3.4", User: "root", Port: "1004", dir: "/config/ssh"}
 	got := c.VirshURI()
-	want := "qemu+ssh://root@1.2.3.4/system?keyfile=/config/ssh/id_ed25519&known_hosts=/config/ssh/known_hosts&known_hosts_verify=auto"
+	want := "qemu+ssh://root@1.2.3.4:1004/system?keyfile=/config/ssh/id_ed25519&known_hosts=/config/ssh/known_hosts&known_hosts_verify=auto"
 	if got != want {
 		t.Fatalf("VirshURI = %q, want %q", got, want)
 	}
 }
 
 func TestNewDerivesSSHDir(t *testing.T) {
-	c := New("h", "root", "/config")
+	c := New("h", "root", "22", "/config")
 	if c.dir != filepath.Join("/config", "ssh") {
 		t.Fatalf("dir = %q, want /config/ssh", c.dir)
 	}

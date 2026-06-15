@@ -129,4 +129,14 @@
     Display="advanced"
     Required="false"
     Mask="false">root</Config>
+  <Config
+    Name="LIBVIRT_SSH_PORT"
+    Target="LIBVIRT_SSH_PORT"
+    Default="22"
+    Mode=""
+    Description="SSH port of the Unraid host (default 22). If you changed Unraid's SSH port (Settings - Management Access), set it here — e.g. 1004 — so VM-backup can reach the host."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">22</Config>
 </Container>

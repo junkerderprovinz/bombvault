@@ -162,7 +162,9 @@ key derived from `APP_KEY`.
 > **Settings → VM Backup over SSH** → copy the shown public key → append it to
 > Unraid's `/root/.ssh/authorized_keys` → click **Test connection**. The template
 > adds `--add-host=host.docker.internal:host-gateway` so the container reaches the
-> host; set `LIBVIRT_HOST` to your Unraid LAN IP if that name doesn't resolve. The
+> host; set `LIBVIRT_HOST` to your Unraid LAN IP if that name doesn't resolve (e.g.
+> when the container runs on a custom `br0.x` network). If you changed Unraid's SSH
+> port, set `LIBVIRT_SSH_PORT` to match (default `22`). The
 > SSH key grants root on the host — the same trust level as the docker.sock
 > BombVault already uses. **Live snapshots** additionally need the qemu guest
 > agent in the VM and the disk on `/mnt/cache` (not `/mnt/user`).
