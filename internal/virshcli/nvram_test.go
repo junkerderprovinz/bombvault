@@ -56,7 +56,7 @@ func TestDeriveVarsTemplate(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{`<loader>/usr/share/qemu/ovmf-x64/OVMF_CODE-pure-efi.fd</loader>`, "/usr/share/qemu/ovmf-x64/OVMF_VARS-pure-efi.fd"},
 		{`<loader>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>`, "/usr/share/OVMF/OVMF_VARS.secboot.fd"},
-		{`<domain></domain>`, defaultOVMFVars}, // no loader
+		{`<domain></domain>`, defaultOVMFVars},                   // no loader
 		{`<loader>/weird/firmware.fd</loader>`, defaultOVMFVars}, // no CODE marker
 	}
 	for _, tc := range cases {

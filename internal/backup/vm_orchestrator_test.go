@@ -28,6 +28,10 @@ type fakeVM struct {
 	autostartErr error
 	dumpXMLVal   string
 	dumpXMLErr   error
+
+	snapshotErr    error
+	blockcommitErr error
+	guestAgent     bool
 }
 
 func (f *fakeVM) State(_ context.Context, name string) (string, error) {
@@ -77,6 +81,21 @@ func (f *fakeVM) Autostart(_ context.Context, name string, on bool) error {
 	}
 	f.log = append(f.log, "autostart:"+name+":"+v)
 	return f.autostartErr
+}
+
+func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, _ bool) error {
+	f.log = append(f.log, "snapshot:"+name)
+	return f.snapshotErr
+}
+
+func (f *fakeVM) BlockCommitActivePivot(_ context.Context, name, device string) error {
+	f.log = append(f.log, "blockcommit:"+name+":"+device)
+	return f.blockcommitErr
+}
+
+func (f *fakeVM) GuestAgentPing(_ context.Context, _ string) bool {
+	f.log = append(f.log, "guestping")
+	return f.guestAgent
 }
 
 // vmContains reports whether any log entry has the given prefix.
@@ -379,5 +398,100 @@ func TestRestoreVMRecordsFailedOnResticError(t *testing.T) {
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
 		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// BackupVMLive tests (safety-critical)
+// ---------------------------------------------------------------------------
+
+func liveDeps(t *testing.T, vm *fakeVM, r *fakeRestic, runs *fakeRuns) backup.VMBackupDeps {
+	t.Helper()
+	d := sampleVMBackupDeps(t, vm, r, runs)
+	d.DiskDevice = "vda"
+	return d
+}
+
+func TestBackupVMLiveHappyPath(t *testing.T) {
+	vm := &fakeVM{guestAgent: true}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 4096}}
+	runs := &fakeRuns{}
+
+	sum, err := backup.BackupVMLive(t.Context(), liveDeps(t, vm, r, runs))
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if sum.SnapshotID != "deadbeef12345678" {
+		t.Fatalf("snapshot id = %q", sum.SnapshotID)
+	}
+	if !vmContains(vm.log, "snapshot:win10") {
+		t.Fatalf("snapshot not created: %v", vm.log)
+	}
+	if !vmContains(vm.log, "blockcommit:win10:vda") {
+		t.Fatalf("blockcommit not called: %v", vm.log)
+	}
+	if vmContains(vm.log, "shutdown:") || vmContains(vm.log, "destroy:") {
+		t.Fatalf("live backup must NOT shut down the VM: %v", vm.log)
+	}
+	if !vmContains(r.log, "backup:/repo/vms") {
+		t.Fatalf("restic backup not called: %v", r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
+		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
+	}
+}
+
+// The core safety guarantee: if blockcommit fails, the VM is left RUNNING and is
+// never destroyed/undefined, and the error reassures the user.
+func TestBackupVMLiveCommitFailsLeavesVMRunning(t *testing.T) {
+	vm := &fakeVM{blockcommitErr: errors.New("commit boom")}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupVMLive(t.Context(), liveDeps(t, vm, r, runs))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if vmContains(vm.log, "destroy:") || vmContains(vm.log, "undefine:") {
+		t.Fatalf("must never tear down the VM on commit failure: %v", vm.log)
+	}
+	if !strings.Contains(err.Error(), "STILL RUNNING") {
+		t.Fatalf("error must reassure the VM is usable: %v", err)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+func TestBackupVMLiveNoDiskDeviceFailsSafely(t *testing.T) {
+	vm := &fakeVM{}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	d := sampleVMBackupDeps(t, vm, r, runs) // DiskDevice empty
+
+	_, err := backup.BackupVMLive(t.Context(), d)
+	if err == nil {
+		t.Fatal("expected error for empty disk device")
+	}
+	// Nothing destructive ran (no snapshot created).
+	if vmContains(vm.log, "snapshot:") {
+		t.Fatalf("must not snapshot without a commit target: %v", vm.log)
+	}
+}
+
+// PreDefine (NVRAM write-back) runs after restic restore and before define.
+func TestRestoreVMRunsPreDefineBeforeDefine(t *testing.T) {
+	vm := &fakeVM{stateVal: ""}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	d := sampleVMRestoreDeps(t, vm, r, runs)
+	called := false
+	d.PreDefine = func(_ context.Context) error { called = true; return nil }
+
+	if err := backup.RestoreVM(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if !called {
+		t.Fatal("PreDefine was not called")
 	}
 }

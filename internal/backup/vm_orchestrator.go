@@ -49,6 +49,15 @@ type VM interface {
 	Define(ctx context.Context, xmlPath string) error
 	Undefine(ctx context.Context, name string) error
 	Autostart(ctx context.Context, name string, on bool) error
+	// SnapshotCreateDiskOnly creates an external, atomic, disk-only snapshot
+	// (the VM keeps running and writes to a fresh overlay; the base goes
+	// read-only). quiesce uses the qemu guest agent for app-consistency.
+	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool) error
+	// BlockCommitActivePivot commits the active overlay back into its base and
+	// pivots the running VM onto the base (blockcommit --active --pivot --wait).
+	BlockCommitActivePivot(ctx context.Context, name, device string) error
+	// GuestAgentPing reports whether the qemu guest agent answers inside the VM.
+	GuestAgentPing(ctx context.Context, name string) bool
 }
 
 // ---------------------------------------------------------------------------
@@ -66,6 +75,9 @@ type VMBackupDeps struct {
 	Name string
 	// DiskPaths are the container-visible absolute paths to the disk images.
 	DiskPaths []string
+	// DiskDevice is the first disk's target dev (e.g. "vda", "hdc") — the
+	// blockcommit target for live backup. Empty disables live commit.
+	DiskDevice string
 	// NVRAMPath is the container-visible NVRAM path (empty for BIOS VMs).
 	NVRAMPath string
 	// RepoPath is the local restic repository path for the vms domain.
@@ -104,6 +116,11 @@ type VMRestoreDeps struct {
 	WasAutostart bool
 	// StartAfter, when true, boots the VM after define (mirrors a running VM).
 	StartAfter bool
+	// PreDefine, when set, runs after restic restore and AFTER the old domain is
+	// undefined, but BEFORE `virsh define` — used to write the captured NVRAM
+	// back to the host over SSH so the VM defines with its real var store. It
+	// must be best-effort (never fatal): a nil error always continues.
+	PreDefine func(ctx context.Context) error
 	// RepoPath is the local restic repository path for the vms domain.
 	RepoPath string
 	// TargetID is the run-recording target id.
@@ -189,6 +206,64 @@ func BackupVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 
 	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
 		return summary, fmt.Errorf("vm backup: record run finish: %w", err)
+	}
+	return summary, nil
+}
+
+// BackupVMLive backs up a RUNNING VM without shutting it down:
+//
+//	snapshot-create-as --disk-only --atomic (VM writes to a fresh overlay)
+//	→ restic backs up the now-static base disk(s)
+//	→ blockcommit --active --pivot (merge overlay back, pivot the live VM)
+//
+// SAFETY: on ANY failure the VM is left RUNNING and usable — it is never
+// destroyed or undefined. A blockcommit failure surfaces a clear, actionable
+// error (the VM keeps running on its overlay; no data is lost) and records the
+// run failed. Requires DiskDevice (the blockcommit target); falls back to a
+// clear error when it is empty.
+func BackupVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
+	runID, err := d.Runs.Start(d.TargetID, kindBackup)
+	if err != nil {
+		return Summary{}, fmt.Errorf("vm live backup: record run start: %w", err)
+	}
+	if d.DiskDevice == "" {
+		e := fmt.Errorf("vm live backup: no disk device to commit — cannot safely snapshot; use graceful method")
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+		return Summary{}, e
+	}
+
+	const snap = "bombvault-tmp"
+	quiesce := d.VM.GuestAgentPing(ctx, d.Name)
+
+	// Create the overlay. Nothing destructive yet — on failure the VM is untouched.
+	if err := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, snap, quiesce); err != nil {
+		e := fmt.Errorf("vm live backup: snapshot: %w", err)
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+		return Summary{}, e
+	}
+
+	// Back up the now-static base disk(s).
+	paths := append([]string(nil), d.DiskPaths...)
+	if d.NVRAMPath != "" {
+		paths = append(paths, d.NVRAMPath)
+	}
+	tags := []string{"vm:" + d.Name, "p2", "live"}
+	summary, backupErr := d.Restic.Backup(ctx, d.RepoPath, paths, tags)
+
+	// ALWAYS attempt to commit the overlay back, even if the backup failed, so the
+	// VM does not keep diverging on the overlay.
+	if commitErr := d.VM.BlockCommitActivePivot(ctx, d.Name, d.DiskDevice); commitErr != nil {
+		e := fmt.Errorf("vm live backup: blockcommit failed — the VM is STILL RUNNING on its snapshot overlay (no data lost); resolve the overlay before the next backup: %w", commitErr)
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+		return Summary{}, e
+	}
+	if backupErr != nil {
+		e := fmt.Errorf("vm live backup: restic: %w", backupErr)
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+		return Summary{}, e
+	}
+	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
+		return summary, fmt.Errorf("vm live backup: record run finish: %w", err)
 	}
 	return summary, nil
 }
@@ -309,6 +384,15 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	}
 	if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, restoreDirs); err != nil {
 		return fmt.Errorf("vm restore: restic restore: %w", err)
+	}
+
+	// Write the captured NVRAM back to the host (over SSH) now that the old
+	// domain is undefined (its nvram removed) and before define, so libvirt picks
+	// up the real var store. Best-effort — never blocks the restore.
+	if d.PreDefine != nil {
+		if err := d.PreDefine(ctx); err != nil {
+			return fmt.Errorf("vm restore: pre-define: %w", err)
+		}
 	}
 
 	// Write domain XML to a temp file then define it with virsh.

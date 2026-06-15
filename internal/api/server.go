@@ -196,6 +196,7 @@ const (
 //	  Backup & disaster recovery for Docker containers and KVM/libvirt VMs
 //	  ───×67
 //	<blank>
+//
 // printBanner prints the shared Junker-der-Provinz brand banner exactly like the
 // other containers' print-banner.sh: a leading blank, the brand art, ONE blank
 // line, then the name/subtitle block framed by the ─ rule. TrimRight makes the
