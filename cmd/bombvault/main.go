@@ -63,6 +63,11 @@ func run() error {
 	if err := sc.EnsureKey(); err != nil {
 		log.Printf("sshconn: ensure key: %v", err) // non-fatal: VM backup stays unavailable until fixed
 	}
+	// Write ~/.ssh/config so libvirt's qemu+ssh (external ssh binary) uses our key
+	// + known_hosts + accept-new — it ignores the URI's keyfile/known_hosts params.
+	if err := sc.WriteSSHConfig(); err != nil {
+		log.Printf("sshconn: write ssh config: %v", err)
+	}
 	vc := virshcli.New(sc.VirshURI())
 
 	// Real restic CLI adapter.
