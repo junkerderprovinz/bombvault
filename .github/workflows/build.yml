@@ -5,6 +5,7 @@ name: Build Docker Image
 on:
   push:
     branches: [main, feat/go-rewrite]
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
     paths-ignore:
       - "**.md"
       - "LICENSE"
@@ -48,6 +49,9 @@ jobs:
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=go-preview,enable=${{ github.ref == 'refs/heads/feat/go-rewrite' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
 
       - name: Build multi-arch image
         uses: docker/build-push-action@v6
