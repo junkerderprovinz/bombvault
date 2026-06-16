@@ -39,3 +39,25 @@ func TestToContainerPath(t *testing.T) {
 		})
 	}
 }
+
+// TestValidResourceName guards the container/VM {name} validator: the Go 1.22
+// router decodes "%2f"/"%2e%2e", so an unvalidated name could carry "../" into
+// the template/XML file sinks. Valid Docker/libvirt names pass; anything with a
+// separator, "..", a leading "-"/".", NUL or that is empty is rejected.
+func TestValidResourceName(t *testing.T) {
+	valid := []string{"plex", "Windows-11", "ubuntu_test", "a.b-c_1", "X"}
+	for _, n := range valid {
+		if !validResourceName(n) {
+			t.Errorf("expected %q to be valid", n)
+		}
+	}
+	invalid := []string{
+		"", "..", "../../etc", "a/b", `a\b`, "a..b", "-rf", ".hidden",
+		"a/../b", "with space", "nul\x00byte", "..%2f", // %2f stays literal here; the decoded "/" form is "a/b" above
+	}
+	for _, n := range invalid {
+		if validResourceName(n) {
+			t.Errorf("expected %q to be REJECTED", n)
+		}
+	}
+}

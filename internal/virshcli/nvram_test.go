@@ -18,6 +18,24 @@ func TestEnsureNVRAMTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("loader with an attribute-breaking char falls back (no XML injection)", func(t *testing.T) {
+		// A loader path carrying a single quote would otherwise break out of the
+		// template='…' attribute. The derived template must fall back to the
+		// trusted master, and the attribute-breaking content must not leak.
+		evil := `<loader type='pflash'>/usr/share/qemu/OVMF_CODE' onx='y.fd</loader>`
+		in := `<domain><os>` + evil + `<nvram>` + nvramPath + `</nvram></os></domain>`
+		got := EnsureNVRAMTemplate(in)
+		want := `<nvram template='` + defaultOVMFVars + `'>`
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected fallback master %q, got:\n%s", want, got)
+		}
+		// The would-be-injected (unsafe) template must NOT be spliced in. The
+		// loader element itself legitimately keeps its original text unchanged.
+		if strings.Contains(got, "OVMF_VARS' onx=") {
+			t.Fatalf("attribute-breaking content was spliced into the nvram template:\n%s", got)
+		}
+	})
+
 	t.Run("BIOS domain (no nvram) is unchanged", func(t *testing.T) {
 		in := `<domain><os><type>hvm</type><boot dev='hd'/></os></domain>`
 		if got := EnsureNVRAMTemplate(in); got != in {
