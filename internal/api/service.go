@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,6 +58,14 @@ type ResticEngine interface {
 	Restore(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
+	// ForgetPolicy applies a keep-policy + prune (retention). Inert when the
+	// policy has no dimension set.
+	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error
+	// Ls lists the files in a snapshot (for file-level restore).
+	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
+	// RestoreInclude restores a single path from a snapshot to target (file-level
+	// restore; target "/" = in-place to its original location).
+	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -105,41 +114,46 @@ func (s *Service) ModeFor(settings store.Settings) restic.Mode {
 	return restic.Mode{Encrypted: false}
 }
 
-// containersRepoPath resolves the absolute restic repo path for the containers
-// domain under the host mount root, rejecting traversal.
-func (s *Service) containersRepoPath(settings store.Settings) (string, error) {
-	repo, err := paths.Resolve(s.cfg.HostMountRoot, settings.ContainersPath)
-	if err != nil {
-		return "", fmt.Errorf("resolve containers path: %w", err)
-	}
-	return repo, nil
-}
-
-// vmsRepoPath resolves the absolute restic repo path for the vms domain under
-// the host mount root, rejecting traversal.
-func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
-	repo, err := paths.Resolve(s.cfg.HostMountRoot, settings.VMsPath)
-	if err != nil {
-		return "", fmt.Errorf("resolve vms path: %w", err)
-	}
-	return repo, nil
-}
-
-// flashRepoPath resolves the restic repo for the flash domain under the host
+// resolveRepo turns a configured repo location into the value passed to restic
+// -r. A restic remote backend (rclone:…, s3:…, sftp:… — off-site) is used
+// verbatim; a local location is resolved as a relative subpath under the host
 // mount root, rejecting traversal.
-func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
-	repo, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashPath)
+func (s *Service) resolveRepo(loc string) (string, error) {
+	if restic.IsRemoteRepo(loc) {
+		return loc, nil
+	}
+	repo, err := paths.Resolve(s.cfg.HostMountRoot, loc)
 	if err != nil {
-		return "", fmt.Errorf("resolve flash path: %w", err)
+		return "", fmt.Errorf("resolve repo path: %w", err)
 	}
 	return repo, nil
 }
 
-// flashRestoreTarget resolves the folder a flash snapshot is extracted into — a
-// "<flash path>-restore" sibling under the host mount. Flash restore NEVER
-// touches the live /boot; the user copies this folder onto a fresh USB.
+// containersRepoPath resolves the restic repo for the containers domain.
+func (s *Service) containersRepoPath(settings store.Settings) (string, error) {
+	return s.resolveRepo(settings.ContainersPath)
+}
+
+// vmsRepoPath resolves the restic repo for the vms domain.
+func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
+	return s.resolveRepo(settings.VMsPath)
+}
+
+// flashRepoPath resolves the restic repo for the flash domain.
+func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
+	return s.resolveRepo(settings.FlashPath)
+}
+
+// flashRestoreTarget resolves the LOCAL folder a flash snapshot is extracted
+// into. Flash restore NEVER touches the live /boot; the user copies this folder
+// onto a fresh USB. For a local repo it is a "<flash path>-restore" sibling; for
+// a remote (rclone) repo it is a fixed local staging folder.
 func (s *Service) flashRestoreTarget(settings store.Settings) (string, error) {
-	target, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashPath+"-restore")
+	sub := "user/bombvault/flash-restore"
+	if !restic.IsRemoteRepo(settings.FlashPath) {
+		sub = settings.FlashPath + "-restore"
+	}
+	target, err := paths.Resolve(s.cfg.HostMountRoot, sub)
 	if err != nil {
 		return "", fmt.Errorf("resolve flash restore target: %w", err)
 	}
@@ -164,11 +178,43 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 	return "", false // not reachable through the mount
 }
 
+// retentionPolicy maps the stored settings to a restic keep-policy.
+func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolicy {
+	return restic.RetentionPolicy{
+		KeepLast:    settings.RetentionKeepLast,
+		KeepDaily:   settings.RetentionKeepDaily,
+		KeepWeekly:  settings.RetentionKeepWeekly,
+		KeepMonthly: settings.RetentionKeepMonthly,
+	}
+}
+
+// applyRetention prunes repo to the configured keep-policy after a successful
+// backup. Best-effort: a prune failure is logged but never fails the backup that
+// just succeeded — the new snapshot is safe and pruning retries on the next run.
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode) {
+	p := s.retentionPolicy(settings)
+	if !p.Any() {
+		return
+	}
+	if err := s.engine.ForgetPolicy(ctx, repo, p, mode); err != nil {
+		log.Printf("api: retention prune failed (backup is safe): %v", err)
+	}
+}
+
 // EnsureRepo creates the repo directory and initialises the restic repo on first
 // use. It is idempotent: an already-initialised repo (a `config` marker file
 // present) skips Init, and an Init that reports an already-existing repo is
 // tolerated.
 func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode) error {
+	// Remote (rclone/off-site) repos have no local directory or `config` marker
+	// to stat. Initialise and tolerate an already-initialised repo (restic errors
+	// with "...already...").
+	if restic.IsRemoteRepo(repo) {
+		if err := s.engine.Init(ctx, repo, mode); err != nil && !strings.Contains(strings.ToLower(err.Error()), "already") {
+			return fmt.Errorf("init repo: %w", err)
+		}
+		return nil
+	}
 	if err := paths.EnsureDir(repo); err != nil {
 		return fmt.Errorf("ensure repo dir: %w", err)
 	}
@@ -295,6 +341,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	if wErr := s.writeDefToStorage(settings, name, defBytes); wErr != nil {
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
+	s.applyRetention(ctx, repo, settings, mode)
 	return sum, nil
 }
 
@@ -551,6 +598,48 @@ func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot
 		}
 	}
 	return out, nil
+}
+
+// ListSnapshotFiles lists the files in a container snapshot, for file-level
+// restore. snapshotID must be valid hex.
+func (s *Service) ListSnapshotFiles(ctx context.Context, snapshotID string) ([]restic.FileEntry, error) {
+	if !backup.ValidSnapshotID(snapshotID) {
+		return nil, backup.ErrInvalidSnapshotID
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.containersRepoPath(settings)
+	if err != nil {
+		return nil, err
+	}
+	return s.engine.Ls(ctx, repo, snapshotID, s.ModeFor(settings))
+}
+
+// RestoreContainerFile restores a single file/dir from a container snapshot back
+// to its original location (in-place). filePath must be an absolute path within
+// the host mount — defense-in-depth so a restore can never write outside it.
+func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath string, confirm bool) error {
+	if !confirm {
+		return backup.ErrNotConfirmed
+	}
+	if !backup.ValidSnapshotID(snapshotID) {
+		return backup.ErrInvalidSnapshotID
+	}
+	if !paths.Within(s.cfg.HostMountRoot, filePath) {
+		return errors.New("restore file: path is outside the backup mount")
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.containersRepoPath(settings)
+	if err != nil {
+		return err
+	}
+	// target "/" → restic writes the included path back to its absolute location.
+	return s.engine.RestoreInclude(ctx, repo, snapshotID, filePath, "/", s.ModeFor(settings))
 }
 
 // DeleteBackups removes ALL backups of a container — every restic snapshot
@@ -864,17 +953,29 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		Restic:     &resticAdapter{engine: s.engine, mode: mode},
 		Runs:       runsAdapter{s.store},
 	}
+	live := false
 	if method == "live" {
 		// Live snapshot only works on a RUNNING VM (blockcommit --active --pivot
 		// needs an active domain). For a shut-off VM, fall back to graceful — which
 		// for an already-off VM just backs up the disks and leaves it off. This
 		// avoids creating an overlay we then cannot commit.
 		if running, _ := s.virsh.IsActive(ctx, name); running {
-			return backup.BackupVMLive(ctx, deps)
+			live = true
+		} else {
+			log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name) //nolint:gosec // G706: %q-quoted
 		}
-		log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name) //nolint:gosec // G706: %q-quoted
 	}
-	return backup.BackupVMGraceful(ctx, deps)
+	var sum backup.Summary
+	if live {
+		sum, err = backup.BackupVMLive(ctx, deps)
+	} else {
+		sum, err = backup.BackupVMGraceful(ctx, deps)
+	}
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	s.applyRetention(ctx, repo, settings, mode)
+	return sum, nil
 }
 
 // RestoreVM orchestrates a VM restore from a stored definition.
@@ -1075,13 +1176,18 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.BackupFlash(ctx, backup.FlashBackupDeps{
+	sum, err := backup.BackupFlash(ctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	s.applyRetention(ctx, repo, settings, mode)
+	return sum, nil
 }
 
 // RestoreFlash extracts a flash snapshot to the restore-target folder (safe —
@@ -1171,4 +1277,104 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 		}
 	}
 	return s.store.SetVMInclude(name, include)
+}
+
+// ---------------------------------------------------------------------------
+// Off-site (rclone) config
+// ---------------------------------------------------------------------------
+
+// rcloneConfPath is where the decrypted rclone config is written for restic→rclone.
+func (s *Service) rcloneConfPath() string { return filepath.Join(s.cfg.DataDir, "rclone.conf") }
+
+// WriteRcloneConfFile (re)writes the on-disk rclone config from the encrypted
+// value in settings, or removes it when empty. Called at startup so off-site
+// repos work immediately after a restart.
+func (s *Service) WriteRcloneConfFile() error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	return s.writeRcloneFile(settings.RcloneConf)
+}
+
+// writeRcloneFile writes the decrypted rclone config (from its base64+AES-GCM
+// stored form) to a 0600 file, or removes the file when the stored value is empty.
+func (s *Service) writeRcloneFile(encB64 string) error {
+	p := s.rcloneConfPath()
+	if strings.TrimSpace(encB64) == "" {
+		if err := os.Remove(p); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("remove rclone conf: %w", err)
+		}
+		return nil
+	}
+	enc, err := base64.StdEncoding.DecodeString(encB64)
+	if err != nil {
+		return fmt.Errorf("decode rclone conf: %w", err)
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return fmt.Errorf("decrypt rclone conf: %w", err)
+	}
+	if err := os.WriteFile(p, plain, 0o600); err != nil {
+		return fmt.Errorf("write rclone conf: %w", err)
+	}
+	return nil
+}
+
+// SetRcloneConf encrypts + stores the rclone config and rewrites the on-disk
+// file restic→rclone reads. An empty conf clears both. The stored DB value is
+// AES-256-GCM-encrypted (APP_KEY); the on-disk file is 0600 in /config.
+func (s *Service) SetRcloneConf(conf string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(conf) == "" {
+		settings.RcloneConf = ""
+	} else {
+		enc, encErr := secret.Encrypt(s.cfg.AppKey, []byte(conf))
+		if encErr != nil {
+			return fmt.Errorf("encrypt rclone conf: %w", encErr)
+		}
+		settings.RcloneConf = base64.StdEncoding.EncodeToString(enc)
+	}
+	if err := s.store.UpdateSettings(settings); err != nil {
+		return err
+	}
+	return s.writeRcloneFile(settings.RcloneConf)
+}
+
+// RcloneRemotes returns the configured rclone remote names (the [name] sections)
+// for display — never the secrets themselves.
+func (s *Service) RcloneRemotes() ([]string, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(settings.RcloneConf) == "" {
+		return nil, nil
+	}
+	enc, err := base64.StdEncoding.DecodeString(settings.RcloneConf)
+	if err != nil {
+		return nil, err
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return nil, err
+	}
+	return parseRcloneRemotes(string(plain)), nil
+}
+
+// parseRcloneRemotes extracts the [name] section headers from an rclone config.
+func parseRcloneRemotes(conf string) []string {
+	var out []string
+	for _, line := range strings.Split(conf, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			if name := strings.TrimSpace(line[1 : len(line)-1]); name != "" {
+				out = append(out, name)
+			}
+		}
+	}
+	return out
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -590,6 +590,77 @@ function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 }
 
+// RcloneCard manages the off-site rclone config (paste rclone.conf). It is
+// stored encrypted; only the remote NAMES are read back for display. Backup
+// paths can then be set to "rclone:<remote>:<bucket>" in Backup Paths.
+function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [remotes, setRemotes] = useState<string[]>([]);
+  const [conf, setConf] = useState("");
+  const [state, setState] = useState<SaveState>("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  function refresh() {
+    getRclone()
+      .then((r) => {
+        if (r.ok) setRemotes(r.remotes ?? []);
+      })
+      .catch(() => undefined);
+  }
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  async function handleSave() {
+    setState("saving");
+    setMsg(null);
+    try {
+      const r = await setRclone(conf);
+      if (r.ok) {
+        setState("saved");
+        setConf("");
+        refresh();
+        setTimeout(() => setState("idle"), 3000);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  return (
+    <Card title={t("rclone.title")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("rclone.hint")}</p>
+      <div className="text-sm text-carbon-text">
+        {t("rclone.configured")}:{" "}
+        <span className="font-mono">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
+      </div>
+      <textarea
+        value={conf}
+        onChange={(e) => setConf(e.target.value)}
+        spellCheck={false}
+        rows={6}
+        placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
+        className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-3 py-2 focus:outline-none focus:border-[#78a9ff]"
+      />
+      <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          onClick={() => void handleSave()}
+          disabled={state === "saving" || conf.trim() === ""}
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {state === "saving" ? t("auth.saving") : t("rclone.save")}
+        </button>
+        {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
+        {state === "error" && msg && <span className="text-sm text-[#ff8389]">{msg}</span>}
+      </div>
+    </Card>
+  );
+}
+
 export function SettingsPage() {
   const { t } = useT();
 
@@ -620,6 +691,9 @@ export function SettingsPage() {
 
   const [schedSaveState, setSchedSaveState] = useState<SaveState>("idle");
   const [schedSaveError, setSchedSaveError] = useState<string | null>(null);
+
+  const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
+  const [retSaveError, setRetSaveError] = useState<string | null>(null);
 
   // "Use containers schedule for VMs and Flash too" checkbox
   const [syncSchedules, setSyncSchedules] = useState(false);
@@ -948,6 +1022,54 @@ export function SettingsPage() {
       </Card>
 
       {/* ------------------------------------------------------------------ */}
+      {/* Retention                                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.retentionTitle")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">
+          {t("settings.retentionHint")}
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {([
+            ["retentionKeepLast", "settings.retentionLast"],
+            ["retentionKeepDaily", "settings.retentionDaily"],
+            ["retentionKeepWeekly", "settings.retentionWeekly"],
+            ["retentionKeepMonthly", "settings.retentionMonthly"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              <input
+                type="number"
+                min={0}
+                value={settings[key]}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+              />
+            </label>
+          ))}
+        </div>
+        <SaveBar
+          state={retSaveState}
+          error={retSaveError}
+          onSave={() =>
+            void save(
+              {
+                retentionKeepLast: settings.retentionKeepLast,
+                retentionKeepDaily: settings.retentionKeepDaily,
+                retentionKeepWeekly: settings.retentionKeepWeekly,
+                retentionKeepMonthly: settings.retentionKeepMonthly,
+              },
+              setRetSaveState,
+              setRetSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
       {/* Encryption                                                         */}
       {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.encryption")}>
@@ -983,6 +1105,11 @@ export function SettingsPage() {
       {/* VM Backup over SSH                                                 */}
       {/* ------------------------------------------------------------------ */}
       <VMSSHCard t={t} />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Off-site (rclone)                                                    */}
+      {/* ------------------------------------------------------------------ */}
+      <RcloneCard t={t} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Spike                                                              */}

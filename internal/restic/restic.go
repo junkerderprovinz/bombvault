@@ -9,10 +9,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
+
+// remoteRepoRe matches a restic remote-backend repo location (vs. a local path).
+// rclone covers cloud backends (B2/S3/Drive/…); the others are restic's native
+// remote backends. A local repo is a plain filesystem path with no scheme.
+var remoteRepoRe = regexp.MustCompile(`^(rclone|sftp|rest|s3|b2|azure|gs|swift):`)
+
+// IsRemoteRepo reports whether loc is a restic remote-backend location (not a
+// local filesystem path). Used to skip path-containment resolution and to inject
+// the rclone config.
+func IsRemoteRepo(loc string) bool { return remoteRepoRe.MatchString(loc) }
 
 // Mode describes how the restic repository is secured.
 type Mode struct {
@@ -45,6 +57,10 @@ type Snapshot struct {
 type Restic struct {
 	// Bin is the path (or name) of the restic binary.  Defaults to "restic".
 	Bin string
+	// RcloneConfig is the path to the rclone config file. When set AND the file
+	// exists, RCLONE_CONFIG is exported for every restic run so rclone-backed
+	// (off-site) repos authenticate. Ignored for local repos.
+	RcloneConfig string
 }
 
 // bin returns the binary to invoke, defaulting to "restic".
@@ -120,6 +136,39 @@ func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
 	return args
 }
 
+// FileEntry is one node from `restic ls` (a file or directory in a snapshot).
+type FileEntry struct {
+	Path string `json:"path"`
+	Type string `json:"type"` // "file" | "dir" | ...
+	Size int64  `json:"size"`
+}
+
+// LsArgs returns the argv slice for `restic ls --json <snapshotID>` (snapshot id
+// after -- as an arg-injection guard; callers also validate it as hex).
+func LsArgs(repo, snapshotID string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "ls", "--json")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--", snapshotID)
+	return args
+}
+
+// RestoreIncludeArgs returns the argv for restoring ONLY includePath out of a
+// snapshot, to target. With target "/" the file is written back to its original
+// absolute location (in-place file-level restore). The snapshot id is the
+// arg-injection-guarded positional.
+func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--target", target, "--include", includePath, "--", snapshotID)
+	return args
+}
+
 // SnapshotsArgs returns the argv slice for `restic snapshots --json`.
 func SnapshotsArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
@@ -147,6 +196,45 @@ func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string 
 	return args
 }
 
+// RetentionPolicy is a restic forget keep-policy. A count of 0 omits that
+// dimension. When no dimension is set the policy is inert (Any reports false).
+type RetentionPolicy struct {
+	KeepLast    int
+	KeepDaily   int
+	KeepWeekly  int
+	KeepMonthly int
+}
+
+// Any reports whether at least one keep dimension is set, i.e. retention is on.
+func (p RetentionPolicy) Any() bool {
+	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
+}
+
+// ForgetPolicyArgs returns the argv for `restic forget --keep-* --prune`. Only
+// the set dimensions are emitted. restic's default grouping (host+paths) applies
+// the policy per group, so each container/VM/flash target keeps its own history.
+func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "forget")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	if p.KeepLast > 0 {
+		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
+	}
+	if p.KeepDaily > 0 {
+		args = append(args, "--keep-daily", strconv.Itoa(p.KeepDaily))
+	}
+	if p.KeepWeekly > 0 {
+		args = append(args, "--keep-weekly", strconv.Itoa(p.KeepWeekly))
+	}
+	if p.KeepMonthly > 0 {
+		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
+	}
+	args = append(args, "--prune")
+	return args
+}
+
 // ---- execution helper ------------------------------------------------------
 
 // run executes restic with the given args and mode.  The password is injected
@@ -162,6 +250,13 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 		env = append(env, "RESTIC_PASSWORD="+m.Password)
 	} else {
 		env = append(env, "RESTIC_INSECURE_NO_PASSWORD=true")
+	}
+	// Point restic→rclone at the managed config for off-site repos (only when it
+	// exists; harmless for local repos).
+	if r.RcloneConfig != "" {
+		if _, statErr := os.Stat(r.RcloneConfig); statErr == nil {
+			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
+		}
 	}
 	cmd.Env = env
 
@@ -267,6 +362,38 @@ func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot,
 	return snaps, nil
 }
 
+// Ls lists the files/dirs in a snapshot. restic ls --json emits one JSON object
+// per line: a leading snapshot-metadata object then one "node" per path. We keep
+// only nodes that carry a path.
+func (r Restic) Ls(ctx context.Context, repo, snapshotID string, m Mode) ([]FileEntry, error) {
+	out, err := r.run(ctx, LsArgs(repo, snapshotID, m), m)
+	if err != nil {
+		return nil, err
+	}
+	var entries []FileEntry
+	for _, line := range bytes.Split(out, []byte("\n")) {
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		var e FileEntry
+		if err := json.Unmarshal(line, &e); err != nil {
+			continue // skip non-node lines
+		}
+		if e.Path != "" && e.Path != "/" {
+			entries = append(entries, e)
+		}
+	}
+	return entries, nil
+}
+
+// RestoreInclude restores ONLY includePath from a snapshot to target. With
+// target "/" this writes the file back to its original absolute location.
+func (r Restic) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, m Mode) error {
+	_, err := r.run(ctx, RestoreIncludeArgs(repo, snapshotID, includePath, target, m), m)
+	return err
+}
+
 // Forget removes the given snapshots from the repo, optionally pruning the freed
 // data. A nil/empty ID list is a no-op (nothing to forget).
 func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, m Mode) error {
@@ -274,6 +401,17 @@ func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, p
 		return nil
 	}
 	_, err := r.run(ctx, ForgetArgs(repo, snapshotIDs, prune, m), m)
+	return err
+}
+
+// ForgetPolicy applies a keep-policy to the repo and prunes the freed data. An
+// inert policy (no keep dimension set) is a no-op, so retention stays off until
+// the user configures it.
+func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy, m Mode) error {
+	if !p.Any() {
+		return nil
+	}
+	_, err := r.run(ctx, ForgetPolicyArgs(repo, p, m), m)
 	return err
 }
 

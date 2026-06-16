@@ -23,8 +23,48 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # Boot smoke test: a green build is not a booting container. Build the amd64
+  # image, run it, and confirm it serves /api/health before we push :latest /
+  # the release tag. The push job depends on this, so a non-booting image can
+  # never reach the registry.
+  smoke:
+    name: Boot smoke test (amd64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build amd64 image (load locally)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: bombvault:smoke
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run container + health check
+        run: |
+          docker run -d --name bv-smoke \
+            -e APP_KEY="$(openssl rand -hex 32)" \
+            -e HTTP_ONLY=true \
+            -p 3000:3000 bombvault:smoke
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; then
+              echo "✓ container is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "✗ container did not become healthy in time"
+          docker logs bv-smoke || true
+          exit 1
+      - name: Cleanup
+        if: always()
+        run: docker rm -f bv-smoke || true
+
   build:
     name: Build (amd64 + arm64)
+    needs: smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

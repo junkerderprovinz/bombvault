@@ -24,6 +24,51 @@ func TestInitArgs(t *testing.T) {
 	})
 }
 
+func TestForgetPolicyArgs(t *testing.T) {
+	t.Run("emits only set dimensions + prune", func(t *testing.T) {
+		got := restic.ForgetPolicyArgs("/repo",
+			restic.RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "forget", "--keep-last", "5", "--keep-monthly", "6", "--prune"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag, full policy", func(t *testing.T) {
+		got := restic.ForgetPolicyArgs("/repo",
+			restic.RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
+			restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "forget", "--insecure-no-password",
+			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--prune"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+func TestIsRemoteRepo(t *testing.T) {
+	remote := []string{"rclone:b2:my-bucket/path", "s3:s3.amazonaws.com/bucket", "sftp:user@host:/srv", "b2:bucket", "rest:https://host/"}
+	for _, r := range remote {
+		if !restic.IsRemoteRepo(r) {
+			t.Errorf("expected %q to be remote", r)
+		}
+	}
+	local := []string{"user/bombvault/container", "/host/user/x", "backups/flash", ""}
+	for _, l := range local {
+		if restic.IsRemoteRepo(l) {
+			t.Errorf("expected %q to be local", l)
+		}
+	}
+}
+
+func TestRetentionPolicyAny(t *testing.T) {
+	if (restic.RetentionPolicy{}).Any() {
+		t.Fatal("empty policy must be inert")
+	}
+	if !(restic.RetentionPolicy{KeepWeekly: 1}).Any() {
+		t.Fatal("a set dimension must make the policy active")
+	}
+}
+
 func TestBackupArgs(t *testing.T) {
 	got := restic.BackupArgs("/repo", []string{"-weird", "/p"}, []string{"container:plex"}, restic.Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "backup", "--json", "--tag", "container:plex", "--", "-weird", "/p"}

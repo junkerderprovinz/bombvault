@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount). Off-site repos (SMB/NFS/rclone), retention, file-level restore, integrity verification and hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>retention</b> and <b>file-level restore</b>. Integrity verification and pre/post hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -86,13 +86,13 @@ Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2
 - **Individual restore** — restore one container or one VM without touching the others.
 - **Flash restore is safe** — a flash snapshot is *extracted to a folder* you then copy onto a fresh USB; the live, running `/boot` is never overwritten (which could leave the server unbootable).
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
-- **File-level restore** *(planned)* — browse a snapshot and restore individual files.
+- **File-level restore** — expand a container snapshot's **Files**, filter, and restore an individual file/folder back to its original location.
 
 ### Storage & scheduling
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
-- Destinations: a **local path** today; SMB/CIFS, NFS and rclone (B2, S3, …) plus per-type destinations are *(planned)*.
-- Configurable retention (keep N snapshots / by age) *(planned)*.
+- Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it) and **rclone** (Backblaze B2, S3, Google Drive, …) via Settings → Off-site, then set a Backup Path to `rclone:<remote>:<bucket>/path`. The rclone config is stored encrypted.
+- Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup.
 - Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
 
 ### Other
