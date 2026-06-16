@@ -333,6 +333,34 @@ export function testVMSSH(): Promise<OkEnvelope> {
 }
 
 // ---------------------------------------------------------------------------
+// Flash API (singleton domain — the Unraid USB)
+// ---------------------------------------------------------------------------
+
+/** POST /api/flash/backup — back up the whole Unraid flash (/boot). */
+export function backupFlashNow(): Promise<BackupResponse> {
+  return fetchJSON("/api/flash/backup", { method: "POST" });
+}
+
+/** GET /api/flash/snapshots — list flash snapshots. */
+export function listFlashSnapshots(): Promise<ListSnapshotsResponse> {
+  return fetchJSON("/api/flash/snapshots");
+}
+
+/**
+ * POST /api/flash/restore — extract a flash snapshot to the restore folder.
+ * Returns the target folder; the live /boot is never overwritten.
+ */
+export function restoreFlash(
+  snapshotId: string,
+  confirm: boolean
+): Promise<OkEnvelope & { target?: string }> {
+  return fetchJSON("/api/flash/restore", {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, confirm }),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Auth API
 // ---------------------------------------------------------------------------
 

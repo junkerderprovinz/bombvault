@@ -106,6 +106,24 @@ func (r *Repo) LastSuccessfulVMBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulVMBackup")
 }
 
+// FlashTargetID is the reserved runs.target_id for the singleton flash domain
+// (the Unraid USB). Flash has no per-item table, so its runs are tagged with
+// this fixed id — distinct from the hex/UUID ids of container and VM targets,
+// so it never collides with or pollutes the other domains' gates.
+const FlashTargetID = "flash"
+
+// LastSuccessfulFlashBackup drives the flash domain everyN due-gate, scoped to
+// the reserved flash target id.
+func (r *Repo) LastSuccessfulFlashBackup() (time.Time, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND target_id = ?
+		ORDER BY started_at DESC
+		LIMIT 1`, FlashTargetID)
+	return scanLastBackupTime(row, "LastSuccessfulFlashBackup")
+}
+
 // scanLastBackupTime reads the single nullable finished_at column from a
 // last-successful-backup query, mapping no-rows / NULL to a zero time.
 func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {

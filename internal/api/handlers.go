@@ -389,7 +389,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, nil); err != nil {
+	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
@@ -707,6 +707,50 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleBackupFlash backs up the whole Unraid USB flash (singleton domain).
+func (h *Handler) handleBackupFlash(w http.ResponseWriter, r *http.Request) {
+	sum, err := h.svc.BackupFlash(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"snapshotId": sum.SnapshotID,
+		"bytes":      sum.Bytes,
+	}))
+}
+
+// handleSnapshotsFlash lists flash snapshots.
+func (h *Handler) handleSnapshotsFlash(w http.ResponseWriter, r *http.Request) {
+	snaps, err := h.svc.SnapshotsFlash(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if snaps == nil {
+		snaps = []restic.Snapshot{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
+}
+
+// handleRestoreFlash extracts a flash snapshot to the restore folder and returns
+// its path (the live /boot is never overwritten).
+func (h *Handler) handleRestoreFlash(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		SnapshotID string `json:"snapshotId"`
+		Confirm    bool   `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, err := h.svc.RestoreFlash(r.Context(), body.SnapshotID, body.Confirm)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
 }
 
 func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {

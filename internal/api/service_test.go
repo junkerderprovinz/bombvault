@@ -571,6 +571,11 @@ func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path
 	return nil
 }
 
+func (f *fakeResticEngine) Restore(_ context.Context, repo, snapshotID, target string, _ restic.Mode) error {
+	f.restored = append(f.restored, repo+":"+snapshotID+"->"+target)
+	return nil
+}
+
 func (f *fakeResticEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
 	return f.snaps, nil
 }

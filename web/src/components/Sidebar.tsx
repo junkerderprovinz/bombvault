@@ -280,7 +280,6 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.flash")}
           icon={<IconFlash />}
           disabled={!flashEnabled}
-          comingSoon
         />
       </nav>
 

@@ -51,6 +51,10 @@ type ResticEngine interface {
 	Init(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode) (restic.Summary, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
+	// Restore extracts a whole snapshot to target (used by flash restore, which
+	// never restores in-place — it writes to a folder the user then copies to a
+	// fresh USB).
+	Restore(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 }
@@ -119,6 +123,27 @@ func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
 		return "", fmt.Errorf("resolve vms path: %w", err)
 	}
 	return repo, nil
+}
+
+// flashRepoPath resolves the restic repo for the flash domain under the host
+// mount root, rejecting traversal.
+func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
+	repo, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashPath)
+	if err != nil {
+		return "", fmt.Errorf("resolve flash path: %w", err)
+	}
+	return repo, nil
+}
+
+// flashRestoreTarget resolves the folder a flash snapshot is extracted into — a
+// "<flash path>-restore" sibling under the host mount. Flash restore NEVER
+// touches the live /boot; the user copies this folder onto a fresh USB.
+func (s *Service) flashRestoreTarget(settings store.Settings) (string, error) {
+	target, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashPath+"-restore")
+	if err != nil {
+		return "", fmt.Errorf("resolve flash restore target: %w", err)
+	}
+	return target, nil
 }
 
 // toContainerPath translates a HOST path under HostSourceRoot to its
@@ -637,6 +662,12 @@ func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID strin
 	return nil
 }
 
+// RestoreTo extracts a whole snapshot under target (flash restore — never
+// in-place). Satisfies backup.FlashRestic.
+func (a *resticAdapter) RestoreTo(ctx context.Context, repo, snapshotID, target string) error {
+	return a.engine.Restore(ctx, repo, snapshotID, target, a.mode)
+}
+
 // templatesAdapter satisfies backup.Templates over the template package funcs.
 type templatesAdapter struct{}
 
@@ -1020,6 +1051,104 @@ func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapsh
 		}
 	}
 	return out, nil
+}
+
+// resticAdapter also satisfies the flash domain's to-target restore surface.
+var _ backup.FlashRestic = (*resticAdapter)(nil)
+
+// BackupFlash backs up the whole Unraid USB flash (the mounted /boot) to the
+// flash repo via restic. Fails with a clear message if the flash directory is
+// not mounted (the /boot → /host/boot mount is required for this domain).
+func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
+	}
+	if _, statErr := os.Stat(s.cfg.FlashDir); errors.Is(statErr, fs.ErrNotExist) {
+		return backup.Summary{}, fmt.Errorf("flash backup: the Unraid flash is not mounted — add the /boot → %s mount to the container template", s.cfg.FlashDir)
+	}
+	repo, err := s.flashRepoPath(settings)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	mode := s.ModeFor(settings)
+	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+		return backup.Summary{}, err
+	}
+	return backup.BackupFlash(ctx, backup.FlashBackupDeps{
+		SourceDir: s.cfg.FlashDir,
+		Repo:      repo,
+		TargetID:  store.FlashTargetID,
+		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Runs:      runsAdapter{s.store},
+	})
+}
+
+// RestoreFlash extracts a flash snapshot to the restore-target folder (safe —
+// the live /boot is never overwritten). "latest"/"" resolves to the newest
+// snapshot. Returns the absolute target folder so the caller can show the user
+// where the recovered flash contents landed.
+func (s *Service) RestoreFlash(ctx context.Context, snapshotID string, confirm bool) (string, error) {
+	if !confirm {
+		return "", backup.ErrNotConfirmed
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.flashRepoPath(settings)
+	if err != nil {
+		return "", err
+	}
+	target, err := s.flashRestoreTarget(settings)
+	if err != nil {
+		return "", err
+	}
+	mode := s.ModeFor(settings)
+
+	if snapshotID == "latest" || snapshotID == "" {
+		snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
+		if sErr != nil {
+			return "", sErr
+		}
+		if len(snaps) == 0 {
+			return "", errors.New("flash has not been backed up yet")
+		}
+		snapshotID = snaps[len(snaps)-1].ID
+	}
+	if err := paths.EnsureDir(target); err != nil {
+		return "", fmt.Errorf("create flash restore folder: %w", err)
+	}
+	if err := backup.RestoreFlash(ctx, backup.FlashRestoreDeps{
+		Confirmed:  confirm,
+		SnapshotID: snapshotID,
+		Repo:       repo,
+		Target:     target,
+		TargetID:   store.FlashTargetID,
+		Restic:     &resticAdapter{engine: s.engine, mode: mode},
+		Runs:       runsAdapter{s.store},
+	}); err != nil {
+		return "", err
+	}
+	return target, nil
+}
+
+// SnapshotsFlash lists restic snapshots in the flash repo (the repo is dedicated
+// to flash, so all of its snapshots are flash backups).
+func (s *Service) SnapshotsFlash(ctx context.Context) ([]restic.Snapshot, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.flashRepoPath(settings)
+	if err != nil {
+		return nil, err
+	}
+	mode := s.ModeFor(settings)
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+		return nil, nil // no backups yet
+	}
+	return s.engine.Snapshots(ctx, repo, mode)
 }
 
 // SetVMMethod updates the backup method for a VM, creating the target if absent.

@@ -204,9 +204,10 @@ type Scheduler struct {
 	c         *cron.Cron
 	backup    BackupFunc
 	listFn    ListTargetsFunc
-	backupVM  BackupFunc        // nil until SetVMJob wires VM backup
-	listVMsFn ListVMTargetsFunc // nil until SetVMJob wires VM backup
-	entryIDs  []cron.EntryID
+	backupVM    BackupFunc        // nil until SetVMJob wires VM backup
+	listVMsFn   ListVMTargetsFunc // nil until SetVMJob wires VM backup
+	backupFlash func() error      // nil until SetFlashJob wires flash backup
+	entryIDs    []cron.EntryID
 }
 
 // New creates a Scheduler. backupFn is called for each due container;
@@ -226,6 +227,13 @@ func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 func (s *Scheduler) SetVMJob(backupVMFn BackupFunc, listVMsFn ListVMTargetsFunc) {
 	s.backupVM = backupVMFn
 	s.listVMsFn = listVMsFn
+}
+
+// SetFlashJob wires the flash domain so a scheduled flash backup actually runs.
+// Flash is a singleton (the Unraid USB), so the job takes no arguments. Until
+// this is called the flash domain is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetFlashJob(backupFlashFn func() error) {
+	s.backupFlash = backupFlashFn
 }
 
 // Start starts the underlying cron runner. Call once at app startup.
@@ -306,11 +314,18 @@ func (s *Scheduler) ReloadWithDueChecks(
 			},
 			lastRun: vmsLastRun,
 		},
-		// Flash cadence is stored but its job is a no-op until flash backup ships.
 		{
 			cadence: settings.FlashSchedule,
 			name:    "flash",
-			fn:      func() { log.Print("schedule: flash job: not yet implemented in Phase 1") },
+			fn: func() {
+				if s.backupFlash == nil {
+					log.Print("schedule: flash job skipped — flash backup not wired (SetFlashJob)")
+					return
+				}
+				if err := s.backupFlash(); err != nil {
+					log.Printf("schedule: flash job: backup failed: %v", err)
+				}
+			},
 			lastRun: flashLastRun,
 		},
 	}

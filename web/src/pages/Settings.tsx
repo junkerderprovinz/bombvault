@@ -771,8 +771,8 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.domains")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
-          Turn each backup domain on or off. Containers and VMs are available
-          now; Flash backup is coming soon.
+          Turn each backup domain on or off. Enabling VMs or Flash reveals its
+          tab in the sidebar.
         </p>
         <ToggleRow
           label={t("settings.containersEnabled")}
@@ -792,7 +792,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.flashEnabled")}
-          description="Unraid flash drive backup (coming soon)"
+          description="Unraid USB flash backup (/boot → restic)"
           checked={settings.flashEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, flashEnabled: v } : prev)

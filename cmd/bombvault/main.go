@@ -93,13 +93,18 @@ func run() error {
 		},
 		st.ListVMTargets,
 	)
+	scheduler.SetFlashJob(func() error {
+		_, bErr := svc.BackupFlash(context.Background())
+		return bErr
+	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
-	// successful backup within each domain (containers vs. VMs scoped separately).
+	// successful backup within each domain (containers / VMs / flash scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
 	vmsLastRun := schedule.LastRunFunc(st.LastSuccessfulVMBackup)
+	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, nil); rErr != nil {
+		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {

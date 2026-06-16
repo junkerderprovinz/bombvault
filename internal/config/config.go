@@ -26,6 +26,7 @@ type Config struct {
 	HTTPSPort         int
 	HTTPOnly          bool
 	FlashTemplatesDir string
+	FlashDir          string
 	DBPath            string
 }
 
@@ -50,6 +51,9 @@ func Load(env map[string]string) (Config, error) {
 		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),
 		FlashTemplatesDir: stringOr(env["FLASH_TEMPLATES_DIR"], "/host/boot/config/plugins/dockerMan/templates-user"),
+		// Container-visible path of the Unraid USB flash (the whole /boot mounted
+		// read at /host/boot) for flash backup.
+		FlashDir: stringOr(env["FLASH_DIR"], "/host/boot"),
 	}
 	c.DBPath = filepath.Join(c.DataDir, "bombvault.sqlite")
 	return c, nil
