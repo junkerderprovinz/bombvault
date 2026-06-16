@@ -627,7 +627,9 @@ func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath
 	if !backup.ValidSnapshotID(snapshotID) {
 		return backup.ErrInvalidSnapshotID
 	}
-	if !paths.Within(s.cfg.HostMountRoot, filePath) {
+	// Clean once so the path we validate is exactly the path we execute.
+	clean := path.Clean(filePath)
+	if !paths.Within(s.cfg.HostMountRoot, clean) {
 		return errors.New("restore file: path is outside the backup mount")
 	}
 	settings, err := s.store.GetSettings()
@@ -639,7 +641,7 @@ func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath
 		return err
 	}
 	// target "/" → restic writes the included path back to its absolute location.
-	return s.engine.RestoreInclude(ctx, repo, snapshotID, filePath, "/", s.ModeFor(settings))
+	return s.engine.RestoreInclude(ctx, repo, snapshotID, clean, "/", s.ModeFor(settings))
 }
 
 // DeleteBackups removes ALL backups of a container — every restic snapshot
@@ -1317,6 +1319,11 @@ func (s *Service) writeRcloneFile(encB64 string) error {
 	}
 	if err := os.WriteFile(p, plain, 0o600); err != nil {
 		return fmt.Errorf("write rclone conf: %w", err)
+	}
+	// Guarantee 0600 even if the file pre-existed with looser perms (WriteFile
+	// only applies the mode on creation) — it holds cleartext cloud credentials.
+	if err := os.Chmod(p, 0o600); err != nil {
+		return fmt.Errorf("chmod rclone conf: %w", err)
 	}
 	return nil
 }
