@@ -178,10 +178,37 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
 
+// resourceNameRe matches a safe Docker container / libvirt VM name: it starts
+// with an alphanumeric and contains only [A-Za-z0-9._-]. This forbids path
+// separators, a leading "-" (argv option-injection) and an empty name; the
+// extra ".." check forbids parent-dir traversal even within the charset. The
+// Go 1.22 router decodes "%2f"/"%2e%2e" into the path value, so an unvalidated
+// {name} could otherwise carry "../" into the template/XML file sinks (CWE-22).
+var resourceNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+
+func validResourceName(name string) bool {
+	return resourceNameRe.MatchString(name) && !strings.Contains(name, "..")
+}
+
+// nameParam extracts and validates the {name} path value, writing a 400 and
+// returning ok=false when it is unsafe. Every name-keyed handler calls this at
+// the boundary so no traversal/option-injection name reaches the service layer.
+func (h *Handler) nameParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	name := r.PathValue("name")
+	if !validResourceName(name) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
+		return "", false
+	}
+	return name, true
+}
+
 // handleDeleteBackups removes ALL backups of a container and forgets it from the
 // store. Used for containers that are no longer installed.
 func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	if err := h.svc.DeleteBackups(r.Context(), name); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -201,7 +228,10 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	sum, err := h.svc.Backup(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -214,7 +244,10 @@ func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleSnapshots(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	snaps, err := h.svc.Snapshots(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -227,7 +260,10 @@ func (h *Handler) handleSnapshots(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	var body struct {
 		SnapshotID string `json:"snapshotId"`
 		Confirm    bool   `json:"confirm"`
@@ -243,7 +279,10 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	var body struct {
 		IncludeInSchedule bool `json:"includeInSchedule"`
 	}
@@ -557,7 +596,26 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 //   - GET  /api/health
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hash, on := h.authEnabled()
+		// Read auth state directly so we can fail CLOSED on a store error: a
+		// transient DB failure must never silently drop the auth gate and expose
+		// the API. Public liveness/auth endpoints stay reachable so the SPA can
+		// still render and recover.
+		s, err := h.store.GetSettings()
+		if err != nil {
+			log.Printf("api: authGate: GetSettings: %v", err)
+			switch r.URL.Path {
+			case "/api/auth", "/api/login", "/api/health":
+				next.ServeHTTP(w, r)
+			default:
+				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+					"ok":    false,
+					"error": "authentication unavailable",
+				})
+			}
+			return
+		}
+		hash := s.AuthPasswordHash
+		on := hash != ""
 		if !on {
 			next.ServeHTTP(w, r)
 			return
@@ -601,7 +659,10 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	sum, err := h.svc.BackupVM(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -614,7 +675,10 @@ func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	snaps, err := h.svc.SnapshotsVM(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -627,7 +691,10 @@ func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	var body struct {
 		SnapshotID string `json:"snapshotId"`
 		Confirm    bool   `json:"confirm"`
@@ -643,7 +710,10 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
 	var body struct {
 		Method            *string `json:"method"`
 		IncludeInSchedule *bool   `json:"includeInSchedule"`
