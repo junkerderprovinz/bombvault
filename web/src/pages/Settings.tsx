@@ -771,8 +771,8 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.domains")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
-          Enabling a domain reveals its navigation tab in the sidebar.
-          Containers is always shown.
+          Turn each backup domain on or off. Containers and VMs are available
+          now; Flash backup is coming soon.
         </p>
         <ToggleRow
           label={t("settings.containersEnabled")}
@@ -784,7 +784,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.vmsEnabled")}
-          description="VM backup via libvirt + qemu-img (coming soon)"
+          description="VM backup + restore via libvirt over SSH"
           checked={settings.vmsEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, vmsEnabled: v } : prev)
@@ -853,7 +853,7 @@ export function SettingsPage() {
         {/* VMs schedule */}
         <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
           <CadenceBuilder
-            label="VMs (later phase)"
+            label="VMs"
             value={syncSchedules ? settings.containersSchedule : settings.vmsSchedule}
             disabled={syncSchedules}
             onChange={(v) =>
@@ -864,7 +864,7 @@ export function SettingsPage() {
           />
           {!syncSchedules && (
             <p className="text-xs text-carbon-textMuted mt-2">
-              Note: VM backup executor is not yet implemented in Phase 1 — schedule is stored but not executed.
+              Backs up every VM with “include in schedule” enabled (set it per VM in the VMs tab).
             </p>
           )}
         </div>

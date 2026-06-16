@@ -79,20 +79,42 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 // LastSuccessfulContainerBackup returns the time of the most recent successful
 // backup run across ALL container targets, or a zero time when there has been
 // none. This is used by the scheduler's everyN due-gate to decide whether the
-// containers domain is due for a run.
+// containers domain is due for a run. It is scoped to container targets
+// (target_id in the `targets` table) so a VM backup never satisfies the gate.
 func (r *Repo) LastSuccessfulContainerBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
 		WHERE kind = 'backup' AND status = 'success'
+		  AND target_id IN (SELECT id FROM targets)
 		ORDER BY started_at DESC
 		LIMIT 1`)
+	return scanLastBackupTime(row, "LastSuccessfulContainerBackup")
+}
+
+// LastSuccessfulVMBackup is the VM-domain counterpart of
+// LastSuccessfulContainerBackup, scoped to VM targets (target_id in the `vms`
+// table). Drives the VMs domain everyN due-gate.
+func (r *Repo) LastSuccessfulVMBackup() (time.Time, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success'
+		  AND target_id IN (SELECT id FROM vms)
+		ORDER BY started_at DESC
+		LIMIT 1`)
+	return scanLastBackupTime(row, "LastSuccessfulVMBackup")
+}
+
+// scanLastBackupTime reads the single nullable finished_at column from a
+// last-successful-backup query, mapping no-rows / NULL to a zero time.
+func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {
 	var ts sql.NullInt64
 	if err := row.Scan(&ts); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return time.Time{}, nil
 		}
-		return time.Time{}, fmt.Errorf("LastSuccessfulContainerBackup: %w", err)
+		return time.Time{}, fmt.Errorf("%s: %w", label, err)
 	}
 	if !ts.Valid {
 		return time.Time{}, nil

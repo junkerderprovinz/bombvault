@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status — Phase 1:</b> one-click <b>Docker container</b> backup &amp; restore is live. VM &amp; flash backup, off-site repos (SMB/NFS/rclone), retention, file-level restore, integrity verification and hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b> and <b>KVM/libvirt VM</b> backup &amp; restore are live (VMs over SSH — no libvirt mount). <b>Flash</b> backup, off-site repos (SMB/NFS/rclone), retention, file-level restore, integrity verification and hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -60,8 +60,8 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery** of your Docker containers and KVM/libvirt VMs. It runs as a single Docker container, gives you a modern dark web UI, and handles the whole lifecycle:
 
-- **Backs up** Docker appdata directories and container definitions today; VM disks/XML and the Unraid flash config are *(planned)*.
-- **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before. (Automatic VM recreation into the VM tab is *(planned)*.)
+- **Backs up** Docker appdata + container definitions and KVM/libvirt VM disks + XML (incl. UEFI NVRAM) today; the Unraid flash config is *(planned)*.
+- **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups in the background (per domain), so you never have to think about it.
 
 Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2.0), built fresh with restic as the engine.
@@ -75,15 +75,15 @@ Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2
 | What | What is saved |
 |---|---|
 | **Docker containers** | Appdata directory + container definition (image, env vars, ports, labels, volumes) |
-| **KVM / libvirt VMs** *(planned)* | VM disk image(s) + XML definition |
+| **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH) |
 | **Unraid flash config** *(planned)* | The USB flash content — complete OS + plugin config |
 
 ### Restore (the good part)
 
 - **One-click full restore** — pick a snapshot, click Restore. Done.
 - **Containers are automatically reinstalled**: the container definition is replayed against the Docker API so the container reappears in the Unraid Docker tab exactly as it was — same image, same settings, same port mappings.
-- **VMs are automatically recreated** *(planned)*: the XML definition is re-imported so the VM reappears in the VM Manager with its disk attached.
-- **Individual restore** — restore one container without touching the others (VM/group restore *(planned)*).
+- **VMs are automatically recreated**: the XML definition is re-imported over SSH so the VM reappears in the VM Manager with its disk + UEFI NVRAM reattached, even after the VM was deleted.
+- **Individual restore** — restore one container or one VM without touching the others.
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
 - **File-level restore** *(planned)* — browse a snapshot and restore individual files.
 
@@ -112,24 +112,25 @@ Browser ──HTTPS──> BombVault container
                    ├─ Background worker (per-domain scheduler + job executor)
                    │
                    ├─ /var/run/docker.sock  ─> Docker API (container stop/inspect/recreate)
-                   ├─ /var/run/libvirt/     ─> libvirt / KVM (VM snapshot/restore)
-                   ├─ /mnt/user/appdata/    ─> container appdata (read/write)
-                   ├─ /boot/               ─> Unraid flash (read/write)
-                   └─ <repo mount>         ─> restic repository (local or remote)
+                   ├─ qemu+ssh://host       ─> libvirt / KVM on the HOST over SSH (no mount)
+                   ├─ /mnt/user/            ─> appdata, VM disks + restic repos (read/write)
+                   ├─ /boot/                ─> Unraid flash (read/write) (planned)
+                   └─ <repo path>           ─> restic repository (local; remote planned)
 ```
 
-BombVault talks to the Docker socket to stop containers before backup and recreate them after restore. It talks to libvirt to quiesce or snapshot VMs. All actual data movement goes through **restic** — BombVault is the orchestration and UI layer, not the storage engine.
+BombVault talks to the Docker socket to stop containers before backup and recreate them after restore. For VMs it runs `virsh` **on the host over SSH** (`qemu+ssh://`) to gracefully shut down or live-snapshot a domain — it never bind-mounts any libvirt path, so it can never interfere with the host VM Manager. All actual data movement goes through **restic** — BombVault is the orchestration and UI layer, not the storage engine.
 
-Restore is the star: after copying data back from the restic snapshot, BombVault replays the saved container definition against the Docker API (`docker run` equivalent), so the container reappears in the Unraid Docker tab as if it had always been there. VMs get their XML re-imported into libvirt and their disks reattached.
+Restore is the star: after copying data back from the restic snapshot, BombVault replays the saved container definition against the Docker API (`docker run` equivalent), so the container reappears in the Unraid Docker tab as if it had always been there. VMs get their XML re-defined over SSH and their disks + UEFI NVRAM reattached.
 
 <br>
 
 ## 4. Security / trust model
 
 > [!WARNING]
-> **BombVault holds root-equivalent control of the host** via the Docker (and, later,
-> libvirt) sockets: it can stop, remove and recreate containers, and reads/writes appdata
-> and the Unraid flash config. Anyone who can reach its web UI effectively has root on the host.
+> **BombVault holds root-equivalent control of the host**: via the Docker socket it can
+> stop, remove and recreate containers and reads/writes appdata, and for VM backup it logs
+> in to the host over SSH (`qemu+ssh://`, root by default) to run `virsh`. Anyone who can
+> reach its web UI effectively has root on the host.
 
 BombVault has **optional built-in password protection** (Settings → Security): set a password
 to require login, clear it to disable. It is **off by default** for trusted-LAN use. Sessions are
@@ -192,12 +193,16 @@ Or add the template manually:
 
 | Variable | Required | Description |
 |---|---|---|
-| `APP_KEY` | **Yes** | 32-byte hex secret used to derive the restic repo password. Generate with `openssl rand -hex 32`. **Keep this safe** — losing it makes backups unrecoverable. |
-| `REPO_PATH` | **Yes** | Path to the restic repository inside the container (map your local repo dir here). |
-| `PORT` | No | HTTP port (default `3000`). The template exposes HTTPS on `3001` by default. |
+| `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. **Keep this safe** — losing it makes encrypted backups unrecoverable. |
+| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; set to the host LAN IP on a custom `br0.x` network). |
+| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
+| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
+| `PORT` | No | HTTP port (default `3000`). |
+| `HTTPS_PORT` | No | HTTPS port (default `3443`; the template maps it to `3001`). |
+| `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only. |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket and your appdata directory as shown in the CA template. The template pre-fills all recommended mount points.
+Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash}`. VM backup needs no mount: see [§5](#5-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
 
 > [!NOTE]
 > **Host integration check:** open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
@@ -206,14 +211,19 @@ Mount the Docker socket and your appdata directory as shown in the CA template. 
 
 ## 8. Development
 
+BombVault is a single static **Go** binary that serves a JSON API and an embedded
+React/Vite SPA (`go:embed`). Build the SPA first, then run the binary:
+
 ```bash
-cp .env.example .env          # set APP_KEY (openssl rand -hex 32)
-npm install
-npm test                       # unit + integration tests
-npm run dev                    # https://localhost:3443 (self-signed cert)
+npm --prefix web ci
+npm --prefix web run build     # outputs web/dist (embedded into the binary)
+export APP_KEY=$(openssl rand -hex 32)
+go test ./...                  # Go unit + integration tests (real restic roundtrip)
+golangci-lint run ./...        # lint
+go run ./cmd/bombvault         # serves https://localhost:3443 (self-signed cert)
 ```
 
-Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unraid on runners). Use the **host integration spike** (`/spike` or `npm run spike`) to validate mounts on your actual Unraid host before submitting a PR.
+Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unraid on runners). Use the **host integration check** (`/spike` in the web UI) to validate mounts, restic and the VM SSH connection on your actual Unraid host before submitting a PR.
 
 <br>
 

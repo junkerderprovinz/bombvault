@@ -171,7 +171,6 @@ function VMsSection({
         />
       </div>
       <p className="text-sm text-carbon-textMuted">{t("jobs.noVMs")}</p>
-      <p className="text-xs text-carbon-textMuted">{t("jobs.vmPlanned")}</p>
     </Card>
   );
 }
