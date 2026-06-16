@@ -545,11 +545,14 @@ type fakeResticEngine struct {
 	inited    []string
 	backedUp  []string
 	lastPaths []string
-	restored  []string
-	forgotten []string
-	snaps     []restic.Snapshot
-	initErr   error
-	backupErr error
+	restored    []string
+	forgotten   []string
+	prunedRepos []string
+	snaps       []restic.Snapshot
+	lsEntries   []restic.FileEntry
+	initErr     error
+	backupErr   error
+	forgetPolicyErr error
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -582,6 +585,22 @@ func (f *fakeResticEngine) Snapshots(_ context.Context, _ string, _ restic.Mode)
 
 func (f *fakeResticEngine) Forget(_ context.Context, _ string, snapshotIDs []string, _ bool, _ restic.Mode) error {
 	f.forgotten = append(f.forgotten, snapshotIDs...)
+	return nil
+}
+
+func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode) error {
+	if p.Any() {
+		f.prunedRepos = append(f.prunedRepos, repo)
+	}
+	return f.forgetPolicyErr
+}
+
+func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]restic.FileEntry, error) {
+	return f.lsEntries, nil
+}
+
+func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+	f.restored = append(f.restored, repo+":"+snapshotID+":"+includePath+"->"+target)
 	return nil
 }
 

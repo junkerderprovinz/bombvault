@@ -114,6 +114,18 @@ UPDATE settings SET containers_path = 'user/bombvault/container' WHERE container
 UPDATE settings SET vms_path        = 'user/bombvault/vms'       WHERE vms_path        = 'backups/bombvault/vms';
 UPDATE settings SET flash_path      = 'user/bombvault/flash'     WHERE flash_path      = 'backups/bombvault/flash';`,
 	},
+	{
+		// Retention keep-policy (all 0 = off) + the encrypted rclone config for
+		// off-site repos.
+		version: 7,
+		name:    "retention_and_rclone",
+		sql: `
+ALTER TABLE settings ADD COLUMN retention_keep_last    INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN retention_keep_daily   INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN retention_keep_weekly  INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN retention_keep_monthly INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN rclone_conf            TEXT    NOT NULL DEFAULT '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

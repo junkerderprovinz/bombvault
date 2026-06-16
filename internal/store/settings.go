@@ -22,6 +22,15 @@ type Settings struct {
 	// AuthPasswordHash is the HMAC-SHA256 password hash set by the admin.
 	// An empty string means authentication is disabled (the default).
 	AuthPasswordHash string
+	// Retention keep-policy (global, applied via `restic forget --prune` after
+	// each successful backup). All zero = retention off (snapshots kept forever).
+	RetentionKeepLast    int
+	RetentionKeepDaily   int
+	RetentionKeepWeekly  int
+	RetentionKeepMonthly int
+	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
+	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
+	RcloneConf string
 }
 
 // GetSettings returns the current app settings.
@@ -30,7 +39,9 @@ func (r *Repo) GetSettings() (Settings, error) {
 		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled,
 		       containers_path, vms_path, flash_path,
 		       containers_schedule, vms_schedule, flash_schedule,
-		       default_language, auth_password_hash
+		       default_language, auth_password_hash,
+		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+		       rclone_conf
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -40,6 +51,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
+		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
+		&s.RcloneConf,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -69,7 +82,12 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  vms_schedule        = ?,
 		  flash_schedule      = ?,
 		  default_language    = ?,
-		  auth_password_hash  = ?
+		  auth_password_hash  = ?,
+		  retention_keep_last    = ?,
+		  retention_keep_daily   = ?,
+		  retention_keep_weekly  = ?,
+		  retention_keep_monthly = ?,
+		  rclone_conf            = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -78,6 +96,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.ContainersPath, s.VMsPath, s.FlashPath,
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
+		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
+		s.RcloneConf,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

@@ -173,6 +173,11 @@ const (
 // snapshotIDRe matches a restic short or full snapshot id (8–64 lowercase hex).
 var snapshotIDRe = regexp.MustCompile(`^[0-9a-f]{8,64}$`)
 
+// ValidSnapshotID reports whether id is a well-formed restic snapshot id
+// (8–64 lowercase hex). Exported so the service layer reuses the same guard for
+// file-level restore before shelling out to restic.
+func ValidSnapshotID(id string) bool { return snapshotIDRe.MatchString(id) }
+
 // normalizeName strips a single leading slash from a docker container name.
 func normalizeName(n string) string {
 	return strings.TrimPrefix(n, "/")

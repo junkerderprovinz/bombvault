@@ -278,6 +278,45 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleListFiles lists the files in a container snapshot for file-level restore.
+// GET /api/containers/{name}/files?snapshot=<id>
+func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.nameParam(w, r); !ok {
+		return
+	}
+	snapshot := r.URL.Query().Get("snapshot")
+	files, err := h.svc.ListSnapshotFiles(r.Context(), snapshot)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if files == nil {
+		files = []restic.FileEntry{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
+}
+
+// handleRestoreFile restores a single file/dir from a container snapshot back to
+// its original location. POST /api/containers/{name}/restore-file
+func (h *Handler) handleRestoreFile(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.nameParam(w, r); !ok {
+		return
+	}
+	var body struct {
+		SnapshotID string `json:"snapshotId"`
+		Path       string `json:"path"`
+		Confirm    bool   `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.RestoreContainerFile(r.Context(), body.SnapshotID, body.Path, body.Confirm); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -309,6 +348,11 @@ type settingsView struct {
 	VMsSchedule        string `json:"vmsSchedule"`
 	FlashSchedule      string `json:"flashSchedule"`
 	DefaultLanguage    string `json:"defaultLanguage"`
+	// Retention keep-policy (0 = that dimension off; all 0 = retention off).
+	RetentionKeepLast    int `json:"retentionKeepLast"`
+	RetentionKeepDaily   int `json:"retentionKeepDaily"`
+	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
+	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -324,6 +368,10 @@ func toView(s store.Settings) settingsView {
 		VMsSchedule:        s.VMsSchedule,
 		FlashSchedule:      s.FlashSchedule,
 		DefaultLanguage:    s.DefaultLanguage,
+		RetentionKeepLast:    s.RetentionKeepLast,
+		RetentionKeepDaily:   s.RetentionKeepDaily,
+		RetentionKeepWeekly:  s.RetentionKeepWeekly,
+		RetentionKeepMonthly: s.RetentionKeepMonthly,
 	}
 }
 
@@ -351,12 +399,16 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate each domain subpath stays under the mount root.
+	// Validate each domain repo location: a remote backend (rclone:…/s3:…) is
+	// accepted verbatim; a local path must stay under the mount root.
 	for _, sub := range []string{v.ContainersPath, v.VMsPath, v.FlashPath} {
+		if restic.IsRemoteRepo(sub) {
+			continue
+		}
 		if _, err := paths.Resolve(h.cfg.HostMountRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
 			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": "invalid backup path: must be a relative subpath under the mount root",
+				"ok": false, "error": "invalid backup path: must be a relative subpath under the mount root, or an rclone:/s3: remote",
 			})
 			return
 		}
@@ -372,6 +424,15 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Preserve fields that are NOT part of the settings form — they are managed
+	// by their own endpoints/flows (auth password) or are encrypted secrets
+	// (rclone config). Without this, every settings save would wipe them.
+	existing, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+
 	s := store.Settings{
 		EncryptionEnabled:  v.EncryptionEnabled,
 		ContainersEnabled:  v.ContainersEnabled,
@@ -384,6 +445,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		VMsSchedule:        v.VMsSchedule,
 		FlashSchedule:      v.FlashSchedule,
 		DefaultLanguage:    v.DefaultLanguage,
+		RetentionKeepLast:    max(0, v.RetentionKeepLast),
+		RetentionKeepDaily:   max(0, v.RetentionKeepDaily),
+		RetentionKeepWeekly:  max(0, v.RetentionKeepWeekly),
+		RetentionKeepMonthly: max(0, v.RetentionKeepMonthly),
+		AuthPasswordHash:     existing.AuthPasswordHash,
+		RcloneConf:           existing.RcloneConf,
 	}
 	if err := h.store.UpdateSettings(s); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -392,6 +459,36 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleRcloneInfo returns the configured rclone remote names (never secrets).
+// GET /api/rclone
+func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {
+	remotes, err := h.svc.RcloneRemotes()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if remotes == nil {
+		remotes = []string{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"remotes": remotes}))
+}
+
+// handleSetRclone stores the rclone config (encrypted) and writes the on-disk
+// file. An empty conf clears it. POST /api/rclone  body {conf}
+func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Conf string `json:"conf"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.SetRcloneConf(body.Conf); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

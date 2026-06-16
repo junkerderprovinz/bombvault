@@ -118,6 +118,16 @@ const en = {
   "snapshots.colSize": "Size",
   "snapshots.restore": "Restore",
   "snapshots.none": "No backups found",
+  "snapshots.files": "Files",
+
+  // File-level restore
+  "files.restore": "Restore",
+  "files.restored": "Restored",
+  "files.restoreConfirm": "Restore this file to its original location? It overwrites the current file.",
+  "files.filterPlaceholder": "Filter files…",
+  "files.none": "No matching files",
+  "files.loadFailed": "Failed to load files",
+  "files.more": "Refine the filter to see more files.",
 
   // Restore
   "restore.confirmTitle": "Confirm restore",
@@ -162,6 +172,21 @@ const en = {
   "settings.save": "Save",
   "settings.saved": "Settings saved",
   "settings.error": "Error saving settings",
+
+  // Retention
+  "settings.retentionTitle": "Retention",
+  "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
+  "settings.retentionLast": "Keep last",
+  "settings.retentionDaily": "Keep daily",
+  "settings.retentionWeekly": "Keep weekly",
+  "settings.retentionMonthly": "Keep monthly",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Paste an rclone config to back up to the cloud (Backblaze B2, S3, Google Drive, …). It is stored encrypted. SMB/NFS need no rclone: mount the share on Unraid and set a Backup Path to it.",
+  "rclone.configured": "Configured remotes",
+  "rclone.pathHint": "Then set a Backup Path to \"rclone:<remote>:<bucket>/path\" to send that domain off-site.",
+  "rclone.save": "Save config",
 
   // Appearance / Accent
   "settings.appearance": "Appearance",
@@ -352,6 +377,16 @@ const de: Translations = {
   "snapshots.colSize": "Größe",
   "snapshots.restore": "Wiederherstellen",
   "snapshots.none": "Keine Backups gefunden",
+  "snapshots.files": "Dateien",
+
+  // File-level restore
+  "files.restore": "Wiederherstellen",
+  "files.restored": "Wiederhergestellt",
+  "files.restoreConfirm": "Diese Datei an ihren Originalort wiederherstellen? Die aktuelle Datei wird überschrieben.",
+  "files.filterPlaceholder": "Dateien filtern…",
+  "files.none": "Keine passenden Dateien",
+  "files.loadFailed": "Dateien konnten nicht geladen werden",
+  "files.more": "Filter verfeinern, um mehr Dateien zu sehen.",
 
   "restore.confirmTitle": "Wiederherstellung bestätigen",
   "restore.confirmBody":
@@ -393,6 +428,21 @@ const de: Translations = {
   "settings.save": "Speichern",
   "settings.saved": "Einstellungen gespeichert",
   "settings.error": "Fehler beim Speichern",
+
+  // Retention
+  "settings.retentionTitle": "Aufbewahrung",
+  "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
+  "settings.retentionLast": "Letzte behalten",
+  "settings.retentionDaily": "Täglich behalten",
+  "settings.retentionWeekly": "Wöchentlich behalten",
+  "settings.retentionMonthly": "Monatlich behalten",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "rclone-Konfiguration einfügen, um in die Cloud zu sichern (Backblaze B2, S3, Google Drive, …). Wird verschlüsselt gespeichert. SMB/NFS brauchen kein rclone: Freigabe in Unraid mounten und einen Backup-Pfad daraufzeigen.",
+  "rclone.configured": "Konfigurierte Remotes",
+  "rclone.pathHint": "Dann einen Backup-Pfad auf \"rclone:<remote>:<bucket>/pfad\" setzen, um diese Domäne off-site zu senden.",
+  "rclone.save": "Konfig speichern",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",

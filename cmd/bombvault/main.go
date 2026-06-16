@@ -7,6 +7,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -70,12 +71,17 @@ func run() error {
 	}
 	vc := virshcli.New(sc.VirshURI())
 
-	// Real restic CLI adapter.
-	engine := &restic.Restic{Bin: "restic"}
+	// Real restic CLI adapter. RcloneConfig points at the managed rclone config
+	// (written below) so off-site (rclone) repos authenticate.
+	engine := &restic.Restic{Bin: "restic", RcloneConfig: filepath.Join(cfg.DataDir, "rclone.conf")}
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
 	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
+	// Materialise the (decrypted) rclone config on disk for off-site repos.
+	if err := svc.WriteRcloneConfFile(); err != nil {
+		log.Printf("rclone: write config: %v", err) // non-fatal: off-site stays unavailable until fixed
+	}
 
 	// Per-domain scheduler; the containers job calls the service's Backup, the
 	// VMs job calls BackupVM (wired via SetVMJob below).

@@ -47,6 +47,18 @@ export interface ListSnapshotsResponse {
   snapshots: Snapshot[];
 }
 
+/** A file/dir node inside a snapshot, from GET /api/containers/{name}/files */
+export interface FileEntry {
+  path: string;
+  type: string;
+  size: number;
+}
+
+export interface ListFilesResponse {
+  ok: boolean;
+  files: FileEntry[];
+}
+
 /** Settings from GET /api/settings (nested under "settings") */
 export interface Settings {
   encryptionEnabled: boolean;
@@ -60,6 +72,10 @@ export interface Settings {
   vmsSchedule: string;
   flashSchedule: string;
   defaultLanguage: string;
+  retentionKeepLast: number;
+  retentionKeepDaily: number;
+  retentionKeepWeekly: number;
+  retentionKeepMonthly: number;
 }
 
 export interface GetSettingsResponse {
@@ -198,6 +214,29 @@ export function restore(
   });
 }
 
+/** GET /api/containers/{name}/files?snapshot=<id> — list files in a snapshot. */
+export function listSnapshotFiles(
+  name: string,
+  snapshot: string
+): Promise<ListFilesResponse> {
+  return fetchJSON(
+    `/api/containers/${encodeURIComponent(name)}/files?snapshot=${encodeURIComponent(snapshot)}`
+  );
+}
+
+/** POST /api/containers/{name}/restore-file — restore one file to its origin. */
+export function restoreContainerFile(
+  name: string,
+  snapshotId: string,
+  path: string,
+  confirm: boolean
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-file`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, path, confirm }),
+  });
+}
+
 /** Rebuild the target list from the backup storage (disaster recovery after a fresh install). */
 export function discover(): Promise<OkEnvelope & { discovered?: number }> {
   return fetchJSON("/api/discover", { method: "POST" });
@@ -228,6 +267,19 @@ export function putSettings(settings: Settings): Promise<OkEnvelope> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
+  });
+}
+
+/** GET /api/rclone — configured rclone remote names (never secrets). */
+export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
+  return fetchJSON("/api/rclone");
+}
+
+/** POST /api/rclone — store the rclone config (encrypted). Empty conf clears it. */
+export function setRclone(conf: string): Promise<OkEnvelope> {
+  return fetchJSON("/api/rclone", {
+    method: "POST",
+    body: JSON.stringify({ conf }),
   });
 }
 
