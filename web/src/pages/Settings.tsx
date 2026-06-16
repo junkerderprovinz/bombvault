@@ -197,7 +197,7 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
           value={value}
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
-          placeholder="backups/bombvault/containers"
+          placeholder="user/bombvault/container"
           className="flex-1 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
         />
         <button
@@ -767,144 +767,49 @@ export function SettingsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Appearance                                                           */}
+      {/* Domains                                                            */}
       {/* ------------------------------------------------------------------ */}
-      <Card title={t("settings.appearance")}>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Native color picker */}
-              <input
-                type="color"
-                value={accentHex}
-                onChange={(e) => {
-                  setAccentHex(e.target.value);
-                  setAccent(e.target.value);
-                }}
-                className="h-8 w-14 cursor-pointer rounded border border-carbon-border bg-carbon-surface2 p-0.5"
-                title={t("settings.accentColor")}
-              />
-              {/* Preset swatches */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
-                {ACCENT_PRESETS.map((p) => (
-                  <button
-                    key={p.hex}
-                    title={p.label}
-                    onClick={() => {
-                      setAccentHex(p.hex);
-                      setAccent(p.hex);
-                    }}
-                    className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
-                    style={{
-                      backgroundColor: p.hex,
-                      borderColor: accentHex.toLowerCase() === p.hex.toLowerCase()
-                        ? "var(--carbon-text)"
-                        : "var(--carbon-border)",
-                    }}
-                  />
-                ))}
-                {/* Reset to default */}
-                {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-                  <button
-                    onClick={() => {
-                      setAccentHex(DEFAULT_ACCENT);
-                      setAccent(DEFAULT_ACCENT);
-                    }}
-                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* VM Backup over SSH                                                   */}
-      {/* ------------------------------------------------------------------ */}
-      <VMSSHCard t={t} />
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Encryption                                                           */}
-      {/* ------------------------------------------------------------------ */}
-      <Card title={t("settings.encryption")}>
-        <ToggleRow
-          label={
-            settings.encryptionEnabled
-              ? t("settings.encryptionOn")
-              : t("settings.encryptionOff")
-          }
-          checked={settings.encryptionEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, encryptionEnabled: v } : prev)
-          }
-        />
-        <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
-          {t("settings.encryptionWarning")}
-        </div>
-        <SaveBar
-          state={encSaveState}
-          error={encSaveError}
-          onSave={() =>
-            void save(
-              { encryptionEnabled: settings.encryptionEnabled },
-              setEncSaveState,
-              setEncSaveError
-            )
-          }
-          t={t}
-        />
-      </Card>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Backup paths                                                         */}
-      {/* ------------------------------------------------------------------ */}
-      <Card title={t("settings.paths")}>
+      <Card title={t("settings.domains")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
-          Relative subpaths under the host mount root (
-          <span className="font-mono">{hostMountRoot}</span>). Click Browse to
-          navigate directories or type a path directly.
+          Enabling a domain reveals its navigation tab in the sidebar.
+          Containers is always shown.
         </p>
-        <FolderBrowser
-          label={t("settings.containersPath")}
-          value={settings.containersPath}
-          hostMountRoot={hostMountRoot}
+        <ToggleRow
+          label={t("settings.containersEnabled")}
+          description="Container backup + restore (always enabled)"
+          checked={settings.containersEnabled}
           onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, containersPath: v } : prev)
+            setSettings((prev) => prev ? { ...prev, containersEnabled: v } : prev)
           }
         />
-        <FolderBrowser
-          label={t("settings.vmsPath")}
-          value={settings.vmsPath}
-          hostMountRoot={hostMountRoot}
+        <ToggleRow
+          label={t("settings.vmsEnabled")}
+          description="VM backup via libvirt + qemu-img (coming soon)"
+          checked={settings.vmsEnabled}
           onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev)
+            setSettings((prev) => prev ? { ...prev, vmsEnabled: v } : prev)
           }
         />
-        <FolderBrowser
-          label={t("settings.flashPath")}
-          value={settings.flashPath}
-          hostMountRoot={hostMountRoot}
+        <ToggleRow
+          label={t("settings.flashEnabled")}
+          description="Unraid flash drive backup (coming soon)"
+          checked={settings.flashEnabled}
           onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, flashPath: v } : prev)
+            setSettings((prev) => prev ? { ...prev, flashEnabled: v } : prev)
           }
         />
         <SaveBar
-          state={pathSaveState}
-          error={pathSaveError}
+          state={domSaveState}
+          error={domSaveError}
           onSave={() =>
             void save(
               {
-                containersPath: settings.containersPath,
-                vmsPath: settings.vmsPath,
-                flashPath: settings.flashPath,
+                containersEnabled: settings.containersEnabled,
+                vmsEnabled: settings.vmsEnabled,
+                flashEnabled: settings.flashEnabled,
               },
-              setPathSaveState,
-              setPathSaveError
+              setDomSaveState,
+              setDomSaveError
             )
           }
           t={t}
@@ -912,7 +817,7 @@ export function SettingsPage() {
       </Card>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Schedule                                                             */}
+      {/* Schedule                                                           */}
       {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.schedule")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
@@ -992,49 +897,50 @@ export function SettingsPage() {
       </Card>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Domains                                                              */}
+      {/* Backup paths                                                       */}
       {/* ------------------------------------------------------------------ */}
-      <Card title={t("settings.domains")}>
+      <Card title={t("settings.paths")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
-          Enabling a domain reveals its navigation tab in the sidebar.
-          Containers is always shown.
+          Relative subpaths under the host mount root (
+          <span className="font-mono">{hostMountRoot}</span>). Click Browse to
+          navigate directories or type a path directly.
         </p>
-        <ToggleRow
-          label={t("settings.containersEnabled")}
-          description="Container backup + restore (always enabled)"
-          checked={settings.containersEnabled}
+        <FolderBrowser
+          label={t("settings.containersPath")}
+          value={settings.containersPath}
+          hostMountRoot={hostMountRoot}
           onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, containersEnabled: v } : prev)
+            setSettings((prev) => prev ? { ...prev, containersPath: v } : prev)
           }
         />
-        <ToggleRow
-          label={t("settings.vmsEnabled")}
-          description="VM backup via libvirt + qemu-img (coming soon)"
-          checked={settings.vmsEnabled}
+        <FolderBrowser
+          label={t("settings.vmsPath")}
+          value={settings.vmsPath}
+          hostMountRoot={hostMountRoot}
           onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, vmsEnabled: v } : prev)
+            setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev)
           }
         />
-        <ToggleRow
-          label={t("settings.flashEnabled")}
-          description="Unraid flash drive backup (coming soon)"
-          checked={settings.flashEnabled}
+        <FolderBrowser
+          label={t("settings.flashPath")}
+          value={settings.flashPath}
+          hostMountRoot={hostMountRoot}
           onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, flashEnabled: v } : prev)
+            setSettings((prev) => prev ? { ...prev, flashPath: v } : prev)
           }
         />
         <SaveBar
-          state={domSaveState}
-          error={domSaveError}
+          state={pathSaveState}
+          error={pathSaveError}
           onSave={() =>
             void save(
               {
-                containersEnabled: settings.containersEnabled,
-                vmsEnabled: settings.vmsEnabled,
-                flashEnabled: settings.flashEnabled,
+                containersPath: settings.containersPath,
+                vmsPath: settings.vmsPath,
+                flashPath: settings.flashPath,
               },
-              setDomSaveState,
-              setDomSaveError
+              setPathSaveState,
+              setPathSaveError
             )
           }
           t={t}
@@ -1042,14 +948,51 @@ export function SettingsPage() {
       </Card>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Spike                                                                */}
+      {/* Encryption                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.encryption")}>
+        <ToggleRow
+          label={
+            settings.encryptionEnabled
+              ? t("settings.encryptionOn")
+              : t("settings.encryptionOff")
+          }
+          checked={settings.encryptionEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, encryptionEnabled: v } : prev)
+          }
+        />
+        <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+          {t("settings.encryptionWarning")}
+        </div>
+        <SaveBar
+          state={encSaveState}
+          error={encSaveError}
+          onSave={() =>
+            void save(
+              { encryptionEnabled: settings.encryptionEnabled },
+              setEncSaveState,
+              setEncSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* VM Backup over SSH                                                 */}
+      {/* ------------------------------------------------------------------ */}
+      <VMSSHCard t={t} />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Spike                                                              */}
       {/* ------------------------------------------------------------------ */}
       <Card title={t("spike.title")}>
         <SpikePanel t={t} />
       </Card>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Security                                                             */}
+      {/* Security                                                           */}
       {/* ------------------------------------------------------------------ */}
       <Card title={t("auth.security")}>
         {/* Status badge */}
@@ -1135,6 +1078,63 @@ export function SettingsPage() {
             </button>
           </div>
         )}
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Appearance                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.appearance")}>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Native color picker */}
+              <input
+                type="color"
+                value={accentHex}
+                onChange={(e) => {
+                  setAccentHex(e.target.value);
+                  setAccent(e.target.value);
+                }}
+                className="h-8 w-14 cursor-pointer rounded border border-carbon-border bg-carbon-surface2 p-0.5"
+                title={t("settings.accentColor")}
+              />
+              {/* Preset swatches */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
+                {ACCENT_PRESETS.map((p) => (
+                  <button
+                    key={p.hex}
+                    title={p.label}
+                    onClick={() => {
+                      setAccentHex(p.hex);
+                      setAccent(p.hex);
+                    }}
+                    className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+                    style={{
+                      backgroundColor: p.hex,
+                      borderColor: accentHex.toLowerCase() === p.hex.toLowerCase()
+                        ? "var(--carbon-text)"
+                        : "var(--carbon-border)",
+                    }}
+                  />
+                ))}
+                {/* Reset to default */}
+                {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
+                  <button
+                    onClick={() => {
+                      setAccentHex(DEFAULT_ACCENT);
+                      setAccent(DEFAULT_ACCENT);
+                    }}
+                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </Card>
     </div>
   );

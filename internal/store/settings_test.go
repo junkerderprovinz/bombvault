@@ -21,7 +21,7 @@ func TestSettingsRoundtrip(t *testing.T) {
 	if !s.EncryptionEnabled {
 		t.Fatal("default encryption_enabled should be true")
 	}
-	if s.ContainersPath != "backups/bombvault/containers" {
+	if s.ContainersPath != "user/bombvault/container" {
 		t.Fatalf("default containers_path wrong: %q", s.ContainersPath)
 	}
 

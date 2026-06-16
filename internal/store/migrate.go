@@ -23,9 +23,9 @@ CREATE TABLE settings (
   containers_enabled INTEGER NOT NULL DEFAULT 1,
   vms_enabled        INTEGER NOT NULL DEFAULT 0,
   flash_enabled      INTEGER NOT NULL DEFAULT 0,
-  containers_path TEXT NOT NULL DEFAULT 'backups/bombvault/containers',
-  vms_path        TEXT NOT NULL DEFAULT 'backups/bombvault/vms',
-  flash_path      TEXT NOT NULL DEFAULT 'backups/bombvault/flash',
+  containers_path TEXT NOT NULL DEFAULT 'user/bombvault/container',
+  vms_path        TEXT NOT NULL DEFAULT 'user/bombvault/vms',
+  flash_path      TEXT NOT NULL DEFAULT 'user/bombvault/flash',
   containers_schedule TEXT NOT NULL DEFAULT 'off',
   vms_schedule        TEXT NOT NULL DEFAULT 'off',
   flash_schedule      TEXT NOT NULL DEFAULT 'off',
@@ -101,6 +101,18 @@ DROP TABLE runs;
 ALTER TABLE runs_new RENAME TO runs;
 CREATE INDEX IF NOT EXISTS idx_runs_target ON runs(target_id);
 PRAGMA foreign_keys=ON;`,
+	},
+	{
+		// Re-home the default backup paths under the user share:
+		// host /mnt/user/bombvault/{container,vms,flash} (relative to the
+		// /host/user mount). Only rows still holding the original v1 defaults are
+		// updated, so any path a user already customised in Settings is preserved.
+		version: 6,
+		name:    "default_paths_user_share",
+		sql: `
+UPDATE settings SET containers_path = 'user/bombvault/container' WHERE containers_path = 'backups/bombvault/containers';
+UPDATE settings SET vms_path        = 'user/bombvault/vms'       WHERE vms_path        = 'backups/bombvault/vms';
+UPDATE settings SET flash_path      = 'user/bombvault/flash'     WHERE flash_path      = 'backups/bombvault/flash';`,
 	},
 }
 
