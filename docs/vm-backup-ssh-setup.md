@@ -109,10 +109,29 @@ In the **VMs** tab each VM has a method:
 | Symptom | Cause / fix |
 |---|---|
 | Test hangs then fails | Host unreachable — re-check Step 3 (network/VLAN/firewall) and `VM Backup: Host`/`Port`. |
-| `Permission denied (publickey)` | Key not authorized — redo Step 2; confirm SSH is enabled. |
+| `Permission denied (publickey)` despite the key being in `authorized_keys` | sshd **StrictModes** rejects the key file because of bad ownership/modes on a parent dir — common when `/root/.ssh` is symlinked to the **FAT flash** (`/boot/config/ssh/...`), which is world-writable. The host log shows `Authentication refused: bad ownership or modes for directory ...`. Fix: add `StrictModes no` to the host's sshd config **in the global section (before any `Match` block)**, then `/etc/rc.d/rc.sshd restart`. Persist it (see below) — Unraid regenerates `/etc/ssh/sshd_config` on boot. |
+| `Permission denied (publickey)` (key truly missing) | Key not authorized — redo Step 2; confirm SSH is enabled. |
 | `Host key verification failed` | `docker exec BombVault rm -f /config/ssh/known_hosts`, then retry. |
 | `/dev/tcp/...` = UNREACHABLE | The container cannot reach the host SSH port — Step 3 (custom-network host access, VLAN routing, or use the shim/LAN IP). |
 | Variables missing in Edit | Re-import the template; an existing container keeps its old saved config. |
+
+## Persistence across reboot
+
+Unraid regenerates `/etc/ssh/sshd_config` on every boot, so host-side SSH tweaks
+must be persisted:
+
+- **SSH port** persists in `/boot/config/ident.cfg` (set via the Unraid GUI).
+- **`StrictModes no`** (if you needed it above) does NOT persist — re-apply it at
+  boot from `/boot/config/go`:
+  ```sh
+  # /boot/config/go — keep SSH key auth working with flash-based authorized_keys
+  ( for i in $(seq 1 30); do [ -f /etc/ssh/sshd_config ] && break; sleep 2; done
+    grep -q '^StrictModes no' /etc/ssh/sshd_config || \
+      sed -i '0,/^Match /s/^Match /StrictModes no\n&/' /etc/ssh/sshd_config
+    /etc/rc.d/rc.sshd restart ) &
+  ```
+- BombVault's own SSH key + `~/.ssh/config` are written to `/config` (appdata) and
+  re-created at startup, so they survive container/host restarts automatically.
 
 ## Security
 
