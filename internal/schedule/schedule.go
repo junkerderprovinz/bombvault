@@ -22,6 +22,9 @@ type BackupFunc func(containerName string) error
 // ListTargetsFunc returns the current list of targets.
 type ListTargetsFunc func() ([]store.Target, error)
 
+// ListVMTargetsFunc returns the current list of VM targets.
+type ListVMTargetsFunc func() ([]store.VMTarget, error)
+
 // LastRunFunc returns the time of the last successful backup for a domain, or
 // a zero time when there has been none. It is injected so the schedule package
 // stays store-free (DI seam).
@@ -198,10 +201,12 @@ func parseDOWSet(s string) (string, error) {
 
 // Scheduler manages per-domain cron entries using robfig/cron/v3.
 type Scheduler struct {
-	c        *cron.Cron
-	backup   BackupFunc
-	listFn   ListTargetsFunc
-	entryIDs []cron.EntryID
+	c         *cron.Cron
+	backup    BackupFunc
+	listFn    ListTargetsFunc
+	backupVM  BackupFunc        // nil until SetVMJob wires VM backup
+	listVMsFn ListVMTargetsFunc // nil until SetVMJob wires VM backup
+	entryIDs  []cron.EntryID
 }
 
 // New creates a Scheduler. backupFn is called for each due container;
@@ -212,6 +217,15 @@ func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 		backup: backupFn,
 		listFn: listFn,
 	}
+}
+
+// SetVMJob wires the VMs domain so scheduled VM backups actually run. backupVMFn
+// is called for each due VM; listVMsFn retrieves the current VM target list when
+// the job fires. Until this is called the VMs domain is a no-op (logged), so the
+// containers-only callers and tests keep working unchanged. Call before Reload.
+func (s *Scheduler) SetVMJob(backupVMFn BackupFunc, listVMsFn ListVMTargetsFunc) {
+	s.backupVM = backupVMFn
+	s.listVMsFn = listVMsFn
 }
 
 // Start starts the underlying cron runner. Call once at app startup.
@@ -275,13 +289,24 @@ func (s *Scheduler) ReloadWithDueChecks(
 			},
 			lastRun: containersLastRun,
 		},
-		// VMs and Flash cadences are stored but their jobs are no-ops in Phase 1.
 		{
 			cadence: settings.VMsSchedule,
 			name:    "vms",
-			fn:      func() { log.Print("schedule: vms job: not yet implemented in Phase 1") },
+			fn: func() {
+				if s.backupVM == nil || s.listVMsFn == nil {
+					log.Print("schedule: vms job skipped — VM backup not wired (SetVMJob)")
+					return
+				}
+				vms, err := s.listVMsFn()
+				if err != nil {
+					log.Printf("schedule: vms job: list VM targets: %v", err)
+					return
+				}
+				RunVMsJob(vms, s.backupVM)
+			},
 			lastRun: vmsLastRun,
 		},
+		// Flash cadence is stored but its job is a no-op until flash backup ships.
 		{
 			cadence: settings.FlashSchedule,
 			name:    "flash",
@@ -349,6 +374,21 @@ func RunContainersJob(targets []store.Target, backupFn BackupFunc) {
 		}
 		if err := backupFn(t.ContainerName); err != nil {
 			log.Printf("schedule: containers job: backup %q failed: %v", t.ContainerName, err)
+		}
+	}
+}
+
+// RunVMsJob backs up each VM target that has IncludeInSchedule=true, calling
+// backupFn sequentially. As with RunContainersJob, an individual VM failure is
+// logged but does not abort the remaining VMs. Exported so tests can invoke the
+// job synchronously without waiting for real wall-clock time.
+func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) {
+	for _, v := range vms {
+		if !v.IncludeInSchedule {
+			continue
+		}
+		if err := backupFn(v.Name); err != nil {
+			log.Printf("schedule: vms job: backup %q failed: %v", v.Name, err)
 		}
 	}
 }

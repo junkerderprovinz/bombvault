@@ -374,6 +374,66 @@ func TestSchedulerContainersJobContinuesOnError(t *testing.T) {
 	}
 }
 
+func TestRunVMsJobBacksUpOnlyScheduled(t *testing.T) {
+	var mu sync.Mutex
+	var called []string
+
+	backupFn := func(name string) error {
+		mu.Lock()
+		called = append(called, name)
+		mu.Unlock()
+		return nil
+	}
+
+	vms := []store.VMTarget{
+		{Name: "ubuntu", IncludeInSchedule: true},
+		{Name: "windows", IncludeInSchedule: false},
+		{Name: "debian", IncludeInSchedule: true},
+	}
+
+	schedule.RunVMsJob(vms, backupFn)
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(called) != 2 {
+		t.Fatalf("expected 2 VMs backed up, got %d: %v", len(called), called)
+	}
+	if called[0] != "ubuntu" || called[1] != "debian" {
+		t.Fatalf("expected [ubuntu debian], got %v", called)
+	}
+}
+
+func TestRunVMsJobContinuesOnError(t *testing.T) {
+	var mu sync.Mutex
+	var called []string
+
+	backupFn := func(name string) error {
+		mu.Lock()
+		called = append(called, name)
+		mu.Unlock()
+		if name == "ubuntu" {
+			return errors.New("backup failed")
+		}
+		return nil
+	}
+
+	vms := []store.VMTarget{
+		{Name: "ubuntu", IncludeInSchedule: true},
+		{Name: "debian", IncludeInSchedule: true},
+	}
+
+	// A single VM failure must not abort the remaining VMs.
+	schedule.RunVMsJob(vms, backupFn)
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(called) != 2 {
+		t.Fatalf("expected 2 attempts, got %d: %v", len(called), called)
+	}
+}
+
 func TestSchedulerReloadRegistersEnabledDomains(t *testing.T) {
 	backupFn := func(_ string) error { return nil }
 	listFn := func() ([]store.Target, error) { return nil, nil }

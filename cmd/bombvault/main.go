@@ -77,7 +77,8 @@ func run() error {
 	svc := api.NewService(cfg, st, dc, vc, engine)
 	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
 
-	// Per-domain scheduler; the containers job calls the service's Backup.
+	// Per-domain scheduler; the containers job calls the service's Backup, the
+	// VMs job calls BackupVM (wired via SetVMJob below).
 	scheduler := schedule.New(
 		func(name string) error {
 			_, bErr := svc.Backup(context.Background(), name)
@@ -85,12 +86,20 @@ func run() error {
 		},
 		st.ListTargets,
 	)
-	// Build the containers LastRunFunc: the everyN due-gate queries the most
-	// recent successful backup across all container targets.
+	scheduler.SetVMJob(
+		func(name string) error {
+			_, bErr := svc.BackupVM(context.Background(), name)
+			return bErr
+		},
+		st.ListVMTargets,
+	)
+	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
+	// successful backup within each domain (containers vs. VMs scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
+	vmsLastRun := schedule.LastRunFunc(st.LastSuccessfulVMBackup)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, nil, nil); rErr != nil {
+		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, nil); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {

@@ -19,8 +19,10 @@ type Handler struct {
 	svc       *Service
 	scheduler *schedule.Scheduler
 	probes    []spike.Probe
-	// containersLastRun is used by the everyN due-gate in ReloadWithDueChecks.
+	// containersLastRun / vmsLastRun drive the everyN due-gates in
+	// ReloadWithDueChecks for their respective domains.
 	containersLastRun schedule.LastRunFunc
+	vmsLastRun        schedule.LastRunFunc
 
 	// Cached host-integration check, warmed once at startup so the dashboard
 	// shows the result list instantly. Guarded by spikeMu; refreshed on POST.
@@ -47,6 +49,7 @@ func NewHandler(
 		scheduler:         scheduler,
 		probes:            probes,
 		containersLastRun: schedule.LastRunFunc(st.LastSuccessfulContainerBackup),
+		vmsLastRun:        schedule.LastRunFunc(st.LastSuccessfulVMBackup),
 	}
 }
 
