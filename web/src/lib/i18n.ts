@@ -227,6 +227,18 @@ const en = {
   "vms.restoreSelectedConfirm": "Restore the LATEST backup of the selected VMs? Each VM is shut off, its disk files replaced, and the VM restored.",
   "vms.notInstalledHint": "These VMs are no longer defined on the host but still have backups. Restore them to recover, or use the Backups panel to browse their snapshots.",
 
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash Backup",
+  "flash.subtitle": "Back up and restore the Unraid USB flash (the whole /boot).",
+  "flash.backupTitle": "Back up the flash",
+  "flash.backupHint": "Captures the entire USB flash (/boot): Unraid OS, license, array config, shares, network and plugin config.",
+  "flash.backupNow": "Back up flash now",
+  "flash.backingUp": "Backing up…",
+  "flash.restoring": "Extracting…",
+  "flash.restoreNote": "Restore EXTRACTS a snapshot to a folder (shown below) — it never overwrites the running /boot. Copy the recovered files onto a fresh USB to rebuild your flash.",
+  "flash.restoredTo": "Extracted to:",
+  "flash.none": "No flash backups yet — run a backup above.",
+
   // Container / VM state badge labels
   "state.created":      "Created",
   "state.running":      "Running",
@@ -445,6 +457,18 @@ const de: Translations = {
   "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "vms.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten VMs wiederherstellen? Jede VM wird heruntergefahren, ihre Disk-Dateien ersetzt und die VM wiederhergestellt.",
   "vms.notInstalledHint": "Diese VMs sind nicht mehr auf dem Host definiert, haben aber noch Backups. Stelle sie wieder her oder sieh ihre Snapshots im Backups-Panel ein.",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash-Backup",
+  "flash.subtitle": "Den Unraid-USB-Stick (das ganze /boot) sichern und wiederherstellen.",
+  "flash.backupTitle": "Flash sichern",
+  "flash.backupHint": "Sichert den kompletten USB-Stick (/boot): Unraid-OS, Lizenz, Array-Config, Shares, Netzwerk und Plugin-Config.",
+  "flash.backupNow": "Flash jetzt sichern",
+  "flash.backingUp": "Sichere…",
+  "flash.restoring": "Extrahiere…",
+  "flash.restoreNote": "Restore EXTRAHIERT einen Snapshot in einen Ordner (unten angezeigt) — der laufende /boot wird NIE überschrieben. Kopiere die wiederhergestellten Dateien auf einen frischen USB-Stick, um deinen Flash neu aufzubauen.",
+  "flash.restoredTo": "Extrahiert nach:",
+  "flash.none": "Noch keine Flash-Backups — oben eines starten.",
 
   // Container / VM state badge labels
   "state.created":      "Erstellt",

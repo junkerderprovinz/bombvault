@@ -23,6 +23,7 @@ type Handler struct {
 	// ReloadWithDueChecks for their respective domains.
 	containersLastRun schedule.LastRunFunc
 	vmsLastRun        schedule.LastRunFunc
+	flashLastRun      schedule.LastRunFunc
 
 	// Cached host-integration check, warmed once at startup so the dashboard
 	// shows the result list instantly. Guarded by spikeMu; refreshed on POST.
@@ -50,6 +51,7 @@ func NewHandler(
 		probes:            probes,
 		containersLastRun: schedule.LastRunFunc(st.LastSuccessfulContainerBackup),
 		vmsLastRun:        schedule.LastRunFunc(st.LastSuccessfulVMBackup),
+		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 	}
 }
 
@@ -90,6 +92,11 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PATCH /api/vms/{name}", h.handlePatchVM)
 	mux.HandleFunc("GET /api/vm/ssh", h.handleVMSSHInfo)
 	mux.HandleFunc("POST /api/vm/ssh/test", h.handleVMSSHTest)
+
+	// Flash endpoints (singleton domain — the Unraid USB).
+	mux.HandleFunc("POST /api/flash/backup", h.handleBackupFlash)
+	mux.HandleFunc("GET /api/flash/snapshots", h.handleSnapshotsFlash)
+	mux.HandleFunc("POST /api/flash/restore", h.handleRestoreFlash)
 
 	return h.authGate(mux)
 }

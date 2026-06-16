@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b> and <b>KVM/libvirt VM</b> backup &amp; restore are live (VMs over SSH — no libvirt mount). <b>Flash</b> backup, off-site repos (SMB/NFS/rclone), retention, file-level restore, integrity verification and hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount). Off-site repos (SMB/NFS/rclone), retention, file-level restore, integrity verification and hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -60,7 +60,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery** of your Docker containers and KVM/libvirt VMs. It runs as a single Docker container, gives you a modern dark web UI, and handles the whole lifecycle:
 
-- **Backs up** Docker appdata + container definitions and KVM/libvirt VM disks + XML (incl. UEFI NVRAM) today; the Unraid flash config is *(planned)*.
+- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), and the whole Unraid flash (`/boot`).
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups in the background (per domain), so you never have to think about it.
 
@@ -76,7 +76,7 @@ Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2
 |---|---|
 | **Docker containers** | Appdata directory + container definition (image, env vars, ports, labels, volumes) |
 | **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH) |
-| **Unraid flash config** *(planned)* | The USB flash content — complete OS + plugin config |
+| **Unraid flash** | The whole USB flash (`/boot`) — OS, license, array config, shares, network + plugin config. Restore extracts to a folder (never overwrites the live flash) |
 
 ### Restore (the good part)
 
@@ -84,6 +84,7 @@ Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2
 - **Containers are automatically reinstalled**: the container definition is replayed against the Docker API so the container reappears in the Unraid Docker tab exactly as it was — same image, same settings, same port mappings.
 - **VMs are automatically recreated**: the XML definition is re-imported over SSH so the VM reappears in the VM Manager with its disk + UEFI NVRAM reattached, even after the VM was deleted.
 - **Individual restore** — restore one container or one VM without touching the others.
+- **Flash restore is safe** — a flash snapshot is *extracted to a folder* you then copy onto a fresh USB; the live, running `/boot` is never overwritten (which could leave the server unbootable).
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
 - **File-level restore** *(planned)* — browse a snapshot and restore individual files.
 
@@ -114,7 +115,7 @@ Browser ──HTTPS──> BombVault container
                    ├─ /var/run/docker.sock  ─> Docker API (container stop/inspect/recreate)
                    ├─ qemu+ssh://host       ─> libvirt / KVM on the HOST over SSH (no mount)
                    ├─ /mnt/user/            ─> appdata, VM disks + restic repos (read/write)
-                   ├─ /boot/                ─> Unraid flash (read/write) (planned)
+                   ├─ /boot/ ─> /host/boot  ─> Unraid flash backup (whole USB)
                    └─ <repo path>           ─> restic repository (local; remote planned)
 ```
 
@@ -151,7 +152,7 @@ key derived from `APP_KEY`.
 | **Unraid 6.12+** | Earlier versions not tested |
 | **Restic repo location** | Local path (recommended: your array or cache), SMB, NFS, or any rclone backend |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`) |
-| **Unraid templates** | Mounted by the template automatically (`/boot/config/plugins/dockerMan/templates-user`) — lets a restored container reappear as a normal, editable Unraid app instead of a "third-party" container |
+| **Unraid flash** (`/boot`) | Mounted whole by the template automatically (`/boot` → `/host/boot`). Powers Flash backup of the entire USB, and lets a restored container reappear as a normal, editable Unraid app (via the templates folder under `/boot`) instead of a "third-party" container |
 | **KVM VMs** *(opt-in)* | VM backup talks to libvirt **over SSH** — no libvirt mount. Set it up in Settings → see below |
 
 > [!IMPORTANT]
