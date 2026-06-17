@@ -85,6 +85,9 @@ func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "missing request body"})
 		return false
 	}
+	// Cap the request body so a giant payload (e.g. an enormous hook or rclone
+	// config) can't exhaust memory.
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(v); err != nil {

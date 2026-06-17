@@ -175,7 +175,12 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 	}
 	defer att.Close()
 	var outBuf, errBuf bytes.Buffer
-	_, _ = stdcopy.StdCopy(&outBuf, &errBuf, att.Reader) // drain until the exec finishes
+	// Cap the captured output: we only keep a short tail for the error reason, so
+	// a hook flooding stdout cannot balloon memory (the rest of the stream is
+	// drained-and-discarded so the exec still finishes).
+	limited := io.LimitReader(att.Reader, 64<<10)
+	_, _ = stdcopy.StdCopy(&outBuf, &errBuf, limited)
+	_, _ = io.Copy(io.Discard, att.Reader) // drain any remainder past the cap
 
 	insp, err := c.api.ContainerExecInspect(ctx, created.ID)
 	if err != nil {
