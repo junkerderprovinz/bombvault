@@ -853,6 +853,9 @@ export function SettingsPage() {
       if (res.ok) {
         setSettings(updated);
         setSaveState("saved");
+        // Tell the Layout/Sidebar to refetch so a newly enabled/disabled domain
+        // tab appears or vanishes immediately — no page reload needed.
+        window.dispatchEvent(new Event("bv:settings-changed"));
         setTimeout(() => setSaveState("idle"), 3000);
       } else {
         setSaveError(res.error ?? t("settings.error"));
