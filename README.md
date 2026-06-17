@@ -184,7 +184,7 @@ Or add the template manually:
 
 1. In Unraid, go to **Docker → Add Container → Template repositories** and add:
    ```
-   https://github.com/junkerderprovinz/unraid-docker-templates
+   https://github.com/junkerderprovinz/unraid-apps
    ```
 2. Search for **BombVault** in Templates.
 3. Set the required variables (see [Configuration](#7-configuration)) and click **Apply**.
