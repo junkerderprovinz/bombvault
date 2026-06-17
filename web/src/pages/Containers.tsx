@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupNow, restore, discover } from "../lib/api";
+import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks } from "../lib/api";
 import type { Container } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
@@ -224,6 +224,84 @@ function DeleteBackupsButton({
   );
 }
 
+// HooksEditor edits the per-container pre/post-backup commands (collapsible).
+function HooksEditor({
+  name,
+  initialPre,
+  initialPost,
+  t,
+}: {
+  name: string;
+  initialPre: string;
+  initialPost: string;
+  t: T;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pre, setPre] = useState(initialPre);
+  const [post, setPost] = useState(initialPost);
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function save() {
+    setState("saving");
+    setMsg(null);
+    try {
+      const r = await setContainerHooks(name, pre, post);
+      if (r.ok) {
+        setState("saved");
+        setTimeout(() => setState("idle"), 2500);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  const inputCls =
+    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {t("hooks.title")}
+        {(initialPre || initialPost) && <span className="text-[#6fdc8c]">●</span>}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+          <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
+            <input value={pre} onChange={(e) => setPre(e.target.value)} spellCheck={false}
+              placeholder="mysqldump -uroot -p$PW db > /config/dump.sql" className={inputCls} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
+            <input value={post} onChange={(e) => setPost(e.target.value)} spellCheck={false}
+              placeholder="curl -fsS https://hooks.example/done" className={inputCls} />
+          </label>
+          <div className="flex items-center gap-3 pt-0.5">
+            <button onClick={() => void save()} disabled={state === "saving"}
+              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
+              {state === "saving" ? "…" : t("settings.save")}
+            </button>
+            {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ContainerRow({
   container,
   t,
@@ -306,6 +384,16 @@ function ContainerRow({
           <DeleteBackupsButton name={container.name} t={t} onDeleted={onDeleted} />
         )}
       </div>
+
+      {/* Pre/post-backup hooks (installed containers only) */}
+      {installed && (
+        <HooksEditor
+          name={container.name}
+          initialPre={container.preHook}
+          initialPost={container.postHook}
+          t={t}
+        />
+      )}
 
       {/* Backups / Restore disclosure (works even when not installed) */}
       <RestorePanel name={container.name} t={t} />

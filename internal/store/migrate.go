@@ -126,6 +126,14 @@ ALTER TABLE settings ADD COLUMN retention_keep_weekly  INTEGER NOT NULL DEFAULT 
 ALTER TABLE settings ADD COLUMN retention_keep_monthly INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE settings ADD COLUMN rclone_conf            TEXT    NOT NULL DEFAULT '';`,
 	},
+	{
+		// Per-container pre/post-backup hook commands.
+		version: 8,
+		name:    "target_hooks",
+		sql: `
+ALTER TABLE targets ADD COLUMN pre_hook  TEXT NOT NULL DEFAULT '';
+ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

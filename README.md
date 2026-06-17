@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>retention</b> and <b>file-level restore</b>. Integrity verification and pre/post hooks are on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>retention</b>, <b>file-level restore</b>, <b>integrity checks</b> and <b>pre/post-backup hooks</b>. A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -99,8 +99,8 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 ### Other
 
 - Snapshot browser with a restore-point list.
-- Integrity verification (`restic check`) *(planned)*.
-- Pre/post backup hooks per container or VM *(planned)*.
+- Integrity verification — run `restic check` per domain from Settings → Integrity.
+- Pre/post-backup hooks per container — shell commands run inside the container (e.g. `mysqldump` into appdata before backup); a failing pre-hook aborts the backup.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - Dark/light UI in English + German today; more locales *(planned)*.
 
