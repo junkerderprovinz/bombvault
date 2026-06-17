@@ -271,18 +271,13 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.jobs")}
           icon={<IconJobs />}
         />
-        <NavItem
-          to="/vms"
-          label={t("nav.vms")}
-          icon={<IconVM />}
-          disabled={!vmsEnabled}
-        />
-        <NavItem
-          to="/flash"
-          label={t("nav.flash")}
-          icon={<IconFlash />}
-          disabled={!flashEnabled}
-        />
+        {/* VMs / Flash tabs appear only once their domain is enabled. */}
+        {vmsEnabled && (
+          <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} />
+        )}
+        {flashEnabled && (
+          <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} />
+        )}
       </nav>
 
       {/* Bottom group: language, then dark/light, then settings */}

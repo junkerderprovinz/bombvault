@@ -33,17 +33,30 @@ export function Layout() {
     checkAuth();
   }, [checkAuth]);
 
-  // Load settings once auth is cleared to drive sidebar feature flags.
-  useEffect(() => {
-    if (authGate !== "pass") return;
+  // Load settings to drive the sidebar's domain tabs.
+  const loadSettings = useCallback(() => {
     getSettings()
       .then((res) => {
         if (res.ok) setSettings(res.settings);
       })
       .catch(() => {
-        // Non-fatal: sidebar will show VMs/Flash as disabled.
+        // Non-fatal: sidebar simply won't reveal VMs/Flash tabs.
       });
-  }, [authGate]);
+  }, []);
+
+  // Initial load once auth is cleared.
+  useEffect(() => {
+    if (authGate !== "pass") return;
+    loadSettings();
+  }, [authGate, loadSettings]);
+
+  // Live-refresh when settings change elsewhere (e.g. enabling a domain on the
+  // Settings page) so a newly-enabled tab appears immediately — no page reload.
+  useEffect(() => {
+    const onChange = () => loadSettings();
+    window.addEventListener("bv:settings-changed", onChange);
+    return () => window.removeEventListener("bv:settings-changed", onChange);
+  }, [loadSettings]);
 
   // While loading the auth state show nothing (avoids flash of app content).
   if (authGate === "loading") {
