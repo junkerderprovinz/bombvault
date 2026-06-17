@@ -188,6 +188,14 @@ const en = {
   "rclone.pathHint": "Then set a Backup Path to \"rclone:<remote>:<bucket>/path\" to send that domain off-site.",
   "rclone.save": "Save config",
 
+  // Integrity (restic check)
+  "integrity.title": "Integrity",
+  "integrity.hint": "Run restic check to verify a repository's structure and metadata are intact.",
+  "integrity.verify": "Verify",
+  "integrity.checking": "Checking…",
+  "integrity.ok": "✓ Healthy",
+  "integrity.failed": "Check failed",
+
   // Appearance / Accent
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
@@ -443,6 +451,14 @@ const de: Translations = {
   "rclone.configured": "Konfigurierte Remotes",
   "rclone.pathHint": "Dann einen Backup-Pfad auf \"rclone:<remote>:<bucket>/pfad\" setzen, um diese Domäne off-site zu senden.",
   "rclone.save": "Konfig speichern",
+
+  // Integrity (restic check)
+  "integrity.title": "Integrität",
+  "integrity.hint": "restic check ausführen, um Struktur und Metadaten eines Repos zu verifizieren.",
+  "integrity.verify": "Prüfen",
+  "integrity.checking": "Prüfe…",
+  "integrity.ok": "✓ Intakt",
+  "integrity.failed": "Prüfung fehlgeschlagen",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",

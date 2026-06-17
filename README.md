@@ -53,6 +53,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 7. [Configuration](#7-configuration)
 8. [Development](#8-development)
 9. [Support this project](#9-support-this-project)
+10. [Credits](#10-credits)
 
 <br>
 
@@ -64,7 +65,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups in the background (per domain), so you never have to think about it.
 
-Inspired by [VolumeVault](https://github.com/Darkdragon14/VolumeVault) (Apache-2.0), built fresh with restic as the engine.
+The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#10-credits).
 
 <br>
 
@@ -233,3 +234,11 @@ Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unra
 <a href="https://buymeacoffee.com/junkerderprovinz">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" height="40">
 </a>
+
+<br>
+
+## 10. Credits
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) — the original idea that sparked BombVault: one-click backup and automatic re-install of Docker containers. Thank you. BombVault is an independent rewrite (Go + restic) that extends the concept to VMs and the Unraid flash.
+- **[restic](https://restic.net/)** — the fast, secure, deduplicating backup engine BombVault orchestrates.
+- **[rclone](https://rclone.org/)** — off-site cloud backends.

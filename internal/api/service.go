@@ -66,6 +66,8 @@ type ResticEngine interface {
 	// RestoreInclude restores a single path from a snapshot to target (file-level
 	// restore; target "/" = in-place to its original location).
 	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
+	// Check verifies repository structure + metadata integrity (restic check).
+	Check(ctx context.Context, repo string, mode restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -1279,6 +1281,39 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 		}
 	}
 	return s.store.SetVMInclude(name, include)
+}
+
+// CheckDomain verifies the integrity of a domain's restic repo (restic check).
+// domain is "containers" | "vms" | "flash". Returns a friendly error when the
+// repo has not been created yet. Bounded by a timeout so a huge repo can't hang
+// the request forever.
+func (s *Service) CheckDomain(ctx context.Context, domain string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	var repo string
+	switch domain {
+	case "containers":
+		repo, err = s.containersRepoPath(settings)
+	case "vms":
+		repo, err = s.vmsRepoPath(settings)
+	case "flash":
+		repo, err = s.flashRepoPath(settings)
+	default:
+		return fmt.Errorf("unknown domain %q", domain)
+	}
+	if err != nil {
+		return err
+	}
+	if !restic.IsRemoteRepo(repo) {
+		if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+			return errors.New("no backups to verify yet")
+		}
+	}
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+	return s.engine.Check(ctx, repo, s.ModeFor(settings))
 }
 
 // ---------------------------------------------------------------------------

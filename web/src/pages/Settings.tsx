@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, checkDomain } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -661,6 +661,60 @@ function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 }
 
+// IntegrityCard runs `restic check` per domain and shows pass/fail. Self-contained.
+function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  type CheckState = "idle" | "checking" | "ok" | "fail";
+  const [state, setState] = useState<Record<string, CheckState>>({});
+  const [msg, setMsg] = useState<Record<string, string>>({});
+
+  async function run(domain: "containers" | "vms" | "flash") {
+    setState((s) => ({ ...s, [domain]: "checking" }));
+    setMsg((m) => ({ ...m, [domain]: "" }));
+    try {
+      const r = await checkDomain(domain);
+      if (r.ok) {
+        setState((s) => ({ ...s, [domain]: "ok" }));
+      } else {
+        setState((s) => ({ ...s, [domain]: "fail" }));
+        setMsg((m) => ({ ...m, [domain]: r.error ?? t("integrity.failed") }));
+      }
+    } catch (err) {
+      setState((s) => ({ ...s, [domain]: "fail" }));
+      setMsg((m) => ({ ...m, [domain]: err instanceof Error ? err.message : t("integrity.failed") }));
+    }
+  }
+
+  const domains: { key: "containers" | "vms" | "flash"; label: string }[] = [
+    { key: "containers", label: t("settings.containersEnabled") },
+    { key: "vms", label: t("settings.vmsEnabled") },
+    { key: "flash", label: t("settings.flashEnabled") },
+  ];
+
+  return (
+    <Card title={t("integrity.title")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("integrity.hint")}</p>
+      <div className="flex flex-col gap-2">
+        {domains.map(({ key, label }) => (
+          <div key={key} className="flex items-center gap-3">
+            <button
+              onClick={() => void run(key)}
+              disabled={state[key] === "checking"}
+              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50 w-28 text-left"
+            >
+              {state[key] === "checking" ? t("integrity.checking") : t("integrity.verify")}
+            </button>
+            <span className="text-sm text-carbon-textSub w-24">{label}</span>
+            {state[key] === "ok" && <span className="text-sm text-[#6fdc8c]">{t("integrity.ok")}</span>}
+            {state[key] === "fail" && (
+              <span className="text-sm text-[#ff8389] break-words flex-1">{msg[key] || t("integrity.failed")}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export function SettingsPage() {
   const { t } = useT();
 
@@ -1117,6 +1171,11 @@ export function SettingsPage() {
       <Card title={t("spike.title")}>
         <SpikePanel t={t} />
       </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Integrity (restic check)                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <IntegrityCard t={t} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Security                                                           */}
