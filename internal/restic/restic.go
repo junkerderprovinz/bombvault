@@ -169,6 +169,17 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	return args
 }
 
+// CheckArgs returns the argv slice for `restic check` (verifies repository
+// structure + metadata integrity).
+func CheckArgs(repo string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "check")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	return args
+}
+
 // SnapshotsArgs returns the argv slice for `restic snapshots --json`.
 func SnapshotsArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
@@ -401,6 +412,14 @@ func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, p
 		return nil
 	}
 	_, err := r.run(ctx, ForgetArgs(repo, snapshotIDs, prune, m), m)
+	return err
+}
+
+// Check verifies the repository's structure and metadata integrity
+// (`restic check`). It returns nil when the repo is healthy, or a scrubbed error
+// describing the problem.
+func (r Restic) Check(ctx context.Context, repo string, m Mode) error {
+	_, err := r.run(ctx, CheckArgs(repo, m), m)
 	return err
 }
 

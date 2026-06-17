@@ -45,6 +45,15 @@ func TestForgetPolicyArgs(t *testing.T) {
 	})
 }
 
+func TestCheckArgs(t *testing.T) {
+	if got, want := restic.CheckArgs("/repo", restic.Mode{Encrypted: true}), []string{"-r", "/repo", "check"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+	if got, want := restic.CheckArgs("/repo", restic.Mode{Encrypted: false}), []string{"-r", "/repo", "check", "--insecure-no-password"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestIsRemoteRepo(t *testing.T) {
 	remote := []string{"rclone:b2:my-bucket/path", "s3:s3.amazonaws.com/bucket", "sftp:user@host:/srv", "b2:bucket", "rest:https://host/"}
 	for _, r := range remote {

@@ -270,6 +270,13 @@ export function putSettings(settings: Settings): Promise<OkEnvelope> {
   });
 }
 
+/** POST /api/check/{domain} — verify a domain's restic repo integrity. */
+export function checkDomain(
+  domain: "containers" | "vms" | "flash"
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/check/${domain}`, { method: "POST" });
+}
+
 /** GET /api/rclone — configured rclone remote names (never secrets). */
 export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
   return fetchJSON("/api/rclone");

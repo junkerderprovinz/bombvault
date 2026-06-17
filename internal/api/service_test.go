@@ -548,11 +548,13 @@ type fakeResticEngine struct {
 	restored    []string
 	forgotten   []string
 	prunedRepos []string
+	checked     []string
 	snaps       []restic.Snapshot
 	lsEntries   []restic.FileEntry
 	initErr     error
 	backupErr   error
 	forgetPolicyErr error
+	checkErr        error
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -602,6 +604,11 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+includePath+"->"+target)
 	return nil
+}
+
+func (f *fakeResticEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
+	f.checked = append(f.checked, repo)
+	return f.checkErr
 }
 
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {
