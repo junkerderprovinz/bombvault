@@ -461,6 +461,20 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enabling the VMs domain requires a working SSH connection to the host —
+	// otherwise the tab would appear but nothing could be backed up. Verify only
+	// on the OFF→ON transition so unrelated saves aren't blocked by a transient
+	// host outage.
+	if v.VMsEnabled && !existing.VMsEnabled {
+		if tErr := h.svc.VMSSHTest(r.Context()); tErr != nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok":    false,
+				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “VM Backup over SSH” and click Test connection first.",
+			})
+			return
+		}
+	}
+
 	s := store.Settings{
 		EncryptionEnabled:  v.EncryptionEnabled,
 		ContainersEnabled:  v.ContainersEnabled,

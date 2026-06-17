@@ -507,8 +507,17 @@ function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
   const [copied, setCopied] = useState(false);
+  const [cmdCopied, setCmdCopied] = useState(false);
   const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [testMsg, setTestMsg] = useState<string | null>(null);
+
+  // Ready-to-paste command that authorizes this key on the Unraid host, both for
+  // the live session and persistently (Unraid restores root.pubkeys on boot).
+  const authorizeCmd = pub
+    ? `mkdir -p /root/.ssh /boot/config/ssh && chmod 700 /root/.ssh
+echo '${pub}' | tee -a /root/.ssh/authorized_keys /boot/config/ssh/root.pubkeys >/dev/null
+chmod 600 /root/.ssh/authorized_keys`
+    : "";
 
   useEffect(() => {
     getVMSSH()
@@ -548,6 +557,16 @@ function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     }
   }
 
+  async function handleCopyCmd() {
+    try {
+      await navigator.clipboard.writeText(authorizeCmd);
+      setCmdCopied(true);
+      setTimeout(() => setCmdCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable — the command is selectable in the box */
+    }
+  }
+
   return (
     <Card title={t("vm.ssh.title")}>
       <div className="flex flex-col gap-3">
@@ -570,6 +589,37 @@ function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </button>
           </div>
         </div>
+
+        {/* One-time setup instructions */}
+        <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-3 flex flex-col gap-2">
+          <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+            {t("vm.ssh.setupTitle")}
+          </span>
+          <ol className="list-decimal pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+            <li>{t("vm.ssh.step1")}</li>
+            <li>{t("vm.ssh.step2")}</li>
+            <li>{t("vm.ssh.step3")}</li>
+          </ol>
+          <div className="flex items-start gap-2">
+            <pre className="flex-1 overflow-x-auto rounded border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <button
+              onClick={handleCopyCmd}
+              disabled={!pub}
+              className="shrink-0 rounded bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            >
+              {cmdCopied ? t("vm.ssh.copied") : t("vm.ssh.copyCmd")}
+            </button>
+          </div>
+          <a
+            href="https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-[#78a9ff] hover:underline"
+          >
+            {t("vm.ssh.guide")} →
+          </a>
+        </div>
+
         <div className="flex items-center gap-3">
           <button
             onClick={handleTest}
