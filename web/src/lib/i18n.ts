@@ -306,6 +306,12 @@ const en = {
   "vm.ssh.testing": "Testing…",
   "vm.ssh.testOk": "Connected — libvirt reachable",
   "vm.ssh.testFail": "Connection failed",
+  "vm.ssh.setupTitle": "Set up (one time)",
+  "vm.ssh.step1": "Copy the command below and run it in the Unraid terminal to authorize this key (it survives reboots).",
+  "vm.ssh.step2": "Set the container's “VM Backup: Host” variable to your Unraid LAN IP (e.g. 192.168.x.x); on simple bridge networking host.docker.internal also works.",
+  "vm.ssh.step3": "Click Test connection — once it's green, enable VMs under Domains.",
+  "vm.ssh.copyCmd": "Copy command",
+  "vm.ssh.guide": "Full setup & networking guide",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -576,6 +582,12 @@ const de: Translations = {
   "vm.ssh.testing": "Teste…",
   "vm.ssh.testOk": "Verbunden — libvirt erreichbar",
   "vm.ssh.testFail": "Verbindung fehlgeschlagen",
+  "vm.ssh.setupTitle": "Einrichten (einmalig)",
+  "vm.ssh.step1": "Den Befehl unten kopieren und im Unraid-Terminal ausführen, um diesen Schlüssel zu autorisieren (überlebt Reboots).",
+  "vm.ssh.step2": "Die Container-Variable “VM Backup: Host” auf die LAN-IP deines Unraid-Servers setzen (z. B. 192.168.x.x); bei einfachem Bridge-Netz geht auch host.docker.internal.",
+  "vm.ssh.step3": "Auf “Verbindung testen” klicken — sobald grün, VMs unter Domänen aktivieren.",
+  "vm.ssh.copyCmd": "Befehl kopieren",
+  "vm.ssh.guide": "Vollständige Setup- & Netzwerk-Anleitung",
 };
 
 // ---------------------------------------------------------------------------

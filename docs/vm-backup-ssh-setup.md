@@ -29,7 +29,7 @@ The SSH keypair is generated automatically on first start at
 ## Step 1 — Enable SSH on the Unraid host
 
 1. **Settings → Management Access → Use SSH = Yes.**
-2. If you changed the **SSH port** (e.g. to `1004`), note it — you'll set
+2. If you changed the **SSH port** (e.g. to a non-default port), note it — you'll set
    `VM Backup: SSH Port` to match.
 
 ## Step 2 — Authorize BombVault's public key (persistent)
@@ -65,7 +65,7 @@ A container on `br0.x` cannot reach the host via `host.docker.internal`
 (172.17.0.1 is docker0, unreachable from `br0.x`). Instead:
 1. **Settings → Docker → Host access to custom networks = Enabled.**
 2. Set `VM Backup: Host` to the **Unraid host's LAN IP** (the IP you open the
-   web UI on, e.g. `192.168.10.10`).
+   web UI on, e.g. `192.168.x.x`).
 3. If the container's network and the host are on **different VLANs**, allow the
    route on your router/firewall: `container VLAN → host-IP : SSH-port (tcp)`.
 4. If the host LAN IP is unreachable, use the host's **shim** IP on the
@@ -75,7 +75,7 @@ A container on `br0.x` cannot reach the host via `host.docker.internal`
 ### Verify reachability (before anything else)
 From the Unraid terminal, replace the IP/port with yours:
 ```sh
-docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.10.10/1004' && echo OPEN || echo UNREACHABLE
+docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.x.x/<port>' && echo OPEN || echo UNREACHABLE
 ```
 `OPEN` = the path works. `UNREACHABLE` = fix networking (Step 3) before going on.
 
@@ -87,7 +87,7 @@ docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.10.10/1004' && 
 2. **Settings → VM Backup over SSH → Test connection** → green.
    Or from the terminal (the exact call BombVault makes):
    ```sh
-   docker exec BombVault virsh -c "qemu+ssh://root@192.168.10.10:1004/system?keyfile=/config/ssh/id_ed25519&known_hosts=/config/ssh/known_hosts&known_hosts_verify=auto" list --all
+   docker exec BombVault virsh -c "qemu+ssh://root@192.168.x.x:<port>/system?keyfile=/config/ssh/id_ed25519&known_hosts=/config/ssh/known_hosts&known_hosts_verify=auto" list --all
    ```
    → lists your VMs.
 

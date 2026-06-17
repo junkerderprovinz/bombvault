@@ -112,13 +112,13 @@
   <Config
     Name="VM Backup: Host"
     Target="LIBVIRT_HOST"
-    Default="host.docker.internal"
+    Default="192.168.x.x"
     Mode=""
-    Description="VM backup only. Unraid host address, reached over SSH. Leave default on bridge networking; on a custom (br0.x) network set your Unraid LAN IP (e.g. 192.168.10.10)."
+    Description="VM backup only. Set this to your Unraid host's LAN IP (the IP you open the web UI on, e.g. 192.168.x.x) — replace the placeholder. On simple bridge networking you may instead use host.docker.internal. Leave the placeholder if you don't use VM backup."
     Type="Variable"
     Display="always"
     Required="false"
-    Mask="false">host.docker.internal</Config>
+    Mask="false">192.168.x.x</Config>
   <Config
     Name="VM Backup: SSH Port"
     Target="LIBVIRT_SSH_PORT"
