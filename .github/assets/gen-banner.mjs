@@ -46,8 +46,18 @@ if (!existsSync(fontPath)) {
 }
 const font = opentype.parse(readFileSync(fontPath));
 
+// Claim is set in Lato (a humanist sans that pairs with Bree Serif) — shared
+// across all Bree-Serif repos for a consistent look.
+const claimFontPath = join(tmpdir(), "BombVault-Lato-Regular.ttf");
+if (!existsSync(claimFontPath)) {
+  const r = await fetch("https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf");
+  if (!r.ok) throw new Error(`claim font fetch ${r.status}`);
+  writeFileSync(claimFontPath, Buffer.from(await r.arrayBuffer()));
+}
+const claimFont = opentype.parse(readFileSync(claimFontPath));
+
 const nameW = font.getAdvanceWidth(NAME, nameSize);
-const claimW = font.getAdvanceWidth(CLAIM, claimSize);
+const claimW = claimFont.getAdvanceWidth(CLAIM, claimSize);
 const groupW = LW + gap + Math.max(nameW, claimW);
 const startX = (W - groupW) / 2;
 const LX = startX, LY = (H - LH) / 2;
@@ -56,13 +66,13 @@ const textX = startX + LW + gap;
 const sc = (s) => s / font.unitsPerEm;
 const nameAsc = font.ascender * sc(nameSize);
 const nameDesc = -font.descender * sc(nameSize);
-const claimAsc = font.ascender * sc(claimSize);
+const claimAsc = claimFont.ascender * (claimSize / claimFont.unitsPerEm);
 const blockH = nameAsc + nameDesc + lineGap + claimAsc;
 const nameBaseline = H / 2 - blockH / 2 + nameAsc;
 const claimBaseline = nameBaseline + nameDesc + lineGap + claimAsc;
 
 const namePath = font.getPath(NAME, textX, nameBaseline, nameSize).toPathData(2);
-const claimPath = font.getPath(CLAIM, textX, claimBaseline, claimSize).toPathData(2);
+const claimPath = claimFont.getPath(CLAIM, textX, claimBaseline, claimSize).toPathData(2);
 
 // Embed the logo verbatim: drop the XML decl, position its root <svg>.
 let logo = readFileSync(join(__dir, "icon.svg"), "utf8").replace(/<\?xml[^>]*\?>\s*/, "");
