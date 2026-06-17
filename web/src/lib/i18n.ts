@@ -196,6 +196,12 @@ const en = {
   "integrity.ok": "✓ Healthy",
   "integrity.failed": "Check failed",
 
+  // Pre/post-backup hooks
+  "hooks.title": "Backup hooks",
+  "hooks.hint": "Commands run inside the container (sh -c). Pre runs before backup (e.g. dump a DB into appdata so it's included) — a failure aborts the backup. Post runs after the container is back up; its failure is only logged.",
+  "hooks.pre": "Pre-backup command",
+  "hooks.post": "Post-backup command",
+
   // Appearance / Accent
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
@@ -459,6 +465,12 @@ const de: Translations = {
   "integrity.checking": "Prüfe…",
   "integrity.ok": "✓ Intakt",
   "integrity.failed": "Prüfung fehlgeschlagen",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Backup-Hooks",
+  "hooks.hint": "Befehle laufen im Container (sh -c). Pre läuft vor dem Backup (z. B. eine DB nach appdata dumpen, damit sie mitgesichert wird) — ein Fehler bricht das Backup ab. Post läuft, wenn der Container wieder oben ist; dessen Fehler wird nur geloggt.",
+  "hooks.pre": "Pre-Backup-Befehl",
+  "hooks.post": "Post-Backup-Befehl",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",

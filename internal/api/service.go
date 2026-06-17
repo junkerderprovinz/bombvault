@@ -328,6 +328,8 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		TargetID:             tg.ID,
 		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
 		FlashTemplatesDir:    s.cfg.FlashTemplatesDir,
+		PreHook:              tg.PreHook,
+		PostHook:             tg.PostHook,
 		Docker:               s.docker,
 		Restic:               &resticAdapter{engine: s.engine, mode: mode},
 		Templates:            templatesAdapter{},
@@ -1281,6 +1283,11 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 		}
 	}
 	return s.store.SetVMInclude(name, include)
+}
+
+// SetContainerHooks stores the pre/post-backup hook commands for a container.
+func (s *Service) SetContainerHooks(_ context.Context, name, preHook, postHook string) error {
+	return s.store.SetHooks(name, preHook, postHook)
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).

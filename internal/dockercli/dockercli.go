@@ -5,6 +5,7 @@
 package dockercli
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -150,6 +152,44 @@ func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) e
 func (c *Client) Start(ctx context.Context, name string) error {
 	if err := c.api.ContainerStart(ctx, name, container.StartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: start: %w", err)
+	}
+	return nil
+}
+
+// Exec runs cmd inside a running container and returns an error when it exits
+// non-zero (used for pre/post-backup hooks). Output is captured only to surface
+// a short failure reason; it is demuxed via stdcopy and drained so the exec
+// completes before we read the exit code.
+func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
+	created, err := c.api.ContainerExecCreate(ctx, name, container.ExecOptions{
+		Cmd:          cmd,
+		AttachStdout: true,
+		AttachStderr: true,
+	})
+	if err != nil {
+		return fmt.Errorf("dockercli: exec create: %w", err)
+	}
+	att, err := c.api.ContainerExecAttach(ctx, created.ID, container.ExecAttachOptions{})
+	if err != nil {
+		return fmt.Errorf("dockercli: exec attach: %w", err)
+	}
+	defer att.Close()
+	var outBuf, errBuf bytes.Buffer
+	_, _ = stdcopy.StdCopy(&outBuf, &errBuf, att.Reader) // drain until the exec finishes
+
+	insp, err := c.api.ContainerExecInspect(ctx, created.ID)
+	if err != nil {
+		return fmt.Errorf("dockercli: exec inspect: %w", err)
+	}
+	if insp.ExitCode != 0 {
+		reason := strings.TrimSpace(errBuf.String())
+		if reason == "" {
+			reason = strings.TrimSpace(outBuf.String())
+		}
+		if len(reason) > 200 {
+			reason = reason[len(reason)-200:]
+		}
+		return fmt.Errorf("hook exited %d: %s", insp.ExitCode, reason)
 	}
 	return nil
 }

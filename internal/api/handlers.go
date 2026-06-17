@@ -114,6 +114,8 @@ type containerView struct {
 	Installed         bool   `json:"installed"`
 	IncludeInSchedule bool   `json:"includeInSchedule"`
 	LastBackup        *int64 `json:"lastBackup"`
+	PreHook           string `json:"preHook"`
+	PostHook          string `json:"postHook"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -144,6 +146,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		}
 		if t, ok := byName[c.Name]; ok {
 			v.IncludeInSchedule = t.IncludeInSchedule
+			v.PreHook = t.PreHook
+			v.PostHook = t.PostHook
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 			}
@@ -322,17 +326,38 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Pointers so a hooks-only PATCH doesn't reset the schedule flag (and vice
+	// versa) — only the fields actually sent are applied.
 	var body struct {
-		IncludeInSchedule bool `json:"includeInSchedule"`
+		IncludeInSchedule *bool   `json:"includeInSchedule"`
+		PreHook           *string `json:"preHook"`
+		PostHook          *string `json:"postHook"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.SetInclude(r.Context(), name, body.IncludeInSchedule); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
+	if body.IncludeInSchedule != nil {
+		if err := h.svc.SetInclude(r.Context(), name, *body.IncludeInSchedule); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.PreHook != nil || body.PostHook != nil {
+		pre, post := strOr(body.PreHook), strOr(body.PostHook)
+		if err := h.svc.SetContainerHooks(r.Context(), name, pre, post); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// strOr returns *p or "" when p is nil.
+func strOr(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
 }
 
 // settingsView is the JSON shape for GET/PUT /api/settings.

@@ -69,6 +69,8 @@ type Docker interface {
 	// Allocations reports the static IP / published host ports every container
 	// currently holds, for the restore pre-flight conflict check.
 	Allocations(ctx context.Context) ([]model.Allocation, error)
+	// Exec runs cmd inside the running container (pre/post-backup hooks).
+	Exec(ctx context.Context, name string, cmd []string) error
 }
 
 // Restic is the subset of the backup engine the orchestrator needs.
@@ -116,6 +118,13 @@ type BackupDeps struct {
 	SnapshotTemplatesDir string
 	// FlashTemplatesDir is where the live Unraid templates are read from.
 	FlashTemplatesDir string
+	// PreHook / PostHook are optional shell commands run inside the container via
+	// `sh -c`. PreHook runs while the container is still up (before stop) so a DB
+	// dump can be captured INTO appdata and included in the backup; a PreHook
+	// failure aborts the backup (no inconsistent snapshot). PostHook runs after
+	// the container is back up; its failure is logged but never fails the backup.
+	PreHook  string
+	PostHook string
 
 	Docker    Docker
 	Restic    Restic
@@ -213,6 +222,17 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return Summary{}, fmt.Errorf("backup: record run start: %w", err)
 	}
 
+	// Pre-backup hook runs while the container is still UP (before stop), so a DB
+	// dump etc. lands in appdata and is included below. A failure aborts the
+	// backup — we never store a snapshot the hook was meant to make consistent.
+	if d.PreHook != "" {
+		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PreHook}); hookErr != nil {
+			e := fmt.Errorf("backup: pre-hook: %w", hookErr)
+			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+			return Summary{}, e
+		}
+	}
+
 	stopTimeout := d.StopTimeout
 	if stopTimeout <= 0 {
 		stopTimeout = defaultStopTimeout
@@ -270,6 +290,14 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if backupErr != nil {
 		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
 		return Summary{}, backupErr
+	}
+
+	// Post-backup hook runs with the container back up. Best-effort: a failure is
+	// logged but never fails a backup that already succeeded.
+	if d.PostHook != "" {
+		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PostHook}); hookErr != nil {
+			log.Printf("backup: post-hook failed (backup is still valid): %v", hookErr)
+		}
 	}
 
 	snap := ""

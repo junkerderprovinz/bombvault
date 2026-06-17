@@ -43,6 +43,9 @@ type Docker interface {
 	// slash) or "" when no such container exists. Used as the restore
 	// wrong-target guard.
 	InspectName(ctx context.Context, name string) (string, error)
+	// Exec runs cmd inside the (running) container and returns an error when the
+	// command exits non-zero. Used for pre/post-backup hooks.
+	Exec(ctx context.Context, name string, cmd []string) error
 }
 
 // normalizeName strips a single leading slash from a docker container name.

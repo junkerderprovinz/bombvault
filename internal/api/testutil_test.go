@@ -86,6 +86,11 @@ func (f *fakeServiceDocker) Pull(_ context.Context, image string) error {
 	return f.pullErr
 }
 
+func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) error {
+	f.calls = append(f.calls, "exec:"+name)
+	return nil
+}
+
 func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect) error {
 	f.calls = append(f.calls, "createAndStart:"+in.Name)
 	f.createdIn = in

@@ -17,6 +17,10 @@ type Target struct {
 	// container's recreate recipe (inspect + template XML) so restore works even
 	// after the container has been deleted from the host.
 	Definition string
+	// PreHook / PostHook are optional shell commands run inside the container via
+	// `sh -c` before/after a backup. Owned by SetHooks (never reset by Upsert).
+	PreHook  string
+	PostHook string
 }
 
 // UpsertTarget inserts or updates the target by container name.
@@ -39,13 +43,13 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	}
 
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -58,7 +62,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -66,7 +70,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -94,6 +98,24 @@ func (r *Repo) SetInclude(containerName string, include bool) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("SetInclude: container %q not found", containerName)
+	}
+	return nil
+}
+
+// SetHooks updates the pre/post-backup hook commands for a container, creating
+// the target row if it does not exist yet (so hooks can be set before the first
+// backup).
+func (r *Repo) SetHooks(containerName, preHook, postHook string) error {
+	res, err := r.db.Exec(
+		`UPDATE targets SET pre_hook = ?, post_hook = ? WHERE container_name = ?`,
+		preHook, postHook, containerName)
+	if err != nil {
+		return fmt.Errorf("SetHooks: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, PreHook: preHook, PostHook: postHook}); err != nil {
+			return fmt.Errorf("SetHooks create target: %w", err)
+		}
 	}
 	return nil
 }
@@ -130,7 +152,7 @@ func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON string
 	var include int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}

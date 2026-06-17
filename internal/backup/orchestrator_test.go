@@ -36,6 +36,9 @@ type fakeDocker struct {
 	// allocations is what Allocations returns (restore pre-flight conflict check).
 	allocations []model.Allocation
 	allocErr    error
+
+	// execErr, when set, fails the NEXT Exec (for hook tests).
+	execErr error
 }
 
 func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
@@ -74,6 +77,11 @@ func (d *fakeDocker) InspectName(_ context.Context, name string) (string, error)
 func (d *fakeDocker) Allocations(_ context.Context) ([]model.Allocation, error) {
 	d.log = append(d.log, "allocations")
 	return d.allocations, d.allocErr
+}
+
+func (d *fakeDocker) Exec(_ context.Context, name string, cmd []string) error {
+	d.log = append(d.log, "exec:"+name+":"+strings.Join(cmd, " "))
+	return d.execErr
 }
 
 type fakeRestic struct {
@@ -191,6 +199,63 @@ func contains(log []string, prefix string) bool {
 // ---------------------------------------------------------------------------
 // BackupContainer
 // ---------------------------------------------------------------------------
+
+func TestBackupHooksOrderingAndPreHookAbort(t *testing.T) {
+	t.Run("pre-hook runs before stop, post-hook after start", func(t *testing.T) {
+		d := &fakeDocker{}
+		r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+		_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+			ContainerRef: "plex", ContainerName: "Plex", RepoPath: "/repo",
+			AppdataPaths: []string{"/host/user/appdata/plex"}, TargetID: "t1",
+			PreHook: "echo pre", PostHook: "echo post",
+			Docker: d, Restic: r, Templates: &fakeTemplates{}, Runs: &fakeRuns{},
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// Expect: exec(pre) → stop → start → exec(post).
+		idx := func(s string) int {
+			for i, e := range d.log {
+				if e == s {
+					return i
+				}
+			}
+			return -1
+		}
+		pre := idx("exec:plex:sh -c echo pre")
+		stop := idx("stop:plex")
+		start := idx("start:plex")
+		post := idx("exec:plex:sh -c echo post")
+		ordered := pre >= 0 && pre < stop && stop < start && start < post
+		if !ordered {
+			t.Fatalf("hook ordering wrong: pre=%d stop=%d start=%d post=%d log=%v", pre, stop, start, post, d.log)
+		}
+	})
+
+	t.Run("pre-hook failure aborts the backup (no stop, no restic)", func(t *testing.T) {
+		d := &fakeDocker{execErr: errors.New("dump failed")}
+		r := &fakeRestic{}
+		runs := &fakeRuns{}
+		_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+			ContainerRef: "plex", ContainerName: "Plex", RepoPath: "/repo",
+			AppdataPaths: []string{"/host/user/appdata/plex"}, TargetID: "t1",
+			PreHook: "false",
+			Docker:  d, Restic: r, Templates: &fakeTemplates{}, Runs: runs,
+		})
+		if err == nil {
+			t.Fatal("expected pre-hook failure to abort the backup")
+		}
+		if contains(d.log, "stop:plex") {
+			t.Fatalf("container must NOT be stopped when pre-hook fails: %v", d.log)
+		}
+		if len(r.log) != 0 {
+			t.Fatalf("restic must NOT run when pre-hook fails: %v", r.log)
+		}
+		if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+			t.Fatalf("run must be recorded failed: %v", runs.finishes)
+		}
+	})
+}
 
 func TestBackupHappyPath(t *testing.T) {
 	d := &fakeDocker{}

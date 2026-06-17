@@ -20,6 +20,8 @@ export interface Container {
   installed: boolean;
   includeInSchedule: boolean;
   lastBackup: number | null;
+  preHook: string;
+  postHook: string;
 }
 
 export interface ListContainersResponse {
@@ -234,6 +236,18 @@ export function restoreContainerFile(
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-file`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, path, confirm }),
+  });
+}
+
+/** PATCH /api/containers/{name} — set pre/post-backup hook commands. */
+export function setContainerHooks(
+  name: string,
+  preHook: string,
+  postHook: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ preHook, postHook }),
   });
 }
 
