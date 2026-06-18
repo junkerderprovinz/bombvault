@@ -204,6 +204,80 @@ const sv: Partial<Translations> = {
   "state.crashed":      "Kraschad",
   "state.pmsuspended":  "Pausad",
   "state.notInstalled": "Inte installerad",
+
+  // Backups extra
+  "snapshots.files": "Filer",
+
+  // File-level restore
+  "files.restore": "Återställ",
+  "files.restored": "Återställd",
+  "files.restoreConfirm": "Återställa den här filen till dess ursprungliga plats? Den nuvarande filen skrivs över.",
+  "files.filterPlaceholder": "Filtrera filer…",
+  "files.none": "Inga matchande filer",
+  "files.loadFailed": "Det gick inte att läsa in filerna",
+  "files.more": "Förfina filtret för att se fler filer.",
+
+  // Retention
+  "settings.retentionTitle": "Lagring",
+  "settings.retentionHint": "Hur många säkerhetskopior som behålls per objekt. Efter varje säkerhetskopiering rensar restic äldre ögonblicksbilder enligt den här policyn. Allt 0 = behåll allt (av).",
+  "settings.retentionLast": "Behåll senaste",
+  "settings.retentionDaily": "Behåll dagliga",
+  "settings.retentionWeekly": "Behåll veckovisa",
+  "settings.retentionMonthly": "Behåll månadsvisa",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Klistra in en rclone-konfiguration för att säkerhetskopiera till molnet (Backblaze B2, S3, Google Drive, …). Den lagras krypterad. SMB/NFS behöver ingen rclone: montera resursen på Unraid och peka en säkerhetskopiesökväg mot den.",
+  "rclone.configured": "Konfigurerade fjärrlager",
+  "rclone.pathHint": "Ange sedan en säkerhetskopiesökväg till ”rclone:<remote>:<bucket>/path” för att skicka den domänen off-site.",
+  "rclone.save": "Spara konfiguration",
+
+  // Integrity (restic check)
+  "integrity.title": "Integritet",
+  "integrity.hint": "Kör restic check för att verifiera att ett arkivs struktur och metadata är intakta.",
+  "integrity.verify": "Verifiera",
+  "integrity.checking": "Kontrollerar…",
+  "integrity.ok": "✓ Frisk",
+  "integrity.failed": "Kontrollen misslyckades",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Säkerhetskopierings-hooks",
+  "hooks.hint": "Kommandon körs inuti containern (sh -c). Pre körs före säkerhetskopieringen (t.ex. dumpa en DB till appdata så att den inkluderas) — ett fel avbryter säkerhetskopieringen. Post körs när containern är uppe igen; dess fel loggas bara.",
+  "hooks.pre": "Kommando före säkerhetskopiering",
+  "hooks.post": "Kommando efter säkerhetskopiering",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash-säkerhetskopia",
+  "flash.subtitle": "Säkerhetskopiera och återställ Unraid-USB-flashen (hela /boot).",
+  "flash.backupTitle": "Säkerhetskopiera flashen",
+  "flash.backupHint": "Fångar hela USB-flashen (/boot): Unraid-OS, licens, array-config, resurser, nätverks- och plugin-config.",
+  "flash.backupNow": "Säkerhetskopiera flash nu",
+  "flash.backingUp": "Säkerhetskopierar…",
+  "flash.restoring": "Packar upp…",
+  "flash.restoreNote": "Återställning PACKAR UPP en ögonblicksbild till en mapp (visas nedan) — den körande /boot skrivs aldrig över. Kopiera de återställda filerna till ett nytt USB för att bygga om din flash.",
+  "flash.restoredTo": "Uppackad till:",
+  "flash.none": "Inga flash-säkerhetskopior än — kör en säkerhetskopiering ovan.",
+
+  // VM backup (SSH)
+  "vm.method": "Metod",
+  "vm.method.graceful": "Mjuk (avstängning)",
+  "vm.method.live": "Live-ögonblicksbild",
+  "vm.ssh.title": "VM-säkerhetskopia över SSH",
+  "vm.ssh.desc": "VM-säkerhetskopia når libvirt över SSH (ingen montering). Auktorisera den här nyckeln på Unraid och testa sedan.",
+  "vm.ssh.host": "Värd",
+  "vm.ssh.publicKey": "Publik nyckel — lägg till i Unraid /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Kopiera",
+  "vm.ssh.copied": "Kopierad",
+  "vm.ssh.test": "Testa anslutning",
+  "vm.ssh.testing": "Testar…",
+  "vm.ssh.testOk": "Ansluten — libvirt nåbar",
+  "vm.ssh.testFail": "Anslutningen misslyckades",
+  "vm.ssh.setupTitle": "Konfigurera (en gång)",
+  "vm.ssh.step1": "Kopiera kommandot nedan och kör det i Unraid-terminalen för att auktorisera den här nyckeln (överlever omstarter).",
+  "vm.ssh.step2": "Ange containerns variabel ”VM Backup: Host” till din Unraids LAN-IP (t.ex. 192.168.x.x); vid enkel bridge-nätverk fungerar host.docker.internal också.",
+  "vm.ssh.step3": "Klicka på Testa anslutning — när den är grön, aktivera VMs under Domäner.",
+  "vm.ssh.copyCmd": "Kopiera kommando",
+  "vm.ssh.guide": "Fullständig installations- och nätverksguide",
 };
 
 export default sv;

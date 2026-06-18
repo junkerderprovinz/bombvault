@@ -204,6 +204,80 @@ const fi: Partial<Translations> = {
   "state.crashed":      "Kaatunut",
   "state.pmsuspended":  "Keskeytetty",
   "state.notInstalled": "Ei asennettu",
+
+  // Backups — files
+  "snapshots.files": "Tiedostot",
+
+  // File-level restore
+  "files.restore": "Palauta",
+  "files.restored": "Palautettu",
+  "files.restoreConfirm": "Palautetaanko tämä tiedosto alkuperäiseen sijaintiinsa? Se korvaa nykyisen tiedoston.",
+  "files.filterPlaceholder": "Suodata tiedostoja…",
+  "files.none": "Ei vastaavia tiedostoja",
+  "files.loadFailed": "Tiedostojen lataus epäonnistui",
+  "files.more": "Tarkenna suodatinta nähdäksesi lisää tiedostoja.",
+
+  // Retention
+  "settings.retentionTitle": "Säilytys",
+  "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
+  "settings.retentionLast": "Säilytä viimeisimmät",
+  "settings.retentionDaily": "Säilytä päivittäin",
+  "settings.retentionWeekly": "Säilytä viikoittain",
+  "settings.retentionMonthly": "Säilytä kuukausittain",
+
+  // Off-site (rclone)
+  "rclone.title": "Etäsijainti (rclone)",
+  "rclone.hint": "Liitä rclone-määritys varmuuskopioidaksesi pilveen (Backblaze B2, S3, Google Drive, …). Se tallennetaan salattuna. SMB/NFS eivät tarvitse rclonea: liitä jako Unraidiin ja osoita varmuuskopiopolku siihen.",
+  "rclone.configured": "Määritetyt etäsijainnit",
+  "rclone.pathHint": "Aseta sitten varmuuskopiopolku muotoon „rclone:<remote>:<bucket>/path” lähettääksesi kyseisen toimialueen etäsijaintiin.",
+  "rclone.save": "Tallenna määritys",
+
+  // Integrity (restic check)
+  "integrity.title": "Eheys",
+  "integrity.hint": "Suorita restic check tarkistaaksesi, että arkiston rakenne ja metatiedot ovat ehjät.",
+  "integrity.verify": "Tarkista",
+  "integrity.checking": "Tarkistetaan…",
+  "integrity.ok": "✓ Kunnossa",
+  "integrity.failed": "Tarkistus epäonnistui",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Varmuuskopiokoukut",
+  "hooks.hint": "Komennot suoritetaan kontin sisällä (sh -c). Pre suoritetaan ennen varmuuskopiota (esim. tietokannan dumppaus appdataan, jotta se sisältyy) — virhe keskeyttää varmuuskopion. Post suoritetaan kontin käynnistyttyä uudelleen; sen virhe vain kirjataan lokiin.",
+  "hooks.pre": "Varmuuskopiota edeltävä komento",
+  "hooks.post": "Varmuuskopion jälkeinen komento",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash-varmuuskopio",
+  "flash.subtitle": "Varmuuskopioi ja palauta Unraid-USB-flash (koko /boot).",
+  "flash.backupTitle": "Varmuuskopioi flash",
+  "flash.backupHint": "Tallentaa koko USB-flashin (/boot): Unraid-käyttöjärjestelmä, lisenssi, array-määritys, jaot, verkko ja laajennusten määritys.",
+  "flash.backupNow": "Varmuuskopioi flash nyt",
+  "flash.backingUp": "Varmuuskopioidaan…",
+  "flash.restoring": "Puretaan…",
+  "flash.restoreNote": "Palautus PURKAA tilannekuvan kansioon (näkyy alla) — se ei koskaan korvaa käynnissä olevaa /boot-osiota. Kopioi palautetut tiedostot uudelle USB-tikulle rakentaaksesi flashin uudelleen.",
+  "flash.restoredTo": "Purettu sijaintiin:",
+  "flash.none": "Ei vielä flash-varmuuskopioita — suorita varmuuskopio yllä.",
+
+  // VM backup (SSH)
+  "vm.method": "Menetelmä",
+  "vm.method.graceful": "Hallittu (sammutus)",
+  "vm.method.live": "Live-tilannekuva",
+  "vm.ssh.title": "VM-varmuuskopio SSH:n kautta",
+  "vm.ssh.desc": "VM-varmuuskopio tavoittaa libvirtin SSH:n kautta (ei liitosta). Valtuuta tämä avain Unraidissa ja testaa sitten.",
+  "vm.ssh.host": "Isäntä",
+  "vm.ssh.publicKey": "Julkinen avain — lisää Unraidin tiedostoon /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Kopioi",
+  "vm.ssh.copied": "Kopioitu",
+  "vm.ssh.test": "Testaa yhteys",
+  "vm.ssh.testing": "Testataan…",
+  "vm.ssh.testOk": "Yhdistetty — libvirt tavoitettavissa",
+  "vm.ssh.testFail": "Yhteys epäonnistui",
+  "vm.ssh.setupTitle": "Määritä (kertaluonteinen)",
+  "vm.ssh.step1": "Kopioi alla oleva komento ja suorita se Unraid-terminaalissa valtuuttaaksesi tämän avaimen (se säilyy uudelleenkäynnistysten yli).",
+  "vm.ssh.step2": "Aseta kontin „VM Backup: Host” -muuttuja Unraid-palvelimesi LAN-IP-osoitteeseen (esim. 192.168.x.x); yksinkertaisessa siltaverkossa myös host.docker.internal toimii.",
+  "vm.ssh.step3": "Napsauta Testaa yhteys — kun se on vihreä, ota VM:t käyttöön kohdassa Toimialueet.",
+  "vm.ssh.copyCmd": "Kopioi komento",
+  "vm.ssh.guide": "Täydellinen asennus- ja verkko-opas",
 };
 
 export default fi;

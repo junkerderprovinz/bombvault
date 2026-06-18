@@ -201,6 +201,80 @@ const nl: Partial<Translations> = {
   "state.crashed":      "Gecrasht",
   "state.pmsuspended":  "Gesuspendeerd",
   "state.notInstalled": "Niet geïnstalleerd",
+
+  // Backups extra
+  "snapshots.files": "Bestanden",
+
+  // File-level restore
+  "files.restore": "Herstellen",
+  "files.restored": "Hersteld",
+  "files.restoreConfirm": "Dit bestand herstellen naar de oorspronkelijke locatie? Het huidige bestand wordt overschreven.",
+  "files.filterPlaceholder": "Bestanden filteren…",
+  "files.none": "Geen overeenkomende bestanden",
+  "files.loadFailed": "Bestanden konden niet worden geladen",
+  "files.more": "Verfijn het filter om meer bestanden te zien.",
+
+  // Retention
+  "settings.retentionTitle": "Bewaarbeleid",
+  "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
+  "settings.retentionLast": "Laatste bewaren",
+  "settings.retentionDaily": "Dagelijks bewaren",
+  "settings.retentionWeekly": "Wekelijks bewaren",
+  "settings.retentionMonthly": "Maandelijks bewaren",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Plak een rclone-configuratie om naar de cloud te back-uppen (Backblaze B2, S3, Google Drive, …). Deze wordt versleuteld opgeslagen. SMB/NFS hebben geen rclone nodig: mount de share op Unraid en stel er een back-uppad op in.",
+  "rclone.configured": "Geconfigureerde remotes",
+  "rclone.pathHint": "Stel daarna een back-uppad in op „rclone:<remote>:<bucket>/path” om dat domein off-site te sturen.",
+  "rclone.save": "Configuratie opslaan",
+
+  // Integrity (restic check)
+  "integrity.title": "Integriteit",
+  "integrity.hint": "Voer restic check uit om te verifiëren dat de structuur en metadata van een repository intact zijn.",
+  "integrity.verify": "Verifiëren",
+  "integrity.checking": "Controleren…",
+  "integrity.ok": "✓ Gezond",
+  "integrity.failed": "Controle mislukt",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Back-uphooks",
+  "hooks.hint": "Commando's draaien in de container (sh -c). Pre draait vóór de back-up (bijv. een DB naar appdata dumpen zodat die wordt meegenomen) — een fout breekt de back-up af. Post draait nadat de container weer draait; een fout daarvan wordt alleen gelogd.",
+  "hooks.pre": "Pre-back-upcommando",
+  "hooks.post": "Post-back-upcommando",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash-back-up",
+  "flash.subtitle": "Maak een back-up van en herstel de Unraid-USB-flash (de hele /boot).",
+  "flash.backupTitle": "De flash back-uppen",
+  "flash.backupHint": "Legt de volledige USB-flash (/boot) vast: Unraid-OS, licentie, array-config, shares, netwerk- en plug-inconfiguratie.",
+  "flash.backupNow": "Flash nu back-uppen",
+  "flash.backingUp": "Back-up maken…",
+  "flash.restoring": "Uitpakken…",
+  "flash.restoreNote": "Herstel PAKT een snapshot uit naar een map (hieronder getoond) — de draaiende /boot wordt nooit overschreven. Kopieer de herstelde bestanden naar een nieuwe USB om je flash opnieuw op te bouwen.",
+  "flash.restoredTo": "Uitgepakt naar:",
+  "flash.none": "Nog geen flash-back-ups — maak er hierboven een.",
+
+  // VM backup (SSH)
+  "vm.method": "Methode",
+  "vm.method.graceful": "Net (afsluiten)",
+  "vm.method.live": "Live-snapshot",
+  "vm.ssh.title": "VM-back-up via SSH",
+  "vm.ssh.desc": "VM-back-up bereikt libvirt via SSH (geen mount). Autoriseer deze sleutel op Unraid en test daarna.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Publieke sleutel — toevoegen aan Unraid /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Kopiëren",
+  "vm.ssh.copied": "Gekopieerd",
+  "vm.ssh.test": "Verbinding testen",
+  "vm.ssh.testing": "Testen…",
+  "vm.ssh.testOk": "Verbonden — libvirt bereikbaar",
+  "vm.ssh.testFail": "Verbinding mislukt",
+  "vm.ssh.setupTitle": "Instellen (eenmalig)",
+  "vm.ssh.step1": "Kopieer het onderstaande commando en voer het uit in de Unraid-terminal om deze sleutel te autoriseren (overleeft herstarts).",
+  "vm.ssh.step2": "Stel de containervariabele „VM Backup: Host” in op het LAN-IP van je Unraid (bijv. 192.168.x.x); bij eenvoudig bridge-netwerk werkt host.docker.internal ook.",
+  "vm.ssh.step3": "Klik op Verbinding testen — zodra die groen is, schakel VM's in onder Domeinen.",
+  "vm.ssh.copyCmd": "Commando kopiëren",
+  "vm.ssh.guide": "Volledige installatie- & netwerkgids",
 };
 
 export default nl;

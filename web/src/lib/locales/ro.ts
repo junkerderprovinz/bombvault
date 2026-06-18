@@ -204,6 +204,80 @@ const ro: Partial<Translations> = {
   "state.crashed":      "Blocat",
   "state.pmsuspended":  "Suspendat",
   "state.notInstalled": "Neinstalat",
+
+  // Backups — files
+  "snapshots.files": "Fișiere",
+
+  // File-level restore
+  "files.restore": "Restaurare",
+  "files.restored": "Restaurat",
+  "files.restoreConfirm": "Restaurați acest fișier în locația sa originală? Suprascrie fișierul curent.",
+  "files.filterPlaceholder": "Filtrează fișiere…",
+  "files.none": "Niciun fișier corespunzător",
+  "files.loadFailed": "Încărcarea fișierelor a eșuat",
+  "files.more": "Rafinați filtrul pentru a vedea mai multe fișiere.",
+
+  // Retention
+  "settings.retentionTitle": "Retenție",
+  "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
+  "settings.retentionLast": "Păstrează ultimele",
+  "settings.retentionDaily": "Păstrează zilnic",
+  "settings.retentionWeekly": "Păstrează săptămânal",
+  "settings.retentionMonthly": "Păstrează lunar",
+
+  // Off-site (rclone)
+  "rclone.title": "În afara sitului (rclone)",
+  "rclone.hint": "Lipiți o configurație rclone pentru a face copii de rezervă în cloud (Backblaze B2, S3, Google Drive, …). Este stocată criptat. SMB/NFS nu necesită rclone: montați partajarea pe Unraid și setați o cale de copiere de rezervă către aceasta.",
+  "rclone.configured": "Destinații configurate",
+  "rclone.pathHint": "Apoi setați o cale de copiere de rezervă către „rclone:<remote>:<bucket>/path” pentru a trimite acel domeniu în afara sitului.",
+  "rclone.save": "Salvează configurația",
+
+  // Integrity (restic check)
+  "integrity.title": "Integritate",
+  "integrity.hint": "Rulați restic check pentru a verifica dacă structura și metadatele unui depozit sunt intacte.",
+  "integrity.verify": "Verifică",
+  "integrity.checking": "Verificare…",
+  "integrity.ok": "✓ Sănătos",
+  "integrity.failed": "Verificare eșuată",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Hook-uri de backup",
+  "hooks.hint": "Comenzile rulează în interiorul containerului (sh -c). Pre rulează înainte de backup (de ex. exportă o bază de date în appdata pentru a fi inclusă) — o eroare anulează backupul. Post rulează după ce containerul a revenit; eroarea sa este doar înregistrată în jurnal.",
+  "hooks.pre": "Comandă pre-backup",
+  "hooks.post": "Comandă post-backup",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Backup Flash",
+  "flash.subtitle": "Faceți copii de rezervă și restaurați flash-ul USB Unraid (întregul /boot).",
+  "flash.backupTitle": "Copiere de rezervă a flash-ului",
+  "flash.backupHint": "Capturează întregul flash USB (/boot): sistemul Unraid, licența, configurația array, partajările, rețeaua și configurația plugin-urilor.",
+  "flash.backupNow": "Copiază flash-ul acum",
+  "flash.backingUp": "Se copiază…",
+  "flash.restoring": "Se extrage…",
+  "flash.restoreNote": "Restaurarea EXTRAGE un instantaneu într-un folder (afișat mai jos) — nu suprascrie niciodată /boot-ul activ. Copiați fișierele recuperate pe un USB nou pentru a reconstrui flash-ul.",
+  "flash.restoredTo": "Extras în:",
+  "flash.none": "Încă nicio copie de rezervă flash — rulați un backup mai sus.",
+
+  // VM backup (SSH)
+  "vm.method": "Metodă",
+  "vm.method.graceful": "Controlat (oprire)",
+  "vm.method.live": "Instantaneu live",
+  "vm.ssh.title": "Backup VM prin SSH",
+  "vm.ssh.desc": "Backupul VM ajunge la libvirt prin SSH (fără montare). Autorizați această cheie pe Unraid, apoi testați.",
+  "vm.ssh.host": "Gazdă",
+  "vm.ssh.publicKey": "Cheie publică — adăugați în /root/.ssh/authorized_keys de pe Unraid",
+  "vm.ssh.copy": "Copiază",
+  "vm.ssh.copied": "Copiat",
+  "vm.ssh.test": "Testează conexiunea",
+  "vm.ssh.testing": "Se testează…",
+  "vm.ssh.testOk": "Conectat — libvirt accesibil",
+  "vm.ssh.testFail": "Conexiune eșuată",
+  "vm.ssh.setupTitle": "Configurare (o singură dată)",
+  "vm.ssh.step1": "Copiați comanda de mai jos și rulați-o în terminalul Unraid pentru a autoriza această cheie (rezistă la reporniri).",
+  "vm.ssh.step2": "Setați variabila „VM Backup: Host” a containerului la IP-ul LAN al serverului dvs. Unraid (de ex. 192.168.x.x); pe rețea bridge simplă funcționează și host.docker.internal.",
+  "vm.ssh.step3": "Faceți clic pe Testează conexiunea — odată ce e verde, activați VM-urile sub Domenii.",
+  "vm.ssh.copyCmd": "Copiază comanda",
+  "vm.ssh.guide": "Ghid complet de configurare și rețea",
 };
 
 export default ro;

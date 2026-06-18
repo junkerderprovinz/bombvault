@@ -204,6 +204,80 @@ const es: Partial<Translations> = {
   "state.crashed":      "Caído",
   "state.pmsuspended":  "Suspendido",
   "state.notInstalled": "No instalado",
+
+  // Backups — files
+  "snapshots.files": "Archivos",
+
+  // File-level restore
+  "files.restore": "Restaurar",
+  "files.restored": "Restaurado",
+  "files.restoreConfirm": "¿Restaurar este archivo a su ubicación original? Sobrescribe el archivo actual.",
+  "files.filterPlaceholder": "Filtrar archivos…",
+  "files.none": "Sin archivos coincidentes",
+  "files.loadFailed": "Error al cargar los archivos",
+  "files.more": "Afina el filtro para ver más archivos.",
+
+  // Retention
+  "settings.retentionTitle": "Retención",
+  "settings.retentionHint": "Cuántas copias conservar por elemento. Tras cada copia, restic poda las instantáneas más antiguas según esta política. Todo a cero = conservar todo (desactivado).",
+  "settings.retentionLast": "Conservar últimas",
+  "settings.retentionDaily": "Conservar diarias",
+  "settings.retentionWeekly": "Conservar semanales",
+  "settings.retentionMonthly": "Conservar mensuales",
+
+  // Off-site (rclone)
+  "rclone.title": "Externo (rclone)",
+  "rclone.hint": "Pega una configuración de rclone para copiar a la nube (Backblaze B2, S3, Google Drive, …). Se guarda cifrada. SMB/NFS no necesitan rclone: monta el recurso compartido en Unraid y asígnale una Ruta de copia.",
+  "rclone.configured": "Remotos configurados",
+  "rclone.pathHint": "Luego asigna una Ruta de copia a «rclone:<remote>:<bucket>/path» para enviar ese dominio fuera del sitio.",
+  "rclone.save": "Guardar configuración",
+
+  // Integrity (restic check)
+  "integrity.title": "Integridad",
+  "integrity.hint": "Ejecuta restic check para verificar que la estructura y los metadatos de un repositorio están intactos.",
+  "integrity.verify": "Verificar",
+  "integrity.checking": "Comprobando…",
+  "integrity.ok": "✓ Saludable",
+  "integrity.failed": "Comprobación fallida",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Hooks de copia",
+  "hooks.hint": "Los comandos se ejecutan dentro del contenedor (sh -c). Pre se ejecuta antes de la copia (p. ej. volcar una BD en appdata para incluirla) — un fallo aborta la copia. Post se ejecuta cuando el contenedor vuelve a estar activo; su fallo solo se registra.",
+  "hooks.pre": "Comando pre-copia",
+  "hooks.post": "Comando post-copia",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Copia del Flash",
+  "flash.subtitle": "Copia y restaura el USB flash de Unraid (todo el /boot).",
+  "flash.backupTitle": "Copiar el flash",
+  "flash.backupHint": "Captura todo el USB flash (/boot): SO de Unraid, licencia, configuración del array, recursos compartidos, red y configuración de plugins.",
+  "flash.backupNow": "Copiar flash ahora",
+  "flash.backingUp": "Copiando…",
+  "flash.restoring": "Extrayendo…",
+  "flash.restoreNote": "La restauración EXTRAE una instantánea a una carpeta (mostrada abajo) — nunca sobrescribe el /boot en ejecución. Copia los archivos recuperados a un USB nuevo para reconstruir tu flash.",
+  "flash.restoredTo": "Extraído en:",
+  "flash.none": "Aún no hay copias del flash — inicia una copia arriba.",
+
+  // VM backup (SSH)
+  "vm.method": "Método",
+  "vm.method.graceful": "Ordenado (apagado)",
+  "vm.method.live": "Instantánea en vivo",
+  "vm.ssh.title": "Copia de VM por SSH",
+  "vm.ssh.desc": "La copia de VM llega a libvirt por SSH (sin montaje). Autoriza esta clave en Unraid y luego prueba.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Clave pública — añádela a /root/.ssh/authorized_keys de Unraid",
+  "vm.ssh.copy": "Copiar",
+  "vm.ssh.copied": "Copiado",
+  "vm.ssh.test": "Probar conexión",
+  "vm.ssh.testing": "Probando…",
+  "vm.ssh.testOk": "Conectado — libvirt accesible",
+  "vm.ssh.testFail": "Conexión fallida",
+  "vm.ssh.setupTitle": "Configurar (una vez)",
+  "vm.ssh.step1": "Copia el comando de abajo y ejecútalo en el terminal de Unraid para autorizar esta clave (sobrevive a los reinicios).",
+  "vm.ssh.step2": "Establece la variable «VM Backup: Host» del contenedor a la IP LAN de tu Unraid (p. ej. 192.168.x.x); en redes bridge simples también funciona host.docker.internal.",
+  "vm.ssh.step3": "Haz clic en Probar conexión — cuando esté en verde, habilita las VMs en Dominios.",
+  "vm.ssh.copyCmd": "Copiar comando",
+  "vm.ssh.guide": "Guía completa de configuración y red",
 };
 
 export default es;

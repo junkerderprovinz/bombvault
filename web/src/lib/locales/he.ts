@@ -204,6 +204,80 @@ const he: Partial<Translations> = {
   "state.crashed":      "קרס",
   "state.pmsuspended":  "מושעה",
   "state.notInstalled": "לא מותקן",
+
+  // Backups — files
+  "snapshots.files": "קבצים",
+
+  // File-level restore
+  "files.restore": "שחזר",
+  "files.restored": "שוחזר",
+  "files.restoreConfirm": "לשחזר קובץ זה למיקומו המקורי? הקובץ הנוכחי יידרס.",
+  "files.filterPlaceholder": "סינון קבצים…",
+  "files.none": "אין קבצים תואמים",
+  "files.loadFailed": "טעינת הקבצים נכשלה",
+  "files.more": "צמצם את הסינון כדי לראות עוד קבצים.",
+
+  // Retention
+  "settings.retentionTitle": "שמירה",
+  "settings.retentionHint": "כמה גיבויים לשמור לכל פריט. אחרי כל גיבוי, restic גוזם snapshots ישנים לפי מדיניות זו. הכל 0 = לשמור הכל (כבוי).",
+  "settings.retentionLast": "שמור אחרונים",
+  "settings.retentionDaily": "שמור יומיים",
+  "settings.retentionWeekly": "שמור שבועיים",
+  "settings.retentionMonthly": "שמור חודשיים",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "הדבק תצורת rclone כדי לגבות לענן (Backblaze B2, S3, Google Drive, …). נשמרת מוצפנת. SMB/NFS אינם צריכים rclone: עגן את השיתוף ב-Unraid והצבע אליו בנתיב גיבוי.",
+  "rclone.configured": "יעדים מרוחקים מוגדרים",
+  "rclone.pathHint": "ואז הגדר נתיב גיבוי אל „rclone:<remote>:<bucket>/path‟ כדי לשלוח דומיין זה מחוץ לאתר.",
+  "rclone.save": "שמור תצורה",
+
+  // Integrity (restic check)
+  "integrity.title": "שלמות",
+  "integrity.hint": "הרץ restic check כדי לאמת שהמבנה והמטא-נתונים של המאגר תקינים.",
+  "integrity.verify": "אמת",
+  "integrity.checking": "בודק…",
+  "integrity.ok": "✓ תקין",
+  "integrity.failed": "הבדיקה נכשלה",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Hooks לגיבוי",
+  "hooks.hint": "הפקודות רצות בתוך ה-container (sh -c). Pre רץ לפני הגיבוי (למשל לדמפ DB אל appdata כדי שייכלל) — כישלון מבטל את הגיבוי. Post רץ אחרי שה-container שב לפעול; כישלונו רק נרשם בלוג.",
+  "hooks.pre": "פקודת טרום-גיבוי",
+  "hooks.post": "פקודת בתר-גיבוי",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "גיבוי Flash",
+  "flash.subtitle": "גבה ושחזר את כונן ה-USB flash של Unraid (כל ה-‎/boot).",
+  "flash.backupTitle": "גבה את ה-flash",
+  "flash.backupHint": "לוכד את כל כונן ה-USB flash (‎/boot): מערכת Unraid, רישיון, תצורת מערך, שיתופים, רשת ותצורת תוספים.",
+  "flash.backupNow": "גבה flash עכשיו",
+  "flash.backingUp": "מגבה…",
+  "flash.restoring": "מחלץ…",
+  "flash.restoreNote": "השחזור מְחַלֵּץ snapshot לתיקייה (מוצגת למטה) — לעולם אינו דורס את ה-‎/boot הפעיל. העתק את הקבצים המשוחזרים ל-USB חדש כדי לבנות מחדש את ה-flash.",
+  "flash.restoredTo": "חולץ אל:",
+  "flash.none": "אין עדיין גיבויי flash — הרץ גיבוי למעלה.",
+
+  // VM backup (SSH)
+  "vm.method": "שיטה",
+  "vm.method.graceful": "מסודרת (כיבוי)",
+  "vm.method.live": "Snapshot חי",
+  "vm.ssh.title": "גיבוי VM דרך SSH",
+  "vm.ssh.desc": "גיבוי VM מגיע ל-libvirt דרך SSH (ללא עיגון). אשר מפתח זה ב-Unraid, ואז בדוק.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "מפתח ציבורי — הוסף ל-‎/root/.ssh/authorized_keys של Unraid",
+  "vm.ssh.copy": "העתק",
+  "vm.ssh.copied": "הועתק",
+  "vm.ssh.test": "בדוק חיבור",
+  "vm.ssh.testing": "בודק…",
+  "vm.ssh.testOk": "מחובר — libvirt נגיש",
+  "vm.ssh.testFail": "החיבור נכשל",
+  "vm.ssh.setupTitle": "הגדרה (פעם אחת)",
+  "vm.ssh.step1": "העתק את הפקודה למטה והרץ אותה במסוף Unraid כדי לאשר מפתח זה (שורד אתחולים).",
+  "vm.ssh.step2": "הגדר את משתנה ה-container „VM Backup: Host‟ לכתובת ה-LAN IP של Unraid (למשל 192.168.x.x); ברשת bridge פשוטה גם host.docker.internal עובד.",
+  "vm.ssh.step3": "לחץ על בדוק חיבור — ברגע שהוא ירוק, הפעל VMs תחת דומיינים.",
+  "vm.ssh.copyCmd": "העתק פקודה",
+  "vm.ssh.guide": "מדריך הגדרה ורשת מלא",
 };
 
 export default he;
