@@ -64,3 +64,12 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Sidebar brand logo. The mark is a colourful illustration with dark areas that
+   blend into the dark sidebar surface. Rather than a background tile, dark mode
+   gets a soft white glow that traces the logo's silhouette so it reads clearly
+   while keeping all of its colours; light mode needs nothing. */
+[data-theme="dark"] .app-logo {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.6))
+          drop-shadow(0 0 5px rgba(255, 255, 255, 0.28));
+}

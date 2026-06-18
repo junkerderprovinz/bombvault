@@ -244,15 +244,14 @@ export function Sidebar({ settings }: SidebarProps) {
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
       {/* Logo / brand — sized to echo the README banner */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-carbon-border">
-        {/* White tile so the dark vault logo stays legible on the dark sidebar
-            surface (and reads fine on the light theme too). */}
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-carbon-border">
-          <img
-            src="/logo.png"
-            alt="BombVault"
-            className="h-9 w-9 object-contain"
-          />
-        </div>
+        {/* No background box. In dark mode a soft white glow (see .app-logo in
+            index.css) lifts the logo's dark parts off the dark surface while
+            keeping its colours; light mode shows it plain. */}
+        <img
+          src="/logo.png"
+          alt="BombVault"
+          className="app-logo h-11 w-11 object-contain shrink-0"
+        />
         <span className="text-carbon-text font-bold text-2xl tracking-tight leading-none">
           BombVault
         </span>
@@ -266,14 +265,14 @@ export function Sidebar({ settings }: SidebarProps) {
           icon={<IconDashboard />}
         />
         <NavItem
-          to="/containers"
-          label={t("nav.containers")}
-          icon={<IconContainers />}
-        />
-        <NavItem
           to="/jobs"
           label={t("nav.jobs")}
           icon={<IconJobs />}
+        />
+        <NavItem
+          to="/containers"
+          label={t("nav.containers")}
+          icon={<IconContainers />}
         />
         {/* VMs / Flash tabs appear only once their domain is enabled. */}
         {vmsEnabled && (
