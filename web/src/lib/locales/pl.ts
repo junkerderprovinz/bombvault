@@ -273,6 +273,11 @@ const pl: Partial<Translations> = {
   "vm.ssh.step3": "Kliknij Testuj połączenie — gdy zaświeci się na zielono, włącz VMs w Domenach.",
   "vm.ssh.copyCmd": "Kopiuj polecenie",
   "vm.ssh.guide": "Pełny przewodnik konfiguracji i sieci",
+  "common.backingUp": "Tworzenie kopii…",
+  "common.restoring": "Przywracanie…",
+  "common.done": "Gotowe",
+  "common.loadingBackups": "Ładowanie kopii…",
+  "common.saving": "Zapisywanie…",
 };
 
 export default pl;

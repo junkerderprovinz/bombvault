@@ -275,6 +275,11 @@ const nl: Partial<Translations> = {
   "vm.ssh.step3": "Klik op Verbinding testen — zodra die groen is, schakel VM's in onder Domeinen.",
   "vm.ssh.copyCmd": "Commando kopiëren",
   "vm.ssh.guide": "Volledige installatie- & netwerkgids",
+  "common.backingUp": "Back-up maken…",
+  "common.restoring": "Herstellen…",
+  "common.done": "Klaar",
+  "common.loadingBackups": "Back-ups laden…",
+  "common.saving": "Opslaan…",
 };
 
 export default nl;

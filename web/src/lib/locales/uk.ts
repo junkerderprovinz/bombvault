@@ -273,6 +273,11 @@ const uk: Partial<Translations> = {
   "vm.ssh.step3": "Натисніть Перевірити з'єднання — щойно воно стане зеленим, увімкніть VMs у Доменах.",
   "vm.ssh.copyCmd": "Копіювати команду",
   "vm.ssh.guide": "Повний посібник з налаштування та мережі",
+  "common.backingUp": "Копіювання…",
+  "common.restoring": "Відновлення…",
+  "common.done": "Готово",
+  "common.loadingBackups": "Завантаження резервних копій…",
+  "common.saving": "Збереження…",
 };
 
 export default uk;

@@ -53,7 +53,7 @@ export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
               className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
               style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
             />
-            Backing up…
+            {t("common.backingUp")}
           </>
         ) : (
           t("containers.backupNow")
@@ -62,7 +62,7 @@ export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
 
       {state.phase === "success" && (
         <span className="text-xs text-[#6fdc8c]">
-          ✓ Done
+          ✓ {t("common.done")}
           {state.snapshotId && (
             <span className="font-mono ml-1 text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}

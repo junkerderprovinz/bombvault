@@ -86,7 +86,7 @@ const navBase =
 const navActive =
   "bg-accent text-accentContrast";
 const navInactive =
-  "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text";
+  "text-[var(--sidebar-text)] hover:bg-carbon-hover hover:text-carbon-text";
 const navDisabled =
   "text-carbon-textMuted cursor-default opacity-50";
 
@@ -244,11 +244,15 @@ export function Sidebar({ settings }: SidebarProps) {
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
       {/* Logo / brand — sized to echo the README banner */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-carbon-border">
-        <img
-          src="/logo.png"
-          alt="BombVault"
-          className="h-11 w-11 rounded-lg object-contain shrink-0"
-        />
+        {/* White tile so the dark vault logo stays legible on the dark sidebar
+            surface (and reads fine on the light theme too). */}
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-carbon-border">
+          <img
+            src="/logo.png"
+            alt="BombVault"
+            className="h-9 w-9 object-contain"
+          />
+        </div>
         <span className="text-carbon-text font-bold text-2xl tracking-tight leading-none">
           BombVault
         </span>

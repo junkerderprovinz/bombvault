@@ -278,6 +278,11 @@ const th: Partial<Translations> = {
   "vm.ssh.step3": "คลิกทดสอบการเชื่อมต่อ — เมื่อเป็นสีเขียวแล้ว เปิดใช้งาน VMs ภายใต้โดเมน",
   "vm.ssh.copyCmd": "คัดลอกคำสั่ง",
   "vm.ssh.guide": "คู่มือการตั้งค่าและเครือข่ายฉบับเต็ม",
+  "common.backingUp": "กำลังสำรองข้อมูล…",
+  "common.restoring": "กำลังกู้คืน…",
+  "common.done": "เสร็จสิ้น",
+  "common.loadingBackups": "กำลังโหลดข้อมูลสำรอง…",
+  "common.saving": "กำลังบันทึก…",
 };
 
 export default th;

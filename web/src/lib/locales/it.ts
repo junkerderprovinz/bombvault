@@ -278,6 +278,11 @@ const it: Partial<Translations> = {
   "vm.ssh.step3": "Clicca su Prova connessione — quando è verde, abilita le VM sotto Domini.",
   "vm.ssh.copyCmd": "Copia comando",
   "vm.ssh.guide": "Guida completa a configurazione e rete",
+  "common.backingUp": "Backup in corso…",
+  "common.restoring": "Ripristino…",
+  "common.done": "Fatto",
+  "common.loadingBackups": "Caricamento backup…",
+  "common.saving": "Salvataggio…",
 };
 
 export default it;

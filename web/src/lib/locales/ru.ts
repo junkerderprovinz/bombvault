@@ -273,6 +273,11 @@ const ru: Partial<Translations> = {
   "vm.ssh.step3": "Нажмите Проверить соединение — как только станет зелёным, включите VMs в Доменах.",
   "vm.ssh.copyCmd": "Копировать команду",
   "vm.ssh.guide": "Полное руководство по настройке и сети",
+  "common.backingUp": "Копирование…",
+  "common.restoring": "Восстановление…",
+  "common.done": "Готово",
+  "common.loadingBackups": "Загрузка резервных копий…",
+  "common.saving": "Сохранение…",
 };
 
 export default ru;

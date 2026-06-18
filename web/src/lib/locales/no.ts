@@ -278,6 +278,11 @@ const no: Partial<Translations> = {
   "vm.ssh.step3": "Klikk på Test tilkobling — når den er grønn, aktiver VM-er under Domener.",
   "vm.ssh.copyCmd": "Kopier kommando",
   "vm.ssh.guide": "Fullstendig oppsett- og nettverksveiledning",
+  "common.backingUp": "Sikkerhetskopierer…",
+  "common.restoring": "Gjenoppretter…",
+  "common.done": "Ferdig",
+  "common.loadingBackups": "Laster sikkerhetskopier…",
+  "common.saving": "Lagrer…",
 };
 
 export default no;

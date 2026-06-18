@@ -251,7 +251,7 @@ function VMBackupButton({
               className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
               style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
             />
-            Backing up…
+            {t("common.backingUp")}
           </>
         ) : (
           t("containers.backupNow")
@@ -259,7 +259,7 @@ function VMBackupButton({
       </button>
       {state.phase === "success" && (
         <span className="text-xs text-[#6fdc8c]">
-          ✓ Done
+          ✓ {t("common.done")}
           {state.phase === "success" && state.snapshotId && (
             <span className="font-mono ml-1 text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
@@ -351,7 +351,7 @@ function VMSnapshotRow({
                 className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
                 style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
               />
-              Restoring…
+              {t("common.restoring")}
             </>
           ) : (
             t("snapshots.restore")
@@ -418,7 +418,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
       {open && (
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
           {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">Loading backups…</p>
+            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
           {error && (
             <p className="py-3 text-xs text-[#ff8389]">{error}</p>

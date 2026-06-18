@@ -215,7 +215,7 @@ function SnapshotRow({
                 className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
                 style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
               />
-              Restoring…
+              {t("common.restoring")}
             </>
           ) : (
             t("snapshots.restore")
@@ -293,7 +293,7 @@ export function RestorePanel({ name, t }: RestorePanelProps) {
       {open && (
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
           {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">Loading backups…</p>
+            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
           {error && (
             <p className="py-3 text-xs text-[#ff8389]">{error}</p>

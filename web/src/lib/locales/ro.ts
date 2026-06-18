@@ -278,6 +278,11 @@ const ro: Partial<Translations> = {
   "vm.ssh.step3": "Faceți clic pe Testează conexiunea — odată ce e verde, activați VM-urile sub Domenii.",
   "vm.ssh.copyCmd": "Copiază comanda",
   "vm.ssh.guide": "Ghid complet de configurare și rețea",
+  "common.backingUp": "Se copiază…",
+  "common.restoring": "Se restaurează…",
+  "common.done": "Gata",
+  "common.loadingBackups": "Se încarcă copiile…",
+  "common.saving": "Se salvează…",
 };
 
 export default ro;

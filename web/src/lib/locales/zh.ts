@@ -270,6 +270,11 @@ const zh: Partial<Translations> = {
   "vm.ssh.step3": "点击「测试连接」——变绿后，在「域」下启用 VM。",
   "vm.ssh.copyCmd": "复制命令",
   "vm.ssh.guide": "完整的设置与网络指南",
+  "common.backingUp": "备份中…",
+  "common.restoring": "恢复中…",
+  "common.done": "完成",
+  "common.loadingBackups": "正在加载备份…",
+  "common.saving": "保存中…",
 };
 
 export default zh;

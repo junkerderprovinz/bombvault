@@ -270,6 +270,11 @@ const ko: Partial<Translations> = {
   "vm.ssh.step3": "연결 테스트를 클릭하고, 녹색이 되면 도메인에서 VM을 활성화하세요.",
   "vm.ssh.copyCmd": "명령 복사",
   "vm.ssh.guide": "전체 설정 및 네트워크 가이드",
+  "common.backingUp": "백업 중…",
+  "common.restoring": "복원 중…",
+  "common.done": "완료",
+  "common.loadingBackups": "백업 불러오는 중…",
+  "common.saving": "저장 중…",
 };
 
 export default ko;

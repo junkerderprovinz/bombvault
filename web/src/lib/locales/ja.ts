@@ -270,6 +270,11 @@ const ja: Partial<Translations> = {
   "vm.ssh.step3": "「接続をテスト」をクリックし、緑になったらドメインで VM を有効にしてください。",
   "vm.ssh.copyCmd": "コマンドをコピー",
   "vm.ssh.guide": "完全なセットアップとネットワークガイド",
+  "common.backingUp": "バックアップ中…",
+  "common.restoring": "復元中…",
+  "common.done": "完了",
+  "common.loadingBackups": "バックアップを読み込み中…",
+  "common.saving": "保存中…",
 };
 
 export default ja;
