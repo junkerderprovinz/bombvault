@@ -118,11 +118,18 @@ type BackupDeps struct {
 	SnapshotTemplatesDir string
 	// FlashTemplatesDir is where the live Unraid templates are read from.
 	FlashTemplatesDir string
+	// WasRunning is the container's run state at backup time. When false the
+	// container is already stopped, so the backup neither stops nor starts it
+	// (and skips the hooks, which need a running container) — a stopped container
+	// must stay stopped. When true it is stopped for a consistent backup and
+	// restarted afterwards.
+	WasRunning bool
 	// PreHook / PostHook are optional shell commands run inside the container via
 	// `sh -c`. PreHook runs while the container is still up (before stop) so a DB
 	// dump can be captured INTO appdata and included in the backup; a PreHook
 	// failure aborts the backup (no inconsistent snapshot). PostHook runs after
 	// the container is back up; its failure is logged but never fails the backup.
+	// Hooks only run when WasRunning (you cannot exec in a stopped container).
 	PreHook  string
 	PostHook string
 
@@ -225,7 +232,8 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	// Pre-backup hook runs while the container is still UP (before stop), so a DB
 	// dump etc. lands in appdata and is included below. A failure aborts the
 	// backup — we never store a snapshot the hook was meant to make consistent.
-	if d.PreHook != "" {
+	// Skipped when the container is already stopped (cannot exec in it).
+	if d.WasRunning && d.PreHook != "" {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PreHook}); hookErr != nil {
 			e := fmt.Errorf("backup: pre-hook: %w", hookErr)
 			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
@@ -246,16 +254,20 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	)
 
 	func() {
-		// Always restart, even if anything below throws.
-		defer func() {
-			if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil && backupErr == nil {
-				backupErr = fmt.Errorf("backup: restart container: %w", startErr)
-			}
-		}()
+		// Only touch the container's lifecycle if it was running. A stopped
+		// container is backed up in place and left stopped — never started.
+		if d.WasRunning {
+			// Always restart it afterwards, even if anything below throws.
+			defer func() {
+				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil && backupErr == nil {
+					backupErr = fmt.Errorf("backup: restart container: %w", startErr)
+				}
+			}()
 
-		if backupErr = d.Docker.Stop(ctx, d.ContainerRef, stopTimeout); backupErr != nil {
-			backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
-			return
+			if backupErr = d.Docker.Stop(ctx, d.ContainerRef, stopTimeout); backupErr != nil {
+				backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
+				return
+			}
 		}
 
 		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, d.AppdataPaths, tags)
@@ -293,8 +305,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	}
 
 	// Post-backup hook runs with the container back up. Best-effort: a failure is
-	// logged but never fails a backup that already succeeded.
-	if d.PostHook != "" {
+	// logged but never fails a backup that already succeeded. Skipped when the
+	// container was not running (nothing to exec into).
+	if d.WasRunning && d.PostHook != "" {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PostHook}); hookErr != nil {
 			log.Printf("backup: post-hook failed (backup is still valid): %v", hookErr)
 		}

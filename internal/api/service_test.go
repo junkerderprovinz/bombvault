@@ -107,8 +107,9 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	// A container whose mount source is under <root>/appdata/plex.
 	appdata := root + "/appdata/plex"
 	d := &fakeServiceDocker{inspect: model.Inspect{
-		Name:  "/plex",
-		Image: "plex:latest",
+		Name:    "/plex",
+		Image:   "plex:latest",
+		Running: true,
 		Mounts: []model.Mount{
 			{Type: "bind", Source: appdata, Destination: "/config"},
 			{Type: "bind", Source: "/etc/localtime", Destination: "/etc/localtime"}, // outside root → excluded

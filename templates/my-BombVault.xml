@@ -44,7 +44,7 @@
     Target="HTTP_ONLY"
     Default="false|true"
     Mode=""
-    Description="Serve plain HTTP instead of HTTPS — only for use behind a TLS-terminating reverse proxy. false = HTTPS (recommended); true = plain HTTP on the HTTP port above."
+    Description="Serve plain HTTP instead of HTTPS — only for use behind a TLS-terminating reverse proxy. false = HTTPS (recommended); true = plain HTTP on the HTTP port above. NOTE: when true, the WebUI link still points to HTTPS — open http://[IP]:[PORT:3000]/ instead (or set the container's WebUI to it)."
     Type="Variable"
     Display="always"
     Required="false"

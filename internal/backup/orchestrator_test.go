@@ -207,7 +207,8 @@ func TestBackupHooksOrderingAndPreHookAbort(t *testing.T) {
 		_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
 			ContainerRef: "plex", ContainerName: "Plex", RepoPath: "/repo",
 			AppdataPaths: []string{"/host/user/appdata/plex"}, TargetID: "t1",
-			PreHook: "echo pre", PostHook: "echo post",
+			WasRunning: true,
+			PreHook:    "echo pre", PostHook: "echo post",
 			Docker: d, Restic: r, Templates: &fakeTemplates{}, Runs: &fakeRuns{},
 		})
 		if err != nil {
@@ -239,7 +240,8 @@ func TestBackupHooksOrderingAndPreHookAbort(t *testing.T) {
 		_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
 			ContainerRef: "plex", ContainerName: "Plex", RepoPath: "/repo",
 			AppdataPaths: []string{"/host/user/appdata/plex"}, TargetID: "t1",
-			PreHook: "false",
+			WasRunning: true,
+			PreHook:    "false",
 			Docker:  d, Restic: r, Templates: &fakeTemplates{}, Runs: runs,
 		})
 		if err == nil {
@@ -257,6 +259,46 @@ func TestBackupHooksOrderingAndPreHookAbort(t *testing.T) {
 	})
 }
 
+func TestBackupStoppedContainerStaysStopped(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef: "plex", ContainerName: "Plex", RepoPath: "/repo",
+		AppdataPaths: []string{"/host/user/appdata/plex"}, TargetID: "t1",
+		WasRunning: false, // already stopped
+		Docker:     d, Restic: r, Templates: &fakeTemplates{}, Runs: &fakeRuns{},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if contains(d.log, "stop:plex") {
+		t.Fatalf("a stopped container must NOT be stopped: %v", d.log)
+	}
+	if d.started {
+		t.Fatalf("a stopped container must NOT be started by a backup: %v", d.log)
+	}
+	if len(r.log) == 0 {
+		t.Fatalf("backup must still run on a stopped container: %v", r.log)
+	}
+}
+
+func TestBackupRunningContainerIsRestarted(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef: "plex", ContainerName: "Plex", RepoPath: "/repo",
+		AppdataPaths: []string{"/p"}, TargetID: "t1",
+		WasRunning: true,
+		Docker:     d, Restic: r, Templates: &fakeTemplates{}, Runs: &fakeRuns{},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !contains(d.log, "stop:plex") || !d.started {
+		t.Fatalf("a running container must be stopped then restarted: %v", d.log)
+	}
+}
+
 func TestBackupHappyPath(t *testing.T) {
 	d := &fakeDocker{}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
@@ -270,6 +312,7 @@ func TestBackupHappyPath(t *testing.T) {
 		AppdataPaths:         []string{"/host/user/appdata/plex"},
 		StopTimeout:          30 * time.Second,
 		TargetID:             "target-1",
+		WasRunning:           true,
 		SnapshotTemplatesDir: "/data/templates",
 		FlashTemplatesDir:    "/boot/templates",
 		Docker:               d,
@@ -317,6 +360,7 @@ func TestBackupAlwaysStarts(t *testing.T) {
 		RepoPath:      "/repo",
 		AppdataPaths:  []string{"/p"},
 		TargetID:      "target-1",
+		WasRunning:    true,
 		Docker:        d,
 		Restic:        r,
 		Templates:     tpl,
@@ -345,6 +389,7 @@ func TestBackupNoTemplateWriteWhenAbsent(t *testing.T) {
 		RepoPath:      "/repo",
 		AppdataPaths:  []string{"/p"},
 		TargetID:      "t",
+		WasRunning:    true,
 		Docker:        d,
 		Restic:        r,
 		Templates:     tpl,
@@ -702,6 +747,7 @@ func TestBackupAlwaysStartsOnStopFailure(t *testing.T) {
 		RepoPath:      "/repo",
 		AppdataPaths:  []string{"/p"},
 		TargetID:      "target-1",
+		WasRunning:    true,
 		Docker:        d,
 		Restic:        r,
 		Templates:     tpl,
