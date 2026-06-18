@@ -84,6 +84,25 @@ func (c *Conn) sshArgs() []string {
 	}
 }
 
+// shellQuote single-quotes s so it survives the REMOTE shell. OpenSSH joins the
+// remote command args into one string that the remote `$SHELL -c` re-splits, so
+// an unquoted path with a space — e.g. the NVRAM file of a VM named
+// "Windows 11" (…/Windows 11_VARS.fd) — would break into two args. Single quotes
+// are literal in sh; an embedded ' is closed, escaped, and reopened.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// sshExec builds the full ssh argv: the connection options, the "--" end-of-
+// options marker, then the remote command with every token shell-quoted.
+func (c *Conn) sshExec(remote ...string) []string {
+	full := append(c.sshArgs(), "--")
+	for _, a := range remote {
+		full = append(full, shellQuote(a))
+	}
+	return full
+}
+
 // WriteSSHConfig writes ~/.ssh/config so libvirt's qemu+ssh transport — which
 // uses the EXTERNAL ssh binary and ignores the URI's keyfile/known_hosts/
 // known_hosts_verify params — still picks up our key, our known_hosts, and an
@@ -124,8 +143,7 @@ func (c *Conn) EnsureKnownHost(ctx context.Context) error {
 
 // Run executes a command on the host over SSH and returns trimmed stdout.
 func (c *Conn) Run(ctx context.Context, args ...string) (string, error) {
-	full := append(c.sshArgs(), append([]string{"--"}, args...)...)
-	out, err := exec.CommandContext(ctx, "ssh", full...).Output() //nolint:gosec // argv-separated; host/user from config
+	out, err := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...).Output() //nolint:gosec // remote args shell-quoted; host/user from config
 	if err != nil {
 		return "", fmt.Errorf("sshconn: run %q: %w", args[0], err)
 	}
@@ -134,8 +152,7 @@ func (c *Conn) Run(ctx context.Context, args ...string) (string, error) {
 
 // ReadFile returns the bytes of a file on the host (used for NVRAM).
 func (c *Conn) ReadFile(ctx context.Context, path string) ([]byte, error) {
-	full := append(c.sshArgs(), "--", "cat", path)
-	out, err := exec.CommandContext(ctx, "ssh", full...).Output() //nolint:gosec // argv-separated
+	out, err := exec.CommandContext(ctx, "ssh", c.sshExec("cat", path)...).Output() //nolint:gosec // remote args shell-quoted
 	if err != nil {
 		return nil, fmt.Errorf("sshconn: read %q: %w", filepath.Base(path), err)
 	}
@@ -143,13 +160,12 @@ func (c *Conn) ReadFile(ctx context.Context, path string) ([]byte, error) {
 }
 
 // WriteFile writes data to a file on the host (used to restore NVRAM) by piping
-// it to `tee <path>` over SSH. tee takes the path as a separate argv argument —
-// no remote shell, so the path can never be interpreted (defence even though
-// nvram paths come from libvirt, not the user). The nvram directory already
-// exists on the host (libvirt owns it), so no mkdir is needed.
+// it to `tee <path>` over SSH. The path is shell-quoted (sshExec) so it survives
+// the remote shell even with spaces (e.g. an NVRAM file from a VM named
+// "Windows 11"). The nvram directory already exists on the host (libvirt owns
+// it), so no mkdir is needed.
 func (c *Conn) WriteFile(ctx context.Context, path string, data []byte) error {
-	full := append(c.sshArgs(), "--", "tee", path)
-	cmd := exec.CommandContext(ctx, "ssh", full...) //nolint:gosec // argv-separated; no shell
+	cmd := exec.CommandContext(ctx, "ssh", c.sshExec("tee", path)...) //nolint:gosec // remote args shell-quoted
 	cmd.Stdin = bytes.NewReader(data)
 	var stderr strings.Builder
 	cmd.Stderr = &stderr
