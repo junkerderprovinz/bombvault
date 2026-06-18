@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Ebene_2" data-name="Ebene 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 709.33 151.33">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: Arial-BoldMT, Arial;
+        font-size: 50px;
+        font-weight: 700;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #fff;
+      }
+
+      .cls-3 {
+        fill: #ea5a30;
+      }
+    </style>
+  </defs>
+  <g id="buttons">
+    <g id="unraid">
+      <rect class="cls-3" width="709.33" height="151.33" rx="20.78" ry="20.78"/>
+      <text class="cls-1" transform="translate(192.13 95.94)"><tspan x="0" y="0">Install on Unraid</tspan></text>
+      <g>
+        <rect class="cls-2" x="65.94" y="35.67" width="14.11" height="80" rx="2.83" ry="2.83"/>
+        <rect class="cls-2" x="93.21" y="35.67" width="14.11" height="80" rx="2.83" ry="2.83"/>
+        <rect class="cls-2" x="120.49" y="35.67" width="14.11" height="80" rx="2.83" ry="2.83"/>
+      </g>
+    </g>
+  </g>
+</svg>
