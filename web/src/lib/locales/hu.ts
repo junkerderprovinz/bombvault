@@ -204,6 +204,80 @@ const hu: Partial<Translations> = {
   "state.crashed":      "Összeomlott",
   "state.pmsuspended":  "Felfüggesztve",
   "state.notInstalled": "Nincs telepítve",
+
+  // Backups — files
+  "snapshots.files": "Fájlok",
+
+  // File-level restore
+  "files.restore": "Visszaállítás",
+  "files.restored": "Visszaállítva",
+  "files.restoreConfirm": "Visszaállítja ezt a fájlt az eredeti helyére? Felülírja az aktuális fájlt.",
+  "files.filterPlaceholder": "Fájlok szűrése…",
+  "files.none": "Nincs egyező fájl",
+  "files.loadFailed": "A fájlok betöltése sikertelen",
+  "files.more": "Finomítsa a szűrőt további fájlok megtekintéséhez.",
+
+  // Retention
+  "settings.retentionTitle": "Megőrzés",
+  "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
+  "settings.retentionLast": "Utolsók megtartása",
+  "settings.retentionDaily": "Napi megtartása",
+  "settings.retentionWeekly": "Heti megtartása",
+  "settings.retentionMonthly": "Havi megtartása",
+
+  // Off-site (rclone)
+  "rclone.title": "Külső helyszín (rclone)",
+  "rclone.hint": "Illesszen be egy rclone-konfigurációt a felhőbe mentéshez (Backblaze B2, S3, Google Drive, …). Titkosítva tárolódik. Az SMB/NFS nem igényel rclone-t: csatolja a megosztást az Unraidben, és állítson rá egy mentési útvonalat.",
+  "rclone.configured": "Beállított távoli helyek",
+  "rclone.pathHint": "Ezután állítson egy mentési útvonalat „rclone:<remote>:<bucket>/path” értékre, hogy az adott tartományt külső helyre küldje.",
+  "rclone.save": "Konfiguráció mentése",
+
+  // Integrity (restic check)
+  "integrity.title": "Integritás",
+  "integrity.hint": "Futtassa a restic check parancsot, hogy ellenőrizze egy adattár szerkezetének és metaadatainak épségét.",
+  "integrity.verify": "Ellenőrzés",
+  "integrity.checking": "Ellenőrzés…",
+  "integrity.ok": "✓ Ép",
+  "integrity.failed": "Az ellenőrzés sikertelen",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Mentési horgok",
+  "hooks.hint": "A parancsok a konténeren belül futnak (sh -c). A Pre a mentés előtt fut (pl. egy adatbázis kiírása az appdata-ba, hogy az is bekerüljön) — a hiba megszakítja a mentést. A Post a konténer újraindulása után fut; annak hibáját csak naplózza.",
+  "hooks.pre": "Mentés előtti parancs",
+  "hooks.post": "Mentés utáni parancs",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash mentés",
+  "flash.subtitle": "Az Unraid USB flash (az egész /boot) mentése és visszaállítása.",
+  "flash.backupTitle": "A flash mentése",
+  "flash.backupHint": "Rögzíti a teljes USB flasht (/boot): Unraid OS, licenc, tömbkonfiguráció, megosztások, hálózat és bővítmény-konfiguráció.",
+  "flash.backupNow": "Flash mentése most",
+  "flash.backingUp": "Mentés…",
+  "flash.restoring": "Kibontás…",
+  "flash.restoreNote": "A visszaállítás egy pillanatképet egy mappába BONT KI (lent látható) — soha nem írja felül a futó /boot-ot. Másolja a helyreállított fájlokat egy friss USB-re a flash újraépítéséhez.",
+  "flash.restoredTo": "Kibontva ide:",
+  "flash.none": "Még nincs flash mentés — indítson egyet fent.",
+
+  // VM backup (SSH)
+  "vm.method": "Módszer",
+  "vm.method.graceful": "Szabályos (leállítás)",
+  "vm.method.live": "Élő pillanatkép",
+  "vm.ssh.title": "VM mentés SSH-n keresztül",
+  "vm.ssh.desc": "A VM mentés SSH-n keresztül éri el a libvirtet (csatolás nélkül). Engedélyezze ezt a kulcsot az Unraidben, majd tesztelje.",
+  "vm.ssh.host": "Hoszt",
+  "vm.ssh.publicKey": "Nyilvános kulcs — fűzze hozzá az Unraid /root/.ssh/authorized_keys fájljához",
+  "vm.ssh.copy": "Másolás",
+  "vm.ssh.copied": "Másolva",
+  "vm.ssh.test": "Kapcsolat tesztelése",
+  "vm.ssh.testing": "Tesztelés…",
+  "vm.ssh.testOk": "Csatlakozva — libvirt elérhető",
+  "vm.ssh.testFail": "A kapcsolat sikertelen",
+  "vm.ssh.setupTitle": "Beállítás (egyszeri)",
+  "vm.ssh.step1": "Másolja az alábbi parancsot, és futtassa az Unraid terminálban a kulcs engedélyezéséhez (túléli az újraindításokat).",
+  "vm.ssh.step2": "Állítsa a konténer „VM Backup: Host” változóját az Unraid szerver LAN IP-címére (pl. 192.168.x.x); egyszerű bridge hálózaton a host.docker.internal is működik.",
+  "vm.ssh.step3": "Kattintson a Kapcsolat tesztelése gombra — ha zöld, engedélyezze a VM-eket a Tartományok alatt.",
+  "vm.ssh.copyCmd": "Parancs másolása",
+  "vm.ssh.guide": "Teljes beállítási és hálózati útmutató",
 };
 
 export default hu;

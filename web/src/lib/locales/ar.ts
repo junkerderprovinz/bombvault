@@ -204,6 +204,80 @@ const ar: Partial<Translations> = {
   "state.crashed":      "تعطّل",
   "state.pmsuspended":  "معلَّق",
   "state.notInstalled": "غير مثبّت",
+
+  // Backups — files
+  "snapshots.files": "الملفات",
+
+  // File-level restore
+  "files.restore": "استعادة",
+  "files.restored": "تمت الاستعادة",
+  "files.restoreConfirm": "استعادة هذا الملف إلى موقعه الأصلي؟ سيُستبدل الملف الحالي.",
+  "files.filterPlaceholder": "تصفية الملفات…",
+  "files.none": "لا توجد ملفات مطابقة",
+  "files.loadFailed": "فشل تحميل الملفات",
+  "files.more": "نقّح التصفية لرؤية المزيد من الملفات.",
+
+  // Retention
+  "settings.retentionTitle": "الاحتفاظ",
+  "settings.retentionHint": "عدد النسخ الاحتياطية المحتفظ بها لكل عنصر. بعد كل نسخة احتياطية، يقلّم restic اللقطات الأقدم وفق هذه السياسة. الكل صفر = الاحتفاظ بكل شيء (معطّل).",
+  "settings.retentionLast": "الاحتفاظ بالأخيرة",
+  "settings.retentionDaily": "الاحتفاظ اليومي",
+  "settings.retentionWeekly": "الاحتفاظ الأسبوعي",
+  "settings.retentionMonthly": "الاحتفاظ الشهري",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "ألصق إعداد rclone للنسخ الاحتياطي إلى السحابة (Backblaze B2 وS3 وGoogle Drive …). يُخزَّن مشفَّراً. لا يحتاج SMB/NFS إلى rclone: ركِّب المشاركة على Unraid واضبط مسار نسخ احتياطي عليها.",
+  "rclone.configured": "الوجهات البعيدة المُعدَّة",
+  "rclone.pathHint": "ثم اضبط مسار نسخ احتياطي على «rclone:<remote>:<bucket>/path» لإرسال هذا النطاق خارج الموقع.",
+  "rclone.save": "حفظ الإعداد",
+
+  // Integrity (restic check)
+  "integrity.title": "السلامة",
+  "integrity.hint": "شغّل restic check للتحقق من سلامة بنية المستودع وبياناته الوصفية.",
+  "integrity.verify": "تحقّق",
+  "integrity.checking": "جارٍ الفحص…",
+  "integrity.ok": "✓ سليم",
+  "integrity.failed": "فشل الفحص",
+
+  // Pre/post-backup hooks
+  "hooks.title": "خطافات النسخ الاحتياطي",
+  "hooks.hint": "تُنفَّذ الأوامر داخل الـ container (sh -c). يُنفَّذ Pre قبل النسخ الاحتياطي (مثلاً تفريغ قاعدة بيانات إلى appdata لتُضمَّن) — فشله يُلغي النسخ الاحتياطي. يُنفَّذ Post بعد عودة الـ container للعمل؛ فشله يُسجَّل فقط.",
+  "hooks.pre": "أمر ما قبل النسخ الاحتياطي",
+  "hooks.post": "أمر ما بعد النسخ الاحتياطي",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "نسخ Flash الاحتياطي",
+  "flash.subtitle": "نسخ واستعادة فلاش USB الخاص بـ Unraid (كامل ‎/boot).",
+  "flash.backupTitle": "نسخ الفلاش احتياطياً",
+  "flash.backupHint": "يلتقط فلاش USB بالكامل (‎/boot): نظام Unraid والترخيص وإعداد المصفوفة والمشاركات وإعداد الشبكة والإضافات.",
+  "flash.backupNow": "نسخ الفلاش احتياطياً الآن",
+  "flash.backingUp": "جارٍ النسخ الاحتياطي…",
+  "flash.restoring": "جارٍ الاستخراج…",
+  "flash.restoreNote": "تَستخرج الاستعادة لقطة إلى مجلد (يظهر أدناه) — لا تستبدل أبداً ‎/boot قيد التشغيل. انسخ الملفات المستعادة إلى فلاش USB جديد لإعادة بناء الفلاش.",
+  "flash.restoredTo": "استُخرج إلى:",
+  "flash.none": "لا توجد نسخ احتياطية للفلاش بعد — شغّل نسخاً احتياطياً أعلاه.",
+
+  // VM backup (SSH)
+  "vm.method": "الطريقة",
+  "vm.method.graceful": "آمنة (إيقاف تشغيل)",
+  "vm.method.live": "لقطة حية",
+  "vm.ssh.title": "نسخ VM احتياطياً عبر SSH",
+  "vm.ssh.desc": "يصل نسخ VM الاحتياطي إلى libvirt عبر SSH (دون تركيب). فوّض هذا المفتاح على Unraid ثم اختبر.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "المفتاح العام — أضِفه إلى ‎/root/.ssh/authorized_keys في Unraid",
+  "vm.ssh.copy": "نسخ",
+  "vm.ssh.copied": "تم النسخ",
+  "vm.ssh.test": "اختبار الاتصال",
+  "vm.ssh.testing": "جارٍ الاختبار…",
+  "vm.ssh.testOk": "متصل — libvirt متاح",
+  "vm.ssh.testFail": "فشل الاتصال",
+  "vm.ssh.setupTitle": "الإعداد (لمرة واحدة)",
+  "vm.ssh.step1": "انسخ الأمر أدناه ونفّذه في طرفية Unraid لتفويض هذا المفتاح (يبقى بعد إعادة التشغيل).",
+  "vm.ssh.step2": "اضبط متغيّر الـ container «VM Backup: Host» على عنوان LAN IP الخاص بـ Unraid (مثلاً 192.168.x.x)؛ مع شبكة الجسر البسيطة يعمل host.docker.internal أيضاً.",
+  "vm.ssh.step3": "انقر على اختبار الاتصال — عندما يصبح أخضر، فعّل VMs ضمن النطاقات.",
+  "vm.ssh.copyCmd": "نسخ الأمر",
+  "vm.ssh.guide": "دليل الإعداد والشبكة الكامل",
 };
 
 export default ar;

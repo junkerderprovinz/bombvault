@@ -204,6 +204,78 @@ const cs: Partial<Translations> = {
   "state.crashed":      "Havarováno",
   "state.pmsuspended":  "Pozastaveno",
   "state.notInstalled": "Není nainstalováno",
+
+  // Files
+  "snapshots.files": "Soubory",
+  "files.restore": "Obnovit",
+  "files.restored": "Obnoveno",
+  "files.restoreConfirm": "Obnovit tento soubor do původního umístění? Přepíše stávající soubor.",
+  "files.filterPlaceholder": "Filtrovat soubory…",
+  "files.none": "Žádné odpovídající soubory",
+  "files.loadFailed": "Nepodařilo se načíst soubory",
+  "files.more": "Upřesněte filtr pro zobrazení dalších souborů.",
+
+  // Retention
+  "settings.retentionTitle": "Uchovávání",
+  "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
+  "settings.retentionLast": "Ponechat poslední",
+  "settings.retentionDaily": "Ponechat denní",
+  "settings.retentionWeekly": "Ponechat týdenní",
+  "settings.retentionMonthly": "Ponechat měsíční",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Vložte konfiguraci rclone pro zálohování do cloudu (Backblaze B2, S3, Google Drive, …). Ukládá se zašifrovaně. SMB/NFS rclone nepotřebují: připojte sdílenou složku v Unraidu a nastavte na ni Zálohovací cestu.",
+  "rclone.configured": "Nakonfigurované vzdálené úložiště",
+  "rclone.pathHint": "Poté nastavte Zálohovací cestu na „rclone:<remote>:<bucket>/path“, aby se tato doména posílala off-site.",
+  "rclone.save": "Uložit konfiguraci",
+
+  // Integrity (restic check)
+  "integrity.title": "Integrita",
+  "integrity.hint": "Spusťte restic check k ověření, že struktura a metadata repozitáře jsou neporušené.",
+  "integrity.verify": "Ověřit",
+  "integrity.checking": "Kontroluji…",
+  "integrity.ok": "✓ V pořádku",
+  "integrity.failed": "Kontrola selhala",
+
+  // Backup hooks
+  "hooks.title": "Zálohovací hooky",
+  "hooks.hint": "Příkazy běží uvnitř kontejneru (sh -c). Pre běží před zálohou (např. dump DB do appdata, aby byla zahrnuta) — selhání zruší zálohu. Post běží po opětovném spuštění kontejneru; jeho selhání se pouze zaznamená.",
+  "hooks.pre": "Příkaz před zálohou",
+  "hooks.post": "Příkaz po záloze",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Záloha Flash",
+  "flash.subtitle": "Zálohujte a obnovujte USB Flash Unraidu (celý /boot).",
+  "flash.backupTitle": "Zálohovat Flash",
+  "flash.backupHint": "Zachytí celý USB Flash (/boot): OS Unraid, licenci, konfiguraci pole, sdílené složky, síť a konfiguraci pluginů.",
+  "flash.backupNow": "Zálohovat Flash nyní",
+  "flash.backingUp": "Zálohuji…",
+  "flash.restoring": "Rozbaluji…",
+  "flash.restoreNote": "Obnova ROZBALÍ snímek do složky (zobrazené níže) — nikdy nepřepíše běžící /boot. Zkopírujte obnovené soubory na nový USB pro znovuvytvoření Flash.",
+  "flash.restoredTo": "Rozbaleno do:",
+  "flash.none": "Zatím žádné zálohy Flash — spusťte zálohu výše.",
+
+  // VM backup (SSH)
+  "vm.method": "Metoda",
+  "vm.method.graceful": "Graceful (vypnutí)",
+  "vm.method.live": "Živý snímek",
+  "vm.ssh.title": "Záloha VM přes SSH",
+  "vm.ssh.desc": "Záloha VM se připojuje k libvirt přes SSH (bez připojení). Autorizujte tento klíč v Unraidu, poté otestujte.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Veřejný klíč — připojte do Unraid /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Kopírovat",
+  "vm.ssh.copied": "Zkopírováno",
+  "vm.ssh.test": "Otestovat připojení",
+  "vm.ssh.testing": "Testuji…",
+  "vm.ssh.testOk": "Připojeno — libvirt dostupný",
+  "vm.ssh.testFail": "Připojení selhalo",
+  "vm.ssh.setupTitle": "Nastavení (jednorázové)",
+  "vm.ssh.step1": "Zkopírujte níže uvedený příkaz a spusťte jej v terminálu Unraid pro autorizaci tohoto klíče (přežije restarty).",
+  "vm.ssh.step2": "Nastavte proměnnou kontejneru „VM Backup: Host“ na LAN IP vašeho Unraidu (např. 192.168.x.x); u jednoduché bridge sítě funguje i host.docker.internal.",
+  "vm.ssh.step3": "Klikněte na Otestovat připojení — jakmile je zelené, povolte VMs v Doménách.",
+  "vm.ssh.copyCmd": "Kopírovat příkaz",
+  "vm.ssh.guide": "Kompletní průvodce nastavením a sítí",
 };
 
 export default cs;

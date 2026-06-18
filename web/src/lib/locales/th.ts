@@ -204,6 +204,80 @@ const th: Partial<Translations> = {
   "state.crashed":      "ขัดข้อง",
   "state.pmsuspended":  "ระงับแล้ว",
   "state.notInstalled": "ไม่ได้ติดตั้ง",
+
+  // Backups — files
+  "snapshots.files": "ไฟล์",
+
+  // File-level restore
+  "files.restore": "กู้คืน",
+  "files.restored": "กู้คืนแล้ว",
+  "files.restoreConfirm": "กู้คืนไฟล์นี้ไปยังตำแหน่งเดิม? ไฟล์ปัจจุบันจะถูกเขียนทับ",
+  "files.filterPlaceholder": "กรองไฟล์…",
+  "files.none": "ไม่มีไฟล์ที่ตรงกัน",
+  "files.loadFailed": "โหลดไฟล์ไม่สำเร็จ",
+  "files.more": "ปรับการกรองให้แคบลงเพื่อดูไฟล์เพิ่มเติม",
+
+  // Retention
+  "settings.retentionTitle": "การเก็บรักษา",
+  "settings.retentionHint": "จำนวนการสำรองข้อมูลที่เก็บไว้ต่อรายการ หลังการสำรองข้อมูลแต่ละครั้ง restic จะตัดสแนปช็อตเก่าตามนโยบายนี้ ทั้งหมดเป็น 0 = เก็บทุกอย่าง (ปิด)",
+  "settings.retentionLast": "เก็บล่าสุด",
+  "settings.retentionDaily": "เก็บรายวัน",
+  "settings.retentionWeekly": "เก็บรายสัปดาห์",
+  "settings.retentionMonthly": "เก็บรายเดือน",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "วาง rclone config เพื่อสำรองข้อมูลไปยังคลาวด์ (Backblaze B2, S3, Google Drive, …) จัดเก็บแบบเข้ารหัส SMB/NFS ไม่ต้องใช้ rclone: เมานต์แชร์บน Unraid แล้วตั้งพาธการสำรองข้อมูลไปยังแชร์นั้น",
+  "rclone.configured": "รีโมตที่กำหนดค่าแล้ว",
+  "rclone.pathHint": "จากนั้นตั้งพาธการสำรองข้อมูลเป็น «rclone:<remote>:<bucket>/path» เพื่อส่งโดเมนนี้ไปนอกสถานที่",
+  "rclone.save": "บันทึกการตั้งค่า",
+
+  // Integrity (restic check)
+  "integrity.title": "ความสมบูรณ์",
+  "integrity.hint": "เรียกใช้ restic check เพื่อยืนยันว่าโครงสร้างและเมตาดาตาของรีพอสิทอรีสมบูรณ์",
+  "integrity.verify": "ยืนยัน",
+  "integrity.checking": "กำลังตรวจสอบ…",
+  "integrity.ok": "✓ สมบูรณ์",
+  "integrity.failed": "การตรวจสอบล้มเหลว",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Hooks การสำรองข้อมูล",
+  "hooks.hint": "คำสั่งทำงานภายใน container (sh -c) Pre ทำงานก่อนการสำรองข้อมูล (เช่น dump DB ลง appdata เพื่อให้รวมอยู่ด้วย) — หากล้มเหลวจะยกเลิกการสำรองข้อมูล Post ทำงานหลังจาก container กลับมาทำงาน หากล้มเหลวจะบันทึกไว้เท่านั้น",
+  "hooks.pre": "คำสั่งก่อนการสำรองข้อมูล",
+  "hooks.post": "คำสั่งหลังการสำรองข้อมูล",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "การสำรองข้อมูล Flash",
+  "flash.subtitle": "สำรองและกู้คืนแฟลช USB ของ Unraid (ทั้ง ‎/boot)",
+  "flash.backupTitle": "สำรองข้อมูลแฟลช",
+  "flash.backupHint": "บันทึกแฟลช USB ทั้งหมด (‎/boot): ระบบปฏิบัติการ Unraid, ลิขสิทธิ์, การตั้งค่าอาร์เรย์, แชร์, เครือข่ายและการตั้งค่าปลั๊กอิน",
+  "flash.backupNow": "สำรองข้อมูลแฟลชเดี๋ยวนี้",
+  "flash.backingUp": "กำลังสำรองข้อมูล…",
+  "flash.restoring": "กำลังแตกไฟล์…",
+  "flash.restoreNote": "การกู้คืนจะแตกสแนปช็อตไปยังโฟลเดอร์ (แสดงด้านล่าง) — ไม่เคยเขียนทับ ‎/boot ที่กำลังทำงาน คัดลอกไฟล์ที่กู้คืนลงแฟลช USB ใหม่เพื่อสร้างแฟลชของคุณขึ้นใหม่",
+  "flash.restoredTo": "แตกไฟล์ไปยัง:",
+  "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช — เรียกใช้การสำรองข้อมูลด้านบน",
+
+  // VM backup (SSH)
+  "vm.method": "วิธีการ",
+  "vm.method.graceful": "แบบราบรื่น (ปิดเครื่อง)",
+  "vm.method.live": "สแนปช็อตขณะทำงาน",
+  "vm.ssh.title": "การสำรองข้อมูล VM ผ่าน SSH",
+  "vm.ssh.desc": "การสำรองข้อมูล VM เข้าถึง libvirt ผ่าน SSH (ไม่ต้องเมานต์) อนุญาตคีย์นี้บน Unraid แล้วทดสอบ",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "คีย์สาธารณะ — เพิ่มต่อท้าย ‎/root/.ssh/authorized_keys ของ Unraid",
+  "vm.ssh.copy": "คัดลอก",
+  "vm.ssh.copied": "คัดลอกแล้ว",
+  "vm.ssh.test": "ทดสอบการเชื่อมต่อ",
+  "vm.ssh.testing": "กำลังทดสอบ…",
+  "vm.ssh.testOk": "เชื่อมต่อแล้ว — เข้าถึง libvirt ได้",
+  "vm.ssh.testFail": "การเชื่อมต่อล้มเหลว",
+  "vm.ssh.setupTitle": "ตั้งค่า (ครั้งเดียว)",
+  "vm.ssh.step1": "คัดลอกคำสั่งด้านล่างแล้วเรียกใช้ในเทอร์มินัล Unraid เพื่ออนุญาตคีย์นี้ (คงอยู่หลังรีบูต)",
+  "vm.ssh.step2": "ตั้งตัวแปร «VM Backup: Host» ของ container เป็น LAN IP ของ Unraid (เช่น 192.168.x.x); บนเครือข่าย bridge แบบง่าย host.docker.internal ก็ใช้ได้",
+  "vm.ssh.step3": "คลิกทดสอบการเชื่อมต่อ — เมื่อเป็นสีเขียวแล้ว เปิดใช้งาน VMs ภายใต้โดเมน",
+  "vm.ssh.copyCmd": "คัดลอกคำสั่ง",
+  "vm.ssh.guide": "คู่มือการตั้งค่าและเครือข่ายฉบับเต็ม",
 };
 
 export default th;

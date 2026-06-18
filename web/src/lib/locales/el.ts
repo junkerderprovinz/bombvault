@@ -204,6 +204,80 @@ const el: Partial<Translations> = {
   "state.crashed":      "Κατέρρευσε",
   "state.pmsuspended":  "Σε αναστολή",
   "state.notInstalled": "Μη εγκατεστημένο",
+
+  // Backups — files
+  "snapshots.files": "Αρχεία",
+
+  // File-level restore
+  "files.restore": "Επαναφορά",
+  "files.restored": "Επαναφέρθηκε",
+  "files.restoreConfirm": "Επαναφορά αυτού του αρχείου στην αρχική του θέση; Αντικαθιστά το τρέχον αρχείο.",
+  "files.filterPlaceholder": "Φιλτράρισμα αρχείων…",
+  "files.none": "Δεν υπάρχουν αρχεία που να ταιριάζουν",
+  "files.loadFailed": "Αποτυχία φόρτωσης αρχείων",
+  "files.more": "Περιορίστε το φίλτρο για να δείτε περισσότερα αρχεία.",
+
+  // Retention
+  "settings.retentionTitle": "Διατήρηση",
+  "settings.retentionHint": "Πόσα αντίγραφα να διατηρούνται ανά στοιχείο. Μετά από κάθε αντίγραφο, το restic κλαδεύει παλαιότερα στιγμιότυπα βάσει αυτής της πολιτικής. Όλα μηδέν = διατήρηση όλων (ανενεργό).",
+  "settings.retentionLast": "Διατήρηση τελευταίων",
+  "settings.retentionDaily": "Διατήρηση ημερήσιων",
+  "settings.retentionWeekly": "Διατήρηση εβδομαδιαίων",
+  "settings.retentionMonthly": "Διατήρηση μηνιαίων",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Επικολλήστε μια διαμόρφωση rclone για αντίγραφα στο cloud (Backblaze B2, S3, Google Drive, …). Αποθηκεύεται κρυπτογραφημένη. SMB/NFS δεν χρειάζονται rclone: προσαρτήστε τον κοινόχρηστο πόρο στο Unraid και ορίστε μια διαδρομή αντιγράφων προς αυτόν.",
+  "rclone.configured": "Διαμορφωμένα remotes",
+  "rclone.pathHint": "Έπειτα ορίστε μια διαδρομή αντιγράφων σε «rclone:<remote>:<bucket>/path» για να στείλετε αυτόν τον τομέα εκτός τοποθεσίας.",
+  "rclone.save": "Αποθήκευση διαμόρφωσης",
+
+  // Integrity (restic check)
+  "integrity.title": "Ακεραιότητα",
+  "integrity.hint": "Εκτελέστε restic check για επαλήθευση ότι η δομή και τα μεταδεδομένα ενός αποθετηρίου είναι άθικτα.",
+  "integrity.verify": "Επαλήθευση",
+  "integrity.checking": "Έλεγχος…",
+  "integrity.ok": "✓ Υγιές",
+  "integrity.failed": "Ο έλεγχος απέτυχε",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Hooks αντιγράφων",
+  "hooks.hint": "Οι εντολές εκτελούνται μέσα στο container (sh -c). Το Pre εκτελείται πριν το αντίγραφο (π.χ. dump μιας DB στο appdata ώστε να συμπεριληφθεί) — μια αποτυχία ματαιώνει το αντίγραφο. Το Post εκτελείται αφού το container επανέλθει· η αποτυχία του μόνο καταγράφεται.",
+  "hooks.pre": "Εντολή πριν το αντίγραφο",
+  "hooks.post": "Εντολή μετά το αντίγραφο",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Αντίγραφο Flash",
+  "flash.subtitle": "Δημιουργία αντιγράφου και επαναφορά του USB flash του Unraid (ολόκληρο το /boot).",
+  "flash.backupTitle": "Αντίγραφο του flash",
+  "flash.backupHint": "Καταγράφει ολόκληρο το USB flash (/boot): λειτουργικό Unraid, άδεια, διαμόρφωση array, κοινόχρηστους πόρους, δίκτυο και διαμόρφωση plugin.",
+  "flash.backupNow": "Αντίγραφο flash τώρα",
+  "flash.backingUp": "Δημιουργία αντιγράφου…",
+  "flash.restoring": "Εξαγωγή…",
+  "flash.restoreNote": "Η επαναφορά ΕΞΑΓΕΙ ένα στιγμιότυπο σε φάκελο (φαίνεται παρακάτω) — δεν αντικαθιστά ποτέ το ενεργό /boot. Αντιγράψτε τα ανακτημένα αρχεία σε νέο USB για να ξαναχτίσετε το flash σας.",
+  "flash.restoredTo": "Εξήχθη σε:",
+  "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash — εκτελέστε ένα αντίγραφο παραπάνω.",
+
+  // VM backup (SSH)
+  "vm.method": "Μέθοδος",
+  "vm.method.graceful": "Ομαλή (τερματισμός)",
+  "vm.method.live": "Ζωντανό στιγμιότυπο",
+  "vm.ssh.title": "Αντίγραφο VM μέσω SSH",
+  "vm.ssh.desc": "Το αντίγραφο VM φτάνει στο libvirt μέσω SSH (χωρίς προσάρτηση). Εξουσιοδοτήστε αυτό το κλειδί στο Unraid, μετά δοκιμάστε.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Δημόσιο κλειδί — προσθέστε στο /root/.ssh/authorized_keys του Unraid",
+  "vm.ssh.copy": "Αντιγραφή",
+  "vm.ssh.copied": "Αντιγράφηκε",
+  "vm.ssh.test": "Δοκιμή σύνδεσης",
+  "vm.ssh.testing": "Δοκιμή…",
+  "vm.ssh.testOk": "Συνδέθηκε — το libvirt είναι προσβάσιμο",
+  "vm.ssh.testFail": "Η σύνδεση απέτυχε",
+  "vm.ssh.setupTitle": "Ρύθμιση (μία φορά)",
+  "vm.ssh.step1": "Αντιγράψτε την παρακάτω εντολή και εκτελέστε την στο τερματικό Unraid για να εξουσιοδοτήσετε αυτό το κλειδί (επιβιώνει των επανεκκινήσεων).",
+  "vm.ssh.step2": "Ορίστε τη μεταβλητή «VM Backup: Host» του container στη LAN IP του Unraid σας (π.χ. 192.168.x.x)· σε απλό bridge networking λειτουργεί και το host.docker.internal.",
+  "vm.ssh.step3": "Κάντε κλικ στη Δοκιμή σύνδεσης — μόλις γίνει πράσινη, ενεργοποιήστε τα VMs στους Τομείς.",
+  "vm.ssh.copyCmd": "Αντιγραφή εντολής",
+  "vm.ssh.guide": "Πλήρης οδηγός ρύθμισης & δικτύου",
 };
 
 export default el;

@@ -204,6 +204,80 @@ const tr: Partial<Translations> = {
   "state.crashed":      "Çöktü",
   "state.pmsuspended":  "Askıya alındı",
   "state.notInstalled": "Kurulu değil",
+
+  // Backups — files
+  "snapshots.files": "Dosyalar",
+
+  // File-level restore
+  "files.restore": "Geri yükle",
+  "files.restored": "Geri yüklendi",
+  "files.restoreConfirm": "Bu dosya orijinal konumuna geri yüklensin mi? Mevcut dosyanın üzerine yazar.",
+  "files.filterPlaceholder": "Dosyaları filtrele…",
+  "files.none": "Eşleşen dosya yok",
+  "files.loadFailed": "Dosyalar yüklenemedi",
+  "files.more": "Daha fazla dosya görmek için filtreyi daraltın.",
+
+  // Retention
+  "settings.retentionTitle": "Saklama",
+  "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
+  "settings.retentionLast": "Son yedekleri tut",
+  "settings.retentionDaily": "Günlük tut",
+  "settings.retentionWeekly": "Haftalık tut",
+  "settings.retentionMonthly": "Aylık tut",
+
+  // Off-site (rclone)
+  "rclone.title": "Dış konum (rclone)",
+  "rclone.hint": "Buluta yedeklemek için bir rclone yapılandırması yapıştırın (Backblaze B2, S3, Google Drive, …). Şifreli olarak saklanır. SMB/NFS rclone gerektirmez: paylaşımı Unraid'e bağlayın ve buna bir Yedekleme Yolu ayarlayın.",
+  "rclone.configured": "Yapılandırılmış uzak konumlar",
+  "rclone.pathHint": "Ardından o etki alanını dış konuma göndermek için bir Yedekleme Yolunu “rclone:<remote>:<bucket>/path” olarak ayarlayın.",
+  "rclone.save": "Yapılandırmayı kaydet",
+
+  // Integrity (restic check)
+  "integrity.title": "Bütünlük",
+  "integrity.hint": "Bir deponun yapısının ve meta verisinin sağlam olduğunu doğrulamak için restic check çalıştırın.",
+  "integrity.verify": "Doğrula",
+  "integrity.checking": "Denetleniyor…",
+  "integrity.ok": "✓ Sağlıklı",
+  "integrity.failed": "Denetim başarısız",
+
+  // Pre/post-backup hooks
+  "hooks.title": "Yedekleme kancaları",
+  "hooks.hint": "Komutlar konteynerin içinde çalışır (sh -c). Pre, yedeklemeden önce çalışır (örn. dahil edilmesi için bir veritabanını appdata'ya döker) — bir hata yedeklemeyi iptal eder. Post, konteyner tekrar açıldıktan sonra çalışır; hatası yalnızca günlüğe kaydedilir.",
+  "hooks.pre": "Yedekleme öncesi komut",
+  "hooks.post": "Yedekleme sonrası komut",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Flash Yedeği",
+  "flash.subtitle": "Unraid USB flash'ı (tüm /boot) yedekleyin ve geri yükleyin.",
+  "flash.backupTitle": "Flash'ı yedekle",
+  "flash.backupHint": "Tüm USB flash'ı (/boot) yakalar: Unraid işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması.",
+  "flash.backupNow": "Flash'ı şimdi yedekle",
+  "flash.backingUp": "Yedekleniyor…",
+  "flash.restoring": "Çıkarılıyor…",
+  "flash.restoreNote": "Geri yükleme, bir anlık görüntüyü bir klasöre ÇIKARIR (aşağıda gösterilir) — çalışan /boot'un üzerine asla yazmaz. Flash'ınızı yeniden oluşturmak için kurtarılan dosyaları yeni bir USB'ye kopyalayın.",
+  "flash.restoredTo": "Şuraya çıkarıldı:",
+  "flash.none": "Henüz flash yedeği yok — yukarıdan bir yedekleme çalıştırın.",
+
+  // VM backup (SSH)
+  "vm.method": "Yöntem",
+  "vm.method.graceful": "Düzgün (kapatma)",
+  "vm.method.live": "Canlı anlık görüntü",
+  "vm.ssh.title": "SSH üzerinden VM Yedeği",
+  "vm.ssh.desc": "VM yedeği libvirt'e SSH üzerinden ulaşır (bağlama yok). Bu anahtarı Unraid'de yetkilendirin, ardından test edin.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Genel anahtar — Unraid /root/.ssh/authorized_keys dosyasına ekleyin",
+  "vm.ssh.copy": "Kopyala",
+  "vm.ssh.copied": "Kopyalandı",
+  "vm.ssh.test": "Bağlantıyı test et",
+  "vm.ssh.testing": "Test ediliyor…",
+  "vm.ssh.testOk": "Bağlandı — libvirt erişilebilir",
+  "vm.ssh.testFail": "Bağlantı başarısız",
+  "vm.ssh.setupTitle": "Kurulum (tek seferlik)",
+  "vm.ssh.step1": "Bu anahtarı yetkilendirmek için aşağıdaki komutu kopyalayıp Unraid terminalinde çalıştırın (yeniden başlatmalarda kalıcıdır).",
+  "vm.ssh.step2": "Konteynerin “VM Backup: Host” değişkenini Unraid sunucunuzun LAN IP'sine ayarlayın (örn. 192.168.x.x); basit köprü ağında host.docker.internal de çalışır.",
+  "vm.ssh.step3": "Bağlantıyı test et'e tıklayın — yeşil olduğunda Etki Alanları altında VM'leri etkinleştirin.",
+  "vm.ssh.copyCmd": "Komutu kopyala",
+  "vm.ssh.guide": "Tam kurulum ve ağ kılavuzu",
 };
 
 export default tr;

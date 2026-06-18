@@ -201,6 +201,78 @@ const uk: Partial<Translations> = {
   "state.crashed":      "Аварійний збій",
   "state.pmsuspended":  "Призупинено",
   "state.notInstalled": "Не встановлено",
+
+  // Files
+  "snapshots.files": "Файли",
+  "files.restore": "Відновити",
+  "files.restored": "Відновлено",
+  "files.restoreConfirm": "Відновити цей файл до початкового розташування? Поточний файл буде перезаписано.",
+  "files.filterPlaceholder": "Фільтрувати файли…",
+  "files.none": "Немає відповідних файлів",
+  "files.loadFailed": "Не вдалося завантажити файли",
+  "files.more": "Уточніть фільтр, щоб побачити більше файлів.",
+
+  // Retention
+  "settings.retentionTitle": "Зберігання",
+  "settings.retentionHint": "Скільки резервних копій зберігати для кожного елемента. Після кожної копії restic видаляє старіші знімки згідно з цією політикою. Усі нулі = зберігати все (вимкнено).",
+  "settings.retentionLast": "Зберігати останні",
+  "settings.retentionDaily": "Зберігати щоденні",
+  "settings.retentionWeekly": "Зберігати щотижневі",
+  "settings.retentionMonthly": "Зберігати щомісячні",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Вставте конфігурацію rclone для резервного копіювання в хмару (Backblaze B2, S3, Google Drive, …). Зберігається у зашифрованому вигляді. SMB/NFS не потребують rclone: змонтуйте спільний ресурс в Unraid і вкажіть на нього Шлях резервних копій.",
+  "rclone.configured": "Налаштовані віддалені сховища",
+  "rclone.pathHint": "Потім встановіть Шлях резервних копій на «rclone:<remote>:<bucket>/path», щоб надсилати цей домен off-site.",
+  "rclone.save": "Зберегти конфігурацію",
+
+  // Integrity (restic check)
+  "integrity.title": "Цілісність",
+  "integrity.hint": "Запустіть restic check, щоб перевірити, що структура й метадані репозиторію не пошкоджені.",
+  "integrity.verify": "Перевірити",
+  "integrity.checking": "Перевірка…",
+  "integrity.ok": "✓ Справний",
+  "integrity.failed": "Перевірка не пройдена",
+
+  // Backup hooks
+  "hooks.title": "Хуки резервного копіювання",
+  "hooks.hint": "Команди виконуються всередині контейнера (sh -c). Pre виконується перед копією (напр. дамп БД у appdata, щоб її включити) — помилка перериває копіювання. Post виконується після відновлення контейнера; його помилка лише записується в журнал.",
+  "hooks.pre": "Команда перед копією",
+  "hooks.post": "Команда після копії",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Копія Flash",
+  "flash.subtitle": "Резервне копіювання та відновлення USB-флешки Unraid (увесь /boot).",
+  "flash.backupTitle": "Створити копію Flash",
+  "flash.backupHint": "Захоплює всю USB-флешку (/boot): ОС Unraid, ліцензію, конфігурацію масиву, спільні ресурси, мережу та конфігурацію плагінів.",
+  "flash.backupNow": "Створити копію Flash зараз",
+  "flash.backingUp": "Копіювання…",
+  "flash.restoring": "Розпакування…",
+  "flash.restoreNote": "Відновлення РОЗПАКОВУЄ знімок у папку (показано нижче) — воно ніколи не перезаписує робочий /boot. Скопіюйте відновлені файли на нову USB-флешку, щоб відтворити Flash.",
+  "flash.restoredTo": "Розпаковано до:",
+  "flash.none": "Копій Flash ще немає — створіть копію вище.",
+
+  // VM backup (SSH)
+  "vm.method": "Метод",
+  "vm.method.graceful": "Graceful (вимкнення)",
+  "vm.method.live": "Живий знімок",
+  "vm.ssh.title": "Копія VM через SSH",
+  "vm.ssh.desc": "Копія VM з'єднується з libvirt через SSH (без монтування). Авторизуйте цей ключ в Unraid, потім протестуйте.",
+  "vm.ssh.host": "Хост",
+  "vm.ssh.publicKey": "Публічний ключ — додайте до Unraid /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Копіювати",
+  "vm.ssh.copied": "Скопійовано",
+  "vm.ssh.test": "Перевірити з'єднання",
+  "vm.ssh.testing": "Перевірка…",
+  "vm.ssh.testOk": "З'єднано — libvirt доступний",
+  "vm.ssh.testFail": "З'єднання не вдалося",
+  "vm.ssh.setupTitle": "Налаштування (одноразове)",
+  "vm.ssh.step1": "Скопіюйте команду нижче та виконайте її в терміналі Unraid, щоб авторизувати цей ключ (переживає перезавантаження).",
+  "vm.ssh.step2": "Встановіть змінну контейнера «VM Backup: Host» на LAN IP вашого Unraid (напр. 192.168.x.x); за простої мостової мережі також працює host.docker.internal.",
+  "vm.ssh.step3": "Натисніть Перевірити з'єднання — щойно воно стане зеленим, увімкніть VMs у Доменах.",
+  "vm.ssh.copyCmd": "Копіювати команду",
+  "vm.ssh.guide": "Повний посібник з налаштування та мережі",
 };
 
 export default uk;

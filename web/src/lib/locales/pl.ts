@@ -201,6 +201,78 @@ const pl: Partial<Translations> = {
   "state.crashed":      "Awaria",
   "state.pmsuspended":  "Zawieszony",
   "state.notInstalled": "Niezainstalowany",
+
+  // Files
+  "snapshots.files": "Pliki",
+  "files.restore": "Przywróć",
+  "files.restored": "Przywrócono",
+  "files.restoreConfirm": "Przywrócić ten plik do oryginalnej lokalizacji? Spowoduje to nadpisanie bieżącego pliku.",
+  "files.filterPlaceholder": "Filtruj pliki…",
+  "files.none": "Brak pasujących plików",
+  "files.loadFailed": "Nie udało się załadować plików",
+  "files.more": "Zawęź filtr, aby zobaczyć więcej plików.",
+
+  // Retention
+  "settings.retentionTitle": "Przechowywanie",
+  "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
+  "settings.retentionLast": "Zachowaj ostatnie",
+  "settings.retentionDaily": "Zachowaj dzienne",
+  "settings.retentionWeekly": "Zachowaj tygodniowe",
+  "settings.retentionMonthly": "Zachowaj miesięczne",
+
+  // Off-site (rclone)
+  "rclone.title": "Off-site (rclone)",
+  "rclone.hint": "Wklej konfigurację rclone, aby tworzyć kopie w chmurze (Backblaze B2, S3, Google Drive, …). Jest przechowywana zaszyfrowana. SMB/NFS nie wymagają rclone: zamontuj udział w Unraid i wskaż na niego Ścieżkę kopii zapasowych.",
+  "rclone.configured": "Skonfigurowane zdalne",
+  "rclone.pathHint": "Następnie ustaw Ścieżkę kopii zapasowych na „rclone:<remote>:<bucket>/path”, aby wysyłać tę domenę off-site.",
+  "rclone.save": "Zapisz konfigurację",
+
+  // Integrity (restic check)
+  "integrity.title": "Integralność",
+  "integrity.hint": "Uruchom restic check, aby zweryfikować, że struktura i metadane repozytorium są nienaruszone.",
+  "integrity.verify": "Zweryfikuj",
+  "integrity.checking": "Sprawdzanie…",
+  "integrity.ok": "✓ Sprawne",
+  "integrity.failed": "Weryfikacja nieudana",
+
+  // Backup hooks
+  "hooks.title": "Hooki kopii zapasowych",
+  "hooks.hint": "Polecenia uruchamiane wewnątrz kontenera (sh -c). Pre działa przed kopią (np. zrzut DB do appdata, aby ją uwzględnić) — błąd przerywa kopię. Post działa po przywróceniu kontenera; jego błąd jest tylko zapisywany w logach.",
+  "hooks.pre": "Polecenie przed kopią",
+  "hooks.post": "Polecenie po kopii",
+
+  // Flash (Unraid USB) backup
+  "flash.title": "Kopia Flash",
+  "flash.subtitle": "Twórz i przywracaj kopie pendrive'a Unraid (całego /boot).",
+  "flash.backupTitle": "Utwórz kopię Flash",
+  "flash.backupHint": "Przechwytuje cały pendrive USB (/boot): system Unraid, licencję, konfigurację macierzy, udziały, sieć i konfigurację wtyczek.",
+  "flash.backupNow": "Utwórz kopię Flash teraz",
+  "flash.backingUp": "Tworzenie kopii…",
+  "flash.restoring": "Wypakowywanie…",
+  "flash.restoreNote": "Przywracanie WYPAKOWUJE migawkę do folderu (pokazanego poniżej) — nigdy nie nadpisuje działającego /boot. Skopiuj odzyskane pliki na nowy pendrive, aby odtworzyć Flash.",
+  "flash.restoredTo": "Wypakowano do:",
+  "flash.none": "Brak kopii Flash — utwórz kopię powyżej.",
+
+  // VM backup (SSH)
+  "vm.method": "Metoda",
+  "vm.method.graceful": "Graceful (zamknięcie)",
+  "vm.method.live": "Migawka na żywo",
+  "vm.ssh.title": "Kopia VM przez SSH",
+  "vm.ssh.desc": "Kopia VM łączy się z libvirt przez SSH (bez montowania). Autoryzuj ten klucz w Unraid, a następnie przetestuj.",
+  "vm.ssh.host": "Host",
+  "vm.ssh.publicKey": "Klucz publiczny — dopisz do Unraid /root/.ssh/authorized_keys",
+  "vm.ssh.copy": "Kopiuj",
+  "vm.ssh.copied": "Skopiowano",
+  "vm.ssh.test": "Testuj połączenie",
+  "vm.ssh.testing": "Testowanie…",
+  "vm.ssh.testOk": "Połączono — libvirt dostępny",
+  "vm.ssh.testFail": "Połączenie nieudane",
+  "vm.ssh.setupTitle": "Konfiguracja (jednorazowa)",
+  "vm.ssh.step1": "Skopiuj poniższe polecenie i uruchom je w terminalu Unraid, aby autoryzować ten klucz (przetrwa restarty).",
+  "vm.ssh.step2": "Ustaw zmienną kontenera „VM Backup: Host” na adres LAN IP twojego Unraid (np. 192.168.x.x); przy prostej sieci mostkowej działa też host.docker.internal.",
+  "vm.ssh.step3": "Kliknij Testuj połączenie — gdy zaświeci się na zielono, włącz VMs w Domenach.",
+  "vm.ssh.copyCmd": "Kopiuj polecenie",
+  "vm.ssh.guide": "Pełny przewodnik konfiguracji i sieci",
 };
 
 export default pl;
