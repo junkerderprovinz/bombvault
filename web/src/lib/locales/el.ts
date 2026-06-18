@@ -278,6 +278,11 @@ const el: Partial<Translations> = {
   "vm.ssh.step3": "Κάντε κλικ στη Δοκιμή σύνδεσης — μόλις γίνει πράσινη, ενεργοποιήστε τα VMs στους Τομείς.",
   "vm.ssh.copyCmd": "Αντιγραφή εντολής",
   "vm.ssh.guide": "Πλήρης οδηγός ρύθμισης & δικτύου",
+  "common.backingUp": "Δημιουργία αντιγράφου…",
+  "common.restoring": "Επαναφορά…",
+  "common.done": "Έτοιμο",
+  "common.loadingBackups": "Φόρτωση αντιγράφων…",
+  "common.saving": "Αποθήκευση…",
 };
 
 export default el;

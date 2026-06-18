@@ -276,6 +276,11 @@ const cs: Partial<Translations> = {
   "vm.ssh.step3": "Klikněte na Otestovat připojení — jakmile je zelené, povolte VMs v Doménách.",
   "vm.ssh.copyCmd": "Kopírovat příkaz",
   "vm.ssh.guide": "Kompletní průvodce nastavením a sítí",
+  "common.backingUp": "Zálohuji…",
+  "common.restoring": "Obnovuji…",
+  "common.done": "Hotovo",
+  "common.loadingBackups": "Načítám zálohy…",
+  "common.saving": "Ukládám…",
 };
 
 export default cs;

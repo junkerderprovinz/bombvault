@@ -278,6 +278,11 @@ const ar: Partial<Translations> = {
   "vm.ssh.step3": "انقر على اختبار الاتصال — عندما يصبح أخضر، فعّل VMs ضمن النطاقات.",
   "vm.ssh.copyCmd": "نسخ الأمر",
   "vm.ssh.guide": "دليل الإعداد والشبكة الكامل",
+  "common.backingUp": "جارٍ النسخ الاحتياطي…",
+  "common.restoring": "جارٍ الاستعادة…",
+  "common.done": "تم",
+  "common.loadingBackups": "جارٍ تحميل النسخ الاحتياطية…",
+  "common.saving": "جارٍ الحفظ…",
 };
 
 export default ar;

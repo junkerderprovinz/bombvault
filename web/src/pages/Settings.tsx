@@ -100,7 +100,7 @@ function SaveBar({
               className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
               style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
             />
-            Saving…
+            {t("common.saving")}
           </>
         ) : (
           t("settings.save")

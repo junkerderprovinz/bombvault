@@ -278,6 +278,11 @@ const hu: Partial<Translations> = {
   "vm.ssh.step3": "Kattintson a Kapcsolat tesztelése gombra — ha zöld, engedélyezze a VM-eket a Tartományok alatt.",
   "vm.ssh.copyCmd": "Parancs másolása",
   "vm.ssh.guide": "Teljes beállítási és hálózati útmutató",
+  "common.backingUp": "Mentés…",
+  "common.restoring": "Visszaállítás…",
+  "common.done": "Kész",
+  "common.loadingBackups": "Mentések betöltése…",
+  "common.saving": "Mentés…",
 };
 
 export default hu;

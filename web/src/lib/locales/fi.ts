@@ -278,6 +278,11 @@ const fi: Partial<Translations> = {
   "vm.ssh.step3": "Napsauta Testaa yhteys — kun se on vihreä, ota VM:t käyttöön kohdassa Toimialueet.",
   "vm.ssh.copyCmd": "Kopioi komento",
   "vm.ssh.guide": "Täydellinen asennus- ja verkko-opas",
+  "common.backingUp": "Varmuuskopioidaan…",
+  "common.restoring": "Palautetaan…",
+  "common.done": "Valmis",
+  "common.loadingBackups": "Ladataan varmuuskopioita…",
+  "common.saving": "Tallennetaan…",
 };
 
 export default fi;

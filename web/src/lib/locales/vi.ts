@@ -270,6 +270,11 @@ const vi: Partial<Translations> = {
   "vm.ssh.step3": "Nhấp Kiểm tra kết nối — khi nó chuyển xanh, bật VM trong mục Domain.",
   "vm.ssh.copyCmd": "Sao chép lệnh",
   "vm.ssh.guide": "Hướng dẫn thiết lập & mạng đầy đủ",
+  "common.backingUp": "Đang sao lưu…",
+  "common.restoring": "Đang khôi phục…",
+  "common.done": "Xong",
+  "common.loadingBackups": "Đang tải bản sao lưu…",
+  "common.saving": "Đang lưu…",
 };
 
 export default vi;

@@ -278,6 +278,11 @@ const sv: Partial<Translations> = {
   "vm.ssh.step3": "Klicka på Testa anslutning — när den är grön, aktivera VMs under Domäner.",
   "vm.ssh.copyCmd": "Kopiera kommando",
   "vm.ssh.guide": "Fullständig installations- och nätverksguide",
+  "common.backingUp": "Säkerhetskopierar…",
+  "common.restoring": "Återställer…",
+  "common.done": "Klar",
+  "common.loadingBackups": "Laddar säkerhetskopior…",
+  "common.saving": "Sparar…",
 };
 
 export default sv;

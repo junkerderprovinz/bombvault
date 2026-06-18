@@ -278,6 +278,11 @@ const he: Partial<Translations> = {
   "vm.ssh.step3": "לחץ על בדוק חיבור — ברגע שהוא ירוק, הפעל VMs תחת דומיינים.",
   "vm.ssh.copyCmd": "העתק פקודה",
   "vm.ssh.guide": "מדריך הגדרה ורשת מלא",
+  "common.backingUp": "מגבה…",
+  "common.restoring": "משחזר…",
+  "common.done": "הושלם",
+  "common.loadingBackups": "טוען גיבויים…",
+  "common.saving": "שומר…",
 };
 
 export default he;

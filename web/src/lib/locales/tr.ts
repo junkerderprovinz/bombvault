@@ -278,6 +278,11 @@ const tr: Partial<Translations> = {
   "vm.ssh.step3": "Bağlantıyı test et'e tıklayın — yeşil olduğunda Etki Alanları altında VM'leri etkinleştirin.",
   "vm.ssh.copyCmd": "Komutu kopyala",
   "vm.ssh.guide": "Tam kurulum ve ağ kılavuzu",
+  "common.backingUp": "Yedekleniyor…",
+  "common.restoring": "Geri yükleniyor…",
+  "common.done": "Tamam",
+  "common.loadingBackups": "Yedekler yükleniyor…",
+  "common.saving": "Kaydediliyor…",
 };
 
 export default tr;

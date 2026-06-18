@@ -278,6 +278,11 @@ const da: Partial<Translations> = {
   "vm.ssh.step3": "Klik på Test forbindelse — når den er grøn, aktiver VMs under Domæner.",
   "vm.ssh.copyCmd": "Kopier kommando",
   "vm.ssh.guide": "Fuld opsætnings- & netværksguide",
+  "common.backingUp": "Sikkerhedskopierer…",
+  "common.restoring": "Gendanner…",
+  "common.done": "Færdig",
+  "common.loadingBackups": "Indlæser sikkerhedskopier…",
+  "common.saving": "Gemmer…",
 };
 
 export default da;

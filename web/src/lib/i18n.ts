@@ -257,6 +257,13 @@ const en = {
   "auth.saving": "Saving…",
   "auth.saveError": "Failed to save",
 
+  // Common action labels (shared across container / VM / settings buttons)
+  "common.backingUp": "Backing up…",
+  "common.restoring": "Restoring…",
+  "common.done": "Done",
+  "common.loadingBackups": "Loading backups…",
+  "common.saving": "Saving…",
+
   // VMs page
   "vms.title": "Virtual Machines",
   "vms.subtitle": "Manage VM backups, schedules, and restores.",
@@ -532,6 +539,13 @@ const de: Translations = {
   "auth.logout": "Abmelden",
   "auth.saving": "Speichern…",
   "auth.saveError": "Speichern fehlgeschlagen",
+
+  // Common action labels (shared across container / VM / settings buttons)
+  "common.backingUp": "Sichere…",
+  "common.restoring": "Stelle wieder her…",
+  "common.done": "Fertig",
+  "common.loadingBackups": "Sicherungen werden geladen…",
+  "common.saving": "Speichern…",
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",
