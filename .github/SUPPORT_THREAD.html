@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!--
+  Unraid Community Applications support thread for BombVault.
+  Structure mirrors the sister-app threads (e.g. featherdrop / Krusader):
+  title -> subtitle -> banner -> buttons -> What is this? -> Highlights ->
+  Requirements -> Posting a bug report -> Credits -> disclaimer.
+  Open standalone in a browser, or paste into the Unraid forum editor's source.
+  Title: [Support] junkerderprovinz - BombVault
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[Support] junkerderprovinz - BombVault</title>
+<style>
+  body { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         line-height: 1.6; color: #1c1c1c; }
+  h1 { text-align: center; font-size: 1.7rem; margin-bottom: .2rem; }
+  .subtitle { text-align: center; color: #666; font-style: italic; margin-top: 0; }
+  h2 { margin-top: 1.9rem; font-size: 1.25rem; }
+  code { background: #f1f1f1; padding: .1em .35em; border-radius: 4px; font-size: .9em; }
+  a { color: #c79a1e; }
+  ul { padding-left: 1.2rem; }
+  li { margin: .25rem 0; }
+  img { border: 0; vertical-align: middle; }
+  hr { border: 0; border-top: 1px solid #ddd; margin: 2rem 0; }
+  .footnote { color: #777; font-size: .9em; font-style: italic; text-align: center; margin-top: 2rem; }
+</style>
+</head>
+<body>
+
+<h1>BombVault – the only backup &amp; disaster-recovery tool you need for Unraid</h1>
+<p class="subtitle">Your Unraid data, sealed in a vault — armed with a fuse.</p>
+
+<p align="center">
+  <a href="https://github.com/junkerderprovinz/bombvault">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner.png" alt="BombVault" width="100%">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://unraid.net/community/apps?q=bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/support-buttons/install-on-unraid.svg" alt="Install on Unraid" width="240"></a>
+  &nbsp;
+  <a href="https://github.com/junkerderprovinz/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/support-buttons/view-on-github.svg" alt="View on GitHub" width="240"></a>
+  &nbsp;
+  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/support-buttons/buy-me-a-coffee.svg" alt="Buy me a coffee" width="240"></a>
+</p>
+
+<h2>What is this?</h2>
+<p>BombVault is a single-binary, Unraid-native web app for <strong>one-click backup and full
+disaster recovery</strong> of your Docker containers, KVM/libvirt VMs and the Unraid flash —
+all powered by <a href="https://restic.net">restic</a>. The restore is the star: a backed-up
+container <strong>automatically reappears in the Docker tab</strong> and a VM
+<strong>in the VM Manager</strong>, exactly as before — no manual reinstall, no
+reconfiguration, even after you deleted it. Everything (backup paths, encryption on/off,
+schedule, retention) is configured in the modern dark web UI; nothing to hand-edit.</p>
+
+<h2>Highlights</h2>
+<ul>
+  <li><strong>Three domains, one app</strong> — Docker containers (appdata + definition), KVM/libvirt VMs (disks + XML + UEFI NVRAM), and the whole Unraid flash (<code>/boot</code>)</li>
+  <li><strong>Restore that re-installs for you</strong> — containers are replayed against the Docker API and VMs re-defined in the VM Manager, so they come back exactly as they were</li>
+  <li><strong>VM backup with no libvirt mount</strong> — BombVault runs <code>virsh</code> on the host over SSH (<code>qemu+ssh://</code>), so it can never disturb your VM Manager; graceful-shutdown or live (guest-agent) snapshots</li>
+  <li><strong>Off-site repos</strong> — rclone (Backblaze B2, S3, Google Drive, …) plus SMB/NFS; the rclone config is stored encrypted</li>
+  <li><strong>Retention</strong> — keep-last / daily / weekly / monthly, auto-pruned after each backup</li>
+  <li><strong>File-level restore</strong> — browse a container snapshot and restore a single file back to its original location</li>
+  <li><strong>Integrity checks</strong> (<code>restic check</code>) and <strong>pre/post-backup hooks</strong> (e.g. <code>mysqldump</code> for an app-consistent backup)</li>
+  <li>Incremental, deduplicated and <strong>always encrypted</strong> (encryption is optional); pre-flight IP/port conflict check before a restore</li>
+  <li>Per-domain scheduling, HTTPS out of the box, optional password, English + German UI</li>
+  <li>Multi-arch — amd64 + arm64. Image: <code>ghcr.io/junkerderprovinz/bombvault:latest</code></li>
+</ul>
+
+<h2>Requirements</h2>
+<ul>
+  <li>Unraid 6.12+</li>
+  <li>The template mounts the Docker socket, your storage root (<code>/mnt</code>) and the flash (<code>/boot</code>) automatically — backup sources and destinations both live under <code>/mnt</code>; pick the exact subpaths in the WebUI</li>
+  <li>A required <code>APP_KEY</code> — generate with <code>openssl rand -hex 32</code>. It derives the restic password, so <strong>keep it safe</strong>: losing it makes encrypted backups unrecoverable</li>
+  <li><strong>VM backup is opt-in</strong> — it talks to libvirt over SSH, so authorize BombVault's key on the host once (Settings → <em>VM Backup over SSH</em> shows a ready-to-paste command + a Test button). No libvirt mount needed</li>
+  <li><strong>Trusted LAN only:</strong> BombVault holds root-equivalent control of your host (via <code>docker.sock</code> and the <code>/mnt</code> mount). Run it on a non-exposed network; optional password protection is in Settings (off by default)</li>
+</ul>
+
+<h2>Posting a bug report</h2>
+<p>Please post:</p>
+<ul>
+  <li>Unraid version (Settings → System Information)</li>
+  <li>Image tag (<code>latest</code> or a pinned <code>vX.Y.Z</code>)</li>
+  <li>Output of <code>docker logs --tail 200 BombVault</code></li>
+  <li>Which domain (containers / VMs / flash) and what you were doing (backup / restore)</li>
+  <li>For VM issues: the result of Settings → <em>VM Backup over SSH</em> → <em>Test connection</em></li>
+  <li>Browser + OS you're using</li>
+</ul>
+<p>GitHub issues with the same info are also welcome:
+<a href="https://github.com/junkerderprovinz/bombvault/issues">github.com/junkerderprovinz/bombvault/issues</a></p>
+
+<h2>Credits</h2>
+<p>The core idea — one-click backup <em>and</em> automatic re-install of Docker containers —
+comes from <a href="https://github.com/Darkdragon14/VolumeVault">VolumeVault</a> by
+@Darkdragon14 (Apache-2.0). BombVault is an independent Go + restic rewrite that extends the
+concept to VMs and the Unraid flash. Built on <a href="https://restic.net">restic</a> (engine)
+and <a href="https://rclone.org">rclone</a> (off-site). If BombVault saves your bacon, you can
+<a href="https://buymeacoffee.com/junkerderprovinz">buy me a coffee</a>.</p>
+
+<hr>
+
+<p class="footnote">Self-hosted, MIT-licensed. BombVault has root-equivalent control of your host — you run it, you own your data and the responsibility.</p>
+
+</body>
+</html>
