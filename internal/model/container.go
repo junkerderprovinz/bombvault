@@ -98,6 +98,10 @@ type Inspect struct {
 	ID         string
 	Name       string // dockerode-style, may carry a leading slash (e.g. "/plex")
 	Image      string
+	// Running is the container's run state. Captured at backup time so backup
+	// preserves it (a stopped container stays stopped, not started) and restore
+	// recreates it in the same state — a backup tool must not change run-state.
+	Running    bool
 	Config     Config
 	HostConfig HostConfig
 	Mounts     []Mount

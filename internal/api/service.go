@@ -328,6 +328,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		TargetID:             tg.ID,
 		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
 		FlashTemplatesDir:    s.cfg.FlashTemplatesDir,
+		WasRunning:           in.Running,
 		PreHook:              tg.PreHook,
 		PostHook:             tg.PostHook,
 		Docker:               s.docker,

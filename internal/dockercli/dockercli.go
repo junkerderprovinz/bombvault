@@ -235,6 +235,11 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect) error {
 	if err != nil {
 		return fmt.Errorf("dockercli: create: %w", err)
 	}
+	// Only start if the container was running when it was backed up — restore
+	// recreates it in its captured state rather than always starting it.
+	if !in.Running {
+		return nil
+	}
 	if err := c.api.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: create-start: %w", err)
 	}
@@ -271,6 +276,9 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 		out.ID = resp.ID
 		out.Name = resp.Name
 		out.Image = resp.Image
+		if resp.State != nil {
+			out.Running = resp.State.Running
+		}
 		if resp.HostConfig != nil {
 			out.HostConfig = mapHostConfig(resp.HostConfig)
 		}
