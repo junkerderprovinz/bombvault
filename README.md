@@ -231,6 +231,8 @@ Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unra
 
 ## 9. Support this project
 
+Questions, bugs, ideas? **[Unraid support thread →](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)** (or open a [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues)).
+
 <a href="https://buymeacoffee.com/junkerderprovinz">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" height="40">
 </a>
