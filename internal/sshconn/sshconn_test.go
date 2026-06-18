@@ -48,3 +48,20 @@ func TestNewDerivesSSHDir(t *testing.T) {
 		t.Fatalf("dir = %q, want /config/ssh", c.dir)
 	}
 }
+
+// A VM named "Windows 11" yields an NVRAM path with a space; OpenSSH joins the
+// remote command args into one string the remote shell re-splits, so the path
+// must be shell-quoted or it breaks into two args.
+func TestShellQuote(t *testing.T) {
+	cases := map[string]string{
+		"/etc/libvirt/qemu/nvram/Windows 11_VARS.fd": `'/etc/libvirt/qemu/nvram/Windows 11_VARS.fd'`,
+		"/plain/path.fd":                              `'/plain/path.fd'`,
+		"true":                                        `'true'`,
+		"a'b":                                         `'a'\''b'`,
+	}
+	for in, want := range cases {
+		if got := shellQuote(in); got != want {
+			t.Errorf("shellQuote(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

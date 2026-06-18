@@ -204,7 +204,7 @@ Or add the template manually:
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only. |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash}`. VM backup needs no mount: see [§5](#5-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
+Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§5](#5-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
 
 > [!NOTE]
 > **Host integration check:** open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.

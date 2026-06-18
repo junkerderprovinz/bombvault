@@ -209,6 +209,39 @@ func (h *Handler) nameParam(w http.ResponseWriter, r *http.Request) (string, boo
 	return name, true
 }
 
+// validVMName accepts libvirt domain names, which (unlike Docker container
+// names) routinely contain spaces — e.g. "Windows 11", "Home Assistant". The VM
+// name never becomes a filesystem path or template filename (it only flows into
+// argv-separated virsh args, restic tags after "--", and SQLite params), so the
+// strict resourceNameRe is wrong here. We still block what could be dangerous:
+// empty, over-long, path separators / "..", a leading "-" (option injection),
+// and control characters.
+func validVMName(name string) bool {
+	if name == "" || len(name) > 128 {
+		return false
+	}
+	if strings.HasPrefix(name, "-") || strings.Contains(name, "..") || strings.ContainsAny(name, "/\\") {
+		return false
+	}
+	for _, r := range name {
+		if r < 0x20 || r == 0x7f {
+			return false
+		}
+	}
+	return true
+}
+
+// vmNameParam is nameParam for VM routes — it uses the libvirt-aware validator
+// so VMs with spaces in their names are not rejected with a 400.
+func (h *Handler) vmNameParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	name := r.PathValue("name")
+	if !validVMName(name) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid VM name"})
+		return "", false
+	}
+	return name, true
+}
+
 // handleDeleteBackups removes ALL backups of a container and forgets it from the
 // store. Used for containers that are no longer installed.
 func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
@@ -815,7 +848,7 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
-	name, ok := h.nameParam(w, r)
+	name, ok := h.vmNameParam(w, r)
 	if !ok {
 		return
 	}
@@ -831,7 +864,7 @@ func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
-	name, ok := h.nameParam(w, r)
+	name, ok := h.vmNameParam(w, r)
 	if !ok {
 		return
 	}
@@ -847,7 +880,7 @@ func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
-	name, ok := h.nameParam(w, r)
+	name, ok := h.vmNameParam(w, r)
 	if !ok {
 		return
 	}
@@ -910,7 +943,7 @@ func (h *Handler) handleRestoreFlash(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
-	name, ok := h.nameParam(w, r)
+	name, ok := h.vmNameParam(w, r)
 	if !ok {
 		return
 	}
