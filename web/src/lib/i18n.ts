@@ -198,7 +198,7 @@ const en = {
 
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
-  "hooks.hint": "Commands run inside the container (sh -c). Pre runs before backup (e.g. dump a DB into appdata so it's included) — a failure aborts the backup. Post runs after the container is back up; its failure is only logged.",
+  "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
   "hooks.pre": "Pre-backup command",
   "hooks.post": "Post-backup command",
 
@@ -481,7 +481,7 @@ const de: Translations = {
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",
-  "hooks.hint": "Befehle laufen im Container (sh -c). Pre läuft vor dem Backup (z. B. eine DB nach appdata dumpen, damit sie mitgesichert wird) — ein Fehler bricht das Backup ab. Post läuft, wenn der Container wieder oben ist; dessen Fehler wird nur geloggt.",
+  "hooks.hint": "Befehle laufen im Container mit sh -c. Der Pre-Befehl läuft vor dem Backup; nutze ihn, um Daten vorzubereiten, die mitgesichert werden sollen, etwa eine Datenbank in die appdata des Containers zu dumpen. Schlägt der Pre-Befehl fehl, wird das Backup abgebrochen. Der Post-Befehl läuft, nachdem der Container wieder gestartet wurde, und sein Fehler wird nur geloggt. Hooks führen nur Befehle aus, sie fügen dem Backup keine zusätzlichen Ordner hinzu.",
   "hooks.pre": "Pre-Backup-Befehl",
   "hooks.post": "Post-Backup-Befehl",
 
