@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -555,6 +556,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		RetentionKeepMonthly: max(0, v.RetentionKeepMonthly),
 		AuthPasswordHash:     existing.AuthPasswordHash,
 		RcloneConf:           existing.RcloneConf,
+		NotifyConf:           existing.NotifyConf,
 	}
 	if err := h.store.UpdateSettings(s); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -609,6 +611,43 @@ func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.SetRcloneConf(body.Conf); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleGetNotify returns the decrypted notification config. GET /api/notify
+func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
+	c, err := h.svc.NotifyConfig()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"notify": c}))
+}
+
+// handleSetNotify stores the notification config (encrypted). POST /api/notify
+func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
+	var c notify.Config
+	if !decodeBody(w, r, &c) {
+		return
+	}
+	if err := h.svc.SetNotifyConfig(c); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleTestNotify sends a test notification using the POSTed config (so the
+// user can test the form before saving). POST /api/notify/test
+func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
+	var c notify.Config
+	if !decodeBody(w, r, &c) {
+		return
+	}
+	if err := notify.SendTest(r.Context(), c); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

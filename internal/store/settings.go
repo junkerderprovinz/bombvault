@@ -31,6 +31,9 @@ type Settings struct {
 	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
 	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
 	RcloneConf string
+	// NotifyConf is the notification config (webhook / Matrix / Healthchecks) as
+	// an AES-256-GCM-encrypted JSON blob (base64). Empty means notifications off.
+	NotifyConf string
 }
 
 // GetSettings returns the current app settings.
@@ -41,7 +44,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       containers_schedule, vms_schedule, flash_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		       rclone_conf
+		       rclone_conf, notify_conf
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -52,7 +55,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
-		&s.RcloneConf,
+		&s.RcloneConf, &s.NotifyConf,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -87,7 +90,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  retention_keep_daily   = ?,
 		  retention_keep_weekly  = ?,
 		  retention_keep_monthly = ?,
-		  rclone_conf            = ?
+		  rclone_conf            = ?,
+		  notify_conf            = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -97,7 +101,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
-		s.RcloneConf,
+		s.RcloneConf, s.NotifyConf,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
