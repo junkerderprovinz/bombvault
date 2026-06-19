@@ -278,6 +278,36 @@ const pl: Partial<Translations> = {
   "common.done": "Gotowe",
   "common.loadingBackups": "Ładowanie kopii…",
   "common.saving": "Zapisywanie…",
+
+  // Backup folders selector
+  "folders.title": "Foldery do kopii",
+  "folders.hint": "Wybierz, które z zamapowanych folderów tego kontenera mają być kopiowane. Folder appdata jest zaznaczony domyślnie. Zaznacz inne, aby je dołączyć, lub dodaj własną ścieżkę w obrębie montowania hosta. Odznaczenie wszystkiego przywraca automatyczne domyślne ustawienie appdata.",
+  "folders.appdataDefault": "appdata (domyślnie)",
+  "folders.notReachable": "nie znajduje się w montowaniu hosta, nie można utworzyć kopii",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Dodaj ścieżkę folderu",
+  "folders.add": "Dodaj",
+  "folders.save": "Zapisz foldery",
+  "folders.saved": "Zapisano",
+  "folders.empty": "Nie znaleziono zamapowanych folderów dla tego kontenera.",
+
+  // Notifications
+  "notify.title": "Powiadomienia",
+  "notify.hint": "Otrzymuj powiadomienie po zakończeniu kopii zapasowej. Skonfiguruj dowolny z poniższych kanałów; wszystkie uruchamiają się zgodnie z regułą.",
+  "notify.on": "Powiadom",
+  "notify.onNever": "Nigdy",
+  "notify.onFailure": "Tylko przy niepowodzeniu",
+  "notify.onAlways": "Przy sukcesie i niepowodzeniu",
+  "notify.webhook": "Adres URL Webhook",
+  "notify.webhookFormat": "Format Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Adres URL Homeserver",
+  "notify.matrixToken": "Token dostępu",
+  "notify.matrixRoom": "ID pokoju",
+  "notify.healthchecks": "Adres URL ping Healthchecks.io",
+  "notify.save": "Zapisz",
+  "notify.test": "Wyślij test",
+  "notify.tested": "Test wysłany",
 };
 
 export default pl;

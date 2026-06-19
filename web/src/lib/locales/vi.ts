@@ -275,6 +275,36 @@ const vi: Partial<Translations> = {
   "common.done": "Xong",
   "common.loadingBackups": "Đang tải bản sao lưu…",
   "common.saving": "Đang lưu…",
+
+  // Backup folders selector
+  "folders.title": "Thư mục sao lưu",
+  "folders.hint": "Chọn những thư mục được ánh xạ của container này để sao lưu. Thư mục appdata được chọn theo mặc định. Đánh dấu các thư mục khác để bao gồm chúng, hoặc thêm một đường dẫn tùy chỉnh bên trong điểm gắn kết của host. Bỏ chọn tất cả sẽ trở về mặc định appdata tự động.",
+  "folders.appdataDefault": "appdata (mặc định)",
+  "folders.notReachable": "không nằm trong điểm gắn kết của host, không thể sao lưu",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Thêm đường dẫn thư mục",
+  "folders.add": "Thêm",
+  "folders.save": "Lưu thư mục",
+  "folders.saved": "Đã lưu",
+  "folders.empty": "Không tìm thấy thư mục được ánh xạ nào cho container này.",
+
+  // Notifications
+  "notify.title": "Thông báo",
+  "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất. Thiết lập bất kỳ kênh nào dưới đây; tất cả đều kích hoạt theo chính sách.",
+  "notify.on": "Thông báo",
+  "notify.onNever": "Không bao giờ",
+  "notify.onFailure": "Chỉ khi thất bại",
+  "notify.onAlways": "Khi thành công và thất bại",
+  "notify.webhook": "URL Webhook",
+  "notify.webhookFormat": "Định dạng Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL Homeserver",
+  "notify.matrixToken": "Mã truy cập",
+  "notify.matrixRoom": "ID phòng",
+  "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.save": "Lưu",
+  "notify.test": "Gửi thử",
+  "notify.tested": "Đã gửi thử",
 };
 
 export default vi;

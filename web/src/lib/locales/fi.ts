@@ -283,6 +283,36 @@ const fi: Partial<Translations> = {
   "common.done": "Valmis",
   "common.loadingBackups": "Ladataan varmuuskopioita…",
   "common.saving": "Tallennetaan…",
+
+  // Backup folders selector
+  "folders.title": "Varmuuskopioitavat kansiot",
+  "folders.hint": "Valitse, mitkä tämän kontin liitetyistä kansioista varmuuskopioidaan. appdata-kansio on valittuna oletuksena. Rastita muut sisällyttääksesi ne, tai lisää oma polku host-liitoksen alle. Kaikkien rastien poistaminen palauttaa automaattisen appdata-oletuksen.",
+  "folders.appdataDefault": "appdata (oletus)",
+  "folders.notReachable": "ei ole host-liitoksen alla, ei voida varmuuskopioida",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Lisää kansiopolku",
+  "folders.add": "Lisää",
+  "folders.save": "Tallenna kansiot",
+  "folders.saved": "Tallennettu",
+  "folders.empty": "Tälle kontille ei löytynyt liitettyjä kansioita.",
+
+  // Notifications
+  "notify.title": "Ilmoitukset",
+  "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu. Määritä mikä tahansa alla olevista kanavista; ne kaikki laukeavat säännön mukaisesti.",
+  "notify.on": "Ilmoita",
+  "notify.onNever": "Ei koskaan",
+  "notify.onFailure": "Vain epäonnistuessa",
+  "notify.onAlways": "Onnistuessa ja epäonnistuessa",
+  "notify.webhook": "Webhook-URL",
+  "notify.webhookFormat": "Webhook-muoto",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver-URL",
+  "notify.matrixToken": "Käyttötunniste",
+  "notify.matrixRoom": "Huoneen tunnus",
+  "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.save": "Tallenna",
+  "notify.test": "Lähetä testi",
+  "notify.tested": "Testi lähetetty",
 };
 
 export default fi;

@@ -278,6 +278,36 @@ const ru: Partial<Translations> = {
   "common.done": "Готово",
   "common.loadingBackups": "Загрузка резервных копий…",
   "common.saving": "Сохранение…",
+
+  // Backup folders selector
+  "folders.title": "Папки для резервного копирования",
+  "folders.hint": "Выберите, какие из подключённых папок этого контейнера копировать. Папка appdata выбрана по умолчанию. Отметьте другие, чтобы включить их, или добавьте собственный путь внутри монтирования хоста. Если снять все отметки, возвращается автоматическое значение appdata по умолчанию.",
+  "folders.appdataDefault": "appdata (по умолчанию)",
+  "folders.notReachable": "находится вне монтирования хоста, не может быть скопировано",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Добавить путь к папке",
+  "folders.add": "Добавить",
+  "folders.save": "Сохранить папки",
+  "folders.saved": "Сохранено",
+  "folders.empty": "Для этого контейнера не найдено подключённых папок.",
+
+  // Notifications
+  "notify.title": "Уведомления",
+  "notify.hint": "Получайте уведомление по завершении резервного копирования. Настройте любой из каналов ниже; все они срабатывают согласно правилу.",
+  "notify.on": "Уведомлять",
+  "notify.onNever": "Никогда",
+  "notify.onFailure": "Только при сбое",
+  "notify.onAlways": "При успехе и сбое",
+  "notify.webhook": "URL Webhook",
+  "notify.webhookFormat": "Формат Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL Homeserver",
+  "notify.matrixToken": "Токен доступа",
+  "notify.matrixRoom": "ID комнаты",
+  "notify.healthchecks": "URL пинга Healthchecks.io",
+  "notify.save": "Сохранить",
+  "notify.test": "Отправить тест",
+  "notify.tested": "Тест отправлен",
 };
 
 export default ru;

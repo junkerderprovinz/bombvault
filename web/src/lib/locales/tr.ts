@@ -283,6 +283,36 @@ const tr: Partial<Translations> = {
   "common.done": "Tamam",
   "common.loadingBackups": "Yedekler yükleniyor…",
   "common.saving": "Kaydediliyor…",
+
+  // Backup folders selector
+  "folders.title": "Yedeklenecek klasörler",
+  "folders.hint": "Bu kapsayıcının eşlenen klasörlerinden hangilerinin yedekleneceğini seçin. appdata klasörü varsayılan olarak seçilidir. Diğerlerini dahil etmek için işaretleyin veya host bağlama noktası altında özel bir yol ekleyin. Tüm işaretleri kaldırmak otomatik appdata varsayılanına döner.",
+  "folders.appdataDefault": "appdata (varsayılan)",
+  "folders.notReachable": "host bağlama noktası altında değil, yedeklenemez",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Klasör yolu ekle",
+  "folders.add": "Ekle",
+  "folders.save": "Klasörleri kaydet",
+  "folders.saved": "Kaydedildi",
+  "folders.empty": "Bu kapsayıcı için eşlenen klasör bulunamadı.",
+
+  // Notifications
+  "notify.title": "Bildirimler",
+  "notify.hint": "Bir yedekleme tamamlandığında bildirim alın. Aşağıdaki kanallardan herhangi birini ayarlayın; hepsi kurala göre tetiklenir.",
+  "notify.on": "Bildir",
+  "notify.onNever": "Asla",
+  "notify.onFailure": "Yalnızca başarısızlıkta",
+  "notify.onAlways": "Başarı ve başarısızlıkta",
+  "notify.webhook": "Webhook URL'si",
+  "notify.webhookFormat": "Webhook biçimi",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver URL'si",
+  "notify.matrixToken": "Erişim belirteci",
+  "notify.matrixRoom": "Oda kimliği",
+  "notify.healthchecks": "Healthchecks.io ping URL'si",
+  "notify.save": "Kaydet",
+  "notify.test": "Test gönder",
+  "notify.tested": "Test gönderildi",
 };
 
 export default tr;

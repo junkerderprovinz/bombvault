@@ -283,6 +283,36 @@ const ro: Partial<Translations> = {
   "common.done": "Gata",
   "common.loadingBackups": "Se încarcă copiile…",
   "common.saving": "Se salvează…",
+
+  // Backup folders selector
+  "folders.title": "Foldere de salvat",
+  "folders.hint": "Alege care dintre folderele mapate ale acestui container să fie salvate. Folderul appdata este selectat implicit. Bifează altele pentru a le include sau adaugă o cale personalizată sub montarea gazdei. Debifarea tuturor revine la valoarea implicită automată appdata.",
+  "folders.appdataDefault": "appdata (implicit)",
+  "folders.notReachable": "nu se află sub montarea gazdei, nu poate fi salvat",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Adaugă o cale de folder",
+  "folders.add": "Adaugă",
+  "folders.save": "Salvează folderele",
+  "folders.saved": "Salvat",
+  "folders.empty": "Nu s-au găsit foldere mapate pentru acest container.",
+
+  // Notifications
+  "notify.title": "Notificări",
+  "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă. Configurează oricare dintre canalele de mai jos; toate se declanșează conform politicii.",
+  "notify.on": "Notifică",
+  "notify.onNever": "Niciodată",
+  "notify.onFailure": "Doar la eșec",
+  "notify.onAlways": "La succes și eșec",
+  "notify.webhook": "URL Webhook",
+  "notify.webhookFormat": "Format Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL Homeserver",
+  "notify.matrixToken": "Token de acces",
+  "notify.matrixRoom": "ID cameră",
+  "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.save": "Salvează",
+  "notify.test": "Trimite test",
+  "notify.tested": "Test trimis",
 };
 
 export default ro;

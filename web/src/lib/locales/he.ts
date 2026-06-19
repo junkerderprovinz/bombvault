@@ -283,6 +283,36 @@ const he: Partial<Translations> = {
   "common.done": "הושלם",
   "common.loadingBackups": "טוען גיבויים…",
   "common.saving": "שומר…",
+
+  // Backup folders selector
+  "folders.title": "תיקיות לגיבוי",
+  "folders.hint": "בחר אילו מהתיקיות הממופות של מכל זה לגבות. תיקיית appdata נבחרת כברירת מחדל. סמן אחרות כדי לכלול אותן, או הוסף נתיב מותאם אישית תחת נקודת העיגון של המארח. ביטול הסימון של הכול חוזר לברירת המחדל האוטומטית של appdata.",
+  "folders.appdataDefault": "appdata (ברירת מחדל)",
+  "folders.notReachable": "אינו תחת נקודת העיגון של המארח, לא ניתן לגבות",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "הוסף נתיב תיקייה",
+  "folders.add": "הוסף",
+  "folders.save": "שמור תיקיות",
+  "folders.saved": "נשמר",
+  "folders.empty": "לא נמצאו תיקיות ממופות עבור מכל זה.",
+
+  // Notifications
+  "notify.title": "התראות",
+  "notify.hint": "קבל התראה כשגיבוי מסתיים. הגדר כל אחד מהערוצים שלהלן; כולם נשלחים בהתאם למדיניות.",
+  "notify.on": "התראה",
+  "notify.onNever": "אף פעם",
+  "notify.onFailure": "רק בכישלון",
+  "notify.onAlways": "בהצלחה ובכישלון",
+  "notify.webhook": "כתובת Webhook",
+  "notify.webhookFormat": "פורמט Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "כתובת Homeserver",
+  "notify.matrixToken": "אסימון גישה",
+  "notify.matrixRoom": "מזהה חדר",
+  "notify.healthchecks": "כתובת ping של Healthchecks.io",
+  "notify.save": "שמור",
+  "notify.test": "שלח בדיקה",
+  "notify.tested": "הבדיקה נשלחה",
 };
 
 export default he;

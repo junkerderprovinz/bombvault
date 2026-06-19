@@ -283,6 +283,36 @@ const ar: Partial<Translations> = {
   "common.done": "تم",
   "common.loadingBackups": "جارٍ تحميل النسخ الاحتياطية…",
   "common.saving": "جارٍ الحفظ…",
+
+  // Backup folders selector
+  "folders.title": "مجلدات النسخ الاحتياطي",
+  "folders.hint": "اختر أي من المجلدات المربوطة بهذه الحاوية تريد نسخها احتياطياً. مجلد appdata محدد بشكل افتراضي. حدّد مجلدات أخرى لتضمينها، أو أضف مساراً مخصصاً ضمن نقطة تركيب المضيف. إلغاء تحديد كل شيء يعيد الوضع إلى الافتراضي التلقائي لمجلد appdata.",
+  "folders.appdataDefault": "appdata (افتراضي)",
+  "folders.notReachable": "ليس ضمن نقطة تركيب المضيف، لا يمكن نسخه احتياطياً",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "إضافة مسار مجلد",
+  "folders.add": "إضافة",
+  "folders.save": "حفظ المجلدات",
+  "folders.saved": "تم الحفظ",
+  "folders.empty": "لم يتم العثور على مجلدات مربوطة لهذه الحاوية.",
+
+  // Notifications
+  "notify.title": "الإشعارات",
+  "notify.hint": "احصل على إشعار عند انتهاء النسخ الاحتياطي. أعدّ أياً من القنوات أدناه؛ تعمل جميعها وفقاً للسياسة.",
+  "notify.on": "إشعار",
+  "notify.onNever": "أبداً",
+  "notify.onFailure": "عند الفشل فقط",
+  "notify.onAlways": "عند النجاح والفشل",
+  "notify.webhook": "رابط Webhook",
+  "notify.webhookFormat": "تنسيق Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "رابط Homeserver",
+  "notify.matrixToken": "رمز الوصول",
+  "notify.matrixRoom": "معرّف الغرفة",
+  "notify.healthchecks": "رابط ping الخاص بـ Healthchecks.io",
+  "notify.save": "حفظ",
+  "notify.test": "إرسال اختبار",
+  "notify.tested": "تم إرسال الاختبار",
 };
 
 export default ar;

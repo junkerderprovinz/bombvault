@@ -283,6 +283,36 @@ const hu: Partial<Translations> = {
   "common.done": "Kész",
   "common.loadingBackups": "Mentések betöltése…",
   "common.saving": "Mentés…",
+
+  // Backup folders selector
+  "folders.title": "Mentett mappák",
+  "folders.hint": "Válaszd ki, hogy a konténer leképezett mappái közül melyeket szeretnéd menteni. Az appdata mappa alapértelmezetten ki van jelölve. Pipáld ki a többit a felvételhez, vagy adj hozzá egyéni elérési utat a gazdagép csatolásán belül. Ha mindent kiveszel, visszaáll az automatikus appdata alapértelmezés.",
+  "folders.appdataDefault": "appdata (alapértelmezett)",
+  "folders.notReachable": "nincs a gazdagép csatolásán belül, nem menthető",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Mappaútvonal hozzáadása",
+  "folders.add": "Hozzáadás",
+  "folders.save": "Mappák mentése",
+  "folders.saved": "Mentve",
+  "folders.empty": "Nem található leképezett mappa ehhez a konténerhez.",
+
+  // Notifications
+  "notify.title": "Értesítések",
+  "notify.hint": "Kapj értesítést, amikor egy mentés befejeződik. Állítsd be az alábbi csatornák bármelyikét; mind a szabály szerint aktiválódik.",
+  "notify.on": "Értesítés",
+  "notify.onNever": "Soha",
+  "notify.onFailure": "Csak hiba esetén",
+  "notify.onAlways": "Sikernél és hibánál",
+  "notify.webhook": "Webhook URL",
+  "notify.webhookFormat": "Webhook formátum",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver URL",
+  "notify.matrixToken": "Hozzáférési token",
+  "notify.matrixRoom": "Szoba azonosító",
+  "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.save": "Mentés",
+  "notify.test": "Teszt küldése",
+  "notify.tested": "Teszt elküldve",
 };
 
 export default hu;

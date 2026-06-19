@@ -283,6 +283,36 @@ const it: Partial<Translations> = {
   "common.done": "Fatto",
   "common.loadingBackups": "Caricamento backup…",
   "common.saving": "Salvataggio…",
+
+  // Backup folders selector
+  "folders.title": "Cartelle da salvare",
+  "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionando tutto si torna al valore automatico di appdata.",
+  "folders.appdataDefault": "appdata (predefinita)",
+  "folders.notReachable": "non si trova sotto il mount dell'host, non può essere salvata",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Aggiungi un percorso di cartella",
+  "folders.add": "Aggiungi",
+  "folders.save": "Salva cartelle",
+  "folders.saved": "Salvato",
+  "folders.empty": "Nessuna cartella mappata trovata per questo contenitore.",
+
+  // Notifications
+  "notify.title": "Notifiche",
+  "notify.hint": "Ricevi una notifica al termine di un backup. Configura uno qualsiasi dei canali qui sotto; si attivano tutti secondo la regola.",
+  "notify.on": "Notifica",
+  "notify.onNever": "Mai",
+  "notify.onFailure": "Solo in caso di errore",
+  "notify.onAlways": "In caso di successo ed errore",
+  "notify.webhook": "URL del Webhook",
+  "notify.webhookFormat": "Formato del Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL dell'Homeserver",
+  "notify.matrixToken": "Token di accesso",
+  "notify.matrixRoom": "ID della stanza",
+  "notify.healthchecks": "URL di ping di Healthchecks.io",
+  "notify.save": "Salva",
+  "notify.test": "Invia test",
+  "notify.tested": "Test inviato",
 };
 
 export default it;
