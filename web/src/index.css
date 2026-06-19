@@ -73,3 +73,10 @@ body {
   filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.6))
           drop-shadow(0 0 5px rgba(255, 255, 255, 0.28));
 }
+
+/* Indeterminate progress bar — a small accent segment sliding left→right on
+   loop, used by ProgressBar.tsx when restic reports no numeric percentage. */
+@keyframes bv-indeterminate {
+  0%   { left: -35%; }
+  100% { left: 100%; }
+}

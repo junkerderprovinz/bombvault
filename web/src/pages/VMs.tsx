@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod } from "../lib/api";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
+import { ProgressBar } from "../components/ProgressBar";
+import { useProgress } from "../lib/progress";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -454,8 +456,9 @@ function VMRow({
   onToggleSelect?: () => void;
 }) {
   const installed = vm.state !== "not-installed";
+  const progress = useProgress()[`vm:${vm.name}`];
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
+    <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed VMs only) */}
@@ -517,6 +520,11 @@ function VMRow({
 
       {/* Backups / Restore disclosure */}
       <VMRestorePanel name={vm.name} t={t} />
+
+      {/* Live backup/restore progress, pinned to the card's bottom edge */}
+      {progress && (
+        <ProgressBar percent={progress.percent} active={progress.active} />
+      )}
     </div>
   );
 }

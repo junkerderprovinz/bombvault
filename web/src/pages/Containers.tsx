@@ -5,6 +5,8 @@ import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
 import { IncludeToggle } from "../components/IncludeToggle";
+import { ProgressBar } from "../components/ProgressBar";
+import { useProgress } from "../lib/progress";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -316,8 +318,9 @@ function ContainerRow({
   onToggleSelect?: () => void;
 }) {
   const installed = container.installed;
+  const progress = useProgress()[`container:${container.name}`];
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
+    <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed containers only) */}
@@ -397,6 +400,11 @@ function ContainerRow({
 
       {/* Backups / Restore disclosure (works even when not installed) */}
       <RestorePanel name={container.name} t={t} />
+
+      {/* Live backup/restore progress, pinned to the card's bottom edge */}
+      {progress && (
+        <ProgressBar percent={progress.percent} active={progress.active} />
+      )}
     </div>
   );
 }

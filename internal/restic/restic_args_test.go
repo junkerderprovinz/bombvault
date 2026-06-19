@@ -96,7 +96,7 @@ func TestBackupArgsUnencrypted(t *testing.T) {
 
 func TestRestoreArgsEncrypted(t *testing.T) {
 	got := restic.RestoreArgs("/repo", "abc123", "/target", restic.Mode{Encrypted: true})
-	want := []string{"-r", "/repo", "restore", "--target", "/target", "--", "abc123"}
+	want := []string{"-r", "/repo", "restore", "--json", "--target", "/target", "--", "abc123"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
@@ -104,7 +104,7 @@ func TestRestoreArgsEncrypted(t *testing.T) {
 
 func TestRestoreArgsNoPassword(t *testing.T) {
 	got := restic.RestoreArgs("/repo", "abc123", "/", restic.Mode{Encrypted: false})
-	want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--target", "/", "--", "abc123"}
+	want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--target", "/", "--", "abc123"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
@@ -113,14 +113,14 @@ func TestRestoreArgsNoPassword(t *testing.T) {
 func TestRestorePathArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.RestorePathArgs("/repo", "abc123", "/host/user/user/appdata/plex", restic.Mode{Encrypted: true})
-		want := []string{"-r", "/repo", "restore", "--target", "/host/user/user/appdata/plex", "--", "abc123:/host/user/user/appdata/plex"}
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/host/user/user/appdata/plex", "--", "abc123:/host/user/user/appdata/plex"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted", func(t *testing.T) {
 		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--target", "/p", "--", "abc123:/p"}
+		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--target", "/p", "--", "abc123:/p"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
