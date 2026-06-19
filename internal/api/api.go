@@ -6,6 +6,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -19,6 +20,7 @@ type Handler struct {
 	svc       *Service
 	scheduler *schedule.Scheduler
 	probes    []spike.Probe
+	progress  *progress.Store // optional; nil = SSE progress endpoint streams nothing
 	// containersLastRun / vmsLastRun drive the everyN due-gates in
 	// ReloadWithDueChecks for their respective domains.
 	containersLastRun schedule.LastRunFunc
@@ -55,6 +57,11 @@ func NewHandler(
 	}
 }
 
+// SetProgress wires the live-progress store the SSE endpoint streams from (the
+// same store the service publishes backup/restore percentages to). Called from
+// main; must be set before Router() so the route reflects it.
+func (h *Handler) SetProgress(p *progress.Store) { h.progress = p }
+
 // Router returns the API mux with Go 1.22 method+path patterns. All routes are
 // under /api/.  The entire mux is wrapped with authGate so that when
 // authentication is enabled every request (other than the public allow-listed
@@ -88,6 +95,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
+	mux.HandleFunc("GET /api/progress", h.handleProgress)
 
 	// VM endpoints.
 	mux.HandleFunc("GET /api/vms", h.handleListVMs)

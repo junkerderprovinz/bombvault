@@ -4,16 +4,20 @@
 package restic
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 // remoteRepoRe matches a restic remote-backend repo location (vs. a local path).
@@ -115,6 +119,7 @@ func RestoreArgs(repo string, snapshotID string, target string, m Mode) []string
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	args = append(args, "--json")
 	args = append(args, "--target", target)
 	args = append(args, "--", snapshotID)
 	return args
@@ -131,6 +136,7 @@ func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	args = append(args, "--json")
 	args = append(args, "--target", p)
 	args = append(args, "--", snapshotID+":"+p)
 	return args
@@ -165,7 +171,7 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	args = append(args, "--target", target, "--include", includePath, "--", snapshotID)
+	args = append(args, "--json", "--target", target, "--include", includePath, "--", snapshotID)
 	return args
 }
 
@@ -271,42 +277,162 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 	}
 	cmd.Env = env
 
+	// When a progress sink is present (backup/restore), stream stdout so each
+	// --json "status" line's percentage reaches the UI live; otherwise capture
+	// the full output in one shot (the default for snapshots/ls/check/forget).
+	if sink := progress.SinkFrom(ctx); sink != nil {
+		return runStreaming(cmd, args, sink)
+	}
+	return runBuffered(cmd, args)
+}
+
+// runBuffered runs restic capturing all stdout into a buffer.
+func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-
 	if err := cmd.Run(); err != nil {
-		// Log the full stderr for server-side diagnostics, and surface a concise,
-		// path-scrubbed reason to the caller so the UI shows WHY restic failed
-		// (e.g. "repository is already locked") instead of a generic message.
-		sub := subcommand(args)
-		log.Printf("restic %s stderr: %s", sub, stderr.String())
-		if reason := lastReason(stderr.String()); reason != "" {
-			return nil, fmt.Errorf("restic %s failed: %s", sub, reason)
-		}
-		return nil, fmt.Errorf("restic %s failed", sub)
+		return nil, runError(args, stderr.String())
 	}
 	return stdout.Bytes(), nil
+}
+
+// runStreaming runs restic and scans its --json stdout line by line, forwarding
+// each "status" line's percent_done to the sink while still accumulating the
+// full output so a trailing summary line can be parsed afterwards.
+func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, error) {
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("restic %s: stdout pipe: %w", subcommand(args), err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, runError(args, stderr.String())
+	}
+
+	var out bytes.Buffer
+	sc := bufio.NewScanner(stdout)
+	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // status/summary lines are small; 1 MiB is ample
+	for sc.Scan() {
+		line := sc.Bytes()
+		out.Write(line)
+		out.WriteByte('\n')
+		if pct, ok := statusPercent(line); ok {
+			sink(pct)
+		}
+	}
+	// A scanner error (e.g. an over-long line) is logged, not fatal: still wait
+	// for the process and let the caller parse whatever output was captured.
+	if scErr := sc.Err(); scErr != nil {
+		log.Printf("restic %s: stdout scan: %v", subcommand(args), scErr)
+		// Drain the rest of stdout so restic doesn't block writing to a full pipe,
+		// which would hang cmd.Wait below.
+		_, _ = io.Copy(io.Discard, stdout)
+	}
+	if err := cmd.Wait(); err != nil {
+		return nil, runError(args, stderr.String())
+	}
+	return out.Bytes(), nil
+}
+
+// runError logs the full stderr server-side and returns a concise, path-scrubbed
+// reason to the caller so the UI shows WHY restic failed (e.g. "repository is
+// already locked") instead of a generic message.
+func runError(args []string, stderr string) error {
+	sub := subcommand(args)
+	log.Printf("restic %s stderr: %s", sub, stderr)
+	if reason := lastReason(stderr); reason != "" {
+		return fmt.Errorf("restic %s failed: %s", sub, reason)
+	}
+	return fmt.Errorf("restic %s failed", sub)
+}
+
+// statusPercent extracts the 0..100 completion percentage from a restic --json
+// "status" line. Returns ok=false for any other line (summary, errors, non-JSON).
+func statusPercent(line []byte) (float64, bool) {
+	var s struct {
+		MessageType string  `json:"message_type"`
+		PercentDone float64 `json:"percent_done"`
+	}
+	if json.Unmarshal(line, &s) != nil || s.MessageType != "status" {
+		return 0, false
+	}
+	pct := s.PercentDone * 100
+	if pct < 0 {
+		pct = 0
+	} else if pct > 100 {
+		pct = 100 // restic can briefly report >100% when total_bytes is underestimated mid-scan
+	}
+	return pct, true
 }
 
 // reasonPathRe matches absolute-path-like tokens so they can be stripped from a
 // surfaced restic error (defense-in-depth: repo/appdata paths must not leak).
 var reasonPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 
-// lastReason returns the last non-empty line of stderr with absolute paths
+// lastReason returns the most informative line of stderr, with absolute paths
 // scrubbed and the length capped — a concise failure cause for the UI.
+//
+// restic often ends its output with a generic boilerplate trailer ("Corrupted
+// blobs are either caused by hardware issues or software bugs. Please open an
+// issue …"), which is useless to the user. We prefer a line that names the
+// actual cause (a "Fatal:" line, "unable to save", "hash mismatch", etc.) and
+// only fall back to the literal last line when nothing better is present.
 func lastReason(stderr string) string {
-	reason := ""
+	var lines []string
 	for _, line := range strings.Split(stderr, "\n") {
 		if s := strings.TrimSpace(line); s != "" {
-			reason = s
+			lines = append(lines, s)
 		}
 	}
+	if len(lines) == 0 {
+		return ""
+	}
+
+	reason := lines[len(lines)-1] // default: the literal last line
+	// Prefer a line that names the real cause (scan from the end).
+	for i := len(lines) - 1; i >= 0; i-- {
+		if isInformativeReason(lines[i]) {
+			reason = lines[i]
+			break
+		}
+	}
+	// If we still landed on boilerplate, take the last non-boilerplate line.
+	if isBoilerplateReason(reason) {
+		for i := len(lines) - 1; i >= 0; i-- {
+			if !isBoilerplateReason(lines[i]) {
+				reason = lines[i]
+				break
+			}
+		}
+	}
+
 	reason = reasonPathRe.ReplaceAllString(reason, "[path]")
 	if len(reason) > 200 {
 		reason = reason[:200]
 	}
 	return reason
+}
+
+// isInformativeReason reports whether a stderr line names an actual failure
+// cause (worth surfacing over restic's generic trailer).
+func isInformativeReason(line string) bool {
+	l := strings.ToLower(line)
+	return strings.HasPrefix(l, "fatal:") ||
+		strings.HasPrefix(l, "error") ||
+		strings.Contains(l, "unable to") ||
+		strings.Contains(l, "data corruption") ||
+		strings.Contains(l, "hash mismatch")
+}
+
+// isBoilerplateReason reports whether a stderr line is restic's generic
+// "open an issue" trailer that carries no actionable detail.
+func isBoilerplateReason(line string) bool {
+	l := strings.ToLower(line)
+	return strings.Contains(l, "please open an issue") ||
+		strings.Contains(l, "corrupted blobs are either") ||
+		strings.Contains(l, "for further troubleshooting")
 }
 
 // subcommand extracts the subcommand name from an args slice for use in error

@@ -12,6 +12,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
@@ -78,6 +79,10 @@ func run() error {
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
 	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
+	// Live backup/restore progress: the service publishes percentages here and the
+	// SSE endpoint (/api/progress) streams them to the SPA's per-card bars.
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
 	// Materialise the (decrypted) rclone config on disk for off-site repos.
 	if err := svc.WriteRcloneConfFile(); err != nil {
 		log.Printf("rclone: write config: %v", err) // non-fatal: off-site stays unavailable until fixed
@@ -121,6 +126,7 @@ func run() error {
 
 	// JSON API + embedded SPA.
 	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+	handler.SetProgress(prog) // same store the service publishes to → SSE endpoint
 	// Warm the host-integration check at startup so the dashboard shows the
 	// green result list immediately on first load (no manual click needed).
 	go handler.WarmSpike()

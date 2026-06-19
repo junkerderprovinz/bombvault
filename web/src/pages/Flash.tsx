@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { backupFlashNow, listFlashSnapshots, restoreFlash } from "../lib/api";
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { ProgressBar } from "../components/ProgressBar";
+import { useProgress } from "../lib/progress";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -155,6 +157,7 @@ export function Flash() {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const progress = useProgress()["flash"];
 
   function load() {
     return listFlashSnapshots()
@@ -180,12 +183,17 @@ export function Flash() {
       </div>
 
       {/* Backup card */}
-      <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+      <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("flash.backupTitle")}
         </h2>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
         <FlashBackupButton t={t} onBackedUp={() => void load()} />
+
+        {/* Live backup/restore progress, pinned to the card's bottom edge */}
+        {progress && (
+          <ProgressBar percent={progress.percent} active={progress.active} />
+        )}
       </div>
 
       {/* Restore card */}

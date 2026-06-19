@@ -25,6 +25,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -90,12 +91,13 @@ type HostSSH interface {
 
 // Service bridges the real adapters to the backup orchestrator's interfaces.
 type Service struct {
-	cfg    config.Config
-	store  *store.Repo
-	docker dockercli.Docker
-	virsh  virshcli.Virsh
-	engine ResticEngine
-	ssh    HostSSH // optional; nil = no SSH (VM NVRAM transfer skipped)
+	cfg      config.Config
+	store    *store.Repo
+	docker   dockercli.Docker
+	virsh    virshcli.Virsh
+	engine   ResticEngine
+	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
+	progress *progress.Store // optional; nil = progress reporting disabled
 }
 
 // NewService constructs the backup service.
@@ -106,6 +108,48 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 // SetHostSSH wires the SSH connection used for VM NVRAM transfer + the UI's
 // key/test endpoints. Called from main after the key is ensured.
 func (s *Service) SetHostSSH(ssh HostSSH) { s.ssh = ssh }
+
+// SetProgress wires the live-progress store that backup/restore operations
+// publish to (and the SSE endpoint subscribes to). Called from main.
+func (s *Service) SetProgress(p *progress.Store) { s.progress = p }
+
+// progBegin marks a backup/restore as started for key/phase and returns a
+// context carrying a restic sink that republishes each percentage. Percent
+// updates are throttled to whole-percent steps to avoid flooding subscribers.
+// When no progress store is wired it is a no-op returning ctx unchanged.
+func (s *Service) progBegin(ctx context.Context, key, phase string) context.Context {
+	if s.progress == nil {
+		return ctx
+	}
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: 0, Active: true})
+	last := -1.0
+	return progress.WithSink(ctx, func(pct float64) {
+		// A multi-path restore runs one restic process per path; each restarts at
+		// ~0. A drop below the last value means a new process began — reset the
+		// throttle so paths 2..N also report live progress.
+		if pct < last {
+			last = -1
+		}
+		if pct < 100 && pct-last < 1 {
+			return // throttle: only forward ≥1% steps (always forward the final 100)
+		}
+		last = pct
+		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true})
+	})
+}
+
+// progEnd emits the terminal event for key/phase: 100% on success, 0% on
+// failure (the UI hides the bar either way). No-op without a progress store.
+func (s *Service) progEnd(key, phase string, ok bool) {
+	if s.progress == nil {
+		return
+	}
+	pct := 100.0
+	if !ok {
+		pct = 0
+	}
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false})
+}
 
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
 // derives the password from APP_KEY; OFF uses a password-less repo.
@@ -319,7 +363,9 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		return backup.Summary{}, fmt.Errorf("upsert target: %w", err)
 	}
 
-	sum, err := backup.BackupContainer(ctx, backup.BackupDeps{
+	pkey := "container:" + name
+	bctx := s.progBegin(ctx, pkey, "backup")
+	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:         name,
 		ContainerName:        name,
 		RepoPath:             repo,
@@ -336,6 +382,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		Templates:            templatesAdapter{},
 		Runs:                 runsAdapter{s.store},
 	})
+	s.progEnd(pkey, "backup", err == nil)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -546,7 +593,9 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
 	}
 
-	return backup.RestoreContainer(ctx, backup.RestoreDeps{
+	rkey := "container:" + name
+	rctx := s.progBegin(ctx, rkey, "restore")
+	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         confirm,
 		ContainerRef:      name,
 		ContainerName:     name,
@@ -562,6 +611,8 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{s.store},
 	})
+	s.progEnd(rkey, "restore", rerr == nil)
+	return rerr
 }
 
 // Snapshots lists the snapshots for a single container. The containers repo is
@@ -972,12 +1023,15 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 			log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name) //nolint:gosec // G706: %q-quoted
 		}
 	}
+	vkey := "vm:" + name
+	bctx := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
 	if live {
-		sum, err = backup.BackupVMLive(ctx, deps)
+		sum, err = backup.BackupVMLive(bctx, deps)
 	} else {
-		sum, err = backup.BackupVMGraceful(ctx, deps)
+		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
+	s.progEnd(vkey, "backup", err == nil)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -1066,7 +1120,9 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		}
 	}
 
-	return backup.RestoreVM(ctx, backup.VMRestoreDeps{
+	rkey := "vm:" + name
+	rctx := s.progBegin(ctx, rkey, "restore")
+	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
 		Confirmed:    confirm,
 		Name:         name,
 		SnapshotID:   snapshotID,
@@ -1082,6 +1138,8 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		Restic:       &resticAdapter{engine: s.engine, mode: mode},
 		Runs:         runsAdapter{s.store},
 	})
+	s.progEnd(rkey, "restore", rerr == nil)
+	return rerr
 }
 
 // VMSSHInfo returns the libvirt SSH host and BombVault's public key for the user
@@ -1183,13 +1241,15 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
-	sum, err := backup.BackupFlash(ctx, backup.FlashBackupDeps{
+	fctx := s.progBegin(ctx, "flash", "backup")
+	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
+	s.progEnd("flash", "backup", err == nil)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -1232,7 +1292,8 @@ func (s *Service) RestoreFlash(ctx context.Context, snapshotID string, confirm b
 	if err := paths.EnsureDir(target); err != nil {
 		return "", fmt.Errorf("create flash restore folder: %w", err)
 	}
-	if err := backup.RestoreFlash(ctx, backup.FlashRestoreDeps{
+	fctx := s.progBegin(ctx, "flash", "restore")
+	rerr := backup.RestoreFlash(fctx, backup.FlashRestoreDeps{
 		Confirmed:  confirm,
 		SnapshotID: snapshotID,
 		Repo:       repo,
@@ -1240,8 +1301,10 @@ func (s *Service) RestoreFlash(ctx context.Context, snapshotID string, confirm b
 		TargetID:   store.FlashTargetID,
 		Restic:     &resticAdapter{engine: s.engine, mode: mode},
 		Runs:       runsAdapter{s.store},
-	}); err != nil {
-		return "", err
+	})
+	s.progEnd("flash", "restore", rerr == nil)
+	if rerr != nil {
+		return "", rerr
 	}
 	return target, nil
 }
