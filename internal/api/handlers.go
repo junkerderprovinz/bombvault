@@ -700,16 +700,42 @@ func (h *Handler) handleSpikeCached(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+// runView enriches a stored Run with the human target name + domain so the
+// dashboard's run history can show WHICH container/VM/flash each run was for —
+// and, on a failure, the error — instead of an opaque snapshot id.
+type runView struct {
+	store.Run
+	Target string `json:"target"`
+	Domain string `json:"domain"` // "container" | "vm" | "flash" | ""
+}
+
 func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 	runs, err := h.store.ListRuns(100)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if runs == nil {
-		runs = []store.Run{}
+	// Resolve target_id → (name, domain). Best-effort: an unknown id (e.g. a
+	// deleted target) just leaves the name blank.
+	name := map[string]string{store.FlashTargetID: "Unraid flash"}
+	domain := map[string]string{store.FlashTargetID: "flash"}
+	if cts, lErr := h.store.ListTargets(); lErr == nil {
+		for _, t := range cts {
+			name[t.ID] = t.ContainerName
+			domain[t.ID] = "container"
+		}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": runs})
+	if vts, lErr := h.store.ListVMTargets(); lErr == nil {
+		for _, t := range vts {
+			name[t.ID] = t.Name
+			domain[t.ID] = "vm"
+		}
+	}
+	views := make([]runView, 0, len(runs))
+	for _, r := range runs {
+		views = append(views, runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": views})
 }
 
 // browseDirEntry is a single subdirectory entry in the browse response.

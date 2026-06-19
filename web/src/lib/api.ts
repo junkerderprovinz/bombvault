@@ -98,6 +98,8 @@ export interface Run {
   snapshotId: string;
   bytes: number;
   error: string;
+  target: string; // human target name (container/VM name, or "Unraid flash")
+  domain: string; // "container" | "vm" | "flash" | ""
 }
 
 export interface ListRunsResponse {

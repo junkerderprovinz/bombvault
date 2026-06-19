@@ -51,8 +51,10 @@ type VM interface {
 	Autostart(ctx context.Context, name string, on bool) error
 	// SnapshotCreateDiskOnly creates an external, atomic, disk-only snapshot
 	// (the VM keeps running and writes to a fresh overlay; the base goes
-	// read-only). quiesce uses the qemu guest agent for app-consistency.
-	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool) error
+	// read-only). quiesce uses the qemu guest agent for app-consistency. skipDevs
+	// lists target devices to exclude (cdrom / read-only) so they are not
+	// snapshotted (which fails for non-block-device files).
+	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool, skipDevs []string) error
 	// BlockCommitActivePivot commits the active overlay back into its base and
 	// pivots the running VM onto the base (blockcommit --active --pivot --wait).
 	BlockCommitActivePivot(ctx context.Context, name, device string) error
@@ -78,6 +80,9 @@ type VMBackupDeps struct {
 	// DiskDevice is the first disk's target dev (e.g. "vda", "hdc") — the
 	// blockcommit target for live backup. Empty disables live commit.
 	DiskDevice string
+	// SkipSnapshotDevs are target devices excluded from the live snapshot
+	// (cdrom / read-only disks). Passed through to SnapshotCreateDiskOnly.
+	SkipSnapshotDevs []string
 	// NVRAMPath is the container-visible NVRAM path (empty for BIOS VMs).
 	NVRAMPath string
 	// RepoPath is the local restic repository path for the vms domain.
@@ -235,8 +240,9 @@ func BackupVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	const snap = "bombvault-tmp"
 	quiesce := d.VM.GuestAgentPing(ctx, d.Name)
 
-	// Create the overlay. Nothing destructive yet — on failure the VM is untouched.
-	if err := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, snap, quiesce); err != nil {
+	// Create the overlay (writable disks only; cdrom/read-only excluded). Nothing
+	// destructive yet — on failure the VM is untouched.
+	if err := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, snap, quiesce, d.SkipSnapshotDevs); err != nil {
 		e := fmt.Errorf("vm live backup: snapshot: %w", err)
 		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
 		return Summary{}, e

@@ -182,11 +182,17 @@ func (c *Client) IsActive(ctx context.Context, name string) (bool, error) {
 }
 
 // SnapshotCreateDiskOnly creates an external, atomic, disk-only snapshot.
-func (c *Client) SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool) error {
+func (c *Client) SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool, skipDevs []string) error {
 	args := []string{"snapshot-create-as", "--domain", name, snapName,
 		"--disk-only", "--atomic", "--no-metadata"}
 	if quiesce {
 		args = append(args, "--quiesce")
+	}
+	// Exclude non-writable disks (cdrom / read-only). Snapshotting them fails with
+	// "external snapshot file ... already exists and is not a block device". The
+	// writable disks default to an external snapshot under --disk-only.
+	for _, dev := range skipDevs {
+		args = append(args, "--diskspec", dev+",snapshot=no")
 	}
 	_, err := c.run(ctx, args...)
 	return err
@@ -223,6 +229,7 @@ type domainXML struct {
 			Target struct {
 				Dev string `xml:"dev,attr"`
 			} `xml:"target"`
+			ReadOnly *struct{} `xml:"readonly"`
 		} `xml:"disk"`
 	} `xml:"devices"`
 	OS struct {
@@ -241,14 +248,20 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 	}
 	var disks []string
 	device := ""
+	var skip []string
 	for _, disk := range d.Devices.Disks {
-		if disk.Type == "file" && disk.Device == "disk" && disk.Source.File != "" {
+		writable := disk.Type == "file" && disk.Device == "disk" && disk.Source.File != "" && disk.ReadOnly == nil
+		switch {
+		case writable:
 			disks = append(disks, disk.Source.File)
 			if device == "" {
-				device = disk.Target.Dev // first disk's target dev = blockcommit target
+				device = disk.Target.Dev // first writable disk's target dev = blockcommit target
 			}
+		case disk.Target.Dev != "":
+			// cdrom, read-only, or source-less disk → exclude from the live snapshot.
+			skip = append(skip, disk.Target.Dev)
 		}
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
-	return DomainInfo{DiskPaths: disks, NVRAMPath: nvram, DiskDevice: device}, nil
+	return DomainInfo{DiskPaths: disks, NVRAMPath: nvram, DiskDevice: device, SkipSnapshotDevs: skip}, nil
 }

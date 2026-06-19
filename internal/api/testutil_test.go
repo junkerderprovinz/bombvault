@@ -123,7 +123,7 @@ func (fakeVirsh) Define(_ context.Context, _ string) error            { return n
 func (fakeVirsh) Undefine(_ context.Context, _ string) error          { return nil }
 func (fakeVirsh) Autostart(_ context.Context, _ string, _ bool) error { return nil }
 func (fakeVirsh) IsActive(_ context.Context, _ string) (bool, error)  { return false, nil }
-func (fakeVirsh) SnapshotCreateDiskOnly(_ context.Context, _, _ string, _ bool) error {
+func (fakeVirsh) SnapshotCreateDiskOnly(_ context.Context, _, _ string, _ bool, _ []string) error {
 	return nil
 }
 func (fakeVirsh) BlockCommitActivePivot(_ context.Context, _, _ string) error { return nil }

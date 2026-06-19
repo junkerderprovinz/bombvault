@@ -277,17 +277,22 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {recent.length > 0 && (
         <div className="divide-y divide-carbon-border">
           {recent.map((run) => (
-            <div key={run.id} className="flex items-center gap-3 py-2.5 text-sm">
-              <StatusChip status={run.status} />
-              <span className="text-carbon-text font-medium w-16 shrink-0">
-                {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
-              </span>
-              <span className="text-carbon-textMuted flex-1 truncate text-xs font-mono">
-                {run.targetId.slice(0, 12)}…
-              </span>
-              <span className="text-carbon-textMuted text-xs shrink-0">
-                {relativeTime(run.startedAt)}
-              </span>
+            <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
+              <div className="flex items-center gap-3">
+                <StatusChip status={run.status} />
+                <span className="text-carbon-text font-medium w-16 shrink-0">
+                  {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
+                </span>
+                <span className="text-carbon-text flex-1 truncate">
+                  {run.target || `${run.targetId.slice(0, 12)}…`}
+                </span>
+                <span className="text-carbon-textMuted text-xs shrink-0">
+                  {relativeTime(run.startedAt)}
+                </span>
+              </div>
+              {run.status === "failed" && run.error && (
+                <p className="pl-16 text-xs text-[#ff8389] break-words">{run.error}</p>
+              )}
             </div>
           ))}
         </div>
