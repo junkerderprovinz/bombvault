@@ -106,6 +106,9 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 
 	// A container whose mount source is under <root>/appdata/plex.
 	appdata := root + "/appdata/plex"
+	if err := os.MkdirAll(appdata, 0o750); err != nil { // must exist (backup filters missing paths)
+		t.Fatal(err)
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name:    "/plex",
 		Image:   "plex:latest",
@@ -154,6 +157,46 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 }
 
+// TestServiceBackupNoAppdataDefinitionOnly pins the forum fix: a stateless
+// container with no existing source paths is backed up "definition-only" (its
+// recreate recipe is captured) instead of failing with restic's "all source
+// directories do not exist". restic is never called.
+func TestServiceBackupNoAppdataDefinitionOnly(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	// No mounts, and the conventional appdata dir is NOT created → nothing exists.
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/bentopdf", Image: "bentopdf:latest", Running: true}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	sum, err := svc.Backup(context.Background(), "bentopdf")
+	if err != nil {
+		t.Fatalf("backup should succeed (definition-only), got: %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("restic must NOT run when there are no source paths, got %d calls", len(eng.backedUp))
+	}
+	if sum.SnapshotID != "" {
+		t.Fatalf("definition-only backup should have no snapshot, got %q", sum.SnapshotID)
+	}
+	tg, err := st.GetTargetByContainer("bentopdf")
+	if err != nil || tg.Definition == "" {
+		t.Fatalf("definition should be captured for recreate-on-restore (tg=%+v err=%v)", tg, err)
+	}
+	if runs, _ := st.ListRuns(10); len(runs) == 0 || runs[0].Status != "success" {
+		t.Fatalf("expected a recorded success run, got %v", runs)
+	}
+}
+
 // TestServiceContainerMountsAndSelection covers the backup-folder selector:
 // listing a container's bind mounts (appdata default selected, others not, an
 // out-of-mount bind marked unreachable), storing an explicit selection, and that
@@ -178,6 +221,12 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	// container paths under <root>.
 	appdataHost, mediaHost := "/mnt/user/appdata/plex", "/mnt/user/media"
 	mediaCP := root + "/user/media"
+	// Both selected dirs must exist (backup filters out missing source paths).
+	for _, p := range []string{root + "/user/appdata/plex", mediaCP} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name: "/plex", Image: "plex:latest", Running: true,
 		Mounts: []model.Mount{
@@ -258,6 +307,12 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 	s.ContainersPath = "backups/containers"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
+	}
+	// The translated appdata dirs must exist (backup filters out missing paths).
+	for _, p := range []string{root + "/user/appdata/pingvin_share_x/data", root + "/user/appdata/pingvin_share_x/images"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	// Exactly the box-gate container: appdata binds under /mnt/user/appdata (real

@@ -440,6 +440,19 @@ func sliceSet(xs []string) map[string]bool {
 	return m
 }
 
+// onlyExistingPaths returns the subset of paths that exist on disk. BombVault
+// reaches every backup source through the host mount, so a missing path means
+// there is genuinely nothing to back up there.
+func onlyExistingPaths(paths []string) []string {
+	out := make([]string, 0, len(paths))
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
@@ -468,6 +481,11 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
 		effective = existing.SelectedPaths
 	}
+	// Drop paths that don't exist on disk so restic is never handed a missing
+	// source (which fails with "all source directories do not exist"). A stateless
+	// container with no data ends up with an empty list → a definition-only backup
+	// (its template/inspect is still captured so it can be recreated on restore).
+	effective = onlyExistingPaths(effective)
 
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
@@ -666,26 +684,39 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	// "latest" (or empty) resolves to the container's newest snapshot — used by
 	// the bulk "restore selected" action. restic returns snapshots oldest-first,
 	// so the last tag-matching one is the newest.
+	// A definition-only backup (stateless container with no restic snapshot) has
+	// no snapshot to resolve — recreate it from the stored definition instead.
+	recreateOnly := false
 	if snapshotID == "latest" || snapshotID == "" {
 		snaps, snapErr := s.Snapshots(ctx, name)
 		if snapErr != nil {
 			return snapErr
 		}
-		if len(snaps) == 0 {
+		switch {
+		case len(snaps) > 0:
+			snapshotID = snaps[len(snaps)-1].ID
+		case tg.Definition != "":
+			recreateOnly = true
+		default:
 			return errors.New("no backups found for this container")
 		}
-		snapshotID = snaps[len(snaps)-1].ID
 	}
 
 	// Re-validate the stored appdata paths stay within the host mount root before
-	// restoring (defense-in-depth in case the DB was tampered with).
-	if len(tg.AppdataPaths) == 0 {
-		return errors.New("no backup paths recorded for this container — run a backup once, then restore")
-	}
-	for _, p := range tg.AppdataPaths {
-		if !paths.Within(s.cfg.HostMountRoot, p) {
-			log.Printf("api: restore: appdata path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
-			return errors.New("a stored backup path is outside the host mount — refusing to restore")
+	// restoring (defense-in-depth in case the DB was tampered with). Skipped for a
+	// recreate-only restore, which has no paths.
+	appdataForRestore := tg.AppdataPaths
+	if recreateOnly {
+		appdataForRestore = nil
+	} else {
+		if len(tg.AppdataPaths) == 0 {
+			return errors.New("no backup paths recorded for this container — run a backup once, then restore")
+		}
+		for _, p := range tg.AppdataPaths {
+			if !paths.Within(s.cfg.HostMountRoot, p) {
+				log.Printf("api: restore: appdata path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
+				return errors.New("a stored backup path is outside the host mount — refusing to restore")
+			}
 		}
 	}
 
@@ -715,11 +746,12 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         confirm,
+		RecreateOnly:      recreateOnly,
 		ContainerRef:      name,
 		ContainerName:     name,
 		RepoPath:          repo,
 		SnapshotID:        snapshotID,
-		AppdataPaths:      tg.AppdataPaths, // restored per-path back to origin
+		AppdataPaths:      appdataForRestore, // restored per-path back to origin (nil = recreate-only)
 		TemplateXML:       xml,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           in,
@@ -1119,15 +1151,16 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	}
 
 	deps := backup.VMBackupDeps{
-		Name:       name,
-		DiskPaths:  diskPaths,
-		DiskDevice: domain.DiskDevice,
-		RepoPath:   repo,
-		TargetID:   tg.ID,
-		DataDir:    s.cfg.DataDir,
-		VM:         s.virsh,
-		Restic:     &resticAdapter{engine: s.engine, mode: mode},
-		Runs:       runsAdapter{s.store},
+		Name:             name,
+		DiskPaths:        diskPaths,
+		DiskDevice:       domain.DiskDevice,
+		SkipSnapshotDevs: domain.SkipSnapshotDevs,
+		RepoPath:         repo,
+		TargetID:         tg.ID,
+		DataDir:          s.cfg.DataDir,
+		VM:               s.virsh,
+		Restic:           &resticAdapter{engine: s.engine, mode: mode},
+		Runs:             runsAdapter{s.store},
 	}
 	live := false
 	if method == "live" {

@@ -14,6 +14,9 @@ import (
 type fakeVM struct {
 	log []string
 
+	// snapshotSkip records the skipDevs passed to SnapshotCreateDiskOnly.
+	snapshotSkip []string
+
 	// active is returned by IsActive.
 	active    bool
 	stateVal  string
@@ -83,8 +86,9 @@ func (f *fakeVM) Autostart(_ context.Context, name string, on bool) error {
 	return f.autostartErr
 }
 
-func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, _ bool) error {
+func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, _ bool, skipDevs []string) error {
 	f.log = append(f.log, "snapshot:"+name)
+	f.snapshotSkip = skipDevs
 	return f.snapshotErr
 }
 

@@ -143,6 +143,10 @@ type BackupDeps struct {
 type RestoreDeps struct {
 	// Confirmed MUST be true — guard against an accidental destructive restore.
 	Confirmed bool
+	// RecreateOnly restores a container that has no restic snapshot (a
+	// definition-only backup of a stateless container): it is recreated from the
+	// captured definition + template, with no snapshot id and no appdata restore.
+	RecreateOnly bool
 	// ContainerRef is the name/id to stop/remove and re-inspect.
 	ContainerRef string
 	// ContainerName is the expected live name (wrong-target guard) and the
@@ -270,31 +274,38 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			}
 		}
 
-		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, d.AppdataPaths, tags)
-		if backupErr != nil {
-			return
-		}
-		summarySeen = true
-
-		// Capture and persist the live Unraid template alongside the snapshot.
-		// Templates.Write prepends "my-", so the snapshot copy lands at
-		// "my-<snapshotID>-<ContainerName>.xml" (a single, snapshot-scoped name).
-		//
-		// A genuine "no template" (ok==false, err==nil) is fine — not every
-		// container has an Unraid template. A real I/O error must NOT silently
-		// pass: the snapshot itself is valid, so the backup still succeeds, but
-		// we surface the template-capture failure in the log rather than
-		// pretending a template was never there.
-		xml, ok, readErr := d.Templates.Read(d.FlashTemplatesDir, d.ContainerName)
-		switch {
-		case readErr != nil:
-			log.Printf("backup: capture template for %q failed (snapshot still valid): %v",
-				d.ContainerName, readErr)
-		case ok:
-			snapName := summary.SnapshotID + "-" + d.ContainerName
-			if backupErr = d.Templates.Write(d.SnapshotTemplatesDir, snapName, xml); backupErr != nil {
-				backupErr = fmt.Errorf("backup: persist template: %w", backupErr)
+		// A container with no existing source paths (a stateless app, or appdata
+		// that simply isn't present yet) is still "backed up": its definition +
+		// template are captured (here and in the service layer) so it can be
+		// recreated on restore. We just skip restic — handing it zero/absent paths
+		// fails with "Fatal: all source directories do not exist".
+		if len(d.AppdataPaths) > 0 {
+			summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, d.AppdataPaths, tags)
+			if backupErr != nil {
 				return
+			}
+			summarySeen = true
+
+			// Capture and persist the live Unraid template alongside the snapshot.
+			// Templates.Write prepends "my-", so the snapshot copy lands at
+			// "my-<snapshotID>-<ContainerName>.xml" (a single, snapshot-scoped name).
+			//
+			// A genuine "no template" (ok==false, err==nil) is fine — not every
+			// container has an Unraid template. A real I/O error must NOT silently
+			// pass: the snapshot itself is valid, so the backup still succeeds, but
+			// we surface the template-capture failure in the log rather than
+			// pretending a template was never there.
+			xml, ok, readErr := d.Templates.Read(d.FlashTemplatesDir, d.ContainerName)
+			switch {
+			case readErr != nil:
+				log.Printf("backup: capture template for %q failed (snapshot still valid): %v",
+					d.ContainerName, readErr)
+			case ok:
+				snapName := summary.SnapshotID + "-" + d.ContainerName
+				if backupErr = d.Templates.Write(d.SnapshotTemplatesDir, snapName, xml); backupErr != nil {
+					backupErr = fmt.Errorf("backup: persist template: %w", backupErr)
+					return
+				}
 			}
 		}
 	}()
@@ -342,7 +353,9 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	if !d.Confirmed {
 		return ErrNotConfirmed
 	}
-	if !snapshotIDRe.MatchString(d.SnapshotID) {
+	// A normal restore requires a valid snapshot id (arg-injection guard); a
+	// recreate-only restore (definition-only backup) has no snapshot.
+	if !d.RecreateOnly && !snapshotIDRe.MatchString(d.SnapshotID) {
 		return ErrInvalidSnapshotID
 	}
 
@@ -357,7 +370,13 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 		return restoreErr
 	}
 
-	if err := d.Runs.Finish(runID, statusSuccess, d.SnapshotID, 0, ""); err != nil {
+	// A recreate-only restore has no real snapshot — record an empty id, not the
+	// "latest"/"" placeholder that was passed in.
+	recordedSnap := d.SnapshotID
+	if d.RecreateOnly {
+		recordedSnap = ""
+	}
+	if err := d.Runs.Finish(runID, statusSuccess, recordedSnap, 0, ""); err != nil {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil
@@ -370,7 +389,9 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	// <path>), so restic never reconciles the shared appdata parent directory
 	// (which fails on a populated dir: "failed to remove stale item ... is a
 	// directory"). This replaces the old single "--target /" restore (SEC-102).
-	if len(d.AppdataPaths) == 0 {
+	// A recreate-only restore (definition-only backup) has no paths to restore;
+	// otherwise every appdata path must be absolute and traversal-free.
+	if !d.RecreateOnly && len(d.AppdataPaths) == 0 {
 		return errors.New("restore: no appdata paths to restore")
 	}
 	for _, p := range d.AppdataPaths {
@@ -419,9 +440,13 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		_ = err
 	}
 
-	// Restore each appdata path back to its origin as its own subtree.
-	if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, d.AppdataPaths); err != nil {
-		return fmt.Errorf("restore: restic restore: %w", err)
+	// Restore each appdata path back to its origin as its own subtree. Skipped for
+	// a recreate-only restore (no snapshot, no paths) — the container is just
+	// recreated from its definition below.
+	if len(d.AppdataPaths) > 0 {
+		if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, d.AppdataPaths); err != nil {
+			return fmt.Errorf("restore: restic restore: %w", err)
+		}
 	}
 
 	// Flash the captured template back, then recreate+start the container. Only

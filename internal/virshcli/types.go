@@ -18,6 +18,10 @@ type DomainInfo struct {
 	DiskPaths  []string
 	NVRAMPath  string
 	DiskDevice string
+	// SkipSnapshotDevs are target devices that must NOT be snapshotted in a live
+	// backup (cdrom / read-only / source-less disks) — snapshotting them fails
+	// with "external snapshot file ... already exists and is not a block device".
+	SkipSnapshotDevs []string
 }
 
 // Virsh is the host-control surface the VM backup orchestrator depends on.
@@ -48,8 +52,9 @@ type Virsh interface {
 	// IsActive reports whether the domain is in the "running" state.
 	IsActive(ctx context.Context, name string) (bool, error)
 	// SnapshotCreateDiskOnly creates an external, atomic, disk-only snapshot
-	// (the VM keeps running, writing to a fresh overlay).
-	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool) error
+	// (the VM keeps running, writing to a fresh overlay). skipDevs lists target
+	// devices to exclude (cdrom / read-only) via --diskspec <dev>,snapshot=no.
+	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool, skipDevs []string) error
 	// BlockCommitActivePivot merges the active overlay back into its base and
 	// pivots the running VM onto the base (blockcommit --active --pivot --wait).
 	BlockCommitActivePivot(ctx context.Context, name, device string) error

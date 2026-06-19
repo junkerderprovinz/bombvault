@@ -26,6 +26,11 @@ import (
 func newTestRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo) {
 	t.Helper()
 	dir := t.TempDir()
+	// The conventional appdata dir for the "plex" container the backup tests use,
+	// so the (now existence-filtered) backup actually has a source to snapshot.
+	if err := os.MkdirAll(filepath.Join(dir, "appdata", "plex"), 0o750); err != nil {
+		t.Fatal(err)
+	}
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
