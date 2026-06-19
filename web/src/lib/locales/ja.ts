@@ -275,6 +275,36 @@ const ja: Partial<Translations> = {
   "common.done": "完了",
   "common.loadingBackups": "バックアップを読み込み中…",
   "common.saving": "保存中…",
+
+  // Backup folders selector
+  "folders.title": "バックアップ対象フォルダ",
+  "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すと、自動の appdata デフォルトに戻ります。",
+  "folders.appdataDefault": "appdata（デフォルト）",
+  "folders.notReachable": "ホストマウント配下にないため、バックアップできません",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "フォルダパスを追加",
+  "folders.add": "追加",
+  "folders.save": "フォルダを保存",
+  "folders.saved": "保存しました",
+  "folders.empty": "このコンテナにマッピングされたフォルダが見つかりません。",
+
+  // Notifications
+  "notify.title": "通知",
+  "notify.hint": "バックアップ完了時に通知を受け取ります。以下のいずれかのチャネルを設定してください。すべてポリシーに従って発火します。",
+  "notify.on": "通知する",
+  "notify.onNever": "なし",
+  "notify.onFailure": "失敗時のみ",
+  "notify.onAlways": "成功時と失敗時",
+  "notify.webhook": "Webhook URL",
+  "notify.webhookFormat": "Webhook 形式",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver URL",
+  "notify.matrixToken": "アクセストークン",
+  "notify.matrixRoom": "ルーム ID",
+  "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.save": "保存",
+  "notify.test": "テスト送信",
+  "notify.tested": "テストを送信しました",
 };
 
 export default ja;

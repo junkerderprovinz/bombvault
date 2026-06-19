@@ -283,6 +283,36 @@ const el: Partial<Translations> = {
   "common.done": "Έτοιμο",
   "common.loadingBackups": "Φόρτωση αντιγράφων…",
   "common.saving": "Αποθήκευση…",
+
+  // Backup folders selector
+  "folders.title": "Φάκελοι αντιγράφων",
+  "folders.hint": "Επιλέξτε ποιους από τους αντιστοιχισμένους φακέλους αυτού του container θα αντιγράψετε. Ο φάκελος appdata είναι επιλεγμένος από προεπιλογή. Τσεκάρετε άλλους για να τους συμπεριλάβετε ή προσθέστε μια προσαρμοσμένη διαδρομή εντός της προσάρτησης του host. Αν τα ξετσεκάρετε όλα, επανέρχεται η αυτόματη προεπιλογή του appdata.",
+  "folders.appdataDefault": "appdata (προεπιλογή)",
+  "folders.notReachable": "δεν βρίσκεται εντός της προσάρτησης του host, δεν μπορεί να αντιγραφεί",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Προσθήκη διαδρομής φακέλου",
+  "folders.add": "Προσθήκη",
+  "folders.save": "Αποθήκευση φακέλων",
+  "folders.saved": "Αποθηκεύτηκε",
+  "folders.empty": "Δεν βρέθηκαν αντιστοιχισμένοι φάκελοι για αυτό το container.",
+
+  // Notifications
+  "notify.title": "Ειδοποιήσεις",
+  "notify.hint": "Λάβετε ειδοποίηση όταν ολοκληρωθεί ένα αντίγραφο. Ρυθμίστε οποιοδήποτε από τα παρακάτω κανάλια· όλα ενεργοποιούνται σύμφωνα με την πολιτική.",
+  "notify.on": "Ειδοποίηση",
+  "notify.onNever": "Ποτέ",
+  "notify.onFailure": "Μόνο σε αποτυχία",
+  "notify.onAlways": "Σε επιτυχία και αποτυχία",
+  "notify.webhook": "URL Webhook",
+  "notify.webhookFormat": "Μορφή Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL Homeserver",
+  "notify.matrixToken": "Διακριτικό πρόσβασης",
+  "notify.matrixRoom": "ID δωματίου",
+  "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.save": "Αποθήκευση",
+  "notify.test": "Αποστολή δοκιμής",
+  "notify.tested": "Η δοκιμή στάλθηκε",
 };
 
 export default el;

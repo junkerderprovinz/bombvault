@@ -281,6 +281,36 @@ const cs: Partial<Translations> = {
   "common.done": "Hotovo",
   "common.loadingBackups": "Načítám zálohy…",
   "common.saving": "Ukládám…",
+
+  // Backup folders selector
+  "folders.title": "Zálohované složky",
+  "folders.hint": "Vyberte, které z namapovaných složek tohoto kontejneru se mají zálohovat. Složka appdata je vybrána ve výchozím nastavení. Zaškrtnutím zahrnete další, nebo přidejte vlastní cestu v rámci připojení hostitele. Odškrtnutí všeho se vrátí k automatickému výchozímu nastavení appdata.",
+  "folders.appdataDefault": "appdata (výchozí)",
+  "folders.notReachable": "není v rámci připojení hostitele, nelze zálohovat",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Přidat cestu ke složce",
+  "folders.add": "Přidat",
+  "folders.save": "Uložit složky",
+  "folders.saved": "Uloženo",
+  "folders.empty": "Pro tento kontejner nebyly nalezeny žádné namapované složky.",
+
+  // Notifications
+  "notify.title": "Oznámení",
+  "notify.hint": "Nechte si poslat upozornění po dokončení zálohy. Nastavte kterýkoli z kanálů níže; všechny se spustí podle pravidla.",
+  "notify.on": "Oznámit",
+  "notify.onNever": "Nikdy",
+  "notify.onFailure": "Pouze při selhání",
+  "notify.onAlways": "Při úspěchu i selhání",
+  "notify.webhook": "URL Webhook",
+  "notify.webhookFormat": "Formát Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL Homeserver",
+  "notify.matrixToken": "Přístupový token",
+  "notify.matrixRoom": "ID místnosti",
+  "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.save": "Uložit",
+  "notify.test": "Odeslat test",
+  "notify.tested": "Test odeslán",
 };
 
 export default cs;

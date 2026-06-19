@@ -275,6 +275,36 @@ const zh: Partial<Translations> = {
   "common.done": "完成",
   "common.loadingBackups": "正在加载备份…",
   "common.saving": "保存中…",
+
+  // Backup folders selector
+  "folders.title": "备份文件夹",
+  "folders.hint": "选择此容器映射的哪些文件夹进行备份。appdata 文件夹默认已选中。勾选其他文件夹以将其包含在内，或在主机挂载下添加自定义路径。取消所有勾选将恢复到自动的 appdata 默认值。",
+  "folders.appdataDefault": "appdata（默认）",
+  "folders.notReachable": "不在主机挂载范围内，无法备份",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "添加文件夹路径",
+  "folders.add": "添加",
+  "folders.save": "保存文件夹",
+  "folders.saved": "已保存",
+  "folders.empty": "未找到此容器的映射文件夹。",
+
+  // Notifications
+  "notify.title": "通知",
+  "notify.hint": "在备份完成时获得通知。设置下方任意渠道；它们都会根据策略触发。",
+  "notify.on": "通知",
+  "notify.onNever": "从不",
+  "notify.onFailure": "仅在失败时",
+  "notify.onAlways": "成功和失败时",
+  "notify.webhook": "Webhook 网址",
+  "notify.webhookFormat": "Webhook 格式",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver 网址",
+  "notify.matrixToken": "访问令牌",
+  "notify.matrixRoom": "房间 ID",
+  "notify.healthchecks": "Healthchecks.io ping 网址",
+  "notify.save": "保存",
+  "notify.test": "发送测试",
+  "notify.tested": "测试已发送",
 };
 
 export default zh;

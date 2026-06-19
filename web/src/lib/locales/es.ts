@@ -283,6 +283,36 @@ const es: Partial<Translations> = {
   "common.done": "Listo",
   "common.loadingBackups": "Cargando copias…",
   "common.saving": "Guardando…",
+
+  // Backup folders selector
+  "folders.title": "Carpetas a copiar",
+  "folders.hint": "Elige qué carpetas mapeadas de este contenedor copiar. La carpeta appdata está seleccionada por defecto. Marca otras para incluirlas, o añade una ruta personalizada dentro del montaje del host. Si lo desmarcas todo, vuelve al valor automático de appdata.",
+  "folders.appdataDefault": "appdata (por defecto)",
+  "folders.notReachable": "no está dentro del montaje del host, no se puede copiar",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Añadir una ruta de carpeta",
+  "folders.add": "Añadir",
+  "folders.save": "Guardar carpetas",
+  "folders.saved": "Guardado",
+  "folders.empty": "No se encontraron carpetas mapeadas para este contenedor.",
+
+  // Notifications
+  "notify.title": "Notificaciones",
+  "notify.hint": "Recibe un aviso cuando termine una copia. Configura cualquiera de los canales de abajo; todos se activan según la política.",
+  "notify.on": "Notificar",
+  "notify.onNever": "Nunca",
+  "notify.onFailure": "Solo en caso de fallo",
+  "notify.onAlways": "En éxito y en fallo",
+  "notify.webhook": "URL del Webhook",
+  "notify.webhookFormat": "Formato del Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL del Homeserver",
+  "notify.matrixToken": "Token de acceso",
+  "notify.matrixRoom": "ID de la sala",
+  "notify.healthchecks": "URL de ping de Healthchecks.io",
+  "notify.save": "Guardar",
+  "notify.test": "Enviar prueba",
+  "notify.tested": "Prueba enviada",
 };
 
 export default es;

@@ -283,6 +283,36 @@ const da: Partial<Translations> = {
   "common.done": "Færdig",
   "common.loadingBackups": "Indlæser sikkerhedskopier…",
   "common.saving": "Gemmer…",
+
+  // Backup folders selector
+  "folders.title": "Sikkerhedskopierede mapper",
+  "folders.hint": "Vælg hvilke af denne containers tilknyttede mapper der skal sikkerhedskopieres. appdata-mappen er valgt som standard. Sæt flueben ved andre for at inkludere dem, eller tilføj en brugerdefineret sti under host-monteringen. Fjernes alle flueben, vendes der tilbage til den automatiske appdata-standard.",
+  "folders.appdataDefault": "appdata (standard)",
+  "folders.notReachable": "ligger ikke under host-monteringen, kan ikke sikkerhedskopieres",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Tilføj en mappesti",
+  "folders.add": "Tilføj",
+  "folders.save": "Gem mapper",
+  "folders.saved": "Gemt",
+  "folders.empty": "Ingen tilknyttede mapper fundet for denne container.",
+
+  // Notifications
+  "notify.title": "Notifikationer",
+  "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig. Opsæt en hvilken som helst af kanalerne nedenfor; de udløses alle i henhold til reglen.",
+  "notify.on": "Underret",
+  "notify.onNever": "Aldrig",
+  "notify.onFailure": "Kun ved fejl",
+  "notify.onAlways": "Ved succes og fejl",
+  "notify.webhook": "Webhook-URL",
+  "notify.webhookFormat": "Webhook-format",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver-URL",
+  "notify.matrixToken": "Adgangstoken",
+  "notify.matrixRoom": "Rum-ID",
+  "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.save": "Gem",
+  "notify.test": "Send test",
+  "notify.tested": "Test sendt",
 };
 
 export default da;

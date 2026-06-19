@@ -283,6 +283,36 @@ const no: Partial<Translations> = {
   "common.done": "Ferdig",
   "common.loadingBackups": "Laster sikkerhetskopier…",
   "common.saving": "Lagrer…",
+
+  // Backup folders selector
+  "folders.title": "Sikkerhetskopierte mapper",
+  "folders.hint": "Velg hvilke av denne containerens tilkoblede mapper som skal sikkerhetskopieres. appdata-mappen er valgt som standard. Huk av andre for å inkludere dem, eller legg til en egendefinert sti under host-monteringen. Å fjerne alle haker går tilbake til den automatiske appdata-standarden.",
+  "folders.appdataDefault": "appdata (standard)",
+  "folders.notReachable": "ligger ikke under host-monteringen, kan ikke sikkerhetskopieres",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Legg til en mappesti",
+  "folders.add": "Legg til",
+  "folders.save": "Lagre mapper",
+  "folders.saved": "Lagret",
+  "folders.empty": "Ingen tilkoblede mapper funnet for denne containeren.",
+
+  // Notifications
+  "notify.title": "Varsler",
+  "notify.hint": "Få varsel når en sikkerhetskopi er ferdig. Sett opp hvilke som helst av kanalene nedenfor; de utløses alle i henhold til regelen.",
+  "notify.on": "Varsle",
+  "notify.onNever": "Aldri",
+  "notify.onFailure": "Kun ved feil",
+  "notify.onAlways": "Ved suksess og feil",
+  "notify.webhook": "Webhook-URL",
+  "notify.webhookFormat": "Webhook-format",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver-URL",
+  "notify.matrixToken": "Tilgangstoken",
+  "notify.matrixRoom": "Rom-ID",
+  "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.save": "Lagre",
+  "notify.test": "Send test",
+  "notify.tested": "Test sendt",
 };
 
 export default no;

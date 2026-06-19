@@ -280,6 +280,36 @@ const nl: Partial<Translations> = {
   "common.done": "Klaar",
   "common.loadingBackups": "Back-ups laden…",
   "common.saving": "Opslaan…",
+
+  // Backup folders selector
+  "folders.title": "Back-upmappen",
+  "folders.hint": "Kies welke van de gekoppelde mappen van deze container je wilt back-uppen. De appdata-map is standaard geselecteerd. Vink andere aan om ze mee te nemen, of voeg een eigen pad toe binnen de host-mount. Alles uitvinken keert terug naar de automatische appdata-standaard.",
+  "folders.appdataDefault": "appdata (standaard)",
+  "folders.notReachable": "valt niet onder de host-mount, kan niet worden geback-upt",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Een mappad toevoegen",
+  "folders.add": "Toevoegen",
+  "folders.save": "Mappen opslaan",
+  "folders.saved": "Opgeslagen",
+  "folders.empty": "Geen gekoppelde mappen gevonden voor deze container.",
+
+  // Notifications
+  "notify.title": "Meldingen",
+  "notify.hint": "Krijg een melding wanneer een back-up klaar is. Stel een van de onderstaande kanalen in; ze gaan allemaal af volgens het beleid.",
+  "notify.on": "Melden",
+  "notify.onNever": "Nooit",
+  "notify.onFailure": "Alleen bij mislukking",
+  "notify.onAlways": "Bij succes en mislukking",
+  "notify.webhook": "Webhook-URL",
+  "notify.webhookFormat": "Webhook-formaat",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver-URL",
+  "notify.matrixToken": "Toegangstoken",
+  "notify.matrixRoom": "Room-ID",
+  "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.save": "Opslaan",
+  "notify.test": "Test versturen",
+  "notify.tested": "Test verstuurd",
 };
 
 export default nl;

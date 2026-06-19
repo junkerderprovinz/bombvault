@@ -283,6 +283,36 @@ const fr: Partial<Translations> = {
   "common.done": "Terminé",
   "common.loadingBackups": "Chargement des sauvegardes…",
   "common.saving": "Enregistrement…",
+
+  // Backup folders selector
+  "folders.title": "Dossiers à sauvegarder",
+  "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher revient au comportement automatique du dossier appdata.",
+  "folders.appdataDefault": "appdata (par défaut)",
+  "folders.notReachable": "n'est pas sous le montage de l'hôte, ne peut pas être sauvegardé",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Ajouter un chemin de dossier",
+  "folders.add": "Ajouter",
+  "folders.save": "Enregistrer les dossiers",
+  "folders.saved": "Enregistré",
+  "folders.empty": "Aucun dossier mappé trouvé pour ce conteneur.",
+
+  // Notifications
+  "notify.title": "Notifications",
+  "notify.hint": "Soyez averti à la fin d'une sauvegarde. Configurez l'un des canaux ci-dessous ; ils se déclenchent tous selon la règle.",
+  "notify.on": "Notifier",
+  "notify.onNever": "Jamais",
+  "notify.onFailure": "Uniquement en cas d'échec",
+  "notify.onAlways": "En cas de succès et d'échec",
+  "notify.webhook": "URL du Webhook",
+  "notify.webhookFormat": "Format du Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL du Homeserver",
+  "notify.matrixToken": "Jeton d'accès",
+  "notify.matrixRoom": "ID du salon",
+  "notify.healthchecks": "URL de ping Healthchecks.io",
+  "notify.save": "Enregistrer",
+  "notify.test": "Envoyer un test",
+  "notify.tested": "Test envoyé",
 };
 
 export default fr;

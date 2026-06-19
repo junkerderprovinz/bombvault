@@ -275,6 +275,36 @@ const ko: Partial<Translations> = {
   "common.done": "완료",
   "common.loadingBackups": "백업 불러오는 중…",
   "common.saving": "저장 중…",
+
+  // Backup folders selector
+  "folders.title": "백업 폴더",
+  "folders.hint": "이 컨테이너의 매핑된 폴더 중 백업할 폴더를 선택하세요. appdata 폴더는 기본으로 선택되어 있습니다. 다른 폴더를 포함하려면 체크하거나, 호스트 마운트 아래에 사용자 지정 경로를 추가하세요. 모든 체크를 해제하면 자동 appdata 기본값으로 돌아갑니다.",
+  "folders.appdataDefault": "appdata (기본값)",
+  "folders.notReachable": "호스트 마운트 아래에 없어 백업할 수 없습니다",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "폴더 경로 추가",
+  "folders.add": "추가",
+  "folders.save": "폴더 저장",
+  "folders.saved": "저장됨",
+  "folders.empty": "이 컨테이너에 매핑된 폴더를 찾을 수 없습니다.",
+
+  // Notifications
+  "notify.title": "알림",
+  "notify.hint": "백업이 완료되면 알림을 받습니다. 아래 채널 중 아무거나 설정하세요. 모두 정책에 따라 실행됩니다.",
+  "notify.on": "알림",
+  "notify.onNever": "안 함",
+  "notify.onFailure": "실패 시에만",
+  "notify.onAlways": "성공 및 실패 시",
+  "notify.webhook": "Webhook URL",
+  "notify.webhookFormat": "Webhook 형식",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver URL",
+  "notify.matrixToken": "액세스 토큰",
+  "notify.matrixRoom": "방 ID",
+  "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.save": "저장",
+  "notify.test": "테스트 보내기",
+  "notify.tested": "테스트 전송됨",
 };
 
 export default ko;

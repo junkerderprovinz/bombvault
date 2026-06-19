@@ -283,6 +283,36 @@ const sv: Partial<Translations> = {
   "common.done": "Klar",
   "common.loadingBackups": "Laddar säkerhetskopior…",
   "common.saving": "Sparar…",
+
+  // Backup folders selector
+  "folders.title": "Säkerhetskopierade mappar",
+  "folders.hint": "Välj vilka av den här containerns mappade mappar som ska säkerhetskopieras. appdata-mappen är vald som standard. Kryssa i andra för att inkludera dem, eller lägg till en egen sökväg under host-monteringen. Om du avmarkerar allt återgår det till det automatiska appdata-standardvalet.",
+  "folders.appdataDefault": "appdata (standard)",
+  "folders.notReachable": "ligger inte under host-monteringen, kan inte säkerhetskopieras",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Lägg till en mappsökväg",
+  "folders.add": "Lägg till",
+  "folders.save": "Spara mappar",
+  "folders.saved": "Sparat",
+  "folders.empty": "Inga mappade mappar hittades för den här containern.",
+
+  // Notifications
+  "notify.title": "Aviseringar",
+  "notify.hint": "Få en avisering när en säkerhetskopiering är klar. Ställ in någon av kanalerna nedan; de utlöses alla enligt regeln.",
+  "notify.on": "Avisera",
+  "notify.onNever": "Aldrig",
+  "notify.onFailure": "Endast vid fel",
+  "notify.onAlways": "Vid lyckat och fel",
+  "notify.webhook": "Webhook-URL",
+  "notify.webhookFormat": "Webhook-format",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "Homeserver-URL",
+  "notify.matrixToken": "Åtkomsttoken",
+  "notify.matrixRoom": "Rums-ID",
+  "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.save": "Spara",
+  "notify.test": "Skicka test",
+  "notify.tested": "Test skickat",
 };
 
 export default sv;

@@ -283,6 +283,36 @@ const th: Partial<Translations> = {
   "common.done": "เสร็จสิ้น",
   "common.loadingBackups": "กำลังโหลดข้อมูลสำรอง…",
   "common.saving": "กำลังบันทึก…",
+
+  // Backup folders selector
+  "folders.title": "โฟลเดอร์ที่สำรองข้อมูล",
+  "folders.hint": "เลือกว่าจะสำรองข้อมูลโฟลเดอร์ใดบ้างที่แมปไว้กับคอนเทนเนอร์นี้ โฟลเดอร์ appdata ถูกเลือกไว้ตามค่าเริ่มต้น ทำเครื่องหมายโฟลเดอร์อื่นเพื่อรวมเข้าไป หรือเพิ่มเส้นทางที่กำหนดเองภายใต้จุดเมานต์ของโฮสต์ การยกเลิกการเลือกทั้งหมดจะกลับไปใช้ค่าเริ่มต้น appdata อัตโนมัติ",
+  "folders.appdataDefault": "appdata (ค่าเริ่มต้น)",
+  "folders.notReachable": "ไม่อยู่ภายใต้จุดเมานต์ของโฮสต์ ไม่สามารถสำรองข้อมูลได้",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "เพิ่มเส้นทางโฟลเดอร์",
+  "folders.add": "เพิ่ม",
+  "folders.save": "บันทึกโฟลเดอร์",
+  "folders.saved": "บันทึกแล้ว",
+  "folders.empty": "ไม่พบโฟลเดอร์ที่แมปไว้สำหรับคอนเทนเนอร์นี้",
+
+  // Notifications
+  "notify.title": "การแจ้งเตือน",
+  "notify.hint": "รับการแจ้งเตือนเมื่อการสำรองข้อมูลเสร็จสิ้น ตั้งค่าช่องทางใดก็ได้ด้านล่าง ทั้งหมดจะทำงานตามนโยบาย",
+  "notify.on": "แจ้งเตือน",
+  "notify.onNever": "ไม่เลย",
+  "notify.onFailure": "เฉพาะเมื่อล้มเหลว",
+  "notify.onAlways": "เมื่อสำเร็จและล้มเหลว",
+  "notify.webhook": "URL ของ Webhook",
+  "notify.webhookFormat": "รูปแบบ Webhook",
+  "notify.matrix": "Matrix",
+  "notify.matrixHomeserver": "URL ของ Homeserver",
+  "notify.matrixToken": "โทเค็นการเข้าถึง",
+  "notify.matrixRoom": "ID ห้อง",
+  "notify.healthchecks": "URL ping ของ Healthchecks.io",
+  "notify.save": "บันทึก",
+  "notify.test": "ส่งทดสอบ",
+  "notify.tested": "ส่งการทดสอบแล้ว",
 };
 
 export default th;
