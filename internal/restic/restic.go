@@ -275,14 +275,17 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
 		}
 	}
-	cmd.Env = env
-
 	// When a progress sink is present (backup/restore), stream stdout so each
 	// --json "status" line's percentage reaches the UI live; otherwise capture
 	// the full output in one shot (the default for snapshots/ls/check/forget).
 	if sink := progress.SinkFrom(ctx); sink != nil {
+		// restic emits periodic --json "status" progress only when stdout is a
+		// TTY or RESTIC_PROGRESS_FPS is set. Our stdout is a pipe, so without this
+		// restic prints only the final summary and the bar would never fill.
+		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
 		return runStreaming(cmd, args, sink)
 	}
+	cmd.Env = env
 	return runBuffered(cmd, args)
 }
 
