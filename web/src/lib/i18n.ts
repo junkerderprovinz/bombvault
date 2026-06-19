@@ -201,6 +201,16 @@ const en = {
   "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
   "hooks.pre": "Pre-backup command",
   "hooks.post": "Post-backup command",
+  "folders.title": "Backup folders",
+  "folders.hint": "Choose which of this container's mapped folders to back up. The appdata folder is selected by default. Tick others to include them, or add a custom path under the host mount. Unticking everything reverts to the automatic appdata default.",
+  "folders.appdataDefault": "appdata (default)",
+  "folders.notReachable": "not under the host mount, can't be backed up",
+  "folders.customPlaceholder": "/mnt/user/some/folder",
+  "folders.addCustom": "Add a folder path",
+  "folders.add": "Add",
+  "folders.save": "Save folders",
+  "folders.saved": "Saved",
+  "folders.empty": "No mapped folders found for this container.",
 
   // Appearance / Accent
   "settings.appearance": "Appearance",
@@ -217,8 +227,8 @@ const en = {
   "dashboard.statMissingVMs": "Missing VMs",
 
   // Jobs page
-  "nav.jobs": "Jobs",
-  "jobs.title": "Jobs",
+  "nav.jobs": "Plans",
+  "jobs.title": "Plans",
   "jobs.subtitle": "Backup plans by domain",
   "jobs.configureInSettings": "Configure schedules in Settings",
   "jobs.containersSection": "Containers",
@@ -484,6 +494,16 @@ const de: Translations = {
   "hooks.hint": "Befehle laufen im Container mit sh -c. Der Pre-Befehl läuft vor dem Backup; nutze ihn, um Daten vorzubereiten, die mitgesichert werden sollen, etwa eine Datenbank in die appdata des Containers zu dumpen. Schlägt der Pre-Befehl fehl, wird das Backup abgebrochen. Der Post-Befehl läuft, nachdem der Container wieder gestartet wurde, und sein Fehler wird nur geloggt. Hooks führen nur Befehle aus, sie fügen dem Backup keine zusätzlichen Ordner hinzu.",
   "hooks.pre": "Pre-Backup-Befehl",
   "hooks.post": "Post-Backup-Befehl",
+  "folders.title": "Gesicherte Ordner",
+  "folders.hint": "Wähle, welche gemappten Ordner dieses Containers gesichert werden. Der appdata-Ordner ist standardmäßig ausgewählt. Hake weitere an, um sie einzuschließen, oder füge einen eigenen Pfad unterhalb des Host-Mounts hinzu. Hakst du alles ab, gilt wieder die automatische appdata-Erkennung.",
+  "folders.appdataDefault": "appdata (Standard)",
+  "folders.notReachable": "nicht unter dem Host-Mount, kann nicht gesichert werden",
+  "folders.customPlaceholder": "/mnt/user/irgendein/ordner",
+  "folders.addCustom": "Ordnerpfad hinzufügen",
+  "folders.add": "Hinzufügen",
+  "folders.save": "Ordner speichern",
+  "folders.saved": "Gespeichert",
+  "folders.empty": "Keine gemappten Ordner für diesen Container gefunden.",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",
@@ -500,8 +520,8 @@ const de: Translations = {
   "dashboard.statMissingVMs": "Fehlende VMs",
 
   // Jobs page
-  "nav.jobs": "Jobs",
-  "jobs.title": "Jobs",
+  "nav.jobs": "Pläne",
+  "jobs.title": "Pläne",
   "jobs.subtitle": "Backup-Pläne nach Domäne",
   "jobs.configureInSettings": "Zeitpläne in den Einstellungen konfigurieren",
   "jobs.containersSection": "Container",

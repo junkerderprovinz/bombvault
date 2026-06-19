@@ -154,6 +154,89 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 }
 
+// TestServiceContainerMountsAndSelection covers the backup-folder selector:
+// listing a container's bind mounts (appdata default selected, others not, an
+// out-of-mount bind marked unreachable), storing an explicit selection, and that
+// a subsequent backup honours it. Host paths equal container paths here because
+// HostSourceRoot == HostMountRoot (identity translation).
+func TestServiceContainerMountsAndSelection(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt", // host /mnt mounted at <root> (mirrors box-gate)
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	// HOST paths (what docker reports + what the UI shows) and their translated
+	// container paths under <root>.
+	appdataHost, mediaHost := "/mnt/user/appdata/plex", "/mnt/user/media"
+	mediaCP := root + "/user/media"
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: appdataHost, Destination: "/config"},
+			{Type: "bind", Source: mediaHost, Destination: "/media"},
+			{Type: "bind", Source: "/etc/localtime", Destination: "/etc/localtime"}, // outside /mnt
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Default selection: appdata selected, media not, localtime unreachable.
+	mounts, custom, err := svc.ContainerMounts(ctx, "plex")
+	if err != nil {
+		t.Fatalf("ContainerMounts: %v", err)
+	}
+	if len(mounts) != 3 || len(custom) != 0 {
+		t.Fatalf("mounts=%d custom=%d", len(mounts), len(custom))
+	}
+	byDest := map[string]api.MountInfo{}
+	for _, m := range mounts {
+		byDest[m.Dest] = m
+	}
+	if !byDest["/config"].Selected || !byDest["/config"].IsAppdata || !byDest["/config"].Reachable {
+		t.Fatalf("appdata mount: %+v", byDest["/config"])
+	}
+	if byDest["/media"].Selected || byDest["/media"].IsAppdata || !byDest["/media"].Reachable {
+		t.Fatalf("media mount: %+v", byDest["/media"])
+	}
+	if byDest["/etc/localtime"].Reachable {
+		t.Fatalf("out-of-mount bind should be unreachable: %+v", byDest["/etc/localtime"])
+	}
+
+	// Storing an explicit selection (host paths) flips media to selected.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{appdataHost, mediaHost}); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	mounts, _, _ = svc.ContainerMounts(ctx, "plex")
+	for _, m := range mounts {
+		if m.Dest == "/media" && !m.Selected {
+			t.Fatal("media should be selected after SetBackupPaths")
+		}
+	}
+
+	// An unreachable path is rejected.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"/etc/localtime"}); err == nil {
+		t.Fatal("SetBackupPaths must reject a path outside the host mount")
+	}
+
+	// A backup now uses the explicit selection (includes media).
+	if _, err := svc.Backup(ctx, "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if !contains(eng.lastPaths, mediaCP) {
+		t.Fatalf("selected media not backed up: %v", eng.lastPaths)
+	}
+}
+
 // TestServiceBackupTranslatesHostAppdataPath pins the box-gate fix: the broad
 // mount is host /mnt → container /host/user, so host /mnt/user/appdata/<x> is
 // reachable at /host/user/USER/appdata/<x> (note the extra "user" segment). Docker
@@ -543,17 +626,17 @@ func marshalDefinition(inspect model.Inspect, templateXML string, appdata ...str
 // ---------------------------------------------------------------------------
 
 type fakeResticEngine struct {
-	inited    []string
-	backedUp  []string
-	lastPaths []string
-	restored    []string
-	forgotten   []string
-	prunedRepos []string
-	checked     []string
-	snaps       []restic.Snapshot
-	lsEntries   []restic.FileEntry
-	initErr     error
-	backupErr   error
+	inited          []string
+	backedUp        []string
+	lastPaths       []string
+	restored        []string
+	forgotten       []string
+	prunedRepos     []string
+	checked         []string
+	snaps           []restic.Snapshot
+	lsEntries       []restic.FileEntry
+	initErr         error
+	backupErr       error
 	forgetPolicyErr error
 	checkErr        error
 }

@@ -251,6 +251,33 @@ export function setContainerHooks(
   });
 }
 
+/** One bind mount of a container, annotated for the backup-folder selector. */
+export interface MountInfo {
+  source: string; // host path (shown to the user)
+  dest: string; // in-container mount point
+  selected: boolean; // currently included in the backup
+  isAppdata: boolean; // auto-detected appdata default
+  reachable: boolean; // reachable under the host mount (backable)
+}
+
+export interface ContainerMountsResponse extends OkEnvelope {
+  mounts?: MountInfo[];
+  custom?: string[];
+}
+
+/** GET /api/containers/{name}/mounts — list bind mounts + the current selection. */
+export function getContainerMounts(name: string): Promise<ContainerMountsResponse> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/mounts`);
+}
+
+/** PATCH /api/containers/{name} — set the explicit backup-folder selection (host paths). */
+export function setBackupPaths(name: string, backupPaths: string[]): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ backupPaths }),
+  });
+}
+
 /** Rebuild the target list from the backup storage (disaster recovery after a fresh install). */
 export function discover(): Promise<OkEnvelope & { discovered?: number }> {
   return fetchJSON("/api/discover", { method: "POST" });

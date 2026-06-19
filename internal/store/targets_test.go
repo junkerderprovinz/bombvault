@@ -17,6 +17,45 @@ func TestTargetRoundtrip(t *testing.T) {
 	}
 }
 
+func TestSetBackupPathsRoundTripAndUpsertPreserves(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// SetBackupPaths creates the target row when none exists yet.
+	if err := r.SetBackupPaths("plex", []string{"/host/user/appdata/plex", "/host/user/media"}); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	got, err := r.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.SelectedPaths) != 2 || got.SelectedPaths[1] != "/host/user/media" {
+		t.Fatalf("selected paths not stored: %v", got.SelectedPaths)
+	}
+
+	// A subsequent backup-time UpsertTarget (which sets AppdataPaths/Definition)
+	// must NOT clobber the user's selection.
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if len(got.SelectedPaths) != 2 {
+		t.Fatalf("Upsert clobbered selection: %v", got.SelectedPaths)
+	}
+
+	// An empty selection clears it (falls back to auto appdata at backup time).
+	if err := r.SetBackupPaths("plex", nil); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if len(got.SelectedPaths) != 0 {
+		t.Fatalf("selection should be cleared, got %v", got.SelectedPaths)
+	}
+}
+
 func TestTargetIncludeToggle(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
