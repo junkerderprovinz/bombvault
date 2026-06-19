@@ -24,6 +24,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -499,6 +500,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		Runs:                 runsAdapter{s.store},
 	})
 	s.progEnd(pkey, "backup", err == nil)
+	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -1148,6 +1150,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
 	s.progEnd(vkey, "backup", err == nil)
+	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -1366,6 +1369,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Runs:      runsAdapter{s.store},
 	})
 	s.progEnd("flash", "backup", err == nil)
+	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -1606,4 +1610,99 @@ func parseRcloneRemotes(conf string) []string {
 		}
 	}
 	return out
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+// NotifyConfig returns the decrypted notification config (an empty Config when
+// none is set).
+func (s *Service) NotifyConfig() (notify.Config, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return notify.Config{}, err
+	}
+	var c notify.Config
+	if strings.TrimSpace(settings.NotifyConf) == "" {
+		return c, nil
+	}
+	enc, err := base64.StdEncoding.DecodeString(settings.NotifyConf)
+	if err != nil {
+		return c, err
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return c, err
+	}
+	if err := json.Unmarshal(plain, &c); err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
+// SetNotifyConfig encrypts + stores the notification config. A config with no
+// channel and no policy clears it.
+func (s *Service) SetNotifyConfig(c notify.Config) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	if !c.Configured() && (c.On == "" || c.On == "never") {
+		settings.NotifyConf = ""
+	} else {
+		blob, mErr := json.Marshal(c)
+		if mErr != nil {
+			return fmt.Errorf("marshal notify conf: %w", mErr)
+		}
+		enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
+		if eErr != nil {
+			return fmt.Errorf("encrypt notify conf: %w", eErr)
+		}
+		settings.NotifyConf = base64.StdEncoding.EncodeToString(enc)
+	}
+	return s.store.UpdateSettings(settings)
+}
+
+// notifyBackup sends a best-effort notification for a completed backup. It reads
+// the stored config each call (cheap; backups are infrequent) and is a no-op when
+// notifications are off.
+func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool, sum backup.Summary, backupErr error) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	target := "Unraid flash"
+	if domain != "flash" {
+		target = fmt.Sprintf("%s %q", domain, name)
+	}
+	var msg string
+	if ok {
+		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
+	} else {
+		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
+	}
+	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: msg, OK: ok})
+}
+
+// shortID truncates a restic snapshot id to its short (8-char) form.
+func shortID(id string) string {
+	if len(id) > 8 {
+		return id[:8]
+	}
+	return id
+}
+
+// humanBytes formats a byte count as a compact human-readable size.
+func humanBytes(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }

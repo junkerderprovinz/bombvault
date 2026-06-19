@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, checkDomain } from "../lib/api";
-import type { Settings } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, checkDomain, getNotify, setNotify, testNotify } from "../lib/api";
+import type { Settings, NotifyConfig } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
@@ -711,6 +711,153 @@ function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 }
 
+// emptyNotify is the default notification config shown before the saved one loads.
+const emptyNotify: NotifyConfig = {
+  on: "never",
+  webhookUrl: "",
+  webhookFormat: "generic",
+  matrixHomeserver: "",
+  matrixToken: "",
+  matrixRoom: "",
+  healthchecksUrl: "",
+};
+
+// NotifyCard configures backup notifications (webhook / Matrix / Healthchecks).
+// Stored encrypted at rest; the form pre-fills from the saved config and Test
+// sends to the CURRENT form values (no save needed).
+function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
+  const [state, setState] = useState<SaveState>("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [tested, setTested] = useState(false);
+
+  useEffect(() => {
+    getNotify()
+      .then((r) => {
+        if (r.ok && r.notify) setCfg({ ...emptyNotify, ...r.notify });
+      })
+      .catch(() => undefined);
+  }, []);
+
+  function set<K extends keyof NotifyConfig>(k: K, v: NotifyConfig[K]) {
+    setCfg((c) => ({ ...c, [k]: v }));
+  }
+
+  async function handleSave() {
+    setState("saving");
+    setMsg(null);
+    try {
+      const r = await setNotify(cfg);
+      if (r.ok) {
+        setState("saved");
+        setTimeout(() => setState("idle"), 3000);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  async function handleTest() {
+    setTested(false);
+    setMsg(null);
+    try {
+      const r = await testNotify(cfg);
+      if (r.ok) {
+        setTested(true);
+        setTimeout(() => setTested(false), 3000);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  const inputCls =
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+  const selectCls =
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+  const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
+
+  return (
+    <Card title={t("notify.title")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.hint")}</p>
+
+      <label className={labelCls}>
+        {t("notify.on")}
+        <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCls}>
+          <option value="never">{t("notify.onNever")}</option>
+          <option value="failure">{t("notify.onFailure")}</option>
+          <option value="always">{t("notify.onAlways")}</option>
+        </select>
+      </label>
+
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+        <label className={labelCls}>
+          {t("notify.webhook")}
+          <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
+            placeholder="https://discord.com/api/webhooks/..." className={inputCls} />
+        </label>
+        <label className={labelCls}>
+          {t("notify.webhookFormat")}
+          <select value={cfg.webhookFormat} onChange={(e) => set("webhookFormat", e.target.value)} className={selectCls}>
+            <option value="generic">Generic JSON</option>
+            <option value="discord">Discord</option>
+            <option value="slack">Slack</option>
+            <option value="gotify">Gotify</option>
+            <option value="ntfy">ntfy</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+        <span className="text-xs font-medium text-carbon-textSub">{t("notify.matrix")}</span>
+        <label className={labelCls}>
+          {t("notify.matrixHomeserver")}
+          <input value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
+            placeholder="https://matrix.org" className={inputCls} />
+        </label>
+        <label className={labelCls}>
+          {t("notify.matrixToken")}
+          <input value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
+            type="password" className={inputCls} />
+        </label>
+        <label className={labelCls}>
+          {t("notify.matrixRoom")}
+          <input value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
+            placeholder="!abcdef:matrix.org" className={inputCls} />
+        </label>
+      </div>
+
+      <label className={labelCls}>
+        {t("notify.healthchecks")}
+        <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
+          placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
+      </label>
+
+      <div className="flex items-center gap-3 pt-1 flex-wrap">
+        <button onClick={() => void handleSave()} disabled={state === "saving"}
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
+          {state === "saving" ? t("auth.saving") : t("notify.save")}
+        </button>
+        <button onClick={() => void handleTest()}
+          className="rounded-lg border border-carbon-border bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
+          {t("notify.test")}
+        </button>
+        {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
+        {tested && <span className="text-sm text-[#6fdc8c]">{t("notify.tested")}</span>}
+        {state === "error" && msg && <span className="text-sm text-[#ff8389] break-words">{msg}</span>}
+      </div>
+    </Card>
+  );
+}
+
 // IntegrityCard runs `restic check` per domain and shows pass/fail. Self-contained.
 function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   type CheckState = "idle" | "checking" | "ok" | "fail";
@@ -1217,6 +1364,11 @@ export function SettingsPage() {
       {/* Off-site (rclone)                                                    */}
       {/* ------------------------------------------------------------------ */}
       <RcloneCard t={t} />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Notifications                                                       */}
+      {/* ------------------------------------------------------------------ */}
+      <NotifyCard t={t} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Spike                                                              */}

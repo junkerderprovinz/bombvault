@@ -278,6 +278,36 @@ export function setBackupPaths(name: string, backupPaths: string[]): Promise<OkE
   });
 }
 
+/** Notification config (webhook / Matrix / Healthchecks). */
+export interface NotifyConfig {
+  on: string; // "never" | "failure" | "always"
+  webhookUrl: string;
+  webhookFormat: string; // generic | discord | slack | gotify | ntfy
+  matrixHomeserver: string;
+  matrixToken: string;
+  matrixRoom: string;
+  healthchecksUrl: string;
+}
+
+export interface GetNotifyResponse extends OkEnvelope {
+  notify?: NotifyConfig;
+}
+
+/** GET /api/notify — the current (decrypted) notification config. */
+export function getNotify(): Promise<GetNotifyResponse> {
+  return fetchJSON("/api/notify");
+}
+
+/** POST /api/notify — store the notification config (encrypted at rest). */
+export function setNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
+  return fetchJSON("/api/notify", { method: "POST", body: JSON.stringify(cfg) });
+}
+
+/** POST /api/notify/test — send a test notification using the given config. */
+export function testNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
+  return fetchJSON("/api/notify/test", { method: "POST", body: JSON.stringify(cfg) });
+}
+
 /** Rebuild the target list from the backup storage (disaster recovery after a fresh install). */
 export function discover(): Promise<OkEnvelope & { discovered?: number }> {
   return fetchJSON("/api/discover", { method: "POST" });

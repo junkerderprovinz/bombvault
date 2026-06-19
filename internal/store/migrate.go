@@ -141,6 +141,13 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "target_selected_paths",
 		sql:     "ALTER TABLE targets ADD COLUMN selected_paths TEXT NOT NULL DEFAULT '[]';",
 	},
+	{
+		// Notification config (webhook / Matrix / Healthchecks), stored as an
+		// AES-256-GCM-encrypted JSON blob (base64). Empty = notifications off.
+		version: 10,
+		name:    "settings_notify_conf",
+		sql:     "ALTER TABLE settings ADD COLUMN notify_conf TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
