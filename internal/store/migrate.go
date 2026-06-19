@@ -134,6 +134,13 @@ ALTER TABLE settings ADD COLUMN rclone_conf            TEXT    NOT NULL DEFAULT 
 ALTER TABLE targets ADD COLUMN pre_hook  TEXT NOT NULL DEFAULT '';
 ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// Per-container explicit backup-folder selection (container-translated
+		// paths). Empty ('[]') means "use the automatic appdata detection".
+		version: 9,
+		name:    "target_selected_paths",
+		sql:     "ALTER TABLE targets ADD COLUMN selected_paths TEXT NOT NULL DEFAULT '[]';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

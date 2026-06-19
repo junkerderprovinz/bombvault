@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks } from "../lib/api";
-import type { Container } from "../lib/api";
+import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths } from "../lib/api";
+import type { Container, MountInfo } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
@@ -304,6 +304,168 @@ function HooksEditor({
   );
 }
 
+// FoldersEditor lets the user choose which of a container's mapped folders get
+// backed up (appdata is the default), plus add custom paths under the host
+// mount. Collapsible; loads the mount list lazily on first open.
+function FoldersEditor({ name, t }: { name: string; t: T }) {
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [mounts, setMounts] = useState<MountInfo[]>([]);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [custom, setCustom] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState("");
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || loaded) return;
+    setLoading(true);
+    getContainerMounts(name)
+      .then((r) => {
+        if (r.ok) {
+          const ms = r.mounts ?? [];
+          setMounts(ms);
+          setChecked(new Set(ms.filter((m) => m.selected && m.reachable).map((m) => m.source)));
+          setCustom(r.custom ?? []);
+        } else {
+          setState("error");
+          setMsg(r.error ?? t("settings.error"));
+        }
+      })
+      .catch((err) => {
+        setState("error");
+        setMsg(err instanceof Error ? err.message : t("settings.error"));
+      })
+      .finally(() => {
+        setLoading(false);
+        setLoaded(true);
+      });
+  }, [open, loaded, name, t]);
+
+  function toggle(source: string) {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(source)) next.delete(source);
+      else next.add(source);
+      return next;
+    });
+  }
+  function addCustom() {
+    const p = customInput.trim();
+    if (p && !custom.includes(p)) setCustom((c) => [...c, p]);
+    setCustomInput("");
+  }
+  async function save() {
+    setState("saving");
+    setMsg(null);
+    const paths = [...checked, ...custom];
+    try {
+      const r = await setBackupPaths(name, paths);
+      if (r.ok) {
+        setState("saved");
+        setTimeout(() => setState("idle"), 2500);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  const inputCls =
+    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {t("folders.title")}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+          <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
+          {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
+          {!loading && mounts.length === 0 && custom.length === 0 && (
+            <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
+          )}
+          {mounts.map((m) => (
+            <label
+              key={m.source}
+              className={`flex items-start gap-2 text-xs ${m.reachable ? "text-carbon-text" : "text-carbon-textMuted"}`}
+            >
+              <input
+                type="checkbox"
+                disabled={!m.reachable}
+                checked={m.reachable && checked.has(m.source)}
+                onChange={() => toggle(m.source)}
+                className="mt-0.5 accent-[var(--accent)]"
+              />
+              <span className="flex flex-col">
+                <span className="font-mono break-all">{m.dest} ← {m.source}</span>
+                {m.isAppdata && <span className="text-[#6fdc8c]">{t("folders.appdataDefault")}</span>}
+                {!m.reachable && <span className="text-[#ff8389]">{t("folders.notReachable")}</span>}
+              </span>
+            </label>
+          ))}
+          {custom.map((p) => (
+            <div key={p} className="flex items-center gap-2 text-xs text-carbon-text">
+              <input type="checkbox" checked readOnly className="accent-[var(--accent)]" />
+              <span className="font-mono break-all flex-1">{p}</span>
+              <button
+                onClick={() => setCustom((c) => c.filter((x) => x !== p))}
+                className="text-carbon-textMuted hover:text-[#ff8389] px-1"
+                aria-label="remove"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustom();
+                }
+              }}
+              spellCheck={false}
+              placeholder={t("folders.customPlaceholder")}
+              className={`${inputCls} flex-1`}
+            />
+            <button
+              onClick={addCustom}
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
+            >
+              {t("folders.add")}
+            </button>
+          </div>
+          <div className="flex items-center gap-3 pt-0.5">
+            <button
+              onClick={() => void save()}
+              disabled={state === "saving" || loading}
+              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {state === "saving" ? "…" : t("folders.save")}
+            </button>
+            {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("folders.saved")}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ContainerRow({
   container,
   t,
@@ -388,14 +550,17 @@ function ContainerRow({
         )}
       </div>
 
-      {/* Pre/post-backup hooks (installed containers only) */}
+      {/* Backup-folder selection + pre/post-backup hooks (installed only) */}
       {installed && (
-        <HooksEditor
-          name={container.name}
-          initialPre={container.preHook}
-          initialPost={container.postHook}
-          t={t}
-        />
+        <>
+          <FoldersEditor name={container.name} t={t} />
+          <HooksEditor
+            name={container.name}
+            initialPre={container.preHook}
+            initialPost={container.postHook}
+            t={t}
+          />
+        </>
       )}
 
       {/* Backups / Restore disclosure (works even when not installed) */}

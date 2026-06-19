@@ -365,9 +365,10 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	// Pointers so a hooks-only PATCH doesn't reset the schedule flag (and vice
 	// versa) — only the fields actually sent are applied.
 	var body struct {
-		IncludeInSchedule *bool   `json:"includeInSchedule"`
-		PreHook           *string `json:"preHook"`
-		PostHook          *string `json:"postHook"`
+		IncludeInSchedule *bool     `json:"includeInSchedule"`
+		PreHook           *string   `json:"preHook"`
+		PostHook          *string   `json:"postHook"`
+		BackupPaths       *[]string `json:"backupPaths"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -385,7 +386,35 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if body.BackupPaths != nil {
+		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleContainerMounts lists a container's bind mounts (annotated with the
+// current selection) for the backup-folder selector.
+// GET /api/containers/{name}/mounts
+func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	mounts, custom, err := h.svc.ContainerMounts(r.Context(), name)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if mounts == nil {
+		mounts = []MountInfo{}
+	}
+	if custom == nil {
+		custom = []string{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"mounts": mounts, "custom": custom}))
 }
 
 // strOr returns *p or "" when p is nil.
@@ -418,17 +447,17 @@ type settingsView struct {
 
 func toView(s store.Settings) settingsView {
 	return settingsView{
-		EncryptionEnabled:  s.EncryptionEnabled,
-		ContainersEnabled:  s.ContainersEnabled,
-		VMsEnabled:         s.VMsEnabled,
-		FlashEnabled:       s.FlashEnabled,
-		ContainersPath:     s.ContainersPath,
-		VMsPath:            s.VMsPath,
-		FlashPath:          s.FlashPath,
-		ContainersSchedule: s.ContainersSchedule,
-		VMsSchedule:        s.VMsSchedule,
-		FlashSchedule:      s.FlashSchedule,
-		DefaultLanguage:    s.DefaultLanguage,
+		EncryptionEnabled:    s.EncryptionEnabled,
+		ContainersEnabled:    s.ContainersEnabled,
+		VMsEnabled:           s.VMsEnabled,
+		FlashEnabled:         s.FlashEnabled,
+		ContainersPath:       s.ContainersPath,
+		VMsPath:              s.VMsPath,
+		FlashPath:            s.FlashPath,
+		ContainersSchedule:   s.ContainersSchedule,
+		VMsSchedule:          s.VMsSchedule,
+		FlashSchedule:        s.FlashSchedule,
+		DefaultLanguage:      s.DefaultLanguage,
 		RetentionKeepLast:    s.RetentionKeepLast,
 		RetentionKeepDaily:   s.RetentionKeepDaily,
 		RetentionKeepWeekly:  s.RetentionKeepWeekly,
@@ -509,17 +538,17 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := store.Settings{
-		EncryptionEnabled:  v.EncryptionEnabled,
-		ContainersEnabled:  v.ContainersEnabled,
-		VMsEnabled:         v.VMsEnabled,
-		FlashEnabled:       v.FlashEnabled,
-		ContainersPath:     v.ContainersPath,
-		VMsPath:            v.VMsPath,
-		FlashPath:          v.FlashPath,
-		ContainersSchedule: v.ContainersSchedule,
-		VMsSchedule:        v.VMsSchedule,
-		FlashSchedule:      v.FlashSchedule,
-		DefaultLanguage:    v.DefaultLanguage,
+		EncryptionEnabled:    v.EncryptionEnabled,
+		ContainersEnabled:    v.ContainersEnabled,
+		VMsEnabled:           v.VMsEnabled,
+		FlashEnabled:         v.FlashEnabled,
+		ContainersPath:       v.ContainersPath,
+		VMsPath:              v.VMsPath,
+		FlashPath:            v.FlashPath,
+		ContainersSchedule:   v.ContainersSchedule,
+		VMsSchedule:          v.VMsSchedule,
+		FlashSchedule:        v.FlashSchedule,
+		DefaultLanguage:      v.DefaultLanguage,
 		RetentionKeepLast:    max(0, v.RetentionKeepLast),
 		RetentionKeepDaily:   max(0, v.RetentionKeepDaily),
 		RetentionKeepWeekly:  max(0, v.RetentionKeepWeekly),

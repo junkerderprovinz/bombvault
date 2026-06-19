@@ -21,6 +21,10 @@ type Target struct {
 	// `sh -c` before/after a backup. Owned by SetHooks (never reset by Upsert).
 	PreHook  string
 	PostHook string
+	// SelectedPaths is the user's explicit set of folders to back up
+	// (container-translated paths). Empty means "use the automatic appdata
+	// detection". Owned by SetBackupPaths (never reset by Upsert).
+	SelectedPaths []string
 }
 
 // UpsertTarget inserts or updates the target by container name.
@@ -41,15 +45,22 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget marshal paths: %w", err)
 	}
+	selJSON, err := json.Marshal(t.SelectedPaths)
+	if err != nil {
+		return Target{}, fmt.Errorf("UpsertTarget marshal selected: %w", err)
+	}
 
+	// selected_paths is owned by SetBackupPaths and intentionally NOT in the
+	// ON CONFLICT update set, so a backup's UpsertTarget never clobbers the
+	// user's folder selection (same pattern as include_in_schedule and hooks).
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON),
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -62,7 +73,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -70,7 +81,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -120,6 +131,32 @@ func (r *Repo) SetHooks(containerName, preHook, postHook string) error {
 	return nil
 }
 
+// SetBackupPaths sets the explicit backup-folder selection (container-translated
+// paths) for a container, creating the target row if it does not exist yet. An
+// empty slice clears the selection so backups fall back to automatic appdata
+// detection. Owned by this setter; never reset by UpsertTarget.
+func (r *Repo) SetBackupPaths(containerName string, selected []string) error {
+	if selected == nil {
+		selected = []string{}
+	}
+	selJSON, err := json.Marshal(selected)
+	if err != nil {
+		return fmt.Errorf("SetBackupPaths marshal: %w", err)
+	}
+	res, err := r.db.Exec(
+		`UPDATE targets SET selected_paths = ? WHERE container_name = ?`,
+		string(selJSON), containerName)
+	if err != nil {
+		return fmt.Errorf("SetBackupPaths: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, SelectedPaths: selected}); err != nil {
+			return fmt.Errorf("SetBackupPaths create target: %w", err)
+		}
+	}
+	return nil
+}
+
 // DeleteTarget removes a target and ALL its run history by container name, in a
 // single transaction. It is a no-op (no error) if the target does not exist.
 // Used to forget a container that is no longer installed once its backups have
@@ -150,14 +187,17 @@ type scanner interface {
 
 func scanTarget(s scanner) (Target, error) {
 	var t Target
-	var pathsJSON string
+	var pathsJSON, selJSON string
 	var include int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
 	if err := json.Unmarshal([]byte(pathsJSON), &t.AppdataPaths); err != nil {
 		return Target{}, fmt.Errorf("scanTarget unmarshal paths: %w", err)
+	}
+	if err := json.Unmarshal([]byte(selJSON), &t.SelectedPaths); err != nil {
+		return Target{}, fmt.Errorf("scanTarget unmarshal selected: %w", err)
 	}
 	t.IncludeInSchedule = include != 0
 	return t, nil

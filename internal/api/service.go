@@ -330,6 +330,115 @@ func hasSegment(p, seg string) bool {
 	return false
 }
 
+// toHostPath is the inverse of toContainerPath: it maps a container-visible path
+// under HostMountRoot back to its HOST path under HostSourceRoot (e.g.
+// /host/user/appdata/x → /mnt/appdata/x). Returns the input unchanged when it is
+// not under the mount root.
+func (s *Service) toHostPath(cp string) string {
+	mountRoot := path.Clean(s.cfg.HostMountRoot)
+	srcRoot := path.Clean(s.cfg.HostSourceRoot)
+	p := path.Clean(cp)
+	if p == mountRoot {
+		return srcRoot
+	}
+	if rest := strings.TrimPrefix(p, mountRoot+"/"); rest != p {
+		return srcRoot + "/" + rest
+	}
+	return cp
+}
+
+// MountInfo describes one of a container's bind mounts for the backup-folder
+// selector in the UI.
+type MountInfo struct {
+	Source    string `json:"source"`    // host path (shown to the user)
+	Dest      string `json:"dest"`      // in-container mount point
+	Selected  bool   `json:"selected"`  // currently included in the backup
+	IsAppdata bool   `json:"isAppdata"` // auto-detected appdata default
+	Reachable bool   `json:"reachable"` // reachable under the host mount (backable)
+}
+
+// ContainerMounts returns the container's bind mounts annotated for the folder
+// selector, plus any selected custom paths (in host form) that do not match a
+// current mount. The selection is the stored explicit choice, or the automatic
+// appdata default when none is configured.
+func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []string, error) {
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return nil, nil, fmt.Errorf("inspect container: %w", err)
+	}
+
+	auto := s.resolveAppdataPaths(name, in)
+	tg, _ := s.store.GetTargetByContainer(name) // absent target → zero value, no selection
+	effective := tg.SelectedPaths
+	if len(effective) == 0 {
+		effective = auto
+	}
+	selSet := sliceSet(effective)
+	autoSet := sliceSet(auto)
+
+	matched := map[string]bool{}
+	var mounts []MountInfo
+	for _, m := range in.Mounts {
+		if m.Type != "bind" || m.Source == "" {
+			continue
+		}
+		cp, reachable := s.toContainerPath(m.Source)
+		mi := MountInfo{Source: m.Source, Dest: m.Destination, Reachable: reachable}
+		if reachable {
+			mi.Selected = selSet[cp]
+			mi.IsAppdata = autoSet[cp]
+			matched[cp] = true
+		}
+		mounts = append(mounts, mi)
+	}
+
+	// Custom = selected paths with no matching current mount, shown in host form.
+	var custom []string
+	for _, cp := range effective {
+		if !matched[cp] {
+			custom = append(custom, s.toHostPath(cp))
+		}
+	}
+	return mounts, custom, nil
+}
+
+// SetBackupPaths stores the user's explicit backup-folder selection for a
+// container. The input paths are HOST paths (what the UI shows); each is
+// translated to its container path and must be reachable under the host mount,
+// otherwise the whole update is rejected. An empty list clears the selection so
+// backups fall back to automatic appdata detection.
+func (s *Service) SetBackupPaths(_ context.Context, name string, hostPaths []string) error {
+	var cps []string
+	seen := map[string]bool{}
+	for _, hp := range hostPaths {
+		hp = strings.TrimSpace(hp)
+		if hp == "" {
+			continue
+		}
+		// toContainerPath path.Cleans the input first (resolving any ".."), then
+		// requires the host-source-root prefix, so its result is guaranteed to sit
+		// under the mount root — no separate containment check needed.
+		cp, ok := s.toContainerPath(hp)
+		if !ok {
+			return fmt.Errorf("path %q is not under the host mount and can't be backed up", hp)
+		}
+		if !seen[cp] {
+			cps = append(cps, cp)
+			seen[cp] = true
+		}
+	}
+	return s.store.SetBackupPaths(name, cps)
+}
+
+// sliceSet builds a set from a string slice.
+func sliceSet(xs []string) map[string]bool {
+	m := make(map[string]bool, len(xs))
+	for _, x := range xs {
+		m[x] = true
+	}
+	return m
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
@@ -351,14 +460,21 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		return backup.Summary{}, fmt.Errorf("inspect container: %w", err)
 	}
 	appdata := s.resolveAppdataPaths(name, in)
+	// Honour an explicit backup-folder selection (SetBackupPaths) when present;
+	// otherwise fall back to the automatic appdata detection. This is both what
+	// gets backed up and what is recorded (AppdataPaths) for restore.
+	effective := appdata
+	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
+		effective = existing.SelectedPaths
+	}
 
-	// Persist the recreate recipe (self-contained: inspect + template + appdata
+	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
 	xml, _, _ := template.Read(s.cfg.FlashTemplatesDir, name)
-	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: appdata})
+	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: effective})
 	defJSON := string(defBytes)
 
-	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: appdata, Definition: defJSON})
+	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: effective, Definition: defJSON})
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("upsert target: %w", err)
 	}
@@ -369,7 +485,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		ContainerRef:         name,
 		ContainerName:        name,
 		RepoPath:             repo,
-		AppdataPaths:         appdata,
+		AppdataPaths:         effective,
 		StopTimeout:          30 * time.Second,
 		TargetID:             tg.ID,
 		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
