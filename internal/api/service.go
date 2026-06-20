@@ -1064,6 +1064,92 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 
 // BackupVM orchestrates a full VM backup: resolve repo + mode, ensure repo,
 // dump XML, parse domain, translate paths, upsert VM target, run orchestrator.
+// leftoverOverlayDevices returns the target devices of any writable disk whose
+// source is a leftover BombVault live-snapshot overlay (a "*.bombvault-tmp" file)
+// left by a previously interrupted live backup. Such an overlay blocks the next
+// snapshot ("…already exists…") and, if left in place, would make a backup
+// capture only the overlay and not its base disk. Matching on BombVault's own
+// snapshot name is unambiguous — never a cdrom or a user's manual snapshot.
+func leftoverOverlayDevices(d virshcli.DomainInfo) []string {
+	// libvirt names a snapshot-create-as overlay "<base>.<snapname>", so our
+	// leftover is exactly a "*.bombvault-tmp" file. Match the suffix (not a bare
+	// substring) so a legit disk whose PATH merely contains the name is not hit.
+	suffix := "." + backup.LiveSnapshotName
+	var devs []string
+	for _, disk := range d.Disks {
+		if strings.HasSuffix(disk.Source, suffix) {
+			devs = append(devs, disk.Dev)
+		}
+	}
+	return devs
+}
+
+// recoverLeftoverOverlay commits a leftover BombVault snapshot overlay back into
+// its base BEFORE a backup, so the VM is on a clean disk chain (live snapshots
+// work again and the backup captures the real base, not just the overlay). It is
+// safe: it only ever commits a disk whose source is our own "*.bombvault-tmp".
+// Returns the refreshed domain XML + parsed info. A no-leftover domain is
+// returned unchanged. The VM must be running to active-commit; a shut-off VM
+// with a leftover is an error the user must resolve (we won't silently start it).
+func (s *Service) recoverLeftoverOverlay(ctx context.Context, name, xmlStr string, domain virshcli.DomainInfo) (string, virshcli.DomainInfo, error) {
+	devs := leftoverOverlayDevices(domain)
+	if len(devs) == 0 {
+		return xmlStr, domain, nil
+	}
+	// Must be running to active-commit. Do NOT swallow the check error: a flaky
+	// host must not be misread as "shut off" (which would send a confusing message
+	// and could otherwise mask a real fault).
+	running, aerr := s.virsh.IsActive(ctx, name)
+	if aerr != nil {
+		return xmlStr, domain, fmt.Errorf("backup vm: check running state for overlay recovery: %w", aerr)
+	}
+	if !running {
+		return xmlStr, domain, fmt.Errorf("backup vm: %q is shut off but left on a BombVault snapshot overlay from an interrupted live backup; start it briefly so the overlay can be merged, then retry", name)
+	}
+	log.Printf("api: BackupVM: %q is on a leftover BombVault snapshot overlay (%v); committing it back before backup", name, devs) //nolint:gosec // G706: %q-quoted name
+	for _, dev := range devs {
+		if cErr := s.virsh.BlockCommitActivePivot(ctx, name, dev); cErr != nil {
+			return xmlStr, domain, fmt.Errorf("backup vm: recover leftover snapshot overlay (%s): %w", dev, cErr)
+		}
+	}
+	// Re-read the now-clean domain so we back up the real base disk, not the overlay.
+	fresh, err := s.virsh.DumpXML(ctx, name)
+	if err != nil {
+		return xmlStr, domain, fmt.Errorf("backup vm: re-dumpxml after overlay recovery: %w", err)
+	}
+	freshDomain, err := virshcli.ParseDomain(fresh)
+	if err != nil {
+		return xmlStr, domain, fmt.Errorf("backup vm: parse domain after overlay recovery: %w", err)
+	}
+	// Verify the commit actually cleared the overlay; if libvirt reported success
+	// but the chain is still dirty, fail with a precise message rather than letting
+	// the next snapshot fail with an opaque "already exists".
+	if still := leftoverOverlayDevices(freshDomain); len(still) > 0 {
+		return xmlStr, domain, fmt.Errorf("backup vm: overlay recovery did not clear the snapshot overlay on %v for %q; resolve it manually", still, name)
+	}
+	return fresh, freshDomain, nil
+}
+
+// failVMBackup makes a pre-orchestrator VM backup failure visible: it records a
+// failed run against the VM's existing target (so it shows in the dashboard run
+// history) and fires a notification. Used for failures that happen BEFORE the
+// orchestrator starts its own run (overlay recovery, the running-state check) so
+// a destructive/aborted attempt is never silent — especially for scheduled
+// backups where the HTTP error is not seen. Best-effort: any bookkeeping error
+// is ignored (the real cause is already being returned to the caller).
+func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
+	if tg, err := s.store.GetVMTargetByName(name); err == nil {
+		if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr == nil {
+			msg := cause.Error()
+			if len(msg) > 500 {
+				msg = msg[:500]
+			}
+			_ = s.store.FinishRun(runID, "failed", "", 0, msg)
+		}
+	}
+	s.notifyBackup(ctx, "VM", name, false, backup.Summary{}, cause)
+}
+
 func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -1095,6 +1181,15 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	domain, err := virshcli.ParseDomain(xmlStr)
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: parse domain: %w", err)
+	}
+
+	// If the VM is still on a leftover BombVault snapshot overlay from a previously
+	// interrupted live backup, commit it back first so live snapshots work again
+	// and we back up the real base disk (not just the overlay). No-op otherwise.
+	xmlStr, domain, err = s.recoverLeftoverOverlay(ctx, name, xmlStr, domain)
+	if err != nil {
+		s.failVMBackup(ctx, name, err) // attempted/needed a destructive commit — don't fail silently
+		return backup.Summary{}, err
 	}
 
 	// Guard: refuse to back up a VM with no disk images (would produce an
@@ -1155,10 +1250,18 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		return backup.Summary{}, fmt.Errorf("upsert vm target: %w", err)
 	}
 
+	// Every writable disk gets an overlay in a live snapshot, so every one must be
+	// committed back afterwards (not just the first).
+	var commitDevs []string
+	for _, disk := range domain.Disks {
+		commitDevs = append(commitDevs, disk.Dev)
+	}
+
 	deps := backup.VMBackupDeps{
 		Name:             name,
 		DiskPaths:        diskPaths,
 		DiskDevice:       domain.DiskDevice,
+		CommitDevs:       commitDevs,
 		SkipSnapshotDevs: domain.SkipSnapshotDevs,
 		RepoPath:         repo,
 		TargetID:         tg.ID,
@@ -1170,10 +1273,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	live := false
 	if method == "live" {
 		// Live snapshot only works on a RUNNING VM (blockcommit --active --pivot
-		// needs an active domain). For a shut-off VM, fall back to graceful — which
-		// for an already-off VM just backs up the disks and leaves it off. This
-		// avoids creating an overlay we then cannot commit.
-		if running, _ := s.virsh.IsActive(ctx, name); running {
+		// needs an active domain). A shut-off VM is backed up by graceful — which for
+		// an already-off VM just backs up the disks and leaves it off (no shutdown).
+		// Do NOT swallow the check error: a flaky host must never be misread as
+		// "not running" and silently downgrade a live VM to a shutdown backup.
+		running, aerr := s.virsh.IsActive(ctx, name)
+		if aerr != nil {
+			e := fmt.Errorf("backup vm: check running state: %w", aerr)
+			s.failVMBackup(ctx, name, e)
+			return backup.Summary{}, e
+		}
+		if running {
 			live = true
 		} else {
 			log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name) //nolint:gosec // G706: %q-quoted
