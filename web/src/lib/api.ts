@@ -22,6 +22,8 @@ export interface Container {
   lastBackup: number | null;
   preHook: string;
   postHook: string;
+  /** Other container names to stop during this container's backup. */
+  stopContainers: string[];
 }
 
 export interface ListContainersResponse {
@@ -308,6 +310,14 @@ export function setNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
 /** POST /api/notify/test — send a test notification using the given config. */
 export function testNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
   return fetchJSON("/api/notify/test", { method: "POST", body: JSON.stringify(cfg) });
+}
+
+/** PATCH /api/containers/{name} — set the other containers to stop during backup. */
+export function setStopContainers(name: string, stopContainers: string[]): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ stopContainers }),
+  });
 }
 
 /** Rebuild the target list from the backup storage (disaster recovery after a fresh install). */

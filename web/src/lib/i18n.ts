@@ -227,6 +227,8 @@ const en = {
   "folders.save": "Save folders",
   "folders.saved": "Saved",
   "folders.empty": "No mapped folders found for this container.",
+  "stophook.title": "Stop other containers",
+  "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards. One container name per line.",
 
   // Appearance / Accent
   "settings.appearance": "Appearance",
@@ -536,6 +538,8 @@ const de: Translations = {
   "folders.save": "Ordner speichern",
   "folders.saved": "Gespeichert",
   "folders.empty": "Keine gemappten Ordner für diesen Container gefunden.",
+  "stophook.title": "Andere Container stoppen",
+  "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten. Ein Container-Name pro Zeile.",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",

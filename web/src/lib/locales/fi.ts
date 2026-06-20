@@ -313,6 +313,8 @@ const fi: Partial<Translations> = {
   "notify.save": "Tallenna",
   "notify.test": "Lähetä testi",
   "notify.tested": "Testi lähetetty",
+  "stophook.title": "Pysäytä muut säiliöt",
+  "stophook.hint": "Pysäytä nämä muut säiliöt tämän säiliön varmuuskopioinnin ajaksi (esimerkiksi tietokanta) ja käynnistä ne sen jälkeen uudelleen. Yksi säiliön nimi riviä kohden.",
 };
 
 export default fi;

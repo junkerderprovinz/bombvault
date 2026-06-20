@@ -313,6 +313,8 @@ const es: Partial<Translations> = {
   "notify.save": "Guardar",
   "notify.test": "Enviar prueba",
   "notify.tested": "Prueba enviada",
+  "stophook.title": "Detener otros contenedores",
+  "stophook.hint": "Detener estos otros contenedores mientras se hace la copia de seguridad de este (por ejemplo una base de datos) y volver a iniciarlos después. Un nombre de contenedor por línea.",
 };
 
 export default es;

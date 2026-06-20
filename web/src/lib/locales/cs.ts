@@ -311,6 +311,8 @@ const cs: Partial<Translations> = {
   "notify.save": "Uložit",
   "notify.test": "Odeslat test",
   "notify.tested": "Test odeslán",
+  "stophook.title": "Zastavit ostatní kontejnery",
+  "stophook.hint": "Zastavit tyto ostatní kontejnery během zálohování tohoto kontejneru (například databázi) a poté je znovu spustit. Jeden název kontejneru na řádek.",
 };
 
 export default cs;

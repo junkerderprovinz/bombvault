@@ -310,6 +310,8 @@ const nl: Partial<Translations> = {
   "notify.save": "Opslaan",
   "notify.test": "Test versturen",
   "notify.tested": "Test verstuurd",
+  "stophook.title": "Andere containers stoppen",
+  "stophook.hint": "Stop deze andere containers terwijl er een back-up van deze container wordt gemaakt (bijvoorbeeld een database) en start ze daarna weer. Eén containernaam per regel.",
 };
 
 export default nl;

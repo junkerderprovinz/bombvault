@@ -313,6 +313,8 @@ const pt: Partial<Translations> = {
   "notify.save": "Guardar",
   "notify.test": "Enviar teste",
   "notify.tested": "Teste enviado",
+  "stophook.title": "Parar outros contentores",
+  "stophook.hint": "Parar estes outros contentores enquanto este é copiado (por exemplo uma base de dados) e iniciá-los novamente depois. Um nome de contentor por linha.",
 };
 
 export default pt;

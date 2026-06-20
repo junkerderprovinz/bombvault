@@ -242,7 +242,7 @@ func TestBackupHooksOrderingAndPreHookAbort(t *testing.T) {
 			AppdataPaths: []string{"/host/user/appdata/plex"}, TargetID: "t1",
 			WasRunning: true,
 			PreHook:    "false",
-			Docker:  d, Restic: r, Templates: &fakeTemplates{}, Runs: runs,
+			Docker:     d, Restic: r, Templates: &fakeTemplates{}, Runs: runs,
 		})
 		if err == nil {
 			t.Fatal("expected pre-hook failure to abort the backup")
@@ -345,6 +345,52 @@ func TestBackupHappyPath(t *testing.T) {
 	// run recorded success
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
+	}
+}
+
+func TestBackupStopsAndRestartsDependencies(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef:         "app",
+		ContainerName:        "App",
+		RepoPath:             "/repo",
+		AppdataPaths:         []string{"/host/user/appdata/app"},
+		StopTimeout:          30 * time.Second,
+		TargetID:             "target-1",
+		WasRunning:           true,
+		StopContainers:       []string{"mariadb"},
+		SnapshotTemplatesDir: "/data/templates",
+		FlashTemplatesDir:    "/boot/templates",
+		Docker:               d,
+		Restic:               r,
+		Templates:            tpl,
+		Runs:                 runs,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	idx := func(s string) int {
+		for i, e := range d.log {
+			if e == s {
+				return i
+			}
+		}
+		return -1
+	}
+	stopDep, startDep := idx("stop:mariadb"), idx("start:mariadb")
+	if stopDep < 0 || startDep < 0 {
+		t.Fatalf("dependency must be stopped AND restarted: %v", d.log)
+	}
+	if stopDep > startDep {
+		t.Fatalf("dependency stop must precede its restart: %v", d.log)
+	}
+	// The dependency restarts BEFORE the target (a DB is ready before the app).
+	if startTarget := idx("start:app"); startTarget >= 0 && startDep > startTarget {
+		t.Fatalf("dependency should restart before the target: %v", d.log)
 	}
 }
 

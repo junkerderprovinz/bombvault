@@ -313,6 +313,8 @@ const da: Partial<Translations> = {
   "notify.save": "Gem",
   "notify.test": "Send test",
   "notify.tested": "Test sendt",
+  "stophook.title": "Stop andre containere",
+  "stophook.hint": "Stop disse andre containere, mens denne sikkerhedskopieres (for eksempel en database), og start dem igen bagefter. Ét containernavn pr. linje.",
 };
 
 export default da;

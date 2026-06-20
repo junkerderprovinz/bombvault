@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths } from "../lib/api";
+import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
@@ -466,6 +466,79 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   );
 }
 
+// StopContainersEditor edits the list of OTHER containers to stop during this
+// container's backup (e.g. a database), one name per line. Collapsible.
+function StopContainersEditor({ name, initial, t }: { name: string; initial: string[]; t: T }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(initial.join("\n"));
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function save() {
+    setState("saving");
+    setMsg(null);
+    const list = text
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    try {
+      const r = await setStopContainers(name, list);
+      if (r.ok) {
+        setState("saved");
+        setTimeout(() => setState("idle"), 2500);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  const inputCls =
+    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {t("stophook.title")}
+        {initial.length > 0 && <span className="text-[#6fdc8c]">●</span>}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+          <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            spellCheck={false}
+            rows={3}
+            placeholder={"mariadb\nredis"}
+            className={inputCls}
+          />
+          <div className="flex items-center gap-3 pt-0.5">
+            <button
+              onClick={() => void save()}
+              disabled={state === "saving"}
+              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {state === "saving" ? "…" : t("settings.save")}
+            </button>
+            {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ContainerRow({
   container,
   t,
@@ -550,10 +623,11 @@ function ContainerRow({
         )}
       </div>
 
-      {/* Backup-folder selection + pre/post-backup hooks (installed only) */}
+      {/* Backup-folder selection + stop-other-containers + pre/post hooks (installed only) */}
       {installed && (
         <>
           <FoldersEditor name={container.name} t={t} />
+          <StopContainersEditor name={container.name} initial={container.stopContainers ?? []} t={t} />
           <HooksEditor
             name={container.name}
             initialPre={container.preHook}

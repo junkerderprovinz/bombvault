@@ -313,6 +313,8 @@ const fr: Partial<Translations> = {
   "notify.save": "Enregistrer",
   "notify.test": "Envoyer un test",
   "notify.tested": "Test envoyé",
+  "stophook.title": "Arrêter d'autres conteneurs",
+  "stophook.hint": "Arrêter ces autres conteneurs pendant la sauvegarde de celui-ci (par exemple une base de données), puis les redémarrer ensuite. Un nom de conteneur par ligne.",
 };
 
 export default fr;
