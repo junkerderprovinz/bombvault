@@ -262,6 +262,7 @@ const th: Partial<Translations> = {
   "vm.method": "วิธีการ",
   "vm.method.graceful": "แบบราบรื่น (ปิดเครื่อง)",
   "vm.method.live": "สแนปช็อตขณะทำงาน",
+  "vm.method.hint": "Graceful จะปิดเครื่อง VM ระหว่างการสำรองข้อมูล ส่วน Live จะให้เครื่องทำงานต่อ (สแนปช็อต ไม่มีดาวน์ไทม์)",
   "vm.ssh.title": "การสำรองข้อมูล VM ผ่าน SSH",
   "vm.ssh.desc": "การสำรองข้อมูล VM เข้าถึง libvirt ผ่าน SSH (ไม่ต้องเมานต์) อนุญาตคีย์นี้บน Unraid แล้วทดสอบ",
   "vm.ssh.host": "Host",

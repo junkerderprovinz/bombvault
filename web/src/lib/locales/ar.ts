@@ -262,6 +262,7 @@ const ar: Partial<Translations> = {
   "vm.method": "الطريقة",
   "vm.method.graceful": "آمنة (إيقاف تشغيل)",
   "vm.method.live": "لقطة حية",
+  "vm.method.hint": "يقوم Graceful بإيقاف تشغيل الجهاز الظاهري أثناء النسخ الاحتياطي؛ بينما يبقيه Live قيد التشغيل (لقطة، دون توقف).",
   "vm.ssh.title": "نسخ VM احتياطياً عبر SSH",
   "vm.ssh.desc": "يصل نسخ VM الاحتياطي إلى libvirt عبر SSH (دون تركيب). فوّض هذا المفتاح على Unraid ثم اختبر.",
   "vm.ssh.host": "Host",

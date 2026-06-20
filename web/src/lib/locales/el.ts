@@ -262,6 +262,7 @@ const el: Partial<Translations> = {
   "vm.method": "Μέθοδος",
   "vm.method.graceful": "Ομαλή (τερματισμός)",
   "vm.method.live": "Ζωντανό στιγμιότυπο",
+  "vm.method.hint": "Το Graceful τερματίζει το VM κατά τη διάρκεια του αντιγράφου ασφαλείας· το Live το κρατά σε λειτουργία (στιγμιότυπο, χωρίς διακοπή).",
   "vm.ssh.title": "Αντίγραφο VM μέσω SSH",
   "vm.ssh.desc": "Το αντίγραφο VM φτάνει στο libvirt μέσω SSH (χωρίς προσάρτηση). Εξουσιοδοτήστε αυτό το κλειδί στο Unraid, μετά δοκιμάστε.",
   "vm.ssh.host": "Host",

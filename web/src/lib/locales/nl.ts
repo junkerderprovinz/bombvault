@@ -259,6 +259,7 @@ const nl: Partial<Translations> = {
   "vm.method": "Methode",
   "vm.method.graceful": "Net (afsluiten)",
   "vm.method.live": "Live-snapshot",
+  "vm.method.hint": "Graceful schakelt de VM uit tijdens de back-up; Live laat hem draaien (snapshot, geen downtime).",
   "vm.ssh.title": "VM-back-up via SSH",
   "vm.ssh.desc": "VM-back-up bereikt libvirt via SSH (geen mount). Autoriseer deze sleutel op Unraid en test daarna.",
   "vm.ssh.host": "Host",

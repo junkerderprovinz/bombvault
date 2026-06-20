@@ -262,6 +262,7 @@ const tr: Partial<Translations> = {
   "vm.method": "Yöntem",
   "vm.method.graceful": "Düzgün (kapatma)",
   "vm.method.live": "Canlı anlık görüntü",
+  "vm.method.hint": "Graceful, yedekleme sırasında sanal makineyi kapatır; Live ise çalışır durumda tutar (anlık görüntü, kesinti yok).",
   "vm.ssh.title": "SSH üzerinden VM Yedeği",
   "vm.ssh.desc": "VM yedeği libvirt'e SSH üzerinden ulaşır (bağlama yok). Bu anahtarı Unraid'de yetkilendirin, ardından test edin.",
   "vm.ssh.host": "Host",

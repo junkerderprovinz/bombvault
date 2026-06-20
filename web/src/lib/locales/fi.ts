@@ -262,6 +262,7 @@ const fi: Partial<Translations> = {
   "vm.method": "Menetelmä",
   "vm.method.graceful": "Hallittu (sammutus)",
   "vm.method.live": "Live-tilannekuva",
+  "vm.method.hint": "Graceful sammuttaa virtuaalikoneen varmuuskopioinnin ajaksi; Live pitää sen käynnissä (tilannevedos, ei käyttökatkoa).",
   "vm.ssh.title": "VM-varmuuskopio SSH:n kautta",
   "vm.ssh.desc": "VM-varmuuskopio tavoittaa libvirtin SSH:n kautta (ei liitosta). Valtuuta tämä avain Unraidissa ja testaa sitten.",
   "vm.ssh.host": "Isäntä",

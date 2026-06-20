@@ -260,6 +260,7 @@ const cs: Partial<Translations> = {
   "vm.method": "Metoda",
   "vm.method.graceful": "Graceful (vypnutí)",
   "vm.method.live": "Živý snímek",
+  "vm.method.hint": "Graceful během zálohy virtuální stroj vypne; Live jej nechá běžet (snapshot, bez výpadku).",
   "vm.ssh.title": "Záloha VM přes SSH",
   "vm.ssh.desc": "Záloha VM se připojuje k libvirt přes SSH (bez připojení). Autorizujte tento klíč v Unraidu, poté otestujte.",
   "vm.ssh.host": "Host",

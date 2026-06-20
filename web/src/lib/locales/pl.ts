@@ -257,6 +257,7 @@ const pl: Partial<Translations> = {
   "vm.method": "Metoda",
   "vm.method.graceful": "Graceful (zamknięcie)",
   "vm.method.live": "Migawka na żywo",
+  "vm.method.hint": "Graceful wyłącza maszynę wirtualną na czas kopii zapasowej; Live pozostawia ją uruchomioną (migawka, bez przestoju).",
   "vm.ssh.title": "Kopia VM przez SSH",
   "vm.ssh.desc": "Kopia VM łączy się z libvirt przez SSH (bez montowania). Autoryzuj ten klucz w Unraid, a następnie przetestuj.",
   "vm.ssh.host": "Host",
