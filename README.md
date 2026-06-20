@@ -75,7 +75,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 | What | What is saved |
 |---|---|
 | **Docker containers** | Appdata directory + container definition (image, env vars, ports, labels, volumes) |
-| **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH) |
+| **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH). Live snapshots **fall back to a graceful backup automatically** if the snapshot can't be created, so a VM backup never just errors out |
 | **Unraid flash** | The whole USB flash (`/boot`) — OS, license, array config, shares, network + plugin config. Restore extracts to a folder (never overwrites the live flash) |
 
 ### Restore (the good part)
