@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers } from "../lib/api";
+import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
@@ -222,6 +222,50 @@ function DeleteBackupsButton({
         {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
       </button>
       {error && <p className="text-xs text-[#ff8389]">{error}</p>}
+    </div>
+  );
+}
+
+// ExportButton writes a plain, tool-free tar+xml copy of the container (the same
+// folders restic backs up, plus the Unraid template) into a browsable folder next
+// to the repo — restic stays the engine; this is an extra, unencrypted export.
+function ExportButton({ name, t }: { name: string; t: T }) {
+  const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function run() {
+    setState("pending");
+    setMsg(null);
+    try {
+      const r = await exportContainer(name);
+      if (r.ok) {
+        setState("done");
+        setMsg(r.path ?? null);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={() => void run()}
+        disabled={state === "pending"}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {state === "pending" ? "…" : t("export.button")}
+      </button>
+      {state === "done" && msg && (
+        <span className="text-xs text-[#6fdc8c] break-all text-right">{t("export.exportedTo")} {msg}</span>
+      )}
+      {state === "error" && msg && (
+        <span className="text-xs text-[#ff8389] break-words text-right">{msg}</span>
+      )}
     </div>
   );
 }
@@ -612,9 +656,10 @@ function ContainerRow({
               </span>
             </label>
 
-            {/* Backup button (right) — refreshes the list so "last backup" updates */}
-            <div className="ml-auto flex flex-col items-end">
+            {/* Backup + plain export (right) — backup refreshes the list so "last backup" updates */}
+            <div className="ml-auto flex flex-col items-end gap-2">
               <BackupButton name={container.name} t={t} onBackedUp={onDeleted} />
+              <ExportButton name={container.name} t={t} />
             </div>
           </>
         ) : (

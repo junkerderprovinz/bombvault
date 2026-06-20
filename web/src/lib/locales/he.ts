@@ -315,6 +315,9 @@ const he: Partial<Translations> = {
   "notify.tested": "הבדיקה נשלחה",
   "stophook.title": "עצירת מכולות אחרות",
   "stophook.hint": "עצור את המכולות האחרות האלה בזמן הגיבוי של מכולה זו (לדוגמה מסד נתונים) והפעל אותן מחדש לאחר מכן. שם מכולה אחד בכל שורה.",
+  "export.button": "ייצוא (tar רגיל)",
+  "export.exportedTo": "יוצא אל:",
+  "backup.configOnly": "תצורה בלבד — אין תיקיות נתונים (ההגדרה נשמרה לשחזור)",
 };
 
 export default he;

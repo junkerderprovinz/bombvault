@@ -315,6 +315,9 @@ const ro: Partial<Translations> = {
   "notify.tested": "Test trimis",
   "stophook.title": "Oprește alte containere",
   "stophook.hint": "Oprește aceste alte containere în timp ce acesta este copiat de rezervă (de exemplu o bază de date), apoi pornește-le din nou după aceea. Un nume de container pe linie.",
+  "export.button": "Export (tar simplu)",
+  "export.exportedTo": "Exportat în:",
+  "backup.configOnly": "Doar configurație — fără foldere de date (definiția salvată pentru recreare)",
 };
 
 export default ro;

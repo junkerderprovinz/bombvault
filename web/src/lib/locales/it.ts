@@ -315,6 +315,9 @@ const it: Partial<Translations> = {
   "notify.tested": "Test inviato",
   "stophook.title": "Arresta altri container",
   "stophook.hint": "Arresta questi altri container durante il backup di questo (per esempio un database) e riavviali in seguito. Un nome di container per riga.",
+  "export.button": "Esporta (tar semplice)",
+  "export.exportedTo": "Esportato in:",
+  "backup.configOnly": "Solo configurazione — nessuna cartella dati (definizione salvata per la ricreazione)",
 };
 
 export default it;

@@ -315,6 +315,9 @@ const pt: Partial<Translations> = {
   "notify.tested": "Teste enviado",
   "stophook.title": "Parar outros contentores",
   "stophook.hint": "Parar estes outros contentores enquanto este é copiado (por exemplo uma base de dados) e iniciá-los novamente depois. Um nome de contentor por linha.",
+  "export.button": "Exportar (tar simples)",
+  "export.exportedTo": "Exportado para:",
+  "backup.configOnly": "Apenas configuração — sem pastas de dados (definição salva para recriação)",
 };
 
 export default pt;

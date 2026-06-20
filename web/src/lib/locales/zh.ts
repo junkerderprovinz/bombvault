@@ -307,6 +307,9 @@ const zh: Partial<Translations> = {
   "notify.tested": "测试已发送",
   "stophook.title": "停止其他容器",
   "stophook.hint": "在备份此容器期间停止这些其他容器（例如数据库），之后再重新启动它们。每行一个容器名称。",
+  "export.button": "导出（普通 tar）",
+  "export.exportedTo": "已导出到：",
+  "backup.configOnly": "仅配置 — 无数据文件夹（已保存定义以便重新创建）",
 };
 
 export default zh;

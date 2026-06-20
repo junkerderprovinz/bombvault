@@ -313,6 +313,9 @@ const cs: Partial<Translations> = {
   "notify.tested": "Test odeslán",
   "stophook.title": "Zastavit ostatní kontejnery",
   "stophook.hint": "Zastavit tyto ostatní kontejnery během zálohování tohoto kontejneru (například databázi) a poté je znovu spustit. Jeden název kontejneru na řádek.",
+  "export.button": "Export (prostý tar)",
+  "export.exportedTo": "Exportováno do:",
+  "backup.configOnly": "Pouze konfigurace — žádné datové složky (definice uložena pro obnovení)",
 };
 
 export default cs;

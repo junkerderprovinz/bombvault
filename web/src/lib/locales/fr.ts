@@ -315,6 +315,9 @@ const fr: Partial<Translations> = {
   "notify.tested": "Test envoyé",
   "stophook.title": "Arrêter d'autres conteneurs",
   "stophook.hint": "Arrêter ces autres conteneurs pendant la sauvegarde de celui-ci (par exemple une base de données), puis les redémarrer ensuite. Un nom de conteneur par ligne.",
+  "export.button": "Exporter (tar brut)",
+  "export.exportedTo": "Exporté vers :",
+  "backup.configOnly": "Configuration uniquement — aucun dossier de données (définition enregistrée pour recréation)",
 };
 
 export default fr;

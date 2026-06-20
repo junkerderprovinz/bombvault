@@ -310,6 +310,9 @@ const pl: Partial<Translations> = {
   "notify.tested": "Test wysłany",
   "stophook.title": "Zatrzymaj inne kontenery",
   "stophook.hint": "Zatrzymaj te inne kontenery na czas tworzenia kopii zapasowej tego kontenera (na przykład bazę danych), a następnie uruchom je ponownie. Jedna nazwa kontenera w wierszu.",
+  "export.button": "Eksport (zwykły tar)",
+  "export.exportedTo": "Wyeksportowano do:",
+  "backup.configOnly": "Tylko konfiguracja — brak folderów danych (definicja zapisana do odtworzenia)",
 };
 
 export default pl;

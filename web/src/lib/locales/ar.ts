@@ -315,6 +315,9 @@ const ar: Partial<Translations> = {
   "notify.tested": "تم إرسال الاختبار",
   "stophook.title": "إيقاف حاويات أخرى",
   "stophook.hint": "أوقف هذه الحاويات الأخرى أثناء النسخ الاحتياطي لهذه الحاوية (مثل قاعدة بيانات)، ثم أعد تشغيلها بعد ذلك. اسم حاوية واحد في كل سطر.",
+  "export.button": "تصدير (tar عادي)",
+  "export.exportedTo": "تم التصدير إلى:",
+  "backup.configOnly": "الإعدادات فقط — لا توجد مجلدات بيانات (تم حفظ التعريف لإعادة الإنشاء)",
 };
 
 export default ar;
