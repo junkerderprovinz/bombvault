@@ -11,11 +11,22 @@ type VMInfo struct {
 	State string // "running", "shut off", "paused", ...
 }
 
+// DiskRef pairs a writable disk's target device with its current source file.
+// It lets the service spot (and target) a leftover BombVault snapshot overlay
+// precisely — i.e. the exact device whose source is "*.bombvault-tmp".
+type DiskRef struct {
+	Dev    string // target dev, e.g. "hdc"
+	Source string // current source file path
+}
+
 // DomainInfo contains the artifacts parsed from a libvirt domain XML:
 // the disk image path(s), the NVRAM path (empty for BIOS VMs), and the first
 // disk's target device (e.g. "vda") used as the live-backup blockcommit target.
 type DomainInfo struct {
 	DiskPaths  []string
+	// Disks pairs each writable disk's target dev with its source (parallels
+	// DiskPaths). Used to detect/commit a leftover live-snapshot overlay.
+	Disks      []DiskRef
 	NVRAMPath  string
 	DiskDevice string
 	// SkipSnapshotDevs are target devices that must NOT be snapshotted in a live

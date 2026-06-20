@@ -445,6 +445,24 @@ func TestBackupVMLiveHappyPath(t *testing.T) {
 	}
 }
 
+// TestBackupVMLiveCommitsAllWritableDisks: a multi-disk VM must have EVERY
+// overlay committed back, not just the first — otherwise disks 2..N keep
+// diverging on an uncommitted overlay.
+func TestBackupVMLiveCommitsAllWritableDisks(t *testing.T) {
+	vm := &fakeVM{active: true}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := liveDeps(t, vm, r, runs)
+	d.CommitDevs = []string{"vda", "vdb"}
+
+	if _, err := backup.BackupVMLive(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if !vmContains(vm.log, "blockcommit:win10:vda") || !vmContains(vm.log, "blockcommit:win10:vdb") {
+		t.Fatalf("every writable overlay must be committed, got %v", vm.log)
+	}
+}
+
 // The core safety guarantee: if blockcommit fails, the VM is left RUNNING and is
 // never destroyed/undefined, and the error reassures the user.
 func TestBackupVMLiveCommitFailsLeavesVMRunning(t *testing.T) {
@@ -467,59 +485,53 @@ func TestBackupVMLiveCommitFailsLeavesVMRunning(t *testing.T) {
 	}
 }
 
-func TestBackupVMLiveNoDiskDeviceUsesGraceful(t *testing.T) {
-	// No writable disk to commit ⇒ live is impossible; fall back to graceful
-	// instead of erroring. VM is already off here, so graceful just backs it up.
-	vm := &fakeVM{active: false, stateVal: "shut off"}
-	r := &fakeRestic{summary: backup.Summary{SnapshotID: "abcd1234"}}
+func TestBackupVMLiveNoDiskDeviceFailsClearly(t *testing.T) {
+	// No writable disk to commit ⇒ live can't work. With NO graceful fallback it
+	// fails clearly and NEVER shuts the VM down (use the graceful method instead).
+	vm := &fakeVM{active: true}
+	r := &fakeRestic{}
 	runs := &fakeRuns{}
 	d := sampleVMBackupDeps(t, vm, r, runs) // DiskDevice empty
 
-	sum, err := backup.BackupVMLive(t.Context(), d)
-	if err != nil {
-		t.Fatalf("expected graceful fallback to succeed, got %v", err)
-	}
-	if sum.SnapshotID != "abcd1234" {
-		t.Fatalf("snapshot id = %q", sum.SnapshotID)
+	_, err := backup.BackupVMLive(t.Context(), d)
+	if err == nil {
+		t.Fatal("expected a clear error for a live backup with no writable disk")
 	}
 	if vmContains(vm.log, "snapshot:") {
 		t.Fatalf("must not snapshot without a commit target: %v", vm.log)
 	}
-	if !vmContains(r.log, "backup:/repo/vms") {
-		t.Fatalf("graceful restic backup not called: %v", r.log)
+	if vmContains(vm.log, "shutdown:") || vmContains(vm.log, "destroy:") {
+		t.Fatalf("live must NEVER shut down the VM: %v", vm.log)
 	}
-	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
-		t.Fatalf("run finishes = %v, want [success] (one run for the fallback)", runs.finishes)
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
 	}
 }
 
-// TestBackupVMLiveFallsBackToGracefulOnSnapshotFailure is the core reliability
-// win: if the live snapshot cannot be created (VM untouched), fall back to a
-// graceful backup so the user still gets a successful backup — recorded as ONE run.
-func TestBackupVMLiveFallsBackToGracefulOnSnapshotFailure(t *testing.T) {
-	vm := &fakeVM{active: true, stateVal: "shut off", snapshotErr: errors.New("snapshot device busy")}
-	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 2048}}
+// TestBackupVMLiveSnapshotFailureNeverShutsDown: when the live snapshot can't be
+// created, live fails clearly and the VM is left RUNNING — never shut down (no
+// graceful fallback). Reliability comes from the leftover-overlay recovery in the
+// service layer, not from shutting the VM down.
+func TestBackupVMLiveSnapshotFailureNeverShutsDown(t *testing.T) {
+	vm := &fakeVM{active: true, snapshotErr: errors.New("snapshot device busy")}
+	r := &fakeRestic{}
 	runs := &fakeRuns{}
 
-	sum, err := backup.BackupVMLive(t.Context(), liveDeps(t, vm, r, runs))
-	if err != nil {
-		t.Fatalf("expected graceful fallback to succeed, got %v", err)
-	}
-	if sum.SnapshotID != "deadbeef12345678" {
-		t.Fatalf("snapshot id = %q", sum.SnapshotID)
+	_, err := backup.BackupVMLive(t.Context(), liveDeps(t, vm, r, runs))
+	if err == nil {
+		t.Fatal("expected snapshot failure to surface as an error")
 	}
 	if !vmContains(vm.log, "snapshot:win10") {
 		t.Fatalf("live snapshot must have been attempted: %v", vm.log)
 	}
-	// Fallback = graceful, so the VM is shut down and (since it was running) restarted.
-	if !vmContains(vm.log, "shutdown:win10") || !vmContains(vm.log, "start:win10") {
-		t.Fatalf("graceful fallback must shutdown+restart the running VM: %v", vm.log)
+	if vmContains(vm.log, "shutdown:") || vmContains(vm.log, "destroy:") {
+		t.Fatalf("live must NEVER shut down the VM on snapshot failure: %v", vm.log)
 	}
-	if !vmContains(r.log, "backup:/repo/vms") {
-		t.Fatalf("restic backup not called: %v", r.log)
+	if vmContains(r.log, "backup:") {
+		t.Fatalf("restic must not run when the snapshot failed: %v", r.log)
 	}
-	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
-		t.Fatalf("run finishes = %v, want exactly [success]", runs.finishes)
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
 	}
 }
 

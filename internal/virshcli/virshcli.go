@@ -247,6 +247,7 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		return DomainInfo{}, fmt.Errorf("virshcli: parse domain xml: %w", err)
 	}
 	var disks []string
+	var diskRefs []DiskRef
 	device := ""
 	var skip []string
 	for _, disk := range d.Devices.Disks {
@@ -254,6 +255,7 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		switch {
 		case writable:
 			disks = append(disks, disk.Source.File)
+			diskRefs = append(diskRefs, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.File})
 			if device == "" {
 				device = disk.Target.Dev // first writable disk's target dev = blockcommit target
 			}
@@ -263,5 +265,5 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		}
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
-	return DomainInfo{DiskPaths: disks, NVRAMPath: nvram, DiskDevice: device, SkipSnapshotDevs: skip}, nil
+	return DomainInfo{DiskPaths: disks, Disks: diskRefs, NVRAMPath: nvram, DiskDevice: device, SkipSnapshotDevs: skip}, nil
 }

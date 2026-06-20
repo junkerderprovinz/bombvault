@@ -5,7 +5,6 @@ package backup
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -78,9 +77,14 @@ type VMBackupDeps struct {
 	Name string
 	// DiskPaths are the container-visible absolute paths to the disk images.
 	DiskPaths []string
-	// DiskDevice is the first disk's target dev (e.g. "vda", "hdc") — the
-	// blockcommit target for live backup. Empty disables live commit.
+	// DiskDevice is the first disk's target dev (e.g. "vda", "hdc"). Used as the
+	// blockcommit target for live backup when CommitDevs is empty (back-compat).
 	DiskDevice string
+	// CommitDevs are ALL writable disk devices the live snapshot creates an overlay
+	// for, each of which must be committed back afterwards. A multi-disk VM needs
+	// every overlay committed — committing only the first leaves the others
+	// diverging on an uncommitted overlay. Falls back to [DiskDevice] when empty.
+	CommitDevs []string
 	// SkipSnapshotDevs are target devices excluded from the live snapshot
 	// (cdrom / read-only disks). Passed through to SnapshotCreateDiskOnly.
 	SkipSnapshotDevs []string
@@ -143,13 +147,15 @@ type VMRestoreDeps struct {
 // BackupVMGraceful
 // ---------------------------------------------------------------------------
 
-// errLiveSnapshotUnavailable signals that the live disk snapshot could not be
-// created and the VM was left UNTOUCHED (no overlay we own), so it is safe to
-// fall back to a graceful backup. BackupVMLive branches on it via errors.Is.
-var errLiveSnapshotUnavailable = errors.New("vm live backup: snapshot unavailable")
+// LiveSnapshotName is the fixed name BombVault gives the temporary external
+// overlay it creates for a live backup. It is exported so the service layer can
+// recognise a leftover overlay (a disk whose source file contains this name,
+// left by a previously interrupted live backup) and commit it back before the
+// next backup.
+const LiveSnapshotName = "bombvault-tmp"
 
 // finishVMRun records the single run outcome shared by the graceful and live
-// (incl. fallback) paths: failed on error, success otherwise.
+// paths: failed on error, success otherwise.
 func finishVMRun(d VMBackupDeps, runID string, summary Summary, backupErr error) (Summary, error) {
 	if backupErr != nil {
 		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
@@ -256,46 +262,32 @@ func BackupVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if err != nil {
 		return Summary{}, fmt.Errorf("vm live backup: record run start: %w", err)
 	}
-
-	// No writable disk to commit ⇒ live is impossible. Don't error — a graceful
-	// backup is the safe, working choice (for an already-off VM it just backs up).
-	if d.DiskDevice == "" {
-		log.Printf("vm live backup: %q has no writable disk to snapshot; using graceful backup", d.Name)
-		summary, backupErr := runVMGraceful(ctx, d)
-		return finishVMRun(d, runID, summary, backupErr)
-	}
-
 	summary, backupErr := runVMLive(ctx, d)
-	if errors.Is(backupErr, errLiveSnapshotUnavailable) {
-		log.Printf("vm live backup: %q snapshot unavailable (%v); falling back to graceful backup", d.Name, backupErr)
-		summary, backupErr = runVMGraceful(ctx, d)
-	}
 	return finishVMRun(d, runID, summary, backupErr)
 }
 
 // runVMLive performs the live snapshot→restic→blockcommit sequence WITHOUT
-// recording a run. On a snapshot-create failure (the snapshot is atomic, so the
-// VM is left UNTOUCHED) it returns an error wrapping errLiveSnapshotUnavailable
-// so the caller can fall back to graceful; failures AFTER the snapshot exists
-// (restic / blockcommit) return a normal error (no fallback — a graceful
-// shutdown with a live overlay would be unsafe). Requires d.DiskDevice
-// (guaranteed non-empty by the caller).
-//
-// NOTE: we deliberately do NOT try to auto-commit a pre-existing overlay on an
-// "already exists" snapshot error. libvirt emits the same "already exists"
-// message for a cdrom/read-only disk that can't be snapshotted, so that gate
-// can't tell a BombVault leftover from the cdrom case or a user's own manual
-// snapshot — committing the wrong overlay would destroy a user's snapshot. The
-// graceful fallback below handles every snapshot failure safely instead.
+// recording a run. It NEVER shuts the VM down: on any failure the VM is left
+// running and a clear error is returned (a VM the user chose to back up live must
+// not be silently shut down — that is what the explicit "graceful" method is
+// for). Reliability for the common "leftover overlay" failure comes from the
+// service layer committing a leftover BombVault overlay back BEFORE this runs.
+// Requires d.DiskDevice (the blockcommit target).
 func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
-	const snap = "bombvault-tmp"
+	commitDevs := d.CommitDevs
+	if len(commitDevs) == 0 && d.DiskDevice != "" {
+		commitDevs = []string{d.DiskDevice}
+	}
+	if len(commitDevs) == 0 {
+		return Summary{}, fmt.Errorf("vm live backup: no writable disk to snapshot/commit — use the graceful method for this VM")
+	}
 	quiesce := d.VM.GuestAgentPing(ctx, d.Name)
 
-	// Create the overlay (writable disks only; cdrom/read-only excluded). The
+	// Create the overlay(s) (writable disks only; cdrom/read-only excluded). The
 	// snapshot is --atomic, so on failure nothing was created and the VM is
-	// untouched → signal a safe graceful fallback.
-	if snapErr := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, snap, quiesce, d.SkipSnapshotDevs); snapErr != nil {
-		return Summary{}, fmt.Errorf("%w: %v", errLiveSnapshotUnavailable, snapErr)
+	// untouched and still running.
+	if snapErr := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, LiveSnapshotName, quiesce, d.SkipSnapshotDevs); snapErr != nil {
+		return Summary{}, fmt.Errorf("vm live backup: snapshot: %w", snapErr)
 	}
 
 	// Back up the now-static base disk(s).
@@ -306,9 +298,16 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	tags := []string{"vm:" + d.Name, "p2", "live"}
 	summary, backupErr := d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 
-	// ALWAYS attempt to commit the overlay back, even if the backup failed, so the
-	// VM does not keep diverging on the overlay.
-	if commitErr := d.VM.BlockCommitActivePivot(ctx, d.Name, d.DiskDevice); commitErr != nil {
+	// ALWAYS commit EVERY overlay back, even if the backup failed, so no disk keeps
+	// diverging on an uncommitted overlay. Attempt all devices; report the first
+	// failure (the VM keeps running on its overlay either way — no data lost).
+	var commitErr error
+	for _, dev := range commitDevs {
+		if cErr := d.VM.BlockCommitActivePivot(ctx, d.Name, dev); cErr != nil && commitErr == nil {
+			commitErr = cErr
+		}
+	}
+	if commitErr != nil {
 		return Summary{}, fmt.Errorf("vm live backup: blockcommit failed — the VM is STILL RUNNING on its snapshot overlay (no data lost); resolve the overlay before the next backup: %w", commitErr)
 	}
 	if backupErr != nil {
