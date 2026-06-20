@@ -60,16 +60,22 @@ export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
         )}
       </button>
 
-      {state.phase === "success" && (
-        <span className="text-xs text-[#6fdc8c]">
-          ✓ {t("common.done")}
-          {state.snapshotId && (
+      {state.phase === "success" &&
+        (state.snapshotId ? (
+          <span className="text-xs text-[#6fdc8c]">
+            ✓ {t("common.done")}
             <span className="font-mono ml-1 text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
-          )}
-        </span>
-      )}
+          </span>
+        ) : (
+          // No snapshot id ⇒ a stateless container with no data folders. The
+          // definition/template is still captured for recreate, but no restic
+          // snapshot was made — say so instead of an opaque "Done".
+          <span className="text-xs text-carbon-textSub max-w-[18rem] break-words">
+            ✓ {t("backup.configOnly")}
+          </span>
+        ))}
 
       {state.phase === "error" && (
         <span className="text-xs text-[#ff8389] max-w-[18rem] break-words">

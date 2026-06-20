@@ -315,6 +315,9 @@ const sv: Partial<Translations> = {
   "notify.tested": "Test skickat",
   "stophook.title": "Stoppa andra containrar",
   "stophook.hint": "Stoppa dessa andra containrar medan den här säkerhetskopieras (till exempel en databas) och starta dem igen efteråt. Ett containernamn per rad.",
+  "export.button": "Exportera (vanlig tar)",
+  "export.exportedTo": "Exporterad till:",
+  "backup.configOnly": "Endast konfiguration — inga datamappar (definition sparad för återskapande)",
 };
 
 export default sv;

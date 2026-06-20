@@ -307,6 +307,9 @@ const vi: Partial<Translations> = {
   "notify.tested": "Đã gửi thử",
   "stophook.title": "Dừng các container khác",
   "stophook.hint": "Dừng các container khác này trong khi container này đang được sao lưu (ví dụ một cơ sở dữ liệu), sau đó khởi động lại chúng. Mỗi dòng một tên container.",
+  "export.button": "Xuất (tar thường)",
+  "export.exportedTo": "Đã xuất tới:",
+  "backup.configOnly": "Chỉ cấu hình — không có thư mục dữ liệu (đã lưu định nghĩa để tạo lại)",
 };
 
 export default vi;

@@ -315,6 +315,9 @@ const da: Partial<Translations> = {
   "notify.tested": "Test sendt",
   "stophook.title": "Stop andre containere",
   "stophook.hint": "Stop disse andre containere, mens denne sikkerhedskopieres (for eksempel en database), og start dem igen bagefter. Ét containernavn pr. linje.",
+  "export.button": "Eksport (almindelig tar)",
+  "export.exportedTo": "Eksporteret til:",
+  "backup.configOnly": "Kun konfiguration — ingen datamapper (definition gemt til genskabelse)",
 };
 
 export default da;

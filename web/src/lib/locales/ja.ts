@@ -307,6 +307,9 @@ const ja: Partial<Translations> = {
   "notify.tested": "テストを送信しました",
   "stophook.title": "他のコンテナを停止",
   "stophook.hint": "このコンテナのバックアップ中に、これらの他のコンテナ（例えばデータベース）を停止し、その後に再び起動します。1 行に 1 つのコンテナ名を入力します。",
+  "export.button": "エクスポート (プレーン tar)",
+  "export.exportedTo": "エクスポート先:",
+  "backup.configOnly": "設定のみ — データフォルダなし (再作成用に定義を保存しました)",
 };
 
 export default ja;

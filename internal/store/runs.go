@@ -58,6 +58,24 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	return nil
 }
 
+// ReapInterruptedRuns marks any run still in 'running' as failed. It is meant to
+// be called once at startup: BombVault is a single process, so a run left in
+// 'running' is necessarily an orphan from a previous lifetime (the process
+// crashed or was updated mid-backup) and can never still be in progress. Without
+// this, such a run keeps a NULL bytes/finished_at and shows a perpetual "running"
+// chip on the dashboard. Returns how many runs were reaped.
+func (r *Repo) ReapInterruptedRuns() (int64, error) {
+	res, err := r.db.Exec(`
+		UPDATE runs
+		SET status = 'failed', finished_at = ?, error = 'interrupted (BombVault restarted mid-run)'
+		WHERE status = 'running'`, time.Now().Unix())
+	if err != nil {
+		return 0, fmt.Errorf("ReapInterruptedRuns: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}
+
 // LastSuccessfulBackup returns the most recent successful backup run for targetID, or nil.
 func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
@@ -165,17 +183,20 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 
 func scanRun(s scanner) (Run, error) {
 	var run Run
-	var finishedAt sql.NullInt64
+	var finishedAt, bytes sql.NullInt64
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
-		&run.StartedAt, &finishedAt, &snapID, &run.Bytes, &errCol,
+		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol,
 	)
 	if err != nil {
 		return Run{}, err
 	}
 	if finishedAt.Valid {
 		run.FinishedAt = &finishedAt.Int64
+	}
+	if bytes.Valid {
+		run.Bytes = bytes.Int64
 	}
 	if snapID.Valid {
 		run.SnapshotID = snapID.String

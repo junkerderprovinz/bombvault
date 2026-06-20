@@ -312,6 +312,9 @@ const nl: Partial<Translations> = {
   "notify.tested": "Test verstuurd",
   "stophook.title": "Andere containers stoppen",
   "stophook.hint": "Stop deze andere containers terwijl er een back-up van deze container wordt gemaakt (bijvoorbeeld een database) en start ze daarna weer. Eén containernaam per regel.",
+  "export.button": "Exporteren (gewone tar)",
+  "export.exportedTo": "Geëxporteerd naar:",
+  "backup.configOnly": "Alleen configuratie — geen datamappen (definitie opgeslagen voor opnieuw aanmaken)",
 };
 
 export default nl;

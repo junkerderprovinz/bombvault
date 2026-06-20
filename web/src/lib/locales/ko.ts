@@ -307,6 +307,9 @@ const ko: Partial<Translations> = {
   "notify.tested": "테스트 전송됨",
   "stophook.title": "다른 컨테이너 중지",
   "stophook.hint": "이 컨테이너를 백업하는 동안 이러한 다른 컨테이너(예: 데이터베이스)를 중지한 다음 나중에 다시 시작합니다. 한 줄에 컨테이너 이름 하나를 입력하세요.",
+  "export.button": "내보내기 (일반 tar)",
+  "export.exportedTo": "내보낸 위치:",
+  "backup.configOnly": "구성만 — 데이터 폴더 없음 (재생성을 위해 정의 저장됨)",
 };
 
 export default ko;

@@ -315,6 +315,9 @@ const hu: Partial<Translations> = {
   "notify.tested": "Teszt elküldve",
   "stophook.title": "Más konténerek leállítása",
   "stophook.hint": "Állítsd le ezeket a többi konténert ennek a konténernek a mentése idejére (például egy adatbázist), majd indítsd el őket utána újra. Soronként egy konténernév.",
+  "export.button": "Exportálás (egyszerű tar)",
+  "export.exportedTo": "Exportálva ide:",
+  "backup.configOnly": "Csak konfiguráció — nincsenek adatmappák (a definíció mentve az újralétrehozáshoz)",
 };
 
 export default hu;

@@ -453,6 +453,18 @@ func onlyExistingPaths(paths []string) []string {
 	return out
 }
 
+// effectiveBackupPaths returns the paths a container backup/export actually uses:
+// the explicit folder selection if set, otherwise the automatic appdata
+// detection, filtered to those that exist on disk (a stateless container ends up
+// with an empty list).
+func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
+	chosen := s.resolveAppdataPaths(name, in)
+	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
+		chosen = existing.SelectedPaths
+	}
+	return onlyExistingPaths(chosen)
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
@@ -473,19 +485,11 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("inspect container: %w", err)
 	}
-	appdata := s.resolveAppdataPaths(name, in)
-	// Honour an explicit backup-folder selection (SetBackupPaths) when present;
-	// otherwise fall back to the automatic appdata detection. This is both what
-	// gets backed up and what is recorded (AppdataPaths) for restore.
-	effective := appdata
-	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
-		effective = existing.SelectedPaths
-	}
-	// Drop paths that don't exist on disk so restic is never handed a missing
-	// source (which fails with "all source directories do not exist"). A stateless
-	// container with no data ends up with an empty list → a definition-only backup
-	// (its template/inspect is still captured so it can be recreated on restore).
-	effective = onlyExistingPaths(effective)
+	// The paths actually backed up: the explicit folder selection if set, else the
+	// automatic appdata detection, filtered to those that exist. A stateless
+	// container ends up with an empty list → a definition-only backup (its
+	// template/inspect is still captured so it can be recreated on restore).
+	effective := s.effectiveBackupPaths(name, in)
 
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.

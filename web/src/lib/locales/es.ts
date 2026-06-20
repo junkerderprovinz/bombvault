@@ -315,6 +315,9 @@ const es: Partial<Translations> = {
   "notify.tested": "Prueba enviada",
   "stophook.title": "Detener otros contenedores",
   "stophook.hint": "Detener estos otros contenedores mientras se hace la copia de seguridad de este (por ejemplo una base de datos) y volver a iniciarlos después. Un nombre de contenedor por línea.",
+  "export.button": "Exportar (tar simple)",
+  "export.exportedTo": "Exportado a:",
+  "backup.configOnly": "Solo configuración — sin carpetas de datos (definición guardada para recrear)",
 };
 
 export default es;

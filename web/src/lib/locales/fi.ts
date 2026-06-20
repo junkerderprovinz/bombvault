@@ -315,6 +315,9 @@ const fi: Partial<Translations> = {
   "notify.tested": "Testi lähetetty",
   "stophook.title": "Pysäytä muut säiliöt",
   "stophook.hint": "Pysäytä nämä muut säiliöt tämän säiliön varmuuskopioinnin ajaksi (esimerkiksi tietokanta) ja käynnistä ne sen jälkeen uudelleen. Yksi säiliön nimi riviä kohden.",
+  "export.button": "Vie (pelkkä tar)",
+  "export.exportedTo": "Viety kohteeseen:",
+  "backup.configOnly": "Vain asetukset — ei datakansioita (määritys tallennettu uudelleenluontia varten)",
 };
 
 export default fi;

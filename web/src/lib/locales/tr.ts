@@ -315,6 +315,9 @@ const tr: Partial<Translations> = {
   "notify.tested": "Test gönderildi",
   "stophook.title": "Diğer konteynerleri durdur",
   "stophook.hint": "Bu konteyner yedeklenirken şu diğer konteynerleri durdurun (örneğin bir veritabanı) ve sonrasında yeniden başlatın. Her satıra bir konteyner adı.",
+  "export.button": "Dışa aktar (düz tar)",
+  "export.exportedTo": "Şuraya aktarıldı:",
+  "backup.configOnly": "Yalnızca yapılandırma — veri klasörü yok (tanım yeniden oluşturma için kaydedildi)",
 };
 
 export default tr;

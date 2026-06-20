@@ -312,6 +312,14 @@ export function testNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
   return fetchJSON("/api/notify/test", { method: "POST", body: JSON.stringify(cfg) });
 }
 
+/** POST /api/containers/{name}/export — write a plain tar+xml export, returns the folder. */
+export interface ExportResponse extends OkEnvelope {
+  path?: string;
+}
+export function exportContainer(name: string): Promise<ExportResponse> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/export`, { method: "POST" });
+}
+
 /** PATCH /api/containers/{name} — set the other containers to stop during backup. */
 export function setStopContainers(name: string, stopContainers: string[]): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {

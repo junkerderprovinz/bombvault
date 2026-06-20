@@ -50,6 +50,14 @@ func run() error {
 	}
 	st := store.New(db)
 
+	// Reap runs left in 'running' by a previous lifetime (crash/update mid-backup)
+	// so they don't linger as a perpetual "running" status on the dashboard.
+	if n, rerr := st.ReapInterruptedRuns(); rerr != nil {
+		log.Printf("reap interrupted runs: %v", rerr)
+	} else if n > 0 {
+		log.Printf("marked %d interrupted run(s) from a previous run as failed", n)
+	}
+
 	// Real Docker adapter over the mounted docker.sock.
 	dc, err := dockercli.New()
 	if err != nil {

@@ -100,6 +100,8 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - Snapshot browser with a restore-point list.
 - Integrity verification — run `restic check` per domain from Settings → Integrity.
 - Pre/post-backup hooks per container — shell commands run inside the container (e.g. `mysqldump` into appdata before backup); a failing pre-hook aborts the backup.
+- **Stop other containers during backup** — name dependent containers (e.g. a database) to stop while this one is backed up and start again afterwards.
+- **Plain export** — a per-container **Export** button writes a browsable, tool-free copy next to the repo: `<name>.tar.gz` of the backup folders plus the Unraid `<name>.xml` template (like the Appdata Backup plugin). Restic stays the engine; the export is an extra, *unencrypted* convenience copy.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - Dark/light UI in English + German today; more locales *(planned)*.
 
