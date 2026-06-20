@@ -14,7 +14,7 @@
   <Category>Backup:</Category>
   <WebUI>https://[IP]:[PORT:3443]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-apps/main/bombvault/my-BombVault.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png?v=3</Icon>
+  <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png?v=4</Icon>
   <ExtraParams>--restart unless-stopped --add-host=host.docker.internal:host-gateway</ExtraParams>
   <DateInstalled/>
   <DonateText>If this template helps you, consider buying me a coffee.</DonateText>
