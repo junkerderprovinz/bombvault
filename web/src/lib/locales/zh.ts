@@ -254,6 +254,7 @@ const zh: Partial<Translations> = {
   "vm.method": "方式",
   "vm.method.graceful": "优雅（关机）",
   "vm.method.live": "实时快照",
+  "vm.method.hint": "Graceful 会在备份期间关闭虚拟机；Live 则保持其运行（快照，无停机）。",
   "vm.ssh.title": "通过 SSH 备份 VM",
   "vm.ssh.desc": "VM 备份通过 SSH 连接 libvirt（无需挂载）。在 Unraid 上授权此密钥，然后测试。",
   "vm.ssh.host": "主机",

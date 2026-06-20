@@ -254,6 +254,7 @@ const vi: Partial<Translations> = {
   "vm.method": "Phương thức",
   "vm.method.graceful": "Êm ái (tắt máy)",
   "vm.method.live": "Snapshot trực tiếp",
+  "vm.method.hint": "Graceful tắt máy ảo trong khi sao lưu; Live giữ máy chạy (ảnh chụp nhanh, không gián đoạn).",
   "vm.ssh.title": "Sao lưu VM qua SSH",
   "vm.ssh.desc": "Sao lưu VM kết nối libvirt qua SSH (không cần gắn kết). Cấp quyền cho khóa này trên Unraid, rồi kiểm tra.",
   "vm.ssh.host": "Máy chủ",

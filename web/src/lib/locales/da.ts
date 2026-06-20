@@ -262,6 +262,7 @@ const da: Partial<Translations> = {
   "vm.method": "Metode",
   "vm.method.graceful": "Pænt (nedlukning)",
   "vm.method.live": "Live-øjebliksbillede",
+  "vm.method.hint": "Graceful lukker den virtuelle maskine ned under sikkerhedskopieringen; Live holder den kørende (snapshot, ingen nedetid).",
   "vm.ssh.title": "VM-sikkerhedskopi over SSH",
   "vm.ssh.desc": "VM-sikkerhedskopi når libvirt over SSH (ingen montering). Autoriser denne nøgle på Unraid, og test derefter.",
   "vm.ssh.host": "Vært",

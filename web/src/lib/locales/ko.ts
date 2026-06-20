@@ -254,6 +254,7 @@ const ko: Partial<Translations> = {
   "vm.method": "방식",
   "vm.method.graceful": "정상 종료 (셧다운)",
   "vm.method.live": "라이브 스냅샷",
+  "vm.method.hint": "Graceful은 백업 중 VM을 종료합니다. Live는 VM을 계속 실행한 채로(스냅샷, 무중단) 백업합니다.",
   "vm.ssh.title": "SSH를 통한 VM 백업",
   "vm.ssh.desc": "VM 백업은 SSH를 통해 libvirt에 연결합니다(마운트 불필요). 이 키를 Unraid에서 승인한 후 테스트하세요.",
   "vm.ssh.host": "호스트",

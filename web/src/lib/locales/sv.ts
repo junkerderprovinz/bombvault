@@ -262,6 +262,7 @@ const sv: Partial<Translations> = {
   "vm.method": "Metod",
   "vm.method.graceful": "Mjuk (avstängning)",
   "vm.method.live": "Live-ögonblicksbild",
+  "vm.method.hint": "Graceful stänger av den virtuella maskinen under säkerhetskopieringen; Live håller den igång (ögonblicksbild, ingen driftstopp).",
   "vm.ssh.title": "VM-säkerhetskopia över SSH",
   "vm.ssh.desc": "VM-säkerhetskopia når libvirt över SSH (ingen montering). Auktorisera den här nyckeln på Unraid och testa sedan.",
   "vm.ssh.host": "Värd",

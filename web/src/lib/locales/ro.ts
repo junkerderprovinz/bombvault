@@ -262,6 +262,7 @@ const ro: Partial<Translations> = {
   "vm.method": "Metodă",
   "vm.method.graceful": "Controlat (oprire)",
   "vm.method.live": "Instantaneu live",
+  "vm.method.hint": "Graceful oprește mașina virtuală în timpul backupului; Live o lasă să ruleze (snapshot, fără întreruperi).",
   "vm.ssh.title": "Backup VM prin SSH",
   "vm.ssh.desc": "Backupul VM ajunge la libvirt prin SSH (fără montare). Autorizați această cheie pe Unraid, apoi testați.",
   "vm.ssh.host": "Gazdă",

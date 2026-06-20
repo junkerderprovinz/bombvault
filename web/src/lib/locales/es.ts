@@ -262,6 +262,7 @@ const es: Partial<Translations> = {
   "vm.method": "Método",
   "vm.method.graceful": "Ordenado (apagado)",
   "vm.method.live": "Instantánea en vivo",
+  "vm.method.hint": "Graceful apaga la máquina virtual durante la copia de seguridad; Live la mantiene en marcha (instantánea, sin tiempo de inactividad).",
   "vm.ssh.title": "Copia de VM por SSH",
   "vm.ssh.desc": "La copia de VM llega a libvirt por SSH (sin montaje). Autoriza esta clave en Unraid y luego prueba.",
   "vm.ssh.host": "Host",

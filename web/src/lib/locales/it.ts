@@ -262,6 +262,7 @@ const it: Partial<Translations> = {
   "vm.method": "Metodo",
   "vm.method.graceful": "Ordinato (spegnimento)",
   "vm.method.live": "Snapshot a caldo",
+  "vm.method.hint": "Graceful spegne la VM durante il backup; Live la mantiene in esecuzione (snapshot, nessun tempo di inattività).",
   "vm.ssh.title": "Backup VM via SSH",
   "vm.ssh.desc": "Il backup VM raggiunge libvirt via SSH (senza mount). Autorizza questa chiave su Unraid, poi prova.",
   "vm.ssh.host": "Host",

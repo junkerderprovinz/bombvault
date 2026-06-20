@@ -254,6 +254,7 @@ const ja: Partial<Translations> = {
   "vm.method": "方式",
   "vm.method.graceful": "グレースフル（シャットダウン）",
   "vm.method.live": "ライブスナップショット",
+  "vm.method.hint": "Graceful はバックアップ中に VM をシャットダウンします。Live は VM を稼働させたまま(スナップショット、停止なし)バックアップします。",
   "vm.ssh.title": "SSH 経由の VM バックアップ",
   "vm.ssh.desc": "VM バックアップは SSH 経由で libvirt に接続します（マウント不要）。この鍵を Unraid で許可してからテストしてください。",
   "vm.ssh.host": "ホスト",

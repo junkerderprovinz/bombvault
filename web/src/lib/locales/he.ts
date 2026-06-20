@@ -262,6 +262,7 @@ const he: Partial<Translations> = {
   "vm.method": "שיטה",
   "vm.method.graceful": "מסודרת (כיבוי)",
   "vm.method.live": "Snapshot חי",
+  "vm.method.hint": "מצב Graceful מכבה את המכונה הווירטואלית במהלך הגיבוי; מצב Live משאיר אותה פועלת (תמונת מצב, ללא השבתה).",
   "vm.ssh.title": "גיבוי VM דרך SSH",
   "vm.ssh.desc": "גיבוי VM מגיע ל-libvirt דרך SSH (ללא עיגון). אשר מפתח זה ב-Unraid, ואז בדוק.",
   "vm.ssh.host": "Host",

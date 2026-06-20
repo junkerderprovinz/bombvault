@@ -262,6 +262,7 @@ const hu: Partial<Translations> = {
   "vm.method": "Módszer",
   "vm.method.graceful": "Szabályos (leállítás)",
   "vm.method.live": "Élő pillanatkép",
+  "vm.method.hint": "A Graceful a biztonsági mentés idejére leállítja a virtuális gépet; a Live futni hagyja (pillanatkép, leállás nélkül).",
   "vm.ssh.title": "VM mentés SSH-n keresztül",
   "vm.ssh.desc": "A VM mentés SSH-n keresztül éri el a libvirtet (csatolás nélkül). Engedélyezze ezt a kulcsot az Unraidben, majd tesztelje.",
   "vm.ssh.host": "Hoszt",

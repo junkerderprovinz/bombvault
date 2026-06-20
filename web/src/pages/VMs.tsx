@@ -135,7 +135,7 @@ function VMMethodSelect({
       value={method}
       disabled={busy}
       onChange={(e) => void handleChange(e.target.value)}
-      title={t("vm.method.live") + " — qemu-guest-agent + /mnt/cache"}
+      title={t("vm.method.hint")}
       className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
     >
       <option value="graceful">{t("vm.method.graceful")}</option>

@@ -262,6 +262,7 @@ const fr: Partial<Translations> = {
   "vm.method": "Méthode",
   "vm.method.graceful": "Propre (arrêt)",
   "vm.method.live": "Instantané à chaud",
+  "vm.method.hint": "Graceful arrête la VM pendant la sauvegarde ; Live la laisse fonctionner (instantané, sans interruption).",
   "vm.ssh.title": "Sauvegarde de VM via SSH",
   "vm.ssh.desc": "La sauvegarde de VM atteint libvirt via SSH (sans montage). Autorisez cette clé sur Unraid, puis testez.",
   "vm.ssh.host": "Hôte",
