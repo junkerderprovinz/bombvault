@@ -467,19 +467,59 @@ func TestBackupVMLiveCommitFailsLeavesVMRunning(t *testing.T) {
 	}
 }
 
-func TestBackupVMLiveNoDiskDeviceFailsSafely(t *testing.T) {
-	vm := &fakeVM{}
-	r := &fakeRestic{}
+func TestBackupVMLiveNoDiskDeviceUsesGraceful(t *testing.T) {
+	// No writable disk to commit ⇒ live is impossible; fall back to graceful
+	// instead of erroring. VM is already off here, so graceful just backs it up.
+	vm := &fakeVM{active: false, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "abcd1234"}}
 	runs := &fakeRuns{}
 	d := sampleVMBackupDeps(t, vm, r, runs) // DiskDevice empty
 
-	_, err := backup.BackupVMLive(t.Context(), d)
-	if err == nil {
-		t.Fatal("expected error for empty disk device")
+	sum, err := backup.BackupVMLive(t.Context(), d)
+	if err != nil {
+		t.Fatalf("expected graceful fallback to succeed, got %v", err)
 	}
-	// Nothing destructive ran (no snapshot created).
+	if sum.SnapshotID != "abcd1234" {
+		t.Fatalf("snapshot id = %q", sum.SnapshotID)
+	}
 	if vmContains(vm.log, "snapshot:") {
 		t.Fatalf("must not snapshot without a commit target: %v", vm.log)
+	}
+	if !vmContains(r.log, "backup:/repo/vms") {
+		t.Fatalf("graceful restic backup not called: %v", r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
+		t.Fatalf("run finishes = %v, want [success] (one run for the fallback)", runs.finishes)
+	}
+}
+
+// TestBackupVMLiveFallsBackToGracefulOnSnapshotFailure is the core reliability
+// win: if the live snapshot cannot be created (VM untouched), fall back to a
+// graceful backup so the user still gets a successful backup — recorded as ONE run.
+func TestBackupVMLiveFallsBackToGracefulOnSnapshotFailure(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off", snapshotErr: errors.New("snapshot device busy")}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 2048}}
+	runs := &fakeRuns{}
+
+	sum, err := backup.BackupVMLive(t.Context(), liveDeps(t, vm, r, runs))
+	if err != nil {
+		t.Fatalf("expected graceful fallback to succeed, got %v", err)
+	}
+	if sum.SnapshotID != "deadbeef12345678" {
+		t.Fatalf("snapshot id = %q", sum.SnapshotID)
+	}
+	if !vmContains(vm.log, "snapshot:win10") {
+		t.Fatalf("live snapshot must have been attempted: %v", vm.log)
+	}
+	// Fallback = graceful, so the VM is shut down and (since it was running) restarted.
+	if !vmContains(vm.log, "shutdown:win10") || !vmContains(vm.log, "start:win10") {
+		t.Fatalf("graceful fallback must shutdown+restart the running VM: %v", vm.log)
+	}
+	if !vmContains(r.log, "backup:/repo/vms") {
+		t.Fatalf("restic backup not called: %v", r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
+		t.Fatalf("run finishes = %v, want exactly [success]", runs.finishes)
 	}
 }
 

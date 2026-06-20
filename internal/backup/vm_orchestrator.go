@@ -5,6 +5,7 @@ package backup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -142,6 +143,24 @@ type VMRestoreDeps struct {
 // BackupVMGraceful
 // ---------------------------------------------------------------------------
 
+// errLiveSnapshotUnavailable signals that the live disk snapshot could not be
+// created and the VM was left UNTOUCHED (no overlay we own), so it is safe to
+// fall back to a graceful backup. BackupVMLive branches on it via errors.Is.
+var errLiveSnapshotUnavailable = errors.New("vm live backup: snapshot unavailable")
+
+// finishVMRun records the single run outcome shared by the graceful and live
+// (incl. fallback) paths: failed on error, success otherwise.
+func finishVMRun(d VMBackupDeps, runID string, summary Summary, backupErr error) (Summary, error) {
+	if backupErr != nil {
+		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
+		return Summary{}, backupErr
+	}
+	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
+		return summary, fmt.Errorf("vm backup: record run finish: %w", err)
+	}
+	return summary, nil
+}
+
 // BackupVMGraceful orchestrates a graceful VM backup:
 //
 //	recordRunStart
@@ -159,10 +178,16 @@ func BackupVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if err != nil {
 		return Summary{}, fmt.Errorf("vm backup: record run start: %w", err)
 	}
+	summary, backupErr := runVMGraceful(ctx, d)
+	return finishVMRun(d, runID, summary, backupErr)
+}
 
+// runVMGraceful performs the graceful shutdown→restic→restart sequence WITHOUT
+// recording a run (the caller owns the run). The VM is guaranteed to be
+// restarted if it was running before, even on any error.
+func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	wasRunning, err := d.VM.IsActive(ctx, d.Name)
 	if err != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(err))
 		return Summary{}, fmt.Errorf("vm backup: check active: %w", err)
 	}
 
@@ -204,15 +229,7 @@ func BackupVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		}
 	}()
 
-	if backupErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
-		return Summary{}, backupErr
-	}
-
-	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
-		return summary, fmt.Errorf("vm backup: record run finish: %w", err)
-	}
-	return summary, nil
+	return summary, backupErr
 }
 
 // BackupVMLive backs up a RUNNING VM without shutting it down:
@@ -221,31 +238,64 @@ func BackupVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 //	→ restic backs up the now-static base disk(s)
 //	→ blockcommit --active --pivot (merge overlay back, pivot the live VM)
 //
-// SAFETY: on ANY failure the VM is left RUNNING and usable — it is never
-// destroyed or undefined. A blockcommit failure surfaces a clear, actionable
-// error (the VM keeps running on its overlay; no data is lost) and records the
-// run failed. Requires DiskDevice (the blockcommit target); falls back to a
-// clear error when it is empty.
+// RELIABILITY: when the live snapshot cannot be created (no writable disk, or
+// snapshot-create-as fails — e.g. a device that can't be snapshotted), the VM is
+// untouched, so we AUTOMATICALLY fall back to a graceful backup. The user always
+// gets a successful backup instead of a hard error. A leftover overlay from a
+// previous interrupted live run (snapshot "already exists") is committed back and
+// the snapshot retried once before falling back. Either way it is recorded as ONE
+// run.
+//
+// SAFETY: on a failure AFTER the snapshot exists (restic or blockcommit) the VM
+// is left RUNNING and usable — never destroyed or undefined. A blockcommit
+// failure surfaces a clear, actionable error (the VM keeps running on its
+// overlay; no data is lost) and we do NOT fall back (a graceful shutdown with a
+// live overlay would be unsafe).
 func BackupVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	runID, err := d.Runs.Start(d.TargetID, kindBackup)
 	if err != nil {
 		return Summary{}, fmt.Errorf("vm live backup: record run start: %w", err)
 	}
+
+	// No writable disk to commit ⇒ live is impossible. Don't error — a graceful
+	// backup is the safe, working choice (for an already-off VM it just backs up).
 	if d.DiskDevice == "" {
-		e := fmt.Errorf("vm live backup: no disk device to commit — cannot safely snapshot; use graceful method")
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
-		return Summary{}, e
+		log.Printf("vm live backup: %q has no writable disk to snapshot; using graceful backup", d.Name)
+		summary, backupErr := runVMGraceful(ctx, d)
+		return finishVMRun(d, runID, summary, backupErr)
 	}
 
+	summary, backupErr := runVMLive(ctx, d)
+	if errors.Is(backupErr, errLiveSnapshotUnavailable) {
+		log.Printf("vm live backup: %q snapshot unavailable (%v); falling back to graceful backup", d.Name, backupErr)
+		summary, backupErr = runVMGraceful(ctx, d)
+	}
+	return finishVMRun(d, runID, summary, backupErr)
+}
+
+// runVMLive performs the live snapshot→restic→blockcommit sequence WITHOUT
+// recording a run. On a snapshot-create failure (the snapshot is atomic, so the
+// VM is left UNTOUCHED) it returns an error wrapping errLiveSnapshotUnavailable
+// so the caller can fall back to graceful; failures AFTER the snapshot exists
+// (restic / blockcommit) return a normal error (no fallback — a graceful
+// shutdown with a live overlay would be unsafe). Requires d.DiskDevice
+// (guaranteed non-empty by the caller).
+//
+// NOTE: we deliberately do NOT try to auto-commit a pre-existing overlay on an
+// "already exists" snapshot error. libvirt emits the same "already exists"
+// message for a cdrom/read-only disk that can't be snapshotted, so that gate
+// can't tell a BombVault leftover from the cdrom case or a user's own manual
+// snapshot — committing the wrong overlay would destroy a user's snapshot. The
+// graceful fallback below handles every snapshot failure safely instead.
+func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	const snap = "bombvault-tmp"
 	quiesce := d.VM.GuestAgentPing(ctx, d.Name)
 
-	// Create the overlay (writable disks only; cdrom/read-only excluded). Nothing
-	// destructive yet — on failure the VM is untouched.
-	if err := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, snap, quiesce, d.SkipSnapshotDevs); err != nil {
-		e := fmt.Errorf("vm live backup: snapshot: %w", err)
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
-		return Summary{}, e
+	// Create the overlay (writable disks only; cdrom/read-only excluded). The
+	// snapshot is --atomic, so on failure nothing was created and the VM is
+	// untouched → signal a safe graceful fallback.
+	if snapErr := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, snap, quiesce, d.SkipSnapshotDevs); snapErr != nil {
+		return Summary{}, fmt.Errorf("%w: %v", errLiveSnapshotUnavailable, snapErr)
 	}
 
 	// Back up the now-static base disk(s).
@@ -259,17 +309,10 @@ func BackupVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	// ALWAYS attempt to commit the overlay back, even if the backup failed, so the
 	// VM does not keep diverging on the overlay.
 	if commitErr := d.VM.BlockCommitActivePivot(ctx, d.Name, d.DiskDevice); commitErr != nil {
-		e := fmt.Errorf("vm live backup: blockcommit failed — the VM is STILL RUNNING on its snapshot overlay (no data lost); resolve the overlay before the next backup: %w", commitErr)
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
-		return Summary{}, e
+		return Summary{}, fmt.Errorf("vm live backup: blockcommit failed — the VM is STILL RUNNING on its snapshot overlay (no data lost); resolve the overlay before the next backup: %w", commitErr)
 	}
 	if backupErr != nil {
-		e := fmt.Errorf("vm live backup: restic: %w", backupErr)
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
-		return Summary{}, e
-	}
-	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
-		return summary, fmt.Errorf("vm live backup: record run finish: %w", err)
+		return Summary{}, fmt.Errorf("vm live backup: restic: %w", backupErr)
 	}
 	return summary, nil
 }
