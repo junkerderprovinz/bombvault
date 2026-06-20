@@ -110,16 +110,17 @@ func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 // Installed is false for "orphan" rows: containers that are no longer installed
 // on the host but still have backups (so the user can restore or delete them).
 type containerView struct {
-	Name              string `json:"name"`
-	Image             string `json:"image"`
-	State             string `json:"state"`
-	Status            string `json:"status"`
-	IP                string `json:"ip"`
-	Installed         bool   `json:"installed"`
-	IncludeInSchedule bool   `json:"includeInSchedule"`
-	LastBackup        *int64 `json:"lastBackup"`
-	PreHook           string `json:"preHook"`
-	PostHook          string `json:"postHook"`
+	Name              string   `json:"name"`
+	Image             string   `json:"image"`
+	State             string   `json:"state"`
+	Status            string   `json:"status"`
+	IP                string   `json:"ip"`
+	Installed         bool     `json:"installed"`
+	IncludeInSchedule bool     `json:"includeInSchedule"`
+	LastBackup        *int64   `json:"lastBackup"`
+	PreHook           string   `json:"preHook"`
+	PostHook          string   `json:"postHook"`
+	StopContainers    []string `json:"stopContainers"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -152,6 +153,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.PreHook = t.PreHook
 			v.PostHook = t.PostHook
+			v.StopContainers = t.StopContainers
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 			}
@@ -370,6 +372,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		PreHook           *string   `json:"preHook"`
 		PostHook          *string   `json:"postHook"`
 		BackupPaths       *[]string `json:"backupPaths"`
+		StopContainers    *[]string `json:"stopContainers"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -389,6 +392,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.BackupPaths != nil {
 		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.StopContainers != nil {
+		if err := h.svc.SetStopContainers(r.Context(), name, *body.StopContainers); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}

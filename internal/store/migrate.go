@@ -148,6 +148,13 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_notify_conf",
 		sql:     "ALTER TABLE settings ADD COLUMN notify_conf TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Other container names to stop for the duration of this container's backup
+		// (e.g. a database), started again afterwards. JSON array; '[]' = none.
+		version: 11,
+		name:    "target_stop_containers",
+		sql:     "ALTER TABLE targets ADD COLUMN stop_containers TEXT NOT NULL DEFAULT '[]';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

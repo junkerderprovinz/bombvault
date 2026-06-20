@@ -313,6 +313,8 @@ const sv: Partial<Translations> = {
   "notify.save": "Spara",
   "notify.test": "Skicka test",
   "notify.tested": "Test skickat",
+  "stophook.title": "Stoppa andra containrar",
+  "stophook.hint": "Stoppa dessa andra containrar medan den här säkerhetskopieras (till exempel en databas) och starta dem igen efteråt. Ett containernamn per rad.",
 };
 
 export default sv;

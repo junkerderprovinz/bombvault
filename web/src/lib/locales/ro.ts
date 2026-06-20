@@ -313,6 +313,8 @@ const ro: Partial<Translations> = {
   "notify.save": "Salvează",
   "notify.test": "Trimite test",
   "notify.tested": "Test trimis",
+  "stophook.title": "Oprește alte containere",
+  "stophook.hint": "Oprește aceste alte containere în timp ce acesta este copiat de rezervă (de exemplu o bază de date), apoi pornește-le din nou după aceea. Un nume de container pe linie.",
 };
 
 export default ro;

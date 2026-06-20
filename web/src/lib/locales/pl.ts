@@ -308,6 +308,8 @@ const pl: Partial<Translations> = {
   "notify.save": "Zapisz",
   "notify.test": "Wyślij test",
   "notify.tested": "Test wysłany",
+  "stophook.title": "Zatrzymaj inne kontenery",
+  "stophook.hint": "Zatrzymaj te inne kontenery na czas tworzenia kopii zapasowej tego kontenera (na przykład bazę danych), a następnie uruchom je ponownie. Jedna nazwa kontenera w wierszu.",
 };
 
 export default pl;

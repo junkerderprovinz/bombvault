@@ -313,6 +313,8 @@ const tr: Partial<Translations> = {
   "notify.save": "Kaydet",
   "notify.test": "Test gönder",
   "notify.tested": "Test gönderildi",
+  "stophook.title": "Diğer konteynerleri durdur",
+  "stophook.hint": "Bu konteyner yedeklenirken şu diğer konteynerleri durdurun (örneğin bir veritabanı) ve sonrasında yeniden başlatın. Her satıra bir konteyner adı.",
 };
 
 export default tr;

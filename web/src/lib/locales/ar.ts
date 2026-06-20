@@ -313,6 +313,8 @@ const ar: Partial<Translations> = {
   "notify.save": "حفظ",
   "notify.test": "إرسال اختبار",
   "notify.tested": "تم إرسال الاختبار",
+  "stophook.title": "إيقاف حاويات أخرى",
+  "stophook.hint": "أوقف هذه الحاويات الأخرى أثناء النسخ الاحتياطي لهذه الحاوية (مثل قاعدة بيانات)، ثم أعد تشغيلها بعد ذلك. اسم حاوية واحد في كل سطر.",
 };
 
 export default ar;

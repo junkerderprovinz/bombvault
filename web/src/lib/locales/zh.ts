@@ -305,6 +305,8 @@ const zh: Partial<Translations> = {
   "notify.save": "保存",
   "notify.test": "发送测试",
   "notify.tested": "测试已发送",
+  "stophook.title": "停止其他容器",
+  "stophook.hint": "在备份此容器期间停止这些其他容器（例如数据库），之后再重新启动它们。每行一个容器名称。",
 };
 
 export default zh;

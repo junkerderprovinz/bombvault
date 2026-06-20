@@ -313,6 +313,8 @@ const hu: Partial<Translations> = {
   "notify.save": "Mentés",
   "notify.test": "Teszt küldése",
   "notify.tested": "Teszt elküldve",
+  "stophook.title": "Más konténerek leállítása",
+  "stophook.hint": "Állítsd le ezeket a többi konténert ennek a konténernek a mentése idejére (például egy adatbázist), majd indítsd el őket utána újra. Soronként egy konténernév.",
 };
 
 export default hu;

@@ -313,6 +313,8 @@ const no: Partial<Translations> = {
   "notify.save": "Lagre",
   "notify.test": "Send test",
   "notify.tested": "Test sendt",
+  "stophook.title": "Stopp andre containere",
+  "stophook.hint": "Stopp disse andre containerne mens denne sikkerhetskopieres (for eksempel en database), og start dem igjen etterpå. Ett containernavn per linje.",
 };
 
 export default no;

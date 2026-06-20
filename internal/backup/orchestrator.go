@@ -132,6 +132,10 @@ type BackupDeps struct {
 	// Hooks only run when WasRunning (you cannot exec in a stopped container).
 	PreHook  string
 	PostHook string
+	// StopContainers are OTHER container names to stop for the duration of this
+	// backup (e.g. a database) and restart afterwards. Stop/start is best-effort:
+	// a failure is logged but never fails the backup. Independent of WasRunning.
+	StopContainers []string
 
 	Docker    Docker
 	Restic    Restic
@@ -272,6 +276,27 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
 				return
 			}
+		}
+
+		// Stop dependency containers (e.g. a database) for the duration of the
+		// backup so their on-disk data is consistent, and ALWAYS restart them
+		// afterwards. Best-effort: a stop/start failure is logged, never fatal.
+		// The restart defer is registered AFTER the target's start defer, so on
+		// unwind the dependencies come back up BEFORE the target (a DB is ready
+		// before the app that needs it).
+		if len(d.StopContainers) > 0 {
+			for _, dep := range d.StopContainers {
+				if stopErr := d.Docker.Stop(ctx, dep, stopTimeout); stopErr != nil {
+					log.Printf("backup: stop dependency %q failed (continuing): %v", dep, stopErr)
+				}
+			}
+			defer func() {
+				for _, dep := range d.StopContainers {
+					if startErr := d.Docker.Start(ctx, dep); startErr != nil {
+						log.Printf("backup: restart dependency %q failed: %v", dep, startErr)
+					}
+				}
+			}()
 		}
 
 		// A container with no existing source paths (a stateless app, or appdata

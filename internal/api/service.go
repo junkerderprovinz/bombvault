@@ -512,6 +512,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		WasRunning:           in.Running,
 		PreHook:              tg.PreHook,
 		PostHook:             tg.PostHook,
+		StopContainers:       tg.StopContainers,
 		Docker:               s.docker,
 		Restic:               &resticAdapter{engine: s.engine, mode: mode},
 		Templates:            templatesAdapter{},
@@ -1505,6 +1506,22 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 // SetContainerHooks stores the pre/post-backup hook commands for a container.
 func (s *Service) SetContainerHooks(_ context.Context, name, preHook, postHook string) error {
 	return s.store.SetHooks(name, preHook, postHook)
+}
+
+// SetStopContainers stores the other container names to stop during this
+// container's backup. Names are trimmed + de-duplicated; blanks are dropped.
+func (s *Service) SetStopContainers(_ context.Context, name string, stop []string) error {
+	var clean []string
+	seen := map[string]bool{}
+	for _, c := range stop {
+		c = strings.TrimSpace(c)
+		if c == "" || c == name || seen[c] {
+			continue // skip blanks, self, and duplicates
+		}
+		seen[c] = true
+		clean = append(clean, c)
+	}
+	return s.store.SetStopContainers(name, clean)
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).

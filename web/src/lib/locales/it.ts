@@ -313,6 +313,8 @@ const it: Partial<Translations> = {
   "notify.save": "Salva",
   "notify.test": "Invia test",
   "notify.tested": "Test inviato",
+  "stophook.title": "Arresta altri container",
+  "stophook.hint": "Arresta questi altri container durante il backup di questo (per esempio un database) e riavviali in seguito. Un nome di container per riga.",
 };
 
 export default it;

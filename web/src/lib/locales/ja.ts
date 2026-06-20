@@ -305,6 +305,8 @@ const ja: Partial<Translations> = {
   "notify.save": "保存",
   "notify.test": "テスト送信",
   "notify.tested": "テストを送信しました",
+  "stophook.title": "他のコンテナを停止",
+  "stophook.hint": "このコンテナのバックアップ中に、これらの他のコンテナ（例えばデータベース）を停止し、その後に再び起動します。1 行に 1 つのコンテナ名を入力します。",
 };
 
 export default ja;
