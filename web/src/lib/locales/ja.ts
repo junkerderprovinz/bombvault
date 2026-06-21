@@ -315,6 +315,8 @@ const ja: Partial<Translations> = {
   "notify.matrixToken": "アクセストークン",
   "notify.matrixRoom": "ルーム ID",
   "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.unraid": "Unraid 通知",
+  "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord などへ転送可能）。SSH 接続の設定が必要です（設定 → VM Backup over SSH）。",
   "notify.save": "保存",
   "notify.test": "テスト送信",
   "notify.tested": "テストを送信しました",

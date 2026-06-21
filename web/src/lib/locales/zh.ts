@@ -315,6 +315,8 @@ const zh: Partial<Translations> = {
   "notify.matrixToken": "访问令牌",
   "notify.matrixRoom": "房间 ID",
   "notify.healthchecks": "Healthchecks.io ping 网址",
+  "notify.unraid": "Unraid 通知",
+  "notify.unraidHint": "发送到 Unraid 自带的通知系统（可转发到 Pushover、邮件、Discord 等）。需要已设置的 SSH 连接（设置 → VM Backup over SSH）。",
   "notify.save": "保存",
   "notify.test": "发送测试",
   "notify.tested": "测试已发送",

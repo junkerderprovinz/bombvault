@@ -323,6 +323,8 @@ const el: Partial<Translations> = {
   "notify.matrixToken": "Διακριτικό πρόσβασης",
   "notify.matrixRoom": "ID δωματίου",
   "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.unraid": "Ειδοποιήσεις Unraid",
+  "notify.unraidHint": "Αποστολή στο σύστημα ειδοποιήσεων του Unraid (που μπορεί να προωθεί σε Pushover, email, Discord …). Απαιτεί ρυθμισμένη σύνδεση SSH (Ρυθμίσεις → VM Backup over SSH).",
   "notify.save": "Αποθήκευση",
   "notify.test": "Αποστολή δοκιμής",
   "notify.tested": "Η δοκιμή στάλθηκε",

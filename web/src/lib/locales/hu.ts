@@ -323,6 +323,8 @@ const hu: Partial<Translations> = {
   "notify.matrixToken": "Hozzáférési token",
   "notify.matrixRoom": "Szoba azonosító",
   "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.unraid": "Unraid-értesítések",
+  "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra …). Beállított SSH-kapcsolat szükséges (Beállítások → VM Backup over SSH).",
   "notify.save": "Mentés",
   "notify.test": "Teszt küldése",
   "notify.tested": "Teszt elküldve",

@@ -90,6 +90,9 @@ type HostSSH interface {
 	WriteFile(ctx context.Context, path string, data []byte) error
 	PublicKey() (string, error)
 	Test(ctx context.Context) error
+	// Run executes a command on the host over SSH (args are shell-quoted). Used to
+	// trigger Unraid's native notification script.
+	Run(ctx context.Context, args ...string) (string, error)
 	// EnsureKnownHost pins the host key (raw ssh accept-new) before libvirt's
 	// qemu+ssh transport verifies it, so virsh doesn't fail on an empty
 	// known_hosts. Also confirms key auth.
@@ -2186,6 +2189,56 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
 	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: msg, OK: ok})
+
+	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
+	// Honour the same policy: notifyBackup already returned for "never", so send
+	// on "always" or on any failure.
+	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) {
+		level := "normal"
+		subject := "BombVault: backup OK"
+		if !ok {
+			level = "warning"
+			subject = "BombVault: backup FAILED"
+		}
+		if e := s.sendUnraidNotify(ctx, subject, msg, level); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
+}
+
+// sendUnraidNotify triggers Unraid's native notification system by running the
+// host's notify script over SSH. level is "normal" | "warning" | "alert".
+func (s *Service) sendUnraidNotify(ctx context.Context, subject, desc, level string) error {
+	if s.ssh == nil {
+		return errors.New("no SSH connection for Unraid notifications (set it up in Settings → VM Backup over SSH)")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	_, err := s.ssh.Run(ctx, "/usr/local/emhttp/webGui/scripts/notify",
+		"-e", "BombVault", "-s", subject, "-d", desc, "-i", level)
+	return err
+}
+
+// TestNotify sends a test to every channel the (unsaved) config enables: the HTTP
+// channels via notify.SendTest, plus the Unraid channel over SSH. It errors when
+// nothing is configured or a configured channel fails, so the UI's Test button
+// reflects the real result.
+func (s *Service) TestNotify(ctx context.Context, c notify.Config) error {
+	if !c.Configured() && !c.Unraid {
+		return errors.New("no notification channel configured")
+	}
+	if c.Configured() {
+		if err := notify.SendTest(ctx, c); err != nil {
+			return err
+		}
+	}
+	if c.Unraid {
+		if err := s.sendUnraidNotify(ctx, "BombVault test notification",
+			"If you see this in Unraid, BombVault notifications are working.", "normal"); err != nil {
+			return fmt.Errorf("unraid: %w", err)
+		}
+	}
+	return nil
 }
 
 // shortID truncates a restic snapshot id to its short (8-char) form.

@@ -291,6 +291,7 @@ export interface NotifyConfig {
   matrixToken: string;
   matrixRoom: string;
   healthchecksUrl: string;
+  unraid: boolean;
 }
 
 export interface GetNotifyResponse extends OkEnvelope {

@@ -323,6 +323,8 @@ const fr: Partial<Translations> = {
   "notify.matrixToken": "Jeton d'accès",
   "notify.matrixRoom": "ID du salon",
   "notify.healthchecks": "URL de ping Healthchecks.io",
+  "notify.unraid": "Notifications Unraid",
+  "notify.unraidHint": "Envoyer au système de notifications d'Unraid (qui peut relayer vers Pushover, e-mail, Discord …). Nécessite la connexion SSH configurée (Réglages → VM Backup over SSH).",
   "notify.save": "Enregistrer",
   "notify.test": "Envoyer un test",
   "notify.tested": "Test envoyé",

@@ -318,6 +318,8 @@ const uk: Partial<Translations> = {
   "notify.matrixToken": "Токен доступу",
   "notify.matrixRoom": "ID кімнати",
   "notify.healthchecks": "URL пінгу Healthchecks.io",
+  "notify.unraid": "Сповіщення Unraid",
+  "notify.unraidHint": "Надсилати у власну систему сповіщень Unraid (яка може пересилати в Pushover, e-mail, Discord …). Потрібне налаштоване SSH-з'єднання (Налаштування → VM Backup over SSH).",
   "notify.save": "Зберегти",
   "notify.test": "Надіслати тест",
   "notify.tested": "Тест надіслано",

@@ -315,6 +315,8 @@ const vi: Partial<Translations> = {
   "notify.matrixToken": "Mã truy cập",
   "notify.matrixRoom": "ID phòng",
   "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.unraid": "Thông báo Unraid",
+  "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord …). Cần thiết lập kết nối SSH (Cài đặt → VM Backup over SSH).",
   "notify.save": "Lưu",
   "notify.test": "Gửi thử",
   "notify.tested": "Đã gửi thử",
