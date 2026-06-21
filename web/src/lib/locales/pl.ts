@@ -187,6 +187,7 @@ const pl: Partial<Translations> = {
   "vms.restoreSelected": "Przywróć zaznaczone (najnowsze)",
   "vms.restoreSelectedConfirm": "Przywrócić NAJNOWSZĄ kopię zapasową zaznaczonych maszyn wirtualnych? Każda zostanie wyłączona, pliki dysku zastąpione i maszyna przywrócona.",
   "vms.notInstalledHint": "Te maszyny wirtualne nie są już zdefiniowane na hoście, ale nadal mają kopie zapasowe. Przywróć je lub użyj panelu Kopie zapasowe, aby przeglądać migawki.",
+  "vms.discoverHint": "Maszyna wirtualna usunięta z Unraida (lub utracona po ponownej instalacji)? Odbuduj jej wpis kopii zapasowej z magazynu, aby ją przywrócić.",
 
   // Container / VM state badge labels
   "state.created":      "Utworzony",

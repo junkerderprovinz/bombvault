@@ -190,6 +190,7 @@ const ro: Partial<Translations> = {
   "vms.restoreSelected": "Restaurează selectatele (cel mai recent)",
   "vms.restoreSelectedConfirm": "Restaurați CEL MAI RECENT backup al VM-urilor selectate? Fiecare VM este oprit, fișierele de disc înlocuite și VM-ul restaurat.",
   "vms.notInstalledHint": "Aceste VM-uri nu mai sunt definite pe gazdă, dar încă au copii de rezervă. Restaurați-le sau navigați în panoul Copii de rezervă pentru a vedea instantaneele.",
+  "vms.discoverHint": "VM ștearsă din Unraid (sau pierdută după o reinstalare)? Reconstruiește intrarea ei de backup din stocare pentru a o putea restaura.",
 
   // Container / VM state badge labels
   "state.created":      "Creat",

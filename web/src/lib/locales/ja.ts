@@ -190,6 +190,7 @@ const ja: Partial<Translations> = {
   "vms.restoreSelected": "選択を復元（最新）",
   "vms.restoreSelectedConfirm": "選択した VM の最新バックアップを復元しますか？各 VM がシャットオフされ、ディスクファイルが置き換えられ、VM が復元されます。",
   "vms.notInstalledHint": "これらの VM はホストで定義されていませんが、バックアップが残っています。復元するか、バックアップパネルでスナップショットを参照してください。",
+  "vms.discoverHint": "Unraid から VM を削除した(または再インストールで失った)場合は、ストレージからバックアップエントリを再構築すると復元できます。",
 
   // Container / VM state badge labels
   "state.created":      "作成済み",

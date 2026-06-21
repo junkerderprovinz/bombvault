@@ -836,6 +836,59 @@ func TestPruneDomainCallsPrune(t *testing.T) {
 	}
 }
 
+// TestDiscoverVMsRebuildsTargetFromStorage pins VM disaster recovery: after a
+// DB loss (no VM target), DiscoverVMs reads the snapshot tags + the mirrored
+// encrypted definition and re-creates the target so the deleted VM is restorable.
+func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.VMsPath = "backups/vms"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Mark the vms repo initialised.
+	repo := filepath.Join(dir, "backups", "vms")
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Mirror an encrypted definition for a VM with no DB target.
+	defsDir := filepath.Join(dir, "backups", "bombvault-vm-defs")
+	if err := os.MkdirAll(defsDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(cfg.AppKey, []byte(`{"Method":"live","DomainXML":"<domain/>"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(defsDir, "Tailscale.def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"vm:Tailscale", "p2"}}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	n, err := svc.DiscoverVMs(context.Background())
+	if err != nil {
+		t.Fatalf("DiscoverVMs: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("expected 1 VM discovered, got %d", n)
+	}
+	tg, err := st.GetVMTargetByName("Tailscale")
+	if err != nil {
+		t.Fatalf("target not recreated: %v", err)
+	}
+	if tg.Method != "live" {
+		t.Fatalf("method = %q, want live", tg.Method)
+	}
+}
+
 func TestDeleteSnapshotForgetsByID(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)

@@ -187,6 +187,7 @@ const nl: Partial<Translations> = {
   "vms.restoreSelected": "Selectie herstellen (nieuwste)",
   "vms.restoreSelectedConfirm": "De NIEUWSTE back-up van de geselecteerde VM's herstellen? Elke VM wordt uitgeschakeld, de schijfbestanden vervangen en de VM hersteld.",
   "vms.notInstalledHint": "Deze VM's zijn niet meer gedefinieerd op de host, maar hebben nog back-ups. Herstel ze of gebruik het back-uppaneel om hun snapshots te bekijken.",
+  "vms.discoverHint": "VM verwijderd uit Unraid (of kwijt na een herinstallatie)? Bouw de back-upvermelding opnieuw op vanuit de opslag om hem te kunnen herstellen.",
 
   // Container / VM state badge labels
   "state.created":      "Aangemaakt",

@@ -190,6 +190,7 @@ const tr: Partial<Translations> = {
   "vms.restoreSelected": "Seçilenleri geri yükle (son)",
   "vms.restoreSelectedConfirm": "Seçili VM'lerin EN SON yedeği geri yüklensin mi? Her VM kapatılır, disk dosyaları değiştirilir ve VM geri yüklenir.",
   "vms.notInstalledHint": "Bu VM'ler artık hostta tanımlı değil ancak yedekleri mevcut. Geri yükleyin veya anlık görüntülerini Yedekler panelinden inceleyin.",
+  "vms.discoverHint": "VM Unraid'den silindi mi (ya da yeniden kurulumdan sonra kayboldu mu)? Geri yükleyebilmek için yedek kaydını depolamadan yeniden oluşturun.",
 
   // Container / VM state badge labels
   "state.created":      "Oluşturuldu",

@@ -190,6 +190,7 @@ const es: Partial<Translations> = {
   "vms.restoreSelected": "Restaurar selección (última)",
   "vms.restoreSelectedConfirm": "¿Restaurar la ÚLTIMA copia de las VMs seleccionadas? Cada VM se apaga, sus archivos de disco se reemplazan y la VM se restaura.",
   "vms.notInstalledHint": "Estas VMs ya no están definidas en el host pero aún tienen copias. Restáuralas para recuperarlas, o usa el panel de Copias para ver sus instantáneas.",
+  "vms.discoverHint": "¿Eliminaste la VM de Unraid (o se perdió tras reinstalar)? Reconstruye su entrada de copia desde el almacenamiento para poder restaurarla.",
 
   // Container / VM state badge labels
   "state.created":      "Creado",

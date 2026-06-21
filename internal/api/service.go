@@ -710,6 +710,115 @@ func (s *Service) Discover(ctx context.Context) (int, error) {
 	return discovered, nil
 }
 
+// vmDefsDir returns the directory (a sibling of the vms repo, on the same backup
+// storage) where encrypted VM definitions are mirrored for disaster recovery.
+func (s *Service) vmDefsDir(settings store.Settings) (string, error) {
+	repo, err := s.vmsRepoPath(settings)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(filepath.Dir(repo), "bombvault-vm-defs"), nil
+}
+
+// writeVMDefToStorage mirrors a VM's definition (encrypted) to the backup storage
+// so a freshly installed BombVault can rebuild it via DiscoverVMs after losing
+// its database. The definition holds the domain XML + NVRAM, so it is always
+// encrypted regardless of the restic encryption setting.
+func (s *Service) writeVMDefToStorage(settings store.Settings, name string, defJSON []byte) error {
+	fn, err := defFileName(name)
+	if err != nil {
+		return err
+	}
+	dir, err := s.vmDefsDir(settings)
+	if err != nil {
+		return err
+	}
+	if err := paths.EnsureDir(dir); err != nil {
+		return fmt.Errorf("ensure vm defs dir: %w", err)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
+	if err != nil {
+		return fmt.Errorf("encrypt vm definition: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, fn), enc, 0o600); err != nil { //nolint:gosec // G703: fn validated by defFileName; dir is operator-configured
+		return fmt.Errorf("write vm definition: %w", err)
+	}
+	return nil
+}
+
+// DiscoverVMs rebuilds the VM target list from backup storage — the VM
+// counterpart of Discover, used after a fresh install / database loss so a VM
+// that was deleted from the host (or whose target is gone) becomes restorable
+// again. It lists the vms repo's snapshots (tagged vm:<name>), reads + decrypts
+// each VM's mirrored definition, and upserts a target. VMs whose definition is
+// missing (backed up before mirroring existed) or undecryptable are skipped.
+// Returns the number of VMs discovered.
+func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
+	settings, repo, err := s.domainRepo("vms")
+	if err != nil {
+		return 0, err
+	}
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+		return 0, nil // no repo yet → nothing to discover
+	}
+	mode := s.ModeFor(settings)
+	snaps, err := s.listSnapshots(ctx, repo, mode)
+	if err != nil {
+		return 0, err
+	}
+
+	names := map[string]bool{}
+	for _, snap := range snaps {
+		for _, tag := range snap.Tags {
+			if rest, ok := strings.CutPrefix(tag, "vm:"); ok && rest != "" {
+				names[rest] = true
+			}
+		}
+	}
+
+	dir, err := s.vmDefsDir(settings)
+	if err != nil {
+		return 0, err
+	}
+	discovered := 0
+	for name := range names {
+		fn, fnErr := defFileName(name)
+		if fnErr != nil {
+			log.Printf("api: discover vms: skipping unsafe name %q: %v", name, fnErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		enc, rErr := os.ReadFile(filepath.Join(dir, fn)) //nolint:gosec // G304: fn validated by defFileName; dir is operator-configured
+		if rErr != nil {
+			log.Printf("api: discover vms: no stored definition for %q — skipping (cannot recreate): %v", name, rErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		plain, dErr := secret.Decrypt(s.cfg.AppKey, enc)
+		if dErr != nil {
+			log.Printf("api: discover vms: definition for %q is undecryptable (wrong APP_KEY?) — skipping: %v", name, dErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		var def vmDefinition
+		if jErr := json.Unmarshal(plain, &def); jErr != nil {
+			log.Printf("api: discover vms: definition for %q is corrupt — skipping: %v", name, jErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		method := def.Method
+		if method == "" {
+			method = "graceful"
+		}
+		if _, uErr := s.store.UpsertVMTarget(store.VMTarget{
+			Name:       name,
+			Method:     method,
+			Definition: string(plain),
+		}); uErr != nil {
+			log.Printf("api: discover vms: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		discovered++
+	}
+	return discovered, nil
+}
+
 // Restore runs a full container restore. The recreate profile is taken from the
 // persisted definition (stored at backup time) so restore works even after the
 // container has been deleted. For old targets without a stored definition the
@@ -1356,6 +1465,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
+	}
+	// Mirror the definition (encrypted) onto the backup storage so a freshly
+	// installed BombVault can rebuild this VM via DiscoverVMs after a database
+	// loss — and so a VM deleted from the host stays restorable. Best-effort.
+	if wErr := s.writeVMDefToStorage(settings, name, defBytes); wErr != nil {
+		log.Printf("api: backup vm: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	s.applyRetention(ctx, repo, settings, mode)
 	return sum, nil

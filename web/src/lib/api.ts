@@ -333,6 +333,11 @@ export function discover(): Promise<OkEnvelope & { discovered?: number }> {
   return fetchJSON("/api/discover", { method: "POST" });
 }
 
+/** Rebuild the VM target list from backup storage (restore a VM deleted from the host). */
+export function discoverVMs(): Promise<OkEnvelope & { discovered?: number }> {
+  return fetchJSON("/api/vms/discover", { method: "POST" });
+}
+
 /** Delete ALL backups of a container and forget it from the store. */
 export function deleteBackups(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups`, {

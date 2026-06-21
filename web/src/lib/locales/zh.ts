@@ -190,6 +190,7 @@ const zh: Partial<Translations> = {
   "vms.restoreSelected": "还原已选项（最新）",
   "vms.restoreSelectedConfirm": "还原所选虚拟机的最新备份？每台虚拟机将关闭，磁盘文件被替换，虚拟机随后被还原。",
   "vms.notInstalledHint": "这些虚拟机已不再在主机上定义，但仍有备份。请还原它们，或在备份面板中浏览其快照。",
+  "vms.discoverHint": "从 Unraid 中删除了虚拟机（或重装后丢失）？从存储中重建它的备份条目即可恢复。",
 
   // Container / VM state badge labels
   "state.created":      "已创建",
