@@ -207,6 +207,8 @@ const pt: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Ficheiros",
+  "snapshots.delete": "Excluir",
+  "snapshots.deleteConfirm": "Excluir este backup? O snapshot é removido do repositório (execute Podar nas Configurações para recuperar o espaço). Não pode ser desfeito.",
 
   // File-level restore
   "files.restore": "Restaurar",
@@ -239,6 +241,12 @@ const pt: Partial<Translations> = {
   "integrity.checking": "A verificar…",
   "integrity.ok": "✓ Saudável",
   "integrity.failed": "Verificação falhou",
+  "integrity.unlock": "Desbloquear",
+  "integrity.prune": "Podar",
+  "integrity.verifyHint": "Execute restic check para verificar estrutura e metadados.",
+  "integrity.unlockHint": "Remova bloqueios travados do repositório deixados por uma execução interrompida (corrige 'repository is already locked').",
+  "integrity.pruneHint": "Recupere espaço de backups excluídos/esquecidos (pode demorar).",
+  "integrity.pruneConfirm": "A poda recupera espaço dos backups excluídos e pode levar vários minutos. Continuar?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de backup",

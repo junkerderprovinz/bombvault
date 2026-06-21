@@ -207,6 +207,8 @@ const sv: Partial<Translations> = {
 
   // Backups extra
   "snapshots.files": "Filer",
+  "snapshots.delete": "Ta bort",
+  "snapshots.deleteConfirm": "Ta bort denna säkerhetskopia? Ögonblicksbilden tas bort från repositoriet (kör Rensa i Inställningar för att frigöra utrymmet). Kan inte ångras.",
 
   // File-level restore
   "files.restore": "Återställ",
@@ -239,6 +241,12 @@ const sv: Partial<Translations> = {
   "integrity.checking": "Kontrollerar…",
   "integrity.ok": "✓ Frisk",
   "integrity.failed": "Kontrollen misslyckades",
+  "integrity.unlock": "Lås upp",
+  "integrity.prune": "Rensa",
+  "integrity.verifyHint": "Kör restic check för att verifiera struktur och metadata.",
+  "integrity.unlockHint": "Ta bort fastnade repository-lås från en kraschad/avbruten körning (åtgärdar 'repository is already locked').",
+  "integrity.pruneHint": "Frigör diskutrymme från borttagna/glömda säkerhetskopior (kan ta en stund).",
+  "integrity.pruneConfirm": "Rensning frigör utrymme från borttagna säkerhetskopior och kan ta flera minuter. Fortsätta?",
 
   // Pre/post-backup hooks
   "hooks.title": "Säkerhetskopierings-hooks",

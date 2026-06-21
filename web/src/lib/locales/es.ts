@@ -207,6 +207,8 @@ const es: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Archivos",
+  "snapshots.delete": "Eliminar",
+  "snapshots.deleteConfirm": "¿Eliminar esta copia? La instantánea se quita del repositorio (ejecuta Podar en Ajustes para recuperar el espacio). No se puede deshacer.",
 
   // File-level restore
   "files.restore": "Restaurar",
@@ -239,6 +241,12 @@ const es: Partial<Translations> = {
   "integrity.checking": "Comprobando…",
   "integrity.ok": "✓ Saludable",
   "integrity.failed": "Comprobación fallida",
+  "integrity.unlock": "Desbloquear",
+  "integrity.prune": "Podar",
+  "integrity.verifyHint": "Ejecuta restic check para verificar la estructura y los metadatos.",
+  "integrity.unlockHint": "Elimina bloqueos obsoletos del repositorio dejados por una ejecución interrumpida (corrige 'repository is already locked').",
+  "integrity.pruneHint": "Recupera espacio de copias eliminadas/olvidadas (puede tardar).",
+  "integrity.pruneConfirm": "La poda recupera espacio de las copias eliminadas y puede tardar varios minutos. ¿Continuar?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de copia",

@@ -207,6 +207,8 @@ const ar: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "الملفات",
+  "snapshots.delete": "حذف",
+  "snapshots.deleteConfirm": "حذف هذه النسخة الاحتياطية؟ تتم إزالة اللقطة من المستودع (شغّل التقليم في الإعدادات لاستعادة المساحة). لا يمكن التراجع.",
 
   // File-level restore
   "files.restore": "استعادة",
@@ -239,6 +241,12 @@ const ar: Partial<Translations> = {
   "integrity.checking": "جارٍ الفحص…",
   "integrity.ok": "✓ سليم",
   "integrity.failed": "فشل الفحص",
+  "integrity.unlock": "إلغاء القفل",
+  "integrity.prune": "تقليم",
+  "integrity.verifyHint": "تشغيل restic check للتحقق من سلامة البنية والبيانات الوصفية.",
+  "integrity.unlockHint": "إزالة أقفال المستودع العالقة من تشغيل تعطل أو انقطع (يصلح 'repository is already locked').",
+  "integrity.pruneHint": "استعادة مساحة القرص من النسخ المحذوفة/المنسية (قد يستغرق وقتًا).",
+  "integrity.pruneConfirm": "يستعيد التقليم المساحة من النسخ المحذوفة وقد يستغرق عدة دقائق. هل تريد المتابعة؟",
 
   // Pre/post-backup hooks
   "hooks.title": "خطافات النسخ الاحتياطي",

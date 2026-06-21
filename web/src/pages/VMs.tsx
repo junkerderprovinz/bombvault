@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot } from "../lib/api";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
@@ -285,10 +285,12 @@ function VMBackupButton({
 function VMSnapshotRow({
   snap,
   vmName,
+  onDeleted,
   t,
 }: {
   snap: Snapshot;
   vmName: string;
+  onDeleted: () => void;
   t: T;
 }) {
   const [confirmed, setConfirmed] = useState(false);
@@ -298,6 +300,23 @@ function VMSnapshotRow({
     | { phase: "success" }
     | { phase: "error"; message: string };
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    setDeleting(true);
+    setDeleteErr(null);
+    try {
+      const res = await deleteSnapshot("vms", snap.id);
+      if (res.ok) onDeleted();
+      else setDeleteErr(res.error ?? "Delete failed");
+    } catch (err) {
+      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleRestore() {
     if (!confirmed) return;
@@ -359,6 +378,14 @@ function VMSnapshotRow({
             t("snapshots.restore")
           )}
         </button>
+        <button
+          onClick={() => void handleDelete()}
+          disabled={deleting || isPending}
+          title={t("snapshots.delete")}
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+        >
+          {deleting ? "…" : t("snapshots.delete")}
+        </button>
       </div>
       {restoreState.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] pl-24">
@@ -370,6 +397,7 @@ function VMSnapshotRow({
           {restoreState.message}
         </p>
       )}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
     </div>
   );
 }
@@ -379,6 +407,8 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -391,7 +421,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
       })
       .catch(() => setError("Failed to load backups"))
       .finally(() => setLoading(false));
-  }, [open, name]);
+  }, [open, name, reloadTick]);
 
   return (
     <div className="mt-1">
@@ -430,7 +460,13 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
           )}
           {!loading &&
             snapshots.map((snap) => (
-              <VMSnapshotRow key={snap.id} snap={snap} vmName={name} t={t} />
+              <VMSnapshotRow
+                key={snap.id}
+                snap={snap}
+                vmName={name}
+                onDeleted={() => setReloadTick((n) => n + 1)}
+                t={t}
+              />
             ))}
         </div>
       )}

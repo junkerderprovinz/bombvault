@@ -207,6 +207,8 @@ const tr: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Dosyalar",
+  "snapshots.delete": "Sil",
+  "snapshots.deleteConfirm": "Bu yedek silinsin mi? Anlık görüntü depodan kaldırılır (alanı geri kazanmak için Ayarlar'da Buda'yı çalıştırın). Geri alınamaz.",
 
   // File-level restore
   "files.restore": "Geri yükle",
@@ -239,6 +241,12 @@ const tr: Partial<Translations> = {
   "integrity.checking": "Denetleniyor…",
   "integrity.ok": "✓ Sağlıklı",
   "integrity.failed": "Denetim başarısız",
+  "integrity.unlock": "Kilidi aç",
+  "integrity.prune": "Buda",
+  "integrity.verifyHint": "Yapı ve meta verileri doğrulamak için restic check çalıştırın.",
+  "integrity.unlockHint": "Çöken/kesintiye uğrayan bir çalışmadan kalan takılı depo kilitlerini temizleyin ('repository is already locked' hatasını giderir).",
+  "integrity.pruneHint": "Silinen/unutulan yedeklerden disk alanını geri kazanın (biraz sürebilir).",
+  "integrity.pruneConfirm": "Budama, silinen yedeklerin alanını geri kazanır ve birkaç dakika sürebilir. Devam edilsin mi?",
 
   // Pre/post-backup hooks
   "hooks.title": "Yedekleme kancaları",

@@ -207,6 +207,8 @@ const fi: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Tiedostot",
+  "snapshots.delete": "Poista",
+  "snapshots.deleteConfirm": "Poistetaanko tämä varmuuskopio? Tilannevedos poistetaan repositoriosta (vapauta tila ajamalla Karsi Asetuksissa). Ei voi perua.",
 
   // File-level restore
   "files.restore": "Palauta",
@@ -239,6 +241,12 @@ const fi: Partial<Translations> = {
   "integrity.checking": "Tarkistetaan…",
   "integrity.ok": "✓ Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
+  "integrity.unlock": "Avaa lukitus",
+  "integrity.prune": "Karsi",
+  "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",
+  "integrity.unlockHint": "Poista keskeytyneen ajon jättämät jumittuneet repositorion lukot (korjaa 'repository is already locked').",
+  "integrity.pruneHint": "Vapauta levytilaa poistetuista/unohdetuista varmuuskopioista (voi kestää hetken).",
+  "integrity.pruneConfirm": "Karsinta vapauttaa tilaa poistetuista varmuuskopioista ja voi kestää useita minuutteja. Jatketaanko?",
 
   // Pre/post-backup hooks
   "hooks.title": "Varmuuskopiokoukut",

@@ -207,6 +207,8 @@ const el: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Αρχεία",
+  "snapshots.delete": "Διαγραφή",
+  "snapshots.deleteConfirm": "Διαγραφή αυτού του αντιγράφου; Το στιγμιότυπο αφαιρείται από το αποθετήριο (εκτελέστε Εκκαθάριση στις Ρυθμίσεις για ανάκτηση χώρου). Μη αναστρέψιμο.",
 
   // File-level restore
   "files.restore": "Επαναφορά",
@@ -239,6 +241,12 @@ const el: Partial<Translations> = {
   "integrity.checking": "Έλεγχος…",
   "integrity.ok": "✓ Υγιές",
   "integrity.failed": "Ο έλεγχος απέτυχε",
+  "integrity.unlock": "Ξεκλείδωμα",
+  "integrity.prune": "Εκκαθάριση",
+  "integrity.verifyHint": "Εκτέλεση restic check για επαλήθευση δομής και μεταδεδομένων.",
+  "integrity.unlockHint": "Καθαρισμός κολλημένων κλειδωμάτων αποθετηρίου από διακοπείσα εκτέλεση (διορθώνει 'repository is already locked').",
+  "integrity.pruneHint": "Ανάκτηση χώρου από διαγραμμένα/ξεχασμένα αντίγραφα (μπορεί να πάρει χρόνο).",
+  "integrity.pruneConfirm": "Η εκκαθάριση ανακτά χώρο από διαγραμμένα αντίγραφα και μπορεί να διαρκέσει λεπτά. Συνέχεια;",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks αντιγράφων",

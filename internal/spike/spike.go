@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -186,25 +187,44 @@ func probeRclone(_ Deps) (string, error) {
 	return first, nil
 }
 
-// probePathWritable verifies the chosen container backup path is writable by
-// writing and immediately removing a small probe file.
+// probePathWritable verifies the chosen container backup path is writable WITHOUT
+// creating it. On Unraid a new top-level dir under /mnt/user becomes a share the
+// user then can't easily delete, so the spike must never create the backup folder
+// at startup — it is created lazily on the first real backup instead. We probe the
+// nearest already-existing ancestor (e.g. the mount root) for writability.
 func probePathWritable(deps Deps) (string, error) {
 	p := deps.ContainerPath
 	if p == "" {
 		return "skipped (no path configured)", nil
 	}
-	if err := os.MkdirAll(p, 0o700); err != nil {
-		return "", fmt.Errorf("cannot create backup dir %q: %w", p, err)
+	// A remote (rclone/SFTP) repo has no local dir to probe.
+	if strings.Contains(p, ":") && !filepath.IsAbs(p) {
+		return fmt.Sprintf("remote repo (%s) — not probed", p), nil
 	}
-	//nolint:gosec // G304: caller must pass a path already validated by paths.Resolve under the mount root; this is not a user-supplied HTTP value
-	f, err := os.CreateTemp(p, ".spike-probe-*")
+	// Walk up to the first existing directory; never create anything.
+	dir := filepath.Clean(p)
+	for {
+		if _, err := os.Stat(dir); err == nil {
+			break
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("no existing parent directory to probe for %q", p)
+		}
+		dir = parent
+	}
+	//nolint:gosec // G304: dir is an existing ancestor of a path validated by paths.Resolve under the mount root; not a user-supplied HTTP value
+	f, err := os.CreateTemp(dir, ".spike-probe-*")
 	if err != nil {
 		return "", fmt.Errorf("path not writable: %w", err)
 	}
 	name := f.Name()
 	_ = f.Close()
 	_ = os.Remove(name) //nolint:gosec // G104 best-effort cleanup of a temp file we just created
-	return fmt.Sprintf("writable (%s)", p), nil
+	if dir == filepath.Clean(p) {
+		return fmt.Sprintf("writable (%s)", p), nil
+	}
+	return fmt.Sprintf("writable (%s will be created on first backup)", p), nil
 }
 
 // probeLibvirt checks that libvirt is reachable over SSH (qemu+ssh). VM backup

@@ -207,6 +207,8 @@ const fr: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Fichiers",
+  "snapshots.delete": "Supprimer",
+  "snapshots.deleteConfirm": "Supprimer cette sauvegarde ? L'instantané est retiré du dépôt (lancez Élaguer dans les Réglages pour récupérer l'espace). Irréversible.",
 
   // File-level restore
   "files.restore": "Restaurer",
@@ -239,6 +241,12 @@ const fr: Partial<Translations> = {
   "integrity.checking": "Vérification…",
   "integrity.ok": "✓ Sain",
   "integrity.failed": "Vérification échouée",
+  "integrity.unlock": "Déverrouiller",
+  "integrity.prune": "Élaguer",
+  "integrity.verifyHint": "Lancer restic check pour vérifier la structure et les métadonnées.",
+  "integrity.unlockHint": "Supprimer les verrous bloqués du dépôt laissés par une exécution interrompue (corrige 'repository is already locked').",
+  "integrity.pruneHint": "Récupérer l'espace des sauvegardes supprimées/oubliées (peut prendre un moment).",
+  "integrity.pruneConfirm": "L'élagage récupère l'espace des sauvegardes supprimées et peut prendre plusieurs minutes. Continuer ?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de sauvegarde",

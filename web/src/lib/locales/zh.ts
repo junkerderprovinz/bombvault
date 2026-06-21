@@ -206,6 +206,8 @@ const zh: Partial<Translations> = {
   "state.notInstalled": "未安装",
 
   "snapshots.files": "文件",
+  "snapshots.delete": "删除",
+  "snapshots.deleteConfirm": "删除此备份？快照将从仓库中移除（在设置中运行“清理”以回收空间）。此操作无法撤销。",
 
   "files.restore": "恢复",
   "files.restored": "已恢复",
@@ -234,6 +236,12 @@ const zh: Partial<Translations> = {
   "integrity.checking": "检查中…",
   "integrity.ok": "✓ 健康",
   "integrity.failed": "检查失败",
+  "integrity.unlock": "解锁",
+  "integrity.prune": "清理",
+  "integrity.verifyHint": "运行 restic check 以验证结构和元数据的完整性。",
+  "integrity.unlockHint": "清除崩溃或中断的运行遗留的卡住的仓库锁（修复 'repository is already locked'）。",
+  "integrity.pruneHint": "从已删除/遗忘的备份中回收磁盘空间（可能需要一些时间）。",
+  "integrity.pruneConfirm": "清理会回收已删除备份的空间，可能需要几分钟。是否继续？",
 
   "hooks.title": "备份钩子",
   "hooks.hint": "命令在容器内运行（sh -c）。Pre 在备份前运行（例如将数据库导出到 appdata 以便一起备份）——失败会中止备份。Post 在容器恢复运行后执行；其失败仅记录日志。",

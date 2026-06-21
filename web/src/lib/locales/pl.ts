@@ -204,6 +204,8 @@ const pl: Partial<Translations> = {
 
   // Files
   "snapshots.files": "Pliki",
+  "snapshots.delete": "Usuń",
+  "snapshots.deleteConfirm": "Usunąć tę kopię? Migawka zostanie usunięta z repozytorium (aby odzyskać miejsce, uruchom Przytnij w Ustawieniach). Nie można cofnąć.",
   "files.restore": "Przywróć",
   "files.restored": "Przywrócono",
   "files.restoreConfirm": "Przywrócić ten plik do oryginalnej lokalizacji? Spowoduje to nadpisanie bieżącego pliku.",
@@ -234,6 +236,12 @@ const pl: Partial<Translations> = {
   "integrity.checking": "Sprawdzanie…",
   "integrity.ok": "✓ Sprawne",
   "integrity.failed": "Weryfikacja nieudana",
+  "integrity.unlock": "Odblokuj",
+  "integrity.prune": "Przytnij",
+  "integrity.verifyHint": "Uruchom restic check, aby zweryfikować strukturę i metadane.",
+  "integrity.unlockHint": "Usuń zablokowane blokady repozytorium pozostałe po przerwanym uruchomieniu (naprawia 'repository is already locked').",
+  "integrity.pruneHint": "Odzyskaj miejsce po usuniętych/zapomnianych kopiach (może chwilę potrwać).",
+  "integrity.pruneConfirm": "Przycinanie odzyskuje miejsce po usuniętych kopiach i może potrwać kilka minut. Kontynuować?",
 
   // Backup hooks
   "hooks.title": "Hooki kopii zapasowych",

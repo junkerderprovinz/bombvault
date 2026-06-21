@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile } from "../lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, deleteSnapshot } from "../lib/api";
 import type { Snapshot, FileEntry } from "../lib/api";
 import type { useT } from "../lib/i18n";
 
@@ -8,6 +8,40 @@ type T = ReturnType<typeof useT>["t"];
 // Cap the rendered file list — an appdata snapshot can hold thousands of nodes;
 // rendering them all would jank the UI. Users narrow with the filter box.
 const FILE_DISPLAY_CAP = 500;
+
+// ---------------------------------------------------------------------------
+// File tree (collapsible folder browser for file-level restore)
+// ---------------------------------------------------------------------------
+
+interface TreeNode {
+  name: string;
+  path: string; // full absolute path (matches FileEntry.path)
+  type: "dir" | "file";
+  children: Map<string, TreeNode>;
+}
+
+// buildTree turns restic's flat file list into a nested folder tree keyed by
+// path segment, so the browser can be expanded/collapsed like a file manager.
+function buildTree(files: FileEntry[]): TreeNode {
+  const root: TreeNode = { name: "", path: "", type: "dir", children: new Map() };
+  for (const f of files) {
+    const segs = f.path.split("/").filter(Boolean);
+    let node = root;
+    let acc = "";
+    segs.forEach((seg, i) => {
+      acc += "/" + seg;
+      let child = node.children.get(seg);
+      if (!child) {
+        const isLast = i === segs.length - 1;
+        const type: "dir" | "file" = isLast && f.type === "file" ? "file" : "dir";
+        child = { name: seg, path: acc, type, children: new Map() };
+        node.children.set(seg, child);
+      }
+      node = child;
+    });
+  }
+  return root;
+}
 
 // FileRow restores a single file/dir back to its original location (in-place).
 function FileRow({
@@ -60,8 +94,92 @@ function FileRow({
   );
 }
 
-// SnapshotFileBrowser lists the files in a snapshot with a filter, for
-// file-level restore.
+// sortNodes orders tree children: directories first, then alphabetically.
+function sortNodes(a: TreeNode, b: TreeNode): number {
+  if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+  return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+}
+
+// TreeRow renders one node of the collapsible file tree. Directories expand /
+// collapse; any node (file or folder) can be restored to its original location.
+function TreeRow({
+  containerName,
+  snapshotId,
+  node,
+  depth,
+  t,
+}: {
+  containerName: string;
+  snapshotId: string;
+  node: TreeNode;
+  depth: number;
+  t: T;
+}) {
+  const [expanded, setExpanded] = useState(depth === 0); // top level open by default
+  const [state, setState] = useState<RestoreState>({ phase: "idle" });
+  const isDir = node.type === "dir";
+  const kids = isDir ? Array.from(node.children.values()).sort(sortNodes) : [];
+
+  async function handleRestore() {
+    if (!window.confirm(t("files.restoreConfirm"))) return;
+    setState({ phase: "pending" });
+    try {
+      const res = await restoreContainerFile(containerName, snapshotId, node.path, true);
+      if (res.ok) setState({ phase: "success" });
+      else setState({ phase: "error", message: res.error ?? "Restore failed" });
+    } catch (err) {
+      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
+    }
+  }
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-1 py-0.5 text-xs rounded hover:bg-carbon-hover"
+        style={{ paddingLeft: depth * 14 }}
+      >
+        {isDir ? (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="w-4 shrink-0 text-carbon-textMuted hover:text-carbon-text"
+            aria-label={expanded ? "collapse" : "expand"}
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`transition-transform ${expanded ? "rotate-90" : ""}`}>
+              <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        ) : (
+          <span className="w-4 shrink-0" />
+        )}
+        <span className="shrink-0">{isDir ? "📁" : "📄"}</span>
+        <span className="font-mono text-carbon-textSub flex-1 truncate" title={node.path}>
+          {node.name}
+        </span>
+        {state.phase === "success" ? (
+          <span className="text-[#6fdc8c] shrink-0">✓ {t("files.restored")}</span>
+        ) : state.phase === "error" ? (
+          <span className="text-[#ff8389] shrink-0 max-w-[12rem] truncate" title={state.message}>
+            {state.message}
+          </span>
+        ) : (
+          <button
+            onClick={() => void handleRestore()}
+            disabled={state.phase === "pending"}
+            className="shrink-0 rounded bg-carbon-surface3 px-2 py-0.5 text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+          >
+            {state.phase === "pending" ? "…" : t("files.restore")}
+          </button>
+        )}
+      </div>
+      {isDir && expanded && kids.map((c) => (
+        <TreeRow key={c.path} containerName={containerName} snapshotId={snapshotId} node={c} depth={depth + 1} t={t} />
+      ))}
+    </div>
+  );
+}
+
+// SnapshotFileBrowser lists the files in a snapshot for file-level restore: a
+// collapsible folder tree when unfiltered, or a flat matched list while filtering.
 function SnapshotFileBrowser({
   containerName,
   snapshotId,
@@ -90,6 +208,8 @@ function SnapshotFileBrowser({
   const q = filter.trim().toLowerCase();
   const matched = q ? files.filter((f) => f.path.toLowerCase().includes(q)) : files;
   const shown = matched.slice(0, FILE_DISPLAY_CAP);
+  const tree = useMemo(() => buildTree(files), [files]);
+  const topLevel = Array.from(tree.children.values()).sort(sortNodes);
 
   return (
     <div className="mt-1 ml-24 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
@@ -103,18 +223,26 @@ function SnapshotFileBrowser({
       />
       {loading && <p className="text-xs text-carbon-textMuted">…</p>}
       {error && <p className="text-xs text-[#ff8389]">{error}</p>}
-      {!loading && !error && matched.length === 0 && (
+      {!loading && !error && (q ? matched.length === 0 : topLevel.length === 0) && (
         <p className="text-xs text-carbon-textMuted">{t("files.none")}</p>
       )}
-      {!loading && shown.length > 0 && (
+      {/* Filtering → flat matched list (easier to scan); otherwise → folder tree. */}
+      {!loading && q && shown.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {shown.map((f) => (
             <FileRow key={f.path} containerName={containerName} snapshotId={snapshotId} file={f} t={t} />
           ))}
         </div>
       )}
-      {matched.length > shown.length && (
+      {!loading && q && matched.length > shown.length && (
         <p className="text-xs text-carbon-textMuted">{t("files.more")}</p>
+      )}
+      {!loading && !q && topLevel.length > 0 && (
+        <div className="max-h-64 overflow-y-auto">
+          {topLevel.map((n) => (
+            <TreeRow key={n.path} containerName={containerName} snapshotId={snapshotId} node={n} depth={0} t={t} />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -134,15 +262,34 @@ type RestoreState =
 function SnapshotRow({
   snap,
   containerName,
+  onDeleted,
   t,
 }: {
   snap: Snapshot;
   containerName: string;
+  onDeleted: () => void;
   t: T;
 }) {
   const [confirmed, setConfirmed] = useState(false);
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
   const [showFiles, setShowFiles] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    setDeleting(true);
+    setDeleteErr(null);
+    try {
+      const res = await deleteSnapshot("containers", snap.id);
+      if (res.ok) onDeleted();
+      else setDeleteErr(res.error ?? "Delete failed");
+    } catch (err) {
+      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleRestore() {
     if (!confirmed) return;
@@ -221,7 +368,18 @@ function SnapshotRow({
             t("snapshots.restore")
           )}
         </button>
+
+        {/* Delete this backup (restic forget) */}
+        <button
+          onClick={() => void handleDelete()}
+          disabled={deleting || isPending}
+          title={t("snapshots.delete")}
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+        >
+          {deleting ? "…" : t("snapshots.delete")}
+        </button>
       </div>
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
 
       {/* File-level restore browser */}
       {showFiles && (
@@ -253,6 +411,8 @@ export function RestorePanel({ name, t }: RestorePanelProps) {
     setOpen((prev) => !prev);
   }
 
+  const [reloadTick, setReloadTick] = useState(0);
+
   useEffect(() => {
     if (!open) return;
     setLoading(true);
@@ -264,7 +424,7 @@ export function RestorePanel({ name, t }: RestorePanelProps) {
       })
       .catch(() => setError("Failed to load backups"))
       .finally(() => setLoading(false));
-  }, [open, name]);
+  }, [open, name, reloadTick]);
 
   return (
     <div className="mt-1">
@@ -306,6 +466,7 @@ export function RestorePanel({ name, t }: RestorePanelProps) {
               key={snap.id}
               snap={snap}
               containerName={name}
+              onDeleted={() => setReloadTick((n) => n + 1)}
               t={t}
             />
           ))}

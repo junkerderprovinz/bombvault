@@ -119,6 +119,8 @@ const en = {
   "snapshots.restore": "Restore",
   "snapshots.none": "No backups found",
   "snapshots.files": "Files",
+  "snapshots.delete": "Delete",
+  "snapshots.deleteConfirm": "Delete this backup? The snapshot is removed from the repository (run Prune in Settings to reclaim the space). This cannot be undone.",
 
   // File-level restore
   "files.restore": "Restore",
@@ -205,12 +207,18 @@ const en = {
   "notify.tested": "Test sent",
 
   // Integrity (restic check)
-  "integrity.title": "Integrity",
-  "integrity.hint": "Run restic check to verify a repository's structure and metadata are intact.",
+  "integrity.title": "Integrity & maintenance",
+  "integrity.hint": "Verify a repository's structure (restic check), clear stale locks left by an interrupted run, or prune to reclaim space from deleted backups.",
   "integrity.verify": "Verify",
   "integrity.checking": "Checking…",
   "integrity.ok": "✓ Healthy",
   "integrity.failed": "Check failed",
+  "integrity.unlock": "Unlock",
+  "integrity.prune": "Prune",
+  "integrity.verifyHint": "Run restic check to verify structure and metadata are intact.",
+  "integrity.unlockHint": "Clear stale repository locks left by a crashed or interrupted run (fixes 'repository is already locked').",
+  "integrity.pruneHint": "Reclaim disk space from deleted/forgotten backups (can take a while).",
+  "integrity.pruneConfirm": "Prune reclaims space from deleted backups and can take several minutes. Continue?",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
@@ -437,6 +445,8 @@ const de: Translations = {
   "snapshots.restore": "Wiederherstellen",
   "snapshots.none": "Keine Backups gefunden",
   "snapshots.files": "Dateien",
+  "snapshots.delete": "Löschen",
+  "snapshots.deleteConfirm": "Dieses Backup löschen? Der Snapshot wird aus dem Repository entfernt (zum Freigeben des Speichers in den Einstellungen „Aufräumen“ ausführen). Kann nicht rückgängig gemacht werden.",
 
   // File-level restore
   "files.restore": "Wiederherstellen",
@@ -520,12 +530,18 @@ const de: Translations = {
   "notify.tested": "Test gesendet",
 
   // Integrity (restic check)
-  "integrity.title": "Integrität",
-  "integrity.hint": "restic check ausführen, um Struktur und Metadaten eines Repos zu verifizieren.",
+  "integrity.title": "Integrität & Wartung",
+  "integrity.hint": "Struktur eines Repos verifizieren (restic check), verwaiste Locks eines abgebrochenen Laufs entfernen oder per Prune Speicher gelöschter Backups freigeben.",
   "integrity.verify": "Prüfen",
   "integrity.checking": "Prüfe…",
   "integrity.ok": "✓ Intakt",
   "integrity.failed": "Prüfung fehlgeschlagen",
+  "integrity.unlock": "Entsperren",
+  "integrity.prune": "Aufräumen",
+  "integrity.verifyHint": "restic check ausführen, um Struktur und Metadaten zu verifizieren.",
+  "integrity.unlockHint": "Verwaiste Repo-Locks eines abgestürzten/abgebrochenen Laufs entfernen (behebt „repository is already locked“).",
+  "integrity.pruneHint": "Speicherplatz gelöschter/vergessener Backups freigeben (kann dauern).",
+  "integrity.pruneConfirm": "Aufräumen gibt Speicher gelöschter Backups frei und kann einige Minuten dauern. Fortfahren?",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",

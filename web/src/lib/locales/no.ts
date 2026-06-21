@@ -207,6 +207,8 @@ const no: Partial<Translations> = {
 
   // Backups extra
   "snapshots.files": "Filer",
+  "snapshots.delete": "Slett",
+  "snapshots.deleteConfirm": "Slette denne sikkerhetskopien? Øyeblikksbildet fjernes fra repositoriet (kjør Beskjær i Innstillinger for å frigjøre plassen). Kan ikke angres.",
 
   // File-level restore
   "files.restore": "Gjenopprett",
@@ -239,6 +241,12 @@ const no: Partial<Translations> = {
   "integrity.checking": "Sjekker…",
   "integrity.ok": "✓ Sunt",
   "integrity.failed": "Sjekk mislyktes",
+  "integrity.unlock": "Lås opp",
+  "integrity.prune": "Beskjær",
+  "integrity.verifyHint": "Kjør restic check for å verifisere struktur og metadata.",
+  "integrity.unlockHint": "Fjern fastlåste repository-låser etter en krasjet/avbrutt kjøring (retter 'repository is already locked').",
+  "integrity.pruneHint": "Frigjør diskplass fra slettede/glemte sikkerhetskopier (kan ta litt tid).",
+  "integrity.pruneConfirm": "Beskjæring frigjør plass fra slettede sikkerhetskopier og kan ta flere minutter. Fortsette?",
 
   // Pre/post-backup hooks
   "hooks.title": "Sikkerhetskopi-hooks",

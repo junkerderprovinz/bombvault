@@ -206,6 +206,8 @@ const vi: Partial<Translations> = {
   "state.notInstalled": "Chưa cài đặt",
 
   "snapshots.files": "Tập tin",
+  "snapshots.delete": "Xóa",
+  "snapshots.deleteConfirm": "Xóa bản sao lưu này? Ảnh chụp nhanh bị xóa khỏi kho (chạy Dọn bớt trong Cài đặt để thu hồi dung lượng). Không thể hoàn tác.",
 
   "files.restore": "Khôi phục",
   "files.restored": "Đã khôi phục",
@@ -234,6 +236,12 @@ const vi: Partial<Translations> = {
   "integrity.checking": "Đang kiểm tra…",
   "integrity.ok": "✓ Khỏe mạnh",
   "integrity.failed": "Kiểm tra thất bại",
+  "integrity.unlock": "Mở khóa",
+  "integrity.prune": "Dọn bớt",
+  "integrity.verifyHint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu.",
+  "integrity.unlockHint": "Xóa các khóa kho bị kẹt do lần chạy bị treo/gián đoạn (sửa 'repository is already locked').",
+  "integrity.pruneHint": "Thu hồi dung lượng đĩa từ các bản sao lưu đã xóa/bị quên (có thể mất một lúc).",
+  "integrity.pruneConfirm": "Dọn bớt thu hồi dung lượng từ các bản sao lưu đã xóa và có thể mất vài phút. Tiếp tục?",
 
   "hooks.title": "Hook sao lưu",
   "hooks.hint": "Lệnh chạy bên trong container (sh -c). Pre chạy trước khi sao lưu (ví dụ: dump một CSDL vào appdata để được bao gồm) — lỗi sẽ hủy việc sao lưu. Post chạy sau khi container hoạt động trở lại; lỗi của nó chỉ được ghi log.",
