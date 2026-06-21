@@ -34,6 +34,9 @@ type Settings struct {
 	// NotifyConf is the notification config (webhook / Matrix / Healthchecks) as
 	// an AES-256-GCM-encrypted JSON blob (base64). Empty means notifications off.
 	NotifyConf string
+	// CloudConf is the cloud-backend credentials (S3 keys, restic-REST auth) for
+	// off-site repos, an AES-256-GCM-encrypted JSON blob (base64). Empty = none.
+	CloudConf string
 }
 
 // GetSettings returns the current app settings.
@@ -44,7 +47,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       containers_schedule, vms_schedule, flash_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		       rclone_conf, notify_conf
+		       rclone_conf, notify_conf, cloud_conf
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -55,7 +58,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
-		&s.RcloneConf, &s.NotifyConf,
+		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -91,7 +94,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  retention_keep_weekly  = ?,
 		  retention_keep_monthly = ?,
 		  rclone_conf            = ?,
-		  notify_conf            = ?
+		  notify_conf            = ?,
+		  cloud_conf             = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -101,7 +105,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
-		s.RcloneConf, s.NotifyConf,
+		s.RcloneConf, s.NotifyConf, s.CloudConf,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

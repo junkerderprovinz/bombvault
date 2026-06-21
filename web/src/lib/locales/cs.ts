@@ -234,6 +234,9 @@ const cs: Partial<Translations> = {
   "rclone.hint": "Vložte konfiguraci rclone pro zálohování do cloudu (Backblaze B2, S3, Google Drive, …). Ukládá se zašifrovaně. SMB/NFS rclone nepotřebují: připojte sdílenou složku v Unraidu a nastavte na ni Zálohovací cestu.",
   "rclone.configured": "Nakonfigurované vzdálené úložiště",
   "rclone.pathHint": "Poté nastavte Zálohovací cestu na „rclone:<remote>:<bucket>/path“, aby se tato doména posílala off-site.",
+  "cloud.title": "Přihlašovací údaje cloudu (S3 / restic REST)",
+  "cloud.hint": "Údaje pro vzdálená restic úložiště, bez rclone. Po uložení nastav cestu zálohy na vzdálené repo, např. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path nebo sftp:user@host:/repo. Tajné údaje se ukládají šifrovaně a už se nezobrazí.",
+  "cloud.secretSet": "uloženo — ponech prázdné pro zachování",
   "rclone.save": "Uložit konfiguraci",
 
   // Integrity (restic check)

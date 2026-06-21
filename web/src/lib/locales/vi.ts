@@ -232,6 +232,9 @@ const vi: Partial<Translations> = {
   "rclone.hint": "Dán cấu hình rclone để sao lưu lên đám mây (Backblaze B2, S3, Google Drive, …). Nó được lưu trữ mã hóa. SMB/NFS không cần rclone: gắn kết share trên Unraid và đặt Đường dẫn sao lưu trỏ tới đó.",
   "rclone.configured": "Các remote đã cấu hình",
   "rclone.pathHint": "Sau đó đặt Đường dẫn sao lưu thành \"rclone:<remote>:<bucket>/path\" để gửi domain đó ra ngoại vi.",
+  "cloud.title": "Thông tin đăng nhập đám mây (S3 / restic REST)",
+  "cloud.hint": "Thông tin đăng nhập cho các backend restic từ xa, không cần rclone. Sau khi lưu, đặt đường dẫn sao lưu tới một repo từ xa, ví dụ s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path hoặc sftp:user@host:/repo. Bí mật được lưu mã hóa và không hiển thị lại.",
+  "cloud.secretSet": "đã lưu — để trống để giữ nguyên",
   "rclone.save": "Lưu cấu hình",
 
   "integrity.title": "Toàn vẹn",

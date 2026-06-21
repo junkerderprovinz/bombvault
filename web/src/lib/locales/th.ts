@@ -236,6 +236,9 @@ const th: Partial<Translations> = {
   "rclone.hint": "วาง rclone config เพื่อสำรองข้อมูลไปยังคลาวด์ (Backblaze B2, S3, Google Drive, …) จัดเก็บแบบเข้ารหัส SMB/NFS ไม่ต้องใช้ rclone: เมานต์แชร์บน Unraid แล้วตั้งพาธการสำรองข้อมูลไปยังแชร์นั้น",
   "rclone.configured": "รีโมตที่กำหนดค่าแล้ว",
   "rclone.pathHint": "จากนั้นตั้งพาธการสำรองข้อมูลเป็น «rclone:<remote>:<bucket>/path» เพื่อส่งโดเมนนี้ไปนอกสถานที่",
+  "cloud.title": "ข้อมูลรับรองคลาวด์ (S3 / restic REST)",
+  "cloud.hint": "ข้อมูลรับรองสำหรับแบ็กเอนด์ restic ระยะไกล โดยไม่ใช้ rclone หลังบันทึก ให้ตั้งค่าเส้นทางสำรองข้อมูลไปยังที่เก็บระยะไกล เช่น s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path หรือ sftp:user@host:/repo ความลับจะถูกเก็บแบบเข้ารหัสและจะไม่แสดงอีก",
+  "cloud.secretSet": "บันทึกแล้ว — เว้นว่างเพื่อคงไว้",
   "rclone.save": "บันทึกการตั้งค่า",
 
   // Integrity (restic check)

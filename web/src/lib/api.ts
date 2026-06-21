@@ -308,6 +308,30 @@ export function setNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
   return fetchJSON("/api/notify", { method: "POST", body: JSON.stringify(cfg) });
 }
 
+/** GET /api/cloud — cloud-backend credential summary (no secrets returned). */
+export interface CloudInfo extends OkEnvelope {
+  s3KeyId?: string;
+  s3Region?: string;
+  restUser?: string;
+  s3SecretSet?: boolean;
+  restPasswordSet?: boolean;
+}
+export function getCloud(): Promise<CloudInfo> {
+  return fetchJSON("/api/cloud");
+}
+
+/** POST /api/cloud — store cloud-backend credentials (encrypted). Blank secret = keep. */
+export interface CloudCreds {
+  s3KeyId: string;
+  s3Secret: string;
+  s3Region: string;
+  restUser: string;
+  restPassword: string;
+}
+export function setCloud(c: CloudCreds): Promise<OkEnvelope> {
+  return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });
+}
+
 /** POST /api/notify/test — send a test notification using the given config. */
 export function testNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
   return fetchJSON("/api/notify/test", { method: "POST", body: JSON.stringify(cfg) });

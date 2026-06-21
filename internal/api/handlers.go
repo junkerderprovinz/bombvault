@@ -712,6 +712,38 @@ func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleGetCloud returns the cloud-backend credentials WITHOUT the secrets: the
+// non-secret fields plus "is-set" flags so the UI can show what's configured and
+// edit it without exposing the stored keys. GET /api/cloud
+func (h *Handler) handleGetCloud(w http.ResponseWriter, _ *http.Request) {
+	c, err := h.svc.CloudConfig()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"s3KeyId":         c.S3KeyID,
+		"s3Region":        c.S3Region,
+		"restUser":        c.RESTUser,
+		"s3SecretSet":     c.S3Secret != "",
+		"restPasswordSet": c.RESTPassword != "",
+	}))
+}
+
+// handleSetCloud stores the cloud-backend credentials (encrypted). A blank secret
+// field keeps the previously stored one. POST /api/cloud
+func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
+	var c CloudCreds
+	if !decodeBody(w, r, &c) {
+		return
+	}
+	if err := h.svc.SetCloudCreds(c); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleTestNotify sends a test notification using the POSTed config (so the
 // user can test the form before saving). POST /api/notify/test
 func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {

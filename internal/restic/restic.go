@@ -38,6 +38,9 @@ type Mode struct {
 	// Password is the restic repository password.  Only used when Encrypted is
 	// true.  Must never appear in argv.
 	Password string
+	// Env is extra environment passed to the restic process ("KEY=VALUE"), used
+	// for backend credentials (S3 AWS_*, REST RESTIC_REST_*). Never in argv.
+	Env []string
 }
 
 // Summary holds the fields we extract from restic's --json backup summary line.
@@ -301,6 +304,9 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
 		}
 	}
+	// Backend credentials for remote repos (S3 AWS_*, REST RESTIC_REST_*), passed
+	// via env so they never appear in argv/logs.
+	env = append(env, m.Env...)
 	// When a progress sink is present (backup/restore), stream stdout so each
 	// --json "status" line's percentage reaches the UI live; otherwise capture
 	// the full output in one shot (the default for snapshots/ls/check/forget).

@@ -236,6 +236,9 @@ const fr: Partial<Translations> = {
   "rclone.hint": "Collez une configuration rclone pour sauvegarder dans le cloud (Backblaze B2, S3, Google Drive, …). Elle est stockée chiffrée. SMB/NFS n'ont pas besoin de rclone : montez le partage sur Unraid et pointez-y un chemin de sauvegarde.",
   "rclone.configured": "Remotes configurés",
   "rclone.pathHint": "Puis définissez un chemin de sauvegarde sur « rclone:<remote>:<bucket>/path » pour envoyer ce domaine hors site.",
+  "cloud.title": "Identifiants cloud (S3 / restic REST)",
+  "cloud.hint": "Identifiants pour les backends restic distants, sans rclone. Après l'enregistrement, définissez un chemin de sauvegarde vers un dépôt distant, p. ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path ou sftp:user@host:/repo. Les secrets sont stockés chiffrés et ne sont plus affichés.",
+  "cloud.secretSet": "enregistré — laisser vide pour conserver",
   "rclone.save": "Enregistrer la config",
 
   // Integrity (restic check)

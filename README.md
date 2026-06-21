@@ -91,7 +91,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 ### Storage & scheduling
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
-- Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it) and **rclone** (Backblaze B2, S3, Google Drive, …) via Settings → Off-site, then set a Backup Path to `rclone:<remote>:<bucket>/path`. The rclone config is stored encrypted.
+- Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
 - Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup.
 - Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
 

@@ -236,6 +236,9 @@ const fi: Partial<Translations> = {
   "rclone.hint": "Liitä rclone-määritys varmuuskopioidaksesi pilveen (Backblaze B2, S3, Google Drive, …). Se tallennetaan salattuna. SMB/NFS eivät tarvitse rclonea: liitä jako Unraidiin ja osoita varmuuskopiopolku siihen.",
   "rclone.configured": "Määritetyt etäsijainnit",
   "rclone.pathHint": "Aseta sitten varmuuskopiopolku muotoon „rclone:<remote>:<bucket>/path” lähettääksesi kyseisen toimialueen etäsijaintiin.",
+  "cloud.title": "Pilvitunnukset (S3 / restic REST)",
+  "cloud.hint": "Tunnukset etä-restic-taustajärjestelmille, ilman rclonea. Aseta tallennuksen jälkeen varmuuskopiopolku etärepoon, esim. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path tai sftp:user@host:/repo. Salaisuudet tallennetaan salattuina eikä niitä näytetä uudelleen.",
+  "cloud.secretSet": "tallennettu — jätä tyhjäksi säilyttääksesi",
   "rclone.save": "Tallenna määritys",
 
   // Integrity (restic check)

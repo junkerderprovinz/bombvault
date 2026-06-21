@@ -236,6 +236,9 @@ const ro: Partial<Translations> = {
   "rclone.hint": "Lipiți o configurație rclone pentru a face copii de rezervă în cloud (Backblaze B2, S3, Google Drive, …). Este stocată criptat. SMB/NFS nu necesită rclone: montați partajarea pe Unraid și setați o cale de copiere de rezervă către aceasta.",
   "rclone.configured": "Destinații configurate",
   "rclone.pathHint": "Apoi setați o cale de copiere de rezervă către „rclone:<remote>:<bucket>/path” pentru a trimite acel domeniu în afara sitului.",
+  "cloud.title": "Credențiale cloud (S3 / restic REST)",
+  "cloud.hint": "Credențiale pentru backenduri restic la distanță, fără rclone. După salvare, setează o cale de backup către un repo la distanță, ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path sau sftp:user@host:/repo. Secretele se stochează criptat și nu se mai afișează.",
+  "cloud.secretSet": "salvat — lasă gol pentru a păstra",
   "rclone.save": "Salvează configurația",
 
   // Integrity (restic check)

@@ -232,6 +232,9 @@ const ko: Partial<Translations> = {
   "rclone.hint": "rclone 설정을 붙여넣어 클라우드(Backblaze B2, S3, Google Drive 등)로 백업합니다. 암호화하여 저장됩니다. SMB/NFS는 rclone이 필요 없습니다. Unraid에 공유를 마운트하고 백업 경로를 그곳으로 설정하세요.",
   "rclone.configured": "구성된 원격",
   "rclone.pathHint": "그런 다음 백업 경로를 \"rclone:<remote>:<bucket>/path\"로 설정하면 해당 도메인이 오프사이트로 전송됩니다.",
+  "cloud.title": "클라우드 자격 증명 (S3 / restic REST)",
+  "cloud.hint": "rclone 없이 원격 restic 백엔드용 자격 증명. 저장 후 백업 경로를 원격 저장소로 설정하세요. 예: s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path 또는 sftp:user@host:/repo. 비밀 값은 암호화되어 저장되며 다시 표시되지 않습니다.",
+  "cloud.secretSet": "저장됨 — 유지하려면 비워 두세요",
   "rclone.save": "설정 저장",
 
   "integrity.title": "무결성",

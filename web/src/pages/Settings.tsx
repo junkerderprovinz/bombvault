@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, checkDomain, unlockDomain, pruneDomain, getNotify, setNotify, testNotify } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, getNotify, setNotify, testNotify } from "../lib/api";
 import type { Settings, NotifyConfig } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -711,6 +711,96 @@ function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 }
 
+// CloudCard stores credentials for off-site restic backends (S3 + restic REST),
+// kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
+// stored value. Field labels are restic's actual env var names (self-documenting).
+function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "" });
+  const [secretSet, setSecretSet] = useState(false);
+  const [pwSet, setPwSet] = useState(false);
+  const [state, setState] = useState<SaveState>("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  function refresh() {
+    getCloud()
+      .then((r) => {
+        if (r.ok) {
+          setC((p) => ({ ...p, s3KeyId: r.s3KeyId ?? "", s3Region: r.s3Region ?? "", restUser: r.restUser ?? "" }));
+          setSecretSet(!!r.s3SecretSet);
+          setPwSet(!!r.restPasswordSet);
+        }
+      })
+      .catch(() => undefined);
+  }
+  useEffect(refresh, []);
+
+  function set<K extends keyof typeof c>(k: K, v: string) {
+    setC((p) => ({ ...p, [k]: v }));
+  }
+
+  async function handleSave() {
+    setState("saving");
+    setMsg(null);
+    try {
+      const r = await setCloud(c);
+      if (r.ok) {
+        setState("saved");
+        setC((p) => ({ ...p, s3Secret: "", restPassword: "" }));
+        refresh();
+        setTimeout(() => setState("idle"), 3000);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  const inputCls =
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+  const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
+
+  return (
+    <Card title={t("cloud.title")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
+
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+        <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
+        <label className={fieldCls}>AWS_ACCESS_KEY_ID
+          <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
+        <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
+          <input type="password" value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
+            placeholder={secretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+        <label className={fieldCls}>AWS_DEFAULT_REGION
+          <input value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+        <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
+        <label className={fieldCls}>RESTIC_REST_USERNAME
+          <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
+        <label className={fieldCls}>RESTIC_REST_PASSWORD
+          <input type="password" value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
+            placeholder={pwSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+      </div>
+
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          onClick={() => void handleSave()}
+          disabled={state === "saving"}
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {state === "saving" ? t("auth.saving") : t("settings.save")}
+        </button>
+        {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
+        {state === "error" && msg && <span className="text-sm text-[#ff8389]">{msg}</span>}
+      </div>
+    </Card>
+  );
+}
+
 // emptyNotify is the default notification config shown before the saved one loads.
 const emptyNotify: NotifyConfig = {
   on: "never",
@@ -1408,6 +1498,8 @@ export function SettingsPage() {
       {/* Off-site (rclone)                                                    */}
       {/* ------------------------------------------------------------------ */}
       <RcloneCard t={t} />
+
+      <CloudCard t={t} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Notifications                                                       */}

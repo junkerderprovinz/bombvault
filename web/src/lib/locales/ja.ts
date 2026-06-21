@@ -232,6 +232,9 @@ const ja: Partial<Translations> = {
   "rclone.hint": "rclone 設定を貼り付けてクラウド（Backblaze B2、S3、Google Drive など）へバックアップします。暗号化して保存されます。SMB/NFS には rclone は不要です。共有を Unraid にマウントし、バックアップパスをそこに設定してください。",
   "rclone.configured": "設定済みリモート",
   "rclone.pathHint": "次にバックアップパスを「rclone:<remote>:<bucket>/path」に設定すると、そのドメインがオフサイトに送られます。",
+  "cloud.title": "クラウド認証情報 (S3 / restic REST)",
+  "cloud.hint": "rclone なしのリモート restic バックエンド用の認証情報。保存後、バックアップパスをリモートリポジトリに設定します（例: s3:s3.amazonaws.com/bucket/path、rest:http://host:8000/repo、b2:bucket:path、sftp:user@host:/repo）。シークレットは暗号化して保存され、再表示されません。",
+  "cloud.secretSet": "保存済み — 維持する場合は空欄",
   "rclone.save": "設定を保存",
 
   "integrity.title": "整合性",

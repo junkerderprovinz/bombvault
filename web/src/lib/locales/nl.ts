@@ -233,6 +233,9 @@ const nl: Partial<Translations> = {
   "rclone.hint": "Plak een rclone-configuratie om naar de cloud te back-uppen (Backblaze B2, S3, Google Drive, …). Deze wordt versleuteld opgeslagen. SMB/NFS hebben geen rclone nodig: mount de share op Unraid en stel er een back-uppad op in.",
   "rclone.configured": "Geconfigureerde remotes",
   "rclone.pathHint": "Stel daarna een back-uppad in op „rclone:<remote>:<bucket>/path” om dat domein off-site te sturen.",
+  "cloud.title": "Cloud-inloggegevens (S3 / restic REST)",
+  "cloud.hint": "Inloggegevens voor externe restic-backends, zonder rclone. Stel na opslaan een back-uppad in naar een externe repo, bijv. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path of sftp:user@host:/repo. Geheimen worden versleuteld opgeslagen en niet meer getoond.",
+  "cloud.secretSet": "opgeslagen — laat leeg om te behouden",
   "rclone.save": "Configuratie opslaan",
 
   // Integrity (restic check)

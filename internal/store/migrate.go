@@ -155,6 +155,14 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "target_stop_containers",
 		sql:     "ALTER TABLE targets ADD COLUMN stop_containers TEXT NOT NULL DEFAULT '[]';",
 	},
+	{
+		// Cloud-backend credentials (S3 keys, restic-REST user/password) for
+		// off-site repos, stored as an AES-256-GCM-encrypted JSON blob (base64),
+		// like rclone_conf/notify_conf. Empty = none.
+		version: 12,
+		name:    "settings_cloud_conf",
+		sql:     "ALTER TABLE settings ADD COLUMN cloud_conf TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

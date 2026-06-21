@@ -236,6 +236,9 @@ const he: Partial<Translations> = {
   "rclone.hint": "הדבק תצורת rclone כדי לגבות לענן (Backblaze B2, S3, Google Drive, …). נשמרת מוצפנת. SMB/NFS אינם צריכים rclone: עגן את השיתוף ב-Unraid והצבע אליו בנתיב גיבוי.",
   "rclone.configured": "יעדים מרוחקים מוגדרים",
   "rclone.pathHint": "ואז הגדר נתיב גיבוי אל „rclone:<remote>:<bucket>/path‟ כדי לשלוח דומיין זה מחוץ לאתר.",
+  "cloud.title": "פרטי התחברות לענן (S3 / restic REST)",
+  "cloud.hint": "פרטי התחברות ל-backends מרוחקים של restic, ללא rclone. לאחר השמירה, הגדר נתיב גיבוי למאגר מרוחק, למשל s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path או sftp:user@host:/repo. הסודות נשמרים מוצפנים ואינם מוצגים שוב.",
+  "cloud.secretSet": "נשמר — השאר ריק כדי לשמור",
   "rclone.save": "שמור תצורה",
 
   // Integrity (restic check)

@@ -232,6 +232,9 @@ const zh: Partial<Translations> = {
   "rclone.hint": "粘贴 rclone 配置即可备份到云端（Backblaze B2、S3、Google Drive 等）。配置会加密存储。SMB/NFS 无需 rclone：在 Unraid 上挂载共享并将备份路径指向它即可。",
   "rclone.configured": "已配置的远程",
   "rclone.pathHint": "然后将备份路径设为「rclone:<remote>:<bucket>/path」，即可将该域异地发送。",
+  "cloud.title": "云凭据（S3 / restic REST）",
+  "cloud.hint": "用于远程 restic 后端的凭据，无需 rclone。保存后，将备份路径设置为远程仓库，例如 s3:s3.amazonaws.com/bucket/path、rest:http://host:8000/repo、b2:bucket:path 或 sftp:user@host:/repo。密钥以加密方式存储，不会再次显示。",
+  "cloud.secretSet": "已保存 — 留空以保留",
   "rclone.save": "保存配置",
 
   "integrity.title": "完整性",
