@@ -210,6 +210,9 @@ const fi: Partial<Translations> = {
   "snapshots.files": "Tiedostot",
   "snapshots.delete": "Poista",
   "snapshots.deleteConfirm": "Poistetaanko tämä varmuuskopio? Tilannevedos poistetaan repositoriosta (vapauta tila ajamalla Karsi Asetuksissa). Ei voi perua.",
+  "snapshots.recreate": "Luo uudelleen tallennetusta asetuksesta",
+  "snapshots.recreateConfirm": "Luodaanko tämä säiliö uudelleen tallennetusta asetuksesta? Se luodaan ja käynnistetään tallennetusta määrityksestä.",
+  "snapshots.configOnlyHint": "Vain-asetukset-varmuuskopio: säiliön määritys on tallennettu, mutta sillä ei ole datakansioita kuvattavaksi. Jos poistat säiliön, se näkyy kohdassa \"Ei asennettu\", jossa voit luoda sen uudelleen tästä asetuksesta.",
 
   // File-level restore
   "files.restore": "Palauta",

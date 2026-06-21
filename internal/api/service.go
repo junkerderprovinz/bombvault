@@ -1290,6 +1290,41 @@ func (s *Service) recoverLeftoverOverlay(ctx context.Context, name, xmlStr strin
 	return fresh, freshDomain, nil
 }
 
+// removeStrayOverlays deletes leftover BombVault live-snapshot overlay files
+// ("*.bombvault-tmp") next to the VM's base disks. blockcommit --active --pivot
+// merges an overlay back into its base and switches the VM onto the base, but
+// does NOT delete the now-orphaned overlay file — so without this, EVERY
+// successful live backup leaves one behind and the NEXT snapshot fails with
+// "external snapshot file ... already exists". The caller MUST ensure the VM is
+// on its base disks first (post-recovery / post-commit) so these files are never
+// in use. Best-effort: failures are logged, never fatal.
+func (s *Service) removeStrayOverlays(diskPaths []string) {
+	suffix := "." + backup.LiveSnapshotName
+	seen := map[string]bool{}
+	for _, dp := range diskPaths {
+		dir := filepath.Dir(dp)
+		if dir == "" || dir == "." || seen[dir] {
+			continue
+		}
+		seen[dir] = true
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), suffix) {
+				continue
+			}
+			p := filepath.Join(dir, e.Name())
+			if rmErr := os.Remove(p); rmErr != nil { //nolint:gosec // G304: dir derived from a translated VM disk path; name has our fixed suffix
+				log.Printf("api: BackupVM: could not remove stray overlay %q: %v", e.Name(), rmErr) //nolint:gosec // G706: %q-quoted
+			} else {
+				log.Printf("api: BackupVM: removed stray live-snapshot overlay %q", e.Name()) //nolint:gosec // G706: %q-quoted
+			}
+		}
+	}
+}
+
 // failVMBackup makes a pre-orchestrator VM backup failure visible: it records a
 // failed run against the VM's existing target (so it shows in the dashboard run
 // history) and fires a notification. Used for failures that happen BEFORE the
@@ -1373,6 +1408,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		}
 		diskPaths = append(diskPaths, cp)
 	}
+
+	// The VM is now guaranteed on its base disks (recoverLeftoverOverlay committed
+	// any overlay). Delete stray "*.bombvault-tmp" overlay files left behind by a
+	// previous live backup, otherwise the next snapshot-create fails "already
+	// exists". This recovers a VM already stuck in that state.
+	s.removeStrayOverlays(diskPaths)
 
 	// NVRAM (UEFI var store) lives under /etc/libvirt on the host. Read it over
 	// SSH and keep it IN the definition (no mount, no restic staging). On restore
@@ -1465,6 +1506,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
+	}
+	// A successful live backup commits its overlay back into the base and pivots
+	// the VM onto it, but leaves the orphaned overlay file behind — delete it so
+	// the next snapshot doesn't fail "already exists". No-op after graceful.
+	if live {
+		s.removeStrayOverlays(diskPaths)
 	}
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild this VM via DiscoverVMs after a database

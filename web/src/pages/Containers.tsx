@@ -683,7 +683,7 @@ function ContainerRow({
       )}
 
       {/* Backups / Restore disclosure (works even when not installed) */}
-      <RestorePanel name={container.name} t={t} />
+      <RestorePanel name={container.name} t={t} installed={installed} />
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (

@@ -210,6 +210,9 @@ const da: Partial<Translations> = {
   "snapshots.files": "Filer",
   "snapshots.delete": "Slet",
   "snapshots.deleteConfirm": "Slet denne sikkerhedskopi? Snapshottet fjernes fra repositoriet (kør Beskær i Indstillinger for at frigøre pladsen). Kan ikke fortrydes.",
+  "snapshots.recreate": "Genskab fra gemt konfiguration",
+  "snapshots.recreateConfirm": "Genskab denne container fra dens gemte konfiguration? Den oprettes og startes ud fra den gemte definition.",
+  "snapshots.configOnlyHint": "Kun-konfiguration-sikkerhedskopi: containerens definition er gemt, men den har ingen datamapper at tage snapshot af. Sletter du containeren, vises den under \"Ikke installeret\", hvor du kan genskabe den fra denne konfiguration.",
 
   // File-level restore
   "files.restore": "Gendan",

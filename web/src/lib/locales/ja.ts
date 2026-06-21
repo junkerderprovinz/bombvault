@@ -209,6 +209,9 @@ const ja: Partial<Translations> = {
   "snapshots.files": "ファイル",
   "snapshots.delete": "削除",
   "snapshots.deleteConfirm": "このバックアップを削除しますか？スナップショットはリポジトリから削除されます（領域回収は設定の「整理」を実行）。元に戻せません。",
+  "snapshots.recreate": "保存した設定から再作成",
+  "snapshots.recreateConfirm": "このコンテナを保存した設定から再作成しますか？保存された定義から作成して起動します。",
+  "snapshots.configOnlyHint": "設定のみのバックアップ: コンテナの定義は保存されていますが、スナップショットを取るデータフォルダはありません。削除すると「未インストール」に表示され、この設定から再作成できます。",
 
   "files.restore": "復元",
   "files.restored": "復元しました",

@@ -210,6 +210,9 @@ const ro: Partial<Translations> = {
   "snapshots.files": "Fișiere",
   "snapshots.delete": "Șterge",
   "snapshots.deleteConfirm": "Ștergeți acest backup? Instantaneul este eliminat din depozit (rulați Curăță în Setări pentru a recupera spațiul). Nu poate fi anulat.",
+  "snapshots.recreate": "Recreează din configurația salvată",
+  "snapshots.recreateConfirm": "Recreezi acest container din configurația salvată? Este creat și pornit din definiția stocată.",
+  "snapshots.configOnlyHint": "Backup doar configurație: definiția containerului este salvată, dar nu are foldere de date pentru snapshot. Dacă îl ștergi, apare la „Neinstalat“, de unde îl poți recrea din această configurație.",
 
   // File-level restore
   "files.restore": "Restaurare",

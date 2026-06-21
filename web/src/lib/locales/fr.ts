@@ -210,6 +210,9 @@ const fr: Partial<Translations> = {
   "snapshots.files": "Fichiers",
   "snapshots.delete": "Supprimer",
   "snapshots.deleteConfirm": "Supprimer cette sauvegarde ? L'instantané est retiré du dépôt (lancez Élaguer dans les Réglages pour récupérer l'espace). Irréversible.",
+  "snapshots.recreate": "Recréer depuis la config enregistrée",
+  "snapshots.recreateConfirm": "Recréer ce conteneur à partir de sa configuration enregistrée ? Il est créé et démarré depuis la définition stockée.",
+  "snapshots.configOnlyHint": "Sauvegarde config seule : la définition du conteneur est enregistrée, mais il n'a pas de dossiers de données à sauvegarder. Si vous le supprimez, il apparaît dans « Non installé », où vous pouvez le recréer depuis cette config.",
 
   // File-level restore
   "files.restore": "Restaurer",

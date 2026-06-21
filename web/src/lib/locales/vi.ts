@@ -209,6 +209,9 @@ const vi: Partial<Translations> = {
   "snapshots.files": "Tập tin",
   "snapshots.delete": "Xóa",
   "snapshots.deleteConfirm": "Xóa bản sao lưu này? Ảnh chụp nhanh bị xóa khỏi kho (chạy Dọn bớt trong Cài đặt để thu hồi dung lượng). Không thể hoàn tác.",
+  "snapshots.recreate": "Tạo lại từ cấu hình đã lưu",
+  "snapshots.recreateConfirm": "Tạo lại container này từ cấu hình đã lưu? Nó được tạo và khởi động từ định nghĩa đã lưu.",
+  "snapshots.configOnlyHint": "Bản sao lưu chỉ cấu hình: định nghĩa của container được lưu, nhưng không có thư mục dữ liệu để chụp nhanh. Nếu bạn xóa container, nó xuất hiện trong \"Chưa cài đặt\", nơi bạn có thể tạo lại từ cấu hình này.",
 
   "files.restore": "Khôi phục",
   "files.restored": "Đã khôi phục",

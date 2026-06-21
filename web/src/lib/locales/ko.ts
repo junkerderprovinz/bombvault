@@ -209,6 +209,9 @@ const ko: Partial<Translations> = {
   "snapshots.files": "파일",
   "snapshots.delete": "삭제",
   "snapshots.deleteConfirm": "이 백업을 삭제할까요? 스냅샷이 저장소에서 제거됩니다(공간 회수는 설정에서 정리 실행). 되돌릴 수 없습니다.",
+  "snapshots.recreate": "저장된 설정에서 재생성",
+  "snapshots.recreateConfirm": "이 컨테이너를 저장된 설정에서 재생성할까요? 저장된 정의에서 생성되어 시작됩니다.",
+  "snapshots.configOnlyHint": "구성 전용 백업: 컨테이너 정의는 저장되어 있지만 스냅샷할 데이터 폴더가 없습니다. 컨테이너를 삭제하면 \"설치되지 않음\"에 표시되며 이 구성에서 재생성할 수 있습니다.",
 
   "files.restore": "복원",
   "files.restored": "복원됨",

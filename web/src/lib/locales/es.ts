@@ -210,6 +210,9 @@ const es: Partial<Translations> = {
   "snapshots.files": "Archivos",
   "snapshots.delete": "Eliminar",
   "snapshots.deleteConfirm": "¿Eliminar esta copia? La instantánea se quita del repositorio (ejecuta Podar en Ajustes para recuperar el espacio). No se puede deshacer.",
+  "snapshots.recreate": "Recrear desde la config guardada",
+  "snapshots.recreateConfirm": "¿Recrear este contenedor desde su configuración guardada? Se crea y se inicia a partir de la definición almacenada.",
+  "snapshots.configOnlyHint": "Copia solo de configuración: la definición del contenedor está guardada, pero no tiene carpetas de datos que respaldar. Si lo eliminas, aparece en \"No instalado\", donde puedes recrearlo desde esta configuración.",
 
   // File-level restore
   "files.restore": "Restaurar",

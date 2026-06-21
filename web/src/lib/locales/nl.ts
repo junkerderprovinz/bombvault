@@ -207,6 +207,9 @@ const nl: Partial<Translations> = {
   "snapshots.files": "Bestanden",
   "snapshots.delete": "Verwijderen",
   "snapshots.deleteConfirm": "Deze back-up verwijderen? De snapshot wordt uit de repository verwijderd (voer Opschonen uit in Instellingen om de ruimte vrij te maken). Kan niet ongedaan worden gemaakt.",
+  "snapshots.recreate": "Opnieuw maken uit opgeslagen config",
+  "snapshots.recreateConfirm": "Deze container opnieuw maken vanuit de opgeslagen configuratie? Hij wordt aangemaakt en gestart vanuit de opgeslagen definitie.",
+  "snapshots.configOnlyHint": "Alleen-config back-up: de definitie van de container is opgeslagen, maar hij heeft geen datamappen om te snapshotten. Als je hem verwijdert verschijnt hij onder \"Niet geïnstalleerd\", waar je hem opnieuw kunt maken vanuit deze config.",
 
   // File-level restore
   "files.restore": "Herstellen",
