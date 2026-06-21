@@ -205,10 +205,24 @@ func (s *Service) progEnd(key, phase string, ok bool) {
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
 // derives the password from APP_KEY; OFF uses a password-less repo.
 func (s *Service) ModeFor(settings store.Settings) restic.Mode {
+	m := restic.Mode{Env: s.cloudEnvFor(settings)}
 	if settings.EncryptionEnabled {
-		return restic.Mode{Encrypted: true, Password: restickey.Derive(s.cfg.AppKey)}
+		m.Encrypted = true
+		m.Password = restickey.Derive(s.cfg.AppKey)
 	}
-	return restic.Mode{Encrypted: false}
+	return m
+}
+
+// cloudEnvFor returns the backend-credential env vars for off-site repos, decoded
+// from the stored (encrypted) cloud config. Best-effort: a decode failure logs
+// and yields no env (the restic op then fails clearly on auth, not on a panic).
+func (s *Service) cloudEnvFor(settings store.Settings) []string {
+	c, err := s.decodeCloud(settings)
+	if err != nil {
+		log.Printf("api: cloud creds decode failed (ignoring): %v", err)
+		return nil
+	}
+	return cloudEnv(c)
 }
 
 // resolveRepo turns a configured repo location into the value passed to restic
@@ -2167,6 +2181,105 @@ func (s *Service) SetNotifyConfig(c notify.Config) error {
 		}
 		settings.NotifyConf = base64.StdEncoding.EncodeToString(enc)
 	}
+	return s.store.UpdateSettings(settings)
+}
+
+// ---------------------------------------------------------------------------
+// Cloud-backend credentials (S3 / restic-REST) for off-site repos
+// ---------------------------------------------------------------------------
+
+// CloudCreds holds the backend credentials restic reads from the environment for
+// off-site repos. Stored AES-256-GCM-encrypted in settings.cloud_conf. The two
+// secret fields (S3Secret, RESTPassword) are write-only over the API.
+type CloudCreds struct {
+	S3KeyID      string `json:"s3KeyId"`
+	S3Secret     string `json:"s3Secret"`
+	S3Region     string `json:"s3Region"`
+	RESTUser     string `json:"restUser"`
+	RESTPassword string `json:"restPassword"`
+}
+
+// cloudEnv renders the credentials into the env vars restic expects (only the set
+// ones), so they reach the restic process via Mode.Env and never via argv/logs.
+func cloudEnv(c CloudCreds) []string {
+	var env []string
+	add := func(k, v string) {
+		if v != "" {
+			env = append(env, k+"="+v)
+		}
+	}
+	add("AWS_ACCESS_KEY_ID", c.S3KeyID)
+	add("AWS_SECRET_ACCESS_KEY", c.S3Secret)
+	add("AWS_DEFAULT_REGION", c.S3Region)
+	add("RESTIC_REST_USERNAME", c.RESTUser)
+	add("RESTIC_REST_PASSWORD", c.RESTPassword)
+	return env
+}
+
+// decodeCloud decrypts the stored cloud credentials from the given settings (an
+// empty/blank cloud_conf yields a zero CloudCreds, no error).
+func (s *Service) decodeCloud(settings store.Settings) (CloudCreds, error) {
+	var c CloudCreds
+	if strings.TrimSpace(settings.CloudConf) == "" {
+		return c, nil
+	}
+	enc, err := base64.StdEncoding.DecodeString(settings.CloudConf)
+	if err != nil {
+		return c, err
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return c, err
+	}
+	if err := json.Unmarshal(plain, &c); err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
+// CloudConfig returns the stored credentials. (Callers that serve it to the UI
+// must blank the secret fields — see handleGetCloud.)
+func (s *Service) CloudConfig() (CloudCreds, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return CloudCreds{}, err
+	}
+	return s.decodeCloud(settings)
+}
+
+// SetCloudCreds stores the credentials encrypted. A blank secret field KEEPS the
+// previously stored secret (so the UI can edit non-secret fields without
+// re-entering keys). A config with nothing set clears it.
+func (s *Service) SetCloudCreds(c CloudCreds) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	// A fully-blank request means "clear" — check BEFORE the keep-prior merge,
+	// otherwise the merge would re-fill the secrets and clearing would be
+	// impossible once a secret had been stored.
+	if (CloudCreds{}) == c {
+		settings.CloudConf = ""
+		return s.store.UpdateSettings(settings)
+	}
+	// Otherwise keep a previously stored secret when its field is left blank, so
+	// the non-secret fields can be edited without re-entering keys.
+	prev, _ := s.decodeCloud(settings)
+	if c.S3Secret == "" {
+		c.S3Secret = prev.S3Secret
+	}
+	if c.RESTPassword == "" {
+		c.RESTPassword = prev.RESTPassword
+	}
+	blob, mErr := json.Marshal(c)
+	if mErr != nil {
+		return fmt.Errorf("marshal cloud conf: %w", mErr)
+	}
+	enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
+	if eErr != nil {
+		return fmt.Errorf("encrypt cloud conf: %w", eErr)
+	}
+	settings.CloudConf = base64.StdEncoding.EncodeToString(enc)
 	return s.store.UpdateSettings(settings)
 }
 

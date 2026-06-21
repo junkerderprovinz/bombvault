@@ -236,6 +236,9 @@ const no: Partial<Translations> = {
   "rclone.hint": "Lim inn en rclone-konfigurasjon for å sikkerhetskopiere til skyen (Backblaze B2, S3, Google Drive, …). Den lagres kryptert. SMB/NFS trenger ikke rclone: monter delingen på Unraid og sett en sikkerhetskopisti til den.",
   "rclone.configured": "Konfigurerte remoter",
   "rclone.pathHint": "Sett deretter en sikkerhetskopisti til «rclone:<remote>:<bucket>/path» for å sende det domenet off-site.",
+  "cloud.title": "Sky-legitimasjon (S3 / restic REST)",
+  "cloud.hint": "Legitimasjon for eksterne restic-backender, uten rclone. Etter lagring setter du en backup-sti til et eksternt repo, f.eks. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path eller sftp:user@host:/repo. Hemmeligheter lagres kryptert og vises ikke igjen.",
+  "cloud.secretSet": "lagret — la stå tomt for å beholde",
   "rclone.save": "Lagre konfigurasjon",
 
   // Integrity (restic check)

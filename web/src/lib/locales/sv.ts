@@ -236,6 +236,9 @@ const sv: Partial<Translations> = {
   "rclone.hint": "Klistra in en rclone-konfiguration för att säkerhetskopiera till molnet (Backblaze B2, S3, Google Drive, …). Den lagras krypterad. SMB/NFS behöver ingen rclone: montera resursen på Unraid och peka en säkerhetskopiesökväg mot den.",
   "rclone.configured": "Konfigurerade fjärrlager",
   "rclone.pathHint": "Ange sedan en säkerhetskopiesökväg till ”rclone:<remote>:<bucket>/path” för att skicka den domänen off-site.",
+  "cloud.title": "Molnuppgifter (S3 / restic REST)",
+  "cloud.hint": "Uppgifter för fjärrbaserade restic-backender, utan rclone. Ange efter sparande en backup-sökväg till ett fjärrrepo, t.ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path eller sftp:user@host:/repo. Hemligheter lagras krypterade och visas inte igen.",
+  "cloud.secretSet": "sparat — lämna tomt för att behålla",
   "rclone.save": "Spara konfiguration",
 
   // Integrity (restic check)

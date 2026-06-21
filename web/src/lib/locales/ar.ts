@@ -236,6 +236,9 @@ const ar: Partial<Translations> = {
   "rclone.hint": "ألصق إعداد rclone للنسخ الاحتياطي إلى السحابة (Backblaze B2 وS3 وGoogle Drive …). يُخزَّن مشفَّراً. لا يحتاج SMB/NFS إلى rclone: ركِّب المشاركة على Unraid واضبط مسار نسخ احتياطي عليها.",
   "rclone.configured": "الوجهات البعيدة المُعدَّة",
   "rclone.pathHint": "ثم اضبط مسار نسخ احتياطي على «rclone:<remote>:<bucket>/path» لإرسال هذا النطاق خارج الموقع.",
+  "cloud.title": "بيانات اعتماد السحابة (S3 / restic REST)",
+  "cloud.hint": "بيانات اعتماد لخلفيات restic عن بُعد، بدون rclone. بعد الحفظ، عيّن مسار النسخ الاحتياطي إلى مستودع بعيد، مثل s3:s3.amazonaws.com/bucket/path أو rest:http://host:8000/repo أو b2:bucket:path أو sftp:user@host:/repo. تُخزَّن الأسرار مشفّرة ولا تُعرض مرة أخرى.",
+  "cloud.secretSet": "محفوظ — اتركه فارغًا للإبقاء عليه",
   "rclone.save": "حفظ الإعداد",
 
   // Integrity (restic check)

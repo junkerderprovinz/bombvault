@@ -231,6 +231,9 @@ const ru: Partial<Translations> = {
   "rclone.hint": "Вставьте конфигурацию rclone для резервного копирования в облако (Backblaze B2, S3, Google Drive, …). Хранится в зашифрованном виде. SMB/NFS не требуют rclone: смонтируйте общий ресурс в Unraid и укажите на него Путь резервных копий.",
   "rclone.configured": "Настроенные удалённые хранилища",
   "rclone.pathHint": "Затем установите Путь резервных копий на «rclone:<remote>:<bucket>/path», чтобы отправлять этот домен off-site.",
+  "cloud.title": "Учётные данные облака (S3 / restic REST)",
+  "cloud.hint": "Учётные данные для удалённых бэкендов restic, без rclone. После сохранения задайте путь резервной копии на удалённый репозиторий, напр. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path или sftp:user@host:/repo. Секреты хранятся в зашифрованном виде и больше не показываются.",
+  "cloud.secretSet": "сохранено — оставьте пустым, чтобы сохранить",
   "rclone.save": "Сохранить конфигурацию",
 
   // Integrity (restic check)

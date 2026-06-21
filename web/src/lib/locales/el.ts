@@ -236,6 +236,9 @@ const el: Partial<Translations> = {
   "rclone.hint": "Επικολλήστε μια διαμόρφωση rclone για αντίγραφα στο cloud (Backblaze B2, S3, Google Drive, …). Αποθηκεύεται κρυπτογραφημένη. SMB/NFS δεν χρειάζονται rclone: προσαρτήστε τον κοινόχρηστο πόρο στο Unraid και ορίστε μια διαδρομή αντιγράφων προς αυτόν.",
   "rclone.configured": "Διαμορφωμένα remotes",
   "rclone.pathHint": "Έπειτα ορίστε μια διαδρομή αντιγράφων σε «rclone:<remote>:<bucket>/path» για να στείλετε αυτόν τον τομέα εκτός τοποθεσίας.",
+  "cloud.title": "Διαπιστευτήρια cloud (S3 / restic REST)",
+  "cloud.hint": "Διαπιστευτήρια για απομακρυσμένα backend του restic, χωρίς rclone. Μετά την αποθήκευση, ορίστε μια διαδρομή αντιγράφου σε απομακρυσμένο repo, π.χ. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path ή sftp:user@host:/repo. Τα μυστικά αποθηκεύονται κρυπτογραφημένα και δεν εμφανίζονται ξανά.",
+  "cloud.secretSet": "αποθηκεύτηκε — αφήστε κενό για διατήρηση",
   "rclone.save": "Αποθήκευση διαμόρφωσης",
 
   // Integrity (restic check)

@@ -231,6 +231,9 @@ const pl: Partial<Translations> = {
   "rclone.hint": "Wklej konfigurację rclone, aby tworzyć kopie w chmurze (Backblaze B2, S3, Google Drive, …). Jest przechowywana zaszyfrowana. SMB/NFS nie wymagają rclone: zamontuj udział w Unraid i wskaż na niego Ścieżkę kopii zapasowych.",
   "rclone.configured": "Skonfigurowane zdalne",
   "rclone.pathHint": "Następnie ustaw Ścieżkę kopii zapasowych na „rclone:<remote>:<bucket>/path”, aby wysyłać tę domenę off-site.",
+  "cloud.title": "Poświadczenia chmury (S3 / restic REST)",
+  "cloud.hint": "Poświadczenia dla zdalnych backendów restic, bez rclone. Po zapisaniu ustaw ścieżkę kopii na zdalne repo, np. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path lub sftp:user@host:/repo. Sekrety są zapisywane zaszyfrowane i nie są ponownie pokazywane.",
+  "cloud.secretSet": "zapisano — zostaw puste, aby zachować",
   "rclone.save": "Zapisz konfigurację",
 
   // Integrity (restic check)

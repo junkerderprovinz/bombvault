@@ -236,6 +236,9 @@ const tr: Partial<Translations> = {
   "rclone.hint": "Buluta yedeklemek için bir rclone yapılandırması yapıştırın (Backblaze B2, S3, Google Drive, …). Şifreli olarak saklanır. SMB/NFS rclone gerektirmez: paylaşımı Unraid'e bağlayın ve buna bir Yedekleme Yolu ayarlayın.",
   "rclone.configured": "Yapılandırılmış uzak konumlar",
   "rclone.pathHint": "Ardından o etki alanını dış konuma göndermek için bir Yedekleme Yolunu “rclone:<remote>:<bucket>/path” olarak ayarlayın.",
+  "cloud.title": "Bulut kimlik bilgileri (S3 / restic REST)",
+  "cloud.hint": "rclone olmadan uzak restic arka uçları için kimlik bilgileri. Kaydettikten sonra bir yedek yolunu uzak bir depoya ayarlayın, ör. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path veya sftp:user@host:/repo. Gizli bilgiler şifreli saklanır ve bir daha gösterilmez.",
+  "cloud.secretSet": "kaydedildi — korumak için boş bırakın",
   "rclone.save": "Yapılandırmayı kaydet",
 
   // Integrity (restic check)

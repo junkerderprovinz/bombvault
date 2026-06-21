@@ -236,6 +236,9 @@ const hu: Partial<Translations> = {
   "rclone.hint": "Illesszen be egy rclone-konfigurációt a felhőbe mentéshez (Backblaze B2, S3, Google Drive, …). Titkosítva tárolódik. Az SMB/NFS nem igényel rclone-t: csatolja a megosztást az Unraidben, és állítson rá egy mentési útvonalat.",
   "rclone.configured": "Beállított távoli helyek",
   "rclone.pathHint": "Ezután állítson egy mentési útvonalat „rclone:<remote>:<bucket>/path” értékre, hogy az adott tartományt külső helyre küldje.",
+  "cloud.title": "Felhő hitelesítő adatok (S3 / restic REST)",
+  "cloud.hint": "Hitelesítő adatok távoli restic backendekhez, rclone nélkül. Mentés után állíts be egy biztonsági mentési útvonalat egy távoli repóra, pl. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path vagy sftp:user@host:/repo. A titkok titkosítva tárolódnak és többé nem jelennek meg.",
+  "cloud.secretSet": "elmentve — hagyd üresen a megtartáshoz",
   "rclone.save": "Konfiguráció mentése",
 
   // Integrity (restic check)
