@@ -2,12 +2,42 @@ package api
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
+
+// TestRemoveStrayOverlays guards the recurring live-backup bug: blockcommit
+// leaves the "*.bombvault-tmp" overlay file behind, breaking the next snapshot.
+// removeStrayOverlays must delete only those files, never the base disk or others.
+func TestRemoveStrayOverlays(t *testing.T) {
+	dir := t.TempDir()
+	base := filepath.Join(dir, "vdisk1.qcow2")
+	overlay := filepath.Join(dir, "vdisk1.bombvault-tmp")
+	other := filepath.Join(dir, "notes.txt")
+	for _, f := range []string{base, overlay, other} {
+		if err := os.WriteFile(f, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	s := &Service{}
+	s.removeStrayOverlays([]string{base})
+
+	if _, err := os.Stat(overlay); !os.IsNotExist(err) {
+		t.Fatalf("the stray overlay must be deleted, stat err = %v", err)
+	}
+	if _, err := os.Stat(base); err != nil {
+		t.Fatalf("the base disk must remain: %v", err)
+	}
+	if _, err := os.Stat(other); err != nil {
+		t.Fatalf("unrelated files must remain: %v", err)
+	}
+}
 
 // TestDomainLocks pins the per-repo serialisation: while a backup holds a
 // domain's lock, maintenance (tryLockDomain) reports busy; other domains stay

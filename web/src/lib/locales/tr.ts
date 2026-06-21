@@ -210,6 +210,9 @@ const tr: Partial<Translations> = {
   "snapshots.files": "Dosyalar",
   "snapshots.delete": "Sil",
   "snapshots.deleteConfirm": "Bu yedek silinsin mi? Anlık görüntü depodan kaldırılır (alanı geri kazanmak için Ayarlar'da Buda'yı çalıştırın). Geri alınamaz.",
+  "snapshots.recreate": "Kayıtlı yapılandırmadan yeniden oluştur",
+  "snapshots.recreateConfirm": "Bu konteyner kayıtlı yapılandırmasından yeniden oluşturulsun mu? Saklanan tanımdan oluşturulup başlatılır.",
+  "snapshots.configOnlyHint": "Yalnızca yapılandırma yedeği: konteynerin tanımı kaydedilir, ancak anlık görüntü alınacak veri klasörü yoktur. Silersen \"Yüklü değil\" altında görünür ve bu yapılandırmadan yeniden oluşturabilirsin.",
 
   // File-level restore
   "files.restore": "Geri yükle",

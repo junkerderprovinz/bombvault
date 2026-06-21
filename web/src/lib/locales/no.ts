@@ -210,6 +210,9 @@ const no: Partial<Translations> = {
   "snapshots.files": "Filer",
   "snapshots.delete": "Slett",
   "snapshots.deleteConfirm": "Slette denne sikkerhetskopien? Øyeblikksbildet fjernes fra repositoriet (kjør Beskjær i Innstillinger for å frigjøre plassen). Kan ikke angres.",
+  "snapshots.recreate": "Gjenopprett fra lagret konfig",
+  "snapshots.recreateConfirm": "Gjenopprette denne containeren fra dens lagrede konfigurasjon? Den opprettes og startes fra den lagrede definisjonen.",
+  "snapshots.configOnlyHint": "Kun-konfig-sikkerhetskopi: containerens definisjon er lagret, men den har ingen datamapper å ta øyeblikksbilde av. Sletter du den, vises den under \"Ikke installert\", der du kan gjenopprette den fra denne konfigurasjonen.",
 
   // File-level restore
   "files.restore": "Gjenopprett",

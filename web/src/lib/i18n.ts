@@ -121,6 +121,9 @@ const en = {
   "snapshots.files": "Files",
   "snapshots.delete": "Delete",
   "snapshots.deleteConfirm": "Delete this backup? The snapshot is removed from the repository (run Prune in Settings to reclaim the space). This cannot be undone.",
+  "snapshots.recreate": "Recreate from saved config",
+  "snapshots.recreateConfirm": "Recreate this container from its saved configuration? It is created and started from the stored definition (image, env, ports, volumes).",
+  "snapshots.configOnlyHint": "Config-only backup: the container's definition is saved, but it has no data folders to snapshot. If you delete the container it appears under \"Not installed\", where you can recreate it from this config.",
 
   // File-level restore
   "files.restore": "Restore",
@@ -448,6 +451,9 @@ const de: Translations = {
   "snapshots.files": "Dateien",
   "snapshots.delete": "Löschen",
   "snapshots.deleteConfirm": "Dieses Backup löschen? Der Snapshot wird aus dem Repository entfernt (zum Freigeben des Speichers in den Einstellungen „Aufräumen“ ausführen). Kann nicht rückgängig gemacht werden.",
+  "snapshots.recreate": "Aus gespeicherter Konfig neu erstellen",
+  "snapshots.recreateConfirm": "Diesen Container aus seiner gespeicherten Konfiguration neu erstellen? Er wird aus der gespeicherten Definition (Image, Env, Ports, Volumes) angelegt und gestartet.",
+  "snapshots.configOnlyHint": "Nur-Konfig-Backup: die Definition des Containers ist gesichert, es gibt aber keine Datenordner zum Snapshotten. Wird der Container gelöscht, erscheint er unter „Nicht installiert“ und kann von dort aus dieser Konfig neu erstellt werden.",
 
   // File-level restore
   "files.restore": "Wiederherstellen",

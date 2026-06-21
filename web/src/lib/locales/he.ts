@@ -210,6 +210,9 @@ const he: Partial<Translations> = {
   "snapshots.files": "קבצים",
   "snapshots.delete": "מחיקה",
   "snapshots.deleteConfirm": "למחוק את הגיבוי הזה? תמונת המצב מוסרת מהמאגר (הרץ גיזום בהגדרות לשחרור המקום). לא ניתן לבטל.",
+  "snapshots.recreate": "צור מחדש מההגדרה השמורה",
+  "snapshots.recreateConfirm": "ליצור מחדש את הקונטיינר הזה מההגדרה השמורה? הוא ייווצר ויופעל מההגדרה המאוחסנת.",
+  "snapshots.configOnlyHint": "גיבוי הגדרה בלבד: הגדרת הקונטיינר נשמרה, אך אין לו תיקיות נתונים לצילום. אם תמחק אותו הוא יופיע תחת \"לא מותקן\", שם תוכל ליצור אותו מחדש מההגדרה הזו.",
 
   // File-level restore
   "files.restore": "שחזר",

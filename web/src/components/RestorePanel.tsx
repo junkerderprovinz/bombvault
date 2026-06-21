@@ -251,6 +251,44 @@ function SnapshotFileBrowser({
 interface RestorePanelProps {
   name: string;
   t: T;
+  // installed=false marks a not-installed (orphan) container: when it has a
+  // config-only backup (no snapshots) it can be recreated from the saved config.
+  installed?: boolean;
+}
+
+// RecreateButton recreates a not-installed container from its saved definition
+// (a config-only backup has no restic snapshot to restore). Calls the normal
+// restore with "latest", which the backend resolves to a recreate-only restore.
+function RecreateButton({ name, t }: { name: string; t: T }) {
+  const [state, setState] = useState<RestoreState>({ phase: "idle" });
+  async function handle() {
+    if (!window.confirm(t("snapshots.recreateConfirm"))) return;
+    setState({ phase: "pending" });
+    try {
+      const res = await restore(name, "latest", true);
+      if (res.ok) setState({ phase: "success" });
+      else setState({ phase: "error", message: res.error ?? "Recreate failed" });
+    } catch (err) {
+      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
+    }
+  }
+  return (
+    <div className="flex flex-col gap-1 py-2">
+      <button
+        onClick={() => void handle()}
+        disabled={state.phase === "pending" || state.phase === "success"}
+        className="self-start inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {state.phase === "pending" ? t("common.restoring") : t("snapshots.recreate")}
+      </button>
+      {state.phase === "success" && (
+        <p className="text-xs text-[#6fdc8c]">Recreate started — the container is being recreated.</p>
+      )}
+      {state.phase === "error" && (
+        <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
+      )}
+    </div>
+  );
 }
 
 type RestoreState =
@@ -401,7 +439,7 @@ function SnapshotRow({
   );
 }
 
-export function RestorePanel({ name, t }: RestorePanelProps) {
+export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
   const [open, setOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -459,7 +497,17 @@ export function RestorePanel({ name, t }: RestorePanelProps) {
             <p className="py-3 text-xs text-[#ff8389]">{error}</p>
           )}
           {!loading && !error && snapshots.length === 0 && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
+            <div className="py-3 flex flex-col gap-1">
+              <p className="text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
+              {/* A config-only backup (stateless container, no data snapshot) has
+                  no restic snapshot. If the container is gone, offer to recreate
+                  it from the saved definition; if it's installed, just explain. */}
+              {installed ? (
+                <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
+              ) : (
+                <RecreateButton name={name} t={t} />
+              )}
+            </div>
           )}
           {!loading && snapshots.map((snap) => (
             <SnapshotRow

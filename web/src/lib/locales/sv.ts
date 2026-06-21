@@ -210,6 +210,9 @@ const sv: Partial<Translations> = {
   "snapshots.files": "Filer",
   "snapshots.delete": "Ta bort",
   "snapshots.deleteConfirm": "Ta bort denna säkerhetskopia? Ögonblicksbilden tas bort från repositoriet (kör Rensa i Inställningar för att frigöra utrymmet). Kan inte ångras.",
+  "snapshots.recreate": "Återskapa från sparad konfig",
+  "snapshots.recreateConfirm": "Återskapa den här containern från dess sparade konfiguration? Den skapas och startas från den lagrade definitionen.",
+  "snapshots.configOnlyHint": "Endast-konfig-säkerhetskopia: containerns definition är sparad, men den har inga datamappar att ta ögonblicksbild av. Om du tar bort den visas den under \"Ej installerad\", där du kan återskapa den från denna konfiguration.",
 
   // File-level restore
   "files.restore": "Återställ",

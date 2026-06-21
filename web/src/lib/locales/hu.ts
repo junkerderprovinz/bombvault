@@ -210,6 +210,9 @@ const hu: Partial<Translations> = {
   "snapshots.files": "Fájlok",
   "snapshots.delete": "Törlés",
   "snapshots.deleteConfirm": "Törli ezt a mentést? A pillanatkép eltávolításra kerül a tárolóból (a hely felszabadításához futtassa a Nyesést a Beállításokban). Nem vonható vissza.",
+  "snapshots.recreate": "Újralétrehozás mentett konfigból",
+  "snapshots.recreateConfirm": "Újralétrehozza ezt a konténert a mentett konfigurációjából? A tárolt definícióból jön létre és indul el.",
+  "snapshots.configOnlyHint": "Csak-konfiguráció mentés: a konténer definíciója mentve van, de nincsenek adatmappái pillanatképhez. Ha törlöd, a „Nincs telepítve“ alatt jelenik meg, ahonnan újralétrehozhatod ebből a konfigból.",
 
   // File-level restore
   "files.restore": "Visszaállítás",

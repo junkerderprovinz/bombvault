@@ -209,6 +209,9 @@ const zh: Partial<Translations> = {
   "snapshots.files": "文件",
   "snapshots.delete": "删除",
   "snapshots.deleteConfirm": "删除此备份？快照将从仓库中移除（在设置中运行“清理”以回收空间）。此操作无法撤销。",
+  "snapshots.recreate": "从已保存的配置重新创建",
+  "snapshots.recreateConfirm": "从已保存的配置重新创建此容器？将根据存储的定义创建并启动。",
+  "snapshots.configOnlyHint": "仅配置备份：容器的定义已保存，但没有可快照的数据文件夹。如果删除该容器，它会出现在“未安装”中，你可以从此配置重新创建它。",
 
   "files.restore": "恢复",
   "files.restored": "已恢复",

@@ -210,6 +210,9 @@ const pt: Partial<Translations> = {
   "snapshots.files": "Ficheiros",
   "snapshots.delete": "Excluir",
   "snapshots.deleteConfirm": "Excluir este backup? O snapshot é removido do repositório (execute Podar nas Configurações para recuperar o espaço). Não pode ser desfeito.",
+  "snapshots.recreate": "Recriar a partir da config salva",
+  "snapshots.recreateConfirm": "Recriar este contêiner a partir da configuração salva? Ele é criado e iniciado a partir da definição armazenada.",
+  "snapshots.configOnlyHint": "Backup só de configuração: a definição do contêiner está salva, mas ele não tem pastas de dados para snapshot. Se você excluí-lo, ele aparece em \"Não instalado\", onde pode recriá-lo a partir desta configuração.",
 
   // File-level restore
   "files.restore": "Restaurar",

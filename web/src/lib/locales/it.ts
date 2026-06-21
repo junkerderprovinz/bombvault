@@ -210,6 +210,9 @@ const it: Partial<Translations> = {
   "snapshots.files": "File",
   "snapshots.delete": "Elimina",
   "snapshots.deleteConfirm": "Eliminare questo backup? Lo snapshot viene rimosso dal repository (esegui Pota nelle Impostazioni per recuperare lo spazio). Non annullabile.",
+  "snapshots.recreate": "Ricrea dalla config salvata",
+  "snapshots.recreateConfirm": "Ricreare questo container dalla sua configurazione salvata? Viene creato e avviato dalla definizione memorizzata.",
+  "snapshots.configOnlyHint": "Backup solo configurazione: la definizione del container è salvata, ma non ha cartelle dati di cui fare snapshot. Se lo elimini compare in \"Non installato\", dove puoi ricrearlo da questa configurazione.",
 
   // File-level restore
   "files.restore": "Ripristina",
