@@ -323,6 +323,8 @@ const no: Partial<Translations> = {
   "notify.matrixToken": "Tilgangstoken",
   "notify.matrixRoom": "Rom-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.unraid": "Unraid-varsler",
+  "notify.unraidHint": "Send til Unraids eget varslingssystem (som kan videresende til Pushover, e-post, Discord …). Krever oppsatt SSH-tilkobling (Innstillinger → VM Backup over SSH).",
   "notify.save": "Lagre",
   "notify.test": "Send test",
   "notify.tested": "Test sendt",

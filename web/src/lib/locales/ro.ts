@@ -323,6 +323,8 @@ const ro: Partial<Translations> = {
   "notify.matrixToken": "Token de acces",
   "notify.matrixRoom": "ID cameră",
   "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.unraid": "Notificări Unraid",
+  "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord …). Necesită conexiunea SSH configurată (Setări → VM Backup over SSH).",
   "notify.save": "Salvează",
   "notify.test": "Trimite test",
   "notify.tested": "Test trimis",

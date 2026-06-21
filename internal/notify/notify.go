@@ -30,6 +30,10 @@ type Config struct {
 	MatrixToken      string `json:"matrixToken"`
 	MatrixRoom       string `json:"matrixRoom"`
 	HealthchecksURL  string `json:"healthchecksUrl"`
+	// Unraid sends each event to Unraid's native notification system (which can
+	// itself forward to Pushover/email/Discord/…). It is delivered over SSH by the
+	// service layer (the host's notify script), not by this package's HTTP Send.
+	Unraid bool `json:"unraid"`
 }
 
 // Event is a completed backup, rendered into each channel's message.

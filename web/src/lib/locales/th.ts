@@ -323,6 +323,8 @@ const th: Partial<Translations> = {
   "notify.matrixToken": "โทเค็นการเข้าถึง",
   "notify.matrixRoom": "ID ห้อง",
   "notify.healthchecks": "URL ping ของ Healthchecks.io",
+  "notify.unraid": "การแจ้งเตือน Unraid",
+  "notify.unraidHint": "ส่งไปยังระบบแจ้งเตือนของ Unraid เอง (ซึ่งสามารถส่งต่อไปยัง Pushover อีเมล Discord …) ต้องตั้งค่าการเชื่อมต่อ SSH ก่อน (ตั้งค่า → VM Backup over SSH)",
   "notify.save": "บันทึก",
   "notify.test": "ส่งทดสอบ",
   "notify.tested": "ส่งการทดสอบแล้ว",

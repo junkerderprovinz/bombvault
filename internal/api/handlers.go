@@ -719,7 +719,7 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &c) {
 		return
 	}
-	if err := notify.SendTest(r.Context(), c); err != nil {
+	if err := h.svc.TestNotify(r.Context(), c); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

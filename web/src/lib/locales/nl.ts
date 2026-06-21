@@ -320,6 +320,8 @@ const nl: Partial<Translations> = {
   "notify.matrixToken": "Toegangstoken",
   "notify.matrixRoom": "Room-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.unraid": "Unraid-meldingen",
+  "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord …). Vereist een ingestelde SSH-verbinding (Instellingen → VM Backup over SSH).",
   "notify.save": "Opslaan",
   "notify.test": "Test versturen",
   "notify.tested": "Test verstuurd",

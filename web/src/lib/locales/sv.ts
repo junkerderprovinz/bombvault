@@ -323,6 +323,8 @@ const sv: Partial<Translations> = {
   "notify.matrixToken": "Åtkomsttoken",
   "notify.matrixRoom": "Rums-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.unraid": "Unraid-aviseringar",
+  "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord …). Kräver konfigurerad SSH-anslutning (Inställningar → VM Backup over SSH).",
   "notify.save": "Spara",
   "notify.test": "Skicka test",
   "notify.tested": "Test skickat",

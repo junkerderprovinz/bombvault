@@ -323,6 +323,8 @@ const fi: Partial<Translations> = {
   "notify.matrixToken": "Käyttötunniste",
   "notify.matrixRoom": "Huoneen tunnus",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.unraid": "Unraid-ilmoitukset",
+  "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin …). Vaatii määritetyn SSH-yhteyden (Asetukset → VM Backup over SSH).",
   "notify.save": "Tallenna",
   "notify.test": "Lähetä testi",
   "notify.tested": "Testi lähetetty",

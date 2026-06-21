@@ -315,6 +315,8 @@ const ko: Partial<Translations> = {
   "notify.matrixToken": "액세스 토큰",
   "notify.matrixRoom": "방 ID",
   "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.unraid": "Unraid 알림",
+  "notify.unraidHint": "Unraid 자체 알림 시스템으로 전송합니다(Pushover, 이메일, Discord 등으로 전달 가능). SSH 연결 설정이 필요합니다(설정 → VM Backup over SSH).",
   "notify.save": "저장",
   "notify.test": "테스트 보내기",
   "notify.tested": "테스트 전송됨",

@@ -720,6 +720,7 @@ const emptyNotify: NotifyConfig = {
   matrixToken: "",
   matrixRoom: "",
   healthchecksUrl: "",
+  unraid: false,
 };
 
 // NotifyCard configures backup notifications (webhook / Matrix / Healthchecks).
@@ -796,6 +797,21 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <option value="failure">{t("notify.onFailure")}</option>
           <option value="always">{t("notify.onAlways")}</option>
         </select>
+      </label>
+
+      {/* Unraid native notifications (delivered over the host SSH connection). */}
+      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={cfg.unraid}
+          onChange={(e) => set("unraid", e.target.checked)}
+          className="mt-0.5"
+          style={{ accentColor: "var(--accent)" }}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm text-carbon-text">{t("notify.unraid")}</span>
+          <span className="text-xs text-carbon-textMuted">{t("notify.unraidHint")}</span>
+        </span>
       </label>
 
       <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
