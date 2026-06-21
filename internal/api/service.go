@@ -18,6 +18,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -104,11 +105,52 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// repoMu serialises operations per domain repo. A backup holds its domain's
+	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
+	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
+	// prune can never run against a repo a backup is actively writing.
+	repoMu map[string]*sync.Mutex
 }
 
 // NewService constructs the backup service.
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
-	return &Service{cfg: cfg, store: st, docker: d, virsh: v, engine: eng}
+	return &Service{
+		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
+		repoMu: map[string]*sync.Mutex{
+			"containers": {},
+			"vms":        {},
+			"flash":      {},
+		},
+	}
+}
+
+// errDomainBusy is returned by a maintenance op when a backup is holding the
+// domain's lock (so it never disturbs an in-progress backup's repo).
+var errDomainBusy = errors.New("a backup is currently running for this domain; try again when it finishes")
+
+// lockDomain blocks until it holds the domain's repo lock and returns the unlock
+// func (used by backups). A nil/absent mutex (unknown domain) is a no-op.
+func (s *Service) lockDomain(domain string) func() {
+	mu := s.repoMu[domain]
+	if mu == nil {
+		return func() {}
+	}
+	mu.Lock()
+	return mu.Unlock
+}
+
+// tryLockDomain acquires the domain's repo lock without blocking. It returns the
+// unlock func and true on success, or (nil, false) when a backup holds it (used
+// by maintenance ops, which must not run against a repo being backed up).
+func (s *Service) tryLockDomain(domain string) (func(), bool) {
+	mu := s.repoMu[domain]
+	if mu == nil {
+		return func() {}, true
+	}
+	if !mu.TryLock() {
+		return nil, false
+	}
+	return mu.Unlock, true
 }
 
 // SetHostSSH wires the SSH connection used for VM NVRAM transfer + the UI's
@@ -473,6 +515,7 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
+	defer s.lockDomain("containers")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -1159,6 +1202,7 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 }
 
 func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, error) {
+	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -1504,6 +1548,7 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
 func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
+	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -1702,10 +1747,16 @@ func (s *Service) requireExistingRepo(repo, notYet string) error {
 	return nil
 }
 
-// isLockErr reports whether a restic error is a repository-lock conflict
-// ("unable to create lock ... already locked").
+// isLockErr reports whether a restic error is a repository-lock conflict. It
+// matches restic's specific lock-conflict phrasing ("unable to create lock" /
+// "already locked") rather than the bare word "locked", so an unrelated error
+// that merely mentions a lock doesn't trigger a needless unlock + retry.
 func isLockErr(err error) bool {
-	return err != nil && strings.Contains(strings.ToLower(err.Error()), "locked")
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "unable to create lock") || strings.Contains(msg, "already locked")
 }
 
 // unlockStale best-effort clears stale locks (plain restic unlock: only locks
@@ -1741,6 +1792,11 @@ func (s *Service) UnlockDomain(ctx context.Context, domain string) error {
 	if err := s.requireExistingRepo(repo, "no repository to unlock yet"); err != nil {
 		return err
 	}
+	unlock, ok := s.tryLockDomain(domain)
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 	return s.engine.Unlock(ctx, repo, true, s.ModeFor(settings))
@@ -1756,6 +1812,11 @@ func (s *Service) PruneDomain(ctx context.Context, domain string) error {
 	if err := s.requireExistingRepo(repo, "no backups to prune yet"); err != nil {
 		return err
 	}
+	unlock, ok := s.tryLockDomain(domain)
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 	return s.engine.Prune(ctx, repo, s.ModeFor(settings))
@@ -1777,6 +1838,11 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID string)
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
 	}
+	unlock, ok := s.tryLockDomain(domain)
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
 	mode := s.ModeFor(settings)
 	s.unlockStale(ctx, repo, mode)
 	return s.engine.Forget(ctx, repo, []string{snapshotID}, false, mode)

@@ -3,10 +3,39 @@ package api
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
+
+// TestDomainLocks pins the per-repo serialisation: while a backup holds a
+// domain's lock, maintenance (tryLockDomain) reports busy; other domains stay
+// lockable; an unknown domain is a no-op success.
+func TestDomainLocks(t *testing.T) {
+	s := &Service{repoMu: map[string]*sync.Mutex{"containers": {}, "vms": {}}}
+
+	release := s.lockDomain("containers") // simulate a backup holding the lock
+	if _, ok := s.tryLockDomain("containers"); ok {
+		t.Fatal("tryLockDomain must report busy while the domain is held")
+	}
+	if u, ok := s.tryLockDomain("vms"); !ok {
+		t.Fatal("a different domain must remain lockable")
+	} else {
+		u()
+	}
+	release()
+
+	u, ok := s.tryLockDomain("containers")
+	if !ok {
+		t.Fatal("domain must be lockable again after release")
+	}
+	u()
+
+	if _, ok := s.tryLockDomain("unknown"); !ok {
+		t.Fatal("an unknown domain must be a no-op success (never blocks)")
+	}
+}
 
 // scriptedVirsh is a minimal virshcli.Virsh for the leftover-overlay recovery
 // tests: it records blockcommit calls and serves a scripted DumpXML.
