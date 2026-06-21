@@ -207,6 +207,8 @@ const hu: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Fájlok",
+  "snapshots.delete": "Törlés",
+  "snapshots.deleteConfirm": "Törli ezt a mentést? A pillanatkép eltávolításra kerül a tárolóból (a hely felszabadításához futtassa a Nyesést a Beállításokban). Nem vonható vissza.",
 
   // File-level restore
   "files.restore": "Visszaállítás",
@@ -239,6 +241,12 @@ const hu: Partial<Translations> = {
   "integrity.checking": "Ellenőrzés…",
   "integrity.ok": "✓ Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
+  "integrity.unlock": "Feloldás",
+  "integrity.prune": "Nyesés",
+  "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",
+  "integrity.unlockHint": "Megszakadt futás után ottragadt repository-zárolások törlése (javítja a 'repository is already locked' hibát).",
+  "integrity.pruneHint": "Lemezterület felszabadítása törölt/elfeledett mentésekből (eltarthat egy ideig).",
+  "integrity.pruneConfirm": "A nyesés felszabadítja a törölt mentések helyét, és több percig is tarthat. Folytatja?",
 
   // Pre/post-backup hooks
   "hooks.title": "Mentési horgok",

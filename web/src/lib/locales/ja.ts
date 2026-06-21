@@ -206,6 +206,8 @@ const ja: Partial<Translations> = {
   "state.notInstalled": "未インストール",
 
   "snapshots.files": "ファイル",
+  "snapshots.delete": "削除",
+  "snapshots.deleteConfirm": "このバックアップを削除しますか？スナップショットはリポジトリから削除されます（領域回収は設定の「整理」を実行）。元に戻せません。",
 
   "files.restore": "復元",
   "files.restored": "復元しました",
@@ -234,6 +236,12 @@ const ja: Partial<Translations> = {
   "integrity.checking": "確認中…",
   "integrity.ok": "✓ 正常",
   "integrity.failed": "チェックに失敗しました",
+  "integrity.unlock": "ロック解除",
+  "integrity.prune": "整理",
+  "integrity.verifyHint": "restic check を実行して構造とメタデータの整合性を検証します。",
+  "integrity.unlockHint": "中断された実行で残ったリポジトリのロックを削除します（'repository is already locked' を解消）。",
+  "integrity.pruneHint": "削除/破棄したバックアップのディスク領域を回収します（時間がかかる場合あり）。",
+  "integrity.pruneConfirm": "整理は削除済みバックアップの領域を回収し、数分かかることがあります。続行しますか？",
 
   "hooks.title": "バックアップフック",
   "hooks.hint": "コマンドはコンテナ内（sh -c）で実行されます。Pre はバックアップ前に実行（例：DB を appdata にダンプして含める）— 失敗するとバックアップは中止されます。Post はコンテナの復帰後に実行され、その失敗はログに記録されるだけです。",

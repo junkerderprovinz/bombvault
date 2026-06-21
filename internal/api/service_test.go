@@ -690,10 +690,16 @@ type fakeResticEngine struct {
 	checked         []string
 	snaps           []restic.Snapshot
 	lsEntries       []restic.FileEntry
+	unlockedRepos   []string
+	unlockRemoveAll []bool
+	manualPruned    []string
+	snapshotsCalls  int
+	snapshotsErr    error
 	initErr         error
 	backupErr       error
 	forgetPolicyErr error
 	checkErr        error
+	unlockErr       error
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -721,6 +727,12 @@ func (f *fakeResticEngine) Restore(_ context.Context, repo, snapshotID, target s
 }
 
 func (f *fakeResticEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
+	f.snapshotsCalls++
+	if f.snapshotsErr != nil {
+		e := f.snapshotsErr
+		f.snapshotsErr = nil // fail once, then succeed (exercises the stale-unlock retry)
+		return nil, e
+	}
 	return f.snaps, nil
 }
 
@@ -748,6 +760,125 @@ func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, i
 func (f *fakeResticEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
 	f.checked = append(f.checked, repo)
 	return f.checkErr
+}
+
+func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool, _ restic.Mode) error {
+	f.unlockedRepos = append(f.unlockedRepos, repo)
+	f.unlockRemoveAll = append(f.unlockRemoveAll, removeAll)
+	return f.unlockErr
+}
+
+func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) error {
+	f.manualPruned = append(f.manualPruned, repo)
+	return nil
+}
+
+// initRepoSvc builds a service whose containers repo is marked initialised, so
+// repo-management methods reach the engine instead of the "not created yet" guard.
+func initRepoSvc(t *testing.T, eng *fakeResticEngine) *api.Service {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+}
+
+func TestUnlockDomainRemovesAllLocks(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc := initRepoSvc(t, eng)
+	if err := svc.UnlockDomain(context.Background(), "containers"); err != nil {
+		t.Fatalf("UnlockDomain: %v", err)
+	}
+	if len(eng.unlockedRepos) != 1 || len(eng.unlockRemoveAll) != 1 || !eng.unlockRemoveAll[0] {
+		t.Fatalf("expected one unlock with removeAll=true, got repos=%v removeAll=%v", eng.unlockedRepos, eng.unlockRemoveAll)
+	}
+}
+
+func TestUnlockDomainNoRepoYet(t *testing.T) {
+	eng := &fakeResticEngine{}
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers" // never initialised (no config marker)
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	if err := svc.UnlockDomain(context.Background(), "containers"); err == nil {
+		t.Fatal("expected a friendly error when the repo does not exist yet")
+	}
+	if len(eng.unlockedRepos) != 0 {
+		t.Fatalf("must not call unlock on a non-existent repo: %v", eng.unlockedRepos)
+	}
+}
+
+func TestPruneDomainCallsPrune(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc := initRepoSvc(t, eng)
+	if err := svc.PruneDomain(context.Background(), "containers"); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	if len(eng.manualPruned) != 1 {
+		t.Fatalf("expected one prune, got %v", eng.manualPruned)
+	}
+}
+
+func TestDeleteSnapshotForgetsByID(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc := initRepoSvc(t, eng)
+	if err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678"); err != nil {
+		t.Fatalf("DeleteSnapshot: %v", err)
+	}
+	if len(eng.forgotten) != 1 || eng.forgotten[0] != "deadbeef12345678" {
+		t.Fatalf("expected forget of the one id, got %v", eng.forgotten)
+	}
+}
+
+func TestDeleteSnapshotRejectsBadID(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc := initRepoSvc(t, eng)
+	if err := svc.DeleteSnapshot(context.Background(), "containers", "not-hex!"); err == nil {
+		t.Fatal("expected an invalid-snapshot-id error")
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("must not forget on an invalid id: %v", eng.forgotten)
+	}
+}
+
+// TestSnapshotsSelfHealsStaleLock: a stale-lock error on listing is recovered by
+// a stale-unlock + retry, so "Failed to load backups" heals itself.
+func TestSnapshotsSelfHealsStaleLock(t *testing.T) {
+	eng := &fakeResticEngine{
+		snapshotsErr: errors.New("unable to create lock in backend: repository is already locked by PID 877"),
+		snaps:        []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex", "p1"}}},
+	}
+	svc := initRepoSvc(t, eng)
+	got, err := svc.Snapshots(context.Background(), "plex")
+	if err != nil {
+		t.Fatalf("Snapshots should self-heal a stale lock, got %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected 1 snapshot after retry, got %d", len(got))
+	}
+	if len(eng.unlockedRepos) != 1 || eng.unlockRemoveAll[0] {
+		t.Fatalf("expected one STALE unlock (removeAll=false), got repos=%v removeAll=%v", eng.unlockedRepos, eng.unlockRemoveAll)
+	}
+	if eng.snapshotsCalls != 2 {
+		t.Fatalf("expected snapshots to be retried once (2 calls), got %d", eng.snapshotsCalls)
+	}
 }
 
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {

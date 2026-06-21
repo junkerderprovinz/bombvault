@@ -207,6 +207,8 @@ const th: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "ไฟล์",
+  "snapshots.delete": "ลบ",
+  "snapshots.deleteConfirm": "ลบการสำรองข้อมูลนี้หรือไม่? สแนปช็อตจะถูกลบออกจากที่เก็บ (รัน ตัดทิ้ง ในการตั้งค่าเพื่อเรียกคืนพื้นที่) ไม่สามารถเลิกทำได้",
 
   // File-level restore
   "files.restore": "กู้คืน",
@@ -239,6 +241,12 @@ const th: Partial<Translations> = {
   "integrity.checking": "กำลังตรวจสอบ…",
   "integrity.ok": "✓ สมบูรณ์",
   "integrity.failed": "การตรวจสอบล้มเหลว",
+  "integrity.unlock": "ปลดล็อก",
+  "integrity.prune": "ตัดทิ้ง",
+  "integrity.verifyHint": "รัน restic check เพื่อตรวจสอบโครงสร้างและข้อมูลเมตา",
+  "integrity.unlockHint": "ล้างล็อกที่ค้างของที่เก็บจากการทำงานที่ขัดข้อง/ถูกขัดจังหวะ (แก้ 'repository is already locked')",
+  "integrity.pruneHint": "เรียกคืนพื้นที่ดิสก์จากการสำรองข้อมูลที่ลบ/ถูกลืม (อาจใช้เวลาสักครู่)",
+  "integrity.pruneConfirm": "การตัดทิ้งจะเรียกคืนพื้นที่จากการสำรองที่ลบแล้วและอาจใช้เวลาหลายนาที ดำเนินการต่อหรือไม่?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks การสำรองข้อมูล",

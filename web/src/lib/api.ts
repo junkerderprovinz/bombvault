@@ -368,6 +368,28 @@ export function checkDomain(
   return fetchJSON(`/api/check/${domain}`, { method: "POST" });
 }
 
+/** POST /api/unlock/{domain} — clear stale repository locks (restic unlock). */
+export function unlockDomain(
+  domain: "containers" | "vms" | "flash"
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/unlock/${domain}`, { method: "POST" });
+}
+
+/** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
+export function pruneDomain(
+  domain: "containers" | "vms" | "flash"
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/prune/${domain}`, { method: "POST" });
+}
+
+/** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
+export function deleteSnapshot(
+  domain: "containers" | "vms" | "flash",
+  id: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
 /** GET /api/rclone — configured rclone remote names (never secrets). */
 export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
   return fetchJSON("/api/rclone");

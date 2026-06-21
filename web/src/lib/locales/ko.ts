@@ -206,6 +206,8 @@ const ko: Partial<Translations> = {
   "state.notInstalled": "설치되지 않음",
 
   "snapshots.files": "파일",
+  "snapshots.delete": "삭제",
+  "snapshots.deleteConfirm": "이 백업을 삭제할까요? 스냅샷이 저장소에서 제거됩니다(공간 회수는 설정에서 정리 실행). 되돌릴 수 없습니다.",
 
   "files.restore": "복원",
   "files.restored": "복원됨",
@@ -234,6 +236,12 @@ const ko: Partial<Translations> = {
   "integrity.checking": "확인 중…",
   "integrity.ok": "✓ 정상",
   "integrity.failed": "검사 실패",
+  "integrity.unlock": "잠금 해제",
+  "integrity.prune": "정리",
+  "integrity.verifyHint": "restic check를 실행하여 구조와 메타데이터 무결성을 확인합니다.",
+  "integrity.unlockHint": "중단된 실행이 남긴 멈춘 저장소 잠금을 제거합니다('repository is already locked' 해결).",
+  "integrity.pruneHint": "삭제/잊힌 백업에서 디스크 공간을 회수합니다(시간이 걸릴 수 있음).",
+  "integrity.pruneConfirm": "정리는 삭제된 백업의 공간을 회수하며 몇 분 걸릴 수 있습니다. 계속할까요?",
 
   "hooks.title": "백업 훅",
   "hooks.hint": "명령은 컨테이너 내부(sh -c)에서 실행됩니다. Pre는 백업 전에 실행되며(예: DB를 appdata로 덤프하여 포함) 실패 시 백업이 중단됩니다. Post는 컨테이너가 다시 가동된 후 실행되며 그 실패는 로그에만 기록됩니다.",

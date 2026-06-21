@@ -70,6 +70,11 @@ type ResticEngine interface {
 	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
 	// Check verifies repository structure + metadata integrity (restic check).
 	Check(ctx context.Context, repo string, mode restic.Mode) error
+	// Unlock removes locks from the repo (restic unlock). removeAll clears ALL
+	// locks, not just stale ones.
+	Unlock(ctx context.Context, repo string, removeAll bool, mode restic.Mode) error
+	// Prune reclaims space freed by forgotten snapshots (restic prune).
+	Prune(ctx context.Context, repo string, mode restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -480,6 +485,9 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
+	// Clear any stale lock left by a previously interrupted run so it can't block
+	// this backup (BombVault is the sole writer; an active lock is never stale).
+	s.unlockStale(ctx, repo, mode)
 
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
@@ -794,7 +802,7 @@ func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot
 	} else if statErr != nil {
 		log.Printf("api: snapshots: WARN could not stat repo config for %q: %v", name, statErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 	}
-	all, err := s.engine.Snapshots(ctx, repo, mode)
+	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -1163,6 +1171,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
+	// Clear any stale lock left by a previously interrupted run so it can't block
+	// this backup (BombVault is the sole writer; an active lock is never stale).
+	s.unlockStale(ctx, repo, mode)
 
 	// Pin the host key before any virsh-over-SSH call (libvirt's qemu+ssh won't
 	// self-populate known_hosts). Best-effort: a failure here surfaces again on
@@ -1469,7 +1480,7 @@ func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapsh
 	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
 		return nil, nil
 	}
-	all, err := s.engine.Snapshots(ctx, repo, mode)
+	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -1508,6 +1519,9 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
+	// Clear any stale lock left by a previously interrupted run so it can't block
+	// this backup (BombVault is the sole writer; an active lock is never stale).
+	s.unlockStale(ctx, repo, mode)
 	fctx := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
@@ -1592,7 +1606,7 @@ func (s *Service) SnapshotsFlash(ctx context.Context) ([]restic.Snapshot, error)
 	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
 		return nil, nil // no backups yet
 	}
-	return s.engine.Snapshots(ctx, repo, mode)
+	return s.listSnapshots(ctx, repo, mode)
 }
 
 // SetVMMethod updates the backup method for a VM, creating the target if absent.
@@ -1643,9 +1657,24 @@ func (s *Service) SetStopContainers(_ context.Context, name string, stop []strin
 // repo has not been created yet. Bounded by a timeout so a huge repo can't hang
 // the request forever.
 func (s *Service) CheckDomain(ctx context.Context, domain string) error {
+	settings, repo, err := s.domainRepo(domain)
+	if err != nil {
+		return err
+	}
+	if err := s.requireExistingRepo(repo, "no backups to verify yet"); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+	return s.engine.Check(ctx, repo, s.ModeFor(settings))
+}
+
+// domainRepo resolves the restic repo path for a domain ("containers" | "vms" |
+// "flash"), returning the settings alongside it so callers don't re-read them.
+func (s *Service) domainRepo(domain string) (store.Settings, string, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return store.Settings{}, "", fmt.Errorf("read settings: %w", err)
 	}
 	var repo string
 	switch domain {
@@ -1656,19 +1685,101 @@ func (s *Service) CheckDomain(ctx context.Context, domain string) error {
 	case "flash":
 		repo, err = s.flashRepoPath(settings)
 	default:
-		return fmt.Errorf("unknown domain %q", domain)
+		return store.Settings{}, "", fmt.Errorf("unknown domain %q", domain)
 	}
+	return settings, repo, err
+}
+
+// requireExistingRepo returns a friendly error (notYet) when a local repo has not
+// been initialised yet. Remote repos are assumed to exist (no cheap local check).
+func (s *Service) requireExistingRepo(repo, notYet string) error {
+	if restic.IsRemoteRepo(repo) {
+		return nil
+	}
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+		return errors.New(notYet)
+	}
+	return nil
+}
+
+// isLockErr reports whether a restic error is a repository-lock conflict
+// ("unable to create lock ... already locked").
+func isLockErr(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "locked")
+}
+
+// unlockStale best-effort clears stale locks (plain restic unlock: only locks
+// from dead processes or old enough — never an active concurrent lock). Logged,
+// never fatal.
+func (s *Service) unlockStale(ctx context.Context, repo string, mode restic.Mode) {
+	if err := s.engine.Unlock(ctx, repo, false, mode); err != nil {
+		log.Printf("api: stale-unlock failed (continuing): %v", err)
+	}
+}
+
+// listSnapshots lists snapshots, self-healing a stale-lock conflict: on a lock
+// error it clears stale locks and retries once. This fixes "Failed to load
+// backups" when an interrupted run left a lock behind.
+func (s *Service) listSnapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error) {
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if isLockErr(err) {
+		s.unlockStale(ctx, repo, mode)
+		snaps, err = s.engine.Snapshots(ctx, repo, mode)
+	}
+	return snaps, err
+}
+
+// UnlockDomain removes locks from a domain's repo (restic unlock --remove-all).
+// BombVault is the sole writer and serialises its operations, so a leftover lock
+// is always safe to clear — this is the manual counterpart to the automatic
+// stale-lock cleanup done before each backup.
+func (s *Service) UnlockDomain(ctx context.Context, domain string) error {
+	settings, repo, err := s.domainRepo(domain)
 	if err != nil {
 		return err
 	}
-	if !restic.IsRemoteRepo(repo) {
-		if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
-			return errors.New("no backups to verify yet")
-		}
+	if err := s.requireExistingRepo(repo, "no repository to unlock yet"); err != nil {
+		return err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return s.engine.Check(ctx, repo, s.ModeFor(settings))
+	return s.engine.Unlock(ctx, repo, true, s.ModeFor(settings))
+}
+
+// PruneDomain reclaims repository space freed by forgotten snapshots
+// (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
+func (s *Service) PruneDomain(ctx context.Context, domain string) error {
+	settings, repo, err := s.domainRepo(domain)
+	if err != nil {
+		return err
+	}
+	if err := s.requireExistingRepo(repo, "no backups to prune yet"); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
+	defer cancel()
+	return s.engine.Prune(ctx, repo, s.ModeFor(settings))
+}
+
+// DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic
+// forget, no prune — fast). The space is reclaimed later by PruneDomain, so
+// deleting several snapshots then pruning once is far cheaper than pruning per
+// delete. The snapshot id is validated (arg-injection guard) and stale locks are
+// cleared first.
+func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID string) error {
+	if !backup.ValidSnapshotID(snapshotID) {
+		return backup.ErrInvalidSnapshotID
+	}
+	settings, repo, err := s.domainRepo(domain)
+	if err != nil {
+		return err
+	}
+	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
+		return err
+	}
+	mode := s.ModeFor(settings)
+	s.unlockStale(ctx, repo, mode)
+	return s.engine.Forget(ctx, repo, []string{snapshotID}, false, mode)
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, checkDomain, getNotify, setNotify, testNotify } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, checkDomain, unlockDomain, pruneDomain, getNotify, setNotify, testNotify } from "../lib/api";
 import type { Settings, NotifyConfig } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -858,52 +858,80 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 }
 
-// IntegrityCard runs `restic check` per domain and shows pass/fail. Self-contained.
+// IntegrityCard runs per-domain repository maintenance: verify (restic check),
+// unlock (clear stale locks), and prune (reclaim space). Self-contained.
 function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
-  type CheckState = "idle" | "checking" | "ok" | "fail";
-  const [state, setState] = useState<Record<string, CheckState>>({});
+  type ActState = "idle" | "busy" | "ok" | "fail";
+  const [state, setState] = useState<Record<string, ActState>>({});
   const [msg, setMsg] = useState<Record<string, string>>({});
 
-  async function run(domain: "containers" | "vms" | "flash") {
-    setState((s) => ({ ...s, [domain]: "checking" }));
-    setMsg((m) => ({ ...m, [domain]: "" }));
+  type Domain = "containers" | "vms" | "flash";
+  type Action = "verify" | "unlock" | "prune";
+
+  async function run(domain: Domain, action: Action) {
+    if (action === "prune" && !window.confirm(t("integrity.pruneConfirm"))) return;
+    const key = `${domain}:${action}`;
+    setState((s) => ({ ...s, [key]: "busy" }));
+    setMsg((m) => ({ ...m, [key]: "" }));
     try {
-      const r = await checkDomain(domain);
+      const r =
+        action === "verify" ? await checkDomain(domain)
+        : action === "unlock" ? await unlockDomain(domain)
+        : await pruneDomain(domain);
       if (r.ok) {
-        setState((s) => ({ ...s, [domain]: "ok" }));
+        setState((s) => ({ ...s, [key]: "ok" }));
       } else {
-        setState((s) => ({ ...s, [domain]: "fail" }));
-        setMsg((m) => ({ ...m, [domain]: r.error ?? t("integrity.failed") }));
+        setState((s) => ({ ...s, [key]: "fail" }));
+        setMsg((m) => ({ ...m, [key]: r.error ?? t("integrity.failed") }));
       }
     } catch (err) {
-      setState((s) => ({ ...s, [domain]: "fail" }));
-      setMsg((m) => ({ ...m, [domain]: err instanceof Error ? err.message : t("integrity.failed") }));
+      setState((s) => ({ ...s, [key]: "fail" }));
+      setMsg((m) => ({ ...m, [key]: err instanceof Error ? err.message : t("integrity.failed") }));
     }
   }
 
-  const domains: { key: "containers" | "vms" | "flash"; label: string }[] = [
+  const domains: { key: Domain; label: string }[] = [
     { key: "containers", label: t("settings.containersEnabled") },
     { key: "vms", label: t("settings.vmsEnabled") },
     { key: "flash", label: t("settings.flashEnabled") },
+  ];
+  const actions: { key: Action; label: string; busy: string }[] = [
+    { key: "verify", label: t("integrity.verify"), busy: t("integrity.checking") },
+    { key: "unlock", label: t("integrity.unlock"), busy: "…" },
+    { key: "prune", label: t("integrity.prune"), busy: "…" },
   ];
 
   return (
     <Card title={t("integrity.title")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("integrity.hint")}</p>
-      <div className="flex flex-col gap-2">
-        {domains.map(({ key, label }) => (
-          <div key={key} className="flex items-center gap-3">
-            <button
-              onClick={() => void run(key)}
-              disabled={state[key] === "checking"}
-              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50 w-28 text-left"
-            >
-              {state[key] === "checking" ? t("integrity.checking") : t("integrity.verify")}
-            </button>
-            <span className="text-sm text-carbon-textSub w-24">{label}</span>
-            {state[key] === "ok" && <span className="text-sm text-[#6fdc8c]">{t("integrity.ok")}</span>}
-            {state[key] === "fail" && (
-              <span className="text-sm text-[#ff8389] break-words flex-1">{msg[key] || t("integrity.failed")}</span>
+      <div className="flex flex-col gap-3">
+        {domains.map(({ key: domain, label }) => (
+          <div key={domain} className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-carbon-textSub w-24 shrink-0">{label}</span>
+              {actions.map((a) => {
+                const k = `${domain}:${a.key}`;
+                return (
+                  <span key={a.key} className="inline-flex items-center gap-1">
+                    <button
+                      onClick={() => void run(domain, a.key)}
+                      disabled={state[k] === "busy"}
+                      title={t(`integrity.${a.key}Hint`)}
+                      className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                    >
+                      {state[k] === "busy" ? a.busy : a.label}
+                    </button>
+                    {state[k] === "ok" && <span className="text-sm text-[#6fdc8c]">{t("integrity.ok")}</span>}
+                  </span>
+                );
+              })}
+            </div>
+            {actions.map((a) =>
+              state[`${domain}:${a.key}`] === "fail" ? (
+                <span key={a.key} className="text-xs text-[#ff8389] break-words">
+                  {a.label}: {msg[`${domain}:${a.key}`] || t("integrity.failed")}
+                </span>
+              ) : null
             )}
           </div>
         ))}

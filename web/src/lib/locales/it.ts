@@ -207,6 +207,8 @@ const it: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "File",
+  "snapshots.delete": "Elimina",
+  "snapshots.deleteConfirm": "Eliminare questo backup? Lo snapshot viene rimosso dal repository (esegui Pota nelle Impostazioni per recuperare lo spazio). Non annullabile.",
 
   // File-level restore
   "files.restore": "Ripristina",
@@ -239,6 +241,12 @@ const it: Partial<Translations> = {
   "integrity.checking": "Verifica…",
   "integrity.ok": "✓ Integro",
   "integrity.failed": "Verifica fallita",
+  "integrity.unlock": "Sblocca",
+  "integrity.prune": "Pota",
+  "integrity.verifyHint": "Esegui restic check per verificare struttura e metadati.",
+  "integrity.unlockHint": "Rimuovi i lock bloccati del repository lasciati da un'esecuzione interrotta (corregge 'repository is already locked').",
+  "integrity.pruneHint": "Recupera spazio dai backup eliminati/dimenticati (può richiedere tempo).",
+  "integrity.pruneConfirm": "La potatura recupera spazio dai backup eliminati e può richiedere alcuni minuti. Continuare?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hook di backup",

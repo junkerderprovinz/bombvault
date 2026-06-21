@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { backupFlashNow, listFlashSnapshots, restoreFlash } from "../lib/api";
+import { backupFlashNow, listFlashSnapshots, restoreFlash, deleteSnapshot } from "../lib/api";
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
@@ -74,7 +74,7 @@ function FlashBackupButton({ t, onBackedUp }: { t: T; onBackedUp: () => void }) 
 // Snapshot row (safe extract restore)
 // ---------------------------------------------------------------------------
 
-function FlashSnapshotRow({ snap, t }: { snap: Snapshot; t: T }) {
+function FlashSnapshotRow({ snap, onDeleted, t }: { snap: Snapshot; onDeleted: () => void; t: T }) {
   const [confirmed, setConfirmed] = useState(false);
   type State =
     | { phase: "idle" }
@@ -82,6 +82,23 @@ function FlashSnapshotRow({ snap, t }: { snap: Snapshot; t: T }) {
     | { phase: "success"; target?: string }
     | { phase: "error"; message: string };
   const [state, setState] = useState<State>({ phase: "idle" });
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    setDeleting(true);
+    setDeleteErr(null);
+    try {
+      const res = await deleteSnapshot("flash", snap.id);
+      if (res.ok) onDeleted();
+      else setDeleteErr(res.error ?? "Delete failed");
+    } catch (err) {
+      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleRestore() {
     if (!confirmed) return;
@@ -135,6 +152,14 @@ function FlashSnapshotRow({ snap, t }: { snap: Snapshot; t: T }) {
             t("snapshots.restore")
           )}
         </button>
+        <button
+          onClick={() => void handleDelete()}
+          disabled={deleting || isPending}
+          title={t("snapshots.delete")}
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+        >
+          {deleting ? "…" : t("snapshots.delete")}
+        </button>
       </div>
       {state.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] pl-24 break-words">
@@ -144,6 +169,7 @@ function FlashSnapshotRow({ snap, t }: { snap: Snapshot; t: T }) {
       {state.phase === "error" && (
         <p className="text-xs text-[#ff8389] pl-24 break-words">{state.message}</p>
       )}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
     </div>
   );
 }
@@ -214,7 +240,7 @@ export function Flash() {
         {!loading && snapshots.length > 0 && (
           <div className="rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
-              <FlashSnapshotRow key={snap.id} snap={snap} t={t} />
+              <FlashSnapshotRow key={snap.id} snap={snap} onDeleted={() => void load()} t={t} />
             ))}
           </div>
         )}

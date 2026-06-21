@@ -207,6 +207,8 @@ const he: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "קבצים",
+  "snapshots.delete": "מחיקה",
+  "snapshots.deleteConfirm": "למחוק את הגיבוי הזה? תמונת המצב מוסרת מהמאגר (הרץ גיזום בהגדרות לשחרור המקום). לא ניתן לבטל.",
 
   // File-level restore
   "files.restore": "שחזר",
@@ -239,6 +241,12 @@ const he: Partial<Translations> = {
   "integrity.checking": "בודק…",
   "integrity.ok": "✓ תקין",
   "integrity.failed": "הבדיקה נכשלה",
+  "integrity.unlock": "ביטול נעילה",
+  "integrity.prune": "גיזום",
+  "integrity.verifyHint": "הרצת restic check לאימות המבנה והמטא-נתונים.",
+  "integrity.unlockHint": "ניקוי נעילות מאגר תקועות שנותרו מהרצה שקרסה/הופסקה (מתקן 'repository is already locked').",
+  "integrity.pruneHint": "שחרור מקום בדיסק מגיבויים שנמחקו/נשכחו (עשוי לקחת זמן).",
+  "integrity.pruneConfirm": "גיזום משחרר מקום מגיבויים שנמחקו ועשוי להימשך מספר דקות. להמשיך?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks לגיבוי",

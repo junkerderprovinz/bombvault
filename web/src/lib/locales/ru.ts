@@ -204,6 +204,8 @@ const ru: Partial<Translations> = {
 
   // Files
   "snapshots.files": "Файлы",
+  "snapshots.delete": "Удалить",
+  "snapshots.deleteConfirm": "Удалить эту резервную копию? Снимок удаляется из репозитория (для освобождения места запустите Очистить в Настройках). Отменить нельзя.",
   "files.restore": "Восстановить",
   "files.restored": "Восстановлено",
   "files.restoreConfirm": "Восстановить этот файл в исходное расположение? Текущий файл будет перезаписан.",
@@ -234,6 +236,12 @@ const ru: Partial<Translations> = {
   "integrity.checking": "Проверка…",
   "integrity.ok": "✓ Исправен",
   "integrity.failed": "Проверка не пройдена",
+  "integrity.unlock": "Разблокировать",
+  "integrity.prune": "Очистить",
+  "integrity.verifyHint": "Запустите restic check для проверки структуры и метаданных.",
+  "integrity.unlockHint": "Удалить зависшие блокировки репозитория от прерванного запуска (исправляет 'repository is already locked').",
+  "integrity.pruneHint": "Освободить место от удалённых/забытых резервных копий (может занять время).",
+  "integrity.pruneConfirm": "Очистка освобождает место от удалённых копий и может занять несколько минут. Продолжить?",
 
   // Backup hooks
   "hooks.title": "Хуки резервного копирования",

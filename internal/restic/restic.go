@@ -252,6 +252,32 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode) []string {
 	return args
 }
 
+// UnlockArgs returns the argv slice for `restic unlock`. removeAll adds
+// --remove-all, which clears ALL locks (not just stale ones) — safe because
+// BombVault is the sole writer to its repos and serialises its operations.
+func UnlockArgs(repo string, removeAll bool, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "unlock")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	if removeAll {
+		args = append(args, "--remove-all")
+	}
+	return args
+}
+
+// PruneArgs returns the argv slice for `restic prune` (reclaims space from
+// forgotten snapshots).
+func PruneArgs(repo string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "prune")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	return args
+}
+
 // ---- execution helper ------------------------------------------------------
 
 // run executes restic with the given args and mode.  The password is injected
@@ -560,6 +586,19 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 		return nil
 	}
 	_, err := r.run(ctx, ForgetPolicyArgs(repo, p, m), m)
+	return err
+}
+
+// Unlock removes locks from the repo (`restic unlock`). removeAll clears ALL
+// locks, not just stale ones — safe because BombVault is the sole writer.
+func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
+	_, err := r.run(ctx, UnlockArgs(repo, removeAll, m), m)
+	return err
+}
+
+// Prune reclaims repository space freed by forgotten snapshots (`restic prune`).
+func (r Restic) Prune(ctx context.Context, repo string, m Mode) error {
+	_, err := r.run(ctx, PruneArgs(repo, m), m)
 	return err
 }
 

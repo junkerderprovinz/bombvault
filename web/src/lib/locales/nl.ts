@@ -204,6 +204,8 @@ const nl: Partial<Translations> = {
 
   // Backups extra
   "snapshots.files": "Bestanden",
+  "snapshots.delete": "Verwijderen",
+  "snapshots.deleteConfirm": "Deze back-up verwijderen? De snapshot wordt uit de repository verwijderd (voer Opschonen uit in Instellingen om de ruimte vrij te maken). Kan niet ongedaan worden gemaakt.",
 
   // File-level restore
   "files.restore": "Herstellen",
@@ -236,6 +238,12 @@ const nl: Partial<Translations> = {
   "integrity.checking": "Controleren…",
   "integrity.ok": "✓ Gezond",
   "integrity.failed": "Controle mislukt",
+  "integrity.unlock": "Ontgrendelen",
+  "integrity.prune": "Opschonen",
+  "integrity.verifyHint": "Voer restic check uit om structuur en metadata te verifiëren.",
+  "integrity.unlockHint": "Verwijder vastgelopen repository-locks van een gecrashte/onderbroken run (lost 'repository is already locked' op).",
+  "integrity.pruneHint": "Maak schijfruimte vrij van verwijderde/vergeten back-ups (kan even duren).",
+  "integrity.pruneConfirm": "Opschonen maakt ruimte vrij van verwijderde back-ups en kan enkele minuten duren. Doorgaan?",
 
   // Pre/post-backup hooks
   "hooks.title": "Back-uphooks",

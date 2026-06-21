@@ -207,6 +207,8 @@ const cs: Partial<Translations> = {
 
   // Files
   "snapshots.files": "Soubory",
+  "snapshots.delete": "Smazat",
+  "snapshots.deleteConfirm": "Smazat tuto zálohu? Snímek se odstraní z repozitáře (pro uvolnění místa spusťte Vyčistit v Nastavení). Nelze vrátit zpět.",
   "files.restore": "Obnovit",
   "files.restored": "Obnoveno",
   "files.restoreConfirm": "Obnovit tento soubor do původního umístění? Přepíše stávající soubor.",
@@ -237,6 +239,12 @@ const cs: Partial<Translations> = {
   "integrity.checking": "Kontroluji…",
   "integrity.ok": "✓ V pořádku",
   "integrity.failed": "Kontrola selhala",
+  "integrity.unlock": "Odemknout",
+  "integrity.prune": "Vyčistit",
+  "integrity.verifyHint": "Spustit restic check k ověření struktury a metadat.",
+  "integrity.unlockHint": "Odstranit zaseklé zámky repozitáře po havarovaném/přerušeném běhu (řeší 'repository is already locked').",
+  "integrity.pruneHint": "Uvolnit místo z odstraněných/zapomenutých záloh (může chvíli trvat).",
+  "integrity.pruneConfirm": "Vyčištění uvolní místo z odstraněných záloh a může trvat několik minut. Pokračovat?",
 
   // Backup hooks
   "hooks.title": "Zálohovací hooky",

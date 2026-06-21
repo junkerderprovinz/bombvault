@@ -207,6 +207,8 @@ const ro: Partial<Translations> = {
 
   // Backups — files
   "snapshots.files": "Fișiere",
+  "snapshots.delete": "Șterge",
+  "snapshots.deleteConfirm": "Ștergeți acest backup? Instantaneul este eliminat din depozit (rulați Curăță în Setări pentru a recupera spațiul). Nu poate fi anulat.",
 
   // File-level restore
   "files.restore": "Restaurare",
@@ -239,6 +241,12 @@ const ro: Partial<Translations> = {
   "integrity.checking": "Verificare…",
   "integrity.ok": "✓ Sănătos",
   "integrity.failed": "Verificare eșuată",
+  "integrity.unlock": "Deblochează",
+  "integrity.prune": "Curăță",
+  "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",
+  "integrity.unlockHint": "Elimină blocajele rămase ale depozitului după o rulare întreruptă (rezolvă 'repository is already locked').",
+  "integrity.pruneHint": "Recuperează spațiu din backupurile șterse/uitate (poate dura).",
+  "integrity.pruneConfirm": "Curățarea recuperează spațiu din backupurile șterse și poate dura câteva minute. Continuați?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hook-uri de backup",

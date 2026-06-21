@@ -596,6 +596,58 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleUnlock clears repository locks for a domain (restic unlock --remove-all),
+// the manual recovery for a "repository is already locked" error left by a
+// crashed/interrupted run. POST /api/unlock/{domain}
+func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	if err := h.svc.UnlockDomain(r.Context(), domain); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handlePrune reclaims repository space freed by forgotten snapshots
+// (restic prune). POST /api/prune/{domain}
+func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	if err := h.svc.PruneDomain(r.Context(), domain); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleDeleteSnapshot forgets a single snapshot from a domain's repo.
+// DELETE /api/snapshots/{domain}/{id}
+func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	if err := h.svc.DeleteSnapshot(r.Context(), domain, r.PathValue("id")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleRcloneInfo returns the configured rclone remote names (never secrets).
 // GET /api/rclone
 func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {
