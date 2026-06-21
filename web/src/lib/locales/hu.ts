@@ -190,6 +190,7 @@ const hu: Partial<Translations> = {
   "vms.restoreSelected": "Kijelöltek visszaállítása (legújabb)",
   "vms.restoreSelectedConfirm": "Visszaállítja a kijelölt VM-ek LEGÚJABB mentését? Minden VM leáll, a lemezfájlok kicserélődnek, és a VM visszaáll.",
   "vms.notInstalledHint": "Ezek a VM-ek már nincsenek definiálva a hoszton, de még vannak biztonsági mentéseik. Állítsa vissza őket, vagy tekintse meg pillanatképeiket a Mentések panelen.",
+  "vms.discoverHint": "Törölted a VM-et az Unraidből (vagy elveszett egy újratelepítés után)? Építsd újra a biztonsági mentési bejegyzését a tárhelyről, hogy visszaállíthasd.",
 
   // Container / VM state badge labels
   "state.created":      "Létrehozva",

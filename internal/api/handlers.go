@@ -270,6 +270,17 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
 }
 
+// handleDiscoverVMs rebuilds the VM target list from backup storage, so a VM
+// deleted from the host (or lost with the database) becomes restorable again.
+func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
+	n, err := h.svc.DiscoverVMs(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
+}
+
 func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {

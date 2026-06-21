@@ -190,6 +190,7 @@ const da: Partial<Translations> = {
   "vms.restoreSelected": "Gendan valgte (nyeste)",
   "vms.restoreSelectedConfirm": "Gendanne den NYESTE sikkerhedskopi af de valgte VMs? Hver VM slukkes, dens diskfiler erstattes og VM'en gendannes.",
   "vms.notInstalledHint": "Disse VMs er ikke længere defineret på værten, men har stadig sikkerhedskopier. Gendan dem, eller gennemse deres øjebliksbilleder i panelet Sikkerhedskopier.",
+  "vms.discoverHint": "VM slettet fra Unraid (eller mistet efter geninstallation)? Genopbyg dens sikkerhedskopipost fra lageret, så du kan gendanne den.",
 
   // Container / VM state badge labels
   "state.created":      "Oprettet",

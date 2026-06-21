@@ -190,6 +190,7 @@ const ar: Partial<Translations> = {
   "vms.restoreSelected": "استعادة المحدَّد (الأحدث)",
   "vms.restoreSelectedConfirm": "استعادة أحدث نسخة احتياطية للـ VMs المحددة؟ سيُوقف كل VM وتُستبدل ملفات القرص ويُستعاد.",
   "vms.notInstalledHint": "هذه الـ VMs لم تعد محددة على المضيف لكن لا تزال لديها نسخ احتياطية. استعدها أو تصفح لقطاتها في لوحة النسخ الاحتياطية.",
+  "vms.discoverHint": "هل حُذفت الجهاز الظاهري من Unraid (أو فُقد بعد إعادة التثبيت)؟ أعد بناء إدخال النسخ الاحتياطي من التخزين لاستعادته.",
 
   // Container / VM state badge labels
   "state.created":      "تم الإنشاء",

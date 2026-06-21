@@ -190,6 +190,7 @@ const vi: Partial<Translations> = {
   "vms.restoreSelected": "Khôi phục đã chọn (mới nhất)",
   "vms.restoreSelectedConfirm": "Khôi phục bản sao lưu MỚI NHẤT của các VMs đã chọn? Mỗi VM sẽ bị tắt, các tệp đĩa được thay thế và VM được khôi phục.",
   "vms.notInstalledHint": "Các VMs này không còn được định nghĩa trên máy chủ nhưng vẫn còn bản sao lưu. Khôi phục hoặc duyệt snapshot trong bảng Bản sao lưu.",
+  "vms.discoverHint": "Đã xóa máy ảo khỏi Unraid (hoặc mất sau khi cài lại)? Dựng lại mục sao lưu của nó từ bộ lưu trữ để có thể khôi phục.",
 
   // Container / VM state badge labels
   "state.created":      "Đã tạo",

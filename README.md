@@ -82,7 +82,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 - **One-click full restore** — pick a snapshot, click Restore. Done.
 - **Containers are automatically reinstalled**: the container definition is replayed against the Docker API so the container reappears in the Unraid Docker tab exactly as it was — same image, same settings, same port mappings.
-- **VMs are automatically recreated**: the XML definition is re-imported over SSH so the VM reappears in the VM Manager with its disk + UEFI NVRAM reattached, even after the VM was deleted.
+- **VMs are automatically recreated**: the XML definition is re-imported over SSH so the VM reappears in the VM Manager with its disk + UEFI NVRAM reattached, even after the VM was deleted. A VM deleted from the host shows under **Not installed** in the VM tab; if its entry is gone too (e.g. after a fresh install), **Discover backups** rebuilds it from storage — same as for containers.
 - **Individual restore** — restore one container or one VM without touching the others.
 - **Flash restore is safe** — a flash snapshot is *extracted to a folder* you then copy onto a fresh USB; the live, running `/boot` is never overwritten (which could leave the server unbootable).
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.

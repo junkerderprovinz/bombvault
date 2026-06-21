@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, discoverVMs } from "../lib/api";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
@@ -578,6 +578,26 @@ export function VMs() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
+
+  async function handleDiscover() {
+    setDiscovering(true);
+    setDiscoverMsg(null);
+    try {
+      const res = await discoverVMs();
+      if (res.ok) {
+        setDiscoverMsg(`+${res.discovered ?? 0}`);
+        await loadVMs();
+      } else {
+        setDiscoverMsg(res.error ?? "Discover failed");
+      }
+    } catch (err) {
+      setDiscoverMsg(err instanceof Error ? err.message : "Discover failed");
+    } finally {
+      setDiscovering(false);
+    }
+  }
 
   function loadVMs() {
     return listVMs()
@@ -646,14 +666,29 @@ export function VMs() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-      {/* Page heading */}
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">
-          {t("vms.title")}
-        </h1>
-        <p className="mt-1 text-sm text-carbon-textSub">
-          {t("vms.subtitle")}
-        </p>
+      {/* Page heading + Discover (disaster-recovery) action */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold text-carbon-text">
+            {t("vms.title")}
+          </h1>
+          <p className="mt-1 text-sm text-carbon-textSub">
+            {t("vms.subtitle")}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {discoverMsg && (
+            <span className="text-xs text-carbon-textSub">{discoverMsg}</span>
+          )}
+          <button
+            onClick={() => void handleDiscover()}
+            disabled={discovering}
+            title={t("vms.discoverHint")}
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {discovering ? t("containers.discovering") : t("containers.discover")}
+          </button>
+        </div>
       </div>
 
       {loading && (
