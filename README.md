@@ -82,6 +82,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 ### Restore (the good part)
 
 - **One-click full restore** — pick a snapshot, click Restore. Done.
+- **Restore from local or off-site** — every backup browser (and the integrity/maintenance card) has a **Local | Off-site** switch, so if a local repo is lost or corrupt you can list and restore straight from the off-site replica. Delete is per-source: removing a backup only affects the copy you're viewing, never both.
 - **Containers are automatically reinstalled**: the container definition is replayed against the Docker API so the container reappears in the Unraid Docker tab exactly as it was — same image, same settings, same port mappings.
 - **VMs are automatically recreated**: the XML definition is re-imported over SSH so the VM reappears in the VM Manager with its disk + UEFI NVRAM reattached, even after the VM was deleted. A VM deleted from the host shows under **Not installed** in the VM tab; if its entry is gone too (e.g. after a fresh install), **Discover backups** rebuilds it from storage — same as for containers.
 - **Individual restore** — restore one container or one VM without touching the others.
@@ -93,7 +94,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
 - Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
-- **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain under Settings → Off-site copy; after each successful local backup BombVault replicates the new snapshot there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary.
+- **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain under Settings → Off-site copy; BombVault replicates new snapshots there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary. Each domain has its own **off-site schedule**: leave it blank to replicate after every local backup, or set a cadence (e.g. `weekly Sun 03:00`) to ship off-site less often than you back up locally — plus a **Replicate now** button for on-demand runs.
 - Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup.
 - Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
 
