@@ -455,6 +455,9 @@ type settingsView struct {
 	ContainersPath     string `json:"containersPath"`
 	VMsPath            string `json:"vmsPath"`
 	FlashPath          string `json:"flashPath"`
+	ContainersOffsite  string `json:"containersOffsite"`
+	VMsOffsite         string `json:"vmsOffsite"`
+	FlashOffsite       string `json:"flashOffsite"`
 	ContainersSchedule string `json:"containersSchedule"`
 	VMsSchedule        string `json:"vmsSchedule"`
 	FlashSchedule      string `json:"flashSchedule"`
@@ -475,6 +478,9 @@ func toView(s store.Settings) settingsView {
 		ContainersPath:       s.ContainersPath,
 		VMsPath:              s.VMsPath,
 		FlashPath:            s.FlashPath,
+		ContainersOffsite:    s.ContainersOffsite,
+		VMsOffsite:           s.VMsOffsite,
+		FlashOffsite:         s.FlashOffsite,
 		ContainersSchedule:   s.ContainersSchedule,
 		VMsSchedule:          s.VMsSchedule,
 		FlashSchedule:        s.FlashSchedule,
@@ -512,8 +518,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Validate each domain repo location: a remote backend (rclone:…/s3:…) is
 	// accepted verbatim; a local path must stay under the mount root.
-	for _, sub := range []string{v.ContainersPath, v.VMsPath, v.FlashPath} {
-		if restic.IsRemoteRepo(sub) {
+	// Local domain repos, plus any configured off-site repos (off-site may be
+	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
+	// a local path must stay under the mount root.
+	for _, sub := range []string{
+		v.ContainersPath, v.VMsPath, v.FlashPath,
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite,
+	} {
+		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
 		}
 		if _, err := paths.Resolve(h.cfg.HostMountRoot, sub); err != nil {
@@ -566,6 +578,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ContainersPath:       v.ContainersPath,
 		VMsPath:              v.VMsPath,
 		FlashPath:            v.FlashPath,
+		ContainersOffsite:    v.ContainersOffsite,
+		VMsOffsite:           v.VMsOffsite,
+		FlashOffsite:         v.FlashOffsite,
 		ContainersSchedule:   v.ContainersSchedule,
 		VMsSchedule:          v.VMsSchedule,
 		FlashSchedule:        v.FlashSchedule,
@@ -577,6 +592,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		AuthPasswordHash:     existing.AuthPasswordHash,
 		RcloneConf:           existing.RcloneConf,
 		NotifyConf:           existing.NotifyConf,
+		CloudConf:            existing.CloudConf,
 	}
 	if err := h.store.UpdateSettings(s); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -1122,22 +1138,42 @@ func (h *Handler) handleSnapshotsFlash(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
-// handleRestoreFlash extracts a flash snapshot to the restore folder and returns
-// its path (the live /boot is never overwritten).
-func (h *Handler) handleRestoreFlash(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		SnapshotID string `json:"snapshotId"`
-		Confirm    bool   `json:"confirm"`
+// headerOnFirstWrite defers the download headers (and so the 200 status) until
+// the first byte is actually streamed. That way a restic failure BEFORE any
+// output (bad id, repo locked, no backups) is reported as a clean JSON error
+// instead of a truncated 200 zip; only a genuine mid-stream failure can leave a
+// partial body.
+type headerOnFirstWrite struct {
+	w      http.ResponseWriter
+	header func()
+	wrote  bool
+}
+
+func (h *headerOnFirstWrite) Write(p []byte) (int, error) {
+	if !h.wrote {
+		h.wrote = true
+		h.header()
 	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	target, err := h.svc.RestoreFlash(r.Context(), body.SnapshotID, body.Confirm)
-	if err != nil {
+	return h.w.Write(p)
+}
+
+// handleDownloadFlash streams a flash snapshot to the browser as a zip download
+// (restic dump). GET so it can be a plain link; non-destructive — the live /boot
+// is never touched. ?snapshot=<id> selects the snapshot ("" / "latest" = newest).
+func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("snapshot")
+	var resolved string
+	lw := &headerOnFirstWrite{w: w, header: func() {
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", `attachment; filename="`+FlashDownloadName(resolved)+`"`)
+	}}
+	err := h.svc.DownloadFlashZip(r.Context(), id, func(rid string) { resolved = rid }, lw)
+	// No bytes streamed yet → headers not sent, so report the failure as JSON
+	// (bad/ambiguous id, no backups, repo locked). A mid-stream failure (after
+	// bytes flowed) can only truncate the body; the failed run is recorded.
+	if err != nil && !lw.wrote {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
 }
 
 func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {

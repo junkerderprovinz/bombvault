@@ -116,6 +116,8 @@ const th: Partial<Translations> = {
   "settings.containersPath": "พาธ Containers",
   "settings.vmsPath": "พาธ VMs",
   "settings.flashPath": "พาธ Flash",
+  "settings.offsiteTitle": "สำเนานอกสถานที่ (ไม่บังคับ)",
+  "settings.offsiteHint": "หลังจากการสำรองข้อมูลในเครื่องสำเร็จทุกครั้ง จะทำสำเนาไปยังที่เก็บที่สองด้วย restic copy ด้วย ป้อนที่เก็บระยะไกล (rest:http://host:8000/repo, s3:…, b2:…) หรือพาธย่อยในเครื่อง; เว้นว่างเพื่อปิดใช้งาน การสำรองในเครื่องยังคงเป็นหลัก",
   "settings.domains": "โดเมน",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const th: Partial<Translations> = {
   "flash.backupHint": "บันทึกแฟลช USB ทั้งหมด (‎/boot): ระบบปฏิบัติการ Unraid, ลิขสิทธิ์, การตั้งค่าอาร์เรย์, แชร์, เครือข่ายและการตั้งค่าปลั๊กอิน",
   "flash.backupNow": "สำรองข้อมูลแฟลชเดี๋ยวนี้",
   "flash.backingUp": "กำลังสำรองข้อมูล…",
-  "flash.restoring": "กำลังแตกไฟล์…",
-  "flash.restoreNote": "การกู้คืนจะแตกสแนปช็อตไปยังโฟลเดอร์ (แสดงด้านล่าง) — ไม่เคยเขียนทับ ‎/boot ที่กำลังทำงาน คัดลอกไฟล์ที่กู้คืนลงแฟลช USB ใหม่เพื่อสร้างแฟลชของคุณขึ้นใหม่",
-  "flash.restoredTo": "แตกไฟล์ไปยัง:",
+  "flash.download": "ดาวน์โหลด (.zip)",
+  "flash.restoreNote": "การกู้คืนจะดาวน์โหลดไฟล์ ZIP ของสแนปช็อต — /boot ที่กำลังทำงานจะไม่ถูกแตะต้อง วางไฟล์ .zip ลงในตัวสร้าง USB ของ Unraid โดยตรง หรือแตกไฟล์ลงใน USB ใหม่เพื่อสร้างแฟลชของคุณใหม่",
   "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช — เรียกใช้การสำรองข้อมูลด้านบน",
 
   // VM backup (SSH)

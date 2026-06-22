@@ -116,6 +116,8 @@ const he: Partial<Translations> = {
   "settings.containersPath": "נתיב Containers",
   "settings.vmsPath": "נתיב VMs",
   "settings.flashPath": "נתיב Flash",
+  "settings.offsiteTitle": "עותק מחוץ לאתר (אופציונלי)",
+  "settings.offsiteHint": "אחרי כל גיבוי מקומי מוצלח, לשכפל אותו גם למאגר שני באמצעות restic copy. הזינו מאגר מרוחק (rest:http://host:8000/repo, s3:…, b2:…) או נתיב משנה מקומי; השאירו ריק כדי להשבית. הגיבוי המקומי נשאר הראשי.",
   "settings.domains": "דומיינים",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const he: Partial<Translations> = {
   "flash.backupHint": "לוכד את כל כונן ה-USB flash (‎/boot): מערכת Unraid, רישיון, תצורת מערך, שיתופים, רשת ותצורת תוספים.",
   "flash.backupNow": "גבה flash עכשיו",
   "flash.backingUp": "מגבה…",
-  "flash.restoring": "מחלץ…",
-  "flash.restoreNote": "השחזור מְחַלֵּץ snapshot לתיקייה (מוצגת למטה) — לעולם אינו דורס את ה-‎/boot הפעיל. העתק את הקבצים המשוחזרים ל-USB חדש כדי לבנות מחדש את ה-flash.",
-  "flash.restoredTo": "חולץ אל:",
+  "flash.download": "הורדה (.zip)",
+  "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה — ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash.",
   "flash.none": "אין עדיין גיבויי flash — הרץ גיבוי למעלה.",
 
   // VM backup (SSH)

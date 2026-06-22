@@ -8,12 +8,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// fakeFlashRestic implements backup.FlashRestic (Backup + RestoreTo).
+// fakeFlashRestic implements backup.FlashRestic (Backup only — flash restore is
+// a zip download handled in the service layer, not the orchestrator).
 type fakeFlashRestic struct {
 	backedUpPaths []string
-	restoreTarget string
 	backupErr     error
-	restoreErr    error
 }
 
 func (f *fakeFlashRestic) Backup(_ context.Context, _ string, paths, _ []string) (backup.Summary, error) {
@@ -22,11 +21,6 @@ func (f *fakeFlashRestic) Backup(_ context.Context, _ string, paths, _ []string)
 		return backup.Summary{}, f.backupErr
 	}
 	return backup.Summary{SnapshotID: "abcd1234ef567890", Bytes: 4096}, nil
-}
-
-func (f *fakeFlashRestic) RestoreTo(_ context.Context, _, _, target string) error {
-	f.restoreTarget = target
-	return f.restoreErr
 }
 
 func TestBackupFlash(t *testing.T) {
@@ -63,46 +57,5 @@ func TestBackupFlashRecordsFailure(t *testing.T) {
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
 		t.Fatalf("expected one failed run, got %v", runs.finishes)
-	}
-}
-
-func TestRestoreFlashRequiresConfirm(t *testing.T) {
-	err := backup.RestoreFlash(context.Background(), backup.FlashRestoreDeps{
-		Confirmed: false, SnapshotID: "abcd1234ef567890", Restic: &fakeFlashRestic{}, Runs: &fakeRuns{},
-	})
-	if !errors.Is(err, backup.ErrNotConfirmed) {
-		t.Fatalf("expected ErrNotConfirmed, got %v", err)
-	}
-}
-
-func TestRestoreFlashRejectsBadSnapshotID(t *testing.T) {
-	err := backup.RestoreFlash(context.Background(), backup.FlashRestoreDeps{
-		Confirmed: true, SnapshotID: "../etc", Restic: &fakeFlashRestic{}, Runs: &fakeRuns{},
-	})
-	if !errors.Is(err, backup.ErrInvalidSnapshotID) {
-		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
-	}
-}
-
-func TestRestoreFlashExtractsToTarget(t *testing.T) {
-	rc := &fakeFlashRestic{}
-	runs := &fakeRuns{}
-	err := backup.RestoreFlash(context.Background(), backup.FlashRestoreDeps{
-		Confirmed:  true,
-		SnapshotID: "abcd1234ef567890",
-		Repo:       "/repo/flash",
-		Target:     "/host/user/user/bombvault/flash-restore",
-		TargetID:   "flash",
-		Restic:     rc,
-		Runs:       runs,
-	})
-	if err != nil {
-		t.Fatalf("RestoreFlash: %v", err)
-	}
-	if rc.restoreTarget != "/host/user/user/bombvault/flash-restore" {
-		t.Fatalf("expected extract to target folder, got %q", rc.restoreTarget)
-	}
-	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
-		t.Fatalf("expected one success run, got %v", runs.finishes)
 	}
 }

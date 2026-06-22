@@ -1070,6 +1070,8 @@ export function SettingsPage() {
 
   const [pathSaveState, setPathSaveState] = useState<SaveState>("idle");
   const [pathSaveError, setPathSaveError] = useState<string | null>(null);
+  const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
+  const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
 
   const [domSaveState, setDomSaveState] = useState<SaveState>("idle");
   const [domSaveError, setDomSaveError] = useState<string | null>(null);
@@ -1403,6 +1405,47 @@ export function SettingsPage() {
               },
               setPathSaveState,
               setPathSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Off-site copy (restic copy replication)                            */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.offsiteTitle")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
+        {([
+          ["containersOffsite", "nav.containers"],
+          ["vmsOffsite", "nav.vms"],
+          ["flashOffsite", "nav.flash"],
+        ] as const).map(([key, label]) => (
+          <label key={key} className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t(label)}</span>
+            <input
+              value={settings[key]}
+              spellCheck={false}
+              onChange={(e) =>
+                setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
+              }
+              placeholder="rest:http://host:8000/repo"
+              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </label>
+        ))}
+        <SaveBar
+          state={offsiteSaveState}
+          error={offsiteSaveError}
+          onSave={() =>
+            void save(
+              {
+                containersOffsite: settings.containersOffsite,
+                vmsOffsite: settings.vmsOffsite,
+                flashOffsite: settings.flashOffsite,
+              },
+              setOffsiteSaveState,
+              setOffsiteSaveError
             )
           }
           t={t}

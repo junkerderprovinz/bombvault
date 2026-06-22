@@ -1,9 +1,11 @@
 package api_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -85,6 +87,90 @@ func TestServiceModeEncryptionOff(t *testing.T) {
 	if mode.Password != "" {
 		t.Fatal("password must be empty when encryption off")
 	}
+}
+
+func TestDownloadFlashZip(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir(), FlashDir: "/host/boot"}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FlashPath = "backups/flash"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}, {ID: "cccc3333dddd4444"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	t.Run("latest resolves to newest and streams zip bytes", func(t *testing.T) {
+		var buf bytes.Buffer
+		var resolved string
+		if err := svc.DownloadFlashZip(context.Background(), "latest", func(id string) { resolved = id }, &buf); err != nil {
+			t.Fatal(err)
+		}
+		if resolved != "cccc3333dddd4444" {
+			t.Fatalf("expected newest id resolved, got %q", resolved)
+		}
+		if buf.Len() == 0 {
+			t.Fatal("expected zip bytes to be streamed")
+		}
+	})
+
+	t.Run("unknown id is rejected before any bytes or headers", func(t *testing.T) {
+		var buf bytes.Buffer
+		called := false
+		err := svc.DownloadFlashZip(context.Background(), "deadbeef", func(string) { called = true }, &buf)
+		if err == nil {
+			t.Fatal("expected an error for an unknown snapshot id")
+		}
+		if called {
+			t.Fatal("onResolved must not fire for an unknown id (headers would be wrongly committed)")
+		}
+		if buf.Len() != 0 {
+			t.Fatal("no bytes may be written on a validation failure")
+		}
+	})
+}
+
+func TestBackupFlashReplicatesOffsite(t *testing.T) {
+	mk := func(offsite string) (*fakeResticEngine, error) {
+		dir := t.TempDir()
+		root := filepath.ToSlash(dir)
+		flashDir := root + "/boot"
+		if err := os.MkdirAll(flashDir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, FlashDir: flashDir}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.FlashPath = "backups/flash"
+		s.FlashOffsite = offsite
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		eng := &fakeResticEngine{}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		_, err := svc.BackupFlash(context.Background())
+		return eng, err
+	}
+
+	t.Run("copies to off-site when configured", func(t *testing.T) {
+		eng, err := mk("backups/flash-offsite")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(eng.copied) != 1 {
+			t.Fatalf("expected exactly one off-site copy, got %v", eng.copied)
+		}
+	})
+
+	t.Run("no copy when off-site is blank", func(t *testing.T) {
+		eng, err := mk("")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(eng.copied) != 0 {
+			t.Fatalf("expected no off-site copy, got %v", eng.copied)
+		}
+	})
 }
 
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
@@ -688,6 +774,8 @@ type fakeResticEngine struct {
 	forgotten       []string
 	prunedRepos     []string
 	checked         []string
+	copied          []string
+	copyErr         error
 	snaps           []restic.Snapshot
 	lsEntries       []restic.FileEntry
 	unlockedRepos   []string
@@ -697,6 +785,7 @@ type fakeResticEngine struct {
 	snapshotsErr    error
 	initErr         error
 	backupErr       error
+	dumpErr         error
 	forgetPolicyErr error
 	checkErr        error
 	unlockErr       error
@@ -721,8 +810,12 @@ func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path
 	return nil
 }
 
-func (f *fakeResticEngine) Restore(_ context.Context, repo, snapshotID, target string, _ restic.Mode) error {
-	f.restored = append(f.restored, repo+":"+snapshotID+"->"+target)
+func (f *fakeResticEngine) DumpZip(_ context.Context, repo, snapshotID, subfolder string, w io.Writer, _ restic.Mode) error {
+	f.restored = append(f.restored, repo+":"+snapshotID+":"+subfolder)
+	if f.dumpErr != nil {
+		return f.dumpErr
+	}
+	_, _ = w.Write([]byte("PK\x03\x04zip")) // minimal zip-magic stand-in
 	return nil
 }
 
@@ -771,6 +864,11 @@ func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool
 func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) error {
 	f.manualPruned = append(f.manualPruned, repo)
 	return nil
+}
+
+func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Mode) error {
+	f.copied = append(f.copied, srcRepo+"->"+destRepo)
+	return f.copyErr
 }
 
 // initRepoSvc builds a service whose containers repo is marked initialised, so

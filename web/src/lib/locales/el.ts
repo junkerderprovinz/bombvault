@@ -116,6 +116,8 @@ const el: Partial<Translations> = {
   "settings.containersPath": "Διαδρομή containers",
   "settings.vmsPath": "Διαδρομή VMs",
   "settings.flashPath": "Διαδρομή Flash",
+  "settings.offsiteTitle": "Αντίγραφο εκτός τόπου (προαιρετικό)",
+  "settings.offsiteHint": "Μετά από κάθε επιτυχημένο τοπικό αντίγραφο, αναπαραγωγή του και σε δεύτερο αποθετήριο με restic copy. Δώστε ένα απομακρυσμένο (rest:http://host:8000/repo, s3:…, b2:…) ή μια τοπική υποδιαδρομή· αφήστε κενό για απενεργοποίηση. Το τοπικό αντίγραφο παραμένει το κύριο.",
   "settings.domains": "Τομείς",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const el: Partial<Translations> = {
   "flash.backupHint": "Καταγράφει ολόκληρο το USB flash (/boot): λειτουργικό Unraid, άδεια, διαμόρφωση array, κοινόχρηστους πόρους, δίκτυο και διαμόρφωση plugin.",
   "flash.backupNow": "Αντίγραφο flash τώρα",
   "flash.backingUp": "Δημιουργία αντιγράφου…",
-  "flash.restoring": "Εξαγωγή…",
-  "flash.restoreNote": "Η επαναφορά ΕΞΑΓΕΙ ένα στιγμιότυπο σε φάκελο (φαίνεται παρακάτω) — δεν αντικαθιστά ποτέ το ενεργό /boot. Αντιγράψτε τα ανακτημένα αρχεία σε νέο USB για να ξαναχτίσετε το flash σας.",
-  "flash.restoredTo": "Εξήχθη σε:",
+  "flash.download": "Λήψη (.zip)",
+  "flash.restoreNote": "Η επαναφορά κατεβάζει ένα ZIP του στιγμιότυπου — το /boot που εκτελείται δεν αγγίζεται ποτέ. Ρίξτε το .zip απευθείας στο εργαλείο δημιουργίας USB του Unraid ή αποσυμπιέστε το σε ένα νέο USB για να αναδημιουργήσετε το flash.",
   "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash — εκτελέστε ένα αντίγραφο παραπάνω.",
 
   // VM backup (SSH)

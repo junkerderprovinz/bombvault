@@ -116,6 +116,8 @@ const tr: Partial<Translations> = {
   "settings.containersPath": "Konteyner yolu",
   "settings.vmsPath": "VM yolu",
   "settings.flashPath": "Flash yolu",
+  "settings.offsiteTitle": "Site dışı kopya (isteğe bağlı)",
+  "settings.offsiteHint": "Her başarılı yerel yedeklemeden sonra, restic copy ile ikinci bir depoya da kopyalanır. Bir uzak depo (rest:http://host:8000/repo, s3:…, b2:…) veya yerel bir alt yol girin; devre dışı bırakmak için boş bırakın. Yerel yedek birincil olarak kalır.",
   "settings.domains": "Etki Alanları",
   "settings.containersEnabled": "Konteynerler",
   "settings.vmsEnabled": "VM'ler",
@@ -268,9 +270,8 @@ const tr: Partial<Translations> = {
   "flash.backupHint": "Tüm USB flash'ı (/boot) yakalar: Unraid işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması.",
   "flash.backupNow": "Flash'ı şimdi yedekle",
   "flash.backingUp": "Yedekleniyor…",
-  "flash.restoring": "Çıkarılıyor…",
-  "flash.restoreNote": "Geri yükleme, bir anlık görüntüyü bir klasöre ÇIKARIR (aşağıda gösterilir) — çalışan /boot'un üzerine asla yazmaz. Flash'ınızı yeniden oluşturmak için kurtarılan dosyaları yeni bir USB'ye kopyalayın.",
-  "flash.restoredTo": "Şuraya çıkarıldı:",
+  "flash.download": "İndir (.zip)",
+  "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir — çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın.",
   "flash.none": "Henüz flash yedeği yok — yukarıdan bir yedekleme çalıştırın.",
 
   // VM backup (SSH)

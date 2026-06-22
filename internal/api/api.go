@@ -120,7 +120,7 @@ func (h *Handler) Router() http.Handler {
 	// Flash endpoints (singleton domain — the Unraid USB).
 	mux.HandleFunc("POST /api/flash/backup", h.handleBackupFlash)
 	mux.HandleFunc("GET /api/flash/snapshots", h.handleSnapshotsFlash)
-	mux.HandleFunc("POST /api/flash/restore", h.handleRestoreFlash)
+	mux.HandleFunc("GET /api/flash/download", h.handleDownloadFlash)
 
 	return h.authGate(mux)
 }

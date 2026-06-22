@@ -114,17 +114,37 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode) []string {
 	return args
 }
 
-// RestoreArgs returns the argv slice for `restic restore`.
-// snapshotID is placed after -- (arg-injection guard).
-func RestoreArgs(repo string, snapshotID string, target string, m Mode) []string {
+// DumpZipArgs returns the argv slice for streaming a snapshot subtree as a zip to
+// stdout: `restic dump -a zip <snapshot>:<subfolder> /`. Rooting the archive at
+// subfolder puts that folder's CONTENTS at the zip root (so a flash zip has
+// bzimage/, config/ … at top level, ready for the Unraid USB creator). The
+// snapshot selector + path go after -- (arg-injection guard); callers also
+// validate the id against the repo's snapshot list.
+func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "restore")
+	args = append(args, "dump", "-a", "zip")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	args = append(args, "--json")
-	args = append(args, "--target", target)
-	args = append(args, "--", snapshotID)
+	args = append(args, "--", snapshotID+":"+subfolder, "/")
+	return args
+}
+
+// CopyArgs returns the argv for replicating snapshots from srcRepo into destRepo:
+// `restic -r <dest> copy --from-repo <src>`. With no ids it copies every source
+// snapshot not already in dest (idempotent — restic skips ones already copied).
+// For an unencrypted pair both ends use --insecure-no-password / --from-…. Any
+// snapshot ids go after -- (arg-injection guard).
+func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, m Mode) []string {
+	args := repoFlag(destRepo)
+	args = append(args, "copy", "--from-repo", srcRepo)
+	if !m.Encrypted {
+		args = append(args, insecureFlag, "--from-insecure-no-password")
+	}
+	if len(snapshotIDs) > 0 {
+		args = append(args, "--")
+		args = append(args, snapshotIDs...)
+	}
 	return args
 }
 
@@ -283,30 +303,33 @@ func PruneArgs(repo string, m Mode) []string {
 
 // ---- execution helper ------------------------------------------------------
 
+// authEnv returns the process environment plus restic auth + backend credentials
+// for mode m: the repo password (or insecure-no-password), the rclone config when
+// the file exists, and any backend creds (S3 AWS_*, REST RESTIC_REST_*) in m.Env.
+// Credentials travel via env, never argv/logs. Shared by run() and DumpZip.
+func (r Restic) authEnv(m Mode) []string {
+	env := os.Environ()
+	if m.Encrypted {
+		env = append(env, "RESTIC_PASSWORD="+m.Password)
+	} else {
+		env = append(env, "RESTIC_INSECURE_NO_PASSWORD=true")
+	}
+	if r.RcloneConfig != "" {
+		if _, statErr := os.Stat(r.RcloneConfig); statErr == nil {
+			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
+		}
+	}
+	env = append(env, m.Env...)
+	return env
+}
+
 // run executes restic with the given args and mode.  The password is injected
 // via env (RESTIC_PASSWORD or RESTIC_INSECURE_NO_PASSWORD=true), never via
 // argv.  On failure, full stderr is logged server-side but only a scrubbed
 // error is returned to the caller.
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-
-	// Inject auth env — password never in argv.
-	env := cmd.Environ()
-	if m.Encrypted {
-		env = append(env, "RESTIC_PASSWORD="+m.Password)
-	} else {
-		env = append(env, "RESTIC_INSECURE_NO_PASSWORD=true")
-	}
-	// Point restic→rclone at the managed config for off-site repos (only when it
-	// exists; harmless for local repos).
-	if r.RcloneConfig != "" {
-		if _, statErr := os.Stat(r.RcloneConfig); statErr == nil {
-			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
-		}
-	}
-	// Backend credentials for remote repos (S3 AWS_*, REST RESTIC_REST_*), passed
-	// via env so they never appear in argv/logs.
-	env = append(env, m.Env...)
+	env := r.authEnv(m)
 	// When a progress sink is present (backup/restore), stream stdout so each
 	// --json "status" line's percentage reaches the UI live; otherwise capture
 	// the full output in one shot (the default for snapshots/ls/check/forget).
@@ -330,6 +353,18 @@ func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
 		return nil, runError(args, stderr.String())
 	}
 	return stdout.Bytes(), nil
+}
+
+// runToWriter runs restic streaming stdout straight into w (for `dump` zip
+// downloads), capturing stderr so a scrubbed reason is returned on failure.
+func runToWriter(cmd *exec.Cmd, args []string, w io.Writer) error {
+	var stderr bytes.Buffer
+	cmd.Stdout = w
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return runError(args, stderr.String())
+	}
+	return nil
 }
 
 // runStreaming runs restic and scans its --json stdout line by line, forwarding
@@ -443,11 +478,40 @@ func lastReason(stderr string) string {
 		}
 	}
 
+	// restic's restore summary "There were N errors" names a count but not a
+	// cause. When that is all we have, append the first concrete per-item error
+	// (e.g. an "ignoring error for <file>: …" line) so the UI shows WHY a restore
+	// partially failed instead of just a number.
+	if errorCountRe.MatchString(reason) {
+		if sample := firstItemError(lines); sample != "" {
+			reason += " (e.g. " + sample + ")"
+		}
+	}
+
 	reason = reasonPathRe.ReplaceAllString(reason, "[path]")
 	if len(reason) > 200 {
 		reason = reason[:200]
 	}
 	return reason
+}
+
+// errorCountRe matches restic's count-only restore summary ("There were N
+// errors"), which says how many items failed but not why.
+var errorCountRe = regexp.MustCompile(`(?i)there were \d+ errors`)
+
+// firstItemError returns the first stderr line that names a concrete per-item
+// failure (the kind restic prints once per file during a partial restore), so it
+// can be surfaced alongside the count-only summary.
+func firstItemError(lines []string) string {
+	for _, l := range lines {
+		ll := strings.ToLower(l)
+		if strings.Contains(ll, "ignoring error") ||
+			strings.Contains(ll, "operation not permitted") ||
+			strings.Contains(ll, "permission denied") {
+			return l
+		}
+	}
+	return ""
 }
 
 // isInformativeReason reports whether a stderr line names an actual failure
@@ -508,9 +572,31 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 	return ParseBackupSummary(out)
 }
 
-// Restore restores the snapshot identified by snapshotID into target directory.
-func (r Restic) Restore(ctx context.Context, repo string, snapshotID string, target string, m Mode) error {
-	_, err := r.run(ctx, RestoreArgs(repo, snapshotID, target, m), m)
+// DumpZip streams the snapshot subtree rooted at subfolder as a zip into w
+// (restic dump -a zip). Used for flash restore: a zip carries no filesystem
+// metadata, so it sidesteps the per-file ownership/permission errors a to-disk
+// restore hits on an Unraid /mnt/user (FUSE) share, and the file drops straight
+// into the Unraid USB creator.
+func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
+	args := DumpZipArgs(repo, snapshotID, subfolder, m)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
+	cmd.Env = r.authEnv(m)
+	return runToWriter(cmd, args, w)
+}
+
+// Copy replicates snapshots from srcRepo into destRepo (restic copy) for off-site
+// backup. When encrypted both repos share the APP_KEY-derived password: the dest
+// via RESTIC_PASSWORD (authEnv), the source via RESTIC_FROM_PASSWORD — never argv.
+// destRepo must already exist (the caller EnsureRepo's it first).
+func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, m Mode) error {
+	args := CopyArgs(destRepo, srcRepo, snapshotIDs, m)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
+	env := r.authEnv(m)
+	if m.Encrypted {
+		env = append(env, "RESTIC_FROM_PASSWORD="+m.Password)
+	}
+	cmd.Env = env
+	_, err := runBuffered(cmd, args)
 	return err
 }
 

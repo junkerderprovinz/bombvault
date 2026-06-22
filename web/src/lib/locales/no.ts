@@ -116,6 +116,8 @@ const no: Partial<Translations> = {
   "settings.containersPath": "Kontainersti",
   "settings.vmsPath": "VM-sti",
   "settings.flashPath": "Flash-sti",
+  "settings.offsiteTitle": "Ekstern kopi (valgfritt)",
+  "settings.offsiteHint": "Etter hver vellykket lokal sikkerhetskopi replikeres den også til et annet repo med restic copy. Angi et fjern-repo (rest:http://host:8000/repo, s3:…, b2:…) eller en lokal understi; la stå tomt for å deaktivere. Den lokale sikkerhetskopien forblir den primære.",
   "settings.domains": "Domener",
   "settings.containersEnabled": "Kontainere",
   "settings.vmsEnabled": "VM-er",
@@ -268,9 +270,8 @@ const no: Partial<Translations> = {
   "flash.backupHint": "Fanger hele USB-flashen (/boot): Unraid-OS, lisens, array-config, delinger, nettverks- og plugin-config.",
   "flash.backupNow": "Sikkerhetskopier flash nå",
   "flash.backingUp": "Sikkerhetskopierer…",
-  "flash.restoring": "Pakker ut…",
-  "flash.restoreNote": "Gjenoppretting PAKKER UT et snapshot til en mappe (vist nedenfor) — den kjørende /boot overskrives aldri. Kopier de gjenopprettede filene til en ny USB for å bygge opp flashen på nytt.",
-  "flash.restoredTo": "Pakket ut til:",
+  "flash.download": "Last ned (.zip)",
+  "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet — den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt.",
   "flash.none": "Ingen flash-sikkerhetskopier ennå — kjør en sikkerhetskopiering ovenfor.",
 
   // VM backup (SSH)

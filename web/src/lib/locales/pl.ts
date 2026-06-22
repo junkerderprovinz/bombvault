@@ -114,6 +114,8 @@ const pl: Partial<Translations> = {
   "settings.containersPath": "Ścieżka kontenerów",
   "settings.vmsPath": "Ścieżka maszyn wirtualnych",
   "settings.flashPath": "Ścieżka Flash",
+  "settings.offsiteTitle": "Kopia poza siedzibą (opcjonalnie)",
+  "settings.offsiteHint": "Po każdej udanej kopii lokalnej replikuj ją także do drugiego repozytorium poleceniem restic copy. Podaj zdalne repo (rest:http://host:8000/repo, s3:…, b2:…) lub lokalną podścieżkę; pozostaw puste, aby wyłączyć. Kopia lokalna pozostaje główną.",
   "settings.domains": "Domeny",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "Maszyny wirtualne",
@@ -263,9 +265,8 @@ const pl: Partial<Translations> = {
   "flash.backupHint": "Przechwytuje cały pendrive USB (/boot): system Unraid, licencję, konfigurację macierzy, udziały, sieć i konfigurację wtyczek.",
   "flash.backupNow": "Utwórz kopię Flash teraz",
   "flash.backingUp": "Tworzenie kopii…",
-  "flash.restoring": "Wypakowywanie…",
-  "flash.restoreNote": "Przywracanie WYPAKOWUJE migawkę do folderu (pokazanego poniżej) — nigdy nie nadpisuje działającego /boot. Skopiuj odzyskane pliki na nowy pendrive, aby odtworzyć Flash.",
-  "flash.restoredTo": "Wypakowano do:",
+  "flash.download": "Pobierz (.zip)",
+  "flash.restoreNote": "Przywracanie pobiera ZIP migawki — działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash.",
   "flash.none": "Brak kopii Flash — utwórz kopię powyżej.",
 
   // VM backup (SSH)
