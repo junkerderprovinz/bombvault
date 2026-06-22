@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, deleteSnapshot } from "../lib/api";
 import type { Snapshot, FileEntry } from "../lib/api";
 import type { useT } from "../lib/i18n";
+import { SourceToggle, type RepoSource } from "./SourceToggle";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -48,11 +49,13 @@ function FileRow({
   containerName,
   snapshotId,
   file,
+  source,
   t,
 }: {
   containerName: string;
   snapshotId: string;
   file: FileEntry;
+  source: string;
   t: T;
 }) {
   const [state, setState] = useState<RestoreState>({ phase: "idle" });
@@ -61,7 +64,7 @@ function FileRow({
     if (!window.confirm(t("files.restoreConfirm"))) return;
     setState({ phase: "pending" });
     try {
-      const res = await restoreContainerFile(containerName, snapshotId, file.path, true);
+      const res = await restoreContainerFile(containerName, snapshotId, file.path, true, source);
       if (res.ok) setState({ phase: "success" });
       else setState({ phase: "error", message: res.error ?? "Restore failed" });
     } catch (err) {
@@ -107,12 +110,14 @@ function TreeRow({
   snapshotId,
   node,
   depth,
+  source,
   t,
 }: {
   containerName: string;
   snapshotId: string;
   node: TreeNode;
   depth: number;
+  source: string;
   t: T;
 }) {
   const [expanded, setExpanded] = useState(depth === 0); // top level open by default
@@ -124,7 +129,7 @@ function TreeRow({
     if (!window.confirm(t("files.restoreConfirm"))) return;
     setState({ phase: "pending" });
     try {
-      const res = await restoreContainerFile(containerName, snapshotId, node.path, true);
+      const res = await restoreContainerFile(containerName, snapshotId, node.path, true, source);
       if (res.ok) setState({ phase: "success" });
       else setState({ phase: "error", message: res.error ?? "Restore failed" });
     } catch (err) {
@@ -172,7 +177,7 @@ function TreeRow({
         )}
       </div>
       {isDir && expanded && kids.map((c) => (
-        <TreeRow key={c.path} containerName={containerName} snapshotId={snapshotId} node={c} depth={depth + 1} t={t} />
+        <TreeRow key={c.path} containerName={containerName} snapshotId={snapshotId} node={c} depth={depth + 1} source={source} t={t} />
       ))}
     </div>
   );
@@ -183,10 +188,12 @@ function TreeRow({
 function SnapshotFileBrowser({
   containerName,
   snapshotId,
+  source,
   t,
 }: {
   containerName: string;
   snapshotId: string;
+  source: string;
   t: T;
 }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -196,14 +203,14 @@ function SnapshotFileBrowser({
 
   useEffect(() => {
     setLoading(true);
-    listSnapshotFiles(containerName, snapshotId)
+    listSnapshotFiles(containerName, snapshotId, source)
       .then((res) => {
         if (res.ok) setFiles(res.files ?? []);
         else setError(t("files.loadFailed"));
       })
       .catch(() => setError(t("files.loadFailed")))
       .finally(() => setLoading(false));
-  }, [containerName, snapshotId, t]);
+  }, [containerName, snapshotId, source, t]);
 
   const q = filter.trim().toLowerCase();
   const matched = q ? files.filter((f) => f.path.toLowerCase().includes(q)) : files;
@@ -230,7 +237,7 @@ function SnapshotFileBrowser({
       {!loading && q && shown.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {shown.map((f) => (
-            <FileRow key={f.path} containerName={containerName} snapshotId={snapshotId} file={f} t={t} />
+            <FileRow key={f.path} containerName={containerName} snapshotId={snapshotId} file={f} source={source} t={t} />
           ))}
         </div>
       )}
@@ -240,7 +247,7 @@ function SnapshotFileBrowser({
       {!loading && !q && topLevel.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {topLevel.map((n) => (
-            <TreeRow key={n.path} containerName={containerName} snapshotId={snapshotId} node={n} depth={0} t={t} />
+            <TreeRow key={n.path} containerName={containerName} snapshotId={snapshotId} node={n} depth={0} source={source} t={t} />
           ))}
         </div>
       )}
@@ -259,13 +266,13 @@ interface RestorePanelProps {
 // RecreateButton recreates a not-installed container from its saved definition
 // (a config-only backup has no restic snapshot to restore). Calls the normal
 // restore with "latest", which the backend resolves to a recreate-only restore.
-function RecreateButton({ name, t }: { name: string; t: T }) {
+function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
   const [state, setState] = useState<RestoreState>({ phase: "idle" });
   async function handle() {
     if (!window.confirm(t("snapshots.recreateConfirm"))) return;
     setState({ phase: "pending" });
     try {
-      const res = await restore(name, "latest", true);
+      const res = await restore(name, "latest", true, source);
       if (res.ok) setState({ phase: "success" });
       else setState({ phase: "error", message: res.error ?? "Recreate failed" });
     } catch (err) {
@@ -300,11 +307,13 @@ type RestoreState =
 function SnapshotRow({
   snap,
   containerName,
+  source,
   onDeleted,
   t,
 }: {
   snap: Snapshot;
   containerName: string;
+  source: string;
   onDeleted: () => void;
   t: T;
 }) {
@@ -319,7 +328,7 @@ function SnapshotRow({
     setDeleting(true);
     setDeleteErr(null);
     try {
-      const res = await deleteSnapshot("containers", snap.id);
+      const res = await deleteSnapshot("containers", snap.id, source);
       if (res.ok) onDeleted();
       else setDeleteErr(res.error ?? "Delete failed");
     } catch (err) {
@@ -333,7 +342,7 @@ function SnapshotRow({
     if (!confirmed) return;
     setRestoreState({ phase: "pending" });
     try {
-      const res = await restore(containerName, snap.id, true);
+      const res = await restore(containerName, snap.id, true, source);
       if (res.ok) {
         setRestoreState({ phase: "success" });
       } else {
@@ -421,7 +430,7 @@ function SnapshotRow({
 
       {/* File-level restore browser */}
       {showFiles && (
-        <SnapshotFileBrowser containerName={containerName} snapshotId={snap.id} t={t} />
+        <SnapshotFileBrowser containerName={containerName} snapshotId={snap.id} source={source} t={t} />
       )}
 
       {/* Inline result */}
@@ -441,6 +450,7 @@ function SnapshotRow({
 
 export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
   const [open, setOpen] = useState(false);
+  const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -455,14 +465,14 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
     if (!open) return;
     setLoading(true);
     setError(null);
-    listSnapshots(name)
+    listSnapshots(name, source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError("Failed to load backups");
+        else setError(res.error ?? "Failed to load backups");
       })
       .catch(() => setError("Failed to load backups"))
       .finally(() => setLoading(false));
-  }, [open, name, reloadTick]);
+  }, [open, name, source, reloadTick]);
 
   return (
     <div className="mt-1">
@@ -490,6 +500,13 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
 
       {open && (
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
+          <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+              <SourceToggle source={source} onChange={setSource} disabled={loading} />
+            </div>
+            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+          </div>
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
@@ -505,7 +522,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               {installed ? (
                 <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
               ) : (
-                <RecreateButton name={name} t={t} />
+                <RecreateButton name={name} source={source} t={t} />
               )}
             </div>
           )}
@@ -514,6 +531,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               key={snap.id}
               snap={snap}
               containerName={name}
+              source={source}
               onDeleted={() => setReloadTick((n) => n + 1)}
               t={t}
             />

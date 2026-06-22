@@ -18,13 +18,19 @@ type Settings struct {
 	// Optional off-site repo per domain. When set, a successful local backup is
 	// replicated there with `restic copy` (the local repo stays primary). Empty
 	// means no off-site copy for that domain.
-	ContainersOffsite  string
-	VMsOffsite         string
-	FlashOffsite       string
-	ContainersSchedule string
-	VMsSchedule        string
-	FlashSchedule      string
-	DefaultLanguage    string
+	ContainersOffsite string
+	VMsOffsite        string
+	FlashOffsite      string
+	// Optional off-site replication schedule per domain (same cadence grammar as
+	// the backup schedules). Empty = replicate after every local backup; set =
+	// replicate ONLY on this cadence (decoupled from the backup schedule).
+	ContainersOffsiteSchedule string
+	VMsOffsiteSchedule        string
+	FlashOffsiteSchedule      string
+	ContainersSchedule        string
+	VMsSchedule               string
+	FlashSchedule             string
+	DefaultLanguage           string
 	// AuthPasswordHash is the HMAC-SHA256 password hash set by the admin.
 	// An empty string means authentication is disabled (the default).
 	AuthPasswordHash string
@@ -51,6 +57,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled,
 		       containers_path, vms_path, flash_path,
 		       containers_offsite, vms_offsite, flash_offsite,
+		       containers_offsite_schedule, vms_offsite_schedule, flash_offsite_schedule,
 		       containers_schedule, vms_schedule, flash_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
@@ -63,6 +70,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
 		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite,
+		&s.ContainersOffsiteSchedule, &s.VMsOffsiteSchedule, &s.FlashOffsiteSchedule,
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
@@ -95,6 +103,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  containers_offsite  = ?,
 		  vms_offsite         = ?,
 		  flash_offsite       = ?,
+		  containers_offsite_schedule = ?,
+		  vms_offsite_schedule        = ?,
+		  flash_offsite_schedule      = ?,
 		  containers_schedule = ?,
 		  vms_schedule        = ?,
 		  flash_schedule      = ?,
@@ -114,6 +125,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.FlashEnabled),
 		s.ContainersPath, s.VMsPath, s.FlashPath,
 		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite,
+		s.ContainersOffsiteSchedule, s.VMsOffsiteSchedule, s.FlashOffsiteSchedule,
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,

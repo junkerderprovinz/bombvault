@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, getNotify, setNotify, testNotify } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify } from "../lib/api";
+import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import type { Settings, NotifyConfig } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -964,12 +965,57 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 }
 
+// ReplicateNowButton triggers an on-demand off-site replication for one domain
+// (restic copy local→off-site), surfacing the result inline.
+function ReplicateNowButton({
+  domain,
+  t,
+}: {
+  domain: "containers" | "vms" | "flash";
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const [st, setSt] = useState<"idle" | "busy" | "ok" | "fail">("idle");
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
+    setSt("busy");
+    setErr(null);
+    try {
+      const r = await replicateOffsite(domain);
+      if (r.ok) {
+        setSt("ok");
+        setTimeout(() => setSt("idle"), 4000);
+      } else {
+        setSt("fail");
+        setErr(r.error ?? t("offsite.replicateFailed"));
+      }
+    } catch (e) {
+      setSt("fail");
+      setErr(e instanceof Error ? e.message : t("offsite.replicateFailed"));
+    }
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => void go()}
+        disabled={st === "busy"}
+        className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+      >
+        {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
+      </button>
+      {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("integrity.ok")}</span>}
+      {st === "fail" && <span className="text-xs text-[#ff8389] break-words">{err}</span>}
+    </span>
+  );
+}
+
 // IntegrityCard runs per-domain repository maintenance: verify (restic check),
 // unlock (clear stale locks), and prune (reclaim space). Self-contained.
 function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   type ActState = "idle" | "busy" | "ok" | "fail";
   const [state, setState] = useState<Record<string, ActState>>({});
   const [msg, setMsg] = useState<Record<string, string>>({});
+  const [source, setSource] = useState<RepoSource>("local");
 
   type Domain = "containers" | "vms" | "flash";
   type Action = "verify" | "unlock" | "prune";
@@ -981,9 +1027,9 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     setMsg((m) => ({ ...m, [key]: "" }));
     try {
       const r =
-        action === "verify" ? await checkDomain(domain)
-        : action === "unlock" ? await unlockDomain(domain)
-        : await pruneDomain(domain);
+        action === "verify" ? await checkDomain(domain, source)
+        : action === "unlock" ? await unlockDomain(domain, source)
+        : await pruneDomain(domain, source);
       if (r.ok) {
         setState((s) => ({ ...s, [key]: "ok" }));
       } else {
@@ -1010,6 +1056,14 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   return (
     <Card title={t("integrity.title")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("integrity.hint")}</p>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+        <SourceToggle
+          source={source}
+          onChange={setSource}
+          disabled={Object.values(state).some((v) => v === "busy")}
+        />
+      </div>
       <div className="flex flex-col gap-3">
         {domains.map(({ key: domain, label }) => (
           <div key={domain} className="flex flex-col gap-1">
@@ -1417,22 +1471,34 @@ export function SettingsPage() {
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
         {([
-          ["containersOffsite", "nav.containers"],
-          ["vmsOffsite", "nav.vms"],
-          ["flashOffsite", "nav.flash"],
-        ] as const).map(([key, label]) => (
-          <label key={key} className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t(label)}</span>
+          ["containersOffsite", "containersOffsiteSchedule", "nav.containers", "containers"],
+          ["vmsOffsite", "vmsOffsiteSchedule", "nav.vms", "vms"],
+          ["flashOffsite", "flashOffsiteSchedule", "nav.flash", "flash"],
+        ] as const).map(([repoKey, schedKey, label, domain]) => (
+          <div key={repoKey} className="flex flex-col gap-1 border-b border-carbon-border pb-3 last:border-0">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              {settings[repoKey] && <ReplicateNowButton domain={domain} t={t} />}
+            </div>
             <input
-              value={settings[key]}
+              value={settings[repoKey]}
               spellCheck={false}
               onChange={(e) =>
-                setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
+                setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
               }
               placeholder="rest:http://host:8000/repo"
               className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
             />
-          </label>
+            <input
+              value={settings[schedKey]}
+              spellCheck={false}
+              onChange={(e) =>
+                setSettings((prev) => (prev ? { ...prev, [schedKey]: e.target.value } : prev))
+              }
+              placeholder={t("offsite.schedulePlaceholder")}
+              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
         ))}
         <SaveBar
           state={offsiteSaveState}
@@ -1443,6 +1509,9 @@ export function SettingsPage() {
                 containersOffsite: settings.containersOffsite,
                 vmsOffsite: settings.vmsOffsite,
                 flashOffsite: settings.flashOffsite,
+                containersOffsiteSchedule: settings.containersOffsiteSchedule,
+                vmsOffsiteSchedule: settings.vmsOffsiteSchedule,
+                flashOffsiteSchedule: settings.flashOffsiteSchedule,
               },
               setOffsiteSaveState,
               setOffsiteSaveError

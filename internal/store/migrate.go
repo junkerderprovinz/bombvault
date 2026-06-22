@@ -181,6 +181,23 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_flash_offsite",
 		sql:     "ALTER TABLE settings ADD COLUMN flash_offsite TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Optional off-site replication schedule per domain. Empty = replicate
+		// after every local backup; set = replicate only on this cadence.
+		version: 16,
+		name:    "settings_containers_offsite_schedule",
+		sql:     "ALTER TABLE settings ADD COLUMN containers_offsite_schedule TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 17,
+		name:    "settings_vms_offsite_schedule",
+		sql:     "ALTER TABLE settings ADD COLUMN vms_offsite_schedule TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 18,
+		name:    "settings_flash_offsite_schedule",
+		sql:     "ALTER TABLE settings ADD COLUMN flash_offsite_schedule TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

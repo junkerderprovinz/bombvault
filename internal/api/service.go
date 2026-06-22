@@ -314,32 +314,75 @@ func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string 
 	return ""
 }
 
-// replicateOffsite copies the domain's local repo to its configured off-site repo
-// with `restic copy` (the local repo stays primary). Best-effort by design: the
-// local backup has already succeeded when this runs, so an off-site failure is
-// logged but never fails the backup. The off-site repo is created on first use.
-// No-op when no off-site is configured for the domain.
-func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) {
+// offsiteScheduleFor returns the per-domain off-site replication schedule. Empty
+// means "replicate after every local backup"; a non-empty cadence means
+// replication is driven by the scheduler instead (decoupled from backups).
+func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) string {
+	switch domain {
+	case "containers":
+		return settings.ContainersOffsiteSchedule
+	case "vms":
+		return settings.VMsOffsiteSchedule
+	case "flash":
+		return settings.FlashOffsiteSchedule
+	}
+	return ""
+}
+
+// copyToOffsite replicates a domain's local repo to its off-site repo with
+// `restic copy` (the local repo stays primary). It creates the off-site repo on
+// first use and copies everything not already there (restic skips dupes, so the
+// first run seeds history and later runs ship just the new snapshot). Returns the
+// (scrubbed) error so on-demand/scheduled callers can surface it; it never logs
+// the off-site location, which can embed credentials. Lock-free — the caller
+// holds the domain lock.
+func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) error {
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
-		return
+		return errors.New("no off-site repo configured for this domain")
 	}
 	dest, err := s.resolveRepo(loc)
 	if err != nil {
-		// Never log loc itself: an off-site location can embed credentials
-		// (e.g. rest:http://user:pass@host/repo). domain is a fixed literal.
-		log.Printf("api: offsite %s: resolve repo location: %v", domain, err)
-		return
+		return fmt.Errorf("resolve off-site repo: %w", err)
 	}
 	if err := s.EnsureRepo(ctx, dest, mode); err != nil {
-		log.Printf("api: offsite %s: ensure repo: %v", domain, err)
+		return fmt.Errorf("ensure off-site repo: %w", err)
+	}
+	return s.engine.Copy(ctx, dest, localRepo, nil, mode)
+}
+
+// replicateOffsite runs right after a successful local backup (caller holds the
+// domain lock). It replicates ONLY when the domain has no separate off-site
+// schedule — a blank schedule couples replication to each backup; a set schedule
+// hands it to the scheduler instead. Best-effort: the local backup has already
+// succeeded, so an off-site failure is logged, never propagated.
+func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) {
+	if s.offsiteRepoFor(domain, settings) == "" {
 		return
 	}
-	// Copy everything not already in the off-site repo (restic skips dupes), so
-	// the first run seeds history and later runs ship just the new snapshot.
-	if err := s.engine.Copy(ctx, dest, localRepo, nil, mode); err != nil {
+	if strings.TrimSpace(s.offsiteScheduleFor(domain, settings)) != "" {
+		return // replicated on its own schedule, not after every backup
+	}
+	if err := s.copyToOffsite(ctx, domain, settings, mode, localRepo); err != nil {
+		// domain is a fixed literal; the error is already path-scrubbed by restic.
 		log.Printf("api: offsite %s: copy failed (local backup is safe): %v", domain, err)
 	}
+}
+
+// ReplicateOffsite replicates a domain's local repo to its off-site repo on
+// demand — the "Replicate now" button and the scheduled off-site job. Unlike the
+// post-backup hook it surfaces the error (so the UI can report it) and takes the
+// domain lock to serialise with backups.
+func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
+	settings, localRepo, err := s.domainRepoSource(domain, "local")
+	if err != nil {
+		return err
+	}
+	if s.offsiteRepoFor(domain, settings) == "" {
+		return errors.New("no off-site repo configured for this domain")
+	}
+	defer s.lockDomain(domain)()
+	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo)
 }
 
 // EnsureRepo creates the repo directory and initialises the restic repo on first
@@ -369,7 +412,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	if err := s.engine.Init(ctx, repo, mode); err != nil {
 		// Tolerate a race / pre-existing repo: the scrubbed adapter error may not
 		// name the cause, so re-check the marker before failing.
-		if _, statErr := os.Stat(filepath.Join(repo, "config")); statErr == nil {
+		if _, statErr := os.Stat(filepath.Join(repo, "config")); statErr == nil { //nolint:gosec // G703: repo is an operator-configured location (settings path or its off-site sibling), validated under the mount root on save; source only selects which configured location, never a raw path
 			return nil
 		}
 		return fmt.Errorf("init repo: %w", err)
@@ -872,7 +915,7 @@ func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
 // container has been deleted. For old targets without a stored definition the
 // live inspect is used as a fallback; if that also fails a clear error is
 // returned prompting the user to run one backup first.
-func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm bool) error {
+func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm bool, source string) error {
 	// Guard confirmation before touching the store/docker so an unconfirmed
 	// restore surfaces the sentinel (and never errors on a missing target first).
 	if !confirm {
@@ -882,7 +925,7 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.containersRepoPath(settings)
+	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
 		return err
 	}
@@ -901,7 +944,7 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	// no snapshot to resolve — recreate it from the stored definition instead.
 	recreateOnly := false
 	if snapshotID == "latest" || snapshotID == "" {
-		snaps, snapErr := s.Snapshots(ctx, name)
+		snaps, snapErr := s.Snapshots(ctx, name, source)
 		if snapErr != nil {
 			return snapErr
 		}
@@ -982,12 +1025,12 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 // shared across all containers, so snapshots are filtered by the
 // `container:<name>` tag the backup writes — otherwise the restore UI for one
 // container would list (and could restore) another container's snapshots.
-func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot, error) {
+func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.containersRepoPath(settings)
+	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
 		return nil, err
 	}
@@ -1021,7 +1064,7 @@ func (s *Service) Snapshots(ctx context.Context, name string) ([]restic.Snapshot
 
 // ListSnapshotFiles lists the files in a container snapshot, for file-level
 // restore. snapshotID must be valid hex.
-func (s *Service) ListSnapshotFiles(ctx context.Context, snapshotID string) ([]restic.FileEntry, error) {
+func (s *Service) ListSnapshotFiles(ctx context.Context, snapshotID, source string) ([]restic.FileEntry, error) {
 	if !backup.ValidSnapshotID(snapshotID) {
 		return nil, backup.ErrInvalidSnapshotID
 	}
@@ -1029,7 +1072,7 @@ func (s *Service) ListSnapshotFiles(ctx context.Context, snapshotID string) ([]r
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.containersRepoPath(settings)
+	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
 		return nil, err
 	}
@@ -1039,7 +1082,7 @@ func (s *Service) ListSnapshotFiles(ctx context.Context, snapshotID string) ([]r
 // RestoreContainerFile restores a single file/dir from a container snapshot back
 // to its original location (in-place). filePath must be an absolute path within
 // the host mount — defense-in-depth so a restore can never write outside it.
-func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath string, confirm bool) error {
+func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath string, confirm bool, source string) error {
 	if !confirm {
 		return backup.ErrNotConfirmed
 	}
@@ -1055,7 +1098,7 @@ func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.containersRepoPath(settings)
+	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
 		return err
 	}
@@ -1081,7 +1124,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	mode := s.ModeFor(settings)
 
 	// Collect this container's snapshot IDs (tag-filtered) and forget them.
-	snaps, err := s.Snapshots(ctx, name)
+	snaps, err := s.Snapshots(ctx, name, "")
 	if err != nil {
 		return err
 	}
@@ -1567,7 +1610,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 }
 
 // RestoreVM orchestrates a VM restore from a stored definition.
-func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confirm bool) error {
+func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confirm bool, source string) error {
 	if !confirm {
 		return backup.ErrNotConfirmed
 	}
@@ -1575,7 +1618,7 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.vmsRepoPath(settings)
+	repo, err := s.repoFor(settings, "vms", source)
 	if err != nil {
 		return err
 	}
@@ -1588,7 +1631,7 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 
 	// "latest" (or empty) resolves to the VM's newest snapshot.
 	if snapshotID == "latest" || snapshotID == "" {
-		snaps, snapErr := s.SnapshotsVM(ctx, name)
+		snaps, snapErr := s.SnapshotsVM(ctx, name, source)
 		if snapErr != nil {
 			return snapErr
 		}
@@ -1715,12 +1758,12 @@ func (s *Service) LibvirtReachable() error {
 
 // SnapshotsVM lists restic snapshots for a single VM, filtered by the
 // "vm:<name>" tag the backup writes.
-func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapshot, error) {
+func (s *Service) SnapshotsVM(ctx context.Context, name, source string) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.vmsRepoPath(settings)
+	repo, err := s.repoFor(settings, "vms", source)
 	if err != nil {
 		return nil, err
 	}
@@ -1833,12 +1876,12 @@ func resolveFlashSnapshot(snaps []restic.Snapshot, selector string) (string, err
 // against the repo. onResolved (optional) is called with the concrete id once it
 // is known-good and BEFORE streaming begins, so the HTTP handler can set the
 // download headers only on the happy path. A restore run is recorded for history.
-func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID string, onResolved func(id string), w io.Writer) error {
+func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source string, onResolved func(id string), w io.Writer) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.flashRepoPath(settings)
+	repo, err := s.repoFor(settings, "flash", source)
 	if err != nil {
 		return err
 	}
@@ -1868,12 +1911,12 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID string, onRes
 
 // SnapshotsFlash lists restic snapshots in the flash repo (the repo is dedicated
 // to flash, so all of its snapshots are flash backups).
-func (s *Service) SnapshotsFlash(ctx context.Context) ([]restic.Snapshot, error) {
+func (s *Service) SnapshotsFlash(ctx context.Context, source string) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.flashRepoPath(settings)
+	repo, err := s.repoFor(settings, "flash", source)
 	if err != nil {
 		return nil, err
 	}
@@ -1931,8 +1974,8 @@ func (s *Service) SetStopContainers(_ context.Context, name string, stop []strin
 // domain is "containers" | "vms" | "flash". Returns a friendly error when the
 // repo has not been created yet. Bounded by a timeout so a huge repo can't hang
 // the request forever.
-func (s *Service) CheckDomain(ctx context.Context, domain string) error {
-	settings, repo, err := s.domainRepo(domain)
+func (s *Service) CheckDomain(ctx context.Context, domain, source string) error {
+	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
 	}
@@ -1944,24 +1987,43 @@ func (s *Service) CheckDomain(ctx context.Context, domain string) error {
 	return s.engine.Check(ctx, repo, s.ModeFor(settings))
 }
 
-// domainRepo resolves the restic repo path for a domain ("containers" | "vms" |
-// "flash"), returning the settings alongside it so callers don't re-read them.
+// repoFor resolves the restic repo path for a domain ("containers"|"vms"|"flash")
+// and source. source "offsite" selects the configured off-site repo (erroring if
+// none is set); anything else ("" / "local") selects the primary local repo. This
+// lets browse/restore/maintenance operate on either copy.
+func (s *Service) repoFor(settings store.Settings, domain, source string) (string, error) {
+	if source == "offsite" {
+		loc := s.offsiteRepoFor(domain, settings)
+		if loc == "" {
+			return "", errors.New("no off-site repo configured for this domain")
+		}
+		return s.resolveRepo(loc)
+	}
+	switch domain {
+	case "containers":
+		return s.containersRepoPath(settings)
+	case "vms":
+		return s.vmsRepoPath(settings)
+	case "flash":
+		return s.flashRepoPath(settings)
+	default:
+		return "", fmt.Errorf("unknown domain %q", domain)
+	}
+}
+
+// domainRepo resolves the primary (local) restic repo path for a domain.
 func (s *Service) domainRepo(domain string) (store.Settings, string, error) {
+	return s.domainRepoSource(domain, "local")
+}
+
+// domainRepoSource is domainRepo with an explicit source ("local"|"offsite"),
+// returning the settings alongside the resolved repo so callers don't re-read.
+func (s *Service) domainRepoSource(domain, source string) (store.Settings, string, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return store.Settings{}, "", fmt.Errorf("read settings: %w", err)
 	}
-	var repo string
-	switch domain {
-	case "containers":
-		repo, err = s.containersRepoPath(settings)
-	case "vms":
-		repo, err = s.vmsRepoPath(settings)
-	case "flash":
-		repo, err = s.flashRepoPath(settings)
-	default:
-		return store.Settings{}, "", fmt.Errorf("unknown domain %q", domain)
-	}
+	repo, err := s.repoFor(settings, domain, source)
 	return settings, repo, err
 }
 
@@ -1971,7 +2033,7 @@ func (s *Service) requireExistingRepo(repo, notYet string) error {
 	if restic.IsRemoteRepo(repo) {
 		return nil
 	}
-	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) { //nolint:gosec // G703: repo is an operator-configured location (settings path or its off-site sibling), validated under the mount root on save; source only selects which configured location, never a raw path
 		return errors.New(notYet)
 	}
 	return nil
@@ -2014,8 +2076,8 @@ func (s *Service) listSnapshots(ctx context.Context, repo string, mode restic.Mo
 // BombVault is the sole writer and serialises its operations, so a leftover lock
 // is always safe to clear — this is the manual counterpart to the automatic
 // stale-lock cleanup done before each backup.
-func (s *Service) UnlockDomain(ctx context.Context, domain string) error {
-	settings, repo, err := s.domainRepo(domain)
+func (s *Service) UnlockDomain(ctx context.Context, domain, source string) error {
+	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
 	}
@@ -2034,8 +2096,8 @@ func (s *Service) UnlockDomain(ctx context.Context, domain string) error {
 
 // PruneDomain reclaims repository space freed by forgotten snapshots
 // (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
-func (s *Service) PruneDomain(ctx context.Context, domain string) error {
-	settings, repo, err := s.domainRepo(domain)
+func (s *Service) PruneDomain(ctx context.Context, domain, source string) error {
+	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
 	}
@@ -2057,11 +2119,11 @@ func (s *Service) PruneDomain(ctx context.Context, domain string) error {
 // deleting several snapshots then pruning once is far cheaper than pruning per
 // delete. The snapshot id is validated (arg-injection guard) and stale locks are
 // cleared first.
-func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID string) error {
+func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source string) error {
 	if !backup.ValidSnapshotID(snapshotID) {
 		return backup.ErrInvalidSnapshotID
 	}
-	settings, repo, err := s.domainRepo(domain)
+	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
 	}
