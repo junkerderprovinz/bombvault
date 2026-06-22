@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, discoverVMs } from "../lib/api";
+import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
@@ -285,11 +286,13 @@ function VMBackupButton({
 function VMSnapshotRow({
   snap,
   vmName,
+  source,
   onDeleted,
   t,
 }: {
   snap: Snapshot;
   vmName: string;
+  source: RepoSource;
   onDeleted: () => void;
   t: T;
 }) {
@@ -308,7 +311,7 @@ function VMSnapshotRow({
     setDeleting(true);
     setDeleteErr(null);
     try {
-      const res = await deleteSnapshot("vms", snap.id);
+      const res = await deleteSnapshot("vms", snap.id, source);
       if (res.ok) onDeleted();
       else setDeleteErr(res.error ?? "Delete failed");
     } catch (err) {
@@ -322,7 +325,7 @@ function VMSnapshotRow({
     if (!confirmed) return;
     setRestoreState({ phase: "pending" });
     try {
-      const res = await restoreVM(vmName, snap.id, true);
+      const res = await restoreVM(vmName, snap.id, true, source);
       if (res.ok) {
         setRestoreState({ phase: "success" });
       } else {
@@ -404,6 +407,7 @@ function VMSnapshotRow({
 
 function VMRestorePanel({ name, t }: { name: string; t: T }) {
   const [open, setOpen] = useState(false);
+  const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -414,14 +418,14 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
     if (!open) return;
     setLoading(true);
     setError(null);
-    listVMSnapshots(name)
+    listVMSnapshots(name, source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError("Failed to load backups");
+        else setError(res.error ?? "Failed to load backups");
       })
       .catch(() => setError("Failed to load backups"))
       .finally(() => setLoading(false));
-  }, [open, name, reloadTick]);
+  }, [open, name, source, reloadTick]);
 
   return (
     <div className="mt-1">
@@ -449,6 +453,13 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
 
       {open && (
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
+          <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+              <SourceToggle source={source} onChange={setSource} disabled={loading} />
+            </div>
+            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+          </div>
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
@@ -464,6 +475,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
                 key={snap.id}
                 snap={snap}
                 vmName={name}
+                source={source}
                 onDeleted={() => setReloadTick((n) => n + 1)}
                 t={t}
               />

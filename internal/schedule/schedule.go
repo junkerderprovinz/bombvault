@@ -201,13 +201,14 @@ func parseDOWSet(s string) (string, error) {
 
 // Scheduler manages per-domain cron entries using robfig/cron/v3.
 type Scheduler struct {
-	c         *cron.Cron
-	backup    BackupFunc
-	listFn    ListTargetsFunc
-	backupVM    BackupFunc        // nil until SetVMJob wires VM backup
-	listVMsFn   ListVMTargetsFunc // nil until SetVMJob wires VM backup
-	backupFlash func() error      // nil until SetFlashJob wires flash backup
-	entryIDs    []cron.EntryID
+	c              *cron.Cron
+	backup         BackupFunc
+	listFn         ListTargetsFunc
+	backupVM       BackupFunc                // nil until SetVMJob wires VM backup
+	listVMsFn      ListVMTargetsFunc         // nil until SetVMJob wires VM backup
+	backupFlash    func() error              // nil until SetFlashJob wires flash backup
+	replicateOffFn func(domain string) error // nil until SetOffsiteJob wires off-site replication
+	entryIDs       []cron.EntryID
 }
 
 // New creates a Scheduler. backupFn is called for each due container;
@@ -234,6 +235,14 @@ func (s *Scheduler) SetVMJob(backupVMFn BackupFunc, listVMsFn ListVMTargetsFunc)
 // this is called the flash domain is a no-op (logged). Call before Reload.
 func (s *Scheduler) SetFlashJob(backupFlashFn func() error) {
 	s.backupFlash = backupFlashFn
+}
+
+// SetOffsiteJob wires off-site replication so the per-domain off-site schedules
+// actually run. replicateFn is called with the domain ("containers"|"vms"|"flash")
+// when an off-site schedule fires. Until this is called the off-site schedules are
+// a no-op (logged). Call before Reload.
+func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
+	s.replicateOffFn = replicateFn
 }
 
 // Start starts the underlying cron runner. Call once at app startup.
@@ -329,6 +338,30 @@ func (s *Scheduler) ReloadWithDueChecks(
 			lastRun: flashLastRun,
 		},
 	}
+
+	// Off-site replication on its own per-domain schedule (decoupled from the
+	// backup schedules above). A blank cadence means "replicate after every local
+	// backup" and is handled in the backup path, not here.
+	offsite := func(domain, cadence string) domainSpec {
+		return domainSpec{
+			cadence: cadence,
+			name:    domain + "-offsite",
+			fn: func() {
+				if s.replicateOffFn == nil {
+					log.Printf("schedule: %s-offsite job skipped — off-site not wired (SetOffsiteJob)", domain)
+					return
+				}
+				if err := s.replicateOffFn(domain); err != nil {
+					log.Printf("schedule: %s-offsite job: %v", domain, err)
+				}
+			},
+		}
+	}
+	domains = append(domains,
+		offsite("containers", settings.ContainersOffsiteSchedule),
+		offsite("vms", settings.VMsOffsiteSchedule),
+		offsite("flash", settings.FlashOffsiteSchedule),
+	)
 
 	for _, d := range domains {
 		cad, err := ParseCadence(d.cadence)

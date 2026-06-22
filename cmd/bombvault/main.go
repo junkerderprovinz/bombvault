@@ -116,6 +116,9 @@ func run() error {
 		_, bErr := svc.BackupFlash(context.Background())
 		return bErr
 	})
+	scheduler.SetOffsiteJob(func(domain string) error {
+		return svc.ReplicateOffsite(context.Background(), domain)
+	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
 	// successful backup within each domain (containers / VMs / flash scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)

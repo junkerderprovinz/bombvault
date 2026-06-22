@@ -100,6 +100,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/unlock/{domain}", h.handleUnlock)
 	mux.HandleFunc("POST /api/prune/{domain}", h.handlePrune)
 	mux.HandleFunc("DELETE /api/snapshots/{domain}/{id}", h.handleDeleteSnapshot)
+	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)

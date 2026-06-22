@@ -49,6 +49,7 @@ export interface Snapshot {
 export interface ListSnapshotsResponse {
   ok: boolean;
   snapshots: Snapshot[];
+  error?: string;
 }
 
 /** A file/dir node inside a snapshot, from GET /api/containers/{name}/files */
@@ -75,6 +76,9 @@ export interface Settings {
   containersOffsite: string;
   vmsOffsite: string;
   flashOffsite: string;
+  containersOffsiteSchedule: string;
+  vmsOffsiteSchedule: string;
+  flashOffsiteSchedule: string;
   containersSchedule: string;
   vmsSchedule: string;
   flashSchedule: string;
@@ -208,16 +212,22 @@ export function backupNow(name: string): Promise<BackupResponse> {
   });
 }
 
-export function listSnapshots(name: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/snapshots`);
+/** Query suffix selecting the off-site repo when source==="offsite" (else local). */
+export function srcParam(source?: string, sep: "?" | "&" = "?"): string {
+  return source === "offsite" ? `${sep}source=offsite` : "";
+}
+
+export function listSnapshots(name: string, source?: string): Promise<ListSnapshotsResponse> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
 export function restore(
   name: string,
   snapshotId: string,
-  confirm: boolean
+  confirm: boolean,
+  source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore`, {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm }),
   });
@@ -226,10 +236,11 @@ export function restore(
 /** GET /api/containers/{name}/files?snapshot=<id> — list files in a snapshot. */
 export function listSnapshotFiles(
   name: string,
-  snapshot: string
+  snapshot: string,
+  source?: string
 ): Promise<ListFilesResponse> {
   return fetchJSON(
-    `/api/containers/${encodeURIComponent(name)}/files?snapshot=${encodeURIComponent(snapshot)}`
+    `/api/containers/${encodeURIComponent(name)}/files?snapshot=${encodeURIComponent(snapshot)}${srcParam(source, "&")}`
   );
 }
 
@@ -238,9 +249,10 @@ export function restoreContainerFile(
   name: string,
   snapshotId: string,
   path: string,
-  confirm: boolean
+  confirm: boolean,
+  source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-file`, {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-file${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, path, confirm }),
   });
@@ -396,31 +408,42 @@ export function putSettings(settings: Settings): Promise<OkEnvelope> {
 
 /** POST /api/check/{domain} — verify a domain's restic repo integrity. */
 export function checkDomain(
-  domain: "containers" | "vms" | "flash"
+  domain: "containers" | "vms" | "flash",
+  source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/check/${domain}`, { method: "POST" });
+  return fetchJSON(`/api/check/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
 /** POST /api/unlock/{domain} — clear stale repository locks (restic unlock). */
 export function unlockDomain(
-  domain: "containers" | "vms" | "flash"
+  domain: "containers" | "vms" | "flash",
+  source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/unlock/${domain}`, { method: "POST" });
+  return fetchJSON(`/api/unlock/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
 /** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
 export function pruneDomain(
+  domain: "containers" | "vms" | "flash",
+  source?: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
+}
+
+/** POST /api/offsite/{domain} — replicate a domain's local repo to its off-site repo now. */
+export function replicateOffsite(
   domain: "containers" | "vms" | "flash"
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/prune/${domain}`, { method: "POST" });
+  return fetchJSON(`/api/offsite/${domain}`, { method: "POST" });
 }
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
 export function deleteSnapshot(
   domain: "containers" | "vms" | "flash",
-  id: string
+  id: string,
+  source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}`, { method: "DELETE" });
+  return fetchJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}${srcParam(source)}`, { method: "DELETE" });
 }
 
 /** GET /api/rclone — configured rclone remote names (never secrets). */
@@ -492,16 +515,17 @@ export function backupVMNow(name: string): Promise<BackupResponse> {
   });
 }
 
-export function listVMSnapshots(name: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/snapshots`);
+export function listVMSnapshots(name: string, source?: string): Promise<ListSnapshotsResponse> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
 export function restoreVM(
   name: string,
   snapshotId: string,
-  confirm: boolean
+  confirm: boolean,
+  source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore`, {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm }),
   });
@@ -547,8 +571,8 @@ export function backupFlashNow(): Promise<BackupResponse> {
 }
 
 /** GET /api/flash/snapshots — list flash snapshots. */
-export function listFlashSnapshots(): Promise<ListSnapshotsResponse> {
-  return fetchJSON("/api/flash/snapshots");
+export function listFlashSnapshots(source?: string): Promise<ListSnapshotsResponse> {
+  return fetchJSON(`/api/flash/snapshots${srcParam(source)}`);
 }
 
 /**
@@ -557,8 +581,8 @@ export function listFlashSnapshots(): Promise<ListSnapshotsResponse> {
  * so the browser downloads flash-<id>.zip. Non-destructive; the live /boot is
  * never touched, and a zip drops straight into the Unraid USB creator.
  */
-export function flashDownloadURL(snapshotId: string): string {
-  return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}`;
+export function flashDownloadURL(snapshotId: string, source?: string): string {
+  return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`;
 }
 
 // ---------------------------------------------------------------------------

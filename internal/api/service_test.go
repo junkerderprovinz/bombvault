@@ -103,7 +103,7 @@ func TestDownloadFlashZip(t *testing.T) {
 	t.Run("latest resolves to newest and streams zip bytes", func(t *testing.T) {
 		var buf bytes.Buffer
 		var resolved string
-		if err := svc.DownloadFlashZip(context.Background(), "latest", func(id string) { resolved = id }, &buf); err != nil {
+		if err := svc.DownloadFlashZip(context.Background(), "latest", "", func(id string) { resolved = id }, &buf); err != nil {
 			t.Fatal(err)
 		}
 		if resolved != "cccc3333dddd4444" {
@@ -117,7 +117,7 @@ func TestDownloadFlashZip(t *testing.T) {
 	t.Run("unknown id is rejected before any bytes or headers", func(t *testing.T) {
 		var buf bytes.Buffer
 		called := false
-		err := svc.DownloadFlashZip(context.Background(), "deadbeef", func(string) { called = true }, &buf)
+		err := svc.DownloadFlashZip(context.Background(), "deadbeef", "", func(string) { called = true }, &buf)
 		if err == nil {
 			t.Fatal("expected an error for an unknown snapshot id")
 		}
@@ -171,6 +171,41 @@ func TestBackupFlashReplicatesOffsite(t *testing.T) {
 			t.Fatalf("expected no off-site copy, got %v", eng.copied)
 		}
 	})
+}
+
+func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	flashDir := root + "/boot"
+	if err := os.MkdirAll(flashDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, FlashDir: flashDir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FlashPath = "backups/flash"
+	s.FlashOffsite = "backups/flash-offsite"
+	s.FlashOffsiteSchedule = "weekly Sun 03:00" // separate schedule → not after every backup
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if _, err := svc.BackupFlash(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.copied) != 0 {
+		t.Fatalf("with a separate off-site schedule, backup must NOT replicate, got %v", eng.copied)
+	}
+
+	// The scheduled/on-demand path replicates explicitly.
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.copied) != 1 {
+		t.Fatalf("ReplicateOffsite must copy once, got %v", eng.copied)
+	}
 }
 
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
@@ -537,7 +572,7 @@ func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	got, err := svc.Snapshots(context.Background(), "plex")
+	got, err := svc.Snapshots(context.Background(), "plex", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -656,7 +691,7 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
-	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true)
+	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true, "")
 	if restoreErr != nil {
 		t.Fatalf("restore must succeed with stored definition: %v", restoreErr)
 	}
@@ -896,7 +931,7 @@ func initRepoSvc(t *testing.T, eng *fakeResticEngine) *api.Service {
 func TestUnlockDomainRemovesAllLocks(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.UnlockDomain(context.Background(), "containers"); err != nil {
+	if err := svc.UnlockDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("UnlockDomain: %v", err)
 	}
 	if len(eng.unlockedRepos) != 1 || len(eng.unlockRemoveAll) != 1 || !eng.unlockRemoveAll[0] {
@@ -915,7 +950,7 @@ func TestUnlockDomainNoRepoYet(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
-	if err := svc.UnlockDomain(context.Background(), "containers"); err == nil {
+	if err := svc.UnlockDomain(context.Background(), "containers", ""); err == nil {
 		t.Fatal("expected a friendly error when the repo does not exist yet")
 	}
 	if len(eng.unlockedRepos) != 0 {
@@ -926,7 +961,7 @@ func TestUnlockDomainNoRepoYet(t *testing.T) {
 func TestPruneDomainCallsPrune(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.PruneDomain(context.Background(), "containers"); err != nil {
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -990,7 +1025,7 @@ func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
 func TestDeleteSnapshotForgetsByID(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678"); err != nil {
+	if err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678", ""); err != nil {
 		t.Fatalf("DeleteSnapshot: %v", err)
 	}
 	if len(eng.forgotten) != 1 || eng.forgotten[0] != "deadbeef12345678" {
@@ -1001,7 +1036,7 @@ func TestDeleteSnapshotForgetsByID(t *testing.T) {
 func TestDeleteSnapshotRejectsBadID(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.DeleteSnapshot(context.Background(), "containers", "not-hex!"); err == nil {
+	if err := svc.DeleteSnapshot(context.Background(), "containers", "not-hex!", ""); err == nil {
 		t.Fatal("expected an invalid-snapshot-id error")
 	}
 	if len(eng.forgotten) != 0 {
@@ -1017,7 +1052,7 @@ func TestSnapshotsSelfHealsStaleLock(t *testing.T) {
 		snaps:        []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex", "p1"}}},
 	}
 	svc := initRepoSvc(t, eng)
-	got, err := svc.Snapshots(context.Background(), "plex")
+	got, err := svc.Snapshots(context.Background(), "plex", "")
 	if err != nil {
 		t.Fatalf("Snapshots should self-heal a stale lock, got %v", err)
 	}

@@ -297,12 +297,22 @@ func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+// sourceParam returns the requested repo source from the ?source= query:
+// "offsite" selects the off-site replica, anything else (incl. absent) is the
+// local repo. Used by the snapshot-browser, restore and maintenance endpoints.
+func sourceParam(r *http.Request) string {
+	if r.URL.Query().Get("source") == "offsite" {
+		return "offsite"
+	}
+	return "local"
+}
+
 func (h *Handler) handleSnapshots(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
 		return
 	}
-	snaps, err := h.svc.Snapshots(r.Context(), name)
+	snaps, err := h.svc.Snapshots(r.Context(), name, sourceParam(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -325,7 +335,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.Restore(r.Context(), name, body.SnapshotID, body.Confirm); err != nil {
+	if err := h.svc.Restore(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -339,7 +349,7 @@ func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	snapshot := r.URL.Query().Get("snapshot")
-	files, err := h.svc.ListSnapshotFiles(r.Context(), snapshot)
+	files, err := h.svc.ListSnapshotFiles(r.Context(), snapshot, sourceParam(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -364,7 +374,7 @@ func (h *Handler) handleRestoreFile(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.RestoreContainerFile(r.Context(), body.SnapshotID, body.Path, body.Confirm); err != nil {
+	if err := h.svc.RestoreContainerFile(r.Context(), body.SnapshotID, body.Path, body.Confirm, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -448,20 +458,23 @@ func strOr(p *string) string {
 
 // settingsView is the JSON shape for GET/PUT /api/settings.
 type settingsView struct {
-	EncryptionEnabled  bool   `json:"encryptionEnabled"`
-	ContainersEnabled  bool   `json:"containersEnabled"`
-	VMsEnabled         bool   `json:"vmsEnabled"`
-	FlashEnabled       bool   `json:"flashEnabled"`
-	ContainersPath     string `json:"containersPath"`
-	VMsPath            string `json:"vmsPath"`
-	FlashPath          string `json:"flashPath"`
-	ContainersOffsite  string `json:"containersOffsite"`
-	VMsOffsite         string `json:"vmsOffsite"`
-	FlashOffsite       string `json:"flashOffsite"`
-	ContainersSchedule string `json:"containersSchedule"`
-	VMsSchedule        string `json:"vmsSchedule"`
-	FlashSchedule      string `json:"flashSchedule"`
-	DefaultLanguage    string `json:"defaultLanguage"`
+	EncryptionEnabled         bool   `json:"encryptionEnabled"`
+	ContainersEnabled         bool   `json:"containersEnabled"`
+	VMsEnabled                bool   `json:"vmsEnabled"`
+	FlashEnabled              bool   `json:"flashEnabled"`
+	ContainersPath            string `json:"containersPath"`
+	VMsPath                   string `json:"vmsPath"`
+	FlashPath                 string `json:"flashPath"`
+	ContainersOffsite         string `json:"containersOffsite"`
+	VMsOffsite                string `json:"vmsOffsite"`
+	FlashOffsite              string `json:"flashOffsite"`
+	ContainersOffsiteSchedule string `json:"containersOffsiteSchedule"`
+	VMsOffsiteSchedule        string `json:"vmsOffsiteSchedule"`
+	FlashOffsiteSchedule      string `json:"flashOffsiteSchedule"`
+	ContainersSchedule        string `json:"containersSchedule"`
+	VMsSchedule               string `json:"vmsSchedule"`
+	FlashSchedule             string `json:"flashSchedule"`
+	DefaultLanguage           string `json:"defaultLanguage"`
 	// Retention keep-policy (0 = that dimension off; all 0 = retention off).
 	RetentionKeepLast    int `json:"retentionKeepLast"`
 	RetentionKeepDaily   int `json:"retentionKeepDaily"`
@@ -471,24 +484,27 @@ type settingsView struct {
 
 func toView(s store.Settings) settingsView {
 	return settingsView{
-		EncryptionEnabled:    s.EncryptionEnabled,
-		ContainersEnabled:    s.ContainersEnabled,
-		VMsEnabled:           s.VMsEnabled,
-		FlashEnabled:         s.FlashEnabled,
-		ContainersPath:       s.ContainersPath,
-		VMsPath:              s.VMsPath,
-		FlashPath:            s.FlashPath,
-		ContainersOffsite:    s.ContainersOffsite,
-		VMsOffsite:           s.VMsOffsite,
-		FlashOffsite:         s.FlashOffsite,
-		ContainersSchedule:   s.ContainersSchedule,
-		VMsSchedule:          s.VMsSchedule,
-		FlashSchedule:        s.FlashSchedule,
-		DefaultLanguage:      s.DefaultLanguage,
-		RetentionKeepLast:    s.RetentionKeepLast,
-		RetentionKeepDaily:   s.RetentionKeepDaily,
-		RetentionKeepWeekly:  s.RetentionKeepWeekly,
-		RetentionKeepMonthly: s.RetentionKeepMonthly,
+		EncryptionEnabled:         s.EncryptionEnabled,
+		ContainersEnabled:         s.ContainersEnabled,
+		VMsEnabled:                s.VMsEnabled,
+		FlashEnabled:              s.FlashEnabled,
+		ContainersPath:            s.ContainersPath,
+		VMsPath:                   s.VMsPath,
+		FlashPath:                 s.FlashPath,
+		ContainersOffsite:         s.ContainersOffsite,
+		VMsOffsite:                s.VMsOffsite,
+		FlashOffsite:              s.FlashOffsite,
+		ContainersOffsiteSchedule: s.ContainersOffsiteSchedule,
+		VMsOffsiteSchedule:        s.VMsOffsiteSchedule,
+		FlashOffsiteSchedule:      s.FlashOffsiteSchedule,
+		ContainersSchedule:        s.ContainersSchedule,
+		VMsSchedule:               s.VMsSchedule,
+		FlashSchedule:             s.FlashSchedule,
+		DefaultLanguage:           s.DefaultLanguage,
+		RetentionKeepLast:         s.RetentionKeepLast,
+		RetentionKeepDaily:        s.RetentionKeepDaily,
+		RetentionKeepWeekly:       s.RetentionKeepWeekly,
+		RetentionKeepMonthly:      s.RetentionKeepMonthly,
 	}
 }
 
@@ -537,11 +553,25 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Validate each cadence parses.
-	for _, cad := range []string{v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule} {
+	// Validate each cadence parses (backup schedules + off-site schedules).
+	for _, cad := range []string{
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule,
+		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule,
+	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok": false, "error": scrubError(err),
+			})
+			return
+		}
+	}
+	// Off-site schedules can't use "everyN": the off-site job has no per-domain
+	// last-run gate, so an everyN cadence would silently fire daily. Restrict it
+	// to off / daily / weekly / cron, which all fire on an exact schedule.
+	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule} {
+		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok": false, "error": "off-site schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
 			})
 			return
 		}
@@ -571,28 +601,31 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := store.Settings{
-		EncryptionEnabled:    v.EncryptionEnabled,
-		ContainersEnabled:    v.ContainersEnabled,
-		VMsEnabled:           v.VMsEnabled,
-		FlashEnabled:         v.FlashEnabled,
-		ContainersPath:       v.ContainersPath,
-		VMsPath:              v.VMsPath,
-		FlashPath:            v.FlashPath,
-		ContainersOffsite:    v.ContainersOffsite,
-		VMsOffsite:           v.VMsOffsite,
-		FlashOffsite:         v.FlashOffsite,
-		ContainersSchedule:   v.ContainersSchedule,
-		VMsSchedule:          v.VMsSchedule,
-		FlashSchedule:        v.FlashSchedule,
-		DefaultLanguage:      v.DefaultLanguage,
-		RetentionKeepLast:    max(0, v.RetentionKeepLast),
-		RetentionKeepDaily:   max(0, v.RetentionKeepDaily),
-		RetentionKeepWeekly:  max(0, v.RetentionKeepWeekly),
-		RetentionKeepMonthly: max(0, v.RetentionKeepMonthly),
-		AuthPasswordHash:     existing.AuthPasswordHash,
-		RcloneConf:           existing.RcloneConf,
-		NotifyConf:           existing.NotifyConf,
-		CloudConf:            existing.CloudConf,
+		EncryptionEnabled:         v.EncryptionEnabled,
+		ContainersEnabled:         v.ContainersEnabled,
+		VMsEnabled:                v.VMsEnabled,
+		FlashEnabled:              v.FlashEnabled,
+		ContainersPath:            v.ContainersPath,
+		VMsPath:                   v.VMsPath,
+		FlashPath:                 v.FlashPath,
+		ContainersOffsite:         v.ContainersOffsite,
+		VMsOffsite:                v.VMsOffsite,
+		FlashOffsite:              v.FlashOffsite,
+		ContainersOffsiteSchedule: v.ContainersOffsiteSchedule,
+		VMsOffsiteSchedule:        v.VMsOffsiteSchedule,
+		FlashOffsiteSchedule:      v.FlashOffsiteSchedule,
+		ContainersSchedule:        v.ContainersSchedule,
+		VMsSchedule:               v.VMsSchedule,
+		FlashSchedule:             v.FlashSchedule,
+		DefaultLanguage:           v.DefaultLanguage,
+		RetentionKeepLast:         max(0, v.RetentionKeepLast),
+		RetentionKeepDaily:        max(0, v.RetentionKeepDaily),
+		RetentionKeepWeekly:       max(0, v.RetentionKeepWeekly),
+		RetentionKeepMonthly:      max(0, v.RetentionKeepMonthly),
+		AuthPasswordHash:          existing.AuthPasswordHash,
+		RcloneConf:                existing.RcloneConf,
+		NotifyConf:                existing.NotifyConf,
+		CloudConf:                 existing.CloudConf,
 	}
 	if err := h.store.UpdateSettings(s); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -616,7 +649,7 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.CheckDomain(r.Context(), domain); err != nil {
+	if err := h.svc.CheckDomain(r.Context(), domain, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -634,7 +667,7 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.UnlockDomain(r.Context(), domain); err != nil {
+	if err := h.svc.UnlockDomain(r.Context(), domain, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -651,7 +684,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.PruneDomain(r.Context(), domain); err != nil {
+	if err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -668,7 +701,24 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.DeleteSnapshot(r.Context(), domain, r.PathValue("id")); err != nil {
+	if err := h.svc.DeleteSnapshot(r.Context(), domain, r.PathValue("id"), sourceParam(r)); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleReplicateOffsite replicates a domain's local repo to its off-site repo on
+// demand (restic copy). POST /api/offsite/{domain}
+func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	if err := h.svc.ReplicateOffsite(r.Context(), domain); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1082,7 +1132,7 @@ func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	snaps, err := h.svc.SnapshotsVM(r.Context(), name)
+	snaps, err := h.svc.SnapshotsVM(r.Context(), name, sourceParam(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1105,7 +1155,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.RestoreVM(r.Context(), name, body.SnapshotID, body.Confirm); err != nil {
+	if err := h.svc.RestoreVM(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1127,7 +1177,7 @@ func (h *Handler) handleBackupFlash(w http.ResponseWriter, r *http.Request) {
 
 // handleSnapshotsFlash lists flash snapshots.
 func (h *Handler) handleSnapshotsFlash(w http.ResponseWriter, r *http.Request) {
-	snaps, err := h.svc.SnapshotsFlash(r.Context())
+	snaps, err := h.svc.SnapshotsFlash(r.Context(), sourceParam(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1167,7 +1217,7 @@ func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Content-Disposition", `attachment; filename="`+FlashDownloadName(resolved)+`"`)
 	}}
-	err := h.svc.DownloadFlashZip(r.Context(), id, func(rid string) { resolved = rid }, lw)
+	err := h.svc.DownloadFlashZip(r.Context(), id, sourceParam(r), func(rid string) { resolved = rid }, lw)
 	// No bytes streamed yet → headers not sent, so report the failure as JSON
 	// (bad/ambiguous id, no backups, repo locked). A mid-stream failure (after
 	// bytes flowed) can only truncate the body; the failed run is recorded.
