@@ -77,7 +77,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 |---|---|
 | **Docker containers** | Appdata directory + container definition (image, env vars, ports, labels, volumes) |
 | **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH). Live snapshots **fall back to a graceful backup automatically** if the snapshot can't be created, so a VM backup never just errors out |
-| **Unraid flash** | The whole USB flash (`/boot`) — OS, license, array config, shares, network + plugin config. Restore extracts to a folder (never overwrites the live flash) |
+| **Unraid flash** | The whole USB flash (`/boot`) — OS, license, array config, shares, network + plugin config. Restore is a one-click **`.zip` download** (never overwrites the live flash) |
 
 ### Restore (the good part)
 
@@ -85,7 +85,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Containers are automatically reinstalled**: the container definition is replayed against the Docker API so the container reappears in the Unraid Docker tab exactly as it was — same image, same settings, same port mappings.
 - **VMs are automatically recreated**: the XML definition is re-imported over SSH so the VM reappears in the VM Manager with its disk + UEFI NVRAM reattached, even after the VM was deleted. A VM deleted from the host shows under **Not installed** in the VM tab; if its entry is gone too (e.g. after a fresh install), **Discover backups** rebuilds it from storage — same as for containers.
 - **Individual restore** — restore one container or one VM without touching the others.
-- **Flash restore is safe** — a flash snapshot is *extracted to a folder* you then copy onto a fresh USB; the live, running `/boot` is never overwritten (which could leave the server unbootable).
+- **Flash restore is a `.zip` download** — pick a snapshot and it streams straight to your browser as `flash-<id>.zip`, ready to drop into the Unraid USB creator (or unzip onto a fresh USB). The live, running `/boot` is never touched, and because a zip carries no filesystem metadata there are no permission errors on the way out.
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
 - **File-level restore** — expand a container snapshot's **Files**, filter, and restore an individual file/folder back to its original location.
 
@@ -93,6 +93,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
 - Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
+- **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain under Settings → Off-site copy; after each successful local backup BombVault replicates the new snapshot there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary.
 - Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup.
 - Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
 

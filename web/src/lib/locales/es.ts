@@ -116,6 +116,8 @@ const es: Partial<Translations> = {
   "settings.containersPath": "Ruta de contenedores",
   "settings.vmsPath": "Ruta de VMs",
   "settings.flashPath": "Ruta Flash",
+  "settings.offsiteTitle": "Copia externa (opcional)",
+  "settings.offsiteHint": "Después de cada copia local correcta, replicarla también a un segundo repositorio con restic copy. Indica un remoto (rest:http://host:8000/repo, s3:…, b2:…) o una subruta local; deja en blanco para desactivar. La copia local sigue siendo la principal.",
   "settings.domains": "Dominios",
   "settings.containersEnabled": "Contenedores",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const es: Partial<Translations> = {
   "flash.backupHint": "Captura todo el USB flash (/boot): SO de Unraid, licencia, configuración del array, recursos compartidos, red y configuración de plugins.",
   "flash.backupNow": "Copiar flash ahora",
   "flash.backingUp": "Copiando…",
-  "flash.restoring": "Extrayendo…",
-  "flash.restoreNote": "La restauración EXTRAE una instantánea a una carpeta (mostrada abajo) — nunca sobrescribe el /boot en ejecución. Copia los archivos recuperados a un USB nuevo para reconstruir tu flash.",
-  "flash.restoredTo": "Extraído en:",
+  "flash.download": "Descargar (.zip)",
+  "flash.restoreNote": "La restauración descarga un ZIP de la instantánea — el /boot en ejecución nunca se toca. Pon el .zip directamente en el creador de USB de Unraid, o descomprímelo en un USB nuevo para reconstruir tu flash.",
   "flash.none": "Aún no hay copias del flash — inicia una copia arriba.",
 
   // VM backup (SSH)

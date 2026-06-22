@@ -116,6 +116,8 @@ const ar: Partial<Translations> = {
   "settings.containersPath": "مسار Containers",
   "settings.vmsPath": "مسار VMs",
   "settings.flashPath": "مسار Flash",
+  "settings.offsiteTitle": "نسخة خارج الموقع (اختياري)",
+  "settings.offsiteHint": "بعد كل نسخة احتياطية محلية ناجحة، يتم نسخها أيضًا إلى مستودع ثانٍ باستخدام restic copy. أدخل مستودعًا بعيدًا (rest:http://host:8000/repo، s3:…، b2:…) أو مسارًا فرعيًا محليًا؛ اتركه فارغًا للتعطيل. تبقى النسخة المحلية هي الأساسية.",
   "settings.domains": "النطاقات",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const ar: Partial<Translations> = {
   "flash.backupHint": "يلتقط فلاش USB بالكامل (‎/boot): نظام Unraid والترخيص وإعداد المصفوفة والمشاركات وإعداد الشبكة والإضافات.",
   "flash.backupNow": "نسخ الفلاش احتياطياً الآن",
   "flash.backingUp": "جارٍ النسخ الاحتياطي…",
-  "flash.restoring": "جارٍ الاستخراج…",
-  "flash.restoreNote": "تَستخرج الاستعادة لقطة إلى مجلد (يظهر أدناه) — لا تستبدل أبداً ‎/boot قيد التشغيل. انسخ الملفات المستعادة إلى فلاش USB جديد لإعادة بناء الفلاش.",
-  "flash.restoredTo": "استُخرج إلى:",
+  "flash.download": "تنزيل (.zip)",
+  "flash.restoreNote": "يقوم الاستعادة بتنزيل ملف ZIP للقطة — لا يتم المساس بـ /boot قيد التشغيل أبدًا. ضع ملف .zip مباشرة في أداة إنشاء USB من Unraid، أو فك ضغطه على USB جديد لإعادة بناء الفلاش.",
   "flash.none": "لا توجد نسخ احتياطية للفلاش بعد — شغّل نسخاً احتياطياً أعلاه.",
 
   // VM backup (SSH)

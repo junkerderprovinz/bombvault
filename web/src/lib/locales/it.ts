@@ -116,6 +116,8 @@ const it: Partial<Translations> = {
   "settings.containersPath": "Percorso container",
   "settings.vmsPath": "Percorso VM",
   "settings.flashPath": "Percorso Flash",
+  "settings.offsiteTitle": "Copia off-site (facoltativa)",
+  "settings.offsiteHint": "Dopo ogni backup locale riuscito, replicalo anche su un secondo repository con restic copy. Inserisci un remoto (rest:http://host:8000/repo, s3:…, b2:…) o un sottopercorso locale; lascia vuoto per disattivare. Il backup locale resta primario.",
   "settings.domains": "Domini",
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VM",
@@ -268,9 +270,8 @@ const it: Partial<Translations> = {
   "flash.backupHint": "Cattura l'intera chiavetta USB flash (/boot): SO Unraid, licenza, configurazione array, condivisioni, rete e configurazione dei plugin.",
   "flash.backupNow": "Backup del flash ora",
   "flash.backingUp": "Backup in corso…",
-  "flash.restoring": "Estrazione…",
-  "flash.restoreNote": "Il ripristino ESTRAE uno snapshot in una cartella (mostrata sotto) — non sovrascrive mai il /boot in esecuzione. Copia i file recuperati su una chiavetta USB nuova per ricostruire il tuo flash.",
-  "flash.restoredTo": "Estratto in:",
+  "flash.download": "Scarica (.zip)",
+  "flash.restoreNote": "Il ripristino scarica uno ZIP dello snapshot — il /boot in esecuzione non viene mai toccato. Trascina il .zip direttamente nel creatore USB di Unraid, oppure estrailo su una chiavetta USB nuova per ricostruire il flash.",
   "flash.none": "Ancora nessun backup del flash — avviane uno sopra.",
 
   // VM backup (SSH)

@@ -114,6 +114,8 @@ const ru: Partial<Translations> = {
   "settings.containersPath": "Путь контейнеров",
   "settings.vmsPath": "Путь виртуальных машин",
   "settings.flashPath": "Путь Flash",
+  "settings.offsiteTitle": "Внешняя копия (необязательно)",
+  "settings.offsiteHint": "После каждого успешного локального бэкапа также реплицировать его во второй репозиторий командой restic copy. Укажите удалённый репозиторий (rest:http://host:8000/repo, s3:…, b2:…) или локальный подпуть; оставьте пустым, чтобы отключить. Локальный бэкап остаётся основным.",
   "settings.domains": "Домены",
   "settings.containersEnabled": "Контейнеры",
   "settings.vmsEnabled": "Виртуальные машины",
@@ -263,9 +265,8 @@ const ru: Partial<Translations> = {
   "flash.backupHint": "Захватывает всю USB-флешку (/boot): ОС Unraid, лицензию, конфигурацию массива, общие ресурсы, сеть и конфигурацию плагинов.",
   "flash.backupNow": "Создать копию Flash сейчас",
   "flash.backingUp": "Копирование…",
-  "flash.restoring": "Распаковка…",
-  "flash.restoreNote": "Восстановление РАСПАКОВЫВАЕТ снимок в папку (показана ниже) — оно никогда не перезаписывает работающий /boot. Скопируйте восстановленные файлы на новую USB-флешку, чтобы пересоздать Flash.",
-  "flash.restoredTo": "Распаковано в:",
+  "flash.download": "Скачать (.zip)",
+  "flash.restoreNote": "Восстановление скачивает ZIP-архив снимка — работающий /boot никогда не затрагивается. Передайте .zip прямо в создатель USB Unraid или распакуйте его на новую флешку, чтобы пересоздать flash.",
   "flash.none": "Копий Flash пока нет — создайте копию выше.",
 
   // VM backup (SSH)

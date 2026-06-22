@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -55,10 +56,10 @@ type ResticEngine interface {
 	Init(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode) (restic.Summary, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
-	// Restore extracts a whole snapshot to target (used by flash restore, which
-	// never restores in-place — it writes to a folder the user then copies to a
-	// fresh USB).
-	Restore(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
+	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
+	// (flash restore — a non-destructive zip download; the live /boot is never
+	// touched and no filesystem metadata is restored).
+	DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 	// ForgetPolicy applies a keep-policy + prune (retention). Inert when the
@@ -76,6 +77,9 @@ type ResticEngine interface {
 	Unlock(ctx context.Context, repo string, removeAll bool, mode restic.Mode) error
 	// Prune reclaims space freed by forgotten snapshots (restic prune).
 	Prune(ctx context.Context, repo string, mode restic.Mode) error
+	// Copy replicates snapshots from srcRepo into destRepo (restic copy) for
+	// off-site backup. Empty ids copy everything not already in dest.
+	Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, mode restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -255,22 +259,6 @@ func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.FlashPath)
 }
 
-// flashRestoreTarget resolves the LOCAL folder a flash snapshot is extracted
-// into. Flash restore NEVER touches the live /boot; the user copies this folder
-// onto a fresh USB. For a local repo it is a "<flash path>-restore" sibling; for
-// a remote (rclone) repo it is a fixed local staging folder.
-func (s *Service) flashRestoreTarget(settings store.Settings) (string, error) {
-	sub := "user/bombvault/flash-restore"
-	if !restic.IsRemoteRepo(settings.FlashPath) {
-		sub = settings.FlashPath + "-restore"
-	}
-	target, err := paths.Resolve(s.cfg.HostMountRoot, sub)
-	if err != nil {
-		return "", fmt.Errorf("resolve flash restore target: %w", err)
-	}
-	return target, nil
-}
-
 // toContainerPath translates a HOST path under HostSourceRoot to its
 // container-visible equivalent under HostMountRoot (the broad Host Data mount,
 // e.g. /mnt → /host/user). Returns ("", false) when the host path is not
@@ -309,6 +297,48 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 	}
 	if err := s.engine.ForgetPolicy(ctx, repo, p, mode); err != nil {
 		log.Printf("api: retention prune failed (backup is safe): %v", err)
+	}
+}
+
+// offsiteRepoFor returns the configured off-site repo location for a domain, or
+// "" when none is set.
+func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string {
+	switch domain {
+	case "containers":
+		return settings.ContainersOffsite
+	case "vms":
+		return settings.VMsOffsite
+	case "flash":
+		return settings.FlashOffsite
+	}
+	return ""
+}
+
+// replicateOffsite copies the domain's local repo to its configured off-site repo
+// with `restic copy` (the local repo stays primary). Best-effort by design: the
+// local backup has already succeeded when this runs, so an off-site failure is
+// logged but never fails the backup. The off-site repo is created on first use.
+// No-op when no off-site is configured for the domain.
+func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) {
+	loc := s.offsiteRepoFor(domain, settings)
+	if loc == "" {
+		return
+	}
+	dest, err := s.resolveRepo(loc)
+	if err != nil {
+		// Never log loc itself: an off-site location can embed credentials
+		// (e.g. rest:http://user:pass@host/repo). domain is a fixed literal.
+		log.Printf("api: offsite %s: resolve repo location: %v", domain, err)
+		return
+	}
+	if err := s.EnsureRepo(ctx, dest, mode); err != nil {
+		log.Printf("api: offsite %s: ensure repo: %v", domain, err)
+		return
+	}
+	// Copy everything not already in the off-site repo (restic skips dupes), so
+	// the first run seeds history and later runs ship just the new snapshot.
+	if err := s.engine.Copy(ctx, dest, localRepo, nil, mode); err != nil {
+		log.Printf("api: offsite %s: copy failed (local backup is safe): %v", domain, err)
 	}
 }
 
@@ -603,6 +633,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	s.applyRetention(ctx, repo, settings, mode)
+	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	return sum, nil
 }
 
@@ -1141,12 +1172,6 @@ func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID strin
 	return nil
 }
 
-// RestoreTo extracts a whole snapshot under target (flash restore — never
-// in-place). Satisfies backup.FlashRestic.
-func (a *resticAdapter) RestoreTo(ctx context.Context, repo, snapshotID, target string) error {
-	return a.engine.Restore(ctx, repo, snapshotID, target, a.mode)
-}
-
 // templatesAdapter satisfies backup.Templates over the template package funcs.
 type templatesAdapter struct{}
 
@@ -1537,6 +1562,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		log.Printf("api: backup vm: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	s.applyRetention(ctx, repo, settings, mode)
+	s.replicateOffsite(ctx, "vms", settings, mode, repo)
 	return sum, nil
 }
 
@@ -1720,7 +1746,7 @@ func (s *Service) SnapshotsVM(ctx context.Context, name string) ([]restic.Snapsh
 	return out, nil
 }
 
-// resticAdapter also satisfies the flash domain's to-target restore surface.
+// resticAdapter also satisfies the flash domain's backup surface.
 var _ backup.FlashRestic = (*resticAdapter)(nil)
 
 // BackupFlash backs up the whole Unraid USB flash (the mounted /boot) to the
@@ -1760,59 +1786,84 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		return backup.Summary{}, err
 	}
 	s.applyRetention(ctx, repo, settings, mode)
+	s.replicateOffsite(ctx, "flash", settings, mode, repo)
 	return sum, nil
 }
 
-// RestoreFlash extracts a flash snapshot to the restore-target folder (safe —
-// the live /boot is never overwritten). "latest"/"" resolves to the newest
-// snapshot. Returns the absolute target folder so the caller can show the user
-// where the recovered flash contents landed.
-func (s *Service) RestoreFlash(ctx context.Context, snapshotID string, confirm bool) (string, error) {
-	if !confirm {
-		return "", backup.ErrNotConfirmed
+// FlashDownloadName is the suggested filename for a flash zip download.
+func FlashDownloadName(id string) string { return "flash-" + id + ".zip" }
+
+// resolveFlashSnapshot maps a user-supplied selector ("" / "latest", a full id,
+// or a short prefix) to the single matching full snapshot id. It errors when the
+// selector matches none OR is an ambiguous prefix of more than one — so the
+// caller rejects it BEFORE any download bytes/headers are committed, and restic
+// always receives an unambiguous full id.
+func resolveFlashSnapshot(snaps []restic.Snapshot, selector string) (string, error) {
+	if len(snaps) == 0 {
+		return "", errors.New("flash has not been backed up yet")
 	}
+	if selector == "" || selector == "latest" {
+		return snaps[len(snaps)-1].ID, nil
+	}
+	var match string
+	for _, s := range snaps {
+		if s.ID == selector {
+			return s.ID, nil // exact id wins outright
+		}
+		if strings.HasPrefix(s.ID, selector) {
+			if match != "" {
+				return "", errors.New("ambiguous snapshot id")
+			}
+			match = s.ID
+		}
+	}
+	if match == "" {
+		return "", errors.New("snapshot not found")
+	}
+	return match, nil
+}
+
+// DownloadFlashZip streams a flash snapshot to w as a zip (restic dump), the
+// non-destructive replacement for the old extract-to-folder restore: the live
+// /boot is never touched, no filesystem metadata is restored (so it can't hit
+// the per-file permission errors a to-disk restore caused on /mnt/user), and the
+// file drops straight into the Unraid USB creator.
+//
+// "latest"/"" resolves to the newest snapshot; an explicit id is validated
+// against the repo. onResolved (optional) is called with the concrete id once it
+// is known-good and BEFORE streaming begins, so the HTTP handler can set the
+// download headers only on the happy path. A restore run is recorded for history.
+func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID string, onResolved func(id string), w io.Writer) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return "", fmt.Errorf("read settings: %w", err)
+		return fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.flashRepoPath(settings)
 	if err != nil {
-		return "", err
-	}
-	target, err := s.flashRestoreTarget(settings)
-	if err != nil {
-		return "", err
+		return err
 	}
 	mode := s.ModeFor(settings)
-
-	if snapshotID == "latest" || snapshotID == "" {
-		snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
-		if sErr != nil {
-			return "", sErr
-		}
-		if len(snaps) == 0 {
-			return "", errors.New("flash has not been backed up yet")
-		}
-		snapshotID = snaps[len(snaps)-1].ID
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return err
 	}
-	if err := paths.EnsureDir(target); err != nil {
-		return "", fmt.Errorf("create flash restore folder: %w", err)
+	id, err := resolveFlashSnapshot(snaps, snapshotID)
+	if err != nil {
+		return err
 	}
-	fctx := s.progBegin(ctx, "flash", "restore")
-	rerr := backup.RestoreFlash(fctx, backup.FlashRestoreDeps{
-		Confirmed:  confirm,
-		SnapshotID: snapshotID,
-		Repo:       repo,
-		Target:     target,
-		TargetID:   store.FlashTargetID,
-		Restic:     &resticAdapter{engine: s.engine, mode: mode},
-		Runs:       runsAdapter{s.store},
-	})
-	s.progEnd("flash", "restore", rerr == nil)
-	if rerr != nil {
-		return "", rerr
+	if onResolved != nil {
+		onResolved(id)
 	}
-	return target, nil
+	runID, err := s.store.StartRun(store.FlashTargetID, "restore")
+	if err != nil {
+		return fmt.Errorf("flash download: start run: %w", err)
+	}
+	if derr := s.engine.DumpZip(ctx, repo, id, s.cfg.FlashDir, w, mode); derr != nil {
+		_ = s.store.FinishRun(runID, "failed", "", 0, derr.Error())
+		return derr
+	}
+	_ = s.store.FinishRun(runID, "success", id, 0, "")
+	return nil
 }
 
 // SnapshotsFlash lists restic snapshots in the flash repo (the repo is dedicated

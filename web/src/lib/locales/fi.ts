@@ -116,6 +116,8 @@ const fi: Partial<Translations> = {
   "settings.containersPath": "Konttien polku",
   "settings.vmsPath": "VM-polku",
   "settings.flashPath": "Flash-polku",
+  "settings.offsiteTitle": "Etäkopio (valinnainen)",
+  "settings.offsiteHint": "Jokaisen onnistuneen paikallisen varmuuskopion jälkeen se monistetaan myös toiseen repoon komennolla restic copy. Anna etärepo (rest:http://host:8000/repo, s3:…, b2:…) tai paikallinen alipolku; jätä tyhjäksi poistaaksesi käytöstä. Paikallinen varmuuskopio pysyy ensisijaisena.",
   "settings.domains": "Toimialueet",
   "settings.containersEnabled": "Kontit",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const fi: Partial<Translations> = {
   "flash.backupHint": "Tallentaa koko USB-flashin (/boot): Unraid-käyttöjärjestelmä, lisenssi, array-määritys, jaot, verkko ja laajennusten määritys.",
   "flash.backupNow": "Varmuuskopioi flash nyt",
   "flash.backingUp": "Varmuuskopioidaan…",
-  "flash.restoring": "Puretaan…",
-  "flash.restoreNote": "Palautus PURKAA tilannekuvan kansioon (näkyy alla) — se ei koskaan korvaa käynnissä olevaa /boot-osiota. Kopioi palautetut tiedostot uudelle USB-tikulle rakentaaksesi flashin uudelleen.",
-  "flash.restoredTo": "Purettu sijaintiin:",
+  "flash.download": "Lataa (.zip)",
+  "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston — käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi.",
   "flash.none": "Ei vielä flash-varmuuskopioita — suorita varmuuskopio yllä.",
 
   // VM backup (SSH)

@@ -116,6 +116,8 @@ const pt: Partial<Translations> = {
   "settings.containersPath": "Caminho dos containers",
   "settings.vmsPath": "Caminho das VMs",
   "settings.flashPath": "Caminho Flash",
+  "settings.offsiteTitle": "Cópia externa (opcional)",
+  "settings.offsiteHint": "Após cada backup local bem-sucedido, replicá-lo também para um segundo repositório com restic copy. Informe um remoto (rest:http://host:8000/repo, s3:…, b2:…) ou um subcaminho local; deixe em branco para desativar. O backup local continua sendo o principal.",
   "settings.domains": "Domínios",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const pt: Partial<Translations> = {
   "flash.backupHint": "Captura toda a pen USB flash (/boot): SO Unraid, licença, configuração do array, partilhas, rede e configuração de plugins.",
   "flash.backupNow": "Fazer backup do flash agora",
   "flash.backingUp": "A fazer backup…",
-  "flash.restoring": "A extrair…",
-  "flash.restoreNote": "O restauro EXTRAI um instantâneo para uma pasta (mostrada abaixo) — nunca sobrescreve o /boot em execução. Copie os ficheiros recuperados para uma pen USB nova para reconstruir o seu flash.",
-  "flash.restoredTo": "Extraído para:",
+  "flash.download": "Baixar (.zip)",
+  "flash.restoreNote": "A restauração baixa um ZIP do snapshot — o /boot em execução nunca é tocado. Solte o .zip direto no criador de USB do Unraid, ou descompacte-o em um USB novo para reconstruir o flash.",
   "flash.none": "Ainda sem backups do flash — inicie um backup acima.",
 
   // VM backup (SSH)

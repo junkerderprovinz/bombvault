@@ -116,6 +116,8 @@ const fr: Partial<Translations> = {
   "settings.containersPath": "Chemin des conteneurs",
   "settings.vmsPath": "Chemin des VMs",
   "settings.flashPath": "Chemin Flash",
+  "settings.offsiteTitle": "Copie hors site (facultatif)",
+  "settings.offsiteHint": "Après chaque sauvegarde locale réussie, la répliquer aussi vers un second dépôt avec restic copy. Indiquez un dépôt distant (rest:http://host:8000/repo, s3:…, b2:…) ou un sous-chemin local ; laissez vide pour désactiver. La sauvegarde locale reste principale.",
   "settings.domains": "Domaines",
   "settings.containersEnabled": "Conteneurs",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const fr: Partial<Translations> = {
   "flash.backupHint": "Capture toute la clé USB flash (/boot) : OS Unraid, licence, config de la matrice, partages, réseau et config des plugins.",
   "flash.backupNow": "Sauvegarder le flash",
   "flash.backingUp": "Sauvegarde…",
-  "flash.restoring": "Extraction…",
-  "flash.restoreNote": "La restauration EXTRAIT un instantané vers un dossier (affiché ci-dessous) — elle n'écrase jamais le /boot en cours d'exécution. Copiez les fichiers récupérés sur une clé USB neuve pour reconstruire votre flash.",
-  "flash.restoredTo": "Extrait vers :",
+  "flash.download": "Télécharger (.zip)",
+  "flash.restoreNote": "La restauration télécharge un ZIP de l'instantané — le /boot en cours d'exécution n'est jamais touché. Glissez le .zip directement dans le créateur de clé USB d'Unraid, ou décompressez-le sur une clé USB neuve pour reconstruire votre flash.",
   "flash.none": "Aucune sauvegarde flash pour l'instant — lancez-en une ci-dessus.",
 
   // VM backup (SSH)

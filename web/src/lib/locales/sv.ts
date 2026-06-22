@@ -116,6 +116,8 @@ const sv: Partial<Translations> = {
   "settings.containersPath": "Containers-sökväg",
   "settings.vmsPath": "VM-sökväg",
   "settings.flashPath": "Flash-sökväg",
+  "settings.offsiteTitle": "Kopia utanför platsen (valfritt)",
+  "settings.offsiteHint": "Efter varje lyckad lokal säkerhetskopia, replikera den även till ett andra arkiv med restic copy. Ange ett fjärrarkiv (rest:http://host:8000/repo, s3:…, b2:…) eller en lokal undersökväg; lämna tomt för att inaktivera. Den lokala säkerhetskopian förblir primär.",
   "settings.domains": "Domäner",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -268,9 +270,8 @@ const sv: Partial<Translations> = {
   "flash.backupHint": "Fångar hela USB-flashen (/boot): Unraid-OS, licens, array-config, resurser, nätverks- och plugin-config.",
   "flash.backupNow": "Säkerhetskopiera flash nu",
   "flash.backingUp": "Säkerhetskopierar…",
-  "flash.restoring": "Packar upp…",
-  "flash.restoreNote": "Återställning PACKAR UPP en ögonblicksbild till en mapp (visas nedan) — den körande /boot skrivs aldrig över. Kopiera de återställda filerna till ett nytt USB för att bygga om din flash.",
-  "flash.restoredTo": "Uppackad till:",
+  "flash.download": "Ladda ner (.zip)",
+  "flash.restoreNote": "Återställning laddar ner en ZIP av ögonblicksbilden — den körande /boot rörs aldrig. Lägg .zip-filen direkt i Unraids USB-skapare, eller packa upp den på ett nytt USB-minne för att bygga om din flash.",
   "flash.none": "Inga flash-säkerhetskopior än — kör en säkerhetskopiering ovan.",
 
   // VM backup (SSH)

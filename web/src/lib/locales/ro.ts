@@ -116,6 +116,8 @@ const ro: Partial<Translations> = {
   "settings.containersPath": "Cale containere",
   "settings.vmsPath": "Cale VM-uri",
   "settings.flashPath": "Cale Flash",
+  "settings.offsiteTitle": "Copie externă (opțional)",
+  "settings.offsiteHint": "După fiecare backup local reușit, replică-l și într-un al doilea depozit cu restic copy. Introdu un depozit la distanță (rest:http://host:8000/repo, s3:…, b2:…) sau o subcale locală; lasă gol pentru a dezactiva. Backupul local rămâne principal.",
   "settings.domains": "Domenii",
   "settings.containersEnabled": "Containere",
   "settings.vmsEnabled": "VM-uri",
@@ -268,9 +270,8 @@ const ro: Partial<Translations> = {
   "flash.backupHint": "Capturează întregul flash USB (/boot): sistemul Unraid, licența, configurația array, partajările, rețeaua și configurația plugin-urilor.",
   "flash.backupNow": "Copiază flash-ul acum",
   "flash.backingUp": "Se copiază…",
-  "flash.restoring": "Se extrage…",
-  "flash.restoreNote": "Restaurarea EXTRAGE un instantaneu într-un folder (afișat mai jos) — nu suprascrie niciodată /boot-ul activ. Copiați fișierele recuperate pe un USB nou pentru a reconstrui flash-ul.",
-  "flash.restoredTo": "Extras în:",
+  "flash.download": "Descarcă (.zip)",
+  "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului — /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul.",
   "flash.none": "Încă nicio copie de rezervă flash — rulați un backup mai sus.",
 
   // VM backup (SSH)

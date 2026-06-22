@@ -72,6 +72,9 @@ export interface Settings {
   containersPath: string;
   vmsPath: string;
   flashPath: string;
+  containersOffsite: string;
+  vmsOffsite: string;
+  flashOffsite: string;
   containersSchedule: string;
   vmsSchedule: string;
   flashSchedule: string;
@@ -549,17 +552,13 @@ export function listFlashSnapshots(): Promise<ListSnapshotsResponse> {
 }
 
 /**
- * POST /api/flash/restore — extract a flash snapshot to the restore folder.
- * Returns the target folder; the live /boot is never overwritten.
+ * GET /api/flash/download — URL that streams a flash snapshot as a zip download
+ * (restic dump). Used as a plain <a> link: the GET carries the session cookie,
+ * so the browser downloads flash-<id>.zip. Non-destructive; the live /boot is
+ * never touched, and a zip drops straight into the Unraid USB creator.
  */
-export function restoreFlash(
-  snapshotId: string,
-  confirm: boolean
-): Promise<OkEnvelope & { target?: string }> {
-  return fetchJSON("/api/flash/restore", {
-    method: "POST",
-    body: JSON.stringify({ snapshotId, confirm }),
-  });
+export function flashDownloadURL(snapshotId: string): string {
+  return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}`;
 }
 
 // ---------------------------------------------------------------------------

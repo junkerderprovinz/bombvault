@@ -167,6 +167,8 @@ const en = {
   "settings.containersPath": "Containers path",
   "settings.vmsPath": "VMs path",
   "settings.flashPath": "Flash path",
+  "settings.offsiteTitle": "Off-site copy (optional)",
+  "settings.offsiteHint": "After each successful local backup, also replicate it to a second repo with restic copy. Enter a remote (rest:http://host:8000/repo, s3:…, b2:…) or a local subpath; leave blank to disable. The local backup stays primary.",
   "settings.domains": "Domains",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -328,9 +330,8 @@ const en = {
   "flash.backupHint": "Captures the entire USB flash (/boot): Unraid OS, license, array config, shares, network and plugin config.",
   "flash.backupNow": "Back up flash now",
   "flash.backingUp": "Backing up…",
-  "flash.restoring": "Extracting…",
-  "flash.restoreNote": "Restore EXTRACTS a snapshot to a folder (shown below) — it never overwrites the running /boot. Copy the recovered files onto a fresh USB to rebuild your flash.",
-  "flash.restoredTo": "Extracted to:",
+  "flash.download": "Download (.zip)",
+  "flash.restoreNote": "Restore downloads a ZIP of the snapshot — the running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
   "flash.none": "No flash backups yet — run a backup above.",
 
   // Container / VM state badge labels
@@ -499,6 +500,8 @@ const de: Translations = {
   "settings.containersPath": "Container-Pfad",
   "settings.vmsPath": "VMs-Pfad",
   "settings.flashPath": "Flash-Pfad",
+  "settings.offsiteTitle": "Offsite-Kopie (optional)",
+  "settings.offsiteHint": "Nach jedem erfolgreichen lokalen Backup wird es zusätzlich per restic copy in ein zweites Repo repliziert. Ein Remote (rest:http://host:8000/repo, s3:…, b2:…) oder einen lokalen Unterpfad angeben; leer lassen zum Deaktivieren. Das lokale Backup bleibt primär.",
   "settings.domains": "Domänen",
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VMs",
@@ -660,9 +663,8 @@ const de: Translations = {
   "flash.backupHint": "Sichert den kompletten USB-Stick (/boot): Unraid-OS, Lizenz, Array-Config, Shares, Netzwerk und Plugin-Config.",
   "flash.backupNow": "Flash jetzt sichern",
   "flash.backingUp": "Sichere…",
-  "flash.restoring": "Extrahiere…",
-  "flash.restoreNote": "Restore EXTRAHIERT einen Snapshot in einen Ordner (unten angezeigt) — der laufende /boot wird NIE überschrieben. Kopiere die wiederhergestellten Dateien auf einen frischen USB-Stick, um deinen Flash neu aufzubauen.",
-  "flash.restoredTo": "Extrahiert nach:",
+  "flash.download": "Download (.zip)",
+  "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter — der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen.",
   "flash.none": "Noch keine Flash-Backups — oben eines starten.",
 
   // Container / VM state badge labels

@@ -94,17 +94,33 @@ func TestBackupArgsUnencrypted(t *testing.T) {
 	}
 }
 
-func TestRestoreArgsEncrypted(t *testing.T) {
-	got := restic.RestoreArgs("/repo", "abc123", "/target", restic.Mode{Encrypted: true})
-	want := []string{"-r", "/repo", "restore", "--json", "--target", "/target", "--", "abc123"}
+func TestDumpZipArgsEncrypted(t *testing.T) {
+	got := restic.DumpZipArgs("/repo", "abc123", "/host/boot", restic.Mode{Encrypted: true})
+	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
 }
 
-func TestRestoreArgsNoPassword(t *testing.T) {
-	got := restic.RestoreArgs("/repo", "abc123", "/", restic.Mode{Encrypted: false})
-	want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--target", "/", "--", "abc123"}
+func TestDumpZipArgsNoPassword(t *testing.T) {
+	got := restic.DumpZipArgs("/repo", "abc123", "/host/boot", restic.Mode{Encrypted: false})
+	want := []string{"-r", "/repo", "dump", "-a", "zip", "--insecure-no-password", "--", "abc123:/host/boot", "/"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
+func TestCopyArgsEncrypted(t *testing.T) {
+	got := restic.CopyArgs("/dest", "/src", nil, restic.Mode{Encrypted: true})
+	want := []string{"-r", "/dest", "copy", "--from-repo", "/src"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
+func TestCopyArgsNoPasswordWithIDs(t *testing.T) {
+	got := restic.CopyArgs("/dest", "/src", []string{"abc123"}, restic.Mode{Encrypted: false})
+	want := []string{"-r", "/dest", "copy", "--from-repo", "/src", "--insecure-no-password", "--from-insecure-no-password", "--", "abc123"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}

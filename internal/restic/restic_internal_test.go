@@ -59,3 +59,23 @@ func TestLastReasonEmpty(t *testing.T) {
 		t.Fatalf("empty stderr should yield empty reason, got %q", got)
 	}
 }
+
+// TestLastReasonAppendsItemErrorToCount pins that a count-only restore summary
+// ("There were N errors") is enriched with the first concrete per-item error and
+// that the host path in that sample is scrubbed.
+func TestLastReasonAppendsItemErrorToCount(t *testing.T) {
+	stderr := strings.Join([]string{
+		"ignoring error for /host/user/bombvault/flash-restore/bzimage: Lchown: operation not permitted",
+		"Fatal: There were 1104 errors",
+	}, "\n")
+	got := lastReason(stderr)
+	if !strings.Contains(got, "There were 1104 errors") {
+		t.Fatalf("should keep the count summary, got %q", got)
+	}
+	if !strings.Contains(got, "operation not permitted") {
+		t.Fatalf("should append a concrete per-item cause, got %q", got)
+	}
+	if strings.Contains(got, "/host/user") {
+		t.Fatalf("should scrub the host path, got %q", got)
+	}
+}

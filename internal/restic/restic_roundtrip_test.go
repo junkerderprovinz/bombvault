@@ -1,6 +1,8 @@
 package restic_test
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"os"
 	"os/exec"
@@ -44,28 +46,24 @@ func TestRoundtrip(t *testing.T) {
 		t.Fatal("expected non-empty snapshot ID")
 	}
 
-	out := filepath.Join(dir, "out")
-	if err := r.Restore(ctx, repo, sum.SnapshotID, out, m); err != nil {
-		t.Fatal("Restore:", err)
+	// Flash-style restore: stream the snapshot subtree as a zip. Rooting at src
+	// puts its contents (f.txt) at the archive root.
+	var buf bytes.Buffer
+	if err := r.DumpZip(ctx, repo, sum.SnapshotID, src, &buf, m); err != nil {
+		t.Fatal("DumpZip:", err)
 	}
-
-	// The restored tree is placed under out/ with the full path of src inside.
-	// Walk for f.txt anywhere under out to verify restoration succeeded.
+	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	if err != nil {
+		t.Fatal("zip open:", err)
+	}
 	found := false
-	err = filepath.Walk(out, func(path string, _ os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if filepath.Base(path) == "f.txt" {
+	for _, f := range zr.File {
+		if filepath.Base(f.Name) == "f.txt" {
 			found = true
 		}
-		return nil
-	})
-	if err != nil {
-		t.Fatal("Walk:", err)
 	}
 	if !found {
-		t.Fatal("restored f.txt not found under", out)
+		t.Fatal("f.txt not found in dumped zip")
 	}
 
 	// Also verify snapshots listing works.

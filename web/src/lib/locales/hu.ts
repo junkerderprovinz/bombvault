@@ -116,6 +116,8 @@ const hu: Partial<Translations> = {
   "settings.containersPath": "Konténerek útvonala",
   "settings.vmsPath": "VM-ek útvonala",
   "settings.flashPath": "Flash útvonala",
+  "settings.offsiteTitle": "Telephelyen kívüli másolat (opcionális)",
+  "settings.offsiteHint": "Minden sikeres helyi mentés után másolja egy második tárolóba is a restic copy paranccsal. Adjon meg egy távoli tárolót (rest:http://host:8000/repo, s3:…, b2:…) vagy egy helyi alútvonalat; hagyja üresen a letiltáshoz. A helyi mentés marad az elsődleges.",
   "settings.domains": "Tartományok",
   "settings.containersEnabled": "Konténerek",
   "settings.vmsEnabled": "VM-ek",
@@ -268,9 +270,8 @@ const hu: Partial<Translations> = {
   "flash.backupHint": "Rögzíti a teljes USB flasht (/boot): Unraid OS, licenc, tömbkonfiguráció, megosztások, hálózat és bővítmény-konfiguráció.",
   "flash.backupNow": "Flash mentése most",
   "flash.backingUp": "Mentés…",
-  "flash.restoring": "Kibontás…",
-  "flash.restoreNote": "A visszaállítás egy pillanatképet egy mappába BONT KI (lent látható) — soha nem írja felül a futó /boot-ot. Másolja a helyreállított fájlokat egy friss USB-re a flash újraépítéséhez.",
-  "flash.restoredTo": "Kibontva ide:",
+  "flash.download": "Letöltés (.zip)",
+  "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját — a futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez.",
   "flash.none": "Még nincs flash mentés — indítson egyet fent.",
 
   // VM backup (SSH)

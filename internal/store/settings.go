@@ -8,13 +8,19 @@ import (
 
 // Settings mirrors the single-row settings table.
 type Settings struct {
-	EncryptionEnabled  bool
-	ContainersEnabled  bool
-	VMsEnabled         bool
-	FlashEnabled       bool
-	ContainersPath     string
-	VMsPath            string
-	FlashPath          string
+	EncryptionEnabled bool
+	ContainersEnabled bool
+	VMsEnabled        bool
+	FlashEnabled      bool
+	ContainersPath    string
+	VMsPath           string
+	FlashPath         string
+	// Optional off-site repo per domain. When set, a successful local backup is
+	// replicated there with `restic copy` (the local repo stays primary). Empty
+	// means no off-site copy for that domain.
+	ContainersOffsite  string
+	VMsOffsite         string
+	FlashOffsite       string
 	ContainersSchedule string
 	VMsSchedule        string
 	FlashSchedule      string
@@ -44,6 +50,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	row := r.db.QueryRow(`
 		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled,
 		       containers_path, vms_path, flash_path,
+		       containers_offsite, vms_offsite, flash_offsite,
 		       containers_schedule, vms_schedule, flash_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
@@ -55,6 +62,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
+		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite,
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
@@ -84,6 +92,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  containers_path     = ?,
 		  vms_path            = ?,
 		  flash_path          = ?,
+		  containers_offsite  = ?,
+		  vms_offsite         = ?,
+		  flash_offsite       = ?,
 		  containers_schedule = ?,
 		  vms_schedule        = ?,
 		  flash_schedule      = ?,
@@ -102,6 +113,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.VMsEnabled),
 		boolInt(s.FlashEnabled),
 		s.ContainersPath, s.VMsPath, s.FlashPath,
+		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite,
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,

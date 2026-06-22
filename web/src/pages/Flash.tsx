@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { backupFlashNow, listFlashSnapshots, restoreFlash, deleteSnapshot } from "../lib/api";
+import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
@@ -71,17 +71,10 @@ function FlashBackupButton({ t, onBackedUp }: { t: T; onBackedUp: () => void }) 
 }
 
 // ---------------------------------------------------------------------------
-// Snapshot row (safe extract restore)
+// Snapshot row (zip download restore)
 // ---------------------------------------------------------------------------
 
 function FlashSnapshotRow({ snap, onDeleted, t }: { snap: Snapshot; onDeleted: () => void; t: T }) {
-  const [confirmed, setConfirmed] = useState(false);
-  type State =
-    | { phase: "idle" }
-    | { phase: "pending" }
-    | { phase: "success"; target?: string }
-    | { phase: "error"; message: string };
-  const [state, setState] = useState<State>({ phase: "idle" });
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -100,23 +93,6 @@ function FlashSnapshotRow({ snap, onDeleted, t }: { snap: Snapshot; onDeleted: (
     }
   }
 
-  async function handleRestore() {
-    if (!confirmed) return;
-    setState({ phase: "pending" });
-    try {
-      const res = await restoreFlash(snap.id, true);
-      if (res.ok) {
-        setState({ phase: "success", target: res.target });
-      } else {
-        setState({ phase: "error", message: res.error ?? "Restore failed" });
-      }
-    } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
-  }
-
-  const isPending = state.phase === "pending";
-  const done = state.phase === "success";
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
@@ -124,51 +100,24 @@ function FlashSnapshotRow({ snap, onDeleted, t }: { snap: Snapshot; onDeleted: (
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
-        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer shrink-0">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            disabled={isPending || done}
-            className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("restore.confirm")}
-        </label>
-        <button
-          onClick={() => void handleRestore()}
-          disabled={!confirmed || isPending || done}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 shrink-0"
+        {/* Non-destructive zip download: a GET link carries the session cookie,
+            so the browser downloads flash-<id>.zip straight from restic dump. */}
+        <a
+          href={flashDownloadURL(snap.id)}
+          download
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
         >
-          {isPending ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("flash.restoring")}
-            </>
-          ) : (
-            t("snapshots.restore")
-          )}
-        </button>
+          {t("flash.download")}
+        </a>
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting || isPending}
+          disabled={deleting}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {state.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c] pl-24 break-words">
-          {t("flash.restoredTo")} <span className="font-mono">{state.target}</span>
-        </p>
-      )}
-      {state.phase === "error" && (
-        <p className="text-xs text-[#ff8389] pl-24 break-words">{state.message}</p>
-      )}
       {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
     </div>
   );

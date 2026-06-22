@@ -114,6 +114,8 @@ const nl: Partial<Translations> = {
   "settings.containersPath": "Containers-pad",
   "settings.vmsPath": "VM's-pad",
   "settings.flashPath": "Flash-pad",
+  "settings.offsiteTitle": "Offsite-kopie (optioneel)",
+  "settings.offsiteHint": "Na elke geslaagde lokale back-up deze ook repliceren naar een tweede repo met restic copy. Vul een remote in (rest:http://host:8000/repo, s3:…, b2:…) of een lokaal subpad; laat leeg om uit te schakelen. De lokale back-up blijft primair.",
   "settings.domains": "Domeinen",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VM's",
@@ -265,9 +267,8 @@ const nl: Partial<Translations> = {
   "flash.backupHint": "Legt de volledige USB-flash (/boot) vast: Unraid-OS, licentie, array-config, shares, netwerk- en plug-inconfiguratie.",
   "flash.backupNow": "Flash nu back-uppen",
   "flash.backingUp": "Back-up maken…",
-  "flash.restoring": "Uitpakken…",
-  "flash.restoreNote": "Herstel PAKT een snapshot uit naar een map (hieronder getoond) — de draaiende /boot wordt nooit overschreven. Kopieer de herstelde bestanden naar een nieuwe USB om je flash opnieuw op te bouwen.",
-  "flash.restoredTo": "Uitgepakt naar:",
+  "flash.download": "Downloaden (.zip)",
+  "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot — de actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen.",
   "flash.none": "Nog geen flash-back-ups — maak er hierboven een.",
 
   // VM backup (SSH)

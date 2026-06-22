@@ -163,6 +163,24 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_cloud_conf",
 		sql:     "ALTER TABLE settings ADD COLUMN cloud_conf TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Optional off-site repo per domain; a successful local backup is replicated
+		// there with `restic copy`. Empty = no off-site copy. One column per domain
+		// (SQLite ADD COLUMN is single-column), hence three migrations.
+		version: 13,
+		name:    "settings_containers_offsite",
+		sql:     "ALTER TABLE settings ADD COLUMN containers_offsite TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 14,
+		name:    "settings_vms_offsite",
+		sql:     "ALTER TABLE settings ADD COLUMN vms_offsite TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 15,
+		name:    "settings_flash_offsite",
+		sql:     "ALTER TABLE settings ADD COLUMN flash_offsite TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

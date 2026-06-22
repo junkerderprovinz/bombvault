@@ -116,6 +116,8 @@ const cs: Partial<Translations> = {
   "settings.containersPath": "Cesta ke kontejnerům",
   "settings.vmsPath": "Cesta k VM",
   "settings.flashPath": "Cesta k Flash",
+  "settings.offsiteTitle": "Kopie mimo lokalitu (volitelné)",
+  "settings.offsiteHint": "Po každé úspěšné místní záloze ji také replikovat do druhého repozitáře pomocí restic copy. Zadejte vzdálený repozitář (rest:http://host:8000/repo, s3:…, b2:…) nebo místní podcestu; ponechte prázdné pro vypnutí. Místní záloha zůstává primární.",
   "settings.domains": "Domény",
   "settings.containersEnabled": "Kontejnery",
   "settings.vmsEnabled": "VMs",
@@ -266,9 +268,8 @@ const cs: Partial<Translations> = {
   "flash.backupHint": "Zachytí celý USB Flash (/boot): OS Unraid, licenci, konfiguraci pole, sdílené složky, síť a konfiguraci pluginů.",
   "flash.backupNow": "Zálohovat Flash nyní",
   "flash.backingUp": "Zálohuji…",
-  "flash.restoring": "Rozbaluji…",
-  "flash.restoreNote": "Obnova ROZBALÍ snímek do složky (zobrazené níže) — nikdy nepřepíše běžící /boot. Zkopírujte obnovené soubory na nový USB pro znovuvytvoření Flash.",
-  "flash.restoredTo": "Rozbaleno do:",
+  "flash.download": "Stáhnout (.zip)",
+  "flash.restoreNote": "Obnovení stáhne ZIP snímku — běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash.",
   "flash.none": "Zatím žádné zálohy Flash — spusťte zálohu výše.",
 
   // VM backup (SSH)
