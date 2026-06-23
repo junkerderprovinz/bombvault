@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
+import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
@@ -810,6 +811,7 @@ export function Containers() {
           <p className="mt-1 text-sm text-carbon-textSub">
             Manage container backups, schedules, and restores.
           </p>
+          <div className="mt-2"><OffsiteIndicator domain="containers" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {discoverMsg && (

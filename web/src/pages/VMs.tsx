@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, discoverVMs } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
@@ -687,6 +688,7 @@ export function VMs() {
           <p className="mt-1 text-sm text-carbon-textSub">
             {t("vms.subtitle")}
           </p>
+          <div className="mt-2"><OffsiteIndicator domain="vms" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {discoverMsg && (

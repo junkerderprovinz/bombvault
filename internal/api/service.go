@@ -336,19 +336,25 @@ func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) str
 // (scrubbed) error so on-demand/scheduled callers can surface it; it never logs
 // the off-site location, which can embed credentials. Lock-free — the caller
 // holds the domain lock.
-func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) error {
+func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) (err error) {
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
 		return errors.New("no off-site repo configured for this domain")
 	}
-	dest, err := s.resolveRepo(loc)
-	if err != nil {
-		return fmt.Errorf("resolve off-site repo: %w", err)
+	dest, rerr := s.resolveRepo(loc)
+	if rerr != nil {
+		return fmt.Errorf("resolve off-site repo: %w", rerr)
 	}
-	if err := s.EnsureRepo(ctx, dest, mode); err != nil {
+	// Publish an active "off-site replication running" indicator for this domain so
+	// the UI shows WHICH domain is replicating. restic copy has no machine-readable
+	// progress, so this is active/indeterminate (no percent), not a filling bar.
+	s.progBegin(ctx, "offsite:"+domain, "replicate")
+	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil) }()
+	if err = s.EnsureRepo(ctx, dest, mode); err != nil {
 		return fmt.Errorf("ensure off-site repo: %w", err)
 	}
-	return s.engine.Copy(ctx, dest, localRepo, nil, mode)
+	err = s.engine.Copy(ctx, dest, localRepo, nil, mode)
+	return err
 }
 
 // replicateOffsite runs right after a successful local backup (caller holds the
