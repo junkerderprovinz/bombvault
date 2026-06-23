@@ -391,9 +391,14 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 // tolerated.
 func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode) error {
 	// Remote (rclone/off-site) repos have no local directory or `config` marker
-	// to stat. Initialise and tolerate an already-initialised repo (restic errors
-	// with "...already...").
+	// to stat. Probe by listing snapshots first: success means the repo already
+	// exists, so skip Init — otherwise every backup re-runs `restic init` against
+	// an existing repo and logs a scary (but harmless) "config file already
+	// exists". Only Init when the probe fails, tolerating a concurrent-create race.
 	if restic.IsRemoteRepo(repo) {
+		if _, probeErr := s.engine.Snapshots(ctx, repo, mode); probeErr == nil {
+			return nil
+		}
 		if err := s.engine.Init(ctx, repo, mode); err != nil && !strings.Contains(strings.ToLower(err.Error()), "already") {
 			return fmt.Errorf("init repo: %w", err)
 		}
@@ -447,11 +452,16 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 		}
 	}
 	if len(out) == 0 {
-		// Last resort: the conventional appdata dir for this container.
-		if c, ok := s.toContainerPath(path.Join("/mnt/user/appdata", name)); ok {
-			out = append(out, c)
-		} else {
-			out = append(out, path.Join(mountRoot, "appdata", name))
+		// Last resort: the conventional appdata dir for this container — but ONLY
+		// if it actually exists. A container with no appdata mount and no such
+		// folder is stateless: default to an empty selection (config-only backup)
+		// rather than a phantom folder that shows as selected yet backs up nothing.
+		cand, ok := s.toContainerPath(path.Join("/mnt/user/appdata", name))
+		if !ok {
+			cand = path.Join(mountRoot, "appdata", name)
+		}
+		if _, err := os.Stat(cand); err == nil { //nolint:gosec // G703: cand is HostMountRoot + "appdata" + a validated container name, not raw user input
+			out = append(out, cand)
 		}
 	}
 	return out
@@ -743,8 +753,10 @@ func (s *Service) Discover(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	mode := s.ModeFor(settings)
-	// No repo yet → nothing to discover (not an error).
-	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+	// No local repo yet → nothing to discover (not an error). Discover always
+	// targets the primary (local) repo, so the local config check is correct here;
+	// keeping it preserves the quiet "0 discovered" for a not-yet-created repo.
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) { //nolint:gosec // G703: repo is the operator-configured local domain path, validated under the mount root on save
 		return 0, nil
 	}
 	snaps, err := s.engine.Snapshots(ctx, repo, mode)
@@ -849,7 +861,9 @@ func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+	// Discover targets the primary (local) repo; the local config check is correct
+	// here and preserves the quiet "0 discovered" for a not-yet-created repo.
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) { //nolint:gosec // G703: repo is the operator-configured local domain path, validated under the mount root on save
 		return 0, nil // no repo yet → nothing to discover
 	}
 	mode := s.ModeFor(settings)
@@ -1035,15 +1049,12 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 		return nil, err
 	}
 	mode := s.ModeFor(settings)
-	// A listing before any backup has run (repo not yet initialised) is "no
+	// A listing before any local backup has run (repo not yet initialised) is "no
 	// snapshots yet", not an error — the SPA shows an empty list, not a failure.
-	// A non-ErrNotExist stat error (e.g. permission denied on the repo dir) is
-	// logged as a warning but does not block the engine call: restic will surface
-	// the real failure with better context.
-	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+	// Remote repos skip this local check and are listed directly (see
+	// localRepoMissing), so an off-site view is never wrongly shown as empty.
+	if localRepoMissing(repo) {
 		return nil, nil
-	} else if statErr != nil {
-		log.Printf("api: snapshots: WARN could not stat repo config for %q: %v", name, statErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 	}
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
@@ -1769,7 +1780,7 @@ func (s *Service) SnapshotsVM(ctx context.Context, name, source string) ([]resti
 	}
 	mode := s.ModeFor(settings)
 	// A listing before any backup has run is "no snapshots yet", not an error.
-	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+	if localRepoMissing(repo) {
 		return nil, nil
 	}
 	all, err := s.listSnapshots(ctx, repo, mode)
@@ -1921,7 +1932,7 @@ func (s *Service) SnapshotsFlash(ctx context.Context, source string) ([]restic.S
 		return nil, err
 	}
 	mode := s.ModeFor(settings)
-	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) {
+	if localRepoMissing(repo) {
 		return nil, nil // no backups yet
 	}
 	return s.listSnapshots(ctx, repo, mode)
@@ -2025,6 +2036,19 @@ func (s *Service) domainRepoSource(domain, source string) (store.Settings, strin
 	}
 	repo, err := s.repoFor(settings, domain, source)
 	return settings, repo, err
+}
+
+// localRepoMissing reports whether a LOCAL repo has not been initialised yet (no
+// `config` marker). It is ALWAYS false for a remote repo (rest:/s3:/b2:/…),
+// which has no local marker to stat — its emptiness is decided by actually
+// listing it. This is why the off-site view (often a remote repo) must not use a
+// local config check, or it would always look empty even when snapshots exist.
+func localRepoMissing(repo string) bool {
+	if restic.IsRemoteRepo(repo) {
+		return false
+	}
+	_, statErr := os.Stat(filepath.Join(repo, "config")) //nolint:gosec // G703: repo is an operator-configured location validated under the mount root on save; source only selects which configured location
+	return errors.Is(statErr, fs.ErrNotExist)
 }
 
 // requireExistingRepo returns a friendly error (notYet) when a local repo has not

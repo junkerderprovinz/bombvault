@@ -173,6 +173,57 @@ func TestBackupFlashReplicatesOffsite(t *testing.T) {
 	})
 }
 
+// TestSnapshotsFlashRemoteOffsiteLists pins the fix for the off-site view being
+// wrongly empty: a REMOTE off-site repo must be listed directly (no local
+// config-file stat, which always fails for rest:/s3:/… and returned nil before).
+func TestSnapshotsFlashRemoteOffsiteLists(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir(), FlashDir: "/host/boot"}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FlashPath = "backups/flash"
+	s.FlashOffsite = "rest:http://nas:8000/flash" // remote off-site repo
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	got, err := svc.SnapshotsFlash(context.Background(), "offsite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("a remote off-site repo must be listed (not short-circuited to empty), got %d", len(got))
+	}
+}
+
+// TestContainerMountsNoPhantomAppdata pins the fix for stateless containers
+// showing a non-existent /mnt/user/appdata/<name> as a selected folder.
+func TestContainerMountsNoPhantomAppdata(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, HostSourceRoot: "/mnt"}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	// A stateless container: no appdata bind mount, and no conventional appdata
+	// folder exists on disk.
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/stateless", Image: "x:latest"}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	mounts, custom, err := svc.ContainerMounts(context.Background(), "stateless")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(custom) != 0 {
+		t.Fatalf("a stateless container must not show a phantom appdata folder, got custom=%v", custom)
+	}
+	for _, m := range mounts {
+		if m.Selected {
+			t.Fatalf("no mount should be auto-selected for a stateless container, got %+v", m)
+		}
+	}
+}
+
 func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -474,7 +525,8 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 // row when it does not exist yet, rather than returning an error.
 func TestServiceSetIncludeFindOrCreate(t *testing.T) {
 	dir := t.TempDir()
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: "/host/user"}
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, HostSourceRoot: "/mnt"}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.ContainersPath = "backups/containers"
@@ -482,11 +534,17 @@ func TestServiceSetIncludeFindOrCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Realistic appdata bind mount: host /mnt/appdata/radarr → container
+	// <root>/appdata/radarr (the mount branch captures it from inspect).
+	appdata := root + "/appdata/radarr"
+	if err := os.MkdirAll(appdata, 0o750); err != nil {
+		t.Fatal(err)
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name:  "/radarr",
 		Image: "radarr:latest",
 		Mounts: []model.Mount{
-			{Type: "bind", Source: "/host/user/appdata/radarr", Destination: "/config"},
+			{Type: "bind", Source: "/mnt/appdata/radarr", Destination: "/config"},
 		},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
@@ -502,7 +560,7 @@ func TestServiceSetIncludeFindOrCreate(t *testing.T) {
 	if !tg.IncludeInSchedule {
 		t.Fatal("include flag must be true after SetInclude")
 	}
-	if !contains(tg.AppdataPaths, "/host/user/appdata/radarr") {
+	if !contains(tg.AppdataPaths, appdata) {
 		t.Fatalf("expected appdata path from inspect, got %v", tg.AppdataPaths)
 	}
 
