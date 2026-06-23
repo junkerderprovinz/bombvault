@@ -5,6 +5,7 @@ import { useT } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress } from "../lib/progress";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -224,6 +225,7 @@ export function Flash() {
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
         <p className="mt-1 text-sm text-carbon-textSub">{t("flash.subtitle")}</p>
+        <div className="mt-2"><OffsiteIndicator domain="flash" /></div>
       </div>
 
       {/* Backup card */}

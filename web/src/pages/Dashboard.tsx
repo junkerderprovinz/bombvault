@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { listRuns, getSpike, listContainers, getSettings } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -384,6 +385,11 @@ export function Dashboard() {
         <p className="mt-1 text-sm text-carbon-textSub">
           BombVault — container backup overview
         </p>
+        <div className="mt-2 flex flex-col gap-1">
+          <OffsiteIndicator domain="containers" withLabel />
+          <OffsiteIndicator domain="vms" withLabel />
+          <OffsiteIndicator domain="flash" withLabel />
+        </div>
       </div>
 
       {/* Stat cards — compact summary row */}
