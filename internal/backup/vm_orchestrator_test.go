@@ -32,9 +32,11 @@ type fakeVM struct {
 	dumpXMLVal   string
 	dumpXMLErr   error
 
-	snapshotErr    error
-	blockcommitErr error
-	guestAgent     bool
+	snapshotErr     error
+	blockcommitErr  error
+	guestAgent      bool
+	freezeOnQuiesce bool   // fail a quiesced snapshot with a freeze error (then a no-quiesce retry succeeds)
+	snapshotQuiesce []bool // records the quiesce arg of each SnapshotCreateDiskOnly call
 }
 
 func (f *fakeVM) State(_ context.Context, name string) (string, error) {
@@ -86,9 +88,13 @@ func (f *fakeVM) Autostart(_ context.Context, name string, on bool) error {
 	return f.autostartErr
 }
 
-func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, _ bool, skipDevs []string) error {
+func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, quiesce bool, skipDevs []string) error {
 	f.log = append(f.log, "snapshot:"+name)
 	f.snapshotSkip = skipDevs
+	f.snapshotQuiesce = append(f.snapshotQuiesce, quiesce)
+	if f.freezeOnQuiesce && quiesce {
+		return errors.New("guest agent command failed: fsfreeze hook failed")
+	}
 	return f.snapshotErr
 }
 
@@ -549,5 +555,24 @@ func TestRestoreVMRunsPreDefineBeforeDefine(t *testing.T) {
 	}
 	if !called {
 		t.Fatal("PreDefine was not called")
+	}
+}
+
+// TestBackupVMLiveFallsBackWithoutQuiesceOnFreeze: a guest with the agent up but
+// a failing fsfreeze hook (e.g. Home Assistant during startup) must not fail the
+// whole live backup — the snapshot retries crash-consistent without --quiesce.
+func TestBackupVMLiveFallsBackWithoutQuiesceOnFreeze(t *testing.T) {
+	vm := &fakeVM{active: true, guestAgent: true, freezeOnQuiesce: true}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+
+	if _, err := backup.BackupVMLive(t.Context(), liveDeps(t, vm, r, runs)); err != nil {
+		t.Fatalf("expected fsfreeze fallback to succeed, got %v", err)
+	}
+	if len(vm.snapshotQuiesce) != 2 || !vm.snapshotQuiesce[0] || vm.snapshotQuiesce[1] {
+		t.Fatalf("expected a quiesced attempt then a crash-consistent retry, got %v", vm.snapshotQuiesce)
+	}
+	if !vmContains(r.log, "backup:") {
+		t.Fatalf("restic backup must run after the fallback snapshot: %v", r.log)
 	}
 }

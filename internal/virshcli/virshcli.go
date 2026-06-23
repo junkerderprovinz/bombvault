@@ -114,6 +114,16 @@ func (c *Client) DumpXML(ctx context.Context, name string) (string, error) {
 	return out, nil
 }
 
+// DumpXMLInactive returns the persistent (inactive) domain XML (virsh dumpxml
+// --inactive) — the defined config without runtime-only/hot-plugged devices.
+func (c *Client) DumpXMLInactive(ctx context.Context, name string) (string, error) {
+	out, err := c.run(ctx, "dumpxml", "--inactive", name)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
 // Shutdown sends an ACPI graceful-shutdown signal.
 func (c *Client) Shutdown(ctx context.Context, name string) error {
 	_, err := c.run(ctx, "shutdown", name)

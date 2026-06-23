@@ -1540,8 +1540,16 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		method = existing.Method
 	}
 
+	// Store the PERSISTENT (inactive) definition for restore so a live-snapshot
+	// restore does not re-pin transient/hot-plugged devices (e.g. a guest USB
+	// manager's serial stick) that the guest re-adds itself on boot. Fall back to
+	// the live XML if --inactive is unavailable.
+	defXML := xmlStr
+	if inactive, ierr := s.virsh.DumpXMLInactive(ctx, name); ierr == nil && strings.TrimSpace(inactive) != "" {
+		defXML = inactive
+	}
 	def := vmDefinition{
-		DomainXML:     xmlStr,
+		DomainXML:     defXML,
 		DiskPaths:     diskPaths,
 		NVRAMHostPath: domain.NVRAMPath,
 		NVRAMBytes:    nvramBytes,

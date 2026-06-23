@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, discoverVMs } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
@@ -206,6 +206,43 @@ function VMIncludeToggle({
 // VM-aware BackupButton variant
 // ---------------------------------------------------------------------------
 
+function VMExportButton({ name, t }: { name: string; t: T }) {
+  const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+  async function run() {
+    setState("pending");
+    setMsg(null);
+    try {
+      const r = await exportVM(name);
+      if (r.ok) {
+        setState("done");
+        setMsg(r.path ?? null);
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <button
+        onClick={() => void run()}
+        disabled={state === "pending"}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {state === "pending" ? "…" : t("export.button")}
+      </button>
+      {state === "done" && (
+        <span className="text-xs text-[#6fdc8c] break-all">{t("export.exportedTo")} {msg}</span>
+      )}
+      {state === "error" && <span className="text-xs text-[#ff8389] break-all">{msg}</span>}
+    </div>
+  );
+}
+
 function VMBackupButton({
   name,
   t,
@@ -261,6 +298,7 @@ function VMBackupButton({
           t("containers.backupNow")
         )}
       </button>
+      <VMExportButton name={name} t={t} />
       {state.phase === "success" && (
         <span className="text-xs text-[#6fdc8c]">
           ✓ {t("common.done")}

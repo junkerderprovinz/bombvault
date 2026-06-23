@@ -15,6 +15,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // exportDir returns the plain-export folder: a sibling of the containers repo
@@ -93,7 +94,7 @@ func (s *Service) writeTarGz(dest string, srcPaths []string) (err error) {
 	}
 	defer func() {
 		if err != nil {
-			_ = f.Close() // idempotent: harmless if already closed below
+			_ = f.Close()      // idempotent: harmless if already closed below
 			_ = os.Remove(tmp) //nolint:gosec // G703: tmp = dest+".tmp"; dest is built from a validResourceName-checked name under the operator-configured export dir
 		}
 	}()
@@ -203,6 +204,84 @@ func addToTar(tw *tar.Writer, root, p string) error {
 		_, cerr := io.Copy(tw, src)
 		return cerr
 	})
+}
+
+// ExportVM writes a TOOL-FREE plain export of a VM next to the restic repo:
+// <name>.tar.gz of its disk image(s) plus <name>.xml (the persistent domain
+// definition), so it can be restored by extracting the disks and `virsh define`
+// without BombVault or restic. Not encrypted (that is the point). Returns the
+// export directory. A running VM is exported crash-consistent (best-effort, "just
+// in case"); for a clean image, export while the VM is shut off.
+func (s *Service) ExportVM(ctx context.Context, name string) (string, error) {
+	// VM names legitimately contain spaces ("Home Assistant", "Windows 11"), so
+	// use the VM-aware validator (still blocks path separators, "..", leading "-"
+	// and control chars — safe as a filename below), not the Docker-strict
+	// validResourceName which rejects any space.
+	if !validVMName(name) {
+		return "", fmt.Errorf("unsafe vm name %q", name)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	dir, err := s.exportDir(settings)
+	if err != nil {
+		return "", err
+	}
+	if err := paths.EnsureDir(dir); err != nil {
+		return "", fmt.Errorf("create export dir: %w", err)
+	}
+	if s.ssh != nil {
+		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
+			return "", fmt.Errorf("export vm: ssh: %w", err)
+		}
+	}
+	// Disk layout from the LIVE XML; definition from the inactive (clean) XML.
+	liveXML, err := s.virsh.DumpXML(ctx, name)
+	if err != nil {
+		return "", fmt.Errorf("export vm: dumpxml: %w", err)
+	}
+	domain, err := virshcli.ParseDomain(liveXML)
+	if err != nil {
+		return "", fmt.Errorf("export vm: parse domain: %w", err)
+	}
+	if len(domain.DiskPaths) == 0 {
+		return "", fmt.Errorf("export vm: no disk paths found for %q", name)
+	}
+	var diskPaths []string
+	for _, hp := range domain.DiskPaths {
+		cp, ok := s.toContainerPath(hp)
+		if !ok {
+			return "", fmt.Errorf("export vm: disk %q is not under the host mount and can't be reached", hp)
+		}
+		diskPaths = append(diskPaths, cp)
+	}
+	defXML := liveXML
+	if inactive, ierr := s.virsh.DumpXMLInactive(ctx, name); ierr == nil && strings.TrimSpace(inactive) != "" {
+		defXML = inactive
+	}
+	if err := os.WriteFile(filepath.Join(dir, name+".xml"), []byte(defXML), 0o600); err != nil { //nolint:gosec // G306: 0600 export file
+		return "", fmt.Errorf("export vm: write xml: %w", err)
+	}
+	if err := s.writeTarGz(filepath.Join(dir, name+".tar.gz"), diskPaths); err != nil {
+		return "", fmt.Errorf("export vm: write tar: %w", err)
+	}
+	return dir, nil
+}
+
+// handleExportVM writes a plain tar+xml export of a VM and returns the export
+// folder. POST /api/vms/{name}/export
+func (h *Handler) handleExportVM(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.vmNameParam(w, r)
+	if !ok {
+		return
+	}
+	dir, err := h.svc.ExportVM(r.Context(), name)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"path": dir}))
 }
 
 // handleExportContainer writes a plain tar+xml export of a container and returns
