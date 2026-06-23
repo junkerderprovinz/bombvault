@@ -263,8 +263,8 @@ const tr: Partial<Translations> = {
   "integrity.prune": "Buda",
   "integrity.verifyHint": "Yapı ve meta verileri doğrulamak için restic check çalıştırın.",
   "integrity.unlockHint": "Çöken/kesintiye uğrayan bir çalışmadan kalan takılı depo kilitlerini temizleyin ('repository is already locked' hatasını giderir).",
-  "integrity.pruneHint": "Silinen/unutulan yedeklerden disk alanını geri kazanın (biraz sürebilir).",
-  "integrity.pruneConfirm": "Budama, silinen yedeklerin alanını geri kazanır ve birkaç dakika sürebilir. Devam edilsin mi?",
+  "integrity.pruneHint": "Saklama politikanı uygula ve alan geri kazan (politika yoksa yalnızca alan geri kazanır; biraz sürebilir).",
+  "integrity.pruneConfirm": "Budama artık saklama politikanı uygular — kurallarının (last/daily/weekly/monthly) ötesindeki anlık görüntüleri kaldırır ve alan geri kazanır. Politika yoksa yalnızca alan geri kazanır. Devam edilsin mi?",
 
   // Pre/post-backup hooks
   "hooks.title": "Yedekleme kancaları",

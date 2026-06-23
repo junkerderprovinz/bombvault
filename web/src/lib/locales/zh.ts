@@ -258,8 +258,8 @@ const zh: Partial<Translations> = {
   "integrity.prune": "清理",
   "integrity.verifyHint": "运行 restic check 以验证结构和元数据的完整性。",
   "integrity.unlockHint": "清除崩溃或中断的运行遗留的卡住的仓库锁（修复 'repository is already locked'）。",
-  "integrity.pruneHint": "从已删除/遗忘的备份中回收磁盘空间（可能需要一些时间）。",
-  "integrity.pruneConfirm": "清理会回收已删除备份的空间，可能需要几分钟。是否继续？",
+  "integrity.pruneHint": "应用你的保留策略并回收空间（未设置策略时仅回收空间；可能需要一些时间）。",
+  "integrity.pruneConfirm": "清理现在会应用你的保留策略——删除超出规则（last/daily/weekly/monthly）的快照并回收空间。未设置策略时仅回收空间。是否继续？",
 
   "hooks.title": "备份钩子",
   "hooks.hint": "命令在容器内运行（sh -c）。Pre 在备份前运行（例如将数据库导出到 appdata 以便一起备份）——失败会中止备份。Post 在容器恢复运行后执行；其失败仅记录日志。",

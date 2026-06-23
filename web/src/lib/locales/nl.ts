@@ -260,8 +260,8 @@ const nl: Partial<Translations> = {
   "integrity.prune": "Opschonen",
   "integrity.verifyHint": "Voer restic check uit om structuur en metadata te verifiëren.",
   "integrity.unlockHint": "Verwijder vastgelopen repository-locks van een gecrashte/onderbroken run (lost 'repository is already locked' op).",
-  "integrity.pruneHint": "Maak schijfruimte vrij van verwijderde/vergeten back-ups (kan even duren).",
-  "integrity.pruneConfirm": "Opschonen maakt ruimte vrij van verwijderde back-ups en kan enkele minuten duren. Doorgaan?",
+  "integrity.pruneHint": "Pas je bewaarbeleid toe en maak ruimte vrij (maakt alleen ruimte vrij als er geen beleid is ingesteld; kan even duren).",
+  "integrity.pruneConfirm": "Opschonen past nu je bewaarbeleid toe: het verwijdert snapshots buiten je regels (last/daily/weekly/monthly) en maakt ruimte vrij. Zonder beleid maakt het alleen ruimte vrij. Doorgaan?",
 
   // Pre/post-backup hooks
   "hooks.title": "Back-uphooks",

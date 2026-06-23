@@ -236,8 +236,8 @@ const en = {
   "integrity.prune": "Prune",
   "integrity.verifyHint": "Run restic check to verify structure and metadata are intact.",
   "integrity.unlockHint": "Clear stale repository locks left by a crashed or interrupted run (fixes 'repository is already locked').",
-  "integrity.pruneHint": "Reclaim disk space from deleted/forgotten backups (can take a while).",
-  "integrity.pruneConfirm": "Prune reclaims space from deleted backups and can take several minutes. Continue?",
+  "integrity.pruneHint": "Apply your retention policy and reclaim space (reclaims space only when no policy is set; can take a while).",
+  "integrity.pruneConfirm": "Prune now applies your retention policy — it removes snapshots beyond your keep rules (last/daily/weekly/monthly) and reclaims space. With no policy set it only reclaims space. Continue?",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
@@ -578,8 +578,8 @@ const de: Translations = {
   "integrity.prune": "Aufräumen",
   "integrity.verifyHint": "restic check ausführen, um Struktur und Metadaten zu verifizieren.",
   "integrity.unlockHint": "Verwaiste Repo-Locks eines abgestürzten/abgebrochenen Laufs entfernen (behebt „repository is already locked“).",
-  "integrity.pruneHint": "Speicherplatz gelöschter/vergessener Backups freigeben (kann dauern).",
-  "integrity.pruneConfirm": "Aufräumen gibt Speicher gelöschter Backups frei und kann einige Minuten dauern. Fortfahren?",
+  "integrity.pruneHint": "Retention anwenden und Speicher freigeben (ohne Policy nur Speicher; kann dauern).",
+  "integrity.pruneConfirm": "Aufräumen wendet jetzt deine Retention an — entfernt Snapshots jenseits deiner Keep-Regeln (last/daily/weekly/monthly) und gibt Speicher frei. Ohne Policy wird nur Speicher freigegeben. Fortfahren?",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",

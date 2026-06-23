@@ -261,8 +261,8 @@ const cs: Partial<Translations> = {
   "integrity.prune": "Vyčistit",
   "integrity.verifyHint": "Spustit restic check k ověření struktury a metadat.",
   "integrity.unlockHint": "Odstranit zaseklé zámky repozitáře po havarovaném/přerušeném běhu (řeší 'repository is already locked').",
-  "integrity.pruneHint": "Uvolnit místo z odstraněných/zapomenutých záloh (může chvíli trvat).",
-  "integrity.pruneConfirm": "Vyčištění uvolní místo z odstraněných záloh a může trvat několik minut. Pokračovat?",
+  "integrity.pruneHint": "Použít zásady uchovávání a uvolnit místo (bez zásad pouze uvolní místo; může chvíli trvat).",
+  "integrity.pruneConfirm": "Úklid nyní použije vaše zásady uchovávání — odebere snímky nad rámec vašich pravidel (last/daily/weekly/monthly) a uvolní místo. Bez zásad pouze uvolní místo. Pokračovat?",
 
   // Backup hooks
   "hooks.title": "Zálohovací hooky",

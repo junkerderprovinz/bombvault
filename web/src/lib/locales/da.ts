@@ -263,8 +263,8 @@ const da: Partial<Translations> = {
   "integrity.prune": "Beskær",
   "integrity.verifyHint": "Kør restic check for at verificere struktur og metadata.",
   "integrity.unlockHint": "Ryd fastlåste repository-låse fra et nedbrudt/afbrudt kørsel (retter 'repository is already locked').",
-  "integrity.pruneHint": "Frigør diskplads fra slettede/glemte sikkerhedskopier (kan tage et stykke tid).",
-  "integrity.pruneConfirm": "Beskæring frigør plads fra slettede sikkerhedskopier og kan tage flere minutter. Fortsæt?",
+  "integrity.pruneHint": "Anvend din opbevaringspolitik og frigør plads (frigør kun plads hvis ingen politik er sat; kan tage et stykke tid).",
+  "integrity.pruneConfirm": "Oprydning anvender nu din opbevaringspolitik — den fjerner snapshots ud over dine regler (last/daily/weekly/monthly) og frigør plads. Uden politik frigør den kun plads. Fortsæt?",
 
   // Pre/post-backup hooks
   "hooks.title": "Sikkerhedskopi-hooks",

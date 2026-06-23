@@ -263,8 +263,8 @@ const ar: Partial<Translations> = {
   "integrity.prune": "تقليم",
   "integrity.verifyHint": "تشغيل restic check للتحقق من سلامة البنية والبيانات الوصفية.",
   "integrity.unlockHint": "إزالة أقفال المستودع العالقة من تشغيل تعطل أو انقطع (يصلح 'repository is already locked').",
-  "integrity.pruneHint": "استعادة مساحة القرص من النسخ المحذوفة/المنسية (قد يستغرق وقتًا).",
-  "integrity.pruneConfirm": "يستعيد التقليم المساحة من النسخ المحذوفة وقد يستغرق عدة دقائق. هل تريد المتابعة؟",
+  "integrity.pruneHint": "تطبيق سياسة الاحتفاظ واستعادة المساحة (تستعيد المساحة فقط إذا لم تُحدَّد سياسة؛ قد يستغرق وقتًا).",
+  "integrity.pruneConfirm": "يطبّق التقليم الآن سياسة الاحتفاظ الخاصة بك — يزيل اللقطات التي تتجاوز قواعدك (last/daily/weekly/monthly) ويستعيد المساحة. بدون سياسة يستعيد المساحة فقط. هل تريد المتابعة؟",
 
   // Pre/post-backup hooks
   "hooks.title": "خطافات النسخ الاحتياطي",
