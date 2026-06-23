@@ -23,7 +23,7 @@ type DiskRef struct {
 // the disk image path(s), the NVRAM path (empty for BIOS VMs), and the first
 // disk's target device (e.g. "vda") used as the live-backup blockcommit target.
 type DomainInfo struct {
-	DiskPaths  []string
+	DiskPaths []string
 	// Disks pairs each writable disk's target dev with its source (parallels
 	// DiskPaths). Used to detect/commit a leftover live-snapshot overlay.
 	Disks      []DiskRef
@@ -45,8 +45,14 @@ type Virsh interface {
 	// ("", nil) when the domain does not exist (mirror of dockercli.InspectName's
 	// not-found tolerance).
 	State(ctx context.Context, name string) (string, error)
-	// DumpXML returns the domain XML for the named VM.
+	// DumpXML returns the domain XML for the named VM (the LIVE config for a
+	// running VM — includes hot-plugged/transient devices and current disk paths).
 	DumpXML(ctx context.Context, name string) (string, error)
+	// DumpXMLInactive returns the PERSISTENT (inactive) domain XML (virsh dumpxml
+	// --inactive): the VM's defined config without runtime-only/hot-plugged
+	// devices. Used to capture the restore definition so a live-snapshot restore
+	// doesn't pin transient devices a guest re-adds itself.
+	DumpXMLInactive(ctx context.Context, name string) (string, error)
 	// Shutdown sends an ACPI graceful-shutdown signal (virsh shutdown).
 	Shutdown(ctx context.Context, name string) error
 	// Destroy force-offs the domain (virsh destroy). Tolerates already-off.

@@ -360,6 +360,11 @@ export function exportContainer(name: string): Promise<ExportResponse> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/export`, { method: "POST" });
 }
 
+/** POST /api/vms/{name}/export — write a plain tar+xml export of a VM, returns the folder. */
+export function exportVM(name: string): Promise<ExportResponse> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/export`, { method: "POST" });
+}
+
 /** PATCH /api/containers/{name} — set the other containers to stop during backup. */
 export function setStopContainers(name: string, stopContainers: string[]): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {

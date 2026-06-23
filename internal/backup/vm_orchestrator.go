@@ -287,7 +287,18 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	// snapshot is --atomic, so on failure nothing was created and the VM is
 	// untouched and still running.
 	if snapErr := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, LiveSnapshotName, quiesce, d.SkipSnapshotDevs); snapErr != nil {
-		return Summary{}, fmt.Errorf("vm live backup: snapshot: %w", snapErr)
+		// A guest with the agent present but a broken/blocking fsfreeze hook (e.g.
+		// Home Assistant during startup) fails a quiesced snapshot. Retry once
+		// crash-consistent (no --quiesce) instead of failing the whole backup; a
+		// non-freeze error (or an already-unquiesced attempt) still fails clearly.
+		if quiesce && isFreezeErr(snapErr) {
+			log.Printf("schedule/backup: vm %q quiesced snapshot failed (%v); retrying crash-consistent without --quiesce", d.Name, snapErr)
+			if snapErr2 := d.VM.SnapshotCreateDiskOnly(ctx, d.Name, LiveSnapshotName, false, d.SkipSnapshotDevs); snapErr2 != nil {
+				return Summary{}, fmt.Errorf("vm live backup: snapshot (after fsfreeze fallback): %w", snapErr2)
+			}
+		} else {
+			return Summary{}, fmt.Errorf("vm live backup: snapshot: %w", snapErr)
+		}
 	}
 
 	// Back up the now-static base disk(s).
@@ -468,4 +479,19 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 	return nil
+}
+
+// isFreezeErr reports whether a snapshot error is a guest-agent freeze failure
+// (the fsfreeze hook blocked or failed), so a quiesced snapshot can be retried
+// crash-consistent (without --quiesce) rather than failing the whole backup.
+func isFreezeErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	m := strings.ToLower(err.Error())
+	return strings.Contains(m, "fsfreeze") ||
+		strings.Contains(m, "freeze") ||
+		strings.Contains(m, "guest agent") ||
+		strings.Contains(m, "guest-agent") ||
+		strings.Contains(m, "quiesce")
 }

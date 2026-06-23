@@ -114,6 +114,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/vms/{name}/backup", h.handleBackupVM)
 	mux.HandleFunc("GET /api/vms/{name}/snapshots", h.handleSnapshotsVM)
 	mux.HandleFunc("POST /api/vms/{name}/restore", h.handleRestoreVM)
+	mux.HandleFunc("POST /api/vms/{name}/export", h.handleExportVM)
 	mux.HandleFunc("PATCH /api/vms/{name}", h.handlePatchVM)
 	mux.HandleFunc("GET /api/vm/ssh", h.handleVMSSHInfo)
 	mux.HandleFunc("POST /api/vm/ssh/test", h.handleVMSSHTest)

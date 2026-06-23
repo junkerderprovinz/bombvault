@@ -81,6 +81,10 @@ var _ virshcli.Virsh = (*scriptedVirsh)(nil)
 
 func (s *scriptedVirsh) List(context.Context) ([]virshcli.VMInfo, error) { return nil, nil }
 func (s *scriptedVirsh) State(context.Context, string) (string, error)   { return "", nil }
+func (s *scriptedVirsh) DumpXMLInactive(ctx context.Context, n string) (string, error) {
+	return s.DumpXML(ctx, n)
+}
+
 func (s *scriptedVirsh) DumpXML(context.Context, string) (string, error) {
 	if len(s.dumpXMLs) == 0 {
 		return "<domain/>", nil
@@ -92,13 +96,13 @@ func (s *scriptedVirsh) DumpXML(context.Context, string) (string, error) {
 	s.dumpIdx++
 	return s.dumpXMLs[i], nil
 }
-func (s *scriptedVirsh) Shutdown(context.Context, string) error          { return nil }
-func (s *scriptedVirsh) Destroy(context.Context, string) error           { return nil }
-func (s *scriptedVirsh) Start(context.Context, string) error             { return nil }
-func (s *scriptedVirsh) Define(context.Context, string) error            { return nil }
-func (s *scriptedVirsh) Undefine(context.Context, string) error          { return nil }
-func (s *scriptedVirsh) Autostart(context.Context, string, bool) error   { return nil }
-func (s *scriptedVirsh) IsActive(context.Context, string) (bool, error)  { return s.active, nil }
+func (s *scriptedVirsh) Shutdown(context.Context, string) error         { return nil }
+func (s *scriptedVirsh) Destroy(context.Context, string) error          { return nil }
+func (s *scriptedVirsh) Start(context.Context, string) error            { return nil }
+func (s *scriptedVirsh) Define(context.Context, string) error           { return nil }
+func (s *scriptedVirsh) Undefine(context.Context, string) error         { return nil }
+func (s *scriptedVirsh) Autostart(context.Context, string, bool) error  { return nil }
+func (s *scriptedVirsh) IsActive(context.Context, string) (bool, error) { return s.active, nil }
 func (s *scriptedVirsh) SnapshotCreateDiskOnly(context.Context, string, string, bool, []string) error {
 	return nil
 }

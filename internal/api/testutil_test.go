@@ -116,6 +116,9 @@ var _ virshcli.Virsh = fakeVirsh{}
 func (fakeVirsh) List(_ context.Context) ([]virshcli.VMInfo, error)   { return nil, nil }
 func (fakeVirsh) State(_ context.Context, _ string) (string, error)   { return "", nil }
 func (fakeVirsh) DumpXML(_ context.Context, _ string) (string, error) { return "<domain/>", nil }
+func (fakeVirsh) DumpXMLInactive(_ context.Context, _ string) (string, error) {
+	return "<domain/>", nil
+}
 func (fakeVirsh) Shutdown(_ context.Context, _ string) error          { return nil }
 func (fakeVirsh) Destroy(_ context.Context, _ string) error           { return nil }
 func (fakeVirsh) Start(_ context.Context, _ string) error             { return nil }
