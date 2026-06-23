@@ -258,8 +258,8 @@ const ja: Partial<Translations> = {
   "integrity.prune": "整理",
   "integrity.verifyHint": "restic check を実行して構造とメタデータの整合性を検証します。",
   "integrity.unlockHint": "中断された実行で残ったリポジトリのロックを削除します（'repository is already locked' を解消）。",
-  "integrity.pruneHint": "削除/破棄したバックアップのディスク領域を回収します（時間がかかる場合あり）。",
-  "integrity.pruneConfirm": "整理は削除済みバックアップの領域を回収し、数分かかることがあります。続行しますか？",
+  "integrity.pruneHint": "保持ポリシーを適用して領域を回収します（ポリシー未設定なら領域回収のみ。時間がかかる場合があります）。",
+  "integrity.pruneConfirm": "プルーンは保持ポリシーを適用し、ルール（last/daily/weekly/monthly）を超えるスナップショットを削除して領域を回収します。ポリシー未設定なら領域回収のみです。続行しますか？",
 
   "hooks.title": "バックアップフック",
   "hooks.hint": "コマンドはコンテナ内（sh -c）で実行されます。Pre はバックアップ前に実行（例：DB を appdata にダンプして含める）— 失敗するとバックアップは中止されます。Post はコンテナの復帰後に実行され、その失敗はログに記録されるだけです。",

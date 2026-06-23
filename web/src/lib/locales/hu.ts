@@ -263,8 +263,8 @@ const hu: Partial<Translations> = {
   "integrity.prune": "Nyesés",
   "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",
   "integrity.unlockHint": "Megszakadt futás után ottragadt repository-zárolások törlése (javítja a 'repository is already locked' hibát).",
-  "integrity.pruneHint": "Lemezterület felszabadítása törölt/elfeledett mentésekből (eltarthat egy ideig).",
-  "integrity.pruneConfirm": "A nyesés felszabadítja a törölt mentések helyét, és több percig is tarthat. Folytatja?",
+  "integrity.pruneHint": "Alkalmazd a megőrzési szabályt és szabadíts fel helyet (szabály nélkül csak helyet szabadít fel; eltarthat egy ideig).",
+  "integrity.pruneConfirm": "A karbantartás most alkalmazza a megőrzési szabályodat — eltávolítja a szabályaidon (last/daily/weekly/monthly) túli pillanatképeket és helyet szabadít fel. Szabály nélkül csak helyet szabadít fel. Folytatod?",
 
   // Pre/post-backup hooks
   "hooks.title": "Mentési horgok",

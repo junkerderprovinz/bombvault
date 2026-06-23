@@ -263,8 +263,8 @@ const he: Partial<Translations> = {
   "integrity.prune": "גיזום",
   "integrity.verifyHint": "הרצת restic check לאימות המבנה והמטא-נתונים.",
   "integrity.unlockHint": "ניקוי נעילות מאגר תקועות שנותרו מהרצה שקרסה/הופסקה (מתקן 'repository is already locked').",
-  "integrity.pruneHint": "שחרור מקום בדיסק מגיבויים שנמחקו/נשכחו (עשוי לקחת זמן).",
-  "integrity.pruneConfirm": "גיזום משחרר מקום מגיבויים שנמחקו ועשוי להימשך מספר דקות. להמשיך?",
+  "integrity.pruneHint": "החלת מדיניות השמירה ושחרור מקום (ללא מדיניות משחרר רק מקום; עשוי לקחת זמן).",
+  "integrity.pruneConfirm": "הגיזום מחיל כעת את מדיניות השמירה שלך — מסיר תמונות מעבר לכללים שלך (last/daily/weekly/monthly) ומשחרר מקום. ללא מדיניות משחרר רק מקום. להמשיך?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks לגיבוי",

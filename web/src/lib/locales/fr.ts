@@ -263,8 +263,8 @@ const fr: Partial<Translations> = {
   "integrity.prune": "Élaguer",
   "integrity.verifyHint": "Lancer restic check pour vérifier la structure et les métadonnées.",
   "integrity.unlockHint": "Supprimer les verrous bloqués du dépôt laissés par une exécution interrompue (corrige 'repository is already locked').",
-  "integrity.pruneHint": "Récupérer l'espace des sauvegardes supprimées/oubliées (peut prendre un moment).",
-  "integrity.pruneConfirm": "L'élagage récupère l'espace des sauvegardes supprimées et peut prendre plusieurs minutes. Continuer ?",
+  "integrity.pruneHint": "Appliquer la politique de rétention et récupérer de l'espace (récupère seulement l'espace si aucune politique n'est définie ; peut prendre du temps).",
+  "integrity.pruneConfirm": "La purge applique maintenant votre politique de rétention — elle supprime les instantanés au-delà de vos règles (last/daily/weekly/monthly) et récupère de l'espace. Sans politique, elle ne fait que récupérer de l'espace. Continuer ?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de sauvegarde",

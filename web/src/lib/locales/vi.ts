@@ -258,8 +258,8 @@ const vi: Partial<Translations> = {
   "integrity.prune": "Dọn bớt",
   "integrity.verifyHint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu.",
   "integrity.unlockHint": "Xóa các khóa kho bị kẹt do lần chạy bị treo/gián đoạn (sửa 'repository is already locked').",
-  "integrity.pruneHint": "Thu hồi dung lượng đĩa từ các bản sao lưu đã xóa/bị quên (có thể mất một lúc).",
-  "integrity.pruneConfirm": "Dọn bớt thu hồi dung lượng từ các bản sao lưu đã xóa và có thể mất vài phút. Tiếp tục?",
+  "integrity.pruneHint": "Áp dụng chính sách lưu giữ và thu hồi dung lượng (không có chính sách thì chỉ thu hồi dung lượng; có thể mất một lúc).",
+  "integrity.pruneConfirm": "Dọn dẹp giờ áp dụng chính sách lưu giữ của bạn — xóa các ảnh chụp vượt quá quy tắc (last/daily/weekly/monthly) và thu hồi dung lượng. Không có chính sách thì chỉ thu hồi dung lượng. Tiếp tục?",
 
   "hooks.title": "Hook sao lưu",
   "hooks.hint": "Lệnh chạy bên trong container (sh -c). Pre chạy trước khi sao lưu (ví dụ: dump một CSDL vào appdata để được bao gồm) — lỗi sẽ hủy việc sao lưu. Post chạy sau khi container hoạt động trở lại; lỗi của nó chỉ được ghi log.",

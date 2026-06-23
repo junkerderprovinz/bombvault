@@ -263,8 +263,8 @@ const ro: Partial<Translations> = {
   "integrity.prune": "Curăță",
   "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",
   "integrity.unlockHint": "Elimină blocajele rămase ale depozitului după o rulare întreruptă (rezolvă 'repository is already locked').",
-  "integrity.pruneHint": "Recuperează spațiu din backupurile șterse/uitate (poate dura).",
-  "integrity.pruneConfirm": "Curățarea recuperează spațiu din backupurile șterse și poate dura câteva minute. Continuați?",
+  "integrity.pruneHint": "Aplică politica de retenție și recuperează spațiu (fără politică doar recuperează spațiu; poate dura).",
+  "integrity.pruneConfirm": "Curățarea aplică acum politica ta de retenție — elimină instantaneele dincolo de regulile tale (last/daily/weekly/monthly) și recuperează spațiu. Fără politică doar recuperează spațiu. Continui?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hook-uri de backup",

@@ -263,8 +263,8 @@ const fi: Partial<Translations> = {
   "integrity.prune": "Karsi",
   "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",
   "integrity.unlockHint": "Poista keskeytyneen ajon jättämät jumittuneet repositorion lukot (korjaa 'repository is already locked').",
-  "integrity.pruneHint": "Vapauta levytilaa poistetuista/unohdetuista varmuuskopioista (voi kestää hetken).",
-  "integrity.pruneConfirm": "Karsinta vapauttaa tilaa poistetuista varmuuskopioista ja voi kestää useita minuutteja. Jatketaanko?",
+  "integrity.pruneHint": "Sovella säilytyskäytäntöä ja vapauta tilaa (ilman käytäntöä vain vapauttaa tilaa; voi kestää).",
+  "integrity.pruneConfirm": "Karsinta soveltaa nyt säilytyskäytäntöäsi — se poistaa tilannevedokset sääntöjesi (last/daily/weekly/monthly) ulkopuolelta ja vapauttaa tilaa. Ilman käytäntöä se vain vapauttaa tilaa. Jatketaanko?",
 
   // Pre/post-backup hooks
   "hooks.title": "Varmuuskopiokoukut",

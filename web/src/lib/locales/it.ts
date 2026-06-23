@@ -263,8 +263,8 @@ const it: Partial<Translations> = {
   "integrity.prune": "Pota",
   "integrity.verifyHint": "Esegui restic check per verificare struttura e metadati.",
   "integrity.unlockHint": "Rimuovi i lock bloccati del repository lasciati da un'esecuzione interrotta (corregge 'repository is already locked').",
-  "integrity.pruneHint": "Recupera spazio dai backup eliminati/dimenticati (può richiedere tempo).",
-  "integrity.pruneConfirm": "La potatura recupera spazio dai backup eliminati e può richiedere alcuni minuti. Continuare?",
+  "integrity.pruneHint": "Applica la tua policy di retention e libera spazio (libera solo spazio se nessuna policy è impostata; può richiedere tempo).",
+  "integrity.pruneConfirm": "La pulizia ora applica la tua policy di retention: rimuove gli snapshot oltre le tue regole (last/daily/weekly/monthly) e libera spazio. Senza policy libera solo spazio. Continuare?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hook di backup",

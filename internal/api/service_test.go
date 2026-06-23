@@ -1016,6 +1016,8 @@ func TestUnlockDomainNoRepoYet(t *testing.T) {
 	}
 }
 
+// TestPruneDomainCallsPrune: with NO retention policy set, Prune is a plain
+// space-reclaim (restic prune) and must NOT forget anything.
 func TestPruneDomainCallsPrune(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
@@ -1024,6 +1026,43 @@ func TestPruneDomainCallsPrune(t *testing.T) {
 	}
 	if len(eng.manualPruned) != 1 {
 		t.Fatalf("expected one prune, got %v", eng.manualPruned)
+	}
+	if len(eng.prunedRepos) != 0 {
+		t.Fatalf("without a policy, Prune must not apply retention, got %v", eng.prunedRepos)
+	}
+}
+
+// TestPruneDomainAppliesRetentionWhenSet: with a retention policy configured,
+// Prune APPLIES it (forget --keep-* --prune) so it collapses snapshots per the
+// policy, not just a plain space-reclaim.
+func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	s.RetentionKeepDaily = 14 // a policy is set
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	if len(eng.prunedRepos) != 1 {
+		t.Fatalf("Prune with a policy must apply retention (ForgetPolicy), got prunedRepos=%v", eng.prunedRepos)
+	}
+	if len(eng.manualPruned) != 0 {
+		t.Fatalf("Prune with a policy must NOT do a plain prune, got %v", eng.manualPruned)
 	}
 }
 

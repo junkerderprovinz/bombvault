@@ -263,8 +263,8 @@ const sv: Partial<Translations> = {
   "integrity.prune": "Rensa",
   "integrity.verifyHint": "Kör restic check för att verifiera struktur och metadata.",
   "integrity.unlockHint": "Ta bort fastnade repository-lås från en kraschad/avbruten körning (åtgärdar 'repository is already locked').",
-  "integrity.pruneHint": "Frigör diskutrymme från borttagna/glömda säkerhetskopior (kan ta en stund).",
-  "integrity.pruneConfirm": "Rensning frigör utrymme från borttagna säkerhetskopior och kan ta flera minuter. Fortsätta?",
+  "integrity.pruneHint": "Tillämpa din lagringspolicy och frigör utrymme (frigör bara utrymme om ingen policy är satt; kan ta en stund).",
+  "integrity.pruneConfirm": "Rensning tillämpar nu din lagringspolicy — den tar bort ögonblicksbilder utöver dina regler (last/daily/weekly/monthly) och frigör utrymme. Utan policy frigör den bara utrymme. Fortsätta?",
 
   // Pre/post-backup hooks
   "hooks.title": "Säkerhetskopierings-hooks",

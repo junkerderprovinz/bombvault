@@ -2149,7 +2149,16 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	defer unlock()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
-	return s.engine.Prune(ctx, repo, s.ModeFor(settings))
+	mode := s.ModeFor(settings)
+	// When a retention policy is configured, Prune APPLIES it (forget --keep-*
+	// --prune): it collapses snapshots per the policy AND reclaims space — i.e. an
+	// "apply retention now", which is what users expect from a manual prune.
+	// Without a policy it stays a plain space-reclaim; running forget with no
+	// keep-flags would delete every snapshot, so that path is guarded by p.Any().
+	if p := s.retentionPolicy(settings); p.Any() {
+		return s.engine.ForgetPolicy(ctx, repo, p, mode)
+	}
+	return s.engine.Prune(ctx, repo, mode)
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic

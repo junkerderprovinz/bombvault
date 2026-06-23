@@ -263,8 +263,8 @@ const es: Partial<Translations> = {
   "integrity.prune": "Podar",
   "integrity.verifyHint": "Ejecuta restic check para verificar la estructura y los metadatos.",
   "integrity.unlockHint": "Elimina bloqueos obsoletos del repositorio dejados por una ejecución interrumpida (corrige 'repository is already locked').",
-  "integrity.pruneHint": "Recupera espacio de copias eliminadas/olvidadas (puede tardar).",
-  "integrity.pruneConfirm": "La poda recupera espacio de las copias eliminadas y puede tardar varios minutos. ¿Continuar?",
+  "integrity.pruneHint": "Aplicar tu política de retención y recuperar espacio (solo recupera espacio si no hay política; puede tardar).",
+  "integrity.pruneConfirm": "La purga ahora aplica tu política de retención: elimina instantáneas más allá de tus reglas (last/daily/weekly/monthly) y recupera espacio. Sin política, solo recupera espacio. ¿Continuar?",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de copia",
