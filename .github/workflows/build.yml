@@ -40,6 +40,8 @@ jobs:
           platforms: linux/amd64
           load: true
           tags: bombvault:smoke
+          build-args: |
+            VERSION=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Run container + health check
@@ -112,5 +114,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

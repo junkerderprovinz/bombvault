@@ -44,8 +44,12 @@ COPY --from=web /src/web/dist ./web/dist
 # buildx injects TARGETOS / TARGETARCH for the requested platform.
 ARG TARGETOS
 ARG TARGETARCH
+# VERSION is stamped into the binary (printed in the startup banner + READY box)
+# so the running image's version is obvious in the container log. Defaults to
+# "dev" for un-stamped local builds; CI passes the release tag.
+ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
-    go build -ldflags "-s -w" -o /out/bombvault ./cmd/bombvault
+    go build -ldflags "-s -w -X github.com/junkerderprovinz/bombvault/internal/api.Version=${VERSION}" -o /out/bombvault ./cmd/bombvault
 
 # ---- Stage 3: runtime (lean Debian + restic from upstream release) ----------
 FROM debian:stable-slim AS runtime
