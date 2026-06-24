@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers, getSettings } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -63,15 +63,19 @@ function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   useEffect(() => {
     let active = true;
-    Promise.all([listContainers(), getSettings(), listRuns()])
-      .then(([contRes, settingsRes, runsRes]) => {
+    Promise.all([listContainers(), getSettings(), listRuns(), listVMs()])
+      .then(([contRes, settingsRes, runsRes, vmsRes]) => {
         if (!active) return;
         const containers = contRes.ok ? (contRes.containers ?? []) : [];
         const settings: Settings | null = settingsRes.ok ? settingsRes.settings : null;
         const runs = runsRes.ok ? (runsRes.runs ?? []) : [];
+        // listVMs fails/returns empty when the VMs domain is off — treat as none.
+        const vms = vmsRes.ok ? (vmsRes.vms ?? []) : [];
 
         const installed = containers.filter((c) => c.installed);
         const notInstalled = containers.filter((c) => !c.installed);
+        const vmsInstalled = vms.filter((v) => v.state !== "not-installed");
+        const vmsMissing = vms.filter((v) => v.state === "not-installed");
         const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
         const activeJobs = schedEnabled
           ? installed.filter((c) => c.includeInSchedule).length
@@ -83,12 +87,12 @@ function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
         setData({
           containers: installed.length,
-          vms: 0,
+          vms: vmsInstalled.length,
           activeJobs,
           pausedJobs,
           errors,
           missingContainers: notInstalled.length,
-          missingVMs: 0,
+          missingVMs: vmsMissing.length,
         });
       })
       .catch(() => {

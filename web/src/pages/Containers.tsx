@@ -797,7 +797,11 @@ export function Containers() {
     setBulkMsg(null);
     const names = [...selected];
     try {
-      await backupAll(names);
+      const res = await backupAll(names);
+      if (!res.ok) {
+        setBulkMsg(res.error ?? "Failed to start backup");
+        return;
+      }
       setSelected(new Set());
       setBulkMsg(t("containers.batchStarted"));
     } catch (e) {

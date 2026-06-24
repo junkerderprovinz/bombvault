@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -18,6 +19,18 @@ import (
 	"strings"
 	"time"
 )
+
+// redactErr strips the request URL from a *url.Error before it is logged: a
+// webhook (Discord/Slack/Gotify/ntfy) or Healthchecks URL carries its secret
+// token in the path, and the default *url.Error string prints the full URL. The
+// underlying cause (timeout, connection refused, …) is preserved.
+func redactErr(err error) error {
+	var ue *url.Error
+	if errors.As(err, &ue) {
+		return fmt.Errorf("%s: %w", ue.Op, ue.Err)
+	}
+	return err
+}
 
 const sendTimeout = 15 * time.Second
 
@@ -75,17 +88,17 @@ func Send(ctx context.Context, c Config, ev Event) {
 
 	if c.WebhookURL != "" {
 		if err := sendWebhook(ctx, client, c, ev); err != nil {
-			log.Printf("notify: webhook: %v", err)
+			log.Printf("notify: webhook: %v", redactErr(err))
 		}
 	}
 	if c.matrixReady() {
 		if err := sendMatrix(ctx, client, c, ev); err != nil {
-			log.Printf("notify: matrix: %v", err)
+			log.Printf("notify: matrix: %v", redactErr(err))
 		}
 	}
 	if c.HealthchecksURL != "" {
 		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, ev.OK); err != nil {
-			log.Printf("notify: healthchecks: %v", err)
+			log.Printf("notify: healthchecks: %v", redactErr(err))
 		}
 	}
 }

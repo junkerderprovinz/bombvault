@@ -203,6 +203,9 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 // Remove removes a container by name or ID.
 func (c *Client) Remove(ctx context.Context, name string) error {
 	if err := c.api.ContainerRemove(ctx, name, container.RemoveOptions{}); err != nil {
+		if isNoSuchContainer(err) {
+			return nil // already gone — a restore/recreate can proceed
+		}
 		return fmt.Errorf("dockercli: remove: %w", err)
 	}
 	return nil
