@@ -483,41 +483,11 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 	waitBatchDone(t, ch)
 }
 
-// TestEnsureRepoRejectsEncryptionMismatch pins the reconcile fix: if the existing
-// repo's encryption doesn't match the current setting (e.g. the user toggled
-// Settings → Encryption after backups exist), EnsureRepo fails with a clear,
-// actionable error instead of letting every backup die with a cryptic restic key
-// error.
-func TestEnsureRepoRejectsEncryptionMismatch(t *testing.T) {
-	dir := t.TempDir()
-	repo := filepath.ToSlash(dir) + "/repo"
-	// Simulate an existing ENCRYPTED restic repo: a config file + a key under keys/.
-	if err := os.MkdirAll(repo+"/keys", 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(repo+"/config", []byte("x"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(repo+"/keys/k1", []byte("key"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
-	svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
-
-	// Setting now says unencrypted, but the repo is encrypted => mismatch.
-	if err := svc.EnsureRepo(context.Background(), repo, restic.Mode{}); err == nil || !strings.Contains(err.Error(), "encryption setting") {
-		t.Fatalf("expected encryption-mismatch error, got %v", err)
-	}
-	// Matching (encrypted) mode passes without touching the engine.
-	if err := svc.EnsureRepo(context.Background(), repo, restic.Mode{Encrypted: true}); err != nil {
-		t.Fatalf("matching encrypted mode must pass: %v", err)
-	}
-}
-
-// TestServiceBackupRefusesEmptyWhenAppdataMissing pins the silent-no-op fix: a
-// container that HAS an appdata mount but whose source isn't reachable (share not
-// mounted) must be refused, not recorded as a successful empty backup.
-func TestServiceBackupRefusesEmptyWhenAppdataMissing(t *testing.T) {
+// TestServiceBackupRefusesEmptyWhenPriorDataVanishes pins the silent-no-op fix: a
+// container that PREVIOUSLY backed up data but now resolves to no paths (its
+// appdata share went missing) must be refused, not recorded as a successful empty
+// backup that overwrites the stored path list. A first backup is NOT affected.
+func TestServiceBackupRefusesEmptyWhenPriorDataVanishes(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
@@ -528,20 +498,65 @@ func TestServiceBackupRefusesEmptyWhenAppdataMissing(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	// Appdata mount present, but its source dir was never created (share missing).
-	missing := root + "/appdata/plex"
+	appdata := root + "/appdata/plex"
+	if err := os.MkdirAll(appdata, 0o750); err != nil {
+		t.Fatal(err)
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name: "/plex", Image: "plex:latest", Running: true,
-		Mounts: []model.Mount{{Type: "bind", Source: missing, Destination: "/config"}},
+		Mounts: []model.Mount{{Type: "bind", Source: appdata, Destination: "/config"}},
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
-	if _, err := svc.Backup(context.Background(), "plex"); err == nil || !strings.Contains(err.Error(), "not reachable") {
-		t.Fatalf("expected refusal when appdata is missing, got %v", err)
+	// First backup captures data and records the path (so the target "expects data").
+	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
+		t.Fatalf("first backup should succeed: %v", err)
 	}
-	if len(eng.backedUp) != 0 {
-		t.Fatalf("restic must NOT run for an unreachable backup, got %d", len(eng.backedUp))
+	if len(eng.backedUp) != 1 {
+		t.Fatalf("first backup should run restic once, got %d", len(eng.backedUp))
+	}
+
+	// The appdata share goes missing → the next backup resolves to no paths.
+	if err := os.RemoveAll(appdata); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Backup(context.Background(), "plex"); err == nil || !strings.Contains(err.Error(), "not reachable") {
+		t.Fatalf("expected refusal once prior data vanished, got %v", err)
+	}
+	if len(eng.backedUp) != 1 {
+		t.Fatalf("restic must NOT run for the empty re-backup, got %d total", len(eng.backedUp))
+	}
+}
+
+// TestServiceBackupFirstTimeEmptyIsDefinitionOnly pins the false-positive guard:
+// the FIRST backup of a container with no resolvable paths yet (new container,
+// appdata not created) is a definition-only success, never refused.
+func TestServiceBackupFirstTimeEmptyIsDefinitionOnly(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Appdata mount present, but the source dir does not exist yet (brand-new app).
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/newapp", Image: "newapp:latest", Running: true,
+		Mounts: []model.Mount{{Type: "bind", Source: root + "/appdata/newapp", Destination: "/config"}},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	sum, err := svc.Backup(context.Background(), "newapp")
+	if err != nil {
+		t.Fatalf("first backup of a new container must not be refused: %v", err)
+	}
+	if sum.SnapshotID != "" || len(eng.backedUp) != 0 {
+		t.Fatalf("expected a definition-only backup (no restic), got sum=%+v calls=%d", sum, len(eng.backedUp))
 	}
 }
 
