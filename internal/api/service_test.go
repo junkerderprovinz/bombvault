@@ -483,6 +483,37 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 	waitBatchDone(t, ch)
 }
 
+// TestServiceBackupRefusesEmptyWhenAppdataMissing pins the silent-no-op fix: a
+// container that HAS an appdata mount but whose source isn't reachable (share not
+// mounted) must be refused, not recorded as a successful empty backup.
+func TestServiceBackupRefusesEmptyWhenAppdataMissing(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Appdata mount present, but its source dir was never created (share missing).
+	missing := root + "/appdata/plex"
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{{Type: "bind", Source: missing, Destination: "/config"}},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	if _, err := svc.Backup(context.Background(), "plex"); err == nil || !strings.Contains(err.Error(), "not reachable") {
+		t.Fatalf("expected refusal when appdata is missing, got %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("restic must NOT run for an unreachable backup, got %d", len(eng.backedUp))
+	}
+}
+
 // TestServiceContainerMountsAndSelection covers the backup-folder selector:
 // listing a container's bind mounts (appdata default selected, others not, an
 // out-of-mount bind marked unreachable), storing an explicit selection, and that
@@ -859,7 +890,8 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 		inspectErr: errors.New("No such container: Pingvin-Share-X"),
 		liveName:   "", // absent
 	}
-	eng := &fakeResticEngine{}
+	// The snapshot must exist for the restore preflight (VerifySnapshot) to pass.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "deadbeef"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
