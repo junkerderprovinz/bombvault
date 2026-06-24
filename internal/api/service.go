@@ -427,18 +427,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// A restic repository always has a top-level `config` file; its presence is
 	// the cheap, binary-free idempotency check.
 	if _, err := os.Stat(filepath.Join(repo, "config")); err == nil {
-		// The repo exists — make sure the current encryption setting still matches
-		// how it was created. Toggling Settings → Encryption after backups exist
-		// would otherwise fail every backup with a cryptic restic key error.
-		enc, encErr := localRepoEncrypted(repo)
-		if encErr != nil {
-			return fmt.Errorf("check repo encryption: %w", encErr)
-		}
-		if enc != mode.Encrypted {
-			return fmt.Errorf("the existing backups at this path are %s, but the encryption setting is now %s — set Settings → Encryption back to match, or point this domain at a fresh backup path",
-				encDesc(enc), encDesc(mode.Encrypted))
-		}
-		return nil // already initialised, encryption matches
+		return nil // already initialised
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("stat repo: %w", err)
 	}
@@ -451,34 +440,6 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 		return fmt.Errorf("init repo: %w", err)
 	}
 	return nil
-}
-
-// localRepoEncrypted reports whether an existing LOCAL restic repo is encrypted,
-// from the presence of key files: an encrypted repo has at least one file under
-// keys/; an --insecure-no-password repo has none. Used to catch an encryption
-// setting that no longer matches the repo it points at.
-func localRepoEncrypted(repo string) (bool, error) {
-	entries, err := os.ReadDir(filepath.Join(repo, "keys")) //nolint:gosec // G703: repo is an operator-configured location validated under the mount root on save
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return false, nil // no keys dir => unencrypted
-		}
-		return false, err
-	}
-	for _, e := range entries {
-		if !e.IsDir() {
-			return true, nil // a key file => encrypted
-		}
-	}
-	return false, nil
-}
-
-// encDesc renders an encryption flag for a user-facing message.
-func encDesc(encrypted bool) string {
-	if encrypted {
-		return "encrypted"
-	}
-	return "unencrypted"
 }
 
 // resolveAppdataPaths returns the CONTAINER-VISIBLE paths to back up for a
@@ -673,16 +634,15 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 // distinguish a genuinely stateless container (empty backup is correct) from one
 // whose paths transiently resolved to nothing (appdata not mounted / misconfig),
 // so the latter is refused rather than recorded as a successful empty backup.
-func (s *Service) expectsData(name string, in model.Inspect) bool {
-	for _, m := range in.Mounts {
-		if m.Source != "" && hasSegment(path.Clean(m.Source), "appdata") {
-			return true
-		}
+func (s *Service) expectsData(name string) bool {
+	existing, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		return false // no prior target — a first backup of a new/stateless container
 	}
-	if existing, err := s.store.GetTargetByContainer(name); err == nil && len(existing.SelectedPaths) > 0 {
-		return true
-	}
-	return false
+	// Only when a PREVIOUS backup actually captured data (or the user selected
+	// folders) is an empty result suspicious. This avoids refusing the first
+	// backup of a brand-new container whose appdata folder doesn't exist yet.
+	return len(existing.AppdataPaths) > 0 || len(existing.SelectedPaths) > 0
 }
 
 // ErrSelfBackup is returned when a backup targets BombVault's own container.
@@ -762,13 +722,12 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	// template/inspect is still captured so it can be recreated on restore).
 	effective := s.effectiveBackupPaths(name, in)
 
-	// Guard against a SILENT no-op: if the container should have data (it has an
-	// appdata-style mount, or the user selected folders) but every path resolved
-	// away — e.g. the appdata share isn't mounted right now, or HOST_SOURCE_ROOT is
-	// misconfigured — refuse instead of recording an empty backup that looks
-	// successful and overwrites the stored path list. A genuinely stateless
-	// container (no such mount/selection) still gets a definition-only backup.
-	if len(effective) == 0 && s.expectsData(name, in) {
+	// Guard against a SILENT no-op: if a PREVIOUS backup captured data (or the user
+	// selected folders) but every path now resolves away — e.g. the appdata share
+	// isn't mounted right now, or HOST_SOURCE_ROOT is misconfigured — refuse instead
+	// of recording an empty backup that looks successful and overwrites the stored
+	// path list. A first backup of a new/stateless container is unaffected.
+	if len(effective) == 0 && s.expectsData(name) {
 		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?) — refusing an empty backup that would look successful", name)
 		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
 		return backup.Summary{}, err
@@ -1439,12 +1398,25 @@ func (a *resticAdapter) VerifySnapshot(ctx context.Context, repo, snapshotID str
 	if err != nil {
 		return fmt.Errorf("read repo: %w", err)
 	}
+	prefixMatches := 0
 	for _, s := range snaps {
-		if s.ID == snapshotID || strings.HasPrefix(s.ID, snapshotID) {
-			return nil
+		if s.ID == snapshotID {
+			return nil // exact id is unambiguous
+		}
+		if strings.HasPrefix(s.ID, snapshotID) {
+			prefixMatches++
 		}
 	}
-	return fmt.Errorf("snapshot %s not found", snapshotID)
+	switch prefixMatches {
+	case 0:
+		return fmt.Errorf("snapshot %s not found", snapshotID)
+	case 1:
+		return nil
+	default:
+		// An ambiguous short id would fail in restic AFTER the destructive teardown
+		// — reject it now, before anything is stopped/destroyed.
+		return fmt.Errorf("snapshot id %s is ambiguous (matches %d snapshots)", snapshotID, prefixMatches)
+	}
 }
 
 // templatesAdapter satisfies backup.Templates over the template package funcs.
