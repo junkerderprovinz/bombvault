@@ -99,22 +99,24 @@ function sortContainers(containers: Container[], key: SortKey): Container[] {
   }
 }
 
-const SORT_LABELS: Record<SortKey, string> = {
-  name: "Name (A–Z)",
-  status: "Status",
-  ip: "IP",
-};
+const SORT_KEYS = {
+  name: "sort.nameAsc",
+  status: "sort.status",
+  ip: "sort.ip",
+} as const;
 
 function SortControl({
   value,
   onChange,
+  t,
 }: {
   value: SortKey;
   onChange: (k: SortKey) => void;
+  t: T;
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-carbon-textMuted">Sort:</span>
+      <span className="text-xs text-carbon-textMuted">{t("sort.label")}</span>
       {(["name", "status", "ip"] as SortKey[]).map((k) => (
         <button
           key={k}
@@ -125,7 +127,7 @@ function SortControl({
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
-          {SORT_LABELS[k]}
+          {t(SORT_KEYS[k])}
         </button>
       ))}
     </div>
@@ -783,7 +785,7 @@ export function Containers() {
       }
     }
     setBulkBusy(false);
-    setBulkMsg(`${ok} ok, ${fail} failed`);
+    setBulkMsg(t("containers.bulkResult").replace("{ok}", String(ok)).replace("{fail}", String(fail)));
     setSelected(new Set());
     void loadContainers();
   }
@@ -847,7 +849,7 @@ export function Containers() {
             {t("containers.title")}
           </h1>
           <p className="mt-1 text-sm text-carbon-textSub">
-            Manage container backups, schedules, and restores.
+            {t("containers.subtitle")}
           </p>
           <div className="mt-2"><OffsiteIndicator domain="containers" /></div>
         </div>
@@ -890,7 +892,7 @@ export function Containers() {
       {!loading && !error && containers.length === 0 && (
         <div className="bg-carbon-surface rounded-card border border-carbon-border p-6 text-center">
           <p className="text-sm text-carbon-textMuted">
-            No containers found. Is Docker running?
+            {t("containers.emptyDocker")}
           </p>
         </div>
       )}
@@ -898,7 +900,7 @@ export function Containers() {
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
           <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
-          <SortControl value={sortKey} onChange={handleSortChange} />
+          <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           {filterKey !== "notInstalled" && selectable.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
               <input

@@ -129,6 +129,7 @@ interface FolderBrowserProps {
 }
 
 function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserProps) {
+  const { t } = useT();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
   const [open, setOpen] = useState(false);
@@ -144,7 +145,7 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
     browse(path)
       .then((res) => {
         if (!res.ok) {
-          setBrowseError(res.error ?? "Could not read directory");
+          setBrowseError(res.error ?? t("folder.couldNotRead"));
           setManualFallback(true);
           return;
         }
@@ -152,12 +153,12 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
         setBrowsePath(path);
       })
       .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Browse failed";
+        const msg = err instanceof Error ? err.message : t("folder.browseFailed");
         setBrowseError(msg);
         setManualFallback(true);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   function handleOpen() {
     setManualFallback(false);
@@ -203,10 +204,10 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
         />
         <button
           onClick={handleOpen}
-          title="Browse folders"
+          title={t("folder.browseTitle")}
           className="shrink-0 rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
-          Browse…
+          {t("folder.browse")}
         </button>
       </div>
 
@@ -216,7 +217,7 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
       )}
       {!resolved && trimmed && (
         <p className="text-xs text-[#ff8389]">
-          Path must be a relative subpath (no leading / or ..)
+          {t("folder.pathHint")}
         </p>
       )}
 
@@ -245,7 +246,7 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
           {loading && (
             <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
               <span className="h-3 w-3 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
-              Loading…
+              {t("folder.loading")}
             </div>
           )}
 
@@ -262,7 +263,7 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
                 </button>
               )}
               {dirs.length === 0 && !browseError && (
-                <p className="text-xs text-carbon-textMuted px-2">No subdirectories</p>
+                <p className="text-xs text-carbon-textMuted px-2">{t("folder.none")}</p>
               )}
               {dirs.map((d) => (
                 <button
@@ -283,7 +284,7 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
                 onClick={handleSelect}
                 className="text-xs rounded-lg bg-carbon-surface3 px-3 py-1 text-carbon-text hover:bg-carbon-hover transition-colors"
               >
-                Use this folder
+                {t("folder.use")}
               </button>
               <span className="text-xs text-carbon-textMuted font-mono truncate">
                 {browsePath || "(root)"}
@@ -372,6 +373,7 @@ function CadenceBuilder({
   disabled?: boolean;
   onChange: (v: string) => void;
 }) {
+  const { t } = useT();
   const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
 
   // Re-parse when the stored value changes externally (e.g. after load or sync checkbox)
@@ -416,7 +418,7 @@ function CadenceBuilder({
                 : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
             }`}
           >
-            {m === "off" ? "Off" : m === "daily" ? "Daily" : m === "weekly" ? "Weekly" : "Every N days"}
+            {m === "off" ? t("cadence.off") : m === "daily" ? t("cadence.daily") : m === "weekly" ? t("cadence.weekly") : t("cadence.everyN")}
           </button>
         ))}
       </div>
@@ -424,7 +426,7 @@ function CadenceBuilder({
       {/* Time picker — shown for all non-off modes */}
       {state.mode !== "off" && (
         <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16">Time</label>
+          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.time")}</label>
           <input
             type="time"
             value={state.time}
@@ -437,7 +439,7 @@ function CadenceBuilder({
       {/* Weekly: weekday checkboxes */}
       {state.mode === "weekly" && (
         <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-xs text-carbon-textMuted w-16">Days</label>
+          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.days")}</label>
           <div className="flex flex-wrap gap-1.5">
             {WEEKDAYS.map((d) => (
               <button
@@ -459,7 +461,7 @@ function CadenceBuilder({
       {/* Every N days: number input */}
       {state.mode === "everyN" && (
         <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16">Every</label>
+          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.every")}</label>
           <input
             type="number"
             min={1}
@@ -470,7 +472,7 @@ function CadenceBuilder({
             }}
             className={`${inputCls} w-20`}
           />
-          <span className="text-xs text-carbon-textMuted">days</span>
+          <span className="text-xs text-carbon-textMuted">{t("cadence.daysUnit")}</span>
         </div>
       )}
 
@@ -1104,6 +1106,11 @@ export function SettingsPage() {
   const { t } = useT();
 
   const [settings, setSettings] = useState<Settings | null>(null);
+  // savedSettings is the server's last-confirmed state. Each card's Save persists
+  // its own fields merged onto THIS baseline (not the live, possibly-edited
+  // `settings`), so saving one card never silently commits another card's
+  // unsaved edits.
+  const [savedSettings, setSavedSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -1144,6 +1151,7 @@ export function SettingsPage() {
       .then((res) => {
         if (res.ok) {
           setSettings(res.settings);
+          setSavedSettings(res.settings);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           // Detect if schedules are already in sync
           const s = res.settings;
@@ -1181,14 +1189,20 @@ export function SettingsPage() {
     setSaveState: (s: SaveState) => void,
     setSaveError: (e: string | null) => void
   ) {
-    if (!settings) return;
+    const base = savedSettings ?? settings;
+    if (!base) return;
     setSaveState("saving");
     setSaveError(null);
-    const updated: Settings = { ...settings, ...patch };
+    // Persist ONLY this card's fields, merged onto the server baseline — never the
+    // live `settings`, which may hold unsaved edits from other cards.
+    const updated: Settings = { ...base, ...patch };
     try {
       const res = await putSettings(updated);
       if (res.ok) {
-        setSettings(updated);
+        // Advance the baseline; reflect just the saved fields in the live state so
+        // other cards' in-progress edits are left untouched.
+        setSavedSettings(updated);
+        setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
         setSaveState("saved");
         // Tell the Layout/Sidebar to refetch so a newly enabled/disabled domain
         // tab appears or vanishes immediately — no page reload needed.
@@ -1767,7 +1781,7 @@ export function SettingsPage() {
                     }}
                     className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1"
                   >
-                    Reset
+                    {t("common.reset")}
                   </button>
                 )}
               </div>

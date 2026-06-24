@@ -70,21 +70,23 @@ function sortVMs(vms: VM[], key: SortKey): VM[] {
   }
 }
 
-const SORT_LABELS: Record<SortKey, string> = {
-  name: "Name (A–Z)",
-  status: "Status",
-};
+const SORT_KEYS = {
+  name: "sort.nameAsc",
+  status: "sort.status",
+} as const;
 
 function SortControl({
   value,
   onChange,
+  t,
 }: {
   value: SortKey;
   onChange: (k: SortKey) => void;
+  t: T;
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-carbon-textMuted">Sort:</span>
+      <span className="text-xs text-carbon-textMuted">{t("sort.label")}</span>
       {(["name", "status"] as SortKey[]).map((k) => (
         <button
           key={k}
@@ -95,7 +97,7 @@ function SortControl({
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
-          {SORT_LABELS[k]}
+          {t(SORT_KEYS[k])}
         </button>
       ))}
     </div>
@@ -119,30 +121,46 @@ function VMMethodSelect({
 }) {
   const [method, setMethod] = useState(initial || "graceful");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleChange(next: string) {
     setBusy(true);
+    setError(null);
     try {
       const res = await setVMMethod(name, next);
-      if (res.ok) setMethod(next);
-    } catch {
-      /* ignore — keep previous selection */
+      if (res.ok) {
+        setMethod(next);
+      } else {
+        // Surface the failure instead of silently reverting — a swallowed error
+        // here means the user thinks they switched to live (no downtime) when the
+        // VM will actually be shut down at backup time.
+        setError(res.error ?? t("vm.method.saveFailed"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("vm.method.saveFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <select
-      value={method}
-      disabled={busy}
-      onChange={(e) => void handleChange(e.target.value)}
-      title={t("vm.method.hint")}
-      className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
-    >
-      <option value="graceful">{t("vm.method.graceful")}</option>
-      <option value="live">{t("vm.method.live")}</option>
-    </select>
+    <div className="flex flex-col items-end gap-1">
+      <select
+        value={method}
+        disabled={busy}
+        onChange={(e) => void handleChange(e.target.value)}
+        title={t("vm.method.hint")}
+        className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
+      >
+        <option value="graceful">{t("vm.method.graceful")}</option>
+        <option value="live">{t("vm.method.live")}</option>
+      </select>
+      {error && (
+        <span className="text-xs text-[#ff8389] max-w-[12rem] text-right leading-tight">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -758,7 +776,7 @@ export function VMs() {
       {/* Sort + select-all controls */}
       {!loading && vms.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
-          <SortControl value={sortKey} onChange={handleSortChange} />
+          <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           {live.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
               <input
