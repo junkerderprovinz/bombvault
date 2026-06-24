@@ -103,9 +103,9 @@ func (r *Repo) LastSuccessfulContainerBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND status = 'success'
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
 		  AND target_id IN (SELECT id FROM targets)
-		ORDER BY started_at DESC
+		ORDER BY finished_at DESC
 		LIMIT 1`)
 	return scanLastBackupTime(row, "LastSuccessfulContainerBackup")
 }
@@ -117,9 +117,9 @@ func (r *Repo) LastSuccessfulVMBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND status = 'success'
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
 		  AND target_id IN (SELECT id FROM vms)
-		ORDER BY started_at DESC
+		ORDER BY finished_at DESC
 		LIMIT 1`)
 	return scanLastBackupTime(row, "LastSuccessfulVMBackup")
 }
@@ -136,8 +136,8 @@ func (r *Repo) LastSuccessfulFlashBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND status = 'success' AND target_id = ?
-		ORDER BY started_at DESC
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?
+		ORDER BY finished_at DESC
 		LIMIT 1`, FlashTargetID)
 	return scanLastBackupTime(row, "LastSuccessfulFlashBackup")
 }

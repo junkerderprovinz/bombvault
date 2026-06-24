@@ -427,7 +427,18 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// A restic repository always has a top-level `config` file; its presence is
 	// the cheap, binary-free idempotency check.
 	if _, err := os.Stat(filepath.Join(repo, "config")); err == nil {
-		return nil // already initialised
+		// The repo exists — make sure the current encryption setting still matches
+		// how it was created. Toggling Settings → Encryption after backups exist
+		// would otherwise fail every backup with a cryptic restic key error.
+		enc, encErr := localRepoEncrypted(repo)
+		if encErr != nil {
+			return fmt.Errorf("check repo encryption: %w", encErr)
+		}
+		if enc != mode.Encrypted {
+			return fmt.Errorf("the existing backups at this path are %s, but the encryption setting is now %s — set Settings → Encryption back to match, or point this domain at a fresh backup path",
+				encDesc(enc), encDesc(mode.Encrypted))
+		}
+		return nil // already initialised, encryption matches
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("stat repo: %w", err)
 	}
@@ -440,6 +451,34 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 		return fmt.Errorf("init repo: %w", err)
 	}
 	return nil
+}
+
+// localRepoEncrypted reports whether an existing LOCAL restic repo is encrypted,
+// from the presence of key files: an encrypted repo has at least one file under
+// keys/; an --insecure-no-password repo has none. Used to catch an encryption
+// setting that no longer matches the repo it points at.
+func localRepoEncrypted(repo string) (bool, error) {
+	entries, err := os.ReadDir(filepath.Join(repo, "keys")) //nolint:gosec // G703: repo is an operator-configured location validated under the mount root on save
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil // no keys dir => unencrypted
+		}
+		return false, err
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			return true, nil // a key file => encrypted
+		}
+	}
+	return false, nil
+}
+
+// encDesc renders an encryption flag for a user-facing message.
+func encDesc(encrypted bool) string {
+	if encrypted {
+		return "encrypted"
+	}
+	return "unencrypted"
 }
 
 // resolveAppdataPaths returns the CONTAINER-VISIBLE paths to back up for a

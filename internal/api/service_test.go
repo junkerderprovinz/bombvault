@@ -483,6 +483,37 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 	waitBatchDone(t, ch)
 }
 
+// TestEnsureRepoRejectsEncryptionMismatch pins the reconcile fix: if the existing
+// repo's encryption doesn't match the current setting (e.g. the user toggled
+// Settings → Encryption after backups exist), EnsureRepo fails with a clear,
+// actionable error instead of letting every backup die with a cryptic restic key
+// error.
+func TestEnsureRepoRejectsEncryptionMismatch(t *testing.T) {
+	dir := t.TempDir()
+	repo := filepath.ToSlash(dir) + "/repo"
+	// Simulate an existing ENCRYPTED restic repo: a config file + a key under keys/.
+	if err := os.MkdirAll(repo+"/keys", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(repo+"/config", []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(repo+"/keys/k1", []byte("key"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+	// Setting now says unencrypted, but the repo is encrypted => mismatch.
+	if err := svc.EnsureRepo(context.Background(), repo, restic.Mode{}); err == nil || !strings.Contains(err.Error(), "encryption setting") {
+		t.Fatalf("expected encryption-mismatch error, got %v", err)
+	}
+	// Matching (encrypted) mode passes without touching the engine.
+	if err := svc.EnsureRepo(context.Background(), repo, restic.Mode{Encrypted: true}); err != nil {
+		t.Fatalf("matching encrypted mode must pass: %v", err)
+	}
+}
+
 // TestServiceBackupRefusesEmptyWhenAppdataMissing pins the silent-no-op fix: a
 // container that HAS an appdata mount but whose source isn't reachable (share not
 // mounted) must be refused, not recorded as a successful empty backup.

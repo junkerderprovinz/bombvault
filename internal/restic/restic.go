@@ -383,7 +383,11 @@ func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, err
 
 	var out bytes.Buffer
 	sc := bufio.NewScanner(stdout)
-	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // status/summary lines are small; 1 MiB is ample
+	// Status/summary lines are normally small, but a status line embeds the
+	// current file path, which can be very long. Allow up to 16 MiB so a giant
+	// path can't overflow the scanner and make a successful backup look failed
+	// (the trailing summary line would be lost after a token-too-long abort).
+	sc.Buffer(make([]byte, 0, 64*1024), 16<<20)
 	for sc.Scan() {
 		line := sc.Bytes()
 		out.Write(line)
