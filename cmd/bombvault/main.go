@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -29,6 +30,21 @@ func main() {
 	}
 }
 
+// ensureDataDirWritable verifies the data dir exists and is writable before the
+// store is opened, so a missing/read-only /config mount fails loudly instead of
+// silently persisting state to the container's ephemeral layer.
+func ensureDataDirWritable(dir string) error {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("data dir %q is not creatable — is the /config mount present? %w", dir, err)
+	}
+	probe := filepath.Join(dir, ".bombvault-write-test")
+	if err := os.WriteFile(probe, []byte("ok"), 0o600); err != nil {
+		return fmt.Errorf("data dir %q is not writable — is the /config mount present and read-write? %w", dir, err)
+	}
+	_ = os.Remove(probe)
+	return nil
+}
+
 func run() error {
 	// Send the standard logger to stdout so all runtime logs share ONE stream
 	// with the ASCII banner (printed via fmt to stdout). Otherwise Docker/Unraid
@@ -37,6 +53,13 @@ func run() error {
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
+		return err
+	}
+
+	// Fail fast if the data dir (the /config mount) isn't a present, writable
+	// filesystem — otherwise the SQLite DB lands on the container's ephemeral
+	// layer and settings/targets/password silently reset on every restart.
+	if err := ensureDataDirWritable(cfg.DataDir); err != nil {
 		return err
 	}
 

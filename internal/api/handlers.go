@@ -385,11 +385,12 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 // handleListFiles lists the files in a container snapshot for file-level restore.
 // GET /api/containers/{name}/files?snapshot=<id>
 func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.nameParam(w, r); !ok {
+	name, ok := h.nameParam(w, r)
+	if !ok {
 		return
 	}
 	snapshot := r.URL.Query().Get("snapshot")
-	files, err := h.svc.ListSnapshotFiles(r.Context(), snapshot, sourceParam(r))
+	files, err := h.svc.ListSnapshotFiles(r.Context(), name, snapshot, sourceParam(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1018,10 +1019,49 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 
 // handleLogin handles POST /api/login.
 // Body: {password string}
+// login brute-force throttle: lock out after loginMaxFails failures within
+// loginWindow, so the optional password gate can't be guessed at full speed.
+const (
+	loginMaxFails = 5
+	loginWindow   = time.Minute
+)
+
+// loginThrottled prunes the failed-attempt window and reports whether logins are
+// currently locked out.
+func (h *Handler) loginThrottled() bool {
+	h.loginMu.Lock()
+	defer h.loginMu.Unlock()
+	cutoff := time.Now().Add(-loginWindow)
+	kept := h.loginFails[:0]
+	for _, ts := range h.loginFails {
+		if ts.After(cutoff) {
+			kept = append(kept, ts)
+		}
+	}
+	h.loginFails = kept
+	return len(h.loginFails) >= loginMaxFails
+}
+
+func (h *Handler) recordLoginFail() {
+	h.loginMu.Lock()
+	h.loginFails = append(h.loginFails, time.Now())
+	h.loginMu.Unlock()
+}
+
+func (h *Handler) recordLoginSuccess() {
+	h.loginMu.Lock()
+	h.loginFails = nil
+	h.loginMu.Unlock()
+}
+
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	hash, on := h.authEnabled()
 	if !on {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
+		return
+	}
+	if h.loginThrottled() {
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts — wait a minute and try again"})
 		return
 	}
 
@@ -1033,9 +1073,11 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !secret.VerifyPassword(h.cfg.AppKey, body.Password, hash) {
+		h.recordLoginFail()
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid password"})
 		return
 	}
+	h.recordLoginSuccess()
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, sessionTTL)
 	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))

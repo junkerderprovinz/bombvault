@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
@@ -33,6 +34,12 @@ type Handler struct {
 	spikeChecks any
 	spikeAllOK  bool
 	spikeRan    bool
+
+	// login brute-force throttle: timestamps of recent failed logins. A global
+	// (not per-IP) window is enough for this single-operator LAN tool — it just
+	// slows password guessing on the optional auth gate.
+	loginMu    sync.Mutex
+	loginFails []time.Time
 }
 
 // NewHandler constructs the API handler.
