@@ -820,6 +820,44 @@ func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 	}
 }
 
+// TestListSnapshotFilesScopedToContainer pins the access-control fix: the
+// file-listing endpoint only lists files of a snapshot that belongs to the named
+// container, so one container's tree can't be browsed through another's route.
+func TestListSnapshotFilesScopedToContainer(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.ToSlash(dir) + "/backups/containers"
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Tags: []string{"container:plex"}},
+			{ID: "bbbb2222", Tags: []string{"container:sonarr"}},
+		},
+		lsEntries: []restic.FileEntry{{}},
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	// plex's own snapshot lists.
+	if files, err := svc.ListSnapshotFiles(context.Background(), "plex", "aaaa1111", ""); err != nil || len(files) != 1 {
+		t.Fatalf("own snapshot must list files: files=%v err=%v", files, err)
+	}
+	// sonarr's snapshot must NOT be listable via plex's route.
+	if _, err := svc.ListSnapshotFiles(context.Background(), "plex", "bbbb2222", ""); err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("foreign snapshot must be refused, got %v", err)
+	}
+}
+
 // TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
 // backups forgets only that container's snapshots (tag-filtered) and removes its
 // target from the store — the path used to clean up no-longer-installed containers.

@@ -142,10 +142,17 @@ Restore is the star: after copying data back from the restic snapshot, BombVault
 
 BombVault has **optional built-in password protection** (Settings → Security): set a password
 to require login, clear it to disable. It is **off by default** for trusted-LAN use. Sessions are
-signed (HMAC, derived from `APP_KEY`) and changing the password invalidates them. Regardless,
+signed (HMAC, derived from `APP_KEY`) and changing the password invalidates them; logins are
+rate-limited to slow guessing. Regardless,
 run BombVault **only on a trusted, non-exposed network** — never publish it directly to the
 internet; for remote access put it behind a reverse proxy that adds authentication and TLS.
 Responses carry baseline security headers (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
+
+Two caveats for the security-conscious: with `HTTP_ONLY=true` the session cookie loses its
+`Secure` flag (it has to, to work over plain HTTP), so only enable the password behind a
+TLS-terminating proxy if confidentiality matters. And the VM-backup SSH connection trusts the
+host key on first connect (TOFU) and pins it thereafter — fine on a trusted LAN, but verify the
+host's key out-of-band if your container↔host path isn't trusted.
 
 Backups are encrypted by restic when encryption is enabled (Settings; on by default), with the
 key derived from `APP_KEY`.

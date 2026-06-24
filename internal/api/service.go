@@ -1264,9 +1264,25 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 
 // ListSnapshotFiles lists the files in a container snapshot, for file-level
 // restore. snapshotID must be valid hex.
-func (s *Service) ListSnapshotFiles(ctx context.Context, snapshotID, source string) ([]restic.FileEntry, error) {
+func (s *Service) ListSnapshotFiles(ctx context.Context, name, snapshotID, source string) ([]restic.FileEntry, error) {
 	if !backup.ValidSnapshotID(snapshotID) {
 		return nil, backup.ErrInvalidSnapshotID
+	}
+	// Scope to the named container: the snapshot must be one of ITS snapshots, so
+	// one container's file tree can't be listed through another's route.
+	snaps, err := s.Snapshots(ctx, name, source)
+	if err != nil {
+		return nil, err
+	}
+	found := false
+	for _, sn := range snaps {
+		if sn.ID == snapshotID || strings.HasPrefix(sn.ID, snapshotID) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
