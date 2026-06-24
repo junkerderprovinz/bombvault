@@ -89,8 +89,14 @@ type fakeRestic struct {
 
 	backupErr     error
 	restoreErr    error
+	verifyErr     error // non-nil => VerifySnapshot fails (missing snapshot / unreadable repo)
 	summary       backup.Summary
 	capturedPaths []string
+}
+
+func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) error {
+	r.log = append(r.log, "verify:"+repo+":"+snapshotID)
+	return r.verifyErr
 }
 
 func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string) (backup.Summary, error) {
@@ -527,6 +533,27 @@ func TestRestoreAbortsOnLiveNameMismatch(t *testing.T) {
 		t.Fatalf("destructive op ran despite mismatch: docker=%v restic=%v", d.log, r.log)
 	}
 	// the run was recorded failed
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+// TestRestoreAbortsWhenSnapshotMissing pins the restore preflight: if the
+// snapshot can't be read (missing / unreadable repo), restore must abort BEFORE
+// any stop/remove so the live container is never torn down for a doomed restore.
+func TestRestoreAbortsWhenSnapshotMissing(t *testing.T) {
+	d := &fakeDocker{liveName: "/plex"}
+	r := &fakeRestic{verifyErr: errors.New("snapshot not found")}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	err := backup.RestoreContainer(t.Context(), restoreDeps(d, r, tpl, runs))
+	if err == nil || !strings.Contains(err.Error(), "preflight") {
+		t.Fatalf("expected snapshot-preflight abort, got %v", err)
+	}
+	if contains(d.log, "stop:") || contains(d.log, "remove:") || contains(r.log, "restore:") {
+		t.Fatalf("nothing destructive allowed when the preflight fails: docker=%v restic=%v", d.log, r.log)
+	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
 		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
 	}

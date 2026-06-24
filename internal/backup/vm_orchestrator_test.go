@@ -278,6 +278,26 @@ func TestRestoreVMRejectsBadSnapshotID(t *testing.T) {
 	}
 }
 
+// TestRestoreVMAbortsWhenSnapshotMissing pins the restore preflight: a snapshot
+// that can't be read must abort BEFORE destroy/undefine, so a running VM is
+// never torn down for a doomed restore.
+func TestRestoreVMAbortsWhenSnapshotMissing(t *testing.T) {
+	vm := &fakeVM{stateVal: "running"}
+	r := &fakeRestic{verifyErr: errors.New("snapshot not found")}
+	runs := &fakeRuns{}
+
+	err := backup.RestoreVM(t.Context(), sampleVMRestoreDeps(t, vm, r, runs))
+	if err == nil || !strings.Contains(err.Error(), "preflight") {
+		t.Fatalf("expected snapshot-preflight abort, got %v", err)
+	}
+	if vmContains(vm.log, "destroy:") || vmContains(vm.log, "undefine:") || vmContains(r.log, "restore:") {
+		t.Fatalf("nothing destructive allowed when the preflight fails: vm=%v restic=%v", vm.log, r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
 func TestRestoreVMRejectsUnsafePath(t *testing.T) {
 	vm := &fakeVM{stateVal: ""}
 	r := &fakeRestic{}

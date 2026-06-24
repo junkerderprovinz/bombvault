@@ -629,6 +629,23 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 	return onlyExistingPaths(chosen)
 }
 
+// expectsData reports whether a container ought to have backup data: it has an
+// appdata-style bind mount, or the user explicitly selected folders. Used to
+// distinguish a genuinely stateless container (empty backup is correct) from one
+// whose paths transiently resolved to nothing (appdata not mounted / misconfig),
+// so the latter is refused rather than recorded as a successful empty backup.
+func (s *Service) expectsData(name string, in model.Inspect) bool {
+	for _, m := range in.Mounts {
+		if m.Source != "" && hasSegment(path.Clean(m.Source), "appdata") {
+			return true
+		}
+	}
+	if existing, err := s.store.GetTargetByContainer(name); err == nil && len(existing.SelectedPaths) > 0 {
+		return true
+	}
+	return false
+}
+
 // ErrSelfBackup is returned when a backup targets BombVault's own container.
 // Backing it up stops the container mid-run (stop → backup → start), which kills
 // the very process doing the backup and takes the app down. Its configuration is
@@ -705,6 +722,18 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	// container ends up with an empty list → a definition-only backup (its
 	// template/inspect is still captured so it can be recreated on restore).
 	effective := s.effectiveBackupPaths(name, in)
+
+	// Guard against a SILENT no-op: if the container should have data (it has an
+	// appdata-style mount, or the user selected folders) but every path resolved
+	// away — e.g. the appdata share isn't mounted right now, or HOST_SOURCE_ROOT is
+	// misconfigured — refuse instead of recording an empty backup that looks
+	// successful and overwrites the stored path list. A genuinely stateless
+	// container (no such mount/selection) still gets a definition-only backup.
+	if len(effective) == 0 && s.expectsData(name, in) {
+		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?) — refusing an empty backup that would look successful", name)
+		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
+		return backup.Summary{}, err
+	}
 
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
@@ -1345,6 +1374,22 @@ func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID strin
 		}
 	}
 	return nil
+}
+
+// VerifySnapshot lists the repo (which also proves it is reachable and the key
+// is right) and confirms snapshotID is present, so a restore aborts before any
+// destructive teardown if the snapshot is missing or the repo is unreadable.
+func (a *resticAdapter) VerifySnapshot(ctx context.Context, repo, snapshotID string) error {
+	snaps, err := a.engine.Snapshots(ctx, repo, a.mode)
+	if err != nil {
+		return fmt.Errorf("read repo: %w", err)
+	}
+	for _, s := range snaps {
+		if s.ID == snapshotID || strings.HasPrefix(s.ID, snapshotID) {
+			return nil
+		}
+	}
+	return fmt.Errorf("snapshot %s not found", snapshotID)
 }
 
 // templatesAdapter satisfies backup.Templates over the template package funcs.

@@ -79,6 +79,11 @@ type Restic interface {
 	// RestorePaths restores each backed-up path back to its own location as a
 	// subtree, so restic never reconciles shared parent dirs (SEC §8 / DR).
 	RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error
+	// VerifySnapshot confirms snapshotID resolves to a readable snapshot in repo.
+	// It is the restore PRE-FLIGHT: a missing snapshot, wrong key, or unreachable
+	// repo must abort BEFORE any destructive teardown (stop/remove a container,
+	// destroy/undefine a VM), so a doomed restore never leaves the target gone.
+	VerifySnapshot(ctx context.Context, repo, snapshotID string) error
 }
 
 // Templates reads and writes Unraid container templates. Read returns
@@ -445,6 +450,16 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	// changed — the user frees the resource and retries.
 	if err := checkRestoreConflicts(ctx, d); err != nil {
 		return err
+	}
+
+	// PRE-FLIGHT: when restoring data, confirm the snapshot is readable BEFORE the
+	// destructive stop/remove, so a missing snapshot or an unreadable repo never
+	// leaves the container torn down with nothing restored. Skipped for a
+	// recreate-only restore (no snapshot, just the definition).
+	if len(d.AppdataPaths) > 0 {
+		if err := d.Restic.VerifySnapshot(ctx, d.RepoPath, d.SnapshotID); err != nil {
+			return fmt.Errorf("restore: snapshot preflight: %w", err)
+		}
 	}
 
 	// Pull the image before touching the running container. Pull the human

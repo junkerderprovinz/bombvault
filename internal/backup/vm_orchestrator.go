@@ -416,6 +416,13 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 
+	// PRE-FLIGHT: confirm the snapshot is restorable (exists + repo readable)
+	// BEFORE destroying/undefining the live VM, so a missing snapshot or an
+	// unreadable repo can never leave the VM gone with nothing restored.
+	if err := d.Restic.VerifySnapshot(ctx, d.RepoPath, d.SnapshotID); err != nil {
+		return fmt.Errorf("vm restore: snapshot preflight: %w", err)
+	}
+
 	// If the VM currently exists, destroy (if running) then undefine it.
 	state, err := d.VM.State(ctx, d.Name)
 	if err != nil {
