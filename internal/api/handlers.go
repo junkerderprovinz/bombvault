@@ -311,19 +311,22 @@ func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Names []string `json:"names"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid body"})
+	if !decodeBody(w, r, &body) { // caps the body at 1 MiB
 		return
 	}
 	if len(body.Names) == 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "no containers selected"})
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no containers selected"})
+		return
+	}
+	if len(body.Names) > 1000 { // far beyond any real container count — reject abuse
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many containers"})
 		return
 	}
 	// Validate every name at the boundary (same guard as the per-container route)
 	// so no traversal/option-injection name reaches the service layer.
 	for _, n := range body.Names {
 		if !validResourceName(n) {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid name"})
 			return
 		}
 	}

@@ -215,7 +215,10 @@ type Scheduler struct {
 // listFn retrieves the current target list when the job fires.
 func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 	return &Scheduler{
-		c:      cron.New(),
+		// Recover wraps every job so a panic in one backup is logged and contained
+		// instead of crashing the whole process (which would silently stop ALL
+		// schedules and take the web UI down).
+		c:      cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
 		backup: backupFn,
 		listFn: listFn,
 	}

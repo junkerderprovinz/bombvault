@@ -532,6 +532,30 @@ func TestRestoreAbortsOnLiveNameMismatch(t *testing.T) {
 	}
 }
 
+// TestRestoreAbortsWhenRemoveFails pins the data-integrity fix: if the existing
+// container can't be removed (e.g. Stop timed out and it is still running),
+// restore must abort BEFORE restic overwrites the appdata — overwriting a live
+// container's data corrupts it.
+func TestRestoreAbortsWhenRemoveFails(t *testing.T) {
+	d := &fakeDocker{liveName: "/plex", removeErr: errors.New("container is still running")}
+	r := &fakeRestic{}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	err := backup.RestoreContainer(t.Context(), restoreDeps(d, r, tpl, runs))
+	if err == nil || !strings.Contains(err.Error(), "remove existing container") {
+		t.Fatalf("expected remove-failure abort, got %v", err)
+	}
+	// restic restore must NOT have run (no overwrite of the live container's data).
+	if contains(r.log, "restore:") {
+		t.Fatalf("restic restore ran despite a failed remove: %v", r.log)
+	}
+	// run recorded failed.
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
 // restoreDepsWithNet gives the restored container a static IP + a published
 // host port so the pre-flight conflict check has something to compare.
 func restoreDepsWithNet(d *fakeDocker, r *fakeRestic, tpl *fakeTemplates, runs *fakeRuns) backup.RestoreDeps {
@@ -724,17 +748,21 @@ func TestRestoreSkipsEmptyTemplate(t *testing.T) {
 	}
 }
 
-func TestRestoreIgnoresStopRemoveErrors(t *testing.T) {
-	d := &fakeDocker{liveName: "/plex", stopErr: errors.New("no such container"), removeErr: errors.New("no such container")}
+func TestRestoreToleratesStopErrorAndAbsentRemove(t *testing.T) {
+	// A Stop error on an already-stopped/absent container is ignored, and an
+	// absent container makes Docker.Remove return nil (the real adapter swallows
+	// not-found). Restore must still proceed. (A genuine, non-absent Remove
+	// failure aborts instead — see TestRestoreAbortsWhenRemoveFails.)
+	d := &fakeDocker{liveName: "/plex", stopErr: errors.New("no such container")}
 	r := &fakeRestic{}
 	tpl := &fakeTemplates{}
 	runs := &fakeRuns{}
 
 	if err := backup.RestoreContainer(t.Context(), restoreDeps(d, r, tpl, runs)); err != nil {
-		t.Fatalf("stop/remove errors must be ignored, got %v", err)
+		t.Fatalf("stop error / absent remove must not block restore, got %v", err)
 	}
 	if !contains(r.log, "restore:") {
-		t.Fatalf("restore must proceed after stop/remove failure: %v", r.log)
+		t.Fatalf("restore must proceed: %v", r.log)
 	}
 }
 

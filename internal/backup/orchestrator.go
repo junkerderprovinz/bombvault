@@ -457,12 +457,16 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 
 	// Stop & remove the existing container — absent/already-stopped is acceptable.
 	if err := d.Docker.Stop(ctx, d.ContainerRef, defaultStopTimeout); err != nil {
-		// ignore: container may be absent or already stopped
+		// ignore: container may be absent or already stopped — a genuinely
+		// still-running container surfaces as a Remove failure below.
 		_ = err
 	}
 	if err := d.Docker.Remove(ctx, d.ContainerRef); err != nil {
-		// ignore: container may be absent
-		_ = err
+		// Docker.Remove returns nil when the container is already gone, so a real
+		// error here means it still exists and could not be removed (e.g. Stop
+		// timed out and it is still running). Abort BEFORE restic overwrites the
+		// appdata — overwriting a live container's data would corrupt it.
+		return fmt.Errorf("restore: remove existing container: %w", err)
 	}
 
 	// Restore each appdata path back to its origin as its own subtree. Skipped for

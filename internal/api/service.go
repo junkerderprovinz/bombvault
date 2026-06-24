@@ -1563,6 +1563,10 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 }
 
 func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, error) {
+	// Survive the client that triggered it disconnecting (see Backup): detach from
+	// the request's cancellation with a generous hard cap.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	defer cancel()
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -1936,6 +1940,10 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
 func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
+	// Survive the client that triggered it disconnecting (see Backup): detach from
+	// the request's cancellation with a generous hard cap.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	defer cancel()
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
