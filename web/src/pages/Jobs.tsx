@@ -14,13 +14,13 @@ function cadenceLabel(raw: string, t: ReturnType<typeof useT>["t"]): string {
   if (!s || s === "off") return t("jobs.notScheduled");
 
   const dailyM = /^daily\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (dailyM) return `Daily at ${dailyM[1]}`;
+  if (dailyM) return t("jobs.cadenceDaily").replace("{time}", dailyM[1]);
 
   const weeklyM = /^weekly\s+([\w,]+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (weeklyM) return `Weekly (${weeklyM[1]}) at ${weeklyM[2]}`;
+  if (weeklyM) return t("jobs.cadenceWeekly").replace("{days}", weeklyM[1]).replace("{time}", weeklyM[2]);
 
   const everyNM = /^everyN\s+(\d+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (everyNM) return `Every ${everyNM[1]} days at ${everyNM[2]}`;
+  if (everyNM) return t("jobs.cadenceEveryN").replace("{n}", everyNM[1]).replace("{time}", everyNM[2]);
 
   return s;
 }
