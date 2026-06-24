@@ -24,6 +24,9 @@ export interface Container {
   postHook: string;
   /** Other container names to stop during this container's backup. */
   stopContainers: string[];
+  /** True for BombVault's own container: it can't be backed up (it would stop
+   *  itself), so the UI hides its backup action and excludes it from "select all". */
+  self?: boolean;
 }
 
 export interface ListContainersResponse {
@@ -167,7 +170,7 @@ export interface SetPasswordResponse extends OkEnvelope {
 // fetchJSON — base wrapper
 // ---------------------------------------------------------------------------
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string
@@ -209,6 +212,20 @@ export function listContainers(): Promise<ListContainersResponse> {
 export function backupNow(name: string): Promise<BackupResponse> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backup`, {
     method: "POST",
+  });
+}
+
+/**
+ * Start a SERVER-SIDE batch backup of the given containers. The work runs on the
+ * server independently of this request, so closing the browser (even stopping
+ * the container the UI runs in) won't interrupt it; watch progress over SSE
+ * ("batch:containers" + per-container keys). Throws ApiError(409) if a batch is
+ * already running.
+ */
+export function backupAll(names: string[]): Promise<OkEnvelope & { started?: number }> {
+  return fetchJSON("/api/containers/backup-all", {
+    method: "POST",
+    body: JSON.stringify({ names }),
   });
 }
 

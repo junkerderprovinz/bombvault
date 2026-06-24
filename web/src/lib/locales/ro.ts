@@ -73,6 +73,10 @@ const ro: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Restaurați CEL MAI RECENT backup al containerelor selectate? Fiecare este oprit, appdata înlocuit și containerul recreat.",
   "containers.clearSelection": "Golire",
   "containers.working": "Se lucrează…",
+  "containers.batchStarted": "Backup pornit — rulează pe server, poți închide acest tab.",
+  "containers.batchAlreadyRunning": "Un backup în lot este deja în curs.",
+  "containers.batchRunning": "Se face backup containerelor selectate…",
+  "containers.selfNote": "Acesta este BombVault — nu face backup propriului container (s-ar opri singur); setările se recuperează prin Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Copii de rezervă",

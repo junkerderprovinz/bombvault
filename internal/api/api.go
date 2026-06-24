@@ -78,6 +78,7 @@ func (h *Handler) Router() http.Handler {
 
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
+	mux.HandleFunc("POST /api/containers/backup-all", h.handleBackupAll)
 	mux.HandleFunc("POST /api/containers/{name}/backup", h.handleBackup)
 	mux.HandleFunc("GET /api/containers/{name}/snapshots", h.handleSnapshots)
 	mux.HandleFunc("POST /api/containers/{name}/restore", h.handleRestore)

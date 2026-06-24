@@ -73,6 +73,10 @@ const hu: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Visszaállítja a kijelölt konténerek LEGÚJABB mentését? Minden leáll, az appdata kicserélődik, és a konténer újra létrejön.",
   "containers.clearSelection": "Kijelölés törlése",
   "containers.working": "Folyamatban…",
+  "containers.batchStarted": "Mentés elindítva — a kiszolgálón fut, bezárhatod ezt a lapot.",
+  "containers.batchAlreadyRunning": "Már fut egy kötegelt mentés.",
+  "containers.batchRunning": "Kijelölt konténerek mentése…",
+  "containers.selfNote": "Ez a BombVault — nem menti a saját konténerét (leállítaná önmagát); a beállításai a Discoverrel állíthatók vissza.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Biztonsági mentések",

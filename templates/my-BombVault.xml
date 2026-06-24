@@ -110,6 +110,16 @@
     Required="false"
     Mask="false">/mnt</Config>
   <Config
+    Name="BOMBVAULT_SELF_CONTAINER"
+    Target="BOMBVAULT_SELF_CONTAINER"
+    Default="BombVault"
+    Mode=""
+    Description="The name of THIS container, so BombVault never backs up (and thus stops) itself. Defaults to BombVault and normally needs no change — auto-detected via the hostname on bridge networking. Set it to match the container name if you renamed the container or run it with host networking."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">BombVault</Config>
+  <Config
     Name="VM Backup: Host"
     Target="LIBVIRT_HOST"
     Default="192.168.x.x"

@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -117,6 +118,16 @@ type Service struct {
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
 	// prune can never run against a repo a backup is actively writing.
 	repoMu map[string]*sync.Mutex
+
+	// self-container detection (resolved once, cached): the name of BombVault's
+	// OWN container, so a backup never stops the process doing the backing up.
+	selfMu       sync.Mutex
+	selfName     string
+	selfResolved bool
+
+	// batchActive guards the server-side "back up all" run so only one can be in
+	// flight at a time (a second request gets a 409 instead of overlapping).
+	batchActive atomic.Bool
 }
 
 // NewService constructs the backup service.
@@ -618,9 +629,56 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 	return onlyExistingPaths(chosen)
 }
 
+// ErrSelfBackup is returned when a backup targets BombVault's own container.
+// Backing it up stops the container mid-run (stop → backup → start), which kills
+// the very process doing the backup and takes the app down. Its configuration is
+// recovered separately via the encrypted definition mirror (Discover), so there
+// is nothing to gain and a crash to lose.
+var ErrSelfBackup = errors.New("BombVault won't back up its own container (it would stop itself mid-backup); its configuration is recovered via Discover")
+
+// selfContainerName returns the name of BombVault's OWN container, resolved once
+// and cached. The BOMBVAULT_SELF_CONTAINER env (set by the Unraid template) wins;
+// otherwise we Inspect our hostname, which Docker defaults to the short container
+// ID, and take that container's Name. Returns "" when undetectable (Docker not
+// reachable yet) and leaves the cache unset so a later call can retry.
+func (s *Service) selfContainerName(ctx context.Context) string {
+	s.selfMu.Lock()
+	defer s.selfMu.Unlock()
+	if s.selfResolved {
+		return s.selfName
+	}
+	if v := strings.TrimSpace(os.Getenv("BOMBVAULT_SELF_CONTAINER")); v != "" {
+		s.selfName, s.selfResolved = v, true
+		return s.selfName
+	}
+	name, err := s.docker.Self(ctx)
+	if err != nil || name == "" {
+		return "" // Docker not reachable / not in a container yet — retry next time
+	}
+	s.selfName, s.selfResolved = name, true
+	return s.selfName
+}
+
+// SelfContainerName exposes the detected own-container name to the HTTP layer so
+// the container list can flag it (the UI hides its backup action / excludes it
+// from "select all").
+func (s *Service) SelfContainerName(ctx context.Context) string {
+	return s.selfContainerName(ctx)
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
+	// A backup must survive the client that triggered it disconnecting — closing
+	// the browser tab, or stopping the very container the BombVault UI runs in.
+	// Detach from the request's cancellation (keeping its values) with a generous
+	// hard cap so a wedged run can't hold the domain lock forever.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	defer cancel()
+	// Never back up our own container: stopping it mid-run is suicide.
+	if self := s.selfContainerName(ctx); self != "" && name == self {
+		return backup.Summary{}, ErrSelfBackup
+	}
 	defer s.lockDomain("containers")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -694,6 +752,63 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	s.applyRetention(ctx, repo, settings, mode)
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	return sum, nil
+}
+
+// StartBackupAll launches a server-side batch backup of the named containers,
+// running them sequentially in a background goroutine. This is the robust path
+// for "back up all selected": it runs ON THE SERVER, so it survives the browser
+// that started it going away (closing the tab, or — the case that bit a user —
+// stopping the very container the BombVault UI is open in). Self and blank names
+// are skipped, and a single container failing is logged and the batch continues.
+//
+// It returns false if a batch is already running (the caller answers 409).
+// Progress is published under "batch:containers" for an overall indicator, while
+// each container still publishes its own "container:<name>" bar as it runs.
+func (s *Service) StartBackupAll(ctx context.Context, names []string) bool {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false
+	}
+	// Detach immediately so the run — and the self-detection it depends on — is
+	// independent of the request that started it (which is canceled the moment the
+	// handler returns). Each per-container Backup applies its own hard timeout, so
+	// the batch needs no deadline of its own; WithoutCancel keeps request values
+	// without a cancel func to leak.
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+
+		self := s.selfContainerName(bctx)
+		queue := make([]string, 0, len(names))
+		for _, n := range names {
+			if n != "" && n != self {
+				queue = append(queue, n)
+			}
+		}
+		total := len(queue)
+		const key = "batch:containers"
+		s.publishBatch(key, 0, true)
+		ok, fail := 0, 0
+		for i, n := range queue {
+			if _, err := s.Backup(bctx, n); err != nil {
+				fail++
+				log.Printf("api: backup-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
+			} else {
+				ok++
+			}
+			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
+		}
+		s.publishBatch(key, 100, false)
+		log.Printf("api: backup-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(names))
+	}()
+	return true
+}
+
+// publishBatch emits an overall batch-progress event (no-op without a store).
+func (s *Service) publishBatch(key string, percent float64, active bool) {
+	if s.progress == nil {
+		return
+	}
+	s.progress.Publish(progress.Event{Key: key, Phase: "backup", Percent: percent, Active: active})
 }
 
 // defsDir returns the directory (a sibling of the containers repo, on the same

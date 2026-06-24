@@ -37,6 +37,8 @@ type fakeServiceDocker struct {
 	liveName    string
 	inspNameErr error
 
+	selfName string // returned by Self (own-container detection); "" = undetected
+
 	allocations []model.Allocation
 	allocErr    error
 
@@ -100,6 +102,11 @@ func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect) 
 func (f *fakeServiceDocker) InspectName(_ context.Context, name string) (string, error) {
 	f.calls = append(f.calls, "inspectName:"+name)
 	return f.liveName, f.inspNameErr
+}
+
+func (f *fakeServiceDocker) Self(_ context.Context) (string, error) {
+	f.calls = append(f.calls, "self")
+	return f.selfName, nil
 }
 
 func (f *fakeServiceDocker) Allocations(_ context.Context) ([]model.Allocation, error) {

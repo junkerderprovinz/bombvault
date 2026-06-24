@@ -73,6 +73,10 @@ const tr: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Seçili konteynerlerin EN SON yedeği geri yüklensin mi? Her biri durdurulur, appdata değiştirilir ve konteyner yeniden oluşturulur.",
   "containers.clearSelection": "Temizle",
   "containers.working": "Çalışıyor…",
+  "containers.batchStarted": "Yedekleme başladı — sunucuda çalışır, bu sekmeyi kapatabilirsiniz.",
+  "containers.batchAlreadyRunning": "Zaten bir toplu yedekleme çalışıyor.",
+  "containers.batchRunning": "Seçili konteynerler yedekleniyor…",
+  "containers.selfNote": "Bu BombVault — kendi konteynerini yedeklemez (kendini durdururdu); ayarları Discover ile geri yüklenir.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Yedekler",

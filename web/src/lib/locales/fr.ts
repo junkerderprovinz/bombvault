@@ -73,6 +73,10 @@ const fr: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Restaurer la DERNIÈRE sauvegarde des conteneurs sélectionnés ? Chacun est arrêté, ses données remplacées et le conteneur recréé.",
   "containers.clearSelection": "Effacer",
   "containers.working": "En cours…",
+  "containers.batchStarted": "Sauvegarde lancée — elle s'exécute sur le serveur, vous pouvez fermer cet onglet.",
+  "containers.batchAlreadyRunning": "Une sauvegarde groupée est déjà en cours.",
+  "containers.batchRunning": "Sauvegarde des conteneurs sélectionnés…",
+  "containers.selfNote": "C'est BombVault — il ne sauvegarde pas son propre conteneur (il s'arrêterait lui-même) ; ses réglages sont restaurés via Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Sauvegardes",
