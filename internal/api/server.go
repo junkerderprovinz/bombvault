@@ -182,6 +182,21 @@ const (
 	bannerSubtitle = "Backup & disaster recovery for Docker containers and KVM/libvirt VMs"
 )
 
+// Version is the build version, injected at build time via
+// -ldflags "-X github.com/junkerderprovinz/bombvault/internal/api.Version=vX.Y.Z".
+// It defaults to "dev" for local/un-stamped builds and is printed in the startup
+// banner + READY box so the running image's version is obvious in the log.
+var Version = "dev"
+
+// versionTag renders the version for the log banners: " vX.Y.Z" for a stamped
+// build, " (dev)" otherwise, so it slots cleanly after the app name.
+func versionTag() string {
+	if Version == "" || Version == "dev" {
+		return " (dev)"
+	}
+	return " " + Version
+}
+
 // printBanner prints the shared brand ASCII art followed by the app name and
 // subtitle, matching the house print-banner.sh format used by all own-image
 // containers.
@@ -208,7 +223,7 @@ func printBanner() {
 	fmt.Println(art)
 	fmt.Println()
 	fmt.Println(sep)
-	fmt.Println("  " + bannerName)
+	fmt.Println("  " + bannerName + versionTag())
 	fmt.Println("  " + bannerSubtitle)
 	fmt.Println(sep)
 	fmt.Println()
@@ -223,6 +238,6 @@ const readyHashes = "###########################################################
 // banner's stream and always appears after the ASCII art.
 func printReady(scheme string, port int) {
 	fmt.Println("  " + readyHashes)
-	fmt.Printf("   BOMBVAULT IS READY  ->  open the WebUI now (%s %d)\n", scheme, port)
+	fmt.Printf("   BOMBVAULT%s IS READY  ->  open the WebUI now (%s %d)\n", versionTag(), scheme, port)
 	fmt.Println("  " + readyHashes)
 }
