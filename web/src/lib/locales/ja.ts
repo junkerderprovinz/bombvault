@@ -73,6 +73,10 @@ const ja: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "選択したコンテナの最新バックアップを復元しますか？各コンテナが停止され、appdata が置き換えられ、コンテナが再作成されます。",
   "containers.clearSelection": "クリア",
   "containers.working": "処理中…",
+  "containers.batchStarted": "バックアップを開始しました。サーバー側で実行されるので、このタブを閉じても大丈夫です。",
+  "containers.batchAlreadyRunning": "一括バックアップはすでに実行中です。",
+  "containers.batchRunning": "選択したコンテナをバックアップ中…",
+  "containers.selfNote": "これは BombVault です。自分のコンテナはバックアップしません（自身を停止してしまうため）。設定は Discover で復元できます。",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "バックアップ",

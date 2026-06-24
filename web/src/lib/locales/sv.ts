@@ -73,6 +73,10 @@ const sv: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Återställa den SENASTE säkerhetskopian av markerade containers? Varje container stoppas, dess appdata ersätts och containern återskapas.",
   "containers.clearSelection": "Rensa",
   "containers.working": "Arbetar…",
+  "containers.batchStarted": "Säkerhetskopia startad — den körs på servern, du kan stänga fliken.",
+  "containers.batchAlreadyRunning": "En batch-säkerhetskopiering pågår redan.",
+  "containers.batchRunning": "Säkerhetskopierar valda containrar…",
+  "containers.selfNote": "Det här är BombVault — det säkerhetskopierar inte sin egen container (skulle stoppa sig själv); inställningarna återställs via Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Säkerhetskopior",

@@ -73,6 +73,10 @@ const pl: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Przywrócić NAJNOWSZĄ kopię zapasową zaznaczonych kontenerów? Każdy zostanie zatrzymany, appdata zastąpione i kontener odtworzony.",
   "containers.clearSelection": "Wyczyść",
   "containers.working": "Pracuję…",
+  "containers.batchStarted": "Kopia uruchomiona — działa na serwerze, możesz zamknąć tę kartę.",
+  "containers.batchAlreadyRunning": "Kopia zbiorcza już trwa.",
+  "containers.batchRunning": "Tworzenie kopii wybranych kontenerów…",
+  "containers.selfNote": "To jest BombVault — nie tworzy kopii własnego kontenera (zatrzymałby sam siebie); jego ustawienia są odzyskiwane przez Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Kopie zapasowe",

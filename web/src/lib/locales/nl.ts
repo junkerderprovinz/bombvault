@@ -73,6 +73,10 @@ const nl: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "De NIEUWSTE back-up van de geselecteerde containers herstellen? Elke container wordt gestopt, de appdata vervangen en de container opnieuw aangemaakt.",
   "containers.clearSelection": "Wissen",
   "containers.working": "Bezig…",
+  "containers.batchStarted": "Back-up gestart — hij draait op de server, je kunt dit tabblad sluiten.",
+  "containers.batchAlreadyRunning": "Er loopt al een bulk-back-up.",
+  "containers.batchRunning": "Geselecteerde containers worden geback-upt…",
+  "containers.selfNote": "Dit is BombVault — het maakt geen back-up van zijn eigen container (dat zou zichzelf stoppen); de instellingen worden hersteld via Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Back-ups",

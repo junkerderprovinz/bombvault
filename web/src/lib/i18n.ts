@@ -109,6 +109,10 @@ const en = {
   "containers.restoreSelectedConfirm": "Restore the LATEST backup of the selected containers? Each is stopped, its appdata replaced, and the container recreated.",
   "containers.clearSelection": "Clear",
   "containers.working": "Working…",
+  "containers.batchStarted": "Backup started — it runs on the server, so you can close this tab.",
+  "containers.batchAlreadyRunning": "A batch backup is already running.",
+  "containers.batchRunning": "Backing up selected containers…",
+  "containers.selfNote": "This is BombVault — it doesn't back up its own container (that would stop itself); its settings are recovered via Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",
@@ -455,6 +459,10 @@ const de: Translations = {
   "containers.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten Container wiederherstellen? Jeder wird gestoppt, seine Appdata ersetzt und neu erstellt.",
   "containers.clearSelection": "Leeren",
   "containers.working": "Arbeite…",
+  "containers.batchStarted": "Backup gestartet — es läuft auf dem Server, du kannst diesen Tab schließen.",
+  "containers.batchAlreadyRunning": "Es läuft bereits ein Sammel-Backup.",
+  "containers.batchRunning": "Sichere ausgewählte Container…",
+  "containers.selfNote": "Das ist BombVault — es sichert seinen eigenen Container nicht (würde sich selbst stoppen); seine Einstellungen werden über Discover wiederhergestellt.",
 
   "snapshots.title": "Backups",
   "snapshots.colId": "ID",

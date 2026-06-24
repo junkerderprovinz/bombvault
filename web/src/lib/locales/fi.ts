@@ -73,6 +73,10 @@ const fi: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Palautetaanko valittujen konttien UUSIN varmuuskopio? Jokainen pysäytetään, sen appdata korvataan ja kontti luodaan uudelleen.",
   "containers.clearSelection": "Tyhjennä",
   "containers.working": "Käsitellään…",
+  "containers.batchStarted": "Varmuuskopiointi käynnistetty — se suoritetaan palvelimella, voit sulkea välilehden.",
+  "containers.batchAlreadyRunning": "Erävarmuuskopiointi on jo käynnissä.",
+  "containers.batchRunning": "Varmuuskopioidaan valittuja kontteja…",
+  "containers.selfNote": "Tämä on BombVault — se ei varmuuskopioi omaa konttiaan (pysäyttäisi itsensä); asetukset palautetaan Discoverilla.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Varmuuskopiot",

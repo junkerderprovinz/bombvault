@@ -73,6 +73,10 @@ const th: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "กู้คืนการสำรองข้อมูลล่าสุดของ containers ที่เลือก? แต่ละรายการจะหยุด แทนที่ข้อมูล แล้วสร้างใหม่",
   "containers.clearSelection": "ล้างการเลือก",
   "containers.working": "กำลังดำเนินการ…",
+  "containers.batchStarted": "เริ่มสำรองข้อมูลแล้ว — ทำงานบนเซิร์ฟเวอร์ คุณปิดแท็บนี้ได้",
+  "containers.batchAlreadyRunning": "มีการสำรองข้อมูลแบบกลุ่มกำลังทำงานอยู่แล้ว",
+  "containers.batchRunning": "กำลังสำรองข้อมูลคอนเทนเนอร์ที่เลือก…",
+  "containers.selfNote": "นี่คือ BombVault — จะไม่สำรองข้อมูลคอนเทนเนอร์ของตัวเอง (จะหยุดตัวเอง); การตั้งค่าจะกู้คืนผ่าน Discover",
 
   // Backups (restic snapshots)
   "snapshots.title": "การสำรองข้อมูล",

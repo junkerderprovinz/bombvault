@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupNow, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, ApiError } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
@@ -657,10 +657,19 @@ function ContainerRow({
               </span>
             </label>
 
-            {/* Backup + plain export (right) — backup refreshes the list so "last backup" updates */}
+            {/* Backup + plain export (right) — backup refreshes the list so "last backup" updates.
+                BombVault's own container has no backup action: backing it up would stop itself. */}
             <div className="ml-auto flex flex-col items-end gap-2">
-              <BackupButton name={container.name} t={t} onBackedUp={onDeleted} />
-              <ExportButton name={container.name} t={t} />
+              {container.self ? (
+                <span className="text-xs text-carbon-textMuted max-w-[18rem] text-right">
+                  {t("containers.selfNote")}
+                </span>
+              ) : (
+                <>
+                  <BackupButton name={container.name} t={t} onBackedUp={onDeleted} />
+                  <ExportButton name={container.name} t={t} />
+                </>
+              )}
             </div>
           </>
         ) : (
@@ -710,6 +719,9 @@ export function Containers() {
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
   const [discovering, setDiscovering] = useState(false);
   const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
+  // Overall server-side batch-backup progress (independent of this browser).
+  const batch = useProgress()["batch:containers"];
+  const batchActive = !!batch?.active;
 
   function loadContainers() {
     return listContainers()
@@ -747,9 +759,12 @@ export function Containers() {
     });
   }
 
-  const allLiveSelected = live.length > 0 && live.every((c) => selected.has(c.name));
+  // BombVault's own container can't be backed up (it would stop itself), so it is
+  // never selectable and "select all" skips it.
+  const selectable = live.filter((c) => !c.self);
+  const allLiveSelected = selectable.length > 0 && selectable.every((c) => selected.has(c.name));
   function toggleSelectAll() {
-    setSelected(allLiveSelected ? new Set() : new Set(live.map((c) => c.name)));
+    setSelected(allLiveSelected ? new Set() : new Set(selectable.map((c) => c.name)));
   }
 
   // Run an action over every selected container, then refresh + clear.
@@ -773,8 +788,27 @@ export function Containers() {
     void loadContainers();
   }
 
-  function backupSelected() {
-    void runBulk((name) => backupNow(name));
+  // Back up the selected containers SERVER-SIDE: one request kicks off a batch
+  // that runs on the server, so it survives this browser going away (closing the
+  // tab, or stopping the container the UI runs in). Progress comes over SSE.
+  async function backupSelected() {
+    if (bulkBusy) return; // guard the in-flight window (button also disables)
+    setBulkBusy(true);
+    setBulkMsg(null);
+    const names = [...selected];
+    try {
+      await backupAll(names);
+      setSelected(new Set());
+      setBulkMsg(t("containers.batchStarted"));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        setBulkMsg(t("containers.batchAlreadyRunning"));
+      } else {
+        setBulkMsg(e instanceof Error ? e.message : "Failed to start backup");
+      }
+    } finally {
+      setBulkBusy(false);
+    }
   }
 
   function restoreSelected() {
@@ -828,6 +862,20 @@ export function Containers() {
         </div>
       </div>
 
+      {/* Server-side batch-backup banner — visible while a "back up all" run is in
+          flight, even if it was started from another tab/session. */}
+      {batchActive && (
+        <div className="flex items-center gap-3 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2">
+          <span
+            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+            style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+          />
+          <span className="text-xs text-carbon-textSub">
+            {t("containers.batchRunning")} ({Math.round(batch?.percent ?? 0)}%)
+          </span>
+        </div>
+      )}
+
       {/* Container list */}
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
@@ -847,7 +895,7 @@ export function Containers() {
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
           <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
           <SortControl value={sortKey} onChange={handleSortChange} />
-          {filterKey !== "notInstalled" && live.length > 0 && (
+          {filterKey !== "notInstalled" && selectable.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
               <input
                 type="checkbox"
@@ -869,8 +917,8 @@ export function Containers() {
             {selected.size} {t("containers.selectedCount")}
           </span>
           <button
-            onClick={backupSelected}
-            disabled={bulkBusy}
+            onClick={() => void backupSelected()}
+            disabled={bulkBusy || batchActive}
             className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("containers.backupSelected")}
@@ -889,9 +937,15 @@ export function Containers() {
           >
             {t("containers.clearSelection")}
           </button>
-          {bulkBusy && <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>}
-          {!bulkBusy && bulkMsg && <span className="text-xs text-carbon-textSub">{bulkMsg}</span>}
         </div>
+      )}
+
+      {/* Bulk status — kept OUTSIDE the action bar so it stays visible after a
+          server-side backup clears the selection (the bar unmounts then). */}
+      {(bulkBusy || bulkMsg) && (
+        <p className="text-xs text-carbon-textSub">
+          {bulkBusy ? t("containers.working") : bulkMsg}
+        </p>
       )}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
@@ -903,7 +957,7 @@ export function Containers() {
               t={t}
               onDeleted={() => void loadContainers()}
               selected={selected.has(c.name)}
-              onToggleSelect={() => toggleSelect(c.name)}
+              onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
             />
           ))}
         </div>

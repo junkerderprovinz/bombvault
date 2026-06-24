@@ -73,6 +73,10 @@ const ar: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "استعادة أحدث نسخة احتياطية للـ containers المحددة؟ سيُوقَف كل منها وتُستبدل بياناته ويُعاد إنشاؤه.",
   "containers.clearSelection": "إلغاء التحديد",
   "containers.working": "جارٍ التنفيذ…",
+  "containers.batchStarted": "بدأ النسخ الاحتياطي — يعمل على الخادم، يمكنك إغلاق هذه التبويبة.",
+  "containers.batchAlreadyRunning": "هناك نسخ احتياطي جماعي قيد التشغيل بالفعل.",
+  "containers.batchRunning": "جارٍ نسخ الحاويات المحددة احتياطياً…",
+  "containers.selfNote": "هذا هو BombVault — لا ينسخ حاويته الخاصة (سيوقف نفسه)؛ تُستعاد إعداداته عبر Discover.",
 
   // Backups (restic snapshots)
   "snapshots.title": "النسخ الاحتياطية",

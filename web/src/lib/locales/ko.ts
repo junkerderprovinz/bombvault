@@ -73,6 +73,10 @@ const ko: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "선택한 컨테이너의 최신 백업을 복원하시겠습니까? 각 컨테이너가 중지되고, appdata가 교체되며, 컨테이너가 재생성됩니다.",
   "containers.clearSelection": "선택 해제",
   "containers.working": "처리 중…",
+  "containers.batchStarted": "백업을 시작했습니다 — 서버에서 실행되므로 이 탭을 닫아도 됩니다.",
+  "containers.batchAlreadyRunning": "이미 일괄 백업이 실행 중입니다.",
+  "containers.batchRunning": "선택한 컨테이너 백업 중…",
+  "containers.selfNote": "이것은 BombVault입니다 — 자신의 컨테이너는 백업하지 않습니다(자신을 중지하게 됨); 설정은 Discover로 복구됩니다.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "백업",

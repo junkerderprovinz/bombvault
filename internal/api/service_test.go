@@ -10,10 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -367,6 +369,118 @@ func TestServiceBackupNoAppdataDefinitionOnly(t *testing.T) {
 	if runs, _ := st.ListRuns(10); len(runs) == 0 || runs[0].Status != "success" {
 		t.Fatalf("expected a recorded success run, got %v", runs)
 	}
+}
+
+// backupTestService builds a service whose container Inspect resolves to an
+// existing appdata path (so restic actually runs), with a progress store wired
+// up. Used by the self-protection + batch tests.
+func backupTestService(t *testing.T) (*api.Service, *fakeServiceDocker, *fakeResticEngine, *progress.Store) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// With HostSourceRoot unset, mount translation is identity-less, so path
+	// resolution falls back to the conventional <root>/appdata/<name> dir — which
+	// must exist for restic to run. Create one per container the batch tests use.
+	for _, n := range []string{"plex", "radarr"} {
+		if err := os.MkdirAll(root+"/appdata/"+n, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/app", Image: "app:latest", Running: true,
+	}}
+	eng := &fakeResticEngine{}
+	prog := progress.NewStore()
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	svc.SetProgress(prog)
+	return svc, d, eng, prog
+}
+
+// waitBatchDone drains the progress store until the terminal "batch:containers"
+// event (Active=false), or fails after a timeout. The channel receive of that
+// event happens-after every Backup the batch goroutine ran, so callers may read
+// the fakes race-free once it returns.
+func waitBatchDone(t *testing.T, ch <-chan progress.Event) {
+	t.Helper()
+	deadline := time.After(5 * time.Second)
+	for {
+		select {
+		case ev := <-ch:
+			if ev.Key == "batch:containers" && !ev.Active {
+				return
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for batch to finish")
+		}
+	}
+}
+
+// TestBackupRefusesSelf pins the forum fix: BombVault must never back up its own
+// container (stopping it mid-backup is suicide). With the self-container known,
+// Backup returns ErrSelfBackup and never touches Docker's lifecycle.
+func TestBackupRefusesSelf(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
+	svc, d, eng, _ := backupTestService(t)
+
+	_, err := svc.Backup(context.Background(), "BombVault")
+	if !errors.Is(err, api.ErrSelfBackup) {
+		t.Fatalf("want ErrSelfBackup, got %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("self-backup must not run restic, got %d", len(eng.backedUp))
+	}
+	for _, c := range d.calls {
+		if strings.HasPrefix(c, "stop:") {
+			t.Fatalf("self-backup must never stop a container, calls=%v", d.calls)
+		}
+	}
+}
+
+// TestStartBackupAllSkipsSelfRunsOthers verifies the server-side batch backs up
+// every selected container EXCEPT BombVault itself, independent of the request.
+func TestStartBackupAllSkipsSelfRunsOthers(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
+	svc, _, eng, store := backupTestService(t)
+	ch, cancel := store.Subscribe()
+	defer cancel()
+
+	if !svc.StartBackupAll(context.Background(), []string{"BombVault", "plex", "radarr"}) {
+		t.Fatal("StartBackupAll should start")
+	}
+	waitBatchDone(t, ch)
+
+	if len(eng.backedUp) != 2 {
+		t.Fatalf("want 2 backups (self skipped), got %d", len(eng.backedUp))
+	}
+}
+
+// TestStartBackupAllRejectsConcurrent pins the single-batch (409) guard: while a
+// batch is in flight, a second StartBackupAll returns false.
+func TestStartBackupAllRejectsConcurrent(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
+	svc, _, eng, store := backupTestService(t)
+	eng.block = make(chan struct{}) // hold the first batch inside restic Backup
+	ch, cancel := store.Subscribe()
+	defer cancel()
+
+	if !svc.StartBackupAll(context.Background(), []string{"plex"}) {
+		t.Fatal("first batch should start")
+	}
+	// The flag is set synchronously by StartBackupAll, so the second call sees a
+	// run in flight regardless of goroutine scheduling.
+	if svc.StartBackupAll(context.Background(), []string{"radarr"}) {
+		t.Fatal("second concurrent batch must be rejected")
+	}
+	close(eng.block) // let the first batch finish, then wait so cleanup is safe
+	waitBatchDone(t, ch)
 }
 
 // TestServiceContainerMountsAndSelection covers the backup-folder selector:
@@ -882,6 +996,9 @@ type fakeResticEngine struct {
 	forgetPolicyErr error
 	checkErr        error
 	unlockErr       error
+	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
+	// run "in flight" to exercise the single-batch (409) guard deterministically.
+	block chan struct{}
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -890,6 +1007,9 @@ func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) e
 }
 
 func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []string, _ restic.Mode) (restic.Summary, error) {
+	if f.block != nil {
+		<-f.block
+	}
 	f.backedUp = append(f.backedUp, repo)
 	f.lastPaths = paths
 	if f.backupErr != nil {

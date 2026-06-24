@@ -73,6 +73,10 @@ const pt: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Restaurar o ÚLTIMO backup dos containers selecionados? Cada um é parado, os seus dados substituídos e o container recriado.",
   "containers.clearSelection": "Limpar",
   "containers.working": "A trabalhar…",
+  "containers.batchStarted": "Backup iniciado: ele roda no servidor, você pode fechar esta aba.",
+  "containers.batchAlreadyRunning": "Já há um backup em lote em andamento.",
+  "containers.batchRunning": "Fazendo backup dos contêineres selecionados…",
+  "containers.selfNote": "Este é o BombVault: ele não faz backup do próprio contêiner (pararia a si mesmo); suas configurações são recuperadas via Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",

@@ -73,6 +73,10 @@ const el: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Επαναφορά του ΤΕΛΕΥΤΑΙΟΥ αντιγράφου των επιλεγμένων containers; Κάθε ένα διακόπτεται, το appdata αντικαθίσταται και το container αναδημιουργείται.",
   "containers.clearSelection": "Εκκαθάριση",
   "containers.working": "Σε εξέλιξη…",
+  "containers.batchStarted": "Το αντίγραφο ξεκίνησε — εκτελείται στον διακομιστή, μπορείτε να κλείσετε την καρτέλα.",
+  "containers.batchAlreadyRunning": "Εκτελείται ήδη μαζικό αντίγραφο.",
+  "containers.batchRunning": "Δημιουργία αντιγράφων των επιλεγμένων κοντέινερ…",
+  "containers.selfNote": "Αυτό είναι το BombVault — δεν δημιουργεί αντίγραφο του δικού του κοντέινερ (θα σταματούσε τον εαυτό του)· οι ρυθμίσεις ανακτώνται μέσω Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Αντίγραφα ασφαλείας",

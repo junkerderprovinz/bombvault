@@ -73,6 +73,10 @@ const zh: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "还原所选容器的最新备份？每个容器将停止运行，其 appdata 将被替换并重新创建。",
   "containers.clearSelection": "清除",
   "containers.working": "处理中…",
+  "containers.batchStarted": "备份已开始——它在服务器上运行，你可以关闭此标签页。",
+  "containers.batchAlreadyRunning": "已有一个批量备份正在运行。",
+  "containers.batchRunning": "正在备份所选容器…",
+  "containers.selfNote": "这是 BombVault——它不会备份自己的容器（会停掉自身）；其设置通过 Discover 恢复。",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "备份",

@@ -73,6 +73,10 @@ const he: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "לשחזר את הגיבוי האחרון של ה-containers הנבחרים? כל אחד יופסק, הנתונים יוחלפו והוא יופעל מחדש.",
   "containers.clearSelection": "נקה בחירה",
   "containers.working": "מבצע…",
+  "containers.batchStarted": "הגיבוי התחיל — הוא רץ בשרת, אפשר לסגור את הלשונית.",
+  "containers.batchAlreadyRunning": "כבר רץ גיבוי קבוצתי.",
+  "containers.batchRunning": "מגבה את המכולות הנבחרות…",
+  "containers.selfNote": "זהו BombVault — הוא לא מגבה את המכולה של עצמו (היה עוצר את עצמו); ההגדרות משוחזרות דרך Discover.",
 
   // Backups (restic snapshots)
   "snapshots.title": "גיבויים",

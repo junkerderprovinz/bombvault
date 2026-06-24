@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -255,6 +256,24 @@ func (c *Client) InspectName(ctx context.Context, name string) (string, error) {
 			return "", nil
 		}
 		return "", fmt.Errorf("dockercli: inspect-name: %w", err)
+	}
+	return normalizeName(resp.Name), nil
+}
+
+// Self resolves the container this process runs in by inspecting our hostname,
+// which Docker defaults to the short container ID. Returns "" (no error) when we
+// are not in a container or it can't be found, so callers degrade gracefully.
+func (c *Client) Self(ctx context.Context) (string, error) {
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		return "", nil
+	}
+	resp, err := c.api.ContainerInspect(ctx, host)
+	if err != nil {
+		if isNoSuchContainer(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("dockercli: self-inspect: %w", err)
 	}
 	return normalizeName(resp.Name), nil
 }

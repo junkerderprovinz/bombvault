@@ -121,6 +121,9 @@ type containerView struct {
 	PreHook           string   `json:"preHook"`
 	PostHook          string   `json:"postHook"`
 	StopContainers    []string `json:"stopContainers"`
+	// Self marks BombVault's own container: the UI hides its backup action and
+	// excludes it from "select all" so a batch can never stop the app itself.
+	Self bool `json:"self"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +140,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		byName[t.ContainerName] = t
 	}
 
+	self := h.svc.SelfContainerName(r.Context())
+
 	live := make(map[string]bool, len(infos))
 	views := make([]containerView, 0, len(infos)+len(targets))
 	for _, c := range infos {
@@ -148,6 +153,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			Status:    c.Status,
 			IP:        c.IP,
 			Installed: true,
+			Self:      self != "" && c.Name == self,
 		}
 		if t, ok := byName[c.Name]; ok {
 			v.IncludeInSchedule = t.IncludeInSchedule
@@ -295,6 +301,37 @@ func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 		"snapshotId": sum.SnapshotID,
 		"bytes":      sum.Bytes,
 	}))
+}
+
+// handleBackupAll starts a SERVER-SIDE batch backup of the selected containers.
+// The work runs in the background (independent of this request) so closing the
+// browser — even stopping the container the UI runs in — can't interrupt it; the
+// SPA watches progress over SSE ("batch:containers" + per-container keys).
+func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Names []string `json:"names"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid body"})
+		return
+	}
+	if len(body.Names) == 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "no containers selected"})
+		return
+	}
+	// Validate every name at the boundary (same guard as the per-container route)
+	// so no traversal/option-injection name reaches the service layer.
+	for _, n := range body.Names {
+		if !validResourceName(n) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
+			return
+		}
+	}
+	if !h.svc.StartBackupAll(r.Context(), body.Names) {
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.Names)}))
 }
 
 // sourceParam returns the requested repo source from the ?source= query:

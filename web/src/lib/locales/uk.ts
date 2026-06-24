@@ -73,6 +73,10 @@ const uk: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Відновити НАЙНОВІШУ резервну копію вибраних контейнерів? Кожен буде зупинено, appdata замінено та контейнер відтворено.",
   "containers.clearSelection": "Скинути",
   "containers.working": "Виконується…",
+  "containers.batchStarted": "Резервне копіювання запущено — виконується на сервері, можна закрити вкладку.",
+  "containers.batchAlreadyRunning": "Пакетне резервне копіювання вже виконується.",
+  "containers.batchRunning": "Резервне копіювання вибраних контейнерів…",
+  "containers.selfNote": "Це BombVault — він не копіює власний контейнер (зупинив би сам себе); його налаштування відновлюються через Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Резервні копії",

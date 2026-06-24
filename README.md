@@ -100,6 +100,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ### Other
 
+- **Back up many at once** — multi-select containers and hit **Back up selected**. The batch runs **server-side**, so it keeps going even if you close the tab, lose the connection, or back up the very container your browser is running in. Each container shows its own progress bar plus an overall batch indicator. BombVault never backs up (and so never stops) its own container.
 - Snapshot browser with a restore-point list; **delete individual backups** you no longer want, and a **collapsible folder tree** for file-level restore.
 - Repository maintenance per domain (Settings → Integrity & maintenance): **Verify** (`restic check`), **Unlock** (clear a stale lock left by an interrupted run), and **Prune** — when a retention policy is set, Prune **applies it** (collapses snapshots per your keep-last/daily/weekly/monthly rules and reclaims space), so you can enforce a newly-changed policy on demand instead of waiting for the next backup; with no policy set it stays a plain space-reclaim.
 - Pre/post-backup hooks per container — shell commands run inside the container (e.g. `mysqldump` into appdata before backup); a failing pre-hook aborts the backup.

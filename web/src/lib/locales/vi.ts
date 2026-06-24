@@ -73,6 +73,10 @@ const vi: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Khôi phục bản sao lưu MỚI NHẤT của các containers đã chọn? Mỗi container sẽ bị dừng, dữ liệu được thay thế và tạo lại.",
   "containers.clearSelection": "Bỏ chọn",
   "containers.working": "Đang xử lý…",
+  "containers.batchStarted": "Đã bắt đầu sao lưu — nó chạy trên máy chủ, bạn có thể đóng tab này.",
+  "containers.batchAlreadyRunning": "Đã có một lượt sao lưu hàng loạt đang chạy.",
+  "containers.batchRunning": "Đang sao lưu các container đã chọn…",
+  "containers.selfNote": "Đây là BombVault — nó không sao lưu container của chính nó (sẽ tự dừng mình); cài đặt được khôi phục qua Discover.",
 
   // Backups (restic snapshots)
   "snapshots.title": "Bản sao lưu",

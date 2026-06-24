@@ -73,6 +73,10 @@ const cs: Partial<Translations> = {
   "containers.restoreSelectedConfirm": "Obnovit NEJNOVĚJŠÍ zálohu vybraných kontejnerů? Každý bude zastaven, jeho appdata nahrazena a kontejner znovu vytvořen.",
   "containers.clearSelection": "Zrušit výběr",
   "containers.working": "Pracuji…",
+  "containers.batchStarted": "Záloha spuštěna — běží na serveru, tuto kartu můžete zavřít.",
+  "containers.batchAlreadyRunning": "Hromadná záloha už probíhá.",
+  "containers.batchRunning": "Zálohování vybraných kontejnerů…",
+  "containers.selfNote": "Toto je BombVault — nezálohuje vlastní kontejner (zastavil by sám sebe); jeho nastavení se obnoví přes Discover.",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Zálohy",
