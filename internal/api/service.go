@@ -1690,7 +1690,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		if b, rerr := s.ssh.ReadFile(ctx, domain.NVRAMPath); rerr == nil {
 			nvramBytes = b
 		} else {
-			log.Printf("api: BackupVM: NVRAM read over SSH failed (%v); UEFI restore will regenerate it", rerr)
+			log.Printf("api: BackupVM: WARN NVRAM read over SSH failed for %q (%v) — the disks are backed up, but on restore the UEFI variables (boot entries) will be regenerated from the firmware template, not restored", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
 
@@ -1866,9 +1866,9 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 	if len(def.NVRAMBytes) > 0 && def.NVRAMHostPath != "" && s.ssh != nil {
 		preDefine = func(ctx context.Context) error {
 			if err := s.ssh.WriteFile(ctx, def.NVRAMHostPath, def.NVRAMBytes); err != nil {
-				log.Printf("api: RestoreVM: NVRAM write over SSH failed (%v); libvirt will regenerate it from the firmware template", err)
+				log.Printf("api: RestoreVM: WARN NVRAM write over SSH failed for %q (%v) — the VM is restored and will boot, but libvirt regenerates the UEFI variables from the firmware template, so boot entries may need to be re-added", name, err) //nolint:gosec // G706: name is %q-quoted
 			}
-			return nil // never block the restore on NVRAM — the template fallback covers it
+			return nil // never block the restore on NVRAM — the firmware-template fallback keeps the VM bootable
 		}
 	}
 

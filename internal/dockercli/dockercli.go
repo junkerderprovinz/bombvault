@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -239,6 +240,17 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect) error {
 	if err != nil {
 		return fmt.Errorf("dockercli: create: %w", err)
 	}
+	// Reconnect any SECONDARY networks (the primary is already attached, via netCfg
+	// or NetworkMode). Best-effort: a network that no longer exists must not block
+	// the restore, so each failure is logged and skipped.
+	for _, n := range in.Networks {
+		if n.Name == "" || n.Name == in.Network.Name {
+			continue
+		}
+		if cErr := c.api.NetworkConnect(ctx, n.Name, resp.ID, endpointSettings(n)); cErr != nil {
+			log.Printf("dockercli: restore %q: reconnect network %q failed (continuing): %v", name, n.Name, cErr)
+		}
+	}
 	// Only start if the container was running when it was backed up — restore
 	// recreates it in its captured state rather than always starting it.
 	if !in.Running {
@@ -322,6 +334,27 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 		})
 	}
 	out.Network = mapPrimaryNetwork(resp)
+	out.Networks = mapAllNetworks(resp)
+	return out
+}
+
+// mapAllNetworks captures every network the container is attached to, so a
+// multi-network container can be fully reconnected on restore.
+func mapAllNetworks(resp container.InspectResponse) []model.NetworkEndpoint {
+	if resp.NetworkSettings == nil {
+		return nil
+	}
+	out := make([]model.NetworkEndpoint, 0, len(resp.NetworkSettings.Networks))
+	for name, e := range resp.NetworkSettings.Networks {
+		if e == nil {
+			continue
+		}
+		ep := model.NetworkEndpoint{Name: name, MACAddress: e.MacAddress, Aliases: e.Aliases}
+		if e.IPAMConfig != nil {
+			ep.IPv4Address = e.IPAMConfig.IPv4Address
+		}
+		out = append(out, ep)
+	}
 	return out
 }
 
@@ -367,10 +400,23 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		SecurityOpt:    hc.SecurityOpt,
 		ReadonlyRootfs: hc.ReadonlyRootfs,
 		NetworkMode:    string(hc.NetworkMode),
+		PidMode:        string(hc.PidMode),
+		IpcMode:        string(hc.IpcMode),
+		UsernsMode:     string(hc.UsernsMode),
+		GroupAdd:       hc.GroupAdd,
+		Sysctls:        hc.Sysctls,
+		Tmpfs:          hc.Tmpfs,
+		ExtraHosts:     hc.ExtraHosts,
+		CgroupParent:   hc.CgroupParent,
 		RestartPolicy: model.RestartPolicy{
 			Name:              string(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
+	}
+	for _, u := range hc.Ulimits {
+		if u != nil {
+			out.Ulimits = append(out.Ulimits, model.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
+		}
 	}
 	if len(hc.PortBindings) > 0 {
 		out.PortBindings = make(map[string][]model.PortBinding, len(hc.PortBindings))
@@ -412,10 +458,23 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 		CapAdd:         hc.CapAdd,
 		CapDrop:        hc.CapDrop,
 		NetworkMode:    container.NetworkMode(hc.NetworkMode),
+		PidMode:        container.PidMode(hc.PidMode),
+		IpcMode:        container.IpcMode(hc.IpcMode),
+		UsernsMode:     container.UsernsMode(hc.UsernsMode),
+		GroupAdd:       hc.GroupAdd,
+		Sysctls:        hc.Sysctls,
+		Tmpfs:          hc.Tmpfs,
+		ExtraHosts:     hc.ExtraHosts,
 		RestartPolicy: container.RestartPolicy{
 			Name:              container.RestartPolicyMode(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
+	}
+	// CgroupParent and Ulimits are promoted from the embedded Resources struct, so
+	// they are set by assignment (a struct literal can't address promoted fields).
+	hostCfg.CgroupParent = hc.CgroupParent
+	for _, u := range hc.Ulimits {
+		hostCfg.Ulimits = append(hostCfg.Ulimits, &container.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
 	}
 	if len(hc.PortBindings) > 0 {
 		hostCfg.PortBindings = make(nat.PortMap, len(hc.PortBindings))
@@ -443,17 +502,26 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 // nil when no static IPv4 was set (DHCP/bridge), letting docker assign normally.
 func buildNetworkingConfig(in model.Inspect) *network.NetworkingConfig {
 	n := in.Network
-	if n.Name == "" || n.IPv4Address == "" {
+	// Recreate the endpoint when there is anything worth preserving — a static IP
+	// OR a pinned MAC. (Previously a pinned-MAC/DHCP-IP container lost its MAC
+	// because the config was only built when an IPv4 was set.)
+	if n.Name == "" || (n.IPv4Address == "" && n.MACAddress == "") {
 		return nil
 	}
-	ep := &network.EndpointSettings{
-		IPAMConfig: &network.EndpointIPAMConfig{IPv4Address: n.IPv4Address},
-		Aliases:    n.Aliases,
+	return &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{n.Name: endpointSettings(n)},
+	}
+}
+
+// endpointSettings builds the SDK endpoint settings for a captured attachment,
+// preserving the static IP (if any), MAC (if any) and aliases.
+func endpointSettings(n model.NetworkEndpoint) *network.EndpointSettings {
+	ep := &network.EndpointSettings{Aliases: n.Aliases}
+	if n.IPv4Address != "" {
+		ep.IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: n.IPv4Address}
 	}
 	if n.MACAddress != "" {
 		ep.MacAddress = n.MACAddress
 	}
-	return &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{n.Name: ep},
-	}
+	return ep
 }

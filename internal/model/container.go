@@ -88,6 +88,27 @@ type HostConfig struct {
 	ReadonlyRootfs bool
 	NetworkMode    string
 	Devices        []DeviceMapping
+	// Namespace / isolation and resource fields preserved on recreate so a
+	// restored container keeps its original security posture and limits (SEC §8).
+	// Dropping any of these can silently change isolation (e.g. PidMode=host) or
+	// remove a hardening limit, so they round-trip through backup/restore.
+	PidMode      string
+	IpcMode      string
+	UsernsMode   string
+	GroupAdd     []string
+	Sysctls      map[string]string
+	Tmpfs        map[string]string
+	ExtraHosts   []string
+	CgroupParent string
+	Ulimits      []Ulimit
+}
+
+// Ulimit is a container resource limit (mirrors docker's units.Ulimit),
+// preserved on recreate.
+type Ulimit struct {
+	Name string
+	Soft int64
+	Hard int64
 }
 
 // Inspect is the subset of a container's inspect data that BombVault captures at
@@ -95,9 +116,9 @@ type HostConfig struct {
 // profile that flows through the DI seam so the recreated container preserves
 // the original's security-relevant fields (SEC §8).
 type Inspect struct {
-	ID         string
-	Name       string // dockerode-style, may carry a leading slash (e.g. "/plex")
-	Image      string
+	ID    string
+	Name  string // dockerode-style, may carry a leading slash (e.g. "/plex")
+	Image string
 	// Running is the container's run state. Captured at backup time so backup
 	// preserves it (a stopped container stays stopped, not started) and restore
 	// recreates it in the same state — a backup tool must not change run-state.
@@ -106,6 +127,11 @@ type Inspect struct {
 	HostConfig HostConfig
 	Mounts     []Mount
 	// Network is the primary network attachment, preserved so the recreated
-	// container keeps its original (often static) IP.
+	// container keeps its original (often static) IP. Used by the restore
+	// pre-flight IP/port conflict check.
 	Network NetworkEndpoint
+	// Networks is EVERY network the container is attached to (including Network).
+	// On recreate the primary is created with the container and the rest are
+	// reconnected, so a multi-network container comes back fully attached.
+	Networks []NetworkEndpoint
 }
