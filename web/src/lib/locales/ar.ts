@@ -103,6 +103,8 @@ const ar: Partial<Translations> = {
   "run.statusSuccess": "ناجح",
   "run.statusFailed": "فشل",
   "run.historyTitle": "سجل التشغيلات",
+  "run.filterDay": "اليوم:",
+  "run.allDays": "كل الأيام",
   "run.colKind": "النوع",
   "run.colStatus": "الحالة",
   "run.colStarted": "بدأ",

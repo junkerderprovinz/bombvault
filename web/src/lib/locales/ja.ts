@@ -103,6 +103,8 @@ const ja: Partial<Translations> = {
   "run.statusSuccess": "成功",
   "run.statusFailed": "失敗",
   "run.historyTitle": "実行履歴",
+  "run.filterDay": "日付：",
+  "run.allDays": "すべての日",
   "run.colKind": "種別",
   "run.colStatus": "状態",
   "run.colStarted": "開始",

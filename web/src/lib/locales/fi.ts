@@ -103,6 +103,8 @@ const fi: Partial<Translations> = {
   "run.statusSuccess": "Onnistui",
   "run.statusFailed": "Epäonnistui",
   "run.historyTitle": "Ajohistoria",
+  "run.filterDay": "Päivä:",
+  "run.allDays": "Kaikki päivät",
   "run.colKind": "Tyyppi",
   "run.colStatus": "Tila",
   "run.colStarted": "Aloitettu",

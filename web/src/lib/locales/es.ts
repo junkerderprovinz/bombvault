@@ -103,6 +103,8 @@ const es: Partial<Translations> = {
   "run.statusSuccess": "Completado",
   "run.statusFailed": "Fallido",
   "run.historyTitle": "Historial de ejecuciones",
+  "run.filterDay": "Día:",
+  "run.allDays": "Todos los días",
   "run.colKind": "Tipo",
   "run.colStatus": "Estado",
   "run.colStarted": "Iniciado",

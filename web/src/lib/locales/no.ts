@@ -103,6 +103,8 @@ const no: Partial<Translations> = {
   "run.statusSuccess": "Vellykket",
   "run.statusFailed": "Mislyktes",
   "run.historyTitle": "Kjørehistorikk",
+  "run.filterDay": "Dag:",
+  "run.allDays": "Alle dager",
   "run.colKind": "Type",
   "run.colStatus": "Status",
   "run.colStarted": "Startet",

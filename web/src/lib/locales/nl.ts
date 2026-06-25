@@ -102,6 +102,8 @@ const nl: Partial<Translations> = {
   "run.statusSuccess": "Geslaagd",
   "run.statusFailed": "Mislukt",
   "run.historyTitle": "Uitvoeringsgeschiedenis",
+  "run.filterDay": "Dag:",
+  "run.allDays": "Alle dagen",
   "run.colKind": "Soort",
   "run.colStatus": "Status",
   "run.colStarted": "Gestart",

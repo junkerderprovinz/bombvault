@@ -921,7 +921,9 @@ type runView struct {
 }
 
 func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
-	runs, err := h.store.ListRuns(100)
+	// Return a generous window so the dashboard's day-filter can show several
+	// days of history, not just the latest handful.
+	runs, err := h.store.ListRuns(500)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

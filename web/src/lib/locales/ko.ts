@@ -103,6 +103,8 @@ const ko: Partial<Translations> = {
   "run.statusSuccess": "성공",
   "run.statusFailed": "실패",
   "run.historyTitle": "실행 기록",
+  "run.filterDay": "날짜:",
+  "run.allDays": "모든 날짜",
   "run.colKind": "종류",
   "run.colStatus": "상태",
   "run.colStarted": "시작",

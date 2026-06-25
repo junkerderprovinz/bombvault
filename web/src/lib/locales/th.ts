@@ -103,6 +103,8 @@ const th: Partial<Translations> = {
   "run.statusSuccess": "สำเร็จ",
   "run.statusFailed": "ล้มเหลว",
   "run.historyTitle": "ประวัติการทำงาน",
+  "run.filterDay": "วัน:",
+  "run.allDays": "ทุกวัน",
   "run.colKind": "ประเภท",
   "run.colStatus": "สถานะ",
   "run.colStarted": "เริ่มต้น",

@@ -103,6 +103,8 @@ const zh: Partial<Translations> = {
   "run.statusSuccess": "成功",
   "run.statusFailed": "失败",
   "run.historyTitle": "运行历史",
+  "run.filterDay": "日期：",
+  "run.allDays": "所有日期",
   "run.colKind": "类型",
   "run.colStatus": "状态",
   "run.colStarted": "开始时间",
