@@ -102,6 +102,8 @@ const ru: Partial<Translations> = {
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Ошибка",
   "run.historyTitle": "История запусков",
+  "run.filterDay": "День:",
+  "run.allDays": "Все дни",
   "run.colKind": "Тип",
   "run.colStatus": "Статус",
   "run.colStarted": "Начало",

@@ -102,6 +102,8 @@ const uk: Partial<Translations> = {
   "run.statusSuccess": "Успішно",
   "run.statusFailed": "Помилка",
   "run.historyTitle": "Історія запусків",
+  "run.filterDay": "День:",
+  "run.allDays": "Усі дні",
   "run.colKind": "Тип",
   "run.colStatus": "Статус",
   "run.colStarted": "Початок",

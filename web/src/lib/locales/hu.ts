@@ -103,6 +103,8 @@ const hu: Partial<Translations> = {
   "run.statusSuccess": "Sikeres",
   "run.statusFailed": "Sikertelen",
   "run.historyTitle": "Futási előzmények",
+  "run.filterDay": "Nap:",
+  "run.allDays": "Minden nap",
   "run.colKind": "Típus",
   "run.colStatus": "Állapot",
   "run.colStarted": "Indítva",

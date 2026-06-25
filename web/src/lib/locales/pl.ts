@@ -102,6 +102,8 @@ const pl: Partial<Translations> = {
   "run.statusSuccess": "Sukces",
   "run.statusFailed": "Niepowodzenie",
   "run.historyTitle": "Historia uruchomień",
+  "run.filterDay": "Dzień:",
+  "run.allDays": "Wszystkie dni",
   "run.colKind": "Typ",
   "run.colStatus": "Status",
   "run.colStarted": "Uruchomiono",

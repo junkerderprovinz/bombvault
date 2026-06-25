@@ -103,6 +103,8 @@ const vi: Partial<Translations> = {
   "run.statusSuccess": "Thành công",
   "run.statusFailed": "Thất bại",
   "run.historyTitle": "Lịch sử chạy",
+  "run.filterDay": "Ngày:",
+  "run.allDays": "Tất cả các ngày",
   "run.colKind": "Loại",
   "run.colStatus": "Trạng thái",
   "run.colStarted": "Bắt đầu",

@@ -103,6 +103,8 @@ const el: Partial<Translations> = {
   "run.statusSuccess": "Επιτυχία",
   "run.statusFailed": "Αποτυχία",
   "run.historyTitle": "Ιστορικό εκτελέσεων",
+  "run.filterDay": "Ημέρα:",
+  "run.allDays": "Όλες οι ημέρες",
   "run.colKind": "Τύπος",
   "run.colStatus": "Κατάσταση",
   "run.colStarted": "Έναρξη",

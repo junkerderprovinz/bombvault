@@ -103,6 +103,8 @@ const ro: Partial<Translations> = {
   "run.statusSuccess": "Succes",
   "run.statusFailed": "Eșuat",
   "run.historyTitle": "Istoricul rulărilor",
+  "run.filterDay": "Zi:",
+  "run.allDays": "Toate zilele",
   "run.colKind": "Tip",
   "run.colStatus": "Stare",
   "run.colStarted": "Început",

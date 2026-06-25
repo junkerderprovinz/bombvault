@@ -257,6 +257,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [day, setDay] = useState("all");
 
   useEffect(() => {
     listRuns()
@@ -268,7 +269,15 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const recent = runs.slice(0, 8);
+  // Local calendar day of a run, used for the day filter + its labels. Runs come
+  // newest-first, so the distinct-days list is already in descending order.
+  const dayOf = (run: Run) => new Date(run.startedAt * 1000).toLocaleDateString();
+  const days: string[] = [];
+  for (const run of runs) {
+    const d = dayOf(run);
+    if (!days.includes(d)) days.push(d);
+  }
+  const shown = day === "all" ? runs : runs.filter((run) => dayOf(run) === day);
 
   return (
     <Card title={t("run.historyTitle")}>
@@ -276,31 +285,48 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {error && <p className="text-sm text-[#ff8389]">{error}</p>}
-      {!loading && !error && recent.length === 0 && (
+      {!loading && !error && runs.length === 0 && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noRuns")}</p>
       )}
-      {recent.length > 0 && (
-        <div className="divide-y divide-carbon-border">
-          {recent.map((run) => (
-            <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
-              <div className="flex items-center gap-3">
-                <StatusChip status={run.status} />
-                <span className="text-carbon-text font-medium w-16 shrink-0">
-                  {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
-                </span>
-                <span className="text-carbon-text flex-1 truncate">
-                  {run.target || `${run.targetId.slice(0, 12)}…`}
-                </span>
-                <span className="text-carbon-textMuted text-xs shrink-0">
-                  {relativeTime(run.startedAt)}
-                </span>
+      {runs.length > 0 && (
+        <>
+          {/* Day filter */}
+          <div className="flex items-center gap-2 mb-2">
+            <label className="text-xs text-carbon-textMuted">{t("run.filterDay")}</label>
+            <select
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+              className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text"
+            >
+              <option value="all">{t("run.allDays")}</option>
+              {days.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          {/* Scrollable list — all runs in the window (filtered by day) */}
+          <div className="divide-y divide-carbon-border max-h-96 overflow-y-auto">
+            {shown.map((run) => (
+              <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
+                <div className="flex items-center gap-3">
+                  <StatusChip status={run.status} />
+                  <span className="text-carbon-text font-medium w-16 shrink-0">
+                    {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
+                  </span>
+                  <span className="text-carbon-text flex-1 truncate">
+                    {run.target || `${run.targetId.slice(0, 12)}…`}
+                  </span>
+                  <span className="text-carbon-textMuted text-xs shrink-0" title={formatTs(run.startedAt)}>
+                    {relativeTime(run.startedAt)}
+                  </span>
+                </div>
+                {run.status === "failed" && run.error && (
+                  <p className="pl-16 text-xs text-[#ff8389] break-words">{run.error}</p>
+                )}
               </div>
-              {run.status === "failed" && run.error && (
-                <p className="pl-16 text-xs text-[#ff8389] break-words">{run.error}</p>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </Card>
   );

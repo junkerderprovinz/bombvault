@@ -103,6 +103,8 @@ const he: Partial<Translations> = {
   "run.statusSuccess": "הצלחה",
   "run.statusFailed": "כשל",
   "run.historyTitle": "היסטוריית הרצות",
+  "run.filterDay": "יום:",
+  "run.allDays": "כל הימים",
   "run.colKind": "סוג",
   "run.colStatus": "סטטוס",
   "run.colStarted": "התחיל",

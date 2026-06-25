@@ -103,6 +103,8 @@ const tr: Partial<Translations> = {
   "run.statusSuccess": "Başarılı",
   "run.statusFailed": "Başarısız",
   "run.historyTitle": "Çalışma Geçmişi",
+  "run.filterDay": "Gün:",
+  "run.allDays": "Tüm günler",
   "run.colKind": "Tür",
   "run.colStatus": "Durum",
   "run.colStarted": "Başladı",
