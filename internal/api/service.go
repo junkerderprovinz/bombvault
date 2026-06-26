@@ -55,6 +55,10 @@ type containerDefinition struct {
 // satisfies it directly in production.
 type ResticEngine interface {
 	Init(ctx context.Context, repo string, mode restic.Mode) error
+	// RepoOpens reports whether the repo can be opened (and decrypted) with mode —
+	// a cheap existence + encryption-mode probe (`restic cat config`). Used by
+	// EnsureRepo to reconcile the configured mode against the repo's actual mode.
+	RepoOpens(ctx context.Context, repo string, mode restic.Mode) bool
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode) (restic.Summary, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
 	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
@@ -402,44 +406,87 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo)
 }
 
-// EnsureRepo creates the repo directory and initialises the restic repo on first
-// use. It is idempotent: an already-initialised repo (a `config` marker file
-// present) skips Init, and an Init that reports an already-existing repo is
-// tolerated.
+// EnsureRepo makes sure the restic repo at repo is ready to use with the
+// configured encryption mode. It is idempotent AND reconciles the mode:
+//
+//   - opens with mode                  → exists and consistent; nothing to do
+//   - opens only with the opposite mode → the Encryption setting was toggled
+//     against an existing repo; return a clear, actionable error instead of
+//     letting every later restic call fail cryptically
+//   - opens with neither mode          → not initialised yet, so create it
+//
+// The probe is `restic cat config` (cheap, needs no lock). Telling a real mode
+// mismatch apart from a not-yet-created repo is what stops a flipped Encryption
+// setting from silently breaking backups (issue #14).
 func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode) error {
-	// Remote (rclone/off-site) repos have no local directory or `config` marker
-	// to stat. Probe by listing snapshots first: success means the repo already
-	// exists, so skip Init — otherwise every backup re-runs `restic init` against
-	// an existing repo and logs a scary (but harmless) "config file already
-	// exists". Only Init when the probe fails, tolerating a concurrent-create race.
-	if restic.IsRemoteRepo(repo) {
-		if _, probeErr := s.engine.Snapshots(ctx, repo, mode); probeErr == nil {
-			return nil
-		}
-		if err := s.engine.Init(ctx, repo, mode); err != nil && !strings.Contains(strings.ToLower(err.Error()), "already") {
-			return fmt.Errorf("init repo: %w", err)
-		}
+	// Fast path: the repo opens with the configured mode → it exists and its
+	// encryption mode matches. This is the common case on every backup after the
+	// first, and it replaces the old `config`-marker stat (which never checked the
+	// mode) with one that does.
+	if s.engine.RepoOpens(ctx, repo, mode) {
 		return nil
 	}
-	if err := paths.EnsureDir(repo); err != nil {
-		return fmt.Errorf("ensure repo dir: %w", err)
+	// It did not open. Probe the OPPOSITE encryption mode (same backend creds): if
+	// that opens it, the repo exists but was created under the other mode — the
+	// user toggled the Encryption setting. Fail fast with an actionable message
+	// rather than running Init (which would log "config already exists") and then
+	// failing every subsequent backup against the now-mismatched repo.
+	if s.engine.RepoOpens(ctx, repo, s.oppositeMode(mode)) {
+		return fmt.Errorf("this backup repository was created %s, but the Encryption setting is now %s — "+
+			"restic cannot open it after the change. Set Encryption back to %s, or point this backup at a "+
+			"new, empty repository location",
+			encryptionWord(!mode.Encrypted), enabledWord(mode.Encrypted), enabledWord(!mode.Encrypted))
 	}
-	// A restic repository always has a top-level `config` file; its presence is
-	// the cheap, binary-free idempotency check.
-	if _, err := os.Stat(filepath.Join(repo, "config")); err == nil {
-		return nil // already initialised
-	} else if !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("stat repo: %w", err)
+	// Opens with neither mode → treat as not initialised (or a brand-new location)
+	// and create it. Local repos need their directory created first; remote
+	// backends do not.
+	if !restic.IsRemoteRepo(repo) {
+		if err := paths.EnsureDir(repo); err != nil {
+			return fmt.Errorf("ensure repo dir: %w", err)
+		}
 	}
 	if err := s.engine.Init(ctx, repo, mode); err != nil {
 		// Tolerate a race / pre-existing repo: the scrubbed adapter error may not
-		// name the cause, so re-check the marker before failing.
-		if _, statErr := os.Stat(filepath.Join(repo, "config")); statErr == nil { //nolint:gosec // G703: repo is an operator-configured location (settings path or its off-site sibling), validated under the mount root on save; source only selects which configured location, never a raw path
+		// name the cause, so re-probe with the configured mode before failing.
+		if s.engine.RepoOpens(ctx, repo, mode) {
 			return nil
 		}
-		return fmt.Errorf("init repo: %w", err)
+		if !strings.Contains(strings.ToLower(err.Error()), "already") {
+			return fmt.Errorf("init repo: %w", err)
+		}
 	}
 	return nil
+}
+
+// oppositeMode returns mode with its encryption flag flipped, preserving backend
+// credentials (Env). The encrypted variant carries the APP_KEY-derived repo
+// password so a probe can actually open an encrypted repo; the unencrypted
+// variant clears it.
+func (s *Service) oppositeMode(mode restic.Mode) restic.Mode {
+	o := mode
+	o.Encrypted = !mode.Encrypted
+	if o.Encrypted {
+		o.Password = restickey.Derive(s.cfg.AppKey)
+	} else {
+		o.Password = ""
+	}
+	return o
+}
+
+// enabledWord renders an Encryption setting state in the UI's wording.
+func enabledWord(encrypted bool) string {
+	if encrypted {
+		return "enabled"
+	}
+	return "disabled"
+}
+
+// encryptionWord renders a repository's actual encryption mode.
+func encryptionWord(encrypted bool) string {
+	if encrypted {
+		return "encrypted"
+	}
+	return "unencrypted"
 }
 
 // resolveAppdataPaths returns the CONTAINER-VISIBLE paths to back up for a
