@@ -24,6 +24,23 @@ func TestInitArgs(t *testing.T) {
 	})
 }
 
+func TestCatConfigArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := restic.CatConfigArgs("/repo", restic.Mode{Encrypted: true, Password: "pw"})
+		want := []string{"-r", "/repo", "cat", "config"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
+		got := restic.CatConfigArgs("/repo", restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "cat", "config", "--insecure-no-password"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("emits only set dimensions + prune", func(t *testing.T) {
 		got := restic.ForgetPolicyArgs("/repo",

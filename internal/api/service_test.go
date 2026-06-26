@@ -53,6 +53,73 @@ func TestServiceEnsureRepoIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestEnsureRepoReconcilesEncryptionMode(t *testing.T) {
+	newSvc := func(t *testing.T, eng *fakeResticEngine) (*api.Service, string) {
+		t.Helper()
+		dir := t.TempDir()
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), filepath.Join(dir, "repo")
+	}
+	enc := restic.Mode{Encrypted: true, Password: "pw"}
+	plain := restic.Mode{Encrypted: false}
+
+	t.Run("existing unencrypted, setting now encrypted → mismatch error, no init", func(t *testing.T) {
+		no := false
+		eng := &fakeResticEngine{existingMode: &no}
+		svc, repo := newSvc(t, eng)
+		err := svc.EnsureRepo(context.Background(), repo, enc)
+		if err == nil {
+			t.Fatal("expected a mode-mismatch error, got nil")
+		}
+		if !strings.Contains(err.Error(), "Encryption") {
+			t.Fatalf("error should name the Encryption setting: %v", err)
+		}
+		if len(eng.inited) != 0 {
+			t.Fatalf("must not init on a mode mismatch, got %v", eng.inited)
+		}
+	})
+
+	t.Run("existing encrypted, setting now unencrypted → mismatch error, no init", func(t *testing.T) {
+		yes := true
+		eng := &fakeResticEngine{existingMode: &yes}
+		svc, repo := newSvc(t, eng)
+		err := svc.EnsureRepo(context.Background(), repo, plain)
+		if err == nil {
+			t.Fatal("expected a mode-mismatch error, got nil")
+		}
+		if len(eng.inited) != 0 {
+			t.Fatalf("must not init on a mode mismatch, got %v", eng.inited)
+		}
+	})
+
+	// Regression guard: the v2.7.0 attempt broke the default unencrypted setup on
+	// the 2nd+ run. A consistent repo must open cleanly and never re-init.
+	t.Run("existing unencrypted, setting still unencrypted → ok, no init", func(t *testing.T) {
+		no := false
+		eng := &fakeResticEngine{existingMode: &no}
+		svc, repo := newSvc(t, eng)
+		if err := svc.EnsureRepo(context.Background(), repo, plain); err != nil {
+			t.Fatalf("consistent unencrypted repo must open cleanly: %v", err)
+		}
+		if len(eng.inited) != 0 {
+			t.Fatalf("must not re-init an existing repo, got %v", eng.inited)
+		}
+	})
+
+	t.Run("existing encrypted, setting still encrypted → ok, no init", func(t *testing.T) {
+		yes := true
+		eng := &fakeResticEngine{existingMode: &yes}
+		svc, repo := newSvc(t, eng)
+		if err := svc.EnsureRepo(context.Background(), repo, enc); err != nil {
+			t.Fatalf("consistent encrypted repo must open cleanly: %v", err)
+		}
+		if len(eng.inited) != 0 {
+			t.Fatalf("must not re-init an existing repo, got %v", eng.inited)
+		}
+	})
+}
+
 func TestServiceModeEncryptionOn(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir()}
 	st := newMemStore(t)
@@ -1115,11 +1182,28 @@ type fakeResticEngine struct {
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
+	// existingMode, when non-nil, simulates an already-created repo of that
+	// encryption mode: RepoOpens then returns true only for a probe whose mode
+	// matches. When nil, RepoOpens mirrors a local repo and "opens" once restic's
+	// `config` marker exists on disk (mode-agnostic).
+	existingMode *bool
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
 	f.inited = append(f.inited, repo)
 	return f.initErr
+}
+
+func (f *fakeResticEngine) RepoOpens(_ context.Context, repo string, m restic.Mode) bool {
+	// Simulated existing repo of a pinned mode: opens only when the probe mode
+	// matches (lets a test exercise the encryption-mode-mismatch path).
+	if f.existingMode != nil {
+		return m.Encrypted == *f.existingMode
+	}
+	// Otherwise mirror a real local repo: it "opens" once restic's config marker
+	// exists on disk, regardless of mode. Keeps the idempotency test meaningful.
+	_, err := os.Stat(filepath.Join(repo, "config"))
+	return err == nil
 }
 
 func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []string, _ restic.Mode) (restic.Summary, error) {

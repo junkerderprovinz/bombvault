@@ -97,6 +97,19 @@ func InitArgs(repo string, m Mode) []string {
 	return args
 }
 
+// CatConfigArgs returns the argv slice for `restic cat config`. Reading the
+// config is the minimal operation that opens AND decrypts a repository, so it is
+// the cheapest probe for both "does this repo exist?" and "does mode m open it?"
+// (a wrong encryption mode / password fails to decrypt the config).
+func CatConfigArgs(repo string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "cat", "config")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	return args
+}
+
 // BackupArgs returns the argv slice for `restic backup`.
 // Tags are added with --tag; paths are placed after -- (arg-injection guard).
 func BackupArgs(repo string, paths []string, tags []string, m Mode) []string {
@@ -564,6 +577,17 @@ func subcommand(args []string) string {
 func (r Restic) Init(ctx context.Context, repo string, m Mode) error {
 	_, err := r.run(ctx, InitArgs(repo, m), m)
 	return err
+}
+
+// RepoOpens reports whether the repository at repo can be opened (and its config
+// decrypted) using mode m. It runs `restic cat config` — the cheapest read that
+// exercises the repo key — and treats any error (repo missing, wrong encryption
+// mode/password, backend unreachable) as "does not open". It needs no lock, so a
+// concurrently-locked repo still reports true. Used to reconcile the configured
+// encryption mode against the mode the repo was actually created with.
+func (r Restic) RepoOpens(ctx context.Context, repo string, m Mode) bool {
+	_, err := r.run(ctx, CatConfigArgs(repo, m), m)
+	return err == nil
 }
 
 // Backup backs up paths into the repo, tagging each snapshot with tags, and
