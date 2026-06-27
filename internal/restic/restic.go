@@ -83,6 +83,13 @@ func (r Restic) bin() string {
 // insecureFlag is the restic flag for password-less repos (requires restic ≥0.17).
 const insecureFlag = "--insecure-no-password"
 
+// backupHost is a fixed restic --host for every backup. restic otherwise defaults
+// host to the machine hostname, which inside a container is a random short
+// container ID that changes whenever the container is recreated (e.g. on update).
+// Pinning it keeps a target's snapshots under one host so retention can group and
+// prune them together — see ForgetPolicyArgs.
+const backupHost = "bombvault"
+
 // repoFlag returns the common leading args for every restic subcommand.
 func repoFlag(repo string) []string {
 	return []string{"-r", repo}
@@ -119,6 +126,10 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode) []string {
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--json")
+	// Pin a stable host (see backupHost) so a target's snapshots stay in one
+	// restic group across container recreations; otherwise retention silently
+	// stops collapsing snapshots after an update.
+	args = append(args, "--host", backupHost)
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
@@ -272,6 +283,14 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	// Group by paths only, NOT restic's default host+paths. A target's snapshots
+	// share their paths but may carry different hosts (older snapshots predate the
+	// stable --host, or were taken under a now-gone container hostname). Grouping
+	// by host would apply the keep-policy separately per container incarnation, so
+	// snapshots from before an update would never be pruned — which is why manual
+	// and automatic prune appeared to "do nothing". Grouping by paths collapses a
+	// target's whole history into one group regardless of host.
+	args = append(args, "--group-by", "paths")
 	if p.KeepLast > 0 {
 		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
 	}
