@@ -45,7 +45,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("emits only set dimensions + prune", func(t *testing.T) {
 		got := restic.ForgetPolicyArgs("/repo",
 			restic.RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, restic.Mode{Encrypted: true})
-		want := []string{"-r", "/repo", "forget", "--keep-last", "5", "--keep-monthly", "6", "--prune"}
+		want := []string{"-r", "/repo", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -54,7 +54,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := restic.ForgetPolicyArgs("/repo",
 			restic.RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
 			restic.Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "forget", "--insecure-no-password",
+		want := []string{"-r", "/repo", "forget", "--insecure-no-password", "--group-by", "paths",
 			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -97,7 +97,7 @@ func TestRetentionPolicyAny(t *testing.T) {
 
 func TestBackupArgs(t *testing.T) {
 	got := restic.BackupArgs("/repo", []string{"-weird", "/p"}, []string{"container:plex"}, restic.Mode{Encrypted: true})
-	want := []string{"-r", "/repo", "backup", "--json", "--tag", "container:plex", "--", "-weird", "/p"}
+	want := []string{"-r", "/repo", "backup", "--json", "--host", "bombvault", "--tag", "container:plex", "--", "-weird", "/p"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
@@ -105,7 +105,7 @@ func TestBackupArgs(t *testing.T) {
 
 func TestBackupArgsUnencrypted(t *testing.T) {
 	got := restic.BackupArgs("/repo", []string{"/src"}, []string{"t"}, restic.Mode{Encrypted: false})
-	want := []string{"-r", "/repo", "backup", "--insecure-no-password", "--json", "--tag", "t", "--", "/src"}
+	want := []string{"-r", "/repo", "backup", "--insecure-no-password", "--json", "--host", "bombvault", "--tag", "t", "--", "/src"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
