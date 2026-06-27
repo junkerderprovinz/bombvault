@@ -1368,6 +1368,59 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	return nil
 }
 
+// DeleteBackupsVM removes ALL backups of a VM in one go — every restic snapshot
+// tagged vm:<name>, pruning the freed data — from the selected source (local or
+// off-site). It is the VM counterpart to DeleteBackups, but source-aware: on the
+// LOCAL source it also forgets the VM from the store (target + run history) so it
+// disappears from the "not installed (backups only)" list; on the OFF-SITE source
+// the target is kept so the VM stays restorable from local. The repo is shared,
+// so only this VM's tagged snapshots are forgotten; prune never touches data
+// still referenced by other VMs' snapshots. Serialised against VM backups via the
+// domain lock, and stale locks are cleared first (so it can't fail on a leftover
+// lock — the same reason PruneDomain needs it).
+func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) error {
+	settings, repo, err := s.domainRepoSource("vms", source)
+	if err != nil {
+		return err
+	}
+	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
+		return err
+	}
+	unlock, ok := s.tryLockDomain("vms")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	mode := s.ModeFor(settings)
+	s.unlockStale(ctx, repo, mode)
+
+	// Collect this VM's snapshot IDs (tag-filtered vm:<name>) and forget+prune them
+	// in one restic call (Forget with prune=true).
+	snaps, err := s.SnapshotsVM(ctx, name, source)
+	if err != nil {
+		return err
+	}
+	ids := make([]string, 0, len(snaps))
+	for _, snap := range snaps {
+		ids = append(ids, snap.ID)
+	}
+	if len(ids) > 0 {
+		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+			return fmt.Errorf("forget snapshots: %w", err)
+		}
+	}
+
+	// Only drop the store target when clearing the PRIMARY (local) copy: the target
+	// keeps the VM restorable from off-site, so purging only the off-site replica
+	// must not strand it.
+	if source != "offsite" {
+		if err := s.store.DeleteVMTarget(name); err != nil {
+			return fmt.Errorf("delete vm target: %w", err)
+		}
+	}
+	return nil
+}
+
 // SetInclude sets the include_in_schedule flag for a container, creating the
 // target row first if it does not exist yet (the first backup has not run).
 // It inspects the container to resolve appdata paths exactly like Backup does,
@@ -1715,6 +1768,15 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// Capture the domain XML and parse disk/NVRAM paths.
 	xmlStr, err := s.virsh.DumpXML(ctx, name)
 	if err != nil {
+		// The host no longer defines this domain (deleted, or an undefined
+		// template). A scheduled target can outlive the VM, so skip it with an
+		// info log and a sentinel instead of failing — the scheduler treats
+		// ErrVMNotInstalled as a skip, so the nightly job no longer errors/spams.
+		// Returns before any run is recorded or failure notification is sent.
+		if virshcli.IsNotFound(err) {
+			log.Printf("api: BackupVM: skipping %q — not defined on the host (not installed; backups only)", name) //nolint:gosec // G706: name is %q-quoted
+			return backup.Summary{}, backup.ErrVMNotInstalled
+		}
 		return backup.Summary{}, fmt.Errorf("backup vm: dumpxml: %w", err)
 	}
 	domain, err := virshcli.ParseDomain(xmlStr)
@@ -2392,6 +2454,13 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 	mode := s.ModeFor(settings)
+	// Clear any stale lock left by a previously interrupted run so it can't block
+	// this prune — a manual prune (and forget --prune) takes restic's exclusive
+	// lock, and an interrupted backup/prune leaves one behind. BombVault is the
+	// sole writer, so an existing lock is always stale. Every other repo-mutating
+	// path (backups, DeleteSnapshot) does this; PruneDomain was missing it, which
+	// made a manual Prune fail with "repository is already locked".
+	s.unlockStale(ctx, repo, mode)
 	// When a retention policy is configured, Prune APPLIES it (forget --keep-*
 	// --prune): it collapses snapshots per the policy AND reclaims space — i.e. an
 	// "apply retention now", which is what users expect from a manual prune.

@@ -36,6 +36,10 @@ type Docker interface {
 	Allocations(ctx context.Context) ([]model.Allocation, error)
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 	Start(ctx context.Context, name string) error
+	// WaitRunning blocks until the named container reports Running, or until
+	// timeout. Used after restarting a backed-up container so its network-namespace
+	// dependents (network_mode: container:<ref>) can attach to a live target.
+	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
 	CreateAndStart(ctx context.Context, in model.Inspect) error

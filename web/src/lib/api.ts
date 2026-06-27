@@ -407,6 +407,17 @@ export function deleteBackups(name: string): Promise<OkEnvelope> {
   });
 }
 
+/**
+ * Delete ALL backups of a VM from the selected source (local or off-site) in one
+ * go and prune the freed space. On the local source the VM is also forgotten from
+ * the store; on off-site the target is kept (still restorable from local).
+ */
+export function deleteBackupsVM(name: string, source?: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
+    method: "DELETE",
+  });
+}
+
 export function setInclude(
   name: string,
   includeInSchedule: boolean
