@@ -18,11 +18,12 @@ import (
 type fakeDocker struct {
 	log []string
 
-	stopErr   error
-	startErr  error
-	pullErr   error
-	createErr error
-	removeErr error
+	stopErr        error
+	startErr       error
+	waitRunningErr error
+	pullErr        error
+	createErr      error
+	removeErr      error
 
 	// liveName is what InspectName returns; "" means absent (no such container).
 	liveName    string
@@ -50,6 +51,11 @@ func (d *fakeDocker) Start(_ context.Context, name string) error {
 	d.log = append(d.log, "start:"+name)
 	d.started = true
 	return d.startErr
+}
+
+func (d *fakeDocker) WaitRunning(_ context.Context, name string, _ time.Duration) error {
+	d.log = append(d.log, "waitRunning:"+name)
+	return d.waitRunningErr
 }
 
 func (d *fakeDocker) Remove(_ context.Context, name string) error {
@@ -394,9 +400,59 @@ func TestBackupStopsAndRestartsDependencies(t *testing.T) {
 	if stopDep > startDep {
 		t.Fatalf("dependency stop must precede its restart: %v", d.log)
 	}
-	// The dependency restarts BEFORE the target (a DB is ready before the app).
-	if startTarget := idx("start:app"); startTarget >= 0 && startDep > startTarget {
-		t.Fatalf("dependency should restart before the target: %v", d.log)
+	// The backed-up TARGET must come back AND be confirmed running BEFORE its
+	// dependents restart — some dependents share the target's network namespace
+	// (network_mode: container:<target>) and cannot start until it is live. The
+	// required order is: start:app -> waitRunning:app -> start:mariadb.
+	startTarget, waitTarget := idx("start:app"), idx("waitRunning:app")
+	if startTarget < 0 || waitTarget < 0 {
+		t.Fatalf("target must be restarted and waited-for-running: %v", d.log)
+	}
+	if startTarget >= waitTarget || waitTarget >= startDep {
+		t.Fatalf("order must be start:app -> waitRunning:app -> start:mariadb, got %v", d.log)
+	}
+}
+
+// TestBackupRestartsDepsEvenWhenTargetWasStopped: a target that was already
+// stopped is backed up in place and never started, but its stopped dependents
+// must still be restarted (and the target must not be waited-for-running).
+func TestBackupRestartsDepsEvenWhenTargetWasStopped(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef:         "app",
+		ContainerName:        "App",
+		RepoPath:             "/repo",
+		AppdataPaths:         []string{"/host/user/appdata/app"},
+		TargetID:             "target-1",
+		WasRunning:           false, // already stopped → never started/waited
+		StopContainers:       []string{"mariadb"},
+		SnapshotTemplatesDir: "/data/templates",
+		FlashTemplatesDir:    "/boot/templates",
+		Docker:               d,
+		Restic:               r,
+		Templates:            tpl,
+		Runs:                 runs,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	has := func(s string) bool {
+		for _, e := range d.log {
+			if e == s {
+				return true
+			}
+		}
+		return false
+	}
+	if has("stop:app") || has("start:app") || has("waitRunning:app") {
+		t.Fatalf("a not-running target must not be stopped/started/waited: %v", d.log)
+	}
+	if !has("stop:mariadb") || !has("start:mariadb") {
+		t.Fatalf("dependents must still be stopped and restarted: %v", d.log)
 	}
 }
 

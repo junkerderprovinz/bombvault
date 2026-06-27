@@ -123,6 +123,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/vms/{name}/snapshots", h.handleSnapshotsVM)
 	mux.HandleFunc("POST /api/vms/{name}/restore", h.handleRestoreVM)
 	mux.HandleFunc("POST /api/vms/{name}/export", h.handleExportVM)
+	mux.HandleFunc("DELETE /api/vms/{name}/backups", h.handleDeleteBackupsVM)
 	mux.HandleFunc("PATCH /api/vms/{name}", h.handlePatchVM)
 	mux.HandleFunc("GET /api/vm/ssh", h.handleVMSSHInfo)
 	mux.HandleFunc("POST /api/vm/ssh/test", h.handleVMSSHTest)

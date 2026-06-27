@@ -78,6 +78,11 @@ func (f *fakeServiceDocker) Start(_ context.Context, name string) error {
 	return f.startErr
 }
 
+func (f *fakeServiceDocker) WaitRunning(_ context.Context, name string, _ time.Duration) error {
+	f.calls = append(f.calls, "waitRunning:"+name)
+	return nil
+}
+
 func (f *fakeServiceDocker) Remove(_ context.Context, name string) error {
 	f.calls = append(f.calls, "remove:"+name)
 	return f.removeErr

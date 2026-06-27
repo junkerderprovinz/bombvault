@@ -45,6 +45,11 @@ var (
 	// It wraps a human-readable list of the conflicts; nothing destructive has
 	// run yet, so the user can free the resources and retry.
 	ErrRestoreConflict = errors.New("restore: ip/port conflict")
+	// ErrVMNotInstalled is returned by a VM backup when the host no longer defines
+	// the domain (deleted, or a template that was undefined). The scheduled job
+	// treats it as a skip, not a failure, so a leftover schedule entry for a
+	// removed VM doesn't error every night.
+	ErrVMNotInstalled = errors.New("vm not installed on host (backups only); skipped")
 )
 
 // Summary is the result of a successful backup.
@@ -60,6 +65,10 @@ type Summary struct {
 type Docker interface {
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 	Start(ctx context.Context, name string) error
+	// WaitRunning blocks until the named container reports Running, or timeout.
+	// A backed-up target must be running again before its network-namespace
+	// dependents (network_mode: container:<target>) can restart.
+	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
 	CreateAndStart(ctx context.Context, in model.Inspect) error
@@ -197,6 +206,9 @@ const (
 	statusFailed  = "failed"
 
 	defaultStopTimeout = 30 * time.Second
+	// runningWaitTimeout bounds how long we wait for a just-restarted backup target
+	// to report Running before restarting its dependents (netns peers need it live).
+	runningWaitTimeout = 60 * time.Second
 )
 
 // snapshotIDRe matches a restic short or full snapshot id (8–64 lowercase hex).
@@ -267,41 +279,55 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	)
 
 	func() {
-		// Only touch the container's lifecycle if it was running. A stopped
-		// container is backed up in place and left stopped — never started.
-		if d.WasRunning {
-			// Always restart it afterwards, even if anything below throws.
-			defer func() {
-				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil && backupErr == nil {
-					backupErr = fmt.Errorf("backup: restart container: %w", startErr)
-				}
-			}()
+		// stoppedDeps tracks the dependency containers we actually stopped, so the
+		// restart unwind only starts those (and never spuriously starts a dep when
+		// we bailed before stopping them).
+		var stoppedDeps []string
 
+		// ONE restart path, registered up front so it is the LAST defer to run on
+		// unwind. Order matters: bring the backed-up TARGET back first and wait
+		// until it is actually Running, THEN restart the stopped dependents. Some
+		// dependents share the target's network namespace (network_mode:
+		// container:<target>) and cannot start until the target is live — restarting
+		// them first failed with "cannot join network namespace of a non running
+		// container". A target that was not running is left stopped; its dependents
+		// are still restarted (best-effort).
+		defer func() {
+			if d.WasRunning {
+				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil {
+					if backupErr == nil {
+						backupErr = fmt.Errorf("backup: restart container: %w", startErr)
+					}
+				} else if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil && backupErr == nil {
+					backupErr = fmt.Errorf("backup: wait container running: %w", waitErr)
+				}
+			}
+			for _, dep := range stoppedDeps {
+				if startErr := d.Docker.Start(ctx, dep); startErr != nil {
+					log.Printf("backup: restart dependency %q failed: %v", dep, startErr)
+				}
+			}
+		}()
+
+		// Stop the target for its own backup (consistent appdata) when it was
+		// running. A stopped container is backed up in place and left as-is.
+		if d.WasRunning {
 			if backupErr = d.Docker.Stop(ctx, d.ContainerRef, stopTimeout); backupErr != nil {
 				backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
 				return
 			}
 		}
 
-		// Stop dependency containers (e.g. a database) for the duration of the
-		// backup so their on-disk data is consistent, and ALWAYS restart them
-		// afterwards. Best-effort: a stop/start failure is logged, never fatal.
-		// The restart defer is registered AFTER the target's start defer, so on
-		// unwind the dependencies come back up BEFORE the target (a DB is ready
-		// before the app that needs it).
-		if len(d.StopContainers) > 0 {
-			for _, dep := range d.StopContainers {
-				if stopErr := d.Docker.Stop(ctx, dep, stopTimeout); stopErr != nil {
-					log.Printf("backup: stop dependency %q failed (continuing): %v", dep, stopErr)
-				}
+		// Stop dependency containers (e.g. a database, or netns peers) for the
+		// duration of the backup so their on-disk data is consistent. Best-effort:
+		// a stop failure is logged and that dep is left out of the restart set. They
+		// are restarted by the defer above, AFTER the target is confirmed running.
+		for _, dep := range d.StopContainers {
+			if stopErr := d.Docker.Stop(ctx, dep, stopTimeout); stopErr != nil {
+				log.Printf("backup: stop dependency %q failed (continuing): %v", dep, stopErr)
+				continue
 			}
-			defer func() {
-				for _, dep := range d.StopContainers {
-					if startErr := d.Docker.Start(ctx, dep); startErr != nil {
-						log.Printf("backup: restart dependency %q failed: %v", dep, startErr)
-					}
-				}
-			}()
+			stoppedDeps = append(stoppedDeps, dep)
 		}
 
 		// A container with no existing source paths (a stateless app, or appdata

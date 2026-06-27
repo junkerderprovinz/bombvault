@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -988,6 +989,84 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 	}
 }
 
+// TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes pins the one-shot VM bulk delete:
+// it forgets ONLY the target VM's tagged snapshots (not other VMs'), prunes the
+// freed space (Forget prune=true), and drops the store target on the LOCAL source.
+func TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.VMsPath = "backups/vms"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "vms")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"vm:win11", "p2"}},
+		{ID: "bbbb2222", Tags: []string{"vm:ubuntu", "p2"}}, // other VM — must be left alone
+		{ID: "cccc3333", Tags: []string{"vm:win11", "p2"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.DeleteBackupsVM(context.Background(), "win11", ""); err != nil {
+		t.Fatalf("DeleteBackupsVM: %v", err)
+	}
+	if len(eng.forgotten) != 2 || !contains(eng.forgotten, "aaaa1111") || !contains(eng.forgotten, "cccc3333") {
+		t.Fatalf("expected win11's aaaa1111+cccc3333 forgotten, got %v", eng.forgotten)
+	}
+	if contains(eng.forgotten, "bbbb2222") {
+		t.Fatalf("forgot another VM's snapshot: %v", eng.forgotten)
+	}
+	if !eng.forgetPruned {
+		t.Fatal("bulk delete must forget with prune=true (reclaim space)")
+	}
+	if _, err := st.GetVMTargetByName("win11"); err == nil {
+		t.Fatal("local bulk delete must drop the VM target")
+	}
+}
+
+// TestDeleteBackupsVMOffsiteKeepsTarget: purging only the OFF-SITE replica must
+// not delete the store target — the VM stays restorable from the local copy.
+func TestDeleteBackupsVMOffsiteKeepsTarget(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.VMsPath = "backups/vms"
+	s.VMsOffsite = "rest:http://offsite/vms" // a remote repo (assumed to exist)
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"vm:win11", "p2"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.DeleteBackupsVM(context.Background(), "win11", "offsite"); err != nil {
+		t.Fatalf("DeleteBackupsVM offsite: %v", err)
+	}
+	if !contains(eng.forgotten, "aaaa1111") {
+		t.Fatalf("off-site snapshot must be forgotten, got %v", eng.forgotten)
+	}
+	if _, err := st.GetVMTargetByName("win11"); err != nil {
+		t.Fatalf("off-site purge must KEEP the VM target (still restorable from local): %v", err)
+	}
+}
+
 // TestRestoreUsesStoredDefinitionWhenContainerDeleted verifies the core
 // disaster-recovery fix: if the container no longer exists on the host,
 // Restore falls back to the definition persisted at backup time and
@@ -1179,6 +1258,7 @@ type fakeResticEngine struct {
 	forgetPolicyErr error
 	checkErr        error
 	unlockErr       error
+	forgetPruned    bool // prune flag of the last Forget call
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
@@ -1242,8 +1322,9 @@ func (f *fakeResticEngine) Snapshots(_ context.Context, _ string, _ restic.Mode)
 	return f.snaps, nil
 }
 
-func (f *fakeResticEngine) Forget(_ context.Context, _ string, snapshotIDs []string, _ bool, _ restic.Mode) error {
+func (f *fakeResticEngine) Forget(_ context.Context, _ string, snapshotIDs []string, prune bool, _ restic.Mode) error {
 	f.forgotten = append(f.forgotten, snapshotIDs...)
+	f.forgetPruned = prune
 	return nil
 }
 
@@ -1352,6 +1433,25 @@ func TestPruneDomainCallsPrune(t *testing.T) {
 	}
 }
 
+// TestPruneDomainClearsStaleLockFirst pins that a manual prune clears a stale
+// restic lock BEFORE pruning. Without this, a lock left by a previously
+// interrupted backup/prune makes every manual Prune fail with "repository is
+// already locked" — the reported "prune is broken". The unlock must be a
+// stale-only unlock (removeAll=false), exactly as backups and DeleteSnapshot do.
+func TestPruneDomainClearsStaleLockFirst(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc := initRepoSvc(t, eng)
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	if len(eng.unlockedRepos) != 1 {
+		t.Fatalf("prune must clear a stale lock exactly once before pruning, got unlocks=%v", eng.unlockedRepos)
+	}
+	if eng.unlockRemoveAll[0] {
+		t.Fatalf("stale-unlock must be removeAll=false (only stale locks), got removeAll=%v", eng.unlockRemoveAll)
+	}
+}
+
 // TestPruneDomainAppliesRetentionWhenSet: with a retention policy configured,
 // Prune APPLIES it (forget --keep-* --prune) so it collapses snapshots per the
 // policy, not just a plain space-reclaim.
@@ -1383,6 +1483,35 @@ func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	}
 	if len(eng.manualPruned) != 0 {
 		t.Fatalf("Prune with a policy must NOT do a plain prune, got %v", eng.manualPruned)
+	}
+}
+
+// notInstalledVirsh is a fakeVirsh whose DumpXML reports the libvirt "failed to
+// get domain" error — i.e. the host no longer defines the VM.
+type notInstalledVirsh struct{ fakeVirsh }
+
+func (notInstalledVirsh) DumpXML(_ context.Context, _ string) (string, error) {
+	return "", errors.New("virshcli: dumpxml: error: failed to get domain 'DietPi_template'")
+}
+
+// TestBackupVMSkipsWhenDomainNotInstalled pins that a scheduled VM whose domain
+// was deleted/undefined on the host is SKIPPED (backup.ErrVMNotInstalled), not
+// failed — so the nightly vms job stops erroring on a leftover schedule entry.
+func TestBackupVMSkipsWhenDomainNotInstalled(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.VMsPath = "backups/vms"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, notInstalledVirsh{}, eng)
+
+	_, err := svc.BackupVM(context.Background(), "DietPi_template")
+	if !errors.Is(err, backup.ErrVMNotInstalled) {
+		t.Fatalf("expected backup.ErrVMNotInstalled for a removed domain, got %v", err)
 	}
 }
 
