@@ -88,16 +88,26 @@ func (c *Client) List(ctx context.Context) ([]VMInfo, error) {
 	return vms, nil
 }
 
+// IsNotFound reports whether a virsh error means the domain does not exist on the
+// host (it was deleted/undefined, or is a template that is no longer defined).
+// Exported so callers — e.g. a scheduled backup — can skip a vanished VM instead
+// of treating libvirt's "failed to get domain" as a hard failure.
+func IsNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "failed to get domain") ||
+		strings.Contains(msg, "domain not found") ||
+		strings.Contains(msg, "no domain")
+}
+
 // State returns the domain state ("running", "shut off", …) or ("", nil) when
 // the domain does not exist — mirrors dockercli.InspectName not-found tolerance.
 func (c *Client) State(ctx context.Context, name string) (string, error) {
 	out, err := c.run(ctx, "domstate", name)
 	if err != nil {
-		// "failed to get domain" / "Domain not found" → treat as absent.
-		msg := strings.ToLower(err.Error())
-		if strings.Contains(msg, "failed to get domain") ||
-			strings.Contains(msg, "domain not found") ||
-			strings.Contains(msg, "no domain") {
+		if IsNotFound(err) { // a missing domain has no state, not an error
 			return "", nil
 		}
 		return "", err

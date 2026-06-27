@@ -265,6 +265,22 @@ func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleDeleteBackupsVM removes ALL backups of a VM from the selected source
+// (local or off-site) in one go and prunes the freed space. The one-shot
+// counterpart to deleting each snapshot individually per source.
+// DELETE /api/vms/{name}/backups?source=
+func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.vmNameParam(w, r)
+	if !ok {
+		return
+	}
+	if err := h.svc.DeleteBackupsVM(r.Context(), name, sourceParam(r)); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleDiscover rebuilds the target list from the backup storage (disaster
 // recovery after a fresh install / loss of /config).
 func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {

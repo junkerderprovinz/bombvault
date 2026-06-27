@@ -158,6 +158,33 @@ func (c *Client) Start(ctx context.Context, name string) error {
 	return nil
 }
 
+// WaitRunning polls until the named container reports Running, or until timeout.
+// ContainerStart returns as soon as the daemon accepts the request, before the
+// container is actually up; a dependent that shares this container's network
+// namespace (network_mode: container:<name>) can't start until it is Running.
+// Used after restarting a backed-up target so its netns dependents come back.
+func (c *Client) WaitRunning(ctx context.Context, name string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	const poll = 200 * time.Millisecond
+	for {
+		resp, err := c.api.ContainerInspect(ctx, name)
+		if err == nil && resp.State != nil && resp.State.Running {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			if err != nil {
+				return fmt.Errorf("dockercli: wait running %q: %w", name, err)
+			}
+			return fmt.Errorf("dockercli: wait running %q: not running after %s", name, timeout)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(poll):
+		}
+	}
+}
+
 // Exec runs cmd inside a running container and returns an error when it exits
 // non-zero (used for pre/post-backup hooks). Output is captured only to surface
 // a short failure reason; it is demuxed via stdcopy and drained so the exec

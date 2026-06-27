@@ -5,12 +5,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -131,6 +133,9 @@ func run() error {
 	scheduler.SetVMJob(
 		func(name string) error {
 			_, bErr := svc.BackupVM(context.Background(), name)
+			if errors.Is(bErr, backup.ErrVMNotInstalled) {
+				return nil // VM no longer on the host: a skip (already logged), not a job failure
+			}
 			return bErr
 		},
 		st.ListVMTargets,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, discoverVMs, exportVM } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, deleteBackupsVM, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
@@ -470,6 +470,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
   const [error, setError] = useState<string | null>(null);
 
   const [reloadTick, setReloadTick] = useState(0);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -483,6 +484,21 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
       .catch(() => setError("Failed to load backups"))
       .finally(() => setLoading(false));
   }, [open, name, source, reloadTick]);
+
+  function handleDeleteAll() {
+    if (!window.confirm(t("snapshots.deleteAllConfirm"))) return;
+    setDeletingAll(true);
+    setError(null);
+    deleteBackupsVM(name, source)
+      .then((res) => {
+        if (!res.ok) setError(res.error ?? "Failed to delete backups");
+      })
+      .catch(() => setError("Failed to delete backups"))
+      .finally(() => {
+        setDeletingAll(false);
+        setReloadTick((n) => n + 1);
+      });
+  }
 
   return (
     <div className="mt-1">
@@ -514,6 +530,15 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
             <div className="flex items-center gap-2">
               <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
               <SourceToggle source={source} onChange={setSource} disabled={loading} />
+              {snapshots.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={deletingAll || loading}
+                  className="ml-auto text-[11px] text-[#ff8389] hover:underline disabled:opacity-50 disabled:no-underline"
+                >
+                  {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
+                </button>
+              )}
             </div>
             <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
           </div>
