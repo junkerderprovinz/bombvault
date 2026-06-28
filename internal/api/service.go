@@ -1421,6 +1421,17 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	return nil
 }
 
+// ForgetVMTarget removes a VM's target row + run history WITHOUT touching any
+// repo — for clearing a stale "Not installed" entry that has no backups (which
+// also stops the scheduler from retrying a deleted VM). Deleting actual backups
+// is DeleteBackupsVM; this is just the bookkeeping cleanup.
+func (s *Service) ForgetVMTarget(name string) error {
+	if err := s.store.DeleteVMTarget(name); err != nil {
+		return fmt.Errorf("forget vm target: %w", err)
+	}
+	return nil
+}
+
 // SetInclude sets the include_in_schedule flag for a container, creating the
 // target row first if it does not exist yet (the first backup has not run).
 // It inspects the container to resolve appdata paths exactly like Backup does,

@@ -367,6 +367,8 @@ const en = {
   "vms.restoreSelected": "Restore selected (latest)",
   "vms.restoreSelectedConfirm": "Restore the LATEST backup of the selected VMs? Each VM is shut off, its disk files replaced, and the VM restored.",
   "vms.notInstalledHint": "These VMs are no longer defined on the host but still have backups. Restore them to recover, or use the Backups panel to browse their snapshots.",
+  "vms.removeEntry": "Remove entry",
+  "vms.removeEntryConfirm": "Remove this VM's entry from the list? Its backups, if any, are not deleted.",
   "vms.discoverHint": "VM deleted from Unraid (or lost after a reinstall)? Rebuild its backup entry from storage so you can restore it.",
 
   // Flash (Unraid USB) backup
@@ -746,6 +748,8 @@ const de: Translations = {
   "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "vms.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten VMs wiederherstellen? Jede VM wird heruntergefahren, ihre Disk-Dateien ersetzt und die VM wiederhergestellt.",
   "vms.notInstalledHint": "Diese VMs sind nicht mehr auf dem Host definiert, haben aber noch Backups. Stelle sie wieder her oder sieh ihre Snapshots im Backups-Panel ein.",
+  "vms.removeEntry": "Eintrag entfernen",
+  "vms.removeEntryConfirm": "Den Eintrag dieser VM aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
   "vms.discoverHint": "VM aus Unraid gelöscht (oder nach einer Neuinstallation verloren)? Baue ihren Backup-Eintrag aus dem Speicher neu auf, um sie wiederherzustellen.",
 
   // Flash (Unraid USB) backup

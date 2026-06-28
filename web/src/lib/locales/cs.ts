@@ -235,6 +235,8 @@ const cs: Partial<Translations> = {
   "vms.restoreSelected": "Obnovit vybrané (nejnovější)",
   "vms.restoreSelectedConfirm": "Obnovit NEJNOVĚJŠÍ zálohu vybraných VM? Každý VM bude vypnut, jeho diskové soubory nahrazeny a VM obnoven.",
   "vms.notInstalledHint": "Tyto VM již nejsou definovány na hostiteli, ale stále mají zálohy. Obnovte je nebo procházejte jejich snímky v panelu Zálohy.",
+  "vms.removeEntry": "Odebrat položku",
+  "vms.removeEntryConfirm": "Odebrat položku tohoto VM ze seznamu? Případné zálohy se nesmažou.",
   "vms.discoverHint": "Virtuální stroj smazaný z Unraidu (nebo ztracený po přeinstalaci)? Znovu sestavte jeho zálohovací záznam z úložiště, abyste jej mohli obnovit.",
 
   // Container / VM state badge labels
