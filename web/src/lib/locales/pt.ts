@@ -235,6 +235,8 @@ const pt: Partial<Translations> = {
   "vms.restoreSelected": "Restaurar seleção (último)",
   "vms.restoreSelectedConfirm": "Restaurar o ÚLTIMO backup das VMs selecionadas? Cada VM é desligada, os seus ficheiros de disco substituídos e a VM restaurada.",
   "vms.notInstalledHint": "Estas VMs já não estão definidas no host mas ainda têm backups. Restaure-as para as recuperar, ou use o painel de Backups para ver os seus instantâneos.",
+  "vms.removeEntry": "Remover entrada",
+  "vms.removeEntryConfirm": "Remover a entrada desta VM da lista? Os backups, se houver, não são excluídos.",
   "vms.discoverHint": "VM excluída do Unraid (ou perdida após uma reinstalação)? Reconstrua sua entrada de backup a partir do armazenamento para poder restaurá-la.",
 
   // Container / VM state badge labels

@@ -1062,7 +1062,14 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
         <SourceToggle
           source={source}
-          onChange={setSource}
+          onChange={(next) => {
+            // The ok/fail indicators belong to the previously selected source —
+            // clear them so a "healthy" result doesn't carry over to the other
+            // repo where no maintenance has run yet.
+            setSource(next);
+            setState({});
+            setMsg({});
+          }}
           disabled={Object.values(state).some((v) => v === "busy")}
         />
       </div>

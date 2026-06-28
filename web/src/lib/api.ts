@@ -418,6 +418,14 @@ export function deleteBackupsVM(name: string, source?: string): Promise<OkEnvelo
   });
 }
 
+/** Clear a stale VM entry (its target row) without touching any repo — for a
+ *  no-longer-installed VM that has no backups left to delete. */
+export function forgetVM(name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
 export function setInclude(
   name: string,
   includeInSchedule: boolean

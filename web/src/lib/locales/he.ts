@@ -235,6 +235,8 @@ const he: Partial<Translations> = {
   "vms.restoreSelected": "שחזר את הנבחרים (אחרון)",
   "vms.restoreSelectedConfirm": "לשחזר את הגיבוי האחרון של ה-VMs הנבחרים? כל VM יכובה, קבצי הדיסק יוחלפו וה-VM ישוחזר.",
   "vms.notInstalledHint": "ה-VMs האלו אינם מוגדרים עוד במארח אך עדיין קיימים להם גיבויים. שחזר אותם או עיין ב-snapshots שלהם בלוח הגיבויים.",
+  "vms.removeEntry": "הסר רשומה",
+  "vms.removeEntryConfirm": "להסיר את הרשומה של מכונה זו מהרשימה? גיבויים קיימים לא יימחקו.",
   "vms.discoverHint": "המכונה הווירטואלית נמחקה מ-Unraid (או אבדה לאחר התקנה מחדש)? בנה מחדש את רשומת הגיבוי שלה מהאחסון כדי לשחזר אותה.",
 
   // Container / VM state badge labels

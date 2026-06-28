@@ -235,6 +235,8 @@ const no: Partial<Translations> = {
   "vms.restoreSelected": "Gjenopprett valgte (nyeste)",
   "vms.restoreSelectedConfirm": "Gjenopprette den NYESTE sikkerhetskopien av valgte VM-er? Hver VM slås av, diskfiler erstattes og VM-en gjenopprettes.",
   "vms.notInstalledHint": "Disse VM-ene er ikke lenger definert på hosten, men har fortsatt sikkerhetskopier. Gjenopprett dem eller bruk Sikkerhetskopier-panelet til å bla gjennom snapshots.",
+  "vms.removeEntry": "Fjern oppføring",
+  "vms.removeEntryConfirm": "Fjerne denne VM-ens oppføring fra listen? Eventuelle sikkerhetskopier slettes ikke.",
   "vms.discoverHint": "VM slettet fra Unraid (eller mistet etter en reinstallasjon)? Bygg opp sikkerhetskopioppføringen på nytt fra lageret for å gjenopprette den.",
 
   // Container / VM state badge labels

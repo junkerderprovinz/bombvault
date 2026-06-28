@@ -235,6 +235,8 @@ const sv: Partial<Translations> = {
   "vms.restoreSelected": "Återställ markerade (senaste)",
   "vms.restoreSelectedConfirm": "Återställa den SENASTE säkerhetskopian av markerade VMs? Varje VM stängs av, dess diskfiler ersätts och VM:en återställs.",
   "vms.notInstalledHint": "Dessa VMs är inte längre definierade på värden men har fortfarande säkerhetskopior. Återställ dem eller bläddra bland deras ögonblicksbilder i panelen Säkerhetskopior.",
+  "vms.removeEntry": "Ta bort post",
+  "vms.removeEntryConfirm": "Ta bort den här VM:ens post från listan? Eventuella säkerhetskopior raderas inte.",
   "vms.discoverHint": "VM borttagen från Unraid (eller förlorad efter en ominstallation)? Bygg om dess säkerhetskopiepost från lagringen så att du kan återställa den.",
 
   // Container / VM state badge labels

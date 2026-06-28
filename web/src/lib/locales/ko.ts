@@ -235,6 +235,8 @@ const ko: Partial<Translations> = {
   "vms.restoreSelected": "선택 항목 복원 (최신)",
   "vms.restoreSelectedConfirm": "선택한 VM의 최신 백업을 복원하시겠습니까? 각 VM이 종료되고, 디스크 파일이 교체되며, VM이 복원됩니다.",
   "vms.notInstalledHint": "이 VM은 더 이상 호스트에 정의되어 있지 않지만 백업이 있습니다. 복원하거나 백업 패널에서 스냅샷을 탐색하세요.",
+  "vms.removeEntry": "항목 제거",
+  "vms.removeEntryConfirm": "이 VM의 항목을 목록에서 제거할까요? 백업이 있어도 삭제되지 않습니다.",
   "vms.discoverHint": "Unraid에서 VM을 삭제했나요(또는 재설치 후 잃어버렸나요)? 스토리지에서 백업 항목을 재구성하면 복원할 수 있습니다.",
 
   // Container / VM state badge labels

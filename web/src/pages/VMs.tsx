@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, deleteBackupsVM, discoverVMs, exportVM } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
@@ -648,6 +648,14 @@ function VMRow({
         </div>
       )}
 
+      {/* Not installed: offer to clear the stale entry (also stops the scheduler
+          retrying a deleted VM). Deleting actual backups stays in the panel below. */}
+      {!installed && (
+        <div className="flex justify-end">
+          <VMForgetButton name={vm.name} t={t} onForgotten={onRefresh} />
+        </div>
+      )}
+
       {/* Backups / Restore disclosure */}
       <VMRestorePanel name={vm.name} t={t} />
 
@@ -655,6 +663,49 @@ function VMRow({
       {progress && (
         <ProgressBar percent={progress.percent} active={progress.active} />
       )}
+    </div>
+  );
+}
+
+// VMForgetButton clears a no-longer-installed VM's stale entry (its target row),
+// for a deleted VM that has no backups left — answering "how do I remove this".
+function VMForgetButton({
+  name,
+  t,
+  onForgotten,
+}: {
+  name: string;
+  t: T;
+  onForgotten: () => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleForget() {
+    if (!window.confirm(t("vms.removeEntryConfirm"))) return;
+    setPending(true);
+    setError(null);
+    try {
+      const res = await forgetVM(name);
+      if (res.ok) onForgotten();
+      else setError(res.error ?? "Remove failed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Remove failed");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={() => void handleForget()}
+        disabled={pending}
+        className="inline-flex items-center gap-2 rounded-lg bg-[#3a1c1c] px-3 py-1.5 text-xs font-medium text-[#ff8389] hover:bg-[#4a2424] transition-colors disabled:opacity-50"
+      >
+        {pending ? t("dashboard.checking") : t("vms.removeEntry")}
+      </button>
+      {error && <p className="text-xs text-[#ff8389]">{error}</p>}
     </div>
   );
 }

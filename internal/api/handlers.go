@@ -281,6 +281,21 @@ func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleForgetVM clears a VM's stale "Not installed" entry (its target row),
+// without touching any repo — for a no-longer-defined VM that has no backups
+// (DeleteBackupsVM handles VMs that still have snapshots). DELETE /api/vms/{name}
+func (h *Handler) handleForgetVM(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.vmNameParam(w, r)
+	if !ok {
+		return
+	}
+	if err := h.svc.ForgetVMTarget(name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleDiscover rebuilds the target list from the backup storage (disaster
 // recovery after a fresh install / loss of /config).
 func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {

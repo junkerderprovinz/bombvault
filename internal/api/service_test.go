@@ -1036,6 +1036,24 @@ func TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes(t *testing.T) {
 	}
 }
 
+// TestForgetVMTargetRemovesEntry pins the orphan-cleanup fix: a no-longer-installed
+// VM with no backups can be cleared from the list (its target row) without needing
+// a repo — answering "how do I delete this entry".
+func TestForgetVMTargetRemovesEntry(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	st := newMemStore(t)
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "DietPi_template"}); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	if err := svc.ForgetVMTarget("DietPi_template"); err != nil {
+		t.Fatalf("ForgetVMTarget: %v", err)
+	}
+	if _, err := st.GetVMTargetByName("DietPi_template"); err == nil {
+		t.Fatal("VM target should be gone after ForgetVMTarget")
+	}
+}
+
 // TestDeleteBackupsVMOffsiteKeepsTarget: purging only the OFF-SITE replica must
 // not delete the store target — the VM stays restorable from the local copy.
 func TestDeleteBackupsVMOffsiteKeepsTarget(t *testing.T) {

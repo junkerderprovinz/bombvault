@@ -235,6 +235,8 @@ const fi: Partial<Translations> = {
   "vms.restoreSelected": "Palauta valitut (uusin)",
   "vms.restoreSelectedConfirm": "Palautetaanko valittujen VM:ien UUSIN varmuuskopio? Jokainen VM sammutetaan, sen levytiedostot korvataan ja VM palautetaan.",
   "vms.notInstalledHint": "Näitä VM:iä ei enää ole määritetty isännällä, mutta niillä on edelleen varmuuskopioita. Palauta ne tai selaa niiden tilannekuvia Varmuuskopiot-paneelissa.",
+  "vms.removeEntry": "Poista merkintä",
+  "vms.removeEntryConfirm": "Poistetaanko tämän VM:n merkintä listalta? Mahdollisia varmuuskopioita ei poisteta.",
   "vms.discoverHint": "Poistettiinko virtuaalikone Unraidista (tai katosiko se uudelleenasennuksessa)? Rakenna sen varmuuskopiomerkintä uudelleen tallennustilasta palauttaaksesi sen.",
 
   // Container / VM state badge labels
