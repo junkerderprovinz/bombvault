@@ -55,9 +55,9 @@ func TestNewDerivesSSHDir(t *testing.T) {
 func TestShellQuote(t *testing.T) {
 	cases := map[string]string{
 		"/etc/libvirt/qemu/nvram/Windows 11_VARS.fd": `'/etc/libvirt/qemu/nvram/Windows 11_VARS.fd'`,
-		"/plain/path.fd":                              `'/plain/path.fd'`,
-		"true":                                        `'true'`,
-		"a'b":                                         `'a'\''b'`,
+		"/plain/path.fd": `'/plain/path.fd'`,
+		"true":           `'true'`,
+		"a'b":            `'a'\''b'`,
 	}
 	for in, want := range cases {
 		if got := shellQuote(in); got != want {

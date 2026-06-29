@@ -920,9 +920,9 @@ type backupJSONLine struct {
 // of a diff statistics line). Field names match restic cmd/restic/cmd_diff.go
 // exactly. We use only Files + Bytes; the rest are kept for completeness.
 type diffStat struct {
-	Files     int    `json:"files"`
-	Dirs      int    `json:"dirs"`
-	Others    int    `json:"others"`
+	Files     int   `json:"files"`
+	Dirs      int   `json:"dirs"`
+	Others    int   `json:"others"`
 	DataBlobs int   `json:"data_blobs"`
 	TreeBlobs int   `json:"tree_blobs"`
 	Bytes     int64 `json:"bytes"`

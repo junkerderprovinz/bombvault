@@ -13,13 +13,13 @@ func TestValidVMName(t *testing.T) {
 		}
 	}
 	bad := []string{
-		"",            // empty
-		"../etc",      // traversal
-		"a/b",         // path separator
-		"a\\b",        // backslash
-		"-rf",         // leading dash (option injection)
-		"x\ty",        // control char
-		"bad\nname",   // newline
+		"",          // empty
+		"../etc",    // traversal
+		"a/b",       // path separator
+		"a\\b",      // backslash
+		"-rf",       // leading dash (option injection)
+		"x\ty",      // control char
+		"bad\nname", // newline
 	}
 	for _, n := range bad {
 		if validVMName(n) {

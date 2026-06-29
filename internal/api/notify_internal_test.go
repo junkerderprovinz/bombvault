@@ -16,17 +16,17 @@ import (
 // fakeHostSSH records Run calls so the Unraid-notification channel can be tested
 // without a real host.
 type fakeHostSSH struct {
-	runs    [][]string
-	runErr  error
+	runs   [][]string
+	runErr error
 }
 
 var _ HostSSH = (*fakeHostSSH)(nil)
 
-func (f *fakeHostSSH) ReadFile(context.Context, string) ([]byte, error)  { return nil, nil }
-func (f *fakeHostSSH) WriteFile(context.Context, string, []byte) error   { return nil }
-func (f *fakeHostSSH) PublicKey() (string, error)                        { return "", nil }
-func (f *fakeHostSSH) Test(context.Context) error                        { return nil }
-func (f *fakeHostSSH) EnsureKnownHost(context.Context) error             { return nil }
+func (f *fakeHostSSH) ReadFile(context.Context, string) ([]byte, error) { return nil, nil }
+func (f *fakeHostSSH) WriteFile(context.Context, string, []byte) error  { return nil }
+func (f *fakeHostSSH) PublicKey() (string, error)                       { return "", nil }
+func (f *fakeHostSSH) Test(context.Context) error                       { return nil }
+func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return nil }
 func (f *fakeHostSSH) Run(_ context.Context, args ...string) (string, error) {
 	f.runs = append(f.runs, args)
 	return "", f.runErr
