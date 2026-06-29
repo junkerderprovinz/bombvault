@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings, DomainStatus } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
@@ -514,6 +514,152 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Backup health heatmap (GitHub-contributions style)
+// ---------------------------------------------------------------------------
+
+type HeatDomain = "containers" | "vms" | "flash";
+
+// cellColor maps a day's outcome (for the selected domain) to a fill color:
+// any failure → red; all-ok → green shades that deepen with more successful
+// runs; no runs → neutral carbon surface.
+function cellColor(stat: DayStat | undefined): string {
+  if (!stat || (stat.ok === 0 && stat.failed === 0)) return "var(--carbon-surface2, #262626)";
+  if (stat.failed > 0) return "#ff8389";
+  // All ok — darker green for more runs that day.
+  if (stat.ok >= 3) return "#42be65";
+  if (stat.ok === 2) return "#6fdc8c";
+  return "#a7f0ba";
+}
+
+// MS_DAY is one day in milliseconds, used to walk the calendar grid.
+const MS_DAY = 86400000;
+
+// mondayIndex returns 0..6 for Mon..Sun (JS getDay() is 0=Sun..6=Sat).
+function mondayIndex(d: Date): number {
+  return (d.getDay() + 6) % 7;
+}
+
+function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [days, setDays] = useState<HistoryDay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [domain, setDomain] = useState<HeatDomain>("containers");
+
+  useEffect(() => {
+    let active = true;
+    getHistory(90)
+      .then((res) => {
+        if (!active) return;
+        if (res.ok) setDays(res.days ?? []);
+      })
+      .catch(() => {/* non-fatal */})
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const byDate = new Map(days.map((d) => [d.date, d]));
+  const statFor = (d: HistoryDay | undefined): DayStat | undefined =>
+    d ? d[domain] : undefined;
+
+  // Build columns of 7 days (Mon..Sun). Lead the first column with empty cells so
+  // each row lines up with its weekday. Parse the YYYY-MM-DD as a local date.
+  const cells: Array<{ key: string; date?: string; stat?: DayStat }> = [];
+  if (days.length > 0) {
+    const first = new Date(days[0].date + "T00:00:00");
+    const last = new Date(days[days.length - 1].date + "T00:00:00");
+    const lead = mondayIndex(first);
+    for (let i = 0; i < lead; i++) {
+      cells.push({ key: `lead-${i}` });
+    }
+    for (let ts = first.getTime(); ts <= last.getTime(); ts += MS_DAY) {
+      const iso = new Date(ts).toLocaleDateString("en-CA"); // YYYY-MM-DD, local
+      const hd = byDate.get(iso);
+      cells.push({ key: iso, date: iso, stat: statFor(hd) });
+    }
+  }
+
+  // Chunk the flat day list into week columns of 7 (Mon..Sun rows).
+  const weeks: Array<typeof cells> = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+
+  const domainLabel = (d: HeatDomain): string => {
+    switch (d) {
+      case "containers":
+        return t("dashboard.domainContainers");
+      case "vms":
+        return t("dashboard.domainVMs");
+      case "flash":
+        return t("dashboard.domainFlash");
+    }
+  };
+
+  const toggle = (
+    <div className="flex items-center gap-1">
+      {(["containers", "vms", "flash"] as HeatDomain[]).map((d) => (
+        <button
+          key={d}
+          type="button"
+          onClick={() => setDomain(d)}
+          className={`px-2 py-0.5 rounded text-xs font-medium border ${
+            domain === d
+              ? "bg-carbon-surface2 text-carbon-text border-carbon-border"
+              : "bg-transparent text-carbon-textMuted border-transparent hover:text-carbon-text"
+          }`}
+        >
+          {domainLabel(d)}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <Card title={t("dashboard.healthTitle")} action={toggle}>
+      {loading && (
+        <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
+      )}
+      {!loading && days.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-1 overflow-x-auto">
+            {weeks.map((week, wi) => (
+              <div key={wi} className="flex flex-col gap-1">
+                {week.map((cell) => {
+                  if (!cell.date) {
+                    return <div key={cell.key} className="w-[11px] h-[11px]" />;
+                  }
+                  const stat = cell.stat ?? { ok: 0, failed: 0 };
+                  return (
+                    <div
+                      key={cell.key}
+                      className="w-[11px] h-[11px] rounded-sm"
+                      style={{ backgroundColor: cellColor(cell.stat) }}
+                      title={`${cell.date}: ${stat.ok} ok, ${stat.failed} failed`}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          {/* Legend */}
+          <div className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
+            <span>{t("dashboard.heatLess")}</span>
+            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "var(--carbon-surface2, #262626)" }} />
+            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "#a7f0ba" }} />
+            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "#6fdc8c" }} />
+            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "#42be65" }} />
+            <span>{t("dashboard.heatMore")}</span>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard page
 // ---------------------------------------------------------------------------
 
@@ -548,6 +694,9 @@ export function Dashboard() {
         <LastBackupsCard t={t} />
         <RunsCard t={t} />
       </div>
+
+      {/* Backup health heatmap — full width */}
+      <HealthHeatmapCard t={t} />
 
       {/* Spike status — full width */}
       <SpikeCard t={t} />

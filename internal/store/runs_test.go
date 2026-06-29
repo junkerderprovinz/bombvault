@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -137,6 +138,44 @@ func TestReapInterruptedRuns(t *testing.T) {
 	}
 	if byID[done].Status != "success" {
 		t.Fatalf("finished run must stay success, got %q", byID[done].Status)
+	}
+}
+
+// TestRunsSince verifies the time-windowed query: runs at or after the cutoff
+// are returned (newest first) and older runs are excluded. Powers the
+// dashboard's backup-health heatmap window.
+func TestRunsSince(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, _ := r.UpsertTarget(store.Target{ContainerName: "sonarr", AppdataPaths: []string{"/data"}})
+	// StartRun stamps started_at = now, so every seeded run is recent. The cutoff
+	// is what we vary: a cutoff in the future excludes them, one in the past keeps
+	// them.
+	for i := 0; i < 3; i++ {
+		if _, err := r.StartRun(tg.ID, "backup"); err != nil {
+			t.Fatalf("StartRun: %v", err)
+		}
+	}
+	now := time.Now().Unix()
+
+	recent, err := r.RunsSince(now - 3600)
+	if err != nil {
+		t.Fatalf("RunsSince(past): %v", err)
+	}
+	if len(recent) != 3 {
+		t.Fatalf("expected 3 runs in the window, got %d", len(recent))
+	}
+
+	none, err := r.RunsSince(now + 3600)
+	if err != nil {
+		t.Fatalf("RunsSince(future): %v", err)
+	}
+	if len(none) != 0 {
+		t.Fatalf("expected 0 runs before a future cutoff, got %d", len(none))
 	}
 }
 

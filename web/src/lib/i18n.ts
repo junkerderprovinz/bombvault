@@ -297,6 +297,11 @@ const en = {
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
 
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Backup health",
+  "dashboard.heatLess": "Less",
+  "dashboard.heatMore": "More",
+
   // Jobs page
   "nav.jobs": "Plans",
   "jobs.title": "Plans",
@@ -691,6 +696,11 @@ const de: Translations = {
   "dashboard.domainContainers": "Container",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Backup-Verlauf",
+  "dashboard.heatLess": "Weniger",
+  "dashboard.heatMore": "Mehr",
 
   // Jobs page
   "nav.jobs": "Pläne",
