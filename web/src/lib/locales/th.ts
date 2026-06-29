@@ -385,6 +385,94 @@ const th: Partial<Translations> = {
   "export.button": "ส่งออก (tar ธรรมดา)",
   "export.exportedTo": "ส่งออกไปที่:",
   "backup.configOnly": "เฉพาะการตั้งค่า — ไม่มีโฟลเดอร์ข้อมูล (บันทึกคำจำกัดความไว้สำหรับสร้างใหม่)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "ลบการสำรองข้อมูลทั้งหมด",
+  "snapshots.deleteAllConfirm": "ลบการสำรองข้อมูลทั้งหมดของ VM นี้จากแหล่งที่เลือก (ในเครื่องหรือนอกสถานที่)? สแนปช็อตจะถูกลบอย่างถาวรและรีพอสิทอรีจะถูกตัดทิ้ง ไม่สามารถเลิกทำได้",
+  "snapshots.deletingAll": "กำลังลบ…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "แท็ก",
+  "snapshot.addTag": "เพิ่มแท็ก",
+  "snapshot.compare": "เปรียบเทียบ",
+  "snapshot.pickTwo": "เลือกสองสแนปช็อตเพื่อเปรียบเทียบ",
+  "snapshot.added": "เพิ่ม",
+  "snapshot.removed": "ลบ",
+  "snapshot.changed": "เปลี่ยนแปลง",
+  "snapshot.diffSummary": "+{addedFiles} ไฟล์ ({addedBytes}), ~{changedFiles} เปลี่ยนแปลง, -{removedFiles} ไฟล์ ({removedBytes})",
+
+  // Restore — to folder
+  "restore.toFolder": "กู้คืนไปยังโฟลเดอร์…",
+  "restore.toFolderHint":
+    "แตกสแนปช็อตนี้ลงในโฟลเดอร์ภายใต้จุดเมานต์การสำรองข้อมูลของคุณ คอนเทนเนอร์ที่กำลังทำงานจะไม่ถูกแตะต้อง",
+  "restore.targetPath": "โฟลเดอร์ปลายทาง",
+  "restore.restoredTo": "กู้คืนไปยัง {path} แล้ว",
+
+  // Encryption-key recovery kit
+  "recovery.title": "ชุดกู้คืน",
+  "recovery.download": "ดาวน์โหลดชุดกู้คืน",
+  "recovery.why":
+    "เมื่อเปิดการเข้ารหัส APP_KEY ของคุณคือกุญแจหลักสำหรับการสำรองข้อมูลทุกชุด ดาวน์โหลดชุดกู้คืน (กุญแจ รหัสผ่าน restic ที่ได้มา ตำแหน่งรีพอสิทอรี และขั้นตอนการกู้คืนด้วยตนเอง) เพื่อให้คุณกู้คืนได้แม้ไม่มีคอนเทนเนอร์ BombVault ที่กำลังทำงาน เก็บไว้แบบออฟไลน์และปลอดภัย",
+  "recovery.nagTitle": "บันทึกชุดกู้คืนของคุณ",
+  "recovery.nagBody":
+    "เมื่อเปิดการเข้ารหัส การสูญเสีย APP_KEY หมายถึงการสูญเสียการสำรองข้อมูลของคุณ ดาวน์โหลดชุดกู้คืนและเก็บไว้ในที่ปลอดภัยแบบออฟไลน์",
+  "recovery.stored": "ฉันเก็บไว้อย่างปลอดภัยแล้ว",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "แบนด์วิดท์นอกสถานที่",
+  "settings.limitUpload": "ขีดจำกัดการอัปโหลด (KiB/s)",
+  "settings.limitDownload": "ขีดจำกัดการดาวน์โหลด (KiB/s)",
+  "settings.limitHint": "0 = ไม่จำกัด จำกัดอัตราการถ่ายโอนนอกสถานที่ของ restic",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "การมอนิเตอร์ (Prometheus)",
+  "settings.metricsEnable": "เปิดเผย /metrics",
+  "settings.metricsToken": "โทเค็น scrape (ไม่บังคับ)",
+  "settings.metricsHint": "เมตริกรูปแบบ Prometheus ที่ /metrics สำหรับ Grafana/Uptime Kuma หากตั้งโทเค็นไว้ ให้ scrape ด้วย Authorization: Bearer <token>",
+
+  // Email (SMTP)
+  "notify.smtp": "อีเมล (SMTP)",
+  "notify.smtpHost": "โฮสต์ SMTP",
+  "notify.smtpPort": "พอร์ต",
+  "notify.smtpUser": "ชื่อผู้ใช้",
+  "notify.smtpPass": "รหัสผ่าน",
+  "notify.smtpFrom": "ที่อยู่ผู้ส่ง",
+  "notify.smtpTo": "ที่อยู่ผู้รับ",
+  "notify.smtpTls": "การเข้ารหัส",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "ตรวจสอบความสามารถในการกู้คืน",
+  "verify.running": "กำลังตรวจสอบ…",
+  "verify.ok": "ตรวจสอบแล้วว่ากู้คืนได้",
+  "verify.failed": "การตรวจสอบล้มเหลว",
+  "verify.last": "ตรวจสอบล่าสุด {time}",
+  "verify.never": "ยังไม่เคยตรวจสอบ",
+  "verify.auto": "การตรวจสอบการกู้คืนอัตโนมัติ",
+  "verify.subsetPct": "ตัวอย่างข้อมูล (%)",
+  "verify.hint": "อ่านตัวอย่างข้อมูลสำรองแบบสุ่มเป็นระยะ เพื่อพิสูจน์ว่าข้อมูลสมบูรณ์และกู้คืนได้",
+  "verify.shield": "ตรวจสอบแล้ว",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "สถานะการป้องกัน",
+  "dashboard.rpoOk": "เป็นปัจจุบัน",
+  "dashboard.rpoWarn": "ใกล้ถึงกำหนด",
+  "dashboard.rpoOverdue": "เกินกำหนด",
+  "dashboard.rpoNever": "ยังไม่มีการสำรองข้อมูล",
+  "dashboard.rpoOff": "ไม่มีตารางเวลา",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "สุขภาพการสำรองข้อมูล",
+  "dashboard.heatLess": "น้อย",
+  "dashboard.heatMore": "มาก",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "ที่จัดเก็บ",
+  "dashboard.dedup": "ลดข้อมูลซ้ำ",
+  "dashboard.snapshotsLabel": "สแนปช็อต",
+  "dashboard.noStats": "ยังไม่มีข้อมูล",
 };
 
 export default th;

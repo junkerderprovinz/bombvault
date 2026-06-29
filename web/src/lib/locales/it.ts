@@ -460,6 +460,16 @@ const it: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshot",
   "dashboard.noStats": "Ancora nessun dato",
+
+  // Notifications — email (SMTP)
+  "notify.smtp": "Email (SMTP)",
+  "notify.smtpHost": "Host SMTP",
+  "notify.smtpPort": "Porta",
+  "notify.smtpUser": "Nome utente",
+  "notify.smtpPass": "Password",
+  "notify.smtpFrom": "Indirizzo mittente",
+  "notify.smtpTo": "Indirizzo destinatario",
+  "notify.smtpTls": "Crittografia",
 };
 
 export default it;
