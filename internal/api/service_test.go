@@ -1053,6 +1053,75 @@ func TestListSnapshotFilesScopedToContainer(t *testing.T) {
 	}
 }
 
+// TestRestoreContainerToPath covers the alternate-folder (non-destructive)
+// restore: it rejects a bad snapshot id BEFORE touching restic, rejects a target
+// that escapes the host mount (the shared paths.Resolve containment guard), and
+// on the happy path restores the WHOLE snapshot tree into the resolved target dir
+// via the engine's restore-to-target method (RestoreInclude with include "/").
+func TestRestoreContainerToPath(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Mark the repo initialised so Snapshots reaches the engine.
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex"}},
+		{ID: "bbbb2222", Tags: []string{"container:sonarr"}}, // foreign — must be refused
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Bad snapshot id is rejected before any restic call.
+	if _, err := svc.RestoreContainerToPath(ctx, "plex", "local", "not-hex!", "user/restore/plex"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("must not restore on a bad snapshot id, got %v", eng.restored)
+	}
+
+	// A target escaping the host mount (../) is refused by the containment guard.
+	if _, err := svc.RestoreContainerToPath(ctx, "plex", "local", "aaaa1111", "../escape"); err == nil {
+		t.Fatal("expected a containment error for a path escaping the host mount")
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("must not restore when the target escapes the mount, got %v", eng.restored)
+	}
+
+	// A foreign snapshot (sonarr's) must not be extractable through plex's route.
+	if _, err := svc.RestoreContainerToPath(ctx, "plex", "local", "bbbb2222", "user/restore/plex"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("foreign snapshot must be refused, got %v", err)
+	}
+
+	// Happy path: the whole snapshot is restored into the resolved target dir.
+	target, err := svc.RestoreContainerToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex")
+	if err != nil {
+		t.Fatalf("RestoreContainerToPath: %v", err)
+	}
+	wantTarget := root + "/user/restore/plex"
+	if target != wantTarget {
+		t.Fatalf("resolved target = %q, want %q", target, wantTarget)
+	}
+	if _, statErr := os.Stat(wantTarget); statErr != nil {
+		t.Fatalf("target dir must be created after containment passes: %v", statErr)
+	}
+	// The fake records repo:snapshot:include->target; include "/" = whole snapshot.
+	if len(eng.restored) != 1 || !strings.Contains(eng.restored[0], "aaaa1111:/->"+wantTarget) {
+		t.Fatalf("expected a whole-snapshot restore-to-target, got %v", eng.restored)
+	}
+}
+
 // TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
 // backups forgets only that container's snapshots (tag-filtered) and removes its
 // target from the store — the path used to clean up no-longer-installed containers.

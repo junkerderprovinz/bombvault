@@ -317,6 +317,29 @@ export function restoreContainerFile(
   });
 }
 
+/** Response from POST /api/containers/{name}/restore-to */
+export interface RestoreToResponse extends OkEnvelope {
+  /** The resolved target folder the snapshot was extracted into. */
+  target?: string;
+}
+
+/**
+ * POST /api/containers/{name}/restore-to — extract a whole snapshot into an
+ * ALTERNATE folder under the host mount (non-destructive: the running container
+ * is never touched). targetPath is a relative subpath under the host mount.
+ */
+export function restoreContainerToPath(
+  name: string,
+  snapshotId: string,
+  targetPath: string,
+  source?: string
+): Promise<RestoreToResponse> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-to${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, targetPath }),
+  });
+}
+
 /** PATCH /api/containers/{name} — set pre/post-backup hook commands. */
 export function setContainerHooks(
   name: string,

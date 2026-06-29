@@ -454,6 +454,29 @@ func (h *Handler) handleRestoreFile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleRestoreContainerTo extracts a whole container snapshot into an ALTERNATE
+// folder under the host mount (non-destructive — the live container is never
+// touched). POST /api/containers/{name}/restore-to
+func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		SnapshotID string `json:"snapshotId"`
+		TargetPath string `json:"targetPath"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, err := h.svc.RestoreContainerToPath(r.Context(), name, sourceParam(r), body.SnapshotID, body.TargetPath)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
+}
+
 func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {

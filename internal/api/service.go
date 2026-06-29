@@ -1665,6 +1665,82 @@ func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath
 	return s.engine.RestoreInclude(ctx, repo, snapshotID, clean, "/", s.ModeFor(settings))
 }
 
+// RestoreContainerToPath extracts a whole container snapshot into an ALTERNATE
+// folder under the host mount (non-destructive — the live container is never
+// touched). Unlike Restore, it stops/removes/recreates nothing: it is for
+// inspecting, cloning or migrating a snapshot's data. It returns the resolved
+// absolute target path (container-visible, under the host mount root); the
+// handler scrubs it for the UI.
+//
+// SEC: the snapshot id is the strict hex guard (backup.ValidSnapshotID, the same
+// guard the file/in-place restores use), the snapshot must belong to the named
+// container (tag-scoped via Snapshots, like ListSnapshotFiles), and the target is
+// resolved with paths.Resolve(HostMountRoot, targetSubPath) — the SAME
+// containment helper SetBackupPaths/handleBrowse use, which path.Cleans and
+// rejects absolute/`..` escapes. The directory is created (MkdirAll) only AFTER
+// containment passes.
+func (s *Service) RestoreContainerToPath(ctx context.Context, name, source, snapshotID, targetSubPath string) (string, error) {
+	if !validResourceName(name) {
+		return "", errors.New("invalid container name")
+	}
+	if source != "local" && source != "offsite" {
+		return "", errors.New("invalid source (must be local or offsite)")
+	}
+	if !backup.ValidSnapshotID(snapshotID) {
+		return "", backup.ErrInvalidSnapshotID
+	}
+
+	// Resolve the target against the host mount root with the shared containment
+	// helper: it path.Cleans the input and rejects an absolute path or any "../"
+	// that would escape the mount. The result is guaranteed to sit under the mount.
+	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	if err != nil {
+		// paths.Resolve returns ErrTraversal/ErrAbsoluteSub — neither leaks a host
+		// path; keep the message generic (defense-in-depth, mirrors handleBrowse).
+		return "", errors.New("invalid target folder: must be a relative subpath under the host mount")
+	}
+
+	// Scope to the named container: the snapshot must be one of ITS snapshots, so
+	// one container's data can't be extracted through another's route (same
+	// access-control check as ListSnapshotFiles).
+	snaps, err := s.Snapshots(ctx, name, source)
+	if err != nil {
+		return "", err
+	}
+	found := false
+	for _, sn := range snaps {
+		if sn.ID == snapshotID || strings.HasPrefix(sn.ID, snapshotID) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+	}
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "containers", source)
+	if err != nil {
+		return "", err
+	}
+
+	// Create the target dir ONLY after containment passed.
+	if err := paths.EnsureDir(target); err != nil {
+		return "", fmt.Errorf("create target folder: %w", err)
+	}
+
+	// Restore the WHOLE snapshot tree into the target dir: restic restore
+	// --target <dir> --include / (everything). Reuses the existing restore-to-target
+	// engine method; "/" includes all paths in the snapshot.
+	if err := s.engine.RestoreInclude(ctx, repo, snapshotID, "/", target, s.ModeFor(settings)); err != nil {
+		return "", err
+	}
+	return target, nil
+}
+
 // DeleteBackups removes ALL backups of a container — every restic snapshot
 // tagged container:<name>, pruning the freed data — and forgets the container
 // from the store (target + run history). Used to clean up containers that are no
