@@ -773,10 +773,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Validate each cadence parses (backup schedules + off-site schedules).
+	// Validate each cadence parses (backup schedules + off-site + drills schedules).
 	for _, cad := range []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule,
+		v.DrillsSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -785,13 +786,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Off-site schedules can't use "everyN": the off-site job has no per-domain
-	// last-run gate, so an everyN cadence would silently fire daily. Restrict it
-	// to off / daily / weekly / cron, which all fire on an exact schedule.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule} {
+	// Off-site and drills schedules can't use "everyN": those jobs have no
+	// per-domain last-run gate, so an everyN cadence would silently fire daily.
+	// Restrict them to off / daily / weekly / cron, which all fire on an exact schedule.
+	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.DrillsSchedule} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": "off-site schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
+				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
 			})
 			return
 		}
@@ -892,6 +893,27 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 		// Log only the failure, never the body (it contains the master key).
 		log.Printf("api: recovery-kit: write failed: %v", wErr)
 	}
+}
+
+// handleRecoveryKitAck records that the user has stored the recovery kit, which
+// dismisses the dashboard nag. It reads the current settings and flips ONLY that
+// flag, so acknowledging never overwrites unrelated settings changes made
+// elsewhere (a full-settings round-trip from the dashboard could clobber them).
+// POST /api/recovery-kit/ack
+func (h *Handler) handleRecoveryKitAck(w http.ResponseWriter, _ *http.Request) {
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !s.RecoveryKitAck {
+		s.RecoveryKitAck = true
+		if err := h.store.UpdateSettings(s); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleCheck verifies the integrity of a domain's restic repo (restic check).
@@ -1070,23 +1092,55 @@ func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetNotify returns the decrypted notification config. GET /api/notify
+// handleGetNotify returns the notification config WITHOUT the stored credentials:
+// the SMTP password and Matrix access token are blanked and reported via "is-set"
+// flags, so the UI can show what's configured and edit it without shipping the
+// secrets to the browser (mirrors the cloud-credentials endpoint). GET /api/notify
 func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	c, err := h.svc.NotifyConfig()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"notify": c}))
+	smtpPasswordSet := c.SMTPPassword != ""
+	matrixTokenSet := c.MatrixToken != ""
+	c.SMTPPassword = ""
+	c.MatrixToken = ""
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"notify":          c,
+		"smtpPasswordSet": smtpPasswordSet,
+		"matrixTokenSet":  matrixTokenSet,
+	}))
 }
 
-// handleSetNotify stores the notification config (encrypted). POST /api/notify
+// fillNotifySecrets fills blank credential fields from the stored config. Because
+// handleGetNotify never ships the SMTP password / Matrix token to the browser, an
+// unchanged form re-submits them blank — blank therefore means "keep the stored one".
+func (h *Handler) fillNotifySecrets(c notify.Config) notify.Config {
+	if c.SMTPPassword != "" && c.MatrixToken != "" {
+		return c
+	}
+	cur, err := h.svc.NotifyConfig()
+	if err != nil {
+		return c
+	}
+	if c.SMTPPassword == "" {
+		c.SMTPPassword = cur.SMTPPassword
+	}
+	if c.MatrixToken == "" {
+		c.MatrixToken = cur.MatrixToken
+	}
+	return c
+}
+
+// handleSetNotify stores the notification config (encrypted). A blank SMTP password
+// or Matrix token keeps the previously stored one. POST /api/notify
 func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	var c notify.Config
 	if !decodeBody(w, r, &c) {
 		return
 	}
-	if err := h.svc.SetNotifyConfig(c); err != nil {
+	if err := h.svc.SetNotifyConfig(h.fillNotifySecrets(c)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1132,7 +1186,7 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &c) {
 		return
 	}
-	if err := h.svc.TestNotify(r.Context(), c); err != nil {
+	if err := h.svc.TestNotify(r.Context(), h.fillNotifySecrets(c)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

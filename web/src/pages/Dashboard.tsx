@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, putSettings, getStatus, getHistory, getStats, recoveryKitUrl } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -872,7 +872,7 @@ function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   const dismiss = () => {
     setDismissing(true);
-    void putSettings({ ...settings, recoveryKitAck: true })
+    void ackRecoveryKit()
       .then((res) => {
         if (res.ok) setSettings({ ...settings, recoveryKitAck: true });
       })

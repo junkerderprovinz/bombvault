@@ -456,6 +456,11 @@ export interface NotifyConfig {
 
 export interface GetNotifyResponse extends OkEnvelope {
   notify?: NotifyConfig;
+  // The SMTP password / Matrix token are never sent to the browser; these flags
+  // report whether one is stored so the form can show "configured" and treat a
+  // blank submit as "keep the stored secret".
+  smtpPasswordSet?: boolean;
+  matrixTokenSet?: boolean;
 }
 
 /** GET /api/notify — the current (decrypted) notification config. */
@@ -583,6 +588,15 @@ export function putSettings(settings: Settings): Promise<OkEnvelope> {
  */
 export function recoveryKitUrl(): string {
   return "/api/recovery-kit";
+}
+
+/**
+ * POST /api/recovery-kit/ack — record that the kit has been stored, dismissing
+ * the dashboard nag. Flips only that one flag server-side, so it can't clobber
+ * unrelated settings changes (unlike resubmitting the whole settings object).
+ */
+export function ackRecoveryKit(): Promise<OkEnvelope> {
+  return fetchJSON("/api/recovery-kit/ack", { method: "POST" });
 }
 
 /** POST /api/check/{domain} — verify a domain's restic repo integrity. */

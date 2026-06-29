@@ -310,10 +310,15 @@ func sendSMTP(ctx context.Context, c Config, ev Event) error {
 	defer client.Close() //nolint:errcheck // close error after Quit is not actionable
 
 	if strings.EqualFold(c.SMTPTLS, "starttls") || c.SMTPTLS == "" {
-		if ok, _ := client.Extension("STARTTLS"); ok {
-			if err := client.StartTLS(&tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12}); err != nil {
-				return fmt.Errorf("starttls: %w", err)
-			}
+		// Require STARTTLS when it was requested: if the server does not advertise
+		// it, fail loudly instead of silently sending credentials/mail in cleartext
+		// (a STARTTLS-stripping MITM must not be able to downgrade us). Users who
+		// genuinely want plaintext can pick the "none" encryption mode explicitly.
+		if ok, _ := client.Extension("STARTTLS"); !ok {
+			return fmt.Errorf("starttls: server does not advertise STARTTLS — set Encryption to TLS (implicit) or None")
+		}
+		if err := client.StartTLS(&tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12}); err != nil {
+			return fmt.Errorf("starttls: %w", err)
 		}
 	}
 

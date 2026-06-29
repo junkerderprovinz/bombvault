@@ -842,11 +842,15 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [state, setState] = useState<SaveState>("idle");
   const [msg, setMsg] = useState<string | null>(null);
   const [tested, setTested] = useState(false);
+  // The SMTP password / Matrix token are never sent to the browser; track whether
+  // one is stored so the field shows "configured" and a blank submit keeps it.
+  const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
 
   useEffect(() => {
     getNotify()
       .then((r) => {
         if (r.ok && r.notify) setCfg({ ...emptyNotify, ...r.notify });
+        setSecretSet({ smtp: !!r.smtpPasswordSet, matrix: !!r.matrixTokenSet });
       })
       .catch(() => undefined);
   }, []);
@@ -953,7 +957,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.matrixToken")}
           <input value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-            type="password" className={inputCls} />
+            type="password" placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} className={inputCls} />
         </label>
         <label className={labelCls}>
           {t("notify.matrixRoom")}
@@ -1008,7 +1012,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpPass")}
               <input value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
-                type="password" className={inputCls} />
+                type="password" placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} className={inputCls} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpFrom")}

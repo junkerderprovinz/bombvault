@@ -425,6 +425,17 @@ function CompareSnapshots({
   const [error, setError] = useState<string | null>(null);
   const [diff, setDiff] = useState<SnapshotDiff | null>(null);
 
+  // Re-seed the default pair whenever the snapshot set changes (e.g. toggling the
+  // Local/Off-site source reloads a different repo's snapshots). Without this, the
+  // selects keep stale IDs from the previous repo and Compare is rejected with
+  // "snapshot does not belong to this container".
+  useEffect(() => {
+    setFrom(snapshots[1]?.id ?? "");
+    setTo(snapshots[0]?.id ?? "");
+    setDiff(null);
+    setError(null);
+  }, [snapshots]);
+
   async function run() {
     if (!from || !to || from === to) return;
     setLoading(true);
