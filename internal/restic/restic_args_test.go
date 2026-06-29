@@ -71,6 +71,37 @@ func TestCheckArgs(t *testing.T) {
 	}
 }
 
+func TestCheckDataArgs(t *testing.T) {
+	t.Run("encrypted builds read-data-subset", func(t *testing.T) {
+		got := restic.CheckDataArgs("/repo", 5, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "check", "--read-data-subset=5%"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
+		got := restic.CheckDataArgs("/repo", 10, restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "check", "--read-data-subset=10%", "--insecure-no-password"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("percent clamps below 1 up to 1", func(t *testing.T) {
+		got := restic.CheckDataArgs("/repo", 0, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "check", "--read-data-subset=1%"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("percent clamps above 100 down to 100", func(t *testing.T) {
+		got := restic.CheckDataArgs("/repo", 250, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "check", "--read-data-subset=100%"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestIsRemoteRepo(t *testing.T) {
 	remote := []string{"rclone:b2:my-bucket/path", "s3:s3.amazonaws.com/bucket", "sftp:user@host:/srv", "b2:bucket", "rest:https://host/"}
 	for _, r := range remote {

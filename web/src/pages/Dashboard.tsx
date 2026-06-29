@@ -366,6 +366,18 @@ function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                     >
                       {d.lastSuccess ? relativeTime(d.lastSuccess) : t("containers.never")}
                     </span>
+                    {d.lastVerified ? (
+                      <span
+                        title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
+                          d.lastVerifiedOK
+                            ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                            : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                        }`}
+                      >
+                        {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(d.lastVerified)}
+                      </span>
+                    ) : null}
                   </>
                 )}
               </div>

@@ -286,6 +286,18 @@ const en = {
   "integrity.pruneHint": "Apply your retention policy and reclaim space (reclaims space only when no policy is set; can take a while).",
   "integrity.pruneConfirm": "Prune now applies your retention policy — it removes snapshots beyond your keep rules (last/daily/weekly/monthly) and reclaims space. With no policy set it only reclaims space. Continue?",
 
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verify restorability",
+  "verify.running": "Verifying…",
+  "verify.ok": "Verified restorable",
+  "verify.failed": "Verification failed",
+  "verify.last": "Last verified {time}",
+  "verify.never": "Never verified",
+  "verify.auto": "Automatic restore checks",
+  "verify.subsetPct": "Data sample (%)",
+  "verify.hint": "Periodically reads a random sample of backup data to prove it is intact and restorable.",
+  "verify.shield": "verified",
+
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
   "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
@@ -726,6 +738,18 @@ const de: Translations = {
   "integrity.unlockHint": "Verwaiste Repo-Locks eines abgestürzten/abgebrochenen Laufs entfernen (behebt „repository is already locked“).",
   "integrity.pruneHint": "Retention anwenden und Speicher freigeben (ohne Policy nur Speicher; kann dauern).",
   "integrity.pruneConfirm": "Aufräumen wendet jetzt deine Retention an — entfernt Snapshots jenseits deiner Keep-Regeln (last/daily/weekly/monthly) und gibt Speicher frei. Ohne Policy wird nur Speicher freigegeben. Fortfahren?",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Wiederherstellbarkeit prüfen",
+  "verify.running": "Wird geprüft…",
+  "verify.ok": "Wiederherstellbar verifiziert",
+  "verify.failed": "Verifizierung fehlgeschlagen",
+  "verify.last": "Zuletzt geprüft {time}",
+  "verify.never": "Nie geprüft",
+  "verify.auto": "Automatische Restore-Prüfungen",
+  "verify.subsetPct": "Datenstichprobe (%)",
+  "verify.hint": "Liest regelmäßig eine zufällige Stichprobe der Backup-Daten, um zu beweisen, dass sie intakt und wiederherstellbar sind.",
+  "verify.shield": "verifiziert",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",

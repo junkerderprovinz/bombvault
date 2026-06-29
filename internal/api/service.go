@@ -78,6 +78,10 @@ type ResticEngine interface {
 	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
 	// Check verifies repository structure + metadata integrity (restic check).
 	Check(ctx context.Context, repo string, mode restic.Mode) error
+	// CheckData runs a restore-readiness drill: `restic check
+	// --read-data-subset=<pct>%`, which reads back and re-verifies a random subset
+	// of the real pack data (not just metadata), proving the backup is restorable.
+	CheckData(ctx context.Context, repo string, subsetPercent int, mode restic.Mode) error
 	// Unlock removes locks from the repo (restic unlock). removeAll clears ALL
 	// locks, not just stale ones.
 	Unlock(ctx context.Context, repo string, removeAll bool, mode restic.Mode) error
@@ -399,6 +403,12 @@ type DomainStatusEntry struct {
 	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
 	PeriodSeconds int64  `json:"periodSeconds"` // expected RPO window in seconds, 0 = no expectation
 	Status        string `json:"status"`        // "off" | "never" | "overdue" | "warn" | "ok"
+	// LastVerified is the unix time of the last LOCAL restore-verification drill
+	// (`restic check --read-data-subset`), 0 = never verified. LastVerifiedOK is
+	// its outcome. These drive the dashboard's "last verified restorable" badge
+	// without an extra round-trip.
+	LastVerified   int64 `json:"lastVerified"`
+	LastVerifiedOK bool  `json:"lastVerifiedOK"`
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -471,13 +481,25 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		}
 		scheduled := d.enabled && period > 0
 
+		// The latest LOCAL restore-verification drill drives the "last verified
+		// restorable" badge. Best-effort: a read error leaves the badge at "never"
+		// (0 / false) rather than failing the whole status query.
+		var lastVerified int64
+		var lastVerifiedOK bool
+		if drill, found, dErr := s.store.LatestRestoreDrill(d.name, "local"); dErr == nil && found {
+			lastVerified = drill.At
+			lastVerifiedOK = drill.OK
+		}
+
 		out = append(out, DomainStatusEntry{
-			Domain:        d.name,
-			Enabled:       d.enabled,
-			Schedule:      d.schedule,
-			LastSuccess:   lastUnix,
-			PeriodSeconds: period,
-			Status:        rpoStatus(now, lastUnix, period, scheduled),
+			Domain:         d.name,
+			Enabled:        d.enabled,
+			Schedule:       d.schedule,
+			LastSuccess:    lastUnix,
+			PeriodSeconds:  period,
+			Status:         rpoStatus(now, lastUnix, period, scheduled),
+			LastVerified:   lastVerified,
+			LastVerifiedOK: lastVerifiedOK,
 		})
 	}
 	return out, nil
@@ -2869,6 +2891,128 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 	return s.engine.Check(ctx, repo, s.ModeFor(settings))
+}
+
+// drillSubsetPct clamps the configured drill subset percentage into restic's
+// valid 1..100 range, defaulting an unset/zero value to 5.
+func drillSubsetPct(pct int) int {
+	if pct <= 0 {
+		return 5
+	}
+	if pct > 100 {
+		return 100
+	}
+	return pct
+}
+
+// RunRestoreDrill proves a domain's backup is actually restorable by running
+// `restic check --read-data-subset` (it reads back + re-verifies a random subset
+// of the real pack data, not just metadata — no scratch disk needed) and records
+// the result so the UI can show a "last verified restorable" badge. domain is
+// {containers,vms,flash}; source is {local,offsite}.
+//
+// It takes the per-domain busy-guard like Prune/Unlock: if a backup is running it
+// returns errDomainBusy and records nothing. A missing/empty repo returns a clear
+// "no backups to verify" error and records nothing (no misleading failure). Both
+// a passing and a failing drill ARE recorded; a failure also fires a notification.
+func (s *Service) RunRestoreDrill(ctx context.Context, domain, source string) (store.RestoreDrill, error) {
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
+	}
+	switch source {
+	case "local", "offsite":
+	default:
+		return store.RestoreDrill{}, fmt.Errorf("unknown source %q", source)
+	}
+
+	settings, repo, err := s.domainRepoSource(domain, source)
+	if err != nil {
+		return store.RestoreDrill{}, err
+	}
+	if err := s.requireExistingRepo(repo, "no backups to verify yet"); err != nil {
+		return store.RestoreDrill{}, err
+	}
+
+	// Serialise with backups (and other maintenance) so a drill never reads a repo
+	// a backup is actively writing. Busy → report it WITHOUT recording a drill.
+	unlock, ok := s.tryLockDomain(domain)
+	if !ok {
+		return store.RestoreDrill{}, errDomainBusy
+	}
+	defer unlock()
+
+	mode := s.ModeFor(settings)
+	// An initialised-but-empty repo (no snapshots) has nothing to verify. Treat it
+	// like a missing repo: a clear error, no misleading failure recorded.
+	snaps, err := s.listSnapshots(ctx, repo, mode)
+	if err != nil {
+		return store.RestoreDrill{}, err
+	}
+	if len(snaps) == 0 {
+		return store.RestoreDrill{}, errors.New("no backups to verify yet")
+	}
+
+	// Reading back a subset of real pack data can be slow on a large repo; bound it.
+	dctx, cancel := context.WithTimeout(ctx, 2*time.Hour)
+	defer cancel()
+	checkErr := s.engine.CheckData(dctx, repo, drillSubsetPct(settings.DrillsSubsetPct), mode)
+
+	drill := store.RestoreDrill{
+		Domain: domain,
+		Source: source,
+		At:     time.Now().Unix(),
+		OK:     checkErr == nil,
+	}
+	if checkErr != nil {
+		drill.Detail = scrubError(checkErr)
+		if len(drill.Detail) > 200 {
+			drill.Detail = drill.Detail[:200]
+		}
+	}
+	if recErr := s.store.AddRestoreDrill(drill); recErr != nil {
+		// Recording is the whole point of a drill; surface a record failure.
+		return store.RestoreDrill{}, fmt.Errorf("record drill: %w", recErr)
+	}
+	// A failed restorability check is important — notify on failure (best-effort).
+	if checkErr != nil {
+		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
+	}
+	return drill, checkErr
+}
+
+// LatestDrill returns the most recent restore-verification drill for a domain +
+// source (a thin passthrough to the store). found is false when none ran yet.
+func (s *Service) LatestDrill(domain, source string) (store.RestoreDrill, bool, error) {
+	return s.store.LatestRestoreDrill(domain, source)
+}
+
+// Drills returns the recorded restore-verification drills for a domain + source
+// (newest first), a thin passthrough to the store.
+func (s *Service) Drills(domain, source string, limit int) ([]store.RestoreDrill, error) {
+	return s.store.ListRestoreDrills(domain, source, limit)
+}
+
+// notifyDrillFailure sends a best-effort notification when a restore-verification
+// drill fails (the backup is NOT provably restorable). Mirrors notifyBackup's
+// policy + Unraid fan-out; a no-op when notifications are off.
+func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	target := "Unraid flash"
+	if domain != "flash" {
+		target = domain
+	}
+	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
+	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: msg, OK: false})
+	if c.Unraid && s.ssh != nil {
+		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
 }
 
 // repoFor resolves the restic repo path for a domain ("containers"|"vms"|"flash")

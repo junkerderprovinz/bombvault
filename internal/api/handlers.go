@@ -681,6 +681,10 @@ type settingsView struct {
 	// Opt-in Prometheus /metrics endpoint + its optional bearer scrape token.
 	MetricsEnabled bool   `json:"metricsEnabled"`
 	MetricsToken   string `json:"metricsToken"`
+	// Scheduled restore-verification drills (restic check --read-data-subset).
+	DrillsEnabled   bool   `json:"drillsEnabled"`
+	DrillsSchedule  string `json:"drillsSchedule"`
+	DrillsSubsetPct int    `json:"drillsSubsetPct"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -714,6 +718,9 @@ func toView(s store.Settings) settingsView {
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 		MetricsEnabled:              s.MetricsEnabled,
 		MetricsToken:                s.MetricsToken,
+		DrillsEnabled:               s.DrillsEnabled,
+		DrillsSchedule:              s.DrillsSchedule,
+		DrillsSubsetPct:             s.DrillsSubsetPct,
 	}
 }
 
@@ -839,6 +846,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
 		MetricsEnabled:              v.MetricsEnabled,
 		MetricsToken:                strings.TrimSpace(v.MetricsToken),
+		DrillsEnabled:               v.DrillsEnabled,
+		DrillsSchedule:              v.DrillsSchedule,
+		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,
@@ -871,6 +881,66 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleRunDrill runs a restore-verification drill for a domain (restic check
+// --read-data-subset), proving the backup is actually restorable, and returns the
+// recorded result. POST /api/verify/{domain}?source=  domain ∈ {containers,vms,flash}
+func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"drill": drill}))
+}
+
+// handleDrills returns the recorded restore-verification drills for a domain +
+// source (newest first), plus the latest one for the badge.
+// GET /api/verify?domain=&source=&limit=
+func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	source := sourceParam(r)
+
+	limit := 90
+	if q := r.URL.Query().Get("limit"); q != "" {
+		if n, err := strconv.Atoi(q); err == nil {
+			limit = n
+		}
+	}
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 365 {
+		limit = 365
+	}
+
+	drills, err := h.svc.Drills(domain, source, limit)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if drills == nil {
+		drills = []store.RestoreDrill{}
+	}
+	var latest any // null when there are no drills yet
+	if len(drills) > 0 {
+		latest = drills[0] // newest first
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"drills": drills, "latest": latest}))
 }
 
 // handleUnlock clears repository locks for a domain (restic unlock --remove-all),
