@@ -139,6 +139,26 @@ export interface StatusResponse {
   error?: string;
 }
 
+/** Per-domain backup outcome counts for a single calendar day. */
+export interface DayStat {
+  ok: number;
+  failed: number;
+}
+
+/** One calendar day's backup outcomes split by domain, from GET /api/history. */
+export interface HistoryDay {
+  date: string; // local YYYY-MM-DD
+  containers: DayStat;
+  vms: DayStat;
+  flash: DayStat;
+}
+
+export interface HistoryResponse {
+  ok: boolean;
+  days?: HistoryDay[];
+  error?: string;
+}
+
 /** A spike check from POST /api/spike */
 export interface SpikeCheck {
   Name: string;
@@ -537,6 +557,12 @@ export function listRuns(): Promise<ListRunsResponse> {
 /** GET /api/status — per-domain RPO (protection) status for the dashboard. */
 export function getStatus(): Promise<StatusResponse> {
   return fetchJSON("/api/status");
+}
+
+/** GET /api/history?days=N — per-day backup outcomes for the health heatmap. */
+export function getHistory(days?: number): Promise<HistoryResponse> {
+  const qs = days ? `?days=${days}` : "";
+  return fetchJSON(`/api/history${qs}`);
 }
 
 /**

@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1007,6 +1008,33 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 		domains = []DomainStatusEntry{}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
+}
+
+// handleHistory returns per-day backup outcomes for the dashboard's
+// backup-health heatmap. GET /api/history?days=90 — days defaults to 90 and is
+// clamped to 1..366.
+func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
+	days := 90
+	if q := r.URL.Query().Get("days"); q != "" {
+		if n, err := strconv.Atoi(q); err == nil {
+			days = n
+		}
+	}
+	if days < 1 {
+		days = 1
+	}
+	if days > 366 {
+		days = 366
+	}
+	hist, err := h.svc.BackupHistory(days)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if hist == nil {
+		hist = []HistoryDay{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"days": hist}))
 }
 
 // browseDirEntry is a single subdirectory entry in the browse response.

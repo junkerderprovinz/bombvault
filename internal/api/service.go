@@ -462,6 +462,120 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 	return out, nil
 }
 
+// DayStat is the per-domain backup outcome count for a single calendar day.
+type DayStat struct {
+	OK     int `json:"ok"`
+	Failed int `json:"failed"`
+}
+
+// HistoryDay is one calendar day's backup outcomes split by domain, for the
+// dashboard's GitHub-contributions-style backup-health heatmap.
+type HistoryDay struct {
+	Date       string  `json:"date"` // local YYYY-MM-DD
+	Containers DayStat `json:"containers"`
+	VMs        DayStat `json:"vms"`
+	Flash      DayStat `json:"flash"`
+}
+
+// runDomains is the target_id → domain map ("container" | "vm" | "flash") used
+// to attribute each run to its domain. It mirrors the same mapping handleRuns
+// uses: container targets, VM targets, and the singleton flash id. Best-effort —
+// an unknown id (e.g. a deleted target) maps to "" and is ignored by the
+// bucketer.
+func (s *Service) runDomains() map[string]string {
+	domain := map[string]string{store.FlashTargetID: "flash"}
+	if cts, err := s.store.ListTargets(); err == nil {
+		for _, t := range cts {
+			domain[t.ID] = "container"
+		}
+	}
+	if vts, err := s.store.ListVMTargets(); err == nil {
+		for _, t := range vts {
+			domain[t.ID] = "vm"
+		}
+	}
+	return domain
+}
+
+// bucketRunsByDay is the pure heatmap-bucketing core: it produces one HistoryDay
+// for EVERY local calendar day in [startUnix, endUnix] (ascending), tallying
+// each backup run's success/failed outcome into its domain via the target_id →
+// domain map. Days with no runs come back with zeros so the frontend gets a
+// contiguous grid. Non-backup kinds and "running" runs are ignored, as are runs
+// whose target maps to no known domain. Kept free of the store/clock so it can
+// be unit-tested directly.
+func bucketRunsByDay(runs []store.Run, domain map[string]string, startUnix, endUnix int64) []HistoryDay {
+	// Map each local day to its index in the output grid. Indices stay valid even
+	// as the slice grows (unlike pointers into a slice that append may reallocate).
+	idx := map[string]int{}
+	start := time.Unix(startUnix, 0).Local()
+	end := time.Unix(endUnix, 0).Local()
+	startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+	endDay := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location())
+
+	out := make([]HistoryDay, 0)
+	for d := startDay; !d.After(endDay); d = d.AddDate(0, 0, 1) {
+		date := d.Format("2006-01-02")
+		idx[date] = len(out)
+		out = append(out, HistoryDay{Date: date})
+	}
+
+	for _, run := range runs {
+		if run.Kind != "backup" {
+			continue
+		}
+		dom := domain[run.TargetID]
+		if dom == "" {
+			continue // unknown / deleted target
+		}
+		date := time.Unix(run.StartedAt, 0).Local().Format("2006-01-02")
+		i, ok := idx[date]
+		if !ok {
+			continue // outside the window (defensive — query already bounds it)
+		}
+		var stat *DayStat
+		switch dom {
+		case "container":
+			stat = &out[i].Containers
+		case "vm":
+			stat = &out[i].VMs
+		case "flash":
+			stat = &out[i].Flash
+		default:
+			continue
+		}
+		switch run.Status {
+		case "success":
+			stat.OK++
+		case "failed":
+			stat.Failed++
+		}
+	}
+	return out
+}
+
+// BackupHistory returns one HistoryDay per calendar day in the last `days` days
+// (ascending, including empty days with zeros) for the dashboard heatmap. days
+// is capped at 366. Runs are bucketed by local calendar day and by domain.
+func (s *Service) BackupHistory(days int) ([]HistoryDay, error) {
+	if days < 1 {
+		days = 1
+	}
+	if days > 366 {
+		days = 366
+	}
+	now := time.Now()
+	since := now.AddDate(0, 0, -(days - 1))
+	// Widen the store query to the start of the earliest day so a run early on the
+	// first day isn't missed by an intra-day cutoff; the bucketer bounds the grid.
+	startUnix := time.Date(since.Year(), since.Month(), since.Day(), 0, 0, 0, 0, since.Location()).Unix()
+	runs, err := s.store.RunsSince(startUnix)
+	if err != nil {
+		return nil, fmt.Errorf("read runs: %w", err)
+	}
+	return bucketRunsByDay(runs, s.runDomains(), startUnix, now.Unix()), nil
+}
+
 // copyToOffsite replicates a domain's local repo to its off-site repo with
 // `restic copy` (the local repo stays primary). It creates the off-site repo on
 // first use and copies everything not already there (restic skips dupes, so the

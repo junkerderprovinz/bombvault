@@ -181,6 +181,31 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	return out, rows.Err()
 }
 
+// RunsSince returns all runs with started_at >= since (unix seconds), newest
+// first. Used by the dashboard's backup-health heatmap to bucket a window of
+// runs by day and domain.
+func (r *Repo) RunsSince(since int64) ([]Run, error) {
+	rows, err := r.db.Query(`
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error
+		FROM runs
+		WHERE started_at >= ?
+		ORDER BY started_at DESC`, since)
+	if err != nil {
+		return nil, fmt.Errorf("RunsSince: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []Run
+	for rows.Next() {
+		run, err := scanRun(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
 func scanRun(s scanner) (Run, error) {
 	var run Run
 	var finishedAt, bytes sql.NullInt64
