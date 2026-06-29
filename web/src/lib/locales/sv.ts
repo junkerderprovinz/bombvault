@@ -385,6 +385,91 @@ const sv: Partial<Translations> = {
   "export.button": "Exportera (vanlig tar)",
   "export.exportedTo": "Exporterad till:",
   "backup.configOnly": "Endast konfiguration — inga datamappar (definition sparad för återskapande)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Ta bort alla säkerhetskopior",
+  "snapshots.deleteAllConfirm": "Ta bort ALLA säkerhetskopior av denna VM från den valda källan (lokal eller off-site)? Ögonblicksbilderna tas bort permanent och arkivet rensas. Detta kan inte ångras.",
+  "snapshots.deletingAll": "Tar bort…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Taggar",
+  "snapshot.addTag": "Lägg till tagg",
+  "snapshot.compare": "Jämför",
+  "snapshot.pickTwo": "Välj två ögonblicksbilder att jämföra",
+  "snapshot.added": "tillagd",
+  "snapshot.removed": "borttagen",
+  "snapshot.changed": "ändrad",
+  "snapshot.diffSummary": "+{addedFiles} filer ({addedBytes}), ~{changedFiles} ändrade, -{removedFiles} filer ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Återställ till mapp…",
+  "restore.toFolderHint": "Packar upp den här ögonblicksbilden i en mapp under din säkerhetskopiemontering. Den körande containern rörs inte.",
+  "restore.targetPath": "Målmapp",
+  "restore.restoredTo": "Återställd till {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Återställningskit",
+  "recovery.download": "Ladda ner återställningskit",
+  "recovery.why": "Med kryptering på är din APP_KEY huvudhemligheten för varje säkerhetskopia. Ladda ner ett återställningskit (nyckeln, det härledda restic-lösenordet, arkivplatserna och manuella återställningssteg) så att du kan återställa även utan en körande BombVault-container. Förvara det offline och säkert.",
+  "recovery.nagTitle": "Spara ditt återställningskit",
+  "recovery.nagBody": "Med kryptering på innebär en förlorad APP_KEY att du förlorar dina säkerhetskopior. Ladda ner återställningskitet och förvara det på en säker plats offline.",
+  "recovery.stored": "Jag har förvarat det säkert",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Off-site-bandbredd",
+  "settings.limitUpload": "Uppladdningsgräns (KiB/s)",
+  "settings.limitDownload": "Nedladdningsgräns (KiB/s)",
+  "settings.limitHint": "0 = obegränsat. Begränsar restics off-site-överföringshastighet.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Övervakning (Prometheus)",
+  "settings.metricsEnable": "Exponera /metrics",
+  "settings.metricsToken": "Scrape-token (valfritt)",
+  "settings.metricsHint": "Mätvärden i Prometheus-format på /metrics för Grafana/Uptime Kuma. Om en token är satt, hämta med Authorization: Bearer <token>.",
+
+  // Notifications — SMTP
+  "notify.smtp": "E-post (SMTP)",
+  "notify.smtpHost": "SMTP-värd",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Användarnamn",
+  "notify.smtpPass": "Lösenord",
+  "notify.smtpFrom": "Avsändaradress",
+  "notify.smtpTo": "Mottagaradress",
+  "notify.smtpTls": "Kryptering",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verifiera återställbarhet",
+  "verify.running": "Verifierar…",
+  "verify.ok": "Verifierat återställbar",
+  "verify.failed": "Verifieringen misslyckades",
+  "verify.last": "Senast verifierad {time}",
+  "verify.never": "Aldrig verifierad",
+  "verify.auto": "Automatiska återställningskontroller",
+  "verify.subsetPct": "Dataurval (%)",
+  "verify.hint": "Läser regelbundet ett slumpmässigt urval av säkerhetskopiedata för att bevisa att den är intakt och återställbar.",
+  "verify.shield": "verifierad",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Skyddsstatus",
+  "dashboard.rpoOk": "Aktuell",
+  "dashboard.rpoWarn": "Snart dags",
+  "dashboard.rpoOverdue": "Försenad",
+  "dashboard.rpoNever": "Ingen säkerhetskopia än",
+  "dashboard.rpoOff": "Ej schemalagd",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Säkerhetskopiehälsa",
+  "dashboard.heatLess": "Mindre",
+  "dashboard.heatMore": "Mer",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Lagring",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Ögonblicksbilder",
+  "dashboard.noStats": "Inga data än",
 };
 
 export default sv;

@@ -376,7 +376,92 @@ const ko: Partial<Translations> = {
   "stophook.hint": "이 컨테이너를 백업하는 동안 이러한 다른 컨테이너(예: 데이터베이스)를 중지한 다음 나중에 다시 시작합니다. 한 줄에 컨테이너 이름 하나를 입력하세요.",
   "export.button": "내보내기 (일반 tar)",
   "export.exportedTo": "내보낸 위치:",
-  "backup.configOnly": "구성만 — 데이터 폴더 없음 (재생성을 위해 정의 저장됨)",
+  "backup.configOnly": "구성만, 데이터 폴더 없음 (재생성을 위해 정의 저장됨)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "모든 백업 삭제",
+  "snapshots.deleteAllConfirm": "선택한 소스(로컬 또는 오프사이트)에서 이 VM의 모든 백업을 삭제하시겠습니까? 스냅샷이 영구적으로 제거되고 저장소가 정리됩니다. 되돌릴 수 없습니다.",
+  "snapshots.deletingAll": "삭제 중…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "태그",
+  "snapshot.addTag": "태그 추가",
+  "snapshot.compare": "비교",
+  "snapshot.pickTwo": "비교할 스냅샷 두 개를 선택하세요",
+  "snapshot.added": "추가됨",
+  "snapshot.removed": "제거됨",
+  "snapshot.changed": "변경됨",
+  "snapshot.diffSummary": "+{addedFiles}개 파일 ({addedBytes}), ~{changedFiles}개 변경, -{removedFiles}개 파일 ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "폴더로 복원…",
+  "restore.toFolderHint": "이 스냅샷을 백업 마운트 아래의 폴더로 추출합니다. 실행 중인 컨테이너는 건드리지 않습니다.",
+  "restore.targetPath": "대상 폴더",
+  "restore.restoredTo": "{path}(으)로 복원됨",
+
+  // Encryption-key recovery kit
+  "recovery.title": "복구 키트",
+  "recovery.download": "복구 키트 다운로드",
+  "recovery.why": "암호화가 켜져 있으면 APP_KEY가 모든 백업의 마스터 비밀입니다. 복구 키트(키, 파생된 restic 비밀번호, 저장소 위치, 수동 복원 단계)를 다운로드하면 BombVault 컨테이너가 실행되지 않아도 복원할 수 있습니다. 오프라인에 안전하게 보관하세요.",
+  "recovery.nagTitle": "복구 키트를 저장하세요",
+  "recovery.nagBody": "암호화가 켜져 있으면 APP_KEY를 잃는 것은 백업을 잃는 것입니다. 복구 키트를 다운로드하여 안전하고 오프라인인 곳에 보관하세요.",
+  "recovery.stored": "안전하게 보관했습니다",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "오프사이트 대역폭",
+  "settings.limitUpload": "업로드 제한 (KiB/s)",
+  "settings.limitDownload": "다운로드 제한 (KiB/s)",
+  "settings.limitHint": "0 = 무제한. restic의 오프사이트 전송 속도를 제한합니다.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "모니터링 (Prometheus)",
+  "settings.metricsEnable": "/metrics 노출",
+  "settings.metricsToken": "스크레이프 토큰 (선택)",
+  "settings.metricsHint": "Grafana/Uptime Kuma용 Prometheus 형식 메트릭이 /metrics에 제공됩니다. 토큰이 설정되어 있으면 Authorization: Bearer <token>으로 스크레이프하세요.",
+
+  // Restore-verification drills
+  "verify.now": "복원 가능 여부 검증",
+  "verify.running": "검증 중…",
+  "verify.ok": "복원 가능 확인됨",
+  "verify.failed": "검증 실패",
+  "verify.last": "마지막 검증 {time}",
+  "verify.never": "검증한 적 없음",
+  "verify.auto": "자동 복원 검사",
+  "verify.subsetPct": "데이터 표본 (%)",
+  "verify.hint": "백업 데이터의 무작위 표본을 주기적으로 읽어 데이터가 온전하고 복원 가능한지 입증합니다.",
+  "verify.shield": "검증됨",
+
+  // Email (SMTP) notifications
+  "notify.smtp": "이메일 (SMTP)",
+  "notify.smtpHost": "SMTP 호스트",
+  "notify.smtpPort": "포트",
+  "notify.smtpUser": "사용자 이름",
+  "notify.smtpPass": "비밀번호",
+  "notify.smtpFrom": "보내는 주소",
+  "notify.smtpTo": "받는 주소",
+  "notify.smtpTls": "암호화",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "보호 상태",
+  "dashboard.rpoOk": "최신",
+  "dashboard.rpoWarn": "곧 예정",
+  "dashboard.rpoOverdue": "기한 초과",
+  "dashboard.rpoNever": "아직 백업 없음",
+  "dashboard.rpoOff": "예약 안 됨",
+  "dashboard.domainContainers": "컨테이너",
+  "dashboard.domainVMs": "VM",
+  "dashboard.domainFlash": "플래시",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "백업 상태",
+  "dashboard.heatLess": "적음",
+  "dashboard.heatMore": "많음",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "스토리지",
+  "dashboard.dedup": "중복 제거",
+  "dashboard.snapshotsLabel": "스냅샷",
+  "dashboard.noStats": "아직 데이터 없음",
 };
 
 export default ko;

@@ -385,6 +385,91 @@ const fr: Partial<Translations> = {
   "export.button": "Exporter (tar brut)",
   "export.exportedTo": "Exporté vers :",
   "backup.configOnly": "Configuration uniquement — aucun dossier de données (définition enregistrée pour recréation)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Supprimer toutes les sauvegardes",
+  "snapshots.deleteAllConfirm": "Supprimer TOUTES les sauvegardes de cette VM depuis la source sélectionnée (locale ou hors site) ? Les instantanés sont supprimés définitivement et le dépôt est élagué. Cette action est irréversible.",
+  "snapshots.deletingAll": "Suppression…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Étiquettes",
+  "snapshot.addTag": "Ajouter une étiquette",
+  "snapshot.compare": "Comparer",
+  "snapshot.pickTwo": "Choisissez deux instantanés à comparer",
+  "snapshot.added": "ajouté(s)",
+  "snapshot.removed": "supprimé(s)",
+  "snapshot.changed": "modifié(s)",
+  "snapshot.diffSummary": "+{addedFiles} fichiers ({addedBytes}), ~{changedFiles} modifiés, -{removedFiles} fichiers ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Restaurer dans un dossier…",
+  "restore.toFolderHint": "Extrait cet instantané dans un dossier sous votre montage de sauvegarde. Le conteneur en cours d'exécution n'est pas touché.",
+  "restore.targetPath": "Dossier cible",
+  "restore.restoredTo": "Restauré vers {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Kit de récupération",
+  "recovery.download": "Télécharger le kit de récupération",
+  "recovery.why": "Avec le chiffrement activé, votre APP_KEY est le secret maître de chaque sauvegarde. Téléchargez un kit de récupération (la clé, le mot de passe restic dérivé, les emplacements des dépôts et les étapes de restauration manuelle) afin de pouvoir restaurer même sans conteneur BombVault en fonctionnement. Conservez-le hors ligne et en lieu sûr.",
+  "recovery.nagTitle": "Sauvegardez votre kit de récupération",
+  "recovery.nagBody": "Avec le chiffrement activé, perdre votre APP_KEY revient à perdre vos sauvegardes. Téléchargez le kit de récupération et conservez-le en lieu sûr et hors ligne.",
+  "recovery.stored": "Je l'ai conservé en lieu sûr",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Bande passante hors site",
+  "settings.limitUpload": "Limite d'envoi (KiB/s)",
+  "settings.limitDownload": "Limite de téléchargement (KiB/s)",
+  "settings.limitHint": "0 = illimité. Plafonne le débit de transfert hors site de restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Surveillance (Prometheus)",
+  "settings.metricsEnable": "Exposer /metrics",
+  "settings.metricsToken": "Jeton de scrape (facultatif)",
+  "settings.metricsHint": "Métriques au format Prometheus sur /metrics pour Grafana/Uptime Kuma. Si un jeton est défini, récupérez avec Authorization: Bearer <token>.",
+
+  // Notifications — SMTP
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "Hôte SMTP",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Nom d'utilisateur",
+  "notify.smtpPass": "Mot de passe",
+  "notify.smtpFrom": "Adresse d'expéditeur",
+  "notify.smtpTo": "Adresse de destinataire",
+  "notify.smtpTls": "Chiffrement",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Vérifier la restaurabilité",
+  "verify.running": "Vérification…",
+  "verify.ok": "Restaurabilité vérifiée",
+  "verify.failed": "Échec de la vérification",
+  "verify.last": "Dernière vérification {time}",
+  "verify.never": "Jamais vérifié",
+  "verify.auto": "Vérifications de restauration automatiques",
+  "verify.subsetPct": "Échantillon de données (%)",
+  "verify.hint": "Lit régulièrement un échantillon aléatoire des données de sauvegarde pour prouver qu'elles sont intactes et restaurables.",
+  "verify.shield": "vérifié",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "État de protection",
+  "dashboard.rpoOk": "À jour",
+  "dashboard.rpoWarn": "Bientôt dû",
+  "dashboard.rpoOverdue": "En retard",
+  "dashboard.rpoNever": "Aucune sauvegarde",
+  "dashboard.rpoOff": "Non planifié",
+  "dashboard.domainContainers": "Conteneurs",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Santé des sauvegardes",
+  "dashboard.heatLess": "Moins",
+  "dashboard.heatMore": "Plus",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Stockage",
+  "dashboard.dedup": "Déduplication",
+  "dashboard.snapshotsLabel": "Instantanés",
+  "dashboard.noStats": "Aucune donnée",
 };
 
 export default fr;

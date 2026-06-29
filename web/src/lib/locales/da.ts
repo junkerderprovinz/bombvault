@@ -385,6 +385,91 @@ const da: Partial<Translations> = {
   "export.button": "Eksport (almindelig tar)",
   "export.exportedTo": "Eksporteret til:",
   "backup.configOnly": "Kun konfiguration — ingen datamapper (definition gemt til genskabelse)",
+
+  // Backups extra (delete all + diff)
+  "snapshots.deleteAll": "Slet alle sikkerhedskopier",
+  "snapshots.deleteAllConfirm": "Slet ALLE sikkerhedskopier af denne VM fra den valgte kilde (lokal eller off-site)? Øjebliksbillederne fjernes permanent og repositoriet beskæres. Kan ikke fortrydes.",
+  "snapshots.deletingAll": "Sletter…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tags",
+  "snapshot.addTag": "Tilføj tag",
+  "snapshot.compare": "Sammenlign",
+  "snapshot.pickTwo": "Vælg to øjebliksbilleder at sammenligne",
+  "snapshot.added": "tilføjet",
+  "snapshot.removed": "fjernet",
+  "snapshot.changed": "ændret",
+  "snapshot.diffSummary": "+{addedFiles} filer ({addedBytes}), ~{changedFiles} ændret, -{removedFiles} filer ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Gendan til mappe…",
+  "restore.toFolderHint": "Pakker dette øjebliksbillede ud i en mappe under din sikkerhedskopimontering. Den kørende container røres ikke.",
+  "restore.targetPath": "Målmappe",
+  "restore.restoredTo": "Gendannet til {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Gendannelseskit",
+  "recovery.download": "Download gendannelseskit",
+  "recovery.why": "Med kryptering slået til er din APP_KEY hovedhemmeligheden for hver sikkerhedskopi. Download et gendannelseskit (nøglen, den afledte restic-adgangskode, repo-placeringer og manuelle gendannelsestrin), så du kan gendanne selv uden en kørende BombVault-container. Opbevar det offline og sikkert.",
+  "recovery.nagTitle": "Gem dit gendannelseskit",
+  "recovery.nagBody": "Med kryptering slået til betyder tab af din APP_KEY tab af dine sikkerhedskopier. Download gendannelseskittet og opbevar det et sikkert sted offline.",
+  "recovery.stored": "Jeg har gemt det sikkert",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Off-site-båndbredde",
+  "settings.limitUpload": "Upload-grænse (KiB/s)",
+  "settings.limitDownload": "Download-grænse (KiB/s)",
+  "settings.limitHint": "0 = ubegrænset. Begrænser restics off-site-overførselshastighed.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Overvågning (Prometheus)",
+  "settings.metricsEnable": "Eksponer /metrics",
+  "settings.metricsToken": "Scrape-token (valgfrit)",
+  "settings.metricsHint": "Metrikker i Prometheus-format på /metrics til Grafana/Uptime Kuma. Er et token sat, scrape med Authorization: Bearer <token>.",
+
+  // Notifications — email (SMTP)
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "SMTP-vært",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Brugernavn",
+  "notify.smtpPass": "Adgangskode",
+  "notify.smtpFrom": "Fra-adresse",
+  "notify.smtpTo": "Til-adresse",
+  "notify.smtpTls": "Kryptering",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verificer gendannelighed",
+  "verify.running": "Verificerer…",
+  "verify.ok": "Verificeret gendannelig",
+  "verify.failed": "Verificering mislykkedes",
+  "verify.last": "Sidst verificeret {time}",
+  "verify.never": "Aldrig verificeret",
+  "verify.auto": "Automatiske gendannelsestjek",
+  "verify.subsetPct": "Datastikprøve (%)",
+  "verify.hint": "Læser jævnligt en tilfældig stikprøve af sikkerhedskopidataene for at bevise, at de er intakte og kan gendannes.",
+  "verify.shield": "verificeret",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Beskyttelsesstatus",
+  "dashboard.rpoOk": "Opdateret",
+  "dashboard.rpoWarn": "Forfalder snart",
+  "dashboard.rpoOverdue": "Forfalden",
+  "dashboard.rpoNever": "Ingen sikkerhedskopi endnu",
+  "dashboard.rpoOff": "Ikke planlagt",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Sikkerhedskopiers tilstand",
+  "dashboard.heatLess": "Mindre",
+  "dashboard.heatMore": "Mere",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Lager",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Øjebliksbilleder",
+  "dashboard.noStats": "Ingen data endnu",
 };
 
 export default da;

@@ -382,6 +382,91 @@ const nl: Partial<Translations> = {
   "export.button": "Exporteren (gewone tar)",
   "export.exportedTo": "Geëxporteerd naar:",
   "backup.configOnly": "Alleen configuratie — geen datamappen (definitie opgeslagen voor opnieuw aanmaken)",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Herstelkit",
+  "recovery.download": "Herstelkit downloaden",
+  "recovery.why": "Met versleuteling aan is je APP_KEY het hoofdgeheim voor elke back-up. Download een herstelkit (de sleutel, het afgeleide restic-wachtwoord, de repo-locaties en handmatige herstelstappen) zodat je ook zonder een draaiende BombVault-container kunt herstellen. Bewaar hem offline en veilig.",
+  "recovery.nagTitle": "Bewaar je herstelkit",
+  "recovery.nagBody": "Met versleuteling aan betekent het verliezen van je APP_KEY het verliezen van je back-ups. Download de herstelkit en bewaar hem ergens veilig en offline.",
+  "recovery.stored": "Ik heb hem veilig bewaard",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tags",
+  "snapshot.addTag": "Tag toevoegen",
+  "snapshot.compare": "Vergelijken",
+  "snapshot.pickTwo": "Kies twee snapshots om te vergelijken",
+  "snapshot.added": "toegevoegd",
+  "snapshot.removed": "verwijderd",
+  "snapshot.changed": "gewijzigd",
+  "snapshot.diffSummary": "+{addedFiles} bestanden ({addedBytes}), ~{changedFiles} gewijzigd, -{removedFiles} bestanden ({removedBytes})",
+
+  // Backups (delete all)
+  "snapshots.deleteAll": "Alle back-ups verwijderen",
+  "snapshots.deleteAllConfirm": "ALLE back-ups van deze VM uit de geselecteerde bron (lokaal of off-site) verwijderen? De snapshots worden permanent verwijderd en de repository wordt opgeschoond. Kan niet ongedaan worden gemaakt.",
+  "snapshots.deletingAll": "Verwijderen…",
+
+  // Restore to folder
+  "restore.toFolder": "Herstellen naar map…",
+  "restore.toFolderHint": "Pakt deze snapshot uit naar een map onder je back-upmount. De draaiende container wordt niet aangeraakt.",
+  "restore.targetPath": "Doelmap",
+  "restore.restoredTo": "Hersteld naar {path}",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Off-site bandbreedte",
+  "settings.limitUpload": "Uploadlimiet (KiB/s)",
+  "settings.limitDownload": "Downloadlimiet (KiB/s)",
+  "settings.limitHint": "0 = onbeperkt. Begrenst restics off-site overdrachtssnelheid.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitoring (Prometheus)",
+  "settings.metricsEnable": "/metrics beschikbaar maken",
+  "settings.metricsToken": "Scrape-token (optioneel)",
+  "settings.metricsHint": "Metrieken in Prometheus-formaat op /metrics voor Grafana/Uptime Kuma. Is er een token ingesteld, scrape dan met Authorization: Bearer <token>.",
+
+  // Notifications (SMTP email)
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "SMTP-host",
+  "notify.smtpPort": "Poort",
+  "notify.smtpUser": "Gebruikersnaam",
+  "notify.smtpPass": "Wachtwoord",
+  "notify.smtpFrom": "Afzenderadres",
+  "notify.smtpTo": "Ontvangeradres",
+  "notify.smtpTls": "Versleuteling",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Herstelbaarheid verifiëren",
+  "verify.running": "Verifiëren…",
+  "verify.ok": "Herstelbaarheid geverifieerd",
+  "verify.failed": "Verificatie mislukt",
+  "verify.last": "Laatst geverifieerd {time}",
+  "verify.never": "Nooit geverifieerd",
+  "verify.auto": "Automatische herstelcontroles",
+  "verify.subsetPct": "Datasteekproef (%)",
+  "verify.hint": "Leest periodiek een willekeurige steekproef van de back-upgegevens om te bewijzen dat ze intact en herstelbaar zijn.",
+  "verify.shield": "geverifieerd",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Beschermingsstatus",
+  "dashboard.rpoOk": "Up-to-date",
+  "dashboard.rpoWarn": "Binnenkort nodig",
+  "dashboard.rpoOverdue": "Te laat",
+  "dashboard.rpoNever": "Nog geen back-up",
+  "dashboard.rpoOff": "Niet gepland",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VM's",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Back-upgezondheid",
+  "dashboard.heatLess": "Minder",
+  "dashboard.heatMore": "Meer",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Opslag",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snapshots",
+  "dashboard.noStats": "Nog geen gegevens",
 };
 
 export default nl;

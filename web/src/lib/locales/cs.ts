@@ -383,6 +383,91 @@ const cs: Partial<Translations> = {
   "export.button": "Export (prostý tar)",
   "export.exportedTo": "Exportováno do:",
   "backup.configOnly": "Pouze konfigurace — žádné datové složky (definice uložena pro obnovení)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Smazat všechny zálohy",
+  "snapshots.deleteAllConfirm": "Smazat VŠECHNY zálohy tohoto VM z vybraného zdroje (místní nebo mimo lokalitu)? Snímky budou trvale odstraněny a repozitář bude vyčištěn. Tuto akci nelze vrátit zpět.",
+  "snapshots.deletingAll": "Mazání…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Štítky",
+  "snapshot.addTag": "Přidat štítek",
+  "snapshot.compare": "Porovnat",
+  "snapshot.pickTwo": "Vyberte dva snímky k porovnání",
+  "snapshot.added": "přidáno",
+  "snapshot.removed": "odebráno",
+  "snapshot.changed": "změněno",
+  "snapshot.diffSummary": "+{addedFiles} souborů ({addedBytes}), ~{changedFiles} změněno, -{removedFiles} souborů ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Obnovit do složky…",
+  "restore.toFolderHint": "Rozbalí tento snímek do složky v rámci připojení zálohy. Běžícího kontejneru se to nedotkne.",
+  "restore.targetPath": "Cílová složka",
+  "restore.restoredTo": "Obnoveno do {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Sada pro obnovu",
+  "recovery.download": "Stáhnout sadu pro obnovu",
+  "recovery.why": "Se zapnutým šifrováním je váš APP_KEY hlavním tajemstvím pro každou zálohu. Stáhněte si sadu pro obnovu (klíč, odvozené heslo restic, umístění repozitářů a ruční kroky obnovy), abyste mohli obnovit i bez běžícího kontejneru BombVault. Uložte ji offline a bezpečně.",
+  "recovery.nagTitle": "Uložte si sadu pro obnovu",
+  "recovery.nagBody": "Se zapnutým šifrováním znamená ztráta APP_KEY ztrátu záloh. Stáhněte si sadu pro obnovu a uložte ji někam bezpečně a offline.",
+  "recovery.stored": "Uložil jsem ji bezpečně",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Šířka pásma mimo lokalitu",
+  "settings.limitUpload": "Limit nahrávání (KiB/s)",
+  "settings.limitDownload": "Limit stahování (KiB/s)",
+  "settings.limitHint": "0 = bez omezení. Omezuje přenosovou rychlost restic mimo lokalitu.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitorování (Prometheus)",
+  "settings.metricsEnable": "Zpřístupnit /metrics",
+  "settings.metricsToken": "Scrape token (volitelné)",
+  "settings.metricsHint": "Metriky ve formátu Prometheus na /metrics pro Grafana/Uptime Kuma. Pokud je nastaven token, scrapujte s Authorization: Bearer <token>.",
+
+  // Email (SMTP)
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "Host SMTP",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Uživatelské jméno",
+  "notify.smtpPass": "Heslo",
+  "notify.smtpFrom": "Adresa odesílatele",
+  "notify.smtpTo": "Adresa příjemce",
+  "notify.smtpTls": "Šifrování",
+
+  // Restore-verification drills
+  "verify.now": "Ověřit obnovitelnost",
+  "verify.running": "Ověřuji…",
+  "verify.ok": "Ověřeno jako obnovitelné",
+  "verify.failed": "Ověření selhalo",
+  "verify.last": "Naposledy ověřeno {time}",
+  "verify.never": "Nikdy neověřeno",
+  "verify.auto": "Automatické kontroly obnovy",
+  "verify.subsetPct": "Vzorek dat (%)",
+  "verify.hint": "Pravidelně čte náhodný vzorek dat zálohy, aby ověřil, že jsou neporušená a obnovitelná.",
+  "verify.shield": "ověřeno",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Stav ochrany",
+  "dashboard.rpoOk": "Aktuální",
+  "dashboard.rpoWarn": "Brzy splatné",
+  "dashboard.rpoOverdue": "Po termínu",
+  "dashboard.rpoNever": "Zatím žádná záloha",
+  "dashboard.rpoOff": "Neplánováno",
+  "dashboard.domainContainers": "Kontejnery",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Stav záloh",
+  "dashboard.heatLess": "Méně",
+  "dashboard.heatMore": "Více",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Úložiště",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snímky",
+  "dashboard.noStats": "Zatím žádná data",
 };
 
 export default cs;

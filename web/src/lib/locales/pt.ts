@@ -384,7 +384,92 @@ const pt: Partial<Translations> = {
   "stophook.hint": "Parar estes outros contentores enquanto este é copiado (por exemplo uma base de dados) e iniciá-los novamente depois. Um nome de contentor por linha.",
   "export.button": "Exportar (tar simples)",
   "export.exportedTo": "Exportado para:",
-  "backup.configOnly": "Apenas configuração — sem pastas de dados (definição salva para recriação)",
+  "backup.configOnly": "Apenas configuração: sem pastas de dados (definição guardada para recriação)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Eliminar todos os backups",
+  "snapshots.deleteAllConfirm": "Eliminar TODOS os backups desta VM da origem selecionada (local ou externa)? Os instantâneos são removidos permanentemente e o repositório é podado. Não pode ser desfeito.",
+  "snapshots.deletingAll": "A eliminar…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Etiquetas",
+  "snapshot.addTag": "Adicionar etiqueta",
+  "snapshot.compare": "Comparar",
+  "snapshot.pickTwo": "Escolha dois instantâneos para comparar",
+  "snapshot.added": "adicionado",
+  "snapshot.removed": "removido",
+  "snapshot.changed": "alterado",
+  "snapshot.diffSummary": "+{addedFiles} ficheiros ({addedBytes}), ~{changedFiles} alterados, -{removedFiles} ficheiros ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Restaurar para pasta…",
+  "restore.toFolderHint": "Extrai este instantâneo para uma pasta dentro do seu mount de backup. O container em execução não é tocado.",
+  "restore.targetPath": "Pasta de destino",
+  "restore.restoredTo": "Restaurado para {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Kit de recuperação",
+  "recovery.download": "Descarregar kit de recuperação",
+  "recovery.why": "Com a encriptação ativada, a sua APP_KEY é o segredo mestre de cada backup. Descarregue um kit de recuperação (a chave, a palavra-passe restic derivada, as localizações do repositório e os passos de restauro manual) para poder restaurar mesmo sem um container BombVault em execução. Guarde-o offline e em segurança.",
+  "recovery.nagTitle": "Guarde o seu kit de recuperação",
+  "recovery.nagBody": "Com a encriptação ativada, perder a sua APP_KEY significa perder os seus backups. Descarregue o kit de recuperação e guarde-o num local seguro e offline.",
+  "recovery.stored": "Já o guardei em segurança",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Largura de banda externa",
+  "settings.limitUpload": "Limite de envio (KiB/s)",
+  "settings.limitDownload": "Limite de receção (KiB/s)",
+  "settings.limitHint": "0 = ilimitado. Limita a taxa de transferência externa do restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitorização (Prometheus)",
+  "settings.metricsEnable": "Expor /metrics",
+  "settings.metricsToken": "Token de scrape (opcional)",
+  "settings.metricsHint": "Métricas em formato Prometheus em /metrics para Grafana/Uptime Kuma. Se um token estiver definido, faça scrape com Authorization: Bearer <token>.",
+
+  // Notifications — email (SMTP)
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "Host SMTP",
+  "notify.smtpPort": "Porta",
+  "notify.smtpUser": "Nome de utilizador",
+  "notify.smtpPass": "Palavra-passe",
+  "notify.smtpFrom": "Endereço de origem",
+  "notify.smtpTo": "Endereço de destino",
+  "notify.smtpTls": "Encriptação",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verificar restaurabilidade",
+  "verify.running": "A verificar…",
+  "verify.ok": "Restaurabilidade verificada",
+  "verify.failed": "Verificação falhou",
+  "verify.last": "Última verificação {time}",
+  "verify.never": "Nunca verificado",
+  "verify.auto": "Verificações automáticas de restauro",
+  "verify.subsetPct": "Amostra de dados (%)",
+  "verify.hint": "Lê periodicamente uma amostra aleatória dos dados de backup para provar que estão intactos e restauráveis.",
+  "verify.shield": "verificado",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Estado de proteção",
+  "dashboard.rpoOk": "Atualizado",
+  "dashboard.rpoWarn": "Em breve",
+  "dashboard.rpoOverdue": "Em atraso",
+  "dashboard.rpoNever": "Ainda sem backup",
+  "dashboard.rpoOff": "Não agendado",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Saúde dos backups",
+  "dashboard.heatLess": "Menos",
+  "dashboard.heatMore": "Mais",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Armazenamento",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Instantâneos",
+  "dashboard.noStats": "Ainda sem dados",
 };
 
 export default pt;

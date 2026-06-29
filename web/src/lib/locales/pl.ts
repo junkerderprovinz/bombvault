@@ -380,6 +380,91 @@ const pl: Partial<Translations> = {
   "export.button": "Eksport (zwykły tar)",
   "export.exportedTo": "Wyeksportowano do:",
   "backup.configOnly": "Tylko konfiguracja — brak folderów danych (definicja zapisana do odtworzenia)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Usuń wszystkie kopie zapasowe",
+  "snapshots.deleteAllConfirm": "Usunąć WSZYSTKIE kopie zapasowe tej maszyny wirtualnej z wybranego źródła (lokalnego lub poza siedzibą)? Migawki zostaną trwale usunięte, a repozytorium przycięte. Nie można cofnąć.",
+  "snapshots.deletingAll": "Usuwanie…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tagi",
+  "snapshot.addTag": "Dodaj tag",
+  "snapshot.compare": "Porównaj",
+  "snapshot.pickTwo": "Wybierz dwie migawki do porównania",
+  "snapshot.added": "dodano",
+  "snapshot.removed": "usunięto",
+  "snapshot.changed": "zmieniono",
+  "snapshot.diffSummary": "+{addedFiles} plików ({addedBytes}), ~{changedFiles} zmienionych, -{removedFiles} plików ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Przywróć do folderu…",
+  "restore.toFolderHint": "Wypakowuje tę migawkę do folderu w obrębie montowania kopii zapasowych. Działający kontener nie jest naruszany.",
+  "restore.targetPath": "Folder docelowy",
+  "restore.restoredTo": "Przywrócono do {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Zestaw odzyskiwania",
+  "recovery.download": "Pobierz zestaw odzyskiwania",
+  "recovery.why": "Przy włączonym szyfrowaniu Twój APP_KEY jest głównym sekretem każdej kopii zapasowej. Pobierz zestaw odzyskiwania (klucz, wyprowadzone hasło restic, lokalizacje repozytoriów oraz kroki ręcznego przywracania), aby móc przywracać nawet bez działającego kontenera BombVault. Przechowuj go offline i bezpiecznie.",
+  "recovery.nagTitle": "Zapisz swój zestaw odzyskiwania",
+  "recovery.nagBody": "Przy włączonym szyfrowaniu utrata APP_KEY oznacza utratę kopii zapasowych. Pobierz zestaw odzyskiwania i przechowuj go w bezpiecznym miejscu offline.",
+  "recovery.stored": "Bezpiecznie zapisałem",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Przepustowość poza siedzibą",
+  "settings.limitUpload": "Limit wysyłania (KiB/s)",
+  "settings.limitDownload": "Limit pobierania (KiB/s)",
+  "settings.limitHint": "0 = bez limitu. Ogranicza prędkość transferu restic poza siedzibą.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitorowanie (Prometheus)",
+  "settings.metricsEnable": "Udostępnij /metrics",
+  "settings.metricsToken": "Token scrapowania (opcjonalnie)",
+  "settings.metricsHint": "Metryki w formacie Prometheus pod /metrics dla Grafana/Uptime Kuma. Jeśli ustawiono token, scrapuj z nagłówkiem Authorization: Bearer <token>.",
+
+  // Notifications — SMTP
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "Host SMTP",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Nazwa użytkownika",
+  "notify.smtpPass": "Hasło",
+  "notify.smtpFrom": "Adres nadawcy",
+  "notify.smtpTo": "Adres odbiorcy",
+  "notify.smtpTls": "Szyfrowanie",
+
+  // Restore-verification drills
+  "verify.now": "Zweryfikuj możliwość przywrócenia",
+  "verify.running": "Weryfikowanie…",
+  "verify.ok": "Zweryfikowano możliwość przywrócenia",
+  "verify.failed": "Weryfikacja nieudana",
+  "verify.last": "Ostatnio zweryfikowano {time}",
+  "verify.never": "Nigdy nie weryfikowano",
+  "verify.auto": "Automatyczne kontrole przywracania",
+  "verify.subsetPct": "Próbka danych (%)",
+  "verify.hint": "Okresowo odczytuje losową próbkę danych kopii zapasowej, aby potwierdzić, że są nienaruszone i możliwe do przywrócenia.",
+  "verify.shield": "zweryfikowano",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Stan ochrony",
+  "dashboard.rpoOk": "Aktualne",
+  "dashboard.rpoWarn": "Wkrótce wymagane",
+  "dashboard.rpoOverdue": "Zaległe",
+  "dashboard.rpoNever": "Brak kopii zapasowej",
+  "dashboard.rpoOff": "Bez harmonogramu",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "Maszyny wirtualne",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Kondycja kopii zapasowych",
+  "dashboard.heatLess": "Mniej",
+  "dashboard.heatMore": "Więcej",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Magazyn",
+  "dashboard.dedup": "Deduplikacja",
+  "dashboard.snapshotsLabel": "Migawki",
+  "dashboard.noStats": "Brak danych",
 };
 
 export default pl;

@@ -385,6 +385,81 @@ const it: Partial<Translations> = {
   "export.button": "Esporta (tar semplice)",
   "export.exportedTo": "Esportato in:",
   "backup.configOnly": "Solo configurazione — nessuna cartella dati (definizione salvata per la ricreazione)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Elimina tutti i backup",
+  "snapshots.deleteAllConfirm": "Eliminare TUTTI i backup di questa VM dalla sorgente selezionata (locale o off-site)? Gli snapshot vengono rimossi definitivamente e il repository viene potato. Operazione irreversibile.",
+  "snapshots.deletingAll": "Eliminazione…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tag",
+  "snapshot.addTag": "Aggiungi tag",
+  "snapshot.compare": "Confronta",
+  "snapshot.pickTwo": "Scegli due snapshot da confrontare",
+  "snapshot.added": "aggiunti",
+  "snapshot.removed": "rimossi",
+  "snapshot.changed": "modificati",
+  "snapshot.diffSummary": "+{addedFiles} file ({addedBytes}), ~{changedFiles} modificati, -{removedFiles} file ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Ripristina in una cartella…",
+  "restore.toFolderHint": "Estrae questo snapshot in una cartella sotto il tuo mount di backup. Il container in esecuzione non viene toccato.",
+  "restore.targetPath": "Cartella di destinazione",
+  "restore.restoredTo": "Ripristinato in {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Kit di ripristino",
+  "recovery.download": "Scarica il kit di ripristino",
+  "recovery.why": "Con la crittografia attiva, la tua APP_KEY è il segreto principale di ogni backup. Scarica un kit di ripristino (la chiave, la password restic derivata, le posizioni dei repository e i passi di ripristino manuale) così puoi ripristinare anche senza un container BombVault in esecuzione. Conservalo offline e in modo sicuro.",
+  "recovery.nagTitle": "Salva il tuo kit di ripristino",
+  "recovery.nagBody": "Con la crittografia attiva, perdere la tua APP_KEY significa perdere i tuoi backup. Scarica il kit di ripristino e conservalo in un luogo sicuro e offline.",
+  "recovery.stored": "L'ho conservato in modo sicuro",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Larghezza di banda off-site",
+  "settings.limitUpload": "Limite upload (KiB/s)",
+  "settings.limitDownload": "Limite download (KiB/s)",
+  "settings.limitHint": "0 = illimitato. Limita la velocità di trasferimento off-site di restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitoraggio (Prometheus)",
+  "settings.metricsEnable": "Esponi /metrics",
+  "settings.metricsToken": "Token di scrape (facoltativo)",
+  "settings.metricsHint": "Metriche in formato Prometheus su /metrics per Grafana/Uptime Kuma. Se è impostato un token, esegui lo scrape con Authorization: Bearer <token>.",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verifica ripristinabilità",
+  "verify.running": "Verifica in corso…",
+  "verify.ok": "Ripristinabilità verificata",
+  "verify.failed": "Verifica fallita",
+  "verify.last": "Ultima verifica {time}",
+  "verify.never": "Mai verificato",
+  "verify.auto": "Controlli di ripristino automatici",
+  "verify.subsetPct": "Campione di dati (%)",
+  "verify.hint": "Legge periodicamente un campione casuale dei dati di backup per dimostrare che sono intatti e ripristinabili.",
+  "verify.shield": "verificato",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Stato di protezione",
+  "dashboard.rpoOk": "Aggiornato",
+  "dashboard.rpoWarn": "In scadenza",
+  "dashboard.rpoOverdue": "In ritardo",
+  "dashboard.rpoNever": "Nessun backup ancora",
+  "dashboard.rpoOff": "Non pianificato",
+  "dashboard.domainContainers": "Container",
+  "dashboard.domainVMs": "VM",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Salute dei backup",
+  "dashboard.heatLess": "Meno",
+  "dashboard.heatMore": "Più",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Archiviazione",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snapshot",
+  "dashboard.noStats": "Ancora nessun dato",
 };
 
 export default it;

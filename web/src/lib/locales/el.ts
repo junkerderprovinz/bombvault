@@ -385,6 +385,91 @@ const el: Partial<Translations> = {
   "export.button": "Εξαγωγή (απλό tar)",
   "export.exportedTo": "Εξήχθη σε:",
   "backup.configOnly": "Μόνο ρυθμίσεις — χωρίς φακέλους δεδομένων (ο ορισμός αποθηκεύτηκε για επαναδημιουργία)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Διαγραφή όλων των αντιγράφων",
+  "snapshots.deleteAllConfirm": "Διαγραφή ΟΛΩΝ των αντιγράφων αυτού του VM από την επιλεγμένη πηγή (τοπική ή εκτός τόπου); Τα στιγμιότυπα αφαιρούνται μόνιμα και το αποθετήριο κλαδεύεται. Μη αναστρέψιμο.",
+  "snapshots.deletingAll": "Διαγραφή…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Ετικέτες",
+  "snapshot.addTag": "Προσθήκη ετικέτας",
+  "snapshot.compare": "Σύγκριση",
+  "snapshot.pickTwo": "Επιλέξτε δύο στιγμιότυπα για σύγκριση",
+  "snapshot.added": "προστέθηκαν",
+  "snapshot.removed": "αφαιρέθηκαν",
+  "snapshot.changed": "άλλαξαν",
+  "snapshot.diffSummary": "+{addedFiles} αρχεία ({addedBytes}), ~{changedFiles} άλλαξαν, -{removedFiles} αρχεία ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Επαναφορά σε φάκελο…",
+  "restore.toFolderHint": "Εξάγει αυτό το στιγμιότυπο σε έναν φάκελο εντός της προσάρτησης αντιγράφων σας. Το container που εκτελείται δεν αγγίζεται.",
+  "restore.targetPath": "Φάκελος προορισμού",
+  "restore.restoredTo": "Επαναφέρθηκε στο {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Κιτ ανάκτησης",
+  "recovery.download": "Λήψη κιτ ανάκτησης",
+  "recovery.why": "Με ενεργή κρυπτογράφηση, το APP_KEY σας είναι το κύριο μυστικό για κάθε αντίγραφο. Κατεβάστε ένα κιτ ανάκτησης (το κλειδί, τον παραγόμενο κωδικό restic, τις θέσεις των repo και τα βήματα χειροκίνητης επαναφοράς) ώστε να μπορείτε να επαναφέρετε ακόμη και χωρίς να εκτελείται container BombVault. Φυλάξτε το εκτός σύνδεσης και με ασφάλεια.",
+  "recovery.nagTitle": "Αποθηκεύστε το κιτ ανάκτησής σας",
+  "recovery.nagBody": "Με ενεργή κρυπτογράφηση, η απώλεια του APP_KEY σημαίνει απώλεια των αντιγράφων σας. Κατεβάστε το κιτ ανάκτησης και φυλάξτε το κάπου ασφαλές και εκτός σύνδεσης.",
+  "recovery.stored": "Το αποθήκευσα με ασφάλεια",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Εύρος ζώνης εκτός τόπου",
+  "settings.limitUpload": "Όριο αποστολής (KiB/s)",
+  "settings.limitDownload": "Όριο λήψης (KiB/s)",
+  "settings.limitHint": "0 = απεριόριστο. Περιορίζει τον ρυθμό μεταφοράς του restic εκτός τόπου.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Παρακολούθηση (Prometheus)",
+  "settings.metricsEnable": "Έκθεση /metrics",
+  "settings.metricsToken": "Διακριτικό scrape (προαιρετικό)",
+  "settings.metricsHint": "Μετρικές σε μορφή Prometheus στο /metrics για Grafana/Uptime Kuma. Αν οριστεί διακριτικό, κάντε scrape με Authorization: Bearer <token>.",
+
+  // Notifications — SMTP
+  "notify.smtp": "Email (SMTP)",
+  "notify.smtpHost": "Host SMTP",
+  "notify.smtpPort": "Θύρα",
+  "notify.smtpUser": "Όνομα χρήστη",
+  "notify.smtpPass": "Κωδικός",
+  "notify.smtpFrom": "Διεύθυνση αποστολέα",
+  "notify.smtpTo": "Διεύθυνση παραλήπτη",
+  "notify.smtpTls": "Κρυπτογράφηση",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Επαλήθευση δυνατότητας επαναφοράς",
+  "verify.running": "Επαλήθευση…",
+  "verify.ok": "Επαληθεύτηκε ως επαναφερόμενο",
+  "verify.failed": "Η επαλήθευση απέτυχε",
+  "verify.last": "Τελευταία επαλήθευση {time}",
+  "verify.never": "Καμία επαλήθευση",
+  "verify.auto": "Αυτόματοι έλεγχοι επαναφοράς",
+  "verify.subsetPct": "Δείγμα δεδομένων (%)",
+  "verify.hint": "Διαβάζει περιοδικά ένα τυχαίο δείγμα των δεδομένων αντιγράφου για να αποδείξει ότι είναι άθικτα και επαναφερόμενα.",
+  "verify.shield": "επαληθευμένο",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Κατάσταση προστασίας",
+  "dashboard.rpoOk": "Ενημερωμένο",
+  "dashboard.rpoWarn": "Λήγει σύντομα",
+  "dashboard.rpoOverdue": "Εκπρόθεσμο",
+  "dashboard.rpoNever": "Κανένα αντίγραφο ακόμα",
+  "dashboard.rpoOff": "Μη προγραμματισμένο",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Υγεία αντιγράφων",
+  "dashboard.heatLess": "Λιγότερα",
+  "dashboard.heatMore": "Περισσότερα",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Αποθηκευτικός χώρος",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Στιγμιότυπα",
+  "dashboard.noStats": "Κανένα δεδομένο ακόμα",
 };
 
 export default el;

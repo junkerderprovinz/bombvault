@@ -385,6 +385,94 @@ const hu: Partial<Translations> = {
   "export.button": "Exportálás (egyszerű tar)",
   "export.exportedTo": "Exportálva ide:",
   "backup.configOnly": "Csak konfiguráció — nincsenek adatmappák (a definíció mentve az újralétrehozáshoz)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Összes mentés törlése",
+  "snapshots.deleteAllConfirm": "Törli ennek a VM-nek az ÖSSZES mentését a kiválasztott forrásból (helyi vagy telephelyen kívüli)? A pillanatképek véglegesen eltávolításra kerülnek, és a tároló megnyesésre kerül. Ez nem vonható vissza.",
+  "snapshots.deletingAll": "Törlés…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Címkék",
+  "snapshot.addTag": "Címke hozzáadása",
+  "snapshot.compare": "Összehasonlítás",
+  "snapshot.pickTwo": "Válassz két pillanatképet az összehasonlításhoz",
+  "snapshot.added": "hozzáadva",
+  "snapshot.removed": "eltávolítva",
+  "snapshot.changed": "módosítva",
+  "snapshot.diffSummary": "+{addedFiles} fájl ({addedBytes}), ~{changedFiles} módosítva, -{removedFiles} fájl ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Visszaállítás mappába…",
+  "restore.toFolderHint":
+    "Kicsomagolja ezt a pillanatképet egy mappába a mentési csatoláson belül. A futó konténert nem érinti.",
+  "restore.targetPath": "Célmappa",
+  "restore.restoredTo": "Visszaállítva ide: {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Helyreállítási csomag",
+  "recovery.download": "Helyreállítási csomag letöltése",
+  "recovery.why":
+    "Bekapcsolt titkosítás mellett az APP_KEY az összes mentés mesterkulcsa. Tölts le egy helyreállítási csomagot (a kulcs, a származtatott restic jelszó, a tároló helyei és a kézi visszaállítási lépések), hogy futó BombVault konténer nélkül is vissza tudj állítani. Tárold offline és biztonságosan.",
+  "recovery.nagTitle": "Mentsd el a helyreállítási csomagot",
+  "recovery.nagBody":
+    "Bekapcsolt titkosítás mellett az APP_KEY elvesztése a mentések elvesztését jelenti. Töltsd le a helyreállítási csomagot, és tárold biztonságos, offline helyen.",
+  "recovery.stored": "Biztonságosan eltároltam",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Telephelyen kívüli sávszélesség",
+  "settings.limitUpload": "Feltöltési korlát (KiB/s)",
+  "settings.limitDownload": "Letöltési korlát (KiB/s)",
+  "settings.limitHint": "0 = korlátlan. Korlátozza a restic telephelyen kívüli átviteli sebességét.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitorozás (Prometheus)",
+  "settings.metricsEnable": "/metrics közzététele",
+  "settings.metricsToken": "Lekérdezési token (opcionális)",
+  "settings.metricsHint": "Prometheus-formátumú metrikák a /metrics címen a Grafana/Uptime Kuma számára. Ha be van állítva token, az Authorization: Bearer <token> fejléccel kérdezd le.",
+
+  // Notifications — SMTP
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "SMTP hoszt",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Felhasználónév",
+  "notify.smtpPass": "Jelszó",
+  "notify.smtpFrom": "Feladó címe",
+  "notify.smtpTo": "Címzett címe",
+  "notify.smtpTls": "Titkosítás",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Visszaállíthatóság ellenőrzése",
+  "verify.running": "Ellenőrzés…",
+  "verify.ok": "Visszaállíthatóság igazolva",
+  "verify.failed": "Az ellenőrzés sikertelen",
+  "verify.last": "Utoljára ellenőrizve: {time}",
+  "verify.never": "Soha nem ellenőrizve",
+  "verify.auto": "Automatikus visszaállítási ellenőrzések",
+  "verify.subsetPct": "Adatminta (%)",
+  "verify.hint": "Rendszeresen beolvas egy véletlenszerű mintát a mentési adatokból, hogy igazolja, azok épek és visszaállíthatók.",
+  "verify.shield": "ellenőrizve",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Védelmi állapot",
+  "dashboard.rpoOk": "Naprakész",
+  "dashboard.rpoWarn": "Hamarosan esedékes",
+  "dashboard.rpoOverdue": "Lejárt",
+  "dashboard.rpoNever": "Még nincs mentés",
+  "dashboard.rpoOff": "Nincs ütemezve",
+  "dashboard.domainContainers": "Konténerek",
+  "dashboard.domainVMs": "VM-ek",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Mentési állapot",
+  "dashboard.heatLess": "Kevesebb",
+  "dashboard.heatMore": "Több",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Tárhely",
+  "dashboard.dedup": "Deduplikáció",
+  "dashboard.snapshotsLabel": "Pillanatképek",
+  "dashboard.noStats": "Még nincs adat",
 };
 
 export default hu;
