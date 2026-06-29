@@ -187,6 +187,17 @@ const en = {
   "settings.encryptionOff": "Disabled (no password)",
   "settings.encryptionWarning":
     "Encryption is fixed per repository at init time. Changing this requires a new empty path.",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Recovery kit",
+  "recovery.download": "Download recovery kit",
+  "recovery.why":
+    "With encryption on, your APP_KEY is the master secret for every backup. Download a recovery kit (the key, the derived restic password, repo locations and manual restore steps) so you can restore even without a running BombVault container. Store it offline and securely.",
+  "recovery.nagTitle": "Save your recovery kit",
+  "recovery.nagBody":
+    "With encryption on, losing your APP_KEY means losing your backups. Download the recovery kit and store it somewhere safe and offline.",
+  "recovery.stored": "I've stored it safely",
+
   "settings.paths": "Backup Paths",
   "settings.containersPath": "Containers path",
   "settings.vmsPath": "VMs path",
@@ -640,6 +651,17 @@ const de: Translations = {
   "settings.encryptionOff": "Deaktiviert (kein Passwort)",
   "settings.encryptionWarning":
     "Die Verschlüsselung ist beim Initialisieren des Repositorys festgelegt. Eine Änderung erfordert einen neuen leeren Pfad.",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Wiederherstellungs-Kit",
+  "recovery.download": "Recovery-Kit herunterladen",
+  "recovery.why":
+    "Mit aktivierter Verschlüsselung ist dein APP_KEY das Master-Geheimnis für jedes Backup. Lade ein Recovery-Kit herunter (den Schlüssel, das abgeleitete restic-Passwort, die Repo-Pfade und manuelle Wiederherstellungsschritte), damit du auch ohne laufenden BombVault-Container wiederherstellen kannst. Bewahre es sicher und offline auf.",
+  "recovery.nagTitle": "Sichere dein Recovery-Kit",
+  "recovery.nagBody":
+    "Mit aktivierter Verschlüsselung bedeutet ein verlorener APP_KEY verlorene Backups. Lade das Recovery-Kit herunter und bewahre es sicher und offline auf.",
+  "recovery.stored": "Sicher aufbewahrt",
+
   "settings.paths": "Backup-Pfade",
   "settings.containersPath": "Container-Pfad",
   "settings.vmsPath": "VMs-Pfad",

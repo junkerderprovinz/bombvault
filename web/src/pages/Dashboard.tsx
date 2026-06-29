@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, putSettings, getStatus, getHistory, getStats, recoveryKitUrl } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -845,6 +845,71 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Recovery-kit nag — shown only when encryption is ON and the kit has not been
+// acknowledged. Prompts the user to download + safely store the encryption
+// recovery kit so disaster recovery works even without a running BombVault.
+// ---------------------------------------------------------------------------
+
+function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [dismissing, setDismissing] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getSettings()
+      .then((res) => {
+        if (active && res.ok) setSettings(res.settings);
+      })
+      .catch(() => {/* non-fatal */});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!settings || !settings.encryptionEnabled || settings.recoveryKitAck) {
+    return null;
+  }
+
+  const dismiss = () => {
+    setDismissing(true);
+    void putSettings({ ...settings, recoveryKitAck: true })
+      .then((res) => {
+        if (res.ok) setSettings({ ...settings, recoveryKitAck: true });
+      })
+      .catch(() => {/* non-fatal */})
+      .finally(() => setDismissing(false));
+  };
+
+  return (
+    <div className="rounded-card border border-[#4a4a2a] bg-[#2a2a1c] px-4 py-3 flex flex-col gap-2">
+      <h2 className="text-sm font-semibold text-[#f1c21b]">
+        {t("recovery.nagTitle")}
+      </h2>
+      <p className="text-xs text-[#f1c21b] leading-relaxed">
+        {t("recovery.nagBody")}
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={recoveryKitUrl()}
+          download="bombvault-recovery-kit.md"
+          className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+        >
+          {t("recovery.download")}
+        </a>
+        <button
+          type="button"
+          onClick={dismiss}
+          disabled={dismissing}
+          className="rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
+        >
+          {t("recovery.stored")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard page
 // ---------------------------------------------------------------------------
 
@@ -867,6 +932,9 @@ export function Dashboard() {
           <OffsiteIndicator domain="flash" withLabel />
         </div>
       </div>
+
+      {/* Recovery-kit nag — only while encryption is on and the kit is unstored */}
+      <RecoveryNag t={t} />
 
       {/* Stat cards — compact summary row */}
       <StatCardsRow t={t} />

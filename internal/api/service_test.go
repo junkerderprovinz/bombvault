@@ -2175,6 +2175,72 @@ func TestCollectStatsRecordsSample(t *testing.T) {
 	}
 }
 
+func TestRecoveryKit(t *testing.T) {
+	t.Run("encryption on: contains key, password line and restore steps", func(t *testing.T) {
+		dir := t.TempDir()
+		appKey := strings.Repeat("a", 64)
+		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.EncryptionEnabled = true
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		if !strings.Contains(kit, appKey) {
+			t.Error("kit must contain the APP_KEY when encryption is on")
+		}
+		// The derived restic repo password must appear, using the SAME derivation the
+		// engine uses (restickey.Derive) — not a reinvented one.
+		if !strings.Contains(kit, restickey.Derive(appKey)) {
+			t.Error("kit must contain the APP_KEY-derived restic password")
+		}
+		if !strings.Contains(kit, "RESTIC_PASSWORD") {
+			t.Error("kit must show the RESTIC_PASSWORD export line")
+		}
+		if !strings.Contains(kit, "restic restore") {
+			t.Error("kit must contain the manual `restic restore` step")
+		}
+		if !strings.Contains(kit, "ENABLED") {
+			t.Error("kit must state encryption is ENABLED")
+		}
+	})
+
+	t.Run("encryption off: contains the no-password note, no key", func(t *testing.T) {
+		dir := t.TempDir()
+		appKey := strings.Repeat("b", 64)
+		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		// Default settings have encryption off (the migration flips the default, but
+		// the test store starts from the schema default which is on); set it off.
+		s := mustSettings(t, st)
+		s.EncryptionEnabled = false
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		if !strings.Contains(kit, "insecure-no-password") {
+			t.Error("kit must explain the no-password (--insecure-no-password) mode when encryption is off")
+		}
+		if strings.Contains(kit, appKey) {
+			t.Error("kit must NOT expose the APP_KEY when encryption is off (no key in play)")
+		}
+		if !strings.Contains(kit, "restic restore") {
+			t.Error("kit must still contain the manual `restic restore` step")
+		}
+	})
+}
+
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {
 	t.Helper()
 	s, err := st.GetSettings()

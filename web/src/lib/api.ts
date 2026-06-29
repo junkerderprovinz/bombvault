@@ -101,6 +101,9 @@ export interface Settings {
   drillsEnabled: boolean;
   drillsSchedule: string;
   drillsSubsetPct: number;
+  /** True once the user has downloaded + safely stored the encryption recovery
+   *  kit, which dismisses the dashboard nag. */
+  recoveryKitAck: boolean;
 }
 
 export interface GetSettingsResponse {
@@ -570,6 +573,16 @@ export function putSettings(settings: Settings): Promise<OkEnvelope> {
     method: "PUT",
     body: JSON.stringify(settings),
   });
+}
+
+/**
+ * GET /api/recovery-kit — URL that streams the encryption-key recovery kit as a
+ * download (bombvault-recovery-kit.md). Used as a plain <a href> with download:
+ * the GET carries the session cookie, so the browser saves the file. The kit
+ * contains the master APP_KEY + the derived restic password — store it offline.
+ */
+export function recoveryKitUrl(): string {
+  return "/api/recovery-kit";
 }
 
 /** POST /api/check/{domain} — verify a domain's restic repo integrity. */

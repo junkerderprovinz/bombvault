@@ -80,6 +80,10 @@ type Settings struct {
 	// DrillsSubsetPct is the percentage of pack data each drill reads back and
 	// re-verifies (`restic check --read-data-subset`). Clamped 1..100; defaults to 5.
 	DrillsSubsetPct int
+	// RecoveryKitAck records that the user has downloaded + safely stored the
+	// encryption-key recovery kit, so the dashboard nag can be dismissed. Default
+	// false (the nag shows while encryption is on and this is unset).
+	RecoveryKitAck bool
 }
 
 // GetSettings returns the current app settings.
@@ -96,11 +100,12 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       offsite_limit_upload, offsite_limit_download,
 		       rclone_conf, notify_conf, cloud_conf,
 		       metrics_enabled, metrics_token,
-		       drills_enabled, drills_schedule, drills_subset_pct
+		       drills_enabled, drills_schedule, drills_subset_pct,
+		       recovery_kit_ack
 		FROM settings WHERE id = 1`)
 
 	var s Settings
-	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled, drillsEnabled int
+	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled, drillsEnabled, recoveryKitAck int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
@@ -114,6 +119,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
 		&metricsEnabled, &s.MetricsToken,
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct,
+		&recoveryKitAck,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -127,6 +133,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.FlashEnabled = flashEnabled != 0
 	s.MetricsEnabled = metricsEnabled != 0
 	s.DrillsEnabled = drillsEnabled != 0
+	s.RecoveryKitAck = recoveryKitAck != 0
 	return s, nil
 }
 
@@ -169,7 +176,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  metrics_token          = ?,
 		  drills_enabled         = ?,
 		  drills_schedule        = ?,
-		  drills_subset_pct      = ?
+		  drills_subset_pct      = ?,
+		  recovery_kit_ack       = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -186,6 +194,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.RcloneConf, s.NotifyConf, s.CloudConf,
 		boolInt(s.MetricsEnabled), s.MetricsToken,
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct,
+		boolInt(s.RecoveryKitAck),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

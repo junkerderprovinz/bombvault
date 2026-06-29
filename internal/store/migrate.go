@@ -298,6 +298,14 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_drills_subset_pct",
 		sql:     "ALTER TABLE settings ADD COLUMN drills_subset_pct INTEGER NOT NULL DEFAULT 5;",
 	},
+	{
+		// Acknowledgement that the user has downloaded + safely stored the
+		// encryption-key recovery kit, so the dashboard nag can be dismissed.
+		// Default 0 (the nag shows while encryption is on and this is unset).
+		version: 32,
+		name:    "settings_recovery_kit_ack",
+		sql:     "ALTER TABLE settings ADD COLUMN recovery_kit_ack INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

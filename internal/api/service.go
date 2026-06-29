@@ -3455,6 +3455,125 @@ func (s *Service) SetCloudCreds(c CloudCreds) error {
 	return s.store.UpdateSettings(settings)
 }
 
+// ---------------------------------------------------------------------------
+// Encryption-key recovery kit (disaster recovery without a running BombVault)
+// ---------------------------------------------------------------------------
+
+// recoveryRepo is one domain's resolved repo locations for the recovery kit.
+type recoveryRepo struct {
+	Domain  string
+	Local   string
+	Offsite string // "" when none configured
+}
+
+// RecoveryKit builds the plain-text/markdown recovery document the authenticated
+// owner downloads to survive a loss of BombVault itself. With encryption ON it
+// contains the master APP_KEY and the SAME APP_KEY-derived restic repository
+// password the engine uses (restickey.Derive), the per-domain repo locations, and
+// step-by-step manual `restic restore` instructions that need no BombVault
+// container. With encryption OFF the repos use `--insecure-no-password`, so the
+// kit's value is mainly the repo locations + the instructions.
+//
+// The document contains the master key, so it must never be logged and must be
+// stored offline by the user (the handler streams it as an attachment only to the
+// session-authenticated owner).
+func (s *Service) RecoveryKit() (string, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+
+	// Resolve each domain's local + off-site repo locations from the configured
+	// settings (the same resolution the engine uses), so the kit names the real
+	// places the data lives. A resolution failure for one domain leaves that line
+	// blank rather than failing the whole kit.
+	repos := make([]recoveryRepo, 0, 3)
+	for _, d := range []string{"containers", "vms", "flash"} {
+		rr := recoveryRepo{Domain: d}
+		if loc, rErr := s.repoFor(settings, d, "local"); rErr == nil {
+			rr.Local = loc
+		}
+		if off := s.offsiteRepoFor(d, settings); off != "" {
+			if loc, rErr := s.resolveRepo(off); rErr == nil {
+				rr.Offsite = loc
+			} else {
+				rr.Offsite = off
+			}
+		}
+		repos = append(repos, rr)
+	}
+
+	var b strings.Builder
+	w := func(format string, a ...any) { fmt.Fprintf(&b, format, a...) }
+
+	w("# BombVault encryption-key recovery kit\n\n")
+	w("Generated: %s\n\n", time.Now().Format(time.RFC1123))
+	w("> WARNING: this file is the master secret for your encrypted backups.\n")
+	w("> It contains your APP_KEY and the derived restic repository password.\n")
+	w("> Store it OFFLINE and securely (a password manager or printed copy in a safe).\n")
+	w("> Anyone with this file can read and restore your backups.\n\n")
+
+	w("## Encryption\n\n")
+	if settings.EncryptionEnabled {
+		password := restickey.Derive(s.cfg.AppKey)
+		w("Status: ENABLED\n\n")
+		w("APP_KEY (the master key — recreate the BombVault container with this exact value):\n\n")
+		w("    %s\n\n", s.cfg.AppKey)
+		w("restic repository password (derived from APP_KEY; use this with plain restic):\n\n")
+		w("    %s\n\n", password)
+	} else {
+		w("Status: DISABLED\n\n")
+		w("The repositories are created WITHOUT a password (restic --insecure-no-password).\n")
+		w("There is no key to lose; the value of this kit is the repository locations and\n")
+		w("the restore instructions below.\n\n")
+	}
+
+	w("## Repository locations\n\n")
+	w("Paths are inside the BombVault container, under the host data mount (%s).\n", s.cfg.HostMountRoot)
+	w("On the host they live under your backup share; remote backends (rclone:/s3:/rest:/sftp:) are used as shown.\n\n")
+	for _, rr := range repos {
+		w("- %s (local): %s\n", rr.Domain, orNone(rr.Local))
+		if rr.Offsite != "" {
+			w("- %s (off-site): %s\n", rr.Domain, rr.Offsite)
+		}
+	}
+	w("\n")
+
+	w("## Manual restore without BombVault\n\n")
+	w("You can restore directly with the restic CLI, no BombVault container required.\n\n")
+	w("1. Install restic (https://restic.net) on any machine that can reach the repository.\n")
+	if settings.EncryptionEnabled {
+		w("2. Set the repository password from this kit:\n\n")
+		w("       export RESTIC_PASSWORD='%s'\n\n", restickey.Derive(s.cfg.AppKey))
+	} else {
+		w("2. The repositories have no password — pass --insecure-no-password to every\n")
+		w("   restic command below (e.g. `restic -r <repo> --insecure-no-password snapshots`).\n\n")
+	}
+	w("3. List the snapshots in a repository (use a path or remote from the list above):\n\n")
+	w("       restic -r <repo> snapshots\n\n")
+	w("4. Restore a snapshot into a target directory (`restic restore`):\n\n")
+	w("       restic -r <repo> restore <snapshot-id> --target <restore-dir>\n\n")
+	w("Notes:\n")
+	w("- For a LOCAL repo, point <repo> at the backup folder on disk (the path above is the\n")
+	w("  container view; on the host it is your backup share, e.g. /mnt/user/<...>).\n")
+	w("- For an rclone remote, configure rclone (~/.config/rclone/rclone.conf) and use the\n")
+	w("  repo verbatim, e.g. `restic -r rclone:remote:bucket/path snapshots`.\n")
+	w("- For an S3/B2/REST/SFTP remote, export the backend credentials restic expects\n")
+	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
+	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
+
+	return b.String(), nil
+}
+
+// orNone returns s, or "(not resolved)" when s is empty, so a blank repo line in
+// the recovery kit reads clearly instead of trailing off.
+func orNone(s string) string {
+	if s == "" {
+		return "(not resolved)"
+	}
+	return s
+}
+
 // notifyBackup sends a best-effort notification for a completed backup. It reads
 // the stored config each call (cheap; backups are infrequent) and is a no-op when
 // notifications are off.
