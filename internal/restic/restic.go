@@ -60,6 +60,20 @@ type Snapshot struct {
 	Hostname string   `json:"hostname"`
 }
 
+// StatsResult holds the fields we extract from `restic stats --json`. Which
+// fields restic populates depends on the --mode:
+//   - mode "raw-data":     TotalSize = physical (deduplicated + compressed)
+//     repository size; BlobCount = total stored blobs.
+//   - mode "restore-size": TotalSize = logical restore size; FileCount = total
+//     files that would be restored.
+//
+// A field not populated for the chosen mode stays zero.
+type StatsResult struct {
+	TotalSize int64 `json:"total_size"`
+	BlobCount int64 `json:"total_blob_count"`
+	FileCount int64 `json:"total_file_count"`
+}
+
 // Restic is the adapter for calling the restic CLI.
 type Restic struct {
 	// Bin is the path (or name) of the restic binary.  Defaults to "restic".
@@ -241,6 +255,20 @@ func SnapshotsArgs(repo string, m Mode) []string {
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--json")
+	return args
+}
+
+// StatsArgs returns the argv slice for `restic stats --json --mode <mode>`.
+// mode is restic's --mode value: "raw-data" reports the physical
+// (deduplicated + compressed) repository size and blob count; "restore-size"
+// reports the logical size and file count of the restored data. The mode is a
+// fixed caller-chosen literal, never user input.
+func StatsArgs(repo, mode string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "stats", "--json", "--mode", mode)
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
 	return args
 }
 
@@ -665,6 +693,21 @@ func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot,
 		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
 	}
 	return snaps, nil
+}
+
+// Stats returns repository statistics for the chosen --mode (see StatsArgs).
+// restic stats --json emits a single JSON object, so it is parsed in one shot
+// (the buffered run, like Snapshots — not the streaming progress path).
+func (r Restic) Stats(ctx context.Context, repo, mode string, m Mode) (StatsResult, error) {
+	out, err := r.run(ctx, StatsArgs(repo, mode, m), m)
+	if err != nil {
+		return StatsResult{}, err
+	}
+	var res StatsResult
+	if err := json.Unmarshal(out, &res); err != nil {
+		return StatsResult{}, fmt.Errorf("restic stats: parse JSON: %w", err)
+	}
+	return res, nil
 }
 
 // Ls lists the files/dirs in a snapshot. restic ls --json emits one JSON object

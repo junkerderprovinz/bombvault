@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
@@ -19,6 +19,19 @@ function relativeTime(unix: number): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+// humanBytes formats a byte count with a binary (1024) unit and one decimal.
+function humanBytes(n: number): string {
+  if (!n || n <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -660,6 +673,166 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Sparkline — hand-rolled inline SVG trend line (no charting lib)
+// ---------------------------------------------------------------------------
+
+function Sparkline({
+  values,
+  width = 120,
+  height = 28,
+}: {
+  values: number[];
+  width?: number;
+  height?: number;
+}) {
+  // Need at least two points to draw a line.
+  if (!values || values.length < 2) return null;
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min;
+  const pad = 2; // keep the stroke off the edges
+  const usableH = height - pad * 2;
+  const usableW = width - pad * 2;
+  const step = usableW / (values.length - 1);
+
+  const points = values
+    .map((v, i) => {
+      const x = pad + i * step;
+      // Flat line when all values are equal (avoid divide-by-zero).
+      const y = span === 0 ? height / 2 : pad + usableH - ((v - min) / span) * usableH;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <span className="text-[#78a9ff] shrink-0">
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="block"
+        aria-hidden="true"
+      >
+        <polyline
+          points={points}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Storage card — repo size + dedup trend per domain
+// ---------------------------------------------------------------------------
+
+type StorageDomain = "containers" | "vms" | "flash";
+
+interface DomainStats {
+  domain: StorageDomain;
+  stats: RepoStat[];
+  latest: RepoStat | null;
+}
+
+function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [data, setData] = useState<DomainStats[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const domains: StorageDomain[] = ["containers", "vms", "flash"];
+    Promise.all(domains.map((d) => getStats(d, "local", 90)))
+      .then((results) => {
+        if (!active) return;
+        setData(
+          results.map((res, i) => ({
+            domain: domains[i],
+            stats: res.ok ? (res.stats ?? []) : [],
+            latest: res.ok ? (res.latest ?? null) : null,
+          }))
+        );
+      })
+      .catch(() => {/* non-fatal */})
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const domainLabel = (d: StorageDomain): string => {
+    switch (d) {
+      case "containers":
+        return t("dashboard.domainContainers");
+      case "vms":
+        return t("dashboard.domainVMs");
+      case "flash":
+        return t("dashboard.domainFlash");
+    }
+  };
+
+  const anyData = !!data && data.some((d) => d.latest != null);
+
+  return (
+    <Card title={t("dashboard.storageTitle")}>
+      {loading && (
+        <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
+      )}
+      {!loading && !anyData && (
+        <p className="text-sm text-carbon-textMuted">{t("dashboard.noStats")}</p>
+      )}
+      {!loading && anyData && data && (
+        <div className="divide-y divide-carbon-border">
+          {data.map((d) => {
+            const has = d.latest != null;
+            const dedup =
+              d.latest && d.latest.restoreSize > 0 && d.latest.rawSize > 0
+                ? `${(d.latest.restoreSize / d.latest.rawSize).toFixed(1)}x`
+                : "—";
+            return (
+              <div key={d.domain} className="flex items-center gap-3 py-2.5 text-sm">
+                <span
+                  className={`font-medium w-28 shrink-0 truncate ${
+                    has ? "text-carbon-text" : "text-carbon-textMuted"
+                  }`}
+                >
+                  {domainLabel(d.domain)}
+                </span>
+                {has && d.latest ? (
+                  <>
+                    <span className="text-carbon-text tabular-nums w-20 shrink-0 text-right">
+                      {humanBytes(d.latest.rawSize)}
+                    </span>
+                    <span className="text-carbon-textMuted text-xs shrink-0 w-24">
+                      {t("dashboard.dedup")} {dedup}
+                    </span>
+                    <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
+                      {d.latest.snapshots} {t("dashboard.snapshotsLabel")}
+                    </span>
+                    <span className="flex-1" />
+                    <Sparkline values={d.stats.map((s) => s.rawSize)} />
+                  </>
+                ) : (
+                  <span className="text-xs text-carbon-textMuted flex-1">
+                    {t("dashboard.noStats")}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard page
 // ---------------------------------------------------------------------------
 
@@ -697,6 +870,9 @@ export function Dashboard() {
 
       {/* Backup health heatmap — full width */}
       <HealthHeatmapCard t={t} />
+
+      {/* Storage — repo size + dedup trend per domain — full width */}
+      <StorageCard t={t} />
 
       {/* Spike status — full width */}
       <SpikeCard t={t} />

@@ -86,6 +86,10 @@ type ResticEngine interface {
 	// Copy replicates snapshots from srcRepo into destRepo (restic copy) for
 	// off-site backup. Empty ids copy everything not already in dest.
 	Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, mode restic.Mode) error
+	// Stats returns repository statistics for the chosen --mode ("raw-data" for
+	// the physical/deduplicated size + blob count; "restore-size" for the logical
+	// size + file count). Used to sample the repo-size trend.
+	Stats(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -574,6 +578,82 @@ func (s *Service) BackupHistory(days int) ([]HistoryDay, error) {
 		return nil, fmt.Errorf("read runs: %w", err)
 	}
 	return bucketRunsByDay(runs, s.runDomains(), startUnix, now.Unix()), nil
+}
+
+// repoStatsMinInterval is the minimum age of the latest sample before a backup
+// re-collects repo stats. Stats (two restic stats passes over the whole repo)
+// are expensive, so once a day is plenty for a size/dedup trend — a domain
+// backed up many times an hour samples only once.
+const repoStatsMinInterval = 20 * time.Hour
+
+// CollectStats samples a domain's repository size for source ("local"/"offsite")
+// and records it for the size/dedup trend. It is best-effort and idempotent: a
+// missing or empty (zero-snapshot) repo records nothing and returns nil, so it
+// never turns an otherwise-good backup into a failure. Any restic error IS
+// returned so the (throttled) caller can log it.
+func (s *Service) CollectStats(ctx context.Context, domain, source string) error {
+	settings, repo, err := s.domainRepoSource(domain, source)
+	if err != nil {
+		return err
+	}
+	// No repo yet (local not initialised) → nothing to measure, not an error.
+	if localRepoMissing(repo) {
+		return nil
+	}
+	mode := s.ModeFor(settings)
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return err
+	}
+	if len(snaps) == 0 {
+		return nil // empty repo — nothing to measure
+	}
+	raw, err := s.engine.Stats(ctx, repo, "raw-data", mode)
+	if err != nil {
+		return err
+	}
+	restoreSize, err := s.engine.Stats(ctx, repo, "restore-size", mode)
+	if err != nil {
+		return err
+	}
+	return s.store.AddRepoStat(store.RepoStat{
+		Domain:      domain,
+		Source:      source,
+		At:          time.Now().Unix(),
+		RawSize:     raw.TotalSize,
+		RestoreSize: restoreSize.TotalSize,
+		Snapshots:   int64(len(snaps)),
+	})
+}
+
+// RepoStats returns the recorded repo-size samples for a domain + source
+// (ascending by time), a thin passthrough to the store.
+func (s *Service) RepoStats(domain, source string, limit int) ([]store.RepoStat, error) {
+	return s.store.ListRepoStats(domain, source, limit)
+}
+
+// maybeCollectStats samples a domain's LOCAL repo size after a successful backup,
+// throttled to repoStatsMinInterval so frequent backups don't re-scan the repo
+// each time. It NEVER blocks or fails the backup: the work runs in a detached
+// goroutine (request values kept, cancellation dropped, with its own timeout)
+// and any error is only logged. Call this on each domain's success path.
+func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
+	if latest, found, err := s.store.LatestRepoStat(domain, "local"); err != nil {
+		log.Printf("api: stats: %s: could not read latest sample (skipping): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	} else if found && time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
+		return // sampled recently enough
+	}
+	// Detach from the request (keep its values) so the sampling survives the
+	// handler returning, with a hard cap so a wedged restic can't leak a goroutine.
+	bg := context.WithoutCancel(ctx)
+	go func() {
+		cctx, cancel := context.WithTimeout(bg, 5*time.Minute)
+		defer cancel()
+		if err := s.CollectStats(cctx, domain, "local"); err != nil {
+			log.Printf("api: stats: %s: collect failed (backup is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
 }
 
 // copyToOffsite replicates a domain's local repo to its off-site repo with
@@ -1068,6 +1148,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	}
 	s.applyRetention(ctx, repo, settings, mode)
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
+	s.maybeCollectStats(ctx, "containers")
 	return sum, nil
 }
 
@@ -2185,6 +2266,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	}
 	s.applyRetention(ctx, repo, settings, mode)
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
+	s.maybeCollectStats(ctx, "vms")
 	return sum, nil
 }
 
@@ -2413,6 +2495,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	}
 	s.applyRetention(ctx, repo, settings, mode)
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
+	s.maybeCollectStats(ctx, "flash")
 	return sum, nil
 }
 

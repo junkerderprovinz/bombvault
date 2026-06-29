@@ -176,3 +176,20 @@ func TestSnapshotsArgs(t *testing.T) {
 		}
 	})
 }
+
+func TestStatsArgs(t *testing.T) {
+	t.Run("encrypted raw-data", func(t *testing.T) {
+		got := restic.StatsArgs("/repo", "raw-data", restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "stats", "--json", "--mode", "raw-data"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted restore-size adds insecure flag", func(t *testing.T) {
+		got := restic.StatsArgs("/repo", "restore-size", restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "stats", "--json", "--mode", "restore-size", "--insecure-no-password"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}

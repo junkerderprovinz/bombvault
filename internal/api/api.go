@@ -115,6 +115,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("GET /api/status", h.handleStatus)
 	mux.HandleFunc("GET /api/history", h.handleHistory)
+	mux.HandleFunc("GET /api/stats", h.handleStats)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 	mux.HandleFunc("GET /api/progress", h.handleProgress)
 

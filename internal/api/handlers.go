@@ -1037,6 +1037,49 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"days": hist}))
 }
 
+// handleStats returns a domain's recorded repository-size samples for the
+// size/dedup trend. GET /api/stats?domain=&source=&limit= — domain ∈ {containers,
+// vms, flash}; source ∈ {local, offsite} (default local); limit defaults to 90,
+// clamped to 1..365. The response carries the ascending sample list plus the
+// latest sample (or null when there is none) for the headline figure.
+func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	source := sourceParam(r)
+
+	limit := 90
+	if q := r.URL.Query().Get("limit"); q != "" {
+		if n, err := strconv.Atoi(q); err == nil {
+			limit = n
+		}
+	}
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 365 {
+		limit = 365
+	}
+
+	stats, err := h.svc.RepoStats(domain, source, limit)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if stats == nil {
+		stats = []store.RepoStat{}
+	}
+	var latest any // null when there are no samples yet
+	if len(stats) > 0 {
+		latest = stats[len(stats)-1]
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"stats": stats, "latest": latest}))
+}
+
 // browseDirEntry is a single subdirectory entry in the browse response.
 type browseDirEntry struct {
 	Name string `json:"name"`

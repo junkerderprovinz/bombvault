@@ -218,6 +218,23 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_offsite_retention_keep_monthly",
 		sql:     "ALTER TABLE settings ADD COLUMN offsite_retention_keep_monthly INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// Repository-size history (per domain + source), sampled after a successful
+		// backup. Drives the dashboard's size/dedup trend. raw_size = physical
+		// (deduplicated + compressed) repo size; restore_size = logical size;
+		// snapshots = snapshot count at sample time.
+		version: 23,
+		name:    "repo_stats",
+		sql: `CREATE TABLE repo_stats (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  domain       TEXT    NOT NULL,
+  source       TEXT    NOT NULL,
+  at           INTEGER NOT NULL,
+  raw_size     INTEGER NOT NULL,
+  restore_size INTEGER NOT NULL,
+  snapshots    INTEGER NOT NULL
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
