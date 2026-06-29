@@ -923,9 +923,9 @@ type diffStat struct {
 	Files     int    `json:"files"`
 	Dirs      int    `json:"dirs"`
 	Others    int    `json:"others"`
-	DataBlobs int    `json:"data_blobs"`
-	TreeBlobs int    `json:"tree_blobs"`
-	Bytes     uint64 `json:"bytes"`
+	DataBlobs int   `json:"data_blobs"`
+	TreeBlobs int   `json:"tree_blobs"`
+	Bytes     int64 `json:"bytes"`
 }
 
 // diffStatistics mirrors restic's diff statistics JSON line

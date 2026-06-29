@@ -385,6 +385,91 @@ const tr: Partial<Translations> = {
   "export.button": "Dışa aktar (düz tar)",
   "export.exportedTo": "Şuraya aktarıldı:",
   "backup.configOnly": "Yalnızca yapılandırma — veri klasörü yok (tanım yeniden oluşturma için kaydedildi)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Tüm yedekleri sil",
+  "snapshots.deleteAllConfirm": "Bu VM'nin seçili kaynaktaki (yerel veya site dışı) TÜM yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır ve depo budanır. Bu işlem geri alınamaz.",
+  "snapshots.deletingAll": "Siliniyor…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Etiketler",
+  "snapshot.addTag": "Etiket ekle",
+  "snapshot.compare": "Karşılaştır",
+  "snapshot.pickTwo": "Karşılaştırmak için iki anlık görüntü seçin",
+  "snapshot.added": "eklendi",
+  "snapshot.removed": "kaldırıldı",
+  "snapshot.changed": "değişti",
+  "snapshot.diffSummary": "+{addedFiles} dosya ({addedBytes}), ~{changedFiles} değişti, -{removedFiles} dosya ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Klasöre geri yükle…",
+  "restore.toFolderHint": "Bu anlık görüntüyü yedekleme bağlama noktanızdaki bir klasöre çıkarır. Çalışan konteynere dokunulmaz.",
+  "restore.targetPath": "Hedef klasör",
+  "restore.restoredTo": "{path} konumuna geri yüklendi",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Kurtarma kiti",
+  "recovery.download": "Kurtarma kitini indir",
+  "recovery.why": "Şifreleme açıkken APP_KEY her yedeğin ana parolasıdır. Çalışan bir BombVault konteyneri olmadan bile geri yükleyebilmek için bir kurtarma kiti indirin (anahtar, türetilen restic parolası, depo konumları ve elle geri yükleme adımları). Çevrimdışı ve güvenli bir yerde saklayın.",
+  "recovery.nagTitle": "Kurtarma kitinizi saklayın",
+  "recovery.nagBody": "Şifreleme açıkken APP_KEY'inizi kaybetmek yedeklerinizi kaybetmek demektir. Kurtarma kitini indirin ve güvenli, çevrimdışı bir yerde saklayın.",
+  "recovery.stored": "Güvenle sakladım",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Site dışı bant genişliği",
+  "settings.limitUpload": "Yükleme sınırı (KiB/s)",
+  "settings.limitDownload": "İndirme sınırı (KiB/s)",
+  "settings.limitHint": "0 = sınırsız. restic'in site dışı aktarım hızını sınırlar.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "İzleme (Prometheus)",
+  "settings.metricsEnable": "/metrics'i yayınla",
+  "settings.metricsToken": "Scrape belirteci (isteğe bağlı)",
+  "settings.metricsHint": "Grafana/Uptime Kuma için /metrics adresinde Prometheus biçiminde metrikler. Bir belirteç ayarlanırsa Authorization: Bearer <token> ile scrape edin.",
+
+  // Notifications — Email (SMTP)
+  "notify.smtp": "E-posta (SMTP)",
+  "notify.smtpHost": "SMTP sunucusu",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Kullanıcı adı",
+  "notify.smtpPass": "Parola",
+  "notify.smtpFrom": "Gönderen adresi",
+  "notify.smtpTo": "Alıcı adresi",
+  "notify.smtpTls": "Şifreleme",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Geri yüklenebilirliği doğrula",
+  "verify.running": "Doğrulanıyor…",
+  "verify.ok": "Geri yüklenebilir olduğu doğrulandı",
+  "verify.failed": "Doğrulama başarısız",
+  "verify.last": "Son doğrulama {time}",
+  "verify.never": "Hiç doğrulanmadı",
+  "verify.auto": "Otomatik geri yükleme denetimleri",
+  "verify.subsetPct": "Veri örneği (%)",
+  "verify.hint": "Yedek verisinin sağlam ve geri yüklenebilir olduğunu kanıtlamak için düzenli olarak rastgele bir örneği okur.",
+  "verify.shield": "doğrulandı",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Koruma durumu",
+  "dashboard.rpoOk": "Güncel",
+  "dashboard.rpoWarn": "Yakında gerekli",
+  "dashboard.rpoOverdue": "Gecikmiş",
+  "dashboard.rpoNever": "Henüz yedek yok",
+  "dashboard.rpoOff": "Zamanlanmamış",
+  "dashboard.domainContainers": "Konteynerler",
+  "dashboard.domainVMs": "VM'ler",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Yedek sağlığı",
+  "dashboard.heatLess": "Az",
+  "dashboard.heatMore": "Çok",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Depolama",
+  "dashboard.dedup": "Yinelemesizleştirme",
+  "dashboard.snapshotsLabel": "Anlık görüntüler",
+  "dashboard.noStats": "Henüz veri yok",
 };
 
 export default tr;

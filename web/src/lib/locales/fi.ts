@@ -385,6 +385,91 @@ const fi: Partial<Translations> = {
   "export.button": "Vie (pelkkä tar)",
   "export.exportedTo": "Viety kohteeseen:",
   "backup.configOnly": "Vain asetukset — ei datakansioita (määritys tallennettu uudelleenluontia varten)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Poista kaikki varmuuskopiot",
+  "snapshots.deleteAllConfirm": "Poistetaanko KAIKKI tämän VM:n varmuuskopiot valitusta lähteestä (paikallinen tai etä)? Tilannevedokset poistetaan pysyvästi ja repositorio karsitaan. Tätä ei voi peruuttaa.",
+  "snapshots.deletingAll": "Poistetaan…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tunnisteet",
+  "snapshot.addTag": "Lisää tunniste",
+  "snapshot.compare": "Vertaa",
+  "snapshot.pickTwo": "Valitse kaksi tilannevedosta vertailtavaksi",
+  "snapshot.added": "lisätty",
+  "snapshot.removed": "poistettu",
+  "snapshot.changed": "muuttunut",
+  "snapshot.diffSummary": "+{addedFiles} tiedostoa ({addedBytes}), ~{changedFiles} muuttunut, -{removedFiles} tiedostoa ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Palauta kansioon…",
+  "restore.toFolderHint": "Purkaa tämän tilannevedoksen kansioon varmuuskopioliitoksesi alle. Käynnissä olevaan konttiin ei kosketa.",
+  "restore.targetPath": "Kohdekansio",
+  "restore.restoredTo": "Palautettu kohteeseen {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Palautuspaketti",
+  "recovery.download": "Lataa palautuspaketti",
+  "recovery.why": "Kun salaus on käytössä, APP_KEY on jokaisen varmuuskopion pääsalaisuus. Lataa palautuspaketti (avain, johdettu restic-salasana, repon sijainnit ja manuaaliset palautusvaiheet), jotta voit palauttaa myös ilman käynnissä olevaa BombVault-konttia. Säilytä se offline-tilassa ja turvallisesti.",
+  "recovery.nagTitle": "Tallenna palautuspakettisi",
+  "recovery.nagBody": "Kun salaus on käytössä, APP_KEY:n menettäminen tarkoittaa varmuuskopioiden menettämistä. Lataa palautuspaketti ja säilytä se turvallisessa ja offline-paikassa.",
+  "recovery.stored": "Olen tallentanut sen turvallisesti",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Etäkaistanleveys",
+  "settings.limitUpload": "Lähetysraja (KiB/s)",
+  "settings.limitDownload": "Latausraja (KiB/s)",
+  "settings.limitHint": "0 = rajoittamaton. Rajoittaa resticin etäsiirtonopeutta.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Valvonta (Prometheus)",
+  "settings.metricsEnable": "Tarjoa /metrics",
+  "settings.metricsToken": "Scrape-tunniste (valinnainen)",
+  "settings.metricsHint": "Prometheus-muotoiset mittarit osoitteessa /metrics Grafanalle/Uptime Kumalle. Jos tunniste on asetettu, scrape Authorization: Bearer <token> -otsikolla.",
+
+  // Notifications — SMTP
+  "notify.smtp": "Sähköposti (SMTP)",
+  "notify.smtpHost": "SMTP-isäntä",
+  "notify.smtpPort": "Portti",
+  "notify.smtpUser": "Käyttäjätunnus",
+  "notify.smtpPass": "Salasana",
+  "notify.smtpFrom": "Lähettäjän osoite",
+  "notify.smtpTo": "Vastaanottajan osoite",
+  "notify.smtpTls": "Salaus",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Vahvista palautettavuus",
+  "verify.running": "Vahvistetaan…",
+  "verify.ok": "Palautettavuus vahvistettu",
+  "verify.failed": "Vahvistus epäonnistui",
+  "verify.last": "Viimeksi vahvistettu {time}",
+  "verify.never": "Ei koskaan vahvistettu",
+  "verify.auto": "Automaattiset palautustarkistukset",
+  "verify.subsetPct": "Datanäyte (%)",
+  "verify.hint": "Lukee säännöllisesti satunnaisen näytteen varmuuskopiodatasta todistaakseen, että se on ehjä ja palautettavissa.",
+  "verify.shield": "vahvistettu",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Suojaustila",
+  "dashboard.rpoOk": "Ajan tasalla",
+  "dashboard.rpoWarn": "Pian erääntyvä",
+  "dashboard.rpoOverdue": "Myöhässä",
+  "dashboard.rpoNever": "Ei vielä varmuuskopiota",
+  "dashboard.rpoOff": "Ei aikataulutettu",
+  "dashboard.domainContainers": "Kontit",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Varmuuskopioiden kunto",
+  "dashboard.heatLess": "Vähemmän",
+  "dashboard.heatMore": "Enemmän",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Tallennustila",
+  "dashboard.dedup": "Deduplikointi",
+  "dashboard.snapshotsLabel": "Tilannevedokset",
+  "dashboard.noStats": "Ei vielä tietoja",
 };
 
 export default fi;

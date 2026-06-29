@@ -385,6 +385,91 @@ const no: Partial<Translations> = {
   "export.button": "Eksporter (vanlig tar)",
   "export.exportedTo": "Eksportert til:",
   "backup.configOnly": "Kun konfigurasjon — ingen datamapper (definisjon lagret for gjenoppretting)",
+
+  // Backups (delete all)
+  "snapshots.deleteAll": "Slett alle sikkerhetskopier",
+  "snapshots.deleteAllConfirm": "Slette ALLE sikkerhetskopier av denne VM-en fra den valgte kilden (lokal eller ekstern)? Snapshotene fjernes permanent og repositoriet beskjæres. Kan ikke angres.",
+  "snapshots.deletingAll": "Sletter…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tagger",
+  "snapshot.addTag": "Legg til tagg",
+  "snapshot.compare": "Sammenlign",
+  "snapshot.pickTwo": "Velg to snapshots å sammenligne",
+  "snapshot.added": "lagt til",
+  "snapshot.removed": "fjernet",
+  "snapshot.changed": "endret",
+  "snapshot.diffSummary": "+{addedFiles} filer ({addedBytes}), ~{changedFiles} endret, -{removedFiles} filer ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Gjenopprett til mappe…",
+  "restore.toFolderHint": "Pakker ut dette snapshotet til en mappe under sikkerhetskopi-monteringen din. Den kjørende kontaineren røres ikke.",
+  "restore.targetPath": "Målmappe",
+  "restore.restoredTo": "Gjenopprettet til {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Gjenopprettingssett",
+  "recovery.download": "Last ned gjenopprettingssett",
+  "recovery.why": "Med kryptering på er APP_KEY hovedhemmeligheten for hver sikkerhetskopi. Last ned et gjenopprettingssett (nøkkelen, det utledede restic-passordet, repo-plasseringer og manuelle gjenopprettingstrinn) så du kan gjenopprette selv uten en kjørende BombVault-kontainer. Oppbevar det offline og sikkert.",
+  "recovery.nagTitle": "Lagre gjenopprettingssettet ditt",
+  "recovery.nagBody": "Med kryptering på betyr tap av APP_KEY at du mister sikkerhetskopiene dine. Last ned gjenopprettingssettet og oppbevar det trygt og offline.",
+  "recovery.stored": "Jeg har lagret det trygt",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Ekstern båndbredde",
+  "settings.limitUpload": "Opplastingsgrense (KiB/s)",
+  "settings.limitDownload": "Nedlastingsgrense (KiB/s)",
+  "settings.limitHint": "0 = ubegrenset. Begrenser resticts eksterne overføringshastighet.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Overvåking (Prometheus)",
+  "settings.metricsEnable": "Eksponer /metrics",
+  "settings.metricsToken": "Scrape-token (valgfritt)",
+  "settings.metricsHint": "Metrikker i Prometheus-format på /metrics for Grafana/Uptime Kuma. Hvis et token er satt, scrape med Authorization: Bearer <token>.",
+
+  // Notifications — email (SMTP)
+  "notify.smtp": "E-post (SMTP)",
+  "notify.smtpHost": "SMTP-host",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Brukernavn",
+  "notify.smtpPass": "Passord",
+  "notify.smtpFrom": "Fra-adresse",
+  "notify.smtpTo": "Til-adresse",
+  "notify.smtpTls": "Kryptering",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verifiser gjenopprettbarhet",
+  "verify.running": "Verifiserer…",
+  "verify.ok": "Verifisert gjenopprettbar",
+  "verify.failed": "Verifisering mislyktes",
+  "verify.last": "Sist verifisert {time}",
+  "verify.never": "Aldri verifisert",
+  "verify.auto": "Automatiske gjenopprettingssjekker",
+  "verify.subsetPct": "Datautvalg (%)",
+  "verify.hint": "Leser jevnlig et tilfeldig utvalg av sikkerhetskopidataene for å bevise at de er intakte og gjenopprettbare.",
+  "verify.shield": "verifisert",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Beskyttelsesstatus",
+  "dashboard.rpoOk": "Oppdatert",
+  "dashboard.rpoWarn": "Snart forfalt",
+  "dashboard.rpoOverdue": "Forfalt",
+  "dashboard.rpoNever": "Ingen sikkerhetskopi ennå",
+  "dashboard.rpoOff": "Ikke planlagt",
+  "dashboard.domainContainers": "Kontainere",
+  "dashboard.domainVMs": "VM-er",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Sikkerhetskopihelse",
+  "dashboard.heatLess": "Mindre",
+  "dashboard.heatMore": "Mer",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Lagring",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snapshots",
+  "dashboard.noStats": "Ingen data ennå",
 };
 
 export default no;

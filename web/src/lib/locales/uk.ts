@@ -380,6 +380,91 @@ const uk: Partial<Translations> = {
   "export.button": "Експорт (звичайний tar)",
   "export.exportedTo": "Експортовано до:",
   "backup.configOnly": "Лише конфігурація — немає тек з даними (визначення збережено для відтворення)",
+
+  // Snapshots — delete all
+  "snapshots.deleteAll": "Видалити всі резервні копії",
+  "snapshots.deleteAllConfirm": "Видалити ВСІ резервні копії цієї VM з вибраного джерела (локального чи зовнішнього)? Знімки буде безповоротно видалено, а репозиторій очищено. Це не можна скасувати.",
+  "snapshots.deletingAll": "Видалення…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Теги",
+  "snapshot.addTag": "Додати тег",
+  "snapshot.compare": "Порівняти",
+  "snapshot.pickTwo": "Виберіть два знімки для порівняння",
+  "snapshot.added": "додано",
+  "snapshot.removed": "видалено",
+  "snapshot.changed": "змінено",
+  "snapshot.diffSummary": "+{addedFiles} файлів ({addedBytes}), ~{changedFiles} змінено, -{removedFiles} файлів ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Відновити до папки…",
+  "restore.toFolderHint": "Розпаковує цей знімок у папку в межах вашого монтування резервних копій. Робочий контейнер не зачіпається.",
+  "restore.targetPath": "Цільова папка",
+  "restore.restoredTo": "Відновлено до {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Набір для відновлення",
+  "recovery.download": "Завантажити набір для відновлення",
+  "recovery.why": "Коли шифрування увімкнено, ваш APP_KEY є головним секретом для кожної резервної копії. Завантажте набір для відновлення (ключ, похідний пароль restic, розташування репозиторіїв та кроки ручного відновлення), щоб мати змогу відновлювати дані навіть без запущеного контейнера BombVault. Зберігайте його офлайн і в безпеці.",
+  "recovery.nagTitle": "Збережіть свій набір для відновлення",
+  "recovery.nagBody": "Коли шифрування увімкнено, втрата APP_KEY означає втрату резервних копій. Завантажте набір для відновлення та зберігайте його в безпечному офлайн-місці.",
+  "recovery.stored": "Я зберіг його в безпеці",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Зовнішня пропускна здатність",
+  "settings.limitUpload": "Ліміт вивантаження (KiB/s)",
+  "settings.limitDownload": "Ліміт завантаження (KiB/s)",
+  "settings.limitHint": "0 = без обмежень. Обмежує швидкість зовнішньої передачі restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Моніторинг (Prometheus)",
+  "settings.metricsEnable": "Надавати /metrics",
+  "settings.metricsToken": "Токен зчитування (необов'язково)",
+  "settings.metricsHint": "Метрики у форматі Prometheus за адресою /metrics для Grafana/Uptime Kuma. Якщо встановлено токен, зчитуйте з Authorization: Bearer <token>.",
+
+  // Notifications — Email (SMTP)
+  "notify.smtp": "Електронна пошта (SMTP)",
+  "notify.smtpHost": "Хост SMTP",
+  "notify.smtpPort": "Порт",
+  "notify.smtpUser": "Ім'я користувача",
+  "notify.smtpPass": "Пароль",
+  "notify.smtpFrom": "Адреса відправника",
+  "notify.smtpTo": "Адреса отримувача",
+  "notify.smtpTls": "Шифрування",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Перевірити відновлюваність",
+  "verify.running": "Перевірка…",
+  "verify.ok": "Відновлюваність підтверджено",
+  "verify.failed": "Перевірка не пройдена",
+  "verify.last": "Востаннє перевірено {time}",
+  "verify.never": "Ще не перевірялося",
+  "verify.auto": "Автоматичні перевірки відновлення",
+  "verify.subsetPct": "Вибірка даних (%)",
+  "verify.hint": "Періодично зчитує випадкову вибірку даних резервної копії, щоб довести, що вони цілі та можуть бути відновлені.",
+  "verify.shield": "перевірено",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Стан захисту",
+  "dashboard.rpoOk": "Актуально",
+  "dashboard.rpoWarn": "Скоро потрібно",
+  "dashboard.rpoOverdue": "Прострочено",
+  "dashboard.rpoNever": "Ще немає копії",
+  "dashboard.rpoOff": "Без розкладу",
+  "dashboard.domainContainers": "Контейнери",
+  "dashboard.domainVMs": "Віртуальні машини",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Стан резервних копій",
+  "dashboard.heatLess": "Менше",
+  "dashboard.heatMore": "Більше",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Сховище",
+  "dashboard.dedup": "Дедуплікація",
+  "dashboard.snapshotsLabel": "Знімки",
+  "dashboard.noStats": "Даних ще немає",
 };
 
 export default uk;

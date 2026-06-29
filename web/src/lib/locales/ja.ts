@@ -377,6 +377,91 @@ const ja: Partial<Translations> = {
   "export.button": "エクスポート (プレーン tar)",
   "export.exportedTo": "エクスポート先:",
   "backup.configOnly": "設定のみ — データフォルダなし (再作成用に定義を保存しました)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "バックアップをすべて削除",
+  "snapshots.deleteAllConfirm": "選択中のソース（ローカルまたはオフサイト）からこの VM のバックアップをすべて削除しますか？スナップショットは完全に削除され、リポジトリが整理されます。元に戻せません。",
+  "snapshots.deletingAll": "削除中…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "タグ",
+  "snapshot.addTag": "タグを追加",
+  "snapshot.compare": "比較",
+  "snapshot.pickTwo": "比較するスナップショットを2つ選択してください",
+  "snapshot.added": "追加",
+  "snapshot.removed": "削除",
+  "snapshot.changed": "変更",
+  "snapshot.diffSummary": "+{addedFiles} ファイル ({addedBytes})、~{changedFiles} 変更、-{removedFiles} ファイル ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "フォルダーに復元…",
+  "restore.toFolderHint": "このスナップショットをバックアップマウント配下のフォルダーに展開します。実行中のコンテナには触れません。",
+  "restore.targetPath": "対象フォルダー",
+  "restore.restoredTo": "{path} に復元しました",
+
+  // Encryption-key recovery kit
+  "recovery.title": "リカバリーキット",
+  "recovery.download": "リカバリーキットをダウンロード",
+  "recovery.why": "暗号化が有効な場合、APP_KEY はすべてのバックアップのマスターシークレットです。リカバリーキット（鍵、導出された restic パスワード、リポジトリの場所、手動復元手順）をダウンロードしておけば、BombVault コンテナが稼働していなくても復元できます。オフラインで安全に保管してください。",
+  "recovery.nagTitle": "リカバリーキットを保存してください",
+  "recovery.nagBody": "暗号化が有効な場合、APP_KEY を失うとバックアップを失います。リカバリーキットをダウンロードし、安全なオフラインの場所に保管してください。",
+  "recovery.stored": "安全に保管しました",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "オフサイト帯域幅",
+  "settings.limitUpload": "アップロード制限 (KiB/s)",
+  "settings.limitDownload": "ダウンロード制限 (KiB/s)",
+  "settings.limitHint": "0 = 無制限。restic のオフサイト転送レートを制限します。",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "監視 (Prometheus)",
+  "settings.metricsEnable": "/metrics を公開",
+  "settings.metricsToken": "スクレイプトークン（任意）",
+  "settings.metricsHint": "Grafana/Uptime Kuma 用に /metrics で Prometheus 形式のメトリクスを公開します。トークンを設定した場合は Authorization: Bearer <token> でスクレイプしてください。",
+
+  // Email (SMTP)
+  "notify.smtp": "メール (SMTP)",
+  "notify.smtpHost": "SMTP ホスト",
+  "notify.smtpPort": "ポート",
+  "notify.smtpUser": "ユーザー名",
+  "notify.smtpPass": "パスワード",
+  "notify.smtpFrom": "送信元アドレス",
+  "notify.smtpTo": "宛先アドレス",
+  "notify.smtpTls": "暗号化",
+
+  // Restore-verification drills
+  "verify.now": "復元可能性を検証",
+  "verify.running": "検証中…",
+  "verify.ok": "復元可能と検証済み",
+  "verify.failed": "検証に失敗しました",
+  "verify.last": "最終検証 {time}",
+  "verify.never": "未検証",
+  "verify.auto": "自動復元チェック",
+  "verify.subsetPct": "データサンプル (%)",
+  "verify.hint": "定期的にバックアップデータのランダムなサンプルを読み取り、データが正常で復元可能であることを確認します。",
+  "verify.shield": "検証済み",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "保護ステータス",
+  "dashboard.rpoOk": "最新",
+  "dashboard.rpoWarn": "まもなく期限",
+  "dashboard.rpoOverdue": "期限切れ",
+  "dashboard.rpoNever": "バックアップなし",
+  "dashboard.rpoOff": "スケジュールなし",
+  "dashboard.domainContainers": "コンテナ",
+  "dashboard.domainVMs": "VM",
+  "dashboard.domainFlash": "フラッシュ",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "バックアップの健全性",
+  "dashboard.heatLess": "少",
+  "dashboard.heatMore": "多",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "ストレージ",
+  "dashboard.dedup": "重複排除",
+  "dashboard.snapshotsLabel": "スナップショット",
+  "dashboard.noStats": "データなし",
 };
 
 export default ja;

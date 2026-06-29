@@ -380,6 +380,91 @@ const ru: Partial<Translations> = {
   "export.button": "Экспорт (обычный tar)",
   "export.exportedTo": "Экспортировано в:",
   "backup.configOnly": "Только конфигурация — нет папок с данными (определение сохранено для пересоздания)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Удалить все резервные копии",
+  "snapshots.deleteAllConfirm": "Удалить ВСЕ резервные копии этой VM из выбранного источника (локального или внешнего)? Снимки будут безвозвратно удалены, а репозиторий очищен. Отменить нельзя.",
+  "snapshots.deletingAll": "Удаление…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Теги",
+  "snapshot.addTag": "Добавить тег",
+  "snapshot.compare": "Сравнить",
+  "snapshot.pickTwo": "Выберите два снимка для сравнения",
+  "snapshot.added": "добавлено",
+  "snapshot.removed": "удалено",
+  "snapshot.changed": "изменено",
+  "snapshot.diffSummary": "+{addedFiles} файлов ({addedBytes}), ~{changedFiles} изменено, -{removedFiles} файлов ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Восстановить в папку…",
+  "restore.toFolderHint": "Извлекает этот снимок в папку внутри монтирования резервных копий. Работающий контейнер не затрагивается.",
+  "restore.targetPath": "Целевая папка",
+  "restore.restoredTo": "Восстановлено в {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Набор для восстановления",
+  "recovery.download": "Скачать набор для восстановления",
+  "recovery.why": "При включённом шифровании ваш APP_KEY — это главный секрет для каждой резервной копии. Скачайте набор для восстановления (ключ, производный пароль restic, расположение репозиториев и шаги ручного восстановления), чтобы можно было восстановить данные даже без работающего контейнера BombVault. Храните его офлайн и в безопасности.",
+  "recovery.nagTitle": "Сохраните набор для восстановления",
+  "recovery.nagBody": "При включённом шифровании потеря APP_KEY означает потерю резервных копий. Скачайте набор для восстановления и храните его в надёжном офлайн-месте.",
+  "recovery.stored": "Я надёжно его сохранил",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Внешняя пропускная способность",
+  "settings.limitUpload": "Лимит отдачи (KiB/s)",
+  "settings.limitDownload": "Лимит загрузки (KiB/s)",
+  "settings.limitHint": "0 = без ограничений. Ограничивает скорость внешней передачи restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Мониторинг (Prometheus)",
+  "settings.metricsEnable": "Публиковать /metrics",
+  "settings.metricsToken": "Токен сбора (необязательно)",
+  "settings.metricsHint": "Метрики в формате Prometheus по адресу /metrics для Grafana/Uptime Kuma. Если задан токен, выполняйте сбор с заголовком Authorization: Bearer <token>.",
+
+  // Email (SMTP)
+  "notify.smtp": "Эл. почта (SMTP)",
+  "notify.smtpHost": "Хост SMTP",
+  "notify.smtpPort": "Порт",
+  "notify.smtpUser": "Имя пользователя",
+  "notify.smtpPass": "Пароль",
+  "notify.smtpFrom": "Адрес отправителя",
+  "notify.smtpTo": "Адрес получателя",
+  "notify.smtpTls": "Шифрование",
+
+  // Restore-verification drills
+  "verify.now": "Проверить восстановимость",
+  "verify.running": "Проверка…",
+  "verify.ok": "Восстановимость подтверждена",
+  "verify.failed": "Проверка не пройдена",
+  "verify.last": "Последняя проверка {time}",
+  "verify.never": "Ни разу не проверялось",
+  "verify.auto": "Автоматические проверки восстановления",
+  "verify.subsetPct": "Выборка данных (%)",
+  "verify.hint": "Периодически считывает случайную выборку данных резервной копии, чтобы убедиться, что они целы и восстановимы.",
+  "verify.shield": "проверено",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Состояние защиты",
+  "dashboard.rpoOk": "Актуально",
+  "dashboard.rpoWarn": "Скоро истекает",
+  "dashboard.rpoOverdue": "Просрочено",
+  "dashboard.rpoNever": "Резервной копии ещё нет",
+  "dashboard.rpoOff": "Без расписания",
+  "dashboard.domainContainers": "Контейнеры",
+  "dashboard.domainVMs": "Виртуальные машины",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Состояние резервных копий",
+  "dashboard.heatLess": "Меньше",
+  "dashboard.heatMore": "Больше",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Хранилище",
+  "dashboard.dedup": "Дедупликация",
+  "dashboard.snapshotsLabel": "Снимки",
+  "dashboard.noStats": "Данных пока нет",
 };
 
 export default ru;

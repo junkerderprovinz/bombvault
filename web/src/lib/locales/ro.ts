@@ -384,7 +384,95 @@ const ro: Partial<Translations> = {
   "stophook.hint": "Oprește aceste alte containere în timp ce acesta este copiat de rezervă (de exemplu o bază de date), apoi pornește-le din nou după aceea. Un nume de container pe linie.",
   "export.button": "Export (tar simplu)",
   "export.exportedTo": "Exportat în:",
-  "backup.configOnly": "Doar configurație — fără foldere de date (definiția salvată pentru recreare)",
+  "backup.configOnly": "Doar configurație, fără foldere de date (definiția salvată pentru recreare)",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Kit de recuperare",
+  "recovery.download": "Descarcă kitul de recuperare",
+  "recovery.why":
+    "Cu criptarea activată, APP_KEY este secretul principal pentru fiecare backup. Descarcă un kit de recuperare (cheia, parola restic derivată, locațiile depozitelor și pașii de restaurare manuală) ca să poți restaura chiar și fără un container BombVault în execuție. Păstrează-l offline și în siguranță.",
+  "recovery.nagTitle": "Salvează-ți kitul de recuperare",
+  "recovery.nagBody":
+    "Cu criptarea activată, pierderea APP_KEY înseamnă pierderea backupurilor. Descarcă kitul de recuperare și păstrează-l undeva sigur și offline.",
+  "recovery.stored": "L-am păstrat în siguranță",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Șterge toate copiile de rezervă",
+  "snapshots.deleteAllConfirm": "Ștergeți TOATE copiile de rezervă ale acestei VM din sursa selectată (locală sau externă)? Instantaneele sunt eliminate permanent și depozitul este curățat. Nu poate fi anulat.",
+  "snapshots.deletingAll": "Se șterge…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Etichete",
+  "snapshot.addTag": "Adaugă etichetă",
+  "snapshot.compare": "Compară",
+  "snapshot.pickTwo": "Alege două instantanee pentru comparare",
+  "snapshot.added": "adăugate",
+  "snapshot.removed": "eliminate",
+  "snapshot.changed": "modificate",
+  "snapshot.diffSummary": "+{addedFiles} fișiere ({addedBytes}), ~{changedFiles} modificate, -{removedFiles} fișiere ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Restaurează în folder…",
+  "restore.toFolderHint":
+    "Extrage acest instantaneu într-un folder de sub montarea ta de backup. Containerul în execuție nu este atins.",
+  "restore.targetPath": "Folder țintă",
+  "restore.restoredTo": "Restaurat în {path}",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Lățime de bandă externă",
+  "settings.limitUpload": "Limită încărcare (KiB/s)",
+  "settings.limitDownload": "Limită descărcare (KiB/s)",
+  "settings.limitHint": "0 = nelimitat. Limitează rata de transfer externă a restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitorizare (Prometheus)",
+  "settings.metricsEnable": "Expune /metrics",
+  "settings.metricsToken": "Token de scrape (opțional)",
+  "settings.metricsHint": "Metrici în format Prometheus la /metrics pentru Grafana/Uptime Kuma. Dacă este setat un token, fă scrape cu Authorization: Bearer <token>.",
+
+  // SMTP email notifications
+  "notify.smtp": "E-mail (SMTP)",
+  "notify.smtpHost": "Gazdă SMTP",
+  "notify.smtpPort": "Port",
+  "notify.smtpUser": "Nume utilizator",
+  "notify.smtpPass": "Parolă",
+  "notify.smtpFrom": "Adresă expeditor",
+  "notify.smtpTo": "Adresă destinatar",
+  "notify.smtpTls": "Criptare",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Verifică posibilitatea de restaurare",
+  "verify.running": "Se verifică…",
+  "verify.ok": "Restaurare verificată",
+  "verify.failed": "Verificare eșuată",
+  "verify.last": "Ultima verificare {time}",
+  "verify.never": "Niciodată verificat",
+  "verify.auto": "Verificări automate de restaurare",
+  "verify.subsetPct": "Eșantion de date (%)",
+  "verify.hint": "Citește periodic un eșantion aleatoriu din datele de backup pentru a dovedi că sunt intacte și restaurabile.",
+  "verify.shield": "verificat",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Stare protecție",
+  "dashboard.rpoOk": "La zi",
+  "dashboard.rpoWarn": "Scadent curând",
+  "dashboard.rpoOverdue": "Restant",
+  "dashboard.rpoNever": "Încă niciun backup",
+  "dashboard.rpoOff": "Neprogramat",
+  "dashboard.domainContainers": "Containere",
+  "dashboard.domainVMs": "VM-uri",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Sănătatea backupurilor",
+  "dashboard.heatLess": "Mai puțin",
+  "dashboard.heatMore": "Mai mult",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Stocare",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Instantanee",
+  "dashboard.noStats": "Încă niciun date",
 };
 
 export default ro;
