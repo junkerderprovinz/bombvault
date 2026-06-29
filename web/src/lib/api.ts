@@ -566,6 +566,37 @@ export function getHistory(days?: number): Promise<HistoryResponse> {
 }
 
 /**
+ * One repository-size sample for a domain at a point in time.
+ * `rawSize` is the physical (deduplicated + compressed) repo size, `restoreSize`
+ * the logical bytes those snapshots would restore to, `snapshots` the count.
+ */
+export interface RepoStat {
+  domain: string;
+  source: string;
+  at: number; // unix seconds
+  rawSize: number;
+  restoreSize: number;
+  snapshots: number;
+}
+
+export interface StatsResponse {
+  ok: boolean;
+  stats?: RepoStat[];
+  latest?: RepoStat | null;
+  error?: string;
+}
+
+/** GET /api/stats?domain=&source=&limit= — repo-size history for the storage card. */
+export function getStats(
+  domain: string,
+  source = "local",
+  limit = 90
+): Promise<StatsResponse> {
+  const qs = `?domain=${encodeURIComponent(domain)}&source=${encodeURIComponent(source)}&limit=${limit}`;
+  return fetchJSON(`/api/stats${qs}`);
+}
+
+/**
  * Lists the immediate subdirectories of <HostMountRoot>/<path>.
  * Pass an empty string (or omit) to list the mount root itself.
  */

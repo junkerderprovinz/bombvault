@@ -1388,6 +1388,8 @@ type fakeResticEngine struct {
 	forgetPolicyErr error
 	checkErr        error
 	unlockErr       error
+	statsCalls      []string // --mode value of each Stats call
+	statsErr        error
 	forgetPruned    bool // prune flag of the last Forget call
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
@@ -1493,6 +1495,17 @@ func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) 
 func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Mode) error {
 	f.copied = append(f.copied, srcRepo+"->"+destRepo)
 	return f.copyErr
+}
+
+func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mode) (restic.StatsResult, error) {
+	f.statsCalls = append(f.statsCalls, mode)
+	if f.statsErr != nil {
+		return restic.StatsResult{}, f.statsErr
+	}
+	if mode == "raw-data" {
+		return restic.StatsResult{TotalSize: 1000, BlobCount: 10}, nil
+	}
+	return restic.StatsResult{TotalSize: 5000, FileCount: 50}, nil
 }
 
 // initRepoSvc builds a service whose containers repo is marked initialised, so
@@ -1788,6 +1801,100 @@ func TestSnapshotsSelfHealsStaleLock(t *testing.T) {
 	}
 	if eng.snapshotsCalls != 2 {
 		t.Fatalf("expected snapshots to be retried once (2 calls), got %d", eng.snapshotsCalls)
+	}
+}
+
+// TestCollectStatsNoRepoIsNoop pins that CollectStats records nothing and returns
+// nil when the local repo has not been created yet — so the post-backup hook can
+// never turn a good backup into a failure on a fresh setup.
+func TestCollectStatsNoRepoIsNoop(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers" // never initialised (no config marker)
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.CollectStats(context.Background(), "containers", "local"); err != nil {
+		t.Fatalf("CollectStats on a missing repo must be a no-op, got %v", err)
+	}
+	if len(eng.statsCalls) != 0 {
+		t.Fatalf("Stats must not be called for a missing repo, got %v", eng.statsCalls)
+	}
+	if got, err := svc.RepoStats("containers", "local", 0); err != nil || len(got) != 0 {
+		t.Fatalf("no sample should be recorded, got %v err=%v", got, err)
+	}
+}
+
+// TestCollectStatsEmptyRepoIsNoop pins that an initialised but empty
+// (zero-snapshot) repo records nothing — Stats is never run over an empty repo.
+func TestCollectStatsEmptyRepoIsNoop(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{} // no snapshots
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.CollectStats(context.Background(), "containers", "local"); err != nil {
+		t.Fatalf("CollectStats on an empty repo must be a no-op, got %v", err)
+	}
+	if len(eng.statsCalls) != 0 {
+		t.Fatalf("Stats must not run on a zero-snapshot repo, got %v", eng.statsCalls)
+	}
+}
+
+// TestCollectStatsRecordsSample pins the happy path: a repo with snapshots is
+// sampled with both restic modes and one row is recorded.
+func TestCollectStatsRecordsSample(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111"}, {ID: "bbbb2222"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.CollectStats(context.Background(), "containers", "local"); err != nil {
+		t.Fatalf("CollectStats: %v", err)
+	}
+	if !contains(eng.statsCalls, "raw-data") || !contains(eng.statsCalls, "restore-size") {
+		t.Fatalf("both restic stats modes must be sampled, got %v", eng.statsCalls)
+	}
+	got, err := svc.RepoStats("containers", "local", 0)
+	if err != nil {
+		t.Fatalf("RepoStats: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected one recorded sample, got %d", len(got))
+	}
+	if got[0].RawSize != 1000 || got[0].RestoreSize != 5000 || got[0].Snapshots != 2 {
+		t.Fatalf("sample = %+v, want rawSize=1000 restoreSize=5000 snapshots=2", got[0])
 	}
 }
 

@@ -302,6 +302,12 @@ const en = {
   "dashboard.heatLess": "Less",
   "dashboard.heatMore": "More",
 
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Storage",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snapshots",
+  "dashboard.noStats": "No data yet",
+
   // Jobs page
   "nav.jobs": "Plans",
   "jobs.title": "Plans",
@@ -701,6 +707,12 @@ const de: Translations = {
   "dashboard.healthTitle": "Backup-Verlauf",
   "dashboard.heatLess": "Weniger",
   "dashboard.heatMore": "Mehr",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Speicher",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snapshots",
+  "dashboard.noStats": "Noch keine Daten",
 
   // Jobs page
   "nav.jobs": "Pläne",
