@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"log"
@@ -105,6 +106,53 @@ func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
 
 func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+// handleMetrics serves the opt-in Prometheus /metrics endpoint (GET /metrics).
+// It bypasses the session authGate (Prometheus can't carry the cookie) and is
+// gated by its own settings instead:
+//   - metrics disabled            → 404 (not served at all)
+//   - a metrics token is set      → require Authorization: Bearer <token>
+//     (constant-time compare), else 401
+//   - no token                    → open (LAN trust model, like /api/health)
+//
+// Only non-sensitive operational metrics are exposed (no repo paths, secrets, or
+// hostnames). The response is Prometheus text exposition format.
+func (h *Handler) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	enabled, token, err := h.svc.MetricsAccess()
+	if err != nil {
+		// Fail closed: a store error must not silently expose or 200 the endpoint.
+		log.Printf("api: metrics: settings read failed: %v", err)
+		http.Error(w, "metrics unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if !enabled {
+		http.NotFound(w, r) // opt-in: not served when disabled
+		return
+	}
+	if token != "" {
+		const prefix = "Bearer "
+		got := r.Header.Get("Authorization")
+		ok := strings.HasPrefix(got, prefix) &&
+			subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(got, prefix)), []byte(token)) == 1
+		if !ok {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="metrics"`)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	body, err := h.svc.Metrics()
+	if err != nil {
+		log.Printf("api: metrics: build failed: %v", err)
+		http.Error(w, "metrics error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", metricsContentType)
+	w.WriteHeader(http.StatusOK)
+	if _, wErr := w.Write([]byte(body)); wErr != nil {
+		log.Printf("api: metrics: write failed: %v", wErr)
+	}
 }
 
 // containerView is the per-container row returned by GET /api/containers.
@@ -630,6 +678,9 @@ type settingsView struct {
 	// Off-site transfer bandwidth caps (KiB/s; 0 = unlimited).
 	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
 	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
+	// Opt-in Prometheus /metrics endpoint + its optional bearer scrape token.
+	MetricsEnabled bool   `json:"metricsEnabled"`
+	MetricsToken   string `json:"metricsToken"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -661,6 +712,8 @@ func toView(s store.Settings) settingsView {
 		OffsiteRetentionKeepMonthly: s.OffsiteRetentionKeepMonthly,
 		OffsiteLimitUpload:          s.OffsiteLimitUpload,
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
+		MetricsEnabled:              s.MetricsEnabled,
+		MetricsToken:                s.MetricsToken,
 	}
 }
 
@@ -784,6 +837,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteRetentionKeepMonthly: max(0, v.OffsiteRetentionKeepMonthly),
 		OffsiteLimitUpload:          max(0, v.OffsiteLimitUpload),
 		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
+		MetricsEnabled:              v.MetricsEnabled,
+		MetricsToken:                strings.TrimSpace(v.MetricsToken),
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,
@@ -1336,6 +1391,8 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 //   - GET  /api/auth
 //   - POST /api/login
 //   - GET  /api/health
+//   - GET  /metrics  (Prometheus can't carry the session cookie; the endpoint
+//     gates itself via its own enabled flag + optional bearer token)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -1346,7 +1403,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
 			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health":
+			case "/api/auth", "/api/login", "/api/health", "/metrics":
 				next.ServeHTTP(w, r)
 			default:
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
@@ -1363,9 +1420,10 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// Always allow the public auth + health endpoints.
+		// Always allow the public auth + health endpoints, plus the self-gating
+		// /metrics scrape endpoint (Prometheus can't carry the session cookie).
 		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health":
+		case "/api/auth", "/api/login", "/api/health", "/metrics":
 			next.ServeHTTP(w, r)
 			return
 		}

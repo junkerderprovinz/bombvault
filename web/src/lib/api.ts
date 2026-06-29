@@ -96,6 +96,8 @@ export interface Settings {
   offsiteRetentionKeepMonthly: number;
   offsiteLimitUpload: number;
   offsiteLimitDownload: number;
+  metricsEnabled: boolean;
+  metricsToken: string;
 }
 
 export interface GetSettingsResponse {

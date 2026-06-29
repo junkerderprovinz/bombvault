@@ -63,6 +63,13 @@ type Settings struct {
 	// CloudConf is the cloud-backend credentials (S3 keys, restic-REST auth) for
 	// off-site repos, an AES-256-GCM-encrypted JSON blob (base64). Empty = none.
 	CloudConf string
+	// MetricsEnabled exposes the Prometheus-format /metrics endpoint when true.
+	// Default false (opt-in): when off, /metrics returns 404 and is not served.
+	MetricsEnabled bool
+	// MetricsToken is an optional bearer token for /metrics. When set, a scrape
+	// must send `Authorization: Bearer <token>`; empty means open (LAN trust
+	// model, like /api/health). The endpoint exposes only non-sensitive metrics.
+	MetricsToken string
 }
 
 // GetSettings returns the current app settings.
@@ -77,11 +84,12 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
 		       offsite_limit_upload, offsite_limit_download,
-		       rclone_conf, notify_conf, cloud_conf
+		       rclone_conf, notify_conf, cloud_conf,
+		       metrics_enabled, metrics_token
 		FROM settings WHERE id = 1`)
 
 	var s Settings
-	var encEnabled, contEnabled, vmsEnabled, flashEnabled int
+	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
@@ -93,6 +101,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
 		&s.OffsiteLimitUpload, &s.OffsiteLimitDownload,
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
+		&metricsEnabled, &s.MetricsToken,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -104,6 +113,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.ContainersEnabled = contEnabled != 0
 	s.VMsEnabled = vmsEnabled != 0
 	s.FlashEnabled = flashEnabled != 0
+	s.MetricsEnabled = metricsEnabled != 0
 	return s, nil
 }
 
@@ -141,7 +151,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  offsite_limit_download = ?,
 		  rclone_conf            = ?,
 		  notify_conf            = ?,
-		  cloud_conf             = ?
+		  cloud_conf             = ?,
+		  metrics_enabled        = ?,
+		  metrics_token          = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -156,6 +168,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
 		s.OffsiteLimitUpload, s.OffsiteLimitDownload,
 		s.RcloneConf, s.NotifyConf, s.CloudConf,
+		boolInt(s.MetricsEnabled), s.MetricsToken,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

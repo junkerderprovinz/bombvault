@@ -83,6 +83,12 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/logout", h.handleLogout)
 	mux.HandleFunc("POST /api/auth/password", h.handleSetPassword)
 
+	// Opt-in Prometheus scrape endpoint. NOT under /api so it never collides with
+	// the JSON routes; it bypasses the session authGate (allow-listed there) and
+	// is gated by its own settings (enabled flag + optional bearer token) inside
+	// the handler instead.
+	mux.HandleFunc("GET /metrics", h.handleMetrics)
+
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
 	mux.HandleFunc("POST /api/containers/backup-all", h.handleBackupAll)

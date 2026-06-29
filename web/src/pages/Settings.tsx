@@ -1217,6 +1217,9 @@ export function SettingsPage() {
   const [limSaveState, setLimSaveState] = useState<SaveState>("idle");
   const [limSaveError, setLimSaveError] = useState<string | null>(null);
 
+  const [metricsSaveState, setMetricsSaveState] = useState<SaveState>("idle");
+  const [metricsSaveError, setMetricsSaveError] = useState<string | null>(null);
+
   // "Use containers schedule for VMs and Flash too" checkbox
   const [syncSchedules, setSyncSchedules] = useState(false);
 
@@ -1725,6 +1728,50 @@ export function SettingsPage() {
               },
               setLimSaveState,
               setLimSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Monitoring (Prometheus)                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.metrics")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
+        <ToggleRow
+          label={t("settings.metricsEnable")}
+          description="GET /metrics"
+          checked={settings.metricsEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, metricsEnabled: v } : prev)
+          }
+        />
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs text-carbon-textSub">{t("settings.metricsToken")}</span>
+          <input
+            type="text"
+            value={settings.metricsToken}
+            spellCheck={false}
+            autoComplete="off"
+            onChange={(e) =>
+              setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
+            }
+            placeholder=""
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+          />
+        </label>
+        <SaveBar
+          state={metricsSaveState}
+          error={metricsSaveError}
+          onSave={() =>
+            void save(
+              {
+                metricsEnabled: settings.metricsEnabled,
+                metricsToken: settings.metricsToken,
+              },
+              setMetricsSaveState,
+              setMetricsSaveError
             )
           }
           t={t}
