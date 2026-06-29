@@ -695,6 +695,50 @@ func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
 	}()
 }
 
+// CollectStatsAsync samples a domain+source repo size in the background (detached,
+// throttled to repoStatsMinInterval). Used to populate the Storage card for repos
+// that already have backups but no sample yet (e.g. on upgrade, or before the next
+// scheduled backup). Best-effort; errors are only logged. domain/source are always
+// from a fixed whitelist (handler-validated or literal).
+func (s *Service) CollectStatsAsync(domain, source string) {
+	if source != "offsite" {
+		source = "local"
+	}
+	if latest, found, err := s.store.LatestRepoStat(domain, source); err == nil && found &&
+		time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
+		return // sampled recently enough
+	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		if err := s.CollectStats(ctx, domain, source); err != nil {
+			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
+		}
+	}()
+}
+
+// CollectStatsOnStartup samples each enabled domain's LOCAL repo shortly after boot
+// so the Storage card shows data for repos that already have backups, instead of
+// "no data" until the next backup runs. Best-effort + throttled.
+func (s *Service) CollectStatsOnStartup() {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return
+	}
+	for _, d := range []struct {
+		name    string
+		enabled bool
+	}{
+		{"containers", settings.ContainersEnabled},
+		{"vms", settings.VMsEnabled},
+		{"flash", settings.FlashEnabled},
+	} {
+		if d.enabled {
+			s.CollectStatsAsync(d.name, "local")
+		}
+	}
+}
+
 // copyToOffsite replicates a domain's local repo to its off-site repo with
 // `restic copy` (the local repo stays primary). It creates the off-site repo on
 // first use and copies everything not already there (restic skips dupes, so the
@@ -3538,6 +3582,10 @@ func (s *Service) RecoveryKit() (string, error) {
 		}
 	}
 	w("\n")
+	w("Each line above is a SEPARATE restic repository. Point restic (or a tool like\n")
+	w("backrest) at the specific per-domain path — the parent folder that holds them is\n")
+	w("NOT itself a repository, and the off-site repo only has snapshots once off-site\n")
+	w("replication has actually run. Add each domain repo on its own.\n\n")
 
 	w("## Manual restore without BombVault\n\n")
 	w("You can restore directly with the restic CLI, no BombVault container required.\n\n")

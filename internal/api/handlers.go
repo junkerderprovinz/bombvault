@@ -1359,6 +1359,11 @@ func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	var latest any // null when there are no samples yet
 	if len(stats) > 0 {
 		latest = stats[len(stats)-1]
+	} else {
+		// No sample yet (a repo that predates this feature, or no backup since
+		// upgrading): kick off a detached, throttled collection so the Storage card
+		// fills in on the next load instead of staying on "no data".
+		h.svc.CollectStatsAsync(domain, source)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"stats": stats, "latest": latest}))
 }
