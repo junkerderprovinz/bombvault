@@ -83,3 +83,41 @@ func TestSendTestNoChannel(t *testing.T) {
 		t.Fatal("SendTest with no channel should error")
 	}
 }
+
+// TestSendTestSMTPDisabledSkips: an SMTP block with SMTPEnabled=false is not a
+// configured channel, so SendTest reports "no channel" rather than dialing.
+func TestSendTestSMTPDisabledSkips(t *testing.T) {
+	cfg := notify.Config{SMTPHost: "smtp.example.com", SMTPFrom: "a@x.com", SMTPTo: "b@x.com"} // SMTPEnabled false
+	if err := notify.SendTest(context.Background(), cfg); err == nil {
+		t.Fatal("SendTest with SMTPEnabled=false should report no channel configured")
+	}
+}
+
+// TestSendTestSMTPMissingHostErrors: enabling SMTP without a host means the
+// channel is not ready, so SendTest still reports nothing configured (no dial).
+func TestSendTestSMTPMissingHostErrors(t *testing.T) {
+	cfg := notify.Config{SMTPEnabled: true, SMTPFrom: "a@x.com", SMTPTo: "b@x.com"} // no host
+	if err := notify.SendTest(context.Background(), cfg); err == nil {
+		t.Fatal("SendTest with SMTP enabled but no host should error")
+	}
+}
+
+// TestSendTestSMTPUnreachableErrorsClearly: a ready SMTP config pointed at a dead
+// port surfaces a clear dial error from the SMTP channel.
+func TestSendTestSMTPUnreachableErrorsClearly(t *testing.T) {
+	cfg := notify.Config{
+		SMTPEnabled: true,
+		SMTPHost:    "127.0.0.1",
+		SMTPPort:    1, // nothing listens here
+		SMTPFrom:    "a@x.com",
+		SMTPTo:      "b@x.com",
+		SMTPTLS:     "none",
+	}
+	err := notify.SendTest(context.Background(), cfg)
+	if err == nil {
+		t.Fatal("SendTest against an unreachable SMTP server should error")
+	}
+	if !strings.Contains(err.Error(), "smtp:") {
+		t.Fatalf("expected a clear smtp error, got %q", err)
+	}
+}

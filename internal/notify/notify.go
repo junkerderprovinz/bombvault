@@ -1,19 +1,23 @@
 // Package notify sends best-effort backup notifications to optional channels: a
-// webhook (generic JSON, Discord, Slack, Gotify or ntfy), a Matrix room, and a
-// Healthchecks.io ping. Every send is best-effort and time-bounded; a failure to
-// notify never affects a backup. URLs/tokens are admin-configured, so reaching
-// internal endpoints is intentional (no SSRF filtering).
+// webhook (generic JSON, Discord, Slack, Gotify or ntfy), a Matrix room, an
+// email (SMTP), and a Healthchecks.io ping. Every send is best-effort and
+// time-bounded; a failure to notify never affects a backup. URLs/tokens are
+// admin-configured, so reaching internal endpoints is intentional (no SSRF
+// filtering).
 package notify
 
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
+	"net/smtp"
 	"net/url"
 	"strconv"
 	"strings"
@@ -47,6 +51,15 @@ type Config struct {
 	// itself forward to Pushover/email/Discord/…). It is delivered over SSH by the
 	// service layer (the host's notify script), not by this package's HTTP Send.
 	Unraid bool `json:"unraid"`
+	// SMTP sends each event as a plain-text email via an SMTP server.
+	SMTPEnabled  bool   `json:"smtpEnabled"`
+	SMTPHost     string `json:"smtpHost"`
+	SMTPPort     int    `json:"smtpPort"`
+	SMTPUsername string `json:"smtpUsername"`
+	SMTPPassword string `json:"smtpPassword"`
+	SMTPFrom     string `json:"smtpFrom"`
+	SMTPTo       string `json:"smtpTo"`
+	SMTPTLS      string `json:"smtpTls"` // "starttls" (default) | "tls" | "none"
 }
 
 // Event is a completed backup, rendered into each channel's message.
@@ -69,11 +82,15 @@ func (c Config) shouldSend(ok bool) bool {
 
 // Configured reports whether at least one channel is set.
 func (c Config) Configured() bool {
-	return c.WebhookURL != "" || c.matrixReady() || c.HealthchecksURL != ""
+	return c.WebhookURL != "" || c.matrixReady() || c.HealthchecksURL != "" || c.smtpReady()
 }
 
 func (c Config) matrixReady() bool {
 	return c.MatrixHomeserver != "" && c.MatrixToken != "" && c.MatrixRoom != ""
+}
+
+func (c Config) smtpReady() bool {
+	return c.SMTPEnabled && c.SMTPHost != "" && c.SMTPFrom != "" && c.SMTPTo != ""
 }
 
 // Send dispatches ev to every configured channel, honouring the On policy. Each
@@ -99,6 +116,11 @@ func Send(ctx context.Context, c Config, ev Event) {
 	if c.HealthchecksURL != "" {
 		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, ev.OK); err != nil {
 			log.Printf("notify: healthchecks: %v", redactErr(err))
+		}
+	}
+	if c.smtpReady() {
+		if err := sendSMTP(ctx, c, ev); err != nil {
+			log.Printf("notify: smtp: %v", err)
 		}
 	}
 }
@@ -127,6 +149,11 @@ func SendTest(ctx context.Context, c Config) error {
 	if c.HealthchecksURL != "" {
 		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, true); err != nil {
 			return fmt.Errorf("healthchecks: %w", err)
+		}
+	}
+	if c.smtpReady() {
+		if err := sendSMTP(ctx, c, ev); err != nil {
+			return fmt.Errorf("smtp: %w", err)
 		}
 	}
 	return nil
@@ -219,4 +246,114 @@ func do(client *http.Client, req *http.Request) error {
 		return fmt.Errorf("endpoint returned HTTP %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// buildSMTPMessage renders ev into an RFC 5322 message (CRLF line endings):
+// From/To/Subject/Date headers plus a plain-text body. Subject is the event
+// title, the body its message. Kept pure so it can be unit-tested without a
+// server.
+func buildSMTPMessage(c Config, ev Event) []byte {
+	var b strings.Builder
+	b.WriteString("From: " + c.SMTPFrom + "\r\n")
+	b.WriteString("To: " + c.SMTPTo + "\r\n")
+	b.WriteString("Subject: " + ev.Title + "\r\n")
+	b.WriteString("Date: " + time.Now().Format(time.RFC1123Z) + "\r\n")
+	b.WriteString("MIME-Version: 1.0\r\n")
+	b.WriteString("Content-Type: text/plain; charset=utf-8\r\n")
+	b.WriteString("\r\n")
+	b.WriteString(ev.Message + "\r\n")
+	return []byte(b.String())
+}
+
+// sendSMTP delivers ev as a plain-text email. TLS mode selects the transport:
+//   - "tls": dial an implicit-TLS connection (port 465 style);
+//   - "starttls" (default): plain dial, then upgrade with STARTTLS;
+//   - "none": plain dial, no encryption.
+//
+// PLAIN auth is used only when a username is set. The dial is bounded by ctx's
+// deadline (falling back to sendTimeout) so an unreachable server fails fast
+// rather than hanging the (best-effort) notification.
+func sendSMTP(ctx context.Context, c Config, ev Event) error {
+	port := c.SMTPPort
+	if port == 0 {
+		port = 587
+	}
+	addr := net.JoinHostPort(c.SMTPHost, strconv.Itoa(port))
+
+	deadline := time.Now().Add(sendTimeout)
+	if d, ok := ctx.Deadline(); ok {
+		deadline = d
+	}
+	dialer := &net.Dialer{Deadline: deadline}
+
+	var (
+		client *smtp.Client
+		err    error
+	)
+	switch strings.ToLower(c.SMTPTLS) {
+	case "tls":
+		conn, dErr := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12})
+		if dErr != nil {
+			return fmt.Errorf("dial %s: %w", addr, dErr)
+		}
+		client, err = smtp.NewClient(conn, c.SMTPHost)
+	default: // "starttls" (default) and "none" dial plaintext first
+		conn, dErr := dialer.DialContext(ctx, "tcp", addr)
+		if dErr != nil {
+			return fmt.Errorf("dial %s: %w", addr, dErr)
+		}
+		client, err = smtp.NewClient(conn, c.SMTPHost)
+	}
+	if err != nil {
+		return err
+	}
+	defer client.Close() //nolint:errcheck // close error after Quit is not actionable
+
+	if strings.EqualFold(c.SMTPTLS, "starttls") || c.SMTPTLS == "" {
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			if err := client.StartTLS(&tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12}); err != nil {
+				return fmt.Errorf("starttls: %w", err)
+			}
+		}
+	}
+
+	if c.SMTPUsername != "" {
+		auth := smtp.PlainAuth("", c.SMTPUsername, c.SMTPPassword, c.SMTPHost)
+		if err := client.Auth(auth); err != nil {
+			return fmt.Errorf("auth: %w", err)
+		}
+	}
+
+	if err := client.Mail(c.SMTPFrom); err != nil {
+		return fmt.Errorf("from: %w", err)
+	}
+	for _, rcpt := range splitRecipients(c.SMTPTo) {
+		if err := client.Rcpt(rcpt); err != nil {
+			return fmt.Errorf("rcpt %s: %w", rcpt, err)
+		}
+	}
+	wc, err := client.Data()
+	if err != nil {
+		return err
+	}
+	if _, err := wc.Write(buildSMTPMessage(c, ev)); err != nil {
+		return err
+	}
+	if err := wc.Close(); err != nil {
+		return err
+	}
+	return client.Quit()
+}
+
+// splitRecipients splits a comma/semicolon-separated recipient list into trimmed,
+// non-empty addresses (the To header keeps the raw string for display).
+func splitRecipients(to string) []string {
+	fields := strings.FieldsFunc(to, func(r rune) bool { return r == ',' || r == ';' })
+	out := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if t := strings.TrimSpace(f); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }

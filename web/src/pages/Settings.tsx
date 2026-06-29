@@ -814,6 +814,14 @@ const emptyNotify: NotifyConfig = {
   matrixRoom: "",
   healthchecksUrl: "",
   unraid: false,
+  smtpEnabled: false,
+  smtpHost: "",
+  smtpPort: 587,
+  smtpUsername: "",
+  smtpPassword: "",
+  smtpFrom: "",
+  smtpTo: "",
+  smtpTls: "starttls",
 };
 
 // NotifyCard configures backup notifications (webhook / Matrix / Healthchecks).
@@ -949,6 +957,62 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
           placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
       </label>
+
+      {/* Email (SMTP), sent via the configured mail server. */}
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={cfg.smtpEnabled}
+            onChange={(e) => set("smtpEnabled", e.target.checked)}
+            className="mt-0.5"
+            style={{ accentColor: "var(--accent)" }}
+          />
+          <span className="text-sm text-carbon-text">{t("notify.smtp")}</span>
+        </label>
+        {cfg.smtpEnabled && (
+          <>
+            <label className={labelCls}>
+              {t("notify.smtpHost")}
+              <input value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
+                placeholder="smtp.example.com" className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.smtpPort")}
+              <input value={cfg.smtpPort} onChange={(e) => set("smtpPort", Number(e.target.value) || 0)} spellCheck={false}
+                type="number" placeholder="587" className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.smtpTls")}
+              <select value={cfg.smtpTls} onChange={(e) => set("smtpTls", e.target.value)} className={selectCls}>
+                <option value="starttls">STARTTLS</option>
+                <option value="tls">TLS (implicit)</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+            <label className={labelCls}>
+              {t("notify.smtpUser")}
+              <input value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
+                className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.smtpPass")}
+              <input value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
+                type="password" className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.smtpFrom")}
+              <input value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
+                placeholder="bombvault@example.com" className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.smtpTo")}
+              <input value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
+                placeholder="admin@example.com" className={inputCls} />
+            </label>
+          </>
+        )}
+      </div>
 
       <div className="flex items-center gap-3 pt-1 flex-wrap">
         <button onClick={() => void handleSave()} disabled={state === "saving"}

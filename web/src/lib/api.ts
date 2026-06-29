@@ -415,7 +415,7 @@ export function setBackupPaths(name: string, backupPaths: string[]): Promise<OkE
   });
 }
 
-/** Notification config (webhook / Matrix / Healthchecks). */
+/** Notification config (webhook / Matrix / Healthchecks / Unraid / email). */
 export interface NotifyConfig {
   on: string; // "never" | "failure" | "always"
   webhookUrl: string;
@@ -425,6 +425,14 @@ export interface NotifyConfig {
   matrixRoom: string;
   healthchecksUrl: string;
   unraid: boolean;
+  smtpEnabled: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  smtpFrom: string;
+  smtpTo: string;
+  smtpTls: string; // "starttls" | "tls" | "none"
 }
 
 export interface GetNotifyResponse extends OkEnvelope {
