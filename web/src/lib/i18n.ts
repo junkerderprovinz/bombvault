@@ -209,6 +209,12 @@ const en = {
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteHint": "A separate policy for the off-site repo, so you can keep it longer as an archive. All zero = keep every off-site backup (no off-site pruning).",
 
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Off-site bandwidth",
+  "settings.limitUpload": "Upload limit (KiB/s)",
+  "settings.limitDownload": "Download limit (KiB/s)",
+  "settings.limitHint": "0 = unlimited. Caps restic's off-site transfer rate.",
+
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
   "rclone.hint": "Paste an rclone config to back up to the cloud (Backblaze B2, S3, Google Drive, …). It is stored encrypted. SMB/NFS need no rclone: mount the share on Unraid and set a Backup Path to it.",
@@ -614,6 +620,12 @@ const de: Translations = {
   "settings.retentionLocal": "Lokales Repo",
   "settings.retentionOffsite": "Off-site-Repo",
   "settings.retentionOffsiteHint": "Eine separate Regel für das Off-site-Repo, damit du es länger als Archiv behalten kannst. Alles 0 = jedes Off-site-Backup behalten (kein Off-site-Prune).",
+
+  // Off-site-Bandbreite
+  "settings.offsiteLimits": "Off-site-Bandbreite",
+  "settings.limitUpload": "Upload-Limit (KiB/s)",
+  "settings.limitDownload": "Download-Limit (KiB/s)",
+  "settings.limitHint": "0 = unbegrenzt. Begrenzt resticts Off-site-Transferrate.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

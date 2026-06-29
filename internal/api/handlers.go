@@ -558,6 +558,9 @@ type settingsView struct {
 	OffsiteRetentionKeepDaily   int `json:"offsiteRetentionKeepDaily"`
 	OffsiteRetentionKeepWeekly  int `json:"offsiteRetentionKeepWeekly"`
 	OffsiteRetentionKeepMonthly int `json:"offsiteRetentionKeepMonthly"`
+	// Off-site transfer bandwidth caps (KiB/s; 0 = unlimited).
+	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
+	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -587,6 +590,8 @@ func toView(s store.Settings) settingsView {
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
 		OffsiteRetentionKeepWeekly:  s.OffsiteRetentionKeepWeekly,
 		OffsiteRetentionKeepMonthly: s.OffsiteRetentionKeepMonthly,
+		OffsiteLimitUpload:          s.OffsiteLimitUpload,
+		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 	}
 }
 
@@ -708,6 +713,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteRetentionKeepDaily:   max(0, v.OffsiteRetentionKeepDaily),
 		OffsiteRetentionKeepWeekly:  max(0, v.OffsiteRetentionKeepWeekly),
 		OffsiteRetentionKeepMonthly: max(0, v.OffsiteRetentionKeepMonthly),
+		OffsiteLimitUpload:          max(0, v.OffsiteLimitUpload),
+		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,

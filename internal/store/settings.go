@@ -48,6 +48,12 @@ type Settings struct {
 	OffsiteRetentionKeepDaily   int
 	OffsiteRetentionKeepWeekly  int
 	OffsiteRetentionKeepMonthly int
+	// Off-site transfer bandwidth caps (KiB/s) passed to restic's global
+	// --limit-upload / --limit-download for off-site replication (and remote
+	// backups). 0 = unlimited (the default), so the WAN is never throttled until
+	// the user opts in.
+	OffsiteLimitUpload   int
+	OffsiteLimitDownload int
 	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
 	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
 	RcloneConf string
@@ -70,6 +76,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
+		       offsite_limit_upload, offsite_limit_download,
 		       rclone_conf, notify_conf, cloud_conf
 		FROM settings WHERE id = 1`)
 
@@ -84,6 +91,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
 		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
+		&s.OffsiteLimitUpload, &s.OffsiteLimitDownload,
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -129,6 +137,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  offsite_retention_keep_daily   = ?,
 		  offsite_retention_keep_weekly  = ?,
 		  offsite_retention_keep_monthly = ?,
+		  offsite_limit_upload   = ?,
+		  offsite_limit_download = ?,
 		  rclone_conf            = ?,
 		  notify_conf            = ?,
 		  cloud_conf             = ?
@@ -144,6 +154,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
 		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
+		s.OffsiteLimitUpload, s.OffsiteLimitDownload,
 		s.RcloneConf, s.NotifyConf, s.CloudConf,
 	)
 	if err != nil {

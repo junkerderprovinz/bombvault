@@ -128,7 +128,7 @@ func TestDumpZipArgsNoPassword(t *testing.T) {
 }
 
 func TestCopyArgsEncrypted(t *testing.T) {
-	got := restic.CopyArgs("/dest", "/src", nil, restic.Mode{Encrypted: true})
+	got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{}, restic.Mode{Encrypted: true})
 	want := []string{"-r", "/dest", "copy", "--from-repo", "/src"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -136,11 +136,35 @@ func TestCopyArgsEncrypted(t *testing.T) {
 }
 
 func TestCopyArgsNoPasswordWithIDs(t *testing.T) {
-	got := restic.CopyArgs("/dest", "/src", []string{"abc123"}, restic.Mode{Encrypted: false})
+	got := restic.CopyArgs("/dest", "/src", []string{"abc123"}, restic.Limits{}, restic.Mode{Encrypted: false})
 	want := []string{"-r", "/dest", "copy", "--from-repo", "/src", "--insecure-no-password", "--from-insecure-no-password", "--", "abc123"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
+}
+
+func TestCopyArgsLimits(t *testing.T) {
+	t.Run("both limits set prepend global flags before the subcommand", func(t *testing.T) {
+		got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{UploadKBps: 1024, DownloadKBps: 512}, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/dest", "--limit-upload", "1024", "--limit-download", "512", "copy", "--from-repo", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("upload only", func(t *testing.T) {
+		got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{UploadKBps: 2048}, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/dest", "--limit-upload", "2048", "copy", "--from-repo", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("zero limits omit the flags", func(t *testing.T) {
+		got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{}, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/dest", "copy", "--from-repo", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
 }
 
 func TestRestorePathArgs(t *testing.T) {
