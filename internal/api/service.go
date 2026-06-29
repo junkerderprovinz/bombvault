@@ -302,6 +302,29 @@ func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolic
 	}
 }
 
+// offsiteRetentionPolicy is the SEPARATE keep-policy for the off-site repo, so it
+// can be kept longer (archive) than the local copy. All-zero (the default) means
+// no off-site pruning — the off-site repo keeps everything, so existing setups
+// are never silently trimmed and an off-site repo only gets pruned once the user
+// explicitly sets this policy.
+func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.RetentionPolicy {
+	return restic.RetentionPolicy{
+		KeepLast:    settings.OffsiteRetentionKeepLast,
+		KeepDaily:   settings.OffsiteRetentionKeepDaily,
+		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
+		KeepMonthly: settings.OffsiteRetentionKeepMonthly,
+	}
+}
+
+// retentionPolicyForSource returns the keep-policy to apply for a given repo
+// source: the off-site policy for "offsite", the local policy otherwise.
+func (s *Service) retentionPolicyForSource(settings store.Settings, source string) restic.RetentionPolicy {
+	if source == "offsite" {
+		return s.offsiteRetentionPolicy(settings)
+	}
+	return s.retentionPolicy(settings)
+}
+
 // applyRetention prunes repo to the configured keep-policy after a successful
 // backup. Best-effort: a prune failure is logged but never fails the backup that
 // just succeeded — the new snapshot is safe and pruning retries on the next run.
@@ -368,8 +391,19 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	if err = s.EnsureRepo(ctx, dest, mode); err != nil {
 		return fmt.Errorf("ensure off-site repo: %w", err)
 	}
-	err = s.engine.Copy(ctx, dest, localRepo, nil, mode)
-	return err
+	if err = s.engine.Copy(ctx, dest, localRepo, nil, mode); err != nil {
+		return err
+	}
+	// Apply the off-site retention policy (separate from local) after a successful
+	// copy — only when one is set, so an off-site repo defaults to keep-everything
+	// (archive) and existing setups are unchanged. Best-effort: a prune failure
+	// must not fail the replication that already succeeded.
+	if op := s.offsiteRetentionPolicy(settings); op.Any() {
+		if perr := s.engine.ForgetPolicy(ctx, dest, op, mode); perr != nil {
+			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}
+	return nil
 }
 
 // replicateOffsite runs right after a successful local backup (caller holds the
@@ -2477,7 +2511,9 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	// "apply retention now", which is what users expect from a manual prune.
 	// Without a policy it stays a plain space-reclaim; running forget with no
 	// keep-flags would delete every snapshot, so that path is guarded by p.Any().
-	if p := s.retentionPolicy(settings); p.Any() {
+	// The policy is per-source: pruning the off-site repo uses the off-site policy
+	// (not the local one), so an archive off-site isn't trimmed to the local rules.
+	if p := s.retentionPolicyForSource(settings, source); p.Any() {
 		return s.engine.ForgetPolicy(ctx, repo, p, mode)
 	}
 	return s.engine.Prune(ctx, repo, mode)

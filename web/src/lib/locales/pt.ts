@@ -277,6 +277,9 @@ const pt: Partial<Translations> = {
   "settings.retentionDaily": "Manter diários",
   "settings.retentionWeekly": "Manter semanais",
   "settings.retentionMonthly": "Manter mensais",
+  "settings.retentionLocal": "Repo local",
+  "settings.retentionOffsite": "Repo externo",
+  "settings.retentionOffsiteHint": "Uma política separada para o repo externo, para mantê-lo por mais tempo como arquivo. Tudo 0 = manter cada backup externo (sem limpeza externa).",
 
   // Off-site (rclone)
   "rclone.title": "Externo (rclone)",

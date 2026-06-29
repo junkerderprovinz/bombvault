@@ -1549,12 +1549,38 @@ export function SettingsPage() {
         <p className="text-xs text-carbon-textMuted -mt-1">
           {t("settings.retentionHint")}
         </p>
+        <span className="text-xs font-medium text-carbon-textSub">{t("settings.retentionLocal")}</span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
             ["retentionKeepLast", "settings.retentionLast"],
             ["retentionKeepDaily", "settings.retentionDaily"],
             ["retentionKeepWeekly", "settings.retentionWeekly"],
             ["retentionKeepMonthly", "settings.retentionMonthly"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              <input
+                type="number"
+                min={0}
+                value={settings[key]}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+              />
+            </label>
+          ))}
+        </div>
+
+        <span className="text-xs font-medium text-carbon-textSub mt-2">{t("settings.retentionOffsite")}</span>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.retentionOffsiteHint")}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {([
+            ["offsiteRetentionKeepLast", "settings.retentionLast"],
+            ["offsiteRetentionKeepDaily", "settings.retentionDaily"],
+            ["offsiteRetentionKeepWeekly", "settings.retentionWeekly"],
+            ["offsiteRetentionKeepMonthly", "settings.retentionMonthly"],
           ] as const).map(([key, label]) => (
             <label key={key} className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t(label)}</span>
@@ -1581,6 +1607,10 @@ export function SettingsPage() {
                 retentionKeepDaily: settings.retentionKeepDaily,
                 retentionKeepWeekly: settings.retentionKeepWeekly,
                 retentionKeepMonthly: settings.retentionKeepMonthly,
+                offsiteRetentionKeepLast: settings.offsiteRetentionKeepLast,
+                offsiteRetentionKeepDaily: settings.offsiteRetentionKeepDaily,
+                offsiteRetentionKeepWeekly: settings.offsiteRetentionKeepWeekly,
+                offsiteRetentionKeepMonthly: settings.offsiteRetentionKeepMonthly,
               },
               setRetSaveState,
               setRetSaveError

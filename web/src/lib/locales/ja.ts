@@ -274,6 +274,9 @@ const ja: Partial<Translations> = {
   "settings.retentionDaily": "日次を保持",
   "settings.retentionWeekly": "週次を保持",
   "settings.retentionMonthly": "月次を保持",
+  "settings.retentionLocal": "ローカルリポジトリ",
+  "settings.retentionOffsite": "オフサイトリポジトリ",
+  "settings.retentionOffsiteHint": "オフサイトリポジトリ用の別ポリシー。アーカイブとして長く保持できます。すべて0＝オフサイトのバックアップをすべて保持（オフサイトの整理なし）。",
 
   "rclone.title": "オフサイト (rclone)",
   "rclone.hint": "rclone 設定を貼り付けてクラウド（Backblaze B2、S3、Google Drive など）へバックアップします。暗号化して保存されます。SMB/NFS には rclone は不要です。共有を Unraid にマウントし、バックアップパスをそこに設定してください。",

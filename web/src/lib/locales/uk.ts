@@ -272,6 +272,9 @@ const uk: Partial<Translations> = {
   "settings.retentionDaily": "Зберігати щоденні",
   "settings.retentionWeekly": "Зберігати щотижневі",
   "settings.retentionMonthly": "Зберігати щомісячні",
+  "settings.retentionLocal": "Локальний репо",
+  "settings.retentionOffsite": "Віддалений репо",
+  "settings.retentionOffsiteHint": "Окрема політика для віддаленого репозиторію, щоб зберігати його довше як архів. Усе 0 = зберігати всі віддалені копії (без очищення віддаленого).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

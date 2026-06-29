@@ -90,6 +90,10 @@ export interface Settings {
   retentionKeepDaily: number;
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
+  offsiteRetentionKeepLast: number;
+  offsiteRetentionKeepDaily: number;
+  offsiteRetentionKeepWeekly: number;
+  offsiteRetentionKeepMonthly: number;
 }
 
 export interface GetSettingsResponse {

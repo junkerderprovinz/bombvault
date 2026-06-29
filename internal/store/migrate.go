@@ -198,6 +198,26 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_flash_offsite_schedule",
 		sql:     "ALTER TABLE settings ADD COLUMN flash_offsite_schedule TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		version: 19,
+		name:    "settings_offsite_retention_keep_last",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_retention_keep_last INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 20,
+		name:    "settings_offsite_retention_keep_daily",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_retention_keep_daily INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 21,
+		name:    "settings_offsite_retention_keep_weekly",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_retention_keep_weekly INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 22,
+		name:    "settings_offsite_retention_keep_monthly",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_retention_keep_monthly INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

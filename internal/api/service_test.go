@@ -329,6 +329,46 @@ func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	}
 }
 
+// TestReplicateOffsiteAppliesOffsiteRetention pins that a replication applies the
+// SEPARATE off-site retention policy to the off-site repo after copying — but only
+// when that policy is set (so an off-site repo defaults to keep-everything).
+func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FlashPath = "backups/flash"
+	s.FlashOffsite = "backups/flash-offsite"
+
+	// First: NO off-site policy → copy only, no off-site prune.
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.copied) != 1 || len(eng.prunedRepos) != 0 {
+		t.Fatalf("no off-site policy → copy only, got copied=%v prunedRepos=%v", eng.copied, eng.prunedRepos)
+	}
+
+	// Now set an off-site policy → replication also prunes the off-site repo.
+	s.OffsiteRetentionKeepDaily = 14
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng2 := &fakeResticEngine{}
+	svc2 := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng2)
+	if err := svc2.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng2.copied) != 1 || len(eng2.prunedRepos) != 1 {
+		t.Fatalf("off-site policy set → copy + off-site retention, got copied=%v prunedRepos=%v", eng2.copied, eng2.prunedRepos)
+	}
+}
+
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	dir := t.TempDir()
 	// HostMountRoot must be writable so EnsureRepo can create the repo dir, and
@@ -1501,6 +1541,54 @@ func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	}
 	if len(eng.manualPruned) != 0 {
 		t.Fatalf("Prune with a policy must NOT do a plain prune, got %v", eng.manualPruned)
+	}
+}
+
+// TestPruneDomainPerSourceRetention pins the per-source retention fix: pruning the
+// OFF-SITE repo uses the off-site policy, and pruning the LOCAL repo uses the local
+// policy. Here local retention is OFF and off-site is SET, so off-site prune
+// applies retention (ForgetPolicy) while local prune is a plain space-reclaim.
+func TestPruneDomainPerSourceRetention(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	s.ContainersOffsite = "backups/containers-offsite"
+	// Local policy OFF, off-site policy SET (archive: keep 30 daily).
+	s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly = 0, 0, 0, 0
+	s.OffsiteRetentionKeepDaily = 30
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range []string{"backups/containers", "backups/containers-offsite"} {
+		if err := os.MkdirAll(filepath.Join(dir, r), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, r, "config"), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	// Off-site prune → off-site policy is set → applies retention (ForgetPolicy).
+	if err := svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
+		t.Fatalf("PruneDomain offsite: %v", err)
+	}
+	if len(eng.prunedRepos) != 1 || len(eng.manualPruned) != 0 {
+		t.Fatalf("off-site prune must apply the off-site policy, got prunedRepos=%v manualPruned=%v", eng.prunedRepos, eng.manualPruned)
+	}
+
+	// Local prune → local policy is OFF → plain space-reclaim, NOT the off-site policy.
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("PruneDomain local: %v", err)
+	}
+	if len(eng.prunedRepos) != 1 {
+		t.Fatalf("local prune must NOT apply a policy when local retention is off, got prunedRepos=%v", eng.prunedRepos)
+	}
+	if len(eng.manualPruned) != 1 {
+		t.Fatalf("local prune with no policy must plain-prune, got manualPruned=%v", eng.manualPruned)
 	}
 }
 

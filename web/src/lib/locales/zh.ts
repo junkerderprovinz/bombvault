@@ -274,6 +274,9 @@ const zh: Partial<Translations> = {
   "settings.retentionDaily": "保留每日",
   "settings.retentionWeekly": "保留每周",
   "settings.retentionMonthly": "保留每月",
+  "settings.retentionLocal": "本地仓库",
+  "settings.retentionOffsite": "异地仓库",
+  "settings.retentionOffsiteHint": "为异地仓库设置单独策略，可作为归档保留更久。全为 0 = 保留每个异地备份（不清理异地）。",
 
   "rclone.title": "异地 (rclone)",
   "rclone.hint": "粘贴 rclone 配置即可备份到云端（Backblaze B2、S3、Google Drive 等）。配置会加密存储。SMB/NFS 无需 rclone：在 Unraid 上挂载共享并将备份路径指向它即可。",

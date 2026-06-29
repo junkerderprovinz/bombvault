@@ -205,6 +205,9 @@ const en = {
   "settings.retentionDaily": "Keep daily",
   "settings.retentionWeekly": "Keep weekly",
   "settings.retentionMonthly": "Keep monthly",
+  "settings.retentionLocal": "Local repo",
+  "settings.retentionOffsite": "Off-site repo",
+  "settings.retentionOffsiteHint": "A separate policy for the off-site repo, so you can keep it longer as an archive. All zero = keep every off-site backup (no off-site pruning).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
@@ -586,6 +589,9 @@ const de: Translations = {
   "settings.retentionDaily": "Täglich behalten",
   "settings.retentionWeekly": "Wöchentlich behalten",
   "settings.retentionMonthly": "Monatlich behalten",
+  "settings.retentionLocal": "Lokales Repo",
+  "settings.retentionOffsite": "Off-site-Repo",
+  "settings.retentionOffsiteHint": "Eine separate Regel für das Off-site-Repo, damit du es länger als Archiv behalten kannst. Alles 0 = jedes Off-site-Backup behalten (kein Off-site-Prune).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

@@ -277,6 +277,9 @@ const el: Partial<Translations> = {
   "settings.retentionDaily": "Διατήρηση ημερήσιων",
   "settings.retentionWeekly": "Διατήρηση εβδομαδιαίων",
   "settings.retentionMonthly": "Διατήρηση μηνιαίων",
+  "settings.retentionLocal": "Τοπικό repo",
+  "settings.retentionOffsite": "Απομακρυσμένο repo",
+  "settings.retentionOffsiteHint": "Ξεχωριστή πολιτική για το απομακρυσμένο repo, ώστε να το κρατάς περισσότερο ως αρχείο. Όλα 0 = κράτα κάθε απομακρυσμένο αντίγραφο (χωρίς απομακρυσμένο κλάδεμα).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

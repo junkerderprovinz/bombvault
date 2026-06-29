@@ -277,6 +277,9 @@ const hu: Partial<Translations> = {
   "settings.retentionDaily": "Napi megtartása",
   "settings.retentionWeekly": "Heti megtartása",
   "settings.retentionMonthly": "Havi megtartása",
+  "settings.retentionLocal": "Helyi repó",
+  "settings.retentionOffsite": "Távoli repó",
+  "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli mentés megőrzése (nincs távoli takarítás).",
 
   // Off-site (rclone)
   "rclone.title": "Külső helyszín (rclone)",
