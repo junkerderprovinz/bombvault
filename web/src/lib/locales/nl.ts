@@ -274,6 +274,9 @@ const nl: Partial<Translations> = {
   "settings.retentionDaily": "Dagelijks bewaren",
   "settings.retentionWeekly": "Wekelijks bewaren",
   "settings.retentionMonthly": "Maandelijks bewaren",
+  "settings.retentionLocal": "Lokale repo",
+  "settings.retentionOffsite": "Off-site repo",
+  "settings.retentionOffsiteHint": "Een apart beleid voor de off-site repo, zodat je die langer als archief kunt bewaren. Alles 0 = elke off-site back-up bewaren (geen off-site opschoning).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

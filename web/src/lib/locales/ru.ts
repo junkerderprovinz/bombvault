@@ -272,6 +272,9 @@ const ru: Partial<Translations> = {
   "settings.retentionDaily": "Хранить ежедневные",
   "settings.retentionWeekly": "Хранить еженедельные",
   "settings.retentionMonthly": "Хранить ежемесячные",
+  "settings.retentionLocal": "Локальный репо",
+  "settings.retentionOffsite": "Удалённый репо",
+  "settings.retentionOffsiteHint": "Отдельная политика для удалённого репозитория, чтобы хранить его дольше как архив. Всё 0 = хранить все удалённые копии (без очистки удалённого).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

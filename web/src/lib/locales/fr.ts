@@ -277,6 +277,9 @@ const fr: Partial<Translations> = {
   "settings.retentionDaily": "Conserver quotidiennes",
   "settings.retentionWeekly": "Conserver hebdomadaires",
   "settings.retentionMonthly": "Conserver mensuelles",
+  "settings.retentionLocal": "Dépôt local",
+  "settings.retentionOffsite": "Dépôt hors-site",
+  "settings.retentionOffsiteHint": "Une politique distincte pour le dépôt hors-site, pour le conserver plus longtemps comme archive. Tout à 0 = conserver chaque sauvegarde hors-site (pas de purge hors-site).",
 
   // Off-site (rclone)
   "rclone.title": "Hors site (rclone)",

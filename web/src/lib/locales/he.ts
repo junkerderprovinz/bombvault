@@ -277,6 +277,9 @@ const he: Partial<Translations> = {
   "settings.retentionDaily": "שמור יומיים",
   "settings.retentionWeekly": "שמור שבועיים",
   "settings.retentionMonthly": "שמור חודשיים",
+  "settings.retentionLocal": "מאגר מקומי",
+  "settings.retentionOffsite": "מאגר מרוחק",
+  "settings.retentionOffsiteHint": "מדיניות נפרדת למאגר המרוחק, כדי לשמור אותו זמן רב יותר כארכיון. הכול 0 = שמור כל גיבוי מרוחק (ללא גיזום מרוחק).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

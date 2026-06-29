@@ -277,6 +277,9 @@ const da: Partial<Translations> = {
   "settings.retentionDaily": "Behold daglige",
   "settings.retentionWeekly": "Behold ugentlige",
   "settings.retentionMonthly": "Behold månedlige",
+  "settings.retentionLocal": "Lokalt repo",
+  "settings.retentionOffsite": "Off-site-repo",
+  "settings.retentionOffsiteHint": "En separat politik for off-site-repoet, så du kan beholde det længere som arkiv. Alt 0 = behold hver off-site-sikkerhedskopi (ingen off-site-oprydning).",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

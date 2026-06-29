@@ -40,6 +40,14 @@ type Settings struct {
 	RetentionKeepDaily   int
 	RetentionKeepWeekly  int
 	RetentionKeepMonthly int
+	// Off-site retention keep-policy: a SEPARATE policy applied to the off-site
+	// repo (e.g. keep longer as an archive than the local copy). All zero = no
+	// off-site pruning (the off-site repo keeps everything — the default, so an
+	// existing off-site repo is never silently trimmed when this ships).
+	OffsiteRetentionKeepLast    int
+	OffsiteRetentionKeepDaily   int
+	OffsiteRetentionKeepWeekly  int
+	OffsiteRetentionKeepMonthly int
 	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
 	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
 	RcloneConf string
@@ -61,6 +69,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       containers_schedule, vms_schedule, flash_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
 		       rclone_conf, notify_conf, cloud_conf
 		FROM settings WHERE id = 1`)
 
@@ -74,6 +83,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
+		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -115,6 +125,10 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  retention_keep_daily   = ?,
 		  retention_keep_weekly  = ?,
 		  retention_keep_monthly = ?,
+		  offsite_retention_keep_last    = ?,
+		  offsite_retention_keep_daily   = ?,
+		  offsite_retention_keep_weekly  = ?,
+		  offsite_retention_keep_monthly = ?,
 		  rclone_conf            = ?,
 		  notify_conf            = ?,
 		  cloud_conf             = ?
@@ -129,6 +143,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
+		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
 		s.RcloneConf, s.NotifyConf, s.CloudConf,
 	)
 	if err != nil {

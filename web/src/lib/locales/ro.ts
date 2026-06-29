@@ -277,6 +277,9 @@ const ro: Partial<Translations> = {
   "settings.retentionDaily": "Păstrează zilnic",
   "settings.retentionWeekly": "Păstrează săptămânal",
   "settings.retentionMonthly": "Păstrează lunar",
+  "settings.retentionLocal": "Repo local",
+  "settings.retentionOffsite": "Repo off-site",
+  "settings.retentionOffsiteHint": "O politică separată pentru repo-ul off-site, ca să-l păstrezi mai mult ca arhivă. Toate 0 = păstrează fiecare backup off-site (fără curățare off-site).",
 
   // Off-site (rclone)
   "rclone.title": "În afara sitului (rclone)",
