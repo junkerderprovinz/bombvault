@@ -285,6 +285,25 @@ func CheckArgs(repo string, m Mode) []string {
 	return args
 }
 
+// CheckDataArgs returns the argv slice for a restore-readiness "drill":
+// `restic check --read-data-subset=<pct>%`. Unlike a plain CheckArgs (metadata
+// only), this actually reads back a random subset of the real pack data and
+// re-verifies it, proving the backup is genuinely restorable — without needing a
+// scratch disk to restore to. subsetPercent is clamped to 1..100.
+func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
+	if subsetPercent < 1 {
+		subsetPercent = 1
+	} else if subsetPercent > 100 {
+		subsetPercent = 100
+	}
+	args := repoFlag(repo)
+	args = append(args, "check", fmt.Sprintf("--read-data-subset=%d%%", subsetPercent))
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	return args
+}
+
 // SnapshotsArgs returns the argv slice for `restic snapshots --json`.
 func SnapshotsArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
@@ -851,6 +870,16 @@ func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, p
 // describing the problem.
 func (r Restic) Check(ctx context.Context, repo string, m Mode) error {
 	_, err := r.run(ctx, CheckArgs(repo, m), m)
+	return err
+}
+
+// CheckData runs a restore-readiness drill: `restic check
+// --read-data-subset=<pct>%`, which reads back and re-verifies a random subset of
+// the real pack data (not just metadata), proving the backup is restorable. It
+// returns nil when the checked data is intact, or a scrubbed error describing the
+// corruption. subsetPercent is clamped to 1..100 by CheckDataArgs.
+func (r Restic) CheckData(ctx context.Context, repo string, subsetPercent int, m Mode) error {
+	_, err := r.run(ctx, CheckDataArgs(repo, subsetPercent, m), m)
 	return err
 }
 

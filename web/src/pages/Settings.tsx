@@ -1,10 +1,20 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
-import type { Settings, NotifyConfig } from "../lib/api";
+import type { Settings, NotifyConfig, RestoreDrill } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
+
+// relativeTime renders a unix timestamp as a short "Xm/h/d ago" string (matches
+// the dashboard helper), used for the "last verified" drill line.
+function relativeTime(unix: number): string {
+  const diff = Math.floor((Date.now() - unix * 1000) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
 
 // ---------------------------------------------------------------------------
 // Card wrapper
@@ -1076,15 +1086,44 @@ function ReplicateNowButton({
 }
 
 // IntegrityCard runs per-domain repository maintenance: verify (restic check),
-// unlock (clear stale locks), and prune (reclaim space). Self-contained.
+// unlock (clear stale locks), prune (reclaim space), and a restore-verification
+// "drill" (restic check --read-data-subset) that proves the backup is actually
+// restorable. Self-contained.
 function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   type ActState = "idle" | "busy" | "ok" | "fail";
   const [state, setState] = useState<Record<string, ActState>>({});
   const [msg, setMsg] = useState<Record<string, string>>({});
   const [source, setSource] = useState<RepoSource>("local");
+  // The last recorded drill per domain (for the current source), keyed by domain.
+  const [lastDrill, setLastDrill] = useState<Record<string, RestoreDrill | null>>({});
 
   type Domain = "containers" | "vms" | "flash";
   type Action = "verify" | "unlock" | "prune";
+
+  const domains: { key: Domain; label: string }[] = [
+    { key: "containers", label: t("settings.containersEnabled") },
+    { key: "vms", label: t("settings.vmsEnabled") },
+    { key: "flash", label: t("settings.flashEnabled") },
+  ];
+
+  // Load the latest drill for each domain on mount and whenever the source
+  // changes, so the "last verified" line reflects the selected repo.
+  useEffect(() => {
+    let active = true;
+    for (const { key: domain } of domains) {
+      getDrills(domain, source, 1)
+        .then((r) => {
+          if (!active) return;
+          if (r.ok) setLastDrill((m) => ({ ...m, [domain]: r.latest ?? null }));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      active = false;
+    };
+    // domains is a stable literal list; re-run only when the source changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source]);
 
   async function run(domain: Domain, action: Action) {
     if (action === "prune" && !window.confirm(t("integrity.pruneConfirm"))) return;
@@ -1108,11 +1147,29 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     }
   }
 
-  const domains: { key: Domain; label: string }[] = [
-    { key: "containers", label: t("settings.containersEnabled") },
-    { key: "vms", label: t("settings.vmsEnabled") },
-    { key: "flash", label: t("settings.flashEnabled") },
-  ];
+  // runDrillFor runs a restore-verification drill and records its result inline,
+  // mirroring the per-action result-state pattern above (keyed "<domain>:drill").
+  async function runDrillFor(domain: Domain) {
+    const key = `${domain}:drill`;
+    setState((s) => ({ ...s, [key]: "busy" }));
+    setMsg((m) => ({ ...m, [key]: "" }));
+    try {
+      const r = await runDrill(domain, source);
+      if (r.ok && r.drill) {
+        const drill = r.drill;
+        setLastDrill((m) => ({ ...m, [domain]: drill }));
+        setState((s) => ({ ...s, [key]: drill.ok ? "ok" : "fail" }));
+        if (!drill.ok) setMsg((m) => ({ ...m, [key]: drill.detail || t("verify.failed") }));
+      } else {
+        setState((s) => ({ ...s, [key]: "fail" }));
+        setMsg((m) => ({ ...m, [key]: r.error ?? t("verify.failed") }));
+      }
+    } catch (err) {
+      setState((s) => ({ ...s, [key]: "fail" }));
+      setMsg((m) => ({ ...m, [key]: err instanceof Error ? err.message : t("verify.failed") }));
+    }
+  }
+
   const actions: { key: Action; label: string; busy: string }[] = [
     { key: "verify", label: t("integrity.verify"), busy: t("integrity.checking") },
     { key: "unlock", label: t("integrity.unlock"), busy: "…" },
@@ -1129,45 +1186,77 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           onChange={(next) => {
             // The ok/fail indicators belong to the previously selected source —
             // clear them so a "healthy" result doesn't carry over to the other
-            // repo where no maintenance has run yet.
+            // repo where no maintenance has run yet. The drill state + cached
+            // last-drill clear here too; the effect above reloads them for `next`.
             setSource(next);
             setState({});
             setMsg({});
+            setLastDrill({});
           }}
           disabled={Object.values(state).some((v) => v === "busy")}
         />
       </div>
       <div className="flex flex-col gap-3">
-        {domains.map(({ key: domain, label }) => (
-          <div key={domain} className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-carbon-textSub w-24 shrink-0">{label}</span>
-              {actions.map((a) => {
-                const k = `${domain}:${a.key}`;
-                return (
-                  <span key={a.key} className="inline-flex items-center gap-1">
-                    <button
-                      onClick={() => void run(domain, a.key)}
-                      disabled={state[k] === "busy"}
-                      title={t(`integrity.${a.key}Hint`)}
-                      className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-                    >
-                      {state[k] === "busy" ? a.busy : a.label}
-                    </button>
-                    {state[k] === "ok" && <span className="text-sm text-[#6fdc8c]">{t("integrity.ok")}</span>}
+        {domains.map(({ key: domain, label }) => {
+          const dKey = `${domain}:drill`;
+          const drill = lastDrill[domain];
+          return (
+            <div key={domain} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-carbon-textSub w-24 shrink-0">{label}</span>
+                {actions.map((a) => {
+                  const k = `${domain}:${a.key}`;
+                  return (
+                    <span key={a.key} className="inline-flex items-center gap-1">
+                      <button
+                        onClick={() => void run(domain, a.key)}
+                        disabled={state[k] === "busy"}
+                        title={t(`integrity.${a.key}Hint`)}
+                        className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                      >
+                        {state[k] === "busy" ? a.busy : a.label}
+                      </button>
+                      {state[k] === "ok" && <span className="text-sm text-[#6fdc8c]">{t("integrity.ok")}</span>}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Restore-verification drill: its own row + inline result + last drill. */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="w-24 shrink-0" />
+                <button
+                  onClick={() => void runDrillFor(domain)}
+                  disabled={state[dKey] === "busy"}
+                  title={t("verify.hint")}
+                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                >
+                  {state[dKey] === "busy" ? t("verify.running") : t("verify.now")}
+                </button>
+                {state[dKey] === "ok" && <span className="text-sm text-[#6fdc8c]">✓ {t("verify.ok")}</span>}
+                {state[dKey] === "fail" && (
+                  <span className="text-sm text-[#ff8389] break-words">✗ {msg[dKey] || t("verify.failed")}</span>
+                )}
+                {/* Last recorded drill for this domain/source (idle state only). */}
+                {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
+                  <span className="text-xs text-carbon-textMuted">
+                    {drill
+                      ? `${t("verify.last").replace("{time}", relativeTime(drill.at))} ${drill.ok ? "✓" : "✗"}`
+                      : t("verify.never")}
                   </span>
-                );
-              })}
+                )}
+              </div>
+
+              {actions.map((a) =>
+                state[`${domain}:${a.key}`] === "fail" ? (
+                  <span key={a.key} className="text-xs text-[#ff8389] break-words">
+                    {a.label}: {msg[`${domain}:${a.key}`] || t("integrity.failed")}
+                  </span>
+                ) : null
+              )}
             </div>
-            {actions.map((a) =>
-              state[`${domain}:${a.key}`] === "fail" ? (
-                <span key={a.key} className="text-xs text-[#ff8389] break-words">
-                  {a.label}: {msg[`${domain}:${a.key}`] || t("integrity.failed")}
-                </span>
-              ) : null
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );
@@ -1219,6 +1308,9 @@ export function SettingsPage() {
 
   const [metricsSaveState, setMetricsSaveState] = useState<SaveState>("idle");
   const [metricsSaveError, setMetricsSaveError] = useState<string | null>(null);
+
+  const [drillsSaveState, setDrillsSaveState] = useState<SaveState>("idle");
+  const [drillsSaveError, setDrillsSaveError] = useState<string | null>(null);
 
   // "Use containers schedule for VMs and Flash too" checkbox
   const [syncSchedules, setSyncSchedules] = useState(false);
@@ -1832,6 +1924,61 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       <Card title={t("spike.title")}>
         <SpikePanel t={t} />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Automatic restore checks (scheduled restore-verification drills)    */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("verify.auto")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
+        <ToggleRow
+          label={t("verify.auto")}
+          checked={settings.drillsEnabled}
+          onChange={(v) =>
+            setSettings((prev) => (prev ? { ...prev, drillsEnabled: v } : prev))
+          }
+        />
+        <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
+          <CadenceBuilder
+            label={t("settings.schedule")}
+            value={settings.drillsSchedule}
+            disabled={!settings.drillsEnabled}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, drillsSchedule: v } : prev))
+            }
+          />
+        </div>
+        <label className="flex flex-col gap-1 max-w-[10rem]">
+          <span className="text-xs text-carbon-textSub">{t("verify.subsetPct")}</span>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={settings.drillsSubsetPct}
+            onChange={(e) => {
+              const n = parseInt(e.target.value, 10);
+              const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
+              setSettings((prev) => (prev ? { ...prev, drillsSubsetPct: clamped } : prev));
+            }}
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+          />
+        </label>
+        <SaveBar
+          state={drillsSaveState}
+          error={drillsSaveError}
+          onSave={() =>
+            void save(
+              {
+                drillsEnabled: settings.drillsEnabled,
+                drillsSchedule: settings.drillsSchedule,
+                drillsSubsetPct: settings.drillsSubsetPct,
+              },
+              setDrillsSaveState,
+              setDrillsSaveError
+            )
+          }
+          t={t}
+        />
       </Card>
 
       {/* ------------------------------------------------------------------ */}

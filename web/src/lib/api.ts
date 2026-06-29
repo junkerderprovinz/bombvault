@@ -98,6 +98,9 @@ export interface Settings {
   offsiteLimitDownload: number;
   metricsEnabled: boolean;
   metricsToken: string;
+  drillsEnabled: boolean;
+  drillsSchedule: string;
+  drillsSubsetPct: number;
 }
 
 export interface GetSettingsResponse {
@@ -135,6 +138,17 @@ export interface DomainStatus {
   lastSuccess: number; // unix seconds; 0 = never
   periodSeconds: number; // expected RPO window; 0 = no expectation
   status: string; // "off" | "never" | "overdue" | "warn" | "ok"
+  lastVerified: number; // unix seconds of the last restore-verification drill; 0 = never
+  lastVerifiedOK: boolean; // whether that last drill passed
+}
+
+/** A recorded restore-verification "drill" from POST/GET /api/verify. */
+export interface RestoreDrill {
+  domain: string;
+  source: string;
+  at: number; // unix seconds the drill ran
+  ok: boolean; // true when the checked data was intact
+  detail: string; // short scrubbed reason on failure; empty on success
 }
 
 export interface StatusResponse {
@@ -564,6 +578,35 @@ export function checkDomain(
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/check/${domain}${srcParam(source)}`, { method: "POST" });
+}
+
+/**
+ * POST /api/verify/{domain}?source= — run a restore-verification drill
+ * (restic check --read-data-subset) that reads back real pack data to prove the
+ * backup is restorable, and record the result. The drill can take a while.
+ */
+export function runDrill(
+  domain: string,
+  source?: string
+): Promise<{ ok: boolean; drill?: RestoreDrill; error?: string }> {
+  return fetchJSON(`/api/verify/${encodeURIComponent(domain)}${srcParam(source)}`, {
+    method: "POST",
+  });
+}
+
+/**
+ * GET /api/verify?domain=&source=&limit= — the recorded restore-verification
+ * drills for a domain + source (newest first), plus the latest one for the badge.
+ */
+export function getDrills(
+  domain: string,
+  source?: string,
+  limit?: number
+): Promise<{ ok: boolean; drills?: RestoreDrill[]; latest?: RestoreDrill | null; error?: string }> {
+  const lim = limit ? `&limit=${limit}` : "";
+  return fetchJSON(
+    `/api/verify?domain=${encodeURIComponent(domain)}${srcParam(source, "&")}${lim}`
+  );
 }
 
 /** POST /api/unlock/{domain} — clear stale repository locks (restic unlock). */

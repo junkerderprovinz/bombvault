@@ -70,6 +70,16 @@ type Settings struct {
 	// must send `Authorization: Bearer <token>`; empty means open (LAN trust
 	// model, like /api/health). The endpoint exposes only non-sensitive metrics.
 	MetricsToken string
+	// DrillsEnabled turns on scheduled restore-verification drills. Off by default
+	// (drills read back real pack data, so they cost I/O), so existing setups are
+	// unchanged until the user opts in.
+	DrillsEnabled bool
+	// DrillsSchedule is the cadence for scheduled drills (same grammar as the backup
+	// schedules). 'off' (the default) = no scheduled drills.
+	DrillsSchedule string
+	// DrillsSubsetPct is the percentage of pack data each drill reads back and
+	// re-verifies (`restic check --read-data-subset`). Clamped 1..100; defaults to 5.
+	DrillsSubsetPct int
 }
 
 // GetSettings returns the current app settings.
@@ -85,11 +95,12 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
 		       offsite_limit_upload, offsite_limit_download,
 		       rclone_conf, notify_conf, cloud_conf,
-		       metrics_enabled, metrics_token
+		       metrics_enabled, metrics_token,
+		       drills_enabled, drills_schedule, drills_subset_pct
 		FROM settings WHERE id = 1`)
 
 	var s Settings
-	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled int
+	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled, drillsEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
@@ -102,6 +113,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.OffsiteLimitUpload, &s.OffsiteLimitDownload,
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
 		&metricsEnabled, &s.MetricsToken,
+		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -114,6 +126,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.VMsEnabled = vmsEnabled != 0
 	s.FlashEnabled = flashEnabled != 0
 	s.MetricsEnabled = metricsEnabled != 0
+	s.DrillsEnabled = drillsEnabled != 0
 	return s, nil
 }
 
@@ -153,7 +166,10 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  notify_conf            = ?,
 		  cloud_conf             = ?,
 		  metrics_enabled        = ?,
-		  metrics_token          = ?
+		  metrics_token          = ?,
+		  drills_enabled         = ?,
+		  drills_schedule        = ?,
+		  drills_subset_pct      = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -169,6 +185,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.OffsiteLimitUpload, s.OffsiteLimitDownload,
 		s.RcloneConf, s.NotifyConf, s.CloudConf,
 		boolInt(s.MetricsEnabled), s.MetricsToken,
+		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

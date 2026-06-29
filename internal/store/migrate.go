@@ -262,6 +262,42 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_metrics_token",
 		sql:     "ALTER TABLE settings ADD COLUMN metrics_token TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Restore-verification "drills": each row records one `restic check
+		// --read-data-subset` run for a domain + source, proving the backup is
+		// actually restorable. ok = 1 on success, 0 on failure; detail = a short
+		// scrubbed reason (empty on success). Powers the "last verified restorable"
+		// badge.
+		version: 28,
+		name:    "restore_drills",
+		sql: `CREATE TABLE restore_drills (
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  domain TEXT    NOT NULL,
+  source TEXT    NOT NULL,
+  at     INTEGER NOT NULL,
+  ok     INTEGER NOT NULL,
+  detail TEXT    NOT NULL DEFAULT ''
+);`,
+	},
+	{
+		// Scheduled restore drills: enable flag, cadence (same grammar as the backup
+		// schedules; 'off' = no scheduled drills), and the data subset percent each
+		// drill reads back. Off by default (drills are expensive: they read real pack
+		// data), so existing setups are unchanged until the user opts in.
+		version: 29,
+		name:    "settings_drills_enabled",
+		sql:     "ALTER TABLE settings ADD COLUMN drills_enabled INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 30,
+		name:    "settings_drills_schedule",
+		sql:     "ALTER TABLE settings ADD COLUMN drills_schedule TEXT NOT NULL DEFAULT 'off';",
+	},
+	{
+		version: 31,
+		name:    "settings_drills_subset_pct",
+		sql:     "ALTER TABLE settings ADD COLUMN drills_subset_pct INTEGER NOT NULL DEFAULT 5;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

@@ -247,6 +247,7 @@ type Scheduler struct {
 	listVMsFn      ListVMTargetsFunc         // nil until SetVMJob wires VM backup
 	backupFlash    func() error              // nil until SetFlashJob wires flash backup
 	replicateOffFn func(domain string) error // nil until SetOffsiteJob wires off-site replication
+	drillFn        func(domain string) error // nil until SetDrillJob wires restore-verification drills
 	entryIDs       []cron.EntryID
 }
 
@@ -285,6 +286,15 @@ func (s *Scheduler) SetFlashJob(backupFlashFn func() error) {
 // a no-op (logged). Call before Reload.
 func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
 	s.replicateOffFn = replicateFn
+}
+
+// SetDrillJob wires scheduled restore-verification drills so the single drill
+// schedule actually runs. drillFn is called with the domain
+// ("containers"|"vms"|"flash") for each enabled domain's local source when the
+// drill schedule fires. Until this is called the drill schedule is a no-op
+// (logged). Call before Reload.
+func (s *Scheduler) SetDrillJob(drillFn func(domain string) error) {
+	s.drillFn = drillFn
 }
 
 // Start starts the underlying cron runner. Call once at app startup.
@@ -405,6 +415,28 @@ func (s *Scheduler) ReloadWithDueChecks(
 		offsite("flash", settings.FlashOffsiteSchedule),
 	)
 
+	// Restore-verification drills run on a single schedule across every enabled
+	// domain's LOCAL source. A drill error just records ok=false (see drillFn); it
+	// never aborts the others. The schedule is inert unless explicitly enabled.
+	if settings.DrillsEnabled {
+		drillDomains := enabledDrillDomains(settings)
+		domains = append(domains, domainSpec{
+			cadence: settings.DrillsSchedule,
+			name:    "drills",
+			fn: func() {
+				if s.drillFn == nil {
+					log.Print("schedule: drills job skipped — drills not wired (SetDrillJob)")
+					return
+				}
+				for _, dom := range drillDomains {
+					if err := s.drillFn(dom); err != nil {
+						log.Printf("schedule: drills job: %s: %v", dom, err)
+					}
+				}
+			},
+		})
+	}
+
 	for _, d := range domains {
 		cad, err := ParseCadence(d.cadence)
 		if err != nil {
@@ -449,6 +481,23 @@ func (s *Scheduler) ReloadWithDueChecks(
 	}
 
 	return nil
+}
+
+// enabledDrillDomains returns the domains a scheduled restore-verification drill
+// should run against: each domain switched on in Settings. A disabled domain has
+// no (current) backups worth drilling, so it is skipped.
+func enabledDrillDomains(settings store.Settings) []string {
+	var out []string
+	if settings.ContainersEnabled {
+		out = append(out, "containers")
+	}
+	if settings.VMsEnabled {
+		out = append(out, "vms")
+	}
+	if settings.FlashEnabled {
+		out = append(out, "flash")
+	}
+	return out
 }
 
 // RunContainersJob backs up each target that has IncludeInSchedule=true,

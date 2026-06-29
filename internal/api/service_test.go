@@ -1559,6 +1559,9 @@ type fakeResticEngine struct {
 	dumpErr         error
 	forgetPolicyErr error
 	checkErr        error
+	checkDataRepos  []string // repo of each CheckData (drill) call
+	checkDataPct    []int    // subset percent of each CheckData call
+	checkDataErr    error    // returned by CheckData (drill outcome)
 	unlockErr       error
 	statsCalls      []string // --mode value of each Stats call
 	statsErr        error
@@ -1656,6 +1659,12 @@ func (f *fakeResticEngine) Check(_ context.Context, repo string, _ restic.Mode) 
 	return f.checkErr
 }
 
+func (f *fakeResticEngine) CheckData(_ context.Context, repo string, subsetPercent int, _ restic.Mode) error {
+	f.checkDataRepos = append(f.checkDataRepos, repo)
+	f.checkDataPct = append(f.checkDataPct, subsetPercent)
+	return f.checkDataErr
+}
+
 func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool, _ restic.Mode) error {
 	f.unlockedRepos = append(f.unlockedRepos, repo)
 	f.unlockRemoveAll = append(f.unlockRemoveAll, removeAll)
@@ -1742,6 +1751,89 @@ func TestUnlockDomainNoRepoYet(t *testing.T) {
 	}
 	if len(eng.unlockedRepos) != 0 {
 		t.Fatalf("must not call unlock on a non-existent repo: %v", eng.unlockedRepos)
+	}
+}
+
+// TestRunRestoreDrillRecordsResult pins the happy path: CheckData passes, so the
+// drill is recorded ok=true (with the configured subset percent) and returned.
+func TestRunRestoreDrillRecordsResult(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := initRepoSvc(t, eng)
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local")
+	if err != nil {
+		t.Fatalf("RunRestoreDrill: %v", err)
+	}
+	if !drill.OK || drill.Domain != "containers" || drill.Source != "local" {
+		t.Fatalf("expected an ok drill for containers/local, got %+v", drill)
+	}
+	if len(eng.checkDataRepos) != 1 {
+		t.Fatalf("expected exactly one CheckData call, got %v", eng.checkDataRepos)
+	}
+	if len(eng.checkDataPct) != 1 || eng.checkDataPct[0] != 5 {
+		t.Fatalf("expected the default 5%% subset, got %v", eng.checkDataPct)
+	}
+	// The result is persisted and readable via LatestDrill.
+	latest, found, err := svc.LatestDrill("containers", "local")
+	if err != nil || !found {
+		t.Fatalf("latest drill not recorded: found=%v err=%v", found, err)
+	}
+	if !latest.OK || latest.At == 0 {
+		t.Fatalf("recorded drill = %+v, want ok=true with a timestamp", latest)
+	}
+}
+
+// TestRunRestoreDrillNoBackups pins that a repo with no snapshots yields a clear
+// "no backups" error and records NOTHING (no misleading failure), and that
+// CheckData is never run.
+func TestRunRestoreDrillNoBackups(t *testing.T) {
+	eng := &fakeResticEngine{} // snaps nil → empty repo
+	svc := initRepoSvc(t, eng)
+
+	_, err := svc.RunRestoreDrill(context.Background(), "containers", "local")
+	if err == nil {
+		t.Fatal("expected an error when there are no snapshots to verify")
+	}
+	if len(eng.checkDataRepos) != 0 {
+		t.Fatalf("CheckData must not run with no snapshots, got %v", eng.checkDataRepos)
+	}
+	if _, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil {
+		t.Fatalf("LatestDrill: %v", fErr)
+	} else if found {
+		t.Fatal("no drill must be recorded when there are no backups to verify")
+	}
+}
+
+// TestRunRestoreDrillFailureRecorded pins that a CheckData failure is recorded as
+// a drill with ok=false (so the badge shows "not restorable") AND surfaced as an
+// error to the caller.
+func TestRunRestoreDrillFailureRecorded(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps:        []restic.Snapshot{{ID: "aaaa1111bbbb2222"}},
+		checkDataErr: errors.New("data corruption in pack /repo/data/ab/cd"),
+	}
+	svc := initRepoSvc(t, eng)
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local")
+	if err == nil {
+		t.Fatal("expected the drill to surface the CheckData failure")
+	}
+	if drill.OK {
+		t.Fatalf("a failed drill must be ok=false, got %+v", drill)
+	}
+	latest, found, lErr := svc.LatestDrill("containers", "local")
+	if lErr != nil || !found {
+		t.Fatalf("a failed drill must still be recorded: found=%v err=%v", found, lErr)
+	}
+	if latest.OK {
+		t.Fatalf("recorded drill must be ok=false, got %+v", latest)
+	}
+	if latest.Detail == "" {
+		t.Fatal("a failed drill should record a (scrubbed) detail")
+	}
+	// Defense-in-depth: the recorded detail must not leak the absolute repo path.
+	if strings.Contains(latest.Detail, "/repo/data") {
+		t.Fatalf("drill detail must be path-scrubbed, got %q", latest.Detail)
 	}
 }
 
