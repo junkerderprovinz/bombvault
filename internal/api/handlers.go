@@ -995,6 +995,20 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": views})
 }
 
+// handleStatus returns the per-domain RPO (protection) status for the dashboard's
+// "are my backups current?" indicator. GET /api/status
+func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
+	domains, err := h.svc.DomainStatus()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if domains == nil {
+		domains = []DomainStatusEntry{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
+}
+
 // browseDirEntry is a single subdirectory entry in the browse response.
 type browseDirEntry struct {
 	Name string `json:"name"`

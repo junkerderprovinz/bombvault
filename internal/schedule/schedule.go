@@ -128,6 +128,45 @@ func ParseCadence(s string) (Cadence, error) {
 	}
 }
 
+// PeriodSeconds returns the expected interval between fires for this cadence, in
+// seconds — the RPO (recovery-point objective) window a backup is expected to
+// stay within. It is the basis of the per-domain protection status: a backup
+// older than the period is overdue.
+//
+//   - off / disabled (Enabled=false)   → 0 (no RPO expectation)
+//   - everyN (IntervalDays>0)           → IntervalDays * 86400
+//   - daily / weekly / raw cron (Spec)  → the gap between the next two fires of
+//     the parsed cron schedule (covers "daily" = 86400 and "weekly" = 604800
+//     too, so there is one code path and no special-casing)
+//
+// A Spec that fails to parse (should never happen for a Cadence built by
+// ParseCadence, which validates) yields 0.
+func (c Cadence) PeriodSeconds() int64 {
+	if !c.Enabled {
+		return 0
+	}
+	if c.IntervalDays > 0 {
+		return int64(c.IntervalDays) * 86400
+	}
+	if c.Spec == "" {
+		return 0
+	}
+	sched, err := cron.ParseStandard(c.Spec)
+	if err != nil {
+		return 0
+	}
+	// Take two consecutive fires from a fixed reference and use their gap. A fixed
+	// base keeps the result deterministic regardless of when this is called.
+	base := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
+	first := sched.Next(base)
+	second := sched.Next(first)
+	d := second.Sub(first)
+	if d <= 0 {
+		return 0
+	}
+	return int64(d.Seconds())
+}
+
 // parseHHMM splits "HH:MM" into (hour, minute) integers and validates ranges.
 func parseHHMM(s string) (h, m int, err error) {
 	parts := strings.SplitN(s, ":", 2)

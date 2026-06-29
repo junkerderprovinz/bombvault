@@ -32,6 +32,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
@@ -365,6 +366,100 @@ func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) str
 		return settings.FlashOffsiteSchedule
 	}
 	return ""
+}
+
+// DomainStatusEntry is the per-domain RPO (protection) status: whether a
+// domain's backups are current relative to its schedule. It drives the
+// dashboard's green/amber/red "are my backups current?" indicator.
+type DomainStatusEntry struct {
+	Domain        string `json:"domain"`        // "containers" | "vms" | "flash"
+	Enabled       bool   `json:"enabled"`       // domain switched on in Settings
+	Schedule      string `json:"schedule"`      // the cadence string (e.g. "daily 02:30")
+	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
+	PeriodSeconds int64  `json:"periodSeconds"` // expected RPO window in seconds, 0 = no expectation
+	Status        string `json:"status"`        // "off" | "never" | "overdue" | "warn" | "ok"
+}
+
+// rpoStatus is the pure status decision from the inputs, so it can be unit-tested
+// exhaustively without a store. scheduled is true when the domain is enabled AND
+// has an RPO expectation (periodSeconds > 0):
+//
+//   - "off"     scheduled is false (disabled / no schedule / unparseable period)
+//   - "never"   scheduled but no successful backup yet (lastSuccess == 0)
+//   - "overdue" age > period*2
+//   - "warn"    age > period   (and <= period*2)
+//   - "ok"      otherwise
+func rpoStatus(nowUnix, lastSuccess, periodSeconds int64, scheduled bool) string {
+	if !scheduled || periodSeconds <= 0 {
+		return "off"
+	}
+	if lastSuccess <= 0 {
+		return "never"
+	}
+	age := nowUnix - lastSuccess
+	switch {
+	case age > periodSeconds*2:
+		return "overdue"
+	case age > periodSeconds:
+		return "warn"
+	default:
+		return "ok"
+	}
+}
+
+// DomainStatus returns the RPO (protection) status of each domain (containers,
+// vms, flash): whether its backups are current relative to its schedule. The
+// enabled flag + cadence come from Settings; the last successful backup time
+// comes from the store's per-domain helpers.
+func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	now := time.Now().Unix()
+
+	domains := []struct {
+		name     string
+		enabled  bool
+		schedule string
+		lastFn   func() (time.Time, error)
+	}{
+		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, s.store.LastSuccessfulContainerBackup},
+		{"vms", settings.VMsEnabled, settings.VMsSchedule, s.store.LastSuccessfulVMBackup},
+		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
+	}
+
+	out := make([]DomainStatusEntry, 0, len(domains))
+	for _, d := range domains {
+		last, lErr := d.lastFn()
+		if lErr != nil {
+			return nil, fmt.Errorf("domain %s last-success: %w", d.name, lErr)
+		}
+		var lastUnix int64
+		if !last.IsZero() {
+			lastUnix = last.Unix()
+		}
+
+		// A period is only meaningful for an enabled domain with a parseable,
+		// non-"off" cadence. An unparseable cadence (defensive — the settings PUT
+		// validates) collapses to period 0 → "off".
+		var period int64
+		cad, cErr := schedule.ParseCadence(d.schedule)
+		if cErr == nil {
+			period = cad.PeriodSeconds()
+		}
+		scheduled := d.enabled && period > 0
+
+		out = append(out, DomainStatusEntry{
+			Domain:        d.name,
+			Enabled:       d.enabled,
+			Schedule:      d.schedule,
+			LastSuccess:   lastUnix,
+			PeriodSeconds: period,
+			Status:        rpoStatus(now, lastUnix, period, scheduled),
+		})
+	}
+	return out, nil
 }
 
 // copyToOffsite replicates a domain's local repo to its off-site repo with

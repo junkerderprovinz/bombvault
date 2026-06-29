@@ -286,6 +286,17 @@ const en = {
   "dashboard.statMissingContainers": "Missing containers",
   "dashboard.statMissingVMs": "Missing VMs",
 
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Protection status",
+  "dashboard.rpoOk": "Up to date",
+  "dashboard.rpoWarn": "Due soon",
+  "dashboard.rpoOverdue": "Overdue",
+  "dashboard.rpoNever": "No backup yet",
+  "dashboard.rpoOff": "Not scheduled",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
   // Jobs page
   "nav.jobs": "Plans",
   "jobs.title": "Plans",
@@ -669,6 +680,17 @@ const de: Translations = {
   "dashboard.statErrors": "Fehler",
   "dashboard.statMissingContainers": "Fehlende Container",
   "dashboard.statMissingVMs": "Fehlende VMs",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Schutzstatus",
+  "dashboard.rpoOk": "Aktuell",
+  "dashboard.rpoWarn": "Bald fällig",
+  "dashboard.rpoOverdue": "Überfällig",
+  "dashboard.rpoNever": "Noch kein Backup",
+  "dashboard.rpoOff": "Kein Zeitplan",
+  "dashboard.domainContainers": "Container",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
 
   // Jobs page
   "nav.jobs": "Pläne",

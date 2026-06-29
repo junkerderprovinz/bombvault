@@ -369,6 +369,78 @@ func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
 	}
 }
 
+// TestDomainStatus drives DomainStatus through a seeded store: a disabled domain
+// is "off", an enabled+scheduled domain with no successful backup is "never", and
+// one with a fresh successful backup is "ok". The time-boundary cases
+// (warn/overdue) are covered exhaustively by the pure rpoStatus helper test.
+func TestDomainStatus(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir()}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	// containers: enabled + scheduled, with a fresh successful backup → ok.
+	s.ContainersEnabled = true
+	s.ContainersSchedule = "daily 02:30"
+	// vms: enabled + scheduled, but no successful backup yet → never.
+	s.VMsEnabled = true
+	s.VMsSchedule = "weekly Mon 03:00"
+	// flash: disabled → off (regardless of schedule).
+	s.FlashEnabled = false
+	s.FlashSchedule = "daily 04:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	// Seed a successful container backup so the containers domain reads "ok".
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "success", "deadbeef12345678", 2048, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	entries, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	byDomain := map[string]api.DomainStatusEntry{}
+	for _, e := range entries {
+		byDomain[e.Domain] = e
+	}
+
+	cont := byDomain["containers"]
+	if cont.Status != "ok" {
+		t.Fatalf("containers status = %q, want ok (entry=%+v)", cont.Status, cont)
+	}
+	if cont.PeriodSeconds != 86400 {
+		t.Fatalf("containers period = %d, want 86400", cont.PeriodSeconds)
+	}
+	if cont.LastSuccess == 0 {
+		t.Fatal("containers lastSuccess should be set after a successful backup")
+	}
+
+	vms := byDomain["vms"]
+	if vms.Status != "never" {
+		t.Fatalf("vms status = %q, want never (entry=%+v)", vms.Status, vms)
+	}
+	if vms.PeriodSeconds != 604800 {
+		t.Fatalf("vms period = %d, want 604800", vms.PeriodSeconds)
+	}
+
+	flash := byDomain["flash"]
+	if flash.Status != "off" {
+		t.Fatalf("flash status = %q, want off (disabled domain)", flash.Status)
+	}
+	if flash.Enabled {
+		t.Fatal("flash should report enabled=false")
+	}
+}
+
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	dir := t.TempDir()
 	// HostMountRoot must be writable so EnsureRepo can create the repo dir, and
