@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>retention</b>, <b>file-level restore</b>, <b>integrity checks</b> and <b>pre/post-backup hooks</b>. A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -97,6 +97,17 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain under Settings → Off-site copy; BombVault replicates new snapshots there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary. Each domain has its own **off-site schedule**: leave it blank to replicate after every local backup, or set a cadence (e.g. `weekly Sun 03:00`) to ship off-site less often than you back up locally — plus a **Replicate now** button for on-demand runs. While a replication is in flight, an **off-site replication indicator** shows which domain is running (on its page and the Dashboard); it is an active indicator, not a percentage bar, since `restic copy` exposes no machine-readable progress.
 - Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup. Set it **per source** — a separate policy for the **local** repo and the **off-site** repo, so you can keep off-site copies longer as an archive. Leave the off-site policy all-zero to never auto-trim off-site snapshots.
 - Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
+- **Off-site bandwidth limits** (Settings → Off-site copy) — cap the `restic` upload/download rate so replication doesn't saturate your WAN.
+
+### Insight, verification & monitoring
+
+- **Protection status (RPO)** — the Dashboard shows a green / amber / red indicator per domain comparing the last successful backup against its schedule, so an overdue backup turns red instead of hiding in a log.
+- **Backup-health heatmap** — a GitHub-contributions-style calendar of per-day backup outcomes per domain (green = all OK, red = a failure), with a Containers / VMs / Flash toggle.
+- **Repository size & dedup trend** — current repo size, deduplication ratio and snapshot count per domain, with a sparkline of how storage grows over time.
+- **Restore-verification drills** — BombVault periodically *proves* your backups are restorable (`restic check --read-data-subset`, bounded — never a disk-filling full restore) and shows a **"last verified restorable"** badge per domain (Settings → Verify).
+- **Encryption-key recovery kit** — one-click download of the master key, the derived restic password and the exact repo locations + commands, so you can restore **without a running BombVault**. A Dashboard reminder nags until you've stored it.
+- **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)** and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always.
+- **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 
 ### Other
 
@@ -107,9 +118,10 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Stop other containers during backup** — name dependent containers (e.g. a database) to stop while this one is backed up and start again afterwards.
 - **Plain export** — a per-container **Export** button writes a browsable, tool-free copy next to the repo: `<name>.tar.gz` of the backup folders plus the Unraid `<name>.xml` template (like the Appdata Backup plugin). Restic stays the engine; the export is an extra, *unencrypted* convenience copy.
 - **VM plain export** — VMs have the same **Export (plain tar)**: `<name>.tar.gz` of the disk image(s) plus `<name>.xml` (the persistent domain definition), restorable with `virsh define` + the disk, no BombVault or restic needed.
-- **Backup-health heatmap** — a GitHub-contributions-style calendar on the Dashboard shows per-day backup outcomes at a glance (green = all OK, red = a failure, deeper green for more runs), with a toggle to switch between Containers, VMs and Flash.
+- **Restore to an alternate folder** — restore a container snapshot (or individual files) to a different path instead of in place, for cloning or inspection.
+- **Snapshot diff & tags** — compare two snapshots to see what changed (files added / changed / removed and the size delta), and tag snapshots to filter them.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
-- Dark/light UI in English + German today; more locales *(planned)*.
+- Dark/light UI in **26 languages** with a flag picker.
 
 <br>
 
