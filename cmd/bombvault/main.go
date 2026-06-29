@@ -173,6 +173,9 @@ func run() error {
 	// Warm the host-integration check at startup so the dashboard shows the
 	// green result list immediately on first load (no manual click needed).
 	go handler.WarmSpike()
+	// Sample existing repos' size shortly after boot so the dashboard Storage card
+	// shows data for repos that already have backups (no wait for the next backup).
+	go svc.CollectStatsOnStartup()
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	return server.Run()
 }
