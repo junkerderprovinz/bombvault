@@ -206,6 +206,51 @@ func (r *Repo) RunsSince(since int64) ([]Run, error) {
 	return out, rows.Err()
 }
 
+// RunCounts returns the total number of backup runs per domain ("containers" |
+// "vms" | "flash") and status ("success" | "failed"), keyed [domain][status].
+// Domain is attributed the same way as the last-successful helpers: container
+// targets live in `targets`, VM targets in `vms`, and the singleton flash domain
+// uses the reserved FlashTargetID. Only finished backup runs (success/failed)
+// are counted; "running" runs are skipped. A domain/status with no runs is
+// absent from the map (the caller defaults it to 0). Drives the Prometheus
+// `bombvault_runs_total` counter.
+func (r *Repo) RunCounts() (map[string]map[string]int, error) {
+	rows, err := r.db.Query(`
+		SELECT
+		  CASE
+		    WHEN target_id = ?                              THEN 'flash'
+		    WHEN target_id IN (SELECT id FROM vms)          THEN 'vms'
+		    WHEN target_id IN (SELECT id FROM targets)      THEN 'containers'
+		    ELSE ''
+		  END AS domain,
+		  status,
+		  count(*) AS n
+		FROM runs
+		WHERE kind = 'backup' AND status IN ('success', 'failed')
+		GROUP BY domain, status`, FlashTargetID)
+	if err != nil {
+		return nil, fmt.Errorf("RunCounts: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string]map[string]int{}
+	for rows.Next() {
+		var domain, status string
+		var n int
+		if sErr := rows.Scan(&domain, &status, &n); sErr != nil {
+			return nil, fmt.Errorf("RunCounts: %w", sErr)
+		}
+		if domain == "" {
+			continue // run for a deleted/unknown target — not attributable to a domain
+		}
+		if out[domain] == nil {
+			out[domain] = map[string]int{}
+		}
+		out[domain][status] = n
+	}
+	return out, rows.Err()
+}
+
 func scanRun(s scanner) (Run, error) {
 	var run Run
 	var finishedAt, bytes sql.NullInt64

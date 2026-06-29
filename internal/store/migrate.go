@@ -248,6 +248,20 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_offsite_limit_download",
 		sql:     "ALTER TABLE settings ADD COLUMN offsite_limit_download INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// Opt-in Prometheus /metrics endpoint for Grafana / Uptime Kuma scraping.
+		// Default 0 (off): when disabled the endpoint returns 404 and is not served.
+		version: 26,
+		name:    "settings_metrics_enabled",
+		sql:     "ALTER TABLE settings ADD COLUMN metrics_enabled INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		// Optional bearer token for /metrics. Empty (the default) = open (LAN trust
+		// model, like /api/health); set = require Authorization: Bearer <token>.
+		version: 27,
+		name:    "settings_metrics_token",
+		sql:     "ALTER TABLE settings ADD COLUMN metrics_token TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

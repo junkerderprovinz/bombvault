@@ -230,6 +230,12 @@ const en = {
   "settings.limitDownload": "Download limit (KiB/s)",
   "settings.limitHint": "0 = unlimited. Caps restic's off-site transfer rate.",
 
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitoring (Prometheus)",
+  "settings.metricsEnable": "Expose /metrics",
+  "settings.metricsToken": "Scrape token (optional)",
+  "settings.metricsHint": "Prometheus-format metrics at /metrics for Grafana/Uptime Kuma. If a token is set, scrape with Authorization: Bearer <token>.",
+
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
   "rclone.hint": "Paste an rclone config to back up to the cloud (Backblaze B2, S3, Google Drive, …). It is stored encrypted. SMB/NFS need no rclone: mount the share on Unraid and set a Backup Path to it.",
@@ -664,6 +670,12 @@ const de: Translations = {
   "settings.limitUpload": "Upload-Limit (KiB/s)",
   "settings.limitDownload": "Download-Limit (KiB/s)",
   "settings.limitHint": "0 = unbegrenzt. Begrenzt resticts Off-site-Transferrate.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Monitoring (Prometheus)",
+  "settings.metricsEnable": "/metrics bereitstellen",
+  "settings.metricsToken": "Scrape-Token (optional)",
+  "settings.metricsHint": "Prometheus-Metriken unter /metrics für Grafana/Uptime Kuma. Mit gesetztem Token via Authorization: Bearer <token> abrufen.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
