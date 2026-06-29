@@ -149,6 +149,11 @@ const en = {
   "restore.cancel": "Cancel",
   "restore.preview": "Preview",
   "restore.started": "Restore started",
+  "restore.toFolder": "Restore to folder…",
+  "restore.toFolderHint":
+    "Extracts this snapshot into a folder under your backup mount. The running container is not touched.",
+  "restore.targetPath": "Target folder",
+  "restore.restoredTo": "Restored to {path}",
 
   // Runs
   "run.kindBackup": "Backup",
@@ -563,6 +568,11 @@ const de: Translations = {
   "restore.cancel": "Abbrechen",
   "restore.preview": "Vorschau",
   "restore.started": "Wiederherstellung gestartet",
+  "restore.toFolder": "In Ordner wiederherstellen…",
+  "restore.toFolderHint":
+    "Entpackt diesen Snapshot in einen Ordner unter deinem Backup-Mount. Der laufende Container wird nicht angetastet.",
+  "restore.targetPath": "Zielordner",
+  "restore.restoredTo": "Wiederhergestellt nach {path}",
 
   "run.kindBackup": "Backup",
   "run.kindRestore": "Wiederherstellung",

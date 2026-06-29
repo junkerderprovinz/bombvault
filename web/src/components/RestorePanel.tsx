@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, deleteSnapshot } from "../lib/api";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, restoreContainerToPath, deleteSnapshot } from "../lib/api";
 import type { Snapshot, FileEntry } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
@@ -304,6 +304,77 @@ type RestoreState =
   | { phase: "success" }
   | { phase: "error"; message: string };
 
+// RestoreToFolder extracts a whole snapshot into an ALTERNATE folder under the
+// host mount — non-destructive: the running container is never touched. It
+// reveals a path input + a confirm button, calls restoreContainerToPath, and
+// shows the resolved target path on success (errors inline).
+function RestoreToFolder({
+  containerName,
+  snapshotId,
+  source,
+  t,
+}: {
+  containerName: string;
+  snapshotId: string;
+  source: string;
+  t: T;
+}) {
+  const [path, setPath] = useState("");
+  const [state, setState] = useState<RestoreState>({ phase: "idle" });
+  const [target, setTarget] = useState("");
+
+  async function handle() {
+    const p = path.trim();
+    if (!p) return;
+    setState({ phase: "pending" });
+    try {
+      const res = await restoreContainerToPath(containerName, snapshotId, p, source);
+      if (res.ok) {
+        setTarget(res.target ?? p);
+        setState({ phase: "success" });
+      } else {
+        setState({ phase: "error", message: res.error ?? "Restore failed" });
+      }
+    } catch (err) {
+      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
+    }
+  }
+
+  const isPending = state.phase === "pending";
+  return (
+    <div className="mt-1 ml-24 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-1.5">
+      <p className="text-[11px] text-carbon-textMuted">{t("restore.toFolderHint")}</p>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-carbon-textSub shrink-0">{t("restore.targetPath")}</span>
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder={`user/restore/${containerName}`}
+          spellCheck={false}
+          disabled={isPending || state.phase === "success"}
+          className="flex-1 rounded bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-none focus:border-[#78a9ff]"
+        />
+        <button
+          onClick={() => void handle()}
+          disabled={!path.trim() || isPending || state.phase === "success"}
+          className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isPending ? t("common.restoring") : t("restore.confirm")}
+        </button>
+      </div>
+      {state.phase === "success" && (
+        <p className="text-xs text-[#6fdc8c] break-words">
+          {t("restore.restoredTo").replace("{path}", target)}
+        </p>
+      )}
+      {state.phase === "error" && (
+        <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
+      )}
+    </div>
+  );
+}
+
 function SnapshotRow({
   snap,
   containerName,
@@ -320,6 +391,7 @@ function SnapshotRow({
   const [confirmed, setConfirmed] = useState(false);
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
   const [showFiles, setShowFiles] = useState(false);
+  const [showRestoreTo, setShowRestoreTo] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -397,6 +469,17 @@ function SnapshotRow({
           {t("snapshots.files")}
         </button>
 
+        {/* Restore to an alternate folder (non-destructive) toggle */}
+        <button
+          onClick={() => setShowRestoreTo((p) => !p)}
+          title={t("restore.toFolderHint")}
+          className={`shrink-0 rounded-lg border border-carbon-border px-2.5 py-1 text-xs transition-colors ${
+            showRestoreTo ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
+        >
+          {t("restore.toFolder")}
+        </button>
+
         {/* Restore button */}
         <button
           onClick={() => void handleRestore()}
@@ -431,6 +514,11 @@ function SnapshotRow({
       {/* File-level restore browser */}
       {showFiles && (
         <SnapshotFileBrowser containerName={containerName} snapshotId={snap.id} source={source} t={t} />
+      )}
+
+      {/* Restore to an alternate folder (non-destructive) */}
+      {showRestoreTo && (
+        <RestoreToFolder containerName={containerName} snapshotId={snap.id} source={source} t={t} />
       )}
 
       {/* Inline result */}
