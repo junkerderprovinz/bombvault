@@ -385,6 +385,91 @@ const he: Partial<Translations> = {
   "export.button": "ייצוא (tar רגיל)",
   "export.exportedTo": "יוצא אל:",
   "backup.configOnly": "תצורה בלבד — אין תיקיות נתונים (ההגדרה נשמרה לשחזור)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "מחק את כל הגיבויים",
+  "snapshots.deleteAllConfirm": "למחוק את כל הגיבויים של VM זו מהמקור הנבחר (מקומי או מחוץ לאתר)? ה-snapshots יוסרו לצמיתות והמאגר ייגזם. לא ניתן לבטל פעולה זו.",
+  "snapshots.deletingAll": "מוחק…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "תגיות",
+  "snapshot.addTag": "הוסף תגית",
+  "snapshot.compare": "השווה",
+  "snapshot.pickTwo": "בחר שני snapshots להשוואה",
+  "snapshot.added": "נוסף",
+  "snapshot.removed": "הוסר",
+  "snapshot.changed": "שונה",
+  "snapshot.diffSummary": "+{addedFiles} קבצים ({addedBytes}), ~{changedFiles} שונו, -{removedFiles} קבצים ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "שחזר לתיקייה…",
+  "restore.toFolderHint": "מחלץ snapshot זה לתיקייה תחת נקודת העיגון של הגיבוי. ה-container הפעיל אינו מושפע.",
+  "restore.targetPath": "תיקיית יעד",
+  "restore.restoredTo": "שוחזר אל {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "ערכת שחזור",
+  "recovery.download": "הורד ערכת שחזור",
+  "recovery.why": "כאשר ההצפנה מופעלת, ה-APP_KEY שלך הוא הסוד הראשי של כל גיבוי. הורד ערכת שחזור (המפתח, סיסמת ה-restic הנגזרת, מיקומי המאגרים ושלבי שחזור ידניים) כדי שתוכל לשחזר גם ללא container פעיל של BombVault. שמור אותה במצב לא מקוון ובאופן מאובטח.",
+  "recovery.nagTitle": "שמור את ערכת השחזור שלך",
+  "recovery.nagBody": "כאשר ההצפנה מופעלת, אובדן ה-APP_KEY שלך משמעו אובדן הגיבויים שלך. הורד את ערכת השחזור ושמור אותה במקום בטוח ולא מקוון.",
+  "recovery.stored": "שמרתי אותה בבטחה",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "רוחב פס מחוץ לאתר",
+  "settings.limitUpload": "מגבלת העלאה (KiB/s)",
+  "settings.limitDownload": "מגבלת הורדה (KiB/s)",
+  "settings.limitHint": "0 = ללא הגבלה. מגביל את קצב ההעברה של restic מחוץ לאתר.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "ניטור (Prometheus)",
+  "settings.metricsEnable": "חשוף את /metrics",
+  "settings.metricsToken": "אסימון Scrape (אופציונלי)",
+  "settings.metricsHint": "מדדים בפורמט Prometheus בכתובת /metrics עבור Grafana/Uptime Kuma. אם מוגדר אסימון, בצע scrape עם Authorization: Bearer <token>.",
+
+  // Notifications — SMTP
+  "notify.smtp": "אימייל (SMTP)",
+  "notify.smtpHost": "שרת SMTP",
+  "notify.smtpPort": "פורט",
+  "notify.smtpUser": "שם משתמש",
+  "notify.smtpPass": "סיסמה",
+  "notify.smtpFrom": "כתובת שולח",
+  "notify.smtpTo": "כתובת נמען",
+  "notify.smtpTls": "הצפנה",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "אמת יכולת שחזור",
+  "verify.running": "מאמת…",
+  "verify.ok": "אומת כניתן לשחזור",
+  "verify.failed": "האימות נכשל",
+  "verify.last": "אומת לאחרונה {time}",
+  "verify.never": "מעולם לא אומת",
+  "verify.auto": "בדיקות שחזור אוטומטיות",
+  "verify.subsetPct": "מדגם נתונים (%)",
+  "verify.hint": "קורא מעת לעת מדגם אקראי של נתוני הגיבוי כדי להוכיח שהם תקינים וניתנים לשחזור.",
+  "verify.shield": "אומת",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "מצב הגנה",
+  "dashboard.rpoOk": "עדכני",
+  "dashboard.rpoWarn": "צפוי בקרוב",
+  "dashboard.rpoOverdue": "באיחור",
+  "dashboard.rpoNever": "אין גיבוי עדיין",
+  "dashboard.rpoOff": "לא מתוזמן",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "בריאות הגיבוי",
+  "dashboard.heatLess": "פחות",
+  "dashboard.heatMore": "יותר",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "אחסון",
+  "dashboard.dedup": "Dedup",
+  "dashboard.snapshotsLabel": "Snapshots",
+  "dashboard.noStats": "אין נתונים עדיין",
 };
 
 export default he;

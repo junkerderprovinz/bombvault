@@ -385,6 +385,94 @@ const ar: Partial<Translations> = {
   "export.button": "تصدير (tar عادي)",
   "export.exportedTo": "تم التصدير إلى:",
   "backup.configOnly": "الإعدادات فقط — لا توجد مجلدات بيانات (تم حفظ التعريف لإعادة الإنشاء)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "حذف جميع النسخ الاحتياطية",
+  "snapshots.deleteAllConfirm": "حذف جميع النسخ الاحتياطية لهذا الـ VM من المصدر المحدد (محلي أو خارج الموقع)؟ تُزال اللقطات نهائياً ويُقلَّم المستودع. لا يمكن التراجع.",
+  "snapshots.deletingAll": "جارٍ الحذف…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "العلامات",
+  "snapshot.addTag": "إضافة علامة",
+  "snapshot.compare": "مقارنة",
+  "snapshot.pickTwo": "اختر لقطتين للمقارنة",
+  "snapshot.added": "مضاف",
+  "snapshot.removed": "محذوف",
+  "snapshot.changed": "متغيّر",
+  "snapshot.diffSummary": "+{addedFiles} ملفات ({addedBytes})، ~{changedFiles} متغيّرة، -{removedFiles} ملفات ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "استعادة إلى مجلد…",
+  "restore.toFolderHint":
+    "يستخرج هذه اللقطة إلى مجلد ضمن نقطة تركيب النسخ الاحتياطي. لا يتم المساس بالـ container قيد التشغيل.",
+  "restore.targetPath": "المجلد الهدف",
+  "restore.restoredTo": "تمت الاستعادة إلى {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "حقيبة الاستعادة",
+  "recovery.download": "تنزيل حقيبة الاستعادة",
+  "recovery.why":
+    "مع تفعيل التشفير، يكون APP_KEY هو السر الرئيسي لكل نسخة احتياطية. نزّل حقيبة استعادة (المفتاح، وكلمة مرور restic المشتقة، ومواقع المستودعات، وخطوات الاستعادة اليدوية) لتتمكن من الاستعادة حتى بدون container يعمل لـ BombVault. احفظها بأمان وبدون اتصال.",
+  "recovery.nagTitle": "احفظ حقيبة الاستعادة",
+  "recovery.nagBody":
+    "مع تفعيل التشفير، فقدان APP_KEY يعني فقدان نسخك الاحتياطية. نزّل حقيبة الاستعادة واحفظها في مكان آمن وبدون اتصال.",
+  "recovery.stored": "حفظتها بأمان",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "نطاق التراسل خارج الموقع",
+  "settings.limitUpload": "حد الرفع (KiB/s)",
+  "settings.limitDownload": "حد التنزيل (KiB/s)",
+  "settings.limitHint": "0 = بلا حد. يحدّ معدل نقل restic خارج الموقع.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "المراقبة (Prometheus)",
+  "settings.metricsEnable": "إتاحة /metrics",
+  "settings.metricsToken": "رمز الاستخلاص (اختياري)",
+  "settings.metricsHint": "مقاييس بتنسيق Prometheus على /metrics لـ Grafana/Uptime Kuma. إذا حُدِّد رمز، استخلص باستخدام Authorization: Bearer <token>.",
+
+  // Email (SMTP)
+  "notify.smtp": "البريد الإلكتروني (SMTP)",
+  "notify.smtpHost": "مضيف SMTP",
+  "notify.smtpPort": "المنفذ",
+  "notify.smtpUser": "اسم المستخدم",
+  "notify.smtpPass": "كلمة المرور",
+  "notify.smtpFrom": "عنوان المُرسِل",
+  "notify.smtpTo": "عنوان المُستلِم",
+  "notify.smtpTls": "التشفير",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "التحقق من قابلية الاستعادة",
+  "verify.running": "جارٍ التحقق…",
+  "verify.ok": "تم التحقق من قابلية الاستعادة",
+  "verify.failed": "فشل التحقق",
+  "verify.last": "آخر تحقق {time}",
+  "verify.never": "لم يُتحقَّق أبداً",
+  "verify.auto": "فحوص الاستعادة التلقائية",
+  "verify.subsetPct": "عينة البيانات (%)",
+  "verify.hint": "يقرأ دورياً عينة عشوائية من بيانات النسخ الاحتياطي لإثبات أنها سليمة وقابلة للاستعادة.",
+  "verify.shield": "مُتحقَّق منه",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "حالة الحماية",
+  "dashboard.rpoOk": "محدَّث",
+  "dashboard.rpoWarn": "مستحق قريباً",
+  "dashboard.rpoOverdue": "متأخر",
+  "dashboard.rpoNever": "لا نسخة احتياطية بعد",
+  "dashboard.rpoOff": "غير مجدوَل",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "سلامة النسخ الاحتياطي",
+  "dashboard.heatLess": "أقل",
+  "dashboard.heatMore": "أكثر",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "التخزين",
+  "dashboard.dedup": "إزالة التكرار",
+  "dashboard.snapshotsLabel": "اللقطات",
+  "dashboard.noStats": "لا توجد بيانات بعد",
 };
 
 export default ar;

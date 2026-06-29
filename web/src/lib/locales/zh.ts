@@ -377,6 +377,91 @@ const zh: Partial<Translations> = {
   "export.button": "导出（普通 tar）",
   "export.exportedTo": "已导出到：",
   "backup.configOnly": "仅配置 — 无数据文件夹（已保存定义以便重新创建）",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "删除所有备份",
+  "snapshots.deleteAllConfirm": "删除此虚拟机在所选来源（本地或异地）的所有备份？快照将被永久移除，并对仓库执行清理。此操作无法撤销。",
+  "snapshots.deletingAll": "删除中…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "标签",
+  "snapshot.addTag": "添加标签",
+  "snapshot.compare": "比较",
+  "snapshot.pickTwo": "选择两个快照进行比较",
+  "snapshot.added": "新增",
+  "snapshot.removed": "移除",
+  "snapshot.changed": "更改",
+  "snapshot.diffSummary": "+{addedFiles} 个文件（{addedBytes}），~{changedFiles} 个更改，-{removedFiles} 个文件（{removedBytes}）",
+
+  // Restore to folder
+  "restore.toFolder": "还原到文件夹…",
+  "restore.toFolderHint": "将此快照解压到备份挂载下的某个文件夹中。运行中的容器不会被改动。",
+  "restore.targetPath": "目标文件夹",
+  "restore.restoredTo": "已还原到 {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "恢复工具包",
+  "recovery.download": "下载恢复工具包",
+  "recovery.why": "启用加密后，你的 APP_KEY 是每个备份的主密钥。下载恢复工具包（密钥、派生出的 restic 密码、仓库位置和手动还原步骤），即使没有运行中的 BombVault 容器也能还原。请离线妥善保存。",
+  "recovery.nagTitle": "保存你的恢复工具包",
+  "recovery.nagBody": "启用加密后，丢失 APP_KEY 就等于丢失备份。请下载恢复工具包并离线妥善保存。",
+  "recovery.stored": "我已妥善保存",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "异地带宽",
+  "settings.limitUpload": "上传限制 (KiB/s)",
+  "settings.limitDownload": "下载限制 (KiB/s)",
+  "settings.limitHint": "0 = 无限制。限制 restic 的异地传输速率。",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "监控 (Prometheus)",
+  "settings.metricsEnable": "暴露 /metrics",
+  "settings.metricsToken": "抓取令牌（可选）",
+  "settings.metricsHint": "在 /metrics 提供 Prometheus 格式的指标，供 Grafana/Uptime Kuma 使用。若设置了令牌，请使用 Authorization: Bearer <token> 抓取。",
+
+  // Notifications — Email (SMTP)
+  "notify.smtp": "邮件 (SMTP)",
+  "notify.smtpHost": "SMTP 主机",
+  "notify.smtpPort": "端口",
+  "notify.smtpUser": "用户名",
+  "notify.smtpPass": "密码",
+  "notify.smtpFrom": "发件地址",
+  "notify.smtpTo": "收件地址",
+  "notify.smtpTls": "加密",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "验证可还原性",
+  "verify.running": "验证中…",
+  "verify.ok": "已验证可还原",
+  "verify.failed": "验证失败",
+  "verify.last": "上次验证于 {time}",
+  "verify.never": "从未验证",
+  "verify.auto": "自动还原检查",
+  "verify.subsetPct": "数据抽样 (%)",
+  "verify.hint": "定期读取备份数据的随机样本，以证明其完好且可还原。",
+  "verify.shield": "已验证",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "保护状态",
+  "dashboard.rpoOk": "最新",
+  "dashboard.rpoWarn": "即将到期",
+  "dashboard.rpoOverdue": "已逾期",
+  "dashboard.rpoNever": "尚无备份",
+  "dashboard.rpoOff": "未计划",
+  "dashboard.domainContainers": "容器",
+  "dashboard.domainVMs": "虚拟机",
+  "dashboard.domainFlash": "闪存",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "备份健康度",
+  "dashboard.heatLess": "较少",
+  "dashboard.heatMore": "较多",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "存储",
+  "dashboard.dedup": "去重",
+  "dashboard.snapshotsLabel": "快照",
+  "dashboard.noStats": "暂无数据",
 };
 
 export default zh;

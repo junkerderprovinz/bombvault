@@ -377,6 +377,91 @@ const vi: Partial<Translations> = {
   "export.button": "Xuất (tar thường)",
   "export.exportedTo": "Đã xuất tới:",
   "backup.configOnly": "Chỉ cấu hình — không có thư mục dữ liệu (đã lưu định nghĩa để tạo lại)",
+
+  // Backups — delete all
+  "snapshots.deleteAll": "Xóa tất cả bản sao lưu",
+  "snapshots.deleteAllConfirm": "Xóa TẤT CẢ bản sao lưu của VM này từ nguồn đã chọn (cục bộ hoặc off-site)? Các snapshot bị xóa vĩnh viễn và kho được dọn bớt. Không thể hoàn tác.",
+  "snapshots.deletingAll": "Đang xóa…",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Thẻ",
+  "snapshot.addTag": "Thêm thẻ",
+  "snapshot.compare": "So sánh",
+  "snapshot.pickTwo": "Chọn hai snapshot để so sánh",
+  "snapshot.added": "đã thêm",
+  "snapshot.removed": "đã xóa",
+  "snapshot.changed": "đã thay đổi",
+  "snapshot.diffSummary": "+{addedFiles} tập tin ({addedBytes}), ~{changedFiles} thay đổi, -{removedFiles} tập tin ({removedBytes})",
+
+  // Restore to folder
+  "restore.toFolder": "Khôi phục vào thư mục…",
+  "restore.toFolderHint": "Giải nén snapshot này vào một thư mục bên dưới điểm gắn kết sao lưu của bạn. Container đang chạy không bị đụng đến.",
+  "restore.targetPath": "Thư mục đích",
+  "restore.restoredTo": "Đã khôi phục vào {path}",
+
+  // Encryption-key recovery kit
+  "recovery.title": "Bộ khôi phục",
+  "recovery.download": "Tải bộ khôi phục",
+  "recovery.why": "Khi bật mã hóa, APP_KEY của bạn là khóa bí mật chính cho mọi bản sao lưu. Hãy tải bộ khôi phục (khóa, mật khẩu restic dẫn xuất, vị trí kho và các bước khôi phục thủ công) để có thể khôi phục ngay cả khi không có container BombVault đang chạy. Lưu trữ nó ngoại tuyến và an toàn.",
+  "recovery.nagTitle": "Lưu bộ khôi phục của bạn",
+  "recovery.nagBody": "Khi bật mã hóa, mất APP_KEY đồng nghĩa với mất các bản sao lưu. Hãy tải bộ khôi phục và cất giữ ở nơi an toàn, ngoại tuyến.",
+  "recovery.stored": "Tôi đã cất giữ an toàn",
+
+  // Off-site bandwidth
+  "settings.offsiteLimits": "Băng thông off-site",
+  "settings.limitUpload": "Giới hạn tải lên (KiB/s)",
+  "settings.limitDownload": "Giới hạn tải xuống (KiB/s)",
+  "settings.limitHint": "0 = không giới hạn. Giới hạn tốc độ truyền off-site của restic.",
+
+  // Monitoring (Prometheus)
+  "settings.metrics": "Giám sát (Prometheus)",
+  "settings.metricsEnable": "Cung cấp /metrics",
+  "settings.metricsToken": "Token scrape (tùy chọn)",
+  "settings.metricsHint": "Số liệu định dạng Prometheus tại /metrics cho Grafana/Uptime Kuma. Nếu đặt token, scrape với Authorization: Bearer <token>.",
+
+  // Notifications — Email (SMTP)
+  "notify.smtp": "Email (SMTP)",
+  "notify.smtpHost": "Máy chủ SMTP",
+  "notify.smtpPort": "Cổng",
+  "notify.smtpUser": "Tên người dùng",
+  "notify.smtpPass": "Mật khẩu",
+  "notify.smtpFrom": "Địa chỉ gửi",
+  "notify.smtpTo": "Địa chỉ nhận",
+  "notify.smtpTls": "Mã hóa",
+
+  // Restore-verification drills ("verify restorability")
+  "verify.now": "Xác minh khả năng khôi phục",
+  "verify.running": "Đang xác minh…",
+  "verify.ok": "Đã xác minh khôi phục được",
+  "verify.failed": "Xác minh thất bại",
+  "verify.last": "Lần xác minh cuối {time}",
+  "verify.never": "Chưa từng xác minh",
+  "verify.auto": "Kiểm tra khôi phục tự động",
+  "verify.subsetPct": "Mẫu dữ liệu (%)",
+  "verify.hint": "Định kỳ đọc một mẫu ngẫu nhiên của dữ liệu sao lưu để chứng minh nó còn nguyên vẹn và khôi phục được.",
+  "verify.shield": "đã xác minh",
+
+  // Dashboard protection (RPO) status
+  "dashboard.protectionTitle": "Trạng thái bảo vệ",
+  "dashboard.rpoOk": "Cập nhật",
+  "dashboard.rpoWarn": "Sắp đến hạn",
+  "dashboard.rpoOverdue": "Quá hạn",
+  "dashboard.rpoNever": "Chưa có bản sao lưu",
+  "dashboard.rpoOff": "Chưa lên lịch",
+  "dashboard.domainContainers": "Containers",
+  "dashboard.domainVMs": "VMs",
+  "dashboard.domainFlash": "Flash",
+
+  // Dashboard backup-health heatmap
+  "dashboard.healthTitle": "Tình trạng sao lưu",
+  "dashboard.heatLess": "Ít hơn",
+  "dashboard.heatMore": "Nhiều hơn",
+
+  // Dashboard storage (repo size + dedup) card
+  "dashboard.storageTitle": "Lưu trữ",
+  "dashboard.dedup": "Khử trùng lặp",
+  "dashboard.snapshotsLabel": "Snapshots",
+  "dashboard.noStats": "Chưa có dữ liệu",
 };
 
 export default vi;
