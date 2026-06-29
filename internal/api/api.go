@@ -113,6 +113,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
+	mux.HandleFunc("GET /api/status", h.handleStatus)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 	mux.HandleFunc("GET /api/progress", h.handleProgress)
 

@@ -131,6 +131,35 @@ func TestParseCadenceRawCron(t *testing.T) {
 	}
 }
 
+// TestCadencePeriodSeconds covers the RPO period each cadence form implies:
+// daily/weekly/everyN/cron derive from the schedule; off yields 0.
+func TestCadencePeriodSeconds(t *testing.T) {
+	cases := []struct {
+		name    string
+		cadence string
+		want    int64
+	}{
+		{"daily", "daily 02:30", 86400},
+		{"weekly", "weekly Mon 03:00", 604800},
+		{"everyN", "everyN 3 04:00", 3 * 86400},
+		{"cron daily", "0 5 * * *", 86400},
+		{"cron weekly", "15 4 * * 2", 604800},
+		{"off", "off", 0},
+		{"empty", "", 0},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cad, err := schedule.ParseCadence(c.cadence)
+			if err != nil {
+				t.Fatalf("ParseCadence(%q): %v", c.cadence, err)
+			}
+			if got := cad.PeriodSeconds(); got != c.want {
+				t.Fatalf("PeriodSeconds(%q) = %d, want %d", c.cadence, got, c.want)
+			}
+		})
+	}
+}
+
 func TestParseCadenceEmptyIsOff(t *testing.T) {
 	cad, err := schedule.ParseCadence("")
 	if err != nil {

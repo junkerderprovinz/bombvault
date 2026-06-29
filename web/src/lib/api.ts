@@ -123,6 +123,22 @@ export interface ListRunsResponse {
   runs: Run[];
 }
 
+/** Per-domain RPO (protection) status from GET /api/status. */
+export interface DomainStatus {
+  domain: string; // "containers" | "vms" | "flash"
+  enabled: boolean;
+  schedule: string;
+  lastSuccess: number; // unix seconds; 0 = never
+  periodSeconds: number; // expected RPO window; 0 = no expectation
+  status: string; // "off" | "never" | "overdue" | "warn" | "ok"
+}
+
+export interface StatusResponse {
+  ok: boolean;
+  domains?: DomainStatus[];
+  error?: string;
+}
+
 /** A spike check from POST /api/spike */
 export interface SpikeCheck {
   Name: string;
@@ -516,6 +532,11 @@ export function getSpike(): Promise<SpikeResponse> {
 
 export function listRuns(): Promise<ListRunsResponse> {
   return fetchJSON("/api/runs");
+}
+
+/** GET /api/status — per-domain RPO (protection) status for the dashboard. */
+export function getStatus(): Promise<StatusResponse> {
+  return fetchJSON("/api/status");
 }
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listRuns, getSpike, listContainers, listVMs, getSettings } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
@@ -250,6 +250,121 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Protection (RPO) status card
+// ---------------------------------------------------------------------------
+
+// chipForRpo maps an RPO status to a StatusChip color variant.
+function chipForRpo(status: string): string {
+  switch (status) {
+    case "ok":
+      return "success";
+    case "warn":
+      return "info";
+    case "overdue":
+    case "never":
+      return "failed";
+    default:
+      return "neutral";
+  }
+}
+
+function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [domains, setDomains] = useState<DomainStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getStatus()
+      .then((res) => {
+        if (!active) return;
+        if (res.ok) setDomains(res.domains ?? []);
+      })
+      .catch(() => {/* non-fatal */})
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const domainLabel = (domain: string): string => {
+    switch (domain) {
+      case "containers":
+        return t("dashboard.domainContainers");
+      case "vms":
+        return t("dashboard.domainVMs");
+      case "flash":
+        return t("dashboard.domainFlash");
+      default:
+        return domain;
+    }
+  };
+
+  const rpoLabel = (status: string): string => {
+    switch (status) {
+      case "ok":
+        return t("dashboard.rpoOk");
+      case "warn":
+        return t("dashboard.rpoWarn");
+      case "overdue":
+        return t("dashboard.rpoOverdue");
+      case "never":
+        return t("dashboard.rpoNever");
+      default:
+        return t("dashboard.rpoOff");
+    }
+  };
+
+  return (
+    <Card title={t("dashboard.protectionTitle")}>
+      {loading && (
+        <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
+      )}
+      {!loading && domains.length > 0 && (
+        <div className="divide-y divide-carbon-border">
+          {domains.map((d) => {
+            const off = d.status === "off";
+            return (
+              <div key={d.domain} className="flex items-center gap-3 py-2.5 text-sm">
+                <span
+                  className={`font-medium w-28 shrink-0 truncate ${
+                    off ? "text-carbon-textMuted" : "text-carbon-text"
+                  }`}
+                >
+                  {domainLabel(d.domain)}
+                </span>
+                {off ? (
+                  <span className="text-xs text-carbon-textMuted flex-1">
+                    {t("dashboard.rpoOff")}
+                  </span>
+                ) : (
+                  <>
+                    <StatusChip status={chipForRpo(d.status)} />
+                    <span className="text-carbon-text flex-1 truncate">
+                      {rpoLabel(d.status)}
+                    </span>
+                    <span className="text-carbon-textMuted text-xs shrink-0">
+                      {d.schedule}
+                    </span>
+                    <span
+                      className="text-carbon-textMuted text-xs shrink-0 w-20 text-right"
+                      title={formatTs(d.lastSuccess)}
+                    >
+                      {d.lastSuccess ? relativeTime(d.lastSuccess) : t("containers.never")}
+                    </span>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Recent Runs card
 // ---------------------------------------------------------------------------
 
@@ -424,6 +539,9 @@ export function Dashboard() {
 
       {/* Stat cards — compact summary row */}
       <StatCardsRow t={t} />
+
+      {/* Protection (RPO) status — "are my backups current?" indicator */}
+      <ProtectionCard t={t} />
 
       {/* 2-column grid for last backups + run history */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
