@@ -685,6 +685,9 @@ type settingsView struct {
 	DrillsEnabled   bool   `json:"drillsEnabled"`
 	DrillsSchedule  string `json:"drillsSchedule"`
 	DrillsSubsetPct int    `json:"drillsSubsetPct"`
+	// RecoveryKitAck dismisses the dashboard nag once the user has downloaded +
+	// safely stored the encryption-key recovery kit.
+	RecoveryKitAck bool `json:"recoveryKitAck"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -721,6 +724,7 @@ func toView(s store.Settings) settingsView {
 		DrillsEnabled:               s.DrillsEnabled,
 		DrillsSchedule:              s.DrillsSchedule,
 		DrillsSubsetPct:             s.DrillsSubsetPct,
+		RecoveryKitAck:              s.RecoveryKitAck,
 	}
 }
 
@@ -849,6 +853,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		DrillsEnabled:               v.DrillsEnabled,
 		DrillsSchedule:              v.DrillsSchedule,
 		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
+		RecoveryKitAck:              v.RecoveryKitAck,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,
@@ -864,6 +869,29 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleRecoveryKit streams the encryption-key recovery kit as a download.
+// GET /api/recovery-kit — BEHIND authGate (NOT public allow-listed): the kit
+// contains the master APP_KEY + the derived restic password, so only the
+// session-authenticated owner may fetch it. The body is the owner's own recovery
+// document and carries the real repo locations (no path scrubbing here), and it
+// is never logged.
+func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
+	kit, err := h.svc.RecoveryKit()
+	if err != nil {
+		// A build failure (settings read) is reported as JSON before any body is
+		// streamed; the secret body is never logged.
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="bombvault-recovery-kit.md"`)
+	w.WriteHeader(http.StatusOK)
+	if _, wErr := w.Write([]byte(kit)); wErr != nil {
+		// Log only the failure, never the body (it contains the master key).
+		log.Printf("api: recovery-kit: write failed: %v", wErr)
+	}
 }
 
 // handleCheck verifies the integrity of a domain's restic repo (restic check).

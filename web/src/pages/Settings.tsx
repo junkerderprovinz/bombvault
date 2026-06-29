@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills } from "../lib/api";
+import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import type { Settings, NotifyConfig, RestoreDrill } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -1888,6 +1888,23 @@ export function SettingsPage() {
         <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
           {t("settings.encryptionWarning")}
         </div>
+        {settings.encryptionEnabled && (
+          <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
+            <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+              {t("recovery.title")}
+            </h3>
+            <p className="text-xs text-carbon-textMuted leading-relaxed">
+              {t("recovery.why")}
+            </p>
+            <a
+              href={recoveryKitUrl()}
+              download="bombvault-recovery-kit.md"
+              className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+            >
+              {t("recovery.download")}
+            </a>
+          </div>
+        )}
         <SaveBar
           state={encSaveState}
           error={encSaveError}
