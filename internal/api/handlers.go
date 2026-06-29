@@ -477,6 +477,52 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
 }
 
+// handleDiff compares two of a container's snapshots and returns the summary of
+// what changed between them. GET /api/containers/{name}/diff?from=&to=&source=
+func (h *Handler) handleDiff(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	from := r.URL.Query().Get("from")
+	to := r.URL.Query().Get("to")
+	d, err := h.svc.DiffSnapshots(r.Context(), name, sourceParam(r), from, to)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"diff": map[string]any{
+			"addedFiles":   d.AddedFiles,
+			"removedFiles": d.RemovedFiles,
+			"changedFiles": d.ChangedFiles,
+			"addedBytes":   d.AddedBytes,
+			"removedBytes": d.RemovedBytes,
+		},
+	}))
+}
+
+// handleTagSnapshot adds tags to one of a container's snapshots (restic tag).
+// POST /api/containers/{name}/tag  body {snapshotId, tags:[...]}
+func (h *Handler) handleTagSnapshot(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		SnapshotID string   `json:"snapshotId"`
+		Tags       []string `json:"tags"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.TagSnapshot(r.Context(), name, sourceParam(r), body.SnapshotID, body.Tags); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {

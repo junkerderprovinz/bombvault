@@ -74,6 +74,18 @@ type StatsResult struct {
 	FileCount int64 `json:"total_file_count"`
 }
 
+// DiffResult holds the summary we extract from `restic diff --json`: its final
+// "statistics" object. The per-file "change" lines are ignored — the headline
+// counts (files added/removed/changed) and the added/removed byte totals are
+// what the UI shows.
+type DiffResult struct {
+	AddedFiles   int   `json:"addedFiles"`
+	RemovedFiles int   `json:"removedFiles"`
+	ChangedFiles int   `json:"changedFiles"`
+	AddedBytes   int64 `json:"addedBytes"`
+	RemovedBytes int64 `json:"removedBytes"`
+}
+
 // Restic is the adapter for calling the restic CLI.
 type Restic struct {
 	// Bin is the path (or name) of the restic binary.  Defaults to "restic".
@@ -295,6 +307,38 @@ func StatsArgs(repo, mode string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	return args
+}
+
+// DiffArgs returns the argv slice for `restic diff --json <snap1> <snap2>`. The
+// two snapshot ids go after -- (arg-injection guard); callers also validate them
+// as hex AND confirm both belong to the target before invoking. restic diff
+// streams one JSON object per line (many "change" lines then a final
+// "statistics" object), parsed by Diff.
+func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "diff", "--json")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--", snap1, snap2)
+	return args
+}
+
+// TagAddArgs returns the argv slice for `restic tag --add <tag> <snapID>`. One
+// --add per tag is emitted; the snapshot id goes after -- (arg-injection guard),
+// and callers validate the id as hex + scope it to the target first. restic tags
+// are comma-separated, so callers must reject commas/control chars in tags.
+func TagAddArgs(repo, snapID string, tags []string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "tag")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	for _, tag := range tags {
+		args = append(args, "--add", tag)
+	}
+	args = append(args, "--", snapID)
 	return args
 }
 
@@ -737,6 +781,29 @@ func (r Restic) Stats(ctx context.Context, repo, mode string, m Mode) (StatsResu
 	return res, nil
 }
 
+// Diff compares two snapshots (`restic diff --json snap1 snap2`) and returns the
+// parsed summary. restic streams one JSON object per line: many "change" lines
+// then a final "statistics" object — we keep only the statistics, mapping its
+// added/removed file counts + byte totals and its changed_files count into a
+// DiffResult. Buffered (like Snapshots/Stats), not the streaming progress path.
+func (r Restic) Diff(ctx context.Context, repo, snap1, snap2 string, m Mode) (DiffResult, error) {
+	out, err := r.run(ctx, DiffArgs(repo, snap1, snap2, m), m)
+	if err != nil {
+		return DiffResult{}, err
+	}
+	return parseDiffStatistics(out)
+}
+
+// TagAdd adds tags to a snapshot (`restic tag --add`). An empty tag list is a
+// no-op (nothing to add).
+func (r Restic) TagAdd(ctx context.Context, repo, snapID string, tags []string, m Mode) error {
+	if len(tags) == 0 {
+		return nil
+	}
+	_, err := r.run(ctx, TagAddArgs(repo, snapID, tags, m), m)
+	return err
+}
+
 // Ls lists the files/dirs in a snapshot. restic ls --json emits one JSON object
 // per line: a leading snapshot-metadata object then one "node" per path. We keep
 // only nodes that carry a path.
@@ -818,6 +885,53 @@ func (r Restic) Prune(ctx context.Context, repo string, m Mode) error {
 type backupJSONLine struct {
 	MessageType string `json:"message_type"`
 	Summary
+}
+
+// diffStat mirrors restic's DiffStat object (the "added"/"removed" sub-objects
+// of a diff statistics line). Field names match restic cmd/restic/cmd_diff.go
+// exactly. We use only Files + Bytes; the rest are kept for completeness.
+type diffStat struct {
+	Files     int    `json:"files"`
+	Dirs      int    `json:"dirs"`
+	Others    int    `json:"others"`
+	DataBlobs int    `json:"data_blobs"`
+	TreeBlobs int    `json:"tree_blobs"`
+	Bytes     uint64 `json:"bytes"`
+}
+
+// diffStatistics mirrors restic's diff statistics JSON line
+// (message_type == "statistics"), per restic cmd/restic/cmd_diff.go.
+type diffStatistics struct {
+	MessageType  string   `json:"message_type"`
+	ChangedFiles int      `json:"changed_files"`
+	Added        diffStat `json:"added"`
+	Removed      diffStat `json:"removed"`
+}
+
+// parseDiffStatistics scans lines of restic --json diff output for the final
+// "statistics" object and maps it into a DiffResult. Per-file "change" lines are
+// ignored — only the summary statistics are surfaced.
+func parseDiffStatistics(data []byte) (DiffResult, error) {
+	for _, line := range bytes.Split(data, []byte("\n")) {
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		var s diffStatistics
+		if err := json.Unmarshal(line, &s); err != nil {
+			continue // skip non-JSON / per-file change lines
+		}
+		if s.MessageType == "statistics" {
+			return DiffResult{
+				AddedFiles:   s.Added.Files,
+				RemovedFiles: s.Removed.Files,
+				ChangedFiles: s.ChangedFiles,
+				AddedBytes:   int64(s.Added.Bytes),
+				RemovedBytes: int64(s.Removed.Bytes),
+			}, nil
+		}
+	}
+	return DiffResult{}, fmt.Errorf("restic diff: no statistics line in output")
 }
 
 // ParseBackupSummary scans lines of restic --json backup output for the

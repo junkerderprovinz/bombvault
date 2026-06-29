@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, restoreContainerToPath, deleteSnapshot } from "../lib/api";
-import type { Snapshot, FileEntry } from "../lib/api";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot } from "../lib/api";
+import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 
@@ -9,6 +9,28 @@ type T = ReturnType<typeof useT>["t"];
 // Cap the rendered file list — an appdata snapshot can hold thousands of nodes;
 // rendering them all would jank the UI. Users narrow with the filter box.
 const FILE_DISPLAY_CAP = 500;
+
+// humanBytes formats a byte count with a binary (1024) unit and one decimal
+// (mirrors the Dashboard's storage card so sizes read the same everywhere).
+function humanBytes(n: number): string {
+  if (!n || n <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
+}
+
+// displayTags drops the internal ownership tag (container:<name>) and shows only
+// any OTHER tags as chips — the ownership tag is an implementation detail every
+// snapshot carries, so showing it would just be noise.
+function displayTags(snap: Snapshot, containerName: string): string[] {
+  const owner = `container:${containerName}`;
+  return (snap.tags ?? []).filter((tg) => tg !== owner);
+}
 
 // ---------------------------------------------------------------------------
 // File tree (collapsible folder browser for file-level restore)
@@ -375,17 +397,212 @@ function RestoreToFolder({
   );
 }
 
+// snapLabel renders a snapshot's short id + time for the compare selects.
+function snapLabel(snap: Snapshot): string {
+  return `${snap.id.slice(0, 8)} · ${new Date(snap.time).toLocaleString()}`;
+}
+
+// CompareSnapshots is a collapsible "Compare" panel: pick two snapshots (two
+// selects, defaulting to the newest pair) and show the diff summary of what
+// changed between them (restic diff). Visually consistent with the Files /
+// Restore-to-folder panels.
+function CompareSnapshots({
+  snapshots,
+  containerName,
+  source,
+  t,
+}: {
+  snapshots: Snapshot[];
+  containerName: string;
+  source: string;
+  t: T;
+}) {
+  const [open, setOpen] = useState(false);
+  // Default to comparing the two most recent snapshots (older "from" → newer "to").
+  const [from, setFrom] = useState(snapshots[1]?.id ?? "");
+  const [to, setTo] = useState(snapshots[0]?.id ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [diff, setDiff] = useState<SnapshotDiff | null>(null);
+
+  async function run() {
+    if (!from || !to || from === to) return;
+    setLoading(true);
+    setError(null);
+    setDiff(null);
+    try {
+      const res = await diffSnapshots(containerName, from, to, source);
+      if (res.ok && res.diff) setDiff(res.diff);
+      else setError(res.error ?? "Compare failed");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const summary = diff
+    ? t("snapshot.diffSummary")
+        .replace("{addedFiles}", String(diff.addedFiles))
+        .replace("{addedBytes}", humanBytes(diff.addedBytes))
+        .replace("{changedFiles}", String(diff.changedFiles))
+        .replace("{removedFiles}", String(diff.removedFiles))
+        .replace("{removedBytes}", humanBytes(diff.removedBytes))
+    : "";
+
+  const selectCls =
+    "rounded bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-none focus:border-[#78a9ff] max-w-[16rem] truncate";
+
+  return (
+    <div className="py-2 border-b border-carbon-border">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {t("snapshot.compare")}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
+          <p className="text-[11px] text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select value={from} onChange={(e) => setFrom(e.target.value)} disabled={loading} className={selectCls}>
+              {snapshots.map((s) => (
+                <option key={s.id} value={s.id}>{snapLabel(s)}</option>
+              ))}
+            </select>
+            <span className="text-xs text-carbon-textMuted">→</span>
+            <select value={to} onChange={(e) => setTo(e.target.value)} disabled={loading} className={selectCls}>
+              {snapshots.map((s) => (
+                <option key={s.id} value={s.id}>{snapLabel(s)}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => void run()}
+              disabled={loading || !from || !to || from === to}
+              className="inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {loading ? "…" : t("snapshot.compare")}
+            </button>
+          </div>
+          {error && <p className="text-xs text-[#ff8389] break-words">{error}</p>}
+          {diff && (
+            <p className="text-xs text-carbon-text font-mono break-words" title={summary}>
+              <span className="text-[#6fdc8c]">+{diff.addedFiles}</span> {t("snapshot.added")} ({humanBytes(diff.addedBytes)}),{" "}
+              <span className="text-carbon-textSub">~{diff.changedFiles}</span> {t("snapshot.changed")},{" "}
+              <span className="text-[#ff8389]">-{diff.removedFiles}</span> {t("snapshot.removed")} ({humanBytes(diff.removedBytes)})
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// SnapshotTags renders a snapshot's (non-ownership) tags as small chips plus a
+// tiny inline "add tag" input. On submit it calls tagSnapshot and asks the
+// parent to refresh so the new chip appears.
+function SnapshotTags({
+  snap,
+  containerName,
+  source,
+  onTagged,
+  t,
+}: {
+  snap: Snapshot;
+  containerName: string;
+  source: string;
+  onTagged: () => void;
+  t: T;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const tags = displayTags(snap, containerName);
+
+  async function submit() {
+    const tag = value.trim();
+    if (!tag) {
+      setAdding(false);
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await tagSnapshot(containerName, snap.id, [tag], source);
+      if (res.ok) {
+        setValue("");
+        setAdding(false);
+        onTagged();
+      } else {
+        setErr(res.error ?? "Failed");
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {tags.map((tg) => (
+        <span
+          key={tg}
+          className="inline-flex items-center rounded bg-carbon-surface3 px-1.5 py-0.5 text-[10px] text-carbon-textSub"
+        >
+          {tg}
+        </span>
+      ))}
+      {adding ? (
+        <input
+          type="text"
+          value={value}
+          autoFocus
+          disabled={busy}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void submit();
+            else if (e.key === "Escape") {
+              setAdding(false);
+              setValue("");
+            }
+          }}
+          onBlur={() => void submit()}
+          placeholder={t("snapshot.addTag")}
+          spellCheck={false}
+          className="w-24 rounded bg-carbon-background border border-carbon-border text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-none focus:border-[#78a9ff]"
+        />
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          title={t("snapshot.addTag")}
+          className="inline-flex items-center rounded border border-carbon-border px-1.5 py-0.5 text-[10px] text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+        >
+          + {t("snapshot.tags")}
+        </button>
+      )}
+      {err && <span className="text-[10px] text-[#ff8389]">{err}</span>}
+    </div>
+  );
+}
+
 function SnapshotRow({
   snap,
   containerName,
   source,
   onDeleted,
+  onTagged,
   t,
 }: {
   snap: Snapshot;
   containerName: string;
   source: string;
   onDeleted: () => void;
+  onTagged: () => void;
   t: T;
 }) {
   const [confirmed, setConfirmed] = useState(false);
@@ -439,12 +656,10 @@ function SnapshotRow({
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
-        {/* Tags */}
-        {snap.tags && snap.tags.length > 0 && (
-          <span className="text-carbon-textMuted text-xs hidden sm:block">
-            {snap.tags.join(", ")}
-          </span>
-        )}
+        {/* Tags (chips + inline add-tag) — ownership tag hidden */}
+        <div className="hidden sm:flex">
+          <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
+        </div>
 
         {/* Confirm checkbox */}
         <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer shrink-0">
@@ -614,6 +829,9 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               )}
             </div>
           )}
+          {!loading && !error && snapshots.length >= 2 && (
+            <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
+          )}
           {!loading && snapshots.map((snap) => (
             <SnapshotRow
               key={snap.id}
@@ -621,6 +839,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               containerName={name}
               source={source}
               onDeleted={() => setReloadTick((n) => n + 1)}
+              onTagged={() => setReloadTick((n) => n + 1)}
               t={t}
             />
           ))}
