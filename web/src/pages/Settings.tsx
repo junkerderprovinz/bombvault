@@ -1150,6 +1150,9 @@ export function SettingsPage() {
   const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
   const [retSaveError, setRetSaveError] = useState<string | null>(null);
 
+  const [limSaveState, setLimSaveState] = useState<SaveState>("idle");
+  const [limSaveError, setLimSaveError] = useState<string | null>(null);
+
   // "Use containers schedule for VMs and Flash too" checkbox
   const [syncSchedules, setSyncSchedules] = useState(false);
 
@@ -1614,6 +1617,50 @@ export function SettingsPage() {
               },
               setRetSaveState,
               setRetSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Off-site bandwidth                                                  */}
+      {/* ------------------------------------------------------------------ */}
+      <Card title={t("settings.offsiteLimits")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">
+          {t("settings.limitHint")}
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {([
+            ["offsiteLimitUpload", "settings.limitUpload"],
+            ["offsiteLimitDownload", "settings.limitDownload"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              <input
+                type="number"
+                min={0}
+                value={settings[key]}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+              />
+            </label>
+          ))}
+        </div>
+        <SaveBar
+          state={limSaveState}
+          error={limSaveError}
+          onSave={() =>
+            void save(
+              {
+                offsiteLimitUpload: settings.offsiteLimitUpload,
+                offsiteLimitDownload: settings.offsiteLimitDownload,
+              },
+              setLimSaveState,
+              setLimSaveError
             )
           }
           t={t}

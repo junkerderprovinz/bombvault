@@ -109,6 +109,29 @@ func repoFlag(repo string) []string {
 	return []string{"-r", repo}
 }
 
+// Limits caps restic's transfer bandwidth in KiB/s. A zero value omits that cap
+// (restic's default = unlimited). Used for off-site replication so backups don't
+// saturate the WAN.
+type Limits struct {
+	UploadKBps   int
+	DownloadKBps int
+}
+
+// limitFlags returns restic's global --limit-upload / --limit-download flags for
+// the non-zero caps in l (KiB/s). These are GLOBAL flags, so they must be placed
+// before the subcommand (right after the repo flag). A zero cap is omitted; an
+// all-zero Limits yields no flags (unlimited, the default).
+func limitFlags(l Limits) []string {
+	var args []string
+	if l.UploadKBps > 0 {
+		args = append(args, "--limit-upload", strconv.Itoa(l.UploadKBps))
+	}
+	if l.DownloadKBps > 0 {
+		args = append(args, "--limit-download", strconv.Itoa(l.DownloadKBps))
+	}
+	return args
+}
+
 // InitArgs returns the argv slice (without the binary name) for `restic init`.
 func InitArgs(repo string, m Mode) []string {
 	args := append(repoFlag(repo), "init")
@@ -172,9 +195,12 @@ func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
 // `restic -r <dest> copy --from-repo <src>`. With no ids it copies every source
 // snapshot not already in dest (idempotent — restic skips ones already copied).
 // For an unencrypted pair both ends use --insecure-no-password / --from-…. Any
-// snapshot ids go after -- (arg-injection guard).
-func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, m Mode) []string {
+// snapshot ids go after -- (arg-injection guard). lim caps the transfer rate via
+// restic's global --limit-upload / --limit-download (zero = unlimited), placed
+// before the subcommand as restic requires for global flags.
+func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) []string {
 	args := repoFlag(destRepo)
+	args = append(args, limitFlags(lim)...)
 	args = append(args, "copy", "--from-repo", srcRepo)
 	if !m.Encrypted {
 		args = append(args, insecureFlag, "--from-insecure-no-password")
@@ -662,9 +688,10 @@ func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string,
 // Copy replicates snapshots from srcRepo into destRepo (restic copy) for off-site
 // backup. When encrypted both repos share the APP_KEY-derived password: the dest
 // via RESTIC_PASSWORD (authEnv), the source via RESTIC_FROM_PASSWORD — never argv.
-// destRepo must already exist (the caller EnsureRepo's it first).
-func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, m Mode) error {
-	args := CopyArgs(destRepo, srcRepo, snapshotIDs, m)
+// destRepo must already exist (the caller EnsureRepo's it first). lim caps the
+// transfer bandwidth (zero = unlimited) so replication doesn't saturate the WAN.
+func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) error {
+	args := CopyArgs(destRepo, srcRepo, snapshotIDs, lim, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
 	env := r.authEnv(m)
 	if m.Encrypted {

@@ -84,8 +84,9 @@ type ResticEngine interface {
 	// Prune reclaims space freed by forgotten snapshots (restic prune).
 	Prune(ctx context.Context, repo string, mode restic.Mode) error
 	// Copy replicates snapshots from srcRepo into destRepo (restic copy) for
-	// off-site backup. Empty ids copy everything not already in dest.
-	Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, mode restic.Mode) error
+	// off-site backup. Empty ids copy everything not already in dest. lim caps the
+	// transfer bandwidth (zero = unlimited) so replication doesn't saturate the WAN.
+	Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, lim restic.Limits, mode restic.Mode) error
 	// Stats returns repository statistics for the chosen --mode ("raw-data" for
 	// the physical/deduplicated size + blob count; "restore-size" for the logical
 	// size + file count). Used to sample the repo-size trend.
@@ -318,6 +319,16 @@ func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.Retenti
 		KeepDaily:   settings.OffsiteRetentionKeepDaily,
 		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
 		KeepMonthly: settings.OffsiteRetentionKeepMonthly,
+	}
+}
+
+// offsiteLimits maps the stored bandwidth caps to restic transfer limits (KiB/s)
+// for off-site replication. All-zero (the default) means unlimited, so the WAN is
+// never throttled until the user opts in.
+func (s *Service) offsiteLimits(settings store.Settings) restic.Limits {
+	return restic.Limits{
+		UploadKBps:   settings.OffsiteLimitUpload,
+		DownloadKBps: settings.OffsiteLimitDownload,
 	}
 }
 
@@ -680,7 +691,9 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	if err = s.EnsureRepo(ctx, dest, mode); err != nil {
 		return fmt.Errorf("ensure off-site repo: %w", err)
 	}
-	if err = s.engine.Copy(ctx, dest, localRepo, nil, mode); err != nil {
+	// Cap the transfer rate so off-site replication doesn't saturate the WAN
+	// (zero limits = unlimited, the default).
+	if err = s.engine.Copy(ctx, dest, localRepo, nil, s.offsiteLimits(settings), mode); err != nil {
 		return err
 	}
 	// Apply the off-site retention policy (separate from local) after a successful

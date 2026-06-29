@@ -1492,7 +1492,7 @@ func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) 
 	return nil
 }
 
-func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Mode) error {
+func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Limits, _ restic.Mode) error {
 	f.copied = append(f.copied, srcRepo+"->"+destRepo)
 	return f.copyErr
 }

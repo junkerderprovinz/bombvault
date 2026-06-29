@@ -235,6 +235,19 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
   snapshots    INTEGER NOT NULL
 );`,
 	},
+	{
+		// Off-site transfer bandwidth caps (KiB/s) for restic's global
+		// --limit-upload / --limit-download. 0 (the default) = unlimited, so the
+		// WAN is never throttled until the user sets a cap.
+		version: 24,
+		name:    "settings_offsite_limit_upload",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_limit_upload INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 25,
+		name:    "settings_offsite_limit_download",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_limit_download INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

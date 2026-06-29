@@ -94,6 +94,8 @@ export interface Settings {
   offsiteRetentionKeepDaily: number;
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
+  offsiteLimitUpload: number;
+  offsiteLimitDownload: number;
 }
 
 export interface GetSettingsResponse {
