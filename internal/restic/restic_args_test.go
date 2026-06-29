@@ -201,6 +201,40 @@ func TestSnapshotsArgs(t *testing.T) {
 	})
 }
 
+func TestDiffArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := restic.DiffArgs("/repo", "aaaa1111", "bbbb2222", restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "diff", "--json", "--", "aaaa1111", "bbbb2222"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
+		got := restic.DiffArgs("/repo", "aaaa1111", "bbbb2222", restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "diff", "--json", "--insecure-no-password", "--", "aaaa1111", "bbbb2222"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+func TestTagAddArgs(t *testing.T) {
+	t.Run("encrypted, one tag per --add, id after --", func(t *testing.T) {
+		got := restic.TagAddArgs("/repo", "aaaa1111", []string{"keep", "milestone"}, restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "tag", "--add", "keep", "--add", "milestone", "--", "aaaa1111"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
+		got := restic.TagAddArgs("/repo", "aaaa1111", []string{"keep"}, restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "tag", "--insecure-no-password", "--add", "keep", "--", "aaaa1111"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestStatsArgs(t *testing.T) {
 	t.Run("encrypted raw-data", func(t *testing.T) {
 		got := restic.StatsArgs("/repo", "raw-data", restic.Mode{Encrypted: true})

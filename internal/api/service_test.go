@@ -1122,6 +1122,109 @@ func TestRestoreContainerToPath(t *testing.T) {
 	}
 }
 
+// diffTagTestService builds a service with an initialised containers repo and the
+// given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
+func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+}
+
+// TestDiffSnapshots pins the snapshot-diff access control + happy path: a bad
+// snapshot id is rejected before any restic call, a foreign snapshot (another
+// container's) is refused, and a valid pair diffs through the engine and returns
+// the summary the engine reports.
+func TestDiffSnapshots(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Tags: []string{"container:plex"}},
+			{ID: "cccc3333", Tags: []string{"container:plex"}},
+			{ID: "bbbb2222", Tags: []string{"container:sonarr"}}, // foreign — must be refused
+		},
+		diffResult: restic.DiffResult{AddedFiles: 3, RemovedFiles: 1, ChangedFiles: 2, AddedBytes: 4096, RemovedBytes: 512},
+	}
+	svc := diffTagTestService(t, eng)
+	ctx := context.Background()
+
+	// Bad snapshot id is rejected before any restic call.
+	if _, err := svc.DiffSnapshots(ctx, "plex", "local", "not-hex!", "cccc3333"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
+	}
+	if len(eng.diffPairs) != 0 {
+		t.Fatalf("must not diff on a bad snapshot id, got %v", eng.diffPairs)
+	}
+
+	// A foreign snapshot (sonarr's) must not be diffable through plex's route.
+	if _, err := svc.DiffSnapshots(ctx, "plex", "local", "aaaa1111", "bbbb2222"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("foreign snapshot must be refused, got %v", err)
+	}
+	if len(eng.diffPairs) != 0 {
+		t.Fatalf("must not diff a foreign snapshot, got %v", eng.diffPairs)
+	}
+
+	// Happy path: both snapshots belong to plex → diff runs and the summary is returned.
+	got, err := svc.DiffSnapshots(ctx, "plex", "local", "aaaa1111", "cccc3333")
+	if err != nil {
+		t.Fatalf("DiffSnapshots: %v", err)
+	}
+	if got != eng.diffResult {
+		t.Fatalf("diff result = %+v, want %+v", got, eng.diffResult)
+	}
+	if len(eng.diffPairs) != 1 || eng.diffPairs[0] != "aaaa1111->cccc3333" {
+		t.Fatalf("expected a single diff aaaa1111->cccc3333, got %v", eng.diffPairs)
+	}
+}
+
+// TestTagSnapshot pins the tag-add access control + sanitisation: a bad snapshot
+// id is rejected, a tag with a comma is refused (restic tags are
+// comma-separated), tags are trimmed and empties dropped, and a valid call tags
+// the snapshot through the engine.
+func TestTagSnapshot(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex"}},
+	}}
+	svc := diffTagTestService(t, eng)
+	ctx := context.Background()
+
+	// Bad snapshot id is rejected before any restic call.
+	if err := svc.TagSnapshot(ctx, "plex", "local", "not-hex!", []string{"keep"}); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("must not tag on a bad snapshot id, got %v", eng.taggedSnaps)
+	}
+
+	// A tag containing a comma is refused (would split into two restic tags).
+	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"a,b"}); err == nil || !strings.Contains(err.Error(), "comma") {
+		t.Fatalf("comma tag must be refused, got %v", err)
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("must not tag with an invalid tag, got %v", eng.taggedSnaps)
+	}
+
+	// Happy path: tags are trimmed, empties dropped, the snapshot is tagged.
+	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"  keep  ", "", "milestone"}); err != nil {
+		t.Fatalf("TagSnapshot: %v", err)
+	}
+	if len(eng.taggedSnaps) != 1 || eng.taggedSnaps[0] != "aaaa1111:keep,milestone" {
+		t.Fatalf("expected aaaa1111 tagged keep,milestone, got %v", eng.taggedSnaps)
+	}
+}
+
 // TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
 // backups forgets only that container's snapshots (tag-filtered) and removes its
 // target from the store — the path used to clean up no-longer-installed containers.
@@ -1459,7 +1562,10 @@ type fakeResticEngine struct {
 	unlockErr       error
 	statsCalls      []string // --mode value of each Stats call
 	statsErr        error
-	forgetPruned    bool // prune flag of the last Forget call
+	diffResult      restic.DiffResult // returned by Diff
+	diffPairs       []string          // "snap1->snap2" of each Diff call
+	taggedSnaps     []string          // "snapID:tag,tag" of each TagAdd call
+	forgetPruned    bool              // prune flag of the last Forget call
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
@@ -1575,6 +1681,16 @@ func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mod
 		return restic.StatsResult{TotalSize: 1000, BlobCount: 10}, nil
 	}
 	return restic.StatsResult{TotalSize: 5000, FileCount: 50}, nil
+}
+
+func (f *fakeResticEngine) Diff(_ context.Context, _, snap1, snap2 string, _ restic.Mode) (restic.DiffResult, error) {
+	f.diffPairs = append(f.diffPairs, snap1+"->"+snap2)
+	return f.diffResult, nil
+}
+
+func (f *fakeResticEngine) TagAdd(_ context.Context, _, snapID string, tags []string, _ restic.Mode) error {
+	f.taggedSnaps = append(f.taggedSnaps, snapID+":"+strings.Join(tags, ","))
+	return nil
 }
 
 // initRepoSvc builds a service whose containers repo is marked initialised, so

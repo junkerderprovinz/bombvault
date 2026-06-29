@@ -91,6 +91,12 @@ type ResticEngine interface {
 	// the physical/deduplicated size + blob count; "restore-size" for the logical
 	// size + file count). Used to sample the repo-size trend.
 	Stats(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
+	// Diff compares two snapshots (restic diff --json) and returns the summary
+	// counts + byte totals (what changed between two backups).
+	Diff(ctx context.Context, repo, snap1, snap2 string, m restic.Mode) (restic.DiffResult, error)
+	// TagAdd adds tags to a snapshot (restic tag --add). Tags must be
+	// pre-sanitised by the caller (restic tags are comma-separated).
+	TagAdd(ctx context.Context, repo, snapID string, tags []string, m restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -1739,6 +1745,129 @@ func (s *Service) RestoreContainerToPath(ctx context.Context, name, source, snap
 		return "", err
 	}
 	return target, nil
+}
+
+// DiffSnapshots compares two of a container's snapshots (restic diff) and
+// returns the summary of what changed between them (files added/removed/changed,
+// bytes added/removed).
+//
+// SEC: both snapshot ids pass the strict hex guard (backup.ValidSnapshotID), and
+// BOTH must belong to the named container (tag-scoped via Snapshots, like
+// RestoreContainerToPath/ListSnapshotFiles), so one container's snapshots can't
+// be diffed through another's route. The repo+mode are resolved for the source.
+func (s *Service) DiffSnapshots(ctx context.Context, name, source, snap1, snap2 string) (restic.DiffResult, error) {
+	if !validResourceName(name) {
+		return restic.DiffResult{}, errors.New("invalid container name")
+	}
+	if source != "local" && source != "offsite" {
+		return restic.DiffResult{}, errors.New("invalid source (must be local or offsite)")
+	}
+	if !backup.ValidSnapshotID(snap1) || !backup.ValidSnapshotID(snap2) {
+		return restic.DiffResult{}, backup.ErrInvalidSnapshotID
+	}
+
+	// Scope to the named container: BOTH snapshots must be among ITS snapshots.
+	snaps, err := s.Snapshots(ctx, name, source)
+	if err != nil {
+		return restic.DiffResult{}, err
+	}
+	if !snapshotBelongs(snaps, snap1) {
+		return restic.DiffResult{}, fmt.Errorf("snapshot %s does not belong to this container", snap1)
+	}
+	if !snapshotBelongs(snaps, snap2) {
+		return restic.DiffResult{}, fmt.Errorf("snapshot %s does not belong to this container", snap2)
+	}
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return restic.DiffResult{}, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "containers", source)
+	if err != nil {
+		return restic.DiffResult{}, err
+	}
+	return s.engine.Diff(ctx, repo, snap1, snap2, s.ModeFor(settings))
+}
+
+// TagSnapshot adds tags to one of a container's snapshots (restic tag --add).
+//
+// SEC: the snapshot id passes the strict hex guard and must belong to the named
+// container (tag-scoped via Snapshots). Tags are sanitised — trimmed, empties
+// dropped, and any tag with a comma or control character rejected (restic tags
+// are comma-separated, so a comma would silently split into two tags). An empty
+// resulting tag set is a no-op.
+func (s *Service) TagSnapshot(ctx context.Context, name, source, snapID string, addTags []string) error {
+	if !validResourceName(name) {
+		return errors.New("invalid container name")
+	}
+	if source != "local" && source != "offsite" {
+		return errors.New("invalid source (must be local or offsite)")
+	}
+	if !backup.ValidSnapshotID(snapID) {
+		return backup.ErrInvalidSnapshotID
+	}
+	tags, err := sanitizeTags(addTags)
+	if err != nil {
+		return err
+	}
+	if len(tags) == 0 {
+		return nil // nothing to add
+	}
+
+	// Scope to the named container: the snapshot must be among ITS snapshots.
+	snaps, err := s.Snapshots(ctx, name, source)
+	if err != nil {
+		return err
+	}
+	if !snapshotBelongs(snaps, snapID) {
+		return fmt.Errorf("snapshot %s does not belong to this container", snapID)
+	}
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "containers", source)
+	if err != nil {
+		return err
+	}
+	return s.engine.TagAdd(ctx, repo, snapID, tags, s.ModeFor(settings))
+}
+
+// snapshotBelongs reports whether id (exact or unique prefix) is present in the
+// already-tag-scoped snapshot list — the access-control check shared by the
+// diff/tag/restore-to-path routes.
+func snapshotBelongs(snaps []restic.Snapshot, id string) bool {
+	for _, sn := range snaps {
+		if sn.ID == id || strings.HasPrefix(sn.ID, id) {
+			return true
+		}
+	}
+	return false
+}
+
+// sanitizeTags trims each tag, drops empties, and rejects any tag containing a
+// comma or a control character. restic stores tags as a comma-separated list, so
+// a comma would split one tag into two; control characters could corrupt argv or
+// the snapshot metadata. Returns an error naming the offending tag.
+func sanitizeTags(in []string) ([]string, error) {
+	out := make([]string, 0, len(in))
+	for _, raw := range in {
+		tag := strings.TrimSpace(raw)
+		if tag == "" {
+			continue
+		}
+		if strings.ContainsRune(tag, ',') {
+			return nil, fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+		}
+		for _, r := range tag {
+			if r < 0x20 || r == 0x7f {
+				return nil, fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+			}
+		}
+		out = append(out, tag)
+	}
+	return out, nil
 }
 
 // DeleteBackups removes ALL backups of a container — every restic snapshot

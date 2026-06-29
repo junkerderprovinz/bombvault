@@ -132,6 +132,16 @@ const en = {
   "snapshots.recreateConfirm": "Recreate this container from its saved configuration? It is created and started from the stored definition (image, env, ports, volumes).",
   "snapshots.configOnlyHint": "Config-only backup: the container's definition is saved, but it has no data folders to snapshot. If you delete the container it appears under \"Not installed\", where you can recreate it from this config.",
 
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tags",
+  "snapshot.addTag": "Add tag",
+  "snapshot.compare": "Compare",
+  "snapshot.pickTwo": "Pick two snapshots to compare",
+  "snapshot.added": "added",
+  "snapshot.removed": "removed",
+  "snapshot.changed": "changed",
+  "snapshot.diffSummary": "+{addedFiles} files ({addedBytes}), ~{changedFiles} changed, -{removedFiles} files ({removedBytes})",
+
   // File-level restore
   "files.restore": "Restore",
   "files.restored": "Restored",
@@ -551,6 +561,16 @@ const de: Translations = {
   "snapshots.recreate": "Aus gespeicherter Konfig neu erstellen",
   "snapshots.recreateConfirm": "Diesen Container aus seiner gespeicherten Konfiguration neu erstellen? Er wird aus der gespeicherten Definition (Image, Env, Ports, Volumes) angelegt und gestartet.",
   "snapshots.configOnlyHint": "Nur-Konfig-Backup: die Definition des Containers ist gesichert, es gibt aber keine Datenordner zum Snapshotten. Wird der Container gelöscht, erscheint er unter „Nicht installiert“ und kann von dort aus dieser Konfig neu erstellt werden.",
+
+  // Snapshot tags + compare (diff)
+  "snapshot.tags": "Tags",
+  "snapshot.addTag": "Tag hinzufügen",
+  "snapshot.compare": "Vergleichen",
+  "snapshot.pickTwo": "Zwei Snapshots zum Vergleichen wählen",
+  "snapshot.added": "hinzugefügt",
+  "snapshot.removed": "entfernt",
+  "snapshot.changed": "geändert",
+  "snapshot.diffSummary": "+{addedFiles} Dateien ({addedBytes}), ~{changedFiles} geändert, -{removedFiles} Dateien ({removedBytes})",
 
   // File-level restore
   "files.restore": "Wiederherstellen",

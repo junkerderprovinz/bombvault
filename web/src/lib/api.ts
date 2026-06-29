@@ -340,6 +340,42 @@ export function restoreContainerToPath(
   });
 }
 
+/** Summary of what changed between two snapshots, from GET /api/containers/{name}/diff */
+export interface SnapshotDiff {
+  addedFiles: number;
+  removedFiles: number;
+  changedFiles: number;
+  addedBytes: number;
+  removedBytes: number;
+}
+
+/**
+ * GET /api/containers/{name}/diff?from=&to= — compare two snapshots and return a
+ * summary of what changed between them (restic diff).
+ */
+export function diffSnapshots(
+  name: string,
+  from: string,
+  to: string,
+  source?: string
+): Promise<{ ok: boolean; diff?: SnapshotDiff; error?: string }> {
+  const qs = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${srcParam(source, "&")}`;
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/diff${qs}`);
+}
+
+/** POST /api/containers/{name}/tag — add tags to a snapshot (restic tag --add). */
+export function tagSnapshot(
+  name: string,
+  snapshotId: string,
+  tags: string[],
+  source?: string
+): Promise<{ ok: boolean; error?: string }> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/tag${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, tags }),
+  });
+}
+
 /** PATCH /api/containers/{name} — set pre/post-backup hook commands. */
 export function setContainerHooks(
   name: string,
