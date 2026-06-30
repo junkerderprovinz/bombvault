@@ -663,6 +663,47 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 	waitBatchDone(t, ch)
 }
 
+// TestStartBackupSingleFlight pins the single-backup async guard: StartBackup
+// fires the work in the background and returns true; while it is in flight a
+// second StartBackup — and a StartBackupAll sharing the same guard — must be
+// rejected (returns false), so a single backup and a batch can never overlap.
+func TestStartBackupSingleFlight(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
+	svc, _, eng, store := backupTestService(t)
+	eng.block = make(chan struct{}) // hold the first backup inside restic Backup
+	ch, cancel := store.Subscribe()
+	defer cancel()
+
+	if !svc.StartBackup(context.Background(), "plex") {
+		t.Fatal("first backup should start")
+	}
+	// The guard is set synchronously by StartBackup, so the second call sees a run
+	// in flight regardless of goroutine scheduling.
+	if svc.StartBackup(context.Background(), "radarr") {
+		t.Fatal("second concurrent backup must be rejected")
+	}
+	if svc.StartBackupAll(context.Background(), []string{"radarr"}) {
+		t.Fatal("a batch must be rejected while a single backup is in flight")
+	}
+	close(eng.block) // let the backup finish
+
+	// Drain until the per-container terminal event so cleanup is race-free.
+	deadline := time.After(5 * time.Second)
+	for {
+		select {
+		case ev := <-ch:
+			if ev.Key == "container:plex" && !ev.Active {
+				if len(eng.backedUp) != 1 {
+					t.Fatalf("backup should run restic once, got %d", len(eng.backedUp))
+				}
+				return
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for single backup to finish")
+		}
+	}
+}
+
 // TestServiceBackupRefusesEmptyWhenPriorDataVanishes pins the silent-no-op fix: a
 // container that PREVIOUSLY backed up data but now resolves to no paths (its
 // appdata share went missing) must be refused, not recorded as a successful empty

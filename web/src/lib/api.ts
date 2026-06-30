@@ -34,10 +34,16 @@ export interface ListContainersResponse {
   containers: Container[];
 }
 
-/** Response from POST /api/containers/{name}/backup */
+/**
+ * Response from the single-backup start endpoints (container/VM/flash). The
+ * backup is now ASYNC: the server fires it in the background and answers
+ * immediately, so the response only acknowledges acceptance — it carries NO
+ * synchronous snapshot id. `started` is true once the job is running; on a
+ * conflict it is `{ok:false, error:"a backup is already running"}`. The button
+ * watches SSE progress + the recorded run for the real outcome.
+ */
 export interface BackupResponse extends OkEnvelope {
-  snapshotId?: string;
-  bytes?: number;
+  started?: boolean;
 }
 
 /** A restic snapshot from GET /api/containers/{name}/snapshots */
@@ -270,6 +276,12 @@ export function listContainers(): Promise<ListContainersResponse> {
   return fetchJSON("/api/containers");
 }
 
+/**
+ * Start a single container backup. ASYNC: returns as soon as the server has
+ * fired the job ({ok:true, started:true}); the backup runs detached on the
+ * server (surviving this connection dying), so the caller must WATCH SSE
+ * progress + the recorded run for the outcome instead of awaiting completion.
+ */
 export function backupNow(name: string): Promise<BackupResponse> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backup`, {
     method: "POST",
@@ -773,6 +785,7 @@ export function listVMs(): Promise<ListVMsResponse> {
   return fetchJSON("/api/vms");
 }
 
+/** Start a single VM backup. ASYNC — see backupNow. */
 export function backupVMNow(name: string): Promise<BackupResponse> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/backup`, {
     method: "POST",
@@ -829,7 +842,10 @@ export function testVMSSH(): Promise<OkEnvelope> {
 // Flash API (singleton domain — the Unraid USB)
 // ---------------------------------------------------------------------------
 
-/** POST /api/flash/backup — back up the whole Unraid flash (/boot). */
+/**
+ * POST /api/flash/backup — start a backup of the whole Unraid flash (/boot).
+ * ASYNC — see backupNow.
+ */
 export function backupFlashNow(): Promise<BackupResponse> {
   return fetchJSON("/api/flash/backup", { method: "POST" });
 }

@@ -367,20 +367,22 @@ func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
 }
 
+// handleBackup starts a single container backup ON THE SERVER and returns
+// immediately. The work runs in the background (independent of this request) so
+// a long backup — or backing up the reverse-proxy container the UI runs through,
+// which severs this connection — can't make the SPA report a phantom failure for
+// a backup the server actually completes. The SPA watches the "container:<name>"
+// progress key over SSE and reads the recorded run for the outcome.
 func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
 		return
 	}
-	sum, err := h.svc.Backup(r.Context(), name)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	if !h.svc.StartBackup(r.Context(), name) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"snapshotId": sum.SnapshotID,
-		"bytes":      sum.Bytes,
-	}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 // handleBackupAll starts a SERVER-SIDE batch backup of the selected containers.
@@ -1615,20 +1617,18 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
 }
 
+// handleBackupVM starts a single VM backup ON THE SERVER and returns
+// immediately (see handleBackup). The SPA watches "vm:<name>" over SSE.
 func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
 	if !ok {
 		return
 	}
-	sum, err := h.svc.BackupVM(r.Context(), name)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	if !h.svc.StartBackupVM(r.Context(), name) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"snapshotId": sum.SnapshotID,
-		"bytes":      sum.Bytes,
-	}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
@@ -1666,17 +1666,15 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleBackupFlash backs up the whole Unraid USB flash (singleton domain).
+// handleBackupFlash starts the Unraid USB flash backup (singleton domain) ON
+// THE SERVER and returns immediately (see handleBackup). The SPA watches the
+// "flash" progress key over SSE.
 func (h *Handler) handleBackupFlash(w http.ResponseWriter, r *http.Request) {
-	sum, err := h.svc.BackupFlash(r.Context())
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	if !h.svc.StartBackupFlash(r.Context()) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"snapshotId": sum.SnapshotID,
-		"bytes":      sum.Bytes,
-	}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 // handleSnapshotsFlash lists flash snapshots.

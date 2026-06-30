@@ -4,6 +4,7 @@ import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress } from "../lib/progress";
+import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
@@ -14,34 +15,20 @@ type T = ReturnType<typeof useT>["t"];
 // ---------------------------------------------------------------------------
 
 function FlashBackupButton({ t, onBackedUp }: { t: T; onBackedUp: () => void }) {
-  type State =
-    | { phase: "idle" }
-    | { phase: "pending" }
-    | { phase: "success"; snapshotId?: string }
-    | { phase: "error"; message: string };
-  const [state, setState] = useState<State>({ phase: "idle" });
+  // Fire-and-watch (see useBackupWatch): the flash backup runs detached on the
+  // server and the POST returns immediately, so we watch the "flash" progress +
+  // recorded run for the outcome instead of awaiting the whole backup.
+  const { state, fire, isPending } = useBackupWatch({
+    progressKey: "flash",
+    start: () => backupFlashNow(),
+    matchRun: (r) => r.domain === "flash",
+    onDone: onBackedUp,
+  });
 
-  async function handleBackup() {
-    setState({ phase: "pending" });
-    try {
-      const res = await backupFlashNow();
-      if (res.ok) {
-        setState({ phase: "success", snapshotId: res.snapshotId });
-        onBackedUp();
-        setTimeout(() => setState({ phase: "idle" }), 4000);
-      } else {
-        setState({ phase: "error", message: res.error ?? "Backup failed" });
-      }
-    } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
-  }
-
-  const isPending = state.phase === "pending";
   return (
     <div className="flex flex-col gap-1 items-start">
       <button
-        onClick={() => void handleBackup()}
+        onClick={() => void fire()}
         disabled={isPending}
         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >

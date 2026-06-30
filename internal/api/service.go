@@ -1286,6 +1286,73 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) bool {
 	return true
 }
 
+// StartBackup launches a single container backup in a background goroutine and
+// returns immediately. Like StartBackupAll, this is the robust path: the work
+// runs ON THE SERVER, so it survives the browser that started it going away —
+// including the case that bit a user, where backing up the reverse-proxy
+// container BombVault's UI runs through severs the request connection while the
+// backup is still in flight. The per-container "container:<name>" progress bar
+// keeps reporting over SSE so the SPA can watch completion.
+//
+// It shares batchActive with StartBackupAll so a single backup and a batch can
+// never overlap (the same repo lock would otherwise serialise them anyway).
+// Returns false if a backup/batch is already running (the caller answers busy).
+func (s *Service) StartBackup(ctx context.Context, name string) bool {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false
+	}
+	// Detach so the run is independent of the request that started it (canceled
+	// the moment the handler returns); Backup applies its own hard timeout.
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		if _, err := s.Backup(bctx, name); err != nil {
+			log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return true
+}
+
+// StartBackupVM launches a single VM backup in a background goroutine and
+// returns immediately, mirroring StartBackup for the VM domain. Progress is
+// published under "vm:<name>". Shares batchActive (no overlap with any other
+// backup); returns false if one is already running.
+func (s *Service) StartBackupVM(ctx context.Context, name string) bool {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		if _, err := s.BackupVM(bctx, name); err != nil {
+			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return true
+}
+
+// StartBackupFlash launches the singleton flash backup in a background goroutine
+// and returns immediately, mirroring StartBackup. Progress is published under
+// "flash". Shares batchActive; returns false if a backup is already running.
+func (s *Service) StartBackupFlash(ctx context.Context) bool {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		if _, err := s.BackupFlash(bctx); err != nil {
+			log.Printf("api: backup flash failed: %v", err)
+		}
+	}()
+	return true
+}
+
+// BackupInProgress reports whether a single backup or a batch is currently
+// running (they share the same single-flight guard). It lets callers — and tests
+// — observe when the detached backup goroutine has fully finished.
+func (s *Service) BackupInProgress() bool { return s.batchActive.Load() }
+
 // publishBatch emits an overall batch-progress event (no-op without a store).
 func (s *Service) publishBatch(key string, percent float64, active bool) {
 	if s.progress == nil {
