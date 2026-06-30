@@ -106,6 +106,24 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
+      # Stamp a meaningful version into the binary. Tag builds use the tag
+      # (e.g. v3.1.0); main builds (which publish :latest) use the latest release
+      # tag plus the short SHA (e.g. v3.1.0+main.4c0c987) instead of the literal
+      # "main", so the log banner + WebUI show a real version (issue #22).
+      - name: Compute version
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            v="${{ github.ref_name }}"
+          else
+            tag=$(gh release view -R "${{ github.repository }}" --json tagName --jq .tagName 2>/dev/null || true)
+            sha=$(printf '%s' "${{ github.sha }}" | cut -c1-7)
+            if [ -n "$tag" ]; then v="${tag}+main.${sha}"; else v="0.0.0+main.${sha}"; fi
+          fi
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          echo "computed version: $v"
       - name: Build multi-arch image
         uses: docker/build-push-action@v6
         with:
@@ -115,7 +133,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ steps.ver.outputs.v }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import type { Settings } from "../lib/api";
+import { getHealth, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { getTheme, toggleTheme } from "../lib/theme";
 
@@ -239,6 +239,17 @@ export function Sidebar({ settings }: SidebarProps) {
   const { t } = useT();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
+  const [version, setVersion] = useState<string | null>(null);
+
+  // Show the running image's version at the bottom of the sidebar (issue #22).
+  // Best-effort: /api/health is public, so this works even before login.
+  useEffect(() => {
+    let active = true;
+    getHealth()
+      .then((h) => { if (active) setVersion(h.version ?? null); })
+      .catch(() => { /* version is best-effort; ignore */ });
+    return () => { active = false; };
+  }, []);
 
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
@@ -290,6 +301,14 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.settings")}
           icon={<IconSettings />}
         />
+        {version && (
+          <div
+            className="px-3.5 pt-1 text-xs text-carbon-textMuted select-none truncate"
+            title={`BombVault ${version}`}
+          >
+            {version}
+          </div>
+        )}
       </div>
     </aside>
   );
