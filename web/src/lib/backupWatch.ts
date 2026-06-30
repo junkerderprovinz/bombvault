@@ -16,8 +16,10 @@
 //   2. polling listRuns() — both as the outcome lookup (success vs failure,
 //      snapshot id, error text) and as a fallback when SSE reports nothing
 //      (a very fast backup that completed before we subscribed, or a dropped
-//      stream). The newest matching backup run started at/after the fire time
-//      is the authority on the result.
+//      stream). We snapshot this target's existing run ids BEFORE firing and
+//      treat the newest run that did NOT exist then as ours — correlating by a
+//      NEW run, never by comparing the client clock to the server's startedAt
+//      (clock skew made that match the wrong run or hang until timeout).
 // ---------------------------------------------------------------------------
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -36,8 +38,6 @@ const SUCCESS_CLEAR_MS = 4000;
 const POLL_INTERVAL_MS = 2000;
 /** Give up watching after this long and report the last known run state. */
 const WATCH_TIMEOUT_MS = 13 * 60 * 60 * 1000; // beyond the server's 12h backup cap
-/** Slack subtracted from the fire time when matching a run (clock skew). */
-const FIRE_SLACK_SEC = 5;
 
 /** A function that POSTs the single-backup start request. */
 export type StartBackupFn = () => Promise<{ ok: boolean; error?: string; started?: boolean }>;
@@ -69,7 +69,10 @@ export function useBackupWatch({ progressKey, start, matchRun, onDone }: UseBack
   // Watch bookkeeping kept in refs so the polling effect doesn't re-subscribe.
   const watching = useRef(false);
   const sawProgress = useRef(false);
-  const fireTime = useRef(0);
+  // Run ids that already existed for this target the moment we fired. The new
+  // run is whichever matching run is NOT in this set — correlation by identity,
+  // not by clock. null = the pre-fire snapshot failed; seeded lazily on first poll.
+  const baselineIds = useRef<Set<string> | null>(null);
   const matchRef = useRef(matchRun);
   const onDoneRef = useRef(onDone);
   matchRef.current = matchRun;
@@ -86,16 +89,22 @@ export function useBackupWatch({ progressKey, start, matchRun, onDone }: UseBack
   }, []);
 
   // Look up the outcome from the recorded runs. Returns true once a terminal
-  // (success/failed) run for this target — started at/after the fire — is found.
+  // (success/failed) run for this target — one that did not exist when we fired
+  // — is found.
   const resolveFromRuns = useCallback(async (): Promise<boolean> => {
     try {
       const res = await listRuns();
       if (!res.ok || !res.runs) return false;
-      const since = fireTime.current - FIRE_SLACK_SEC;
-      // Runs come newest-first; the first match at/after the fire is ours.
-      const run = res.runs.find(
-        (r) => r.kind === "backup" && r.startedAt >= since && matchRef.current(r)
-      );
+      const mine = (r: Run) => r.kind === "backup" && matchRef.current(r);
+      // If the pre-fire snapshot failed, seed the baseline from the current runs
+      // now and wait for the NEXT one — never resolve against a pre-existing run.
+      if (baselineIds.current === null) {
+        baselineIds.current = new Set(res.runs.filter(mine).map((r) => r.id));
+        return false;
+      }
+      const base = baselineIds.current;
+      // Runs come newest-first; the newest matching run absent at fire time is ours.
+      const run = res.runs.find((r) => mine(r) && !base.has(r.id));
       if (!run) return false;
       if (run.status === "success") {
         finish({ phase: "success", snapshotId: run.snapshotId || undefined });
@@ -125,6 +134,20 @@ export function useBackupWatch({ progressKey, start, matchRun, onDone }: UseBack
   const fire = useCallback(async () => {
     if (watching.current) return;
     setState({ phase: "pending" });
+    // Snapshot this target's existing run ids BEFORE firing, so the watch can
+    // pick out the run we are about to start by identity. If this fails, leave
+    // the baseline null — resolveFromRuns seeds it lazily on the first poll.
+    baselineIds.current = null;
+    try {
+      const before = await listRuns();
+      if (before.ok && before.runs) {
+        baselineIds.current = new Set(
+          before.runs.filter((r) => r.kind === "backup" && matchRef.current(r)).map((r) => r.id)
+        );
+      }
+    } catch {
+      // ignore — lazy seeding covers it.
+    }
     let res: Awaited<ReturnType<StartBackupFn>>;
     try {
       res = await start();
@@ -137,7 +160,6 @@ export function useBackupWatch({ progressKey, start, matchRun, onDone }: UseBack
       return;
     }
     // Server accepted the job and is now running it detached.
-    fireTime.current = Math.floor(Date.now() / 1000);
     sawProgress.current = false;
     watching.current = true;
 
