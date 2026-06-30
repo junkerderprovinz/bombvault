@@ -468,6 +468,13 @@ const cs: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snímky",
   "dashboard.noStats": "Zatím žádná data",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Použít plán kontejnerů i pro VM a Flash",
+  "jobs.vmIncludeHint": "Zálohuje každý VM se zapnutým „Zahrnout do plánu“ (nastavíte u jednotlivých VM na kartě VMs).",
+  "jobs.flashNotImplemented": "Poznámka: Executor zálohování Flash zatím není ve fázi 1 implementován — plán se uloží, ale nespustí.",
+  "schedule.includeAll": "Zahrnout vše do plánu",
+  "schedule.excludeAll": "Vyřadit vše",
 };
 
 export default cs;

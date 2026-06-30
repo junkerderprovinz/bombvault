@@ -470,6 +470,13 @@ const fi: Partial<Translations> = {
   "dashboard.dedup": "Deduplikointi",
   "dashboard.snapshotsLabel": "Tilannevedokset",
   "dashboard.noStats": "Ei vielä tietoja",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Käytä konttien aikataulua myös VM:ille ja Flashille",
+  "jobs.vmIncludeHint": "Varmuuskopioi jokaisen VM:n, jolla „sisällytä aikatauluun” on käytössä (asetetaan VM-kohtaisesti VMs-välilehdellä).",
+  "jobs.flashNotImplemented": "Huomautus: Flash-varmuuskopioinnin suoritinta ei ole vielä toteutettu vaiheessa 1 — aikataulu tallennetaan, mutta sitä ei suoriteta.",
+  "schedule.includeAll": "Sisällytä kaikki aikatauluun",
+  "schedule.excludeAll": "Poista kaikki",
 };
 
 export default fi;

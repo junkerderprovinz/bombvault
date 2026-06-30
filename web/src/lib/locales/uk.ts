@@ -465,6 +465,13 @@ const uk: Partial<Translations> = {
   "dashboard.dedup": "Дедуплікація",
   "dashboard.snapshotsLabel": "Знімки",
   "dashboard.noStats": "Даних ще немає",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Використовувати розклад контейнерів також для VM і Flash",
+  "jobs.vmIncludeHint": "Створює копію кожної VM з увімкненим «Включити до розкладу» (налаштовується для кожної VM на вкладці VMs).",
+  "jobs.flashNotImplemented": "Примітка: виконавець резервного копіювання Flash у фазі 1 ще не реалізовано — розклад зберігається, але не виконується.",
+  "schedule.includeAll": "Включити всі до розкладу",
+  "schedule.excludeAll": "Виключити всі",
 };
 
 export default uk;

@@ -462,6 +462,13 @@ const vi: Partial<Translations> = {
   "dashboard.dedup": "Khử trùng lặp",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "Chưa có dữ liệu",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Dùng lịch của Containers cho cả VMs và Flash",
+  "jobs.vmIncludeHint": "Sao lưu mọi VM có bật \"đưa vào lịch trình\" (đặt riêng cho từng VM trong tab VMs).",
+  "jobs.flashNotImplemented": "Lưu ý: Bộ thực thi sao lưu Flash chưa được triển khai trong Giai đoạn 1 — lịch được lưu nhưng không được thực thi.",
+  "schedule.includeAll": "Đưa tất cả vào lịch trình",
+  "schedule.excludeAll": "Loại tất cả",
 };
 
 export default vi;

@@ -470,6 +470,13 @@ const it: Partial<Translations> = {
   "notify.smtpFrom": "Indirizzo mittente",
   "notify.smtpTo": "Indirizzo destinatario",
   "notify.smtpTls": "Crittografia",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Usa il calendario dei Container anche per VM e Flash",
+  "jobs.vmIncludeHint": "Esegue il backup di ogni VM con «includi nel calendario» attivo (impostabile per VM nella scheda VM).",
+  "jobs.flashNotImplemented": "Nota: l'esecutore di backup Flash non è ancora implementato nella fase 1 — il calendario viene salvato ma non eseguito.",
+  "schedule.includeAll": "Includi tutto nel calendario",
+  "schedule.excludeAll": "Escludi tutto",
 };
 
 export default it;

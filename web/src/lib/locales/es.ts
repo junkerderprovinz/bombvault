@@ -468,6 +468,13 @@ const es: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Instantáneas",
   "dashboard.noStats": "Aún no hay datos",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Usar el calendario de Contenedores también para las VMs y Flash",
+  "jobs.vmIncludeHint": "Hace copia de cada VM con «incluir en el calendario» activado (configúralo por VM en la pestaña VMs).",
+  "jobs.flashNotImplemented": "Nota: el ejecutor de copias de Flash aún no está implementado en la fase 1 — el calendario se guarda pero no se ejecuta.",
+  "schedule.includeAll": "Incluir todo en el calendario",
+  "schedule.excludeAll": "Excluir todo",
 };
 
 export default es;

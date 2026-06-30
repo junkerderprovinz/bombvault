@@ -465,6 +465,13 @@ const ru: Partial<Translations> = {
   "dashboard.dedup": "Дедупликация",
   "dashboard.snapshotsLabel": "Снимки",
   "dashboard.noStats": "Данных пока нет",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Использовать расписание контейнеров также для VM и Flash",
+  "jobs.vmIncludeHint": "Создаёт копию каждой VM с включённым «Включить в расписание» (настраивается для каждой VM на вкладке VMs).",
+  "jobs.flashNotImplemented": "Примечание: исполнитель резервного копирования Flash в фазе 1 ещё не реализован — расписание сохраняется, но не выполняется.",
+  "schedule.includeAll": "Включить все в расписание",
+  "schedule.excludeAll": "Исключить все",
 };
 
 export default ru;

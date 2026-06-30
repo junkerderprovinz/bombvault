@@ -462,6 +462,13 @@ const zh: Partial<Translations> = {
   "dashboard.dedup": "去重",
   "dashboard.snapshotsLabel": "快照",
   "dashboard.noStats": "暂无数据",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "VMs 和 Flash 也使用容器的计划",
+  "jobs.vmIncludeHint": "备份每台启用了“加入计划”的 VM（在 VMs 标签页中逐台设置）。",
+  "jobs.flashNotImplemented": "注意：Flash 备份执行器在第 1 阶段尚未实现——计划会被保存但不会执行。",
+  "schedule.includeAll": "全部加入计划",
+  "schedule.excludeAll": "全部移除",
 };
 
 export default zh;

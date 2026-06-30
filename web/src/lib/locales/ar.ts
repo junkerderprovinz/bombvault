@@ -473,6 +473,13 @@ const ar: Partial<Translations> = {
   "dashboard.dedup": "إزالة التكرار",
   "dashboard.snapshotsLabel": "اللقطات",
   "dashboard.noStats": "لا توجد بيانات بعد",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "استخدم جدول Containers أيضاً لـ VMs وFlash",
+  "jobs.vmIncludeHint": "ينسخ كل VM مفعَّل فيه «التضمين في الجدول» احتياطياً (يُضبط لكل VM في تبويب VMs).",
+  "jobs.flashNotImplemented": "ملاحظة: منفذ نسخ Flash الاحتياطي لم يُنفَّذ بعد في المرحلة الأولى — يُحفظ الجدول لكنه لا يُنفَّذ.",
+  "schedule.includeAll": "تضمين الكل في الجدول",
+  "schedule.excludeAll": "استبعاد الكل",
 };
 
 export default ar;

@@ -470,6 +470,13 @@ const pt: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Instantâneos",
   "dashboard.noStats": "Ainda sem dados",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Usar o agendamento dos Containers também para as VMs e Flash",
+  "jobs.vmIncludeHint": "Faz backup de cada VM com «incluir no agendamento» ativado (defina por VM no separador VMs).",
+  "jobs.flashNotImplemented": "Nota: o executor de backup do Flash ainda não está implementado na fase 1 — o agendamento é guardado mas não executado.",
+  "schedule.includeAll": "Incluir tudo no agendamento",
+  "schedule.excludeAll": "Excluir tudo",
 };
 
 export default pt;
