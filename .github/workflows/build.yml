@@ -140,4 +140,5 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
+          short-description: "Backup and full disaster recovery for Unraid: Docker containers, KVM VMs and the USB flash."
           enable-url-completion: true
