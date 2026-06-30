@@ -468,7 +468,7 @@ const vi: Partial<Translations> = {
   "jobs.vmIncludeHint": "Sao lưu mọi VM có bật \"đưa vào lịch trình\" (đặt riêng cho từng VM trong tab VMs).",
   "jobs.flashNotImplemented": "Lưu ý: Bộ thực thi sao lưu Flash chưa được triển khai trong Giai đoạn 1 — lịch được lưu nhưng không được thực thi.",
   "schedule.includeAll": "Đưa tất cả vào lịch trình",
-  "schedule.excludeAll": "Loại tất cả",
+  "schedule.excludeAll": "Loại tất cả khỏi lịch trình",
 };
 
 export default vi;

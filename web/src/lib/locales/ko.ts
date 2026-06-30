@@ -468,7 +468,7 @@ const ko: Partial<Translations> = {
   "jobs.vmIncludeHint": "「일정에 포함」이 활성화된 모든 VM을 백업합니다(VMs 탭에서 VM별로 설정).",
   "jobs.flashNotImplemented": "참고: Flash 백업 실행기는 1단계에서 아직 구현되지 않았습니다 — 일정은 저장되지만 실행되지는 않습니다.",
   "schedule.includeAll": "모두 일정에 포함",
-  "schedule.excludeAll": "모두 제외",
+  "schedule.excludeAll": "모두 일정에서 제외",
 };
 
 export default ko;

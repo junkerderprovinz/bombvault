@@ -471,7 +471,7 @@ const ru: Partial<Translations> = {
   "jobs.vmIncludeHint": "Создаёт копию каждой VM с включённым «Включить в расписание» (настраивается для каждой VM на вкладке VMs).",
   "jobs.flashNotImplemented": "Примечание: исполнитель резервного копирования Flash в фазе 1 ещё не реализован — расписание сохраняется, но не выполняется.",
   "schedule.includeAll": "Включить все в расписание",
-  "schedule.excludeAll": "Исключить все",
+  "schedule.excludeAll": "Исключить все из расписания",
 };
 
 export default ru;

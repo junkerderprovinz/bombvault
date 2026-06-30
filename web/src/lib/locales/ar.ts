@@ -479,7 +479,7 @@ const ar: Partial<Translations> = {
   "jobs.vmIncludeHint": "ينسخ كل VM مفعَّل فيه «التضمين في الجدول» احتياطياً (يُضبط لكل VM في تبويب VMs).",
   "jobs.flashNotImplemented": "ملاحظة: منفذ نسخ Flash الاحتياطي لم يُنفَّذ بعد في المرحلة الأولى — يُحفظ الجدول لكنه لا يُنفَّذ.",
   "schedule.includeAll": "تضمين الكل في الجدول",
-  "schedule.excludeAll": "استبعاد الكل",
+  "schedule.excludeAll": "استبعاد الكل من الجدول",
 };
 
 export default ar;

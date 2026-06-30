@@ -471,7 +471,7 @@ const pl: Partial<Translations> = {
   "jobs.vmIncludeHint": "Tworzy kopię każdej VM z włączoną opcją „uwzględnij w harmonogramie” (ustawiane osobno dla każdej VM w zakładce VMs).",
   "jobs.flashNotImplemented": "Uwaga: executor kopii Flash nie jest jeszcze zaimplementowany w fazie 1 — harmonogram jest zapisywany, ale nie wykonywany.",
   "schedule.includeAll": "Uwzględnij wszystkie w harmonogramie",
-  "schedule.excludeAll": "Wyklucz wszystkie",
+  "schedule.excludeAll": "Wyklucz wszystkie z harmonogramu",
 };
 
 export default pl;

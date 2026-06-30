@@ -479,7 +479,7 @@ const th: Partial<Translations> = {
   "jobs.vmIncludeHint": "สำรองข้อมูลทุก VM ที่เปิด «รวมในตารางเวลา» ไว้ (ตั้งค่าแยกแต่ละ VM ในแท็บ VMs)",
   "jobs.flashNotImplemented": "หมายเหตุ: ตัวประมวลผลสำรองข้อมูล Flash ยังไม่ได้พัฒนาในเฟส 1 — ตารางเวลาจะถูกบันทึกแต่ไม่ถูกดำเนินการ",
   "schedule.includeAll": "รวมทั้งหมดในตารางเวลา",
-  "schedule.excludeAll": "ยกเว้นทั้งหมด",
+  "schedule.excludeAll": "ยกเว้นทั้งหมดจากตารางเวลา",
 };
 
 export default th;

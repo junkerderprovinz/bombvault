@@ -476,7 +476,7 @@ const fr: Partial<Translations> = {
   "jobs.vmIncludeHint": "Sauvegarde chaque VM dont l'option « inclure dans le planning » est activée (à régler par VM dans l'onglet VMs).",
   "jobs.flashNotImplemented": "Remarque : l'exécuteur de sauvegarde Flash n'est pas encore implémenté en phase 1 — le planning est enregistré mais pas exécuté.",
   "schedule.includeAll": "Tout inclure dans le planning",
-  "schedule.excludeAll": "Tout exclure",
+  "schedule.excludeAll": "Tout exclure du planning",
 };
 
 export default fr;

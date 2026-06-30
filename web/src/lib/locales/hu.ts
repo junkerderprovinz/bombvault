@@ -479,7 +479,7 @@ const hu: Partial<Translations> = {
   "jobs.vmIncludeHint": "Minden VM-et ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van (VM-enként a VMs lapon állítható be).",
   "jobs.flashNotImplemented": "Megjegyzés: A Flash mentési végrehajtó az 1. fázisban még nincs megvalósítva — az ütemezés mentésre kerül, de nem fut le.",
   "schedule.includeAll": "Mind az ütemezésbe",
-  "schedule.excludeAll": "Mind eltávolítása",
+  "schedule.excludeAll": "Mind ki az ütemezésből",
 };
 
 export default hu;

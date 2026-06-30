@@ -468,7 +468,7 @@ const ja: Partial<Translations> = {
   "jobs.vmIncludeHint": "「スケジュールに含める」が有効なすべての VM をバックアップします（VM ごとに VMs タブで設定）。",
   "jobs.flashNotImplemented": "注意: フラッシュバックアップの実行機能はフェーズ 1 ではまだ未実装です — スケジュールは保存されますが実行されません。",
   "schedule.includeAll": "すべてスケジュールに含める",
-  "schedule.excludeAll": "すべて除外",
+  "schedule.excludeAll": "すべてスケジュールから除外",
 };
 
 export default ja;
