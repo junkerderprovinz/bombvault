@@ -10,7 +10,11 @@
   <Support>https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/</Support>
   <Project>https://github.com/junkerderprovinz/bombvault</Project>
   <ReadMe>https://github.com/junkerderprovinz/bombvault/blob/main/README.md</ReadMe>
-  <Overview>Your Unraid data, sealed in a vault — armed with a fuse. BombVault is the best (and only) backup tool you'll ever need for Unraid: one-click backup AND full disaster recovery for your Docker containers, KVM/libvirt VMs and the Unraid flash, all powered by restic. Restore is the star — a backed-up container automatically reappears in the Docker tab and a VM in the VM Manager, exactly as before, with no manual reinstall or reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos (rclone / SMB / NFS), retention, file-level restore, integrity checks and pre/post-backup hooks. Backup paths, encryption on/off and the schedule are all set IN the WebUI under Settings — backups default to /mnt/user/bombvault/ (containers/vms/flash), created on the first backup; change the location any time under Settings. WARNING: BombVault holds root-equivalent control of your host — through the mounted docker.sock it can stop/start/recreate containers, and through the broad /mnt mount it reads appdata for backup and writes it back on restore. Run it ONLY on a trusted, non-exposed network. Optional password protection is available in Settings (off by default). Generate the required APP_KEY with: openssl rand -hex 32 (keep it safe — it derives the restic password, so losing it makes encrypted backups unrecoverable).</Overview>
+  <Overview>Your Unraid data, sealed in a vault. Armed with a fuse.
+
+One-click backup and full disaster recovery for Docker containers, VMs and the flash USB, powered by restic.
+
+The restore is the star: a backed-up container and VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos, retention, file-level restore, integrity checks, scheduling and pre/post-backup hooks, all configured in the WebUI.</Overview>
   <Category>Backup:</Category>
   <WebUI>https://[IP]:[PORT:3443]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-apps/main/bombvault/my-BombVault.xml</TemplateURL>
@@ -54,7 +58,7 @@
     Target="APP_KEY"
     Default=""
     Mode=""
-    Description="REQUIRED. 64 lowercase hex chars: openssl rand -hex 32. Master key for secrets + the derived restic password — losing it makes encrypted backups unrecoverable."
+    Description="REQUIRED. 64 lowercase hex chars: openssl rand -hex 32. Master key for secrets and the derived restic password; losing it makes encrypted backups unrecoverable."
     Type="Variable"
     Display="always"
     Required="true"
@@ -94,7 +98,7 @@
     Target="/var/run/docker.sock"
     Default="/var/run/docker.sock"
     Mode="rw"
-    Description="Root-equivalent host control: stop/start/recreate containers around backup/restore."
+    Description="Root-equivalent host control: stop/start/recreate containers around backup/restore. Together with the broad /mnt mount this gives BombVault root-equivalent access to your host, so run it only on a trusted, non-exposed network."
     Type="Path"
     Display="advanced"
     Required="true"
