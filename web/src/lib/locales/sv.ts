@@ -476,7 +476,7 @@ const sv: Partial<Translations> = {
   "jobs.vmIncludeHint": "Säkerhetskopierar varje VM med ”inkludera i schema” aktiverat (ställs in per VM på VMs-fliken).",
   "jobs.flashNotImplemented": "Obs: Flash-säkerhetskopieringsexekutorn är ännu inte implementerad i fas 1 — schemat sparas men körs inte.",
   "schedule.includeAll": "Inkludera alla i schemat",
-  "schedule.excludeAll": "Exkludera alla",
+  "schedule.excludeAll": "Exkludera alla från schemat",
 };
 
 export default sv;

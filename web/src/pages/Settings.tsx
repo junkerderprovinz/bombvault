@@ -69,7 +69,7 @@ function ToggleRow({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
-          checked ? "bg-[#6fdc8c]" : "bg-carbon-surface3"
+          checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
         <span

@@ -476,7 +476,7 @@ const da: Partial<Translations> = {
   "jobs.vmIncludeHint": "Sikkerhedskopierer hver VM med »inkluder i tidsplan« slået til (indstilles pr. VM på VMs-fanen).",
   "jobs.flashNotImplemented": "Bemærk: Flash-sikkerhedskopieringseksekutoren er endnu ikke implementeret i fase 1 — tidsplanen gemmes, men køres ikke.",
   "schedule.includeAll": "Inkluder alle i tidsplanen",
-  "schedule.excludeAll": "Ekskluder alle",
+  "schedule.excludeAll": "Ekskluder alle fra tidsplanen",
 };
 
 export default da;

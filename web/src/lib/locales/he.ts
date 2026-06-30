@@ -476,7 +476,7 @@ const he: Partial<Translations> = {
   "jobs.vmIncludeHint": "מגבה כל VM שבו מופעל „כלול בלוח הזמנים‟ (נקבע לכל VM בלשונית VMs).",
   "jobs.flashNotImplemented": "הערה: מנוע גיבוי Flash טרם מומש בשלב 1 — לוח הזמנים נשמר אך אינו מורץ.",
   "schedule.includeAll": "כלול הכל בלוח הזמנים",
-  "schedule.excludeAll": "החרג הכל",
+  "schedule.excludeAll": "החרג הכל מלוח הזמנים",
 };
 
 export default he;

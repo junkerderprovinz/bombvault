@@ -737,14 +737,14 @@ function ScheduleIncludeAllControl({
       <button
         onClick={() => void run(true)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {t("schedule.includeAll")}
       </button>
       <button
         onClick={() => void run(false)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
       >
         {t("schedule.excludeAll")}
       </button>
@@ -944,11 +944,6 @@ export function Containers() {
           </p>
         </div>
       )}
-      {/* One-click include/exclude every installed container in the schedule. */}
-      {!loading && !error && live.length > 0 && (
-        <ScheduleIncludeAllControl t={t} onChanged={() => void loadContainers()} />
-      )}
-
       {/* Controls: filter (installed / not installed) + sort. */}
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
@@ -965,6 +960,11 @@ export function Containers() {
               />
               {t("containers.selectAll")}
             </label>
+          )}
+          {live.length > 0 && (
+            <div className="ml-auto">
+              <ScheduleIncludeAllControl t={t} onChanged={() => void loadContainers()} />
+            </div>
           )}
         </div>
       )}

@@ -476,7 +476,7 @@ const tr: Partial<Translations> = {
   "jobs.vmIncludeHint": "“Zamanlamaya ekle” etkin olan her VM'yi yedekler (her VM için VMs sekmesinden ayarlanır).",
   "jobs.flashNotImplemented": "Not: Flash yedekleme yürütücüsü Aşama 1'de henüz uygulanmadı — zamanlama saklanır ancak çalıştırılmaz.",
   "schedule.includeAll": "Tümünü zamanlamaya ekle",
-  "schedule.excludeAll": "Tümünü çıkar",
+  "schedule.excludeAll": "Tümünü zamanlamadan çıkar",
 };
 
 export default tr;

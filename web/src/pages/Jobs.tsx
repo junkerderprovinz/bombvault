@@ -446,7 +446,7 @@ export function Jobs() {
               type="checkbox"
               checked={syncSchedules}
               onChange={(e) => setSyncSchedules(e.target.checked)}
-              className="h-4 w-4 rounded border-carbon-border bg-carbon-surface2 accent-[#6fdc8c]"
+              className="h-4 w-4 rounded border-carbon-border bg-carbon-surface2 accent-[var(--accent)]"
             />
             <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
           </label>

@@ -476,7 +476,7 @@ const fi: Partial<Translations> = {
   "jobs.vmIncludeHint": "Varmuuskopioi jokaisen VM:n, jolla „sisällytä aikatauluun” on käytössä (asetetaan VM-kohtaisesti VMs-välilehdellä).",
   "jobs.flashNotImplemented": "Huomautus: Flash-varmuuskopioinnin suoritinta ei ole vielä toteutettu vaiheessa 1 — aikataulu tallennetaan, mutta sitä ei suoriteta.",
   "schedule.includeAll": "Sisällytä kaikki aikatauluun",
-  "schedule.excludeAll": "Poista kaikki",
+  "schedule.excludeAll": "Poista kaikki aikataulusta",
 };
 
 export default fi;

@@ -476,7 +476,7 @@ const pt: Partial<Translations> = {
   "jobs.vmIncludeHint": "Faz backup de cada VM com «incluir no agendamento» ativado (defina por VM no separador VMs).",
   "jobs.flashNotImplemented": "Nota: o executor de backup do Flash ainda não está implementado na fase 1 — o agendamento é guardado mas não executado.",
   "schedule.includeAll": "Incluir tudo no agendamento",
-  "schedule.excludeAll": "Excluir tudo",
+  "schedule.excludeAll": "Excluir tudo do agendamento",
 };
 
 export default pt;

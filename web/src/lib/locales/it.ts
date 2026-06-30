@@ -476,7 +476,7 @@ const it: Partial<Translations> = {
   "jobs.vmIncludeHint": "Esegue il backup di ogni VM con «includi nel calendario» attivo (impostabile per VM nella scheda VM).",
   "jobs.flashNotImplemented": "Nota: l'esecutore di backup Flash non è ancora implementato nella fase 1 — il calendario viene salvato ma non eseguito.",
   "schedule.includeAll": "Includi tutto nel calendario",
-  "schedule.excludeAll": "Escludi tutto",
+  "schedule.excludeAll": "Escludi tutto dal calendario",
 };
 
 export default it;

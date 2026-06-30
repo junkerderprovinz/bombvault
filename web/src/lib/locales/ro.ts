@@ -479,7 +479,7 @@ const ro: Partial<Translations> = {
   "jobs.vmIncludeHint": "Face backup fiecărui VM cu „Includeți în programare” activat (se setează per VM în fila VMs).",
   "jobs.flashNotImplemented": "Notă: Executorul de backup Flash nu este încă implementat în Faza 1 — programarea este salvată, dar nu este executată.",
   "schedule.includeAll": "Include toate în programare",
-  "schedule.excludeAll": "Exclude toate",
+  "schedule.excludeAll": "Exclude toate din programare",
 };
 
 export default ro;
