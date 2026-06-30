@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, listRuns } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress } from "../lib/progress";
+import { useBackupWatch } from "../lib/backupWatch";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -270,37 +271,20 @@ function VMBackupButton({
   t: T;
   onBackedUp?: () => void;
 }) {
-  type BackupState =
-    | { phase: "idle" }
-    | { phase: "pending" }
-    | { phase: "success"; snapshotId?: string }
-    | { phase: "error"; message: string };
-
-  const [state, setState] = useState<BackupState>({ phase: "idle" });
-
-  async function handleBackup() {
-    setState({ phase: "pending" });
-    try {
-      const res = await backupVMNow(name);
-      if (res.ok) {
-        setState({ phase: "success", snapshotId: res.snapshotId });
-        onBackedUp?.();
-        setTimeout(() => setState({ phase: "idle" }), 4000);
-      } else {
-        setState({ phase: "error", message: res.error ?? "Backup failed" });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Network error";
-      setState({ phase: "error", message: msg });
-    }
-  }
-
-  const isPending = state.phase === "pending";
+  // Fire-and-watch (see useBackupWatch): the server backs the VM up detached and
+  // answers immediately, so we watch the "vm:<name>" progress + recorded run for
+  // the outcome instead of awaiting the whole backup.
+  const { state, fire, isPending } = useBackupWatch({
+    progressKey: `vm:${name}`,
+    start: () => backupVMNow(name),
+    matchRun: (r) => r.domain === "vm" && r.target === name,
+    onDone: onBackedUp,
+  });
 
   return (
     <div className="flex flex-col gap-1 items-start">
       <button
-        onClick={() => void handleBackup()}
+        onClick={() => void fire()}
         disabled={isPending}
         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -800,8 +784,34 @@ export function VMs() {
     void loadVMs();
   }
 
+  // Single VM backups are now ASYNC and share the server's single-backup guard,
+  // so firing them in a tight loop would make every call after the first hit
+  // "a backup is already running". Run the bulk serially: start one, then wait
+  // for its recorded run to finish (guard cleared) before starting the next.
+  async function backupOneAndWait(name: string): Promise<{ ok: boolean }> {
+    const since = Math.floor(Date.now() / 1000) - 5;
+    const res = await backupVMNow(name);
+    if (!res.ok) return { ok: false };
+    // Poll the recorded run until this VM's backup reaches a terminal state.
+    const deadline = Date.now() + 13 * 60 * 60 * 1000; // past the 12h server cap
+    for (;;) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        const runs = await listRuns();
+        const run = runs.runs?.find(
+          (rr) => rr.kind === "backup" && rr.domain === "vm" && rr.target === name && rr.startedAt >= since
+        );
+        if (run && run.status === "success") return { ok: true };
+        if (run && run.status === "failed") return { ok: false };
+      } catch {
+        // transient — keep polling
+      }
+      if (Date.now() > deadline) return { ok: false };
+    }
+  }
+
   function backupSelected() {
-    void runBulk((name) => backupVMNow(name));
+    void runBulk((name) => backupOneAndWait(name));
   }
 
   function restoreSelected() {

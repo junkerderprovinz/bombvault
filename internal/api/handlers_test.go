@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -25,6 +26,15 @@ import (
 // underlying fakes for assertions.
 func newTestRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo) {
 	t.Helper()
+	h, st, _ := newTestRouterSvc(t, d, eng)
+	return h, st
+}
+
+// newTestRouterSvc is newTestRouter that also returns the service, so backup
+// tests can wait for the now-async backup goroutine to fully finish (the work is
+// detached, so without waiting it can outlive the test and touch a closed store).
+func newTestRouterSvc(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service) {
+	t.Helper()
 	dir := t.TempDir()
 	// The conventional appdata dir for the "plex" container the backup tests use,
 	// so the (now existence-filtered) backup actually has a source to snapshot.
@@ -39,7 +49,22 @@ func newTestRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (h
 		st.ListTargets,
 	)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes())
-	return h.Router(), st
+	return h.Router(), st, svc
+}
+
+// waitForBackupDone blocks until the detached single-backup/batch goroutine has
+// released the shared guard, i.e. all of its work (run record + best-effort
+// retention/stats) is done. This keeps async-backup tests from racing cleanup.
+func waitForBackupDone(t *testing.T, svc *api.Service) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if !svc.BackupInProgress() {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("timed out waiting for the async backup goroutine to finish")
 }
 
 func doJSON(t *testing.T, h http.Handler, method, path, body string) (*httptest.ResponseRecorder, map[string]any) {
@@ -108,41 +133,73 @@ func TestListContainers(t *testing.T) {
 	}
 }
 
+// waitForBackupRun polls the runs store until a backup run reaches a terminal
+// (success/failed) state, then returns it. Single backups are now ASYNC: the
+// handler returns immediately and the work runs in a detached goroutine, so a
+// test must wait for the recorded run before reading the outcome — and before
+// the in-memory store closes on cleanup.
+func waitForBackupRun(t *testing.T, st *store.Repo) store.Run {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		runs, err := st.ListRuns(10)
+		if err != nil {
+			t.Fatalf("ListRuns: %v", err)
+		}
+		for _, r := range runs {
+			if r.Kind == "backup" && (r.Status == "success" || r.Status == "failed") {
+				return r
+			}
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	t.Fatal("timed out waiting for the async backup run to finish")
+	return store.Run{}
+}
+
 func TestBackupOK(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest"}}
-	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	h, st, svc := newTestRouterSvc(t, d, &fakeResticEngine{})
+	// The single backup is now ASYNC: the handler only acknowledges acceptance.
 	w, m := doJSON(t, h, http.MethodPost, "/api/containers/plex/backup", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d", w.Code)
 	}
-	if m["ok"] != true {
-		t.Fatalf("expected ok:true, got %v", m)
+	if m["ok"] != true || m["started"] != true {
+		t.Fatalf("expected ok:true, started:true, got %v", m)
 	}
-	if m["snapshotId"] != "deadbeef12345678" {
-		t.Fatalf("expected snapshotId, got %v", m)
+	// The outcome is recorded on the run, not returned synchronously.
+	run := waitForBackupRun(t, st)
+	if run.Status != "success" {
+		t.Fatalf("expected a successful run, got %q (%s)", run.Status, run.Error)
 	}
+	if run.SnapshotID != "deadbeef12345678" {
+		t.Fatalf("expected snapshot id on the run, got %q", run.SnapshotID)
+	}
+	waitForBackupDone(t, svc)
 }
 
 func TestBackupFailureGraceful(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest"}}
 	eng := &fakeResticEngine{backupErr: errors.New("restic backup failed: /secret/repo/path")}
-	h, _ := newTestRouter(t, d, eng)
+	h, st, svc := newTestRouterSvc(t, d, eng)
+	// Async: the handler accepts the job (200, started:true) and the failure is
+	// recorded on the run rather than returned in the response.
 	w, m := doJSON(t, h, http.MethodPost, "/api/containers/plex/backup", "")
-	// Operational failure → still HTTP 200, {ok:false,error}.
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected graceful 200, got %d", w.Code)
 	}
-	if m["ok"] != false {
-		t.Fatalf("expected ok:false, got %v", m)
+	if m["ok"] != true || m["started"] != true {
+		t.Fatalf("expected the job to be accepted (ok:true, started:true), got %v", m)
 	}
-	errStr, _ := m["error"].(string)
-	if errStr == "" {
-		t.Fatalf("expected an error message, got %v", m)
+	run := waitForBackupRun(t, st)
+	if run.Status != "failed" {
+		t.Fatalf("expected a failed run, got %q", run.Status)
 	}
-	// Error must be scrubbed — must not leak the repo path.
-	if strings.Contains(errStr, "/secret/repo/path") {
-		t.Fatalf("error leaked the repo path: %q", errStr)
+	if run.Error == "" {
+		t.Fatalf("expected an error message on the run, got %+v", run)
 	}
+	waitForBackupDone(t, svc)
 }
 
 func TestSnapshots(t *testing.T) {
@@ -385,17 +442,20 @@ func TestListVMsWithEntry(t *testing.T) {
 }
 
 func TestBackupVMHandlerReturnsOK(t *testing.T) {
-	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
-	// BackupVM will fail at virsh list because fakeVirsh returns empty — but
-	// the handler must still return ok:false (not a 500) so we test graceful error.
+	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	// The VM backup is now ASYNC: the handler accepts the job and returns
+	// immediately; the actual backup (which fails in the background here, since
+	// the fake VM has no disks) runs detached.
 	w, m := doJSON(t, h, http.MethodPost, "/api/vms/win11/backup", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
 	}
-	// fakeVirsh.List returns nothing, so win11 is unknown → error path.
-	if m["ok"] == nil {
-		t.Fatalf("missing ok field: %v", m)
+	if m["ok"] != true || m["started"] != true {
+		t.Fatalf("expected the job to be accepted (ok:true, started:true), got %v", m)
 	}
+	// Wait for the detached goroutine so it can't outlive the test and touch a
+	// closed store.
+	waitForBackupDone(t, svc)
 }
 
 func TestSnapshotsVMHandlerEmpty(t *testing.T) {
@@ -477,9 +537,11 @@ func newSpikeRouter(t *testing.T, d *fakeServiceDocker) http.Handler {
 
 func TestRuns(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest"}}
-	h, _ := newTestRouter(t, d, &fakeResticEngine{})
-	// Drive one backup so a run exists.
+	h, st, svc := newTestRouterSvc(t, d, &fakeResticEngine{})
+	// Drive one backup so a run exists. It's async now, so wait for it to record.
 	doJSON(t, h, http.MethodPost, "/api/containers/plex/backup", "")
+	waitForBackupRun(t, st)
+	waitForBackupDone(t, svc)
 	w, m := doJSON(t, h, http.MethodGet, "/api/runs", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d", w.Code)
