@@ -10,11 +10,11 @@
   <Support>https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/</Support>
   <Project>https://github.com/junkerderprovinz/bombvault</Project>
   <ReadMe>https://github.com/junkerderprovinz/bombvault/blob/main/README.md</ReadMe>
-  <Overview>Your Unraid data, sealed in a vault. Armed with a fuse.
+  <Overview>The best and only backup tool you'll ever need for Unraid.
 
-One-click backup and full disaster recovery for Docker containers, VMs and the flash USB, powered by restic.
+One-click backup and full disaster recovery for your Docker containers, VMs and the flash USB, powered by restic.
 
-The restore is the star: a backed-up container and VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos, retention, file-level restore, integrity checks, scheduling and pre/post-backup hooks, all configured in the WebUI.</Overview>
+The restore is the star: a backed-up container or VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos, retention, file-level restore, integrity checks, scheduling and pre/post-backup hooks, all configured in the WebUI.</Overview>
   <Category>Backup:</Category>
   <WebUI>https://[IP]:[PORT:3443]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-apps/main/bombvault/my-BombVault.xml</TemplateURL>
