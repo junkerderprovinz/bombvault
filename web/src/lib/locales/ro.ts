@@ -473,6 +473,13 @@ const ro: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Instantanee",
   "dashboard.noStats": "Încă niciun date",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Folosește programarea Containerelor și pentru VM-uri și Flash",
+  "jobs.vmIncludeHint": "Face backup fiecărui VM cu „Includeți în programare” activat (se setează per VM în fila VMs).",
+  "jobs.flashNotImplemented": "Notă: Executorul de backup Flash nu este încă implementat în Faza 1 — programarea este salvată, dar nu este executată.",
+  "schedule.includeAll": "Include toate în programare",
+  "schedule.excludeAll": "Exclude toate",
 };
 
 export default ro;

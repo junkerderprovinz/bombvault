@@ -465,6 +465,13 @@ const pl: Partial<Translations> = {
   "dashboard.dedup": "Deduplikacja",
   "dashboard.snapshotsLabel": "Migawki",
   "dashboard.noStats": "Brak danych",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Użyj harmonogramu Containers także dla VMs i Flash",
+  "jobs.vmIncludeHint": "Tworzy kopię każdej VM z włączoną opcją „uwzględnij w harmonogramie” (ustawiane osobno dla każdej VM w zakładce VMs).",
+  "jobs.flashNotImplemented": "Uwaga: executor kopii Flash nie jest jeszcze zaimplementowany w fazie 1 — harmonogram jest zapisywany, ale nie wykonywany.",
+  "schedule.includeAll": "Uwzględnij wszystkie w harmonogramie",
+  "schedule.excludeAll": "Wyklucz wszystkie",
 };
 
 export default pl;

@@ -467,6 +467,13 @@ const nl: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "Nog geen gegevens",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Gebruik de planning van Containers ook voor VM's en Flash",
+  "jobs.vmIncludeHint": "Maakt een back-up van elke VM waarbij „opnemen in planning” is ingeschakeld (stel dit per VM in op het tabblad VM's).",
+  "jobs.flashNotImplemented": "Let op: de Flash-back-upuitvoerder is in fase 1 nog niet geïmplementeerd — de planning wordt opgeslagen maar niet uitgevoerd.",
+  "schedule.includeAll": "Alles in planning opnemen",
+  "schedule.excludeAll": "Alles uitsluiten",
 };
 
 export default nl;

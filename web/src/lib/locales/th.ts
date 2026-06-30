@@ -473,6 +473,13 @@ const th: Partial<Translations> = {
   "dashboard.dedup": "ลดข้อมูลซ้ำ",
   "dashboard.snapshotsLabel": "สแนปช็อต",
   "dashboard.noStats": "ยังไม่มีข้อมูล",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "ใช้ตารางเวลาของ Containers สำหรับ VMs และ Flash ด้วย",
+  "jobs.vmIncludeHint": "สำรองข้อมูลทุก VM ที่เปิด «รวมในตารางเวลา» ไว้ (ตั้งค่าแยกแต่ละ VM ในแท็บ VMs)",
+  "jobs.flashNotImplemented": "หมายเหตุ: ตัวประมวลผลสำรองข้อมูล Flash ยังไม่ได้พัฒนาในเฟส 1 — ตารางเวลาจะถูกบันทึกแต่ไม่ถูกดำเนินการ",
+  "schedule.includeAll": "รวมทั้งหมดในตารางเวลา",
+  "schedule.excludeAll": "ยกเว้นทั้งหมด",
 };
 
 export default th;

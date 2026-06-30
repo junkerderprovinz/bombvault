@@ -470,6 +470,13 @@ const da: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Øjebliksbilleder",
   "dashboard.noStats": "Ingen data endnu",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Brug Containers-tidsplanen til VMs og Flash også",
+  "jobs.vmIncludeHint": "Sikkerhedskopierer hver VM med »inkluder i tidsplan« slået til (indstilles pr. VM på VMs-fanen).",
+  "jobs.flashNotImplemented": "Bemærk: Flash-sikkerhedskopieringseksekutoren er endnu ikke implementeret i fase 1 — tidsplanen gemmes, men køres ikke.",
+  "schedule.includeAll": "Inkluder alle i tidsplanen",
+  "schedule.excludeAll": "Ekskluder alle",
 };
 
 export default da;

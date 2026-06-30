@@ -470,6 +470,13 @@ const tr: Partial<Translations> = {
   "dashboard.dedup": "Yinelemesizleştirme",
   "dashboard.snapshotsLabel": "Anlık görüntüler",
   "dashboard.noStats": "Henüz veri yok",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Konteyner zamanlamasını VM'ler ve Flash için de kullan",
+  "jobs.vmIncludeHint": "“Zamanlamaya ekle” etkin olan her VM'yi yedekler (her VM için VMs sekmesinden ayarlanır).",
+  "jobs.flashNotImplemented": "Not: Flash yedekleme yürütücüsü Aşama 1'de henüz uygulanmadı — zamanlama saklanır ancak çalıştırılmaz.",
+  "schedule.includeAll": "Tümünü zamanlamaya ekle",
+  "schedule.excludeAll": "Tümünü çıkar",
 };
 
 export default tr;

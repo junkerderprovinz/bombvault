@@ -470,6 +470,13 @@ const el: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Στιγμιότυπα",
   "dashboard.noStats": "Κανένα δεδομένο ακόμα",
+
+  // Schedules / Plans tab
+  "jobs.syncSchedules": "Χρήση του χρονοδιαγράμματος Containers και για VMs και Flash",
+  "jobs.vmIncludeHint": "Δημιουργεί αντίγραφο κάθε VM με ενεργό το «Συμπερίληψη στο χρονοδιάγραμμα» (ορίζεται ανά VM στην καρτέλα VMs).",
+  "jobs.flashNotImplemented": "Σημείωση: Ο εκτελεστής αντιγράφου Flash δεν έχει υλοποιηθεί ακόμα στη Φάση 1 — το χρονοδιάγραμμα αποθηκεύεται αλλά δεν εκτελείται.",
+  "schedule.includeAll": "Συμπερίληψη όλων στο χρονοδιάγραμμα",
+  "schedule.excludeAll": "Εξαίρεση όλων",
 };
 
 export default el;
