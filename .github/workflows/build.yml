@@ -118,3 +118,26 @@ jobs:
             VERSION=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Mirror the GitHub README to the Docker Hub repo's full description (same
+      # text as on GitHub; relative image/link paths completed to absolute so they
+      # render on Docker Hub). Editing the description needs a credential the push
+      # token (DOCKERHUB_TOKEN) lacks — it returns 403 — so this uses a separate
+      # DOCKERHUB_PASSWORD secret (Docker Hub account password, or a PAT scoped to
+      # edit repos). Skipped until that secret is set, so a missing credential
+      # never fails the build.
+      - name: Docker Hub description sync ready?
+        id: dhdesc
+        if: ${{ vars.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request' }}
+        env:
+          PW: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          if [ -n "$PW" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "DOCKERHUB_PASSWORD not set — skipping Docker Hub description sync"; echo "go=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Sync README to Docker Hub
+        if: ${{ steps.dhdesc.outputs.go == 'true' }}
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
+          enable-url-completion: true
