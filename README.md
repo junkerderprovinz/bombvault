@@ -45,15 +45,16 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 ## Table of Contents
 
 1. [What is this?](#1-what-is-this)
-2. [Features](#2-features)
-3. [How it works](#3-how-it-works)
-4. [Security / trust model](#4-security--trust-model)
-5. [Requirements](#5-requirements)
-6. [Install on Unraid](#6-install-on-unraid)
-7. [Configuration](#7-configuration)
-8. [Development](#8-development)
-9. [Support this project](#9-support-this-project)
-10. [Credits](#10-credits)
+2. [Screenshots](#2-screenshots)
+3. [Features](#3-features)
+4. [How it works](#4-how-it-works)
+5. [Security / trust model](#5-security--trust-model)
+6. [Requirements](#6-requirements)
+7. [Install on Unraid](#7-install-on-unraid)
+8. [Configuration](#8-configuration)
+9. [Development](#9-development)
+10. [Support this project](#10-support-this-project)
+11. [Credits](#11-credits)
 
 <br>
 
@@ -65,11 +66,48 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups in the background (per domain) from the **Plans** tab — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
 
-The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#10-credits).
+The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#11-credits).
 
 <br>
 
-## 2. Features
+## 2. Screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — protection-status traffic lights, run history and backup-health heatmap" width="90%">
+  <br><em>Dashboard — RPO protection-status traffic lights per domain, last backups, run history, a backup-health heatmap and per-domain storage/dedup.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers tab — per-container backup with schedule toggle, hooks and export" width="90%">
+  <br><em>Containers — per-container backup with include-in-schedule toggle, backup folders/hooks, one-click backup and plain-tar export.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/vms.png" alt="BombVault VMs tab — KVM/libvirt VM backups over SSH" width="90%">
+  <br><em>VMs — KVM/libvirt VM backups over SSH, graceful or live method, schedule inclusion and export.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/flash.png" alt="BombVault Flash tab — whole-USB flash backup with live progress bar" width="90%">
+  <br><em>Flash — whole-/boot USB flash backup with a live progress bar; restore downloads a ZIP and never touches the running flash.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings — backup paths, off-site copy and retention" width="90%">
+  <br><em>Settings — backup paths, optional off-site copy (restic copy) and staggered local/off-site retention.</em>
+</p>
+
+<br>
+
+## 3. Features
 
 ### Backup scope
 
@@ -125,7 +163,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 <br>
 
-## 3. How it works
+## 4. How it works
 
 ```
 Browser ──HTTPS──> BombVault container
@@ -145,7 +183,7 @@ Restore is the star: after copying data back from the restic snapshot, BombVault
 
 <br>
 
-## 4. Security / trust model
+## 5. Security / trust model
 
 > [!WARNING]
 > **BombVault holds root-equivalent control of the host**: via the Docker socket it can
@@ -172,7 +210,7 @@ key derived from `APP_KEY`.
 
 <br>
 
-## 5. Requirements
+## 6. Requirements
 
 | Requirement | Notes |
 |---|---|
@@ -202,7 +240,7 @@ key derived from `APP_KEY`.
 
 <br>
 
-## 6. Install on Unraid
+## 7. Install on Unraid
 
 Install via **Community Applications** — search for **BombVault**.
 
@@ -213,11 +251,11 @@ Or add the template manually:
    https://github.com/junkerderprovinz/unraid-apps
    ```
 2. Search for **BombVault** in Templates.
-3. Set the required variables (see [Configuration](#7-configuration)) and click **Apply**.
+3. Set the required variables (see [Configuration](#8-configuration)) and click **Apply**.
 
 <br>
 
-## 7. Configuration
+## 8. Configuration
 
 | Variable | Required | Description |
 |---|---|---|
@@ -230,14 +268,14 @@ Or add the template manually:
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only. |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§5](#5-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
+Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§6](#6-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
 
 > [!NOTE]
 > **Host integration check:** open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
 
 <br>
 
-## 8. Development
+## 9. Development
 
 BombVault is a single static **Go** binary that serves a JSON API and an embedded
 React/Vite SPA (`go:embed`). Build the SPA first, then run the binary:
@@ -255,7 +293,7 @@ Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unra
 
 <br>
 
-## 9. Support this project
+## 10. Support this project
 
 Questions, bugs, ideas? **[Unraid support thread →](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)** (or open a [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues)).
 
@@ -265,7 +303,7 @@ Questions, bugs, ideas? **[Unraid support thread →](https://forums.unraid.net/
 
 <br>
 
-## 10. Credits
+## 11. Credits
 
 - **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) — the original idea that sparked BombVault: one-click backup and automatic re-install of Docker containers. Thank you. BombVault is an independent rewrite (Go + restic) that extends the concept to VMs and the Unraid flash.
 - **[restic](https://restic.net/)** — the fast, secure, deduplicating backup engine BombVault orchestrates.
