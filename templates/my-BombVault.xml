@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>BombVault</Name>
-  <Repository>ghcr.io/junkerderprovinz/bombvault:latest</Repository>
-  <Registry>https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault</Registry>
+  <Repository>junkerderprovinz/bombvault:latest</Repository>
+  <Registry>https://hub.docker.com/r/junkerderprovinz/bombvault</Registry>
   <Network>bridge</Network>
   <MyIP/>
   <Shell>bash</Shell>
