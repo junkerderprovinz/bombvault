@@ -2132,6 +2132,26 @@ func (s *Service) SetInclude(ctx context.Context, name string, include bool) err
 	return s.store.SetInclude(name, include)
 }
 
+// SetIncludeAll sets the include_in_schedule flag for EVERY installed container
+// in one call — the one-click "include all in schedule" / "exclude all" action.
+// It iterates the same installed-container source the containers list uses
+// (docker.List) and ensures a target row exists for each (exactly as SetInclude
+// does, find-or-create) so the flag is never silently lost on a container that
+// has not been backed up yet. A single container's inspect/upsert failure aborts
+// the batch with that error rather than leaving a partial, ambiguous result.
+func (s *Service) SetIncludeAll(ctx context.Context, include bool) error {
+	infos, err := s.docker.List(ctx)
+	if err != nil {
+		return fmt.Errorf("list containers: %w", err)
+	}
+	for _, c := range infos {
+		if err := s.SetInclude(ctx, c.Name, include); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ContainerPath returns the resolved absolute containers backup path, used by
 // the spike's path-writable probe. Returns "" if it cannot be resolved.
 func (s *Service) ContainerPath() string {
@@ -2964,6 +2984,42 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 		}
 	}
 	return s.store.SetVMInclude(name, include)
+}
+
+// SetVMIncludeAll sets the include_in_schedule flag for EVERY known VM in one
+// call — the VM counterpart to SetIncludeAll. It iterates the live VMs reported
+// by virsh and ensures a target row exists for each (find-or-create, exactly as
+// SetVMInclude does), then applies the same flag to every already-known VM
+// target (so an orphan VM that still has backups is toggled too). De-duplicated
+// so a VM that is both live and a known target is only set once.
+func (s *Service) SetVMIncludeAll(ctx context.Context, include bool) error {
+	infos, err := s.virsh.List(ctx)
+	if err != nil {
+		return fmt.Errorf("list vms: %w", err)
+	}
+	seen := make(map[string]bool, len(infos))
+	for _, vm := range infos {
+		if err := s.SetVMInclude(ctx, vm.Name, include); err != nil {
+			return err
+		}
+		seen[vm.Name] = true
+	}
+	// Known targets whose VM is no longer defined on the host (orphans with
+	// backups) — the find-or-create in SetVMInclude already handles existing
+	// rows, so a plain store update is enough here.
+	targets, err := s.store.ListVMTargets()
+	if err != nil {
+		return fmt.Errorf("list vm targets: %w", err)
+	}
+	for _, t := range targets {
+		if seen[t.Name] {
+			continue
+		}
+		if err := s.store.SetVMInclude(t.Name, include); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SetContainerHooks stores the pre/post-backup hook commands for a container.

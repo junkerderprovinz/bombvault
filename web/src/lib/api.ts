@@ -581,6 +581,17 @@ export function setInclude(
   });
 }
 
+/**
+ * POST /api/containers/schedule-include — one-click set the "include in schedule"
+ * flag for EVERY installed container (true = include all, false = exclude all).
+ */
+export function setIncludeAll(include: boolean): Promise<OkEnvelope> {
+  return fetchJSON("/api/containers/schedule-include", {
+    method: "POST",
+    body: JSON.stringify({ include }),
+  });
+}
+
 export function getSettings(): Promise<GetSettingsResponse> {
   return fetchJSON("/api/settings");
 }
@@ -815,6 +826,17 @@ export function setVMInclude(
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ includeInSchedule }),
+  });
+}
+
+/**
+ * POST /api/vms/schedule-include — one-click set the "include in schedule" flag
+ * for EVERY known VM (true = include all, false = exclude all).
+ */
+export function setVMIncludeAll(include: boolean): Promise<OkEnvelope> {
+  return fetchJSON("/api/vms/schedule-include", {
+    method: "POST",
+    body: JSON.stringify({ include }),
   });
 }
 

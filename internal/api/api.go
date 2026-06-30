@@ -92,6 +92,7 @@ func (h *Handler) Router() http.Handler {
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
 	mux.HandleFunc("POST /api/containers/backup-all", h.handleBackupAll)
+	mux.HandleFunc("POST /api/containers/schedule-include", h.handleScheduleIncludeAll)
 	mux.HandleFunc("POST /api/containers/{name}/backup", h.handleBackup)
 	mux.HandleFunc("GET /api/containers/{name}/snapshots", h.handleSnapshots)
 	mux.HandleFunc("POST /api/containers/{name}/restore", h.handleRestore)
@@ -135,6 +136,7 @@ func (h *Handler) Router() http.Handler {
 	// VM endpoints.
 	mux.HandleFunc("GET /api/vms", h.handleListVMs)
 	mux.HandleFunc("POST /api/vms/discover", h.handleDiscoverVMs)
+	mux.HandleFunc("POST /api/vms/schedule-include", h.handleVMScheduleIncludeAll)
 	mux.HandleFunc("POST /api/vms/{name}/backup", h.handleBackupVM)
 	mux.HandleFunc("GET /api/vms/{name}/snapshots", h.handleSnapshotsVM)
 	mux.HandleFunc("POST /api/vms/{name}/restore", h.handleRestoreVM)

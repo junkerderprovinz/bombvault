@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { getSettings, putSettings, browse, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { CadenceBuilder } from "../components/CadenceBuilder";
 import type { Settings, NotifyConfig, RestoreDrill } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { SpikePanel } from "../components/SpikePanel";
@@ -302,196 +303,6 @@ function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserP
             </div>
           )}
         </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Schedule cadence builder (Feature 2)
-// ---------------------------------------------------------------------------
-
-type CadenceMode = "off" | "daily" | "weekly" | "everyN";
-
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
-
-interface CadenceState {
-  mode: CadenceMode;
-  time: string; // "HH:MM"
-  weekdays: string[]; // subset of WEEKDAYS, for weekly
-  intervalDays: number; // for everyN
-}
-
-const DEFAULT_CADENCE: CadenceState = {
-  mode: "off",
-  time: "02:00",
-  weekdays: ["Mon"],
-  intervalDays: 3,
-};
-
-/** Build the grammar string from builder state. */
-function buildCadenceString(s: CadenceState): string {
-  switch (s.mode) {
-    case "off":
-      return "off";
-    case "daily":
-      return `daily ${s.time}`;
-    case "weekly": {
-      const days = WEEKDAYS.filter((d) => s.weekdays.includes(d));
-      const daysStr = days.length > 0 ? days.join(",") : "Mon";
-      return `weekly ${daysStr} ${s.time}`;
-    }
-    case "everyN":
-      return `everyN ${Math.max(1, s.intervalDays)} ${s.time}`;
-  }
-}
-
-/** Parse a stored cadence string back into builder state. */
-function parseCadenceString(raw: string): CadenceState {
-  const s = (raw ?? "").trim();
-  if (!s || s === "off") return { ...DEFAULT_CADENCE, mode: "off" };
-
-  const dailyM = /^daily\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (dailyM) return { mode: "daily", time: dailyM[1], weekdays: ["Mon"], intervalDays: 3 };
-
-  const weeklyM = /^weekly\s+([\w,]+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (weeklyM) {
-    const days = weeklyM[1]
-      .split(",")
-      .map((d) => d.trim())
-      .map((d) => d.charAt(0).toUpperCase() + d.slice(1).toLowerCase());
-    return { mode: "weekly", time: weeklyM[2], weekdays: days, intervalDays: 3 };
-  }
-
-  const everyNM = /^everyN\s+(\d+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (everyNM) {
-    return { mode: "everyN", time: everyNM[2], weekdays: ["Mon"], intervalDays: parseInt(everyNM[1], 10) };
-  }
-
-  // Unrecognised (e.g. raw cron from old data) — fall back to off
-  return { ...DEFAULT_CADENCE, mode: "off" };
-}
-
-function CadenceBuilder({
-  label,
-  value,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  onChange: (v: string) => void;
-}) {
-  const { t } = useT();
-  const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
-
-  // Re-parse when the stored value changes externally (e.g. after load or sync checkbox)
-  useEffect(() => {
-    setState(parseCadenceString(value));
-  }, [value]);
-
-  function update(patch: Partial<CadenceState>) {
-    setState((prev) => {
-      const next = { ...prev, ...patch };
-      onChange(buildCadenceString(next));
-      return next;
-    });
-  }
-
-  function toggleWeekday(day: string) {
-    const current = state.weekdays;
-    const next = current.includes(day)
-      ? current.filter((d) => d !== day)
-      : [...current, day];
-    // Always keep at least one weekday selected
-    if (next.length === 0) return;
-    update({ weekdays: next });
-  }
-
-  const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff] disabled:opacity-50";
-
-  return (
-    <div className={`flex flex-col gap-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
-      <span className="text-xs text-carbon-textSub font-medium">{label}</span>
-
-      {/* Mode pills */}
-      <div className="flex flex-wrap gap-2">
-        {(["off", "daily", "weekly", "everyN"] as CadenceMode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => update({ mode: m })}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              state.mode === m
-                ? "bg-carbon-surface3 text-carbon-text"
-                : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-            }`}
-          >
-            {m === "off" ? t("cadence.off") : m === "daily" ? t("cadence.daily") : m === "weekly" ? t("cadence.weekly") : t("cadence.everyN")}
-          </button>
-        ))}
-      </div>
-
-      {/* Time picker — shown for all non-off modes */}
-      {state.mode !== "off" && (
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.time")}</label>
-          <input
-            type="time"
-            value={state.time}
-            onChange={(e) => update({ time: e.target.value })}
-            className={inputCls}
-          />
-        </div>
-      )}
-
-      {/* Weekly: weekday checkboxes */}
-      {state.mode === "weekly" && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.days")}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {WEEKDAYS.map((d) => (
-              <button
-                key={d}
-                onClick={() => toggleWeekday(d)}
-                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
-                  state.weekdays.includes(d)
-                    ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                    : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border hover:bg-carbon-hover"
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Every N days: number input */}
-      {state.mode === "everyN" && (
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.every")}</label>
-          <input
-            type="number"
-            min={1}
-            value={state.intervalDays}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!isNaN(n) && n >= 1) update({ intervalDays: n });
-            }}
-            className={`${inputCls} w-20`}
-          />
-          <span className="text-xs text-carbon-textMuted">{t("cadence.daysUnit")}</span>
-        </div>
-      )}
-
-      {/* Preview */}
-      {state.mode !== "off" && (
-        <p className="text-xs text-carbon-textMuted">
-          Value:{" "}
-          <span className="font-mono text-carbon-textSub">{buildCadenceString(state)}</span>
-        </p>
       )}
     </div>
   );
@@ -1301,9 +1112,6 @@ export function SettingsPage() {
   const [domSaveState, setDomSaveState] = useState<SaveState>("idle");
   const [domSaveError, setDomSaveError] = useState<string | null>(null);
 
-  const [schedSaveState, setSchedSaveState] = useState<SaveState>("idle");
-  const [schedSaveError, setSchedSaveError] = useState<string | null>(null);
-
   const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
   const [retSaveError, setRetSaveError] = useState<string | null>(null);
 
@@ -1316,9 +1124,6 @@ export function SettingsPage() {
   const [drillsSaveState, setDrillsSaveState] = useState<SaveState>("idle");
   const [drillsSaveError, setDrillsSaveError] = useState<string | null>(null);
 
-  // "Use containers schedule for VMs and Flash too" checkbox
-  const [syncSchedules, setSyncSchedules] = useState(false);
-
   useEffect(() => {
     getSettings()
       .then((res) => {
@@ -1326,16 +1131,6 @@ export function SettingsPage() {
           setSettings(res.settings);
           setSavedSettings(res.settings);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
-          // Detect if schedules are already in sync
-          const s = res.settings;
-          if (
-            s.vmsSchedule === s.containersSchedule &&
-            s.flashSchedule === s.containersSchedule &&
-            s.containersSchedule !== "off" &&
-            s.containersSchedule !== ""
-          ) {
-            setSyncSchedules(true);
-          }
         } else {
           setLoadError("Failed to load settings");
         }
@@ -1444,21 +1239,6 @@ export function SettingsPage() {
     window.location.reload();
   }
 
-  // Build the schedule patch (used by the Schedule save button)
-  function buildSchedulePatch(): Partial<Settings> {
-    const patch: Partial<Settings> = {
-      containersSchedule: settings!.containersSchedule,
-    };
-    if (syncSchedules) {
-      patch.vmsSchedule = settings!.containersSchedule;
-      patch.flashSchedule = settings!.containersSchedule;
-    } else {
-      patch.vmsSchedule = settings!.vmsSchedule;
-      patch.flashSchedule = settings!.flashSchedule;
-    }
-    return patch;
-  }
-
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       {/* Page heading */}
@@ -1517,86 +1297,6 @@ export function SettingsPage() {
               setDomSaveError
             )
           }
-          t={t}
-        />
-      </Card>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Schedule                                                           */}
-      {/* ------------------------------------------------------------------ */}
-      <Card title={t("settings.schedule")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          Configure when automatic backups run per domain.
-        </p>
-
-        {/* Containers schedule */}
-        <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
-          <CadenceBuilder
-            label="Containers"
-            value={settings.containersSchedule}
-            onChange={(v) =>
-              setSettings((prev) =>
-                prev ? { ...prev, containersSchedule: v } : prev
-              )
-            }
-          />
-        </div>
-
-        {/* Sync checkbox */}
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={syncSchedules}
-            onChange={(e) => setSyncSchedules(e.target.checked)}
-            className="h-4 w-4 rounded border-carbon-border bg-carbon-surface2 accent-[#6fdc8c]"
-          />
-          <span className="text-sm text-carbon-text">
-            Use the Containers schedule for VMs and Flash too
-          </span>
-        </label>
-
-        {/* VMs schedule */}
-        <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
-          <CadenceBuilder
-            label="VMs"
-            value={syncSchedules ? settings.containersSchedule : settings.vmsSchedule}
-            disabled={syncSchedules}
-            onChange={(v) =>
-              setSettings((prev) =>
-                prev ? { ...prev, vmsSchedule: v } : prev
-              )
-            }
-          />
-          {!syncSchedules && (
-            <p className="text-xs text-carbon-textMuted mt-2">
-              Backs up every VM with “include in schedule” enabled (set it per VM in the VMs tab).
-            </p>
-          )}
-        </div>
-
-        {/* Flash schedule */}
-        <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
-          <CadenceBuilder
-            label="Flash (later phase)"
-            value={syncSchedules ? settings.containersSchedule : settings.flashSchedule}
-            disabled={syncSchedules}
-            onChange={(v) =>
-              setSettings((prev) =>
-                prev ? { ...prev, flashSchedule: v } : prev
-              )
-            }
-          />
-          {!syncSchedules && (
-            <p className="text-xs text-carbon-textMuted mt-2">
-              Note: Flash backup executor is not yet implemented in Phase 1 — schedule is stored but not executed.
-            </p>
-          )}
-        </div>
-
-        <SaveBar
-          state={schedSaveState}
-          error={schedSaveError}
-          onSave={() => void save(buildSchedulePatch(), setSchedSaveState, setSchedSaveError)}
           t={t}
         />
       </Card>

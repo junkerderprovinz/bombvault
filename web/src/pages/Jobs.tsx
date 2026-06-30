@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getSettings, listContainers } from "../lib/api";
+import { getSettings, putSettings, listContainers } from "../lib/api";
 import type { Settings, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { NavLink } from "react-router-dom";
+import { CadenceBuilder } from "../components/CadenceBuilder";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -79,16 +79,64 @@ function Card({
 }
 
 // ---------------------------------------------------------------------------
-// Domain section — Containers
+// Save bar (mirrors Settings.tsx) — one button persists every domain schedule.
+// ---------------------------------------------------------------------------
+
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+function SaveBar({
+  state,
+  error,
+  onSave,
+  t,
+}: {
+  state: SaveState;
+  error: string | null;
+  onSave: () => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <button
+        onClick={onSave}
+        disabled={state === "saving"}
+        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {state === "saving" ? (
+          <>
+            <span
+              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+            {t("common.saving")}
+          </>
+        ) : (
+          t("settings.save")
+        )}
+      </button>
+      {state === "saved" && (
+        <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>
+      )}
+      {state === "error" && error && (
+        <span className="text-sm text-[#ff8389]">{error}</span>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Domain section — Containers (editable schedule + included-containers list)
 // ---------------------------------------------------------------------------
 
 function ContainersSection({
   settings,
   containers,
+  onChange,
   t,
 }: {
   settings: Settings;
   containers: Container[];
+  onChange: (schedule: string) => void;
   t: ReturnType<typeof useT>["t"];
 }) {
   const schedule = settings.containersSchedule;
@@ -107,6 +155,15 @@ function ContainersSection({
               ? t("jobs.notScheduled")
               : cadenceLabel(schedule, t)
           }
+        />
+      </div>
+
+      {/* Editable cadence builder */}
+      <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
+        <CadenceBuilder
+          label={t("jobs.containersSection")}
+          value={schedule}
+          onChange={onChange}
         />
       </div>
 
@@ -144,17 +201,21 @@ function ContainersSection({
 }
 
 // ---------------------------------------------------------------------------
-// Domain section — VMs
+// Domain section — VMs (editable schedule)
 // ---------------------------------------------------------------------------
 
 function VMsSection({
   settings,
+  syncSchedules,
+  onChange,
   t,
 }: {
   settings: Settings;
+  syncSchedules: boolean;
+  onChange: (schedule: string) => void;
   t: ReturnType<typeof useT>["t"];
 }) {
-  const schedule = settings.vmsSchedule;
+  const schedule = syncSchedules ? settings.containersSchedule : settings.vmsSchedule;
   const status = scheduleStatus(schedule);
 
   return (
@@ -170,23 +231,37 @@ function VMsSection({
           }
         />
       </div>
-      <p className="text-sm text-carbon-textMuted">{t("jobs.noVMs")}</p>
+      <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+        <CadenceBuilder
+          label={t("jobs.vmsSection")}
+          value={schedule}
+          disabled={syncSchedules}
+          onChange={onChange}
+        />
+        {!syncSchedules && (
+          <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.vmIncludeHint")}</p>
+        )}
+      </div>
     </Card>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Domain section — Flash
+// Domain section — Flash (editable schedule)
 // ---------------------------------------------------------------------------
 
 function FlashSection({
   settings,
+  syncSchedules,
+  onChange,
   t,
 }: {
   settings: Settings;
+  syncSchedules: boolean;
+  onChange: (schedule: string) => void;
   t: ReturnType<typeof useT>["t"];
 }) {
-  const schedule = settings.flashSchedule;
+  const schedule = syncSchedules ? settings.containersSchedule : settings.flashSchedule;
   const status = scheduleStatus(schedule);
 
   return (
@@ -201,6 +276,17 @@ function FlashSection({
               : cadenceLabel(schedule, t)
           }
         />
+      </div>
+      <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+        <CadenceBuilder
+          label={t("jobs.flashSection")}
+          value={schedule}
+          disabled={syncSchedules}
+          onChange={onChange}
+        />
+        {!syncSchedules && (
+          <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.flashNotImplemented")}</p>
+        )}
       </div>
       <div className="flex items-center gap-3 py-2 text-sm border-t border-carbon-border">
         <div className="w-2 h-2 rounded-full bg-carbon-surface3 shrink-0" />
@@ -218,16 +304,39 @@ function FlashSection({
 export function Jobs() {
   const { t } = useT();
   const [settings, setSettings] = useState<Settings | null>(null);
+  // savedSettings is the server's last-confirmed state. Saving merges only the
+  // schedule fields onto THIS baseline (not the live, possibly-edited settings),
+  // so saving never silently commits an unrelated change made elsewhere.
+  const [savedSettings, setSavedSettings] = useState<Settings | null>(null);
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // "Use the Containers schedule for VMs and Flash too" checkbox.
+  const [syncSchedules, setSyncSchedules] = useState(false);
+
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     Promise.all([getSettings(), listContainers()])
       .then(([settingsRes, containersRes]) => {
         if (!active) return;
-        if (settingsRes.ok) setSettings(settingsRes.settings);
+        if (settingsRes.ok) {
+          setSettings(settingsRes.settings);
+          setSavedSettings(settingsRes.settings);
+          // Detect if the schedules are already in sync, so the checkbox reflects it.
+          const s = settingsRes.settings;
+          if (
+            s.vmsSchedule === s.containersSchedule &&
+            s.flashSchedule === s.containersSchedule &&
+            s.containersSchedule !== "off" &&
+            s.containersSchedule !== ""
+          ) {
+            setSyncSchedules(true);
+          }
+        }
         if (containersRes.ok) setContainers(containersRes.containers ?? []);
         if (!settingsRes.ok) setError("Failed to load settings");
       })
@@ -242,23 +351,54 @@ export function Jobs() {
     };
   }, []);
 
+  // Build the schedule patch (used by the single Save button).
+  function buildSchedulePatch(): Partial<Settings> {
+    if (!settings) return {};
+    const patch: Partial<Settings> = {
+      containersSchedule: settings.containersSchedule,
+    };
+    if (syncSchedules) {
+      patch.vmsSchedule = settings.containersSchedule;
+      patch.flashSchedule = settings.containersSchedule;
+    } else {
+      patch.vmsSchedule = settings.vmsSchedule;
+      patch.flashSchedule = settings.flashSchedule;
+    }
+    return patch;
+  }
+
+  async function handleSave() {
+    const base = savedSettings ?? settings;
+    if (!base) return;
+    setSaveState("saving");
+    setSaveError(null);
+    const patch = buildSchedulePatch();
+    const updated: Settings = { ...base, ...patch };
+    try {
+      const res = await putSettings(updated);
+      if (res.ok) {
+        setSavedSettings(updated);
+        setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
+        setSaveState("saved");
+        setTimeout(() => setSaveState("idle"), 3000);
+      } else {
+        setSaveError(res.error ?? t("settings.error"));
+        setSaveState("error");
+      }
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t("settings.error"));
+      setSaveState("error");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       {/* Page heading */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("jobs.title")}
-          </h1>
-          <p className="mt-1 text-sm text-carbon-textSub">{t("jobs.subtitle")}</p>
-        </div>
-        {/* Link to Settings */}
-        <NavLink
-          to="/settings"
-          className="text-xs text-carbon-textSub hover:text-carbon-text transition-colors shrink-0 mt-1"
-        >
-          → {t("jobs.configureInSettings")}
-        </NavLink>
+      <div>
+        <h1 className="text-2xl font-semibold text-carbon-text">
+          {t("jobs.title")}
+        </h1>
+        <p className="mt-1 text-sm text-carbon-textSub">{t("jobs.subtitle")}</p>
       </div>
 
       {loading && (
@@ -270,9 +410,45 @@ export function Jobs() {
 
       {!loading && !error && settings && (
         <>
-          <ContainersSection settings={settings} containers={containers} t={t} />
-          <VMsSection settings={settings} t={t} />
-          <FlashSection settings={settings} t={t} />
+          <ContainersSection
+            settings={settings}
+            containers={containers}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, containersSchedule: v } : prev))
+            }
+            t={t}
+          />
+
+          {/* Sync checkbox — applies the Containers schedule to VMs + Flash too. */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={syncSchedules}
+              onChange={(e) => setSyncSchedules(e.target.checked)}
+              className="h-4 w-4 rounded border-carbon-border bg-carbon-surface2 accent-[#6fdc8c]"
+            />
+            <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
+          </label>
+
+          <VMsSection
+            settings={settings}
+            syncSchedules={syncSchedules}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, vmsSchedule: v } : prev))
+            }
+            t={t}
+          />
+          <FlashSection
+            settings={settings}
+            syncSchedules={syncSchedules}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, flashSchedule: v } : prev))
+            }
+            t={t}
+          />
+
+          {/* One Save persists all three domain schedules. */}
+          <SaveBar state={saveState} error={saveError} onSave={() => void handleSave()} t={t} />
         </>
       )}
     </div>

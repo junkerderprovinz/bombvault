@@ -15,12 +15,14 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 func TestServiceEnsureRepoIsIdempotent(t *testing.T) {
@@ -1010,6 +1012,109 @@ func TestServiceSetIncludeInspectFailFallback(t *testing.T) {
 		t.Fatal("include flag must be true")
 	}
 }
+
+// TestServiceSetIncludeAll verifies the one-click action toggles the
+// include_in_schedule flag for EVERY installed container, find-or-creating a
+// target row for any container that has not been backed up yet.
+func TestServiceSetIncludeAll(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: "/host/user"}
+	st := newMemStore(t)
+
+	// Two installed containers, neither with a target row yet. Inspect fails so
+	// the fallback path is exercised (the point is the loop, not appdata resolution).
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			{Name: "plex"},
+			{Name: "sonarr"},
+		},
+		inspectErr: errors.New("no such container"),
+	}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.SetIncludeAll(context.Background(), true); err != nil {
+		t.Fatalf("SetIncludeAll(true): %v", err)
+	}
+	for _, name := range []string{"plex", "sonarr"} {
+		tg, err := st.GetTargetByContainer(name)
+		if err != nil {
+			t.Fatalf("target %q must have been created: %v", name, err)
+		}
+		if !tg.IncludeInSchedule {
+			t.Fatalf("include flag must be true for %q", name)
+		}
+	}
+
+	// Excluding all flips every flag back.
+	if err := svc.SetIncludeAll(context.Background(), false); err != nil {
+		t.Fatalf("SetIncludeAll(false): %v", err)
+	}
+	for _, name := range []string{"plex", "sonarr"} {
+		tg, err := st.GetTargetByContainer(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if tg.IncludeInSchedule {
+			t.Fatalf("include flag must be false for %q", name)
+		}
+	}
+}
+
+// TestServiceSetVMIncludeAll verifies the VM one-click action toggles the flag
+// for every live VM (find-or-creating its target) AND every already-known VM
+// target (orphans with backups but no live domain).
+func TestServiceSetVMIncludeAll(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: "/host/user"}
+	st := newMemStore(t)
+
+	// Pre-seed an orphan VM target (no live domain) so we prove orphans are toggled.
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "old-vm", Method: "graceful"}); err != nil {
+		t.Fatal(err)
+	}
+
+	// virsh reports two live VMs; "old-vm" is NOT among them.
+	v := listVMsVirsh{vms: []virshcli.VMInfo{
+		{Name: "win11", State: "running"},
+		{Name: "ubuntu", State: "shut off"},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+
+	if err := svc.SetVMIncludeAll(context.Background(), true); err != nil {
+		t.Fatalf("SetVMIncludeAll(true): %v", err)
+	}
+	for _, name := range []string{"win11", "ubuntu", "old-vm"} {
+		tg, err := st.GetVMTargetByName(name)
+		if err != nil {
+			t.Fatalf("vm target %q must exist: %v", name, err)
+		}
+		if !tg.IncludeInSchedule {
+			t.Fatalf("include flag must be true for vm %q", name)
+		}
+	}
+
+	if err := svc.SetVMIncludeAll(context.Background(), false); err != nil {
+		t.Fatalf("SetVMIncludeAll(false): %v", err)
+	}
+	for _, name := range []string{"win11", "ubuntu", "old-vm"} {
+		tg, err := st.GetVMTargetByName(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if tg.IncludeInSchedule {
+			t.Fatalf("include flag must be false for vm %q", name)
+		}
+	}
+}
+
+// listVMsVirsh is a fakeVirsh whose List returns a configured set of VMs, for
+// the SetVMIncludeAll test (the base fakeVirsh always returns an empty list).
+type listVMsVirsh struct {
+	fakeVirsh
+	vms []virshcli.VMInfo
+}
+
+func (v listVMsVirsh) List(_ context.Context) ([]virshcli.VMInfo, error) { return v.vms, nil }
 
 func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 	dir := t.TempDir()
