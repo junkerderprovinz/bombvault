@@ -63,7 +63,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 
 - **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), and the whole Unraid flash (`/boot`).
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
-- **Schedules** incremental backups in the background (per domain), so you never have to think about it.
+- **Schedules** incremental backups in the background (per domain) from the **Plans** tab — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
 
 The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#10-credits).
 
