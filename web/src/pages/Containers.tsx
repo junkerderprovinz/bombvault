@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupAll, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, ApiError } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, setIncludeAll, ApiError } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
@@ -705,6 +705,54 @@ function ContainerRow({
   );
 }
 
+// ScheduleIncludeAllControl is the one-click header control: "Include all in
+// schedule" / "Exclude all" for every installed container, refreshing the list
+// so each row's include toggle reflects the new state.
+function ScheduleIncludeAllControl({
+  t,
+  onChanged,
+}: {
+  t: T;
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(include: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await setIncludeAll(include);
+      if (res.ok) onChanged();
+      else setError(res.error ?? t("settings.error"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <button
+        onClick={() => void run(true)}
+        disabled={busy}
+        className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {t("schedule.includeAll")}
+      </button>
+      <button
+        onClick={() => void run(false)}
+        disabled={busy}
+        className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {t("schedule.excludeAll")}
+      </button>
+      {error && <span className="text-xs text-[#ff8389]">{error}</span>}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Containers page
 // ---------------------------------------------------------------------------
@@ -896,6 +944,11 @@ export function Containers() {
           </p>
         </div>
       )}
+      {/* One-click include/exclude every installed container in the schedule. */}
+      {!loading && !error && live.length > 0 && (
+        <ScheduleIncludeAllControl t={t} onChanged={() => void loadContainers()} />
+      )}
+
       {/* Controls: filter (installed / not installed) + sort. */}
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">

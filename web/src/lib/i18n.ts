@@ -410,6 +410,11 @@ const en = {
   "jobs.flashRow": "Unraid flash config",
   "jobs.flashPlanned": "planned",
   "jobs.vmPlanned": "VM backup executor not yet implemented.",
+  "jobs.syncSchedules": "Use the Containers schedule for VMs and Flash too",
+  "jobs.vmIncludeHint": "Backs up every VM with “include in schedule” enabled (set it per VM in the VMs tab).",
+  "jobs.flashNotImplemented": "Note: Flash backup executor is not yet implemented in Phase 1 — schedule is stored but not executed.",
+  "schedule.includeAll": "Include all in schedule",
+  "schedule.excludeAll": "Exclude all",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -874,6 +879,11 @@ const de: Translations = {
   "jobs.flashRow": "Unraid Flash-Konfiguration",
   "jobs.flashPlanned": "geplant",
   "jobs.vmPlanned": "VM-Backup-Executor noch nicht implementiert.",
+  "jobs.syncSchedules": "Container-Zeitplan auch für VMs und Flash verwenden",
+  "jobs.vmIncludeHint": "Sichert jede VM mit aktiviertem „In Zeitplan aufnehmen“ (pro VM im VMs-Tab einstellbar).",
+  "jobs.flashNotImplemented": "Hinweis: Der Flash-Backup-Executor ist in Phase 1 noch nicht implementiert — der Zeitplan wird gespeichert, aber nicht ausgeführt.",
+  "schedule.includeAll": "Alle in den Zeitplan",
+  "schedule.excludeAll": "Alle entfernen",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

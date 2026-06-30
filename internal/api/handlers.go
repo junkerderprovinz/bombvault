@@ -618,6 +618,23 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleScheduleIncludeAll sets the include_in_schedule flag for EVERY installed
+// container in one call — the one-click "include all in schedule" / "exclude all"
+// action. POST /api/containers/schedule-include  body {include: bool}
+func (h *Handler) handleScheduleIncludeAll(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Include bool `json:"include"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.SetIncludeAll(r.Context(), body.Include); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleContainerMounts lists a container's bind mounts (annotated with the
 // current selection) for the backup-folder selector.
 // GET /api/containers/{name}/mounts
@@ -1751,6 +1768,23 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleVMScheduleIncludeAll sets the include_in_schedule flag for EVERY known VM
+// in one call — the VM counterpart to handleScheduleIncludeAll.
+// POST /api/vms/schedule-include  body {include: bool}
+func (h *Handler) handleVMScheduleIncludeAll(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Include bool `json:"include"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.SetVMIncludeAll(r.Context(), body.Include); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }

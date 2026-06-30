@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, listRuns } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, listRuns } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
@@ -694,6 +694,54 @@ function VMForgetButton({
   );
 }
 
+// ScheduleIncludeAllControl is the one-click header control: "Include all in
+// schedule" / "Exclude all" for every known VM, refreshing the list so each
+// row's include toggle reflects the new state.
+function ScheduleIncludeAllControl({
+  t,
+  onChanged,
+}: {
+  t: T;
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(include: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await setVMIncludeAll(include);
+      if (res.ok) onChanged();
+      else setError(res.error ?? t("settings.error"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <button
+        onClick={() => void run(true)}
+        disabled={busy}
+        className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {t("schedule.includeAll")}
+      </button>
+      <button
+        onClick={() => void run(false)}
+        disabled={busy}
+        className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover transition-colors disabled:opacity-50"
+      >
+        {t("schedule.excludeAll")}
+      </button>
+      {error && <span className="text-xs text-[#ff8389]">{error}</span>}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // VMs page
 // ---------------------------------------------------------------------------
@@ -857,6 +905,11 @@ export function VMs() {
         <div className="bg-carbon-surface rounded-card border border-carbon-border p-6 text-center">
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
+      )}
+
+      {/* One-click include/exclude every VM in the schedule. */}
+      {!loading && !error && live.length > 0 && (
+        <ScheduleIncludeAllControl t={t} onChanged={() => void loadVMs()} />
       )}
 
       {/* Sort + select-all controls */}
