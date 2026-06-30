@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { setInclude } from "../lib/api";
 
 interface IncludeToggleProps {
@@ -10,6 +10,11 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-seed when the parent passes a fresh value (e.g. after "Include all in
+  // schedule" reloads the list). Rows are keyed by name and do not remount, so
+  // without this the toggle would keep showing its stale pre-bulk state.
+  useEffect(() => setEnabled(initial), [initial]);
 
   async function handleChange(next: boolean) {
     setBusy(true);

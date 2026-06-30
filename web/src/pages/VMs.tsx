@@ -176,6 +176,11 @@ function VMIncludeToggle({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Re-seed when the parent passes a fresh value (e.g. after "Include all in
+  // schedule" reloads the list). Rows are keyed by name and do not remount, so
+  // without this the toggle would keep showing its stale pre-bulk state.
+  useEffect(() => setEnabled(initial), [initial]);
+
   async function handleChange(next: boolean) {
     setBusy(true);
     setError(null);
@@ -834,21 +839,38 @@ export function VMs() {
 
   // Single VM backups are now ASYNC and share the server's single-backup guard,
   // so firing them in a tight loop would make every call after the first hit
-  // "a backup is already running". Run the bulk serially: start one, then wait
-  // for its recorded run to finish (guard cleared) before starting the next.
+  // "a backup is already running". Run the bulk serially: snapshot this VM's
+  // existing run ids, fire (retrying briefly while the previous VM's guard is
+  // still releasing — the guard clears just after the run goes terminal, not the
+  // instant we observe it), then wait for the NEW run to finish before the next.
+  // Correlate by a new run id, never by the client clock (skew matched the wrong
+  // or last run).
   async function backupOneAndWait(name: string): Promise<{ ok: boolean }> {
-    const since = Math.floor(Date.now() / 1000) - 5;
-    const res = await backupVMNow(name);
-    if (!res.ok) return { ok: false };
-    // Poll the recorded run until this VM's backup reaches a terminal state.
+    const isVMRun = (rr: { kind: string; domain?: string; target?: string }) =>
+      rr.kind === "backup" && rr.domain === "vm" && rr.target === name;
+    let baseline = new Set<string>();
+    try {
+      const before = await listRuns();
+      baseline = new Set((before.runs ?? []).filter(isVMRun).map((rr) => rr.id));
+    } catch {
+      // ignore — fall back to the first terminal run for this VM.
+    }
+    // Fire, retrying only while the guard is still busy from the previous VM.
+    const fireDeadline = Date.now() + 30 * 1000;
+    for (;;) {
+      const res = await backupVMNow(name);
+      if (res.ok) break;
+      const busy = (res.error ?? "").toLowerCase().includes("already running");
+      if (!busy || Date.now() > fireDeadline) return { ok: false };
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    // Poll the recorded run until this VM's NEW backup reaches a terminal state.
     const deadline = Date.now() + 13 * 60 * 60 * 1000; // past the 12h server cap
     for (;;) {
       await new Promise((r) => setTimeout(r, 2000));
       try {
         const runs = await listRuns();
-        const run = runs.runs?.find(
-          (rr) => rr.kind === "backup" && rr.domain === "vm" && rr.target === name && rr.startedAt >= since
-        );
+        const run = runs.runs?.find((rr) => isVMRun(rr) && !baseline.has(rr.id));
         if (run && run.status === "success") return { ok: true };
         if (run && run.status === "failed") return { ok: false };
       } catch {

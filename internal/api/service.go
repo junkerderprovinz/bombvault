@@ -2137,14 +2137,21 @@ func (s *Service) SetInclude(ctx context.Context, name string, include bool) err
 // It iterates the same installed-container source the containers list uses
 // (docker.List) and ensures a target row exists for each (exactly as SetInclude
 // does, find-or-create) so the flag is never silently lost on a container that
-// has not been backed up yet. A single container's inspect/upsert failure aborts
-// the batch with that error rather than leaving a partial, ambiguous result.
+// has not been backed up yet. BombVault's own container is skipped — it can
+// never be backed up (ErrSelfBackup), so scheduling it would only add a failing
+// job and make it show up as a schedule member. A single container's
+// inspect/upsert failure aborts the batch with that error rather than leaving a
+// partial, ambiguous result.
 func (s *Service) SetIncludeAll(ctx context.Context, include bool) error {
 	infos, err := s.docker.List(ctx)
 	if err != nil {
 		return fmt.Errorf("list containers: %w", err)
 	}
+	self := s.selfContainerName(ctx)
 	for _, c := range infos {
+		if self != "" && c.Name == self {
+			continue // never schedule BombVault's own container
+		}
 		if err := s.SetInclude(ctx, c.Name, include); err != nil {
 			return err
 		}

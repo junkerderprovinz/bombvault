@@ -141,7 +141,9 @@ function ContainersSection({
 }) {
   const schedule = settings.containersSchedule;
   const status = scheduleStatus(schedule);
-  const included = containers.filter((c) => c.installed && c.includeInSchedule);
+  // Exclude BombVault's own container: it can never be backed up, so it must
+  // never appear as a schedule member even if a stale flag lingers on its row.
+  const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
 
   return (
     <Card title={t("jobs.containersSection")}>
@@ -350,6 +352,25 @@ export function Jobs() {
       active = false;
     };
   }, []);
+
+  // While "sync" is on, mirror the Containers cadence onto VMs + Flash in live
+  // state too — not just in the save patch. Otherwise unchecking sync would snap
+  // the VM/Flash editors back to their stale pre-sync values instead of the
+  // synced one the user was just looking at. The equality guard stops re-renders
+  // from looping.
+  useEffect(() => {
+    if (!syncSchedules) return;
+    setSettings((prev) => {
+      if (!prev) return prev;
+      if (
+        prev.vmsSchedule === prev.containersSchedule &&
+        prev.flashSchedule === prev.containersSchedule
+      ) {
+        return prev;
+      }
+      return { ...prev, vmsSchedule: prev.containersSchedule, flashSchedule: prev.containersSchedule };
+    });
+  }, [syncSchedules, settings?.containersSchedule]);
 
   // Build the schedule patch (used by the single Save button).
   function buildSchedulePatch(): Partial<Settings> {
