@@ -105,7 +105,7 @@ func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
 // ---------------------------------------------------------------------------
 
 func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "version": Version})
 }
 
 // handleMetrics serves the opt-in Prometheus /metrics endpoint (GET /metrics).

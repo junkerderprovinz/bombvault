@@ -268,7 +268,7 @@ async function fetchJSON<T>(
 // API functions
 // ---------------------------------------------------------------------------
 
-export function getHealth(): Promise<{ ok: boolean }> {
+export function getHealth(): Promise<{ ok: boolean; version?: string }> {
   return fetchJSON("/api/health");
 }
 
