@@ -5,6 +5,7 @@ import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence } from "../components/CadenceBuilder";
+import { relativeTime } from "../lib/reltime";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -13,14 +14,6 @@ import { formatCadence } from "../components/CadenceBuilder";
 function formatTs(unix: number | null | undefined): string {
   if (!unix) return "—";
   return new Date(unix * 1000).toLocaleString();
-}
-
-function relativeTime(unix: number): string {
-  const diff = Math.floor((Date.now() - unix * 1000) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 // humanBytes formats a byte count with a binary (1024) unit and one decimal.
@@ -367,7 +360,7 @@ function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                       className="text-carbon-textMuted text-xs shrink-0 w-20 text-right"
                       title={formatTs(d.lastSuccess)}
                     >
-                      {d.lastSuccess ? relativeTime(d.lastSuccess) : t("containers.never")}
+                      {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
                     </span>
                     {d.lastVerified ? (
                       <span
@@ -378,7 +371,7 @@ function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                             : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
                         }`}
                       >
-                        {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(d.lastVerified)}
+                        {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
                       </span>
                     ) : null}
                   </>
@@ -460,7 +453,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                     {run.target || `${run.targetId.slice(0, 12)}…`}
                   </span>
                   <span className="text-carbon-textMuted text-xs shrink-0" title={formatTs(run.startedAt)}>
-                    {relativeTime(run.startedAt)}
+                    {relativeTime(t, run.startedAt)}
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
@@ -952,13 +945,13 @@ export function Dashboard() {
         <RunsCard t={t} />
       </div>
 
-      {/* Backup health heatmap — full width (advanced) */}
-      {advanced && <HealthHeatmapCard t={t} />}
+      {/* Backup health heatmap — full width */}
+      <HealthHeatmapCard t={t} />
 
-      {/* Storage — repo size + dedup trend per domain — full width (advanced) */}
-      {advanced && <StorageCard t={t} />}
+      {/* Storage — repo size + dedup trend per domain — full width */}
+      <StorageCard t={t} />
 
-      {/* Spike status — full width (advanced) */}
+      {/* Spike (host-integration) status is the only advanced-gated dashboard card. */}
       {advanced && <SpikeCard t={t} />}
     </div>
   );

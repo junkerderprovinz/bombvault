@@ -284,25 +284,35 @@ export function Sidebar({ settings }: SidebarProps) {
         )}
       </nav>
 
-      {/* Bottom group: language, then dark/light, then settings */}
+      {/* Bottom group: language, then dark/light, then advanced, then settings */}
       <div className="flex flex-col gap-1 p-3 border-t border-carbon-border">
         <SidebarControls />
+        {/* Advanced mode — a proper switch, above Settings; reveals expert
+            controls across the app (per-browser preference). */}
+        <button
+          role="switch"
+          aria-checked={advanced}
+          onClick={() => setAdvanced(!advanced)}
+          className="flex items-center justify-between gap-2 px-3.5 py-1.5 rounded-lg text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors select-none"
+        >
+          <span>{t("nav.advanced")}</span>
+          <span
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+              advanced ? "bg-accent" : "bg-carbon-surface3"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
+                advanced ? "translate-x-[18px]" : "translate-x-[3px]"
+              }`}
+            />
+          </span>
+        </button>
         <NavItem
           to="/settings"
           label={t("nav.settings")}
           icon={<IconSettings />}
         />
-        {/* Advanced mode — reveals expert controls across the app (per-browser). */}
-        <label className="flex items-center justify-between gap-2 px-3.5 py-1 text-xs text-carbon-textSub cursor-pointer select-none">
-          <span>{t("nav.advanced")}</span>
-          <input
-            type="checkbox"
-            checked={advanced}
-            onChange={(e) => setAdvanced(e.target.checked)}
-            className="h-4 w-4 cursor-pointer"
-            style={{ accentColor: "var(--accent)" }}
-          />
-        </label>
       </div>
     </aside>
   );

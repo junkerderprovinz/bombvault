@@ -8,6 +8,7 @@ import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
+import { relativeTime } from "../lib/reltime";
 
 // AboutFooter shows the running version (linking to the releases page) and a
 // "Report a bug" link at the very bottom of Settings, so the sidebar stays clean.
@@ -44,16 +45,6 @@ function AboutFooter() {
       </a>
     </div>
   );
-}
-
-// relativeTime renders a unix timestamp as a short "Xm/h/d ago" string (matches
-// the dashboard helper), used for the "last verified" drill line.
-function relativeTime(unix: number): string {
-  const diff = Math.floor((Date.now() - unix * 1000) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 // ---------------------------------------------------------------------------
@@ -915,7 +906,7 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
                   <span className="text-xs text-carbon-textMuted">
                     {drill
-                      ? `${t("verify.last").replace("{time}", relativeTime(drill.at))} ${drill.ok ? "✓" : "✗"}`
+                      ? `${t("verify.last").replace("{time}", relativeTime(t, drill.at))} ${drill.ok ? "✓" : "✗"}`
                       : t("verify.never")}
                   </span>
                 )}
