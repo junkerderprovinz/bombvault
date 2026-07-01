@@ -3,6 +3,7 @@ import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, resto
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
+import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 
@@ -185,8 +186,24 @@ function SnapshotFileBrowser({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dest, setDest] = useState<"inPlace" | "toFolder">("inPlace");
   const [folder, setFolder] = useState(defaultFolder);
-  const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
   const [restoredTarget, setRestoredTarget] = useState("");
+
+  // Fire-and-watch (see useBackupWatch): the server validates + resolves the
+  // target synchronously, acks with {started, target}, and runs the restic work
+  // detached — so a long restore survives this panel (or the whole browser)
+  // going away; the run history is the source of truth for the outcome.
+  const { state: restoreState, fire, reset, isPending } = useBackupWatch({
+    progressKey: `container:${containerName}`,
+    kind: "restore",
+    start: async () => {
+      const paths = [...selected];
+      const targetPath = dest === "toFolder" ? folder.trim() : "";
+      const res = await restoreContainerFiles(containerName, snapshotId, paths, targetPath, true, source);
+      if (res.ok) setRestoredTarget(res.target ?? "");
+      return res;
+    },
+    matchRun: (r) => r.domain === "container" && r.target === containerName,
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -214,43 +231,29 @@ function SnapshotFileBrowser({
       else next.add(p);
       return next;
     });
-    setRestoreState({ phase: "idle" });
+    reset();
   }
 
   // Changing the destination or the target folder also invalidates a prior result
   // banner, so a stale "Restored to …" can't linger over a different, unrun choice.
   function pickDest(d: "inPlace" | "toFolder") {
     setDest(d);
-    setRestoreState({ phase: "idle" });
+    reset();
   }
   function pickFolder(v: string) {
     setFolder(v);
-    setRestoreState({ phase: "idle" });
+    reset();
   }
 
-  async function handleRestoreSelected() {
-    const paths = [...selected];
-    if (paths.length === 0) return;
-    const targetPath = dest === "toFolder" ? folder.trim() : "";
-    if (dest === "toFolder" && !targetPath) return;
+  function handleRestoreSelected() {
+    if (selected.size === 0) return;
+    if (dest === "toFolder" && !folder.trim()) return;
     // In place overwrites the live files, so keep the explicit confirm.
     if (dest === "inPlace" && !window.confirm(t("files.restoreConfirm"))) return;
-    setRestoreState({ phase: "pending" });
-    try {
-      const res = await restoreContainerFiles(containerName, snapshotId, paths, targetPath, true, source);
-      if (res.ok) {
-        setRestoredTarget(res.target ?? "");
-        setRestoreState({ phase: "success" });
-      } else {
-        setRestoreState({ phase: "error", message: res.error ?? "Restore failed" });
-      }
-    } catch (err) {
-      setRestoreState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
+    void fire();
   }
 
   const count = selected.size;
-  const isPending = restoreState.phase === "pending";
 
   return (
     <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
@@ -322,13 +325,19 @@ function SnapshotFileBrowser({
           )}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => void handleRestoreSelected()}
+              onClick={handleRestoreSelected}
               disabled={isPending || (dest === "toFolder" && !folder.trim())}
               className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
           </div>
+          {isPending && (
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
+              <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+            </div>
+          )}
           {restoreState.phase === "success" && (
             <p className="text-xs text-[#6fdc8c] break-words">
               {restoredTarget
@@ -415,27 +424,30 @@ function RestoreToFolder({
   t: T;
 }) {
   const [path, setPath] = useState(defaultFolder);
-  const [state, setState] = useState<RestoreState>({ phase: "idle" });
   const [target, setTarget] = useState("");
 
-  async function handle() {
-    const p = path.trim();
-    if (!p) return;
-    setState({ phase: "pending" });
-    try {
+  // Fire-and-watch (see useBackupWatch): the server validates + resolves the
+  // target synchronously, acks with {started, target}, and runs the (possibly
+  // multi-hour) extraction detached — issue #24: awaiting it held the request
+  // open until the browser/proxy dropped it, killing restic mid-restore. The
+  // run history is the source of truth; closing the panel is safe.
+  const { state, fire, reset, isPending } = useBackupWatch({
+    progressKey: `container:${containerName}`,
+    kind: "restore",
+    start: async () => {
+      const p = path.trim();
       const res = await restoreContainerToPath(containerName, snapshotId, p, source);
-      if (res.ok) {
-        setTarget(res.target ?? p);
-        setState({ phase: "success" });
-      } else {
-        setState({ phase: "error", message: res.error ?? "Restore failed" });
-      }
-    } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
+      if (res.ok) setTarget(res.target ?? p);
+      return res;
+    },
+    matchRun: (r) => r.domain === "container" && r.target === containerName,
+  });
+
+  function pickPath(v: string) {
+    setPath(v);
+    reset(); // a stale "Restored to …" must not linger over a different, unrun choice
   }
 
-  const isPending = state.phase === "pending";
   const done = state.phase === "success";
   return (
     <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-1.5">
@@ -444,17 +456,23 @@ function RestoreToFolder({
         label={t("restore.targetPath")}
         value={path}
         hostMountRoot={hostMountRoot}
-        onChange={setPath}
+        onChange={pickPath}
       />
       <div className="flex items-center gap-2">
         <button
-          onClick={() => void handle()}
+          onClick={() => void fire()}
           disabled={!path.trim() || isPending || done}
           className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPending ? t("common.restoring") : t("restore.confirm")}
         </button>
       </div>
+      {isPending && (
+        <div className="flex flex-col gap-0.5">
+          <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
+          <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+        </div>
+      )}
       {state.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] break-words">
           {t("restore.restoredTo").replace("{path}", target)}
@@ -698,7 +716,16 @@ function SnapshotRow({
   // leaveStopped overrides the captured run-state so an in-place restore recreates
   // the container without starting it (rebuild a stack member by member).
   const [leaveStopped, setLeaveStopped] = useState(false);
-  const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
+  // Fire-and-watch (see useBackupWatch): the restore runs detached on the
+  // server (surviving this connection — and this panel — going away), so we
+  // watch the "container:<name>" progress + the recorded run for the outcome
+  // instead of awaiting the whole restore.
+  const { state: restoreState, fire, isPending } = useBackupWatch({
+    progressKey: `container:${containerName}`,
+    kind: "restore",
+    start: () => restore(containerName, snap.id, true, source, leaveStopped),
+    matchRun: (r) => r.domain === "container" && r.target === containerName,
+  });
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
   // In basic mode only the in-place restore is offered; the mode radios (files /
@@ -723,23 +750,11 @@ function SnapshotRow({
     }
   }
 
-  async function handleRestore() {
+  function handleRestore() {
     if (!confirmed) return;
-    setRestoreState({ phase: "pending" });
-    try {
-      const res = await restore(containerName, snap.id, true, source, leaveStopped);
-      if (res.ok) {
-        setRestoreState({ phase: "success" });
-      } else {
-        setRestoreState({ phase: "error", message: res.error ?? "Restore failed" });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Network error";
-      setRestoreState({ phase: "error", message: msg });
-    }
+    void fire();
   }
 
-  const isPending = restoreState.phase === "pending";
   // Group name so the three radios are mutually exclusive PER snapshot.
   const radioName = `restore-mode-${snap.id}`;
 
@@ -840,7 +855,7 @@ function SnapshotRow({
                   {t("restore.confirm")}
                 </label>
                 <button
-                  onClick={() => void handleRestore()}
+                  onClick={handleRestore}
                   disabled={!confirmed || isPending || restoreState.phase === "success"}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
@@ -869,6 +884,12 @@ function SnapshotRow({
                 />
                 {t("restore.leaveStopped")}
               </label>
+              {isPending && (
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
+                  <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+                </div>
+              )}
               {restoreState.phase === "success" && (
                 <p className="text-xs text-[#6fdc8c]">
                   Restore complete — container is being recreated.

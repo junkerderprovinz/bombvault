@@ -145,8 +145,11 @@ type Service struct {
 	selfName     string
 	selfResolved bool
 
-	// batchActive guards the server-side "back up all" run so only one can be in
-	// flight at a time (a second request gets a 409 instead of overlapping).
+	// batchActive is the shared single-flight guard for every server-side
+	// backup AND restore starter (single, batch, VM, flash, restore-in-place,
+	// restore-files, restore-to-folder): only one can be in flight at a time (a
+	// second request is answered "already running" instead of overlapping —
+	// they contend on repo locks and container stop/start).
 	batchActive atomic.Bool
 }
 
@@ -1348,9 +1351,9 @@ func (s *Service) StartBackupFlash(ctx context.Context) bool {
 	return true
 }
 
-// BackupInProgress reports whether a single backup or a batch is currently
-// running (they share the same single-flight guard). It lets callers — and tests
-// — observe when the detached backup goroutine has fully finished.
+// BackupInProgress reports whether a single backup, a batch, or a restore is
+// currently running (they share the same single-flight guard). It lets callers
+// — and tests — observe when the detached goroutine has fully finished.
 func (s *Service) BackupInProgress() bool { return s.batchActive.Load() }
 
 // publishBatch emits an overall batch-progress event (no-op without a store).
@@ -1595,38 +1598,72 @@ func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
 	return discovered, nil
 }
 
+// containerRestorePlan carries everything prepareRestore validated and resolved
+// so the long-running execution can run detached from the request that asked
+// for it (StartRestore) while the sync Restore path keeps identical behaviour.
+type containerRestorePlan struct {
+	repo         string
+	mode         restic.Mode
+	targetID     string
+	snapshotID   string
+	recreateOnly bool
+	appdataPaths []string // restored per-path back to origin (nil = recreate-only)
+	inspect      model.Inspect
+	templateXML  string
+}
+
 // Restore runs a full container restore. The recreate profile is taken from the
 // persisted definition (stored at backup time) so restore works even after the
 // container has been deleted. For old targets without a stored definition the
 // live inspect is used as a fallback; if that also fails a clear error is
 // returned prompting the user to run one backup first.
 func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm bool, source string, leaveStopped bool) error {
+	plan, err := s.prepareRestore(ctx, name, snapshotID, confirm, source)
+	if err != nil {
+		return err
+	}
+	return s.executeRestore(ctx, name, plan, leaveStopped)
+}
+
+// prepareRestore performs ALL of a container restore's validation and
+// resolution synchronously — confirmation, name/snapshot-id guards, snapshot
+// ownership, path containment and the recreate-recipe lookup — so a bad request
+// fails immediately with a clear error, BEFORE anything long-running (or
+// destructive) starts. The returned plan is everything executeRestore needs.
+func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, confirm bool, source string) (containerRestorePlan, error) {
 	// Guard confirmation before touching the store/docker so an unconfirmed
 	// restore surfaces the sentinel (and never errors on a missing target first).
 	if !confirm {
-		return backup.ErrNotConfirmed
+		return containerRestorePlan{}, backup.ErrNotConfirmed
 	}
 	// Re-validate the name at the service layer (defense-in-depth): the HTTP route
 	// guards it via nameParam, but RestoreStack enumerates names from the store, so
 	// the name-as-template-filename sink must be guarded here too, in case a
 	// stored/imported name ever bypassed the boundary.
 	if !validResourceName(name) {
-		return errors.New("invalid container name")
+		return containerRestorePlan{}, errors.New("invalid container name")
+	}
+	// An explicit snapshot id must be well-formed hex. The orchestrator re-checks
+	// this, but guarding here makes a bad id fail synchronously (fail-fast for the
+	// async StartRestore path). "latest"/"" resolve below.
+	explicitID := snapshotID != "latest" && snapshotID != ""
+	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return containerRestorePlan{}, fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
-		return err
+		return containerRestorePlan{}, err
 	}
 	mode := s.ModeFor(settings)
 
 	tg, err := s.store.GetTargetByContainer(name)
 	if err != nil {
 		log.Printf("api: restore: unknown target %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
-		return errors.New("container has not been backed up yet")
+		return containerRestorePlan{}, errors.New("container has not been backed up yet")
 	}
 
 	// "latest" (or empty) resolves to the container's newest snapshot — used by
@@ -1634,19 +1671,25 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	// so the last tag-matching one is the newest.
 	// A definition-only backup (stateless container with no restic snapshot) has
 	// no snapshot to resolve — recreate it from the stored definition instead.
+	// An explicit id must belong to THIS container (tag-scoped via Snapshots, the
+	// same access-control check the file/to-path restores use).
 	recreateOnly := false
-	if snapshotID == "latest" || snapshotID == "" {
-		snaps, snapErr := s.Snapshots(ctx, name, source)
-		if snapErr != nil {
-			return snapErr
+	snaps, snapErr := s.Snapshots(ctx, name, source)
+	if snapErr != nil {
+		return containerRestorePlan{}, snapErr
+	}
+	if explicitID {
+		if !snapshotBelongs(snaps, snapshotID) {
+			return containerRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
 		}
+	} else {
 		switch {
 		case len(snaps) > 0:
 			snapshotID = snaps[len(snaps)-1].ID
 		case tg.Definition != "":
 			recreateOnly = true
 		default:
-			return errors.New("no backups found for this container")
+			return containerRestorePlan{}, errors.New("no backups found for this container")
 		}
 	}
 
@@ -1658,12 +1701,12 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		appdataForRestore = nil
 	} else {
 		if len(tg.AppdataPaths) == 0 {
-			return errors.New("no backup paths recorded for this container — run a backup once, then restore")
+			return containerRestorePlan{}, errors.New("no backup paths recorded for this container — run a backup once, then restore")
 		}
 		for _, p := range tg.AppdataPaths {
 			if !paths.Within(s.cfg.HostMountRoot, p) {
 				log.Printf("api: restore: appdata path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
-				return errors.New("a stored backup path is outside the host mount — refusing to restore")
+				return containerRestorePlan{}, errors.New("a stored backup path is outside the host mount — refusing to restore")
 			}
 		}
 	}
@@ -1676,7 +1719,7 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	if tg.Definition != "" {
 		var def containerDefinition
 		if jsonErr := json.Unmarshal([]byte(tg.Definition), &def); jsonErr != nil {
-			return fmt.Errorf("restore: unmarshal stored definition: %w", jsonErr)
+			return containerRestorePlan{}, fmt.Errorf("restore: unmarshal stored definition: %w", jsonErr)
 		}
 		in = def.Inspect
 		xml = def.TemplateXML
@@ -1684,34 +1727,85 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		// Fallback: target was backed up before this feature; try live inspect.
 		liveIn, liveErr := s.docker.Inspect(ctx, name)
 		if liveErr != nil {
-			return errors.New("no stored definition for this container — run a backup once after upgrading, then restore is possible even after deletion")
+			return containerRestorePlan{}, errors.New("no stored definition for this container — run a backup once after upgrading, then restore is possible even after deletion")
 		}
 		in = liveIn
 		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
 	}
 
+	return containerRestorePlan{
+		repo:         repo,
+		mode:         mode,
+		targetID:     tg.ID,
+		snapshotID:   snapshotID,
+		recreateOnly: recreateOnly,
+		appdataPaths: appdataForRestore,
+		inspect:      in,
+		templateXML:  xml,
+	}, nil
+}
+
+// executeRestore drives the long-running (destructive) part of a container
+// restore described by an already-validated plan, publishing "container:<name>"
+// progress. The orchestrator records the run (kindRestore) itself.
+func (s *Service) executeRestore(ctx context.Context, name string, plan containerRestorePlan, leaveStopped bool) error {
 	rkey := "container:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
-		Confirmed:         confirm,
-		RecreateOnly:      recreateOnly,
+		Confirmed:         true, // prepareRestore rejected unconfirmed requests
+		RecreateOnly:      plan.recreateOnly,
 		ContainerRef:      name,
 		ContainerName:     name,
-		RepoPath:          repo,
-		SnapshotID:        snapshotID,
-		AppdataPaths:      appdataForRestore, // restored per-path back to origin (nil = recreate-only)
-		TemplateXML:       xml,
+		RepoPath:          plan.repo,
+		SnapshotID:        plan.snapshotID,
+		AppdataPaths:      plan.appdataPaths, // restored per-path back to origin (nil = recreate-only)
+		TemplateXML:       plan.templateXML,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
-		Inspect:           in,
+		Inspect:           plan.inspect,
 		LeaveStopped:      leaveStopped,
-		TargetID:          tg.ID,
+		TargetID:          plan.targetID,
 		Docker:            s.docker,
-		Restic:            &resticAdapter{engine: s.engine, mode: mode},
+		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{s.store},
 	})
 	s.progEnd(rkey, "restore", rerr == nil)
 	return rerr
+}
+
+// StartRestore launches an in-place container restore in a background goroutine
+// and returns immediately, mirroring StartBackup. This is the robust path for
+// long restores: the work runs ON THE SERVER, detached from the request, so a
+// multi-hour restore can't be killed by the browser/proxy dropping the idle
+// HTTP connection (which cancels the request context and aborted restic
+// mid-restore). ALL validation runs synchronously first, so a bad request still
+// fails immediately with a clear error and no goroutine is started.
+//
+// It shares batchActive with the backup starters so a restore can never run
+// concurrently with a backup or another restore (they contend on repo locks and
+// container stop/start). Returns (false, nil) when one is already running.
+func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, leaveStopped bool) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	plan, err := s.prepareRestore(ctx, name, snapshotID, true, source)
+	if err != nil {
+		s.batchActive.Store(false)
+		return false, err
+	}
+	// Detach so the run is independent of the request that started it (canceled
+	// the moment the handler returns), with the same hard cap backups use so a
+	// wedged run can't hold the guard forever.
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		defer cancel()
+		if rerr := s.executeRestore(rctx, name, plan, leaveStopped); rerr != nil {
+			log.Printf("api: restore: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return true, nil
 }
 
 // Snapshots lists the snapshots for a single container. The containers repo is
@@ -1801,20 +1895,47 @@ func (s *Service) ListSnapshotFiles(ctx context.Context, name, snapshotID, sourc
 // never read/write outside the backup mount; and the alternate target is resolved
 // with paths.Resolve and created (EnsureDir) only after containment passes.
 func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (string, error) {
+	plan, err := s.prepareRestoreFiles(ctx, name, source, snapshotID, filePaths, targetSubPath, confirm)
+	if err != nil {
+		return "", err
+	}
+	if err := s.runRestoreFiles(ctx, plan); err != nil {
+		return "", err
+	}
+	return plan.resolved, nil
+}
+
+// filesRestorePlan carries everything prepareRestoreFiles validated and
+// resolved so the restic loop can run detached from the request that asked for
+// it (StartRestoreFiles) while the sync path keeps identical behaviour.
+type filesRestorePlan struct {
+	repo       string
+	mode       restic.Mode
+	snapshotID string
+	paths      []string // cleaned selection, containment-validated for in-place
+	target     string   // restic --target: "/" = in place, else the resolved folder
+	resolved   string   // the resolved alternate folder ("" = in-place)
+}
+
+// prepareRestoreFiles performs ALL of a file-level restore's validation and
+// resolution synchronously (see the SEC notes on RestoreContainerFiles) — so a
+// bad request fails immediately with a clear error — and creates the alternate
+// target folder once containment passes.
+func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (filesRestorePlan, error) {
 	if !confirm {
-		return "", backup.ErrNotConfirmed
+		return filesRestorePlan{}, backup.ErrNotConfirmed
 	}
 	if !validResourceName(name) {
-		return "", errors.New("invalid container name")
+		return filesRestorePlan{}, errors.New("invalid container name")
 	}
 	if source != "local" && source != "offsite" {
-		return "", errors.New("invalid source (must be local or offsite)")
+		return filesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
-		return "", backup.ErrInvalidSnapshotID
+		return filesRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 	if len(filePaths) == 0 {
-		return "", errors.New("no files selected")
+		return filesRestorePlan{}, errors.New("no files selected")
 	}
 
 	// Clean each selected path once, so the path we validate is the path we run.
@@ -1827,10 +1948,10 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 	// (same access-control check as RestoreContainerToPath).
 	snaps, err := s.Snapshots(ctx, name, source)
 	if err != nil {
-		return "", err
+		return filesRestorePlan{}, err
 	}
 	if !snapshotBelongs(snaps, snapshotID) {
-		return "", fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+		return filesRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
 	}
 
 	// Resolve the destination. Empty targetSubPath → in-place (restic target "/",
@@ -1842,10 +1963,10 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
 		t, err := paths.Resolve(s.cfg.HostMountRoot, sub)
 		if err != nil {
-			return "", errors.New("invalid target folder: must be a relative subpath under the host mount")
+			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
 		if err := paths.EnsureDir(t); err != nil {
-			return "", fmt.Errorf("create target folder: %w", err)
+			return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 		target = t
 		resolved = t
@@ -1857,34 +1978,133 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 		// paths.Resolve already contained above.
 		for _, c := range cleaned {
 			if !paths.Within(s.cfg.HostMountRoot, c) {
-				return "", errors.New("restore file: path is outside the backup mount")
+				return filesRestorePlan{}, errors.New("restore file: path is outside the backup mount")
 			}
 		}
 	}
 
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return "", fmt.Errorf("read settings: %w", err)
+		return filesRestorePlan{}, fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
-		return "", err
+		return filesRestorePlan{}, err
 	}
-	mode := s.ModeFor(settings)
+	return filesRestorePlan{
+		repo:       repo,
+		mode:       s.ModeFor(settings),
+		snapshotID: snapshotID,
+		paths:      cleaned,
+		target:     target,
+		resolved:   resolved,
+	}, nil
+}
 
-	// Restore each selected path. This is intentionally not atomic — restic writes
-	// per path — so if one fails mid-batch, the error names how many already went
-	// through and which path stopped it, instead of a bare failure that hides that
-	// earlier paths were already restored.
-	for i, c := range cleaned {
-		if err := s.engine.RestoreInclude(ctx, repo, snapshotID, c, target, mode); err != nil {
-			if len(cleaned) > 1 {
-				return "", fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(cleaned), c, err)
+// runRestoreFiles restores each selected path of an already-validated plan.
+// This is intentionally not atomic — restic writes per path — so if one fails
+// mid-batch, the error names how many already went through and which path
+// stopped it, instead of a bare failure that hides that earlier paths were
+// already restored.
+func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) error {
+	for i, c := range plan.paths {
+		if err := s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, c, plan.target, plan.mode); err != nil {
+			if len(plan.paths) > 1 {
+				return fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(plan.paths), c, err)
 			}
-			return "", err
+			return err
 		}
 	}
-	return resolved, nil
+	return nil
+}
+
+// StartRestoreFiles launches a file-level restore in a background goroutine and
+// returns immediately (see StartRestore for why). ALL validation runs
+// synchronously (a bad request fails right away, no goroutine); the resolved
+// alternate target folder ("" for in-place) is returned in the ack so the UI
+// can show it. The detached run publishes "container:<name>" progress (phase
+// "restore") and records a run (kind "restore") so the outcome — including the
+// real restic error text — lands in the run history.
+//
+// Shares batchActive with backups and the other restores; returns
+// ("", false, nil) when one is already running.
+func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (string, bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return "", false, nil
+	}
+	plan, err := s.prepareRestoreFiles(ctx, name, source, snapshotID, filePaths, targetSubPath, confirm)
+	if err != nil {
+		s.batchActive.Store(false)
+		return "", false, err
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		defer cancel()
+		runID := s.beginRestoreRun(name)
+		rkey := "container:" + name
+		pctx := s.progBegin(rctx, rkey, "restore")
+		rerr := s.runRestoreFiles(pctx, plan)
+		s.progEnd(rkey, "restore", rerr == nil)
+		s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		if rerr != nil {
+			log.Printf("api: restore files: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return plan.resolved, true, nil
+}
+
+// beginRestoreRun best-effort records the start of a service-layer restore run
+// (kind "restore") against the container's target row, so the outcome shows up
+// in the run history like the orchestrated in-place restore does. Returns ""
+// when recording is impossible (no target row / store error) — the restore
+// itself must never be blocked by bookkeeping.
+func (s *Service) beginRestoreRun(name string) string {
+	tg, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		log.Printf("api: restore: no target row for %q — outcome won't appear in the run history: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return ""
+	}
+	runID, err := runsAdapter{s.store}.Start(tg.ID, "restore")
+	if err != nil {
+		log.Printf("api: restore: record run start for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return ""
+	}
+	return runID
+}
+
+// finishRestoreRun closes a run opened by beginRestoreRun with the terminal
+// status + the (truncated) error text. A "" runID (recording was skipped) is a
+// no-op; a finish failure is logged, never surfaced (best-effort bookkeeping).
+func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
+	if runID == "" {
+		return
+	}
+	var err error
+	if rerr != nil {
+		err = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
+	} else {
+		err = runsAdapter{s.store}.Finish(runID, "success", snapshotID, 0, "")
+	}
+	if err != nil {
+		log.Printf("api: restore: record run finish failed: %v", err)
+	}
+}
+
+// truncateRunErr bounds an error message so it fits the runs.error_message
+// column (mirrors the orchestrator's truncateErr; the restic adapter already
+// scrubs secrets/paths from its own errors).
+func truncateRunErr(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+	const max = 500
+	if len(msg) > max {
+		return msg[:max]
+	}
+	return msg
 }
 
 // RestoreContainerToPath extracts a whole container snapshot into an ALTERNATE
@@ -1902,14 +2122,40 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 // rejects absolute/`..` escapes. The directory is created (MkdirAll) only AFTER
 // containment passes.
 func (s *Service) RestoreContainerToPath(ctx context.Context, name, source, snapshotID, targetSubPath string) (string, error) {
+	plan, err := s.prepareRestoreToPath(ctx, name, source, snapshotID, targetSubPath)
+	if err != nil {
+		return "", err
+	}
+	if err := s.runRestoreToPath(ctx, plan); err != nil {
+		return "", err
+	}
+	return plan.target, nil
+}
+
+// toPathRestorePlan carries everything prepareRestoreToPath validated and
+// resolved so the restic extraction can run detached from the request that
+// asked for it (StartRestoreToPath) while the sync path keeps identical
+// behaviour.
+type toPathRestorePlan struct {
+	repo       string
+	mode       restic.Mode
+	snapshotID string
+	target     string // resolved absolute target folder (under the host mount)
+}
+
+// prepareRestoreToPath performs ALL of a to-folder restore's validation and
+// resolution synchronously (see the SEC notes on RestoreContainerToPath) — so a
+// bad request fails immediately with a clear error — and creates the target
+// folder once containment passes.
+func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapshotID, targetSubPath string) (toPathRestorePlan, error) {
 	if !validResourceName(name) {
-		return "", errors.New("invalid container name")
+		return toPathRestorePlan{}, errors.New("invalid container name")
 	}
 	if source != "local" && source != "offsite" {
-		return "", errors.New("invalid source (must be local or offsite)")
+		return toPathRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
-		return "", backup.ErrInvalidSnapshotID
+		return toPathRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 
 	// Resolve the target against the host mount root with the shared containment
@@ -1919,7 +2165,7 @@ func (s *Service) RestoreContainerToPath(ctx context.Context, name, source, snap
 	if err != nil {
 		// paths.Resolve returns ErrTraversal/ErrAbsoluteSub — neither leaks a host
 		// path; keep the message generic (defense-in-depth, mirrors handleBrowse).
-		return "", errors.New("invalid target folder: must be a relative subpath under the host mount")
+		return toPathRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}
 
 	// Scope to the named container: the snapshot must be one of ITS snapshots, so
@@ -1927,40 +2173,77 @@ func (s *Service) RestoreContainerToPath(ctx context.Context, name, source, snap
 	// access-control check as ListSnapshotFiles).
 	snaps, err := s.Snapshots(ctx, name, source)
 	if err != nil {
-		return "", err
+		return toPathRestorePlan{}, err
 	}
-	found := false
-	for _, sn := range snaps {
-		if sn.ID == snapshotID || strings.HasPrefix(sn.ID, snapshotID) {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return "", fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+	if !snapshotBelongs(snaps, snapshotID) {
+		return toPathRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
 	}
 
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return "", fmt.Errorf("read settings: %w", err)
+		return toPathRestorePlan{}, fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
-		return "", err
+		return toPathRestorePlan{}, err
 	}
 
 	// Create the target dir ONLY after containment passed.
 	if err := paths.EnsureDir(target); err != nil {
-		return "", fmt.Errorf("create target folder: %w", err)
+		return toPathRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 	}
+	return toPathRestorePlan{
+		repo:       repo,
+		mode:       s.ModeFor(settings),
+		snapshotID: snapshotID,
+		target:     target,
+	}, nil
+}
 
-	// Restore the WHOLE snapshot tree into the target dir: restic restore
-	// --target <dir> --include / (everything). Reuses the existing restore-to-target
-	// engine method; "/" includes all paths in the snapshot.
-	if err := s.engine.RestoreInclude(ctx, repo, snapshotID, "/", target, s.ModeFor(settings)); err != nil {
-		return "", err
+// runRestoreToPath restores the WHOLE snapshot tree of an already-validated
+// plan into the target dir: restic restore --target <dir> --include /
+// (everything). Reuses the existing restore-to-target engine method; "/"
+// includes all paths in the snapshot.
+func (s *Service) runRestoreToPath(ctx context.Context, plan toPathRestorePlan) error {
+	return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, "/", plan.target, plan.mode)
+}
+
+// StartRestoreToPath launches a whole-snapshot extraction into an alternate
+// folder in a background goroutine and returns immediately (see StartRestore
+// for why — this is THE flow that died on multi-hour restores, issue #24). ALL
+// validation runs synchronously (a bad request fails right away, no goroutine);
+// the resolved target folder is returned in the ack so the UI can show it. The
+// detached run publishes "container:<name>" progress (phase "restore") and
+// records a run (kind "restore") so the outcome — including the real restic
+// error text — lands in the run history.
+//
+// Shares batchActive with backups and the other restores; returns
+// ("", false, nil) when one is already running.
+func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshotID, targetSubPath string) (string, bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return "", false, nil
 	}
-	return target, nil
+	plan, err := s.prepareRestoreToPath(ctx, name, source, snapshotID, targetSubPath)
+	if err != nil {
+		s.batchActive.Store(false)
+		return "", false, err
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		defer cancel()
+		runID := s.beginRestoreRun(name)
+		rkey := "container:" + name
+		pctx := s.progBegin(rctx, rkey, "restore")
+		rerr := s.runRestoreToPath(pctx, plan)
+		s.progEnd(rkey, "restore", rerr == nil)
+		s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		if rerr != nil {
+			log.Printf("api: restore to folder: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return plan.target, true, nil
 }
 
 // DiffSnapshots compares two of a container's snapshots (restic diff) and
@@ -2747,42 +3030,84 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 
 // RestoreVM orchestrates a VM restore from a stored definition.
 func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confirm bool, source string, leaveStopped bool) error {
+	plan, err := s.prepareRestoreVM(ctx, name, snapshotID, confirm, source)
+	if err != nil {
+		return err
+	}
+	return s.executeRestoreVM(ctx, name, plan, leaveStopped)
+}
+
+// vmRestorePlan carries everything prepareRestoreVM validated and resolved so
+// the long-running execution can run detached from the request that asked for
+// it (StartRestoreVM) while the sync RestoreVM path keeps identical behaviour.
+type vmRestorePlan struct {
+	repo         string
+	mode         restic.Mode
+	targetID     string
+	snapshotID   string
+	diskPaths    []string
+	domainXML    string
+	wasAutostart bool
+	// wasRunning is the captured run state (nil = old backup with no recorded
+	// state → boot after restore, the historical behaviour).
+	wasRunning *bool
+	preDefine  func(context.Context) error
+}
+
+// prepareRestoreVM performs ALL of a VM restore's validation and resolution
+// synchronously — confirmation, snapshot-id guard + ownership, definition
+// lookup, disk-path containment and the SSH host-key pin — so a bad request
+// fails immediately with a clear error, BEFORE anything long-running starts.
+func (s *Service) prepareRestoreVM(ctx context.Context, name, snapshotID string, confirm bool, source string) (vmRestorePlan, error) {
 	if !confirm {
-		return backup.ErrNotConfirmed
+		return vmRestorePlan{}, backup.ErrNotConfirmed
+	}
+	// An explicit snapshot id must be well-formed hex. The orchestrator re-checks
+	// this, but guarding here makes a bad id fail synchronously (fail-fast for the
+	// async StartRestoreVM path). "latest"/"" resolve below.
+	explicitID := snapshotID != "latest" && snapshotID != ""
+	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+		return vmRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return vmRestorePlan{}, fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.repoFor(settings, "vms", source)
 	if err != nil {
-		return err
+		return vmRestorePlan{}, err
 	}
 	mode := s.ModeFor(settings)
 
 	tg, err := s.store.GetVMTargetByName(name)
 	if err != nil {
-		return errors.New("vm has not been backed up yet")
+		return vmRestorePlan{}, errors.New("vm has not been backed up yet")
 	}
 
-	// "latest" (or empty) resolves to the VM's newest snapshot.
-	if snapshotID == "latest" || snapshotID == "" {
-		snaps, snapErr := s.SnapshotsVM(ctx, name, source)
-		if snapErr != nil {
-			return snapErr
+	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
+	// must belong to THIS VM (tag-scoped via SnapshotsVM), mirroring the container
+	// restores' access-control check.
+	snaps, snapErr := s.SnapshotsVM(ctx, name, source)
+	if snapErr != nil {
+		return vmRestorePlan{}, snapErr
+	}
+	if explicitID {
+		if !snapshotBelongs(snaps, snapshotID) {
+			return vmRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this vm", snapshotID)
 		}
+	} else {
 		if len(snaps) == 0 {
-			return errors.New("no backups found for this vm")
+			return vmRestorePlan{}, errors.New("no backups found for this vm")
 		}
 		snapshotID = snaps[len(snaps)-1].ID
 	}
 
 	if tg.Definition == "" {
-		return errors.New("no stored definition for this vm — run a backup once first")
+		return vmRestorePlan{}, errors.New("no stored definition for this vm — run a backup once first")
 	}
 	var def vmDefinition
 	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
-		return fmt.Errorf("restore vm: unmarshal definition: %w", err)
+		return vmRestorePlan{}, fmt.Errorf("restore vm: unmarshal definition: %w", err)
 	}
 
 	// Disks must live within the Host Data mount (that is how restic reaches
@@ -2796,7 +3121,7 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		}
 	}
 	if len(diskPaths) == 0 {
-		return errors.New("no restorable disk paths found in this backup")
+		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
 	}
 
 	// Make UEFI domains bootable even if the captured NVRAM is absent: add a
@@ -2822,33 +3147,79 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 	// Pin the host key before the orchestrator's virsh-over-SSH calls.
 	if s.ssh != nil {
 		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
-			return fmt.Errorf("restore vm: ssh: %w", err)
+			return vmRestorePlan{}, fmt.Errorf("restore vm: ssh: %w", err)
 		}
 	}
 
+	return vmRestorePlan{
+		repo:         repo,
+		mode:         mode,
+		targetID:     tg.ID,
+		snapshotID:   snapshotID,
+		diskPaths:    diskPaths,
+		domainXML:    domainXML,
+		wasAutostart: def.WasAutostart,
+		wasRunning:   def.WasRunning,
+		preDefine:    preDefine,
+	}, nil
+}
+
+// executeRestoreVM drives the long-running (destructive) part of a VM restore
+// described by an already-validated plan, publishing "vm:<name>" progress. The
+// orchestrator records the run (kindRestore) itself.
+func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRestorePlan, leaveStopped bool) error {
 	rkey := "vm:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
-		Confirmed:    confirm,
+		Confirmed:    true, // prepareRestoreVM rejected unconfirmed requests
 		Name:         name,
-		SnapshotID:   snapshotID,
-		DiskPaths:    diskPaths,
-		DomainXML:    domainXML,
-		WasAutostart: def.WasAutostart,
+		SnapshotID:   plan.snapshotID,
+		DiskPaths:    plan.diskPaths,
+		DomainXML:    plan.domainXML,
+		WasAutostart: plan.wasAutostart,
 		// Boot after restore iff the VM was running when backed up (nil = old backup
 		// with no recorded state → boot, the historical behaviour) AND the restore
 		// didn't ask to leave it stopped.
-		StartAfter: (def.WasRunning == nil || *def.WasRunning) && !leaveStopped,
-		PreDefine:  preDefine,
-		RepoPath:   repo,
-		TargetID:   tg.ID,
+		StartAfter: (plan.wasRunning == nil || *plan.wasRunning) && !leaveStopped,
+		PreDefine:  plan.preDefine,
+		RepoPath:   plan.repo,
+		TargetID:   plan.targetID,
 		DataDir:    s.cfg.DataDir,
 		VM:         s.virsh,
-		Restic:     &resticAdapter{engine: s.engine, mode: mode},
+		Restic:     &resticAdapter{engine: s.engine, mode: plan.mode},
 		Runs:       runsAdapter{s.store},
 	})
 	s.progEnd(rkey, "restore", rerr == nil)
 	return rerr
+}
+
+// StartRestoreVM launches a VM restore in a background goroutine and returns
+// immediately, mirroring StartRestore for the VM domain (a VM disk restore can
+// run for hours — far past any browser/proxy idle timeout). ALL validation runs
+// synchronously (a bad request fails right away, no goroutine); progress is
+// published under "vm:<name>" and the orchestrator records the run.
+//
+// Shares batchActive with backups and the other restores; returns (false, nil)
+// when one is already running.
+func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source string, leaveStopped bool) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	plan, err := s.prepareRestoreVM(ctx, name, snapshotID, true, source)
+	if err != nil {
+		s.batchActive.Store(false)
+		return false, err
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		defer cancel()
+		if rerr := s.executeRestoreVM(rctx, name, plan, leaveStopped); rerr != nil {
+			log.Printf("api: restore vm: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return true, nil
 }
 
 // VMSSHInfo returns the libvirt SSH host and BombVault's public key for the user

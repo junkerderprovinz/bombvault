@@ -177,6 +177,8 @@ const en = {
   "restore.mode.toFolder": "To a folder",
   "restore.inPlaceHint": "Recreate this container exactly as it was.",
   "restore.leaveStopped": "Leave stopped after restore (don't start it)",
+  "restore.bgHint":
+    "Running in the background — you can close this panel; the outcome appears in the run history.",
 
   // Stacks (compose-project restore)
   "stack.title": "Stacks",
@@ -684,6 +686,8 @@ const de: Translations = {
   "restore.mode.toFolder": "In einen Ordner",
   "restore.inPlaceHint": "Diesen Container exakt wie zuvor neu erstellen.",
   "restore.leaveStopped": "Nach dem Restore gestoppt lassen (nicht starten)",
+  "restore.bgHint":
+    "Läuft im Hintergrund — du kannst dieses Panel schließen; das Ergebnis erscheint im Ausführungsverlauf.",
 
   // Stacks (Compose-Projekt-Wiederherstellung)
   "stack.title": "Stacks",

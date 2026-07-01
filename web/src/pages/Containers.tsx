@@ -5,6 +5,7 @@ import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
+import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { IncludeToggle } from "../components/IncludeToggle";
@@ -1036,9 +1037,19 @@ export function Containers() {
     }
   }
 
+  // Restores are ASYNC and share the server's single-flight guard, so the bulk
+  // loop must fire one restore and WAIT for its recorded run before the next
+  // (firing them in a tight loop would make every call after the first hit
+  // "already running"). fireAndWaitRun handles the fire/retry/wait cycle.
   function restoreSelected() {
     if (!window.confirm(t("containers.restoreSelectedConfirm"))) return;
-    void runBulk((name) => restore(name, "latest", true));
+    void runBulk((name) =>
+      fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "container" && r.target === name,
+        start: () => restore(name, "latest", true),
+      })
+    );
   }
 
   async function handleDiscover() {

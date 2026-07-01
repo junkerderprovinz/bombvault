@@ -1360,6 +1360,188 @@ func TestRestoreContainerFiles(t *testing.T) {
 	}
 }
 
+// restoreTestService builds a service with an initialised containers repo, a
+// plex-tagged snapshot ("aaaa1111") in the fake engine, and a real temp host
+// mount root — the shared setup for the async-restore (Start*) tests. It
+// returns the service, store, engine and the resolved mount root.
+func restoreTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo, string) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Mark the repo initialised so Snapshots reaches the engine.
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	return svc, st, root
+}
+
+// TestStartRestoreSingleFlight pins the shared single-flight guard for the
+// async restore starters: while one restore is in flight, every other restore
+// starter — and a backup, which shares the same guard — must be rejected busy
+// (started=false, no error), so a restore can never overlap a backup or another
+// restore (they contend on repo locks and container stop/start).
+func TestStartRestoreSingleFlight(t *testing.T) {
+	eng := &fakeResticEngine{blockRestore: make(chan struct{})}
+	svc, _, root := restoreTestService(t, eng)
+	ctx := context.Background()
+	fileA := root + "/appdata/plex/a.conf"
+
+	// First restore starts (and blocks inside the engine); the resolved target is
+	// returned in the ack.
+	target, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex")
+	if err != nil || !started {
+		t.Fatalf("first restore should start: started=%v err=%v", started, err)
+	}
+	if want := root + "/user/restore/plex"; target != want {
+		t.Fatalf("ack target = %q, want %q", target, want)
+	}
+
+	// The guard is set synchronously by the starters, so every second call sees a
+	// run in flight regardless of goroutine scheduling.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex2"); err != nil || started {
+		t.Fatalf("second to-folder restore must be rejected busy: started=%v err=%v", started, err)
+	}
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || started {
+		t.Fatalf("a files restore must be rejected busy: started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestore(ctx, "plex", "aaaa1111", "local", false); err != nil || started {
+		t.Fatalf("an in-place restore must be rejected busy: started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestoreVM(ctx, "win11", "aaaa1111", "local", false); err != nil || started {
+		t.Fatalf("a VM restore must be rejected busy: started=%v err=%v", started, err)
+	}
+	if svc.StartBackup(ctx, "plex") {
+		t.Fatal("a backup must be rejected while a restore is in flight (shared guard)")
+	}
+
+	close(eng.blockRestore) // let the restore finish
+	waitForBackupDone(t, svc)
+	if len(eng.restored) != 1 {
+		t.Fatalf("exactly the first restore should have run, got %v", eng.restored)
+	}
+}
+
+// TestStartRestoreValidationFailsFast pins the sync/async split: validation
+// runs SYNCHRONOUSLY in every Start* restore wrapper, so a bad request fails
+// immediately with a clear error, no goroutine is started, and the shared
+// guard is released right away.
+func TestStartRestoreValidationFailsFast(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, _, root := restoreTestService(t, eng)
+	ctx := context.Background()
+	fileA := root + "/appdata/plex/a.conf"
+
+	// Bad snapshot id → synchronous ErrInvalidSnapshotID from every wrapper.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "not-hex!", "user/restore/plex"); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+		t.Fatalf("to-folder: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
+	}
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "not-hex!", []string{fileA}, "user/restore/plex", true); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+		t.Fatalf("files: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestore(ctx, "plex", "not-hex!", "local", false); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+		t.Fatalf("in-place: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestoreVM(ctx, "win11", "not-hex!", "local", false); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+		t.Fatalf("vm: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
+	}
+
+	// A foreign snapshot is refused synchronously too (ownership check).
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "bbbb2222", "user/restore/plex"); err == nil || !strings.Contains(err.Error(), "does not belong") || started {
+		t.Fatalf("foreign snapshot must be refused synchronously, got started=%v err=%v", started, err)
+	}
+
+	// The guard must have been released by every failed validation (no goroutine
+	// holds it), so a valid start is not wrongly answered "busy"...
+	if svc.BackupInProgress() {
+		t.Fatal("failed validation must release the single-flight guard")
+	}
+	// ...and no restore ever reached the engine.
+	if len(eng.restored) != 0 {
+		t.Fatalf("no restore must have run for rejected requests, got %v", eng.restored)
+	}
+}
+
+// TestStartRestoreFilesRecordsRun pins the run-history bookkeeping of the async
+// file-level restore: the detached run records a kind "restore" run against the
+// container's target row — failed WITH the real restic error text, success WITH
+// the snapshot id — so the outcome survives the browser going away.
+func TestStartRestoreFilesRecordsRun(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st, root := restoreTestService(t, eng)
+	ctx := context.Background()
+	fileA := root + "/appdata/plex/a.conf"
+
+	// The run is recorded against the container's target row.
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{fileA}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Failure: the engine rejects the path — the run must be failed and carry the
+	// real restic error text.
+	eng.restoreErrPath = fileA
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	waitForBackupDone(t, svc)
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 {
+		t.Fatalf("want 1 recorded run, got %d", len(runs))
+	}
+	failed := runs[0]
+	if failed.TargetID != tg.ID || failed.Kind != "restore" || failed.Status != "failed" {
+		t.Fatalf("want a failed kind=restore run for the target, got %+v", failed)
+	}
+	if !strings.Contains(failed.Error, "restore boom") {
+		t.Fatalf("the run must carry the real restic error text, got %q", failed.Error)
+	}
+
+	// Success: the run must be success and carry the snapshot id.
+	eng.restoreErrPath = ""
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || !started {
+		t.Fatalf("second restore should start: started=%v err=%v", started, err)
+	}
+	waitForBackupDone(t, svc)
+	runs, err = st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 2 {
+		t.Fatalf("want 2 recorded runs, got %d", len(runs))
+	}
+	// Both runs started within the same second, so the list order can tie —
+	// find the success run by content instead of position.
+	found := false
+	for _, run := range runs {
+		if run.Status != "success" {
+			continue
+		}
+		found = true
+		if run.Kind != "restore" || run.SnapshotID != "aaaa1111" || run.Error != "" {
+			t.Fatalf("want a success kind=restore run with the snapshot id, got %+v", run)
+		}
+	}
+	if !found {
+		t.Fatalf("want a success run recorded, got %+v", runs)
+	}
+}
+
 // diffTagTestService builds a service with an initialised containers repo and the
 // given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
 func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
@@ -1625,7 +1807,11 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
-	s.ContainersPath = "backups/containers"
+	// A remote-style repo location: Restore now verifies the explicit snapshot id
+	// belongs to the container BEFORE anything runs, and that listing reaches the
+	// fake engine directly for a remote repo (a local one would need an on-disk
+	// marker, which can't live under the fixed Linux root above).
+	s.ContainersPath = "rest:http://127.0.0.1/containers"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -1660,8 +1846,10 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 		inspectErr: errors.New("No such container: Pingvin-Share-X"),
 		liveName:   "", // absent
 	}
-	// The snapshot must exist for the restore preflight (VerifySnapshot) to pass.
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "deadbeef"}}}
+	// The snapshot must exist for the restore preflight (VerifySnapshot) to pass,
+	// and carry the ownership tag every backup writes, since Restore now verifies
+	// an explicit snapshot id belongs to the container BEFORE anything runs.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "deadbeef", Tags: []string{"container:Pingvin-Share-X"}}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
@@ -1811,6 +1999,10 @@ type fakeResticEngine struct {
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
+	// blockRestore, when non-nil, makes RestoreInclude wait on it — lets a test
+	// hold an async restore "in flight" to exercise the shared single-flight
+	// guard deterministically.
+	blockRestore chan struct{}
 	// existingMode, when non-nil, simulates an already-created repo of that
 	// encryption mode: RepoOpens then returns true only for a probe whose mode
 	// matches. When nil, RepoOpens mirrors a local repo and "opens" once restic's
@@ -1889,6 +2081,9 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 }
 
 func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+	if f.blockRestore != nil {
+		<-f.blockRestore
+	}
 	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
 		return errors.New("restore boom")
 	}
