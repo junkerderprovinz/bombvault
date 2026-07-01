@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listContainers, deleteBackups, backupAll, restore, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, setIncludeAll, ApiError } from "../lib/api";
-import type { Container, MountInfo } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, setIncludeAll, ApiError } from "../lib/api";
+import type { Container, MountInfo, StackMemberResult } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
@@ -754,6 +754,152 @@ function ScheduleIncludeAllControl({
 }
 
 // ---------------------------------------------------------------------------
+// Stacks panel (compose-project restore)
+// ---------------------------------------------------------------------------
+
+interface StackGroup {
+  project: string;
+  members: Container[];
+}
+
+// groupStacks buckets INSTALLED containers by their non-empty compose project and
+// keeps only groups with 2+ members (a lone container isn't a "stack" worth its
+// own card). Groups + members are sorted by name for a stable render.
+function groupStacks(containers: Container[]): StackGroup[] {
+  const byProject = new Map<string, Container[]>();
+  for (const c of containers) {
+    if (!c.installed || !c.stack) continue;
+    const arr = byProject.get(c.stack) ?? [];
+    arr.push(c);
+    byProject.set(c.stack, arr);
+  }
+  const groups: StackGroup[] = [];
+  for (const [project, members] of byProject) {
+    if (members.length < 2) continue;
+    members.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    groups.push({ project, members });
+  }
+  groups.sort((a, b) => a.project.localeCompare(b.project, undefined, { sensitivity: "base" }));
+  return groups;
+}
+
+// StackCard is one compose stack: its name, members, and a "Restore stack…"
+// action that restores every member stopped, then (optionally) starts them in
+// dependency order. Results are shown per member afterwards.
+function StackCard({ group, t }: { group: StackGroup; t: T }) {
+  const [open, setOpen] = useState(false);
+  const [startInOrder, setStartInOrder] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<StackMemberResult[] | null>(null);
+
+  async function run() {
+    if (!window.confirm(t("stack.restoreConfirm"))) return;
+    setBusy(true);
+    setError(null);
+    setResults(null);
+    try {
+      const res = await restoreStack(group.project, startInOrder, true);
+      if (res.ok) {
+        setResults(res.members ?? []);
+      } else {
+        setError(res.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-2">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <span className="font-semibold text-carbon-text text-sm">{group.project}</span>
+          <span className="ml-2 text-xs text-carbon-textMuted">
+            {t("stack.members").replace("{n}", String(group.members.length))}
+          </span>
+          <p className="mt-0.5 text-[11px] text-carbon-textMuted truncate">
+            {group.members.map((m) => m.name).join(", ")}
+          </p>
+        </div>
+        <button
+          onClick={() => setOpen((p) => !p)}
+          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+        >
+          {t("stack.restore")}
+        </button>
+      </div>
+
+      {open && (
+        <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+          <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
+          <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
+            <input
+              type="checkbox"
+              checked={startInOrder}
+              onChange={(e) => setStartInOrder(e.target.checked)}
+              className="h-4 w-4 cursor-pointer"
+              style={{ accentColor: "var(--accent)" }}
+            />
+            {t("stack.startInOrder")}
+          </label>
+          <div className="flex items-center gap-3 pt-0.5">
+            <button
+              onClick={() => void run()}
+              disabled={busy}
+              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {busy ? t("stack.restoring") : t("stack.restore")}
+            </button>
+            {results && !busy && (
+              <span className="text-xs text-accent">{t("stack.restored")}</span>
+            )}
+            {error && <span className="text-xs text-[#ff8389] break-words">{error}</span>}
+          </div>
+
+          {results && results.length > 0 && (
+            <ul className="mt-1 flex flex-col gap-1">
+              {results.map((m) => (
+                <li key={m.name} className="flex items-center gap-2 text-[11px]">
+                  <span className="font-mono text-carbon-textSub">{m.name}</span>
+                  {m.error ? (
+                    <span className="text-[#ff8389] break-words">{m.error}</span>
+                  ) : (
+                    <span className="text-accent">
+                      {m.restored ? t("stack.memberRestored") : "—"}
+                      {m.started ? " + " + t("stack.memberStarted") : ""}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// StacksPanel renders one card per detected compose stack, above the container
+// list. It renders nothing when no multi-member stack is present.
+function StacksPanel({ containers, t }: { containers: Container[]; t: T }) {
+  const stacks = groupStacks(containers);
+  if (stacks.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-3">
+      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
+        {t("stack.title")}
+      </h2>
+      {stacks.map((g) => (
+        <StackCard key={g.project} group={g} t={t} />
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Containers page
 // ---------------------------------------------------------------------------
 
@@ -1006,6 +1152,9 @@ export function Containers() {
           {bulkBusy ? t("containers.working") : bulkMsg}
         </p>
       )}
+
+      {/* Stacks panel — one card per detected compose stack, above the list. */}
+      {!loading && !error && <StacksPanel containers={containers} t={t} />}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3">

@@ -128,6 +128,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
 - **File-level restore** — expand a container snapshot's **Files**, filter, **tick any number of files and folders**, then restore the whole selection **in place** (original locations) or **into a folder** you pick.
 - **Restore keeps the run-state** — a container (or VM) that was running when backed up comes back running; one that was stopped stays stopped. Tick **Leave stopped after restore** to recreate it without starting it, so you can rebuild a group of dependent containers one by one and start them yourself afterwards.
+- **Restore a whole stack** — containers from the same Docker Compose project (via the `com.docker.compose.project` label) are grouped into a **Stacks** panel. **Restore stack** rebuilds every member from its latest backup **left stopped**, then optionally **starts them in `depends_on` order** — so a compose stack (e.g. managed with Dockhand) comes back without members racing ahead of their dependencies.
 
 ### Storage & scheduling
 
