@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 
 // ---------------------------------------------------------------------------
@@ -915,6 +916,7 @@ function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
 export function Dashboard() {
   const { t } = useT();
+  const { advanced } = useAdvanced();
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -948,14 +950,14 @@ export function Dashboard() {
         <RunsCard t={t} />
       </div>
 
-      {/* Backup health heatmap — full width */}
-      <HealthHeatmapCard t={t} />
+      {/* Backup health heatmap — full width (advanced) */}
+      {advanced && <HealthHeatmapCard t={t} />}
 
-      {/* Storage — repo size + dedup trend per domain — full width */}
-      <StorageCard t={t} />
+      {/* Storage — repo size + dedup trend per domain — full width (advanced) */}
+      {advanced && <StorageCard t={t} />}
 
-      {/* Spike status — full width */}
-      <SpikeCard t={t} />
+      {/* Spike status — full width (advanced) */}
+      {advanced && <SpikeCard t={t} />}
     </div>
   );
 }

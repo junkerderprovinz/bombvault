@@ -14,6 +14,7 @@ const ko: Partial<Translations> = {
   "nav.flash": "플래시",
   "nav.settings": "설정",
   "nav.reportBug": "버그 신고",
+  "nav.advanced": "고급",
   "nav.comingSoon": "출시 예정",
 
   // Dashboard

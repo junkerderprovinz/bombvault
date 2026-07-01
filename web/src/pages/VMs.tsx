@@ -4,6 +4,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
+import { useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
@@ -279,6 +280,7 @@ function VMBackupButton({
   // Fire-and-watch (see useBackupWatch): the server backs the VM up detached and
   // answers immediately, so we watch the "vm:<name>" progress + recorded run for
   // the outcome instead of awaiting the whole backup.
+  const { advanced } = useAdvanced();
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `vm:${name}`,
     start: () => backupVMNow(name),
@@ -305,7 +307,8 @@ function VMBackupButton({
           t("containers.backupNow")
         )}
       </button>
-      <VMExportButton name={name} t={t} />
+      {/* Plain export is an advanced-only extra. */}
+      {advanced && <VMExportButton name={name} t={t} />}
       {state.phase === "success" && (
         <span className="text-xs text-[#6fdc8c]">
           ✓ {t("common.done")}
@@ -467,6 +470,7 @@ function VMSnapshotRow({
 }
 
 function VMRestorePanel({ name, t }: { name: string; t: T }) {
+  const { advanced } = useAdvanced();
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -532,8 +536,13 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-              <SourceToggle source={source} onChange={setSource} disabled={loading} />
+              {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
+              {advanced && (
+                <>
+                  <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+                  <SourceToggle source={source} onChange={setSource} disabled={loading} />
+                </>
+              )}
               {snapshots.length > 0 && (
                 <button
                   onClick={handleDeleteAll}
@@ -589,6 +598,7 @@ function VMRow({
   selected?: boolean;
   onToggleSelect?: () => void;
 }) {
+  const { advanced } = useAdvanced();
   const installed = vm.state !== "not-installed";
   const progress = useProgress()[`vm:${vm.name}`];
   return (
@@ -641,10 +651,13 @@ function VMRow({
                 {t("containers.includeInSchedule")}
               </span>
             </label>
-            <label className="flex items-center gap-2">
-              <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
-              <VMMethodSelect name={vm.name} initial={vm.method} t={t} />
-            </label>
+            {/* Backup method (graceful / live) selector is advanced-only. */}
+            {advanced && (
+              <label className="flex items-center gap-2">
+                <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
+                <VMMethodSelect name={vm.name} initial={vm.method} t={t} />
+              </label>
+            )}
           </div>
           <div className="ml-auto flex flex-col items-end">
             <VMBackupButton name={vm.name} t={t} onBackedUp={onRefresh} />
@@ -768,6 +781,7 @@ function ScheduleIncludeAllControl({
 
 export function VMs() {
   const { t } = useT();
+  const { advanced } = useAdvanced();
   const [vms, setVMs] = useState<VM[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -981,13 +995,16 @@ export function VMs() {
           >
             {t("vms.backupSelected")}
           </button>
-          <button
-            onClick={restoreSelected}
-            disabled={bulkBusy}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {t("vms.restoreSelected")}
-          </button>
+          {/* Bulk restore is advanced-only; bulk backup stays basic. */}
+          {advanced && (
+            <button
+              onClick={restoreSelected}
+              disabled={bulkBusy}
+              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {t("vms.restoreSelected")}
+            </button>
+          )}
           <button
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}

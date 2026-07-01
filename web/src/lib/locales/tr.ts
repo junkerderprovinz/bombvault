@@ -14,6 +14,7 @@ const tr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Ayarlar",
   "nav.reportBug": "Hata bildir",
+  "nav.advanced": "Gelişmiş",
   "nav.comingSoon": "Yakında",
 
   // Dashboard

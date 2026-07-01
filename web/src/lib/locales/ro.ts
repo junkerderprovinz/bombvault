@@ -14,6 +14,7 @@ const ro: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Setări",
   "nav.reportBug": "Raportează o eroare",
+  "nav.advanced": "Avansat",
   "nav.comingSoon": "În curând",
 
   // Dashboard

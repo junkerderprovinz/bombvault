@@ -14,6 +14,7 @@ const th: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "การตั้งค่า",
   "nav.reportBug": "รายงานข้อบกพร่อง",
+  "nav.advanced": "ขั้นสูง",
   "nav.comingSoon": "เร็วๆ นี้",
 
   // Dashboard

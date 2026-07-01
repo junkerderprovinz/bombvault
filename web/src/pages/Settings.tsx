@@ -5,6 +5,7 @@ import { CadenceBuilder } from "../components/CadenceBuilder";
 import { FolderBrowser } from "../components/FolderBrowser";
 import type { Settings, NotifyConfig, RestoreDrill } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
 
@@ -900,6 +901,7 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
 export function SettingsPage() {
   const { t } = useT();
+  const { advanced } = useAdvanced();
 
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedSettings is the server's last-confirmed state. Each card's Save persists
@@ -1188,6 +1190,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Off-site copy (restic copy replication)                            */}
       {/* ------------------------------------------------------------------ */}
+      {advanced && (
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
         {([
@@ -1240,10 +1243,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Retention                                                            */}
       {/* ------------------------------------------------------------------ */}
+      {advanced && (
       <Card title={t("settings.retentionTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           {t("settings.retentionHint")}
@@ -1318,10 +1323,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Off-site bandwidth                                                  */}
       {/* ------------------------------------------------------------------ */}
+      {advanced && (
       <Card title={t("settings.offsiteLimits")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           {t("settings.limitHint")}
@@ -1362,10 +1369,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Monitoring (Prometheus)                                            */}
       {/* ------------------------------------------------------------------ */}
+      {advanced && (
       <Card title={t("settings.metrics")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
         <ToggleRow
@@ -1406,6 +1415,7 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Encryption                                                         */}
@@ -1459,30 +1469,35 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* VM Backup over SSH                                                 */}
       {/* ------------------------------------------------------------------ */}
-      <VMSSHCard t={t} />
+      {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you
+          need to make VM backups work is never hidden behind Advanced. */}
+      {(advanced || settings.vmsEnabled) && <VMSSHCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* Off-site (rclone)                                                    */}
       {/* ------------------------------------------------------------------ */}
-      <RcloneCard t={t} />
+      {advanced && <RcloneCard t={t} />}
 
-      <CloudCard t={t} />
+      {advanced && <CloudCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* Notifications                                                       */}
       {/* ------------------------------------------------------------------ */}
-      <NotifyCard t={t} />
+      {advanced && <NotifyCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* Spike                                                              */}
       {/* ------------------------------------------------------------------ */}
-      <Card title={t("spike.title")}>
-        <SpikePanel t={t} />
-      </Card>
+      {advanced && (
+        <Card title={t("spike.title")}>
+          <SpikePanel t={t} />
+        </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Automatic restore checks (scheduled restore-verification drills)    */}
       {/* ------------------------------------------------------------------ */}
+      {advanced && (
       <Card title={t("verify.auto")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
         <ToggleRow
@@ -1534,11 +1549,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Integrity (restic check)                                            */}
       {/* ------------------------------------------------------------------ */}
-      <IntegrityCard t={t} />
+      {advanced && <IntegrityCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* Security                                                           */}

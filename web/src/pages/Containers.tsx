@@ -3,6 +3,7 @@ import { listContainers, deleteBackups, backupAll, restore, restoreStack, discov
 import type { Container, MountInfo, StackMemberResult } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
+import { useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
@@ -600,6 +601,7 @@ function ContainerRow({
   selected?: boolean;
   onToggleSelect?: () => void;
 }) {
+  const { advanced } = useAdvanced();
   const installed = container.installed;
   const progress = useProgress()[`container:${container.name}`];
   return (
@@ -670,7 +672,8 @@ function ContainerRow({
               ) : (
                 <>
                   <BackupButton name={container.name} t={t} onBackedUp={onDeleted} />
-                  <ExportButton name={container.name} t={t} />
+                  {/* Plain tar+xml export is an advanced-only extra. */}
+                  {advanced && <ExportButton name={container.name} t={t} />}
                 </>
               )}
             </div>
@@ -681,8 +684,9 @@ function ContainerRow({
         )}
       </div>
 
-      {/* Backup-folder selection + stop-other-containers + pre/post hooks (installed only) */}
-      {installed && (
+      {/* Backup-folder selection + stop-other-containers + pre/post hooks
+          (installed only). These expert editors are advanced-only. */}
+      {installed && advanced && (
         <>
           <FoldersEditor name={container.name} t={t} />
           <StopContainersEditor name={container.name} initial={container.stopContainers ?? []} t={t} />
@@ -925,6 +929,7 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
 
 export function Containers() {
   const { t } = useT();
+  const { advanced } = useAdvanced();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1148,13 +1153,16 @@ export function Containers() {
           >
             {t("containers.backupSelected")}
           </button>
-          <button
-            onClick={restoreSelected}
-            disabled={bulkBusy}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {t("containers.restoreSelected")}
-          </button>
+          {/* Bulk restore is advanced-only; bulk backup stays basic. */}
+          {advanced && (
+            <button
+              onClick={restoreSelected}
+              disabled={bulkBusy}
+              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {t("containers.restoreSelected")}
+            </button>
+          )}
           <button
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}

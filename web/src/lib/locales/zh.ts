@@ -14,6 +14,7 @@ const zh: Partial<Translations> = {
   "nav.flash": "闪存",
   "nav.settings": "设置",
   "nav.reportBug": "报告错误",
+  "nav.advanced": "高级",
   "nav.comingSoon": "即将推出",
 
   // Dashboard

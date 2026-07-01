@@ -14,6 +14,7 @@ const he: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "הגדרות",
   "nav.reportBug": "דיווח על באג",
+  "nav.advanced": "מתקדם",
   "nav.comingSoon": "בקרוב",
 
   // Dashboard
