@@ -496,6 +496,7 @@ const nl: Partial<Translations> = {
   "restore.mode.toFolder": "Naar een map",
   "restore.inPlaceHint": "Deze container exact herstellen zoals hij was.",
   "restore.leaveStopped": "Na herstel gestopt laten (niet starten)",
+  "restore.bgHint": "Draait op de achtergrond — je kunt dit paneel sluiten; het resultaat verschijnt in de uitvoeringsgeschiedenis.",
   "stack.title": "Stacks",
   "stack.restore": "Stack herstellen…",
   "stack.members": "{n} containers",

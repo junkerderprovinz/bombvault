@@ -494,6 +494,7 @@ const uk: Partial<Translations> = {
   "restore.mode.toFolder": "До папки",
   "restore.inPlaceHint": "Відтворити цей контейнер точно таким, яким він був.",
   "restore.leaveStopped": "Залишити зупиненим після відновлення (не запускати)",
+  "restore.bgHint": "Виконується у фоновому режимі — цю панель можна закрити; результат з'явиться в історії запусків.",
   "stack.title": "Стеки",
   "stack.restore": "Відновити стек…",
   "stack.members": "{n} контейнерів",

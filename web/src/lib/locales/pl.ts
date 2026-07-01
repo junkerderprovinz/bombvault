@@ -494,6 +494,7 @@ const pl: Partial<Translations> = {
   "restore.mode.toFolder": "Do folderu",
   "restore.inPlaceHint": "Odtwórz ten kontener dokładnie tak, jak był.",
   "restore.leaveStopped": "Pozostaw zatrzymane po przywróceniu (nie uruchamiaj)",
+  "restore.bgHint": "Działa w tle — możesz zamknąć ten panel; wynik pojawi się w historii uruchomień.",
   "stack.title": "Stacki",
   "stack.restore": "Przywróć stack…",
   "stack.members": "{n} kontenerów",

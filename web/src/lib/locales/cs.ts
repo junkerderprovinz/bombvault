@@ -497,6 +497,7 @@ const cs: Partial<Translations> = {
   "restore.mode.toFolder": "Do složky",
   "restore.inPlaceHint": "Znovu vytvořit tento kontejner přesně tak, jak byl.",
   "restore.leaveStopped": "Po obnovení nechat zastavené (nespouštět)",
+  "restore.bgHint": "Běží na pozadí — tento panel můžete zavřít; výsledek se objeví v historii běhů.",
   "stack.title": "Stacky",
   "stack.restore": "Obnovit stack…",
   "stack.members": "{n} kontejnerů",

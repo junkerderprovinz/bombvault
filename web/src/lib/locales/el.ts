@@ -499,6 +499,7 @@ const el: Partial<Translations> = {
   "restore.mode.toFolder": "Σε φάκελο",
   "restore.inPlaceHint": "Αναδημιουργήστε αυτό το container ακριβώς όπως ήταν.",
   "restore.leaveStopped": "Άφησέ το σταματημένο μετά την επαναφορά (μην το ξεκινήσεις)",
+  "restore.bgHint": "Εκτελείται στο παρασκήνιο — μπορείτε να κλείσετε αυτόν τον πίνακα. Το αποτέλεσμα θα εμφανιστεί στο ιστορικό εκτελέσεων.",
   "stack.title": "Stacks",
   "stack.restore": "Επαναφορά stack…",
   "stack.members": "{n} containers",

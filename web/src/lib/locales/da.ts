@@ -499,6 +499,7 @@ const da: Partial<Translations> = {
   "restore.mode.toFolder": "Til en mappe",
   "restore.inPlaceHint": "Genskab denne container præcis som den var.",
   "restore.leaveStopped": "Lad den være stoppet efter gendannelse (start den ikke)",
+  "restore.bgHint": "Kører i baggrunden — du kan lukke dette panel; resultatet vises i kørselsoversigten.",
   "stack.title": "Stakke",
   "stack.restore": "Gendan stack…",
   "stack.members": "{n} containere",

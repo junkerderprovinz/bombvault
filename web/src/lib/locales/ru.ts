@@ -494,6 +494,7 @@ const ru: Partial<Translations> = {
   "restore.mode.toFolder": "В папку",
   "restore.inPlaceHint": "Пересоздать этот контейнер точно таким, каким он был.",
   "restore.leaveStopped": "Оставить остановленным после восстановления (не запускать)",
+  "restore.bgHint": "Выполняется в фоновом режиме — эту панель можно закрыть; результат появится в истории запусков.",
   "stack.title": "Стеки",
   "stack.restore": "Восстановить стек…",
   "stack.members": "{n} контейнеров",

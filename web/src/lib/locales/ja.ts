@@ -491,6 +491,7 @@ const ja: Partial<Translations> = {
   "restore.mode.toFolder": "フォルダーに",
   "restore.inPlaceHint": "このコンテナを以前とまったく同じに再作成します。",
   "restore.leaveStopped": "復元後に停止したままにする（起動しない）",
+  "restore.bgHint": "バックグラウンドで実行中です。このパネルを閉じても大丈夫です。結果は実行履歴に表示されます。",
   "stack.title": "スタック",
   "stack.restore": "スタックを復元…",
   "stack.members": "コンテナ {n} 個",

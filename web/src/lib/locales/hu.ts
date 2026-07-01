@@ -502,6 +502,7 @@ const hu: Partial<Translations> = {
   "restore.mode.toFolder": "Egy mappába",
   "restore.inPlaceHint": "Hozza létre újra ezt a konténert pontosan úgy, ahogy volt.",
   "restore.leaveStopped": "Visszaállítás után hagyja leállítva (ne indítsa el)",
+  "restore.bgHint": "A háttérben fut — bezárhatod ezt a panelt; az eredmény megjelenik a futási előzményekben.",
   "stack.title": "Stackek",
   "stack.restore": "Stack visszaállítása…",
   "stack.members": "{n} konténer",
