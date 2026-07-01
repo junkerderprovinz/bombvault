@@ -451,13 +451,14 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID string `json:"snapshotId"`
-		Confirm    bool   `json:"confirm"`
+		SnapshotID   string `json:"snapshotId"`
+		Confirm      bool   `json:"confirm"`
+		LeaveStopped bool   `json:"leaveStopped"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.Restore(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r)); err != nil {
+	if err := h.svc.Restore(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r), body.LeaveStopped); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1677,13 +1678,14 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID string `json:"snapshotId"`
-		Confirm    bool   `json:"confirm"`
+		SnapshotID   string `json:"snapshotId"`
+		Confirm      bool   `json:"confirm"`
+		LeaveStopped bool   `json:"leaveStopped"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.RestoreVM(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r)); err != nil {
+	if err := h.svc.RestoreVM(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r), body.LeaveStopped); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

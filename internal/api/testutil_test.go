@@ -42,14 +42,15 @@ type fakeServiceDocker struct {
 	allocations []model.Allocation
 	allocErr    error
 
-	stopErr   error
-	startErr  error
-	removeErr error
-	pullErr   error
-	createErr error
-	started   bool
-	createdIn model.Inspect
-	calls     []string
+	stopErr      error
+	startErr     error
+	removeErr    error
+	pullErr      error
+	createErr    error
+	started      bool
+	createdIn    model.Inspect
+	createdStart bool
+	calls        []string
 }
 
 var _ dockercli.Docker = (*fakeServiceDocker)(nil)
@@ -98,9 +99,10 @@ func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) e
 	return nil
 }
 
-func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect) error {
+func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {
 	f.calls = append(f.calls, "createAndStart:"+in.Name)
 	f.createdIn = in
+	f.createdStart = start
 	return f.createErr
 }
 

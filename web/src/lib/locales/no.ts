@@ -489,6 +489,7 @@ const no: Partial<Translations> = {
   "restore.mode.files": "Enkeltfiler",
   "restore.mode.toFolder": "Til en mappe",
   "restore.inPlaceHint": "Gjenopprett denne kontaineren nøyaktig slik den var.",
+  "restore.leaveStopped": "La den være stoppet etter gjenoppretting (ikke start den)",
   "settings.restoreFolder": "Standard gjenopprettingsmappe",
   "settings.restoreFolderHint": "Hvor «gjenopprett til en mappe» pakker ut snapshots som standard.",
 };

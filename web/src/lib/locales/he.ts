@@ -489,6 +489,7 @@ const he: Partial<Translations> = {
   "restore.mode.files": "קבצים בודדים",
   "restore.mode.toFolder": "לתיקייה",
   "restore.inPlaceHint": "צור מחדש את ה-container הזה בדיוק כפי שהיה.",
+  "restore.leaveStopped": "השאר עצור לאחר השחזור (אל תפעיל)",
   "settings.restoreFolder": "תיקיית שחזור ברירת מחדל",
   "settings.restoreFolderHint": "היכן „שחזור לתיקייה‟ מחלץ snapshots כברירת מחדל.",
 };

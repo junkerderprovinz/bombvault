@@ -492,6 +492,7 @@ const th: Partial<Translations> = {
   "restore.mode.files": "ไฟล์แต่ละไฟล์",
   "restore.mode.toFolder": "ไปยังโฟลเดอร์",
   "restore.inPlaceHint": "สร้างคอนเทนเนอร์นี้ใหม่ให้เหมือนเดิมทุกประการ",
+  "restore.leaveStopped": "ปล่อยให้หยุดอยู่หลังกู้คืน (ไม่ต้องเริ่มทำงาน)",
   "settings.restoreFolder": "โฟลเดอร์กู้คืนเริ่มต้น",
   "settings.restoreFolderHint": "ตำแหน่งที่ «กู้คืนไปยังโฟลเดอร์» แตกสแนปช็อตตามค่าเริ่มต้น",
 };

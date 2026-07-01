@@ -42,7 +42,10 @@ type Docker interface {
 	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
-	CreateAndStart(ctx context.Context, in model.Inspect) error
+	// CreateAndStart recreates the container from the captured inspect and starts
+	// it only when start is true (the caller decides, e.g. from the captured
+	// run-state and a "leave stopped" restore option).
+	CreateAndStart(ctx context.Context, in model.Inspect, start bool) error
 	// InspectName returns the live container's name (normalized, no leading
 	// slash) or "" when no such container exists. Used as the restore
 	// wrong-target guard.

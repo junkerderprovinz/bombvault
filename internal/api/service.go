@@ -1600,7 +1600,7 @@ func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
 // container has been deleted. For old targets without a stored definition the
 // live inspect is used as a fallback; if that also fails a clear error is
 // returned prompting the user to run one backup first.
-func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm bool, source string) error {
+func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm bool, source string, leaveStopped bool) error {
 	// Guard confirmation before touching the store/docker so an unconfirmed
 	// restore surfaces the sentinel (and never errors on a missing target first).
 	if !confirm {
@@ -1696,6 +1696,7 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 		TemplateXML:       xml,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           in,
+		LeaveStopped:      leaveStopped,
 		TargetID:          tg.ID,
 		Docker:            s.docker,
 		Restic:            &resticAdapter{engine: s.engine, mode: mode},
@@ -2347,6 +2348,11 @@ type vmDefinition struct {
 	NVRAMBytes    []byte `json:"nvram_bytes,omitempty"`
 	Method        string `json:"method"`
 	WasAutostart  bool   `json:"was_autostart"`
+	// WasRunning is the VM's run state at backup time. A pointer so an OLD backup
+	// (taken before this field existed) reads as nil = unknown, and restore then
+	// falls back to booting the VM (the historical behaviour). A non-nil value is
+	// honoured so restore mirrors the captured state, like containers do.
+	WasRunning *bool `json:"was_running,omitempty"`
 }
 
 // VMView is the per-VM row returned by ListVMs.
@@ -2636,6 +2642,14 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if inactive, ierr := s.virsh.DumpXMLInactive(ctx, name); ierr == nil && strings.TrimSpace(inactive) != "" {
 		defXML = inactive
 	}
+	// Capture the run-state so restore can mirror it (like containers). Best-effort:
+	// a probe failure just leaves it unrecorded (nil) and restore falls back to
+	// booting. The VM is still in its original state here (the backup stops/snapshots
+	// it later, in the orchestrator).
+	var wasRunning *bool
+	if running, aerr := s.virsh.IsActive(ctx, name); aerr == nil {
+		wasRunning = &running
+	}
 	def := vmDefinition{
 		DomainXML:     defXML,
 		DiskPaths:     diskPaths,
@@ -2643,6 +2657,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		NVRAMBytes:    nvramBytes,
 		Method:        method,
 		WasAutostart:  wasAutostart,
+		WasRunning:    wasRunning,
 	}
 	defBytes, _ := json.Marshal(def)
 
@@ -2724,7 +2739,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 }
 
 // RestoreVM orchestrates a VM restore from a stored definition.
-func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confirm bool, source string) error {
+func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confirm bool, source string, leaveStopped bool) error {
 	if !confirm {
 		return backup.ErrNotConfirmed
 	}
@@ -2813,14 +2828,17 @@ func (s *Service) RestoreVM(ctx context.Context, name, snapshotID string, confir
 		DiskPaths:    diskPaths,
 		DomainXML:    domainXML,
 		WasAutostart: def.WasAutostart,
-		StartAfter:   true,
-		PreDefine:    preDefine,
-		RepoPath:     repo,
-		TargetID:     tg.ID,
-		DataDir:      s.cfg.DataDir,
-		VM:           s.virsh,
-		Restic:       &resticAdapter{engine: s.engine, mode: mode},
-		Runs:         runsAdapter{s.store},
+		// Boot after restore iff the VM was running when backed up (nil = old backup
+		// with no recorded state → boot, the historical behaviour) AND the restore
+		// didn't ask to leave it stopped.
+		StartAfter: (def.WasRunning == nil || *def.WasRunning) && !leaveStopped,
+		PreDefine:  preDefine,
+		RepoPath:   repo,
+		TargetID:   tg.ID,
+		DataDir:    s.cfg.DataDir,
+		VM:         s.virsh,
+		Restic:     &resticAdapter{engine: s.engine, mode: mode},
+		Runs:       runsAdapter{s.store},
 	})
 	s.progEnd(rkey, "restore", rerr == nil)
 	return rerr

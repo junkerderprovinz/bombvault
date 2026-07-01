@@ -489,6 +489,7 @@ const fr: Partial<Translations> = {
   "restore.mode.files": "Fichiers individuels",
   "restore.mode.toFolder": "Dans un dossier",
   "restore.inPlaceHint": "Recréer ce conteneur exactement tel qu'il était.",
+  "restore.leaveStopped": "Laisser arrêté après la restauration (ne pas le démarrer)",
   "settings.restoreFolder": "Dossier de restauration par défaut",
   "settings.restoreFolderHint": "Où « restaurer dans un dossier » extrait les instantanés par défaut.",
 };

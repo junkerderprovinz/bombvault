@@ -693,6 +693,9 @@ function SnapshotRow({
   t: T;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  // leaveStopped overrides the captured run-state so an in-place restore recreates
+  // the container without starting it (rebuild a stack member by member).
+  const [leaveStopped, setLeaveStopped] = useState(false);
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
@@ -719,7 +722,7 @@ function SnapshotRow({
     if (!confirmed) return;
     setRestoreState({ phase: "pending" });
     try {
-      const res = await restore(containerName, snap.id, true, source);
+      const res = await restore(containerName, snap.id, true, source, leaveStopped);
       if (res.ok) {
         setRestoreState({ phase: "success" });
       } else {
@@ -843,6 +846,18 @@ function SnapshotRow({
                   )}
                 </button>
               </div>
+              {/* Leave stopped: recreate but don't start (rebuild a stack in order). */}
+              <label className="flex items-center gap-1.5 text-[11px] text-carbon-textSub cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={leaveStopped}
+                  onChange={(e) => setLeaveStopped(e.target.checked)}
+                  disabled={isPending || restoreState.phase === "success"}
+                  className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+                  style={{ accentColor: "var(--accent)" }}
+                />
+                {t("restore.leaveStopped")}
+              </label>
               {restoreState.phase === "success" && (
                 <p className="text-xs text-[#6fdc8c]">
                   Restore complete — container is being recreated.

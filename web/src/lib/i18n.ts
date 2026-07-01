@@ -174,6 +174,7 @@ const en = {
   "restore.mode.files": "Individual files",
   "restore.mode.toFolder": "To a folder",
   "restore.inPlaceHint": "Recreate this container exactly as it was.",
+  "restore.leaveStopped": "Leave stopped after restore (don't start it)",
 
   // Runs
   "run.kindBackup": "Backup",
@@ -657,6 +658,7 @@ const de: Translations = {
   "restore.mode.files": "Einzelne Dateien",
   "restore.mode.toFolder": "In einen Ordner",
   "restore.inPlaceHint": "Diesen Container exakt wie zuvor neu erstellen.",
+  "restore.leaveStopped": "Nach dem Restore gestoppt lassen (nicht starten)",
 
   "run.kindBackup": "Backup",
   "run.kindRestore": "Wiederherstellung",

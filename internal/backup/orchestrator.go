@@ -71,7 +71,7 @@ type Docker interface {
 	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
-	CreateAndStart(ctx context.Context, in model.Inspect) error
+	CreateAndStart(ctx context.Context, in model.Inspect, start bool) error
 	// InspectName returns the live container's name (the adapter normalizes it),
 	// or "" when no such container exists.
 	InspectName(ctx context.Context, name string) (string, error)
@@ -185,6 +185,10 @@ type RestoreDeps struct {
 	// Inspect is the captured definition used to recreate the container. The
 	// full profile (incl. security fields) flows through CreateAndStart.
 	Inspect model.Inspect
+	// LeaveStopped, when true, recreates the container but does NOT start it, even
+	// if it was running when backed up. Lets a restore rebuild a stack member by
+	// member without prematurely starting containers that depend on each other.
+	LeaveStopped bool
 	// TargetID is the run-recording target id.
 	TargetID string
 
@@ -528,7 +532,9 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 			return fmt.Errorf("restore: write template: %w", err)
 		}
 	}
-	if err := d.Docker.CreateAndStart(ctx, d.Inspect); err != nil {
+	// Start only if it was running when backed up AND the restore didn't ask to
+	// leave it stopped.
+	if err := d.Docker.CreateAndStart(ctx, d.Inspect, d.Inspect.Running && !d.LeaveStopped); err != nil {
 		return fmt.Errorf("restore: recreate container: %w", err)
 	}
 	return nil

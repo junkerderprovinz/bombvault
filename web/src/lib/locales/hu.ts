@@ -492,6 +492,7 @@ const hu: Partial<Translations> = {
   "restore.mode.files": "Egyes fájlok",
   "restore.mode.toFolder": "Egy mappába",
   "restore.inPlaceHint": "Hozza létre újra ezt a konténert pontosan úgy, ahogy volt.",
+  "restore.leaveStopped": "Visszaállítás után hagyja leállítva (ne indítsa el)",
   "settings.restoreFolder": "Alapértelmezett visszaállítási mappa",
   "settings.restoreFolderHint": "Hová csomagolja ki a „visszaállítás mappába” a pillanatképeket alapértelmezetten.",
 };

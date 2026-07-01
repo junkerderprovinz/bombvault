@@ -489,6 +489,7 @@ const tr: Partial<Translations> = {
   "restore.mode.files": "Tekil dosyalar",
   "restore.mode.toFolder": "Bir klasöre",
   "restore.inPlaceHint": "Bu konteyneri tam olarak eski haliyle yeniden oluştur.",
+  "restore.leaveStopped": "Geri yükledikten sonra durdurulmuş bırak (başlatma)",
   "settings.restoreFolder": "Varsayılan geri yükleme klasörü",
   "settings.restoreFolderHint": "“Klasöre geri yükle” işleminin anlık görüntüleri varsayılan olarak nereye çıkaracağı.",
 };

@@ -481,6 +481,7 @@ const vi: Partial<Translations> = {
   "restore.mode.files": "Từng tập tin",
   "restore.mode.toFolder": "Vào một thư mục",
   "restore.inPlaceHint": "Tạo lại container này y hệt như trước.",
+  "restore.leaveStopped": "Để nguyên trạng thái dừng sau khi khôi phục (không khởi động)",
   "settings.restoreFolder": "Thư mục khôi phục mặc định",
   "settings.restoreFolderHint": "Nơi \"khôi phục vào một thư mục\" giải nén snapshot theo mặc định.",
 };

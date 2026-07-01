@@ -489,6 +489,7 @@ const sv: Partial<Translations> = {
   "restore.mode.files": "Enskilda filer",
   "restore.mode.toFolder": "Till en mapp",
   "restore.inPlaceHint": "Återskapa den här containern precis som den var.",
+  "restore.leaveStopped": "Lämna stoppad efter återställning (starta den inte)",
   "settings.restoreFolder": "Standardmapp för återställning",
   "settings.restoreFolderHint": "Vart ”återställ till en mapp” packar upp ögonblicksbilder som standard.",
 };

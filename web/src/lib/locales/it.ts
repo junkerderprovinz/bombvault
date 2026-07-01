@@ -489,6 +489,7 @@ const it: Partial<Translations> = {
   "restore.mode.files": "File singoli",
   "restore.mode.toFolder": "In una cartella",
   "restore.inPlaceHint": "Ricrea questo container esattamente com'era.",
+  "restore.leaveStopped": "Lascia fermo dopo il ripristino (non avviarlo)",
   "settings.restoreFolder": "Cartella di ripristino predefinita",
   "settings.restoreFolderHint": "Dove «ripristina in una cartella» estrae gli snapshot per impostazione predefinita.",
 };

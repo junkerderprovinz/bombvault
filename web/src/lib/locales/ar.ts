@@ -492,6 +492,7 @@ const ar: Partial<Translations> = {
   "restore.mode.files": "ملفات فردية",
   "restore.mode.toFolder": "إلى مجلد",
   "restore.inPlaceHint": "إعادة إنشاء هذا الـ container تماماً كما كان.",
+  "restore.leaveStopped": "تركه متوقفاً بعد الاستعادة (عدم تشغيله)",
   "settings.restoreFolder": "مجلد الاستعادة الافتراضي",
   "settings.restoreFolderHint": "المكان الذي تستخرج فيه «الاستعادة إلى مجلد» اللقطات افتراضياً.",
 };

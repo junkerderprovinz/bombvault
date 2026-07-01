@@ -484,6 +484,7 @@ const pl: Partial<Translations> = {
   "restore.mode.files": "Pojedyncze pliki",
   "restore.mode.toFolder": "Do folderu",
   "restore.inPlaceHint": "Odtwórz ten kontener dokładnie tak, jak był.",
+  "restore.leaveStopped": "Pozostaw zatrzymane po przywróceniu (nie uruchamiaj)",
   "settings.restoreFolder": "Domyślny folder przywracania",
   "settings.restoreFolderHint": "Gdzie „przywróć do folderu” domyślnie wypakowuje migawki.",
 };

@@ -486,6 +486,7 @@ const nl: Partial<Translations> = {
   "restore.mode.files": "Losse bestanden",
   "restore.mode.toFolder": "Naar een map",
   "restore.inPlaceHint": "Deze container exact herstellen zoals hij was.",
+  "restore.leaveStopped": "Na herstel gestopt laten (niet starten)",
   "settings.restoreFolder": "Standaard herstelmap",
   "settings.restoreFolderHint": "Waar „naar een map herstellen” snapshots standaard uitpakt.",
 };
