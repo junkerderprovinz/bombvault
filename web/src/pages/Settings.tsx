@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -8,6 +8,43 @@ import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
+
+// AboutFooter shows the running version (linking to the releases page) and a
+// "Report a bug" link at the very bottom of Settings, so the sidebar stays clean.
+function AboutFooter() {
+  const { t } = useT();
+  const [version, setVersion] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    getHealth()
+      .then((h) => { if (active) setVersion(h.version ?? null); })
+      .catch(() => { /* version is best-effort; ignore */ });
+    return () => { active = false; };
+  }, []);
+  return (
+    <div className="pt-6 pb-4 flex flex-col items-center gap-1 text-xs text-carbon-textMuted">
+      {version && (
+        <a
+          href="https://github.com/junkerderprovinz/bombvault/releases"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-carbon-text transition-colors"
+          title={`BombVault ${version}`}
+        >
+          BombVault {version}
+        </a>
+      )}
+      <a
+        href="https://github.com/junkerderprovinz/bombvault/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:text-carbon-text transition-colors"
+      >
+        {t("nav.reportBug")}
+      </a>
+    </div>
+  );
+}
 
 // relativeTime renders a unix timestamp as a short "Xm/h/d ago" string (matches
 // the dashboard helper), used for the "last verified" drill line.
@@ -1701,6 +1738,9 @@ export function SettingsPage() {
           </div>
         </div>
       </Card>
+
+      {/* Version + report-a-bug live here (kept out of the sidebar for a clean UI). */}
+      <AboutFooter />
     </div>
   );
 }

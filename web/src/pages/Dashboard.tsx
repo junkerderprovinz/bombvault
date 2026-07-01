@@ -4,6 +4,7 @@ import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, Da
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
+import { formatCadence } from "../components/CadenceBuilder";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -283,6 +284,7 @@ function chipForRpo(status: string): string {
 }
 
 function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { lang } = useT();
   const [domains, setDomains] = useState<DomainStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -359,7 +361,7 @@ function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                       {rpoLabel(d.status)}
                     </span>
                     <span className="text-carbon-textMuted text-xs shrink-0">
-                      {d.schedule}
+                      {formatCadence(d.schedule, t, lang)}
                     </span>
                     <span
                       className="text-carbon-textMuted text-xs shrink-0 w-20 text-right"
