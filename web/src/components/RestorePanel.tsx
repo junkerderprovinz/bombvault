@@ -365,30 +365,38 @@ interface RestorePanelProps {
 // RecreateButton recreates a not-installed container from its saved definition
 // (a config-only backup has no restic snapshot to restore). Calls the normal
 // restore with "latest", which the backend resolves to a recreate-only restore.
+//
+// Fire-and-watch (see useBackupWatch): the POST is only the async ACK — the
+// recreate runs detached on the server, so the real outcome (the recorded run)
+// must be watched. Treating the ack as final rendered detached failures green.
 function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
-  const [state, setState] = useState<RestoreState>({ phase: "idle" });
-  async function handle() {
+  const { state, fire, isPending } = useBackupWatch({
+    progressKey: `container:${name}`,
+    kind: "restore",
+    start: () => restore(name, "latest", true, source),
+    matchRun: (r) => r.domain === "container" && r.target === name,
+  });
+  function handle() {
     if (!window.confirm(t("snapshots.recreateConfirm"))) return;
-    setState({ phase: "pending" });
-    try {
-      const res = await restore(name, "latest", true, source);
-      if (res.ok) setState({ phase: "success" });
-      else setState({ phase: "error", message: res.error ?? "Recreate failed" });
-    } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
+    void fire();
   }
   return (
     <div className="flex flex-col gap-1 py-2">
       <button
-        onClick={() => void handle()}
-        disabled={state.phase === "pending" || state.phase === "success"}
+        onClick={handle}
+        disabled={isPending || state.phase === "success"}
         className="self-start inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
-        {state.phase === "pending" ? t("common.restoring") : t("snapshots.recreate")}
+        {isPending ? t("common.restoring") : t("snapshots.recreate")}
       </button>
+      {isPending && (
+        <div className="flex flex-col gap-0.5">
+          <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
+          <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+        </div>
+      )}
       {state.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c]">Recreate started — the container is being recreated.</p>
+        <p className="text-xs text-[#6fdc8c]">Recreate complete — the container has been recreated.</p>
       )}
       {state.phase === "error" && (
         <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
@@ -396,12 +404,6 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
     </div>
   );
 }
-
-type RestoreState =
-  | { phase: "idle" }
-  | { phase: "pending" }
-  | { phase: "success" }
-  | { phase: "error"; message: string };
 
 // RestoreToFolder extracts a whole snapshot into an ALTERNATE folder under the
 // host mount — non-destructive: the running container is never touched. It uses

@@ -37,14 +37,26 @@ export type BackupWatchState =
 /** The run kind being watched (matches the recorded run's `kind` field). */
 export type WatchKind = "backup" | "restore";
 
-/** How long success stays shown before auto-clearing (matches the old UX). */
+/** How long a BACKUP success stays shown before auto-clearing (matches the old
+ * UX). Restore banners are sticky — see finish(). */
 const SUCCESS_CLEAR_MS = 4000;
 /** Poll the runs list at this cadence while watching for completion. */
 const POLL_INTERVAL_MS = 2000;
-/** Give up watching after this long and report the last known run state. */
-const WATCH_TIMEOUT_MS = 13 * 60 * 60 * 1000; // beyond the server's 12h backup/restore cap
+/** Give up watching after this long and report the last known run state — kept
+ * just beyond the matching server-side hard cap (12h backups, 48h restores). */
+const WATCH_TIMEOUT_BACKUP_MS = 13 * 60 * 60 * 1000;
+const WATCH_TIMEOUT_RESTORE_MS = 49 * 60 * 60 * 1000;
 /** Retry a busy fire (shared single-flight guard still releasing) this long. */
 const BUSY_RETRY_MS = 30 * 1000;
+/** Once the live progress entry has vanished, allow this many successful run
+ * polls to still surface the recorded run before falling back to a generic
+ * success (some flows record no run — see the fallback in fire()'s poll). */
+const RUNLESS_GRACE_POLLS = 3;
+
+/** The watch deadline for a run kind (matches the server's detached-run cap). */
+function watchTimeoutMs(kind: WatchKind): number {
+  return kind === "restore" ? WATCH_TIMEOUT_RESTORE_MS : WATCH_TIMEOUT_BACKUP_MS;
+}
 
 /** A function that POSTs the start request (backup or restore). */
 export type StartBackupFn = () => Promise<{ ok: boolean; error?: string; started?: boolean }>;
@@ -78,6 +90,12 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   // Watch bookkeeping kept in refs so the polling effect doesn't re-subscribe.
   const watching = useRef(false);
   const sawProgress = useRef(false);
+  // True once the SSE progress entry was seen active AND then disappeared —
+  // the server-side work has finished; only the outcome lookup remains.
+  const progressVanished = useRef(false);
+  // Successful run polls since the progress entry vanished that found NO
+  // matching run — drives the no-run fallback (see fire()'s poll loop).
+  const pollsSinceVanished = useRef(0);
   // Run ids that already existed for this target the moment we fired. The new
   // run is whichever matching run is NOT in this set — correlation by identity,
   // not by clock. null = the pre-fire snapshot failed; seeded lazily on first poll.
@@ -92,45 +110,55 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   const finish = useCallback((next: BackupWatchState) => {
     watching.current = false;
     sawProgress.current = false;
+    progressVanished.current = false;
+    pollsSinceVanished.current = 0;
     setState(next);
     if (next.phase === "success") {
       onDoneRef.current?.();
-      setTimeout(() => setState({ phase: "idle" }), SUCCESS_CLEAR_MS);
+      // A restore's success banner is STICKY: a restore is a rare, destructive
+      // action whose outcome the user must actually see, so the backup button's
+      // ~4s auto-clear does not apply. It stays until reset() — which is wired
+      // to selection/destination changes — puts the button back to idle.
+      if (kindRef.current !== "restore") {
+        setTimeout(() => setState({ phase: "idle" }), SUCCESS_CLEAR_MS);
+      }
     }
   }, []);
 
-  // Look up the outcome from the recorded runs. Returns true once a terminal
+  // Look up the outcome from the recorded runs. "resolved" once a terminal
   // (success/failed) run for this target — one that did not exist when we fired
-  // — is found.
-  const resolveFromRuns = useCallback(async (): Promise<boolean> => {
+  // — is found (state has been set); "no-run" when the lookup worked but no new
+  // matching run exists (the candidate for the no-run fallback); "inconclusive"
+  // when the lookup failed, was seeding, or the run is still in flight.
+  const resolveFromRuns = useCallback(async (): Promise<"resolved" | "no-run" | "inconclusive"> => {
     try {
       const res = await listRuns();
-      if (!res.ok || !res.runs) return false;
+      if (!res.ok || !res.runs) return "inconclusive";
       const mine = (r: Run) => r.kind === kindRef.current && matchRef.current(r);
       // If the pre-fire snapshot failed, seed the baseline from the current runs
       // now and wait for the NEXT one — never resolve against a pre-existing run.
       if (baselineIds.current === null) {
         baselineIds.current = new Set(res.runs.filter(mine).map((r) => r.id));
-        return false;
+        return "inconclusive";
       }
       const base = baselineIds.current;
       // Runs come newest-first; the newest matching run absent at fire time is ours.
       const run = res.runs.find((r) => mine(r) && !base.has(r.id));
-      if (!run) return false;
+      if (!run) return "no-run";
       if (run.status === "success") {
         finish({ phase: "success", snapshotId: run.snapshotId || undefined });
-        return true;
+        return "resolved";
       }
       if (run.status === "failed") {
         finish({
           phase: "error",
           message: run.error || (kindRef.current === "restore" ? "Restore failed" : "Backup failed"),
         });
-        return true;
+        return "resolved";
       }
-      return false; // still running
+      return "inconclusive"; // still running
     } catch {
-      return false; // transient network error — keep polling
+      return "inconclusive"; // transient network error — keep polling
     }
   }, [finish]);
 
@@ -140,6 +168,11 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     if (!watching.current) return;
     if (entry && entry.active) {
       sawProgress.current = true;
+    } else if (sawProgress.current) {
+      // The entry was seen active and has now cleared: the server-side work is
+      // done, only the run lookup remains. From here the poll loop counts
+      // successful-but-empty run polls toward the no-run fallback.
+      progressVanished.current = true;
     }
   }, [entry]);
 
@@ -178,14 +211,29 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     }
     // Server accepted the job and is now running it detached.
     sawProgress.current = false;
+    progressVanished.current = false;
+    pollsSinceVanished.current = 0;
     watching.current = true;
 
     const startedAt = Date.now();
     const poll = async () => {
       if (!watching.current) return;
-      const done = await resolveFromRuns();
-      if (done || !watching.current) return;
-      if (Date.now() - startedAt > WATCH_TIMEOUT_MS) {
+      const outcome = await resolveFromRuns();
+      if (outcome === "resolved" || !watching.current) return;
+      // No-run fallback: some flows record no run at all (restore-files /
+      // restore-to on a container without a target row), so run polling alone
+      // would pend forever. Once the SSE progress entry was seen active and
+      // then vanished (the work IS finished), a few clean polls that still
+      // find no run end the watch with a generic success. A run that IS found
+      // stays authoritative — it resolves above before this can trigger.
+      if (progressVanished.current && outcome === "no-run") {
+        pollsSinceVanished.current += 1;
+        if (pollsSinceVanished.current >= RUNLESS_GRACE_POLLS) {
+          finish({ phase: "success" });
+          return;
+        }
+      }
+      if (Date.now() - startedAt > watchTimeoutMs(kindRef.current)) {
         finish({
           phase: "error",
           message: `Timed out waiting for the ${kindRef.current} to finish`,
@@ -256,7 +304,7 @@ export async function fireAndWaitRun(opts: {
     await new Promise((r) => setTimeout(r, 1000));
   }
   // Poll the recorded runs until this target's NEW run reaches a terminal state.
-  const deadline = Date.now() + WATCH_TIMEOUT_MS;
+  const deadline = Date.now() + watchTimeoutMs(opts.kind);
   for (;;) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     try {

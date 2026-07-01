@@ -1542,6 +1542,60 @@ func TestStartRestoreFilesRecordsRun(t *testing.T) {
 	}
 }
 
+// TestRestoreHoldsDomainLockAgainstScheduledBackup pins the domain-lock layer
+// of the restore execute paths: the scheduler calls s.Backup DIRECTLY and
+// bypasses the batchActive single-flight guard by design, so the domain repo
+// lock is the only layer a scheduled backup respects. A direct Backup of the
+// same domain must therefore BLOCK until a running detached restore releases
+// the lock — serialization, never overlap (in either direction).
+func TestRestoreHoldsDomainLockAgainstScheduledBackup(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Start a detached restore and wait until it is INSIDE the engine — at that
+	// point the restore execute path already holds the "containers" domain lock.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	// A scheduled-style DIRECT backup (no batchActive involved) must block on
+	// the domain lock instead of overlapping the in-flight restore.
+	backupDone := make(chan error, 1)
+	go func() {
+		_, err := svc.Backup(ctx, "plex")
+		backupDone <- err
+	}()
+	select {
+	case err := <-backupDone:
+		t.Fatalf("backup completed while the restore held the domain lock (err=%v)", err)
+	case <-time.After(200 * time.Millisecond):
+		// Still blocked — serialized behind the restore, exactly as intended.
+	}
+
+	close(eng.blockRestore) // restore finishes → releases the domain lock
+	select {
+	case err := <-backupDone:
+		if err != nil {
+			t.Fatalf("backup after the restore released the lock: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("backup never ran after the restore released the domain lock")
+	}
+	waitForBackupDone(t, svc)
+	if len(eng.restored) != 1 {
+		t.Fatalf("exactly the restore should have hit the engine's restore path, got %v", eng.restored)
+	}
+}
+
 // diffTagTestService builds a service with an initialised containers repo and the
 // given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
 func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
@@ -1999,10 +2053,15 @@ type fakeResticEngine struct {
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
-	// blockRestore, when non-nil, makes RestoreInclude wait on it — lets a test
-	// hold an async restore "in flight" to exercise the shared single-flight
-	// guard deterministically.
+	// blockRestore, when non-nil, makes RestoreInclude AND RestorePath wait on
+	// it — lets a test hold an async restore "in flight" to exercise the shared
+	// single-flight guard and the domain lock deterministically.
 	blockRestore chan struct{}
+	// restoreEntered, when non-nil, receives one (non-blocking) signal the
+	// moment a blocked restore call is INSIDE the engine — i.e. the restore
+	// execute path has already acquired the domain repo lock — so a test can
+	// order its next step deterministically instead of sleeping.
+	restoreEntered chan struct{}
 	// existingMode, when non-nil, simulates an already-created repo of that
 	// encryption mode: RepoOpens then returns true only for a probe whose mode
 	// matches. When nil, RepoOpens mirrors a local repo and "opens" once restic's
@@ -2039,7 +2098,23 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []str
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
 }
 
+// blockIfArmed signals restoreEntered (non-blocking) and waits on blockRestore
+// when it is armed — shared by the restore entry points of the fake.
+func (f *fakeResticEngine) blockIfArmed() {
+	if f.blockRestore == nil {
+		return
+	}
+	if f.restoreEntered != nil {
+		select {
+		case f.restoreEntered <- struct{}{}:
+		default:
+		}
+	}
+	<-f.blockRestore
+}
+
 func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path string, _ restic.Mode) error {
+	f.blockIfArmed()
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+path)
 	return nil
 }
@@ -2081,9 +2156,7 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 }
 
 func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
-	if f.blockRestore != nil {
-		<-f.blockRestore
-	}
+	f.blockIfArmed()
 	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
 		return errors.New("restore boom")
 	}
