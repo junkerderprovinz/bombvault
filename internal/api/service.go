@@ -1606,6 +1606,13 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	if !confirm {
 		return backup.ErrNotConfirmed
 	}
+	// Re-validate the name at the service layer (defense-in-depth): the HTTP route
+	// guards it via nameParam, but RestoreStack enumerates names from the store, so
+	// the name-as-template-filename sink must be guarded here too, in case a
+	// stored/imported name ever bypassed the boundary.
+	if !validResourceName(name) {
+		return errors.New("invalid container name")
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)

@@ -14,9 +14,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// composeInspect builds a stored inspect for a compose stack member, carrying the
-// project/service/depends_on labels the restore enumeration + ordering read.
-func composeInspect(name, project, service, dependsOn string) model.Inspect {
+// composeInspectState builds a stored inspect for a compose stack member, carrying
+// the project/service/depends_on labels the restore enumeration + ordering read,
+// with an explicit run-state-at-backup (restore only starts members that were
+// running when backed up).
+func composeInspectState(name, project, service, dependsOn string, running bool) model.Inspect {
 	labels := map[string]string{
 		"com.docker.compose.project": project,
 		"com.docker.compose.service": service,
@@ -26,7 +28,7 @@ func composeInspect(name, project, service, dependsOn string) model.Inspect {
 	}
 	return model.Inspect{
 		Name:    "/" + name,
-		Running: true, // running-at-backup: proves leaveStopped overrides "start"
+		Running: running,
 		Config: model.Config{
 			Image:  "example/" + service + ":latest",
 			Labels: labels,
@@ -34,13 +36,18 @@ func composeInspect(name, project, service, dependsOn string) model.Inspect {
 	}
 }
 
-// seedStackTarget seeds a container target with a stored compose definition + a
-// backup path under the mount root, so RestoreStack enumerates it and Restore can
+// composeInspect is composeInspectState for a member that was running at backup.
+func composeInspect(name, project, service, dependsOn string) model.Inspect {
+	return composeInspectState(name, project, service, dependsOn, true)
+}
+
+// seedStackTargetState seeds a container target with a stored compose definition +
+// a backup path under the mount root, so RestoreStack enumerates it and Restore can
 // reach the fake docker. mountRoot is a Linux-absolute host mount (paths.Within
 // uses forward-slash semantics), so appdata paths are built with forward slashes.
-func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, service, dependsOn string) {
+func seedStackTargetState(t *testing.T, st *store.Repo, mountRoot, name, project, service, dependsOn string, running bool) {
 	t.Helper()
-	def, err := marshalDefinition(composeInspect(name, project, service, dependsOn), "")
+	def, err := marshalDefinition(composeInspectState(name, project, service, dependsOn, running), "")
 	if err != nil {
 		t.Fatalf("marshal definition for %s: %v", name, err)
 	}
@@ -51,6 +58,41 @@ func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, ser
 	}); err != nil {
 		t.Fatalf("seed target %s: %v", name, err)
 	}
+}
+
+// seedStackTarget seeds a member that was running at backup.
+func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, service, dependsOn string) {
+	t.Helper()
+	seedStackTargetState(t, st, mountRoot, name, project, service, dependsOn, true)
+}
+
+// stackTestService builds a service + store with a real (empty) local containers
+// repo on disk, so RestoreStack's "latest" resolves the fake engine's snapshots.
+func stackTestService(t *testing.T, eng *fakeResticEngine, d *fakeServiceDocker) (*api.Service, *store.Repo, string) {
+	t.Helper()
+	dir := t.TempDir()
+	const mountRoot = "/host/user"
+	cfg := config.Config{
+		AppKey:            strings.Repeat("a", 64),
+		DataDir:           dir,
+		HostMountRoot:     mountRoot,
+		FlashTemplatesDir: filepath.Join(dir, "flash"),
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return api.NewService(cfg, st, d, fakeVirsh{}, eng), st, mountRoot
 }
 
 // TestRestoreStack exercises the full stack-restore path: all members restore
@@ -179,5 +221,86 @@ func TestRestoreStackEmpty(t *testing.T) {
 	_, err := svc.RestoreStack(context.Background(), "nope", "local", false, true)
 	if err == nil || !strings.Contains(err.Error(), "no backed-up containers") {
 		t.Fatalf("expected 'no backed-up containers' error, got %v", err)
+	}
+}
+
+// TestRestoreStackRespectsRunState: startAfter starts only members that were
+// running when backed up; a member stopped at backup is restored but not started.
+func TestRestoreStackRespectsRunState(t *testing.T) {
+	d := &fakeServiceDocker{liveName: ""}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:web"}},
+		{ID: "bbbb2222", Tags: []string{"container:worker"}},
+	}}
+	svc, st, mountRoot := stackTestService(t, eng, d)
+	seedStackTargetState(t, st, mountRoot, "web", "app", "web", "", true)        // running
+	seedStackTargetState(t, st, mountRoot, "worker", "app", "worker", "", false) // stopped
+
+	res, err := svc.RestoreStack(context.Background(), "app", "local", true, true)
+	if err != nil {
+		t.Fatalf("RestoreStack: %v", err)
+	}
+	byName := map[string]api.StackMemberResult{}
+	for _, m := range res.Members {
+		byName[m.Name] = m
+	}
+	if !byName["web"].Restored || !byName["web"].Started {
+		t.Fatalf("running-at-backup member should be restored + started: %+v", byName["web"])
+	}
+	if !byName["worker"].Restored || byName["worker"].Started {
+		t.Fatalf("stopped-at-backup member should be restored but NOT started: %+v", byName["worker"])
+	}
+	for _, c := range d.calls {
+		if c == "start:worker" {
+			t.Fatalf("a member stopped at backup must not be started: %v", d.calls)
+		}
+	}
+}
+
+// TestRestoreStackBlocksDependentOnFailedDependency: when a dependency fails to
+// restore, its dependent is held back (not started) with a clear reason — exactly
+// the race the stack restore exists to avoid.
+func TestRestoreStackBlocksDependentOnFailedDependency(t *testing.T) {
+	// db's recreate fails deterministically, so its dependent app must be held back.
+	d := &fakeServiceDocker{liveName: "", createErrName: "db"}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:app"}},
+	}}
+	svc, st, mountRoot := stackTestService(t, eng, d)
+	seedStackTarget(t, st, mountRoot, "app", "shop", "app", "db") // app depends_on db
+	// db: definition-only (no snapshot) → recreate-only path → its CreateAndStart
+	// fails via createErrName, so db does not come up and app is blocked.
+	dbDef, err := marshalDefinition(composeInspect("db", "shop", "db", ""), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "db", Definition: string(dbDef)}); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := svc.RestoreStack(context.Background(), "shop", "local", true, true)
+	if err != nil {
+		t.Fatalf("RestoreStack: %v", err)
+	}
+	byName := map[string]api.StackMemberResult{}
+	for _, m := range res.Members {
+		byName[m.Name] = m
+	}
+	if byName["db"].Restored {
+		t.Fatalf("db restore should have failed (no appdata paths): %+v", byName["db"])
+	}
+	if !byName["app"].Restored {
+		t.Fatalf("app should have restored: %+v", byName["app"])
+	}
+	if byName["app"].Started {
+		t.Fatal("app must NOT start while its dependency db is down")
+	}
+	if !strings.Contains(byName["app"].Error, "dependency") {
+		t.Fatalf("app error should explain the held-back dependency, got %q", byName["app"].Error)
+	}
+	for _, c := range d.calls {
+		if c == "start:app" {
+			t.Fatalf("app was started despite its dependency failing: %v", d.calls)
+		}
 	}
 }

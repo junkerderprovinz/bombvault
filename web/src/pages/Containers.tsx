@@ -5,6 +5,7 @@ import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { BackupButton } from "../components/BackupButton";
 import { RestorePanel } from "../components/RestorePanel";
+import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress } from "../lib/progress";
@@ -762,13 +763,18 @@ interface StackGroup {
   members: Container[];
 }
 
-// groupStacks buckets INSTALLED containers by their non-empty compose project and
+// groupStacks buckets BACKED-UP containers by their non-empty compose project and
 // keeps only groups with 2+ members (a lone container isn't a "stack" worth its
-// own card). Groups + members are sorted by name for a stable render.
+// own card). A member is included when it is backed up — orphans (deleted, so
+// not installed) always are; an installed one needs a recorded backup. This
+// mirrors what the backend RestoreStack enumerates (stored definitions), so the
+// count doesn't mislead AND a fully-wiped stack (the disaster-recovery case) still
+// shows a card. Groups + members are sorted by name for a stable render.
 function groupStacks(containers: Container[]): StackGroup[] {
   const byProject = new Map<string, Container[]>();
   for (const c of containers) {
-    if (!c.installed || !c.stack) continue;
+    if (!c.stack) continue;
+    if (c.installed && c.lastBackup == null) continue; // installed but never backed up
     const arr = byProject.get(c.stack) ?? [];
     arr.push(c);
     byProject.set(c.stack, arr);
@@ -783,11 +789,13 @@ function groupStacks(containers: Container[]): StackGroup[] {
   return groups;
 }
 
-// StackCard is one compose stack: its name, members, and a "Restore stack…"
-// action that restores every member stopped, then (optionally) starts them in
-// dependency order. Results are shown per member afterwards.
-function StackCard({ group, t }: { group: StackGroup; t: T }) {
+// StackCard is one compose stack: its name, members, and (in a collapsible panel)
+// a "Restore stack" action that restores every member stopped, then optionally
+// starts them in dependency order. Results are shown per member; on success it
+// asks the page to reload so the container list reflects the new state.
+function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: () => void; t: T }) {
   const [open, setOpen] = useState(false);
+  const [source, setSource] = useState<RepoSource>("local");
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -799,9 +807,10 @@ function StackCard({ group, t }: { group: StackGroup; t: T }) {
     setError(null);
     setResults(null);
     try {
-      const res = await restoreStack(group.project, startInOrder, true);
+      const res = await restoreStack(group.project, startInOrder, true, source);
       if (res.ok) {
         setResults(res.members ?? []);
+        onRestored(); // refresh the main list so run-state/orphan rows update
       } else {
         setError(res.error ?? t("settings.error"));
       }
@@ -824,17 +833,28 @@ function StackCard({ group, t }: { group: StackGroup; t: T }) {
             {group.members.map((m) => m.name).join(", ")}
           </p>
         </div>
+        {/* Disclosure toggle (icon only) so the sole "Restore stack" label is the
+            action button inside the panel. */}
         <button
           onClick={() => setOpen((p) => !p)}
-          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+          aria-expanded={open}
+          aria-label={t("stack.restore")}
+          title={t("stack.restore")}
+          className="shrink-0 inline-flex items-center rounded-lg border border-carbon-border p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
-          {t("stack.restore")}
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+            <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </div>
 
       {open && (
         <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+            <SourceToggle source={source} onChange={setSource} disabled={busy} />
+          </div>
           <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
             <input
               type="checkbox"
@@ -884,7 +904,7 @@ function StackCard({ group, t }: { group: StackGroup; t: T }) {
 
 // StacksPanel renders one card per detected compose stack, above the container
 // list. It renders nothing when no multi-member stack is present.
-function StacksPanel({ containers, t }: { containers: Container[]; t: T }) {
+function StacksPanel({ containers, onRestored, t }: { containers: Container[]; onRestored: () => void; t: T }) {
   const stacks = groupStacks(containers);
   if (stacks.length === 0) return null;
   return (
@@ -893,7 +913,7 @@ function StacksPanel({ containers, t }: { containers: Container[]; t: T }) {
         {t("stack.title")}
       </h2>
       {stacks.map((g) => (
-        <StackCard key={g.project} group={g} t={t} />
+        <StackCard key={g.project} group={g} onRestored={onRestored} t={t} />
       ))}
     </div>
   );
@@ -1154,7 +1174,7 @@ export function Containers() {
       )}
 
       {/* Stacks panel — one card per detected compose stack, above the list. */}
-      {!loading && !error && <StacksPanel containers={containers} t={t} />}
+      {!loading && !error && <StacksPanel containers={containers} onRestored={() => void loadContainers()} t={t} />}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3">
