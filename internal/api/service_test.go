@@ -1268,6 +1268,84 @@ func TestRestoreContainerToPath(t *testing.T) {
 	}
 }
 
+// TestRestoreContainerFiles covers the multi-select file restore: it is
+// confirm-gated, rejects a bad snapshot id and an empty selection before touching
+// restic, refuses a foreign snapshot, refuses an in-place path that escapes the
+// host mount and a target folder that escapes it, and on the happy path extracts
+// the selection into a resolved alternate folder (created only after containment
+// passes) via the engine.
+func TestRestoreContainerFiles(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Mark the repo initialised so Snapshots reaches the engine.
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex"}},
+		{ID: "bbbb2222", Tags: []string{"container:sonarr"}}, // foreign — must be refused
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	ctx := context.Background()
+	fileA := root + "/appdata/plex/a.conf"
+
+	// Not confirmed → refused before any restic call.
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", false); !errors.Is(err, backup.ErrNotConfirmed) {
+		t.Fatalf("expected ErrNotConfirmed, got %v", err)
+	}
+	// Bad snapshot id.
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "not-hex!", []string{fileA}, "user/restore/plex", true); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
+	}
+	// Empty selection.
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", nil, "user/restore/plex", true); err == nil {
+		t.Fatal("expected an error for an empty selection")
+	}
+	// A foreign snapshot (sonarr's) must not be restorable through plex's route.
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "bbbb2222", []string{fileA}, "user/restore/plex", true); err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("foreign snapshot must be refused, got %v", err)
+	}
+	// An in-place path escaping the host mount is refused (empty target = in place).
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{"/etc/passwd"}, "", true); err == nil {
+		t.Fatal("expected a containment error for an in-place path outside the mount")
+	}
+	// A target folder escaping the host mount (../) is refused by the guard.
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "../escape", true); err == nil {
+		t.Fatal("expected a containment error for a target escaping the mount")
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("no restore must have run on a rejected request, got %v", eng.restored)
+	}
+
+	// Happy path — into an alternate folder: the resolved dir is created and each
+	// selected path is extracted into it via the engine.
+	target, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true)
+	if err != nil {
+		t.Fatalf("to-folder restore: %v", err)
+	}
+	wantTarget := root + "/user/restore/plex"
+	if target != wantTarget {
+		t.Fatalf("resolved target = %q, want %q", target, wantTarget)
+	}
+	if _, statErr := os.Stat(wantTarget); statErr != nil {
+		t.Fatalf("target dir must be created after containment passes: %v", statErr)
+	}
+	if len(eng.restored) != 1 || !strings.Contains(eng.restored[0], "aaaa1111:"+fileA+"->"+wantTarget) {
+		t.Fatalf("expected the file restored into the folder, got %v", eng.restored)
+	}
+}
+
 // diffTagTestService builds a service with an initialised containers repo and the
 // given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
 func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {

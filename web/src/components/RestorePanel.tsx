@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
@@ -67,56 +67,31 @@ function buildTree(files: FileEntry[]): TreeNode {
   return root;
 }
 
-// FileRow restores a single file/dir back to its original location (in-place).
+// FileRow is one entry in the flat (filtered) list: a checkbox that toggles the
+// file/dir in the multi-select restore set.
 function FileRow({
-  containerName,
-  snapshotId,
   file,
-  source,
-  t,
+  selected,
+  onToggle,
 }: {
-  containerName: string;
-  snapshotId: string;
   file: FileEntry;
-  source: string;
-  t: T;
+  selected: boolean;
+  onToggle: () => void;
 }) {
-  const [state, setState] = useState<RestoreState>({ phase: "idle" });
-
-  async function handleRestore() {
-    if (!window.confirm(t("files.restoreConfirm"))) return;
-    setState({ phase: "pending" });
-    try {
-      const res = await restoreContainerFile(containerName, snapshotId, file.path, true, source);
-      if (res.ok) setState({ phase: "success" });
-      else setState({ phase: "error", message: res.error ?? "Restore failed" });
-    } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
-  }
-
   return (
-    <div className="flex items-center gap-2 py-1 text-xs border-b border-carbon-border last:border-0">
+    <label className="flex items-center gap-2 py-1 text-xs border-b border-carbon-border last:border-0 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={onToggle}
+        className="shrink-0"
+        style={{ accentColor: "var(--accent)" }}
+      />
       <span className="font-mono text-carbon-textSub flex-1 truncate" title={file.path}>
         {file.type === "dir" ? "📁 " : ""}
         {file.path}
       </span>
-      {state.phase === "success" ? (
-        <span className="text-[#6fdc8c] shrink-0">✓ {t("files.restored")}</span>
-      ) : state.phase === "error" ? (
-        <span className="text-[#ff8389] shrink-0 max-w-[14rem] truncate" title={state.message}>
-          {state.message}
-        </span>
-      ) : (
-        <button
-          onClick={() => void handleRestore()}
-          disabled={state.phase === "pending"}
-          className="shrink-0 rounded bg-carbon-surface3 px-2 py-0.5 text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
-        >
-          {state.phase === "pending" ? "…" : t("files.restore")}
-        </button>
-      )}
-    </div>
+    </label>
   );
 }
 
@@ -127,38 +102,22 @@ function sortNodes(a: TreeNode, b: TreeNode): number {
 }
 
 // TreeRow renders one node of the collapsible file tree. Directories expand /
-// collapse; any node (file or folder) can be restored to its original location.
+// collapse; a checkbox on every node (file or folder) toggles it in the
+// multi-select restore set. Ticking a folder restores its whole subtree.
 function TreeRow({
-  containerName,
-  snapshotId,
   node,
   depth,
-  source,
-  t,
+  selected,
+  onToggle,
 }: {
-  containerName: string;
-  snapshotId: string;
   node: TreeNode;
   depth: number;
-  source: string;
-  t: T;
+  selected: Set<string>;
+  onToggle: (p: string) => void;
 }) {
   const [expanded, setExpanded] = useState(depth === 0); // top level open by default
-  const [state, setState] = useState<RestoreState>({ phase: "idle" });
   const isDir = node.type === "dir";
   const kids = isDir ? Array.from(node.children.values()).sort(sortNodes) : [];
-
-  async function handleRestore() {
-    if (!window.confirm(t("files.restoreConfirm"))) return;
-    setState({ phase: "pending" });
-    try {
-      const res = await restoreContainerFile(containerName, snapshotId, node.path, true, source);
-      if (res.ok) setState({ phase: "success" });
-      else setState({ phase: "error", message: res.error ?? "Restore failed" });
-    } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
-  }
 
   return (
     <div>
@@ -179,50 +138,54 @@ function TreeRow({
         ) : (
           <span className="w-4 shrink-0" />
         )}
+        <input
+          type="checkbox"
+          checked={selected.has(node.path)}
+          onChange={() => onToggle(node.path)}
+          className="shrink-0"
+          style={{ accentColor: "var(--accent)" }}
+          aria-label={node.path}
+        />
         <span className="shrink-0">{isDir ? "📁" : "📄"}</span>
         <span className="font-mono text-carbon-textSub flex-1 truncate" title={node.path}>
           {node.name}
         </span>
-        {state.phase === "success" ? (
-          <span className="text-[#6fdc8c] shrink-0">✓ {t("files.restored")}</span>
-        ) : state.phase === "error" ? (
-          <span className="text-[#ff8389] shrink-0 max-w-[12rem] truncate" title={state.message}>
-            {state.message}
-          </span>
-        ) : (
-          <button
-            onClick={() => void handleRestore()}
-            disabled={state.phase === "pending"}
-            className="shrink-0 rounded bg-carbon-surface3 px-2 py-0.5 text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
-          >
-            {state.phase === "pending" ? "…" : t("files.restore")}
-          </button>
-        )}
       </div>
       {isDir && expanded && kids.map((c) => (
-        <TreeRow key={c.path} containerName={containerName} snapshotId={snapshotId} node={c} depth={depth + 1} source={source} t={t} />
+        <TreeRow key={c.path} node={c} depth={depth + 1} selected={selected} onToggle={onToggle} />
       ))}
     </div>
   );
 }
 
-// SnapshotFileBrowser lists the files in a snapshot for file-level restore: a
-// collapsible folder tree when unfiltered, or a flat matched list while filtering.
+// SnapshotFileBrowser lists a snapshot's files for multi-select restore: tick any
+// files/folders (a collapsible folder tree when unfiltered, or a flat matched list
+// while filtering), choose a destination (in place, or an alternate folder), then
+// restore the whole selection at once.
 function SnapshotFileBrowser({
   containerName,
   snapshotId,
   source,
+  hostMountRoot,
+  defaultFolder,
   t,
 }: {
   containerName: string;
   snapshotId: string;
   source: string;
+  hostMountRoot: string;
+  defaultFolder: string;
   t: T;
 }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dest, setDest] = useState<"inPlace" | "toFolder">("inPlace");
+  const [folder, setFolder] = useState(defaultFolder);
+  const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
+  const [restoredTarget, setRestoredTarget] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -241,8 +204,45 @@ function SnapshotFileBrowser({
   const tree = useMemo(() => buildTree(files), [files]);
   const topLevel = Array.from(tree.children.values()).sort(sortNodes);
 
+  // toggle flips one path in the selection set; a new selection clears any prior
+  // result banner so it can't linger over a fresh, unrun selection.
+  function toggle(p: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) next.delete(p);
+      else next.add(p);
+      return next;
+    });
+    setRestoreState({ phase: "idle" });
+  }
+
+  async function handleRestoreSelected() {
+    const paths = [...selected];
+    if (paths.length === 0) return;
+    const targetPath = dest === "toFolder" ? folder.trim() : "";
+    if (dest === "toFolder" && !targetPath) return;
+    // In place overwrites the live files, so keep the explicit confirm.
+    if (dest === "inPlace" && !window.confirm(t("files.restoreConfirm"))) return;
+    setRestoreState({ phase: "pending" });
+    try {
+      const res = await restoreContainerFiles(containerName, snapshotId, paths, targetPath, true, source);
+      if (res.ok) {
+        setRestoredTarget(res.target ?? "");
+        setRestoreState({ phase: "success" });
+      } else {
+        setRestoreState({ phase: "error", message: res.error ?? "Restore failed" });
+      }
+    } catch (err) {
+      setRestoreState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
+    }
+  }
+
+  const count = selected.size;
+  const isPending = restoreState.phase === "pending";
+
   return (
-    <div className="mt-1 ml-24 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
+    <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
+      <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
       <input
         type="text"
         value={filter}
@@ -260,7 +260,7 @@ function SnapshotFileBrowser({
       {!loading && q && shown.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {shown.map((f) => (
-            <FileRow key={f.path} containerName={containerName} snapshotId={snapshotId} file={f} source={source} t={t} />
+            <FileRow key={f.path} file={f} selected={selected.has(f.path)} onToggle={() => toggle(f.path)} />
           ))}
         </div>
       )}
@@ -270,8 +270,63 @@ function SnapshotFileBrowser({
       {!loading && !q && topLevel.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {topLevel.map((n) => (
-            <TreeRow key={n.path} containerName={containerName} snapshotId={snapshotId} node={n} depth={0} source={source} t={t} />
+            <TreeRow key={n.path} node={n} depth={0} selected={selected} onToggle={toggle} />
           ))}
+        </div>
+      )}
+
+      {/* Destination + restore-selected action — shown once something is ticked. */}
+      {count > 0 && (
+        <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={`files-dest-${snapshotId}`}
+                checked={dest === "inPlace"}
+                onChange={() => setDest("inPlace")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("files.dest.inPlace")}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={`files-dest-${snapshotId}`}
+                checked={dest === "toFolder"}
+                onChange={() => setDest("toFolder")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("files.dest.toFolder")}
+            </label>
+          </div>
+          {dest === "toFolder" && (
+            <FolderBrowser
+              label={t("restore.targetPath")}
+              value={folder}
+              hostMountRoot={hostMountRoot}
+              onChange={setFolder}
+            />
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void handleRestoreSelected()}
+              disabled={isPending || (dest === "toFolder" && !folder.trim())}
+              className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
+            </button>
+          </div>
+          {restoreState.phase === "success" && (
+            <p className="text-xs text-[#6fdc8c] break-words">
+              {restoredTarget
+                ? t("restore.restoredTo").replace("{path}", restoredTarget)
+                : t("files.restoredInPlace")}
+            </p>
+          )}
+          {restoreState.phase === "error" && (
+            <p className="text-xs text-[#ff8389] break-words">{restoreState.message}</p>
+          )}
         </div>
       )}
     </div>
@@ -790,10 +845,17 @@ function SnapshotRow({
             </div>
           )}
 
-          {/* Individual files — file-level restore (unchanged browser). */}
+          {/* Individual files — multi-select file restore (in place / to a folder). */}
           {mode === "files" && (
             <div className="border-t border-carbon-border pt-2">
-              <SnapshotFileBrowser containerName={containerName} snapshotId={snap.id} source={source} t={t} />
+              <SnapshotFileBrowser
+                containerName={containerName}
+                snapshotId={snap.id}
+                source={source}
+                hostMountRoot={hostMountRoot}
+                defaultFolder={defaultFolder}
+                t={t}
+              />
             </div>
           )}
 

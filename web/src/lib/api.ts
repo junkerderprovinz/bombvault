@@ -335,17 +335,29 @@ export function listSnapshotFiles(
   );
 }
 
-/** POST /api/containers/{name}/restore-file — restore one file to its origin. */
-export function restoreContainerFile(
+/** Response from POST /api/containers/{name}/restore-files */
+export interface RestoreFilesResponse extends OkEnvelope {
+  /** Alternate-folder restore: the resolved target folder; "" for an in-place restore. */
+  target?: string;
+}
+
+/**
+ * POST /api/containers/{name}/restore-files — restore selected files/dirs from a
+ * snapshot. An empty targetPath restores them in place (original locations); a
+ * relative subpath extracts the selection into that folder under the host mount
+ * (non-destructive: the running container is never touched).
+ */
+export function restoreContainerFiles(
   name: string,
   snapshotId: string,
-  path: string,
+  paths: string[],
+  targetPath: string,
   confirm: boolean,
   source?: string
-): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-file${srcParam(source)}`, {
+): Promise<RestoreFilesResponse> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-files${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, path, confirm }),
+    body: JSON.stringify({ snapshotId, paths, targetPath, confirm }),
   });
 }
 

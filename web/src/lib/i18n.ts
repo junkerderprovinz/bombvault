@@ -150,6 +150,11 @@ const en = {
   "files.none": "No matching files",
   "files.loadFailed": "Failed to load files",
   "files.more": "Refine the filter to see more files.",
+  "files.selectHint": "Tick the files and folders to restore, then choose where.",
+  "files.dest.inPlace": "Restore in place (original location)",
+  "files.dest.toFolder": "Restore to a folder",
+  "files.restoreSelected": "Restore selected ({n})",
+  "files.restoredInPlace": "Restored the selected files to their original location.",
 
   // Restore
   "restore.confirmTitle": "Confirm restore",
@@ -629,6 +634,11 @@ const de: Translations = {
   "files.none": "Keine passenden Dateien",
   "files.loadFailed": "Dateien konnten nicht geladen werden",
   "files.more": "Filter verfeinern, um mehr Dateien zu sehen.",
+  "files.selectHint": "Dateien und Ordner ankreuzen, dann Ziel wählen.",
+  "files.dest.inPlace": "Am Ursprungsort wiederherstellen",
+  "files.dest.toFolder": "In einen Ordner wiederherstellen",
+  "files.restoreSelected": "Auswahl wiederherstellen ({n})",
+  "files.restoredInPlace": "Ausgewählte Dateien an ihren Originalort wiederhergestellt.",
 
   "restore.confirmTitle": "Wiederherstellung bestätigen",
   "restore.confirmBody":

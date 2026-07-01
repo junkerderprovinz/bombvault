@@ -1777,31 +1777,99 @@ func (s *Service) ListSnapshotFiles(ctx context.Context, name, snapshotID, sourc
 	return s.engine.Ls(ctx, repo, snapshotID, s.ModeFor(settings))
 }
 
-// RestoreContainerFile restores a single file/dir from a container snapshot back
-// to its original location (in-place). filePath must be an absolute path within
-// the host mount — defense-in-depth so a restore can never write outside it.
-func (s *Service) RestoreContainerFile(ctx context.Context, snapshotID, filePath string, confirm bool, source string) error {
+// RestoreContainerFiles restores one or more files/dirs from a container
+// snapshot. With targetSubPath empty the selected paths are written back to their
+// ORIGINAL locations (in-place, restic target "/"); with a non-empty
+// targetSubPath the selection is extracted into an ALTERNATE folder under the host
+// mount (non-destructive, same containment as RestoreContainerToPath). It returns
+// the resolved absolute target folder for the alternate-folder case, or "" for an
+// in-place restore.
+//
+// SEC: confirm-gated; the snapshot id passes the strict hex guard
+// (backup.ValidSnapshotID) and must belong to the named container (tag-scoped via
+// Snapshots, like RestoreContainerToPath) so one container's data can't be
+// extracted through another's route; every selected path is path.Cleaned and must
+// sit within the host mount (paths.Within) — defense-in-depth so a restore can
+// never read/write outside the backup mount; and the alternate target is resolved
+// with paths.Resolve and created (EnsureDir) only after containment passes.
+func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (string, error) {
 	if !confirm {
-		return backup.ErrNotConfirmed
+		return "", backup.ErrNotConfirmed
+	}
+	if !validResourceName(name) {
+		return "", errors.New("invalid container name")
+	}
+	if source != "local" && source != "offsite" {
+		return "", errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
-		return backup.ErrInvalidSnapshotID
+		return "", backup.ErrInvalidSnapshotID
 	}
-	// Clean once so the path we validate is exactly the path we execute.
-	clean := path.Clean(filePath)
-	if !paths.Within(s.cfg.HostMountRoot, clean) {
-		return errors.New("restore file: path is outside the backup mount")
+	if len(filePaths) == 0 {
+		return "", errors.New("no files selected")
 	}
+
+	// Clean each selected path once, so the path we validate is the path we run.
+	cleaned := make([]string, 0, len(filePaths))
+	for _, p := range filePaths {
+		cleaned = append(cleaned, path.Clean(p))
+	}
+
+	// Scope to the named container: the snapshot must be one of ITS snapshots
+	// (same access-control check as RestoreContainerToPath).
+	snaps, err := s.Snapshots(ctx, name, source)
+	if err != nil {
+		return "", err
+	}
+	if !snapshotBelongs(snaps, snapshotID) {
+		return "", fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+	}
+
+	// Resolve the destination. Empty targetSubPath → in-place (restic target "/",
+	// which writes each included path back to its absolute location). Otherwise
+	// resolve the alternate folder under the host mount (shared containment helper)
+	// and create it only after containment passes.
+	target := "/"
+	resolved := ""
+	if strings.TrimSpace(targetSubPath) != "" {
+		t, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+		if err != nil {
+			return "", errors.New("invalid target folder: must be a relative subpath under the host mount")
+		}
+		if err := paths.EnsureDir(t); err != nil {
+			return "", fmt.Errorf("create target folder: %w", err)
+		}
+		target = t
+		resolved = t
+	} else {
+		// In place writes each path back to its absolute location, so every path
+		// must sit within the host mount (defense-in-depth). Validate all up front
+		// so one bad entry fails the whole batch before anything is written. For an
+		// alternate folder this is unnecessary: restic writes under --target, which
+		// paths.Resolve already contained above.
+		for _, c := range cleaned {
+			if !paths.Within(s.cfg.HostMountRoot, c) {
+				return "", errors.New("restore file: path is outside the backup mount")
+			}
+		}
+	}
+
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return "", fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.repoFor(settings, "containers", source)
 	if err != nil {
-		return err
+		return "", err
 	}
-	// target "/" → restic writes the included path back to its absolute location.
-	return s.engine.RestoreInclude(ctx, repo, snapshotID, clean, "/", s.ModeFor(settings))
+	mode := s.ModeFor(settings)
+
+	for _, c := range cleaned {
+		if err := s.engine.RestoreInclude(ctx, repo, snapshotID, c, target, mode); err != nil {
+			return "", err
+		}
+	}
+	return resolved, nil
 }
 
 // RestoreContainerToPath extracts a whole container snapshot into an ALTERNATE

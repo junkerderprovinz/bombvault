@@ -126,7 +126,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Individual restore** — restore one container or one VM without touching the others.
 - **Flash restore is a `.zip` download** — pick a snapshot and it streams straight to your browser as `flash-<id>.zip`, ready to drop into the Unraid USB creator (or unzip onto a fresh USB). The live, running `/boot` is never touched, and because a zip carries no filesystem metadata there are no permission errors on the way out.
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
-- **File-level restore** — expand a container snapshot's **Files**, filter, and restore an individual file/folder back to its original location.
+- **File-level restore** — expand a container snapshot's **Files**, filter, **tick any number of files and folders**, then restore the whole selection **in place** (original locations) or **into a folder** you pick.
 
 ### Storage & scheduling
 
