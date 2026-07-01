@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, setIncludeAll, ApiError } from "../lib/api";
-import type { Container, MountInfo, StackMemberResult } from "../lib/api";
+import type { Container, MountInfo } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
@@ -796,25 +796,27 @@ function groupStacks(containers: Container[]): StackGroup[] {
 
 // StackCard is one compose stack: its name, members, and (in a collapsible panel)
 // a "Restore stack" action that restores every member stopped, then optionally
-// starts them in dependency order. Results are shown per member; on success it
-// asks the page to reload so the container list reflects the new state.
+// starts them in dependency order. The restore is ASYNC on the server (the POST
+// only acks {started:true} and carries no member results), so on start the card
+// shows a sticky "restore started" hint; per-member outcomes land in the run
+// history. Synchronous validation errors (empty stack, busy, …) show inline.
 function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: () => void; t: T }) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<StackMemberResult[] | null>(null);
+  const [started, setStarted] = useState(false);
 
   async function run() {
     if (!window.confirm(t("stack.restoreConfirm"))) return;
     setBusy(true);
     setError(null);
-    setResults(null);
+    setStarted(false);
     try {
       const res = await restoreStack(group.project, startInOrder, true, source);
       if (res.ok) {
-        setResults(res.members ?? []);
+        setStarted(true);
         onRestored(); // refresh the main list so run-state/orphan rows update
       } else {
         setError(res.error ?? t("settings.error"));
@@ -878,28 +880,17 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
             >
               {busy ? t("stack.restoring") : t("stack.restore")}
             </button>
-            {results && !busy && (
-              <span className="text-xs text-accent">{t("stack.restored")}</span>
-            )}
             {error && <span className="text-xs text-[#ff8389] break-words">{error}</span>}
           </div>
 
-          {results && results.length > 0 && (
-            <ul className="mt-1 flex flex-col gap-1">
-              {results.map((m) => (
-                <li key={m.name} className="flex items-center gap-2 text-[11px]">
-                  <span className="font-mono text-carbon-textSub">{m.name}</span>
-                  {m.error ? (
-                    <span className="text-[#ff8389] break-words">{m.error}</span>
-                  ) : (
-                    <span className="text-accent">
-                      {m.restored ? t("stack.memberRestored") : "—"}
-                      {m.started ? " + " + t("stack.memberStarted") : ""}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+          {/* Sticky async ack: the server runs the stack restore detached and the
+              ack carries no member results — per-member outcomes are in the run
+              history. This stays until the panel is used again (no auto-clear). */}
+          {started && !busy && (
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
+              <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+            </div>
           )}
         </div>
       )}

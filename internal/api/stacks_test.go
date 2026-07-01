@@ -2,12 +2,15 @@ package api_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -254,6 +257,129 @@ func TestRestoreStackRespectsRunState(t *testing.T) {
 		if c == "start:worker" {
 			t.Fatalf("a member stopped at backup must not be started: %v", d.calls)
 		}
+	}
+}
+
+// TestStartRestoreStackSingleFlight pins the async stack restore's guard model:
+// StartRestoreStack shares batchActive with every other backup/restore starter,
+// so while a stack restore is in flight every starter — including a second
+// stack restore and a backup — is rejected busy (started=false, no error). It
+// also pins per-member run recording (finding: outcomes must stay discoverable
+// after the async ack): each member's in-place restore records a kind
+// "restore" run via the orchestrator.
+//
+// Unlike the other stack tests this one must reach restic (so the restore can
+// be held in flight): with stackTestService's "/host/user" placeholder the
+// LOCAL repo resolves as missing, Snapshots comes back empty and every member
+// silently takes the recreate-only path — which never touches restic. A REMOTE
+// repo location skips the local-existence probe while the mount root stays
+// Linux-absolute (paths.Within needs "/"-rooted appdata paths).
+func TestStartRestoreStackSingleFlight(t *testing.T) {
+	d := &fakeServiceDocker{liveName: ""} // absent → fresh restore path
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Tags: []string{"container:web"}},
+			{ID: "bbbb2222", Tags: []string{"container:worker"}},
+		},
+	}
+	dir := t.TempDir()
+	const mountRoot = "/host/user"
+	cfg := config.Config{
+		AppKey:            strings.Repeat("a", 64),
+		DataDir:           dir,
+		HostMountRoot:     mountRoot,
+		FlashTemplatesDir: filepath.Join(dir, "flash"),
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "rest:http://127.0.0.1:8000/containers" // remote → no local-repo probe
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	seedStackTarget(t, st, mountRoot, "web", "app", "web", "")
+	seedStackTarget(t, st, mountRoot, "worker", "app", "worker", "")
+	ctx := context.Background()
+
+	started, err := svc.StartRestoreStack(ctx, "app", "local", true, true)
+	if err != nil || !started {
+		t.Fatalf("stack restore should start: started=%v err=%v", started, err)
+	}
+	// Wait until the first member's restore is inside the engine (in flight).
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		runs, _ := st.ListRuns(10)
+		t.Fatalf("stack restore never reached the engine; docker calls=%v runs=%+v restored=%v", d.calls, runs, eng.restored)
+	}
+
+	// Every starter sharing the guard must answer busy while it runs.
+	if started, err := svc.StartRestoreStack(ctx, "app", "local", true, true); err != nil || started {
+		t.Fatalf("second stack restore must be rejected busy: started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false); err != nil || started {
+		t.Fatalf("an in-place restore must be rejected busy: started=%v err=%v", started, err)
+	}
+	if svc.StartBackup(ctx, "web") {
+		t.Fatal("a backup must be rejected while a stack restore is in flight (shared guard)")
+	}
+
+	close(eng.blockRestore) // let the member restores finish
+	waitForBackupDone(t, svc)
+
+	// Run recording still happens per member: one successful kind "restore" run
+	// each, recorded by the orchestrator against the member's target row.
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restoreRuns := 0
+	for _, run := range runs {
+		if run.Kind == "restore" && run.Status == "success" {
+			restoreRuns++
+		}
+	}
+	if restoreRuns != 2 {
+		t.Fatalf("want one successful restore run per stack member (2), got %d (%+v)", restoreRuns, runs)
+	}
+}
+
+// TestStartRestoreStackValidationFailsFast pins the sync/async split of the
+// stack starter: confirmation, source, project and member enumeration all run
+// SYNCHRONOUSLY, so a bad request — including an empty stack — fails
+// immediately with a clear error, no goroutine is started, and the shared
+// single-flight guard is released right away.
+func TestStartRestoreStackValidationFailsFast(t *testing.T) {
+	d := &fakeServiceDocker{}
+	eng := &fakeResticEngine{}
+	svc, st, mountRoot := stackTestService(t, eng, d)
+	seedStackTarget(t, st, mountRoot, "web", "app", "web", "")
+	ctx := context.Background()
+
+	if started, err := svc.StartRestoreStack(ctx, "app", "local", true, false); !errors.Is(err, backup.ErrNotConfirmed) || started {
+		t.Fatalf("unconfirmed: want ErrNotConfirmed + not started, got started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestoreStack(ctx, "app", "nope", true, true); err == nil || started {
+		t.Fatalf("a bad source must fail synchronously, got started=%v err=%v", started, err)
+	}
+	if started, err := svc.StartRestoreStack(ctx, "ghost", "local", true, true); err == nil || !strings.Contains(err.Error(), "no backed-up containers") || started {
+		t.Fatalf("an empty stack must fail synchronously, got started=%v err=%v", started, err)
+	}
+
+	// Every failed validation must have released the guard (no goroutine holds
+	// it), so a later valid start is not wrongly answered "busy"...
+	if svc.BackupInProgress() {
+		t.Fatal("failed validation must release the single-flight guard")
+	}
+	// ...and nothing ever reached docker or restic.
+	if len(eng.restored) != 0 {
+		t.Fatalf("no restore must have run for rejected requests, got %v", eng.restored)
+	}
+	if len(d.calls) != 0 {
+		t.Fatalf("docker must not have been touched, got %v", d.calls)
 	}
 }
 

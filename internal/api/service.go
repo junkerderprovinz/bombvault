@@ -1749,6 +1749,13 @@ func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, c
 // restore described by an already-validated plan, publishing "container:<name>"
 // progress. The orchestrator records the run (kindRestore) itself.
 func (s *Service) executeRestore(ctx context.Context, name string, plan containerRestorePlan, leaveStopped bool) error {
+	// Hold the domain repo lock for the whole restic/docker phase. The scheduler
+	// calls Backup/BackupVM directly and bypasses the batchActive single-flight
+	// guard BY DESIGN — the domain lock is the one layer scheduled jobs do
+	// respect — so without it a detached multi-hour restore could overlap a
+	// scheduled backup of the same domain in both directions.
+	unlock := s.lockDomain("containers")
+	defer unlock()
 	rkey := "container:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
@@ -1773,6 +1780,15 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	return rerr
 }
 
+// restoreTimeout is the hard cap on every detached restore goroutine
+// (StartRestore/StartRestoreVM/StartRestoreFiles/StartRestoreToPath/
+// StartRestoreStack). Aborting a restore mid-flight is DESTRUCTIVE — the
+// container has already been removed and the appdata is partially written — so
+// unlike the 12h backup cap this one is deliberately generous: it exists only
+// so a truly wedged restic can't hold the single-flight guard (and the domain
+// lock) forever, never to bound a legitimate huge restore.
+const restoreTimeout = 48 * time.Hour
+
 // StartRestore launches an in-place container restore in a background goroutine
 // and returns immediately, mirroring StartBackup. This is the robust path for
 // long restores: the work runs ON THE SERVER, detached from the request, so a
@@ -1794,12 +1810,12 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 		return false, err
 	}
 	// Detach so the run is independent of the request that started it (canceled
-	// the moment the handler returns), with the same hard cap backups use so a
-	// wedged run can't hold the guard forever.
+	// the moment the handler returns), capped by restoreTimeout (see its comment
+	// for why the restore cap is far more generous than the backup one).
 	bctx := context.WithoutCancel(ctx)
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		if rerr := s.executeRestore(rctx, name, plan, leaveStopped); rerr != nil {
 			log.Printf("api: restore: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
@@ -2007,6 +2023,11 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 // stopped it, instead of a bare failure that hides that earlier paths were
 // already restored.
 func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) error {
+	// Hold the domain repo lock for the restic work: scheduled backups bypass
+	// batchActive by design and the domain lock is the layer they DO respect
+	// (see executeRestore).
+	unlock := s.lockDomain("containers")
+	defer unlock()
 	for i, c := range plan.paths {
 		if err := s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, c, plan.target, plan.mode); err != nil {
 			if len(plan.paths) > 1 {
@@ -2040,7 +2061,7 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 	bctx := context.WithoutCancel(ctx)
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		runID := s.beginRestoreRun(name)
 		rkey := "container:" + name
@@ -2205,6 +2226,11 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 // (everything). Reuses the existing restore-to-target engine method; "/"
 // includes all paths in the snapshot.
 func (s *Service) runRestoreToPath(ctx context.Context, plan toPathRestorePlan) error {
+	// Hold the domain repo lock for the restic work: scheduled backups bypass
+	// batchActive by design and the domain lock is the layer they DO respect
+	// (see executeRestore).
+	unlock := s.lockDomain("containers")
+	defer unlock()
 	return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, "/", plan.target, plan.mode)
 }
 
@@ -2231,7 +2257,7 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 	bctx := context.WithoutCancel(ctx)
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		runID := s.beginRestoreRun(name)
 		rkey := "container:" + name
@@ -3168,6 +3194,11 @@ func (s *Service) prepareRestoreVM(ctx context.Context, name, snapshotID string,
 // described by an already-validated plan, publishing "vm:<name>" progress. The
 // orchestrator records the run (kindRestore) itself.
 func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRestorePlan, leaveStopped bool) error {
+	// Hold the domain repo lock for the whole restic/libvirt phase: the scheduler
+	// calls BackupVM directly (bypassing batchActive by design) and the domain
+	// lock is the layer scheduled jobs DO respect (see executeRestore).
+	unlock := s.lockDomain("vms")
+	defer unlock()
 	rkey := "vm:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
@@ -3213,7 +3244,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 	bctx := context.WithoutCancel(ctx)
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, 12*time.Hour)
+		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		if rerr := s.executeRestoreVM(rctx, name, plan, leaveStopped); rerr != nil {
 			log.Printf("api: restore vm: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted

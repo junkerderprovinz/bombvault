@@ -494,6 +494,11 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 // The {project} is a compose project name, which is laxer than a container name
 // (validResourceName would wrongly reject some), so it gets its own minimal check
 // that still blocks path traversal / separators reaching the store enumeration.
+//
+// ASYNC (see handleRestore): validation + member enumeration run synchronously
+// (a bad request — including an empty stack — still fails right away); the
+// per-member restore + start loops run detached. Per-member outcomes land in
+// the run history (each member's restore records a kind "restore" run).
 func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
 	project := r.PathValue("project")
 	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
@@ -507,12 +512,16 @@ func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	res, err := h.svc.RestoreStack(r.Context(), project, sourceParam(r), body.StartAfter, body.Confirm)
+	started, err := h.svc.StartRestoreStack(r.Context(), project, sourceParam(r), body.StartAfter, body.Confirm)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"members": res.Members}))
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 // handleListFiles lists the files in a container snapshot for file-level restore.

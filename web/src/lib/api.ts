@@ -336,26 +336,23 @@ export function restore(
   });
 }
 
-/** Per-member outcome of a stack restore (POST /api/stacks/{project}/restore). */
-export interface StackMemberResult {
-  name: string;
-  service: string;
-  restored: boolean;
-  started: boolean;
-  error?: string;
-}
-
 /**
  * POST /api/stacks/{project}/restore — restore every backed-up container in a
  * compose stack from its latest backup, left stopped; when startAfter is true they
- * are then started in dependency order. Returns a per-member result list.
+ * are then started in dependency order.
+ *
+ * ASYNC (see restore): validation + member enumeration run synchronously (a bad
+ * request — including an empty stack — still answers ok:false right away), then
+ * the server returns {ok:true, started:true} and the per-member loops run
+ * detached. The ack carries NO member results; each member's restore records a
+ * kind "restore" run, so outcomes live in the run history.
  */
 export function restoreStack(
   project: string,
   startAfter: boolean,
   confirm: boolean,
   source?: string
-): Promise<{ ok: boolean; members?: StackMemberResult[]; error?: string }> {
+): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ startAfter, confirm }),
