@@ -477,6 +477,15 @@ const he: Partial<Translations> = {
   "jobs.flashNotImplemented": "הערה: מנוע גיבוי Flash טרם מומש בשלב 1 — לוח הזמנים נשמר אך אינו מורץ.",
   "schedule.includeAll": "כלול הכל בלוח הזמנים",
   "schedule.excludeAll": "החרג הכל מלוח הזמנים",
+
+  // Restore panel (#21)
+  "restore.open": "שחזור…",
+  "restore.mode.inPlace": "שחזור במקום המקורי",
+  "restore.mode.files": "קבצים בודדים",
+  "restore.mode.toFolder": "לתיקייה",
+  "restore.inPlaceHint": "צור מחדש את ה-container הזה בדיוק כפי שהיה.",
+  "settings.restoreFolder": "תיקיית שחזור ברירת מחדל",
+  "settings.restoreFolderHint": "היכן „שחזור לתיקייה‟ מחלץ snapshots כברירת מחדל.",
 };
 
 export default he;

@@ -472,6 +472,15 @@ const ru: Partial<Translations> = {
   "jobs.flashNotImplemented": "Примечание: исполнитель резервного копирования Flash в фазе 1 ещё не реализован — расписание сохраняется, но не выполняется.",
   "schedule.includeAll": "Включить все в расписание",
   "schedule.excludeAll": "Исключить все из расписания",
+
+  // Restore panel (#21)
+  "restore.open": "Восстановить…",
+  "restore.mode.inPlace": "Восстановить на месте",
+  "restore.mode.files": "Отдельные файлы",
+  "restore.mode.toFolder": "В папку",
+  "restore.inPlaceHint": "Пересоздать этот контейнер точно таким, каким он был.",
+  "settings.restoreFolder": "Папка восстановления по умолчанию",
+  "settings.restoreFolderHint": "Куда «восстановление в папку» по умолчанию распаковывает снимки.",
 };
 
 export default ru;

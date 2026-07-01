@@ -475,6 +475,15 @@ const cs: Partial<Translations> = {
   "jobs.flashNotImplemented": "Poznámka: Executor zálohování Flash zatím není ve fázi 1 implementován — plán se uloží, ale nespustí.",
   "schedule.includeAll": "Zahrnout vše do plánu",
   "schedule.excludeAll": "Vyřadit vše z plánu",
+
+  // Restore panel (#21)
+  "restore.open": "Obnovit…",
+  "restore.mode.inPlace": "Obnovit na místě",
+  "restore.mode.files": "Jednotlivé soubory",
+  "restore.mode.toFolder": "Do složky",
+  "restore.inPlaceHint": "Znovu vytvořit tento kontejner přesně tak, jak byl.",
+  "settings.restoreFolder": "Výchozí složka pro obnovu",
+  "settings.restoreFolderHint": "Kam „obnovit do složky“ ve výchozím nastavení rozbaluje snímky.",
 };
 
 export default cs;

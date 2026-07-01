@@ -472,6 +472,15 @@ const pl: Partial<Translations> = {
   "jobs.flashNotImplemented": "Uwaga: executor kopii Flash nie jest jeszcze zaimplementowany w fazie 1 — harmonogram jest zapisywany, ale nie wykonywany.",
   "schedule.includeAll": "Uwzględnij wszystkie w harmonogramie",
   "schedule.excludeAll": "Wyklucz wszystkie z harmonogramu",
+
+  // Restore panel (#21)
+  "restore.open": "Przywróć…",
+  "restore.mode.inPlace": "Przywróć w oryginalnym miejscu",
+  "restore.mode.files": "Pojedyncze pliki",
+  "restore.mode.toFolder": "Do folderu",
+  "restore.inPlaceHint": "Odtwórz ten kontener dokładnie tak, jak był.",
+  "settings.restoreFolder": "Domyślny folder przywracania",
+  "settings.restoreFolderHint": "Gdzie „przywróć do folderu” domyślnie wypakowuje migawki.",
 };
 
 export default pl;

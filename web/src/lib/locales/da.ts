@@ -477,6 +477,15 @@ const da: Partial<Translations> = {
   "jobs.flashNotImplemented": "Bemærk: Flash-sikkerhedskopieringseksekutoren er endnu ikke implementeret i fase 1 — tidsplanen gemmes, men køres ikke.",
   "schedule.includeAll": "Inkluder alle i tidsplanen",
   "schedule.excludeAll": "Ekskluder alle fra tidsplanen",
+
+  // Restore panel (#21)
+  "restore.open": "Gendan…",
+  "restore.mode.inPlace": "Gendan på plads",
+  "restore.mode.files": "Enkelte filer",
+  "restore.mode.toFolder": "Til en mappe",
+  "restore.inPlaceHint": "Genskab denne container præcis som den var.",
+  "settings.restoreFolder": "Standardmappe til gendannelse",
+  "settings.restoreFolderHint": "Hvor »gendan til en mappe« som standard pakker øjebliksbilleder ud.",
 };
 
 export default da;

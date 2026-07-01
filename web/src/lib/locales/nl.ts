@@ -474,6 +474,15 @@ const nl: Partial<Translations> = {
   "jobs.flashNotImplemented": "Let op: de Flash-back-upuitvoerder is in fase 1 nog niet geïmplementeerd — de planning wordt opgeslagen maar niet uitgevoerd.",
   "schedule.includeAll": "Alles in planning opnemen",
   "schedule.excludeAll": "Alles uit planning uitsluiten",
+
+  // Restore panel (#21)
+  "restore.open": "Herstellen…",
+  "restore.mode.inPlace": "Op oorspronkelijke plek herstellen",
+  "restore.mode.files": "Losse bestanden",
+  "restore.mode.toFolder": "Naar een map",
+  "restore.inPlaceHint": "Deze container exact herstellen zoals hij was.",
+  "settings.restoreFolder": "Standaard herstelmap",
+  "settings.restoreFolderHint": "Waar „naar een map herstellen” snapshots standaard uitpakt.",
 };
 
 export default nl;

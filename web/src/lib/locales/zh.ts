@@ -469,6 +469,15 @@ const zh: Partial<Translations> = {
   "jobs.flashNotImplemented": "注意：Flash 备份执行器在第 1 阶段尚未实现——计划会被保存但不会执行。",
   "schedule.includeAll": "全部加入计划",
   "schedule.excludeAll": "全部移出计划",
+
+  // Restore panel (#21)
+  "restore.open": "还原…",
+  "restore.mode.inPlace": "原地还原",
+  "restore.mode.files": "单个文件",
+  "restore.mode.toFolder": "还原到文件夹",
+  "restore.inPlaceHint": "将此容器完全按原样重新创建。",
+  "settings.restoreFolder": "默认还原文件夹",
+  "settings.restoreFolderHint": "“还原到文件夹”默认解压快照的位置。",
 };
 
 export default zh;

@@ -15,6 +15,10 @@ type Settings struct {
 	ContainersPath    string
 	VMsPath           string
 	FlashPath         string
+	// RestoreFolder is the default folder for "restore to a folder": a relative
+	// subpath under the host mount that pre-fills the restore-to-folder picker
+	// (same style as the backup-path settings).
+	RestoreFolder string
 	// Optional off-site repo per domain. When set, a successful local backup is
 	// replicated there with `restic copy` (the local repo stays primary). Empty
 	// means no off-site copy for that domain.
@@ -90,7 +94,7 @@ type Settings struct {
 func (r *Repo) GetSettings() (Settings, error) {
 	row := r.db.QueryRow(`
 		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled,
-		       containers_path, vms_path, flash_path,
+		       containers_path, vms_path, flash_path, restore_folder,
 		       containers_offsite, vms_offsite, flash_offsite,
 		       containers_offsite_schedule, vms_offsite_schedule, flash_offsite_schedule,
 		       containers_schedule, vms_schedule, flash_schedule,
@@ -108,7 +112,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled, drillsEnabled, recoveryKitAck int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
-		&s.ContainersPath, &s.VMsPath, &s.FlashPath,
+		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.RestoreFolder,
 		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite,
 		&s.ContainersOffsiteSchedule, &s.VMsOffsiteSchedule, &s.FlashOffsiteSchedule,
 		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule,
@@ -148,6 +152,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  containers_path     = ?,
 		  vms_path            = ?,
 		  flash_path          = ?,
+		  restore_folder      = ?,
 		  containers_offsite  = ?,
 		  vms_offsite         = ?,
 		  flash_offsite       = ?,
@@ -183,7 +188,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.ContainersEnabled),
 		boolInt(s.VMsEnabled),
 		boolInt(s.FlashEnabled),
-		s.ContainersPath, s.VMsPath, s.FlashPath,
+		s.ContainersPath, s.VMsPath, s.FlashPath, s.RestoreFolder,
 		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite,
 		s.ContainersOffsiteSchedule, s.VMsOffsiteSchedule, s.FlashOffsiteSchedule,
 		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule,

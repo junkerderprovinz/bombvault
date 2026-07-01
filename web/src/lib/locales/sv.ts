@@ -477,6 +477,15 @@ const sv: Partial<Translations> = {
   "jobs.flashNotImplemented": "Obs: Flash-säkerhetskopieringsexekutorn är ännu inte implementerad i fas 1 — schemat sparas men körs inte.",
   "schedule.includeAll": "Inkludera alla i schemat",
   "schedule.excludeAll": "Exkludera alla från schemat",
+
+  // Restore panel (#21)
+  "restore.open": "Återställ…",
+  "restore.mode.inPlace": "Återställ på plats",
+  "restore.mode.files": "Enskilda filer",
+  "restore.mode.toFolder": "Till en mapp",
+  "restore.inPlaceHint": "Återskapa den här containern precis som den var.",
+  "settings.restoreFolder": "Standardmapp för återställning",
+  "settings.restoreFolderHint": "Vart ”återställ till en mapp” packar upp ögonblicksbilder som standard.",
 };
 
 export default sv;

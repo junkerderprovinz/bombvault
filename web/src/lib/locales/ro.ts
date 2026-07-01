@@ -480,6 +480,15 @@ const ro: Partial<Translations> = {
   "jobs.flashNotImplemented": "Notă: Executorul de backup Flash nu este încă implementat în Faza 1 — programarea este salvată, dar nu este executată.",
   "schedule.includeAll": "Include toate în programare",
   "schedule.excludeAll": "Exclude toate din programare",
+
+  // Restore panel (#21)
+  "restore.open": "Restaurare…",
+  "restore.mode.inPlace": "Restaurare pe loc",
+  "restore.mode.files": "Fișiere individuale",
+  "restore.mode.toFolder": "Într-un folder",
+  "restore.inPlaceHint": "Recreează acest container exact așa cum era.",
+  "settings.restoreFolder": "Folder de restaurare implicit",
+  "settings.restoreFolderHint": "Unde extrage implicit „restaurează într-un folder” instantaneele.",
 };
 
 export default ro;

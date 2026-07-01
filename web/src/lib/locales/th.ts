@@ -480,6 +480,15 @@ const th: Partial<Translations> = {
   "jobs.flashNotImplemented": "หมายเหตุ: ตัวประมวลผลสำรองข้อมูล Flash ยังไม่ได้พัฒนาในเฟส 1 — ตารางเวลาจะถูกบันทึกแต่ไม่ถูกดำเนินการ",
   "schedule.includeAll": "รวมทั้งหมดในตารางเวลา",
   "schedule.excludeAll": "ยกเว้นทั้งหมดจากตารางเวลา",
+
+  // Restore panel (#21)
+  "restore.open": "กู้คืน…",
+  "restore.mode.inPlace": "กู้คืนที่ตำแหน่งเดิม",
+  "restore.mode.files": "ไฟล์แต่ละไฟล์",
+  "restore.mode.toFolder": "ไปยังโฟลเดอร์",
+  "restore.inPlaceHint": "สร้างคอนเทนเนอร์นี้ใหม่ให้เหมือนเดิมทุกประการ",
+  "settings.restoreFolder": "โฟลเดอร์กู้คืนเริ่มต้น",
+  "settings.restoreFolderHint": "ตำแหน่งที่ «กู้คืนไปยังโฟลเดอร์» แตกสแนปช็อตตามค่าเริ่มต้น",
 };
 
 export default th;

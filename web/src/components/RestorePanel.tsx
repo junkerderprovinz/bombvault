@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot } from "../lib/api";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFile, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
+import { FolderBrowser } from "./FolderBrowser";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -327,21 +328,26 @@ type RestoreState =
   | { phase: "error"; message: string };
 
 // RestoreToFolder extracts a whole snapshot into an ALTERNATE folder under the
-// host mount — non-destructive: the running container is never touched. It
-// reveals a path input + a confirm button, calls restoreContainerToPath, and
-// shows the resolved target path on success (errors inline).
+// host mount — non-destructive: the running container is never touched. It uses
+// the shared FolderBrowser (a folder-tree picker) pre-filled with the default
+// restore folder, calls restoreContainerToPath, and shows the resolved target
+// path on success (errors inline).
 function RestoreToFolder({
   containerName,
   snapshotId,
   source,
+  hostMountRoot,
+  defaultFolder,
   t,
 }: {
   containerName: string;
   snapshotId: string;
   source: string;
+  hostMountRoot: string;
+  defaultFolder: string;
   t: T;
 }) {
-  const [path, setPath] = useState("");
+  const [path, setPath] = useState(defaultFolder);
   const [state, setState] = useState<RestoreState>({ phase: "idle" });
   const [target, setTarget] = useState("");
 
@@ -363,23 +369,20 @@ function RestoreToFolder({
   }
 
   const isPending = state.phase === "pending";
+  const done = state.phase === "success";
   return (
-    <div className="mt-1 ml-24 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-1.5">
+    <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-1.5">
       <p className="text-[11px] text-carbon-textMuted">{t("restore.toFolderHint")}</p>
+      <FolderBrowser
+        label={t("restore.targetPath")}
+        value={path}
+        hostMountRoot={hostMountRoot}
+        onChange={setPath}
+      />
       <div className="flex items-center gap-2">
-        <span className="text-xs text-carbon-textSub shrink-0">{t("restore.targetPath")}</span>
-        <input
-          type="text"
-          value={path}
-          onChange={(e) => setPath(e.target.value)}
-          placeholder={`user/restore/${containerName}`}
-          spellCheck={false}
-          disabled={isPending || state.phase === "success"}
-          className="flex-1 rounded bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-none focus:border-[#78a9ff]"
-        />
         <button
           onClick={() => void handle()}
-          disabled={!path.trim() || isPending || state.phase === "success"}
+          disabled={!path.trim() || isPending || done}
           className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPending ? t("common.restoring") : t("restore.confirm")}
@@ -601,10 +604,15 @@ function SnapshotTags({
   );
 }
 
+// RestoreMode selects which of the three restore flows the inline panel shows.
+type RestoreMode = "inPlace" | "files" | "toFolder";
+
 function SnapshotRow({
   snap,
   containerName,
   source,
+  hostMountRoot,
+  defaultFolder,
   onDeleted,
   onTagged,
   t,
@@ -612,14 +620,17 @@ function SnapshotRow({
   snap: Snapshot;
   containerName: string;
   source: string;
+  hostMountRoot: string;
+  defaultFolder: string;
   onDeleted: () => void;
   onTagged: () => void;
   t: T;
 }) {
   const [confirmed, setConfirmed] = useState(false);
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
-  const [showFiles, setShowFiles] = useState(false);
-  const [showRestoreTo, setShowRestoreTo] = useState(false);
+  // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
+  const [showRestore, setShowRestore] = useState(false);
+  const [mode, setMode] = useState<RestoreMode>("inPlace");
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -655,6 +666,8 @@ function SnapshotRow({
   }
 
   const isPending = restoreState.phase === "pending";
+  // Group name so the three radios are mutually exclusive PER snapshot.
+  const radioName = `restore-mode-${snap.id}`;
 
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
@@ -672,57 +685,14 @@ function SnapshotRow({
           <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
         </div>
 
-        {/* Confirm checkbox */}
-        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer shrink-0">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            disabled={isPending || restoreState.phase === "success"}
-            className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("restore.confirm")}
-        </label>
-
-        {/* Files (file-level restore) toggle */}
+        {/* Consolidated restore toggle: opens the inline panel with 3 modes */}
         <button
-          onClick={() => setShowFiles((p) => !p)}
+          onClick={() => setShowRestore((p) => !p)}
           className={`shrink-0 rounded-lg border border-carbon-border px-2.5 py-1 text-xs transition-colors ${
-            showFiles ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+            showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
-          {t("snapshots.files")}
-        </button>
-
-        {/* Restore to an alternate folder (non-destructive) toggle */}
-        <button
-          onClick={() => setShowRestoreTo((p) => !p)}
-          title={t("restore.toFolderHint")}
-          className={`shrink-0 rounded-lg border border-carbon-border px-2.5 py-1 text-xs transition-colors ${
-            showRestoreTo ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {t("restore.toFolder")}
-        </button>
-
-        {/* Restore button */}
-        <button
-          onClick={() => void handleRestore()}
-          disabled={!confirmed || isPending || restoreState.phase === "success"}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-        >
-          {isPending ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.restoring")}
-            </>
-          ) : (
-            t("snapshots.restore")
-          )}
+          {t("restore.open")}
         </button>
 
         {/* Delete this backup (restic forget) */}
@@ -737,30 +707,118 @@ function SnapshotRow({
       </div>
       {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
 
-      {/* File-level restore browser */}
-      {showFiles && (
-        <SnapshotFileBrowser containerName={containerName} snapshotId={snap.id} source={source} t={t} />
-      )}
+      {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
+      {showRestore && (
+        <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={radioName}
+                checked={mode === "inPlace"}
+                onChange={() => setMode("inPlace")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("restore.mode.inPlace")}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={radioName}
+                checked={mode === "files"}
+                onChange={() => setMode("files")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("restore.mode.files")}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={radioName}
+                checked={mode === "toFolder"}
+                onChange={() => setMode("toFolder")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("restore.mode.toFolder")}
+            </label>
+          </div>
 
-      {/* Restore to an alternate folder (non-destructive) */}
-      {showRestoreTo && (
-        <RestoreToFolder containerName={containerName} snapshotId={snap.id} source={source} t={t} />
-      )}
+          {/* In place — the destructive recreate (confirm-gated). */}
+          {mode === "inPlace" && (
+            <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
+              <p className="text-[11px] text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="flex items-center gap-1.5 text-carbon-textSub cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    onChange={(e) => setConfirmed(e.target.checked)}
+                    disabled={isPending || restoreState.phase === "success"}
+                    className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  {t("restore.confirm")}
+                </label>
+                <button
+                  onClick={() => void handleRestore()}
+                  disabled={!confirmed || isPending || restoreState.phase === "success"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                >
+                  {isPending ? (
+                    <>
+                      <span
+                        className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                        style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+                      />
+                      {t("common.restoring")}
+                    </>
+                  ) : (
+                    t("snapshots.restore")
+                  )}
+                </button>
+              </div>
+              {restoreState.phase === "success" && (
+                <p className="text-xs text-[#6fdc8c]">
+                  Restore complete — container is being recreated.
+                </p>
+              )}
+              {restoreState.phase === "error" && (
+                <p className="text-xs text-[#ff8389] break-words">
+                  {restoreState.message}
+                </p>
+              )}
+            </div>
+          )}
 
-      {/* Inline result */}
-      {restoreState.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c] pl-24">
-          Restore complete — container is being recreated.
-        </p>
-      )}
-      {restoreState.phase === "error" && (
-        <p className="text-xs text-[#ff8389] pl-24 break-words">
-          {restoreState.message}
-        </p>
+          {/* Individual files — file-level restore (unchanged browser). */}
+          {mode === "files" && (
+            <div className="border-t border-carbon-border pt-2">
+              <SnapshotFileBrowser containerName={containerName} snapshotId={snap.id} source={source} t={t} />
+            </div>
+          )}
+
+          {/* To a folder — extract into an alternate folder via the tree picker. */}
+          {mode === "toFolder" && (
+            <div className="border-t border-carbon-border pt-2">
+              <RestoreToFolder
+                containerName={containerName}
+                snapshotId={snap.id}
+                source={source}
+                hostMountRoot={hostMountRoot}
+                defaultFolder={defaultFolder}
+                t={t}
+              />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
 }
+
+// DEFAULT_RESTORE_FOLDER is the fallback pre-fill for the restore-to-folder
+// picker when the settings value is empty (matches the backend column default).
+const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
 export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
   const [open, setOpen] = useState(false);
@@ -768,12 +826,30 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Restore-to-folder needs the default folder + host mount root to seed the
+  // FolderBrowser. Fetched once the panel is opened (not on mount).
+  const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
+  const [hostMountRoot, setHostMountRoot] = useState("/host/user");
 
   function toggle() {
     setOpen((prev) => !prev);
   }
 
   const [reloadTick, setReloadTick] = useState(0);
+
+  // Load the default restore folder + host mount root the first time the panel
+  // is opened, so the restore-to-folder picker can pre-fill them.
+  useEffect(() => {
+    if (!open) return;
+    getSettings()
+      .then((res) => {
+        if (res.ok) {
+          setRestoreFolder(res.settings.restoreFolder || DEFAULT_RESTORE_FOLDER);
+          if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+        }
+      })
+      .catch(() => undefined);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -849,6 +925,8 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               snap={snap}
               containerName={name}
               source={source}
+              hostMountRoot={hostMountRoot}
+              defaultFolder={restoreFolder}
               onDeleted={() => setReloadTick((n) => n + 1)}
               onTagged={() => setReloadTick((n) => n + 1)}
               t={t}

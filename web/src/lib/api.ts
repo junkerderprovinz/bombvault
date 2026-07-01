@@ -82,6 +82,7 @@ export interface Settings {
   containersPath: string;
   vmsPath: string;
   flashPath: string;
+  restoreFolder: string;
   containersOffsite: string;
   vmsOffsite: string;
   flashOffsite: string;

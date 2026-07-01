@@ -469,6 +469,15 @@ const ja: Partial<Translations> = {
   "jobs.flashNotImplemented": "注意: フラッシュバックアップの実行機能はフェーズ 1 ではまだ未実装です — スケジュールは保存されますが実行されません。",
   "schedule.includeAll": "すべてスケジュールに含める",
   "schedule.excludeAll": "すべてスケジュールから除外",
+
+  // Restore panel (#21)
+  "restore.open": "復元…",
+  "restore.mode.inPlace": "元の場所に復元",
+  "restore.mode.files": "個別ファイル",
+  "restore.mode.toFolder": "フォルダーに",
+  "restore.inPlaceHint": "このコンテナを以前とまったく同じに再作成します。",
+  "settings.restoreFolder": "既定の復元フォルダー",
+  "settings.restoreFolderHint": "「フォルダーに復元」がスナップショットを既定で展開する場所。",
 };
 
 export default ja;
