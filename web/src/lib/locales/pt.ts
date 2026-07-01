@@ -499,6 +499,7 @@ const pt: Partial<Translations> = {
   "restore.mode.toFolder": "Para uma pasta",
   "restore.inPlaceHint": "Recriar este container exatamente como estava.",
   "restore.leaveStopped": "Deixar parado após o restauro (não iniciar)",
+  "restore.bgHint": "Roda em segundo plano: você pode fechar este painel; o resultado aparecerá no histórico de execuções.",
   "stack.title": "Stacks",
   "stack.restore": "Restaurar stack…",
   "stack.members": "{n} containers",

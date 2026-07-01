@@ -499,6 +499,7 @@ const it: Partial<Translations> = {
   "restore.mode.toFolder": "In una cartella",
   "restore.inPlaceHint": "Ricrea questo container esattamente com'era.",
   "restore.leaveStopped": "Lascia fermo dopo il ripristino (non avviarlo)",
+  "restore.bgHint": "Gira in background: puoi chiudere questo pannello; il risultato apparirà nella cronologia delle esecuzioni.",
   "stack.title": "Stack",
   "stack.restore": "Ripristina stack…",
   "stack.members": "{n} container",

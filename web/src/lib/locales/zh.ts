@@ -491,6 +491,7 @@ const zh: Partial<Translations> = {
   "restore.mode.toFolder": "还原到文件夹",
   "restore.inPlaceHint": "将此容器完全按原样重新创建。",
   "restore.leaveStopped": "还原后保持停止状态（不启动）",
+  "restore.bgHint": "正在后台运行——你可以关闭此面板；结果会显示在运行历史中。",
   "stack.title": "堆栈",
   "stack.restore": "还原堆栈…",
   "stack.members": "{n} 个容器",

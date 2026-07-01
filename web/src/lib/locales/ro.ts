@@ -502,6 +502,7 @@ const ro: Partial<Translations> = {
   "restore.mode.toFolder": "Într-un folder",
   "restore.inPlaceHint": "Recreează acest container exact așa cum era.",
   "restore.leaveStopped": "Lasă oprit după restaurare (nu îl porni)",
+  "restore.bgHint": "Rulează în fundal — poți închide acest panou; rezultatul va apărea în istoricul rulărilor.",
   "stack.title": "Stack-uri",
   "stack.restore": "Restaurează stack-ul…",
   "stack.members": "{n} containere",

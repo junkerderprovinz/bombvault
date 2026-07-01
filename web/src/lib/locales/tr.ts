@@ -499,6 +499,7 @@ const tr: Partial<Translations> = {
   "restore.mode.toFolder": "Bir klasöre",
   "restore.inPlaceHint": "Bu konteyneri tam olarak eski haliyle yeniden oluştur.",
   "restore.leaveStopped": "Geri yükledikten sonra durdurulmuş bırak (başlatma)",
+  "restore.bgHint": "Arka planda çalışıyor — bu paneli kapatabilirsiniz; sonuç çalışma geçmişinde görünecek.",
   "stack.title": "Stack'ler",
   "stack.restore": "Stack'i geri yükle…",
   "stack.members": "{n} konteyner",

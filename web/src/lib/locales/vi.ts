@@ -491,6 +491,7 @@ const vi: Partial<Translations> = {
   "restore.mode.toFolder": "Vào một thư mục",
   "restore.inPlaceHint": "Tạo lại container này y hệt như trước.",
   "restore.leaveStopped": "Để nguyên trạng thái dừng sau khi khôi phục (không khởi động)",
+  "restore.bgHint": "Đang chạy trong nền — bạn có thể đóng bảng này; kết quả sẽ hiển thị trong lịch sử chạy.",
   "stack.title": "Stack",
   "stack.restore": "Khôi phục stack…",
   "stack.members": "{n} container",

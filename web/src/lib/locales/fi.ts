@@ -499,6 +499,7 @@ const fi: Partial<Translations> = {
   "restore.mode.toFolder": "Kansioon",
   "restore.inPlaceHint": "Luo tämä kontti uudelleen täsmälleen entisellään.",
   "restore.leaveStopped": "Jätä pysäytetyksi palautuksen jälkeen (älä käynnistä)",
+  "restore.bgHint": "Suoritetaan taustalla — voit sulkea tämän paneelin; tulos näkyy ajohistoriassa.",
   "stack.title": "Stackit",
   "stack.restore": "Palauta stack…",
   "stack.members": "{n} konttia",

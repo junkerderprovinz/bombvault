@@ -499,6 +499,7 @@ const no: Partial<Translations> = {
   "restore.mode.toFolder": "Til en mappe",
   "restore.inPlaceHint": "Gjenopprett denne kontaineren nøyaktig slik den var.",
   "restore.leaveStopped": "La den være stoppet etter gjenoppretting (ikke start den)",
+  "restore.bgHint": "Kjører i bakgrunnen — du kan lukke dette panelet; resultatet vises i kjørehistorikken.",
   "stack.title": "Stacker",
   "stack.restore": "Gjenopprett stack…",
   "stack.members": "{n} kontainere",

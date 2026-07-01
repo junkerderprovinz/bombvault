@@ -491,6 +491,7 @@ const ko: Partial<Translations> = {
   "restore.mode.toFolder": "폴더로",
   "restore.inPlaceHint": "이 컨테이너를 이전과 정확히 동일하게 다시 만듭니다.",
   "restore.leaveStopped": "복원 후 중지된 상태로 두기 (시작하지 않음)",
+  "restore.bgHint": "백그라운드에서 실행 중입니다 — 이 패널을 닫아도 됩니다. 결과는 실행 기록에 표시됩니다.",
   "stack.title": "스택",
   "stack.restore": "스택 복원…",
   "stack.members": "컨테이너 {n}개",

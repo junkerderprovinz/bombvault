@@ -499,6 +499,7 @@ const he: Partial<Translations> = {
   "restore.mode.toFolder": "לתיקייה",
   "restore.inPlaceHint": "צור מחדש את ה-container הזה בדיוק כפי שהיה.",
   "restore.leaveStopped": "השאר עצור לאחר השחזור (אל תפעיל)",
+  "restore.bgHint": "פועל ברקע — אפשר לסגור את הלוח הזה; התוצאה תופיע בהיסטוריית ההרצות.",
   "stack.title": "Stacks",
   "stack.restore": "שחזור stack…",
   "stack.members": "{n} containers",

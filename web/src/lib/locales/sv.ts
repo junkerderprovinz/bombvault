@@ -499,6 +499,7 @@ const sv: Partial<Translations> = {
   "restore.mode.toFolder": "Till en mapp",
   "restore.inPlaceHint": "Återskapa den här containern precis som den var.",
   "restore.leaveStopped": "Lämna stoppad efter återställning (starta den inte)",
+  "restore.bgHint": "Körs i bakgrunden — du kan stänga den här panelen; resultatet visas i körningshistoriken.",
   "stack.title": "Stackar",
   "stack.restore": "Återställ stack…",
   "stack.members": "{n} containrar",

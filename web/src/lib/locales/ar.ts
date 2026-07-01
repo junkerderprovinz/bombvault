@@ -502,6 +502,7 @@ const ar: Partial<Translations> = {
   "restore.mode.toFolder": "إلى مجلد",
   "restore.inPlaceHint": "إعادة إنشاء هذا الـ container تماماً كما كان.",
   "restore.leaveStopped": "تركه متوقفاً بعد الاستعادة (عدم تشغيله)",
+  "restore.bgHint": "تعمل في الخلفية — يمكنك إغلاق هذه اللوحة؛ ستظهر النتيجة في سجل التشغيلات.",
   "stack.title": "الـ Stacks",
   "stack.restore": "استعادة الـ stack…",
   "stack.members": "{n} من الـ containers",
