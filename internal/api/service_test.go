@@ -1665,7 +1665,7 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
-	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true, "")
+	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true, "", false)
 	if restoreErr != nil {
 		t.Fatalf("restore must succeed with stored definition: %v", restoreErr)
 	}

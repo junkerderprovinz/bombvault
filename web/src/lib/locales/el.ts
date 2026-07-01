@@ -489,6 +489,7 @@ const el: Partial<Translations> = {
   "restore.mode.files": "Μεμονωμένα αρχεία",
   "restore.mode.toFolder": "Σε φάκελο",
   "restore.inPlaceHint": "Αναδημιουργήστε αυτό το container ακριβώς όπως ήταν.",
+  "restore.leaveStopped": "Άφησέ το σταματημένο μετά την επαναφορά (μην το ξεκινήσεις)",
   "settings.restoreFolder": "Προεπιλεγμένος φάκελος επαναφοράς",
   "settings.restoreFolderHint": "Πού εξάγει τα στιγμιότυπα από προεπιλογή η «επαναφορά σε φάκελο».",
 };

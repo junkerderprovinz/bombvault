@@ -343,6 +343,9 @@ function VMSnapshotRow({
   t: T;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  // leaveStopped overrides the captured run-state so the VM is restored but not
+  // booted (mirrors the container restore option).
+  const [leaveStopped, setLeaveStopped] = useState(false);
   type RestoreState =
     | { phase: "idle" }
     | { phase: "pending" }
@@ -371,7 +374,7 @@ function VMSnapshotRow({
     if (!confirmed) return;
     setRestoreState({ phase: "pending" });
     try {
-      const res = await restoreVM(vmName, snap.id, true, source);
+      const res = await restoreVM(vmName, snap.id, true, source, leaveStopped);
       if (res.ok) {
         setRestoreState({ phase: "success" });
       } else {
@@ -436,6 +439,18 @@ function VMSnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
+      {/* Leave stopped: restore the VM but don't boot it. */}
+      <label className="flex items-center gap-1.5 text-[11px] text-carbon-textSub cursor-pointer pl-24">
+        <input
+          type="checkbox"
+          checked={leaveStopped}
+          onChange={(e) => setLeaveStopped(e.target.checked)}
+          disabled={isPending || restoreState.phase === "success"}
+          className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+          style={{ accentColor: "var(--accent)" }}
+        />
+        {t("restore.leaveStopped")}
+      </label>
       {restoreState.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] pl-24">
           Restore complete — VM disks have been replaced.

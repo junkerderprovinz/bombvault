@@ -254,12 +254,12 @@ func (c *Client) Pull(ctx context.Context, img string) error {
 	return nil
 }
 
-// CreateAndStart recreates a container from a captured inspect and starts it.
-// Security-relevant fields (User, Cap*, Privileged, SecurityOpt,
-// ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/RestartPolicy/
-// Env/Cmd/Image are preserved so the recreated container never gains privilege
-// over the original.
-func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect) error {
+// CreateAndStart recreates a container from a captured inspect and starts it
+// when start is true. Security-relevant fields (User, Cap*, Privileged,
+// SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/
+// RestartPolicy/Env/Cmd/Image are preserved so the recreated container never
+// gains privilege over the original.
+func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start bool) error {
 	cfg, hostCfg := buildCreateConfig(in)
 	name := normalizeName(in.Name)
 	netCfg := buildNetworkingConfig(in)
@@ -278,9 +278,10 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect) error {
 			log.Printf("dockercli: restore %q: reconnect network %q failed (continuing): %v", name, n.Name, cErr)
 		}
 	}
-	// Only start if the container was running when it was backed up — restore
-	// recreates it in its captured state rather than always starting it.
-	if !in.Running {
+	// Start only when the caller asked for it (it decides from the captured
+	// run-state and the "leave stopped" restore option) — restore recreates the
+	// container in its captured state rather than always starting it.
+	if !start {
 		return nil
 	}
 	if err := c.api.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {

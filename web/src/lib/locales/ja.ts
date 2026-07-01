@@ -481,6 +481,7 @@ const ja: Partial<Translations> = {
   "restore.mode.files": "個別ファイル",
   "restore.mode.toFolder": "フォルダーに",
   "restore.inPlaceHint": "このコンテナを以前とまったく同じに再作成します。",
+  "restore.leaveStopped": "復元後に停止したままにする（起動しない）",
   "settings.restoreFolder": "既定の復元フォルダー",
   "settings.restoreFolderHint": "「フォルダーに復元」がスナップショットを既定で展開する場所。",
 };

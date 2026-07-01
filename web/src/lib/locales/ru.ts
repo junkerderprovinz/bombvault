@@ -484,6 +484,7 @@ const ru: Partial<Translations> = {
   "restore.mode.files": "Отдельные файлы",
   "restore.mode.toFolder": "В папку",
   "restore.inPlaceHint": "Пересоздать этот контейнер точно таким, каким он был.",
+  "restore.leaveStopped": "Оставить остановленным после восстановления (не запускать)",
   "settings.restoreFolder": "Папка восстановления по умолчанию",
   "settings.restoreFolderHint": "Куда «восстановление в папку» по умолчанию распаковывает снимки.",
 };

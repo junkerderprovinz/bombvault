@@ -492,6 +492,7 @@ const ro: Partial<Translations> = {
   "restore.mode.files": "Fișiere individuale",
   "restore.mode.toFolder": "Într-un folder",
   "restore.inPlaceHint": "Recreează acest container exact așa cum era.",
+  "restore.leaveStopped": "Lasă oprit după restaurare (nu îl porni)",
   "settings.restoreFolder": "Folder de restaurare implicit",
   "settings.restoreFolderHint": "Unde extrage implicit „restaurează într-un folder” instantaneele.",
 };

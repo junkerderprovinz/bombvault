@@ -316,11 +316,12 @@ export function restore(
   name: string,
   snapshotId: string,
   confirm: boolean,
-  source?: string
+  source?: string,
+  leaveStopped?: boolean
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
   });
 }
 
@@ -824,11 +825,12 @@ export function restoreVM(
   name: string,
   snapshotId: string,
   confirm: boolean,
-  source?: string
+  source?: string,
+  leaveStopped?: boolean
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
   });
 }
 

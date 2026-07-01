@@ -487,6 +487,7 @@ const cs: Partial<Translations> = {
   "restore.mode.files": "Jednotlivé soubory",
   "restore.mode.toFolder": "Do složky",
   "restore.inPlaceHint": "Znovu vytvořit tento kontejner přesně tak, jak byl.",
+  "restore.leaveStopped": "Po obnovení nechat zastavené (nespouštět)",
   "settings.restoreFolder": "Výchozí složka pro obnovu",
   "settings.restoreFolderHint": "Kam „obnovit do složky“ ve výchozím nastavení rozbaluje snímky.",
 };

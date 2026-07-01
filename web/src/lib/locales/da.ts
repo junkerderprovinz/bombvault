@@ -489,6 +489,7 @@ const da: Partial<Translations> = {
   "restore.mode.files": "Enkelte filer",
   "restore.mode.toFolder": "Til en mappe",
   "restore.inPlaceHint": "Genskab denne container præcis som den var.",
+  "restore.leaveStopped": "Lad den være stoppet efter gendannelse (start den ikke)",
   "settings.restoreFolder": "Standardmappe til gendannelse",
   "settings.restoreFolderHint": "Hvor »gendan til en mappe« som standard pakker øjebliksbilleder ud.",
 };

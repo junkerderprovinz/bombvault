@@ -481,6 +481,7 @@ const ko: Partial<Translations> = {
   "restore.mode.files": "개별 파일",
   "restore.mode.toFolder": "폴더로",
   "restore.inPlaceHint": "이 컨테이너를 이전과 정확히 동일하게 다시 만듭니다.",
+  "restore.leaveStopped": "복원 후 중지된 상태로 두기 (시작하지 않음)",
   "settings.restoreFolder": "기본 복원 폴더",
   "settings.restoreFolderHint": "‘폴더로 복원’이 기본적으로 스냅샷을 추출하는 위치입니다.",
 };

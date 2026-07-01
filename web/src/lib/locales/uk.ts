@@ -484,6 +484,7 @@ const uk: Partial<Translations> = {
   "restore.mode.files": "Окремі файли",
   "restore.mode.toFolder": "До папки",
   "restore.inPlaceHint": "Відтворити цей контейнер точно таким, яким він був.",
+  "restore.leaveStopped": "Залишити зупиненим після відновлення (не запускати)",
   "settings.restoreFolder": "Стандартна папка відновлення",
   "settings.restoreFolderHint": "Куди «відновлення до папки» за замовчуванням розпаковує знімки.",
 };

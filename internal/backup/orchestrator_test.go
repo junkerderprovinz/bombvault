@@ -33,6 +33,9 @@ type fakeDocker struct {
 	// createdInspect captures the full profile passed to CreateAndStart so tests
 	// can assert the security-relevant fields flow through the DI seam unchanged.
 	createdInspect model.Inspect
+	// createdStart records the start decision passed to CreateAndStart so tests
+	// can assert run-state / leave-stopped handling.
+	createdStart bool
 
 	// allocations is what Allocations returns (restore pre-flight conflict check).
 	allocations []model.Allocation
@@ -68,10 +71,11 @@ func (d *fakeDocker) Pull(_ context.Context, image string) error {
 	return d.pullErr
 }
 
-func (d *fakeDocker) CreateAndStart(_ context.Context, in model.Inspect) error {
+func (d *fakeDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {
 	d.log = append(d.log, "createAndStart:"+in.Name)
 	d.createdName = in.Name
 	d.createdInspect = in
+	d.createdStart = start
 	return d.createErr
 }
 
@@ -712,6 +716,40 @@ func TestRestoreIgnoresOwnAllocation(t *testing.T) {
 	}
 	if !contains(d.log, "createAndStart:") {
 		t.Fatalf("restore should complete through recreate: %v", d.log)
+	}
+}
+
+// TestRestoreLeaveStopped pins the run-state decision passed to CreateAndStart:
+// a container running at backup is started, unless the restore asked to leave it
+// stopped; a container stopped at backup stays stopped either way.
+func TestRestoreLeaveStopped(t *testing.T) {
+	cases := []struct {
+		name         string
+		wasRunning   bool
+		leaveStopped bool
+		wantStart    bool
+	}{
+		{"running, start", true, false, true},
+		{"running, leave stopped", true, true, false},
+		{"stopped stays stopped", false, false, false},
+		{"stopped, leave stopped", false, true, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := &fakeDocker{liveName: "/plex"}
+			deps := restoreDeps(d, &fakeRestic{}, &fakeTemplates{}, &fakeRuns{})
+			deps.Inspect.Running = tc.wasRunning
+			deps.LeaveStopped = tc.leaveStopped
+			if err := backup.RestoreContainer(t.Context(), deps); err != nil {
+				t.Fatalf("restore: %v", err)
+			}
+			if !contains(d.log, "createAndStart:") {
+				t.Fatalf("restore should always recreate: %v", d.log)
+			}
+			if d.createdStart != tc.wantStart {
+				t.Fatalf("createStart = %v, want %v", d.createdStart, tc.wantStart)
+			}
+		})
 	}
 }
 

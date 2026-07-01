@@ -489,6 +489,7 @@ const pt: Partial<Translations> = {
   "restore.mode.files": "Ficheiros individuais",
   "restore.mode.toFolder": "Para uma pasta",
   "restore.inPlaceHint": "Recriar este container exatamente como estava.",
+  "restore.leaveStopped": "Deixar parado após o restauro (não iniciar)",
   "settings.restoreFolder": "Pasta de restauro predefinida",
   "settings.restoreFolderHint": "Onde «restaurar para uma pasta» extrai os instantâneos por predefinição.",
 };

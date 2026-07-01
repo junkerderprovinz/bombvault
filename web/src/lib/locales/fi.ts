@@ -489,6 +489,7 @@ const fi: Partial<Translations> = {
   "restore.mode.files": "Yksittäiset tiedostot",
   "restore.mode.toFolder": "Kansioon",
   "restore.inPlaceHint": "Luo tämä kontti uudelleen täsmälleen entisellään.",
+  "restore.leaveStopped": "Jätä pysäytetyksi palautuksen jälkeen (älä käynnistä)",
   "settings.restoreFolder": "Palautuksen oletuskansio",
   "settings.restoreFolderHint": "Mihin „palauta kansioon” purkaa tilannevedokset oletuksena.",
 };

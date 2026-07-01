@@ -481,6 +481,7 @@ const zh: Partial<Translations> = {
   "restore.mode.files": "单个文件",
   "restore.mode.toFolder": "还原到文件夹",
   "restore.inPlaceHint": "将此容器完全按原样重新创建。",
+  "restore.leaveStopped": "还原后保持停止状态（不启动）",
   "settings.restoreFolder": "默认还原文件夹",
   "settings.restoreFolderHint": "“还原到文件夹”默认解压快照的位置。",
 };
