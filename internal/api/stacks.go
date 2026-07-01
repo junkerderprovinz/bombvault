@@ -29,8 +29,11 @@ func parseDependsOn(labels map[string]string) []string {
 	if raw == "" {
 		return nil
 	}
-	// JSON object form: keys are the service names.
-	if strings.HasPrefix(raw, "{") {
+	// JSON forms start with a bracket: the modern object encoding
+	// ({"svc":{...}}), or an array of names (["svc",...]). Parse those directly;
+	// a bracketed-but-unparseable value returns nil rather than being fed to the
+	// comma parser (which would turn "{...}"/"[...]" into garbage service names).
+	if raw[0] == '{' || raw[0] == '[' {
 		var obj map[string]json.RawMessage
 		if err := json.Unmarshal([]byte(raw), &obj); err == nil {
 			deps := make([]string, 0, len(obj))
@@ -43,7 +46,17 @@ func parseDependsOn(labels map[string]string) []string {
 			sort.Strings(deps)
 			return deps
 		}
-		// Not valid JSON after all — fall through to the comma/colon parser.
+		var arr []string
+		if err := json.Unmarshal([]byte(raw), &arr); err == nil {
+			deps := make([]string, 0, len(arr))
+			for _, svc := range arr {
+				if svc = strings.TrimSpace(svc); svc != "" {
+					deps = append(deps, svc)
+				}
+			}
+			return deps
+		}
+		return nil
 	}
 	// Comma-separated list; each item may carry ":condition:restart" suffixes, so
 	// keep only the part before the first ':'. Covers the plain-list form too.
@@ -77,9 +90,10 @@ type StackRestoreResult struct {
 
 // stackMember is the internal working record for one enumerated stack member.
 type stackMember struct {
-	name    string
-	service string
-	deps    []string // compose service names this member depends_on
+	name       string
+	service    string
+	deps       []string // compose service names this member depends_on
+	wasRunning bool     // run-state captured at backup (def.Inspect.Running)
 }
 
 // RestoreStack restores every backed-up container in the compose project: each is
@@ -127,9 +141,10 @@ func (s *Service) RestoreStack(ctx context.Context, project, source string, star
 			continue
 		}
 		members = append(members, stackMember{
-			name:    tg.ContainerName,
-			service: composeService(labels),
-			deps:    parseDependsOn(labels),
+			name:       tg.ContainerName,
+			service:    composeService(labels),
+			deps:       parseDependsOn(labels),
+			wasRunning: def.Inspect.Running,
 		})
 	}
 	if len(members) == 0 {
@@ -153,17 +168,38 @@ func (s *Service) RestoreStack(ctx context.Context, project, source string, star
 
 	if startAfter {
 		order := stackStartOrder(members)
+		deps := stackDepGraph(members)
+		// blocked[i] = member i could not (and must not) be started: it failed to
+		// restore, its own start failed, or a dependency it needs is itself blocked.
+		// Processed in dependency order, so a member's deps are decided before it — a
+		// dependent is never started ahead of a dependency that isn't up.
+		blocked := make([]bool, len(members))
 		for _, i := range order {
 			if !restoredOK[i] {
+				blocked[i] = true // the restore already recorded the error
+				continue
+			}
+			// Hold back a member whose dependency did not come up (exactly the race
+			// the stack restore exists to avoid).
+			if dep := firstBlockedDep(deps[i], blocked); dep >= 0 {
+				blocked[i] = true
+				if results[i].Error == "" {
+					results[i].Error = fmt.Sprintf("not started: dependency %q was not restored/started", members[dep].name)
+				}
+				continue
+			}
+			// Respect the captured run-state: a member stopped when it was backed up
+			// is restored but not started (mirrors the single-container restore). It is
+			// NOT blocked — a stopped-at-backup dependency doesn't hold back dependents.
+			if !members[i].wasRunning {
 				continue
 			}
 			if sErr := s.docker.Start(ctx, members[i].name); sErr != nil {
-				// Don't overwrite a restore error (there shouldn't be one here, since
-				// we only start restored members) — only record when Error is empty.
+				blocked[i] = true // its failure holds back anything that depends on it
 				if results[i].Error == "" {
 					results[i].Error = sErr.Error()
 				}
-				continue // a start failure must NOT stop the loop
+				continue
 			}
 			results[i].Started = true
 		}
@@ -172,33 +208,54 @@ func (s *Service) RestoreStack(ctx context.Context, project, source string, star
 	return StackRestoreResult{Members: results}, nil
 }
 
-// stackStartOrder returns member indices in dependency order (a member's deps
-// start before it) via Kahn's topological sort over the in-stack compose service
-// deps. Deps that name a service outside the stack are ignored. If a cycle leaves
-// members unresolved, they are appended in their original enumeration order so
-// every member is still returned exactly once.
-func stackStartOrder(members []stackMember) []int {
-	// Map compose service -> member index (only services that are members count).
-	svcIndex := make(map[string]int, len(members))
+// stackDepGraph maps each member to the indices of the OTHER in-stack members it
+// depends on (via com.docker.compose.depends_on service names). A service name can
+// resolve to MORE THAN ONE member (compose replicas / a shared service label), so
+// every matching member becomes a dependency edge. Deps that name a service
+// outside the stack, and self-deps, are ignored; edges are de-duplicated.
+func stackDepGraph(members []stackMember) [][]int {
+	svcIndex := make(map[string][]int, len(members))
 	for i, m := range members {
 		if m.service != "" {
-			svcIndex[m.service] = i
+			svcIndex[m.service] = append(svcIndex[m.service], i)
 		}
 	}
-	// Build the in-stack dependency edges + in-degrees.
-	indeg := make([]int, len(members))
-	deps := make([][]int, len(members)) // deps[i] = in-stack member indices i depends on
+	graph := make([][]int, len(members))
 	for i, m := range members {
 		seen := make(map[int]bool)
 		for _, d := range m.deps {
-			j, ok := svcIndex[d]
-			if !ok || j == i || seen[j] {
-				continue // dep outside the stack, self-dep, or duplicate
+			for _, j := range svcIndex[d] {
+				if j == i || seen[j] {
+					continue // self-dep or duplicate edge
+				}
+				seen[j] = true
+				graph[i] = append(graph[i], j)
 			}
-			seen[j] = true
-			deps[i] = append(deps[i], j)
-			indeg[i]++
 		}
+	}
+	return graph
+}
+
+// firstBlockedDep returns the index of the first dependency in deps that is
+// blocked, or -1 when none is.
+func firstBlockedDep(deps []int, blocked []bool) int {
+	for _, j := range deps {
+		if blocked[j] {
+			return j
+		}
+	}
+	return -1
+}
+
+// stackStartOrder returns member indices in dependency order (a member's deps
+// start before it) via Kahn's topological sort over the in-stack dependency graph.
+// If a cycle leaves members unresolved, they are appended in their original
+// enumeration order so every member is still returned exactly once.
+func stackStartOrder(members []stackMember) []int {
+	deps := stackDepGraph(members)
+	indeg := make([]int, len(members))
+	for i := range members {
+		indeg[i] = len(deps[i])
 	}
 	// Kahn's algorithm: repeatedly emit a zero-in-degree member (lowest index
 	// first, for determinism) and relax the members that depend on it.
@@ -206,7 +263,7 @@ func stackStartOrder(members []stackMember) []int {
 	emitted := make([]bool, len(members))
 	for len(order) < len(members) {
 		progressed := false
-		for i := 0; i < len(members); i++ {
+		for i := range members {
 			if emitted[i] || indeg[i] != 0 {
 				continue
 			}
@@ -214,7 +271,7 @@ func stackStartOrder(members []stackMember) []int {
 			emitted[i] = true
 			progressed = true
 			// Relax dependents: any member that depends on i loses one in-degree.
-			for k := 0; k < len(members); k++ {
+			for k := range members {
 				if emitted[k] {
 					continue
 				}
@@ -230,7 +287,7 @@ func stackStartOrder(members []stackMember) []int {
 		}
 	}
 	// Append any leftover (cycle) members in enumeration order.
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		if !emitted[i] {
 			order = append(order, i)
 		}

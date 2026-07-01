@@ -2,6 +2,8 @@ package api_test
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -42,15 +44,16 @@ type fakeServiceDocker struct {
 	allocations []model.Allocation
 	allocErr    error
 
-	stopErr      error
-	startErr     error
-	removeErr    error
-	pullErr      error
-	createErr    error
-	started      bool
-	createdIn    model.Inspect
-	createdStart bool
-	calls        []string
+	stopErr       error
+	startErr      error
+	removeErr     error
+	pullErr       error
+	createErr     error
+	createErrName string // when set, CreateAndStart fails for this container name
+	started       bool
+	createdIn     model.Inspect
+	createdStart  bool
+	calls         []string
 }
 
 var _ dockercli.Docker = (*fakeServiceDocker)(nil)
@@ -103,6 +106,9 @@ func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect, 
 	f.calls = append(f.calls, "createAndStart:"+in.Name)
 	f.createdIn = in
 	f.createdStart = start
+	if f.createErrName != "" && strings.TrimPrefix(in.Name, "/") == f.createErrName {
+		return errors.New("dockercli: create failed for " + f.createErrName)
+	}
 	return f.createErr
 }
 
