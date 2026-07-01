@@ -19,6 +19,8 @@ type ContainerInfo struct {
 	// configured without an explicit IP, or a stopped container whose network
 	// state is not stored in the list summary).
 	IP string
+	// Stack is the compose project (com.docker.compose.project label), "" if none.
+	Stack string
 }
 
 // Docker is the host-control surface consumed by the backup orchestrator.

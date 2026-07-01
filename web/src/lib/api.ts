@@ -24,6 +24,9 @@ export interface Container {
   postHook: string;
   /** Other container names to stop during this container's backup. */
   stopContainers: string[];
+  /** Compose project (com.docker.compose.project label) this container belongs to,
+   *  "" if none. Drives the "restore whole stack" panel. */
+  stack: string;
   /** True for BombVault's own container: it can't be backed up (it would stop
    *  itself), so the UI hides its backup action and excludes it from "select all". */
   self?: boolean;
@@ -322,6 +325,32 @@ export function restore(
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
+  });
+}
+
+/** Per-member outcome of a stack restore (POST /api/stacks/{project}/restore). */
+export interface StackMemberResult {
+  name: string;
+  service: string;
+  restored: boolean;
+  started: boolean;
+  error?: string;
+}
+
+/**
+ * POST /api/stacks/{project}/restore — restore every backed-up container in a
+ * compose stack from its latest backup, left stopped; when startAfter is true they
+ * are then started in dependency order. Returns a per-member result list.
+ */
+export function restoreStack(
+  project: string,
+  startAfter: boolean,
+  confirm: boolean,
+  source?: string
+): Promise<{ ok: boolean; members?: StackMemberResult[]; error?: string }> {
+  return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/restore${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ startAfter, confirm }),
   });
 }
 

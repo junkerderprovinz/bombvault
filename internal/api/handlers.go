@@ -170,6 +170,9 @@ type containerView struct {
 	PreHook           string   `json:"preHook"`
 	PostHook          string   `json:"postHook"`
 	StopContainers    []string `json:"stopContainers"`
+	// Stack is the compose project (com.docker.compose.project label) this
+	// container belongs to, "" if none. Drives the "restore whole stack" panel.
+	Stack string `json:"stack"`
 	// Self marks BombVault's own container: the UI hides its backup action and
 	// excludes it from "select all" so a batch can never stop the app itself.
 	Self bool `json:"self"`
@@ -202,6 +205,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			Status:    c.Status,
 			IP:        c.IP,
 			Installed: true,
+			Stack:     c.Stack,
 			Self:      self != "" && c.Name == self,
 		}
 		if t, ok := byName[c.Name]; ok {
@@ -233,6 +237,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			var def containerDefinition
 			if json.Unmarshal([]byte(t.Definition), &def) == nil {
 				v.Image = def.Inspect.Config.Image
+				v.Stack = def.Inspect.Config.Labels["com.docker.compose.project"]
 			}
 		}
 		if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
@@ -463,6 +468,32 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleRestoreStack restores every backed-up member of a compose stack STOPPED,
+// then (optionally) starts them in dependency order. POST /api/stacks/{project}/restore
+// The {project} is a compose project name, which is laxer than a container name
+// (validResourceName would wrongly reject some), so it gets its own minimal check
+// that still blocks path traversal / separators reaching the store enumeration.
+func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
+	project := r.PathValue("project")
+	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid stack name"})
+		return
+	}
+	var body struct {
+		StartAfter bool `json:"startAfter"`
+		Confirm    bool `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	res, err := h.svc.RestoreStack(r.Context(), project, sourceParam(r), body.StartAfter, body.Confirm)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"members": res.Members}))
 }
 
 // handleListFiles lists the files in a container snapshot for file-level restore.

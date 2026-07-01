@@ -176,6 +176,20 @@ const en = {
   "restore.inPlaceHint": "Recreate this container exactly as it was.",
   "restore.leaveStopped": "Leave stopped after restore (don't start it)",
 
+  // Stacks (compose-project restore)
+  "stack.title": "Stacks",
+  "stack.restore": "Restore stack…",
+  "stack.members": "{n} containers",
+  "stack.restoreHint":
+    "Restores every container in this stack from its latest backup, left stopped, then (optionally) starts them in dependency order.",
+  "stack.startInOrder": "Start in dependency order after restore",
+  "stack.restoreConfirm":
+    "Restore all containers in this stack? Each is recreated from its latest backup.",
+  "stack.restoring": "Restoring stack…",
+  "stack.restored": "Stack restored",
+  "stack.memberRestored": "restored",
+  "stack.memberStarted": "started",
+
   // Runs
   "run.kindBackup": "Backup",
   "run.kindRestore": "Restore",
@@ -659,6 +673,20 @@ const de: Translations = {
   "restore.mode.toFolder": "In einen Ordner",
   "restore.inPlaceHint": "Diesen Container exakt wie zuvor neu erstellen.",
   "restore.leaveStopped": "Nach dem Restore gestoppt lassen (nicht starten)",
+
+  // Stacks (Compose-Projekt-Wiederherstellung)
+  "stack.title": "Stacks",
+  "stack.restore": "Stack wiederherstellen…",
+  "stack.members": "{n} Container",
+  "stack.restoreHint":
+    "Stellt jeden Container dieses Stacks aus dem letzten Backup wieder her (gestoppt) und startet sie danach optional in Abhängigkeitsreihenfolge.",
+  "stack.startInOrder": "Nach dem Restore in Abhängigkeitsreihenfolge starten",
+  "stack.restoreConfirm":
+    "Alle Container dieses Stacks wiederherstellen? Jeder wird aus seinem letzten Backup neu erstellt.",
+  "stack.restoring": "Stack wird wiederhergestellt…",
+  "stack.restored": "Stack wiederhergestellt",
+  "stack.memberRestored": "wiederhergestellt",
+  "stack.memberStarted": "gestartet",
 
   "run.kindBackup": "Backup",
   "run.kindRestore": "Wiederherstellung",

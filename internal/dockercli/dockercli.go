@@ -77,6 +77,7 @@ func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
 			State:  string(s.State),
 			Status: s.Status,
 			IP:     ip,
+			Stack:  s.Labels["com.docker.compose.project"],
 		})
 	}
 	return out, nil
