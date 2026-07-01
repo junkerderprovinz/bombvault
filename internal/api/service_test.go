@@ -1328,9 +1328,10 @@ func TestRestoreContainerFiles(t *testing.T) {
 		t.Fatalf("no restore must have run on a rejected request, got %v", eng.restored)
 	}
 
-	// Happy path — into an alternate folder: the resolved dir is created and each
-	// selected path is extracted into it via the engine.
-	target, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true)
+	// Happy path — into an alternate folder: the resolved dir is created and BOTH
+	// selected paths are extracted into it, in order (multi-file batch).
+	fileB := root + "/appdata/plex/sub/b.dat"
+	target, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA, fileB}, "user/restore/plex", true)
 	if err != nil {
 		t.Fatalf("to-folder restore: %v", err)
 	}
@@ -1341,8 +1342,21 @@ func TestRestoreContainerFiles(t *testing.T) {
 	if _, statErr := os.Stat(wantTarget); statErr != nil {
 		t.Fatalf("target dir must be created after containment passes: %v", statErr)
 	}
-	if len(eng.restored) != 1 || !strings.Contains(eng.restored[0], "aaaa1111:"+fileA+"->"+wantTarget) {
-		t.Fatalf("expected the file restored into the folder, got %v", eng.restored)
+	if len(eng.restored) != 2 ||
+		!strings.Contains(eng.restored[0], "aaaa1111:"+fileA+"->"+wantTarget) ||
+		!strings.Contains(eng.restored[1], "aaaa1111:"+fileB+"->"+wantTarget) {
+		t.Fatalf("expected both files restored into the folder, got %v", eng.restored)
+	}
+
+	// Mid-batch failure: the second of three paths fails, so the error names the
+	// progress (how many went through) and the remaining path is not attempted.
+	eng.restored = nil
+	eng.restoreErrPath = fileB
+	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA, fileB, fileA}, "user/restore/plex", true); err == nil || !strings.Contains(err.Error(), "restored 1 of 3 files") {
+		t.Fatalf("expected a progress-annotated mid-batch error, got %v", err)
+	}
+	if len(eng.restored) != 1 {
+		t.Fatalf("must stop at the failing path (only the first should have run), got %v", eng.restored)
 	}
 }
 
@@ -1766,6 +1780,7 @@ type fakeResticEngine struct {
 	backedUp        []string
 	lastPaths       []string
 	restored        []string
+	restoreErrPath  string // when set, RestoreInclude fails on this include path
 	forgotten       []string
 	prunedRepos     []string
 	checked         []string
@@ -1874,6 +1889,9 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 }
 
 func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
+		return errors.New("restore boom")
+	}
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+includePath+"->"+target)
 	return nil
 }

@@ -264,7 +264,7 @@ const fi: Partial<Translations> = {
   // File-level restore
   "files.restore": "Palauta",
   "files.restored": "Palautettu",
-  "files.restoreConfirm": "Palautetaanko tämä tiedosto alkuperäiseen sijaintiinsa? Se korvaa nykyisen tiedoston.",
+  "files.restoreConfirm": "Palautetaanko valitut tiedostot alkuperäisiin sijainteihinsa? Olemassa olevat tiedostot korvataan.",
   "files.selectHint": "Valitse palautettavat tiedostot ja kansiot ja valitse sitten kohde.",
   "files.dest.inPlace": "Palauta paikoilleen (alkuperäinen sijainti)",
   "files.dest.toFolder": "Palauta kansioon",

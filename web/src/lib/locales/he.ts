@@ -264,7 +264,7 @@ const he: Partial<Translations> = {
   // File-level restore
   "files.restore": "שחזר",
   "files.restored": "שוחזר",
-  "files.restoreConfirm": "לשחזר קובץ זה למיקומו המקורי? הקובץ הנוכחי יידרס.",
+  "files.restoreConfirm": "לשחזר את הקבצים שנבחרו למיקומם המקורי? קבצים קיימים יידרסו.",
   "files.selectHint": "סמן את הקבצים והתיקיות לשחזור, ואז בחר יעד.",
   "files.dest.inPlace": "שחזור במקום (מיקום מקורי)",
   "files.dest.toFolder": "שחזור לתיקייה",

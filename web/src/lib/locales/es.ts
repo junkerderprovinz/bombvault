@@ -264,7 +264,7 @@ const es: Partial<Translations> = {
   // File-level restore
   "files.restore": "Restaurar",
   "files.restored": "Restaurado",
-  "files.restoreConfirm": "¿Restaurar este archivo a su ubicación original? Sobrescribe el archivo actual.",
+  "files.restoreConfirm": "¿Restaurar los archivos seleccionados a sus ubicaciones originales? Los archivos existentes se sobrescribirán.",
   "files.selectHint": "Marca los archivos y carpetas que restaurar y luego elige el destino.",
   "files.dest.inPlace": "Restaurar en su sitio (ubicación original)",
   "files.dest.toFolder": "Restaurar en una carpeta",

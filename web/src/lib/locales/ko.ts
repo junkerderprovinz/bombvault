@@ -262,7 +262,7 @@ const ko: Partial<Translations> = {
 
   "files.restore": "복원",
   "files.restored": "복원됨",
-  "files.restoreConfirm": "이 파일을 원래 위치로 복원하시겠습니까? 현재 파일을 덮어씁니다.",
+  "files.restoreConfirm": "선택한 파일을 원래 위치로 복원하시겠습니까? 기존 파일을 덮어씁니다.",
   "files.selectHint": "복원할 파일과 폴더를 선택한 다음 대상을 고르세요.",
   "files.dest.inPlace": "제자리에 복원 (원래 위치)",
   "files.dest.toFolder": "폴더로 복원",

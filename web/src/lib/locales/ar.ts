@@ -264,7 +264,7 @@ const ar: Partial<Translations> = {
   // File-level restore
   "files.restore": "استعادة",
   "files.restored": "تمت الاستعادة",
-  "files.restoreConfirm": "استعادة هذا الملف إلى موقعه الأصلي؟ سيُستبدل الملف الحالي.",
+  "files.restoreConfirm": "استعادة الملفات المحددة إلى مواقعها الأصلية؟ سيتم استبدال الملفات الموجودة.",
   "files.selectHint": "حدّد الملفات والمجلدات المراد استعادتها ثم اختر الوجهة.",
   "files.dest.inPlace": "الاستعادة في المكان (الموقع الأصلي)",
   "files.dest.toFolder": "الاستعادة إلى مجلد",

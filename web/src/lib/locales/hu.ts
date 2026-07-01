@@ -264,7 +264,7 @@ const hu: Partial<Translations> = {
   // File-level restore
   "files.restore": "Visszaállítás",
   "files.restored": "Visszaállítva",
-  "files.restoreConfirm": "Visszaállítja ezt a fájlt az eredeti helyére? Felülírja az aktuális fájlt.",
+  "files.restoreConfirm": "Visszaállítja a kijelölt fájlokat az eredeti helyükre? A meglévő fájlok felülíródnak.",
   "files.selectHint": "Jelölje be a visszaállítandó fájlokat és mappákat, majd válassza ki a célt.",
   "files.dest.inPlace": "Visszaállítás a helyére (eredeti hely)",
   "files.dest.toFolder": "Visszaállítás mappába",

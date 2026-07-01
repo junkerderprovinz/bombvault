@@ -1831,8 +1831,8 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 	// and create it only after containment passes.
 	target := "/"
 	resolved := ""
-	if strings.TrimSpace(targetSubPath) != "" {
-		t, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	if sub := strings.TrimSpace(targetSubPath); sub != "" {
+		t, err := paths.Resolve(s.cfg.HostMountRoot, sub)
 		if err != nil {
 			return "", errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
@@ -1864,8 +1864,15 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 	}
 	mode := s.ModeFor(settings)
 
-	for _, c := range cleaned {
+	// Restore each selected path. This is intentionally not atomic — restic writes
+	// per path — so if one fails mid-batch, the error names how many already went
+	// through and which path stopped it, instead of a bare failure that hides that
+	// earlier paths were already restored.
+	for i, c := range cleaned {
 		if err := s.engine.RestoreInclude(ctx, repo, snapshotID, c, target, mode); err != nil {
+			if len(cleaned) > 1 {
+				return "", fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(cleaned), c, err)
+			}
 			return "", err
 		}
 	}

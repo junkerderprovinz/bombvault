@@ -264,7 +264,7 @@ const tr: Partial<Translations> = {
   // File-level restore
   "files.restore": "Geri yükle",
   "files.restored": "Geri yüklendi",
-  "files.restoreConfirm": "Bu dosya orijinal konumuna geri yüklensin mi? Mevcut dosyanın üzerine yazar.",
+  "files.restoreConfirm": "Seçili dosyalar orijinal konumlarına geri yüklensin mi? Mevcut dosyaların üzerine yazılır.",
   "files.selectHint": "Geri yüklenecek dosya ve klasörleri işaretleyin, ardından hedefi seçin.",
   "files.dest.inPlace": "Yerinde geri yükle (orijinal konum)",
   "files.dest.toFolder": "Bir klasöre geri yükle",

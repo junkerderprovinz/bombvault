@@ -264,7 +264,7 @@ const da: Partial<Translations> = {
   // File-level restore
   "files.restore": "Gendan",
   "files.restored": "Gendannet",
-  "files.restoreConfirm": "Gendanne denne fil til dens oprindelige placering? Den nuværende fil overskrives.",
+  "files.restoreConfirm": "Gendanne de valgte filer til deres oprindelige placeringer? Eksisterende filer overskrives.",
   "files.selectHint": "Markér de filer og mapper, der skal gendannes, og vælg derefter destination.",
   "files.dest.inPlace": "Gendan på stedet (oprindelig placering)",
   "files.dest.toFolder": "Gendan til en mappe",

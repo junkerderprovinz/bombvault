@@ -216,6 +216,17 @@ function SnapshotFileBrowser({
     setRestoreState({ phase: "idle" });
   }
 
+  // Changing the destination or the target folder also invalidates a prior result
+  // banner, so a stale "Restored to …" can't linger over a different, unrun choice.
+  function pickDest(d: "inPlace" | "toFolder") {
+    setDest(d);
+    setRestoreState({ phase: "idle" });
+  }
+  function pickFolder(v: string) {
+    setFolder(v);
+    setRestoreState({ phase: "idle" });
+  }
+
   async function handleRestoreSelected() {
     const paths = [...selected];
     if (paths.length === 0) return;
@@ -284,7 +295,7 @@ function SnapshotFileBrowser({
                 type="radio"
                 name={`files-dest-${snapshotId}`}
                 checked={dest === "inPlace"}
-                onChange={() => setDest("inPlace")}
+                onChange={() => pickDest("inPlace")}
                 style={{ accentColor: "var(--accent)" }}
               />
               {t("files.dest.inPlace")}
@@ -294,7 +305,7 @@ function SnapshotFileBrowser({
                 type="radio"
                 name={`files-dest-${snapshotId}`}
                 checked={dest === "toFolder"}
-                onChange={() => setDest("toFolder")}
+                onChange={() => pickDest("toFolder")}
                 style={{ accentColor: "var(--accent)" }}
               />
               {t("files.dest.toFolder")}
@@ -305,7 +316,7 @@ function SnapshotFileBrowser({
               label={t("restore.targetPath")}
               value={folder}
               hostMountRoot={hostMountRoot}
-              onChange={setFolder}
+              onChange={pickFolder}
             />
           )}
           <div className="flex items-center gap-2">

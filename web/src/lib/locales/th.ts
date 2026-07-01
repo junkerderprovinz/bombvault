@@ -264,7 +264,7 @@ const th: Partial<Translations> = {
   // File-level restore
   "files.restore": "กู้คืน",
   "files.restored": "กู้คืนแล้ว",
-  "files.restoreConfirm": "กู้คืนไฟล์นี้ไปยังตำแหน่งเดิม? ไฟล์ปัจจุบันจะถูกเขียนทับ",
+  "files.restoreConfirm": "กู้คืนไฟล์ที่เลือกไปยังตำแหน่งเดิมของแต่ละไฟล์? ไฟล์ที่มีอยู่จะถูกเขียนทับ",
   "files.selectHint": "ทำเครื่องหมายไฟล์และโฟลเดอร์ที่ต้องการกู้คืน แล้วเลือกปลายทาง",
   "files.dest.inPlace": "กู้คืนที่ตำแหน่งเดิม",
   "files.dest.toFolder": "กู้คืนไปยังโฟลเดอร์",
