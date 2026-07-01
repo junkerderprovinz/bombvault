@@ -13,6 +13,7 @@ const vi: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Cài đặt",
+  "nav.reportBug": "Báo lỗi",
   "nav.comingSoon": "Sắp ra mắt",
 
   // Dashboard

@@ -13,6 +13,7 @@ const hu: Partial<Translations> = {
   "nav.vms": "VM-ek",
   "nav.flash": "Flash",
   "nav.settings": "Beállítások",
+  "nav.reportBug": "Hiba jelentése",
   "nav.comingSoon": "Hamarosan",
 
   // Dashboard

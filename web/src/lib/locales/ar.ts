@@ -13,6 +13,7 @@ const ar: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "الإعدادات",
+  "nav.reportBug": "الإبلاغ عن خطأ",
   "nav.comingSoon": "قريباً",
 
   // Dashboard

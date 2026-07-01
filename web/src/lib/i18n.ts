@@ -49,6 +49,7 @@ const en = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Settings",
+  "nav.reportBug": "Report a bug",
   "nav.comingSoon": "Coming soon",
 
   // Dashboard
@@ -552,6 +553,7 @@ const de: Translations = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Einstellungen",
+  "nav.reportBug": "Fehler melden",
   "nav.comingSoon": "Demnächst",
 
   "dashboard.title": "Dashboard",

@@ -13,6 +13,7 @@ const ro: Partial<Translations> = {
   "nav.vms": "VM-uri",
   "nav.flash": "Flash",
   "nav.settings": "Setări",
+  "nav.reportBug": "Raportează o eroare",
   "nav.comingSoon": "În curând",
 
   // Dashboard
