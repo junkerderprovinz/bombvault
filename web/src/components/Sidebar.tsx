@@ -301,13 +301,25 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.settings")}
           icon={<IconSettings />}
         />
+        {/* Report a bug → GitHub issues, and the version → the releases page (#23). */}
+        <a
+          href="https://github.com/junkerderprovinz/bombvault/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3.5 pt-1 text-xs text-carbon-textMuted hover:text-carbon-text transition-colors truncate"
+        >
+          {t("nav.reportBug")}
+        </a>
         {version && (
-          <div
-            className="px-3.5 pt-1 text-xs text-carbon-textMuted select-none truncate"
-            title={`BombVault ${version}`}
+          <a
+            href="https://github.com/junkerderprovinz/bombvault/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3.5 pt-0.5 text-xs text-carbon-textMuted hover:text-carbon-text transition-colors truncate"
+            title={`BombVault ${version} — view releases`}
           >
             {version}
-          </div>
+          </a>
         )}
       </div>
     </aside>

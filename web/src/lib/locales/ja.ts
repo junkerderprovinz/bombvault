@@ -13,6 +13,7 @@ const ja: Partial<Translations> = {
   "nav.vms": "VM",
   "nav.flash": "フラッシュ",
   "nav.settings": "設定",
+  "nav.reportBug": "バグを報告",
   "nav.comingSoon": "近日公開",
 
   // Dashboard

@@ -13,6 +13,7 @@ const ru: Partial<Translations> = {
   "nav.vms": "Виртуальные машины",
   "nav.flash": "Flash",
   "nav.settings": "Настройки",
+  "nav.reportBug": "Сообщить об ошибке",
   "nav.comingSoon": "Скоро",
 
   // Dashboard

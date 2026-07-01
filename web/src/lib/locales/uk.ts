@@ -13,6 +13,7 @@ const uk: Partial<Translations> = {
   "nav.vms": "Віртуальні машини",
   "nav.flash": "Flash",
   "nav.settings": "Налаштування",
+  "nav.reportBug": "Повідомити про помилку",
   "nav.comingSoon": "Незабаром",
 
   // Dashboard

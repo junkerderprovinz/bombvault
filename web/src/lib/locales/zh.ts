@@ -13,6 +13,7 @@ const zh: Partial<Translations> = {
   "nav.vms": "虚拟机",
   "nav.flash": "闪存",
   "nav.settings": "设置",
+  "nav.reportBug": "报告错误",
   "nav.comingSoon": "即将推出",
 
   // Dashboard
