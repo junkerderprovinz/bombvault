@@ -99,7 +99,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/containers/{name}/mounts", h.handleContainerMounts)
 	mux.HandleFunc("POST /api/containers/{name}/export", h.handleExportContainer)
 	mux.HandleFunc("GET /api/containers/{name}/files", h.handleListFiles)
-	mux.HandleFunc("POST /api/containers/{name}/restore-file", h.handleRestoreFile)
+	mux.HandleFunc("POST /api/containers/{name}/restore-files", h.handleRestoreFiles)
 	mux.HandleFunc("POST /api/containers/{name}/restore-to", h.handleRestoreContainerTo)
 	mux.HandleFunc("GET /api/containers/{name}/diff", h.handleDiff)
 	mux.HandleFunc("POST /api/containers/{name}/tag", h.handleTagSnapshot)

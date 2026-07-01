@@ -483,25 +483,29 @@ func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
 }
 
-// handleRestoreFile restores a single file/dir from a container snapshot back to
-// its original location. POST /api/containers/{name}/restore-file
-func (h *Handler) handleRestoreFile(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.nameParam(w, r); !ok {
+// handleRestoreFiles restores one or more files/dirs from a container snapshot,
+// either back to their original locations (targetPath empty) or into an alternate
+// folder under the host mount. POST /api/containers/{name}/restore-files
+func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
 		return
 	}
 	var body struct {
-		SnapshotID string `json:"snapshotId"`
-		Path       string `json:"path"`
-		Confirm    bool   `json:"confirm"`
+		SnapshotID string   `json:"snapshotId"`
+		Paths      []string `json:"paths"`
+		TargetPath string   `json:"targetPath"`
+		Confirm    bool     `json:"confirm"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.RestoreContainerFile(r.Context(), body.SnapshotID, body.Path, body.Confirm, sourceParam(r)); err != nil {
+	target, err := h.svc.RestoreContainerFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
 }
 
 // handleRestoreContainerTo extracts a whole container snapshot into an ALTERNATE
