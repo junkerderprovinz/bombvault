@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import { getHealth, type Settings } from "../lib/api";
+import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { getTheme, toggleTheme } from "../lib/theme";
 import { useAdvanced } from "../lib/advanced";
@@ -241,17 +241,6 @@ export function Sidebar({ settings }: SidebarProps) {
   const { advanced, setAdvanced } = useAdvanced();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
-  const [version, setVersion] = useState<string | null>(null);
-
-  // Show the running image's version at the bottom of the sidebar (issue #22).
-  // Best-effort: /api/health is public, so this works even before login.
-  useEffect(() => {
-    let active = true;
-    getHealth()
-      .then((h) => { if (active) setVersion(h.version ?? null); })
-      .catch(() => { /* version is best-effort; ignore */ });
-    return () => { active = false; };
-  }, []);
 
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
@@ -314,26 +303,6 @@ export function Sidebar({ settings }: SidebarProps) {
             style={{ accentColor: "var(--accent)" }}
           />
         </label>
-        {/* Report a bug → GitHub issues, and the version → the releases page (#23). */}
-        <a
-          href="https://github.com/junkerderprovinz/bombvault/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-3.5 pt-1 text-xs text-carbon-textMuted hover:text-carbon-text transition-colors truncate"
-        >
-          {t("nav.reportBug")}
-        </a>
-        {version && (
-          <a
-            href="https://github.com/junkerderprovinz/bombvault/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 pt-0.5 text-xs text-carbon-textMuted hover:text-carbon-text transition-colors truncate"
-            title={`BombVault ${version} — view releases`}
-          >
-            {version}
-          </a>
-        )}
       </div>
     </aside>
   );

@@ -40,6 +40,56 @@ export function buildCadenceString(s: CadenceState): string {
   }
 }
 
+// prettyTime turns "HH:MM" into "H:MM" (drops a leading zero on the hour), e.g.
+// "04:00" -> "4:00".
+function prettyTime(hhmm: string): string {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  return m ? `${parseInt(m[1], 10)}:${m[2]}` : hhmm;
+}
+
+// WEEKDAY_OFFSET maps the stored English abbreviation to a day in the first week
+// of 2023 (2023-01-01 is a Sunday, so +1 = Mon … +7 = Sun).
+const WEEKDAY_OFFSET: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+
+// localizedWeekday renders a stored English 3-letter weekday in the given
+// language's short form via Intl (e.g. "Mon" -> "Mo." in de), falling back to the
+// stored abbreviation.
+function localizedWeekday(abbr: string, lang: string): string {
+  const off = WEEKDAY_OFFSET[abbr];
+  if (!off) return abbr;
+  try {
+    return new Intl.DateTimeFormat(lang, { weekday: "short" }).format(new Date(Date.UTC(2023, 0, off)));
+  } catch {
+    return abbr;
+  }
+}
+
+type CadenceT = ReturnType<typeof useT>["t"];
+
+/**
+ * formatCadence renders a stored cadence string as human-readable, localized text
+ * (e.g. "everyN 3 04:00" -> "jeden 3. Tag um 4:00 Uhr"). Returns "" for off/empty,
+ * so callers can decide how to show a disabled schedule.
+ */
+export function formatCadence(raw: string, t: CadenceT, lang: string): string {
+  const s = parseCadenceString(raw);
+  const time = prettyTime(s.time);
+  switch (s.mode) {
+    case "off":
+      return "";
+    case "daily":
+      return t("cadence.fmtDaily").replace("{time}", time);
+    case "weekly": {
+      const days = (s.weekdays.length ? s.weekdays : ["Mon"]).map((d) => localizedWeekday(d, lang)).join(", ");
+      return t("cadence.fmtWeekly").replace("{days}", days).replace("{time}", time);
+    }
+    case "everyN":
+      // "every 1 day" reads oddly — an interval of 1 is just daily.
+      if (s.intervalDays <= 1) return t("cadence.fmtDaily").replace("{time}", time);
+      return t("cadence.fmtEveryN").replace("{n}", String(s.intervalDays)).replace("{time}", time);
+  }
+}
+
 /** Parse a stored cadence string back into builder state. */
 export function parseCadenceString(raw: string): CadenceState {
   const s = (raw ?? "").trim();
@@ -77,7 +127,7 @@ export function CadenceBuilder({
   disabled?: boolean;
   onChange: (v: string) => void;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
 
   // Re-parse when the stored value changes externally (e.g. after load or sync checkbox)
@@ -180,11 +230,10 @@ export function CadenceBuilder({
         </div>
       )}
 
-      {/* Preview */}
+      {/* Preview — human-readable, localized (e.g. "jeden 3. Tag um 4:00 Uhr"). */}
       {state.mode !== "off" && (
-        <p className="text-xs text-carbon-textMuted">
-          Value:{" "}
-          <span className="font-mono text-carbon-textSub">{buildCadenceString(state)}</span>
+        <p className="text-xs text-carbon-textSub">
+          {formatCadence(buildCadenceString(state), t, lang)}
         </p>
       )}
     </div>
