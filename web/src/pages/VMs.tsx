@@ -598,7 +598,6 @@ function VMRow({
   selected?: boolean;
   onToggleSelect?: () => void;
 }) {
-  const { advanced } = useAdvanced();
   const installed = vm.state !== "not-installed";
   const progress = useProgress()[`vm:${vm.name}`];
   return (
@@ -651,13 +650,11 @@ function VMRow({
                 {t("containers.includeInSchedule")}
               </span>
             </label>
-            {/* Backup method (graceful / live) selector is advanced-only. */}
-            {advanced && (
-              <label className="flex items-center gap-2">
-                <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
-                <VMMethodSelect name={vm.name} initial={vm.method} t={t} />
-              </label>
-            )}
+            {/* Backup method (graceful / live) — always visible; it decides VM downtime. */}
+            <label className="flex items-center gap-2">
+              <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
+              <VMMethodSelect name={vm.name} initial={vm.method} t={t} />
+            </label>
           </div>
           <div className="ml-auto flex flex-col items-end">
             <VMBackupButton name={vm.name} t={t} onBackedUp={onRefresh} />
