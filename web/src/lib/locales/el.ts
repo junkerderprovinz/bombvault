@@ -477,6 +477,15 @@ const el: Partial<Translations> = {
   "jobs.flashNotImplemented": "Σημείωση: Ο εκτελεστής αντιγράφου Flash δεν έχει υλοποιηθεί ακόμα στη Φάση 1 — το χρονοδιάγραμμα αποθηκεύεται αλλά δεν εκτελείται.",
   "schedule.includeAll": "Συμπερίληψη όλων στο χρονοδιάγραμμα",
   "schedule.excludeAll": "Εξαίρεση όλων από το χρονοδιάγραμμα",
+
+  // Restore panel (#21)
+  "restore.open": "Επαναφορά…",
+  "restore.mode.inPlace": "Επαναφορά στην αρχική θέση",
+  "restore.mode.files": "Μεμονωμένα αρχεία",
+  "restore.mode.toFolder": "Σε φάκελο",
+  "restore.inPlaceHint": "Αναδημιουργήστε αυτό το container ακριβώς όπως ήταν.",
+  "settings.restoreFolder": "Προεπιλεγμένος φάκελος επαναφοράς",
+  "settings.restoreFolderHint": "Πού εξάγει τα στιγμιότυπα από προεπιλογή η «επαναφορά σε φάκελο».",
 };
 
 export default el;

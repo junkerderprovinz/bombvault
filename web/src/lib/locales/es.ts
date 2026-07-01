@@ -475,6 +475,15 @@ const es: Partial<Translations> = {
   "jobs.flashNotImplemented": "Nota: el ejecutor de copias de Flash aún no está implementado en la fase 1 — el calendario se guarda pero no se ejecuta.",
   "schedule.includeAll": "Incluir todo en el calendario",
   "schedule.excludeAll": "Excluir todo del calendario",
+
+  // Restore panel (#21)
+  "restore.open": "Restaurar…",
+  "restore.mode.inPlace": "Restaurar en el sitio original",
+  "restore.mode.files": "Archivos individuales",
+  "restore.mode.toFolder": "En una carpeta",
+  "restore.inPlaceHint": "Recrear este contenedor exactamente como estaba.",
+  "settings.restoreFolder": "Carpeta de restauración predeterminada",
+  "settings.restoreFolderHint": "Dónde «restaurar en una carpeta» extrae las instantáneas de forma predeterminada.",
 };
 
 export default es;

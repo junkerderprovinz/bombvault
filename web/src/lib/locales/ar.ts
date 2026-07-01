@@ -480,6 +480,15 @@ const ar: Partial<Translations> = {
   "jobs.flashNotImplemented": "ملاحظة: منفذ نسخ Flash الاحتياطي لم يُنفَّذ بعد في المرحلة الأولى — يُحفظ الجدول لكنه لا يُنفَّذ.",
   "schedule.includeAll": "تضمين الكل في الجدول",
   "schedule.excludeAll": "استبعاد الكل من الجدول",
+
+  // Restore panel (#21)
+  "restore.open": "استعادة…",
+  "restore.mode.inPlace": "استعادة في المكان الأصلي",
+  "restore.mode.files": "ملفات فردية",
+  "restore.mode.toFolder": "إلى مجلد",
+  "restore.inPlaceHint": "إعادة إنشاء هذا الـ container تماماً كما كان.",
+  "settings.restoreFolder": "مجلد الاستعادة الافتراضي",
+  "settings.restoreFolderHint": "المكان الذي تستخرج فيه «الاستعادة إلى مجلد» اللقطات افتراضياً.",
 };
 
 export default ar;

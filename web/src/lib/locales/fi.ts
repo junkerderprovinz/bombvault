@@ -477,6 +477,15 @@ const fi: Partial<Translations> = {
   "jobs.flashNotImplemented": "Huomautus: Flash-varmuuskopioinnin suoritinta ei ole vielä toteutettu vaiheessa 1 — aikataulu tallennetaan, mutta sitä ei suoriteta.",
   "schedule.includeAll": "Sisällytä kaikki aikatauluun",
   "schedule.excludeAll": "Poista kaikki aikataulusta",
+
+  // Restore panel (#21)
+  "restore.open": "Palauta…",
+  "restore.mode.inPlace": "Palauta paikalleen",
+  "restore.mode.files": "Yksittäiset tiedostot",
+  "restore.mode.toFolder": "Kansioon",
+  "restore.inPlaceHint": "Luo tämä kontti uudelleen täsmälleen entisellään.",
+  "settings.restoreFolder": "Palautuksen oletuskansio",
+  "settings.restoreFolderHint": "Mihin „palauta kansioon” purkaa tilannevedokset oletuksena.",
 };
 
 export default fi;

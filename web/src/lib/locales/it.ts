@@ -477,6 +477,15 @@ const it: Partial<Translations> = {
   "jobs.flashNotImplemented": "Nota: l'esecutore di backup Flash non è ancora implementato nella fase 1 — il calendario viene salvato ma non eseguito.",
   "schedule.includeAll": "Includi tutto nel calendario",
   "schedule.excludeAll": "Escludi tutto dal calendario",
+
+  // Restore panel (#21)
+  "restore.open": "Ripristina…",
+  "restore.mode.inPlace": "Ripristina nella posizione originale",
+  "restore.mode.files": "File singoli",
+  "restore.mode.toFolder": "In una cartella",
+  "restore.inPlaceHint": "Ricrea questo container esattamente com'era.",
+  "settings.restoreFolder": "Cartella di ripristino predefinita",
+  "settings.restoreFolderHint": "Dove «ripristina in una cartella» estrae gli snapshot per impostazione predefinita.",
 };
 
 export default it;

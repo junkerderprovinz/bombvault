@@ -480,6 +480,15 @@ const hu: Partial<Translations> = {
   "jobs.flashNotImplemented": "Megjegyzés: A Flash mentési végrehajtó az 1. fázisban még nincs megvalósítva — az ütemezés mentésre kerül, de nem fut le.",
   "schedule.includeAll": "Mind az ütemezésbe",
   "schedule.excludeAll": "Mind ki az ütemezésből",
+
+  // Restore panel (#21)
+  "restore.open": "Visszaállítás…",
+  "restore.mode.inPlace": "Visszaállítás a helyére",
+  "restore.mode.files": "Egyes fájlok",
+  "restore.mode.toFolder": "Egy mappába",
+  "restore.inPlaceHint": "Hozza létre újra ezt a konténert pontosan úgy, ahogy volt.",
+  "settings.restoreFolder": "Alapértelmezett visszaállítási mappa",
+  "settings.restoreFolderHint": "Hová csomagolja ki a „visszaállítás mappába” a pillanatképeket alapértelmezetten.",
 };
 
 export default hu;

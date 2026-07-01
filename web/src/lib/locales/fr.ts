@@ -477,6 +477,15 @@ const fr: Partial<Translations> = {
   "jobs.flashNotImplemented": "Remarque : l'exécuteur de sauvegarde Flash n'est pas encore implémenté en phase 1 — le planning est enregistré mais pas exécuté.",
   "schedule.includeAll": "Tout inclure dans le planning",
   "schedule.excludeAll": "Tout exclure du planning",
+
+  // Restore panel (#21)
+  "restore.open": "Restaurer…",
+  "restore.mode.inPlace": "Restaurer à l'emplacement d'origine",
+  "restore.mode.files": "Fichiers individuels",
+  "restore.mode.toFolder": "Dans un dossier",
+  "restore.inPlaceHint": "Recréer ce conteneur exactement tel qu'il était.",
+  "settings.restoreFolder": "Dossier de restauration par défaut",
+  "settings.restoreFolderHint": "Où « restaurer dans un dossier » extrait les instantanés par défaut.",
 };
 
 export default fr;

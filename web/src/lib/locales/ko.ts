@@ -469,6 +469,15 @@ const ko: Partial<Translations> = {
   "jobs.flashNotImplemented": "참고: Flash 백업 실행기는 1단계에서 아직 구현되지 않았습니다 — 일정은 저장되지만 실행되지는 않습니다.",
   "schedule.includeAll": "모두 일정에 포함",
   "schedule.excludeAll": "모두 일정에서 제외",
+
+  // Restore panel (#21)
+  "restore.open": "복원…",
+  "restore.mode.inPlace": "원위치에 복원",
+  "restore.mode.files": "개별 파일",
+  "restore.mode.toFolder": "폴더로",
+  "restore.inPlaceHint": "이 컨테이너를 이전과 정확히 동일하게 다시 만듭니다.",
+  "settings.restoreFolder": "기본 복원 폴더",
+  "settings.restoreFolderHint": "‘폴더로 복원’이 기본적으로 스냅샷을 추출하는 위치입니다.",
 };
 
 export default ko;

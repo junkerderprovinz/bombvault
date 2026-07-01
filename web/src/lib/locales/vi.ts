@@ -469,6 +469,15 @@ const vi: Partial<Translations> = {
   "jobs.flashNotImplemented": "Lưu ý: Bộ thực thi sao lưu Flash chưa được triển khai trong Giai đoạn 1 — lịch được lưu nhưng không được thực thi.",
   "schedule.includeAll": "Đưa tất cả vào lịch trình",
   "schedule.excludeAll": "Loại tất cả khỏi lịch trình",
+
+  // Restore panel (#21)
+  "restore.open": "Khôi phục…",
+  "restore.mode.inPlace": "Khôi phục tại chỗ",
+  "restore.mode.files": "Từng tập tin",
+  "restore.mode.toFolder": "Vào một thư mục",
+  "restore.inPlaceHint": "Tạo lại container này y hệt như trước.",
+  "settings.restoreFolder": "Thư mục khôi phục mặc định",
+  "settings.restoreFolderHint": "Nơi \"khôi phục vào một thư mục\" giải nén snapshot theo mặc định.",
 };
 
 export default vi;

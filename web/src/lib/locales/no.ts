@@ -477,6 +477,15 @@ const no: Partial<Translations> = {
   "jobs.flashNotImplemented": "Merk: Flash-sikkerhetskopi-executoren er ennå ikke implementert i fase 1 — tidsplanen lagres, men kjøres ikke.",
   "schedule.includeAll": "Inkluder alle i tidsplan",
   "schedule.excludeAll": "Ekskluder alle fra tidsplan",
+
+  // Restore panel (#21)
+  "restore.open": "Gjenopprett…",
+  "restore.mode.inPlace": "Gjenopprett på plass",
+  "restore.mode.files": "Enkeltfiler",
+  "restore.mode.toFolder": "Til en mappe",
+  "restore.inPlaceHint": "Gjenopprett denne kontaineren nøyaktig slik den var.",
+  "settings.restoreFolder": "Standard gjenopprettingsmappe",
+  "settings.restoreFolderHint": "Hvor «gjenopprett til en mappe» pakker ut snapshots som standard.",
 };
 
 export default no;

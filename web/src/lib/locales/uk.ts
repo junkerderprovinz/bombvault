@@ -472,6 +472,15 @@ const uk: Partial<Translations> = {
   "jobs.flashNotImplemented": "Примітка: виконавець резервного копіювання Flash у фазі 1 ще не реалізовано — розклад зберігається, але не виконується.",
   "schedule.includeAll": "Включити всі до розкладу",
   "schedule.excludeAll": "Виключити всі з розкладу",
+
+  // Restore panel (#21)
+  "restore.open": "Відновити…",
+  "restore.mode.inPlace": "Відновити на місці",
+  "restore.mode.files": "Окремі файли",
+  "restore.mode.toFolder": "До папки",
+  "restore.inPlaceHint": "Відтворити цей контейнер точно таким, яким він був.",
+  "settings.restoreFolder": "Стандартна папка відновлення",
+  "settings.restoreFolderHint": "Куди «відновлення до папки» за замовчуванням розпаковує знімки.",
 };
 
 export default uk;

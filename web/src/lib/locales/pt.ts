@@ -477,6 +477,15 @@ const pt: Partial<Translations> = {
   "jobs.flashNotImplemented": "Nota: o executor de backup do Flash ainda não está implementado na fase 1 — o agendamento é guardado mas não executado.",
   "schedule.includeAll": "Incluir tudo no agendamento",
   "schedule.excludeAll": "Excluir tudo do agendamento",
+
+  // Restore panel (#21)
+  "restore.open": "Restaurar…",
+  "restore.mode.inPlace": "Restaurar no local original",
+  "restore.mode.files": "Ficheiros individuais",
+  "restore.mode.toFolder": "Para uma pasta",
+  "restore.inPlaceHint": "Recriar este container exatamente como estava.",
+  "settings.restoreFolder": "Pasta de restauro predefinida",
+  "settings.restoreFolderHint": "Onde «restaurar para uma pasta» extrai os instantâneos por predefinição.",
 };
 
 export default pt;

@@ -674,6 +674,7 @@ type settingsView struct {
 	ContainersPath            string `json:"containersPath"`
 	VMsPath                   string `json:"vmsPath"`
 	FlashPath                 string `json:"flashPath"`
+	RestoreFolder             string `json:"restoreFolder"`
 	ContainersOffsite         string `json:"containersOffsite"`
 	VMsOffsite                string `json:"vmsOffsite"`
 	FlashOffsite              string `json:"flashOffsite"`
@@ -718,6 +719,7 @@ func toView(s store.Settings) settingsView {
 		ContainersPath:              s.ContainersPath,
 		VMsPath:                     s.VMsPath,
 		FlashPath:                   s.FlashPath,
+		RestoreFolder:               s.RestoreFolder,
 		ContainersOffsite:           s.ContainersOffsite,
 		VMsOffsite:                  s.VMsOffsite,
 		FlashOffsite:                s.FlashOffsite,
@@ -777,7 +779,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
 	// a local path must stay under the mount root.
 	for _, sub := range []string{
-		v.ContainersPath, v.VMsPath, v.FlashPath,
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.RestoreFolder,
 		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite,
 	} {
 		if sub == "" || restic.IsRemoteRepo(sub) {
@@ -848,6 +850,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ContainersPath:              v.ContainersPath,
 		VMsPath:                     v.VMsPath,
 		FlashPath:                   v.FlashPath,
+		RestoreFolder:               v.RestoreFolder,
 		ContainersOffsite:           v.ContainersOffsite,
 		VMsOffsite:                  v.VMsOffsite,
 		FlashOffsite:                v.FlashOffsite,

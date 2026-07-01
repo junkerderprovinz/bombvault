@@ -306,6 +306,15 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_recovery_kit_ack",
 		sql:     "ALTER TABLE settings ADD COLUMN recovery_kit_ack INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// Default folder for "restore to a folder": a relative subpath under the
+		// host mount that pre-fills the restore-to-folder picker (same style as the
+		// backup-path settings). Extracts land under here unless the user picks
+		// elsewhere.
+		version: 33,
+		name:    "settings_restore_folder",
+		sql:     "ALTER TABLE settings ADD COLUMN restore_folder TEXT NOT NULL DEFAULT 'user/bombvault/restore';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

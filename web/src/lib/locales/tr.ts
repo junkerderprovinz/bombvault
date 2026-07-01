@@ -477,6 +477,15 @@ const tr: Partial<Translations> = {
   "jobs.flashNotImplemented": "Not: Flash yedekleme yürütücüsü Aşama 1'de henüz uygulanmadı — zamanlama saklanır ancak çalıştırılmaz.",
   "schedule.includeAll": "Tümünü zamanlamaya ekle",
   "schedule.excludeAll": "Tümünü zamanlamadan çıkar",
+
+  // Restore panel (#21)
+  "restore.open": "Geri yükle…",
+  "restore.mode.inPlace": "Yerinde geri yükle",
+  "restore.mode.files": "Tekil dosyalar",
+  "restore.mode.toFolder": "Bir klasöre",
+  "restore.inPlaceHint": "Bu konteyneri tam olarak eski haliyle yeniden oluştur.",
+  "settings.restoreFolder": "Varsayılan geri yükleme klasörü",
+  "settings.restoreFolderHint": "“Klasöre geri yükle” işleminin anlık görüntüleri varsayılan olarak nereye çıkaracağı.",
 };
 
 export default tr;
