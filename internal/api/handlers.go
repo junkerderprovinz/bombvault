@@ -450,6 +450,13 @@ func (h *Handler) handleSnapshots(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
+// handleRestore starts an in-place container restore ON THE SERVER and returns
+// immediately (see handleBackup — restores got the same treatment in issue #24:
+// a multi-hour restore held this request open until the browser/proxy dropped
+// it, which canceled the context and killed restic mid-restore). Validation
+// still runs synchronously, so a bad request fails right away; the SPA watches
+// the "container:<name>" progress key over SSE and reads the recorded run for
+// the outcome.
 func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -463,11 +470,23 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.Restore(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r), body.LeaveStopped); err != nil {
+	// Confirmation is guarded here so an unconfirmed request fails synchronously
+	// with the familiar sentinel (the sync service core re-checks it for the
+	// stack-restore path — defense-in-depth).
+	if !body.Confirm {
+		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
+		return
+	}
+	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 // handleRestoreStack restores every backed-up member of a compose stack STOPPED,
@@ -518,6 +537,10 @@ func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
 // handleRestoreFiles restores one or more files/dirs from a container snapshot,
 // either back to their original locations (targetPath empty) or into an alternate
 // folder under the host mount. POST /api/containers/{name}/restore-files
+//
+// ASYNC (see handleRestore): validation + target resolution run synchronously
+// (the resolved target is returned in the ack); the restic work runs detached,
+// publishing "container:<name>" progress and recording a run for the outcome.
 func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -532,17 +555,27 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	target, err := h.svc.RestoreContainerFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
+	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
 // handleRestoreContainerTo extracts a whole container snapshot into an ALTERNATE
 // folder under the host mount (non-destructive — the live container is never
 // touched). POST /api/containers/{name}/restore-to
+//
+// ASYNC (see handleRestore — this is THE flow of issue #24: a 700GB extraction
+// held the request open for hours until the connection dropped and killed
+// restic). Validation + target resolution run synchronously (the resolved
+// target is returned in the ack); the restic work runs detached, publishing
+// "container:<name>" progress and recording a run for the outcome.
 func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -555,12 +588,16 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	target, err := h.svc.RestoreContainerToPath(r.Context(), name, sourceParam(r), body.SnapshotID, body.TargetPath)
+	target, started, err := h.svc.StartRestoreToPath(r.Context(), name, sourceParam(r), body.SnapshotID, body.TargetPath)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": target}))
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
 // handleDiff compares two of a container's snapshots and returns the summary of
@@ -1703,6 +1740,9 @@ func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
+// handleRestoreVM starts a VM restore ON THE SERVER and returns immediately
+// (see handleRestore). The SPA watches "vm:<name>" over SSE and reads the
+// recorded run for the outcome.
 func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
 	if !ok {
@@ -1716,11 +1756,22 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.RestoreVM(r.Context(), name, body.SnapshotID, body.Confirm, sourceParam(r), body.LeaveStopped); err != nil {
+	// Confirmation is guarded here so an unconfirmed request fails synchronously
+	// with the familiar sentinel (the sync service core re-checks it).
+	if !body.Confirm {
+		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
+		return
+	}
+	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 // handleBackupFlash starts the Unraid USB flash backup (singleton domain) ON

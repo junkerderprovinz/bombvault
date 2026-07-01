@@ -315,13 +315,21 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
+/**
+ * Start an in-place container restore. ASYNC (like backupNow): validation runs
+ * synchronously (a bad request still answers ok:false right away), then the
+ * server returns {ok:true, started:true} and the restore runs detached — it
+ * survives this connection dying, so a multi-hour restore can't be killed by
+ * the browser/proxy dropping the request. Watch the "container:<name>" SSE
+ * progress key + the recorded run (kind "restore") for the outcome.
+ */
 export function restore(
   name: string,
   snapshotId: string,
   confirm: boolean,
   source?: string,
   leaveStopped?: boolean
-): Promise<OkEnvelope> {
+): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
@@ -367,6 +375,8 @@ export function listSnapshotFiles(
 
 /** Response from POST /api/containers/{name}/restore-files */
 export interface RestoreFilesResponse extends OkEnvelope {
+  /** True once the server accepted the job and is running it detached. */
+  started?: boolean;
   /** Alternate-folder restore: the resolved target folder; "" for an in-place restore. */
   target?: string;
 }
@@ -376,6 +386,9 @@ export interface RestoreFilesResponse extends OkEnvelope {
  * snapshot. An empty targetPath restores them in place (original locations); a
  * relative subpath extracts the selection into that folder under the host mount
  * (non-destructive: the running container is never touched).
+ *
+ * ASYNC (see restore): the ack carries the resolved target; the restic work runs
+ * detached — watch SSE progress + the recorded run for the outcome.
  */
 export function restoreContainerFiles(
   name: string,
@@ -393,7 +406,9 @@ export function restoreContainerFiles(
 
 /** Response from POST /api/containers/{name}/restore-to */
 export interface RestoreToResponse extends OkEnvelope {
-  /** The resolved target folder the snapshot was extracted into. */
+  /** True once the server accepted the job and is running it detached. */
+  started?: boolean;
+  /** The resolved target folder the snapshot is extracted into. */
   target?: string;
 }
 
@@ -401,6 +416,10 @@ export interface RestoreToResponse extends OkEnvelope {
  * POST /api/containers/{name}/restore-to — extract a whole snapshot into an
  * ALTERNATE folder under the host mount (non-destructive: the running container
  * is never touched). targetPath is a relative subpath under the host mount.
+ *
+ * ASYNC (see restore — this is THE flow that died on multi-hour extractions):
+ * the ack carries the resolved target; the restic work runs detached — watch
+ * SSE progress + the recorded run for the outcome.
  */
 export function restoreContainerToPath(
   name: string,
@@ -850,13 +869,14 @@ export function listVMSnapshots(name: string, source?: string): Promise<ListSnap
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
+/** Start a VM restore. ASYNC — see restore; watch "vm:<name>" over SSE. */
 export function restoreVM(
   name: string,
   snapshotId: string,
   confirm: boolean,
   source?: string,
   leaveStopped?: boolean
-): Promise<OkEnvelope> {
+): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm, leaveStopped }),

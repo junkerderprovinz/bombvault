@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, listRuns } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
@@ -7,7 +7,7 @@ import { useT, stateLabel } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress } from "../lib/progress";
-import { useBackupWatch } from "../lib/backupWatch";
+import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -349,12 +349,16 @@ function VMSnapshotRow({
   // leaveStopped overrides the captured run-state so the VM is restored but not
   // booted (mirrors the container restore option).
   const [leaveStopped, setLeaveStopped] = useState(false);
-  type RestoreState =
-    | { phase: "idle" }
-    | { phase: "pending" }
-    | { phase: "success" }
-    | { phase: "error"; message: string };
-  const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
+  // Fire-and-watch (see useBackupWatch): the restore runs detached on the
+  // server — a multi-hour VM disk restore must survive this connection (and
+  // this panel) going away — so we watch the "vm:<name>" progress + the
+  // recorded run for the outcome instead of awaiting the whole restore.
+  const { state: restoreState, fire, isPending } = useBackupWatch({
+    progressKey: `vm:${vmName}`,
+    kind: "restore",
+    start: () => restoreVM(vmName, snap.id, true, source, leaveStopped),
+    matchRun: (r) => r.domain === "vm" && r.target === vmName,
+  });
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -373,23 +377,10 @@ function VMSnapshotRow({
     }
   }
 
-  async function handleRestore() {
+  function handleRestore() {
     if (!confirmed) return;
-    setRestoreState({ phase: "pending" });
-    try {
-      const res = await restoreVM(vmName, snap.id, true, source, leaveStopped);
-      if (res.ok) {
-        setRestoreState({ phase: "success" });
-      } else {
-        setRestoreState({ phase: "error", message: res.error ?? "Restore failed" });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Network error";
-      setRestoreState({ phase: "error", message: msg });
-    }
+    void fire();
   }
-
-  const isPending = restoreState.phase === "pending";
 
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
@@ -417,7 +408,7 @@ function VMSnapshotRow({
           {t("restore.confirm")}
         </label>
         <button
-          onClick={() => void handleRestore()}
+          onClick={handleRestore}
           disabled={!confirmed || isPending || restoreState.phase === "success"}
           className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
@@ -454,6 +445,12 @@ function VMSnapshotRow({
         />
         {t("restore.leaveStopped")}
       </label>
+      {isPending && (
+        <div className="flex flex-col gap-0.5 pl-24">
+          <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
+          <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+        </div>
+      )}
       {restoreState.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] pl-24">
           Restore complete — VM disks have been replaced.
@@ -863,56 +860,31 @@ export function VMs() {
     void loadVMs();
   }
 
-  // Single VM backups are now ASYNC and share the server's single-backup guard,
-  // so firing them in a tight loop would make every call after the first hit
-  // "a backup is already running". Run the bulk serially: snapshot this VM's
-  // existing run ids, fire (retrying briefly while the previous VM's guard is
-  // still releasing — the guard clears just after the run goes terminal, not the
-  // instant we observe it), then wait for the NEW run to finish before the next.
-  // Correlate by a new run id, never by the client clock (skew matched the wrong
-  // or last run).
-  async function backupOneAndWait(name: string): Promise<{ ok: boolean }> {
-    const isVMRun = (rr: { kind: string; domain?: string; target?: string }) =>
-      rr.kind === "backup" && rr.domain === "vm" && rr.target === name;
-    let baseline = new Set<string>();
-    try {
-      const before = await listRuns();
-      baseline = new Set((before.runs ?? []).filter(isVMRun).map((rr) => rr.id));
-    } catch {
-      // ignore — fall back to the first terminal run for this VM.
-    }
-    // Fire, retrying only while the guard is still busy from the previous VM.
-    const fireDeadline = Date.now() + 30 * 1000;
-    for (;;) {
-      const res = await backupVMNow(name);
-      if (res.ok) break;
-      const busy = (res.error ?? "").toLowerCase().includes("already running");
-      if (!busy || Date.now() > fireDeadline) return { ok: false };
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-    // Poll the recorded run until this VM's NEW backup reaches a terminal state.
-    const deadline = Date.now() + 13 * 60 * 60 * 1000; // past the 12h server cap
-    for (;;) {
-      await new Promise((r) => setTimeout(r, 2000));
-      try {
-        const runs = await listRuns();
-        const run = runs.runs?.find((rr) => isVMRun(rr) && !baseline.has(rr.id));
-        if (run && run.status === "success") return { ok: true };
-        if (run && run.status === "failed") return { ok: false };
-      } catch {
-        // transient — keep polling
-      }
-      if (Date.now() > deadline) return { ok: false };
-    }
-  }
-
+  // Single VM backups AND restores are ASYNC and share the server's
+  // single-flight guard, so firing them in a tight loop would make every call
+  // after the first hit "already running". Run the bulk serially via
+  // fireAndWaitRun: it fires one run (retrying briefly while the previous VM's
+  // guard is still releasing), then waits for the NEW recorded run to finish
+  // before the next — correlated by run id, never by the client clock.
   function backupSelected() {
-    void runBulk((name) => backupOneAndWait(name));
+    void runBulk((name) =>
+      fireAndWaitRun({
+        kind: "backup",
+        matchRun: (r) => r.domain === "vm" && r.target === name,
+        start: () => backupVMNow(name),
+      })
+    );
   }
 
   function restoreSelected() {
     if (!window.confirm(t("vms.restoreSelectedConfirm"))) return;
-    void runBulk((name) => restoreVM(name, "latest", true));
+    void runBulk((name) =>
+      fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "vm" && r.target === name,
+        start: () => restoreVM(name, "latest", true),
+      })
+    );
   }
 
   return (
