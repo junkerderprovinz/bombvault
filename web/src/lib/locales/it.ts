@@ -264,7 +264,7 @@ const it: Partial<Translations> = {
   // File-level restore
   "files.restore": "Ripristina",
   "files.restored": "Ripristinato",
-  "files.restoreConfirm": "Ripristinare questo file nella sua posizione originale? Sovrascrive il file attuale.",
+  "files.restoreConfirm": "Ripristinare i file selezionati nelle loro posizioni originali? I file esistenti verranno sovrascritti.",
   "files.selectHint": "Seleziona i file e le cartelle da ripristinare, poi scegli la destinazione.",
   "files.dest.inPlace": "Ripristina nella posizione originale",
   "files.dest.toFolder": "Ripristina in una cartella",

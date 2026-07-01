@@ -262,7 +262,7 @@ const cs: Partial<Translations> = {
   "snapshots.configOnlyHint": "Záloha jen konfigurace: definice kontejneru je uložena, ale nemá žádné datové složky ke snímku. Když kontejner smažete, objeví se v sekci „Nenainstalováno“, kde jej z této konfigurace znovu vytvoříte.",
   "files.restore": "Obnovit",
   "files.restored": "Obnoveno",
-  "files.restoreConfirm": "Obnovit tento soubor do původního umístění? Přepíše stávající soubor.",
+  "files.restoreConfirm": "Obnovit vybrané soubory do jejich původních umístění? Stávající soubory budou přepsány.",
   "files.selectHint": "Zaškrtněte soubory a složky k obnovení a poté zvolte cíl.",
   "files.dest.inPlace": "Obnovit na původní místo",
   "files.dest.toFolder": "Obnovit do složky",

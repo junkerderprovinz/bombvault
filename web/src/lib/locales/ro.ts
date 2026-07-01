@@ -264,7 +264,7 @@ const ro: Partial<Translations> = {
   // File-level restore
   "files.restore": "Restaurare",
   "files.restored": "Restaurat",
-  "files.restoreConfirm": "Restaurați acest fișier în locația sa originală? Suprascrie fișierul curent.",
+  "files.restoreConfirm": "Restaurați fișierele selectate în locațiile lor originale? Fișierele existente vor fi suprascrise.",
   "files.selectHint": "Bifați fișierele și folderele de restaurat, apoi alegeți destinația.",
   "files.dest.inPlace": "Restaurare pe loc (locația originală)",
   "files.dest.toFolder": "Restaurare într-un folder",

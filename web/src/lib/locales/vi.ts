@@ -262,7 +262,7 @@ const vi: Partial<Translations> = {
 
   "files.restore": "Khôi phục",
   "files.restored": "Đã khôi phục",
-  "files.restoreConfirm": "Khôi phục tập tin này về vị trí gốc? Nó sẽ ghi đè tập tin hiện tại.",
+  "files.restoreConfirm": "Khôi phục các tập tin đã chọn về vị trí gốc của chúng? Các tập tin hiện có sẽ bị ghi đè.",
   "files.selectHint": "Đánh dấu các tập tin và thư mục cần khôi phục, rồi chọn đích đến.",
   "files.dest.inPlace": "Khôi phục tại chỗ (vị trí gốc)",
   "files.dest.toFolder": "Khôi phục vào một thư mục",

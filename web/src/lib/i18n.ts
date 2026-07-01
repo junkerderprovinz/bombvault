@@ -145,7 +145,7 @@ const en = {
   // File-level restore
   "files.restore": "Restore",
   "files.restored": "Restored",
-  "files.restoreConfirm": "Restore this file to its original location? It overwrites the current file.",
+  "files.restoreConfirm": "Restore the selected files to their original locations? Existing files will be overwritten.",
   "files.filterPlaceholder": "Filter files…",
   "files.none": "No matching files",
   "files.loadFailed": "Failed to load files",
@@ -629,7 +629,7 @@ const de: Translations = {
   // File-level restore
   "files.restore": "Wiederherstellen",
   "files.restored": "Wiederhergestellt",
-  "files.restoreConfirm": "Diese Datei an ihren Originalort wiederherstellen? Die aktuelle Datei wird überschrieben.",
+  "files.restoreConfirm": "Ausgewählte Dateien an ihren Originalort wiederherstellen? Vorhandene Dateien werden überschrieben.",
   "files.filterPlaceholder": "Dateien filtern…",
   "files.none": "Keine passenden Dateien",
   "files.loadFailed": "Dateien konnten nicht geladen werden",

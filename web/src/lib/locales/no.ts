@@ -264,7 +264,7 @@ const no: Partial<Translations> = {
   // File-level restore
   "files.restore": "Gjenopprett",
   "files.restored": "Gjenopprettet",
-  "files.restoreConfirm": "Gjenopprette denne filen til opprinnelig plassering? Den gjeldende filen overskrives.",
+  "files.restoreConfirm": "Gjenopprette de valgte filene til deres opprinnelige plasseringer? Eksisterende filer overskrives.",
   "files.selectHint": "Kryss av filene og mappene som skal gjenopprettes, og velg deretter mål.",
   "files.dest.inPlace": "Gjenopprett på stedet (opprinnelig plassering)",
   "files.dest.toFolder": "Gjenopprett til en mappe",

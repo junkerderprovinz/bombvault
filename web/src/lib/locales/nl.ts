@@ -261,7 +261,7 @@ const nl: Partial<Translations> = {
   // File-level restore
   "files.restore": "Herstellen",
   "files.restored": "Hersteld",
-  "files.restoreConfirm": "Dit bestand herstellen naar de oorspronkelijke locatie? Het huidige bestand wordt overschreven.",
+  "files.restoreConfirm": "De geselecteerde bestanden herstellen naar hun oorspronkelijke locaties? Bestaande bestanden worden overschreven.",
   "files.selectHint": "Vink de bestanden en mappen aan om te herstellen en kies daarna de bestemming.",
   "files.dest.inPlace": "Herstellen op oorspronkelijke locatie",
   "files.dest.toFolder": "Herstellen naar een map",

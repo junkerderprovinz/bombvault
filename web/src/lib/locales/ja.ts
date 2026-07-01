@@ -262,7 +262,7 @@ const ja: Partial<Translations> = {
 
   "files.restore": "復元",
   "files.restored": "復元しました",
-  "files.restoreConfirm": "このファイルを元の場所に復元しますか？現在のファイルは上書きされます。",
+  "files.restoreConfirm": "選択したファイルをそれぞれの元の場所に復元しますか？既存のファイルは上書きされます。",
   "files.selectHint": "復元するファイルとフォルダーにチェックを入れ、保存先を選択してください。",
   "files.dest.inPlace": "元の場所に復元",
   "files.dest.toFolder": "フォルダーに復元",

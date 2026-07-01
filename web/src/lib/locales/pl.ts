@@ -259,7 +259,7 @@ const pl: Partial<Translations> = {
   "snapshots.configOnlyHint": "Kopia tylko konfiguracji: definicja kontenera jest zapisana, ale nie ma folderów danych do migawki. Po usunięciu pojawi się w sekcji „Niezainstalowane“, gdzie można go odtworzyć z tej konfiguracji.",
   "files.restore": "Przywróć",
   "files.restored": "Przywrócono",
-  "files.restoreConfirm": "Przywrócić ten plik do oryginalnej lokalizacji? Spowoduje to nadpisanie bieżącego pliku.",
+  "files.restoreConfirm": "Przywrócić wybrane pliki do ich oryginalnych lokalizacji? Istniejące pliki zostaną nadpisane.",
   "files.selectHint": "Zaznacz pliki i foldery do przywrócenia, a następnie wybierz miejsce docelowe.",
   "files.dest.inPlace": "Przywróć w miejscu (oryginalna lokalizacja)",
   "files.dest.toFolder": "Przywróć do folderu",

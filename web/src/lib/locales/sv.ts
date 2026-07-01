@@ -264,7 +264,7 @@ const sv: Partial<Translations> = {
   // File-level restore
   "files.restore": "Återställ",
   "files.restored": "Återställd",
-  "files.restoreConfirm": "Återställa den här filen till dess ursprungliga plats? Den nuvarande filen skrivs över.",
+  "files.restoreConfirm": "Återställa de valda filerna till deras ursprungliga platser? Befintliga filer skrivs över.",
   "files.selectHint": "Kryssa i filerna och mapparna som ska återställas och välj sedan mål.",
   "files.dest.inPlace": "Återställ på plats (ursprunglig plats)",
   "files.dest.toFolder": "Återställ till en mapp",
