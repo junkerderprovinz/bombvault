@@ -14,6 +14,7 @@ const el: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Ρυθμίσεις",
   "nav.reportBug": "Αναφορά σφάλματος",
+  "nav.advanced": "Για προχωρημένους",
   "nav.comingSoon": "Σύντομα",
 
   // Dashboard

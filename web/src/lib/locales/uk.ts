@@ -14,6 +14,7 @@ const uk: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Налаштування",
   "nav.reportBug": "Повідомити про помилку",
+  "nav.advanced": "Додатково",
   "nav.comingSoon": "Незабаром",
 
   // Dashboard

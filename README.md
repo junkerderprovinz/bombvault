@@ -109,6 +109,8 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ## 3. Features
 
+> **Simple by default.** The interface shows only the essentials (back up, restore, schedule). Flip the **Advanced** toggle in the sidebar to reveal the expert controls — retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics, integrity/maintenance tools and more. It's a per-browser preference, off by default, so newcomers get a clean UI and power users get everything.
+
 ### Backup scope
 
 | What | What is saved |

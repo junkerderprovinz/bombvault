@@ -14,6 +14,7 @@ const cs: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Nastavení",
   "nav.reportBug": "Nahlásit chybu",
+  "nav.advanced": "Pokročilé",
   "nav.comingSoon": "Připravujeme",
 
   // Dashboard

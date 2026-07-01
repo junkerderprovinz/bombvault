@@ -14,6 +14,7 @@ const vi: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Cài đặt",
   "nav.reportBug": "Báo lỗi",
+  "nav.advanced": "Nâng cao",
   "nav.comingSoon": "Sắp ra mắt",
 
   // Dashboard

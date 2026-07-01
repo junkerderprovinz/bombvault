@@ -50,6 +50,7 @@ const en = {
   "nav.flash": "Flash",
   "nav.settings": "Settings",
   "nav.reportBug": "Report a bug",
+  "nav.advanced": "Advanced",
   "nav.comingSoon": "Coming soon",
 
   // Dashboard
@@ -554,6 +555,7 @@ const de: Translations = {
   "nav.flash": "Flash",
   "nav.settings": "Einstellungen",
   "nav.reportBug": "Fehler melden",
+  "nav.advanced": "Erweitert",
   "nav.comingSoon": "Demnächst",
 
   "dashboard.title": "Dashboard",

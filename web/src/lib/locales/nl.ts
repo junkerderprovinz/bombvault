@@ -14,6 +14,7 @@ const nl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Instellingen",
   "nav.reportBug": "Bug melden",
+  "nav.advanced": "Geavanceerd",
   "nav.comingSoon": "Binnenkort",
 
   // Dashboard

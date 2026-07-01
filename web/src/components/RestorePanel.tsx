@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
+import { useAdvanced } from "../lib/advanced";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 
@@ -692,6 +693,7 @@ function SnapshotRow({
   onTagged: () => void;
   t: T;
 }) {
+  const { advanced } = useAdvanced();
   const [confirmed, setConfirmed] = useState(false);
   // leaveStopped overrides the captured run-state so an in-place restore recreates
   // the container without starting it (rebuild a stack member by member).
@@ -699,7 +701,10 @@ function SnapshotRow({
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: "idle" });
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
+  // In basic mode only the in-place restore is offered; the mode radios (files /
+  // to-folder) are advanced. Pin the mode to "inPlace" so the panel always renders.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
+  const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -749,10 +754,12 @@ function SnapshotRow({
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
-        {/* Tags (chips + inline add-tag) — ownership tag hidden */}
-        <div className="hidden sm:flex">
-          <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
-        </div>
+        {/* Tags (chips + inline add-tag) — ownership tag hidden. Advanced only. */}
+        {advanced && (
+          <div className="hidden sm:flex">
+            <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
+          </div>
+        )}
 
         {/* Consolidated restore toggle: opens the inline panel with 3 modes */}
         <button
@@ -779,41 +786,45 @@ function SnapshotRow({
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
       {showRestore && (
         <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
-          <div className="flex flex-col gap-1.5">
-            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
-              <input
-                type="radio"
-                name={radioName}
-                checked={mode === "inPlace"}
-                onChange={() => setMode("inPlace")}
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t("restore.mode.inPlace")}
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
-              <input
-                type="radio"
-                name={radioName}
-                checked={mode === "files"}
-                onChange={() => setMode("files")}
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t("restore.mode.files")}
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
-              <input
-                type="radio"
-                name={radioName}
-                checked={mode === "toFolder"}
-                onChange={() => setMode("toFolder")}
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t("restore.mode.toFolder")}
-            </label>
-          </div>
+          {/* Mode radios (Individual files / To a folder) are advanced; in basic
+              mode only the in-place restore below is shown. */}
+          {advanced && (
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+                <input
+                  type="radio"
+                  name={radioName}
+                  checked={mode === "inPlace"}
+                  onChange={() => setMode("inPlace")}
+                  style={{ accentColor: "var(--accent)" }}
+                />
+                {t("restore.mode.inPlace")}
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+                <input
+                  type="radio"
+                  name={radioName}
+                  checked={mode === "files"}
+                  onChange={() => setMode("files")}
+                  style={{ accentColor: "var(--accent)" }}
+                />
+                {t("restore.mode.files")}
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+                <input
+                  type="radio"
+                  name={radioName}
+                  checked={mode === "toFolder"}
+                  onChange={() => setMode("toFolder")}
+                  style={{ accentColor: "var(--accent)" }}
+                />
+                {t("restore.mode.toFolder")}
+              </label>
+            </div>
+          )}
 
           {/* In place — the destructive recreate (confirm-gated). */}
-          {mode === "inPlace" && (
+          {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-[11px] text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
               <div className="flex items-center gap-3 flex-wrap">
@@ -872,7 +883,7 @@ function SnapshotRow({
           )}
 
           {/* Individual files — multi-select file restore (in place / to a folder). */}
-          {mode === "files" && (
+          {effectiveMode === "files" && (
             <div className="border-t border-carbon-border pt-2">
               <SnapshotFileBrowser
                 containerName={containerName}
@@ -886,7 +897,7 @@ function SnapshotRow({
           )}
 
           {/* To a folder — extract into an alternate folder via the tree picker. */}
-          {mode === "toFolder" && (
+          {effectiveMode === "toFolder" && (
             <div className="border-t border-carbon-border pt-2">
               <RestoreToFolder
                 containerName={containerName}
@@ -909,6 +920,7 @@ function SnapshotRow({
 const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
 export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
+  const { advanced } = useAdvanced();
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -978,13 +990,16 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
 
       {open && (
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
-          <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-              <SourceToggle source={source} onChange={setSource} disabled={loading} />
+          {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
+          {advanced && (
+            <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+                <SourceToggle source={source} onChange={setSource} disabled={loading} />
+              </div>
+              <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
             </div>
-            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
-          </div>
+          )}
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
@@ -1004,7 +1019,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               )}
             </div>
           )}
-          {!loading && !error && snapshots.length >= 2 && (
+          {advanced && !loading && !error && snapshots.length >= 2 && (
             <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
           )}
           {!loading && snapshots.map((snap) => (

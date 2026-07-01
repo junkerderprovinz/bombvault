@@ -14,6 +14,7 @@ const hu: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Beállítások",
   "nav.reportBug": "Hiba jelentése",
+  "nav.advanced": "Speciális",
   "nav.comingSoon": "Hamarosan",
 
   // Dashboard

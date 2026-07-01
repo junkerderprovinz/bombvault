@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { getHealth, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { getTheme, toggleTheme } from "../lib/theme";
+import { useAdvanced } from "../lib/advanced";
 
 interface SidebarProps {
   settings: Settings | null;
@@ -237,6 +238,7 @@ function SidebarControls() {
 
 export function Sidebar({ settings }: SidebarProps) {
   const { t } = useT();
+  const { advanced, setAdvanced } = useAdvanced();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
   const [version, setVersion] = useState<string | null>(null);
@@ -301,6 +303,17 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.settings")}
           icon={<IconSettings />}
         />
+        {/* Advanced mode — reveals expert controls across the app (per-browser). */}
+        <label className="flex items-center justify-between gap-2 px-3.5 py-1 text-xs text-carbon-textSub cursor-pointer select-none">
+          <span>{t("nav.advanced")}</span>
+          <input
+            type="checkbox"
+            checked={advanced}
+            onChange={(e) => setAdvanced(e.target.checked)}
+            className="h-4 w-4 cursor-pointer"
+            style={{ accentColor: "var(--accent)" }}
+          />
+        </label>
         {/* Report a bug → GitHub issues, and the version → the releases page (#23). */}
         <a
           href="https://github.com/junkerderprovinz/bombvault/issues"

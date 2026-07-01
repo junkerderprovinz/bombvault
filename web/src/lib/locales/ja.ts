@@ -14,6 +14,7 @@ const ja: Partial<Translations> = {
   "nav.flash": "フラッシュ",
   "nav.settings": "設定",
   "nav.reportBug": "バグを報告",
+  "nav.advanced": "詳細設定",
   "nav.comingSoon": "近日公開",
 
   // Dashboard
