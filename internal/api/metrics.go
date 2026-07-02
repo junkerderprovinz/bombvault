@@ -102,6 +102,29 @@ func (s *Service) Metrics() (string, error) {
 		b.WriteString(snapBody.String())
 	}
 
+	// ransomware-protection gauges per domain (from DomainStatus). Emitted for
+	// every domain so a scraper always sees a series: off-site append-only flag,
+	// the last tamper-test outcome (1 = append-only proven, 0 = not/unknown), and
+	// the last off-site replication timestamp (0 = never replicated).
+	b.WriteString("# HELP bombvault_offsite_immutable Whether a domain's off-site repo is flagged append-only (1) or not (0).\n")
+	b.WriteString("# TYPE bombvault_offsite_immutable gauge\n")
+	for _, d := range statuses {
+		fmt.Fprintf(&b, "bombvault_offsite_immutable{domain=\"%s\"} %d\n",
+			escapeLabelValue(d.Domain), boolMetric(d.OffsiteImmutable))
+	}
+	b.WriteString("# HELP bombvault_tamper_test_ok Whether the last off-site tamper test proved append-only protection (1) or not (0).\n")
+	b.WriteString("# TYPE bombvault_tamper_test_ok gauge\n")
+	for _, d := range statuses {
+		fmt.Fprintf(&b, "bombvault_tamper_test_ok{domain=\"%s\"} %d\n",
+			escapeLabelValue(d.Domain), boolMetric(d.LastTamperOK))
+	}
+	b.WriteString("# HELP bombvault_offsite_last_replication_timestamp_seconds Unix time of the last off-site replication per domain (0 if none).\n")
+	b.WriteString("# TYPE bombvault_offsite_last_replication_timestamp_seconds gauge\n")
+	for _, d := range statuses {
+		fmt.Fprintf(&b, "bombvault_offsite_last_replication_timestamp_seconds{domain=\"%s\"} %d\n",
+			escapeLabelValue(d.Domain), d.LastReplicationAt)
+	}
+
 	// backup run counts per domain + status. Emitted for every domain/status pair
 	// so a scraper always sees a series (0 when none), in a stable order.
 	b.WriteString("# HELP bombvault_runs_total Total number of finished backup runs per domain and status.\n")

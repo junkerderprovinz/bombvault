@@ -443,6 +443,23 @@ type DomainStatusEntry struct {
 	// without an extra round-trip.
 	LastVerified   int64 `json:"lastVerified"`
 	LastVerifiedOK bool  `json:"lastVerifiedOK"`
+
+	// Ransomware-protection scorecard facts (Task 8): whether the domain has an
+	// off-site copy, whether it is flagged append-only (immutable), and the
+	// age-stamped outcomes of the three protection checks — the active tamper
+	// test, the off-site replication, and the off-site DR drill. Protection is the
+	// red/amber/green aggregate (see protectionLevel); it is "" for a disabled
+	// domain (the dashboard then shows nothing for it). These extend /api/status so
+	// the dashboard card needs no second round-trip.
+	OffsiteConfigured bool   `json:"offsiteConfigured"`
+	OffsiteImmutable  bool   `json:"offsiteImmutable"`
+	LastTamperAt      int64  `json:"lastTamperAt"`
+	LastTamperOK      bool   `json:"lastTamperOK"`
+	LastReplicationAt int64  `json:"lastReplicationAt"`
+	LastReplicationOK bool   `json:"lastReplicationOK"`
+	LastDRDrillAt     int64  `json:"lastDrDrillAt"`
+	LastDRDrillOK     bool   `json:"lastDrDrillOK"`
+	Protection        string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -470,6 +487,76 @@ func rpoStatus(nowUnix, lastSuccess, periodSeconds int64, scheduled bool) string
 	default:
 		return "ok"
 	}
+}
+
+// cadencePeriodSeconds parses a cadence string to its expected period in seconds,
+// returning 0 for an empty or unparseable cadence (i.e. "no expectation").
+func cadencePeriodSeconds(cadence string) int64 {
+	if strings.TrimSpace(cadence) == "" {
+		return 0
+	}
+	cad, err := schedule.ParseCadence(cadence)
+	if err != nil {
+		return 0
+	}
+	return cad.PeriodSeconds()
+}
+
+// protInputs carries the facts protectionLevel aggregates, so the decision is a
+// pure function of its inputs (unit-testable without a store) and mirrors
+// rpoStatus's shape.
+type protInputs struct {
+	enabled           bool
+	offsiteConfigured bool
+	offsiteImmutable  bool
+	hadTamper         bool
+	lastTamperOK      bool
+	lastTamperAt      int64
+	tamperPeriod      int64 // seconds; 0 = no/invalid tamper schedule
+	lastReplicationAt int64
+	offsitePeriod     int64 // seconds; 0 = replication not on its own schedule
+	lastDRDrillAt     int64
+	drillPeriod       int64 // seconds; 0 = no drill schedule
+}
+
+// protectionLevel aggregates a domain's ransomware-protection posture into a
+// red/amber/green chip. The far side enforces immutability, so this NEVER goes
+// green on configuration claims alone:
+//
+//   - ""    the domain is disabled — the dashboard shows nothing for it.
+//   - red   the domain is enabled but has no off-site copy at all; OR the off-site
+//     is flagged immutable yet the append-only guarantee is unproven — the
+//     tamper test is missing, last failed, or is stale (older than 2× its
+//     schedule period). A non-immutable off-site makes no append-only claim,
+//     so a missing tamper test does not make it red.
+//   - amber protection exists but a scheduled time-check is overdue by the SAME
+//     period-doubling rule backups use (rpoStatus "overdue"): the off-site
+//     replication (only when a decoupled off-site schedule is set) or the
+//     off-site DR drill (only when a drill schedule is set).
+//   - green otherwise.
+func protectionLevel(now int64, in protInputs) string {
+	if !in.enabled {
+		return "" // disabled domains carry no protection posture
+	}
+	if !in.offsiteConfigured {
+		return "red" // enabled but no off-site copy — unprotected by design
+	}
+	if in.offsiteImmutable {
+		tamperStale := in.tamperPeriod > 0 && now-in.lastTamperAt > in.tamperPeriod*2
+		if !in.hadTamper || !in.lastTamperOK || tamperStale {
+			return "red" // an append-only claim we cannot currently PROVE
+		}
+	}
+	// Replication currency only has an independent expectation when the off-site
+	// runs on its own schedule; otherwise it is coupled to each backup (already
+	// covered by the domain's own Status).
+	if rpoStatus(now, in.lastReplicationAt, in.offsitePeriod, in.offsitePeriod > 0) == "overdue" {
+		return "amber"
+	}
+	if rpoStatus(now, in.lastDRDrillAt, in.drillPeriod, in.drillPeriod > 0) == "overdue" {
+		return "amber"
+	}
+	return "green"
 }
 
 // DomainStatus returns the RPO (protection) status of each domain (containers,
@@ -525,15 +612,64 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			lastVerifiedOK = drill.OK
 		}
 
+		// Ransomware-protection scorecard facts. All reads are best-effort: a store
+		// error leaves the relevant fact at its zero value (a missing check), which
+		// the aggregate then treats conservatively rather than failing the query.
+		offsiteConfigured := s.offsiteRepoFor(d.name, settings) != ""
+		offsiteImmutable := offsiteImmutableFor(d.name, settings)
+
+		var lastTamperAt int64
+		var lastTamperOK, hadTamper bool
+		if tt, found, tErr := s.store.LatestTamperTest(d.name); tErr == nil && found {
+			hadTamper = true
+			lastTamperAt = tt.At
+			lastTamperOK = tt.Protected
+		}
+		var lastReplicationAt int64
+		var lastReplicationOK bool
+		if run, found, rErr := s.store.LatestOffsiteRun(d.name); rErr == nil && found {
+			lastReplicationAt = run.StartedAt
+			lastReplicationOK = run.OK
+		}
+		var lastDRDrillAt int64
+		var lastDRDrillOK bool
+		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
+			lastDRDrillAt = dr.At
+			lastDRDrillOK = dr.OK
+		}
+
+		protection := protectionLevel(now, protInputs{
+			enabled:           d.enabled,
+			offsiteConfigured: offsiteConfigured,
+			offsiteImmutable:  offsiteImmutable,
+			hadTamper:         hadTamper,
+			lastTamperOK:      lastTamperOK,
+			lastTamperAt:      lastTamperAt,
+			tamperPeriod:      cadencePeriodSeconds(settings.TamperTestSchedule),
+			lastReplicationAt: lastReplicationAt,
+			offsitePeriod:     cadencePeriodSeconds(s.offsiteScheduleFor(d.name, settings)),
+			lastDRDrillAt:     lastDRDrillAt,
+			drillPeriod:       cadencePeriodSeconds(settings.DrillsSchedule),
+		})
+
 		out = append(out, DomainStatusEntry{
-			Domain:         d.name,
-			Enabled:        d.enabled,
-			Schedule:       d.schedule,
-			LastSuccess:    lastUnix,
-			PeriodSeconds:  period,
-			Status:         rpoStatus(now, lastUnix, period, scheduled),
-			LastVerified:   lastVerified,
-			LastVerifiedOK: lastVerifiedOK,
+			Domain:            d.name,
+			Enabled:           d.enabled,
+			Schedule:          d.schedule,
+			LastSuccess:       lastUnix,
+			PeriodSeconds:     period,
+			Status:            rpoStatus(now, lastUnix, period, scheduled),
+			LastVerified:      lastVerified,
+			LastVerifiedOK:    lastVerifiedOK,
+			OffsiteConfigured: offsiteConfigured,
+			OffsiteImmutable:  offsiteImmutable,
+			LastTamperAt:      lastTamperAt,
+			LastTamperOK:      lastTamperOK,
+			LastReplicationAt: lastReplicationAt,
+			LastReplicationOK: lastReplicationOK,
+			LastDRDrillAt:     lastDRDrillAt,
+			LastDRDrillOK:     lastDRDrillOK,
+			Protection:        protection,
 		})
 	}
 	return out, nil
