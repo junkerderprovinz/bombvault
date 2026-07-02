@@ -1151,8 +1151,8 @@ func TestStartBackupAllSkipsSelfRunsOthers(t *testing.T) {
 	ch, cancel := store.Subscribe()
 	defer cancel()
 
-	if !svc.StartBackupAll(context.Background(), []string{"BombVault", "plex", "radarr"}) {
-		t.Fatal("StartBackupAll should start")
+	if started, err := svc.StartBackupAll(context.Background(), []string{"BombVault", "plex", "radarr"}); err != nil || !started {
+		t.Fatalf("StartBackupAll should start: started=%v err=%v", started, err)
 	}
 	waitBatchDone(t, ch)
 	waitForBackupDone(t, svc) // guard fully released → temp-dir cleanup is race-free
@@ -1171,12 +1171,12 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 	ch, cancel := store.Subscribe()
 	defer cancel()
 
-	if !svc.StartBackupAll(context.Background(), []string{"plex"}) {
-		t.Fatal("first batch should start")
+	if started, err := svc.StartBackupAll(context.Background(), []string{"plex"}); err != nil || !started {
+		t.Fatalf("first batch should start: started=%v err=%v", started, err)
 	}
 	// The flag is set synchronously by StartBackupAll, so the second call sees a
 	// run in flight regardless of goroutine scheduling.
-	if svc.StartBackupAll(context.Background(), []string{"radarr"}) {
+	if started, _ := svc.StartBackupAll(context.Background(), []string{"radarr"}); started {
 		t.Fatal("second concurrent batch must be rejected")
 	}
 	close(eng.block) // let the first batch finish, then wait so cleanup is safe
@@ -1193,15 +1193,15 @@ func TestStartBackupSingleFlight(t *testing.T) {
 	svc, _, eng, _ := backupTestService(t)
 	eng.block = make(chan struct{}) // hold the first backup inside restic Backup
 
-	if !svc.StartBackup(context.Background(), "plex") {
-		t.Fatal("first backup should start")
+	if started, err := svc.StartBackup(context.Background(), "plex"); err != nil || !started {
+		t.Fatalf("first backup should start: started=%v err=%v", started, err)
 	}
 	// The guard is set synchronously by StartBackup, so the second call sees a run
 	// in flight regardless of goroutine scheduling.
-	if svc.StartBackup(context.Background(), "radarr") {
+	if started, _ := svc.StartBackup(context.Background(), "radarr"); started {
 		t.Fatal("second concurrent backup must be rejected")
 	}
-	if svc.StartBackupAll(context.Background(), []string{"radarr"}) {
+	if started, _ := svc.StartBackupAll(context.Background(), []string{"radarr"}); started {
 		t.Fatal("a batch must be rejected while a single backup is in flight")
 	}
 	close(eng.block) // let the backup finish
@@ -1980,7 +1980,7 @@ func TestStartRestoreSingleFlight(t *testing.T) {
 	if started, err := svc.StartRestoreVM(ctx, "win11", "aaaa1111", "local", false); err != nil || started {
 		t.Fatalf("a VM restore must be rejected busy: started=%v err=%v", started, err)
 	}
-	if svc.StartBackup(ctx, "plex") {
+	if started, _ := svc.StartBackup(ctx, "plex"); started {
 		t.Fatal("a backup must be rejected while a restore is in flight (shared guard)")
 	}
 

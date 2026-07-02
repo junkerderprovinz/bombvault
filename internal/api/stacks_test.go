@@ -323,7 +323,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false); err != nil || started {
 		t.Fatalf("an in-place restore must be rejected busy: started=%v err=%v", started, err)
 	}
-	if svc.StartBackup(ctx, "web") {
+	if started, _ := svc.StartBackup(ctx, "web"); started {
 		t.Fatal("a backup must be rejected while a stack restore is in flight (shared guard)")
 	}
 

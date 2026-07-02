@@ -143,6 +143,14 @@ type Service struct {
 	// prune can never run against a repo a backup is actively writing.
 	repoMu map[string]*sync.Mutex
 
+	// domainActivity names the operation currently holding each domain's repoMu
+	// ("backup"|"restore"|"prune"|"verify"|"replicate"|"delete"|"unlock"|
+	// "maintenance"), so backup starters can return a clear busy error instead of
+	// launching a goroutine that then blocks silently on the mutex. Guarded by
+	// activityMu; set when a lock is acquired, cleared (defer) on release.
+	activityMu     sync.Mutex
+	domainActivity map[string]string
+
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
 	selfMu       sync.Mutex
@@ -200,6 +208,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 			"vms":        {},
 			"flash":      {},
 		},
+		domainActivity:    map[string]string{},
 		offsiteOverBudget: map[string]bool{},
 	}
 }
@@ -208,21 +217,62 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 // domain's lock (so it never disturbs an in-progress backup's repo).
 var errDomainBusy = errors.New("a backup is currently running for this domain; try again when it finishes")
 
-// lockDomain blocks until it holds the domain's repo lock and returns the unlock
-// func (used by backups). A nil/absent mutex (unknown domain) is a no-op.
-func (s *Service) lockDomain(domain string) func() {
+// setDomainActivity records the reason label for a currently-held domain lock.
+func (s *Service) setDomainActivity(domain, reason string) {
+	s.activityMu.Lock()
+	if s.domainActivity == nil {
+		s.domainActivity = map[string]string{}
+	}
+	s.domainActivity[domain] = reason
+	s.activityMu.Unlock()
+}
+
+// clearDomainActivity drops the reason label when a domain lock is released.
+func (s *Service) clearDomainActivity(domain string) {
+	s.activityMu.Lock()
+	delete(s.domainActivity, domain)
+	s.activityMu.Unlock()
+}
+
+// domainBusy reports the activity label of a domain whose repo lock is currently
+// held, and whether it is held at all. It lets a backup starter refuse a busy
+// domain up front instead of launching a goroutine that then blocks silently on
+// the mutex (there is an inherent tiny race — a scheduler can grab the lock right
+// after this check — that is acceptable UX; it shrinks the silent stall to a rare
+// window).
+func (s *Service) domainBusy(domain string) (string, bool) {
+	s.activityMu.Lock()
+	defer s.activityMu.Unlock()
+	r, ok := s.domainActivity[domain]
+	return r, ok
+}
+
+// lockDomainFor is lockDomain plus an activity label recorded for the hold, so
+// domainBusy can report what is running. The returned closure clears the label
+// and unlocks. A nil/absent mutex (unknown domain) is a no-op.
+func (s *Service) lockDomainFor(domain, reason string) func() {
 	mu := s.repoMu[domain]
 	if mu == nil {
 		return func() {}
 	}
 	mu.Lock()
-	return mu.Unlock
+	s.setDomainActivity(domain, reason)
+	return func() {
+		s.clearDomainActivity(domain)
+		mu.Unlock()
+	}
 }
 
-// tryLockDomain acquires the domain's repo lock without blocking. It returns the
-// unlock func and true on success, or (nil, false) when a backup holds it (used
-// by maintenance ops, which must not run against a repo being backed up).
-func (s *Service) tryLockDomain(domain string) (func(), bool) {
+// lockDomain blocks until it holds the domain's repo lock and returns the unlock
+// func (used by backups). A nil/absent mutex (unknown domain) is a no-op. The
+// hold is labelled "backup"; non-backup holders call lockDomainFor with their own
+// label so domainBusy can name what is running.
+func (s *Service) lockDomain(domain string) func() { return s.lockDomainFor(domain, "backup") }
+
+// tryLockDomainFor acquires the domain's repo lock without blocking, recording
+// the reason label on success. It returns the unlock func and true, or
+// (nil, false) when another op holds it.
+func (s *Service) tryLockDomainFor(domain, reason string) (func(), bool) {
 	mu := s.repoMu[domain]
 	if mu == nil {
 		return func() {}, true
@@ -230,7 +280,20 @@ func (s *Service) tryLockDomain(domain string) (func(), bool) {
 	if !mu.TryLock() {
 		return nil, false
 	}
-	return mu.Unlock, true
+	s.setDomainActivity(domain, reason)
+	return func() {
+		s.clearDomainActivity(domain)
+		mu.Unlock()
+	}, true
+}
+
+// tryLockDomain acquires the domain's repo lock without blocking. It returns the
+// unlock func and true on success, or (nil, false) when a backup holds it (used
+// by maintenance ops, which must not run against a repo being backed up). The
+// hold is labelled "maintenance"; callers that want a precise label
+// (prune/verify/delete/unlock) call tryLockDomainFor.
+func (s *Service) tryLockDomain(domain string) (func(), bool) {
+	return s.tryLockDomainFor(domain, "maintenance")
 }
 
 // SetHostSSH wires the SSH connection used for VM NVRAM transfer + the UI's
@@ -1257,7 +1320,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	if s.offsiteRepoFor(domain, settings) == "" {
 		return errors.New("no off-site repo configured for this domain")
 	}
-	defer s.lockDomain(domain)()
+	defer s.lockDomainFor(domain, "replicate")()
 	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo)
 }
 
@@ -1766,12 +1829,19 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 // stopping the very container the BombVault UI is open in). Self and blank names
 // are skipped, and a single container failing is logged and the batch continues.
 //
-// It returns false if a batch is already running (the caller answers 409).
+// It returns (false, nil) if a batch is already running (the caller answers 409),
+// or (false, err) if the containers domain is already busy with another op
+// (scheduled backup/restore/prune/…) — a clear busy error the handler maps to a
+// 409, instead of launching a goroutine that then blocks silently on the lock.
 // Progress is published under "batch:containers" for an overall indicator, while
 // each container still publishes its own "container:<name>" bar as it runs.
-func (s *Service) StartBackupAll(ctx context.Context, names []string) bool {
+func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false
+		return false, nil
+	}
+	if op, busy := s.domainBusy("containers"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on containers", op)
 	}
 	// Detach immediately so the run — and the self-detection it depends on — is
 	// independent of the request that started it (which is canceled the moment the
@@ -1805,7 +1875,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) bool {
 		s.publishBatch(key, 100, false)
 		log.Printf("api: backup-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(names))
 	}()
-	return true
+	return true, nil
 }
 
 // StartBackup launches a single container backup in a background goroutine and
@@ -1818,10 +1888,15 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) bool {
 //
 // It shares batchActive with StartBackupAll so a single backup and a batch can
 // never overlap (the same repo lock would otherwise serialise them anyway).
-// Returns false if a backup/batch is already running (the caller answers busy).
-func (s *Service) StartBackup(ctx context.Context, name string) bool {
+// Returns (false, nil) if a backup/batch is already running (the caller answers
+// busy), or (false, err) if the containers domain is already busy with another op.
+func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false
+		return false, nil
+	}
+	if op, busy := s.domainBusy("containers"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on containers", op)
 	}
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns); Backup applies its own hard timeout.
@@ -1832,16 +1907,21 @@ func (s *Service) StartBackup(ctx context.Context, name string) bool {
 			log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
-	return true
+	return true, nil
 }
 
 // StartBackupVM launches a single VM backup in a background goroutine and
 // returns immediately, mirroring StartBackup for the VM domain. Progress is
 // published under "vm:<name>". Shares batchActive (no overlap with any other
-// backup); returns false if one is already running.
-func (s *Service) StartBackupVM(ctx context.Context, name string) bool {
+// backup); returns (false, nil) if one is already running, or (false, err) if the
+// vms domain is already busy with another op.
+func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false
+		return false, nil
+	}
+	if op, busy := s.domainBusy("vms"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on vms", op)
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -1850,15 +1930,20 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) bool {
 			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
-	return true
+	return true, nil
 }
 
 // StartBackupFlash launches the singleton flash backup in a background goroutine
 // and returns immediately, mirroring StartBackup. Progress is published under
-// "flash". Shares batchActive; returns false if a backup is already running.
-func (s *Service) StartBackupFlash(ctx context.Context) bool {
+// "flash". Shares batchActive; returns (false, nil) if a backup is already
+// running, or (false, err) if the flash domain is already busy with another op.
+func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false
+		return false, nil
+	}
+	if op, busy := s.domainBusy("flash"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on flash", op)
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -1867,7 +1952,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) bool {
 			log.Printf("api: backup flash failed: %v", err)
 		}
 	}()
-	return true
+	return true, nil
 }
 
 // BackupInProgress reports whether a single backup, a batch, or a restore is
@@ -2273,7 +2358,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	// guard BY DESIGN — the domain lock is the one layer scheduled jobs do
 	// respect — so without it a detached multi-hour restore could overlap a
 	// scheduled backup of the same domain in both directions.
-	unlock := s.lockDomain("containers")
+	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
 	rkey := "container:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
@@ -2545,7 +2630,7 @@ func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) er
 	// Hold the domain repo lock for the restic work: scheduled backups bypass
 	// batchActive by design and the domain lock is the layer they DO respect
 	// (see executeRestore).
-	unlock := s.lockDomain("containers")
+	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
 	for i, c := range plan.paths {
 		if err := s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, c, plan.target, plan.mode); err != nil {
@@ -2748,7 +2833,7 @@ func (s *Service) runRestoreToPath(ctx context.Context, plan toPathRestorePlan) 
 	// Hold the domain repo lock for the restic work: scheduled backups bypass
 	// batchActive by design and the domain lock is the layer they DO respect
 	// (see executeRestore).
-	unlock := s.lockDomain("containers")
+	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
 	return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, "/", plan.target, plan.mode)
 }
@@ -2978,7 +3063,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
 	}
-	unlock, ok := s.tryLockDomain("vms")
+	unlock, ok := s.tryLockDomainFor("vms", "delete")
 	if !ok {
 		return errDomainBusy
 	}
@@ -3735,7 +3820,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	// Hold the domain repo lock for the whole restic/libvirt phase: the scheduler
 	// calls BackupVM directly (bypassing batchActive by design) and the domain
 	// lock is the layer scheduled jobs DO respect (see executeRestore).
-	unlock := s.lockDomain("vms")
+	unlock := s.lockDomainFor("vms", "restore")
 	defer unlock()
 	rkey := "vm:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
@@ -4166,7 +4251,7 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string) (st
 
 	// Serialise with backups (and other maintenance) so a drill never reads a repo
 	// a backup is actively writing. Busy → report it WITHOUT recording a drill.
-	unlock, ok := s.tryLockDomain(domain)
+	unlock, ok := s.tryLockDomainFor(domain, "verify")
 	if !ok {
 		return store.RestoreDrill{}, errDomainBusy
 	}
@@ -4273,7 +4358,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string) (store.RestoreD
 
 	// Serialise with backups/restores on the domain repo — a scheduled backup must
 	// never fire mid-drill and vice-versa. Busy → report it WITHOUT recording.
-	unlock, ok := s.tryLockDomain(domain)
+	unlock, ok := s.tryLockDomainFor(domain, "verify")
 	if !ok {
 		return store.RestoreDrill{}, errDomainBusy
 	}
@@ -4693,7 +4778,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) error
 	if err := s.requireExistingRepo(repo, "no repository to unlock yet"); err != nil {
 		return err
 	}
-	unlock, ok := s.tryLockDomain(domain)
+	unlock, ok := s.tryLockDomainFor(domain, "unlock")
 	if !ok {
 		return errDomainBusy
 	}
@@ -4719,7 +4804,7 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	if err := s.requireExistingRepo(repo, "no backups to prune yet"); err != nil {
 		return err
 	}
-	unlock, ok := s.tryLockDomain(domain)
+	unlock, ok := s.tryLockDomainFor(domain, "prune")
 	if !ok {
 		return errDomainBusy
 	}
@@ -4769,7 +4854,7 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
 	}
-	unlock, ok := s.tryLockDomain(domain)
+	unlock, ok := s.tryLockDomainFor(domain, "delete")
 	if !ok {
 		return errDomainBusy
 	}

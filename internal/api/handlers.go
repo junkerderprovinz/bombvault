@@ -384,7 +384,12 @@ func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !h.svc.StartBackup(r.Context(), name) {
+	started, err := h.svc.StartBackup(r.Context(), name)
+	if err != nil { // the target domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
 		return
 	}
@@ -418,7 +423,12 @@ func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !h.svc.StartBackupAll(r.Context(), body.Names) {
+	started, err := h.svc.StartBackupAll(r.Context(), body.Names)
+	if err != nil { // the containers domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
 		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
 		return
 	}
@@ -1853,7 +1863,12 @@ func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !h.svc.StartBackupVM(r.Context(), name) {
+	started, err := h.svc.StartBackupVM(r.Context(), name)
+	if err != nil { // the vms domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
 		return
 	}
@@ -1914,7 +1929,12 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 // THE SERVER and returns immediately (see handleBackup). The SPA watches the
 // "flash" progress key over SSE.
 func (h *Handler) handleBackupFlash(w http.ResponseWriter, r *http.Request) {
-	if !h.svc.StartBackupFlash(r.Context()) {
+	started, err := h.svc.StartBackupFlash(r.Context())
+	if err != nil { // the flash domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
 		return
 	}
