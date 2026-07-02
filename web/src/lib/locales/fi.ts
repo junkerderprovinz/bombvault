@@ -94,7 +94,12 @@ const fi: Partial<Translations> = {
   "restore.confirmBody":
     "Kontti pysäytetään, sen appdata korvataan ja se luodaan uudelleen varmuuskopiosta. Jatketaanko?",
   "restore.confirm": "Vahvista",
-  "restore.cancel": "Peruuta",
+  "restore.cancel": "Peruuta palautus",
+  "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
+  "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää sen osittain palautetuksi — se on palautettava uudelleen, jotta {name} toimii. Peruutetaanko silti?",
+  "restore.cancelling": "Peruutetaan…",
+  "restore.cancelled": "Palautus peruutettu",
+  "restore.progress": "Palautetaan… {pct}%",
   "restore.preview": "Esikatselu",
   "restore.started": "Palautus käynnistetty",
 
@@ -362,6 +367,8 @@ const fi: Partial<Translations> = {
   "common.done": "Valmis",
   "common.loadingBackups": "Ladataan varmuuskopioita…",
   "common.saving": "Tallennetaan…",
+  "common.restoreRunning": "Palautus on käynnissä…",
+  "common.backupRunning": "Varmuuskopiointi on käynnissä…",
 
   // Backup folders selector
   "folders.title": "Varmuuskopioitavat kansiot",

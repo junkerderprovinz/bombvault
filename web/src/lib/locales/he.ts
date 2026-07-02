@@ -94,7 +94,12 @@ const he: Partial<Translations> = {
   "restore.confirmBody":
     "פעולה זו תעצור את ה-container, תחליף את הנתונים שלו ותיצור אותו מחדש מהגיבוי. להמשיך?",
   "restore.confirm": "אשר",
-  "restore.cancel": "ביטול",
+  "restore.cancel": "ביטול השחזור",
+  "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
+  "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר אותו משוחזר חלקית — יהיה צורך לשחזר שוב כדי לקבל {name} תקין. לבטל בכל זאת?",
+  "restore.cancelling": "מבטל…",
+  "restore.cancelled": "השחזור בוטל",
+  "restore.progress": "משחזר… {pct}%",
   "restore.preview": "תצוגה מקדימה",
   "restore.started": "השחזור התחיל",
 
@@ -362,6 +367,8 @@ const he: Partial<Translations> = {
   "common.done": "הושלם",
   "common.loadingBackups": "טוען גיבויים…",
   "common.saving": "שומר…",
+  "common.restoreRunning": "מתבצע שחזור…",
+  "common.backupRunning": "מתבצע גיבוי…",
 
   // Backup folders selector
   "folders.title": "תיקיות לגיבוי",

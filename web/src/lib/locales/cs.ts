@@ -94,7 +94,12 @@ const cs: Partial<Translations> = {
   "restore.confirmBody":
     "Kontejner bude zastaven, jeho appdata nahrazena a kontejner obnoven ze zálohy. Pokračovat?",
   "restore.confirm": "Potvrdit",
-  "restore.cancel": "Zrušit",
+  "restore.cancel": "Zrušit obnovu",
+  "restore.cancelConfirmSafe": "Zrušit obnovu? Částečně zapsaná cílová složka zůstane beze změny.",
+  "restore.cancelConfirmInPlace": "{name} se právě obnovuje. Zrušení jej ponechá částečně obnovený — pro funkční {name} bude nutné obnovu spustit znovu. Přesto zrušit?",
+  "restore.cancelling": "Ruším…",
+  "restore.cancelled": "Obnova zrušena",
+  "restore.progress": "Obnovuji… {pct}%",
   "restore.preview": "Náhled",
   "restore.started": "Obnova spuštěna",
 
@@ -360,6 +365,8 @@ const cs: Partial<Translations> = {
   "common.done": "Hotovo",
   "common.loadingBackups": "Načítám zálohy…",
   "common.saving": "Ukládám…",
+  "common.restoreRunning": "Probíhá obnova…",
+  "common.backupRunning": "Probíhá zálohování…",
 
   // Backup folders selector
   "folders.title": "Zálohované složky",

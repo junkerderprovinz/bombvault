@@ -94,7 +94,12 @@ const ja: Partial<Translations> = {
   "restore.confirmBody":
     "コンテナを停止し、appdata を置き換え、バックアップから再作成します。続行しますか？",
   "restore.confirm": "確認",
-  "restore.cancel": "キャンセル",
+  "restore.cancel": "復元をキャンセル",
+  "restore.cancelConfirmSafe": "復元をキャンセルしますか？途中まで書き込まれた出力フォルダーはそのまま残ります。",
+  "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルすると一部だけ復元された状態になります — 正常な {name} にするには再度復元する必要があります。それでもキャンセルしますか？",
+  "restore.cancelling": "キャンセル中…",
+  "restore.cancelled": "復元をキャンセルしました",
+  "restore.progress": "復元中… {pct}%",
   "restore.preview": "プレビュー",
   "restore.started": "復元を開始しました",
 
@@ -354,6 +359,8 @@ const ja: Partial<Translations> = {
   "common.done": "完了",
   "common.loadingBackups": "バックアップを読み込み中…",
   "common.saving": "保存中…",
+  "common.restoreRunning": "復元を実行中です…",
+  "common.backupRunning": "バックアップを実行中です…",
 
   // Backup folders selector
   "folders.title": "バックアップ対象フォルダ",

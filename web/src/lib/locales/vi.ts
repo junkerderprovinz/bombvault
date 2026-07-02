@@ -94,7 +94,12 @@ const vi: Partial<Translations> = {
   "restore.confirmBody":
     "Thao tác này sẽ dừng container, thay thế dữ liệu và tạo lại từ bản sao lưu. Tiếp tục?",
   "restore.confirm": "Xác nhận",
-  "restore.cancel": "Hủy",
+  "restore.cancel": "Hủy khôi phục",
+  "restore.cancelConfirmSafe": "Hủy khôi phục? Thư mục đầu ra đã ghi một phần sẽ được giữ nguyên.",
+  "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến nó chỉ được khôi phục một phần — bạn sẽ cần khôi phục lại để có một {name} hoạt động. Vẫn hủy chứ?",
+  "restore.cancelling": "Đang hủy…",
+  "restore.cancelled": "Đã hủy khôi phục",
+  "restore.progress": "Đang khôi phục… {pct}%",
   "restore.preview": "Xem trước",
   "restore.started": "Đã bắt đầu khôi phục",
 
@@ -354,6 +359,8 @@ const vi: Partial<Translations> = {
   "common.done": "Xong",
   "common.loadingBackups": "Đang tải bản sao lưu…",
   "common.saving": "Đang lưu…",
+  "common.restoreRunning": "Một tiến trình khôi phục đang chạy…",
+  "common.backupRunning": "Một tiến trình sao lưu đang chạy…",
 
   // Backup folders selector
   "folders.title": "Thư mục sao lưu",

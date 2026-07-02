@@ -94,7 +94,12 @@ const fr: Partial<Translations> = {
   "restore.confirmBody":
     "Le conteneur sera arrêté, ses données remplacées et recréé depuis la sauvegarde. Continuer ?",
   "restore.confirm": "Confirmer",
-  "restore.cancel": "Annuler",
+  "restore.cancel": "Annuler la restauration",
+  "restore.cancelConfirmSafe": "Annuler la restauration ? Le dossier de sortie partiel est laissé tel quel.",
+  "restore.cancelConfirmInPlace": "{name} est en cours de restauration. L'annuler le laisse partiellement restauré — il faudra le restaurer à nouveau pour obtenir un {name} fonctionnel. Annuler quand même ?",
+  "restore.cancelling": "Annulation…",
+  "restore.cancelled": "Restauration annulée",
+  "restore.progress": "Restauration… {pct} %",
   "restore.preview": "Aperçu",
   "restore.started": "Restauration démarrée",
 
@@ -362,6 +367,8 @@ const fr: Partial<Translations> = {
   "common.done": "Terminé",
   "common.loadingBackups": "Chargement des sauvegardes…",
   "common.saving": "Enregistrement…",
+  "common.restoreRunning": "Une restauration est en cours…",
+  "common.backupRunning": "Une sauvegarde est en cours…",
 
   // Backup folders selector
   "folders.title": "Dossiers à sauvegarder",

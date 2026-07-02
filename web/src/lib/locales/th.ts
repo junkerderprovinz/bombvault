@@ -94,7 +94,12 @@ const th: Partial<Translations> = {
   "restore.confirmBody":
     "การดำเนินการนี้จะหยุด container แทนที่ข้อมูล และสร้างใหม่จากการสำรองข้อมูล ดำเนินการต่อ?",
   "restore.confirm": "ยืนยัน",
-  "restore.cancel": "ยกเลิก",
+  "restore.cancel": "ยกเลิกการกู้คืน",
+  "restore.cancelConfirmSafe": "ยกเลิกการกู้คืนหรือไม่? โฟลเดอร์ผลลัพธ์ที่กู้คืนบางส่วนจะยังคงอยู่ตามเดิม",
+  "restore.cancelConfirmInPlace": "{name} กำลังกู้คืนอยู่ การยกเลิกจะทำให้กู้คืนได้เพียงบางส่วน — คุณจะต้องกู้คืนอีกครั้งเพื่อให้ได้ {name} ที่ใช้งานได้ ยกเลิกต่อไปหรือไม่?",
+  "restore.cancelling": "กำลังยกเลิก…",
+  "restore.cancelled": "ยกเลิกการกู้คืนแล้ว",
+  "restore.progress": "กำลังกู้คืน… {pct}%",
   "restore.preview": "ดูตัวอย่าง",
   "restore.started": "เริ่มการกู้คืนแล้ว",
 
@@ -362,6 +367,8 @@ const th: Partial<Translations> = {
   "common.done": "เสร็จสิ้น",
   "common.loadingBackups": "กำลังโหลดข้อมูลสำรอง…",
   "common.saving": "กำลังบันทึก…",
+  "common.restoreRunning": "กำลังกู้คืนข้อมูลอยู่…",
+  "common.backupRunning": "กำลังสำรองข้อมูลอยู่…",
 
   // Backup folders selector
   "folders.title": "โฟลเดอร์ที่สำรองข้อมูล",

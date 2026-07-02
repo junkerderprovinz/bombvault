@@ -94,7 +94,12 @@ const ro: Partial<Translations> = {
   "restore.confirmBody":
     "Aceasta va opri containerul, va înlocui appdata și îl va recrea din copie de rezervă. Continuați?",
   "restore.confirm": "Confirmare",
-  "restore.cancel": "Anulare",
+  "restore.cancel": "Anulează restaurarea",
+  "restore.cancelConfirmSafe": "Anulați restaurarea? Folderul de ieșire parțial este lăsat așa cum este.",
+  "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea îl lasă parțial restaurat — va fi nevoie de o nouă restaurare pentru a obține un {name} funcțional. Anulați oricum?",
+  "restore.cancelling": "Se anulează…",
+  "restore.cancelled": "Restaurare anulată",
+  "restore.progress": "Se restaurează… {pct}%",
   "restore.preview": "Previzualizare",
   "restore.started": "Restaurare pornită",
 
@@ -362,6 +367,8 @@ const ro: Partial<Translations> = {
   "common.done": "Gata",
   "common.loadingBackups": "Se încarcă copiile…",
   "common.saving": "Se salvează…",
+  "common.restoreRunning": "O restaurare este în curs…",
+  "common.backupRunning": "O copie de rezervă este în curs…",
 
   // Backup folders selector
   "folders.title": "Foldere de salvat",

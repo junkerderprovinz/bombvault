@@ -93,7 +93,12 @@ const nl: Partial<Translations> = {
   "restore.confirmTitle": "Herstel bevestigen",
   "restore.confirmBody": "De container wordt gestopt, de appdata vervangen en opnieuw aangemaakt vanuit de back-up. Doorgaan?",
   "restore.confirm": "Bevestigen",
-  "restore.cancel": "Annuleren",
+  "restore.cancel": "Herstel annuleren",
+  "restore.cancelConfirmSafe": "Herstel annuleren? De gedeeltelijk geschreven doelmap blijft ongewijzigd.",
+  "restore.cancelConfirmInPlace": "{name} wordt momenteel hersteld. Annuleren laat het gedeeltelijk hersteld achter — je moet opnieuw herstellen om een werkende {name} te krijgen. Toch annuleren?",
+  "restore.cancelling": "Annuleren…",
+  "restore.cancelled": "Herstel geannuleerd",
+  "restore.progress": "Herstellen… {pct}%",
   "restore.preview": "Voorbeeld",
   "restore.started": "Herstel gestart",
 
@@ -359,6 +364,8 @@ const nl: Partial<Translations> = {
   "common.done": "Klaar",
   "common.loadingBackups": "Back-ups laden…",
   "common.saving": "Opslaan…",
+  "common.restoreRunning": "Er wordt een herstel uitgevoerd…",
+  "common.backupRunning": "Er wordt een back-up uitgevoerd…",
 
   // Backup folders selector
   "folders.title": "Back-upmappen",

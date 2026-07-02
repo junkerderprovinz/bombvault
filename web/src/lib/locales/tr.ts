@@ -94,7 +94,12 @@ const tr: Partial<Translations> = {
   "restore.confirmBody":
     "Bu işlem konteyneri durduracak, appdata'yı değiştirecek ve yedekten yeniden oluşturacak. Devam edilsin mi?",
   "restore.confirm": "Onayla",
-  "restore.cancel": "İptal",
+  "restore.cancel": "Geri yüklemeyi iptal et",
+  "restore.cancelConfirmSafe": "Geri yükleme iptal edilsin mi? Kısmen yazılan hedef klasör olduğu gibi bırakılır.",
+  "restore.cancelConfirmInPlace": "{name} geri yükleme aşamasında. İptal etmek onu kısmen geri yüklenmiş bırakır — çalışan bir {name} için yeniden geri yüklemeniz gerekir. Yine de iptal edilsin mi?",
+  "restore.cancelling": "İptal ediliyor…",
+  "restore.cancelled": "Geri yükleme iptal edildi",
+  "restore.progress": "Geri yükleniyor… {pct}%",
   "restore.preview": "Önizleme",
   "restore.started": "Geri yükleme başladı",
 
@@ -362,6 +367,8 @@ const tr: Partial<Translations> = {
   "common.done": "Tamam",
   "common.loadingBackups": "Yedekler yükleniyor…",
   "common.saving": "Kaydediliyor…",
+  "common.restoreRunning": "Bir geri yükleme çalışıyor…",
+  "common.backupRunning": "Bir yedekleme çalışıyor…",
 
   // Backup folders selector
   "folders.title": "Yedeklenecek klasörler",

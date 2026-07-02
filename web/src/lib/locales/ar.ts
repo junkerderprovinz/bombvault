@@ -94,7 +94,12 @@ const ar: Partial<Translations> = {
   "restore.confirmBody":
     "سيُوقف هذا الـ container وتُستبدل بياناته ويُعاد إنشاؤه من النسخة الاحتياطية. هل تريد المتابعة؟",
   "restore.confirm": "تأكيد",
-  "restore.cancel": "إلغاء",
+  "restore.cancel": "إلغاء الاستعادة",
+  "restore.cancelConfirmSafe": "إلغاء الاستعادة؟ سيبقى مجلد الإخراج الجزئي كما هو.",
+  "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء سيتركه مستعادًا جزئيًا — ستحتاج إلى استعادته مرة أخرى للحصول على {name} يعمل. الإلغاء على أي حال؟",
+  "restore.cancelling": "جارٍ الإلغاء…",
+  "restore.cancelled": "تم إلغاء الاستعادة",
+  "restore.progress": "جارٍ الاستعادة… {pct}%",
   "restore.preview": "معاينة",
   "restore.started": "بدأت الاستعادة",
 
@@ -362,6 +367,8 @@ const ar: Partial<Translations> = {
   "common.done": "تم",
   "common.loadingBackups": "جارٍ تحميل النسخ الاحتياطية…",
   "common.saving": "جارٍ الحفظ…",
+  "common.restoreRunning": "جارٍ تنفيذ استعادة…",
+  "common.backupRunning": "جارٍ تنفيذ نسخ احتياطي…",
 
   // Backup folders selector
   "folders.title": "مجلدات النسخ الاحتياطي",

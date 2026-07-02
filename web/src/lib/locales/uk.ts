@@ -93,7 +93,12 @@ const uk: Partial<Translations> = {
   "restore.confirmTitle": "Підтвердити відновлення",
   "restore.confirmBody": "Контейнер буде зупинено, appdata замінено та відтворено з резервної копії. Продовжити?",
   "restore.confirm": "Підтвердити",
-  "restore.cancel": "Скасувати",
+  "restore.cancel": "Скасувати відновлення",
+  "restore.cancelConfirmSafe": "Скасувати відновлення? Частково записана цільова папка залишиться без змін.",
+  "restore.cancelConfirmInPlace": "{name} перебуває в процесі відновлення. Скасування залишить його частково відновленим — щоб отримати робочий {name}, доведеться відновити ще раз. Усе одно скасувати?",
+  "restore.cancelling": "Скасування…",
+  "restore.cancelled": "Відновлення скасовано",
+  "restore.progress": "Відновлення… {pct}%",
   "restore.preview": "Перегляд",
   "restore.started": "Відновлення розпочато",
 
@@ -357,6 +362,8 @@ const uk: Partial<Translations> = {
   "common.done": "Готово",
   "common.loadingBackups": "Завантаження резервних копій…",
   "common.saving": "Збереження…",
+  "common.restoreRunning": "Виконується відновлення…",
+  "common.backupRunning": "Виконується резервне копіювання…",
 
   // Backup folders selector
   "folders.title": "Папки для резервного копіювання",

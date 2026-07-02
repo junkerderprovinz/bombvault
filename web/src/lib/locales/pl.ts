@@ -93,7 +93,12 @@ const pl: Partial<Translations> = {
   "restore.confirmTitle": "Potwierdź przywracanie",
   "restore.confirmBody": "Kontener zostanie zatrzymany, appdata zastąpione i odtworzone z kopii zapasowej. Kontynuować?",
   "restore.confirm": "Potwierdź",
-  "restore.cancel": "Anuluj",
+  "restore.cancel": "Anuluj przywracanie",
+  "restore.cancelConfirmSafe": "Anulować przywracanie? Częściowo zapisany folder docelowy pozostanie bez zmian.",
+  "restore.cancelConfirmInPlace": "{name} jest w trakcie przywracania. Anulowanie pozostawi go częściowo przywróconym — aby uzyskać działający {name}, trzeba będzie przywrócić go ponownie. Anulować mimo to?",
+  "restore.cancelling": "Anulowanie…",
+  "restore.cancelled": "Przywracanie anulowane",
+  "restore.progress": "Przywracanie… {pct}%",
   "restore.preview": "Podgląd",
   "restore.started": "Przywracanie uruchomione",
 
@@ -357,6 +362,8 @@ const pl: Partial<Translations> = {
   "common.done": "Gotowe",
   "common.loadingBackups": "Ładowanie kopii…",
   "common.saving": "Zapisywanie…",
+  "common.restoreRunning": "Trwa przywracanie…",
+  "common.backupRunning": "Trwa tworzenie kopii zapasowej…",
 
   // Backup folders selector
   "folders.title": "Foldery do kopii",

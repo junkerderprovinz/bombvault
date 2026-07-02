@@ -94,7 +94,12 @@ const no: Partial<Translations> = {
   "restore.confirmBody":
     "Dette vil stoppe kontaineren, erstatte appdata og gjenopprette den fra sikkerhetskopien. Fortsette?",
   "restore.confirm": "Bekreft",
-  "restore.cancel": "Avbryt",
+  "restore.cancel": "Avbryt gjenoppretting",
+  "restore.cancelConfirmSafe": "Avbryte gjenopprettingen? Den delvis skrevne målmappen beholdes som den er.",
+  "restore.cancelConfirmInPlace": "{name} er midt i en gjenoppretting. Å avbryte etterlater den delvis gjenopprettet — du må gjenopprette på nytt for å få en fungerende {name}. Avbryte likevel?",
+  "restore.cancelling": "Avbryter…",
+  "restore.cancelled": "Gjenoppretting avbrutt",
+  "restore.progress": "Gjenoppretter… {pct}%",
   "restore.preview": "Forhåndsvisning",
   "restore.started": "Gjenoppretting startet",
 
@@ -362,6 +367,8 @@ const no: Partial<Translations> = {
   "common.done": "Ferdig",
   "common.loadingBackups": "Laster sikkerhetskopier…",
   "common.saving": "Lagrer…",
+  "common.restoreRunning": "En gjenoppretting kjører…",
+  "common.backupRunning": "En sikkerhetskopiering kjører…",
 
   // Backup folders selector
   "folders.title": "Sikkerhetskopierte mapper",
