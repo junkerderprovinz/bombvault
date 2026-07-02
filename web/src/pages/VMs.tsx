@@ -359,6 +359,7 @@ function VMSnapshotRow({
     start: () => restoreVM(vmName, snap.id, true, source, leaveStopped),
     matchRun: (r) => r.domain === "vm" && r.target === vmName,
   });
+  const prog = useProgress()[`vm:${vmName}`];
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -446,9 +447,17 @@ function VMSnapshotRow({
         {t("restore.leaveStopped")}
       </label>
       {isPending && (
-        <div className="flex flex-col gap-0.5 pl-24">
+        <div className="flex flex-col gap-1 pl-24">
           <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
           <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+          {prog?.phase === "restore" && prog.active && (
+            <ProgressBar
+              percent={prog.percent}
+              active
+              inline
+              label={prog.percent > 0 ? t("restore.progress").replace("{pct}", String(Math.round(prog.percent))) : undefined}
+            />
+          )}
         </div>
       )}
       {restoreState.phase === "success" && (
@@ -672,7 +681,11 @@ function VMRow({
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (
-        <ProgressBar percent={progress.percent} active={progress.active} />
+        <ProgressBar
+          percent={progress.percent}
+          active={progress.active}
+          label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
+        />
       )}
     </div>
   );

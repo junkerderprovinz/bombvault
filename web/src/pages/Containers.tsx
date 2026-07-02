@@ -705,7 +705,11 @@ function ContainerRow({
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (
-        <ProgressBar percent={progress.percent} active={progress.active} />
+        <ProgressBar
+          percent={progress.percent}
+          active={progress.active}
+          label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
+        />
       )}
     </div>
   );
