@@ -394,9 +394,10 @@ function protectionChip(level: string): string {
   }
 }
 
-// A checklist row: "ok" (proven), "bad" (a red gap → deep-links to Settings), or
-// "muted" (not applicable / never run — no claim made, so not a failure).
-type RowState = "ok" | "bad" | "muted";
+// A checklist row: "ok" (proven, green), "amber" (a currency lapse that mirrors
+// the chip's amber — stale/overdue), "bad" (a red gap → deep-links to Settings),
+// or "muted" (not applicable / never run — no claim made, so not a failure).
+type RowState = "ok" | "amber" | "bad" | "muted";
 
 function RansomwareCard({
   t,
@@ -407,21 +408,10 @@ function RansomwareCard({
   domains: DomainStatus[];
   loading: boolean;
 }) {
-  // Encryption + off-site prune config live in Settings; fetched here (mirrors
-  // RecoveryNag/StatCardsRow) so the card needs no second /api/status round-trip.
-  const [settings, setSettings] = useState<Settings | null>(null);
-  useEffect(() => {
-    let active = true;
-    getSettings()
-      .then((res) => {
-        if (active && res.ok) setSettings(res.settings);
-      })
-      .catch(() => {/* non-fatal */});
-    return () => {
-      active = false;
-    };
-  }, []);
-
+  // Pure renderer: every row is derived from the extended /api/status domain
+  // fields (tamperState/replicationState/drillState/encryptionOn/pruneStrategySet),
+  // which the backend computes from the SAME inputs as the aggregate chip — so a
+  // row can never contradict it, and the card needs no /api/settings round-trip.
   const domainLabel = (domain: string): string => {
     switch (domain) {
       case "containers":
@@ -451,18 +441,51 @@ function RansomwareCard({
   // Render nothing at all when no domain is in scope (nobody has off-site yet).
   if (!loading && shown.length === 0) return null;
 
-  const encOn = !!settings?.encryptionEnabled;
-  // A prune strategy is "set" when the far side prunes (immutable), or an off-site
-  // retention keep-policy / growth budget is configured (global settings).
-  const globalPrune =
-    !!settings &&
-    (settings.offsiteGrowthBudgetGB > 0 ||
-      settings.offsiteRetentionKeepLast > 0 ||
-      settings.offsiteRetentionKeepDaily > 0 ||
-      settings.offsiteRetentionKeepWeekly > 0 ||
-      settings.offsiteRetentionKeepMonthly > 0);
-
   const ageText = (at: number): string => (at > 0 ? relativeTime(t, at) : t("containers.never"));
+
+  // appendOnly/replication/drill rows are pure maps of the backend state string
+  // (which is kept consistent with the chip). The ✓/!/✗/— icon + label + color all
+  // follow the state, so a red/never row never reads "verified".
+  const appendOnlyRow = (d: DomainStatus): { label: string; state: RowState; at?: number } => {
+    switch (d.tamperState) {
+      case "ok":
+        return { label: t("ransomware.appendOnlyVerified"), state: "ok", at: d.lastTamperAt };
+      case "stale":
+        return { label: t("ransomware.appendOnlyStale"), state: "amber", at: d.lastTamperAt };
+      case "failed":
+        return { label: t("ransomware.appendOnlyFailed"), state: "bad", at: d.lastTamperAt };
+      case "never":
+        return { label: t("ransomware.appendOnlyNever"), state: "bad" };
+      default:
+        return { label: t("ransomware.appendOnlyOff"), state: "muted" };
+    }
+  };
+  const replicationRow = (d: DomainStatus): { label: string; state: RowState; at?: number } => {
+    switch (d.replicationState) {
+      case "ok":
+        return { label: t("ransomware.replicationCurrent"), state: "ok", at: d.lastReplicationAt };
+      case "overdue":
+        return { label: t("ransomware.replicationOverdue"), state: "amber", at: d.lastReplicationAt };
+      case "never":
+        return { label: t("ransomware.replicationNever"), state: "muted" };
+      default:
+        // "" — replication is coupled to each backup (no independent expectation).
+        return { label: t("ransomware.replicationCurrent"), state: "muted" };
+    }
+  };
+  const drillRow = (d: DomainStatus): { label: string; state: RowState; at?: number } => {
+    switch (d.drillState) {
+      case "ok":
+        return { label: t("ransomware.drillOffsite"), state: "ok", at: d.lastDrDrillAt };
+      case "overdue":
+        return { label: t("ransomware.drillOverdue"), state: "amber", at: d.lastDrDrillAt };
+      case "never":
+        return { label: t("ransomware.drillNever"), state: "muted" };
+      default:
+        // "" — no drill schedule set, so no claim.
+        return { label: t("ransomware.drillOffsite"), state: "muted" };
+    }
+  };
 
   return (
     <Card title={t("ransomware.title")}>
@@ -470,40 +493,29 @@ function RansomwareCard({
       {!loading &&
         shown.map((d) => {
           // Each row: label, state, and an optional age stamp. A "bad" row is a red
-          // gap the user should fix — it deep-links into Settings.
+          // gap the user should fix — it deep-links into Settings. Every state comes
+          // from the backend so it cannot diverge from the chip above.
+          const ao = appendOnlyRow(d);
+          const rep = replicationRow(d);
+          const dr = drillRow(d);
           const rows: { key: string; label: string; state: RowState; at?: number }[] = [
             {
               key: "configured",
               label: t("ransomware.configured"),
               state: d.offsiteConfigured ? "ok" : "bad",
             },
-            {
-              key: "appendOnly",
-              label: d.offsiteImmutable ? t("ransomware.appendOnlyVerified") : t("ransomware.appendOnlyOff"),
-              state: d.offsiteImmutable ? (d.lastTamperOK ? "ok" : "bad") : "muted",
-              at: d.offsiteImmutable ? d.lastTamperAt : undefined,
-            },
-            {
-              key: "replication",
-              label: t("ransomware.replicationCurrent"),
-              state: d.lastReplicationOK ? "ok" : d.lastReplicationAt > 0 ? "bad" : "muted",
-              at: d.lastReplicationAt,
-            },
-            {
-              key: "drill",
-              label: t("ransomware.drillOffsite"),
-              state: d.lastDrDrillOK ? "ok" : d.lastDrDrillAt > 0 ? "bad" : "muted",
-              at: d.lastDrDrillAt,
-            },
+            { key: "appendOnly", ...ao },
+            { key: "replication", ...rep },
+            { key: "drill", ...dr },
             {
               key: "encryption",
               label: t("ransomware.encryptionOn"),
-              state: encOn ? "ok" : "bad",
+              state: d.encryptionOn ? "ok" : "bad",
             },
             {
               key: "prune",
               label: t("ransomware.pruneStrategy"),
-              state: d.offsiteImmutable || globalPrune ? "ok" : "bad",
+              state: d.pruneStrategySet ? "ok" : "bad",
             },
           ];
 
@@ -518,28 +530,31 @@ function RansomwareCard({
               </div>
               <div className="flex flex-col gap-0.5 pl-1">
                 {rows.map((row) => {
-                  const icon = row.state === "ok" ? "✓" : row.state === "bad" ? "✗" : "—";
+                  const icon =
+                    row.state === "ok" ? "✓" : row.state === "amber" ? "!" : row.state === "bad" ? "✗" : "—";
                   const iconColor =
                     row.state === "ok"
                       ? "text-[#6fdc8c]"
-                      : row.state === "bad"
-                        ? "text-[#ff8389]"
-                        : "text-carbon-textMuted";
+                      : row.state === "amber"
+                        ? "text-[#f1c21b]"
+                        : row.state === "bad"
+                          ? "text-[#ff8389]"
+                          : "text-carbon-textMuted";
+                  const labelColor =
+                    row.state === "amber"
+                      ? "text-[#f1c21b]"
+                      : row.state === "muted"
+                        ? "text-carbon-textMuted"
+                        : "text-carbon-textSub";
                   return (
                     <div key={row.key} className="flex items-center gap-2 text-sm">
                       <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
                       {row.state === "bad" ? (
-                        <Link to="/settings" className="text-[#ff8389] hover:underline flex-1 truncate">
+                        <Link to="/settings#offsite" className="text-[#ff8389] hover:underline flex-1 truncate">
                           {row.label}
                         </Link>
                       ) : (
-                        <span
-                          className={`flex-1 truncate ${
-                            row.state === "muted" ? "text-carbon-textMuted" : "text-carbon-textSub"
-                          }`}
-                        >
-                          {row.label}
-                        </span>
+                        <span className={`flex-1 truncate ${labelColor}`}>{row.label}</span>
                       )}
                       {row.at !== undefined && (
                         <span className="text-xs text-carbon-textMuted shrink-0">{ageText(row.at)}</span>

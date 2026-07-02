@@ -460,6 +460,17 @@ type DomainStatusEntry struct {
 	LastDRDrillAt     int64  `json:"lastDrDrillAt"`
 	LastDRDrillOK     bool   `json:"lastDrDrillOK"`
 	Protection        string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
+
+	// Per-check states derived from the SAME inputs Protection aggregates (see
+	// protectionChecks), so the dashboard card can render each checklist row as a
+	// pure function of the backend and never contradict the chip. EncryptionOn and
+	// PruneStrategySet are the two config-level facts the card also renders, moved
+	// server-side so the card needs no separate /api/settings round-trip.
+	TamperState      string `json:"tamperState"`      // "" | "never" | "failed" | "stale" | "ok"
+	ReplicationState string `json:"replicationState"` // "" | "never" | "overdue" | "ok"
+	DrillState       string `json:"drillState"`       // "" | "never" | "overdue" | "ok"
+	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
+	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -559,6 +570,72 @@ func protectionLevel(now int64, in protInputs) string {
 	return "green"
 }
 
+// protChecks is the per-check state the ransomware scorecard renders. Each field
+// is derived from the SAME protInputs protectionLevel aggregates, so a checklist
+// row can NEVER contradict the chip. An empty state ("") means the check makes no
+// claim (and so is rendered muted, not as a failure).
+type protChecks struct {
+	Tamper      string // "" | "never" | "failed" | "stale" | "ok"
+	Replication string // "" | "never" | "overdue" | "ok"
+	Drill       string // "" | "never" | "overdue" | "ok"
+}
+
+// protectionChecks mirrors protectionLevel exactly:
+//
+//   - Tamper ∈ {never,failed,stale} is precisely the immutable branch that turns
+//     the chip red; a non-immutable off-site makes no append-only claim → "".
+//   - Replication/Drill "overdue" is precisely the amber branch (rpoStatus
+//     "overdue", the same period-doubling rule). "never"/"ok" stay non-amber so
+//     they match a green chip.
+//
+// It deliberately does NOT surface a red "replication failed"/"drill failed":
+// protectionLevel ignores lastReplicationOK/lastDRDrillOK, so a red row there
+// would contradict a green chip. Only currency (timing) is mirrored.
+func protectionChecks(now int64, in protInputs) protChecks {
+	var c protChecks
+
+	// Tamper (append-only) — only an immutable off-site makes an append-only claim.
+	switch {
+	case !in.offsiteImmutable:
+		c.Tamper = ""
+	case !in.hadTamper:
+		c.Tamper = "never"
+	case !in.lastTamperOK:
+		c.Tamper = "failed"
+	case in.tamperPeriod > 0 && now-in.lastTamperAt > in.tamperPeriod*2:
+		c.Tamper = "stale"
+	default:
+		c.Tamper = "ok"
+	}
+
+	// Replication currency — coupled to each backup unless the off-site runs on its
+	// own schedule, so there is only an independent expectation when offsitePeriod>0.
+	if in.offsitePeriod > 0 {
+		switch rpoStatus(now, in.lastReplicationAt, in.offsitePeriod, true) {
+		case "overdue":
+			c.Replication = "overdue"
+		case "never":
+			c.Replication = "never"
+		default:
+			c.Replication = "ok"
+		}
+	}
+
+	// DR drill currency — only when a drill schedule is set.
+	if in.drillPeriod > 0 {
+		switch rpoStatus(now, in.lastDRDrillAt, in.drillPeriod, true) {
+		case "overdue":
+			c.Drill = "overdue"
+		case "never":
+			c.Drill = "never"
+		default:
+			c.Drill = "ok"
+		}
+	}
+
+	return c
+}
+
 // DomainStatus returns the RPO (protection) status of each domain (containers,
 // vms, flash): whether its backups are current relative to its schedule. The
 // enabled flag + cadence come from Settings; the last successful backup time
@@ -638,7 +715,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			lastDRDrillOK = dr.OK
 		}
 
-		protection := protectionLevel(now, protInputs{
+		in := protInputs{
 			enabled:           d.enabled,
 			offsiteConfigured: offsiteConfigured,
 			offsiteImmutable:  offsiteImmutable,
@@ -650,7 +727,20 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			offsitePeriod:     cadencePeriodSeconds(s.offsiteScheduleFor(d.name, settings)),
 			lastDRDrillAt:     lastDRDrillAt,
 			drillPeriod:       cadencePeriodSeconds(settings.DrillsSchedule),
-		})
+		}
+		// protection (the chip) and checks (each row) are derived from the SAME
+		// inputs, so a row can never contradict the chip.
+		protection := protectionLevel(now, in)
+		checks := protectionChecks(now, in)
+
+		// An off-site retention strategy is "configured" when the far side prunes
+		// (immutable), a growth budget is set, or an off-site keep policy is set.
+		pruneStrategySet := offsiteImmutable ||
+			settings.OffsiteGrowthBudgetGB > 0 ||
+			settings.OffsiteRetentionKeepLast > 0 ||
+			settings.OffsiteRetentionKeepDaily > 0 ||
+			settings.OffsiteRetentionKeepWeekly > 0 ||
+			settings.OffsiteRetentionKeepMonthly > 0
 
 		out = append(out, DomainStatusEntry{
 			Domain:            d.name,
@@ -670,6 +760,11 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			LastDRDrillAt:     lastDRDrillAt,
 			LastDRDrillOK:     lastDRDrillOK,
 			Protection:        protection,
+			TamperState:       checks.Tamper,
+			ReplicationState:  checks.Replication,
+			DrillState:        checks.Drill,
+			EncryptionOn:      settings.EncryptionEnabled,
+			PruneStrategySet:  pruneStrategySet,
 		})
 	}
 	return out, nil
