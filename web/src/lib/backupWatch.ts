@@ -24,7 +24,7 @@
 //      (clock skew made that match the wrong run or hang until timeout).
 // ---------------------------------------------------------------------------
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { listRuns, type Run } from "./api";
 import { useProgress } from "./progress";
 
@@ -78,6 +78,14 @@ interface UseBackupWatchArgs {
   kind?: WatchKind;
   /** Called once on successful completion so the caller can refresh its list. */
   onDone?: () => void;
+  /**
+   * Set true by a paired cancel button when its cancel POST succeeds. The
+   * no-run success fallback consults it so a cancelled restore that recorded NO
+   * run (file/to-folder on a target-less container → progress entry just
+   * vanishes) finishes "cancelled" (neutral) instead of flashing green
+   * "Restored". Reset to false when a fresh run starts.
+   */
+  cancelledRef?: MutableRefObject<boolean>;
 }
 
 /**
@@ -85,7 +93,7 @@ interface UseBackupWatchArgs {
  * the current display state. Determines success vs failure from the recorded
  * run, never from the (now fire-and-forget) POST response.
  */
-export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", onDone }: UseBackupWatchArgs) {
+export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", onDone, cancelledRef }: UseBackupWatchArgs) {
   const [state, setState] = useState<BackupWatchState>({ phase: "idle" });
   const progress = useProgress();
   const entry = progress[progressKey];
@@ -106,9 +114,13 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   const matchRef = useRef(matchRun);
   const kindRef = useRef(kind);
   const onDoneRef = useRef(onDone);
+  // Mirror the (optional) cancelled flag ref the same way, so the poll closure
+  // always reads the latest one without re-subscribing.
+  const cancelledRefRef = useRef(cancelledRef);
   matchRef.current = matchRun;
   kindRef.current = kind;
   onDoneRef.current = onDone;
+  cancelledRefRef.current = cancelledRef;
 
   const finish = useCallback((next: BackupWatchState) => {
     watching.current = false;
@@ -190,6 +202,8 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   const fire = useCallback(async () => {
     if (watching.current) return;
     setState({ phase: "pending" });
+    // A fresh run starts uncancelled — clear any leftover flag from a prior one.
+    if (cancelledRefRef.current) cancelledRefRef.current.current = false;
     // Snapshot this target's existing run ids BEFORE firing, so the watch can
     // pick out the run we are about to start by identity. If this fails, leave
     // the baseline null — resolveFromRuns seeds it lazily on the first poll.
@@ -238,7 +252,9 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
       if (progressVanished.current && outcome === "no-run") {
         pollsSinceVanished.current += 1;
         if (pollsSinceVanished.current >= RUNLESS_GRACE_POLLS) {
-          finish({ phase: "success" });
+          // A cancel with no recorded run must NOT masquerade as success: if the
+          // paired cancel button flagged a cancel, finish neutral-cancelled.
+          finish(cancelledRefRef.current?.current ? { phase: "cancelled" } : { phase: "success" });
           return;
         }
       }

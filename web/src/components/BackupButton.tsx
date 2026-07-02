@@ -1,5 +1,6 @@
 import { backupNow } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
+import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
 
 type T = ReturnType<typeof useT>["t"];
@@ -9,9 +10,13 @@ interface BackupButtonProps {
   t: T;
   /** Called after a successful backup so the caller can refresh (e.g. last-backup time). */
   onBackedUp?: () => void;
+  /** "Something is running" signal (anyActive): disables this backup with a
+   *  friendly hint while another op runs — but never for its OWN in-flight
+   *  backup (that is isPending, handled below). */
+  running?: { active: boolean; phase?: string };
 }
 
-export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
+export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps) {
   // Fire-and-watch: the server runs the backup detached and answers immediately,
   // so we watch the "container:<name>" progress + recorded run for the outcome
   // instead of awaiting (which would die if we back up the proxy the UI runs
@@ -22,12 +27,13 @@ export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
     matchRun: (r) => r.domain === "container" && r.target === name,
     onDone: onBackedUp,
   });
+  const blockedByOther = !!running?.active && !isPending;
 
   return (
     <div className="flex flex-col gap-1 items-start">
       <button
         onClick={() => void fire()}
-        disabled={isPending}
+        disabled={isPending || blockedByOther}
         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
@@ -42,6 +48,11 @@ export function BackupButton({ name, t, onBackedUp }: BackupButtonProps) {
           t("containers.backupNow")
         )}
       </button>
+
+      {/* A backup/restore/replication elsewhere blocks a new backup — say why. */}
+      {blockedByOther && (
+        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
+      )}
 
       {state.phase === "success" &&
         (state.snapshotId ? (

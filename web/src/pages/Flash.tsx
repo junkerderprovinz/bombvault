@@ -3,7 +3,7 @@ import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } 
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
-import { useProgress, anyActive } from "../lib/progress";
+import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -55,10 +55,10 @@ function FlashBackupButton({
           t("flash.backupNow")
         )}
       </button>
-      {/* A backup/restore elsewhere blocks a new flash backup — explain why. */}
+      {/* A backup/restore/replication elsewhere blocks a new flash backup. */}
       {externallyBusy && !isPending && (
         <span className="text-xs text-carbon-textMuted">
-          {busyPhase === "restore" ? t("common.restoreRunning") : t("common.backupRunning")}
+          {t(busyPhraseKey(busyPhase))}
         </span>
       )}
       {state.phase === "success" && (

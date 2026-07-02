@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -7,7 +7,7 @@ import { useT, stateLabel } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
-import { useProgress, anyActive } from "../lib/progress";
+import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
 type T = ReturnType<typeof useT>["t"];
@@ -273,10 +273,14 @@ function VMBackupButton({
   name,
   t,
   onBackedUp,
+  running,
 }: {
   name: string;
   t: T;
   onBackedUp?: () => void;
+  /** "Something is running" signal (anyActive): busy-guards this backup while
+   *  another op runs, but never for its OWN in-flight backup (isPending). */
+  running?: { active: boolean; phase?: string };
 }) {
   // Fire-and-watch (see useBackupWatch): the server backs the VM up detached and
   // answers immediately, so we watch the "vm:<name>" progress + recorded run for
@@ -288,12 +292,13 @@ function VMBackupButton({
     matchRun: (r) => r.domain === "vm" && r.target === name,
     onDone: onBackedUp,
   });
+  const blockedByOther = !!running?.active && !isPending;
 
   return (
     <div className="flex flex-col gap-1 items-start">
       <button
         onClick={() => void fire()}
-        disabled={isPending}
+        disabled={isPending || blockedByOther}
         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
@@ -308,6 +313,10 @@ function VMBackupButton({
           t("containers.backupNow")
         )}
       </button>
+      {/* A backup/restore/replication elsewhere blocks a new VM backup — say why. */}
+      {blockedByOther && (
+        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
+      )}
       {/* Plain export is an advanced-only extra. */}
       {advanced && <VMExportButton name={name} t={t} />}
       {state.phase === "success" && (
@@ -354,13 +363,18 @@ function VMSnapshotRow({
   // server — a multi-hour VM disk restore must survive this connection (and
   // this panel) going away — so we watch the "vm:<name>" progress + the
   // recorded run for the outcome instead of awaiting the whole restore.
+  const cancelledRef = useRef(false);
   const { state: restoreState, fire, isPending } = useBackupWatch({
     progressKey: `vm:${vmName}`,
     kind: "restore",
     start: () => restoreVM(vmName, snap.id, true, source, leaveStopped),
     matchRun: (r) => r.domain === "vm" && r.target === vmName,
+    cancelledRef,
   });
-  const prog = useProgress()[`vm:${vmName}`];
+  const progressMap = useProgress();
+  const prog = progressMap[`vm:${vmName}`];
+  const running = anyActive(progressMap);
+  const blockedByOther = running.active && !isPending;
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -411,7 +425,7 @@ function VMSnapshotRow({
         </label>
         <button
           onClick={handleRestore}
-          disabled={!confirmed || isPending || restoreState.phase === "success"}
+          disabled={!confirmed || isPending || blockedByOther || restoreState.phase === "success"}
           className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
           {isPending ? (
@@ -426,6 +440,9 @@ function VMSnapshotRow({
             t("snapshots.restore")
           )}
         </button>
+        {blockedByOther && (
+          <span className="text-[11px] text-carbon-textMuted shrink-0">{t(busyPhraseKey(running.phase))}</span>
+        )}
         <button
           onClick={() => void handleDelete()}
           disabled={deleting || isPending}
@@ -460,7 +477,7 @@ function VMSnapshotRow({
             />
           )}
           {/* A VM restore replaces the disk in place — the hard warning. */}
-          <RestoreCancelButton cancelKey={`vm:${vmName}`} inPlace name={vmName} t={t} />
+          <RestoreCancelButton cancelKey={`vm:${vmName}`} inPlace name={vmName} t={t} cancelledRef={cancelledRef} />
         </div>
       )}
       {restoreState.phase === "success" && (
@@ -611,7 +628,11 @@ function VMRow({
   onToggleSelect?: () => void;
 }) {
   const installed = vm.state !== "not-installed";
-  const progress = useProgress()[`vm:${vm.name}`];
+  const progressMap = useProgress();
+  const progress = progressMap[`vm:${vm.name}`];
+  // "Something is running" across any domain — busy-guards this row's own VM
+  // backup (its OWN in-flight backup is handled by isPending inside the button).
+  const running = anyActive(progressMap);
   return (
     <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
       {/* Top row */}
@@ -669,7 +690,7 @@ function VMRow({
             </label>
           </div>
           <div className="ml-auto flex flex-col items-end">
-            <VMBackupButton name={vm.name} t={t} onBackedUp={onRefresh} />
+            <VMBackupButton name={vm.name} t={t} onBackedUp={onRefresh} running={running} />
           </div>
         </div>
       )}
@@ -1008,7 +1029,7 @@ export function VMs() {
           )}
           {!bulkBusy && running.active && (
             <span className="text-xs text-carbon-textMuted">
-              {running.phase === "restore" ? t("common.restoreRunning") : t("common.backupRunning")}
+              {t(busyPhraseKey(running.phase))}
             </span>
           )}
           {!bulkBusy && bulkMsg && (
