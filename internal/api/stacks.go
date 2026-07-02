@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sort"
@@ -183,11 +184,21 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 	restoredOK := make([]bool, len(members))
 	for i, m := range members {
 		res := StackMemberResult{Name: m.name, Service: m.service}
-		if rErr := s.Restore(ctx, m.name, "latest", true, source, true); rErr != nil {
-			res.Error = rErr.Error()
-		} else {
+		rErr := s.Restore(ctx, m.name, "latest", true, source, true)
+		switch {
+		case rErr == nil:
 			res.Restored = true
 			restoredOK[i] = true
+		case errors.Is(rErr, context.Canceled):
+			// A user cancel aborts the whole stack restore at the current member: the
+			// member's own run is recorded "cancelled" by the orchestrator, and the
+			// remaining members are left untouched (their runs are never started, and
+			// the start loop below is skipped).
+			res.Error = rErr.Error()
+			results[i] = res
+			return StackRestoreResult{Members: results[:i+1]}
+		default:
+			res.Error = rErr.Error()
 		}
 		results[i] = res
 	}

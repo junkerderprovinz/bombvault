@@ -391,7 +391,7 @@ func RestoreVM(ctx context.Context, d VMRestoreDeps) error {
 
 	restoreErr := runVMRestore(ctx, d)
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(restoreErr))
+		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), "", 0, truncateErr(restoreErr))
 		return restoreErr
 	}
 	if err := d.Runs.Finish(runID, statusSuccess, d.SnapshotID, 0, ""); err != nil {

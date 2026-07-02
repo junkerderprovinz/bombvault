@@ -2099,6 +2099,53 @@ func TestStartRestoreFilesRecordsRun(t *testing.T) {
 	}
 }
 
+// TestRestoreCancelledRecordsCancelledNotError pins cancelled ≠ failed: when a
+// restore's engine call returns context.Canceled (a user cancel via
+// POST /api/restore/cancel), the recorded run is "cancelled", NOT "failed".
+//
+// Harness adaptation: the codebase has no restore-failure notifier (a failed
+// restore is only logged), so the plan's "notifier.failureCalls" assertion is
+// moot — this asserts the distinct run status. It drives the real async
+// to-folder restore (the issue #24 path, StartRestoreToPath → finishRestoreRun)
+// and waits for terminal state so the t.TempDir cleanup can't race the goroutine.
+func TestRestoreCancelledRecordsCancelledNotError(t *testing.T) {
+	eng := &fakeResticEngine{restoreErr: context.Canceled}
+	svc, st, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex")
+	if err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	waitForBackupDone(t, svc) // terminal state → run recorded, temp-dir cleanup race-free
+
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restore *store.Run
+	for i := range runs {
+		if runs[i].TargetID == tg.ID && runs[i].Kind == "restore" {
+			restore = &runs[i]
+			break
+		}
+	}
+	if restore == nil {
+		t.Fatalf("expected a recorded restore run, got %+v", runs)
+	}
+	if restore.Status != "cancelled" {
+		t.Fatalf("a cancelled restore must record status %q, got %q", "cancelled", restore.Status)
+	}
+	if restore.Error == "restore boom" {
+		t.Fatalf("a cancelled restore must not record a restic failure message, got %q", restore.Error)
+	}
+}
+
 // TestRestoreHoldsDomainLockAgainstScheduledBackup pins the domain-lock layer
 // of the restore execute paths: the scheduler calls s.Backup DIRECTLY and
 // bypasses the batchActive single-flight guard by design, so the domain repo
@@ -2580,6 +2627,7 @@ type fakeResticEngine struct {
 	lastPaths       []string
 	restored        []string
 	restoreErrPath  string // when set, RestoreInclude fails on this include path
+	restoreErr      error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
 	forgotten       []string
 	prunedRepos     []string
 	checked         []string
@@ -2691,6 +2739,9 @@ func (f *fakeResticEngine) blockIfArmed() {
 
 func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path string, _ restic.Mode) error {
 	f.blockIfArmed()
+	if f.restoreErr != nil {
+		return f.restoreErr
+	}
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+path)
 	return nil
 }
@@ -2736,6 +2787,9 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
 	f.restoreCtxErrs = append(f.restoreCtxErrs, ctx.Err())
 	f.blockIfArmed()
+	if f.restoreErr != nil {
+		return f.restoreErr
+	}
 	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
 		return errors.New("restore boom")
 	}
