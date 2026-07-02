@@ -6,6 +6,7 @@ import { useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress } from "../lib/progress";
 import { ProgressBar } from "./ProgressBar";
+import { RestoreCancelButton } from "./RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 
@@ -354,6 +355,14 @@ function SnapshotFileBrowser({
               {prog?.phase === "restore" && prog.active && (
                 <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
               )}
+              {/* file-level cancel is in-place ONLY when restoring to original
+                  locations; restoring to a folder is non-destructive (safe). */}
+              <RestoreCancelButton
+                cancelKey={`container:${containerName}`}
+                inPlace={dest === "inPlace"}
+                name={containerName}
+                t={t}
+              />
             </div>
           )}
           {restoreState.phase === "success" && (
@@ -362,6 +371,9 @@ function SnapshotFileBrowser({
                 ? t("restore.restoredTo").replace("{path}", restoredTarget)
                 : t("files.restoredInPlace")}
             </p>
+          )}
+          {restoreState.phase === "cancelled" && (
+            <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
           )}
           {restoreState.phase === "error" && (
             <p className="text-xs text-[#ff8389] break-words">{restoreState.message}</p>
@@ -415,10 +427,15 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
           {prog?.phase === "restore" && prog.active && (
             <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
           )}
+          {/* Recreate rebuilds the container in place — the hard warning. */}
+          <RestoreCancelButton cancelKey={`container:${name}`} inPlace name={name} t={t} />
         </div>
       )}
       {state.phase === "success" && (
         <p className="text-xs text-[#6fdc8c]">Recreate complete — the container has been recreated.</p>
+      )}
+      {state.phase === "cancelled" && (
+        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
       )}
       {state.phase === "error" && (
         <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
@@ -499,12 +516,17 @@ function RestoreToFolder({
           {prog?.phase === "restore" && prog.active && (
             <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
           )}
+          {/* Extract to a folder is non-destructive — the light (safe) warning. */}
+          <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace={false} name={containerName} t={t} />
         </div>
       )}
       {state.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] break-words">
           {t("restore.restoredTo").replace("{path}", target)}
         </p>
+      )}
+      {state.phase === "cancelled" && (
+        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
       )}
       {state.phase === "error" && (
         <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
@@ -920,12 +942,17 @@ function SnapshotRow({
                   {prog?.phase === "restore" && prog.active && (
                     <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
                   )}
+                  {/* Whole-snapshot in-place restore recreates the container — hard warning. */}
+                  <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace name={containerName} t={t} />
                 </div>
               )}
               {restoreState.phase === "success" && (
                 <p className="text-xs text-[#6fdc8c]">
                   Restore complete — container is being recreated.
                 </p>
+              )}
+              {restoreState.phase === "cancelled" && (
+                <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
               )}
               {restoreState.phase === "error" && (
                 <p className="text-xs text-[#ff8389] break-words">

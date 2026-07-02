@@ -32,6 +32,9 @@ export type BackupWatchState =
   | { phase: "idle" }
   | { phase: "pending" }
   | { phase: "success"; snapshotId?: string }
+  // A user-cancelled restore is a NEUTRAL terminal (sticky, no red error banner):
+  // the recorded run's status is "cancelled", distinct from a real failure.
+  | { phase: "cancelled" }
   | { phase: "error"; message: string };
 
 /** The run kind being watched (matches the recorded run's `kind` field). */
@@ -154,6 +157,12 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
           phase: "error",
           message: run.error || (kindRef.current === "restore" ? "Restore failed" : "Backup failed"),
         });
+        return "resolved";
+      }
+      if (run.status === "cancelled") {
+        // Neutral terminal: the user cancelled — finish() leaves it sticky and
+        // does NOT fire onDone or the red error banner (see the union comment).
+        finish({ phase: "cancelled" });
         return "resolved";
       }
       return "inconclusive"; // still running

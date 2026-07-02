@@ -6,6 +6,7 @@ import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
+import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { useProgress } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
@@ -458,12 +459,17 @@ function VMSnapshotRow({
               label={prog.percent > 0 ? t("restore.progress").replace("{pct}", String(Math.round(prog.percent))) : undefined}
             />
           )}
+          {/* A VM restore replaces the disk in place — the hard warning. */}
+          <RestoreCancelButton cancelKey={`vm:${vmName}`} inPlace name={vmName} t={t} />
         </div>
       )}
       {restoreState.phase === "success" && (
         <p className="text-xs text-[#6fdc8c] pl-24">
           Restore complete — VM disks have been replaced.
         </p>
+      )}
+      {restoreState.phase === "cancelled" && (
+        <p className="text-xs text-carbon-textSub pl-24 break-words">{t("restore.cancelled")}</p>
       )}
       {restoreState.phase === "error" && (
         <p className="text-xs text-[#ff8389] pl-24 break-words">

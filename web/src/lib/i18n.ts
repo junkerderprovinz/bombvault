@@ -163,7 +163,12 @@ const en = {
   "restore.confirmBody":
     "This will stop the container, replace its appdata and recreate it from the backup. Continue?",
   "restore.confirm": "Confirm",
-  "restore.cancel": "Cancel",
+  "restore.cancel": "Cancel restore",
+  "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
+  "restore.cancelConfirmInPlace":
+    "{name} is mid-restore. Cancelling leaves it partially restored — you'll need to restore again to get a working {name}. Cancel anyway?",
+  "restore.cancelling": "Cancelling…",
+  "restore.cancelled": "Restore cancelled",
   "restore.preview": "Preview",
   "restore.started": "Restore started",
   "restore.toFolder": "Restore to folder…",
@@ -752,7 +757,12 @@ const de: Translations = {
   "restore.confirmBody":
     "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
   "restore.confirm": "Bestätigen",
-  "restore.cancel": "Abbrechen",
+  "restore.cancel": "Wiederherstellung abbrechen",
+  "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
+  "restore.cancelConfirmInPlace":
+    "{name} wird gerade wiederhergestellt. Ein Abbruch lässt es unvollständig wiederhergestellt zurück — du musst es erneut wiederherstellen, um ein funktionierendes {name} zu erhalten. Trotzdem abbrechen?",
+  "restore.cancelling": "Wird abgebrochen…",
+  "restore.cancelled": "Wiederherstellung abgebrochen",
   "restore.preview": "Vorschau",
   "restore.started": "Wiederherstellung gestartet",
   "restore.toFolder": "In Ordner wiederherstellen…",

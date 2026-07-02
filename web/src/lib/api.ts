@@ -369,6 +369,20 @@ export function restore(
 }
 
 /**
+ * POST /api/restore/cancel {key} — cancel an in-flight restore by its progress
+ * key ("container:<name>" / "vm:<name>" / "stack:<project>"). Cancelling an
+ * unknown or already-finished key is a no-op success ({ok:true,cancelled:false}).
+ * A user-cancelled restore records the run as "cancelled" (distinct from
+ * "failed") and fires no failure alert.
+ */
+export function cancelRestore(key: string): Promise<{ ok: boolean; cancelled: boolean }> {
+  return fetchJSON("/api/restore/cancel", {
+    method: "POST",
+    body: JSON.stringify({ key }),
+  });
+}
+
+/**
  * POST /api/stacks/{project}/restore — restore every backed-up container in a
  * compose stack from its latest backup, left stopped; when startAfter is true they
  * are then started in dependency order.
