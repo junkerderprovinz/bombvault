@@ -109,9 +109,14 @@ func TestMetricsExposition(t *testing.T) {
 	}
 }
 
-// TestMetricsRansomwareGauges pins the three ransomware-protection gauges added
-// in Task 8: the off-site immutable flag, the last tamper-test outcome, and the
-// last off-site replication timestamp — present for every domain and well-formed.
+// TestMetricsRansomwareGauges pins the three ransomware-protection gauges AND
+// their M6 gating: they are emitted only for ENABLED domains (mirroring the
+// scorecard), tamper_test_ok only where an append-only claim exists (immutable
+// off-site), and the replication timestamp reflects the last SUCCESS (H3b).
+//   - containers: enabled + immutable + a successful replication → all three.
+//   - vms: enabled but NON-immutable → immutable + last_replication, but NO
+//     tamper_test_ok (no append-only claim to prove).
+//   - flash: DISABLED → no protection gauges at all.
 func TestMetricsRansomwareGauges(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -124,17 +129,28 @@ func TestMetricsRansomwareGauges(t *testing.T) {
 	s.ContainersEnabled = true
 	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
 	s.ContainersOffsiteImmutable = true
+	s.VMsEnabled = true
+	s.VMsOffsite = "rest:http://192.168.1.2:8000/vms" // enabled but NOT immutable
+	s.FlashEnabled = false                            // disabled → no protection gauges
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
 	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
+	// An OLD success + a NEWER failure: the gauge must reflect the last SUCCESS.
 	id, err := st.RecordOffsiteRun("containers", 1700000000)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := st.FinishOffsiteRun(id, true, ""); err != nil {
+		t.Fatal(err)
+	}
+	idFail, err := st.RecordOffsiteRun("containers", 1800000000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(idFail, false, "boom"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -152,7 +168,6 @@ func TestMetricsRansomwareGauges(t *testing.T) {
 		"# HELP bombvault_tamper_test_ok",
 		"# TYPE bombvault_tamper_test_ok gauge",
 		`bombvault_tamper_test_ok{domain="containers"} 1`,
-		`bombvault_tamper_test_ok{domain="flash"} 0`,
 		"# HELP bombvault_offsite_last_replication_timestamp_seconds",
 		"# TYPE bombvault_offsite_last_replication_timestamp_seconds gauge",
 		`bombvault_offsite_last_replication_timestamp_seconds{domain="containers"} 1700000000`,
@@ -161,6 +176,19 @@ func TestMetricsRansomwareGauges(t *testing.T) {
 	for _, want := range mustContain {
 		if !strings.Contains(out, want) {
 			t.Errorf("metrics output missing %q\n--- output ---\n%s", want, out)
+		}
+	}
+	// Gated OUT: no tamper_test_ok for a non-immutable domain (no append-only
+	// claim); no protection gauges at all for a disabled domain.
+	mustNotContain := []string{
+		`bombvault_tamper_test_ok{domain="vms"}`,
+		`bombvault_offsite_immutable{domain="flash"}`,
+		`bombvault_tamper_test_ok{domain="flash"}`,
+		`bombvault_offsite_last_replication_timestamp_seconds{domain="flash"}`,
+	}
+	for _, bad := range mustNotContain {
+		if strings.Contains(out, bad) {
+			t.Errorf("metrics output must gate out %q\n--- output ---\n%s", bad, out)
 		}
 	}
 }

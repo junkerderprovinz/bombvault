@@ -591,6 +591,157 @@ func TestDomainStatusScorecardDisabled(t *testing.T) {
 	}
 }
 
+// TestDomainStatusReplicationCurrencyUsesLastSuccess pins H3: with a decoupled
+// off-site schedule, DomainStatus's replication currency must use the last
+// SUCCESSFUL replication, not the most recent attempt. A fresh FAILED run over an
+// old SUCCESS reads as overdue (amber), not fresh (green).
+func TestDomainStatusReplicationCurrencyUsesLastSuccess(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers" // non-immutable → no tamper red
+	s.ContainersOffsiteSchedule = "daily 02:30"                     // decoupled → its own RPO expectation
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Unix()
+	// An OLD successful replication, then a FRESH failed one.
+	idOK, err := st.RecordOffsiteRun("containers", now-30*86400)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(idOK, true, ""); err != nil {
+		t.Fatal(err)
+	}
+	idFail, err := st.RecordOffsiteRun("containers", now-60)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(idFail, false, "copy failed"); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	var c api.DomainStatusEntry
+	for _, d := range statuses {
+		if d.Domain == "containers" {
+			c = d
+		}
+	}
+	if c.LastReplicationAt != now-30*86400 {
+		t.Fatalf("currency must use the last SUCCESSFUL replication (%d), got %d", now-30*86400, c.LastReplicationAt)
+	}
+	if c.ReplicationState != "overdue" {
+		t.Fatalf("a broken replication (old success) must read overdue, got %q", c.ReplicationState)
+	}
+	if c.Protection != "amber" {
+		t.Fatalf("an overdue replication must be amber, got %q", c.Protection)
+	}
+}
+
+// TestDomainStatusCoupledReplicationOverdue pins L6: in the DEFAULT coupled
+// configuration (no off-site schedule), a domain whose backups keep succeeding but
+// whose last successful off-site replication is well older than the last backup
+// must surface a not-ok (amber) replication check — off-site health is no longer
+// invisible by default.
+func TestDomainStatusCoupledReplicationOverdue(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers" // coupled: no ContainersOffsiteSchedule
+	s.ContainersSchedule = "daily 02:30"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// A recent successful container backup.
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := st.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(run, "success", "deadbeef12345678", 2048, ""); err != nil {
+		t.Fatal(err)
+	}
+	// The last successful replication is well older than the last backup.
+	now := time.Now().Unix()
+	idOK, err := st.RecordOffsiteRun("containers", now-30*86400)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(idOK, true, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	var c api.DomainStatusEntry
+	for _, d := range statuses {
+		if d.Domain == "containers" {
+			c = d
+		}
+	}
+	if c.ReplicationState == "ok" || c.ReplicationState == "" {
+		t.Fatalf("coupled replication far behind the last backup must NOT read ok, got %q", c.ReplicationState)
+	}
+	if c.Protection != "amber" {
+		t.Fatalf("a lagging coupled replication must be amber, got %q", c.Protection)
+	}
+}
+
+// TestDomainStatusDrillCurrencyIgnoresDisabledDrills pins M5: with DrillsEnabled
+// false the scheduler runs no drills, so a stale lastDRDrillAt must NOT read as
+// overdue — DrillState is "" (no currency claim) and the domain is not amber for it.
+func TestDomainStatusDrillCurrencyIgnoresDisabledDrills(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.DrillsEnabled = false
+	s.DrillsSchedule = "weekly Sun 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// A very stale DR drill (would be "overdue" if drills were enabled).
+	now := time.Now().Unix()
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", At: now - 365*86400, OK: true, Kind: "dr"}); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	var c api.DomainStatusEntry
+	for _, d := range statuses {
+		if d.Domain == "containers" {
+			c = d
+		}
+	}
+	if c.DrillState != "" {
+		t.Fatalf("drills disabled → DrillState must be \"\" (no currency claim), got %q", c.DrillState)
+	}
+	if c.Protection == "amber" {
+		t.Fatalf("a stale drill must not make a domain amber when drills are disabled, got %q", c.Protection)
+	}
+}
+
 // newImmutableOffsiteSvc builds a service whose containers repo is initialised
 // locally and whose off-site repo is a remote flagged immutable — the setup for
 // the delete/prune-refusal and unlock-allowed tests.
@@ -2462,6 +2613,12 @@ type fakeResticEngine struct {
 	// from lsEntries — kept consistent with the files RestoreInclude("/") writes.
 	statsRestoreSizeErr error
 	statsRestoreBytes   int64
+	// rawSizeBytes, when non-zero, overrides the raw-data TotalSize that Stats
+	// reports — lets a test drive the off-site growth budget over its limit.
+	rawSizeBytes int64
+	// copyPanic, when true, makes Copy panic — exercises the deferred
+	// FinishOffsiteRun's defence against stamping a phantom success on an unwind.
+	copyPanic bool
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
@@ -2626,6 +2783,9 @@ func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) 
 }
 
 func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Limits, _ restic.Mode) error {
+	if f.copyPanic {
+		panic("boom during copy")
+	}
 	f.copied = append(f.copied, srcRepo+"->"+destRepo)
 	return f.copyErr
 }
@@ -2636,7 +2796,11 @@ func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mod
 		return restic.StatsResult{}, f.statsErr
 	}
 	if mode == "raw-data" {
-		return restic.StatsResult{TotalSize: 1000, BlobCount: 10}, nil
+		raw := int64(1000)
+		if f.rawSizeBytes != 0 {
+			raw = f.rawSizeBytes
+		}
+		return restic.StatsResult{TotalSize: raw, BlobCount: 10}, nil
 	}
 	return restic.StatsResult{TotalSize: 5000, FileCount: 50}, nil
 }
