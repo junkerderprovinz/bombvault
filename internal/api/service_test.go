@@ -2479,6 +2479,13 @@ type fakeResticEngine struct {
 	// matches. When nil, RepoOpens mirrors a local repo and "opens" once restic's
 	// `config` marker exists on disk (mode-agnostic).
 	existingMode *bool
+	// ctx observability for the DR-drill detach/bound tests: restoreCtxErrs records
+	// ctx.Err() at each RestoreInclude entry (proves the restore ran under a
+	// non-cancelled, detached ctx), and snapshotsCtxDeadline records whether each
+	// Snapshots call carried a deadline (proves the drill's snapshot listing is
+	// bounded). Recording only — the fake's behaviour is unchanged.
+	restoreCtxErrs       []error
+	snapshotsCtxDeadline []bool
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -2540,7 +2547,9 @@ func (f *fakeResticEngine) DumpZip(_ context.Context, repo, snapshotID, subfolde
 	return nil
 }
 
-func (f *fakeResticEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
+func (f *fakeResticEngine) Snapshots(ctx context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
+	_, hasDeadline := ctx.Deadline()
+	f.snapshotsCtxDeadline = append(f.snapshotsCtxDeadline, hasDeadline)
 	f.snapshotsCalls++
 	if f.snapshotsErr != nil {
 		e := f.snapshotsErr
@@ -2567,7 +2576,8 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 	return f.lsEntries, nil
 }
 
-func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+	f.restoreCtxErrs = append(f.restoreCtxErrs, ctx.Err())
 	f.blockIfArmed()
 	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
 		return errors.New("restore boom")
@@ -2972,6 +2982,108 @@ func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 		if _, statErr := os.Stat(sandboxTarget(t, eng.restored[0])); !os.IsNotExist(statErr) {
 			t.Fatalf("sandbox must be cleaned even on a failed drill, stat err=%v", statErr)
 		}
+	}
+}
+
+// TestRunDRDrillTruncatedFileFails pins H1: a restored file that is short by a
+// small amount (here 5 KB of a ~125 KB snapshot — WELL under the old 5% band, but
+// over the tight metadata floor) must FAIL the drill. restic restore is
+// content-addressed, so the restored logical bytes must equal restic's
+// restore-size exactly; the file COUNT is unchanged, so only an exact-byte check
+// (not a 5%/total band) catches the data hole. Pre-fix this drill recorded ok=true
+// over a truncation.
+func TestRunDRDrillTruncatedFileFails(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			// One large file; the sandbox restore materialises its full 120000 bytes.
+			{Path: "/appdata/plex/big.db", Type: "file", Size: 120000},
+		},
+		// restic's restore-size reports 125000 bytes (5000 more than landed on disk):
+		// a truncated restore with the file count unchanged. 5000 < 5% of 125000
+		// (=6250) so the OLD band waved it through; 5000 > the tight 4 KB floor.
+		statsRestoreBytes: 125000,
+	}
+	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	if err == nil {
+		t.Fatal("a truncated restore (exact-byte mismatch) must FAIL the drill, not record ok=true")
+	}
+	if drill.OK {
+		t.Fatalf("a truncated restore must be ok=false, got %+v", drill)
+	}
+	latest, found, lErr := svc.LatestDrill("containers", "offsite")
+	if lErr != nil || !found || latest.OK {
+		t.Fatalf("a failed drill must be recorded ok=false: %+v found=%v err=%v", latest, found, lErr)
+	}
+}
+
+// TestRunDRDrillEmptySnapshotSkips pins L4: a snapshot with no restorable file
+// data (0 files / 0 bytes — e.g. a definition-only / stateless container) must
+// record NOTHING (neither a false green nor a false red) and return a clear
+// "nothing to drill" message.
+func TestRunDRDrillEmptySnapshotSkips(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		// No file entries → StatsRestoreSize reports 0 files / 0 bytes.
+		lsEntries: nil,
+	}
+	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "nothing to drill") {
+		t.Fatalf("an empty snapshot must return a clear 'nothing to drill' message, got err=%v", err)
+	}
+	if drill.OK {
+		t.Fatalf("an empty snapshot must not record a green drill, got %+v", drill)
+	}
+	// NOTHING recorded — the scorecard neither greens nor reds a no-op.
+	if _, found, fErr := svc.LatestDrill("containers", "offsite"); fErr != nil {
+		t.Fatalf("LatestDrill: %v", fErr)
+	} else if found {
+		t.Fatal("an empty-snapshot drill must record no row at all")
+	}
+}
+
+// TestRunDRDrillDetachedAndBounded pins M2 (detach) + M1 (bounded listing): even
+// when the caller's ctx is already cancelled (a browser tab close / a
+// context.Background scheduler parent), the drill runs to completion — the restore
+// executes under a NON-cancelled, detached ctx (M2) and the snapshot listing runs
+// under a BOUNDED ctx so a wedged `restic snapshots` can't hold the domain lock
+// forever (M1).
+func TestRunDRDrillDetachedAndBounded(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+		},
+	}
+	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // parent is already cancelled before the drill starts
+
+	drill, err := svc.RunRestoreDrill(ctx, "containers", "offsite", "dr")
+	if err != nil {
+		t.Fatalf("a cancelled parent ctx must NOT abort the drill, got %v", err)
+	}
+	if !drill.OK {
+		t.Fatalf("the drill must complete despite the cancelled parent, got %+v", drill)
+	}
+	// M2: the restore ran under a detached, non-cancelled ctx.
+	if len(eng.restoreCtxErrs) == 0 {
+		t.Fatal("expected the sandbox restore to run")
+	}
+	if eng.restoreCtxErrs[0] != nil {
+		t.Fatalf("restore ctx must be detached (not cancelled), got %v", eng.restoreCtxErrs[0])
+	}
+	// M1: the snapshot listing ran under a bounded (deadline-bearing) ctx.
+	if len(eng.snapshotsCtxDeadline) == 0 {
+		t.Fatal("expected the drill to list snapshots")
+	}
+	if !eng.snapshotsCtxDeadline[0] {
+		t.Fatal("the drill's snapshot listing must run under a bounded ctx (a deadline)")
 	}
 }
 
