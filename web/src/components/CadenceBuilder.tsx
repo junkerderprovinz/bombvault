@@ -47,8 +47,10 @@ function prettyTime(hhmm: string): string {
   return m ? `${parseInt(m[1], 10)}:${m[2]}` : hhmm;
 }
 
-// WEEKDAY_OFFSET maps the stored English abbreviation to a day in the first week
-// of 2023 (2023-01-01 is a Sunday, so +1 = Mon … +7 = Sun).
+// WEEKDAY_OFFSET maps the stored English abbreviation to a day-of-month in the
+// first week of January 2024. 2024-01-01 is a MONDAY, so day 1 = Mon … day 7 =
+// Sun. (The previous reference, 2024's predecessor, started on a Sunday, which
+// shifted every label back by one — a Sunday schedule read as "Sat".)
 const WEEKDAY_OFFSET: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
 
 // localizedWeekday renders a stored English 3-letter weekday in the given
@@ -58,7 +60,7 @@ function localizedWeekday(abbr: string, lang: string): string {
   const off = WEEKDAY_OFFSET[abbr];
   if (!off) return abbr;
   try {
-    return new Intl.DateTimeFormat(lang, { weekday: "short" }).format(new Date(Date.UTC(2023, 0, off)));
+    return new Intl.DateTimeFormat(lang, { weekday: "short" }).format(new Date(Date.UTC(2024, 0, off)));
   } catch {
     return abbr;
   }

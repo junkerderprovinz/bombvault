@@ -2683,9 +2683,22 @@ type VMView struct {
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
 // VMs with no virsh entry but with backup history appear as state="not-installed".
 func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
-	infos, err := s.virsh.List(ctx)
+	// Only reach libvirt over SSH when the VMs domain is enabled. The dashboard
+	// calls this on every GUI load; for users who don't back up VMs at all, an
+	// unconditional virsh-over-SSH connect spams the container log with
+	// "could not resolve hostname / connection reset" errors (forum: BJZwart).
+	// Stored VM targets are still listed (as orphans) — only the live enumeration
+	// is skipped.
+	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, fmt.Errorf("list vms: virsh: %w", err)
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	var infos []virshcli.VMInfo
+	if settings.VMsEnabled {
+		infos, err = s.virsh.List(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list vms: virsh: %w", err)
+		}
 	}
 	targets, _ := s.store.ListVMTargets()
 	byName := make(map[string]store.VMTarget, len(targets))
