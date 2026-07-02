@@ -208,6 +208,10 @@ const (
 
 	statusSuccess = "success"
 	statusFailed  = "failed"
+	// statusCancelled records a restore stopped by an intentional user cancel
+	// (context.Canceled), distinct from a real failure so it fires no failure
+	// alert and the UI can render it neutrally. Free-text runs.status, no migration.
+	statusCancelled = "cancelled"
 
 	defaultStopTimeout = 30 * time.Second
 	// runningWaitTimeout bounds how long we wait for a just-restarted backup target
@@ -426,7 +430,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 
 	restoreErr := runRestore(ctx, d)
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(restoreErr))
+		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), "", 0, truncateErr(restoreErr))
 		return restoreErr
 	}
 
@@ -440,6 +444,17 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil
+}
+
+// restoreOutcome maps a restore error to its terminal run status: a user cancel
+// (context.Canceled) records "cancelled" — an intentional, non-failure outcome
+// that fires no failure alert; anything else is "failed". Shared by the container
+// and VM restore orchestrators.
+func restoreOutcome(err error) string {
+	if errors.Is(err, context.Canceled) {
+		return statusCancelled
+	}
+	return statusFailed
 }
 
 // runRestore performs the destructive restore sequence after the guards pass.

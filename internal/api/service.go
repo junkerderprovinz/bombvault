@@ -2758,10 +2758,16 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 		return
 	}
 	var err error
-	if rerr != nil {
-		err = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
-	} else {
+	switch {
+	case rerr == nil:
 		err = runsAdapter{s.store}.Finish(runID, "success", snapshotID, 0, "")
+	case errors.Is(rerr, context.Canceled):
+		// A user cancel is an intentional, recorded outcome — NOT a failure: record
+		// it as "cancelled" and fire no failure alert (restores have no failure
+		// notifier today; the terminal progEnd already fired to clear the bar).
+		err = runsAdapter{s.store}.Finish(runID, "cancelled", "", 0, "cancelled by user")
+	default:
+		err = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
 	}
 	if err != nil {
 		log.Printf("api: restore: record run finish failed: %v", err)
@@ -4131,7 +4137,13 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 		return fmt.Errorf("flash download: start run: %w", err)
 	}
 	if derr := s.engine.DumpZip(ctx, repo, id, s.cfg.FlashDir, w, mode); derr != nil {
-		_ = s.store.FinishRun(runID, "failed", "", 0, derr.Error())
+		// A client disconnect / user cancel of the download is context.Canceled —
+		// record it as "cancelled", not a failure.
+		status, msg := "failed", derr.Error()
+		if errors.Is(derr, context.Canceled) {
+			status, msg = "cancelled", "cancelled by user"
+		}
+		_ = s.store.FinishRun(runID, status, "", 0, msg)
 		return derr
 	}
 	_ = s.store.FinishRun(runID, "success", id, 0, "")
