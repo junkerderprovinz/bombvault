@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CadenceBuilder } from "../components/CadenceBuilder";
@@ -1051,17 +1051,36 @@ export function SettingsPage() {
       });
   }, []);
 
+  // Deep-link support: /settings#offsite scrolls the off-site card into view once
+  // it has rendered (the card only exists after settings load, so this waits for
+  // that). The ref guard makes it fire exactly once, not on every settings edit.
+  const scrolledToHash = useRef(false);
+  useEffect(() => {
+    if (scrolledToHash.current) return;
+    if (settings && window.location.hash === "#offsite") {
+      const el = document.getElementById("offsite");
+      if (el) {
+        el.scrollIntoView();
+        scrolledToHash.current = true;
+      }
+    }
+  }, [settings]);
+
   // ---------------------------------------------------------------------------
   // Generic save helper
   // ---------------------------------------------------------------------------
 
+  // save persists one card's fields and returns true ONLY when the server confirmed
+  // the write. Callers that gate a follow-up action on a confirmed save (e.g. the
+  // off-site immutable toggle, which must not run a tamper test on a failed save)
+  // await the boolean; fire-and-forget callers can still ignore it via `void`.
   async function save(
     patch: Partial<Settings>,
     setSaveState: (s: SaveState) => void,
     setSaveError: (e: string | null) => void
-  ) {
+  ): Promise<boolean> {
     const base = savedSettings ?? settings;
-    if (!base) return;
+    if (!base) return false;
     setSaveState("saving");
     setSaveError(null);
     // Persist ONLY this card's fields, merged onto the server baseline — never the
@@ -1079,13 +1098,15 @@ export function SettingsPage() {
         // tab appears or vanishes immediately — no page reload needed.
         window.dispatchEvent(new Event("bv:settings-changed"));
         setTimeout(() => setSaveState("idle"), 3000);
-      } else {
-        setSaveError(res.error ?? t("settings.error"));
-        setSaveState("error");
+        return true;
       }
+      setSaveError(res.error ?? t("settings.error"));
+      setSaveState("error");
+      return false;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : t("settings.error"));
       setSaveState("error");
+      return false;
     }
   }
 
@@ -1269,8 +1290,10 @@ export function SettingsPage() {
 
       {/* ------------------------------------------------------------------ */}
       {/* Off-site copy (restic copy replication)                            */}
+      {/* Default-mode feature (v4): off-site + ransomware protection is a      */}
+      {/* first-class flow, not advanced-only. Deep-linked via /settings#offsite. */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && (
+      <div id="offsite">
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
         {([
@@ -1352,12 +1375,11 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      )}
+      </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Retention                                                            */}
+      {/* Retention — default-mode feature (v4), paired with off-site above.   */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && (
       <Card title={t("settings.retentionTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           {t("settings.retentionHint")}
@@ -1432,7 +1454,6 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Off-site bandwidth                                                  */}
