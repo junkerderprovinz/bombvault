@@ -1204,6 +1204,28 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleTestOffsite probes a domain's off-site repo (reachable / initialised)
+// without modifying it, so the UI can verify the location before relying on it.
+// Modelled on handleVMSSHTest. POST /api/offsite/{domain}/test
+func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	reachable, initialized, err := h.svc.TestOffsite(r.Context(), domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"reachable":   reachable,
+		"initialized": initialized,
+	}))
+}
+
 // handleRcloneInfo returns the configured rclone remote names (never secrets).
 // GET /api/rclone
 func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {

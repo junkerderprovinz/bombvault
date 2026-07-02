@@ -741,6 +741,16 @@ export function replicateOffsite(
   return fetchJSON(`/api/offsite/${domain}`, { method: "POST" });
 }
 
+/**
+ * POST /api/offsite/{domain}/test — probe the off-site repo without modifying it:
+ * whether it is reachable and whether it is an initialised restic repository.
+ */
+export function testOffsite(
+  domain: "containers" | "vms" | "flash"
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+  return fetchJSON(`/api/offsite/${domain}/test`, { method: "POST" });
+}
+
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
 export function deleteSnapshot(
   domain: "containers" | "vms" | "flash",
