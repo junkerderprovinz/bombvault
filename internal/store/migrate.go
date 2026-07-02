@@ -363,7 +363,7 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		// is actually enforced); detail carries the scrubbed status/error.
 		version: 40,
 		name:    "tamper_tests",
-		sql: `CREATE TABLE tamper_tests (
+		sql: `CREATE TABLE IF NOT EXISTS tamper_tests (
   domain TEXT NOT NULL, at INTEGER NOT NULL,
   protected INTEGER NOT NULL,          -- 1 = delete was refused
   detail TEXT NOT NULL DEFAULT ''      -- scrubbed status/error
@@ -374,7 +374,7 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		// outcome, scrubbed error). finished_at NULL = still running.
 		version: 41,
 		name:    "offsite_runs",
-		sql: `CREATE TABLE offsite_runs (
+		sql: `CREATE TABLE IF NOT EXISTS offsite_runs (
   domain TEXT NOT NULL, started_at INTEGER NOT NULL, finished_at INTEGER,
   ok INTEGER NOT NULL DEFAULT 0, error TEXT NOT NULL DEFAULT ''
 );`,
@@ -385,6 +385,18 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		version: 42,
 		name:    "restore_drills_kind",
 		sql:     "ALTER TABLE restore_drills ADD COLUMN kind TEXT NOT NULL DEFAULT 'subset';",
+	},
+	{
+		// Covering indexes for the history tables' hot query shape: "latest row for
+		// this domain" (tamper_tests, offsite_runs) and "latest drill for this
+		// domain+source+kind" (restore_drills). Each lookup filters by domain (+source
+		// +kind) and orders by the timestamp DESC, so these indexes let SQLite skip a
+		// full-table scan as the history grows. IF NOT EXISTS keeps it idempotent.
+		version: 43,
+		name:    "history_indexes",
+		sql: `CREATE INDEX IF NOT EXISTS idx_tamper_tests_domain_at ON tamper_tests(domain, at);
+CREATE INDEX IF NOT EXISTS idx_offsite_runs_domain_started ON offsite_runs(domain, started_at);
+CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_drills(domain, source, kind, at);`,
 	},
 }
 

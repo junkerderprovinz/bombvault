@@ -120,3 +120,31 @@ func (r *Repo) LatestOffsiteRun(domain string) (OffsiteRun, bool, error) {
 	run.OK = ok != 0
 	return run, true, nil
 }
+
+// LatestSuccessfulOffsiteRun returns the most recent SUCCESSFUL replication run
+// for a domain (ok=1, by start time). The bool is false (with a zero OffsiteRun)
+// when no successful copy has ever landed. Unlike LatestOffsiteRun this ignores a
+// newer failed or still-running row, so a broken replication reads as stale (the
+// last real off-site copy) rather than fresh — this is the currency source the
+// scorecard uses, mirroring how backups use their last SUCCESS.
+func (r *Repo) LatestSuccessfulOffsiteRun(domain string) (OffsiteRun, bool, error) {
+	row := r.db.QueryRow(`
+		SELECT domain, started_at, finished_at, ok, error
+		FROM offsite_runs
+		WHERE domain = ? AND ok = 1
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT 1`, domain)
+	var run OffsiteRun
+	var finished sql.NullInt64
+	var ok int
+	err := row.Scan(&run.Domain, &run.StartedAt, &finished, &ok, &run.Error)
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteRun{}, false, nil
+	}
+	if err != nil {
+		return OffsiteRun{}, false, fmt.Errorf("LatestSuccessfulOffsiteRun: %w", err)
+	}
+	run.FinishedAt = finished.Int64
+	run.OK = ok != 0
+	return run, true, nil
+}
