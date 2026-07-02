@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl, getHealth } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
-import type { Settings, NotifyConfig, RestoreDrill } from "../lib/api";
+import type { Settings, NotifyConfig, RestoreDrill, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -802,15 +802,42 @@ function TestConnectionButton({
 
 // IntegrityCard runs per-domain repository maintenance: verify (restic check),
 // unlock (clear stale locks), prune (reclaim space), and a restore-verification
-// "drill" (restic check --read-data-subset) that proves the backup is actually
-// restorable. Self-contained.
-function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+// "drill". The drill has two kinds, chosen by the "Drill type" toggle:
+//   - "Integrity check" (subset): restic check --read-data-subset on the selected
+//     source repo — proves the backup data is intact + restorable.
+//   - "Real restore (off-site)" (dr): a REAL sandbox restore of the newest
+//     off-site snapshot, then verification + cleanup. Containers + flash only
+//     (VMs are refused server-side — disk images too large to sandbox-restore).
+// The DR-drill target (which container's off-site snapshot to restore) binds to
+// the shared settings.drDrillTarget via the parent's baseline-merging save().
+function IntegrityCard({
+  t,
+  settings,
+  setSettings,
+  save,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  settings: Settings;
+  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>;
+  save: (
+    patch: Partial<Settings>,
+    setSaveState: (s: SaveState) => void,
+    setSaveError: (e: string | null) => void
+  ) => Promise<boolean>;
+}) {
   type ActState = "idle" | "busy" | "ok" | "fail";
+  type DrillKind = "subset" | "dr";
   const [state, setState] = useState<Record<string, ActState>>({});
   const [msg, setMsg] = useState<Record<string, string>>({});
   const [source, setSource] = useState<RepoSource>("local");
+  const [kind, setKind] = useState<DrillKind>("subset");
   // The last recorded drill per domain (for the current source), keyed by domain.
   const [lastDrill, setLastDrill] = useState<Record<string, RestoreDrill | null>>({});
+  // Container list feeding the DR-drill target dropdown (kind "dr", containers).
+  const [containers, setContainers] = useState<Container[]>([]);
+  // Save state for the drill-target dropdown (persisted via the parent save()).
+  const [tgtState, setTgtState] = useState<SaveState>("idle");
+  const [tgtError, setTgtError] = useState<string | null>(null);
 
   type Domain = "containers" | "vms" | "flash";
   type Action = "verify" | "unlock" | "prune";
@@ -820,6 +847,20 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     { key: "vms", label: t("settings.vmsEnabled") },
     { key: "flash", label: t("settings.flashEnabled") },
   ];
+
+  // Load the containers once for the DR-drill target picker (includes orphans
+  // that still have off-site backups, so any drillable target is selectable).
+  useEffect(() => {
+    let active = true;
+    listContainers()
+      .then((r) => {
+        if (active && r.ok) setContainers(r.containers ?? []);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Load the latest drill for each domain on mount and whenever the source
   // changes, so the "last verified" line reflects the selected repo.
@@ -864,12 +905,15 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   // runDrillFor runs a restore-verification drill and records its result inline,
   // mirroring the per-action result-state pattern above (keyed "<domain>:drill").
+  // A "dr" drill does a REAL off-site restore into a sandbox — it always targets
+  // the off-site repo (source is ignored) and asks for confirmation first.
   async function runDrillFor(domain: Domain) {
+    if (kind === "dr" && !window.confirm(t("drill.confirmDR"))) return;
     const key = `${domain}:drill`;
     setState((s) => ({ ...s, [key]: "busy" }));
     setMsg((m) => ({ ...m, [key]: "" }));
     try {
-      const r = await runDrill(domain, source);
+      const r = await runDrill(domain, kind === "dr" ? "offsite" : source, kind);
       if (r.ok && r.drill) {
         const drill = r.drill;
         setLastDrill((m) => ({ ...m, [domain]: drill }));
@@ -891,10 +935,13 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     { key: "prune", label: t("integrity.prune"), busy: "…" },
   ];
 
+  const selectCls =
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+
   return (
     <Card title={t("integrity.title")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("integrity.hint")}</p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
         <SourceToggle
           source={source}
@@ -911,10 +958,74 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           disabled={Object.values(state).some((v) => v === "busy")}
         />
       </div>
+
+      {/* Drill-type toggle: subset integrity check vs a real off-site DR restore. */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
+        <div className="inline-flex rounded-lg border border-carbon-border overflow-hidden">
+          {([
+            ["subset", t("drill.kindSubset")],
+            ["dr", t("drill.kindDR")],
+          ] as const).map(([val, label]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => {
+                // Clear any lingering per-domain result so a subset "healthy"
+                // doesn't read as a DR pass (or vice versa) after switching kind.
+                setKind(val);
+                setState({});
+                setMsg({});
+              }}
+              disabled={Object.values(state).some((v) => v === "busy")}
+              className={`px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
+                kind === val
+                  ? "bg-accent text-accentContrast"
+                  : "text-carbon-textSub hover:text-carbon-text"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* DR-drill controls: an explainer + the container target picker. The target
+          is a shared setting (settings.drDrillTarget) saved via the parent's
+          baseline-merging save(), so it never clobbers other cards' edits. Flash
+          has no picker (its whole snapshot is restored); VMs are refused below. */}
+      {kind === "dr" && (
+        <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+          <p className="text-xs text-carbon-textMuted">{t("drill.drNote")}</p>
+          <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
+            {t("drill.target")}
+            <select
+              value={settings.drDrillTarget}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSettings((prev) => (prev ? { ...prev, drDrillTarget: v } : prev));
+                void save({ drDrillTarget: v }, setTgtState, setTgtError);
+              }}
+              className={selectCls}
+            >
+              <option value="">{t("drill.targetMostRecent")}</option>
+              {containers.map((c) => (
+                <option key={c.name} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </label>
+          {tgtState === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
+          {tgtState === "error" && tgtError && <span className="text-xs text-[#ff8389]">{tgtError}</span>}
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         {domains.map(({ key: domain, label }) => {
           const dKey = `${domain}:drill`;
           const drill = lastDrill[domain];
+          // A DR drill can't run for VMs (server refuses it) — show a short note
+          // in place of the run button instead of a button that always errors.
+          const drDisabledForVM = kind === "dr" && domain === "vms";
           return (
             <div key={domain} className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -937,28 +1048,38 @@ function IntegrityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 })}
               </div>
 
-              {/* Restore-verification drill: its own row + inline result + last drill. */}
+              {/* Restore-verification drill: its own row + inline result + last drill.
+                  The run button + labels follow the selected drill kind; VMs can't
+                  run a DR restore, so their row shows a note instead. */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="w-24 shrink-0" />
-                <button
-                  onClick={() => void runDrillFor(domain)}
-                  disabled={state[dKey] === "busy"}
-                  title={t("verify.hint")}
-                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-                >
-                  {state[dKey] === "busy" ? t("verify.running") : t("verify.now")}
-                </button>
-                {state[dKey] === "ok" && <span className="text-sm text-[#6fdc8c]">✓ {t("verify.ok")}</span>}
-                {state[dKey] === "fail" && (
-                  <span className="text-sm text-[#ff8389] break-words">✗ {msg[dKey] || t("verify.failed")}</span>
-                )}
-                {/* Last recorded drill for this domain/source (idle state only). */}
-                {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
-                  <span className="text-xs text-carbon-textMuted">
-                    {drill
-                      ? `${t("verify.last").replace("{time}", relativeTime(t, drill.at))} ${drill.ok ? "✓" : "✗"}`
-                      : t("verify.never")}
-                  </span>
+                {drDisabledForVM ? (
+                  <span className="text-xs text-carbon-textMuted">{t("drill.drVMsNote")}</span>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => void runDrillFor(domain)}
+                      disabled={state[dKey] === "busy"}
+                      title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
+                      className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                    >
+                      {state[dKey] === "busy"
+                        ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
+                        : kind === "dr" ? t("drill.runDR") : t("verify.now")}
+                    </button>
+                    {state[dKey] === "ok" && <span className="text-sm text-[#6fdc8c]">✓ {t("verify.ok")}</span>}
+                    {state[dKey] === "fail" && (
+                      <span className="text-sm text-[#ff8389] break-words">✗ {msg[dKey] || t("verify.failed")}</span>
+                    )}
+                    {/* Last recorded drill for this domain/source (idle state only). */}
+                    {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
+                      <span className="text-xs text-carbon-textMuted">
+                        {drill
+                          ? `${t("verify.last").replace("{time}", relativeTime(t, drill.at))} ${drill.ok ? "✓" : "✗"}`
+                          : t("verify.never")}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -1682,9 +1803,12 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Integrity (restic check)                                            */}
+      {/* Integrity, maintenance & restore drills                             */}
+      {/* Default-visible (v4): manual restore drills — including the real     */}
+      {/* off-site DR restore — are part of the core ransomware-protection     */}
+      {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && <IntegrityCard t={t} />}
+      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Security                                                           */}

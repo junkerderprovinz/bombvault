@@ -365,6 +365,22 @@ function ProtectionCard({
                         {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
                       </span>
                     ) : null}
+                    {/* Off-site restorability badge — mirrors the local-verify shield
+                        above (same pills), but proves the backup is recoverable from
+                        the OFF-SITE repo (a real DR sandbox restore). Only containers
+                        + flash ever run a DR drill, so VMs never show this pill. */}
+                    {d.lastDrDrillAt ? (
+                      <span
+                        title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
+                          d.lastDrDrillOK
+                            ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                            : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                        }`}
+                      >
+                        {d.lastDrDrillOK ? "✓" : "✗"} {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                      </span>
+                    ) : null}
                   </>
                 )}
               </div>
