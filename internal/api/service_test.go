@@ -402,6 +402,91 @@ func TestReplicateOffsiteImmutableSkipsRetention(t *testing.T) {
 	}
 }
 
+// offsiteReplTestService builds a service with a flash LOCAL repo and a remote
+// (rest:) off-site repo, ready for ReplicateOffsite. A remote off-site keeps
+// localRepoMissing false so the post-copy stats sample actually runs.
+func offsiteReplTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FlashPath = "backups/flash"
+	s.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
+}
+
+// TestReplicateOffsiteRecordsRunOK pins that a successful replication persists an
+// off-site run with ok=true, a finish timestamp and no error text.
+func TestReplicateOffsiteRecordsRunOK(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st := offsiteReplTestService(t, eng)
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	run, found, err := st.LatestOffsiteRun("flash")
+	if err != nil || !found {
+		t.Fatalf("expected a recorded off-site run, found=%v err=%v", found, err)
+	}
+	if !run.OK {
+		t.Fatalf("a successful replication must record ok=true, got %+v", run)
+	}
+	if run.Error != "" {
+		t.Fatalf("a successful run must record no error, got %q", run.Error)
+	}
+	if run.FinishedAt == 0 {
+		t.Fatalf("a finished run must carry a finish timestamp, got %+v", run)
+	}
+}
+
+// TestReplicateOffsiteRecordsRunFailure pins that a failed copy still records a
+// run — with ok=false and the scrubbed error text.
+func TestReplicateOffsiteRecordsRunFailure(t *testing.T) {
+	eng := &fakeResticEngine{copyErr: errors.New("copy exploded")}
+	svc, st := offsiteReplTestService(t, eng)
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err == nil {
+		t.Fatal("a failed copy must surface the error")
+	}
+	run, found, gerr := st.LatestOffsiteRun("flash")
+	if gerr != nil || !found {
+		t.Fatalf("a failed replication must still record a run, found=%v err=%v", found, gerr)
+	}
+	if run.OK {
+		t.Fatalf("a failed replication must record ok=false, got %+v", run)
+	}
+	if !strings.Contains(run.Error, "copy exploded") {
+		t.Fatalf("the recorded run must carry the scrubbed error text, got %q", run.Error)
+	}
+}
+
+// TestReplicateOffsiteSamplesOffsiteStats pins that a successful replication
+// samples the off-site repo size (via CollectStatsAsync) — proven by a repo_stats
+// row for source="offsite" appearing after the copy.
+func TestReplicateOffsiteSamplesOffsiteStats(t *testing.T) {
+	// A non-empty snapshot list lets the async sampler record a repo_stats row.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc, st := offsiteReplTestService(t, eng)
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	// The sample runs in a detached goroutine; poll briefly for it to land.
+	found := false
+	for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline); {
+		if _, ok, err := st.LatestRepoStat("flash", "offsite"); err == nil && ok {
+			found = true
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if !found {
+		t.Fatal("a successful replication must sample the off-site repo size (CollectStatsAsync)")
+	}
+}
+
 // newImmutableOffsiteSvc builds a service whose containers repo is initialised
 // locally and whose off-site repo is a remote flagged immutable — the setup for
 // the delete/prune-refusal and unlock-allowed tests.
