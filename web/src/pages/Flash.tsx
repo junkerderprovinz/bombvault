@@ -3,7 +3,7 @@ import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } 
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { ProgressBar } from "../components/ProgressBar";
-import { useProgress } from "../lib/progress";
+import { useProgress, anyActive } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -14,7 +14,18 @@ type T = ReturnType<typeof useT>["t"];
 // Backup button
 // ---------------------------------------------------------------------------
 
-function FlashBackupButton({ t, onBackedUp }: { t: T; onBackedUp: () => void }) {
+function FlashBackupButton({
+  t,
+  onBackedUp,
+  externallyBusy = false,
+  busyPhase,
+}: {
+  t: T;
+  onBackedUp: () => void;
+  /** True when a backup/restore is running elsewhere (any domain). */
+  externallyBusy?: boolean;
+  busyPhase?: string;
+}) {
   // Fire-and-watch (see useBackupWatch): the flash backup runs detached on the
   // server and the POST returns immediately, so we watch the "flash" progress +
   // recorded run for the outcome instead of awaiting the whole backup.
@@ -29,7 +40,7 @@ function FlashBackupButton({ t, onBackedUp }: { t: T; onBackedUp: () => void }) 
     <div className="flex flex-col gap-1 items-start">
       <button
         onClick={() => void fire()}
-        disabled={isPending}
+        disabled={isPending || externallyBusy}
         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? (
@@ -44,6 +55,12 @@ function FlashBackupButton({ t, onBackedUp }: { t: T; onBackedUp: () => void }) 
           t("flash.backupNow")
         )}
       </button>
+      {/* A backup/restore elsewhere blocks a new flash backup — explain why. */}
+      {externallyBusy && !isPending && (
+        <span className="text-xs text-carbon-textMuted">
+          {busyPhase === "restore" ? t("common.restoreRunning") : t("common.backupRunning")}
+        </span>
+      )}
       {state.phase === "success" && (
         <span className="text-xs text-[#6fdc8c]">
           ✓ {t("settings.saved")}
@@ -186,7 +203,11 @@ export function Flash() {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const progress = useProgress()["flash"];
+  const progressMap = useProgress();
+  const progress = progressMap["flash"];
+  // Any backup/restore/replication in flight (any domain) disables the flash
+  // backup button + shows a hint, instead of relying on the 409 round-trip.
+  const running = anyActive(progressMap);
 
   function load() {
     setError(null);
@@ -221,7 +242,12 @@ export function Flash() {
           {t("flash.backupTitle")}
         </h2>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
-        <FlashBackupButton t={t} onBackedUp={() => void load()} />
+        <FlashBackupButton
+          t={t}
+          onBackedUp={() => void load()}
+          externallyBusy={running.active}
+          busyPhase={running.phase}
+        />
 
         {/* Live backup/restore progress, pinned to the card's bottom edge */}
         {progress && (

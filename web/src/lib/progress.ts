@@ -133,6 +133,24 @@ function closeSource(): void {
  * just-completed) target keyed by its `key` (e.g. "container:plex", "vm:win11",
  * "flash"). Index it directly in the consumer.
  */
+/**
+ * anyActive reports whether ANY tracked target is currently running a backup,
+ * restore, or replication — a broad "something is in flight" signal used to
+ * disable start buttons and show a busy hint. Returns the first matching phase so
+ * the caller can word the hint ("a restore is running" vs "a backup is running").
+ */
+export function anyActive(
+  map: Record<string, { phase: string; active: boolean }>
+): { active: boolean; phase?: string } {
+  for (const k of Object.keys(map)) {
+    const e = map[k];
+    if (e.active && (e.phase === "backup" || e.phase === "restore" || e.phase === "replicate")) {
+      return { active: true, phase: e.phase };
+    }
+  }
+  return { active: false };
+}
+
 export function useProgress(): ProgressMap {
   const [map, setMap] = useState<ProgressMap>(current);
 

@@ -7,7 +7,7 @@ import { useT, stateLabel } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
-import { useProgress } from "../lib/progress";
+import { useProgress, anyActive } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
 type T = ReturnType<typeof useT>["t"];
@@ -795,6 +795,9 @@ function ScheduleIncludeAllControl({
 export function VMs() {
   const { t } = useT();
   const { advanced } = useAdvanced();
+  // Broader "something is running" signal: any backup/restore/replication in
+  // flight disables the bulk start buttons + shows a hint.
+  const running = anyActive(useProgress());
   const [vms, setVMs] = useState<VM[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -978,7 +981,7 @@ export function VMs() {
           </span>
           <button
             onClick={backupSelected}
-            disabled={bulkBusy}
+            disabled={bulkBusy || running.active}
             className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("vms.backupSelected")}
@@ -987,7 +990,7 @@ export function VMs() {
           {advanced && (
             <button
               onClick={restoreSelected}
-              disabled={bulkBusy}
+              disabled={bulkBusy || running.active}
               className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {t("vms.restoreSelected")}
@@ -1002,6 +1005,11 @@ export function VMs() {
           </button>
           {bulkBusy && (
             <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>
+          )}
+          {!bulkBusy && running.active && (
+            <span className="text-xs text-carbon-textMuted">
+              {running.phase === "restore" ? t("common.restoreRunning") : t("common.backupRunning")}
+            </span>
           )}
           {!bulkBusy && bulkMsg && (
             <span className="text-xs text-carbon-textSub">{bulkMsg}</span>

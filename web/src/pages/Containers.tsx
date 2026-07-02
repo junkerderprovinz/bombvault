@@ -11,7 +11,7 @@ import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
-import { useProgress } from "../lib/progress";
+import { useProgress, anyActive } from "../lib/progress";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -953,8 +953,13 @@ export function Containers() {
   const [discovering, setDiscovering] = useState(false);
   const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
   // Overall server-side batch-backup progress (independent of this browser).
-  const batch = useProgress()["batch:containers"];
+  const progress = useProgress();
+  const batch = progress["batch:containers"];
   const batchActive = !!batch?.active;
+  // Broader "something is running" signal: any backup/restore/replication in
+  // flight (not just this page's batch) disables the start buttons + shows a
+  // hint, instead of relying on the 409 round-trip.
+  const running = anyActive(progress);
 
   function loadContainers() {
     return listContainers()
@@ -1170,7 +1175,7 @@ export function Containers() {
           </span>
           <button
             onClick={() => void backupSelected()}
-            disabled={bulkBusy || batchActive}
+            disabled={bulkBusy || batchActive || running.active}
             className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("containers.backupSelected")}
@@ -1179,7 +1184,7 @@ export function Containers() {
           {advanced && (
             <button
               onClick={restoreSelected}
-              disabled={bulkBusy}
+              disabled={bulkBusy || running.active}
               className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {t("containers.restoreSelected")}
@@ -1192,6 +1197,11 @@ export function Containers() {
           >
             {t("containers.clearSelection")}
           </button>
+          {running.active && (
+            <span className="text-xs text-carbon-textMuted">
+              {running.phase === "restore" ? t("common.restoreRunning") : t("common.backupRunning")}
+            </span>
+          )}
         </div>
       )}
 

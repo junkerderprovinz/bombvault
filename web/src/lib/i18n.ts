@@ -569,6 +569,8 @@ const en = {
   "common.done": "Done",
   "common.loadingBackups": "Loading backups…",
   "common.saving": "Saving…",
+  "common.restoreRunning": "A restore is running…",
+  "common.backupRunning": "A backup is running…",
 
   // VMs page
   "vms.title": "Virtual Machines",
@@ -1161,6 +1163,8 @@ const de: Translations = {
   "common.done": "Fertig",
   "common.loadingBackups": "Sicherungen werden geladen…",
   "common.saving": "Speichern…",
+  "common.restoreRunning": "Eine Wiederherstellung läuft…",
+  "common.backupRunning": "Eine Sicherung läuft…",
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",
