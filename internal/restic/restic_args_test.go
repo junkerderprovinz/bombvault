@@ -282,3 +282,22 @@ func TestStatsArgs(t *testing.T) {
 		}
 	})
 }
+
+func TestStatsRestoreSizeArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := restic.StatsRestoreSizeArgs("/repo", "deadbeef", restic.Mode{Encrypted: true})
+		// Per-snapshot restore-size stats: `stats --mode restore-size --json <snap>`.
+		// The snapshot id goes after -- (arg-injection guard, house pattern).
+		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--json", "--", "deadbeef"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
+		got := restic.StatsRestoreSizeArgs("/repo", "deadbeef", restic.Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--json", "--insecure-no-password", "--", "deadbeef"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}

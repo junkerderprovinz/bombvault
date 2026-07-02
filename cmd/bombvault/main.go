@@ -147,8 +147,8 @@ func run() error {
 	scheduler.SetOffsiteJob(func(domain string) error {
 		return svc.ReplicateOffsite(context.Background(), domain)
 	})
-	scheduler.SetDrillJob(func(domain string) error {
-		_, dErr := svc.RunRestoreDrill(context.Background(), domain, "local")
+	scheduler.SetDrillJob(func(domain, source, kind string) error {
+		_, dErr := svc.RunRestoreDrill(context.Background(), domain, source, kind)
 		return dErr
 	})
 	scheduler.SetTamperJob(func(domain string) error {

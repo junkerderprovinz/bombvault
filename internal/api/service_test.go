@@ -1004,6 +1004,7 @@ func TestStartBackupAllSkipsSelfRunsOthers(t *testing.T) {
 		t.Fatal("StartBackupAll should start")
 	}
 	waitBatchDone(t, ch)
+	waitForBackupDone(t, svc) // guard fully released → temp-dir cleanup is race-free
 
 	if len(eng.backedUp) != 2 {
 		t.Fatalf("want 2 backups (self skipped), got %d", len(eng.backedUp))
@@ -1029,6 +1030,7 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 	}
 	close(eng.block) // let the first batch finish, then wait so cleanup is safe
 	waitBatchDone(t, ch)
+	waitForBackupDone(t, svc) // guard fully released → temp-dir cleanup is race-free
 }
 
 // TestStartBackupSingleFlight pins the single-backup async guard: StartBackup
@@ -1037,10 +1039,8 @@ func TestStartBackupAllRejectsConcurrent(t *testing.T) {
 // rejected (returns false), so a single backup and a batch can never overlap.
 func TestStartBackupSingleFlight(t *testing.T) {
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
-	svc, _, eng, store := backupTestService(t)
+	svc, _, eng, _ := backupTestService(t)
 	eng.block = make(chan struct{}) // hold the first backup inside restic Backup
-	ch, cancel := store.Subscribe()
-	defer cancel()
 
 	if !svc.StartBackup(context.Background(), "plex") {
 		t.Fatal("first backup should start")
@@ -1055,20 +1055,12 @@ func TestStartBackupSingleFlight(t *testing.T) {
 	}
 	close(eng.block) // let the backup finish
 
-	// Drain until the per-container terminal event so cleanup is race-free.
-	deadline := time.After(5 * time.Second)
-	for {
-		select {
-		case ev := <-ch:
-			if ev.Key == "container:plex" && !ev.Active {
-				if len(eng.backedUp) != 1 {
-					t.Fatalf("backup should run restic once, got %d", len(eng.backedUp))
-				}
-				return
-			}
-		case <-deadline:
-			t.Fatal("timed out waiting for single backup to finish")
-		}
+	// Wait for the detached goroutine to fully release the shared guard: this
+	// happens-after ALL of its temp-dir writes (def mirror + run record), not just
+	// after the progress event, so t.TempDir cleanup can't race the goroutine.
+	waitForBackupDone(t, svc)
+	if len(eng.backedUp) != 1 {
+		t.Fatalf("backup should run restic once, got %d", len(eng.backedUp))
 	}
 }
 
@@ -2464,6 +2456,12 @@ type fakeResticEngine struct {
 	diffPairs       []string          // "snap1->snap2" of each Diff call
 	taggedSnaps     []string          // "snapID:tag,tag" of each TagAdd call
 	forgetPruned    bool              // prune flag of the last Forget call
+	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
+	// (non-zero) overrides the byte total it reports so a test can force a
+	// verification mismatch. Absent overrides, StatsRestoreSize derives files+bytes
+	// from lsEntries — kept consistent with the files RestoreInclude("/") writes.
+	statsRestoreSizeErr error
+	statsRestoreBytes   int64
 	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
 	// run "in flight" to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
@@ -2575,6 +2573,23 @@ func (f *fakeResticEngine) RestoreInclude(_ context.Context, repo, snapshotID, i
 		return errors.New("restore boom")
 	}
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+includePath+"->"+target)
+	// For a whole-tree restore into a real target dir (the DR-drill sandbox path),
+	// materialise the snapshot's file entries so the drill's on-disk walk has
+	// something to verify. Non-drill callers pass no lsEntries, so this is inert.
+	if includePath == "/" && target != "" && target != "/" {
+		for _, e := range f.lsEntries {
+			if e.Type != "file" {
+				continue
+			}
+			dst := filepath.Join(target, filepath.FromSlash(e.Path))
+			if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+				return err
+			}
+			if err := os.WriteFile(dst, make([]byte, e.Size), 0o600); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -2614,6 +2629,23 @@ func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mod
 		return restic.StatsResult{TotalSize: 1000, BlobCount: 10}, nil
 	}
 	return restic.StatsResult{TotalSize: 5000, FileCount: 50}, nil
+}
+
+func (f *fakeResticEngine) StatsRestoreSize(_ context.Context, _, _ string, _ restic.Mode) (int, int64, error) {
+	if f.statsRestoreSizeErr != nil {
+		return 0, 0, f.statsRestoreSizeErr
+	}
+	files, bytes := 0, int64(0)
+	for _, e := range f.lsEntries {
+		if e.Type == "file" {
+			files++
+			bytes += e.Size
+		}
+	}
+	if f.statsRestoreBytes != 0 {
+		bytes = f.statsRestoreBytes // force a verification mismatch
+	}
+	return files, bytes, nil
 }
 
 func (f *fakeResticEngine) Diff(_ context.Context, _, snap1, snap2 string, _ restic.Mode) (restic.DiffResult, error) {
@@ -2684,7 +2716,7 @@ func TestRunRestoreDrillRecordsResult(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	svc := initRepoSvc(t, eng)
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset")
 	if err != nil {
 		t.Fatalf("RunRestoreDrill: %v", err)
 	}
@@ -2714,7 +2746,7 @@ func TestRunRestoreDrillNoBackups(t *testing.T) {
 	eng := &fakeResticEngine{} // snaps nil → empty repo
 	svc := initRepoSvc(t, eng)
 
-	_, err := svc.RunRestoreDrill(context.Background(), "containers", "local")
+	_, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset")
 	if err == nil {
 		t.Fatal("expected an error when there are no snapshots to verify")
 	}
@@ -2738,7 +2770,7 @@ func TestRunRestoreDrillFailureRecorded(t *testing.T) {
 	}
 	svc := initRepoSvc(t, eng)
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset")
 	if err == nil {
 		t.Fatal("expected the drill to surface the CheckData failure")
 	}
@@ -2758,6 +2790,188 @@ func TestRunRestoreDrillFailureRecorded(t *testing.T) {
 	// Defense-in-depth: the recorded detail must not leak the absolute repo path.
 	if strings.Contains(latest.Detail, "/repo/data") {
 		t.Fatalf("drill detail must be path-scrubbed, got %q", latest.Detail)
+	}
+}
+
+// drDrillService builds a service with an off-site repo configured for domain and
+// DR drills enabled, so RunRestoreDrill(..., "dr") can run against the fake engine.
+// HostMountRoot is a temp dir so the drill sandbox is created + torn down under it.
+func drDrillService(t *testing.T, eng *fakeResticEngine, domain, offsite, drillTarget string) *api.Service {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.DrillsEnabled = true
+	s.DRDrillTarget = drillTarget
+	switch domain {
+	case "containers":
+		s.ContainersOffsite = offsite
+	case "flash":
+		s.FlashOffsite = offsite
+	case "vms":
+		s.VMsOffsite = offsite
+	}
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+}
+
+// sandboxTarget extracts the restore target (the drill sandbox dir) from a fake
+// engine RestoreInclude record ("repo:snap:include->target").
+func sandboxTarget(t *testing.T, restored string) string {
+	t.Helper()
+	i := strings.Index(restored, "->")
+	if i < 0 {
+		t.Fatalf("restore record has no target: %q", restored)
+	}
+	return restored[i+2:]
+}
+
+// TestRunDRDrillHappyPath pins the real off-site DR drill for containers: it
+// restores the newest off-site snapshot of the drill target into a marker-guarded
+// sandbox, verifies the restored files+bytes against restic's own accounting,
+// removes the sandbox, and records a restore_drills(kind='dr', source='offsite').
+func TestRunDRDrillHappyPath(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111bbbb2222", Time: "2026-06-01T00:00:00Z", Tags: []string{"container:plex"}},
+			{ID: "cccc3333dddd4444", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}},
+		},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+			{Path: "/appdata/plex/sub/b.conf", Type: "file", Size: 200},
+			{Path: "/appdata/plex/sub", Type: "dir", Size: 0},
+		},
+	}
+	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	if err != nil {
+		t.Fatalf("RunRestoreDrill dr: %v", err)
+	}
+	if !drill.OK || drill.Kind != "dr" || drill.Source != "offsite" || drill.Domain != "containers" {
+		t.Fatalf("want an ok dr/offsite/containers drill, got %+v", drill)
+	}
+	if len(eng.restored) != 1 {
+		t.Fatalf("want exactly one whole-tree sandbox restore, got %v", eng.restored)
+	}
+	// The newest snapshot (by Time) must be the one drilled.
+	if !strings.Contains(eng.restored[0], ":cccc3333dddd4444:/->") {
+		t.Fatalf("must restore the newest off-site snapshot, got %q", eng.restored[0])
+	}
+	sandbox := sandboxTarget(t, eng.restored[0])
+	if !strings.Contains(filepath.Base(sandbox), "bombvault-drill-containers-") {
+		t.Fatalf("restore target is not a drill sandbox: %q", sandbox)
+	}
+	// Marker-guarded cleanup ran: the sandbox is gone after a successful drill.
+	if _, statErr := os.Stat(sandbox); !os.IsNotExist(statErr) {
+		t.Fatalf("drill sandbox must be removed after a successful drill, stat err=%v", statErr)
+	}
+	// Recorded as a dr drill and retrievable via the newest-of-any-kind accessor.
+	latest, found, lErr := svc.LatestDrill("containers", "offsite")
+	if lErr != nil || !found {
+		t.Fatalf("dr drill not recorded: found=%v err=%v", found, lErr)
+	}
+	if latest.Kind != "dr" || !latest.OK || latest.At == 0 {
+		t.Fatalf("recorded drill = %+v, want kind=dr ok=true with a timestamp", latest)
+	}
+}
+
+// TestRunDRDrillFlashWholeSnapshot pins the flash branch: with no per-container
+// tag scoping, the whole newest flash snapshot is drilled + verified + cleaned.
+func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z"}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/config/go", Type: "file", Size: 42},
+		},
+	}
+	svc := drDrillService(t, eng, "flash", "rest:http://192.168.20.9:8000/flash", "")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "flash", "offsite", "dr")
+	if err != nil {
+		t.Fatalf("RunRestoreDrill dr flash: %v", err)
+	}
+	if !drill.OK || drill.Kind != "dr" || drill.Domain != "flash" {
+		t.Fatalf("want an ok dr flash drill, got %+v", drill)
+	}
+	if len(eng.restored) != 1 {
+		t.Fatalf("want one flash sandbox restore, got %v", eng.restored)
+	}
+	if _, statErr := os.Stat(sandboxTarget(t, eng.restored[0])); !os.IsNotExist(statErr) {
+		t.Fatalf("flash drill sandbox must be removed, stat err=%v", statErr)
+	}
+}
+
+// TestRunDRDrillVMRefused pins that a DR drill is refused for VMs (their disk
+// images are too large / not sandbox-safe): a clear error, nothing restored, and
+// no drill recorded.
+func TestRunDRDrillVMRefused(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"vm:win11"}}}}
+	svc := drDrillService(t, eng, "vms", "rest:http://192.168.20.9:8000/vms", "")
+
+	_, err := svc.RunRestoreDrill(context.Background(), "vms", "offsite", "dr")
+	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "vm") {
+		t.Fatalf("VM dr drill must be refused with a clear error, got %v", err)
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("a refused VM dr drill must restore nothing, got %v", eng.restored)
+	}
+	if _, found, fErr := svc.LatestDrill("vms", "offsite"); fErr != nil {
+		t.Fatalf("LatestDrill: %v", fErr)
+	} else if found {
+		t.Fatal("a refused VM dr drill must record no drill")
+	}
+}
+
+// TestRunDRDrillNoOffsite pins the clear error when the domain has no off-site
+// repo configured — nothing is restored or recorded.
+func TestRunDRDrillNoOffsite(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
+	svc := drDrillService(t, eng, "containers", "", "plex") // no off-site set
+
+	_, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	if err == nil || !strings.Contains(err.Error(), "off-site") {
+		t.Fatalf("want a clear no-off-site error, got %v", err)
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("nothing must be restored without an off-site repo, got %v", eng.restored)
+	}
+}
+
+// TestRunDRDrillFailureNotifiesAndRecords pins the failure path: when the restored
+// sandbox does not match restic's restore-size accounting, the drill fails, is
+// recorded kind='dr' ok=false, surfaces an error, and the sandbox is still cleaned.
+func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+		},
+		statsRestoreBytes: 9_000_000, // restic claims far more than the sandbox holds → mismatch
+	}
+	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	if err == nil {
+		t.Fatal("a verification mismatch must surface an error")
+	}
+	if drill.OK || drill.Kind != "dr" {
+		t.Fatalf("a failed dr drill must be kind=dr ok=false, got %+v", drill)
+	}
+	// Still recorded (kind dr, ok=false) and the sandbox still cleaned up.
+	latest, found, lErr := svc.LatestDrill("containers", "offsite")
+	if lErr != nil || !found || latest.Kind != "dr" || latest.OK {
+		t.Fatalf("failed dr drill must be recorded kind=dr ok=false: %+v found=%v err=%v", latest, found, lErr)
+	}
+	if len(eng.restored) == 1 {
+		if _, statErr := os.Stat(sandboxTarget(t, eng.restored[0])); !os.IsNotExist(statErr) {
+			t.Fatalf("sandbox must be cleaned even on a failed drill, stat err=%v", statErr)
+		}
 	}
 }
 

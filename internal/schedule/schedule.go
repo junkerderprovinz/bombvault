@@ -243,12 +243,12 @@ type Scheduler struct {
 	c              *cron.Cron
 	backup         BackupFunc
 	listFn         ListTargetsFunc
-	backupVM       BackupFunc                // nil until SetVMJob wires VM backup
-	listVMsFn      ListVMTargetsFunc         // nil until SetVMJob wires VM backup
-	backupFlash    func() error              // nil until SetFlashJob wires flash backup
-	replicateOffFn func(domain string) error // nil until SetOffsiteJob wires off-site replication
-	drillFn        func(domain string) error // nil until SetDrillJob wires restore-verification drills
-	tamperFn       func(domain string) error // nil until SetTamperJob wires off-site tamper tests
+	backupVM       BackupFunc                              // nil until SetVMJob wires VM backup
+	listVMsFn      ListVMTargetsFunc                       // nil until SetVMJob wires VM backup
+	backupFlash    func() error                            // nil until SetFlashJob wires flash backup
+	replicateOffFn func(domain string) error               // nil until SetOffsiteJob wires off-site replication
+	drillFn        func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
+	tamperFn       func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
 	entryIDs       []cron.EntryID
 }
 
@@ -290,11 +290,12 @@ func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
 }
 
 // SetDrillJob wires scheduled restore-verification drills so the single drill
-// schedule actually runs. drillFn is called with the domain
-// ("containers"|"vms"|"flash") for each enabled domain's local source when the
-// drill schedule fires. Until this is called the drill schedule is a no-op
-// (logged). Call before Reload.
-func (s *Scheduler) SetDrillJob(drillFn func(domain string) error) {
+// schedule actually runs. drillFn is called with (domain, source, kind) for each
+// scheduled drill task when the drill schedule fires — a local "subset" integrity
+// check per enabled domain, plus a real off-site "dr" drill for containers + flash
+// when off-site is configured (see drillTasks). Until this is called the drill
+// schedule is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error) {
 	s.drillFn = drillFn
 }
 
@@ -424,11 +425,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 		offsite("flash", settings.FlashOffsiteSchedule),
 	)
 
-	// Restore-verification drills run on a single schedule across every enabled
-	// domain's LOCAL source. A drill error just records ok=false (see drillFn); it
-	// never aborts the others. The schedule is inert unless explicitly enabled.
+	// Restore-verification drills run on a single schedule across a set of
+	// (domain, source, kind) tasks: a local "subset" integrity check per enabled
+	// domain plus a real off-site "dr" drill for containers + flash when off-site is
+	// configured (see drillTasks). A drill error just records ok=false (see drillFn);
+	// it never aborts the others. The schedule is inert unless explicitly enabled.
 	if settings.DrillsEnabled {
-		drillDomains := enabledDrillDomains(settings)
+		tasks := drillTasks(settings)
 		domains = append(domains, domainSpec{
 			cadence: settings.DrillsSchedule,
 			name:    "drills",
@@ -437,9 +440,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Print("schedule: drills job skipped — drills not wired (SetDrillJob)")
 					return
 				}
-				for _, dom := range drillDomains {
-					if err := s.drillFn(dom); err != nil {
-						log.Printf("schedule: drills job: %s: %v", dom, err)
+				for _, tk := range tasks {
+					if err := s.drillFn(tk.domain, tk.source, tk.kind); err != nil {
+						log.Printf("schedule: drills job: %s/%s(%s): %v", tk.domain, tk.source, tk.kind, err)
 					}
 				}
 			},
@@ -512,6 +515,33 @@ func (s *Scheduler) ReloadWithDueChecks(
 	}
 
 	return nil
+}
+
+// drillTask is one scheduled restore-verification drill: a (domain, source, kind)
+// tuple the drills job iterates when it fires.
+type drillTask struct {
+	domain string
+	source string
+	kind   string
+}
+
+// drillTasks returns the scheduled drill tasks for the current settings: a local
+// "subset" integrity check for every enabled domain, plus a real off-site "dr"
+// drill for containers + flash when their off-site repo is configured. VMs are
+// intentionally excluded from DR drills — their disk images are too large to
+// sandbox-restore (they still get the local subset check).
+func drillTasks(settings store.Settings) []drillTask {
+	var out []drillTask
+	for _, d := range enabledDrillDomains(settings) {
+		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
+	}
+	if settings.ContainersEnabled && settings.ContainersOffsite != "" {
+		out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
+	}
+	if settings.FlashEnabled && settings.FlashOffsite != "" {
+		out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
+	}
+	return out
 }
 
 // enabledDrillDomains returns the domains a scheduled restore-verification drill

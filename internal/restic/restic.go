@@ -329,6 +329,22 @@ func StatsArgs(repo, mode string, m Mode) []string {
 	return args
 }
 
+// StatsRestoreSizeArgs returns the argv for `restic stats --mode restore-size
+// --json <snapshotID>` — the logical restore size + file count of ONE snapshot
+// (vs. StatsArgs, which is repo-wide). The snapshot id goes after -- (arg-injection
+// guard); callers validate it as hex + scope it to the target first. Used by the
+// DR drill to compare restic's own accounting against an on-disk walk of the
+// restored sandbox.
+func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "stats", "--mode", "restore-size", "--json")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--", snapshotID)
+	return args
+}
+
 // DiffArgs returns the argv slice for `restic diff --json <snap1> <snap2>`. The
 // two snapshot ids go after -- (arg-injection guard); callers also validate them
 // as hex AND confirm both belong to the target before invoking. restic diff
@@ -798,6 +814,23 @@ func (r Restic) Stats(ctx context.Context, repo, mode string, m Mode) (StatsResu
 		return StatsResult{}, fmt.Errorf("restic stats: parse JSON: %w", err)
 	}
 	return res, nil
+}
+
+// StatsRestoreSize returns the logical restore size (total bytes) and file count
+// of ONE snapshot via `restic stats --mode restore-size --json <snap>`. It is the
+// per-snapshot counterpart of Stats (which is repo-wide): the DR drill compares
+// these against an on-disk walk of the restored sandbox to prove the restore was
+// complete. restic stats --json emits a single JSON object (buffered parse).
+func (r Restic) StatsRestoreSize(ctx context.Context, repo, snapshotID string, m Mode) (int, int64, error) {
+	out, err := r.run(ctx, StatsRestoreSizeArgs(repo, snapshotID, m), m)
+	if err != nil {
+		return 0, 0, err
+	}
+	var res StatsResult
+	if err := json.Unmarshal(out, &res); err != nil {
+		return 0, 0, fmt.Errorf("restic stats: parse JSON: %w", err)
+	}
+	return int(res.FileCount), res.TotalSize, nil
 }
 
 // Diff compares two snapshots (`restic diff --json snap1 snap2`) and returns the
