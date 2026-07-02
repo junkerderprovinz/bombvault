@@ -151,6 +151,10 @@ func run() error {
 		_, dErr := svc.RunRestoreDrill(context.Background(), domain, "local")
 		return dErr
 	})
+	scheduler.SetTamperJob(func(domain string) error {
+		_, tErr := svc.RunTamperTest(context.Background(), domain)
+		return tErr
+	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
 	// successful backup within each domain (containers / VMs / flash scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)

@@ -248,6 +248,7 @@ type Scheduler struct {
 	backupFlash    func() error              // nil until SetFlashJob wires flash backup
 	replicateOffFn func(domain string) error // nil until SetOffsiteJob wires off-site replication
 	drillFn        func(domain string) error // nil until SetDrillJob wires restore-verification drills
+	tamperFn       func(domain string) error // nil until SetTamperJob wires off-site tamper tests
 	entryIDs       []cron.EntryID
 }
 
@@ -295,6 +296,14 @@ func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
 // (logged). Call before Reload.
 func (s *Scheduler) SetDrillJob(drillFn func(domain string) error) {
 	s.drillFn = drillFn
+}
+
+// SetTamperJob wires scheduled off-site tamper tests so the single tamper schedule
+// actually runs. tamperFn is called with each domain whose off-site repo is flagged
+// immutable when the tamper schedule fires. Until this is called the tamper
+// schedule is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
+	s.tamperFn = tamperFn
 }
 
 // Start starts the underlying cron runner. Call once at app startup.
@@ -437,6 +446,28 @@ func (s *Scheduler) ReloadWithDueChecks(
 		})
 	}
 
+	// Off-site tamper tests run on their own schedule across every domain whose
+	// off-site repo is flagged immutable (append-only). Inert unless at least one
+	// domain is flagged AND the schedule is enabled — the far side is what enforces
+	// immutability, so there is nothing to verify for a non-immutable repo.
+	if tamperDomains := immutableOffsiteDomains(settings); len(tamperDomains) > 0 {
+		domains = append(domains, domainSpec{
+			cadence: settings.TamperTestSchedule,
+			name:    "tamper",
+			fn: func() {
+				if s.tamperFn == nil {
+					log.Print("schedule: tamper job skipped — tamper test not wired (SetTamperJob)")
+					return
+				}
+				for _, dom := range tamperDomains {
+					if err := s.tamperFn(dom); err != nil {
+						log.Printf("schedule: tamper job: %s: %v", dom, err)
+					}
+				}
+			},
+		})
+	}
+
 	for _, d := range domains {
 		cad, err := ParseCadence(d.cadence)
 		if err != nil {
@@ -495,6 +526,24 @@ func enabledDrillDomains(settings store.Settings) []string {
 		out = append(out, "vms")
 	}
 	if settings.FlashEnabled {
+		out = append(out, "flash")
+	}
+	return out
+}
+
+// immutableOffsiteDomains returns the domains whose off-site repo is flagged
+// immutable (append-only) — the domains a scheduled tamper test should verify. A
+// domain without the flag has nothing to prove (BombVault never claimed it was
+// protected), so it is skipped.
+func immutableOffsiteDomains(settings store.Settings) []string {
+	var out []string
+	if settings.ContainersOffsiteImmutable {
+		out = append(out, "containers")
+	}
+	if settings.VMsOffsiteImmutable {
+		out = append(out, "vms")
+	}
+	if settings.FlashOffsiteImmutable {
 		out = append(out, "flash")
 	}
 	return out
