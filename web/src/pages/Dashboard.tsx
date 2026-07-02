@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -276,26 +277,16 @@ function chipForRpo(status: string): string {
   }
 }
 
-function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function ProtectionCard({
+  t,
+  domains,
+  loading,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  domains: DomainStatus[];
+  loading: boolean;
+}) {
   const { lang } = useT();
-  const [domains, setDomains] = useState<DomainStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    getStatus()
-      .then((res) => {
-        if (!active) return;
-        if (res.ok) setDomains(res.domains ?? []);
-      })
-      .catch(() => {/* non-fatal */})
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const domainLabel = (domain: string): string => {
     switch (domain) {
@@ -381,6 +372,185 @@ function ProtectionCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           })}
         </div>
       )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ransomware protection card
+// ---------------------------------------------------------------------------
+
+// protectionChip maps the red/amber/green aggregate to a StatusChip variant.
+function protectionChip(level: string): string {
+  switch (level) {
+    case "green":
+      return "ok";
+    case "amber":
+      return "info";
+    case "red":
+      return "failed";
+    default:
+      return "neutral";
+  }
+}
+
+// A checklist row: "ok" (proven), "bad" (a red gap → deep-links to Settings), or
+// "muted" (not applicable / never run — no claim made, so not a failure).
+type RowState = "ok" | "bad" | "muted";
+
+function RansomwareCard({
+  t,
+  domains,
+  loading,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  domains: DomainStatus[];
+  loading: boolean;
+}) {
+  // Encryption + off-site prune config live in Settings; fetched here (mirrors
+  // RecoveryNag/StatCardsRow) so the card needs no second /api/status round-trip.
+  const [settings, setSettings] = useState<Settings | null>(null);
+  useEffect(() => {
+    let active = true;
+    getSettings()
+      .then((res) => {
+        if (active && res.ok) setSettings(res.settings);
+      })
+      .catch(() => {/* non-fatal */});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const domainLabel = (domain: string): string => {
+    switch (domain) {
+      case "containers":
+        return t("dashboard.domainContainers");
+      case "vms":
+        return t("dashboard.domainVMs");
+      case "flash":
+        return t("dashboard.domainFlash");
+      default:
+        return domain;
+    }
+  };
+
+  const protLabel = (level: string): string => {
+    switch (level) {
+      case "green":
+        return t("ransomware.protGreen");
+      case "amber":
+        return t("ransomware.protAmber");
+      default:
+        return t("ransomware.protRed");
+    }
+  };
+
+  // In scope: enabled domains that carry a protection posture (protection != "").
+  const shown = domains.filter((d) => d.enabled && d.protection !== "");
+  // Render nothing at all when no domain is in scope (nobody has off-site yet).
+  if (!loading && shown.length === 0) return null;
+
+  const encOn = !!settings?.encryptionEnabled;
+  // A prune strategy is "set" when the far side prunes (immutable), or an off-site
+  // retention keep-policy / growth budget is configured (global settings).
+  const globalPrune =
+    !!settings &&
+    (settings.offsiteGrowthBudgetGB > 0 ||
+      settings.offsiteRetentionKeepLast > 0 ||
+      settings.offsiteRetentionKeepDaily > 0 ||
+      settings.offsiteRetentionKeepWeekly > 0 ||
+      settings.offsiteRetentionKeepMonthly > 0);
+
+  const ageText = (at: number): string => (at > 0 ? relativeTime(t, at) : t("containers.never"));
+
+  return (
+    <Card title={t("ransomware.title")}>
+      {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
+      {!loading &&
+        shown.map((d) => {
+          // Each row: label, state, and an optional age stamp. A "bad" row is a red
+          // gap the user should fix — it deep-links into Settings.
+          const rows: { key: string; label: string; state: RowState; at?: number }[] = [
+            {
+              key: "configured",
+              label: t("ransomware.configured"),
+              state: d.offsiteConfigured ? "ok" : "bad",
+            },
+            {
+              key: "appendOnly",
+              label: d.offsiteImmutable ? t("ransomware.appendOnlyVerified") : t("ransomware.appendOnlyOff"),
+              state: d.offsiteImmutable ? (d.lastTamperOK ? "ok" : "bad") : "muted",
+              at: d.offsiteImmutable ? d.lastTamperAt : undefined,
+            },
+            {
+              key: "replication",
+              label: t("ransomware.replicationCurrent"),
+              state: d.lastReplicationOK ? "ok" : d.lastReplicationAt > 0 ? "bad" : "muted",
+              at: d.lastReplicationAt,
+            },
+            {
+              key: "drill",
+              label: t("ransomware.drillOffsite"),
+              state: d.lastDrDrillOK ? "ok" : d.lastDrDrillAt > 0 ? "bad" : "muted",
+              at: d.lastDrDrillAt,
+            },
+            {
+              key: "encryption",
+              label: t("ransomware.encryptionOn"),
+              state: encOn ? "ok" : "bad",
+            },
+            {
+              key: "prune",
+              label: t("ransomware.pruneStrategy"),
+              state: d.offsiteImmutable || globalPrune ? "ok" : "bad",
+            },
+          ];
+
+          return (
+            <div key={d.domain} className="flex flex-col gap-1.5 py-2 border-b border-carbon-border last:border-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-carbon-text w-28 shrink-0 truncate">
+                  {domainLabel(d.domain)}
+                </span>
+                <StatusChip status={protectionChip(d.protection)} />
+                <span className="text-sm text-carbon-textSub">{protLabel(d.protection)}</span>
+              </div>
+              <div className="flex flex-col gap-0.5 pl-1">
+                {rows.map((row) => {
+                  const icon = row.state === "ok" ? "✓" : row.state === "bad" ? "✗" : "—";
+                  const iconColor =
+                    row.state === "ok"
+                      ? "text-[#6fdc8c]"
+                      : row.state === "bad"
+                        ? "text-[#ff8389]"
+                        : "text-carbon-textMuted";
+                  return (
+                    <div key={row.key} className="flex items-center gap-2 text-sm">
+                      <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
+                      {row.state === "bad" ? (
+                        <Link to="/settings" className="text-[#ff8389] hover:underline flex-1 truncate">
+                          {row.label}
+                        </Link>
+                      ) : (
+                        <span
+                          className={`flex-1 truncate ${
+                            row.state === "muted" ? "text-carbon-textMuted" : "text-carbon-textSub"
+                          }`}
+                        >
+                          {row.label}
+                        </span>
+                      )}
+                      {row.at !== undefined && (
+                        <span className="text-xs text-carbon-textMuted shrink-0">{ageText(row.at)}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
     </Card>
   );
 }
@@ -913,6 +1083,25 @@ export function Dashboard() {
   const { t } = useT();
   const { advanced } = useAdvanced();
 
+  // Single /api/status fetch shared by the Protection + Ransomware cards (no
+  // duplicate round-trip — both cards read the same extended domain status).
+  const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
+  const [statusLoading, setStatusLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    getStatus()
+      .then((res) => {
+        if (active && res.ok) setStatusDomains(res.domains ?? []);
+      })
+      .catch(() => {/* non-fatal */})
+      .finally(() => {
+        if (active) setStatusLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
       {/* Page heading */}
@@ -937,7 +1126,11 @@ export function Dashboard() {
       <StatCardsRow t={t} />
 
       {/* Protection (RPO) status — "are my backups current?" indicator */}
-      <ProtectionCard t={t} />
+      <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} />
+
+      {/* Ransomware protection — off-site immutability scorecard (only rendered
+          when at least one enabled domain has a protection posture) */}
+      <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />
 
       {/* 2-column grid for last backups + run history */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
