@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -206,5 +208,83 @@ func TestRunTamperTestTransportErrorInconclusive(t *testing.T) {
 	}
 	if !last.Protected || last.Detail != seedMarker {
 		t.Fatalf("inconclusive run must record nothing (seeded marker must stand), got protected=%v detail=%q", last.Protected, last.Detail)
+	}
+}
+
+// TestRunTamperTestInconclusiveStatuses: a 401 (rotated creds) or 503 (far-side
+// maintenance / proxy) is NOT a delete verdict — it is INCONCLUSIVE, exactly like
+// a transport error: RunTamperTest returns an error, records NO row and fires NO
+// notification (it must never flip a stored PROTECTED verdict to a false
+// "protection LOST" on a non-decisive status).
+func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusServiceUnavailable} {
+		t.Run(fmt.Sprintf("status_%d", status), func(t *testing.T) {
+			srv := httptest.NewServer(deleteRecorder(status, new([]string)))
+			defer srv.Close()
+
+			ssh := &fakeHostSSH{}
+			svc, st := tamperService(t, "rest:"+srv.URL, ssh)
+			if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+				t.Fatal(err)
+			}
+			// Seed a previous PROTECTED verdict with a unique marker — a non-decisive
+			// status must leave it untouched (no new row, no flip).
+			const seed = "SEED-INCONCLUSIVE-DO-NOT-REPLACE"
+			if err := st.RecordTamperTest("containers", true, seed); err != nil {
+				t.Fatal(err)
+			}
+
+			_, err := svc.RunTamperTest(context.Background(), "containers")
+			if err == nil {
+				t.Fatalf("status %d must be inconclusive → a non-nil error", status)
+			}
+			// Nothing recorded — the seeded PROTECTED row still stands.
+			last, found, lerr := st.LatestTamperTest("containers")
+			if lerr != nil || !found || !last.Protected || last.Detail != seed {
+				t.Fatalf("status %d must record nothing (seed must stand), got protected=%v detail=%q found=%v err=%v", status, last.Protected, last.Detail, found, lerr)
+			}
+			// And no protection-loss notification fired.
+			if len(ssh.runs) != 0 {
+				t.Fatalf("status %d must not notify, got %d notifications", status, len(ssh.runs))
+			}
+		})
+	}
+}
+
+// TestRunTamperTestConcurrentFlipNotifiesOnce: two concurrent tamper tests that
+// each observe a protected→unprotected flip must fire the protection-loss alert
+// EXACTLY once. RunTamperTest serialises per domain, so read-prev → record →
+// notify is atomic: the second run reads the verdict the first recorded and sees
+// no flip. Without the per-domain lock both could read the old PROTECTED verdict
+// and double-alarm.
+func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
+	srv := httptest.NewServer(deleteRecorder(http.StatusNotFound, new([]string))) // 404 = would delete = unprotected
+	defer srv.Close()
+
+	ssh := &fakeHostSSH{}
+	svc, st := tamperService(t, "rest:"+srv.URL, ssh)
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		t.Fatal(err)
+	}
+	// Seed a previous PROTECTED verdict so BOTH concurrent runs would, without
+	// serialisation, observe the same protected→unprotected flip.
+	if err := st.RecordTamperTest("containers", true, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if _, err := svc.RunTamperTest(context.Background(), "containers"); err != nil {
+				t.Errorf("RunTamperTest: %v", err)
+			}
+		}()
+	}
+	wg.Wait()
+
+	if len(ssh.runs) != 1 {
+		t.Fatalf("a concurrent protected→unprotected flip must notify exactly once, got %d", len(ssh.runs))
 	}
 }

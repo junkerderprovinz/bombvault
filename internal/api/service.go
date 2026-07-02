@@ -162,6 +162,33 @@ type Service struct {
 	// back under budget so a later breach re-alarms.
 	budgetMu          sync.Mutex
 	offsiteOverBudget map[string]bool
+
+	// tamperMu serialises RunTamperTest per domain so the read-prev → record →
+	// notify sequence is atomic: two concurrent tamper tests can't both observe the
+	// old verdict and double-fire (or interleave and drop) the protection-loss
+	// alert. It is distinct from repoMu — a tamper test touches no repo state, only
+	// the tamper history — and is created lazily (tamperMuGuard) so it works
+	// regardless of how the Service was constructed.
+	tamperMuGuard sync.Mutex
+	tamperMu      map[string]*sync.Mutex
+}
+
+// lockTamper blocks until it holds domain's tamper lock and returns the unlock
+// func, lazily creating the per-domain mutex. Serialises RunTamperTest so the
+// read-prev → record → notify sequence is atomic (see the tamperMu field).
+func (s *Service) lockTamper(domain string) func() {
+	s.tamperMuGuard.Lock()
+	if s.tamperMu == nil {
+		s.tamperMu = map[string]*sync.Mutex{}
+	}
+	mu := s.tamperMu[domain]
+	if mu == nil {
+		mu = &sync.Mutex{}
+		s.tamperMu[domain] = mu
+	}
+	s.tamperMuGuard.Unlock()
+	mu.Lock()
+	return mu.Unlock
 }
 
 // NewService constructs the backup service.
