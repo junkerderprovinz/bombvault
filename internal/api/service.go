@@ -555,10 +555,60 @@ type protInputs struct {
 	lastTamperOK      bool
 	lastTamperAt      int64
 	tamperPeriod      int64 // seconds; 0 = no/invalid tamper schedule
-	lastReplicationAt int64
-	offsitePeriod     int64 // seconds; 0 = replication not on its own schedule
+	lastReplicationAt int64 // last SUCCESSFUL replication (currency source)
+	offsitePeriod     int64 // seconds; 0 = replication coupled to each backup (no own schedule)
+	lastBackupAt      int64 // last SUCCESSFUL backup (coupled-replication currency basis)
+	backupPeriod      int64 // seconds; the domain's backup RPO period (coupled-grace basis)
 	lastDRDrillAt     int64
 	drillPeriod       int64 // seconds; 0 = no drill schedule
+}
+
+// replicationState decides the off-site replication currency (""/never/overdue/ok)
+// from the SAME inputs protectionLevel and protectionChecks share, so the chip and
+// the checklist row can never disagree.
+//
+//   - No off-site configured → "" (there is no replication to be current; the
+//     missing-off-site case is handled as red by protectionLevel).
+//   - Decoupled (offsitePeriod>0): the standard rpoStatus against the off-site's
+//     own schedule, using the last SUCCESSFUL replication.
+//   - Coupled (offsitePeriod==0, the default): replication rides each backup, so
+//     the claim is "the last successful backup has a corresponding successful
+//     off-site copy". It goes overdue only once the gap between the last backup and
+//     the last successful replication exceeds a grace of 2× the backup period
+//     (conservative: a backup replicating shortly after is fine; a never-replicated
+//     backup is flagged only once it has sat unreplicated beyond the grace). Amber,
+//     never red.
+func replicationState(now int64, in protInputs) string {
+	if !in.offsiteConfigured {
+		return ""
+	}
+	if in.offsitePeriod > 0 {
+		switch rpoStatus(now, in.lastReplicationAt, in.offsitePeriod, true) {
+		case "overdue":
+			return "overdue"
+		case "never":
+			return "never"
+		default:
+			return "ok"
+		}
+	}
+	// Coupled path: only meaningful once a backup exists and there is an RPO basis.
+	if in.lastBackupAt == 0 || in.backupPeriod <= 0 {
+		return ""
+	}
+	grace := in.backupPeriod * 2
+	if in.lastReplicationAt == 0 {
+		// Never replicated: overdue only once the backup has sat unreplicated > grace
+		// (a just-made first backup replicating shortly after must not instantly flag).
+		if now-in.lastBackupAt > grace {
+			return "overdue"
+		}
+		return "ok"
+	}
+	if in.lastReplicationAt < in.lastBackupAt && in.lastBackupAt-in.lastReplicationAt > grace {
+		return "overdue"
+	}
+	return "ok"
 }
 
 // protectionLevel aggregates a domain's ransomware-protection posture into a
@@ -589,10 +639,11 @@ func protectionLevel(now int64, in protInputs) string {
 			return "red" // an append-only claim we cannot currently PROVE
 		}
 	}
-	// Replication currency only has an independent expectation when the off-site
-	// runs on its own schedule; otherwise it is coupled to each backup (already
-	// covered by the domain's own Status).
-	if rpoStatus(now, in.lastReplicationAt, in.offsitePeriod, in.offsitePeriod > 0) == "overdue" {
+	// Replication currency: overdue is amber. Decoupled off-sites use their own
+	// schedule; coupled (default) off-sites are checked against the last backup with
+	// a conservative grace (see replicationState) so off-site health is no longer
+	// invisible in the config most users run.
+	if replicationState(now, in) == "overdue" {
 		return "amber"
 	}
 	if rpoStatus(now, in.lastDRDrillAt, in.drillPeriod, in.drillPeriod > 0) == "overdue" {
@@ -639,18 +690,10 @@ func protectionChecks(now int64, in protInputs) protChecks {
 		c.Tamper = "ok"
 	}
 
-	// Replication currency — coupled to each backup unless the off-site runs on its
-	// own schedule, so there is only an independent expectation when offsitePeriod>0.
-	if in.offsitePeriod > 0 {
-		switch rpoStatus(now, in.lastReplicationAt, in.offsitePeriod, true) {
-		case "overdue":
-			c.Replication = "overdue"
-		case "never":
-			c.Replication = "never"
-		default:
-			c.Replication = "ok"
-		}
-	}
+	// Replication currency — decoupled off-sites use their own schedule; coupled
+	// (default) off-sites are checked against the last backup with a grace (see
+	// replicationState). "" when there is nothing to claim yet.
+	c.Replication = replicationState(now, in)
 
 	// DR drill currency — only when a drill schedule is set.
 	if in.drillPeriod > 0 {
@@ -733,17 +776,27 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			lastTamperAt = tt.At
 			lastTamperOK = tt.Protected
 		}
+		// Currency uses the last SUCCESSFUL replication (mirrors backups' last-SUCCESS):
+		// a perpetually-failing replication then reads as stale → overdue → amber,
+		// rather than staying fresh off a failed attempt's timestamp.
 		var lastReplicationAt int64
 		var lastReplicationOK bool
-		if run, found, rErr := s.store.LatestOffsiteRun(d.name); rErr == nil && found {
+		if run, found, rErr := s.store.LatestSuccessfulOffsiteRun(d.name); rErr == nil && found {
 			lastReplicationAt = run.StartedAt
-			lastReplicationOK = run.OK
+			lastReplicationOK = true
 		}
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
 		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
+		}
+
+		// The DR-drill currency only has a claim when the scheduler actually runs
+		// drills (DrillsEnabled); otherwise a stale lastDRDrillAt must not read overdue.
+		var drillPeriod int64
+		if settings.DrillsEnabled {
+			drillPeriod = cadencePeriodSeconds(settings.DrillsSchedule)
 		}
 
 		in := protInputs{
@@ -756,8 +809,10 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			tamperPeriod:      cadencePeriodSeconds(settings.TamperTestSchedule),
 			lastReplicationAt: lastReplicationAt,
 			offsitePeriod:     cadencePeriodSeconds(s.offsiteScheduleFor(d.name, settings)),
+			lastBackupAt:      lastUnix,
+			backupPeriod:      period,
 			lastDRDrillAt:     lastDRDrillAt,
-			drillPeriod:       cadencePeriodSeconds(settings.DrillsSchedule),
+			drillPeriod:       drillPeriod,
 		}
 		// protection (the chip) and checks (each row) are derived from the SAME
 		// inputs, so a row can never contradict the chip.
@@ -1056,11 +1111,15 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = 0
 	}
+	// ok is set true ONLY on the explicit success return below, so an unwinding
+	// panic (named-return err still nil) can't stamp a phantom successful run — the
+	// deferred finish then records a failure, not a false success.
+	var ok bool
 	defer func() {
 		if runID == 0 {
 			return
 		}
-		if ferr := s.store.FinishOffsiteRun(runID, err == nil, truncateRunErr(err)); ferr != nil {
+		if ferr := s.store.FinishOffsiteRun(runID, ok, truncateRunErr(err)); ferr != nil {
 			log.Printf("api: offsite %s: could not finish replication run: %v", domain, ferr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
@@ -1094,13 +1153,23 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}
-	// Sample the off-site repo size into the repo_stats time series (detached +
-	// throttled) so the Storage card and the growth budget have fresh data, then
-	// check the sampled size against the growth budget. The REST protocol can't see
-	// the far side's free space — only BombVault's own growth — so the budget is a
-	// detection aid, not a hard cap.
-	s.CollectStatsAsync(domain, "offsite")
+	// Sample the off-site repo size into the repo_stats time series and evaluate the
+	// growth budget. When a budget is set we sample SYNCHRONOUSLY first so the check
+	// sees THIS replication's fresh size — including the very first replication,
+	// which has no prior sample — rather than a stale one; for an immutable repo
+	// (no far-side prune) the budget is the only growth backstop, so it must not lag
+	// or miss the seed. Without a budget we sample in the background (throttled) just
+	// for the Storage card. The REST protocol can't see the far side's free space —
+	// only BombVault's own growth — so the budget is a detection aid, not a hard cap.
+	if settings.OffsiteGrowthBudgetGB > 0 {
+		if serr := s.CollectStats(ctx, domain, "offsite"); serr != nil {
+			log.Printf("api: offsite %s: budget size sample failed (replica is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	} else {
+		s.CollectStatsAsync(domain, "offsite")
+	}
 	s.checkOffsiteBudget(ctx, domain, settings)
+	ok = true
 	return nil
 }
 
@@ -1190,6 +1259,39 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	}
 	defer s.lockDomain(domain)()
 	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo)
+}
+
+// ScheduledReplicateOffsite runs a scheduled off-site replication and, unlike the
+// interactive ReplicateOffsite (whose error the UI surfaces directly), NOTIFIES on
+// failure. A scheduled replication that silently failed would let the off-site
+// copy rot unseen — the scorecard's currency check would only catch it later — so
+// a scheduled failure alerts immediately. Best-effort notify; the error is still
+// returned for the scheduler log.
+func (s *Service) ScheduledReplicateOffsite(ctx context.Context, domain string) error {
+	err := s.ReplicateOffsite(ctx, domain)
+	if err != nil {
+		s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
+	}
+	return err
+}
+
+// notifyReplicationFailed sends a best-effort alert when a SCHEDULED off-site
+// replication fails (the off-site copy is not current). Mirrors
+// notifyOverBudget/notifyProtectionLost's policy gate + Unraid fan-out; a no-op
+// when notifications are off.
+func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	subject := "Off-site replication FAILED for " + domain
+	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
+	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	if c.Unraid && s.ssh != nil {
+		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
 }
 
 // TestOffsite probes a domain's off-site repo without modifying it, so the UI can
@@ -4332,7 +4434,7 @@ func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, setti
 	// explicitly on that path before the cleanup defer is even registered.
 	markerPath := filepath.Join(sandbox, drillMarkerName)
 	if err := os.WriteFile(markerPath, []byte("bombvault dr drill\n"), 0o600); err != nil { //nolint:gosec // G306: marker is a non-secret sentinel; 0600 is already restrictive
-		if rmErr := os.Remove(sandbox); rmErr != nil {
+		if rmErr := os.Remove(sandbox); rmErr != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve (rejects absolute/traversal); it was just created empty by os.Mkdir above
 			log.Printf("api: dr-drill: could not remove sandbox after marker-write failure: %v", rmErr)
 		}
 		return fmt.Errorf("write drill marker: %w", err)
