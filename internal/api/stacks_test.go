@@ -206,6 +206,92 @@ func TestRestoreStack(t *testing.T) {
 	}
 }
 
+// TestRestoreStackCancelledMemberAbortsLoop pins the clean-abort contract that
+// B1 makes reachable: when a member's restore is cancelled (the real restic
+// layer now surfaces context.Canceled — here the fake stands in for it), the
+// stack loop stops AT that member. The current member is recorded, the result
+// carries only the members processed so far, EVERY remaining member is left
+// untouched (no restore run is even started for them), and the dependency-ordered
+// start loop is skipped entirely (no container is started).
+func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
+	d := &fakeServiceDocker{liveName: ""} // absent → fresh restore path
+	// restoreErr fires for whichever member the loop reaches first; enumeration is
+	// alphabetical, so svc-a is cancelled and svc-b/svc-c must never be reached.
+	eng := &fakeResticEngine{
+		restoreErr: context.Canceled,
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Tags: []string{"container:svc-a"}},
+			{ID: "bbbb2222", Tags: []string{"container:svc-b"}},
+			{ID: "cccc3333", Tags: []string{"container:svc-c"}},
+		},
+	}
+	// A REMOTE containers repo skips the local-existence probe so the restore
+	// actually reaches the engine (and its restoreErr) instead of silently taking
+	// the recreate-only path — the same reason TestStartRestoreStackSingleFlight
+	// uses a rest: URL. The mount root stays Linux-absolute for paths.Within.
+	dir := t.TempDir()
+	const mountRoot = "/host/user"
+	cfg := config.Config{
+		AppKey:            strings.Repeat("a", 64),
+		DataDir:           dir,
+		HostMountRoot:     mountRoot,
+		FlashTemplatesDir: filepath.Join(dir, "flash"),
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "rest:http://127.0.0.1:8000/containers" // remote → no local-repo probe
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	seedStackTarget(t, st, mountRoot, "svc-a", "media", "a", "b")
+	seedStackTarget(t, st, mountRoot, "svc-b", "media", "b", "c")
+	seedStackTarget(t, st, mountRoot, "svc-c", "media", "c", "")
+
+	res, err := svc.RestoreStack(context.Background(), "media", "local", true, true)
+	if err != nil {
+		t.Fatalf("RestoreStack: %v", err)
+	}
+
+	// The loop aborted at the first (cancelled) member: only it is in the result.
+	if len(res.Members) != 1 {
+		t.Fatalf("a cancelled member must abort the loop: members = %d, want 1 (%+v)", len(res.Members), res.Members)
+	}
+	if res.Members[0].Name != "svc-a" {
+		t.Fatalf("the aborted member should be the first enumerated (svc-a), got %q", res.Members[0].Name)
+	}
+	if res.Members[0].Restored {
+		t.Fatalf("a cancelled member must not be marked restored: %+v", res.Members[0])
+	}
+
+	// Remaining members got NO run: exactly one restore run exists, recorded
+	// "cancelled" (not "failed") for the aborted member. svc-b and svc-c never ran.
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restoreRuns []store.Run
+	for _, run := range runs {
+		if run.Kind == "restore" {
+			restoreRuns = append(restoreRuns, run)
+		}
+	}
+	if len(restoreRuns) != 1 {
+		t.Fatalf("only the aborted member may record a run: got %d restore runs (%+v)", len(restoreRuns), restoreRuns)
+	}
+	if restoreRuns[0].Status != "cancelled" {
+		t.Fatalf("the cancelled member must record status %q, got %q", "cancelled", restoreRuns[0].Status)
+	}
+
+	// The start loop must be skipped entirely — nothing was started.
+	for _, c := range d.calls {
+		if strings.HasPrefix(c, "start:") {
+			t.Fatalf("a cancelled stack restore must start no containers, got %v", d.calls)
+		}
+	}
+}
+
 // TestRestoreStackNotConfirmed pins the confirm gate.
 func TestRestoreStackNotConfirmed(t *testing.T) {
 	st := newMemStore(t)

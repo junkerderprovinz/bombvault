@@ -509,6 +509,8 @@ func (r Restic) authEnv(m Mode) []string {
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	env := r.authEnv(m)
+	var out []byte
+	var err error
 	// When a progress sink is present (backup/restore), stream stdout so each
 	// --json "status" line's percentage reaches the UI live; otherwise capture
 	// the full output in one shot (the default for snapshots/ls/check/forget).
@@ -517,10 +519,30 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 		// TTY or RESTIC_PROGRESS_FPS is set. Our stdout is a pipe, so without this
 		// restic prints only the final summary and the bar would never fill.
 		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
-		return runStreaming(cmd, args, sink)
+		out, err = runStreaming(cmd, args, sink)
+	} else {
+		cmd.Env = env
+		out, err = runBuffered(cmd, args)
 	}
-	cmd.Env = env
-	return runBuffered(cmd, args)
+	return out, ctxCancelErr(ctx, args, err)
+}
+
+// ctxCancelErr re-wraps a command failure that was actually caused by ctx being
+// cancelled or hitting its deadline. exec.CommandContext kills the child on
+// cancel, which cmd.Run/Wait reports as a generic *ExitError ("signal: killed")
+// with NO context error in its chain; runError would then scrub that into a
+// plain "restic <sub> failed", and every finish site — which tells a user
+// cancel from a real failure via errors.Is(err, context.Canceled) — would
+// misrecord the cancel as "failed" (which is exactly what defeated the cancel
+// feature in production). When ctx is done we therefore return an error WRAPPING
+// ctx.Err() so errors.Is holds. A deadline stays context.DeadlineExceeded (NOT
+// Canceled), so a restore wedged past its 48h cap is still recorded "failed" —
+// correct. When ctx is not done the original (scrubbed) error is returned as-is.
+func ctxCancelErr(ctx context.Context, args []string, err error) error {
+	if err != nil && ctx.Err() != nil {
+		return fmt.Errorf("restic %s cancelled: %w", subcommand(args), ctx.Err())
+	}
+	return err
 }
 
 // runBuffered runs restic capturing all stdout into a buffer.
@@ -775,7 +797,10 @@ func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string,
 	args := DumpZipArgs(repo, snapshotID, subfolder, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
 	cmd.Env = r.authEnv(m)
-	return runToWriter(cmd, args, w)
+	// A client disconnect / user cancel of the download cancels ctx and kills the
+	// child; re-wrap so DownloadFlashZip's errors.Is(err, context.Canceled) holds
+	// and records "cancelled" instead of "failed" (same root cause as run()).
+	return ctxCancelErr(ctx, args, runToWriter(cmd, args, w))
 }
 
 // Copy replicates snapshots from srcRepo into destRepo (restic copy) for off-site
