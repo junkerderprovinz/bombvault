@@ -430,6 +430,19 @@ const en = {
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
 
+  // Dashboard ransomware-protection card (v4)
+  "ransomware.title": "Ransomware protection",
+  "ransomware.protGreen": "Protected",
+  "ransomware.protAmber": "Needs attention",
+  "ransomware.protRed": "At risk",
+  "ransomware.configured": "off-site configured",
+  "ransomware.appendOnlyVerified": "append-only verified",
+  "ransomware.appendOnlyOff": "append-only not enabled",
+  "ransomware.replicationCurrent": "replication current",
+  "ransomware.drillOffsite": "restore drill (off-site)",
+  "ransomware.encryptionOn": "encryption on",
+  "ransomware.pruneStrategy": "prune strategy set",
+
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Backup health",
   "dashboard.heatLess": "Less",
@@ -980,6 +993,19 @@ const de: Translations = {
   "dashboard.domainContainers": "Container",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+
+  // Dashboard-Ransomware-Schutz-Karte (v4)
+  "ransomware.title": "Ransomware-Schutz",
+  "ransomware.protGreen": "Geschützt",
+  "ransomware.protAmber": "Aufmerksamkeit nötig",
+  "ransomware.protRed": "Gefährdet",
+  "ransomware.configured": "Off-site konfiguriert",
+  "ransomware.appendOnlyVerified": "Append-only verifiziert",
+  "ransomware.appendOnlyOff": "Append-only nicht aktiviert",
+  "ransomware.replicationCurrent": "Replikation aktuell",
+  "ransomware.drillOffsite": "Restore-Test (Off-site)",
+  "ransomware.encryptionOn": "Verschlüsselung an",
+  "ransomware.pruneStrategy": "Prune-Strategie gesetzt",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Backup-Verlauf",
