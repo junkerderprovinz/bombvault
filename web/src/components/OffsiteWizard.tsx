@@ -37,12 +37,20 @@ const IMM_KEY = {
   flash: "flashOffsiteImmutable",
 } as const;
 
-type Backend = "rest" | "rclone" | "s3";
+// "none" = empty URL (neutral prompt — no REST snippet, no caveat); "other" =
+// a recognized non-REST scheme (sftp/b2/gs/azure) or an unrecognized/bare path
+// that must NOT get the REST deploy-snippet flow.
+type Backend = "rest" | "rclone" | "s3" | "other" | "none";
 
 function inferBackend(url: string): Backend {
-  if (url.startsWith("rclone:")) return "rclone";
-  if (url.startsWith("s3:") || url.startsWith("s3://")) return "s3";
-  return "rest";
+  const u = url.trim();
+  if (u === "") return "none";
+  if (u.startsWith("rclone:")) return "rclone";
+  if (u.startsWith("s3:") || u.startsWith("s3://")) return "s3";
+  if (u.startsWith("rest:") || u.startsWith("http://") || u.startsWith("https://")) return "rest";
+  // Recognized non-REST schemes (and anything else) are "other": no REST snippet,
+  // no rclone/s3 caveat — the wizard makes no false REST assumption.
+  return "other";
 }
 
 // CopyBlock mirrors the VM-SSH card's copy pattern: a monospace <pre> with a copy
@@ -89,7 +97,7 @@ export function OffsiteWizard({
     patch: Partial<Settings>,
     setState: (s: SaveState) => void,
     setError: (e: string | null) => void
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   t: T;
 }) {
   const repoKey = REPO_KEY[domain];
@@ -111,6 +119,11 @@ export function OffsiteWizard({
   const [restPwSet, setRestPwSet] = useState(false);
   const [credState, setCredState] = useState<SaveState>("idle");
   const [credErr, setCredErr] = useState<string | null>(null);
+  // cloudLoaded gates the "Save credentials" button: we must never POST a cloud
+  // object that wasn't loaded from the server, or a blank round-trip would WIPE
+  // the stored S3/REST non-secret fields (or clear CloudConf entirely).
+  const [cloudLoaded, setCloudLoaded] = useState(false);
+  const [cloudLoadErr, setCloudLoadErr] = useState<string | null>(null);
 
   // Step 3 — connection test verdict.
   const [testState, setTestState] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
@@ -122,6 +135,7 @@ export function OffsiteWizard({
 
   // Step 4 — immutable flag + tamper verdict.
   const [immState, setImmState] = useState<SaveState>("idle");
+  const [immErr, setImmErr] = useState<string | null>(null);
   const [tamperState, setTamperState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [verdict, setVerdict] = useState<{ testable: boolean; protected: boolean; detail: string } | null>(null);
   const [tamperErr, setTamperErr] = useState<string | null>(null);
@@ -138,7 +152,11 @@ export function OffsiteWizard({
     let active = true;
     getCloud()
       .then((r) => {
-        if (!active || !r.ok) return;
+        if (!active) return;
+        if (!r.ok) {
+          setCloudLoadErr(t("offsite.wizard.credLoadError"));
+          return;
+        }
         setCloudState((p) => ({
           ...p,
           s3KeyId: r.s3KeyId ?? "",
@@ -146,11 +164,18 @@ export function OffsiteWizard({
           restUser: r.restUser ?? "",
         }));
         setRestPwSet(!!r.restPasswordSet);
+        // Only now is a save safe: the object about to be POSTed reflects the
+        // server's stored non-secret fields.
+        setCloudLoaded(true);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setCloudLoadErr(t("offsite.wizard.credLoadError"));
+      });
     return () => {
       active = false;
     };
+    // t is stable for a given language; the load runs once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function patchRepo(v: string) {
@@ -179,6 +204,10 @@ export function OffsiteWizard({
   }
 
   async function saveCreds() {
+    // Never POST creds that were not loaded from the server (a blank round-trip
+    // would wipe the stored non-secret fields). The button is disabled in this
+    // state too; this is the defensive backstop.
+    if (!cloudLoaded) return;
     setCredState("saving");
     setCredErr(null);
     try {
@@ -235,11 +264,18 @@ export function OffsiteWizard({
     }
   }
 
-  // Toggling immutable ON persists the flag AND immediately proves it with a
-  // tamper test (the verdict is shown verbatim). OFF just clears the flag.
+  // Toggling immutable ON persists the flag AND — only after a CONFIRMED save —
+  // proves it with a tamper test (the verdict is shown verbatim). A failed save
+  // rolls the optimistic flip back and surfaces the error, so a green "protected"
+  // verdict can never appear while the server flag actually stayed OFF.
   async function toggleImmutable(next: boolean) {
     setSettings((prev) => (prev ? { ...prev, [immKey]: next } : prev));
-    await save({ [immKey]: next } as Partial<Settings>, setImmState, () => undefined);
+    const ok = await save({ [immKey]: next } as Partial<Settings>, setImmState, setImmErr);
+    if (!ok) {
+      // Roll back the optimistic toggle; immErr / immState==='error' show the reason.
+      setSettings((prev) => (prev ? { ...prev, [immKey]: !next } : prev));
+      return;
+    }
     if (next) void runTamper();
     else {
       setVerdict(null);
@@ -271,6 +307,11 @@ export function OffsiteWizard({
         ? "text-[#6fdc8c]"
         : "text-[#ff8389]"
     : "";
+
+  // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
+  // a saved/edited rclone: or s3: URL always shows its warning, and a REST/empty
+  // URL never shows a spurious one.
+  const urlBackend = inferBackend(repoURL);
 
   return (
     <div className="mt-2 flex flex-col gap-4 rounded-lg border border-carbon-border bg-carbon-surface2 p-4">
@@ -351,7 +392,7 @@ export function OffsiteWizard({
             value={repoURL}
             spellCheck={false}
             onChange={(e) => patchRepo(e.target.value)}
-            placeholder="rest:http://192.168.x.x:8000/bombvault-containers/containers"
+            placeholder={t("offsite.wizard.repoUrlPlaceholder")}
             className={inputCls}
           />
         </label>
@@ -407,11 +448,12 @@ export function OffsiteWizard({
               className={inputCls}
             />
           </label>
+          {cloudLoadErr && <span className="text-xs text-[#ff8389]">{cloudLoadErr}</span>}
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => void saveCreds()}
-              disabled={credState === "saving"}
+              disabled={credState === "saving" || !cloudLoaded}
               className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
@@ -444,15 +486,17 @@ export function OffsiteWizard({
         <span className={stepTitle}>{t("offsite.wizard.step4")}</span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
+            <span id={`imm-label-${domain}`} className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
             <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
           </div>
           <button
+            type="button"
             role="switch"
             aria-checked={immutable}
+            aria-labelledby={`imm-label-${domain}`}
             disabled={immState === "saving"}
             onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors disabled:opacity-50 ${
+            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
               immutable ? "bg-accent" : "bg-carbon-surface3"
             }`}
           >
@@ -463,14 +507,15 @@ export function OffsiteWizard({
             />
           </button>
         </div>
+        {immState === "error" && immErr && <span className="text-xs text-[#ff8389]">{immErr}</span>}
 
-        {/* Backend-specific caveats (Step 5). */}
-        {backend === "rclone" && (
+        {/* Backend-specific caveats (Step 5) — driven by the live repo URL. */}
+        {urlBackend === "rclone" && (
           <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2 text-xs text-[#f1c21b] leading-relaxed">
             {t("offsite.rcloneWarning")}
           </div>
         )}
-        {backend === "s3" && (
+        {urlBackend === "s3" && (
           <div className="rounded-lg bg-carbon-surface border border-carbon-border px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
             {t("offsite.s3Unverified")}
           </div>
