@@ -263,6 +263,23 @@ func TestRestoreNotConfirmed(t *testing.T) {
 	}
 }
 
+// TestRestoreCancelUnknownKey pins the cancel endpoint's idempotent no-op:
+// cancelling a key with no in-flight restore is a graceful success reporting
+// cancelled:false (never an error), so the button is safe to click any time.
+func TestRestoreCancelUnknownKey(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/restore/cancel", `{"key":"container:plex"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", m)
+	}
+	if m["cancelled"] != false {
+		t.Fatalf("cancelling an unknown key must report cancelled:false, got %v", m["cancelled"])
+	}
+}
+
 func TestPatchInclude(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, st := newTestRouter(t, d, &fakeResticEngine{})

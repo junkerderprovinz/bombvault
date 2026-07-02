@@ -259,10 +259,18 @@ func (s *Service) StartRestoreStack(ctx context.Context, project, source string,
 	// restoreTimeout (see its comment for why the restore cap is far more
 	// generous than the backup one).
 	bctx := context.WithoutCancel(ctx)
+	// A stack restore has no aggregate progress bar; it is cancellable as a whole
+	// under this synthetic key (the frontend cancel button targets it). Cancelling
+	// aborts the member loop at the current member.
+	key := "stack:" + project
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
+		s.registerCancel(key, cancel)
+		defer s.unregisterCancel(key)
 		res := s.runRestoreStack(rctx, members, source, startAfter)
 		for _, m := range res.Members {
 			if m.Error != "" {

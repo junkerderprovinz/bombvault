@@ -510,6 +510,21 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
+// handleRestoreCancel cancels an in-flight restore by its progress key
+// (POST /api/restore/cancel {key}). Cancelling an unknown/already-finished key is
+// an idempotent success (cancelled:false). A cancelled restore records a
+// "cancelled" run (distinct from "failed") and fires no failure alert.
+func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Key string `json:"key"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	cancelled := h.svc.CancelRun(body.Key)
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
+}
+
 // handleRestoreStack restores every backed-up member of a compose stack STOPPED,
 // then (optionally) starts them in dependency order. POST /api/stacks/{project}/restore
 // The {project} is a compose project name, which is laxer than a container name
