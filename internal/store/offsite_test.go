@@ -130,6 +130,66 @@ func TestOffsiteRunsRoundTrip(t *testing.T) {
 	}
 }
 
+// TestLatestSuccessfulOffsiteRun pins that LatestSuccessfulOffsiteRun returns the
+// most recent run whose ok=1, IGNORING a newer failed (or still-running) run — so
+// a broken replication reads as stale (last real copy) rather than fresh. This is
+// the currency source the scorecard uses (mirrors backups' last-SUCCESS).
+func TestLatestSuccessfulOffsiteRun(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// Empty store: no successful run yet.
+	if _, found, err := r.LatestSuccessfulOffsiteRun("flash"); err != nil {
+		t.Fatalf("LatestSuccessfulOffsiteRun (empty): %v", err)
+	} else if found {
+		t.Fatal("expected found=false on an empty store")
+	}
+
+	// A successful run at t=100, then a NEWER failed run at t=200.
+	id1, err := r.RecordOffsiteRun("flash", 100)
+	if err != nil {
+		t.Fatalf("RecordOffsiteRun: %v", err)
+	}
+	if err := r.FinishOffsiteRun(id1, true, ""); err != nil {
+		t.Fatalf("FinishOffsiteRun: %v", err)
+	}
+	id2, err := r.RecordOffsiteRun("flash", 200)
+	if err != nil {
+		t.Fatalf("RecordOffsiteRun (fail): %v", err)
+	}
+	if err := r.FinishOffsiteRun(id2, false, "copy failed"); err != nil {
+		t.Fatalf("FinishOffsiteRun (fail): %v", err)
+	}
+
+	// The successful (older) run must win over the newer failed one.
+	run, found, err := r.LatestSuccessfulOffsiteRun("flash")
+	if err != nil || !found {
+		t.Fatalf("LatestSuccessfulOffsiteRun: found=%v err=%v", found, err)
+	}
+	if !run.OK || run.StartedAt != 100 {
+		t.Fatalf("run = %+v, want the last SUCCESSFUL run (started_at=100), not the newer failure", run)
+	}
+
+	// A still-running (unfinished) row is not a success either.
+	if _, err := r.RecordOffsiteRun("flash", 300); err != nil {
+		t.Fatalf("RecordOffsiteRun (running): %v", err)
+	}
+	run, found, err = r.LatestSuccessfulOffsiteRun("flash")
+	if err != nil || !found || run.StartedAt != 100 {
+		t.Fatalf("a still-running row must not count as success; want started_at=100, got %+v found=%v err=%v", run, found, err)
+	}
+
+	// Domain isolation.
+	if _, found, err := r.LatestSuccessfulOffsiteRun("containers"); err != nil {
+		t.Fatalf("LatestSuccessfulOffsiteRun (other domain): %v", err)
+	} else if found {
+		t.Fatal("a different domain must not see flash runs")
+	}
+}
+
 // TestRestoreDrillKinds covers the drill kind column: a kind-less record
 // defaults to "subset", a kind="dr" drill is retrievable via
 // LatestRestoreDrillKind, and the plain LatestRestoreDrill keeps returning the
