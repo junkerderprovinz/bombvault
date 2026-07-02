@@ -434,6 +434,16 @@ func sourceParam(r *http.Request) string {
 	return "local"
 }
 
+// kindParam extracts the drill kind from the query: "dr" selects a real off-site
+// sandbox-restore drill; anything else (incl. absent) is the classic "subset"
+// integrity check. Used by POST /api/verify/{domain}.
+func kindParam(r *http.Request) string {
+	if r.URL.Query().Get("kind") == "dr" {
+		return "dr"
+	}
+	return "subset"
+}
+
 func (h *Handler) handleSnapshots(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1075,9 +1085,11 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleRunDrill runs a restore-verification drill for a domain (restic check
-// --read-data-subset), proving the backup is actually restorable, and returns the
-// recorded result. POST /api/verify/{domain}?source=  domain ∈ {containers,vms,flash}
+// handleRunDrill runs a restore-verification drill for a domain and returns the
+// recorded result. ?kind=subset (default) is the classic `restic check
+// --read-data-subset` integrity check; ?kind=dr is a real off-site sandbox restore
+// (containers + flash only). POST /api/verify/{domain}?source=&kind=  domain ∈
+// {containers,vms,flash}
 func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
@@ -1086,7 +1098,7 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r))
+	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r), kindParam(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

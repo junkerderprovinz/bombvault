@@ -95,6 +95,10 @@ type ResticEngine interface {
 	// the physical/deduplicated size + blob count; "restore-size" for the logical
 	// size + file count). Used to sample the repo-size trend.
 	Stats(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
+	// StatsRestoreSize returns the logical restore size (bytes) + file count of ONE
+	// snapshot (`restic stats --mode restore-size <snap>`). The DR drill compares it
+	// against an on-disk walk of the restored sandbox.
+	StatsRestoreSize(ctx context.Context, repo, snapshotID string, m restic.Mode) (files int, bytes int64, err error)
 	// Diff compares two snapshots (restic diff --json) and returns the summary
 	// counts + byte totals (what changed between two backups).
 	Diff(ctx context.Context, repo, snap1, snap2 string, m restic.Mode) (restic.DiffResult, error)
@@ -3986,17 +3990,32 @@ func drillSubsetPct(pct int) int {
 	return pct
 }
 
-// RunRestoreDrill proves a domain's backup is actually restorable by running
+// RunRestoreDrill runs a restore-verification drill of the requested kind and
+// records the result so the UI can show a "last verified restorable" badge.
+// kind "subset" (or "") is the classic in-place integrity check; kind "dr" is a
+// real off-site sandbox restore (see runDRDrill). domain is {containers,vms,flash};
+// source is {local,offsite} (ignored for kind "dr", which is always off-site).
+func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind string) (store.RestoreDrill, error) {
+	switch kind {
+	case "", "subset":
+		return s.runSubsetDrill(ctx, domain, source)
+	case "dr":
+		return s.runDRDrill(ctx, domain)
+	default:
+		return store.RestoreDrill{}, fmt.Errorf("unknown drill kind %q", kind)
+	}
+}
+
+// runSubsetDrill proves a domain's backup is actually restorable by running
 // `restic check --read-data-subset` (it reads back + re-verifies a random subset
 // of the real pack data, not just metadata — no scratch disk needed) and records
-// the result so the UI can show a "last verified restorable" badge. domain is
-// {containers,vms,flash}; source is {local,offsite}.
+// the result. domain is {containers,vms,flash}; source is {local,offsite}.
 //
 // It takes the per-domain busy-guard like Prune/Unlock: if a backup is running it
 // returns errDomainBusy and records nothing. A missing/empty repo returns a clear
 // "no backups to verify" error and records nothing (no misleading failure). Both
 // a passing and a failing drill ARE recorded; a failure also fires a notification.
-func (s *Service) RunRestoreDrill(ctx context.Context, domain, source string) (store.RestoreDrill, error) {
+func (s *Service) runSubsetDrill(ctx context.Context, domain, source string) (store.RestoreDrill, error) {
 	switch domain {
 	case "containers", "vms", "flash":
 	default:
@@ -4045,6 +4064,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source string) (s
 		Source: source,
 		At:     time.Now().Unix(),
 		OK:     checkErr == nil,
+		Kind:   "subset",
 	}
 	if checkErr != nil {
 		drill.Detail = scrubError(checkErr)
@@ -4061,6 +4081,292 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source string) (s
 		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
 	}
 	return drill, checkErr
+}
+
+// drillMarkerName is the sentinel file written into a DR-drill sandbox at
+// creation. Cleanup deletes a sandbox ONLY when this marker is present in that
+// exact directory — a safety interlock so a drill can never os.RemoveAll a path
+// that is not a marked drill sandbox we created.
+const drillMarkerName = ".bombvault-drill"
+
+// drillByteToleranceDivisor bounds how far the on-disk restore size may diverge
+// from restic's reported restore-size before a DR drill is judged failed: a 1/20
+// (5%) band, floored at drillByteToleranceFloor. restore-size is the logical file
+// size, so a completed restore matches closely; the band only absorbs
+// filesystem-level rounding, not a missing/truncated file.
+const (
+	drillByteToleranceDivisor = 20
+	drillByteToleranceFloor   = 4096
+)
+
+// runDRDrill performs a real off-site disaster-recovery drill for a domain: it
+// restores the newest off-site snapshot of the drill target into a marker-guarded
+// sandbox under the restore folder, verifies the restored file count + bytes
+// against restic's own accounting, deletes the sandbox (marker-guarded), and
+// records a restore_drills(kind='dr', source='offsite') row. VMs are refused —
+// their disk images are too large / not sandbox-safe. It takes the domain repo
+// lock exactly like a real restore, so a scheduled backup can never fire mid-drill
+// and vice-versa; busy → errDomainBusy, recording nothing. A failure records
+// kind='dr' ok=false AND fires the drill-failure notification.
+func (s *Service) runDRDrill(ctx context.Context, domain string) (store.RestoreDrill, error) {
+	switch domain {
+	case "containers", "flash":
+	case "vms":
+		return store.RestoreDrill{}, errors.New("DR drills are not supported for VMs: their disk images are too large to sandbox-restore — use an integrity check instead")
+	default:
+		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
+	}
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return store.RestoreDrill{}, fmt.Errorf("read settings: %w", err)
+	}
+	loc := s.offsiteRepoFor(domain, settings)
+	if loc == "" {
+		return store.RestoreDrill{}, errors.New("no off-site repo configured for this domain")
+	}
+	repo, err := s.resolveRepo(loc)
+	if err != nil {
+		return store.RestoreDrill{}, err
+	}
+
+	// Serialise with backups/restores on the domain repo — a scheduled backup must
+	// never fire mid-drill and vice-versa. Busy → report it WITHOUT recording.
+	unlock, ok := s.tryLockDomain(domain)
+	if !ok {
+		return store.RestoreDrill{}, errDomainBusy
+	}
+	defer unlock()
+
+	mode := s.ModeFor(settings)
+	snapID, err := s.pickDRSnapshot(ctx, domain, settings, repo, mode)
+	if err != nil {
+		return store.RestoreDrill{}, err
+	}
+
+	// Restore into the sandbox, verify, and clean up (marker-guarded). The outcome
+	// is recorded either way; a failure also notifies.
+	drillErr := s.sandboxRestoreVerify(ctx, domain, settings, repo, snapID, mode)
+	drill := store.RestoreDrill{
+		Domain: domain,
+		Source: "offsite",
+		At:     time.Now().Unix(),
+		OK:     drillErr == nil,
+		Kind:   "dr",
+	}
+	if drillErr != nil {
+		drill.Detail = scrubError(drillErr)
+		if len(drill.Detail) > 200 {
+			drill.Detail = drill.Detail[:200]
+		}
+	}
+	if recErr := s.store.AddRestoreDrill(drill); recErr != nil {
+		return store.RestoreDrill{}, fmt.Errorf("record drill: %w", recErr)
+	}
+	if drillErr != nil {
+		s.notifyDrillFailure(ctx, domain, "offsite", drill.Detail)
+	}
+	return drill, drillErr
+}
+
+// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
+// containers: the DRDrillTarget container (or, when unset, the most recently
+// backed-up container), scoped to its container:<name> tag. flash: the newest
+// snapshot outright (flash is a single whole-USB image, no per-item scoping). An
+// empty repo or a target with no off-site snapshot yields a clear error.
+func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
+	all, err := s.listSnapshots(ctx, repo, mode)
+	if err != nil {
+		return "", err
+	}
+	if len(all) == 0 {
+		return "", errors.New("no off-site backups to drill yet")
+	}
+	switch domain {
+	case "flash":
+		return newestSnapshot(all).ID, nil
+	case "containers":
+		target := settings.DRDrillTarget
+		if target == "" {
+			target, err = s.newestBackedUpContainer()
+			if err != nil {
+				return "", err
+			}
+		}
+		tag := "container:" + target
+		var scoped []restic.Snapshot
+		for _, snap := range all {
+			for _, t := range snap.Tags {
+				if t == tag {
+					scoped = append(scoped, snap)
+					break
+				}
+			}
+		}
+		if len(scoped) == 0 {
+			return "", fmt.Errorf("no off-site snapshot for drill target %q", target)
+		}
+		return newestSnapshot(scoped).ID, nil
+	default:
+		return "", fmt.Errorf("unknown domain %q", domain)
+	}
+}
+
+// newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
+// chronologically as a string). snaps must be non-empty.
+func newestSnapshot(snaps []restic.Snapshot) restic.Snapshot {
+	best := snaps[0]
+	for _, sn := range snaps[1:] {
+		if sn.Time > best.Time {
+			best = sn
+		}
+	}
+	return best
+}
+
+// newestBackedUpContainer returns the container name with the most recent
+// successful backup run — the default DR-drill target when none is pinned.
+func (s *Service) newestBackedUpContainer() (string, error) {
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		return "", fmt.Errorf("list targets: %w", err)
+	}
+	best := ""
+	var bestAt int64
+	for _, t := range targets {
+		run, rErr := s.store.LastSuccessfulBackup(t.ID)
+		if rErr != nil {
+			return "", rErr
+		}
+		if run == nil || run.FinishedAt == nil {
+			continue
+		}
+		if *run.FinishedAt >= bestAt {
+			bestAt = *run.FinishedAt
+			best = t.ContainerName
+		}
+	}
+	if best == "" {
+		return "", errors.New("no backed-up container to drill")
+	}
+	return best, nil
+}
+
+// sandboxRestoreVerify restores the whole snapshot tree into a fresh
+// marker-guarded sandbox under the restore folder, verifies the restored files +
+// bytes against restic's own accounting, and (always) attempts marker-guarded
+// cleanup. A mismatch or restore/verify error is returned; the sandbox is still
+// removed. Reuses the SAME RestoreInclude machinery + paths.Resolve containment as
+// a real restore-to-folder.
+func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, settings store.Settings, repo, snapID string, mode restic.Mode) error {
+	sub := path.Join(settings.RestoreFolder, fmt.Sprintf("bombvault-drill-%s-%d", domain, time.Now().UnixNano()))
+	sandbox, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+	if err != nil {
+		return errors.New("invalid restore folder: must be a relative subpath under the host mount")
+	}
+	if err := paths.EnsureDir(sandbox); err != nil {
+		return fmt.Errorf("create drill sandbox: %w", err)
+	}
+	// Marker FIRST — before any restore — so the cleanup interlock can always
+	// confirm this is a sandbox we created, even if the restore fails midway.
+	markerPath := filepath.Join(sandbox, drillMarkerName)
+	if err := os.WriteFile(markerPath, []byte("bombvault dr drill\n"), 0o600); err != nil { //nolint:gosec // G306: marker is a non-secret sentinel; 0600 is already restrictive
+		return fmt.Errorf("write drill marker: %w", err)
+	}
+	defer func() {
+		if cErr := cleanupDrillSandbox(sandbox); cErr != nil {
+			log.Printf("api: dr-drill: cleanup: %v", cErr)
+		}
+	}()
+
+	// Bound the restore — reading a whole snapshot back over the WAN can be slow.
+	dctx, cancel := context.WithTimeout(ctx, 2*time.Hour)
+	defer cancel()
+	if err := s.engine.RestoreInclude(dctx, repo, snapID, "/", sandbox, mode); err != nil {
+		return fmt.Errorf("restore into sandbox: %w", err)
+	}
+
+	// Verify: restic's own file count (ls) + restore-size bytes (stats) vs an
+	// on-disk walk of the sandbox (the marker is excluded from the walk).
+	lsEntries, err := s.engine.Ls(dctx, repo, snapID, mode)
+	if err != nil {
+		return fmt.Errorf("list snapshot: %w", err)
+	}
+	wantFiles := 0
+	for _, e := range lsEntries {
+		if e.Type == "file" {
+			wantFiles++
+		}
+	}
+	_, wantBytes, err := s.engine.StatsRestoreSize(dctx, repo, snapID, mode)
+	if err != nil {
+		return fmt.Errorf("snapshot stats: %w", err)
+	}
+	gotFiles, gotBytes, err := walkDrillSandbox(sandbox)
+	if err != nil {
+		return fmt.Errorf("walk sandbox: %w", err)
+	}
+	if !drillVerifyOK(wantFiles, gotFiles, wantBytes, gotBytes) {
+		return fmt.Errorf("verification mismatch: restic reports %d files / %d bytes, restored sandbox has %d files / %d bytes", wantFiles, wantBytes, gotFiles, gotBytes)
+	}
+	return nil
+}
+
+// walkDrillSandbox counts the regular files and their total bytes under a drill
+// sandbox, excluding the .bombvault-drill marker at its root. Only regular files
+// count toward restore-size (dirs/symlinks/devices are ignored, matching restic).
+func walkDrillSandbox(sandbox string) (files int, bytes int64, err error) {
+	marker := filepath.Join(sandbox, drillMarkerName)
+	err = filepath.WalkDir(sandbox, func(p string, d fs.DirEntry, walkErr error) error { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve (rejects absolute/traversal); read-only walk
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() || p == marker {
+			return nil
+		}
+		info, iErr := d.Info()
+		if iErr != nil {
+			return iErr
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		files++
+		bytes += info.Size()
+		return nil
+	})
+	return files, bytes, err
+}
+
+// drillVerifyOK reports whether a restored sandbox matches restic's accounting:
+// the file count must match exactly and the restore-size bytes must be within the
+// tolerance band (drillByteToleranceDivisor / drillByteToleranceFloor).
+func drillVerifyOK(wantFiles, gotFiles int, wantBytes, gotBytes int64) bool {
+	if gotFiles != wantFiles {
+		return false
+	}
+	tol := wantBytes / drillByteToleranceDivisor
+	if tol < drillByteToleranceFloor {
+		tol = drillByteToleranceFloor
+	}
+	diff := wantBytes - gotBytes
+	if diff < 0 {
+		diff = -diff
+	}
+	return diff <= tol
+}
+
+// cleanupDrillSandbox removes a DR-drill sandbox, but ONLY after confirming the
+// .bombvault-drill marker written at creation is present in that exact directory.
+// This is a safety-critical interlock: os.RemoveAll is destructive, so a drill
+// must never delete a path that is not a marked sandbox (e.g. a mis-resolved or
+// operator-configured folder). A missing marker removes nothing and returns an
+// error.
+func cleanupDrillSandbox(sandbox string) error {
+	if _, err := os.Stat(filepath.Join(sandbox, drillMarkerName)); err != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve; this stat is the marker interlock itself
+		return fmt.Errorf("drill sandbox %q lacks the %s marker; refusing to delete", filepath.Base(sandbox), drillMarkerName)
+	}
+	return os.RemoveAll(sandbox) //nolint:gosec // G703: sandbox is under the host mount root (paths.Resolve) AND guarded above by the .bombvault-drill marker — never removes a non-drill path
 }
 
 // LatestDrill returns the most recent restore-verification drill for a domain +
