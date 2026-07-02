@@ -1293,6 +1293,54 @@ type listVMsVirsh struct {
 
 func (v listVMsVirsh) List(_ context.Context) ([]virshcli.VMInfo, error) { return v.vms, nil }
 
+// countingVirsh records List calls (and can make List fail), so a test can prove
+// ListVMs does or does not reach libvirt.
+type countingVirsh struct {
+	fakeVirsh
+	listCalls int
+	listErr   error
+}
+
+func (c *countingVirsh) List(context.Context) ([]virshcli.VMInfo, error) {
+	c.listCalls++
+	return nil, c.listErr
+}
+
+// TestListVMsSkipsVirshWhenDomainDisabled pins the BJZwart fix: with the VMs
+// domain disabled, ListVMs must NOT reach libvirt over SSH (which spammed the
+// container log on every dashboard load); with it enabled, it must.
+func TestListVMsSkipsVirshWhenDomainDisabled(t *testing.T) {
+	st := newMemStore(t)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir()}
+	v := &countingVirsh{listErr: errors.New("ssh: could not resolve hostname")}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+
+	// Disabled (default): no virsh call, no error.
+	s := mustSettings(t, st)
+	s.VMsEnabled = false
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.ListVMs(context.Background()); err != nil {
+		t.Fatalf("ListVMs with VMs disabled must not error: %v", err)
+	}
+	if v.listCalls != 0 {
+		t.Fatalf("virsh.List must NOT be called when the VMs domain is disabled, got %d calls", v.listCalls)
+	}
+
+	// Enabled: virsh IS consulted (and its error surfaces).
+	s.VMsEnabled = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.ListVMs(context.Background()); err == nil {
+		t.Fatal("ListVMs with VMs enabled must surface the virsh error")
+	}
+	if v.listCalls != 1 {
+		t.Fatalf("virsh.List must be called once when enabled, got %d", v.listCalls)
+	}
+}
+
 func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 	dir := t.TempDir()
 	// HostMountRoot is the test temp dir so the resolved repo lives under it and
