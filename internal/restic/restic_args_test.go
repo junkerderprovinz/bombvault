@@ -117,6 +117,28 @@ func TestIsRemoteRepo(t *testing.T) {
 	}
 }
 
+func TestLooksLikeUnprefixedRemote(t *testing.T) {
+	// A scheme-like "word:" prefix that is NOT a recognized remote — the common
+	// mistake of omitting the rclone: prefix.
+	unprefixed := []string{"BackBlaze:BombVault-test", "MyRemote:bucket", "gdrive:folder/sub"}
+	for _, u := range unprefixed {
+		if !restic.LooksLikeUnprefixedRemote(u) {
+			t.Errorf("expected %q to look like an unprefixed remote", u)
+		}
+	}
+	// Recognized remotes must NOT be flagged (they carry a valid prefix)...
+	// ...nor must plain local paths (no scheme).
+	ok := []string{
+		"rclone:BackBlaze:BombVault-test", "s3:s3.amazonaws.com/bucket", "b2:bucket", "sftp:user@host:/srv",
+		"user/bombvault/container", "/host/user/x", "backups/flash", "",
+	}
+	for _, o := range ok {
+		if restic.LooksLikeUnprefixedRemote(o) {
+			t.Errorf("expected %q NOT to be flagged as an unprefixed remote", o)
+		}
+	}
+}
+
 func TestRetentionPolicyAny(t *testing.T) {
 	if (restic.RetentionPolicy{}).Any() {
 		t.Fatal("empty policy must be inert")

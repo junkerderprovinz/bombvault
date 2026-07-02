@@ -30,6 +30,20 @@ var remoteRepoRe = regexp.MustCompile(`^(rclone|sftp|rest|s3|b2|azure|gs|swift):
 // the rclone config.
 func IsRemoteRepo(loc string) bool { return remoteRepoRe.MatchString(loc) }
 
+// schemeLikeRe matches a leading "word:" scheme. Used to spot a repo location
+// that looks like a remote backend but lacks a recognized prefix — e.g. a user
+// typing "BackBlaze:bucket" (an rclone remote name) instead of the required
+// "rclone:BackBlaze:bucket".
+var schemeLikeRe = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9+.-]*:`)
+
+// LooksLikeUnprefixedRemote reports whether loc has a scheme-like "word:" prefix
+// but is NOT a recognized restic remote — the common mistake of omitting the
+// rclone:/s3:/… prefix, which would otherwise be silently treated as a local
+// path named after the string.
+func LooksLikeUnprefixedRemote(loc string) bool {
+	return !remoteRepoRe.MatchString(loc) && schemeLikeRe.MatchString(loc)
+}
+
 // Mode describes how the restic repository is secured.
 type Mode struct {
 	// Encrypted, when true, means the repo uses a password passed via the

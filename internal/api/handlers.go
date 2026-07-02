@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -892,6 +893,16 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	} {
 		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
+		}
+		// A "word:" prefix that isn't a recognized remote is almost always a
+		// mistyped off-site path (e.g. "BackBlaze:bucket" instead of
+		// "rclone:BackBlaze:bucket"); reject it with guidance rather than
+		// silently treating it as a local folder named after the string.
+		if restic.LooksLikeUnprefixedRemote(sub) {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok": false, "error": fmt.Sprintf("%q looks like a remote backend but is missing its prefix — off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub),
+			})
+			return
 		}
 		if _, err := paths.Resolve(h.cfg.HostMountRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
