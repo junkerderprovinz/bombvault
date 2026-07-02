@@ -1,7 +1,7 @@
 # .github/workflows/lint.yml
 name: Lint
 on:
-  push: { branches: [main, feat/go-rewrite] }
+  push: { branches: [main, feat/v4] }
   pull_request: { branches: [main] }
 jobs:
   go:
