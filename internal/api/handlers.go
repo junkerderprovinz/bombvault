@@ -790,6 +790,16 @@ type settingsView struct {
 	// RecoveryKitAck dismisses the dashboard nag once the user has downloaded +
 	// safely stored the encryption-key recovery kit.
 	RecoveryKitAck bool `json:"recoveryKitAck"`
+	// Per-domain "off-site repo is append-only (immutable)" flags: BombVault then
+	// skips its own off-site prune and refuses off-site deletes.
+	ContainersOffsiteImmutable bool `json:"containersOffsiteImmutable"`
+	VMsOffsiteImmutable        bool `json:"vmsOffsiteImmutable"`
+	FlashOffsiteImmutable      bool `json:"flashOffsiteImmutable"`
+	// Off-site growth budget in GB (0 = alarm off) + tamper-test cadence +
+	// DR-drill target container ('' = auto).
+	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
+	TamperTestSchedule    string `json:"tamperTestSchedule"`
+	DRDrillTarget         string `json:"drDrillTarget"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -828,6 +838,12 @@ func toView(s store.Settings) settingsView {
 		DrillsSchedule:              s.DrillsSchedule,
 		DrillsSubsetPct:             s.DrillsSubsetPct,
 		RecoveryKitAck:              s.RecoveryKitAck,
+		ContainersOffsiteImmutable:  s.ContainersOffsiteImmutable,
+		VMsOffsiteImmutable:         s.VMsOffsiteImmutable,
+		FlashOffsiteImmutable:       s.FlashOffsiteImmutable,
+		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
+		TamperTestSchedule:          s.TamperTestSchedule,
+		DRDrillTarget:               s.DRDrillTarget,
 	}
 }
 
@@ -876,11 +892,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Validate each cadence parses (backup schedules + off-site + drills schedules).
+	// Validate each cadence parses (backup schedules + off-site + drills +
+	// tamper-test schedules).
 	for _, cad := range []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule,
-		v.DrillsSchedule,
+		v.DrillsSchedule, v.TamperTestSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -889,10 +906,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Off-site and drills schedules can't use "everyN": those jobs have no
-	// per-domain last-run gate, so an everyN cadence would silently fire daily.
-	// Restrict them to off / daily / weekly / cron, which all fire on an exact schedule.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.DrillsSchedule} {
+	// Off-site, drills and tamper-test schedules can't use "everyN": those jobs
+	// have no per-domain last-run gate, so an everyN cadence would silently fire
+	// daily. Restrict them to off / daily / weekly / cron, which all fire on an
+	// exact schedule.
+	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
@@ -959,6 +977,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		DrillsSchedule:              v.DrillsSchedule,
 		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
 		RecoveryKitAck:              v.RecoveryKitAck,
+		ContainersOffsiteImmutable:  v.ContainersOffsiteImmutable,
+		VMsOffsiteImmutable:         v.VMsOffsiteImmutable,
+		FlashOffsiteImmutable:       v.FlashOffsiteImmutable,
+		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
+		TamperTestSchedule:          v.TamperTestSchedule,
+		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,
@@ -971,6 +995,20 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
+		return
+	}
+	// Immutable off-site + an off-site retention policy both set: warn, don't
+	// fail. BombVault never prunes an append-only repo, so the policy is inert
+	// until enforced far-side. The "warnings" array is a backward-compatible
+	// extension of the ok envelope (absent when there is nothing to warn about).
+	var warnings []string
+	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable) &&
+		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
+			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
+		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
+	}
+	if len(warnings) > 0 {
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings}))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
