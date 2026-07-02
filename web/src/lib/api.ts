@@ -114,6 +114,18 @@ export interface Settings {
   /** True once the user has downloaded + safely stored the encryption recovery
    *  kit, which dismisses the dashboard nag. */
   recoveryKitAck: boolean;
+  // Ransomware protection (v4): per-domain "off-site repo is append-only
+  // (immutable)" flags — BombVault then skips its own off-site prune and refuses
+  // off-site deletes; the far side (rest-server --append-only) enforces it.
+  containersOffsiteImmutable: boolean;
+  vmsOffsiteImmutable: boolean;
+  flashOffsiteImmutable: boolean;
+  /** Off-site growth budget in GB (0 = alarm off). */
+  offsiteGrowthBudgetGB: number;
+  /** Cadence for the scheduled off-site tamper test (default "weekly Sun 04:30"). */
+  tamperTestSchedule: string;
+  /** DR-drill target container ("" = auto: the most recently backed-up container). */
+  drDrillTarget: string;
 }
 
 export interface GetSettingsResponse {
@@ -153,6 +165,17 @@ export interface DomainStatus {
   status: string; // "off" | "never" | "overdue" | "warn" | "ok"
   lastVerified: number; // unix seconds of the last restore-verification drill; 0 = never
   lastVerifiedOK: boolean; // whether that last drill passed
+  // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
+  // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
+  offsiteConfigured: boolean; // an off-site repo is configured for this domain
+  offsiteImmutable: boolean; // the off-site repo is flagged append-only (immutable)
+  lastTamperAt: number; // unix seconds of the last off-site tamper test; 0 = never
+  lastTamperOK: boolean; // whether that test proved append-only protection
+  lastReplicationAt: number; // unix seconds of the last off-site replication; 0 = never
+  lastReplicationOK: boolean; // whether that replication succeeded
+  lastDrDrillAt: number; // unix seconds of the last off-site DR drill; 0 = never
+  lastDrDrillOK: boolean; // whether that DR drill passed
+  protection: string; // "" (disabled) | "red" | "amber" | "green"
 }
 
 /** A recorded restore-verification "drill" from POST/GET /api/verify. */
@@ -655,7 +678,14 @@ export function getSettings(): Promise<GetSettingsResponse> {
   return fetchJSON("/api/settings");
 }
 
-export function putSettings(settings: Settings): Promise<OkEnvelope> {
+/**
+ * PUT /api/settings — persist the settings object. `warnings` is a
+ * backward-compatible extension of the ok envelope: non-fatal advisories (e.g.
+ * an off-site retention policy that is inert because the repo is append-only).
+ */
+export function putSettings(
+  settings: Settings
+): Promise<OkEnvelope & { warnings?: string[] }> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
@@ -749,6 +779,45 @@ export function testOffsite(
   domain: "containers" | "vms" | "flash"
 ): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
   return fetchJSON(`/api/offsite/${domain}/test`, { method: "POST" });
+}
+
+/**
+ * A one-time rest-server deployment recipe for a domain's append-only off-site
+ * repo. The plaintext `password` is shown ONCE and never persisted server-side;
+ * `htpasswd` is its bcrypt line for the far-side .htpasswd file. `dockerRun` and
+ * `compose` are ready-to-paste recipes (with the echo pre-step + repo-URL hint).
+ */
+export interface DeploySnippetData {
+  user: string;
+  password: string;
+  htpasswd: string;
+  dockerRun: string;
+  compose: string;
+}
+
+/**
+ * GET /api/offsite/{domain}/deploy-snippet — generate a fresh rest-server
+ * deployment recipe (docker run + compose + generated htpasswd credentials).
+ * Nothing is stored server-side; the plaintext password lives only in this
+ * response, so it must be saved by the user right away.
+ */
+export function deploySnippet(
+  domain: "containers" | "vms" | "flash"
+): Promise<OkEnvelope & { snippet?: DeploySnippetData }> {
+  return fetchJSON(`/api/offsite/${domain}/deploy-snippet`);
+}
+
+/**
+ * POST /api/offsite/{domain}/tamper-test — actively PROVE the far side refuses
+ * deletes: side-effect-free authenticated DELETEs against provably non-existent
+ * object IDs. `testable` is false for non-REST repos (rclone/S3/local can't be
+ * probed this way); `protected` is true only when every probe was refused;
+ * `detail` carries the scrubbed reason when not protected.
+ */
+export function tamperTest(
+  domain: "containers" | "vms" | "flash"
+): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
+  return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
