@@ -151,6 +151,13 @@ type Service struct {
 	// second request is answered "already running" instead of overlapping —
 	// they contend on repo locks and container stop/start).
 	batchActive atomic.Bool
+
+	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
+	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
+	// every replication while over budget); the latch clears when growth drops
+	// back under budget so a later breach re-alarms.
+	budgetMu          sync.Mutex
+	offsiteOverBudget map[string]bool
 }
 
 // NewService constructs the backup service.
@@ -162,6 +169,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 			"vms":        {},
 			"flash":      {},
 		},
+		offsiteOverBudget: map[string]bool{},
 	}
 }
 
@@ -777,6 +785,23 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	if loc == "" {
 		return errors.New("no off-site repo configured for this domain")
 	}
+	// Persist this replication attempt to the off-site run history (begin now, close
+	// on the way out via defer with outcome + scrubbed error). restic copy has no
+	// machine-readable progress, so only duration + outcome are recorded. Bookkeeping
+	// is best-effort: a store error is logged and never fails the replication.
+	runID, recErr := s.store.RecordOffsiteRun(domain, time.Now().Unix())
+	if recErr != nil {
+		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
+		runID = 0
+	}
+	defer func() {
+		if runID == 0 {
+			return
+		}
+		if ferr := s.store.FinishOffsiteRun(runID, err == nil, truncateRunErr(err)); ferr != nil {
+			log.Printf("api: offsite %s: could not finish replication run: %v", domain, ferr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
 	dest, rerr := s.resolveRepo(loc)
 	if rerr != nil {
 		return fmt.Errorf("resolve off-site repo: %w", rerr)
@@ -807,7 +832,68 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}
+	// Sample the off-site repo size into the repo_stats time series (detached +
+	// throttled) so the Storage card and the growth budget have fresh data, then
+	// check the sampled size against the growth budget. The REST protocol can't see
+	// the far side's free space — only BombVault's own growth — so the budget is a
+	// detection aid, not a hard cap.
+	s.CollectStatsAsync(domain, "offsite")
+	s.checkOffsiteBudget(ctx, domain, settings)
 	return nil
+}
+
+// checkOffsiteBudget compares the latest sampled off-site repo size for a domain
+// against the configured growth budget (OffsiteGrowthBudgetGB, 0 = off) and fires
+// a notification ONCE on each false→true crossing. The latch (offsiteOverBudget)
+// clears when growth drops back under budget so a later breach re-alarms. It reads
+// the newest repo_stats row for domain+source="offsite"; if none exists yet (the
+// async sample hasn't landed on the very first replication) it simply skips.
+func (s *Service) checkOffsiteBudget(ctx context.Context, domain string, settings store.Settings) {
+	if settings.OffsiteGrowthBudgetGB <= 0 {
+		return // budget disabled for this install
+	}
+	stat, found, err := s.store.LatestRepoStat(domain, "offsite")
+	if err != nil {
+		log.Printf("api: offsite %s: budget check could not read latest sample: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	if !found {
+		return // no off-site sample yet — nothing to compare
+	}
+	budgetBytes := int64(settings.OffsiteGrowthBudgetGB) * 1024 * 1024 * 1024
+	over := stat.RawSize > budgetBytes
+
+	// Latch the state under the mutex and detect the false→true crossing so the
+	// alarm fires exactly once per breach (not on every replication while over).
+	s.budgetMu.Lock()
+	if s.offsiteOverBudget == nil {
+		s.offsiteOverBudget = map[string]bool{}
+	}
+	prev := s.offsiteOverBudget[domain]
+	s.offsiteOverBudget[domain] = over
+	s.budgetMu.Unlock()
+
+	if over && !prev {
+		s.notifyOverBudget(ctx, domain, stat.RawSize, budgetBytes)
+	}
+}
+
+// notifyOverBudget sends a best-effort alert when a domain's off-site repo first
+// crosses its growth budget. It mirrors notifyProtectionLost/notifyDrillFailure's
+// policy gate + Unraid fan-out; a no-op when notifications are off.
+func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	subject := "Off-site backup over budget for " + domain
+	msg := fmt.Sprintf("The off-site repository for %s has grown to %s, over the configured growth budget of %s. Prune the far side or raise the budget.", domain, humanBytes(size), humanBytes(budget))
+	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	if c.Unraid && s.ssh != nil {
+		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
 }
 
 // replicateOffsite runs right after a successful local backup (caller holds the
