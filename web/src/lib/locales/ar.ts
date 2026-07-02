@@ -96,7 +96,7 @@ const ar: Partial<Translations> = {
   "restore.confirm": "تأكيد",
   "restore.cancel": "إلغاء الاستعادة",
   "restore.cancelConfirmSafe": "إلغاء الاستعادة؟ سيبقى مجلد الإخراج الجزئي كما هو.",
-  "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء سيتركه مستعادًا جزئيًا — ستحتاج إلى استعادته مرة أخرى للحصول على {name} يعمل. الإلغاء على أي حال؟",
+  "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء يترك هذه الاستعادة غير مكتملة — قد تحتاج إلى تنفيذها مرة أخرى. الإلغاء على أي حال؟",
   "restore.cancelling": "جارٍ الإلغاء…",
   "restore.cancelled": "تم إلغاء الاستعادة",
   "restore.progress": "جارٍ الاستعادة… {pct}%",
@@ -369,6 +369,7 @@ const ar: Partial<Translations> = {
   "common.saving": "جارٍ الحفظ…",
   "common.restoreRunning": "جارٍ تنفيذ استعادة…",
   "common.backupRunning": "جارٍ تنفيذ نسخ احتياطي…",
+  "common.replicateRunning": "جارٍ تنفيذ نسخ متماثل…",
 
   // Backup folders selector
   "folders.title": "مجلدات النسخ الاحتياطي",
@@ -518,6 +519,7 @@ const ar: Partial<Translations> = {
   "stack.restoreConfirm": "استعادة جميع الـ containers في هذا الـ stack؟ يُعاد إنشاء كل منها من أحدث نسخة احتياطية.",
   "stack.restoring": "جارٍ استعادة الـ stack…",
   "stack.restored": "تمت استعادة الـ stack",
+  "stack.restoreFinished": "اكتملت استعادة الـ stack — راجع سجل التشغيلات للاطّلاع على نتائج كل حاوية.",
   "stack.memberRestored": "تمت الاستعادة",
   "stack.memberStarted": "تم التشغيل",
   "settings.restoreFolder": "مجلد الاستعادة الافتراضي",

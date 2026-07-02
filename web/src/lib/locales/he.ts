@@ -96,7 +96,7 @@ const he: Partial<Translations> = {
   "restore.confirm": "אשר",
   "restore.cancel": "ביטול השחזור",
   "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
-  "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר אותו משוחזר חלקית — יהיה צורך לשחזר שוב כדי לקבל {name} תקין. לבטל בכל זאת?",
+  "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר את השחזור הזה חלקי — ייתכן שיהיה צורך להריץ אותו שוב. לבטל בכל זאת?",
   "restore.cancelling": "מבטל…",
   "restore.cancelled": "השחזור בוטל",
   "restore.progress": "משחזר… {pct}%",
@@ -369,6 +369,7 @@ const he: Partial<Translations> = {
   "common.saving": "שומר…",
   "common.restoreRunning": "מתבצע שחזור…",
   "common.backupRunning": "מתבצע גיבוי…",
+  "common.replicateRunning": "מתבצע שכפול…",
 
   // Backup folders selector
   "folders.title": "תיקיות לגיבוי",
@@ -515,6 +516,7 @@ const he: Partial<Translations> = {
   "stack.restoreConfirm": "לשחזר את כל ה-containers ב-stack הזה? כל אחד נוצר מחדש מהגיבוי האחרון שלו.",
   "stack.restoring": "משחזר stack…",
   "stack.restored": "ה-stack שוחזר",
+  "stack.restoreFinished": "שחזור ה-stack הושלם — עיין בהיסטוריית ההרצות לתוצאות לכל קונטיינר.",
   "stack.memberRestored": "שוחזר",
   "stack.memberStarted": "הופעל",
   "settings.restoreFolder": "תיקיית שחזור ברירת מחדל",

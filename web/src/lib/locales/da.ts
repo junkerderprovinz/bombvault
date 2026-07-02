@@ -96,7 +96,7 @@ const da: Partial<Translations> = {
   "restore.confirm": "Bekræft",
   "restore.cancel": "Annuller gendannelse",
   "restore.cancelConfirmSafe": "Annuller gendannelsen? Den delvist skrevne målmappe bevares som den er.",
-  "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader den delvist gendannet — du skal gendanne igen for at få et fungerende {name}. Annuller alligevel?",
+  "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader denne gendannelse ufuldstændig — du skal muligvis køre den igen. Annuller alligevel?",
   "restore.cancelling": "Annullerer…",
   "restore.cancelled": "Gendannelse annulleret",
   "restore.progress": "Gendanner… {pct}%",
@@ -369,6 +369,7 @@ const da: Partial<Translations> = {
   "common.saving": "Gemmer…",
   "common.restoreRunning": "En gendannelse kører…",
   "common.backupRunning": "En sikkerhedskopiering kører…",
+  "common.replicateRunning": "En replikering kører…",
 
   // Backup folders selector
   "folders.title": "Sikkerhedskopierede mapper",
@@ -515,6 +516,7 @@ const da: Partial<Translations> = {
   "stack.restoreConfirm": "Gendan alle containere i denne stack? Hver enkelt genskabes fra den seneste sikkerhedskopi.",
   "stack.restoring": "Gendanner stack…",
   "stack.restored": "Stack gendannet",
+  "stack.restoreFinished": "Gendannelse af stack fuldført — se kørselsoversigten for resultater pr. container.",
   "stack.memberRestored": "gendannet",
   "stack.memberStarted": "startet",
   "settings.restoreFolder": "Standardmappe til gendannelse",

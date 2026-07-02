@@ -96,7 +96,7 @@ const hu: Partial<Translations> = {
   "restore.confirm": "Megerősítés",
   "restore.cancel": "Visszaállítás megszakítása",
   "restore.cancelConfirmSafe": "Megszakítja a visszaállítást? A részlegesen kiírt célmappa változatlanul megmarad.",
-  "restore.cancelConfirmInPlace": "A(z) {name} visszaállítása folyamatban van. A megszakítás részlegesen visszaállított állapotban hagyja — a működő {name} eléréséhez újra kell futtatni a visszaállítást. Mégis megszakítja?",
+  "restore.cancelConfirmInPlace": "A(z) {name} visszaállítása folyamatban van. A megszakítás félbehagyja ezt a visszaállítást — lehet, hogy újra kell futtatni. Mégis megszakítja?",
   "restore.cancelling": "Megszakítás…",
   "restore.cancelled": "Visszaállítás megszakítva",
   "restore.progress": "Visszaállítás… {pct}%",
@@ -369,6 +369,7 @@ const hu: Partial<Translations> = {
   "common.saving": "Mentés…",
   "common.restoreRunning": "Visszaállítás van folyamatban…",
   "common.backupRunning": "Biztonsági mentés van folyamatban…",
+  "common.replicateRunning": "Replikálás van folyamatban…",
 
   // Backup folders selector
   "folders.title": "Mentett mappák",
@@ -518,6 +519,7 @@ const hu: Partial<Translations> = {
   "stack.restoreConfirm": "Visszaállítja a stack összes konténerét? Mindegyik újra létrejön a legutóbbi biztonsági mentésből.",
   "stack.restoring": "Stack visszaállítása…",
   "stack.restored": "Stack visszaállítva",
+  "stack.restoreFinished": "A stack visszaállítása befejeződött — a konténerenkénti eredmények a futási előzményekben találhatók.",
   "stack.memberRestored": "visszaállítva",
   "stack.memberStarted": "elindítva",
   "settings.restoreFolder": "Alapértelmezett visszaállítási mappa",

@@ -96,7 +96,7 @@ const ko: Partial<Translations> = {
   "restore.confirm": "확인",
   "restore.cancel": "복원 취소",
   "restore.cancelConfirmSafe": "복원을 취소하시겠습니까? 일부만 기록된 출력 폴더는 그대로 유지됩니다.",
-  "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 일부만 복원된 상태로 남습니다 — 정상적인 {name}을(를) 얻으려면 다시 복원해야 합니다. 그래도 취소하시겠습니까?",
+  "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 이 복원이 불완전한 상태로 남습니다 — 다시 실행해야 할 수도 있습니다. 그래도 취소하시겠습니까?",
   "restore.cancelling": "취소하는 중…",
   "restore.cancelled": "복원이 취소되었습니다",
   "restore.progress": "복원 중… {pct}%",
@@ -361,6 +361,7 @@ const ko: Partial<Translations> = {
   "common.saving": "저장 중…",
   "common.restoreRunning": "복원이 실행 중입니다…",
   "common.backupRunning": "백업이 실행 중입니다…",
+  "common.replicateRunning": "복제가 실행 중입니다…",
 
   // Backup folders selector
   "folders.title": "백업 폴더",
@@ -507,6 +508,7 @@ const ko: Partial<Translations> = {
   "stack.restoreConfirm": "이 스택의 모든 컨테이너를 복원할까요? 각각 최신 백업에서 다시 생성됩니다.",
   "stack.restoring": "스택 복원 중…",
   "stack.restored": "스택 복원됨",
+  "stack.restoreFinished": "스택 복원이 완료되었습니다 — 컨테이너별 결과는 실행 기록에서 확인하세요.",
   "stack.memberRestored": "복원됨",
   "stack.memberStarted": "시작됨",
   "settings.restoreFolder": "기본 복원 폴더",

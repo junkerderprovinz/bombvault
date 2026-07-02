@@ -96,7 +96,7 @@ const el: Partial<Translations> = {
   "restore.confirm": "Επιβεβαίωση",
   "restore.cancel": "Ακύρωση επαναφοράς",
   "restore.cancelConfirmSafe": "Ακύρωση της επαναφοράς; Ο φάκελος με τα μερικά δεδομένα παραμένει ως έχει.",
-  "restore.cancelConfirmInPlace": "Το {name} βρίσκεται σε εξέλιξη επαναφοράς. Η ακύρωση το αφήνει μερικώς επαναφερμένο — θα χρειαστεί νέα επαναφορά για να έχετε ένα λειτουργικό {name}. Ακύρωση ούτως ή άλλως;",
+  "restore.cancelConfirmInPlace": "Το {name} βρίσκεται σε εξέλιξη επαναφοράς. Η ακύρωση αφήνει αυτή την επαναφορά ημιτελή — ίσως χρειαστεί να την εκτελέσετε ξανά. Ακύρωση ούτως ή άλλως;",
   "restore.cancelling": "Ακύρωση…",
   "restore.cancelled": "Η επαναφορά ακυρώθηκε",
   "restore.progress": "Επαναφορά… {pct}%",
@@ -369,6 +369,7 @@ const el: Partial<Translations> = {
   "common.saving": "Αποθήκευση…",
   "common.restoreRunning": "Εκτελείται μια επαναφορά…",
   "common.backupRunning": "Εκτελείται ένα αντίγραφο ασφαλείας…",
+  "common.replicateRunning": "Εκτελείται μια αναπαραγωγή…",
 
   // Backup folders selector
   "folders.title": "Φάκελοι αντιγράφων",
@@ -515,6 +516,7 @@ const el: Partial<Translations> = {
   "stack.restoreConfirm": "Επαναφορά όλων των containers αυτού του stack; Καθένα αναδημιουργείται από το τελευταίο αντίγραφο ασφαλείας.",
   "stack.restoring": "Επαναφορά stack…",
   "stack.restored": "Το stack επαναφέρθηκε",
+  "stack.restoreFinished": "Η επαναφορά του stack ολοκληρώθηκε — δείτε το ιστορικό εκτελέσεων για τα αποτελέσματα ανά container.",
   "stack.memberRestored": "επαναφέρθηκε",
   "stack.memberStarted": "ξεκίνησε",
   "settings.restoreFolder": "Προεπιλεγμένος φάκελος επαναφοράς",

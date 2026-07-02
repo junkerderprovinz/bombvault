@@ -96,7 +96,7 @@ const zh: Partial<Translations> = {
   "restore.confirm": "确认",
   "restore.cancel": "取消还原",
   "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
-  "restore.cancelConfirmInPlace": "{name} 正在还原中。取消将使其停留在部分还原的状态——需要再次还原才能得到可用的 {name}。仍要取消吗？",
+  "restore.cancelConfirmInPlace": "{name} 正在还原中。取消会使本次还原处于未完成状态——可能需要再次运行。仍要取消吗？",
   "restore.cancelling": "正在取消…",
   "restore.cancelled": "还原已取消",
   "restore.progress": "还原中… {pct}%",
@@ -361,6 +361,7 @@ const zh: Partial<Translations> = {
   "common.saving": "保存中…",
   "common.restoreRunning": "正在进行还原…",
   "common.backupRunning": "正在进行备份…",
+  "common.replicateRunning": "正在进行复制…",
 
   // Backup folders selector
   "folders.title": "备份文件夹",
@@ -507,6 +508,7 @@ const zh: Partial<Translations> = {
   "stack.restoreConfirm": "还原此堆栈中的所有容器？每个都将从最新备份重新创建。",
   "stack.restoring": "正在还原堆栈…",
   "stack.restored": "堆栈已还原",
+  "stack.restoreFinished": "堆栈还原完成——每个容器的结果请查看运行历史。",
   "stack.memberRestored": "已还原",
   "stack.memberStarted": "已启动",
   "settings.restoreFolder": "默认还原文件夹",

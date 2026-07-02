@@ -95,7 +95,7 @@ const ru: Partial<Translations> = {
   "restore.confirm": "Подтвердить",
   "restore.cancel": "Отменить восстановление",
   "restore.cancelConfirmSafe": "Отменить восстановление? Частично записанная целевая папка останется без изменений.",
-  "restore.cancelConfirmInPlace": "{name} находится в процессе восстановления. Отмена оставит его частично восстановленным — чтобы получить рабочий {name}, потребуется восстановить снова. Всё равно отменить?",
+  "restore.cancelConfirmInPlace": "{name} находится в процессе восстановления. Отмена оставит это восстановление незавершённым — возможно, придётся запустить его снова. Всё равно отменить?",
   "restore.cancelling": "Отмена…",
   "restore.cancelled": "Восстановление отменено",
   "restore.progress": "Восстановление… {pct}%",
@@ -364,6 +364,7 @@ const ru: Partial<Translations> = {
   "common.saving": "Сохранение…",
   "common.restoreRunning": "Выполняется восстановление…",
   "common.backupRunning": "Выполняется резервное копирование…",
+  "common.replicateRunning": "Выполняется репликация…",
 
   // Backup folders selector
   "folders.title": "Папки для резервного копирования",
@@ -510,6 +511,7 @@ const ru: Partial<Translations> = {
   "stack.restoreConfirm": "Восстановить все контейнеры этого стека? Каждый пересоздаётся из последней резервной копии.",
   "stack.restoring": "Восстановление стека…",
   "stack.restored": "Стек восстановлен",
+  "stack.restoreFinished": "Восстановление стека завершено — результаты по каждому контейнеру см. в истории запусков.",
   "stack.memberRestored": "восстановлен",
   "stack.memberStarted": "запущен",
   "settings.restoreFolder": "Папка восстановления по умолчанию",

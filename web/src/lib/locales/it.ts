@@ -96,7 +96,7 @@ const it: Partial<Translations> = {
   "restore.confirm": "Conferma",
   "restore.cancel": "Annulla ripristino",
   "restore.cancelConfirmSafe": "Annullare il ripristino? La cartella di output parziale viene lasciata così com'è.",
-  "restore.cancelConfirmInPlace": "{name} è a metà ripristino. Annullando resta parzialmente ripristinato — sarà necessario ripristinarlo di nuovo per ottenere un {name} funzionante. Annullare comunque?",
+  "restore.cancelConfirmInPlace": "{name} è a metà ripristino. Annullando questo ripristino resta incompleto — potrebbe essere necessario eseguirlo di nuovo. Annullare comunque?",
   "restore.cancelling": "Annullamento…",
   "restore.cancelled": "Ripristino annullato",
   "restore.progress": "Ripristino… {pct}%",
@@ -369,6 +369,7 @@ const it: Partial<Translations> = {
   "common.saving": "Salvataggio…",
   "common.restoreRunning": "È in corso un ripristino…",
   "common.backupRunning": "È in corso un backup…",
+  "common.replicateRunning": "È in corso una replica…",
 
   // Backup folders selector
   "folders.title": "Cartelle da salvare",
@@ -515,6 +516,7 @@ const it: Partial<Translations> = {
   "stack.restoreConfirm": "Ripristinare tutti i container di questo stack? Ciascuno viene ricreato dall'ultimo backup.",
   "stack.restoring": "Ripristino dello stack…",
   "stack.restored": "Stack ripristinato",
+  "stack.restoreFinished": "Ripristino dello stack completato — consulta la cronologia esecuzioni per i risultati per container.",
   "stack.memberRestored": "ripristinato",
   "stack.memberStarted": "avviato",
   "settings.restoreFolder": "Cartella di ripristino predefinita",

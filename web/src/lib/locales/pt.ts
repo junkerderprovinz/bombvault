@@ -96,7 +96,7 @@ const pt: Partial<Translations> = {
   "restore.confirm": "Confirmar",
   "restore.cancel": "Cancelar restauro",
   "restore.cancelConfirmSafe": "Cancelar o restauro? A pasta de saída parcial é mantida como está.",
-  "restore.cancelConfirmInPlace": "{name} está a meio de um restauro. Cancelar deixa-o parcialmente restaurado — será necessário restaurar novamente para obter um {name} funcional. Cancelar mesmo assim?",
+  "restore.cancelConfirmInPlace": "{name} está a meio de um restauro. Cancelar deixa este restauro incompleto — poderá ser necessário executá-lo novamente. Cancelar mesmo assim?",
   "restore.cancelling": "A cancelar…",
   "restore.cancelled": "Restauro cancelado",
   "restore.progress": "A restaurar… {pct}%",
@@ -369,6 +369,7 @@ const pt: Partial<Translations> = {
   "common.saving": "A guardar…",
   "common.restoreRunning": "Está a decorrer um restauro…",
   "common.backupRunning": "Está a decorrer um backup…",
+  "common.replicateRunning": "Está a decorrer uma replicação…",
 
   // Backup folders selector
   "folders.title": "Pastas a copiar",
@@ -515,6 +516,7 @@ const pt: Partial<Translations> = {
   "stack.restoreConfirm": "Restaurar todos os containers desta stack? Cada um é recriado a partir do último backup.",
   "stack.restoring": "A restaurar a stack…",
   "stack.restored": "Stack restaurada",
+  "stack.restoreFinished": "Restauro da stack concluído — consulta o histórico de execuções para ver os resultados por container.",
   "stack.memberRestored": "restaurado",
   "stack.memberStarted": "iniciado",
   "settings.restoreFolder": "Pasta de restauro predefinida",

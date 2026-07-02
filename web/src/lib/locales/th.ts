@@ -96,7 +96,7 @@ const th: Partial<Translations> = {
   "restore.confirm": "ยืนยัน",
   "restore.cancel": "ยกเลิกการกู้คืน",
   "restore.cancelConfirmSafe": "ยกเลิกการกู้คืนหรือไม่? โฟลเดอร์ผลลัพธ์ที่กู้คืนบางส่วนจะยังคงอยู่ตามเดิม",
-  "restore.cancelConfirmInPlace": "{name} กำลังกู้คืนอยู่ การยกเลิกจะทำให้กู้คืนได้เพียงบางส่วน — คุณจะต้องกู้คืนอีกครั้งเพื่อให้ได้ {name} ที่ใช้งานได้ ยกเลิกต่อไปหรือไม่?",
+  "restore.cancelConfirmInPlace": "{name} กำลังกู้คืนอยู่ การยกเลิกจะทำให้การกู้คืนนี้ไม่สมบูรณ์ — คุณอาจต้องกู้คืนอีกครั้ง ยกเลิกต่อไปหรือไม่?",
   "restore.cancelling": "กำลังยกเลิก…",
   "restore.cancelled": "ยกเลิกการกู้คืนแล้ว",
   "restore.progress": "กำลังกู้คืน… {pct}%",
@@ -369,6 +369,7 @@ const th: Partial<Translations> = {
   "common.saving": "กำลังบันทึก…",
   "common.restoreRunning": "กำลังกู้คืนข้อมูลอยู่…",
   "common.backupRunning": "กำลังสำรองข้อมูลอยู่…",
+  "common.replicateRunning": "กำลังจำลองข้อมูลอยู่…",
 
   // Backup folders selector
   "folders.title": "โฟลเดอร์ที่สำรองข้อมูล",
@@ -518,6 +519,7 @@ const th: Partial<Translations> = {
   "stack.restoreConfirm": "กู้คืนทุกคอนเทนเนอร์ในสแตกนี้หรือไม่? แต่ละตัวจะถูกสร้างใหม่จากการสำรองข้อมูลล่าสุด",
   "stack.restoring": "กำลังกู้คืนสแตก…",
   "stack.restored": "กู้คืนสแตกแล้ว",
+  "stack.restoreFinished": "กู้คืนสแตกเสร็จแล้ว — ดูผลลัพธ์รายคอนเทนเนอร์ได้ในประวัติการทำงาน",
   "stack.memberRestored": "กู้คืนแล้ว",
   "stack.memberStarted": "เริ่มทำงานแล้ว",
   "settings.restoreFolder": "โฟลเดอร์กู้คืนเริ่มต้น",

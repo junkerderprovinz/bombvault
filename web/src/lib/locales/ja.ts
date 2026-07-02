@@ -96,7 +96,7 @@ const ja: Partial<Translations> = {
   "restore.confirm": "確認",
   "restore.cancel": "復元をキャンセル",
   "restore.cancelConfirmSafe": "復元をキャンセルしますか？途中まで書き込まれた出力フォルダーはそのまま残ります。",
-  "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルすると一部だけ復元された状態になります — 正常な {name} にするには再度復元する必要があります。それでもキャンセルしますか？",
+  "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルするとこの復元は不完全なまま残ります — もう一度実行が必要になる場合があります。それでもキャンセルしますか？",
   "restore.cancelling": "キャンセル中…",
   "restore.cancelled": "復元をキャンセルしました",
   "restore.progress": "復元中… {pct}%",
@@ -361,6 +361,7 @@ const ja: Partial<Translations> = {
   "common.saving": "保存中…",
   "common.restoreRunning": "復元を実行中です…",
   "common.backupRunning": "バックアップを実行中です…",
+  "common.replicateRunning": "複製を実行中です…",
 
   // Backup folders selector
   "folders.title": "バックアップ対象フォルダ",
@@ -507,6 +508,7 @@ const ja: Partial<Translations> = {
   "stack.restoreConfirm": "このスタック内のすべてのコンテナを復元しますか？各コンテナは最新のバックアップから再作成されます。",
   "stack.restoring": "スタックを復元中…",
   "stack.restored": "スタックを復元しました",
+  "stack.restoreFinished": "スタックの復元が完了しました — コンテナごとの結果は実行履歴で確認できます。",
   "stack.memberRestored": "復元済み",
   "stack.memberStarted": "起動済み",
   "settings.restoreFolder": "既定の復元フォルダー",

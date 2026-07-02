@@ -95,7 +95,7 @@ const nl: Partial<Translations> = {
   "restore.confirm": "Bevestigen",
   "restore.cancel": "Herstel annuleren",
   "restore.cancelConfirmSafe": "Herstel annuleren? De gedeeltelijk geschreven doelmap blijft ongewijzigd.",
-  "restore.cancelConfirmInPlace": "{name} wordt momenteel hersteld. Annuleren laat het gedeeltelijk hersteld achter — je moet opnieuw herstellen om een werkende {name} te krijgen. Toch annuleren?",
+  "restore.cancelConfirmInPlace": "{name} wordt momenteel hersteld. Annuleren laat dit herstel onvolledig achter — je moet het mogelijk opnieuw uitvoeren. Toch annuleren?",
   "restore.cancelling": "Annuleren…",
   "restore.cancelled": "Herstel geannuleerd",
   "restore.progress": "Herstellen… {pct}%",
@@ -366,6 +366,7 @@ const nl: Partial<Translations> = {
   "common.saving": "Opslaan…",
   "common.restoreRunning": "Er wordt een herstel uitgevoerd…",
   "common.backupRunning": "Er wordt een back-up uitgevoerd…",
+  "common.replicateRunning": "Er wordt een replicatie uitgevoerd…",
 
   // Backup folders selector
   "folders.title": "Back-upmappen",
@@ -512,6 +513,7 @@ const nl: Partial<Translations> = {
   "stack.restoreConfirm": "Alle containers in deze stack herstellen? Elke wordt opnieuw aangemaakt vanuit de laatste back-up.",
   "stack.restoring": "Stack wordt hersteld…",
   "stack.restored": "Stack hersteld",
+  "stack.restoreFinished": "Herstel van stack voltooid — zie de uitvoeringsgeschiedenis voor resultaten per container.",
   "stack.memberRestored": "hersteld",
   "stack.memberStarted": "gestart",
   "settings.restoreFolder": "Standaard herstelmap",

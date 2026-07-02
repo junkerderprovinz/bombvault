@@ -96,7 +96,7 @@ const no: Partial<Translations> = {
   "restore.confirm": "Bekreft",
   "restore.cancel": "Avbryt gjenoppretting",
   "restore.cancelConfirmSafe": "Avbryte gjenopprettingen? Den delvis skrevne målmappen beholdes som den er.",
-  "restore.cancelConfirmInPlace": "{name} er midt i en gjenoppretting. Å avbryte etterlater den delvis gjenopprettet — du må gjenopprette på nytt for å få en fungerende {name}. Avbryte likevel?",
+  "restore.cancelConfirmInPlace": "{name} er midt i en gjenoppretting. Å avbryte etterlater denne gjenopprettingen ufullstendig — du må kanskje kjøre den på nytt. Avbryte likevel?",
   "restore.cancelling": "Avbryter…",
   "restore.cancelled": "Gjenoppretting avbrutt",
   "restore.progress": "Gjenoppretter… {pct}%",
@@ -369,6 +369,7 @@ const no: Partial<Translations> = {
   "common.saving": "Lagrer…",
   "common.restoreRunning": "En gjenoppretting kjører…",
   "common.backupRunning": "En sikkerhetskopiering kjører…",
+  "common.replicateRunning": "En replikering kjører…",
 
   // Backup folders selector
   "folders.title": "Sikkerhetskopierte mapper",
@@ -515,6 +516,7 @@ const no: Partial<Translations> = {
   "stack.restoreConfirm": "Gjenopprette alle kontainere i denne stacken? Hver av dem gjenskapes fra siste sikkerhetskopi.",
   "stack.restoring": "Gjenoppretter stack…",
   "stack.restored": "Stack gjenopprettet",
+  "stack.restoreFinished": "Gjenoppretting av stack fullført — se kjørehistorikken for resultater per container.",
   "stack.memberRestored": "gjenopprettet",
   "stack.memberStarted": "startet",
   "settings.restoreFolder": "Standard gjenopprettingsmappe",

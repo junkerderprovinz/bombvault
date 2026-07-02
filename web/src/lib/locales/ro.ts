@@ -96,7 +96,7 @@ const ro: Partial<Translations> = {
   "restore.confirm": "Confirmare",
   "restore.cancel": "Anulează restaurarea",
   "restore.cancelConfirmSafe": "Anulați restaurarea? Folderul de ieșire parțial este lăsat așa cum este.",
-  "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea îl lasă parțial restaurat — va fi nevoie de o nouă restaurare pentru a obține un {name} funcțional. Anulați oricum?",
+  "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea lasă această restaurare incompletă — s-ar putea să fie nevoie să o executați din nou. Anulați oricum?",
   "restore.cancelling": "Se anulează…",
   "restore.cancelled": "Restaurare anulată",
   "restore.progress": "Se restaurează… {pct}%",
@@ -369,6 +369,7 @@ const ro: Partial<Translations> = {
   "common.saving": "Se salvează…",
   "common.restoreRunning": "O restaurare este în curs…",
   "common.backupRunning": "O copie de rezervă este în curs…",
+  "common.replicateRunning": "O replicare este în curs…",
 
   // Backup folders selector
   "folders.title": "Foldere de salvat",
@@ -518,6 +519,7 @@ const ro: Partial<Translations> = {
   "stack.restoreConfirm": "Restaurezi toate containerele din acest stack? Fiecare este recreat din ultima copie de rezervă.",
   "stack.restoring": "Se restaurează stack-ul…",
   "stack.restored": "Stack restaurat",
+  "stack.restoreFinished": "Restaurarea stack-ului s-a finalizat — vedeți rezultatele per container în istoricul rulărilor.",
   "stack.memberRestored": "restaurat",
   "stack.memberStarted": "pornit",
   "settings.restoreFolder": "Folder de restaurare implicit",

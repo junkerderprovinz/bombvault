@@ -96,7 +96,7 @@ const sv: Partial<Translations> = {
   "restore.confirm": "Bekräfta",
   "restore.cancel": "Avbryt återställning",
   "restore.cancelConfirmSafe": "Avbryta återställningen? Den delvis skrivna målmappen lämnas som den är.",
-  "restore.cancelConfirmInPlace": "{name} håller på att återställas. Att avbryta lämnar den delvis återställd — du måste återställa igen för att få ett fungerande {name}. Avbryta ändå?",
+  "restore.cancelConfirmInPlace": "{name} håller på att återställas. Att avbryta lämnar den här återställningen ofullständig — du kan behöva köra den igen. Avbryta ändå?",
   "restore.cancelling": "Avbryter…",
   "restore.cancelled": "Återställning avbruten",
   "restore.progress": "Återställer… {pct}%",
@@ -369,6 +369,7 @@ const sv: Partial<Translations> = {
   "common.saving": "Sparar…",
   "common.restoreRunning": "En återställning pågår…",
   "common.backupRunning": "En säkerhetskopiering pågår…",
+  "common.replicateRunning": "En replikering pågår…",
 
   // Backup folders selector
   "folders.title": "Säkerhetskopierade mappar",
@@ -515,6 +516,7 @@ const sv: Partial<Translations> = {
   "stack.restoreConfirm": "Återställa alla containrar i den här stacken? Varje återskapas från den senaste säkerhetskopian.",
   "stack.restoring": "Återställer stack…",
   "stack.restored": "Stack återställd",
+  "stack.restoreFinished": "Återställning av stack klar — se körningshistoriken för resultat per container.",
   "stack.memberRestored": "återställd",
   "stack.memberStarted": "startad",
   "settings.restoreFolder": "Standardmapp för återställning",
