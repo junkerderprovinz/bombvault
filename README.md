@@ -151,6 +151,17 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)** and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 
+### Ransomware protection *(v4-preview)*
+
+> Landing in v4. Available now on the `v4-preview` image for testing; the marker is removed at release.
+
+- **Immutable (append-only) off-site** — flag an off-site repo append-only so ransomware (or a compromised host) can't delete or rewrite your backups. The far side (a `restic/rest-server` in `--append-only` mode) *enforces* it; BombVault only ever *verifies* it and never shows green on a configuration claim alone.
+- **Tamper test** — BombVault periodically *proves* the append-only guarantee by actually attempting a delete against the off-site repo (aimed at a non-existent object): refused = protected, accepted = not protected. An inconclusive result (server unreachable, auth error) never flips the stored verdict, and a real protected → unprotected flip fires a single alert.
+- **Guided off-site setup** — a wizard walks you from backend choice (rest-server / rclone / S3) through a ready-to-paste rest-server deploy snippet, a connection test, the immutable toggle (which runs the tamper test immediately) and a retention strategy — so append-only off-site is reachable without hand-editing configs.
+- **DR drills (off-site)** — beyond the local integrity drill, BombVault can restore a real target from the *off-site* repo into a throwaway sandbox, verify it file-for-file and byte-for-byte, then clean up — proving you can actually recover from off-site, not just that the repo answers.
+- **Ransomware-protection scorecard** — a Dashboard card with a green / amber / red posture per domain and an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set); every red row deep-links to the fix. The card and its chip only ever go green on *verified* facts, never on intent.
+- **Growth-budget alarm** — for an immutable off-site (where old snapshots are deliberately never pruned), set a size budget and get alerted before it runs away.
+
 ### Other
 
 - **Back up many at once** — multi-select containers and hit **Back up selected**. The batch runs **server-side**, so it keeps going even if you close the tab, lose the connection, or back up the very container your browser is running in. Each container shows its own progress bar plus an overall batch indicator. BombVault never backs up (and so never stops) its own container.

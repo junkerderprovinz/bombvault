@@ -191,3 +191,36 @@ Card: per domain a checklist (configured / append-only verified + age via `relat
 ## Self-review notes
 
 Spec coverage: flags/behaviour (T1-2), connection test (T3), snippet (T4), tamper stage 1 + schedule + alerts (T5), wizard + rclone warning + S3 unverified (T6), replication history + growth/budget (T7), scorecard + gauges (T8-9), DR drill + scheduling + target + badge (T10-11), i18n/review/docs (T12). Wave-5 items (canary, SigV4, retention snippet automation beyond the wizard text) intentionally deferred per spec.
+
+## Box-gate checklist (Bottich, `v4-preview` image)
+
+Run by the owner on the real box before merging feat/v4 to main and tagging the release. Pull the
+`v4-preview` image (feat/v4 build); production stays on `:latest` (v3.x) throughout.
+
+- [ ] **Deploy a real append-only far side** — use the wizard's generated `restic/rest-server --append-only`
+  snippet on the box, then point a domain's off-site repo at it (`rest:http://…`).
+- [ ] **Wizard end-to-end** — backend choice → copy the deploy snippet → connection test shows
+  reachable/uninitialized correctly → save URL + REST credentials → immutable toggle ON runs the tamper
+  test immediately and shows `✓ delete refused — append-only active`.
+- [ ] **Tamper verdict, both modes** — against the append-only server → protected (green). Point at a
+  server with `--append-only` OFF → `✗ server ACCEPTED the delete — NOT protected` (red). Stop the server →
+  inconclusive, and confirm the stored verdict does NOT flip.
+- [ ] **Replication currency uses last SUCCESS** — replicate a domain; scorecard "replication current" is
+  green. Break the far side and let a scheduled replication FAIL → a failure notification fires AND
+  "replication current" goes stale/amber (must NOT stay green on a failing replication).
+- [ ] **DR drill from off-site** — Settings → Verify → "Real restore (off-site)" for a container → restores
+  into a sandbox, verifies, cleans up (no leftover `bombvault-drill-*` under the restore folder), Dashboard
+  shows "proven restorable from off-site". Confirm VM DR is refused with a clear message.
+- [ ] **Protection-loss notification** — from a verified-green immutable off-site, flip the far side OFF
+  append-only and run the tamper test → exactly one "protection LOST" notification, scorecard goes red.
+- [ ] **Growth budget** — set a small off-site growth budget on the immutable repo, replicate past it →
+  the budget alarm fires once.
+- [ ] **Default-mode reachability** — Advanced OFF: off-site / retention / DR cards + the ransomware
+  Dashboard card are visible; red rows deep-link to the off-site settings; the destructive Prune button is
+  hidden (Advanced-only).
+- [ ] **rclone path guard** — entering an off-site path without a scheme (e.g. `BackBlaze:bucket`) is
+  rejected with guidance to use `rclone:BackBlaze:bucket`; `rclone:<remote>:<bucket>` saves and replicates.
+- [ ] **i18n** — switch UI to German → new ransomware/off-site/drill strings are translated; the three
+  tamper-verdict strings stay English verbatim (by design).
+- [ ] **Regression** — normal local backup + restore still work; the `:latest` (v3.x) production container
+  is unaffected.
