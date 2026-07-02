@@ -3,6 +3,7 @@ import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, t
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { FolderBrowser } from "../components/FolderBrowser";
+import { OffsiteWizard } from "../components/OffsiteWizard";
 import type { Settings, NotifyConfig, RestoreDrill } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
@@ -1008,6 +1009,8 @@ export function SettingsPage() {
   const [pathSaveError, setPathSaveError] = useState<string | null>(null);
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
   const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
+  // Which domain's guided off-site setup wizard is expanded (null = none).
+  const [offsiteWizard, setOffsiteWizard] = useState<"containers" | "vms" | "flash" | null>(null);
 
   const [domSaveState, setDomSaveState] = useState<SaveState>("idle");
   const [domSaveError, setDomSaveError] = useState<string | null>(null);
@@ -1274,37 +1277,61 @@ export function SettingsPage() {
           ["containersOffsite", "containersOffsiteSchedule", "nav.containers", "containers"],
           ["vmsOffsite", "vmsOffsiteSchedule", "nav.vms", "vms"],
           ["flashOffsite", "flashOffsiteSchedule", "nav.flash", "flash"],
-        ] as const).map(([repoKey, schedKey, label, domain]) => (
+        ] as const).map(([repoKey, schedKey, label, domain]) => {
+          const wizardOpen = offsiteWizard === domain;
+          return (
           <div key={repoKey} className="flex flex-col gap-1 border-b border-carbon-border pb-3 last:border-0">
             <div className="flex items-center justify-between">
               <span className="text-xs text-carbon-textSub">{t(label)}</span>
-              {settings[repoKey] && (
-                <span className="inline-flex items-center gap-2">
-                  <TestConnectionButton domain={domain} t={t} />
-                  <ReplicateNowButton domain={domain} t={t} />
-                </span>
-              )}
+              <span className="inline-flex items-center gap-2">
+                {settings[repoKey] && !wizardOpen && (
+                  <>
+                    <TestConnectionButton domain={domain} t={t} />
+                    <ReplicateNowButton domain={domain} t={t} />
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
+                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+                >
+                  {wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
+                </button>
+              </span>
             </div>
-            <input
-              value={settings[repoKey]}
-              spellCheck={false}
-              onChange={(e) =>
-                setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
-              }
-              placeholder="rest:http://host:8000/repo"
-              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-            />
-            <input
-              value={settings[schedKey]}
-              spellCheck={false}
-              onChange={(e) =>
-                setSettings((prev) => (prev ? { ...prev, [schedKey]: e.target.value } : prev))
-              }
-              placeholder={t("offsite.schedulePlaceholder")}
-              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-            />
+            {wizardOpen ? (
+              <OffsiteWizard
+                domain={domain}
+                settings={settings}
+                setSettings={setSettings}
+                save={save}
+                t={t}
+              />
+            ) : (
+              <>
+                <input
+                  value={settings[repoKey]}
+                  spellCheck={false}
+                  onChange={(e) =>
+                    setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
+                  }
+                  placeholder="rest:http://host:8000/repo"
+                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+                <input
+                  value={settings[schedKey]}
+                  spellCheck={false}
+                  onChange={(e) =>
+                    setSettings((prev) => (prev ? { ...prev, [schedKey]: e.target.value } : prev))
+                  }
+                  placeholder={t("offsite.schedulePlaceholder")}
+                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </>
+            )}
           </div>
-        ))}
+          );
+        })}
         <SaveBar
           state={offsiteSaveState}
           error={offsiteSaveError}
