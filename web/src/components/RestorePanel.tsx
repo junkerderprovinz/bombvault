@@ -4,8 +4,22 @@ import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
+import { useProgress } from "../lib/progress";
+import { ProgressBar } from "./ProgressBar";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
+
+// restoreProgressBar renders the shared inline restore ProgressBar + a
+// "Restoring… NN%" caption for a given progress key, while the fire-and-watch is
+// pending. Indeterminate until the first percent arrives (mirrors the backup
+// bars). Returns null when nothing is streaming for this key yet.
+function restoreProgressCaption(
+  t: T,
+  prog: { phase: string; percent: number; active: boolean } | undefined
+): string | undefined {
+  if (!prog || prog.phase !== "restore" || prog.percent <= 0) return undefined;
+  return t("restore.progress").replace("{pct}", String(Math.round(prog.percent)));
+}
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -204,6 +218,7 @@ function SnapshotFileBrowser({
     },
     matchRun: (r) => r.domain === "container" && r.target === containerName,
   });
+  const prog = useProgress()[`container:${containerName}`];
 
   useEffect(() => {
     setLoading(true);
@@ -333,9 +348,12 @@ function SnapshotFileBrowser({
             </button>
           </div>
           {isPending && (
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
               <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+              {prog?.phase === "restore" && prog.active && (
+                <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
+              )}
             </div>
           )}
           {restoreState.phase === "success" && (
@@ -376,6 +394,7 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
     start: () => restore(name, "latest", true, source),
     matchRun: (r) => r.domain === "container" && r.target === name,
   });
+  const prog = useProgress()[`container:${name}`];
   function handle() {
     if (!window.confirm(t("snapshots.recreateConfirm"))) return;
     void fire();
@@ -390,9 +409,12 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
         {isPending ? t("common.restoring") : t("snapshots.recreate")}
       </button>
       {isPending && (
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-1">
           <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
           <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+          {prog?.phase === "restore" && prog.active && (
+            <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
+          )}
         </div>
       )}
       {state.phase === "success" && (
@@ -444,6 +466,7 @@ function RestoreToFolder({
     },
     matchRun: (r) => r.domain === "container" && r.target === containerName,
   });
+  const prog = useProgress()[`container:${containerName}`];
 
   function pickPath(v: string) {
     setPath(v);
@@ -470,9 +493,12 @@ function RestoreToFolder({
         </button>
       </div>
       {isPending && (
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-1">
           <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
           <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+          {prog?.phase === "restore" && prog.active && (
+            <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
+          )}
         </div>
       )}
       {state.phase === "success" && (
@@ -728,6 +754,7 @@ function SnapshotRow({
     start: () => restore(containerName, snap.id, true, source, leaveStopped),
     matchRun: (r) => r.domain === "container" && r.target === containerName,
   });
+  const prog = useProgress()[`container:${containerName}`];
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
   // In basic mode only the in-place restore is offered; the mode radios (files /
@@ -887,9 +914,12 @@ function SnapshotRow({
                 {t("restore.leaveStopped")}
               </label>
               {isPending && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-1">
                   <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
                   <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+                  {prog?.phase === "restore" && prog.active && (
+                    <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
+                  )}
                 </div>
               )}
               {restoreState.phase === "success" && (
