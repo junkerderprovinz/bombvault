@@ -176,6 +176,15 @@ export interface DomainStatus {
   lastDrDrillAt: number; // unix seconds of the last off-site DR drill; 0 = never
   lastDrDrillOK: boolean; // whether that DR drill passed
   protection: string; // "" (disabled) | "red" | "amber" | "green"
+  // Per-check states derived server-side from the SAME inputs as `protection`, so
+  // the dashboard card renders each row as a pure function of the backend and can
+  // never contradict the chip. encryptionOn/pruneStrategySet are the two config
+  // facts the card also renders (no separate /api/settings round-trip needed).
+  tamperState: string; // "" | "never" | "failed" | "stale" | "ok"
+  replicationState: string; // "" | "never" | "overdue" | "ok"
+  drillState: string; // "" | "never" | "overdue" | "ok"
+  encryptionOn: boolean; // repo encryption is enabled
+  pruneStrategySet: boolean; // an off-site retention strategy is configured
 }
 
 /** A recorded restore-verification "drill" from POST/GET /api/verify. */
