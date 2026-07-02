@@ -95,7 +95,7 @@ const uk: Partial<Translations> = {
   "restore.confirm": "Підтвердити",
   "restore.cancel": "Скасувати відновлення",
   "restore.cancelConfirmSafe": "Скасувати відновлення? Частково записана цільова папка залишиться без змін.",
-  "restore.cancelConfirmInPlace": "{name} перебуває в процесі відновлення. Скасування залишить його частково відновленим — щоб отримати робочий {name}, доведеться відновити ще раз. Усе одно скасувати?",
+  "restore.cancelConfirmInPlace": "{name} перебуває в процесі відновлення. Скасування залишить це відновлення незавершеним — можливо, доведеться запустити його ще раз. Усе одно скасувати?",
   "restore.cancelling": "Скасування…",
   "restore.cancelled": "Відновлення скасовано",
   "restore.progress": "Відновлення… {pct}%",
@@ -364,6 +364,7 @@ const uk: Partial<Translations> = {
   "common.saving": "Збереження…",
   "common.restoreRunning": "Виконується відновлення…",
   "common.backupRunning": "Виконується резервне копіювання…",
+  "common.replicateRunning": "Виконується реплікація…",
 
   // Backup folders selector
   "folders.title": "Папки для резервного копіювання",
@@ -510,6 +511,7 @@ const uk: Partial<Translations> = {
   "stack.restoreConfirm": "Відновити всі контейнери цього стеку? Кожен створюється заново з останньої резервної копії.",
   "stack.restoring": "Відновлення стеку…",
   "stack.restored": "Стек відновлено",
+  "stack.restoreFinished": "Відновлення стеку завершено — результати за кожним контейнером див. в історії запусків.",
   "stack.memberRestored": "відновлено",
   "stack.memberStarted": "запущено",
   "settings.restoreFolder": "Стандартна папка відновлення",

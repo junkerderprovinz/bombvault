@@ -96,7 +96,7 @@ const fi: Partial<Translations> = {
   "restore.confirm": "Vahvista",
   "restore.cancel": "Peruuta palautus",
   "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
-  "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää sen osittain palautetuksi — se on palautettava uudelleen, jotta {name} toimii. Peruutetaanko silti?",
+  "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää tämän palautuksen keskeneräiseksi — se on ehkä suoritettava uudelleen. Peruutetaanko silti?",
   "restore.cancelling": "Peruutetaan…",
   "restore.cancelled": "Palautus peruutettu",
   "restore.progress": "Palautetaan… {pct}%",
@@ -369,6 +369,7 @@ const fi: Partial<Translations> = {
   "common.saving": "Tallennetaan…",
   "common.restoreRunning": "Palautus on käynnissä…",
   "common.backupRunning": "Varmuuskopiointi on käynnissä…",
+  "common.replicateRunning": "Replikointi on käynnissä…",
 
   // Backup folders selector
   "folders.title": "Varmuuskopioitavat kansiot",
@@ -515,6 +516,7 @@ const fi: Partial<Translations> = {
   "stack.restoreConfirm": "Palautetaanko kaikki tämän stackin kontit? Jokainen luodaan uudelleen viimeisimmästä varmuuskopiosta.",
   "stack.restoring": "Palautetaan stackia…",
   "stack.restored": "Stack palautettu",
+  "stack.restoreFinished": "Stackin palautus valmis — katso konttikohtaiset tulokset ajohistoriasta.",
   "stack.memberRestored": "palautettu",
   "stack.memberStarted": "käynnistetty",
   "settings.restoreFolder": "Palautuksen oletuskansio",

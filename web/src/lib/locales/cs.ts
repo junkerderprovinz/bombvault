@@ -96,7 +96,7 @@ const cs: Partial<Translations> = {
   "restore.confirm": "Potvrdit",
   "restore.cancel": "Zrušit obnovu",
   "restore.cancelConfirmSafe": "Zrušit obnovu? Částečně zapsaná cílová složka zůstane beze změny.",
-  "restore.cancelConfirmInPlace": "{name} se právě obnovuje. Zrušení jej ponechá částečně obnovený — pro funkční {name} bude nutné obnovu spustit znovu. Přesto zrušit?",
+  "restore.cancelConfirmInPlace": "{name} se právě obnovuje. Zrušení ponechá tuto obnovu neúplnou — možná ji bude nutné spustit znovu. Přesto zrušit?",
   "restore.cancelling": "Ruším…",
   "restore.cancelled": "Obnova zrušena",
   "restore.progress": "Obnovuji… {pct}%",
@@ -367,6 +367,7 @@ const cs: Partial<Translations> = {
   "common.saving": "Ukládám…",
   "common.restoreRunning": "Probíhá obnova…",
   "common.backupRunning": "Probíhá zálohování…",
+  "common.replicateRunning": "Probíhá replikace…",
 
   // Backup folders selector
   "folders.title": "Zálohované složky",
@@ -513,6 +514,7 @@ const cs: Partial<Translations> = {
   "stack.restoreConfirm": "Obnovit všechny kontejnery tohoto stacku? Každý se znovu vytvoří z poslední zálohy.",
   "stack.restoring": "Obnovování stacku…",
   "stack.restored": "Stack obnoven",
+  "stack.restoreFinished": "Obnovení stacku dokončeno — výsledky pro jednotlivé kontejnery najdete v historii běhů.",
   "stack.memberRestored": "obnoveno",
   "stack.memberStarted": "spuštěno",
   "settings.restoreFolder": "Výchozí složka pro obnovu",

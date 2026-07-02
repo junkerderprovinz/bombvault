@@ -96,7 +96,7 @@ const tr: Partial<Translations> = {
   "restore.confirm": "Onayla",
   "restore.cancel": "Geri yüklemeyi iptal et",
   "restore.cancelConfirmSafe": "Geri yükleme iptal edilsin mi? Kısmen yazılan hedef klasör olduğu gibi bırakılır.",
-  "restore.cancelConfirmInPlace": "{name} geri yükleme aşamasında. İptal etmek onu kısmen geri yüklenmiş bırakır — çalışan bir {name} için yeniden geri yüklemeniz gerekir. Yine de iptal edilsin mi?",
+  "restore.cancelConfirmInPlace": "{name} geri yükleme aşamasında. İptal etmek bu geri yüklemeyi yarım bırakır — onu yeniden çalıştırmanız gerekebilir. Yine de iptal edilsin mi?",
   "restore.cancelling": "İptal ediliyor…",
   "restore.cancelled": "Geri yükleme iptal edildi",
   "restore.progress": "Geri yükleniyor… {pct}%",
@@ -369,6 +369,7 @@ const tr: Partial<Translations> = {
   "common.saving": "Kaydediliyor…",
   "common.restoreRunning": "Bir geri yükleme çalışıyor…",
   "common.backupRunning": "Bir yedekleme çalışıyor…",
+  "common.replicateRunning": "Bir çoğaltma çalışıyor…",
 
   // Backup folders selector
   "folders.title": "Yedeklenecek klasörler",
@@ -515,6 +516,7 @@ const tr: Partial<Translations> = {
   "stack.restoreConfirm": "Bu stack'teki tüm konteynerler geri yüklensin mi? Her biri en son yedeğinden yeniden oluşturulur.",
   "stack.restoring": "Stack geri yükleniyor…",
   "stack.restored": "Stack geri yüklendi",
+  "stack.restoreFinished": "Stack geri yükleme tamamlandı — konteyner başına sonuçlar için çalışma geçmişine bakın.",
   "stack.memberRestored": "geri yüklendi",
   "stack.memberStarted": "başlatıldı",
   "settings.restoreFolder": "Varsayılan geri yükleme klasörü",

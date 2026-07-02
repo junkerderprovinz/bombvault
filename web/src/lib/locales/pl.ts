@@ -95,7 +95,7 @@ const pl: Partial<Translations> = {
   "restore.confirm": "Potwierdź",
   "restore.cancel": "Anuluj przywracanie",
   "restore.cancelConfirmSafe": "Anulować przywracanie? Częściowo zapisany folder docelowy pozostanie bez zmian.",
-  "restore.cancelConfirmInPlace": "{name} jest w trakcie przywracania. Anulowanie pozostawi go częściowo przywróconym — aby uzyskać działający {name}, trzeba będzie przywrócić go ponownie. Anulować mimo to?",
+  "restore.cancelConfirmInPlace": "{name} jest w trakcie przywracania. Anulowanie pozostawi to przywracanie niedokończone — być może trzeba będzie je uruchomić ponownie. Anulować mimo to?",
   "restore.cancelling": "Anulowanie…",
   "restore.cancelled": "Przywracanie anulowane",
   "restore.progress": "Przywracanie… {pct}%",
@@ -364,6 +364,7 @@ const pl: Partial<Translations> = {
   "common.saving": "Zapisywanie…",
   "common.restoreRunning": "Trwa przywracanie…",
   "common.backupRunning": "Trwa tworzenie kopii zapasowej…",
+  "common.replicateRunning": "Trwa replikacja…",
 
   // Backup folders selector
   "folders.title": "Foldery do kopii",
@@ -510,6 +511,7 @@ const pl: Partial<Translations> = {
   "stack.restoreConfirm": "Przywrócić wszystkie kontenery tego stacka? Każdy zostanie odtworzony z ostatniej kopii zapasowej.",
   "stack.restoring": "Przywracanie stacka…",
   "stack.restored": "Stack przywrócony",
+  "stack.restoreFinished": "Przywracanie stacku zakończone — wyniki dla poszczególnych kontenerów znajdziesz w historii uruchomień.",
   "stack.memberRestored": "przywrócono",
   "stack.memberStarted": "uruchomiono",
   "settings.restoreFolder": "Domyślny folder przywracania",

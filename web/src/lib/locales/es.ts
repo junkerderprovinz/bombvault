@@ -96,7 +96,7 @@ const es: Partial<Translations> = {
   "restore.confirm": "Confirmar",
   "restore.cancel": "Cancelar restauración",
   "restore.cancelConfirmSafe": "¿Cancelar la restauración? La carpeta de salida parcial se deja tal cual.",
-  "restore.cancelConfirmInPlace": "{name} está a medio restaurar. Cancelar lo deja parcialmente restaurado — habrá que restaurarlo de nuevo para obtener un {name} funcional. ¿Cancelar de todos modos?",
+  "restore.cancelConfirmInPlace": "{name} está a medio restaurar. Cancelar deja esta restauración incompleta — puede que tengas que volver a ejecutarla. ¿Cancelar de todos modos?",
   "restore.cancelling": "Cancelando…",
   "restore.cancelled": "Restauración cancelada",
   "restore.progress": "Restaurando… {pct}%",
@@ -369,6 +369,7 @@ const es: Partial<Translations> = {
   "common.saving": "Guardando…",
   "common.restoreRunning": "Hay una restauración en curso…",
   "common.backupRunning": "Hay una copia de seguridad en curso…",
+  "common.replicateRunning": "Hay una replicación en curso…",
 
   // Backup folders selector
   "folders.title": "Carpetas a copiar",
@@ -513,6 +514,7 @@ const es: Partial<Translations> = {
   "stack.restoreConfirm": "¿Restaurar todos los contenedores de esta stack? Cada uno se recrea desde su última copia de seguridad.",
   "stack.restoring": "Restaurando stack…",
   "stack.restored": "Stack restaurada",
+  "stack.restoreFinished": "Restauración de la stack finalizada — consulta el historial de ejecuciones para ver los resultados por contenedor.",
   "stack.memberRestored": "restaurado",
   "stack.memberStarted": "iniciado",
   "settings.restoreFolder": "Carpeta de restauración predeterminada",

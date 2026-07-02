@@ -96,7 +96,7 @@ const vi: Partial<Translations> = {
   "restore.confirm": "Xác nhận",
   "restore.cancel": "Hủy khôi phục",
   "restore.cancelConfirmSafe": "Hủy khôi phục? Thư mục đầu ra đã ghi một phần sẽ được giữ nguyên.",
-  "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến nó chỉ được khôi phục một phần — bạn sẽ cần khôi phục lại để có một {name} hoạt động. Vẫn hủy chứ?",
+  "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến lần khôi phục này không hoàn tất — bạn có thể cần chạy lại. Vẫn hủy chứ?",
   "restore.cancelling": "Đang hủy…",
   "restore.cancelled": "Đã hủy khôi phục",
   "restore.progress": "Đang khôi phục… {pct}%",
@@ -361,6 +361,7 @@ const vi: Partial<Translations> = {
   "common.saving": "Đang lưu…",
   "common.restoreRunning": "Một tiến trình khôi phục đang chạy…",
   "common.backupRunning": "Một tiến trình sao lưu đang chạy…",
+  "common.replicateRunning": "Một tiến trình sao chép đang chạy…",
 
   // Backup folders selector
   "folders.title": "Thư mục sao lưu",
@@ -507,6 +508,7 @@ const vi: Partial<Translations> = {
   "stack.restoreConfirm": "Khôi phục tất cả container trong stack này? Mỗi container được tạo lại từ bản sao lưu mới nhất.",
   "stack.restoring": "Đang khôi phục stack…",
   "stack.restored": "Đã khôi phục stack",
+  "stack.restoreFinished": "Đã hoàn tất khôi phục stack — xem lịch sử chạy để biết kết quả theo từng container.",
   "stack.memberRestored": "đã khôi phục",
   "stack.memberStarted": "đã khởi động",
   "settings.restoreFolder": "Thư mục khôi phục mặc định",
