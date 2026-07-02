@@ -825,6 +825,9 @@ function IntegrityCard({
     setSaveError: (e: string | null) => void
   ) => Promise<boolean>;
 }) {
+  // Prune deletes snapshots, so it stays advanced-only even though the rest of
+  // this card (verify, unlock, DR drill) is a first-class default-mode feature.
+  const { advanced } = useAdvanced();
   type ActState = "idle" | "busy" | "ok" | "fail";
   type DrillKind = "subset" | "dr";
   const [state, setState] = useState<Record<string, ActState>>({});
@@ -932,7 +935,8 @@ function IntegrityCard({
   const actions: { key: Action; label: string; busy: string }[] = [
     { key: "verify", label: t("integrity.verify"), busy: t("integrity.checking") },
     { key: "unlock", label: t("integrity.unlock"), busy: "…" },
-    { key: "prune", label: t("integrity.prune"), busy: "…" },
+    // Prune deletes snapshots — keep it behind Advanced so novices can't reach it.
+    ...(advanced ? [{ key: "prune" as Action, label: t("integrity.prune"), busy: "…" }] : []),
   ];
 
   const selectCls =
