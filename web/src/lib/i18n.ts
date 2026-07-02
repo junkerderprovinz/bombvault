@@ -166,7 +166,7 @@ const en = {
   "restore.cancel": "Cancel restore",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
-    "{name} is mid-restore. Cancelling leaves it partially restored — you'll need to restore again to get a working {name}. Cancel anyway?",
+    "{name} is mid-restore. Cancelling leaves this restore partial — you may need to restore it again. Cancel anyway?",
   "restore.cancelling": "Cancelling…",
   "restore.cancelled": "Restore cancelled",
   "restore.preview": "Preview",
@@ -197,6 +197,7 @@ const en = {
     "Restore all containers in this stack? Each is recreated from its latest backup.",
   "stack.restoring": "Restoring stack…",
   "stack.restored": "Stack restored",
+  "stack.restoreFinished": "Stack restore finished — see the run history for per-container results.",
   "stack.memberRestored": "restored",
   "stack.memberStarted": "started",
 
@@ -571,6 +572,7 @@ const en = {
   "common.saving": "Saving…",
   "common.restoreRunning": "A restore is running…",
   "common.backupRunning": "A backup is running…",
+  "common.replicateRunning": "A replication is running…",
 
   // VMs page
   "vms.title": "Virtual Machines",
@@ -762,7 +764,7 @@ const de: Translations = {
   "restore.cancel": "Wiederherstellung abbrechen",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":
-    "{name} wird gerade wiederhergestellt. Ein Abbruch lässt es unvollständig wiederhergestellt zurück — du musst es erneut wiederherstellen, um ein funktionierendes {name} zu erhalten. Trotzdem abbrechen?",
+    "{name} wird gerade wiederhergestellt. Ein Abbruch lässt diese Wiederherstellung unvollständig zurück — möglicherweise musst du sie erneut ausführen. Trotzdem abbrechen?",
   "restore.cancelling": "Wird abgebrochen…",
   "restore.cancelled": "Wiederherstellung abgebrochen",
   "restore.preview": "Vorschau",
@@ -793,6 +795,7 @@ const de: Translations = {
     "Alle Container dieses Stacks wiederherstellen? Jeder wird aus seinem letzten Backup neu erstellt.",
   "stack.restoring": "Stack wird wiederhergestellt…",
   "stack.restored": "Stack wiederhergestellt",
+  "stack.restoreFinished": "Stack-Wiederherstellung abgeschlossen — Ergebnisse je Container im Verlauf.",
   "stack.memberRestored": "wiederhergestellt",
   "stack.memberStarted": "gestartet",
 
@@ -1165,6 +1168,7 @@ const de: Translations = {
   "common.saving": "Speichern…",
   "common.restoreRunning": "Eine Wiederherstellung läuft…",
   "common.backupRunning": "Eine Sicherung läuft…",
+  "common.replicateRunning": "Eine Replikation läuft…",
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",

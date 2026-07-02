@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
-import { useProgress } from "../lib/progress";
+import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { ProgressBar } from "./ProgressBar";
 import { RestoreCancelButton } from "./RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
@@ -207,6 +207,7 @@ function SnapshotFileBrowser({
   // target synchronously, acks with {started, target}, and runs the restic work
   // detached — so a long restore survives this panel (or the whole browser)
   // going away; the run history is the source of truth for the outcome.
+  const cancelledRef = useRef(false);
   const { state: restoreState, fire, reset, isPending } = useBackupWatch({
     progressKey: `container:${containerName}`,
     kind: "restore",
@@ -218,8 +219,14 @@ function SnapshotFileBrowser({
       return res;
     },
     matchRun: (r) => r.domain === "container" && r.target === containerName,
+    cancelledRef,
   });
-  const prog = useProgress()[`container:${containerName}`];
+  const progressMap = useProgress();
+  const prog = progressMap[`container:${containerName}`];
+  // Busy-guard: block a new restore while any OTHER backup/restore/replication
+  // runs (this item's own in-flight op is covered by isPending, never blocked).
+  const running = anyActive(progressMap);
+  const blockedByOther = running.active && !isPending;
 
   useEffect(() => {
     setLoading(true);
@@ -342,11 +349,14 @@ function SnapshotFileBrowser({
           <div className="flex items-center gap-2">
             <button
               onClick={handleRestoreSelected}
-              disabled={isPending || (dest === "toFolder" && !folder.trim())}
+              disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim())}
               className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
+            {blockedByOther && (
+              <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+            )}
           </div>
           {isPending && (
             <div className="flex flex-col gap-1">
@@ -362,6 +372,7 @@ function SnapshotFileBrowser({
                 inPlace={dest === "inPlace"}
                 name={containerName}
                 t={t}
+                cancelledRef={cancelledRef}
               />
             </div>
           )}
@@ -400,13 +411,18 @@ interface RestorePanelProps {
 // recreate runs detached on the server, so the real outcome (the recorded run)
 // must be watched. Treating the ack as final rendered detached failures green.
 function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
+  const cancelledRef = useRef(false);
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `container:${name}`,
     kind: "restore",
     start: () => restore(name, "latest", true, source),
     matchRun: (r) => r.domain === "container" && r.target === name,
+    cancelledRef,
   });
-  const prog = useProgress()[`container:${name}`];
+  const progressMap = useProgress();
+  const prog = progressMap[`container:${name}`];
+  const running = anyActive(progressMap);
+  const blockedByOther = running.active && !isPending;
   function handle() {
     if (!window.confirm(t("snapshots.recreateConfirm"))) return;
     void fire();
@@ -415,11 +431,14 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
     <div className="flex flex-col gap-1 py-2">
       <button
         onClick={handle}
-        disabled={isPending || state.phase === "success"}
+        disabled={isPending || blockedByOther || state.phase === "success"}
         className="self-start inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? t("common.restoring") : t("snapshots.recreate")}
       </button>
+      {blockedByOther && (
+        <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+      )}
       {isPending && (
         <div className="flex flex-col gap-1">
           <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
@@ -428,7 +447,7 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
             <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
           )}
           {/* Recreate rebuilds the container in place — the hard warning. */}
-          <RestoreCancelButton cancelKey={`container:${name}`} inPlace name={name} t={t} />
+          <RestoreCancelButton cancelKey={`container:${name}`} inPlace name={name} t={t} cancelledRef={cancelledRef} />
         </div>
       )}
       {state.phase === "success" && (
@@ -472,6 +491,7 @@ function RestoreToFolder({
   // multi-hour) extraction detached — issue #24: awaiting it held the request
   // open until the browser/proxy dropped it, killing restic mid-restore. The
   // run history is the source of truth; closing the panel is safe.
+  const cancelledRef = useRef(false);
   const { state, fire, reset, isPending } = useBackupWatch({
     progressKey: `container:${containerName}`,
     kind: "restore",
@@ -482,8 +502,12 @@ function RestoreToFolder({
       return res;
     },
     matchRun: (r) => r.domain === "container" && r.target === containerName,
+    cancelledRef,
   });
-  const prog = useProgress()[`container:${containerName}`];
+  const progressMap = useProgress();
+  const prog = progressMap[`container:${containerName}`];
+  const running = anyActive(progressMap);
+  const blockedByOther = running.active && !isPending;
 
   function pickPath(v: string) {
     setPath(v);
@@ -503,11 +527,14 @@ function RestoreToFolder({
       <div className="flex items-center gap-2">
         <button
           onClick={() => void fire()}
-          disabled={!path.trim() || isPending || done}
+          disabled={!path.trim() || isPending || blockedByOther || done}
           className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPending ? t("common.restoring") : t("restore.confirm")}
         </button>
+        {blockedByOther && (
+          <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+        )}
       </div>
       {isPending && (
         <div className="flex flex-col gap-1">
@@ -517,7 +544,7 @@ function RestoreToFolder({
             <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
           )}
           {/* Extract to a folder is non-destructive — the light (safe) warning. */}
-          <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace={false} name={containerName} t={t} />
+          <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace={false} name={containerName} t={t} cancelledRef={cancelledRef} />
         </div>
       )}
       {state.phase === "success" && (
@@ -770,13 +797,18 @@ function SnapshotRow({
   // server (surviving this connection — and this panel — going away), so we
   // watch the "container:<name>" progress + the recorded run for the outcome
   // instead of awaiting the whole restore.
+  const cancelledRef = useRef(false);
   const { state: restoreState, fire, isPending } = useBackupWatch({
     progressKey: `container:${containerName}`,
     kind: "restore",
     start: () => restore(containerName, snap.id, true, source, leaveStopped),
     matchRun: (r) => r.domain === "container" && r.target === containerName,
+    cancelledRef,
   });
-  const prog = useProgress()[`container:${containerName}`];
+  const progressMap = useProgress();
+  const prog = progressMap[`container:${containerName}`];
+  const running = anyActive(progressMap);
+  const blockedByOther = running.active && !isPending;
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
   // In basic mode only the in-place restore is offered; the mode radios (files /
@@ -907,7 +939,7 @@ function SnapshotRow({
                 </label>
                 <button
                   onClick={handleRestore}
-                  disabled={!confirmed || isPending || restoreState.phase === "success"}
+                  disabled={!confirmed || isPending || blockedByOther || restoreState.phase === "success"}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
                   {isPending ? (
@@ -922,6 +954,9 @@ function SnapshotRow({
                     t("snapshots.restore")
                   )}
                 </button>
+                {blockedByOther && (
+                  <span className="text-[11px] text-carbon-textMuted shrink-0">{t(busyPhraseKey(running.phase))}</span>
+                )}
               </div>
               {/* Leave stopped: recreate but don't start (rebuild a stack in order). */}
               <label className="flex items-center gap-1.5 text-[11px] text-carbon-textSub cursor-pointer">
@@ -943,7 +978,7 @@ function SnapshotRow({
                     <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
                   )}
                   {/* Whole-snapshot in-place restore recreates the container — hard warning. */}
-                  <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace name={containerName} t={t} />
+                  <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace name={containerName} t={t} cancelledRef={cancelledRef} />
                 </div>
               )}
               {restoreState.phase === "success" && (

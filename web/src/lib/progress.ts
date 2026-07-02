@@ -14,24 +14,34 @@
 
 import { useEffect, useState } from "react";
 
-export type ProgressPhase = "backup" | "restore";
+export type ProgressPhase = "backup" | "restore" | "replicate";
 
 export interface ProgressState {
   phase: ProgressPhase;
   percent: number;
   active: boolean;
+  // Browser timestamp (Date.now()) of the last event seen for this key. Used to
+  // age out an entry whose terminal SSE frame was lost (network blip, restic
+  // crash, a reconnect where the clear never ran) so a stuck active:true entry
+  // can't disable every bulk button app-wide until a reload. See STALE_MS.
+  lastSeen: number;
 }
 
 export type ProgressMap = Record<string, ProgressState>;
 
-// Shape of a single SSE payload.
-interface ProgressEvent extends ProgressState {
-  key: string;
-}
+// Shape of a single SSE payload. lastSeen is stamped locally in applyEvent, so
+// it is not part of the wire shape.
+type ProgressEvent = Omit<ProgressState, "lastSeen"> & { key: string };
 
 // How long an inactive (completed) entry lingers so the bar can visibly reach
 // 100% before it fades out, then gets dropped from the map entirely.
 const COMPLETE_LINGER_MS = 800;
+
+// An entry with no event for this long is treated as NOT active by anyActive():
+// its terminal frame was almost certainly lost. restic streams progress at
+// RESTIC_PROGRESS_FPS=3 (~every 0.33s) while a run is live, so 15s without a
+// frame comfortably means "no longer running" without racing a slow tick.
+export const STALE_MS = 15000;
 
 // ---------------------------------------------------------------------------
 // Module-level shared state
@@ -61,7 +71,7 @@ function applyEvent(ev: ProgressEvent): void {
   // 100 on success and 0 on failure) rather than forcing 100 — otherwise a
   // failed/cancelled backup would flash a full green bar. Consumers render the
   // bar only while `active` is true, so we hold `active` during the linger.
-  const entry: ProgressState = { phase: ev.phase, percent: ev.percent, active: true };
+  const entry: ProgressState = { phase: ev.phase, percent: ev.percent, active: true, lastSeen: Date.now() };
 
   current = { ...current, [ev.key]: entry };
   emit();
@@ -93,7 +103,11 @@ function handleMessage(e: MessageEvent<string>): void {
     const ev = parsed as ProgressEvent;
     applyEvent({
       key: ev.key,
-      phase: ev.phase === "restore" ? "restore" : "backup",
+      // Preserve the real domain: a "replicate" (off-site) phase must stay
+      // distinct so anyActive can word the busy hint correctly (the activity
+      // tracker refuses a backup while a replication runs). Anything unknown
+      // collapses to "backup".
+      phase: ev.phase === "restore" ? "restore" : ev.phase === "replicate" ? "replicate" : "backup",
       percent: typeof ev.percent === "number" ? ev.percent : 0,
       active: !!ev.active,
     });
@@ -140,15 +154,34 @@ function closeSource(): void {
  * the caller can word the hint ("a restore is running" vs "a backup is running").
  */
 export function anyActive(
-  map: Record<string, { phase: string; active: boolean }>
+  map: Record<string, { phase: string; active: boolean; lastSeen?: number }>
 ): { active: boolean; phase?: string } {
+  const now = Date.now();
   for (const k of Object.keys(map)) {
     const e = map[k];
-    if (e.active && (e.phase === "backup" || e.phase === "restore" || e.phase === "replicate")) {
+    // A live entry whose last event is older than STALE_MS lost its terminal
+    // frame — treat it as no longer active so it can't lock the bulk buttons
+    // forever. (lastSeen is always set by applyEvent; the optional type only
+    // keeps this callable with looser shapes.)
+    const stale = e.lastSeen !== undefined && now - e.lastSeen > STALE_MS;
+    if (e.active && !stale && (e.phase === "backup" || e.phase === "restore" || e.phase === "replicate")) {
       return { active: true, phase: e.phase };
     }
   }
   return { active: false };
+}
+
+/**
+ * busyPhraseKey maps an anyActive() phase to the i18n key for the "something is
+ * running" hint, so every busy hint (bulk bars, per-item buttons) words it the
+ * same way — including the off-site "replication is running" case.
+ */
+export function busyPhraseKey(
+  phase?: string
+): "common.restoreRunning" | "common.replicateRunning" | "common.backupRunning" {
+  if (phase === "restore") return "common.restoreRunning";
+  if (phase === "replicate") return "common.replicateRunning";
+  return "common.backupRunning";
 }
 
 export function useProgress(): ProgressMap {

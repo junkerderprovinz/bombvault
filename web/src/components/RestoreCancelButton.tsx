@@ -13,7 +13,7 @@
 // neutral cancelled banner.
 // ---------------------------------------------------------------------------
 
-import { useState } from "react";
+import { useState, type MutableRefObject } from "react";
 import { cancelRestore } from "../lib/api";
 import type { useT } from "../lib/i18n";
 
@@ -24,6 +24,7 @@ export function RestoreCancelButton({
   inPlace,
   name,
   t,
+  cancelledRef,
 }: {
   /** The exact progress key the backend registered this restore under. */
   cancelKey: string;
@@ -33,6 +34,9 @@ export function RestoreCancelButton({
   /** Human name substituted into the in-place warning ({name}). */
   name: string;
   t: T;
+  /** Paired watch's cancelled flag: set true on a successful cancel so a no-run
+   *  restore finishes "cancelled", not a green "Restored". */
+  cancelledRef?: MutableRefObject<boolean>;
 }) {
   const [cancelling, setCancelling] = useState(false);
 
@@ -44,6 +48,9 @@ export function RestoreCancelButton({
     setCancelling(true);
     try {
       await cancelRestore(cancelKey);
+      // The cancel was accepted server-side: mark it so the watch's no-run
+      // fallback reports "cancelled" instead of a phantom success.
+      if (cancelledRef) cancelledRef.current = true;
     } catch {
       // A failed cancel POST leaves the restore running; the button stays
       // available to retry. The watch remains the source of truth for the outcome.

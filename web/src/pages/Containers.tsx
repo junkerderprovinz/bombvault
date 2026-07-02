@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, exportContainer, setIncludeAll, ApiError } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -11,7 +11,7 @@ import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
-import { useProgress, anyActive } from "../lib/progress";
+import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -605,7 +605,11 @@ function ContainerRow({
 }) {
   const { advanced } = useAdvanced();
   const installed = container.installed;
-  const progress = useProgress()[`container:${container.name}`];
+  const progressMap = useProgress();
+  const progress = progressMap[`container:${container.name}`];
+  // "Something is running" across any domain — used to busy-guard this row's
+  // own backup button (its OWN in-flight backup is handled by isPending inside).
+  const running = anyActive(progressMap);
   return (
     <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
       {/* Top row */}
@@ -673,7 +677,7 @@ function ContainerRow({
                 </span>
               ) : (
                 <>
-                  <BackupButton name={container.name} t={t} onBackedUp={onDeleted} />
+                  <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} />
                   {/* Plain tar+xml export is an advanced-only extra. */}
                   {advanced && <ExportButton name={container.name} t={t} />}
                 </>
@@ -799,6 +803,12 @@ function groupStacks(containers: Container[]): StackGroup[] {
   return groups;
 }
 
+// Grace after the last member goes inactive before a stack restore is treated as
+// finished. Comfortably longer than the per-member progress linger (~800ms) plus
+// the gap before the next member starts, so the cancel button doesn't flicker out
+// between sequential members.
+const STACK_DONE_GRACE_MS = 8000;
+
 // StackCard is one compose stack: its name, members, and (in a collapsible panel)
 // a "Restore stack" action that restores every member stopped, then optionally
 // starts them in dependency order. The restore is ASYNC on the server (the POST
@@ -812,23 +822,48 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
+  // Terminal state for the stack restore: since StackCard drives no fire-and-
+  // watch of its own, we derive "finished" from the members' progress below.
+  const [finished, setFinished] = useState(false);
   // The stack restore has no aggregate progress bar (it restores members one by
-  // one under their own "container:<name>" keys), so we surface a Cancel while
-  // any member is actively being restored. Cancelling targets the synthetic
-  // "stack:<project>" key, which aborts the member loop at the current member.
+  // one under their own "container:<name>" keys). A member is "active" while it
+  // is being restored; cancelling targets the synthetic "stack:<project>" key,
+  // which aborts the member loop at the current member.
   const progress = useProgress();
-  const stackRestoring =
+  const anyMemberActive =
     started &&
     group.members.some((m) => {
       const p = progress[`container:${m.name}`];
       return !!p && p.active && p.phase === "restore";
     });
+  // Once we have seen a member go active, keep the cancel button up for the WHOLE
+  // restoring window (through the ~800ms linger + gap between sequential members)
+  // and only flip to a neutral "finished" once NO member has been active for a
+  // grace window longer than that gap — otherwise the cancel button flickered out
+  // between members and the "runs in background" banner stayed sticky forever.
+  const sawActive = useRef(false);
+  useEffect(() => {
+    if (!started) return;
+    if (anyMemberActive) {
+      sawActive.current = true;
+      return; // renewed activity — the cleanup below cleared any pending terminal
+    }
+    if (!sawActive.current) return; // nothing has run yet: don't finish early
+    const timer = setTimeout(() => {
+      sawActive.current = false;
+      setStarted(false); // reset so a later single-member restore can't resurrect
+      setFinished(true); //   the stack cancel button
+    }, STACK_DONE_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [started, anyMemberActive]);
 
   async function run() {
     if (!window.confirm(t("stack.restoreConfirm"))) return;
     setBusy(true);
     setError(null);
     setStarted(false);
+    setFinished(false);
+    sawActive.current = false;
     try {
       const res = await restoreStack(group.project, startInOrder, true, source);
       if (res.ok) {
@@ -899,18 +934,21 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
             {error && <span className="text-xs text-[#ff8389] break-words">{error}</span>}
           </div>
 
-          {/* Sticky async ack: the server runs the stack restore detached and the
-              ack carries no member results — per-member outcomes are in the run
-              history. This stays until the panel is used again (no auto-clear). */}
+          {/* Async ack: the server runs the stack restore detached and the ack
+              carries no member results — per-member outcomes are in the run
+              history. The cancel button stays up for the whole restoring window
+              (no per-member flicker); once every member goes inactive the panel
+              flips to a neutral "finished" note (see the terminal effect above). */}
           {started && !busy && (
             <div className="flex flex-col gap-1">
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
               <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
               {/* Whole-stack in-place restore — hard warning, keyed to the stack. */}
-              {stackRestoring && (
-                <RestoreCancelButton cancelKey={`stack:${group.project}`} inPlace name={group.project} t={t} />
-              )}
+              <RestoreCancelButton cancelKey={`stack:${group.project}`} inPlace name={group.project} t={t} />
             </div>
+          )}
+          {finished && !busy && (
+            <p className="text-xs text-carbon-textSub">{t("stack.restoreFinished")}</p>
           )}
         </div>
       )}
@@ -1199,7 +1237,7 @@ export function Containers() {
           </button>
           {running.active && (
             <span className="text-xs text-carbon-textMuted">
-              {running.phase === "restore" ? t("common.restoreRunning") : t("common.backupRunning")}
+              {t(busyPhraseKey(running.phase))}
             </span>
           )}
         </div>
