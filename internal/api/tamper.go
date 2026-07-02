@@ -55,6 +55,10 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdi
 	default:
 		return TamperVerdict{}, fmt.Errorf("unknown domain %q", domain)
 	}
+	// Serialise per domain so read-prev → record → notify is atomic: a second
+	// concurrent test then reads the verdict this one recorded (no double / dropped
+	// protection-loss alert on a flip).
+	defer s.lockTamper(domain)()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
@@ -126,13 +130,18 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdi
 }
 
 // tamperProbe issues one authenticated DELETE and maps the status code to a
-// protection verdict. A transport error is returned as-is (inconclusive) so the
-// caller can distinguish "server refused/allowed" from "couldn't reach server".
+// protection verdict. ONLY decisive statuses yield a verdict; everything else is
+// treated as INCONCLUSIVE and returned as a non-nil error (exactly like a
+// transport error), so the caller records nothing and notifies nothing rather
+// than flip a stored verdict on an ambiguous response.
 //
 //   - 403 / 405 → protected (the delete was refused — append-only enforced)
-//   - 404       → NOT protected (the server would have deleted it)
+//   - 404       → NOT protected (the object did not exist; the server would have
+//     deleted a real one — not append-only)
 //   - 2xx       → NOT protected (the server accepted a delete)
-//   - other     → conservatively NOT protected, with the code in the detail
+//   - 401 / 3xx / 5xx / anything else → INCONCLUSIVE (non-nil error): auth
+//     failure (rotated creds), a redirect, or far-side/proxy maintenance is not a
+//     delete verdict and must never be read as "not protected".
 func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, detail string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
@@ -158,7 +167,11 @@ func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, d
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
 		return false, "server accepted a delete", nil
 	default:
-		return false, fmt.Sprintf("unexpected status %d — treating as not protected", resp.StatusCode), nil
+		// 401/3xx/5xx/unexpected: not a delete verdict → inconclusive, like a
+		// transport error. Returning an error makes RunTamperTest record + notify
+		// nothing, so a rotated credential or a far-side maintenance window can never
+		// masquerade as a lost append-only guarantee.
+		return false, "", fmt.Errorf("inconclusive tamper probe: unexpected status %d", resp.StatusCode)
 	}
 }
 
