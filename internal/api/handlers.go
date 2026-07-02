@@ -1246,6 +1246,30 @@ func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snippet": snip}))
 }
 
+// handleTamperTest runs an active off-site tamper test for a domain: it probes the
+// far-side rest-server's delete path with side-effect-free DELETEs to verify the
+// append-only protection is actually enforced (not just configured).
+// POST /api/offsite/{domain}/tamper-test
+func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	verdict, err := h.svc.RunTamperTest(r.Context(), domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"testable":  verdict.Testable,
+		"protected": verdict.Protected,
+		"detail":    verdict.Detail,
+	}))
+}
+
 // handleRcloneInfo returns the configured rclone remote names (never secrets).
 // GET /api/rclone
 func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {
