@@ -25,6 +25,13 @@ type DeploySnippet struct {
 // rest-server verifies htpasswd bcrypt hashes; cost 12 is a sensible 2026 default.
 const bcryptDeployCost = 12
 
+// tlsGuidance is an honest caveat appended to both deploy recipes. restic sends
+// the htpasswd credential as HTTP Basic auth, so on plain http:// it travels in
+// the clear — fine on a trusted LAN/VPN, but a WAN-reachable box should terminate
+// TLS at a reverse proxy so the append-only repository credential is not exposed
+// to on-path observers.
+const tlsGuidance = "# Plain HTTP is fine on a trusted LAN/VPN. For a WAN-reachable box, terminate TLS (a reverse proxy) so the repository credential is not sent in the clear."
+
 // randomDeployPassword returns a URL-safe 24-character password. 18 random bytes
 // base64url-encode to exactly 24 chars (no padding), all in the URL-safe alphabet
 // so the password is safe to paste into a shell/htpasswd line without quoting
@@ -69,7 +76,8 @@ echo '%s' >> /path/on/storage-box/restic/.htpasswd
 # 2) start the append-only rest-server:
 docker run -d --name rest-server -p 8000:8000 -v /path/on/storage-box/restic:/data -e OPTIONS="--append-only --private-repos --htpasswd-file /data/.htpasswd" restic/rest-server:0.14.0
 
-%s`, htpasswd, repoHint)
+%s
+%s`, htpasswd, tlsGuidance, repoHint)
 
 	compose := fmt.Sprintf(`# 1) create the append-only credential on the storage box:
 echo '%s' >> /path/on/storage-box/restic/.htpasswd
@@ -87,7 +95,8 @@ services:
       - /path/on/storage-box/restic:/data
     restart: unless-stopped
 
-%s`, htpasswd, repoHint)
+%s
+%s`, htpasswd, tlsGuidance, repoHint)
 
 	return DeploySnippet{
 		User:      user,

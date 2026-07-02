@@ -214,6 +214,13 @@ run BombVault **only on a trusted, non-exposed network** — never publish it di
 internet; for remote access put it behind a reverse proxy that adds authentication and TLS.
 Responses carry baseline security headers (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 
+Because the password gate is **opt-in**, when it is unset the whole UI and API are reachable by
+anyone who can reach the port — including the off-site setup and tamper-test routes that mint or
+use append-only credentials, and the encryption-key recovery kit. Enable the password gate
+(Settings → Security), especially once off-site/immutable backups or encryption are in use, and
+never expose the port directly to the internet — reach it over a VPN or a reverse proxy that adds
+authentication.
+
 Two caveats for the security-conscious: with `HTTP_ONLY=true` the session cookie loses its
 `Secure` flag (it has to, to work over plain HTTP), so only enable the password behind a
 TLS-terminating proxy if confidentiality matters. And the VM-backup SSH connection trusts the
