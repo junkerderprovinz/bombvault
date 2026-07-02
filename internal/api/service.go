@@ -2477,6 +2477,12 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	if err != nil {
 		return err
 	}
+	// Bulk-deleting from an immutable off-site repo is refused, same gate as
+	// DeleteSnapshot/PruneDomain: this path runs Forget with prune=true, exactly
+	// the destructive op append-only exists to block. The local repo is unaffected.
+	if source == "offsite" && offsiteImmutableFor("vms", settings) {
+		return errOffsiteAppendOnly
+	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
 	}
