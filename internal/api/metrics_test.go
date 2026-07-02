@@ -109,6 +109,62 @@ func TestMetricsExposition(t *testing.T) {
 	}
 }
 
+// TestMetricsRansomwareGauges pins the three ransomware-protection gauges added
+// in Task 8: the off-site immutable flag, the last tamper-test outcome, and the
+// last off-site replication timestamp — present for every domain and well-formed.
+func TestMetricsRansomwareGauges(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.ContainersOffsiteImmutable = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.RecordTamperTest("containers", true, ""); err != nil {
+		t.Fatal(err)
+	}
+	id, err := st.RecordOffsiteRun("containers", 1700000000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(id, true, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	out, err := svc.Metrics()
+	if err != nil {
+		t.Fatalf("Metrics: %v", err)
+	}
+
+	mustContain := []string{
+		"# HELP bombvault_offsite_immutable",
+		"# TYPE bombvault_offsite_immutable gauge",
+		`bombvault_offsite_immutable{domain="containers"} 1`,
+		`bombvault_offsite_immutable{domain="vms"} 0`,
+		"# HELP bombvault_tamper_test_ok",
+		"# TYPE bombvault_tamper_test_ok gauge",
+		`bombvault_tamper_test_ok{domain="containers"} 1`,
+		`bombvault_tamper_test_ok{domain="flash"} 0`,
+		"# HELP bombvault_offsite_last_replication_timestamp_seconds",
+		"# TYPE bombvault_offsite_last_replication_timestamp_seconds gauge",
+		`bombvault_offsite_last_replication_timestamp_seconds{domain="containers"} 1700000000`,
+		`bombvault_offsite_last_replication_timestamp_seconds{domain="vms"} 0`,
+	}
+	for _, want := range mustContain {
+		if !strings.Contains(out, want) {
+			t.Errorf("metrics output missing %q\n--- output ---\n%s", want, out)
+		}
+	}
+}
+
 // TestMetricsLabelEscaping verifies label values are escaped per Prometheus
 // rules (backslash, quote, newline) — exercised via the version label, the only
 // label whose value isn't a fixed enum.

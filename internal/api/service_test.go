@@ -487,6 +487,110 @@ func TestReplicateOffsiteSamplesOffsiteStats(t *testing.T) {
 	}
 }
 
+// TestDomainStatusScorecard pins the ransomware-protection scorecard fields on
+// DomainStatus: a configured+immutable domain with a fresh PROTECTED tamper test
+// and a successful replication is green; a domain with NO off-site is red; a
+// configured+immutable domain whose tamper test FAILED is red.
+func TestDomainStatusScorecard(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	// containers: enabled, immutable off-site, fresh PROTECTED tamper → green.
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.ContainersOffsiteImmutable = true
+	// vms: enabled, NO off-site → red.
+	s.VMsEnabled = true
+	// flash: enabled, immutable off-site, but the tamper test FAILED → red.
+	s.FlashEnabled = true
+	s.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
+	s.FlashOffsiteImmutable = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.RecordTamperTest("containers", true, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.RecordTamperTest("flash", false, "server would have deleted (404)"); err != nil {
+		t.Fatal(err)
+	}
+	// A successful off-site replication for containers so LastReplication* is set.
+	id, err := st.RecordOffsiteRun("containers", 1700000000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(id, true, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	byDomain := map[string]api.DomainStatusEntry{}
+	for _, d := range statuses {
+		byDomain[d.Domain] = d
+	}
+
+	c := byDomain["containers"]
+	if !c.OffsiteConfigured || !c.OffsiteImmutable {
+		t.Fatalf("containers should be configured+immutable, got %+v", c)
+	}
+	if !c.LastTamperOK || c.LastTamperAt == 0 {
+		t.Fatalf("containers tamper should be OK + stamped, got %+v", c)
+	}
+	if !c.LastReplicationOK || c.LastReplicationAt != 1700000000 {
+		t.Fatalf("containers replication should be OK + stamped at 1700000000, got %+v", c)
+	}
+	if c.Protection != "green" {
+		t.Fatalf("containers should be green, got %q", c.Protection)
+	}
+
+	v := byDomain["vms"]
+	if v.OffsiteConfigured {
+		t.Fatalf("vms should have no off-site, got %+v", v)
+	}
+	if v.Protection != "red" {
+		t.Fatalf("vms (no off-site) should be red, got %q", v.Protection)
+	}
+
+	f := byDomain["flash"]
+	if f.LastTamperOK || f.LastTamperAt == 0 {
+		t.Fatalf("flash tamper should be recorded as failed + stamped, got %+v", f)
+	}
+	if f.Protection != "red" {
+		t.Fatalf("flash (tamper failed) should be red, got %q", f.Protection)
+	}
+}
+
+// TestDomainStatusScorecardDisabled pins that a disabled domain carries no
+// protection posture (Protection == "") so the dashboard shows nothing for it.
+func TestDomainStatusScorecardDisabled(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	// Explicitly disable every domain (containers defaults to enabled).
+	s := mustSettings(t, st)
+	s.ContainersEnabled = false
+	s.VMsEnabled = false
+	s.FlashEnabled = false
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	for _, d := range statuses {
+		if d.Protection != "" {
+			t.Errorf("disabled domain %s should have empty Protection, got %q", d.Domain, d.Protection)
+		}
+	}
+}
+
 // newImmutableOffsiteSvc builds a service whose containers repo is initialised
 // locally and whose off-site repo is a remote flagged immutable — the setup for
 // the delete/prune-refusal and unlock-allowed tests.
