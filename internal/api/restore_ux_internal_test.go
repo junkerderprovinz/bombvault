@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 // TestStartBackupAllRefusesBusyDomain pins the per-domain activity tracker: when
@@ -32,5 +33,27 @@ func TestStartBackupAllRefusesBusyDomain(t *testing.T) {
 	// batchActive must be released so a later attempt can run.
 	if svc.batchActive.Load() {
 		t.Fatal("batchActive must be cleared after a refused start")
+	}
+}
+
+// TestCancelRunLifecycle pins the cancel registry: a registered progress key can
+// be cancelled (its context is cancelled and CancelRun reports true), and after
+// unregister a cancel of the same key is an idempotent no-op reporting false —
+// so cancelling an already-finished/unknown restore is harmless.
+func TestCancelRunLifecycle(t *testing.T) {
+	svc := &Service{runCancels: map[string]context.CancelFunc{}}
+	ctx, cancel := context.WithCancel(context.Background())
+	svc.registerCancel("container:plex", cancel)
+	if !svc.CancelRun("container:plex") {
+		t.Fatal("CancelRun should report true for a registered key")
+	}
+	select {
+	case <-ctx.Done():
+	case <-time.After(time.Second):
+		t.Fatal("CancelRun must cancel the registered context")
+	}
+	svc.unregisterCancel("container:plex")
+	if svc.CancelRun("container:plex") {
+		t.Fatal("CancelRun should report false for an unknown/finished key (idempotent no-op)")
 	}
 }

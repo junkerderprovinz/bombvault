@@ -151,6 +151,14 @@ type Service struct {
 	activityMu     sync.Mutex
 	domainActivity map[string]string
 
+	// runCancels maps a running restore's progress key ("container:<name>" /
+	// "vm:<name>" / "to:<path>" / "stack:<project>") to the CancelFunc of its
+	// detached context, so POST /api/restore/cancel can stop an in-flight restore
+	// by key. Registered on launch, deleted (defer) when the run finishes. Guarded
+	// by cancelMu. Cancelling an unknown/finished key is a harmless no-op.
+	cancelMu   sync.Mutex
+	runCancels map[string]context.CancelFunc
+
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
 	selfMu       sync.Mutex
@@ -209,6 +217,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 			"flash":      {},
 		},
 		domainActivity:    map[string]string{},
+		runCancels:        map[string]context.CancelFunc{},
 		offsiteOverBudget: map[string]bool{},
 	}
 }
@@ -2393,6 +2402,39 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 // lock) forever, never to bound a legitimate huge restore.
 const restoreTimeout = 48 * time.Hour
 
+// registerCancel records the CancelFunc of a running restore under its progress
+// key so POST /api/restore/cancel can stop it. Called on launch; paired with a
+// deferred unregisterCancel.
+func (s *Service) registerCancel(key string, cancel context.CancelFunc) {
+	s.cancelMu.Lock()
+	if s.runCancels == nil {
+		s.runCancels = map[string]context.CancelFunc{}
+	}
+	s.runCancels[key] = cancel
+	s.cancelMu.Unlock()
+}
+
+// unregisterCancel drops a restore's cancel entry once it has finished, so a
+// later cancel of the same key is a harmless no-op.
+func (s *Service) unregisterCancel(key string) {
+	s.cancelMu.Lock()
+	delete(s.runCancels, key)
+	s.cancelMu.Unlock()
+}
+
+// CancelRun cancels a running restore by its progress key and reports whether one
+// was registered. Cancelling an unknown/already-finished key returns false and is
+// a no-op (idempotent), so the endpoint can be called safely at any time.
+func (s *Service) CancelRun(key string) bool {
+	s.cancelMu.Lock()
+	cancel, ok := s.runCancels[key]
+	s.cancelMu.Unlock()
+	if ok {
+		cancel()
+	}
+	return ok
+}
+
 // StartRestore launches an in-place container restore in a background goroutine
 // and returns immediately, mirroring StartBackup. This is the robust path for
 // long restores: the work runs ON THE SERVER, detached from the request, so a
@@ -2417,10 +2459,15 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 	// the moment the handler returns), capped by restoreTimeout (see its comment
 	// for why the restore cap is far more generous than the backup one).
 	bctx := context.WithoutCancel(ctx)
+	key := "container:" + name // the exact progBegin key executeRestore publishes under
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
+		s.registerCancel(key, cancel)
+		defer s.unregisterCancel(key)
 		if rerr := s.executeRestore(rctx, name, plan, leaveStopped); rerr != nil {
 			log.Printf("api: restore: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
@@ -2663,12 +2710,16 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 		return "", false, err
 	}
 	bctx := context.WithoutCancel(ctx)
+	rkey := "container:" + name // the exact progBegin key this restore publishes under
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
+		s.registerCancel(rkey, cancel)
+		defer s.unregisterCancel(rkey)
 		runID := s.beginRestoreRun(name)
-		rkey := "container:" + name
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFiles(pctx, plan)
 		s.progEnd(rkey, "restore", rerr == nil)
@@ -2859,12 +2910,16 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 		return "", false, err
 	}
 	bctx := context.WithoutCancel(ctx)
+	rkey := "container:" + name // the exact progBegin key this restore publishes under
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
+		s.registerCancel(rkey, cancel)
+		defer s.unregisterCancel(rkey)
 		runID := s.beginRestoreRun(name)
-		rkey := "container:" + name
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreToPath(pctx, plan)
 		s.progEnd(rkey, "restore", rerr == nil)
@@ -3865,10 +3920,15 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 		return false, err
 	}
 	bctx := context.WithoutCancel(ctx)
+	key := "vm:" + name // the exact progBegin key executeRestoreVM publishes under
 	go func() {
 		defer s.batchActive.Store(false)
-		rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
+		s.registerCancel(key, cancel)
+		defer s.unregisterCancel(key)
 		if rerr := s.executeRestoreVM(rctx, name, plan, leaveStopped); rerr != nil {
 			log.Printf("api: restore vm: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
