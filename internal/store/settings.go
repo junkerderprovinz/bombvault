@@ -88,6 +88,22 @@ type Settings struct {
 	// encryption-key recovery kit, so the dashboard nag can be dismissed. Default
 	// false (the nag shows while encryption is on and this is unset).
 	RecoveryKitAck bool
+	// Per-domain "off-site repo is append-only (immutable)" flag. The far side
+	// (e.g. rest-server --append-only) enforces it; with the flag set BombVault
+	// skips its own off-site retention prune and refuses off-site deletes.
+	ContainersOffsiteImmutable bool
+	VMsOffsiteImmutable        bool
+	FlashOffsiteImmutable      bool
+	// OffsiteGrowthBudgetGB caps how large an (only-growing) append-only off-site
+	// repo may get before a notification fires — detection, not prevention.
+	// 0 = budget alarm off (the default).
+	OffsiteGrowthBudgetGB int
+	// TamperTestSchedule is the cadence for the scheduled off-site tamper test
+	// (same grammar as the backup schedules). Defaults to "weekly Sun 04:30".
+	TamperTestSchedule string
+	// DRDrillTarget is the container the real-restore DR drill restores. Empty
+	// (the default) = auto: the most recently successfully backed-up container.
+	DRDrillTarget string
 }
 
 // GetSettings returns the current app settings.
@@ -105,11 +121,14 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       rclone_conf, notify_conf, cloud_conf,
 		       metrics_enabled, metrics_token,
 		       drills_enabled, drills_schedule, drills_subset_pct,
-		       recovery_kit_ack
+		       recovery_kit_ack,
+		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable,
+		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, metricsEnabled, drillsEnabled, recoveryKitAck int
+	var contImmutable, vmsImmutable, flashImmutable int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.RestoreFolder,
@@ -124,6 +143,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&metricsEnabled, &s.MetricsToken,
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct,
 		&recoveryKitAck,
+		&contImmutable, &vmsImmutable, &flashImmutable,
+		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -138,6 +159,9 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.MetricsEnabled = metricsEnabled != 0
 	s.DrillsEnabled = drillsEnabled != 0
 	s.RecoveryKitAck = recoveryKitAck != 0
+	s.ContainersOffsiteImmutable = contImmutable != 0
+	s.VMsOffsiteImmutable = vmsImmutable != 0
+	s.FlashOffsiteImmutable = flashImmutable != 0
 	return s, nil
 }
 
@@ -182,7 +206,13 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  drills_enabled         = ?,
 		  drills_schedule        = ?,
 		  drills_subset_pct      = ?,
-		  recovery_kit_ack       = ?
+		  recovery_kit_ack       = ?,
+		  containers_offsite_immutable = ?,
+		  vms_offsite_immutable        = ?,
+		  flash_offsite_immutable      = ?,
+		  offsite_growth_budget_gb     = ?,
+		  tamper_test_schedule         = ?,
+		  dr_drill_target              = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -200,6 +230,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.MetricsEnabled), s.MetricsToken,
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct,
 		boolInt(s.RecoveryKitAck),
+		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable),
+		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

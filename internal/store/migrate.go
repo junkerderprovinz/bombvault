@@ -315,6 +315,77 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 		name:    "settings_restore_folder",
 		sql:     "ALTER TABLE settings ADD COLUMN restore_folder TEXT NOT NULL DEFAULT 'user/bombvault/restore';",
 	},
+	{
+		// Per-domain "off-site repo is append-only (immutable)" flag: the far side
+		// (e.g. rest-server --append-only) enforces it; BombVault then skips its own
+		// off-site prune and refuses off-site deletes. One column per domain (SQLite
+		// ADD COLUMN is single-column), hence three migrations.
+		version: 34,
+		name:    "settings_containers_offsite_immutable",
+		sql:     "ALTER TABLE settings ADD COLUMN containers_offsite_immutable INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 35,
+		name:    "settings_vms_offsite_immutable",
+		sql:     "ALTER TABLE settings ADD COLUMN vms_offsite_immutable INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 36,
+		name:    "settings_flash_offsite_immutable",
+		sql:     "ALTER TABLE settings ADD COLUMN flash_offsite_immutable INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		// Off-site growth budget (GB): an append-only repo only ever grows, so this
+		// caps how large it may get before a notification fires (detection, not
+		// prevention). 0 = budget alarm off (the default).
+		version: 37,
+		name:    "settings_offsite_growth_budget_gb",
+		sql:     "ALTER TABLE settings ADD COLUMN offsite_growth_budget_gb INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		// Cadence for the scheduled off-site tamper test (same grammar as the backup
+		// schedules). Weekly by default so the "append-only is still enforced"
+		// verdict never grows stale unnoticed.
+		version: 38,
+		name:    "settings_tamper_test_schedule",
+		sql:     "ALTER TABLE settings ADD COLUMN tamper_test_schedule TEXT NOT NULL DEFAULT 'weekly Sun 04:30';",
+	},
+	{
+		// Container the real-restore DR drill restores by default. Empty (the
+		// default) = auto: the most recently successfully backed-up container.
+		version: 39,
+		name:    "settings_dr_drill_target",
+		sql:     "ALTER TABLE settings ADD COLUMN dr_drill_target TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		// Off-site tamper-test history: each row is one active probe of the far
+		// side's delete path. protected = 1 means the delete was refused (append-only
+		// is actually enforced); detail carries the scrubbed status/error.
+		version: 40,
+		name:    "tamper_tests",
+		sql: `CREATE TABLE tamper_tests (
+  domain TEXT NOT NULL, at INTEGER NOT NULL,
+  protected INTEGER NOT NULL,          -- 1 = delete was refused
+  detail TEXT NOT NULL DEFAULT ''      -- scrubbed status/error
+);`,
+	},
+	{
+		// Off-site replication history: one row per `restic copy` run (begin/end,
+		// outcome, scrubbed error). finished_at NULL = still running.
+		version: 41,
+		name:    "offsite_runs",
+		sql: `CREATE TABLE offsite_runs (
+  domain TEXT NOT NULL, started_at INTEGER NOT NULL, finished_at INTEGER,
+  ok INTEGER NOT NULL DEFAULT 0, error TEXT NOT NULL DEFAULT ''
+);`,
+	},
+	{
+		// Drill kind: 'subset' = the existing `restic check --read-data-subset`
+		// verification; 'dr' = a real sandbox restore from the off-site repo.
+		version: 42,
+		name:    "restore_drills_kind",
+		sql:     "ALTER TABLE restore_drills ADD COLUMN kind TEXT NOT NULL DEFAULT 'subset';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
