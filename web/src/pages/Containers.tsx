@@ -7,6 +7,7 @@ import { useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
+import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
@@ -811,6 +812,17 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
+  // The stack restore has no aggregate progress bar (it restores members one by
+  // one under their own "container:<name>" keys), so we surface a Cancel while
+  // any member is actively being restored. Cancelling targets the synthetic
+  // "stack:<project>" key, which aborts the member loop at the current member.
+  const progress = useProgress();
+  const stackRestoring =
+    started &&
+    group.members.some((m) => {
+      const p = progress[`container:${m.name}`];
+      return !!p && p.active && p.phase === "restore";
+    });
 
   async function run() {
     if (!window.confirm(t("stack.restoreConfirm"))) return;
@@ -891,9 +903,13 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
               ack carries no member results — per-member outcomes are in the run
               history. This stays until the panel is used again (no auto-clear). */}
           {started && !busy && (
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
               <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+              {/* Whole-stack in-place restore — hard warning, keyed to the stack. */}
+              {stackRestoring && (
+                <RestoreCancelButton cancelKey={`stack:${group.project}`} inPlace name={group.project} t={t} />
+              )}
             </div>
           )}
         </div>
