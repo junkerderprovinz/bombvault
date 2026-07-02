@@ -414,6 +414,8 @@ func newImmutableOffsiteSvc(t *testing.T) (*api.Service, *fakeResticEngine) {
 	s.ContainersPath = "backups/containers"
 	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
 	s.ContainersOffsiteImmutable = true
+	s.VMsOffsite = "rest:http://192.168.1.2:8000/vms"
+	s.VMsOffsiteImmutable = true
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -471,6 +473,22 @@ func TestPruneDomainOffsiteImmutableRefused(t *testing.T) {
 	}
 	if len(eng.manualPruned) != 1 {
 		t.Fatalf("local prune must reach the engine, got %v", eng.manualPruned)
+	}
+}
+
+// TestDeleteBackupsVMOffsiteImmutableRefused pins that the bulk VM purge is
+// refused on an immutable off-site repo (it runs Forget with prune=true, the
+// destructive op append-only blocks) with a clear append-only error, and that
+// nothing reaches the engine.
+func TestDeleteBackupsVMOffsiteImmutableRefused(t *testing.T) {
+	svc, eng := newImmutableOffsiteSvc(t)
+
+	err := svc.DeleteBackupsVM(context.Background(), "win11", "offsite")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("off-site bulk VM delete on an immutable repo must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
 	}
 }
 
