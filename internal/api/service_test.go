@@ -371,6 +371,123 @@ func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
 	}
 }
 
+// TestReplicateOffsiteImmutableSkipsRetention pins the append-only behaviour:
+// with the domain's off-site immutable flag set, a replication still runs Copy
+// but NEVER applies the off-site retention policy (no ForgetPolicy against the
+// off-site repo) — retention is enforced far-side.
+func TestReplicateOffsiteImmutableSkipsRetention(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FlashPath = "backups/flash"
+	s.FlashOffsite = "backups/flash-offsite"
+	s.OffsiteRetentionKeepDaily = 14 // an off-site policy IS set…
+	s.FlashOffsiteImmutable = true   // …but the repo is append-only
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.copied) != 1 {
+		t.Fatalf("immutable off-site must still replicate (Copy), got %v", eng.copied)
+	}
+	if len(eng.prunedRepos) != 0 {
+		t.Fatalf("immutable off-site must NOT be pruned (ForgetPolicy), got %v", eng.prunedRepos)
+	}
+}
+
+// newImmutableOffsiteSvc builds a service whose containers repo is initialised
+// locally and whose off-site repo is a remote flagged immutable — the setup for
+// the delete/prune-refusal and unlock-allowed tests.
+func newImmutableOffsiteSvc(t *testing.T) (*api.Service, *fakeResticEngine) {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.ContainersOffsiteImmutable = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), eng
+}
+
+// TestDeleteSnapshotOffsiteImmutableRefused pins the delete refusal: deleting a
+// snapshot from an immutable OFF-SITE repo is refused with a clear append-only
+// error (nothing reaches the engine), while the LOCAL repo stays deletable.
+func TestDeleteSnapshotOffsiteImmutableRefused(t *testing.T) {
+	svc, eng := newImmutableOffsiteSvc(t)
+
+	err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678", "offsite")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("off-site delete on an immutable repo must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused delete, got %v", eng.forgotten)
+	}
+
+	// The LOCAL repo is unaffected by the off-site immutable flag.
+	if err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678", ""); err != nil {
+		t.Fatalf("local delete must stay allowed: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("local delete must reach the engine, got %v", eng.forgotten)
+	}
+}
+
+// TestPruneDomainOffsiteImmutableRefused pins the prune refusal: pruning an
+// immutable OFF-SITE repo is refused with an append-only error (neither
+// ForgetPolicy nor Prune reaches the engine); the LOCAL repo stays prunable.
+func TestPruneDomainOffsiteImmutableRefused(t *testing.T) {
+	svc, eng := newImmutableOffsiteSvc(t)
+
+	err := svc.PruneDomain(context.Background(), "containers", "offsite")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("off-site prune on an immutable repo must fail with an append-only error, got %v", err)
+	}
+	if len(eng.prunedRepos) != 0 || len(eng.manualPruned) != 0 {
+		t.Fatalf("no prune may reach the engine for a refused prune, got prunedRepos=%v manualPruned=%v", eng.prunedRepos, eng.manualPruned)
+	}
+
+	// The LOCAL repo is unaffected by the off-site immutable flag.
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("local prune must stay allowed: %v", err)
+	}
+	if len(eng.manualPruned) != 1 {
+		t.Fatalf("local prune must reach the engine, got %v", eng.manualPruned)
+	}
+}
+
+// TestUnlockDomainOffsiteImmutableAllowed pins that Unlock stays allowed on an
+// immutable off-site repo: rest-server permits lock removal in append-only
+// mode, and clearing a stale lock is operationally required.
+func TestUnlockDomainOffsiteImmutableAllowed(t *testing.T) {
+	svc, eng := newImmutableOffsiteSvc(t)
+
+	if err := svc.UnlockDomain(context.Background(), "containers", "offsite"); err != nil {
+		t.Fatalf("unlock on an immutable off-site repo must stay allowed: %v", err)
+	}
+	if len(eng.unlockedRepos) != 1 {
+		t.Fatalf("expected exactly one unlock call, got %v", eng.unlockedRepos)
+	}
+}
+
 // TestDomainStatus drives DomainStatus through a seeded store: a disabled domain
 // is "off", an enabled+scheduled domain with no successful backup is "never", and
 // one with a fresh successful backup is "ok". The time-boundary cases

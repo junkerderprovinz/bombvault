@@ -353,6 +353,63 @@ func TestSettingsGetPut(t *testing.T) {
 	}
 }
 
+// TestSettingsPutImmutableRetentionWarning pins the warnings extension of the
+// PUT /api/settings envelope: saving an immutable off-site flag together with
+// an off-site retention policy succeeds (ok:true, backward compatible) but
+// carries a "warnings" array — BombVault will not prune an append-only repo,
+// so the policy is inert until enforced far-side. Without the conflict the
+// response has no warnings.
+func TestSettingsPutImmutableRetentionWarning(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	// Immutable flag + off-site retention set → ok with a warning.
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"containersOffsite": "rest:http://192.168.1.2:8000/containers",
+		"containersOffsiteImmutable": true,
+		"offsiteRetentionKeepDaily": 14
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("put status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("immutable + retention must still save (warn, not fail), got %v", m)
+	}
+	warnings, ok := m["warnings"].([]any)
+	if !ok || len(warnings) == 0 {
+		t.Fatalf("expected a non-empty warnings array, got %v", m)
+	}
+	if s, _ := warnings[0].(string); !strings.Contains(s, "append-only") {
+		t.Fatalf("warning must explain the append-only conflict, got %q", warnings[0])
+	}
+
+	// Immutable without off-site retention → plain ok, no warnings key.
+	body = `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"containersOffsite": "rest:http://192.168.1.2:8000/containers",
+		"containersOffsiteImmutable": true
+	}`
+	w, m = doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status = %d body=%s", w.Code, w.Body.String())
+	}
+	if _, present := m["warnings"]; present {
+		t.Fatalf("no warnings expected without an off-site retention policy, got %v", m)
+	}
+}
+
 func TestSettingsPutRejectsBadCadence(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})

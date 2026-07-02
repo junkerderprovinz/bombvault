@@ -396,6 +396,29 @@ func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) str
 	return ""
 }
 
+// offsiteImmutableFor reports whether a domain's off-site repo is flagged
+// append-only (immutable). The far side (e.g. rest-server --append-only)
+// enforces it; the flag changes BombVault's OWN behaviour: replication skips
+// the off-site retention prune, and off-site delete/prune are refused. Unlock
+// stays allowed — rest-server permits lock removal in append-only mode, and
+// clearing a stale lock is operationally required.
+func offsiteImmutableFor(domain string, s store.Settings) bool {
+	switch domain {
+	case "containers":
+		return s.ContainersOffsiteImmutable
+	case "vms":
+		return s.VMsOffsiteImmutable
+	case "flash":
+		return s.FlashOffsiteImmutable
+	}
+	return false
+}
+
+// errOffsiteAppendOnly refuses a destructive operation against an off-site repo
+// flagged immutable: the whole point of append-only is that credentials on this
+// box cannot delete history, so BombVault does not even try.
+var errOffsiteAppendOnly = errors.New("repo is append-only; prune far-side or use a maintenance window")
+
 // DomainStatusEntry is the per-domain RPO (protection) status: whether a
 // domain's backups are current relative to its schedule. It drives the
 // dashboard's green/amber/red "are my backups current?" indicator.
@@ -774,8 +797,12 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// Apply the off-site retention policy (separate from local) after a successful
 	// copy — only when one is set, so an off-site repo defaults to keep-everything
 	// (archive) and existing setups are unchanged. Best-effort: a prune failure
-	// must not fail the replication that already succeeded.
-	if op := s.offsiteRetentionPolicy(settings); op.Any() {
+	// must not fail the replication that already succeeded. An IMMUTABLE
+	// (append-only) off-site repo is never pruned from here: the far side would
+	// refuse the delete anyway, and retention is enforced far-side by design.
+	if offsiteImmutableFor(domain, settings) {
+		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
+	} else if op := s.offsiteRetentionPolicy(settings); op.Any() {
 		if perr := s.engine.ForgetPolicy(ctx, dest, op, mode); perr != nil {
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
@@ -3818,6 +3845,12 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	if err != nil {
 		return err
 	}
+	// An immutable off-site repo is never pruned from this box (append-only is
+	// the point). Only the offsite+immutable combination is gated — the local
+	// repo stays fully maintainable.
+	if source == "offsite" && offsiteImmutableFor(domain, settings) {
+		return errOffsiteAppendOnly
+	}
 	if err := s.requireExistingRepo(repo, "no backups to prune yet"); err != nil {
 		return err
 	}
@@ -3861,6 +3894,12 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
+	}
+	// Deleting snapshots from an immutable off-site repo is refused (same gate
+	// as PruneDomain): append-only means credentials on this box cannot erase
+	// off-site history. The local repo is unaffected.
+	if source == "offsite" && offsiteImmutableFor(domain, settings) {
+		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
