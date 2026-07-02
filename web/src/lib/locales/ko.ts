@@ -94,7 +94,12 @@ const ko: Partial<Translations> = {
   "restore.confirmBody":
     "컨테이너를 중지하고, appdata를 교체하며, 백업에서 재생성합니다. 계속하시겠습니까?",
   "restore.confirm": "확인",
-  "restore.cancel": "취소",
+  "restore.cancel": "복원 취소",
+  "restore.cancelConfirmSafe": "복원을 취소하시겠습니까? 일부만 기록된 출력 폴더는 그대로 유지됩니다.",
+  "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 일부만 복원된 상태로 남습니다 — 정상적인 {name}을(를) 얻으려면 다시 복원해야 합니다. 그래도 취소하시겠습니까?",
+  "restore.cancelling": "취소하는 중…",
+  "restore.cancelled": "복원이 취소되었습니다",
+  "restore.progress": "복원 중… {pct}%",
   "restore.preview": "미리 보기",
   "restore.started": "복원이 시작되었습니다",
 
@@ -354,6 +359,8 @@ const ko: Partial<Translations> = {
   "common.done": "완료",
   "common.loadingBackups": "백업 불러오는 중…",
   "common.saving": "저장 중…",
+  "common.restoreRunning": "복원이 실행 중입니다…",
+  "common.backupRunning": "백업이 실행 중입니다…",
 
   // Backup folders selector
   "folders.title": "백업 폴더",

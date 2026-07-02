@@ -94,7 +94,12 @@ const hu: Partial<Translations> = {
   "restore.confirmBody":
     "Ez leállítja a konténert, kicseréli az appdata-t, és visszaállítja a mentésből. Folytatja?",
   "restore.confirm": "Megerősítés",
-  "restore.cancel": "Mégse",
+  "restore.cancel": "Visszaállítás megszakítása",
+  "restore.cancelConfirmSafe": "Megszakítja a visszaállítást? A részlegesen kiírt célmappa változatlanul megmarad.",
+  "restore.cancelConfirmInPlace": "A(z) {name} visszaállítása folyamatban van. A megszakítás részlegesen visszaállított állapotban hagyja — a működő {name} eléréséhez újra kell futtatni a visszaállítást. Mégis megszakítja?",
+  "restore.cancelling": "Megszakítás…",
+  "restore.cancelled": "Visszaállítás megszakítva",
+  "restore.progress": "Visszaállítás… {pct}%",
   "restore.preview": "Előnézet",
   "restore.started": "Visszaállítás elindult",
 
@@ -362,6 +367,8 @@ const hu: Partial<Translations> = {
   "common.done": "Kész",
   "common.loadingBackups": "Mentések betöltése…",
   "common.saving": "Mentés…",
+  "common.restoreRunning": "Visszaállítás van folyamatban…",
+  "common.backupRunning": "Biztonsági mentés van folyamatban…",
 
   // Backup folders selector
   "folders.title": "Mentett mappák",

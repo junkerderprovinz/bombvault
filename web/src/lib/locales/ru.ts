@@ -93,7 +93,12 @@ const ru: Partial<Translations> = {
   "restore.confirmTitle": "Подтвердить восстановление",
   "restore.confirmBody": "Контейнер будет остановлен, appdata заменены и пересозданы из резервной копии. Продолжить?",
   "restore.confirm": "Подтвердить",
-  "restore.cancel": "Отмена",
+  "restore.cancel": "Отменить восстановление",
+  "restore.cancelConfirmSafe": "Отменить восстановление? Частично записанная целевая папка останется без изменений.",
+  "restore.cancelConfirmInPlace": "{name} находится в процессе восстановления. Отмена оставит его частично восстановленным — чтобы получить рабочий {name}, потребуется восстановить снова. Всё равно отменить?",
+  "restore.cancelling": "Отмена…",
+  "restore.cancelled": "Восстановление отменено",
+  "restore.progress": "Восстановление… {pct}%",
   "restore.preview": "Предпросмотр",
   "restore.started": "Восстановление запущено",
 
@@ -357,6 +362,8 @@ const ru: Partial<Translations> = {
   "common.done": "Готово",
   "common.loadingBackups": "Загрузка резервных копий…",
   "common.saving": "Сохранение…",
+  "common.restoreRunning": "Выполняется восстановление…",
+  "common.backupRunning": "Выполняется резервное копирование…",
 
   // Backup folders selector
   "folders.title": "Папки для резервного копирования",

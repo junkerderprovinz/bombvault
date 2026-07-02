@@ -94,7 +94,12 @@ const el: Partial<Translations> = {
   "restore.confirmBody":
     "Αυτό θα διακόψει το container, θα αντικαταστήσει το appdata και θα το επαναφέρει από το αντίγραφο. Συνέχεια;",
   "restore.confirm": "Επιβεβαίωση",
-  "restore.cancel": "Ακύρωση",
+  "restore.cancel": "Ακύρωση επαναφοράς",
+  "restore.cancelConfirmSafe": "Ακύρωση της επαναφοράς; Ο φάκελος με τα μερικά δεδομένα παραμένει ως έχει.",
+  "restore.cancelConfirmInPlace": "Το {name} βρίσκεται σε εξέλιξη επαναφοράς. Η ακύρωση το αφήνει μερικώς επαναφερμένο — θα χρειαστεί νέα επαναφορά για να έχετε ένα λειτουργικό {name}. Ακύρωση ούτως ή άλλως;",
+  "restore.cancelling": "Ακύρωση…",
+  "restore.cancelled": "Η επαναφορά ακυρώθηκε",
+  "restore.progress": "Επαναφορά… {pct}%",
   "restore.preview": "Προεπισκόπηση",
   "restore.started": "Η επαναφορά ξεκίνησε",
 
@@ -362,6 +367,8 @@ const el: Partial<Translations> = {
   "common.done": "Έτοιμο",
   "common.loadingBackups": "Φόρτωση αντιγράφων…",
   "common.saving": "Αποθήκευση…",
+  "common.restoreRunning": "Εκτελείται μια επαναφορά…",
+  "common.backupRunning": "Εκτελείται ένα αντίγραφο ασφαλείας…",
 
   // Backup folders selector
   "folders.title": "Φάκελοι αντιγράφων",

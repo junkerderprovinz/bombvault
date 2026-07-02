@@ -94,7 +94,12 @@ const zh: Partial<Translations> = {
   "restore.confirmBody":
     "此操作将停止容器、替换其 appdata 并从备份中重新创建。是否继续？",
   "restore.confirm": "确认",
-  "restore.cancel": "取消",
+  "restore.cancel": "取消还原",
+  "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
+  "restore.cancelConfirmInPlace": "{name} 正在还原中。取消将使其停留在部分还原的状态——需要再次还原才能得到可用的 {name}。仍要取消吗？",
+  "restore.cancelling": "正在取消…",
+  "restore.cancelled": "还原已取消",
+  "restore.progress": "还原中… {pct}%",
   "restore.preview": "预览",
   "restore.started": "还原已启动",
 
@@ -354,6 +359,8 @@ const zh: Partial<Translations> = {
   "common.done": "完成",
   "common.loadingBackups": "正在加载备份…",
   "common.saving": "保存中…",
+  "common.restoreRunning": "正在进行还原…",
+  "common.backupRunning": "正在进行备份…",
 
   // Backup folders selector
   "folders.title": "备份文件夹",

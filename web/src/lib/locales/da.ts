@@ -94,7 +94,12 @@ const da: Partial<Translations> = {
   "restore.confirmBody":
     "Containeren stoppes, dens appdata erstattes og den genoprettes fra sikkerhedskopien. Fortsæt?",
   "restore.confirm": "Bekræft",
-  "restore.cancel": "Annuller",
+  "restore.cancel": "Annuller gendannelse",
+  "restore.cancelConfirmSafe": "Annuller gendannelsen? Den delvist skrevne målmappe bevares som den er.",
+  "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader den delvist gendannet — du skal gendanne igen for at få et fungerende {name}. Annuller alligevel?",
+  "restore.cancelling": "Annullerer…",
+  "restore.cancelled": "Gendannelse annulleret",
+  "restore.progress": "Gendanner… {pct}%",
   "restore.preview": "Forhåndsvisning",
   "restore.started": "Gendannelse startet",
 
@@ -362,6 +367,8 @@ const da: Partial<Translations> = {
   "common.done": "Færdig",
   "common.loadingBackups": "Indlæser sikkerhedskopier…",
   "common.saving": "Gemmer…",
+  "common.restoreRunning": "En gendannelse kører…",
+  "common.backupRunning": "En sikkerhedskopiering kører…",
 
   // Backup folders selector
   "folders.title": "Sikkerhedskopierede mapper",

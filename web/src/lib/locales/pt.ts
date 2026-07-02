@@ -94,7 +94,12 @@ const pt: Partial<Translations> = {
   "restore.confirmBody":
     "O container será parado, os seus dados substituídos e recriado a partir do backup. Continuar?",
   "restore.confirm": "Confirmar",
-  "restore.cancel": "Cancelar",
+  "restore.cancel": "Cancelar restauro",
+  "restore.cancelConfirmSafe": "Cancelar o restauro? A pasta de saída parcial é mantida como está.",
+  "restore.cancelConfirmInPlace": "{name} está a meio de um restauro. Cancelar deixa-o parcialmente restaurado — será necessário restaurar novamente para obter um {name} funcional. Cancelar mesmo assim?",
+  "restore.cancelling": "A cancelar…",
+  "restore.cancelled": "Restauro cancelado",
+  "restore.progress": "A restaurar… {pct}%",
   "restore.preview": "Pré-visualizar",
   "restore.started": "Restauro iniciado",
 
@@ -362,6 +367,8 @@ const pt: Partial<Translations> = {
   "common.done": "Concluído",
   "common.loadingBackups": "A carregar backups…",
   "common.saving": "A guardar…",
+  "common.restoreRunning": "Está a decorrer um restauro…",
+  "common.backupRunning": "Está a decorrer um backup…",
 
   // Backup folders selector
   "folders.title": "Pastas a copiar",

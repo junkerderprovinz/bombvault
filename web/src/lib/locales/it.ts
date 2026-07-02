@@ -94,7 +94,12 @@ const it: Partial<Translations> = {
   "restore.confirmBody":
     "Il container verrà fermato, i suoi dati sostituiti e ricreato dal backup. Continuare?",
   "restore.confirm": "Conferma",
-  "restore.cancel": "Annulla",
+  "restore.cancel": "Annulla ripristino",
+  "restore.cancelConfirmSafe": "Annullare il ripristino? La cartella di output parziale viene lasciata così com'è.",
+  "restore.cancelConfirmInPlace": "{name} è a metà ripristino. Annullando resta parzialmente ripristinato — sarà necessario ripristinarlo di nuovo per ottenere un {name} funzionante. Annullare comunque?",
+  "restore.cancelling": "Annullamento…",
+  "restore.cancelled": "Ripristino annullato",
+  "restore.progress": "Ripristino… {pct}%",
   "restore.preview": "Anteprima",
   "restore.started": "Ripristino avviato",
 
@@ -362,6 +367,8 @@ const it: Partial<Translations> = {
   "common.done": "Fatto",
   "common.loadingBackups": "Caricamento backup…",
   "common.saving": "Salvataggio…",
+  "common.restoreRunning": "È in corso un ripristino…",
+  "common.backupRunning": "È in corso un backup…",
 
   // Backup folders selector
   "folders.title": "Cartelle da salvare",
