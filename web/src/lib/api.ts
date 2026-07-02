@@ -729,17 +729,29 @@ export function checkDomain(
 }
 
 /**
- * POST /api/verify/{domain}?source= — run a restore-verification drill
- * (restic check --read-data-subset) that reads back real pack data to prove the
- * backup is restorable, and record the result. The drill can take a while.
+ * POST /api/verify/{domain}?source=&kind= — run a restore-verification drill and
+ * record the result. `kind` selects what runs:
+ *   - "subset" (default): a `restic check --read-data-subset` integrity check on
+ *     the selected `source` repo — reads back real pack data to prove the backup
+ *     is intact. Works for all domains + both sources.
+ *   - "dr": a REAL off-site sandbox restore (containers + flash only; VMs are
+ *     refused server-side). It always runs against the off-site repo, so the
+ *     `source` argument is ignored for this kind.
+ * The drill can take a while (a DR restore downloads real data).
  */
 export function runDrill(
   domain: string,
-  source?: string
+  source?: string,
+  kind: "subset" | "dr" = "subset"
 ): Promise<{ ok: boolean; drill?: RestoreDrill; error?: string }> {
-  return fetchJSON(`/api/verify/${encodeURIComponent(domain)}${srcParam(source)}`, {
-    method: "POST",
-  });
+  const params = new URLSearchParams();
+  if (source === "offsite") params.set("source", "offsite");
+  if (kind === "dr") params.set("kind", "dr");
+  const qs = params.toString();
+  return fetchJSON(
+    `/api/verify/${encodeURIComponent(domain)}${qs ? `?${qs}` : ""}`,
+    { method: "POST" }
+  );
 }
 
 /**

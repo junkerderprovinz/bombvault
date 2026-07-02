@@ -386,6 +386,19 @@ const en = {
   "verify.hint": "Periodically reads a random sample of backup data to prove it is intact and restorable.",
   "verify.shield": "verified",
 
+  // DR drill controls (real off-site restore) + the off-site restorability badge
+  "drill.kindLabel": "Drill type:",
+  "drill.kindSubset": "Integrity check",
+  "drill.kindDR": "Real restore (off-site)",
+  "drill.target": "Drill target (container)",
+  "drill.targetMostRecent": "Most recent backup",
+  "drill.drNote": "A real restore extracts the newest off-site snapshot into a temporary sandbox, verifies it, then cleans up. It downloads real data and can take a while.",
+  "drill.drVMsNote": "Real restore isn't available for VMs — their disk images are too large to sandbox-restore. Use the integrity check instead.",
+  "drill.runDR": "Run real restore",
+  "drill.runningDR": "Restoring…",
+  "drill.confirmDR": "This performs a REAL restore of the newest off-site snapshot into a temporary sandbox to prove it is recoverable, then deletes it. It downloads real data and can take a while. Continue?",
+  "drill.provenOffsite": "proven restorable from off-site",
+
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
   "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
@@ -958,6 +971,19 @@ const de: Translations = {
   "verify.subsetPct": "Datenstichprobe (%)",
   "verify.hint": "Liest regelmäßig eine zufällige Stichprobe der Backup-Daten, um zu beweisen, dass sie intakt und wiederherstellbar sind.",
   "verify.shield": "verifiziert",
+
+  // DR-Test-Steuerung (echte Off-site-Wiederherstellung) + Off-site-Badge
+  "drill.kindLabel": "Prüfart:",
+  "drill.kindSubset": "Integritätsprüfung",
+  "drill.kindDR": "Echte Wiederherstellung (Off-site)",
+  "drill.target": "Testziel (Container)",
+  "drill.targetMostRecent": "Neuestes Backup",
+  "drill.drNote": "Eine echte Wiederherstellung entpackt den neuesten Off-site-Snapshot in eine temporäre Sandbox, verifiziert ihn und räumt danach auf. Dabei werden echte Daten geladen, das kann dauern.",
+  "drill.drVMsNote": "Echte Wiederherstellung ist für VMs nicht verfügbar — ihre Disk-Images sind zu groß für eine Sandbox-Wiederherstellung. Nutze stattdessen die Integritätsprüfung.",
+  "drill.runDR": "Echte Wiederherstellung starten",
+  "drill.runningDR": "Stelle wieder her…",
+  "drill.confirmDR": "Dies führt eine ECHTE Wiederherstellung des neuesten Off-site-Snapshots in eine temporäre Sandbox durch, um die Wiederherstellbarkeit zu beweisen, und löscht sie danach. Dabei werden echte Daten geladen, das kann dauern. Fortfahren?",
+  "drill.provenOffsite": "nachweislich aus Off-site wiederherstellbar",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",
