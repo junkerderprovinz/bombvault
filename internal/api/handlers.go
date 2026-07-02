@@ -907,6 +907,17 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// RestoreFolder is ALWAYS a local filesystem path (restores land on the local
+	// mount root). A remote-looking value (e.g. "s3:foo") would slip past the
+	// containment check below, which skips remotes with `continue`, so reject it
+	// up front — it can never legitimately be a remote backend.
+	if v.RestoreFolder != "" && restic.IsRemoteRepo(v.RestoreFolder) {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok": false, "error": "restore folder must be a local path under the mount root",
+		})
+		return
+	}
+
 	// Validate each domain repo location: a remote backend (rclone:…/s3:…) is
 	// accepted verbatim; a local path must stay under the mount root.
 	// Local domain repos, plus any configured off-site repos (off-site may be
@@ -963,6 +974,17 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+	}
+
+	// A DR-drill target, when set, is a container name fed by the UI dropdown.
+	// Validate it with the same rule that guards name-keyed handler paths, so a
+	// garbage/injection-shaped value is rejected at save time rather than stored
+	// (parity with the other name validations above).
+	if dt := strings.TrimSpace(v.DRDrillTarget); dt != "" && !validResourceName(dt) {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok": false, "error": "invalid DR-drill target",
+		})
+		return
 	}
 
 	// Preserve fields that are NOT part of the settings form — they are managed

@@ -371,6 +371,9 @@ export function OffsiteWizard({
                 <span className="text-xs text-carbon-textMuted">docker-compose</span>
                 <CopyBlock text={snippet.compose} t={t} />
               </div>
+              <div className="rounded-lg bg-carbon-surface border border-carbon-border px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
+                {t("offsite.wizard.tlsNote")}
+              </div>
               <button
                 type="button"
                 onClick={() => void genSnippet()}
