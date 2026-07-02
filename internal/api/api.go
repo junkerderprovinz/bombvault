@@ -125,6 +125,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/snapshots/{domain}/{id}", h.handleDeleteSnapshot)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)
+	mux.HandleFunc("GET /api/offsite/{domain}/deploy-snippet", h.handleDeploySnippet)
 	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)

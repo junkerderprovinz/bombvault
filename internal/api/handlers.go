@@ -1226,6 +1226,26 @@ func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+// handleDeploySnippet returns a one-time rest-server deployment recipe for a
+// domain's append-only off-site repo (docker run + compose + generated htpasswd
+// credentials). Nothing is persisted server-side — the plaintext password is
+// shown once. GET /api/offsite/{domain}/deploy-snippet
+func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	snip, err := buildDeploySnippet(domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snippet": snip}))
+}
+
 // handleRcloneInfo returns the configured rclone remote names (never secrets).
 // GET /api/rclone
 func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {
