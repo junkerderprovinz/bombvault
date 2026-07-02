@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl, getHealth } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -750,6 +750,55 @@ function ReplicateNowButton({
   );
 }
 
+// TestConnectionButton probes a domain's off-site repo (reachable / initialised)
+// without modifying it, showing the verdict inline — so the user can verify the
+// configured location before relying on it.
+function TestConnectionButton({
+  domain,
+  t,
+}: {
+  domain: "containers" | "vms" | "flash";
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
+    setSt("busy");
+    setErr(null);
+    try {
+      const r = await testOffsite(domain);
+      if (r.ok && r.reachable && r.initialized) {
+        setSt("ok");
+      } else if (r.ok && r.reachable) {
+        setSt("uninit");
+      } else {
+        setSt("fail");
+        setErr(r.error ?? null);
+      }
+    } catch (e) {
+      setSt("fail");
+      setErr(e instanceof Error ? e.message : null);
+    }
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => void go()}
+        disabled={st === "busy"}
+        className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+      >
+        {t("offsite.test")}
+      </button>
+      {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.testOk")}</span>}
+      {st === "uninit" && <span className="text-xs text-[#f1c21b]">{t("offsite.testUninitialized")}</span>}
+      {st === "fail" && (
+        <span className="text-xs text-[#ff8389] break-words">{err ?? t("offsite.testFailed")}</span>
+      )}
+    </span>
+  );
+}
+
 // IntegrityCard runs per-domain repository maintenance: verify (restic check),
 // unlock (clear stale locks), prune (reclaim space), and a restore-verification
 // "drill" (restic check --read-data-subset) that proves the backup is actually
@@ -1229,7 +1278,12 @@ export function SettingsPage() {
           <div key={repoKey} className="flex flex-col gap-1 border-b border-carbon-border pb-3 last:border-0">
             <div className="flex items-center justify-between">
               <span className="text-xs text-carbon-textSub">{t(label)}</span>
-              {settings[repoKey] && <ReplicateNowButton domain={domain} t={t} />}
+              {settings[repoKey] && (
+                <span className="inline-flex items-center gap-2">
+                  <TestConnectionButton domain={domain} t={t} />
+                  <ReplicateNowButton domain={domain} t={t} />
+                </span>
+              )}
             </div>
             <input
               value={settings[repoKey]}

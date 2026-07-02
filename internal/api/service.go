@@ -844,6 +844,48 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo)
 }
 
+// TestOffsite probes a domain's off-site repo without modifying it, so the UI can
+// tell the user whether the configured location is a reachable, initialised restic
+// repository BEFORE relying on it. It uses the SAME probe EnsureRepo uses to detect
+// an existing repo — `restic cat config` (ResticEngine.RepoOpens) — trying both
+// encryption modes, so a repo created under the opposite Encryption setting still
+// counts as initialised (that mode mismatch is reported by EnsureRepo, not here).
+//
+// reachable reports the repo could be opened at all; initialized that it is a real
+// restic repository. `cat config` cannot distinguish an unreachable backend from a
+// reachable-but-empty location (both simply fail to open), so a repo that opens in
+// neither mode is reported as neither reachable nor initialised. An unconfigured
+// off-site repo for the domain is an error, not a verdict.
+func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, initialized bool, err error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return false, false, fmt.Errorf("read settings: %w", err)
+	}
+	loc := s.offsiteRepoFor(domain, settings)
+	if loc == "" {
+		return false, false, errors.New("no off-site repo configured for this domain")
+	}
+	repo, err := s.resolveRepo(loc)
+	if err != nil {
+		return false, false, err
+	}
+	// Bound the probe so a dead backend fails fast instead of hanging the request
+	// (cat config over an unreachable REST server can otherwise stall).
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	mode := s.ModeFor(settings)
+	if s.engine.RepoOpens(ctx, repo, mode) {
+		return true, true, nil
+	}
+	// Opens under the opposite encryption mode → the repo exists and is reachable,
+	// just created under the other Encryption setting; still reachable + initialised
+	// for this probe (EnsureRepo surfaces the mismatch on the next backup).
+	if s.engine.RepoOpens(ctx, repo, s.oppositeMode(mode)) {
+		return true, true, nil
+	}
+	return false, false, nil
+}
+
 // EnsureRepo makes sure the restic repo at repo is ready to use with the
 // configured encryption mode. It is idempotent AND reconciles the mode:
 //

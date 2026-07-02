@@ -506,6 +506,48 @@ func TestUnlockDomainOffsiteImmutableAllowed(t *testing.T) {
 	}
 }
 
+// TestTestOffsiteNoRepoConfigured: with no off-site repo set for the domain,
+// TestOffsite errors clearly instead of probing.
+func TestTestOffsiteNoRepoConfigured(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
+	if err == nil || !strings.Contains(err.Error(), "no off-site repo") {
+		t.Fatalf("expected a 'no off-site repo configured' error, got %v", err)
+	}
+	if reachable || initialized {
+		t.Fatalf("an unconfigured probe must report reachable=false initialized=false, got %v/%v", reachable, initialized)
+	}
+}
+
+// TestTestOffsiteReachableInitialized: a configured off-site repo the engine can
+// open (restic cat config) reports reachable + initialized true.
+func TestTestOffsiteReachableInitialized(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	no := false
+	eng := &fakeResticEngine{existingMode: &no} // repo opens in the unencrypted mode
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
+	if err != nil {
+		t.Fatalf("TestOffsite: %v", err)
+	}
+	if !reachable || !initialized {
+		t.Fatalf("expected reachable+initialized true, got reachable=%v initialized=%v", reachable, initialized)
+	}
+}
+
 // TestDomainStatus drives DomainStatus through a seeded store: a disabled domain
 // is "off", an enabled+scheduled domain with no successful backup is "never", and
 // one with a fresh successful backup is "ok". The time-boundary cases
