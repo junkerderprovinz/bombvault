@@ -70,6 +70,16 @@ function IconSettings() {
   );
 }
 
+// Circular "restore" arrow — a recovery/roll-back glyph for the Recovery tab
+function IconRecovery() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="shrink-0" aria-hidden="true">
+      <path d="M8 2.5a5.5 5.5 0 1 0 5.2 3.7" strokeLinecap="round" />
+      <path d="M13.5 2v3.2H10.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Calendar/list icon for Jobs
 function IconJobs() {
   return (
@@ -269,6 +279,12 @@ export function Sidebar({ settings }: SidebarProps) {
           to="/jobs"
           label={t("nav.jobs")}
           icon={<IconJobs />}
+        />
+        {/* Always visible: disaster recovery is a core, non-expert flow. */}
+        <NavItem
+          to="/recovery"
+          label={t("nav.recovery")}
+          icon={<IconRecovery />}
         />
         <NavItem
           to="/containers"
