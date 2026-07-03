@@ -650,6 +650,16 @@ export function discoverVMs(): Promise<OkEnvelope & { discovered?: number }> {
   return fetchJSON("/api/vms/discover", { method: "POST" });
 }
 
+/**
+ * Runs both domain discovers (rebuild containers + VMs from the encrypted backup
+ * defs in storage) and returns the counts. The caller then re-fetches
+ * listContainers()/listVMs() to show the reconstructed targets.
+ */
+export async function discoverAll(): Promise<{ containers: number; vms: number }> {
+  const [c, v] = await Promise.all([discover(), discoverVMs()]);
+  return { containers: c.discovered ?? 0, vms: v.discovered ?? 0 };
+}
+
 /** Delete ALL backups of a container and forget it from the store. */
 export function deleteBackups(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups`, {
