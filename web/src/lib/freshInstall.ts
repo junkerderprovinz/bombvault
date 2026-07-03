@@ -1,7 +1,11 @@
-import type { Container, VM, DomainStatus } from "./api";
-// Fresh = nothing to show yet: no known targets AND no domain has ever backed up successfully.
-export function isFreshInstall(containers: Container[], vms: VM[], domains: DomainStatus[]): boolean {
-  const noTargets = containers.length === 0 && vms.length === 0;
-  const neverBacked = domains.every((d) => d.status === "off" || d.status === "never");
-  return noTargets && neverBacked;
+import type { DomainStatus } from "./api";
+// Fresh = a BombVault that has never backed up anything yet: at least one domain
+// is configured and EVERY domain is either off or has never had a successful
+// backup. The docker-container count is deliberately NOT a signal: listContainers
+// always includes BombVault's own container, so it is never 0 on a healthy host —
+// basing "fresh" on it made the disaster-recovery nudge dead (it only fired on a
+// Docker outage). The backup signal fires correctly for a brand-new install AND a
+// rebuilt one recovering from existing backups.
+export function isFreshInstall(domains: DomainStatus[]): boolean {
+  return domains.length > 0 && domains.every((d) => d.status === "off" || d.status === "never");
 }
