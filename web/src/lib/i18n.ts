@@ -651,12 +651,13 @@ const en = {
   // Step 2 — attach your backups
   "recovery.step2": "Attach your backups",
   "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
+  "recovery.credsSaveHint": "Off-site credentials save with each card's own Save button — save them before you connect & preview.",
   "recovery.connectPreview": "Connect & preview",
   // Step 3 — discover everything
   "recovery.step3": "Discover what's in your backups",
   "recovery.discover": "Discover backups",
   "recovery.foundCounts": "Found {c} containers and {v} VMs.",
-  "recovery.foundNone": "Nothing found yet — check the connection and attachment above.",
+  "recovery.foundNone": "Nothing found yet — check the connection and attachment above. If you expected backups here, make sure your APP_KEY matches these backups.",
   // Step 4 — review & restore all (left stopped)
   "recovery.step4": "Review and restore",
   "recovery.restoreAll": "Restore all (left stopped)",
@@ -1283,12 +1284,13 @@ const de: Translations = {
   // Schritt 2 — Backups anhängen
   "recovery.step2": "Backups anhängen",
   "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
+  "recovery.credsSaveHint": "Off-site-Zugangsdaten werden über den eigenen Speichern-Button der jeweiligen Karte gespeichert — speichere sie, bevor du „Verbinden & prüfen“ klickst.",
   "recovery.connectPreview": "Verbinden & prüfen",
   // Schritt 3 — alles entdecken
   "recovery.step3": "Entdecke, was in deinen Backups steckt",
   "recovery.discover": "Backups entdecken",
   "recovery.foundCounts": "{c} Container und {v} VMs gefunden.",
-  "recovery.foundNone": "Noch nichts gefunden — prüfe Verbindung und Anhang oben.",
+  "recovery.foundNone": "Noch nichts gefunden — prüfe Verbindung und Anhang oben. Falls du hier Backups erwartest, stelle sicher, dass dein APP_KEY zu diesen Backups passt.",
   // Schritt 4 — prüfen & alle wiederherstellen (gestoppt lassen)
   "recovery.step4": "Prüfen und wiederherstellen",
   "recovery.restoreAll": "Alle wiederherstellen (gestoppt lassen)",
