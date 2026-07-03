@@ -16,6 +16,7 @@ const it: Partial<Translations> = {
   "nav.reportBug": "Segnala un bug",
   "nav.advanced": "Avanzate",
   "nav.comingSoon": "Prossimamente",
+  "nav.recovery": "Ripristino",
 
   // Dashboard
   "dashboard.title": "Dashboard",
@@ -370,6 +371,7 @@ const it: Partial<Translations> = {
   "common.restoreRunning": "È in corso un ripristino…",
   "common.backupRunning": "È in corso un backup…",
   "common.replicateRunning": "È in corso una replica…",
+  "common.close": "Chiudi",
 
   // Backup folders selector
   "folders.title": "Cartelle da salvare",
@@ -436,6 +438,34 @@ const it: Partial<Translations> = {
   "recovery.nagTitle": "Salva il tuo kit di ripristino",
   "recovery.nagBody": "Con la crittografia attiva, perdere la tua APP_KEY significa perdere i tuoi backup. Scarica il kit di ripristino e conservalo in un luogo sicuro e offline.",
   "recovery.stored": "L'ho conservato in modo sicuro",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Ripristino di emergenza",
+  "recovery.intro": "Ripristina i tuoi container e le tue VM da un backup esistente su questa installazione. Punta BombVault ai tuoi backup, scopri cosa contengono e ripristina.",
+  "recovery.step1": "BombVault può leggere i tuoi backup?",
+  "recovery.appKeyExplain": "Per leggere i backup esistenti questo container ha bisogno della STESSA APP_KEY usata in precedenza — si trova nel tuo kit di ripristino. Impostala nel template del container Unraid se non l'hai già fatto, poi riverifica.",
+  "recovery.appKeyRemedy": "La chiave di crittografia non corrisponde a questi backup. Imposta l'APP_KEY originale (dal tuo kit di ripristino) nel template del container, poi riverifica.",
+  "recovery.readable": "I tuoi backup sono leggibili.",
+  "recovery.notReachable": "Non è stato ancora possibile raggiungere i tuoi backup — collega la posizione qui sotto, poi riverifica.",
+  "recovery.recheck": "Riverifica",
+  "recovery.step2": "Collega i tuoi backup",
+  "recovery.attachHint": "Punta BombVault ai tuoi backup esistenti: un percorso locale sotto il mount dell'host, oppure un repository off-site (rest / S3 / B2 / sftp / rclone) con le sue credenziali. Poi connettiti per confermare.",
+  "recovery.credsSaveHint": "Le credenziali off-site si salvano con il pulsante Salva di ciascuna scheda — salvale prima di connetterti e visualizzare l'anteprima.",
+  "recovery.connectPreview": "Connetti e anteprima",
+  "recovery.step3": "Scopri cosa contengono i tuoi backup",
+  "recovery.discover": "Scopri backup",
+  "recovery.foundCounts": "Trovati {c} container e {v} VM.",
+  "recovery.foundNone": "Ancora niente trovato — controlla la connessione e il collegamento qui sopra. Se ti aspettavi dei backup qui, assicurati che la tua APP_KEY corrisponda a questi backup.",
+  "recovery.step4": "Rivedi e ripristina",
+  "recovery.restoreAll": "Ripristina tutto (lasciato fermo)",
+  "recovery.restoreAllResult": "{ok} ripristinati, {fail} falliti. Avviali dalle schede Container/VM quando sei pronto.",
+  "recovery.vmSshNote": "Il ripristino delle VM richiede il collegamento SSH a libvirt — configuralo in Impostazioni → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Esegui prima Scopri qui sopra.",
+  "recovery.step5": "Il tuo kit di ripristino",
+  "recovery.kitHint": "Scarica e conserva il tuo kit di ripristino in un luogo sicuro — contiene la chiave di crittografia e i comandi restic esatti per ripristinare anche senza BombVault.",
+  "recovery.kitDownload": "Scarica il kit di ripristino",
+  "recovery.freshNudge": "Stai ripristinando da un server precedente o da una ricostruzione? Recupera i tuoi backup esistenti.",
+  "recovery.freshNudgeCta": "Vai a Ripristino",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Larghezza di banda off-site",

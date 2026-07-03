@@ -16,6 +16,7 @@ const ar: Partial<Translations> = {
   "nav.reportBug": "الإبلاغ عن خطأ",
   "nav.advanced": "متقدم",
   "nav.comingSoon": "قريباً",
+  "nav.recovery": "الاستعادة",
 
   // Dashboard
   "dashboard.title": "لوحة التحكم",
@@ -370,6 +371,7 @@ const ar: Partial<Translations> = {
   "common.restoreRunning": "جارٍ تنفيذ استعادة…",
   "common.backupRunning": "جارٍ تنفيذ نسخ احتياطي…",
   "common.replicateRunning": "جارٍ تنفيذ نسخ متماثل…",
+  "common.close": "إغلاق",
 
   // Backup folders selector
   "folders.title": "مجلدات النسخ الاحتياطي",
@@ -439,6 +441,34 @@ const ar: Partial<Translations> = {
   "recovery.nagBody":
     "مع تفعيل التشفير، فقدان APP_KEY يعني فقدان نسخك الاحتياطية. نزّل حقيبة الاستعادة واحفظها في مكان آمن وبدون اتصال.",
   "recovery.stored": "حفظتها بأمان",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "التعافي من الكوارث",
+  "recovery.intro": "استعد الـ containers والـ VMs من نسخة احتياطية موجودة إلى هذا التثبيت. وجّه BombVault إلى نسخك الاحتياطية، واكتشف محتوياتها، ثم استعِد.",
+  "recovery.step1": "هل يستطيع BombVault قراءة نسخك الاحتياطية؟",
+  "recovery.appKeyExplain": "لقراءة النسخ الاحتياطية الموجودة يحتاج هذا الـ container إلى نفس APP_KEY الذي استخدمه سابقاً — إنه في حقيبة الاستعادة الخاصة بك. اضبطه في قالب حاوية Unraid إن لم يكن مضبوطاً، ثم أعد الفحص.",
+  "recovery.appKeyRemedy": "مفتاح التشفير لا يطابق هذه النسخ الاحتياطية. اضبط APP_KEY الأصلي (من حقيبة الاستعادة) في قالب الحاوية، ثم أعد الفحص.",
+  "recovery.readable": "نسخك الاحتياطية قابلة للقراءة.",
+  "recovery.notReachable": "تعذّر الوصول إلى نسخك الاحتياطية بعد — أرفق الموقع أدناه، ثم أعد الفحص.",
+  "recovery.recheck": "إعادة الفحص",
+  "recovery.step2": "أرفق نسخك الاحتياطية",
+  "recovery.attachHint": "وجّه BombVault إلى نسخك الاحتياطية الموجودة: مسار محلي ضمن نقطة تركيب المضيف، أو مستودع خارج الموقع (rest / S3 / B2 / sftp / rclone) مع بيانات اعتماده. ثم اتصل للتأكيد.",
+  "recovery.credsSaveHint": "تُحفَظ بيانات الاعتماد خارج الموقع بزر الحفظ الخاص بكل بطاقة — احفظها قبل الاتصال والمعاينة.",
+  "recovery.connectPreview": "اتصال ومعاينة",
+  "recovery.step3": "اكتشف ما في نسخك الاحتياطية",
+  "recovery.discover": "اكتشاف النسخ الاحتياطية",
+  "recovery.foundCounts": "تم العثور على {c} containers و{v} VMs.",
+  "recovery.foundNone": "لم يُعثر على شيء بعد — تحقق من الاتصال والإرفاق أعلاه. إذا كنت تتوقع وجود نسخ احتياطية هنا، فتأكد من أن APP_KEY يطابق هذه النسخ.",
+  "recovery.step4": "المراجعة والاستعادة",
+  "recovery.restoreAll": "استعادة الكل (يبقى متوقفاً)",
+  "recovery.restoreAllResult": "استُعيد {ok}، فشل {fail}. شغّلها من تبويبات Containers/VMs عند الجاهزية.",
+  "recovery.vmSshNote": "تتطلب استعادة VM رابط libvirt عبر SSH — أعدّه في الإعدادات → VM Backup over SSH.",
+  "recovery.noneDiscovered": "شغّل الاكتشاف أعلاه أولاً.",
+  "recovery.step5": "حقيبة الاستعادة الخاصة بك",
+  "recovery.kitHint": "نزّل حقيبة الاستعادة واحفظها في مكان آمن — تحتوي على مفتاح التشفير وأوامر restic الدقيقة للاستعادة حتى بدون BombVault.",
+  "recovery.kitDownload": "تنزيل حقيبة الاستعادة",
+  "recovery.freshNudge": "تستعيد من خادم سابق أو بعد إعادة بناء؟ استعد نسخك الاحتياطية الموجودة.",
+  "recovery.freshNudgeCta": "الانتقال إلى الاستعادة",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "نطاق التراسل خارج الموقع",

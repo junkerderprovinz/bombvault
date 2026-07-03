@@ -16,6 +16,7 @@ const tr: Partial<Translations> = {
   "nav.reportBug": "Hata bildir",
   "nav.advanced": "Gelişmiş",
   "nav.comingSoon": "Yakında",
+  "nav.recovery": "Kurtarma",
 
   // Dashboard
   "dashboard.title": "Kontrol Paneli",
@@ -370,6 +371,7 @@ const tr: Partial<Translations> = {
   "common.restoreRunning": "Bir geri yükleme çalışıyor…",
   "common.backupRunning": "Bir yedekleme çalışıyor…",
   "common.replicateRunning": "Bir çoğaltma çalışıyor…",
+  "common.close": "Kapat",
 
   // Backup folders selector
   "folders.title": "Yedeklenecek klasörler",
@@ -436,6 +438,34 @@ const tr: Partial<Translations> = {
   "recovery.nagTitle": "Kurtarma kitinizi saklayın",
   "recovery.nagBody": "Şifreleme açıkken APP_KEY'inizi kaybetmek yedeklerinizi kaybetmek demektir. Kurtarma kitini indirin ve güvenli, çevrimdışı bir yerde saklayın.",
   "recovery.stored": "Güvenle sakladım",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Felaket kurtarma",
+  "recovery.intro": "Konteynerlerinizi ve VM'lerinizi mevcut bir yedekten bu kuruluma geri yükleyin. BombVault'u yedeklerinize yönlendirin, içlerinde ne olduğunu keşfedin ve geri yükleyin.",
+  "recovery.step1": "BombVault yedeklerinizi okuyabiliyor mu?",
+  "recovery.appKeyExplain": "Mevcut yedekleri okumak için bu konteynerin daha önce kullandığı AYNI APP_KEY gerekir — bu, kurtarma kitinizde yer alır. Henüz ayarlı değilse Unraid konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",
+  "recovery.appKeyRemedy": "Şifreleme anahtarı bu yedeklerle eşleşmiyor. Orijinal APP_KEY'i (kurtarma kitinizden) konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",
+  "recovery.readable": "Yedekleriniz okunabilir.",
+  "recovery.notReachable": "Yedeklerinize henüz ulaşılamadı — aşağıdaki konumu ekleyin, ardından yeniden denetleyin.",
+  "recovery.recheck": "Yeniden denetle",
+  "recovery.step2": "Yedeklerinizi ekleyin",
+  "recovery.attachHint": "BombVault'u mevcut yedeklerinize yönlendirin: host bağlama noktası altında yerel bir yol ya da kimlik bilgileriyle bir site dışı depo (rest / S3 / B2 / sftp / rclone). Ardından onaylamak için bağlanın.",
+  "recovery.credsSaveHint": "Site dışı kimlik bilgileri her kartın kendi Kaydet düğmesiyle kaydedilir — bağlanıp önizlemeden önce onları kaydedin.",
+  "recovery.connectPreview": "Bağlan ve önizle",
+  "recovery.step3": "Yedeklerinizde ne olduğunu keşfedin",
+  "recovery.discover": "Yedekleri keşfet",
+  "recovery.foundCounts": "{c} konteyner ve {v} VM bulundu.",
+  "recovery.foundNone": "Henüz hiçbir şey bulunamadı — yukarıdaki bağlantıyı ve ekli konumu denetleyin. Burada yedek bekliyorduysanız APP_KEY'inizin bu yedeklerle eşleştiğinden emin olun.",
+  "recovery.step4": "İncele ve geri yükle",
+  "recovery.restoreAll": "Tümünü geri yükle (durdurulmuş bırakılır)",
+  "recovery.restoreAllResult": "{ok} geri yüklendi, {fail} başarısız. Hazır olduğunuzda Konteynerler/VM'ler sekmelerinden başlatın.",
+  "recovery.vmSshNote": "VM geri yükleme libvirt SSH bağlantısını gerektirir — bunu Ayarlar → VM Backup over SSH altında kurun.",
+  "recovery.noneDiscovered": "Önce yukarıdaki Yedekleri keşfet'i çalıştırın.",
+  "recovery.step5": "Kurtarma kitiniz",
+  "recovery.kitHint": "Kurtarma kitinizi indirin ve güvenli bir yerde saklayın — şifreleme anahtarını ve BombVault olmadan bile geri yüklemek için gereken tam restic komutlarını içerir.",
+  "recovery.kitDownload": "Kurtarma kitini indir",
+  "recovery.freshNudge": "Önceki bir sunucudan ya da yeniden kurulumdan mı geri yüklüyorsunuz? Mevcut yedeklerinizi kurtarın.",
+  "recovery.freshNudgeCta": "Kurtarma'ya git",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Site dışı bant genişliği",

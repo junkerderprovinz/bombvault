@@ -16,6 +16,7 @@ const ko: Partial<Translations> = {
   "nav.reportBug": "버그 신고",
   "nav.advanced": "고급",
   "nav.comingSoon": "출시 예정",
+  "nav.recovery": "복구",
 
   // Dashboard
   "dashboard.title": "대시보드",
@@ -362,6 +363,7 @@ const ko: Partial<Translations> = {
   "common.restoreRunning": "복원이 실행 중입니다…",
   "common.backupRunning": "백업이 실행 중입니다…",
   "common.replicateRunning": "복제가 실행 중입니다…",
+  "common.close": "닫기",
 
   // Backup folders selector
   "folders.title": "백업 폴더",
@@ -428,6 +430,34 @@ const ko: Partial<Translations> = {
   "recovery.nagTitle": "복구 키트를 저장하세요",
   "recovery.nagBody": "암호화가 켜져 있으면 APP_KEY를 잃는 것은 백업을 잃는 것입니다. 복구 키트를 다운로드하여 안전하고 오프라인인 곳에 보관하세요.",
   "recovery.stored": "안전하게 보관했습니다",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "재해 복구",
+  "recovery.intro": "기존 백업에서 컨테이너와 VM을 이 설치본으로 복구합니다. BombVault를 백업에 연결하고, 그 안에 무엇이 있는지 검색한 뒤 복원하세요.",
+  "recovery.step1": "BombVault가 백업을 읽을 수 있나요?",
+  "recovery.appKeyExplain": "기존 백업을 읽으려면 이 컨테이너에 이전과 동일한 APP_KEY가 필요합니다 — 복구 키트에 들어 있습니다. 아직 설정하지 않았다면 Unraid 컨테이너 템플릿에서 설정한 뒤 다시 확인하세요.",
+  "recovery.appKeyRemedy": "암호화 키가 이 백업과 일치하지 않습니다. 원래 APP_KEY(복구 키트에 있음)를 컨테이너 템플릿에 설정한 뒤 다시 확인하세요.",
+  "recovery.readable": "백업을 읽을 수 있습니다.",
+  "recovery.notReachable": "아직 백업에 연결할 수 없습니다 — 아래에서 위치를 연결한 뒤 다시 확인하세요.",
+  "recovery.recheck": "다시 확인",
+  "recovery.step2": "백업 연결",
+  "recovery.attachHint": "BombVault를 기존 백업에 연결하세요: 호스트 마운트 아래의 로컬 경로, 또는 자격 증명이 포함된 오프사이트 저장소(rest / S3 / B2 / sftp / rclone). 그런 다음 연결하여 확인하세요.",
+  "recovery.credsSaveHint": "오프사이트 자격 증명은 각 카드의 저장 버튼으로 저장됩니다 — 연결하여 미리 보기 전에 저장하세요.",
+  "recovery.connectPreview": "연결 및 미리 보기",
+  "recovery.step3": "백업에 무엇이 있는지 검색",
+  "recovery.discover": "백업 검색",
+  "recovery.foundCounts": "컨테이너 {c}개와 VM {v}개를 찾았습니다.",
+  "recovery.foundNone": "아직 아무것도 찾지 못했습니다 — 위의 연결과 연결 위치를 확인하세요. 여기에 백업이 있을 것으로 예상했다면 APP_KEY가 이 백업과 일치하는지 확인하세요.",
+  "recovery.step4": "검토 및 복원",
+  "recovery.restoreAll": "모두 복원 (중지된 상태로 둠)",
+  "recovery.restoreAllResult": "{ok}개 복원, {fail}개 실패. 준비되면 컨테이너/VM 탭에서 시작하세요.",
+  "recovery.vmSshNote": "VM 복원에는 libvirt SSH 연결이 필요합니다 — 설정 → VM Backup over SSH에서 설정하세요.",
+  "recovery.noneDiscovered": "먼저 위의 검색을 실행하세요.",
+  "recovery.step5": "복구 키트",
+  "recovery.kitHint": "복구 키트를 다운로드하여 안전한 곳에 보관하세요 — 암호화 키와 BombVault 없이도 복원할 수 있는 정확한 restic 명령이 들어 있습니다.",
+  "recovery.kitDownload": "복구 키트 다운로드",
+  "recovery.freshNudge": "이전 서버나 재구축에서 복원하시나요? 기존 백업을 복구하세요.",
+  "recovery.freshNudgeCta": "복구로 이동",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "오프사이트 대역폭",

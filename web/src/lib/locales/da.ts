@@ -16,6 +16,7 @@ const da: Partial<Translations> = {
   "nav.reportBug": "Rapportér en fejl",
   "nav.advanced": "Avanceret",
   "nav.comingSoon": "Kommer snart",
+  "nav.recovery": "Gendannelse",
 
   // Dashboard
   "dashboard.title": "Oversigt",
@@ -370,6 +371,7 @@ const da: Partial<Translations> = {
   "common.restoreRunning": "En gendannelse kører…",
   "common.backupRunning": "En sikkerhedskopiering kører…",
   "common.replicateRunning": "En replikering kører…",
+  "common.close": "Luk",
 
   // Backup folders selector
   "folders.title": "Sikkerhedskopierede mapper",
@@ -436,6 +438,34 @@ const da: Partial<Translations> = {
   "recovery.nagTitle": "Gem dit gendannelseskit",
   "recovery.nagBody": "Med kryptering slået til betyder tab af din APP_KEY tab af dine sikkerhedskopier. Download gendannelseskittet og opbevar det et sikkert sted offline.",
   "recovery.stored": "Jeg har gemt det sikkert",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Katastrofegendannelse",
+  "recovery.intro": "Gendan dine containers og VMs fra en eksisterende sikkerhedskopi til denne installation. Peg BombVault mod dine sikkerhedskopier, opdag hvad de indeholder, og gendan.",
+  "recovery.step1": "Kan BombVault læse dine sikkerhedskopier?",
+  "recovery.appKeyExplain": "For at læse eksisterende sikkerhedskopier skal denne container bruge den SAMME APP_KEY, som den brugte før — den findes i dit gendannelseskit. Angiv den i Unraid-containerskabelonen, hvis den ikke allerede er sat, og tjek så igen.",
+  "recovery.appKeyRemedy": "Krypteringsnøglen matcher ikke disse sikkerhedskopier. Angiv den oprindelige APP_KEY (fra dit gendannelseskit) i containerskabelonen, og tjek så igen.",
+  "recovery.readable": "Dine sikkerhedskopier kan læses.",
+  "recovery.notReachable": "Kunne ikke nå dine sikkerhedskopier endnu — tilknyt placeringen nedenfor, og tjek så igen.",
+  "recovery.recheck": "Tjek igen",
+  "recovery.step2": "Tilknyt dine sikkerhedskopier",
+  "recovery.attachHint": "Peg BombVault mod dine eksisterende sikkerhedskopier: en lokal sti under host-monteringen eller et off-site-repo (rest / S3 / B2 / sftp / rclone) med dets legitimationsoplysninger. Opret så forbindelse for at bekræfte.",
+  "recovery.credsSaveHint": "Off-site-legitimationsoplysninger gemmes med hvert korts egen Gem-knap — gem dem, før du opretter forbindelse og forhåndsviser.",
+  "recovery.connectPreview": "Opret forbindelse & forhåndsvis",
+  "recovery.step3": "Opdag hvad der er i dine sikkerhedskopier",
+  "recovery.discover": "Opdag sikkerhedskopier",
+  "recovery.foundCounts": "Fandt {c} containers og {v} VMs.",
+  "recovery.foundNone": "Intet fundet endnu — tjek forbindelsen og tilknytningen ovenfor. Hvis du forventede sikkerhedskopier her, så sørg for, at din APP_KEY matcher disse sikkerhedskopier.",
+  "recovery.step4": "Gennemgå og gendan",
+  "recovery.restoreAll": "Gendan alle (efterlades stoppet)",
+  "recovery.restoreAllResult": "Gendannet {ok}, mislykkedes {fail}. Start dem fra fanerne Containers/VMs, når du er klar.",
+  "recovery.vmSshNote": "VM-gendannelse kræver libvirt-SSH-forbindelsen — opsæt den under Indstillinger → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Kør Opdag ovenfor først.",
+  "recovery.step5": "Dit gendannelseskit",
+  "recovery.kitHint": "Download og opbevar dit gendannelseskit et sikkert sted — det indeholder krypteringsnøglen og de præcise restic-kommandoer til at gendanne selv uden BombVault.",
+  "recovery.kitDownload": "Download gendannelseskit",
+  "recovery.freshNudge": "Gendanner du fra en tidligere server eller en genopbygning? Gendan dine eksisterende sikkerhedskopier.",
+  "recovery.freshNudgeCta": "Gå til Gendannelse",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site-båndbredde",

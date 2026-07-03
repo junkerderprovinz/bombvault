@@ -16,6 +16,7 @@ const no: Partial<Translations> = {
   "nav.reportBug": "Rapporter en feil",
   "nav.advanced": "Avansert",
   "nav.comingSoon": "Kommer snart",
+  "nav.recovery": "Gjenoppretting",
 
   // Dashboard
   "dashboard.title": "Dashboard",
@@ -370,6 +371,7 @@ const no: Partial<Translations> = {
   "common.restoreRunning": "En gjenoppretting kjører…",
   "common.backupRunning": "En sikkerhetskopiering kjører…",
   "common.replicateRunning": "En replikering kjører…",
+  "common.close": "Lukk",
 
   // Backup folders selector
   "folders.title": "Sikkerhetskopierte mapper",
@@ -436,6 +438,34 @@ const no: Partial<Translations> = {
   "recovery.nagTitle": "Lagre gjenopprettingssettet ditt",
   "recovery.nagBody": "Med kryptering på betyr tap av APP_KEY at du mister sikkerhetskopiene dine. Last ned gjenopprettingssettet og oppbevar det trygt og offline.",
   "recovery.stored": "Jeg har lagret det trygt",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Katastrofegjenoppretting",
+  "recovery.intro": "Gjenopprett containerne og VM-ene dine fra en eksisterende sikkerhetskopi til denne installasjonen. Pek BombVault mot sikkerhetskopiene dine, oppdag hva som ligger i dem, og gjenopprett.",
+  "recovery.step1": "Kan BombVault lese sikkerhetskopiene dine?",
+  "recovery.appKeyExplain": "For å lese eksisterende sikkerhetskopier trenger denne containeren SAMME APP_KEY som før — den ligger i gjenopprettingssettet ditt. Angi den i Unraid-containermalen hvis den ikke allerede er satt, og sjekk på nytt.",
+  "recovery.appKeyRemedy": "Krypteringsnøkkelen stemmer ikke med disse sikkerhetskopiene. Angi den opprinnelige APP_KEY (fra gjenopprettingssettet ditt) i containermalen, og sjekk på nytt.",
+  "recovery.readable": "Sikkerhetskopiene dine er lesbare.",
+  "recovery.notReachable": "Kunne ikke nå sikkerhetskopiene ennå — koble til plasseringen nedenfor, og sjekk på nytt.",
+  "recovery.recheck": "Sjekk på nytt",
+  "recovery.step2": "Koble til sikkerhetskopiene dine",
+  "recovery.attachHint": "Pek BombVault mot dine eksisterende sikkerhetskopier: en lokal sti under host-monteringen, eller et off-site-repo (rest / S3 / B2 / sftp / rclone) med legitimasjon. Koble deretter til for å bekrefte.",
+  "recovery.credsSaveHint": "Off-site-legitimasjon lagres med hvert korts egen Lagre-knapp — lagre den før du kobler til og forhåndsviser.",
+  "recovery.connectPreview": "Koble til og forhåndsvis",
+  "recovery.step3": "Oppdag hva som ligger i sikkerhetskopiene dine",
+  "recovery.discover": "Oppdag sikkerhetskopier",
+  "recovery.foundCounts": "Fant {c} containere og {v} VM-er.",
+  "recovery.foundNone": "Fant ingenting ennå — sjekk tilkoblingen og tilknytningen ovenfor. Hvis du forventet sikkerhetskopier her, kontroller at APP_KEY stemmer med disse sikkerhetskopiene.",
+  "recovery.step4": "Gjennomgå og gjenopprett",
+  "recovery.restoreAll": "Gjenopprett alle (forblir stoppet)",
+  "recovery.restoreAllResult": "Gjenopprettet {ok}, mislyktes {fail}. Start dem fra Containere/VM-er-fanene når du er klar.",
+  "recovery.vmSshNote": "VM-gjenoppretting krever libvirt-SSH-koblingen — sett den opp under Innstillinger → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Kjør Oppdag ovenfor først.",
+  "recovery.step5": "Gjenopprettingssettet ditt",
+  "recovery.kitHint": "Last ned og oppbevar gjenopprettingssettet ditt et trygt sted — det inneholder krypteringsnøkkelen og de nøyaktige restic-kommandoene for å gjenopprette selv uten BombVault.",
+  "recovery.kitDownload": "Last ned gjenopprettingssett",
+  "recovery.freshNudge": "Gjenoppretter du fra en tidligere server eller en ny installasjon? Gjenopprett dine eksisterende sikkerhetskopier.",
+  "recovery.freshNudgeCta": "Gå til Gjenoppretting",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Ekstern båndbredde",

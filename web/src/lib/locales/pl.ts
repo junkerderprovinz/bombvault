@@ -16,6 +16,7 @@ const pl: Partial<Translations> = {
   "nav.reportBug": "Zgłoś błąd",
   "nav.advanced": "Zaawansowane",
   "nav.comingSoon": "Wkrótce",
+  "nav.recovery": "Odzyskiwanie",
 
   // Dashboard
   "dashboard.title": "Panel",
@@ -365,6 +366,7 @@ const pl: Partial<Translations> = {
   "common.restoreRunning": "Trwa przywracanie…",
   "common.backupRunning": "Trwa tworzenie kopii zapasowej…",
   "common.replicateRunning": "Trwa replikacja…",
+  "common.close": "Zamknij",
 
   // Backup folders selector
   "folders.title": "Foldery do kopii",
@@ -431,6 +433,34 @@ const pl: Partial<Translations> = {
   "recovery.nagTitle": "Zapisz swój zestaw odzyskiwania",
   "recovery.nagBody": "Przy włączonym szyfrowaniu utrata APP_KEY oznacza utratę kopii zapasowych. Pobierz zestaw odzyskiwania i przechowuj go w bezpiecznym miejscu offline.",
   "recovery.stored": "Bezpiecznie zapisałem",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Odzyskiwanie po awarii",
+  "recovery.intro": "Odzyskaj swoje kontenery i maszyny wirtualne z istniejącej kopii zapasowej na tę instalację. Wskaż BombVault swoje kopie zapasowe, sprawdź, co w nich jest, i przywróć.",
+  "recovery.step1": "Czy BombVault może odczytać Twoje kopie zapasowe?",
+  "recovery.appKeyExplain": "Aby odczytać istniejące kopie zapasowe, ten kontener potrzebuje TEGO SAMEGO APP_KEY, którego używał wcześniej — znajdziesz go w swoim zestawie odzyskiwania. Ustaw go w szablonie kontenera Unraid, jeśli jeszcze go nie ma, a następnie sprawdź ponownie.",
+  "recovery.appKeyRemedy": "Klucz szyfrowania nie pasuje do tych kopii zapasowych. Ustaw oryginalny APP_KEY (z zestawu odzyskiwania) w szablonie kontenera, a następnie sprawdź ponownie.",
+  "recovery.readable": "Twoje kopie zapasowe są czytelne.",
+  "recovery.notReachable": "Nie udało się jeszcze dotrzeć do kopii zapasowych — podłącz lokalizację poniżej, a następnie sprawdź ponownie.",
+  "recovery.recheck": "Sprawdź ponownie",
+  "recovery.step2": "Podłącz swoje kopie zapasowe",
+  "recovery.attachHint": "Wskaż BombVault swoje istniejące kopie zapasowe: lokalną ścieżkę w obrębie montowania hosta lub zdalne repo (rest / S3 / B2 / sftp / rclone) wraz z poświadczeniami. Następnie połącz się, aby potwierdzić.",
+  "recovery.credsSaveHint": "Poświadczenia zdalne zapisuje się osobnym przyciskiem Zapisz każdej karty — zapisz je przed połączeniem i podglądem.",
+  "recovery.connectPreview": "Połącz i wyświetl podgląd",
+  "recovery.step3": "Sprawdź, co jest w Twoich kopiach zapasowych",
+  "recovery.discover": "Odkryj kopie zapasowe",
+  "recovery.foundCounts": "Znaleziono {c} kontenerów i {v} maszyn wirtualnych.",
+  "recovery.foundNone": "Jeszcze nic nie znaleziono — sprawdź połączenie i podłączenie powyżej. Jeśli spodziewałeś się tu kopii zapasowych, upewnij się, że Twój APP_KEY pasuje do tych kopii.",
+  "recovery.step4": "Przejrzyj i przywróć",
+  "recovery.restoreAll": "Przywróć wszystko (pozostaną zatrzymane)",
+  "recovery.restoreAllResult": "Przywrócono {ok}, nieudane {fail}. Uruchom je z zakładek Kontenery/Maszyny wirtualne, gdy będziesz gotowy.",
+  "recovery.vmSshNote": "Przywracanie VM wymaga połączenia libvirt SSH — skonfiguruj je w Ustawienia → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Najpierw uruchom Odkryj powyżej.",
+  "recovery.step5": "Twój zestaw odzyskiwania",
+  "recovery.kitHint": "Pobierz i przechowuj swój zestaw odzyskiwania w bezpiecznym miejscu — zawiera klucz szyfrowania i dokładne polecenia restic do przywrócenia nawet bez BombVault.",
+  "recovery.kitDownload": "Pobierz zestaw odzyskiwania",
+  "recovery.freshNudge": "Przywracasz z poprzedniego serwera lub po ponownej instalacji? Odzyskaj swoje istniejące kopie zapasowe.",
+  "recovery.freshNudgeCta": "Przejdź do Odzyskiwania",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Przepustowość poza siedzibą",

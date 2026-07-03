@@ -16,6 +16,7 @@ const pt: Partial<Translations> = {
   "nav.reportBug": "Reportar um erro",
   "nav.advanced": "Avançado",
   "nav.comingSoon": "Em breve",
+  "nav.recovery": "Recuperação",
 
   // Dashboard
   "dashboard.title": "Painel",
@@ -370,6 +371,7 @@ const pt: Partial<Translations> = {
   "common.restoreRunning": "Está a decorrer um restauro…",
   "common.backupRunning": "Está a decorrer um backup…",
   "common.replicateRunning": "Está a decorrer uma replicação…",
+  "common.close": "Fechar",
 
   // Backup folders selector
   "folders.title": "Pastas a copiar",
@@ -436,6 +438,34 @@ const pt: Partial<Translations> = {
   "recovery.nagTitle": "Guarde o seu kit de recuperação",
   "recovery.nagBody": "Com a encriptação ativada, perder a sua APP_KEY significa perder os seus backups. Descarregue o kit de recuperação e guarde-o num local seguro e offline.",
   "recovery.stored": "Já o guardei em segurança",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Recuperação de desastres",
+  "recovery.intro": "Recupere os seus containers e VMs de um backup existente para esta instalação. Aponte o BombVault aos seus backups, descubra o que contêm e restaure.",
+  "recovery.step1": "O BombVault consegue ler os seus backups?",
+  "recovery.appKeyExplain": "Para ler backups existentes, este container precisa da MESMA APP_KEY que usava antes — está no seu kit de recuperação. Defina-a no modelo de container do Unraid caso ainda não esteja, e verifique novamente.",
+  "recovery.appKeyRemedy": "A chave de encriptação não corresponde a estes backups. Defina a APP_KEY original (do seu kit de recuperação) no modelo de container e verifique novamente.",
+  "recovery.readable": "Os seus backups são legíveis.",
+  "recovery.notReachable": "Ainda não foi possível alcançar os seus backups — anexe a localização abaixo e verifique novamente.",
+  "recovery.recheck": "Verificar novamente",
+  "recovery.step2": "Anexar os seus backups",
+  "recovery.attachHint": "Aponte o BombVault aos seus backups existentes: um caminho local dentro do mount do host, ou um repo externo (rest / S3 / B2 / sftp / rclone) com as respetivas credenciais. Depois ligue-se para confirmar.",
+  "recovery.credsSaveHint": "As credenciais externas guardam-se com o botão Guardar de cada cartão — guarde-as antes de ligar e pré-visualizar.",
+  "recovery.connectPreview": "Ligar e pré-visualizar",
+  "recovery.step3": "Descobrir o que há nos seus backups",
+  "recovery.discover": "Descobrir backups",
+  "recovery.foundCounts": "Encontrados {c} containers e {v} VMs.",
+  "recovery.foundNone": "Ainda nada encontrado — verifique a ligação e o anexo acima. Se esperava backups aqui, confirme que a sua APP_KEY corresponde a estes backups.",
+  "recovery.step4": "Rever e restaurar",
+  "recovery.restoreAll": "Restaurar tudo (fica parado)",
+  "recovery.restoreAllResult": "Restaurados {ok}, falharam {fail}. Inicie-os a partir dos separadores Containers/VMs quando estiver pronto.",
+  "recovery.vmSshNote": "O restauro de VMs precisa da ligação SSH ao libvirt — configure-a em Definições → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Execute primeiro Descobrir acima.",
+  "recovery.step5": "O seu kit de recuperação",
+  "recovery.kitHint": "Descarregue e guarde o seu kit de recuperação num local seguro — contém a chave de encriptação e os comandos restic exatos para restaurar mesmo sem o BombVault.",
+  "recovery.kitDownload": "Descarregar kit de recuperação",
+  "recovery.freshNudge": "A restaurar de um servidor anterior ou de uma reinstalação? Recupere os seus backups existentes.",
+  "recovery.freshNudgeCta": "Ir para Recuperação",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Largura de banda externa",

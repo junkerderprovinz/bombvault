@@ -16,6 +16,7 @@ const hu: Partial<Translations> = {
   "nav.reportBug": "Hiba jelentése",
   "nav.advanced": "Speciális",
   "nav.comingSoon": "Hamarosan",
+  "nav.recovery": "Helyreállítás",
 
   // Dashboard
   "dashboard.title": "Irányítópult",
@@ -370,6 +371,7 @@ const hu: Partial<Translations> = {
   "common.restoreRunning": "Visszaállítás van folyamatban…",
   "common.backupRunning": "Biztonsági mentés van folyamatban…",
   "common.replicateRunning": "Replikálás van folyamatban…",
+  "common.close": "Bezárás",
 
   // Backup folders selector
   "folders.title": "Mentett mappák",
@@ -439,6 +441,34 @@ const hu: Partial<Translations> = {
   "recovery.nagBody":
     "Bekapcsolt titkosítás mellett az APP_KEY elvesztése a mentések elvesztését jelenti. Töltsd le a helyreállítási csomagot, és tárold biztonságos, offline helyen.",
   "recovery.stored": "Biztonságosan eltároltam",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Vészhelyreállítás",
+  "recovery.intro": "Állítsd vissza a konténereidet és VM-jeidet egy meglévő biztonsági mentésből erre a telepítésre. Irányítsd a BombVaultot a mentéseidre, fedezd fel a tartalmukat, és állítsd vissza.",
+  "recovery.step1": "Tudja a BombVault olvasni a mentéseidet?",
+  "recovery.appKeyExplain": "A meglévő mentések olvasásához ennek a konténernek UGYANARRA az APP_KEY-re van szüksége, amit korábban használt — ez a helyreállítási csomagodban van. Állítsd be az Unraid konténer-sablonban, ha még nincs, majd ellenőrizd újra.",
+  "recovery.appKeyRemedy": "A titkosítási kulcs nem egyezik ezekkel a mentésekkel. Állítsd be az eredeti APP_KEY-t (a helyreállítási csomagodból) a konténer-sablonban, majd ellenőrizd újra.",
+  "recovery.readable": "A mentéseid olvashatók.",
+  "recovery.notReachable": "A mentéseid még nem érhetők el — csatold a helyet alább, majd ellenőrizd újra.",
+  "recovery.recheck": "Újraellenőrzés",
+  "recovery.step2": "Csatold a mentéseidet",
+  "recovery.attachHint": "Irányítsd a BombVaultot a meglévő mentéseidre: egy helyi útvonal a gazdagép csatolása alatt, vagy egy telephelyen kívüli tároló (rest / S3 / B2 / sftp / rclone) a hitelesítő adataival. Majd csatlakozz a megerősítéshez.",
+  "recovery.credsSaveHint": "A telephelyen kívüli hitelesítő adatok az egyes kártyák saját Mentés gombjával mentődnek — mentsd el őket, mielőtt csatlakozol és előnézetet kérsz.",
+  "recovery.connectPreview": "Csatlakozás és előnézet",
+  "recovery.step3": "Fedezd fel a mentéseid tartalmát",
+  "recovery.discover": "Mentések felfedezése",
+  "recovery.foundCounts": "{c} konténer és {v} VM található.",
+  "recovery.foundNone": "Még semmi sem található — ellenőrizd a fenti kapcsolatot és csatolást. Ha mentésekre számítottál itt, győződj meg róla, hogy az APP_KEY-d egyezik ezekkel a mentésekkel.",
+  "recovery.step4": "Áttekintés és visszaállítás",
+  "recovery.restoreAll": "Összes visszaállítása (leállítva hagyva)",
+  "recovery.restoreAllResult": "{ok} visszaállítva, {fail} sikertelen. Indítsd el őket a Konténerek/VM-ek lapokról, amikor készen állsz.",
+  "recovery.vmSshNote": "A VM visszaállításához szükség van a libvirt SSH-kapcsolatra — állítsd be a Beállítások → VM Backup over SSH alatt.",
+  "recovery.noneDiscovered": "Először futtasd a fenti Felfedezést.",
+  "recovery.step5": "A helyreállítási csomagod",
+  "recovery.kitHint": "Töltsd le és tárold a helyreállítási csomagodat biztonságos helyen — tartalmazza a titkosítási kulcsot és a pontos restic parancsokat a visszaállításhoz BombVault nélkül is.",
+  "recovery.kitDownload": "Helyreállítási csomag letöltése",
+  "recovery.freshNudge": "Egy korábbi szerverről vagy újraépítésből állítasz vissza? Állítsd vissza a meglévő mentéseidet.",
+  "recovery.freshNudgeCta": "Ugrás a Helyreállításhoz",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Telephelyen kívüli sávszélesség",

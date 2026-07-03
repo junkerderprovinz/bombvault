@@ -16,6 +16,7 @@ const cs: Partial<Translations> = {
   "nav.reportBug": "Nahlásit chybu",
   "nav.advanced": "Pokročilé",
   "nav.comingSoon": "Připravujeme",
+  "nav.recovery": "Obnova",
 
   // Dashboard
   "dashboard.title": "Přehled",
@@ -368,6 +369,7 @@ const cs: Partial<Translations> = {
   "common.restoreRunning": "Probíhá obnova…",
   "common.backupRunning": "Probíhá zálohování…",
   "common.replicateRunning": "Probíhá replikace…",
+  "common.close": "Zavřít",
 
   // Backup folders selector
   "folders.title": "Zálohované složky",
@@ -434,6 +436,34 @@ const cs: Partial<Translations> = {
   "recovery.nagTitle": "Uložte si sadu pro obnovu",
   "recovery.nagBody": "Se zapnutým šifrováním znamená ztráta APP_KEY ztrátu záloh. Stáhněte si sadu pro obnovu a uložte ji někam bezpečně a offline.",
   "recovery.stored": "Uložil jsem ji bezpečně",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Zotavení po havárii",
+  "recovery.intro": "Obnovte své kontejnery a VM z existující zálohy do této instalace. Nasměrujte BombVault na své zálohy, zjistěte, co obsahují, a obnovte je.",
+  "recovery.step1": "Může BombVault číst vaše zálohy?",
+  "recovery.appKeyExplain": "Ke čtení existujících záloh potřebuje tento kontejner STEJNÝ APP_KEY, který používal dříve — najdete jej ve své sadě pro obnovu. Nastavte jej v šabloně kontejneru Unraid, pokud ještě není, a poté proveďte opětovnou kontrolu.",
+  "recovery.appKeyRemedy": "Šifrovací klíč neodpovídá těmto zálohám. Nastavte původní APP_KEY (ze své sady pro obnovu) v šabloně kontejneru a poté proveďte opětovnou kontrolu.",
+  "recovery.readable": "Vaše zálohy jsou čitelné.",
+  "recovery.notReachable": "Zálohy zatím nelze dosáhnout — připojte umístění níže a poté proveďte opětovnou kontrolu.",
+  "recovery.recheck": "Zkontrolovat znovu",
+  "recovery.step2": "Připojte své zálohy",
+  "recovery.attachHint": "Nasměrujte BombVault na své existující zálohy: místní cestu pod připojením hostitele nebo vzdálené repo (rest / S3 / B2 / sftp / rclone) s jeho přihlašovacími údaji. Poté se připojte pro potvrzení.",
+  "recovery.credsSaveHint": "Vzdálené přihlašovací údaje se ukládají vlastním tlačítkem Uložit u každé karty — uložte je před připojením a náhledem.",
+  "recovery.connectPreview": "Připojit a zobrazit náhled",
+  "recovery.step3": "Zjistěte, co je ve vašich zálohách",
+  "recovery.discover": "Objevit zálohy",
+  "recovery.foundCounts": "Nalezeno {c} kontejnerů a {v} VM.",
+  "recovery.foundNone": "Zatím nic nenalezeno — zkontrolujte připojení a připojené umístění výše. Pokud jste zde čekali zálohy, ujistěte se, že váš APP_KEY odpovídá těmto zálohám.",
+  "recovery.step4": "Zkontrolovat a obnovit",
+  "recovery.restoreAll": "Obnovit vše (ponecháno zastavené)",
+  "recovery.restoreAllResult": "Obnoveno {ok}, selhalo {fail}. Spusťte je z karet Kontejnery/VM, až budete připraveni.",
+  "recovery.vmSshNote": "Obnova VM vyžaduje připojení libvirt přes SSH — nastavte jej v Nastavení → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Nejprve spusťte Objevit výše.",
+  "recovery.step5": "Vaše sada pro obnovu",
+  "recovery.kitHint": "Stáhněte si sadu pro obnovu a uložte ji na bezpečné místo — obsahuje šifrovací klíč a přesné příkazy restic pro obnovu i bez BombVaultu.",
+  "recovery.kitDownload": "Stáhnout sadu pro obnovu",
+  "recovery.freshNudge": "Obnovujete z předchozího serveru nebo po přestavbě? Obnovte své existující zálohy.",
+  "recovery.freshNudgeCta": "Přejít na Obnovu",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Šířka pásma mimo lokalitu",
