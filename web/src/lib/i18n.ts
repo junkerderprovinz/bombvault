@@ -633,6 +633,13 @@ const en = {
   "vm.ssh.step3": "Click Test connection — once it's green, enable VMs under Domains.",
   "vm.ssh.copyCmd": "Copy command",
   "vm.ssh.guide": "Full setup & networking guide",
+
+  // Guided Recovery tab (disaster-recovery walkthrough) — note: the `recovery.*`
+  // prefix above is the encryption *kit*; the page title uses `recovery.pageTitle`
+  // to avoid colliding with the existing `recovery.title` ("Recovery kit").
+  "nav.recovery": "Recovery",
+  "recovery.pageTitle": "Disaster recovery",
+  "recovery.intro": "Recover your containers and VMs from an existing backup onto this install. Point BombVault at your backups, discover what's in them, and restore.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1230,6 +1237,11 @@ const de: Translations = {
   "vm.ssh.step3": "Auf “Verbindung testen” klicken — sobald grün, VMs unter Domänen aktivieren.",
   "vm.ssh.copyCmd": "Befehl kopieren",
   "vm.ssh.guide": "Vollständige Setup- & Netzwerk-Anleitung",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "nav.recovery": "Wiederherstellung",
+  "recovery.pageTitle": "Notfall-Wiederherstellung",
+  "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her. Richte BombVault auf deine Backups aus, finde heraus, was darin steckt, und stelle es wieder her.",
 };
 
 // ---------------------------------------------------------------------------
