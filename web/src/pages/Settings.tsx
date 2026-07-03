@@ -73,7 +73,7 @@ function Card({
 // Toggle row
 // ---------------------------------------------------------------------------
 
-function ToggleRow({
+export function ToggleRow({
   label,
   description,
   checked,
@@ -318,7 +318,7 @@ chmod 600 /root/.ssh/authorized_keys`
 // RcloneCard manages the off-site rclone config (paste rclone.conf). It is
 // stored encrypted; only the remote NAMES are read back for display. Backup
 // paths can then be set to "rclone:<remote>:<bucket>" in Backup Paths.
-function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [remotes, setRemotes] = useState<string[]>([]);
   const [conf, setConf] = useState("");
   const [state, setState] = useState<SaveState>("idle");
@@ -389,7 +389,7 @@ function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // CloudCard stores credentials for off-site restic backends (S3 + restic REST),
 // kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
 // stored value. Field labels are restic's actual env var names (self-documenting).
-function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "" });
   const [secretSet, setSecretSet] = useState(false);
   const [pwSet, setPwSet] = useState(false);
