@@ -15,8 +15,6 @@ import {
   putSettings,
   listContainers,
   listVMs,
-  listSnapshots,
-  listVMSnapshots,
   restore,
   restoreVM,
   getVMSSH,
@@ -51,11 +49,13 @@ function isKeyMismatch(err: string | undefined): boolean {
 function RestoreRow({
   domain,
   name,
+  lastBackup,
   t,
   otherActive,
 }: {
   domain: "container" | "vm";
   name: string;
+  lastBackup: number | null;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
 }) {
@@ -77,33 +77,18 @@ function RestoreRow({
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive && !isPending;
 
-  // Latest snapshot — DISPLAY ONLY; the restore itself resolves "latest" on the
-  // server. Fetched via listSnapshots / listVMSnapshots per the row's domain.
-  const [snapLabel, setSnapLabel] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    const load = domain === "container" ? listSnapshots(name) : listVMSnapshots(name);
-    load
-      .then((res) => {
-        if (!active) return;
-        const snaps = res.ok ? res.snapshots ?? [] : [];
-        const latest = snaps.length ? snaps.reduce((a, b) => (a.time >= b.time ? a : b)) : undefined;
-        setSnapLabel(latest ? new Date(latest.time).toLocaleString() : "");
-      })
-      .catch(() => {
-        if (active) setSnapLabel("");
-      });
-    return () => {
-      active = false;
-    };
-  }, [domain, name]);
+  // Latest-backup label — DISPLAY ONLY, read straight from the target list's own
+  // lastBackup field (unix seconds). No per-row snapshot fetch: a discovered list
+  // of N containers + M VMs would otherwise spawn N+M concurrent restic processes
+  // just for this label. The restore itself resolves "latest" on the server.
+  const snapLabel = lastBackup ? new Date(lastBackup * 1000).toLocaleString() : "";
 
   return (
     <div className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         <span className="text-carbon-text font-medium flex-1 truncate">{name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
-          {snapLabel === null ? "…" : snapLabel || t("containers.never")}
+          {snapLabel || t("containers.never")}
         </span>
         <button
           onClick={() => void fire()}
@@ -236,6 +221,13 @@ export default function Recovery() {
         window.dispatchEvent(new Event("bv:settings-changed"));
         setTimeout(() => setAttachState("idle"), 3000);
         setPreviewed(true);
+        // Attaching a (possibly different) repo invalidates any previously
+        // discovered targets — clear them so Step 4 can never offer to restore
+        // the OLD repo's data; the user must re-Discover against the new repo.
+        setContainers([]);
+        setVMs([]);
+        setDiscovered(null);
+        setRestoreAllResult(null);
         await checkReadable();
       } else {
         setAttachError(res.error ?? t("settings.error"));
@@ -320,26 +312,31 @@ export default function Recovery() {
     setRestoreAllResult(null);
     let ok = 0;
     let fail = 0;
-    for (const c of containers) {
-      const res = await fireAndWaitRun({
-        kind: "restore",
-        matchRun: (r) => r.domain === "container" && r.target === c.name,
-        start: () => restore(c.name, "latest", true, undefined, true),
-      });
-      if (res.ok) ok++;
-      else fail++;
+    // try/finally so a throw mid-loop can never strand the busy flag (which would
+    // leave "Restore all" and every row permanently disabled).
+    try {
+      for (const c of containers) {
+        const res = await fireAndWaitRun({
+          kind: "restore",
+          matchRun: (r) => r.domain === "container" && r.target === c.name,
+          start: () => restore(c.name, "latest", true, undefined, true),
+        });
+        if (res.ok) ok++;
+        else fail++;
+      }
+      for (const v of vms) {
+        const res = await fireAndWaitRun({
+          kind: "restore",
+          matchRun: (r) => r.domain === "vm" && r.target === v.name,
+          start: () => restoreVM(v.name, "latest", true, undefined, true),
+        });
+        if (res.ok) ok++;
+        else fail++;
+      }
+      setRestoreAllResult({ ok, fail });
+    } finally {
+      setRestoreAllBusy(false);
     }
-    for (const v of vms) {
-      const res = await fireAndWaitRun({
-        kind: "restore",
-        matchRun: (r) => r.domain === "vm" && r.target === v.name,
-        start: () => restoreVM(v.name, "latest", true, undefined, true),
-      });
-      if (res.ok) ok++;
-      else fail++;
-    }
-    setRestoreAllResult({ ok, fail });
-    setRestoreAllBusy(false);
   }, [restoreAllBusy, containers, vms, t]);
 
   const anyDiscovered = containers.length > 0 || vms.length > 0;
@@ -465,6 +462,10 @@ export default function Recovery() {
             <CloudCard t={t} />
             <RcloneCard t={t} />
 
+            {/* Credentials save via each card's OWN Save button, not "Connect &
+                preview" below — flag it so the user saves creds first. */}
+            <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.credsSaveHint")}</p>
+
             {/* Connect & preview — save paths/off-site/encryption, then re-check. */}
             <div className="flex items-center gap-3 pt-1">
               <button
@@ -583,6 +584,7 @@ export default function Recovery() {
                     key={`container:${c.name}`}
                     domain="container"
                     name={c.name}
+                    lastBackup={c.lastBackup}
                     t={t}
                     otherActive={rowOtherActive}
                   />
@@ -599,6 +601,7 @@ export default function Recovery() {
                     key={`vm:${v.name}`}
                     domain="vm"
                     name={v.name}
+                    lastBackup={v.lastBackup}
                     t={t}
                     otherActive={rowOtherActive}
                   />
