@@ -7,6 +7,7 @@ import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence } from "../components/CadenceBuilder";
 import { relativeTime } from "../lib/reltime";
+import { isFreshInstall } from "../lib/freshInstall";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1107,6 +1108,76 @@ function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
 }
 
 // ---------------------------------------------------------------------------
+// Fresh-install nudge — on a brand-new or rebuilt install (no known targets and
+// no domain has ever backed up successfully) point the user at the guided
+// Recovery tab to recover their existing backups. Self-contained (fetches its
+// own data) and dismissible; the dismissal persists in localStorage.
+// ---------------------------------------------------------------------------
+
+const RECOVERY_NUDGE_DISMISSED = "bombvault.recoveryNudgeDismissed";
+
+function FreshInstallNudge({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [fresh, setFresh] = useState(false);
+  const [dismissed, setDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(RECOVERY_NUDGE_DISMISSED) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([listContainers(), listVMs(), getStatus()])
+      .then(([cRes, vRes, sRes]) => {
+        if (!active) return;
+        const containers = cRes.ok ? (cRes.containers ?? []) : [];
+        // listVMs fails/returns empty when the VMs domain is off — treat as none.
+        const vms = vRes.ok ? (vRes.vms ?? []) : [];
+        const domains = sRes.ok ? (sRes.domains ?? []) : [];
+        setFresh(isFreshInstall(containers, vms, domains));
+      })
+      .catch(() => {/* non-fatal — no nudge */});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!fresh || dismissed) return null;
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(RECOVERY_NUDGE_DISMISSED, "1");
+    } catch {
+      /* storage unavailable — dismiss for this session only */
+    }
+    setDismissed(true);
+  };
+
+  return (
+    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex items-center gap-4">
+      <div className="flex-1 flex flex-col gap-1.5">
+        <p className="text-sm text-carbon-text">{t("recovery.freshNudge")}</p>
+        <Link
+          to="/recovery"
+          className="self-start text-sm font-medium hover:underline"
+          style={{ color: "var(--accent)" }}
+        >
+          {t("recovery.freshNudgeCta")} →
+        </Link>
+      </div>
+      <button
+        type="button"
+        onClick={dismiss}
+        className="shrink-0 rounded-md border border-carbon-border px-2 py-1 text-sm text-carbon-textSub hover:text-carbon-text transition-colors"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard page
 // ---------------------------------------------------------------------------
 
@@ -1149,6 +1220,9 @@ export function Dashboard() {
           <OffsiteIndicator domain="flash" withLabel />
         </div>
       </div>
+
+      {/* Fresh/rebuilt install → nudge to the guided Recovery tab (dismissible) */}
+      <FreshInstallNudge t={t} />
 
       {/* Recovery-kit nag — only while encryption is on and the kit is unstored */}
       <RecoveryNag t={t} />
