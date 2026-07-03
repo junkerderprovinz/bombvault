@@ -647,6 +647,10 @@ const en = {
   "recovery.readable": "Your backups are readable.",
   "recovery.notReachable": "Couldn't reach your backups yet — attach the location below, then re-check.",
   "recovery.recheck": "Re-check",
+  // Step 2 — attach your backups
+  "recovery.step2": "Attach your backups",
+  "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
+  "recovery.connectPreview": "Connect & preview",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1256,6 +1260,10 @@ const de: Translations = {
   "recovery.readable": "Deine Backups sind lesbar.",
   "recovery.notReachable": "Deine Backups waren noch nicht erreichbar — hänge den Speicherort unten an und prüfe erneut.",
   "recovery.recheck": "Erneut prüfen",
+  // Schritt 2 — Backups anhängen
+  "recovery.step2": "Backups anhängen",
+  "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
+  "recovery.connectPreview": "Verbinden & prüfen",
 };
 
 // ---------------------------------------------------------------------------
