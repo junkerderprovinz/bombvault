@@ -540,6 +540,7 @@ const it: Partial<Translations> = {
   "offsite.wizard.regenerate": "Rigenera (nuova password)",
   "offsite.wizard.snippetError": "Impossibile generare lo snippet",
   "offsite.wizard.passwordWarning": "Questa password viene mostrata UNA SOLA VOLTA e non viene mai salvata da BombVault. Salvala ora — ti serve per le credenziali qui sotto e non può essere recuperata.",
+  "offsite.wizard.tlsNote": "Questa ricetta usa il semplice HTTP — nessun problema su una LAN affidabile o VPN. Se la storage box è raggiungibile da internet, metti rest-server dietro HTTPS (un reverse proxy TLS) così le credenziali del repository non viaggiano in chiaro.",
   "offsite.wizard.password": "Password generata (salvala)",
   "offsite.wizard.step3": "3 · URL del repository + credenziali",
   "offsite.wizard.repoUrl": "URL del repository off-site",

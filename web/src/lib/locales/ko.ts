@@ -532,6 +532,7 @@ const ko: Partial<Translations> = {
   "offsite.wizard.regenerate": "다시 생성 (새 비밀번호)",
   "offsite.wizard.snippetError": "스니펫을 생성할 수 없습니다",
   "offsite.wizard.passwordWarning": "이 비밀번호는 단 한 번만 표시되며 BombVault에 저장되지 않습니다. 지금 저장하세요 — 아래 자격 증명에 필요하며 복구할 수 없습니다.",
+  "offsite.wizard.tlsNote": "이 방식은 일반 HTTP를 사용합니다 — 신뢰할 수 있는 LAN이나 VPN에서는 문제없습니다. 스토리지 박스가 인터넷을 통해 접근 가능하다면, rest-server를 HTTPS(TLS 리버스 프록시) 뒤에 두어 리포지토리 자격 증명이 평문으로 전송되지 않도록 하세요.",
   "offsite.wizard.password": "생성된 비밀번호 (저장하세요)",
   "offsite.wizard.step3": "3 · 리포지토리 URL + 자격 증명",
   "offsite.wizard.repoUrl": "오프사이트 리포지토리 URL",

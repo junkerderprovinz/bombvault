@@ -538,6 +538,7 @@ const es: Partial<Translations> = {
   "offsite.wizard.regenerate": "Regenerar (nueva contraseña)",
   "offsite.wizard.snippetError": "No se pudo generar el fragmento",
   "offsite.wizard.passwordWarning": "Esta contraseña se muestra UNA sola vez y BombVault nunca la almacena. Guárdala ahora — la necesitas para las credenciales de abajo y no se puede recuperar.",
+  "offsite.wizard.tlsNote": "Esta receta usa HTTP simple — sin problema en una LAN de confianza o VPN. Si el servidor de almacenamiento es accesible desde internet, coloca rest-server detrás de HTTPS (un proxy inverso con TLS) para que las credenciales del repositorio no se envíen en texto claro.",
   "offsite.wizard.password": "Contraseña generada (guárdala)",
   "offsite.wizard.step3": "3 · URL del repositorio + credenciales",
   "offsite.wizard.repoUrl": "URL del repositorio externo",

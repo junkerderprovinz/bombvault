@@ -540,6 +540,7 @@ const he: Partial<Translations> = {
   "offsite.wizard.regenerate": "צור מחדש (סיסמה חדשה)",
   "offsite.wizard.snippetError": "לא ניתן ליצור את הקטע",
   "offsite.wizard.passwordWarning": "סיסמה זו מוצגת פעם אחת בלבד ו-BombVault לעולם אינו שומר אותה. שמור אותה כעת — היא נחוצה עבור פרטי ההתחברות שלמטה ולא ניתן לשחזר אותה.",
+  "offsite.wizard.tlsNote": "מתכון זה משתמש ב-HTTP רגיל — בסדר גמור ב-LAN מהימן או VPN. אם מכונת האחסון נגישה דרך האינטרנט, מקם את rest-server מאחורי HTTPS (reverse proxy עם TLS) כדי שפרטי ההתחברות של המאגר לא יישלחו בטקסט גלוי.",
   "offsite.wizard.password": "סיסמה שנוצרה (שמור אותה)",
   "offsite.wizard.step3": "3 · כתובת URL של המאגר + פרטי התחברות",
   "offsite.wizard.repoUrl": "כתובת URL של מאגר מחוץ לאתר",

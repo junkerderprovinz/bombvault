@@ -543,6 +543,7 @@ const hu: Partial<Translations> = {
   "offsite.wizard.regenerate": "Újragenerálás (új jelszó)",
   "offsite.wizard.snippetError": "A kódrészletet nem sikerült generálni",
   "offsite.wizard.passwordWarning": "Ez a jelszó csak EGYSZER jelenik meg, és a BombVault soha nem tárolja. Mentsd el most — szükséged lesz rá az alábbi hitelesítő adatokhoz, és nem állítható helyre.",
+  "offsite.wizard.tlsNote": "Ez a recept egyszerű HTTP-t használ — megbízható LAN-on vagy VPN-en ez rendben van. Ha a tárolószerver elérhető az internetről, tedd a rest-servert HTTPS mögé (egy TLS fordított proxy), hogy a repository hitelesítő adatai ne titkosítatlanul menjenek át.",
   "offsite.wizard.password": "Generált jelszó (mentsd el)",
   "offsite.wizard.step3": "3 · Repository URL + hitelesítő adatok",
   "offsite.wizard.repoUrl": "Telephelyen kívüli repository URL",

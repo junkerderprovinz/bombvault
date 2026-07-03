@@ -543,6 +543,7 @@ const ar: Partial<Translations> = {
   "offsite.wizard.regenerate": "إعادة التوليد (كلمة مرور جديدة)",
   "offsite.wizard.snippetError": "تعذّر توليد المقتطف",
   "offsite.wizard.passwordWarning": "تُعرض كلمة المرور هذه مرة واحدة فقط ولا يخزّنها BombVault إطلاقاً. احفظها الآن — ستحتاجها لبيانات الاعتماد أدناه ولا يمكن استرجاعها.",
+  "offsite.wizard.tlsNote": "يستخدم هذا الإعداد HTTP عادياً — لا مشكلة في شبكة LAN موثوقة أو VPN. إذا كان صندوق التخزين قابلاً للوصول عبر الإنترنت، فضع rest-server خلف HTTPS (وكيل عكسي بـ TLS) حتى لا تُرسَل بيانات اعتماد المستودع بنص واضح.",
   "offsite.wizard.password": "كلمة المرور المُولَّدة (احفظها)",
   "offsite.wizard.step3": "3 · رابط المستودع + بيانات الاعتماد",
   "offsite.wizard.repoUrl": "رابط المستودع خارج الموقع",

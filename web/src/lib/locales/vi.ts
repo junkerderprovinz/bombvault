@@ -532,6 +532,7 @@ const vi: Partial<Translations> = {
   "offsite.wizard.regenerate": "Tạo lại (mật khẩu mới)",
   "offsite.wizard.snippetError": "Không thể tạo đoạn lệnh",
   "offsite.wizard.passwordWarning": "Mật khẩu này chỉ hiển thị MỘT LẦN và không bao giờ được BombVault lưu trữ. Hãy lưu lại ngay — bạn cần nó cho thông tin đăng nhập bên dưới và không thể khôi phục.",
+  "offsite.wizard.tlsNote": "Cách này dùng HTTP thuần — không sao trên LAN tin cậy hoặc VPN. Nếu storage box có thể truy cập qua internet, hãy đặt rest-server sau HTTPS (một reverse proxy TLS) để thông tin đăng nhập của kho không bị gửi dưới dạng văn bản thuần.",
   "offsite.wizard.password": "Mật khẩu được tạo (hãy lưu lại)",
   "offsite.wizard.step3": "3 · URL kho + thông tin đăng nhập",
   "offsite.wizard.repoUrl": "URL kho off-site",

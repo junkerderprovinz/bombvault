@@ -540,6 +540,7 @@ const tr: Partial<Translations> = {
   "offsite.wizard.regenerate": "Yeniden oluştur (yeni parola)",
   "offsite.wizard.snippetError": "Kod parçacığı oluşturulamadı",
   "offsite.wizard.passwordWarning": "Bu parola YALNIZCA BİR KEZ gösterilir ve BombVault tarafından asla saklanmaz. Şimdi kaydedin — aşağıdaki kimlik bilgileri için gereklidir ve kurtarılamaz.",
+  "offsite.wizard.tlsNote": "Bu tarif düz HTTP kullanır — güvenilir bir LAN veya VPN'de sorun değil. Depolama sunucusu internet üzerinden erişilebiliyorsa, rest-server'ı HTTPS (bir TLS ters proxy) arkasına alın ki depo kimlik bilgileri açık metin olarak gönderilmesin.",
   "offsite.wizard.password": "Oluşturulan parola (bunu kaydedin)",
   "offsite.wizard.step3": "3 · Depo URL'si + kimlik bilgileri",
   "offsite.wizard.repoUrl": "Site dışı depo URL'si",

@@ -537,6 +537,7 @@ const nl: Partial<Translations> = {
   "offsite.wizard.regenerate": "Opnieuw genereren (nieuw wachtwoord)",
   "offsite.wizard.snippetError": "Kon het snippet niet genereren",
   "offsite.wizard.passwordWarning": "Dit wachtwoord wordt slechts ÉÉN KEER getoond en wordt nooit door BombVault opgeslagen. Sla het nu op — je hebt het nodig voor de inloggegevens hieronder en het kan niet worden hersteld.",
+  "offsite.wizard.tlsNote": "Dit recept gebruikt gewoon HTTP — prima op een vertrouwd LAN of VPN. Is de storage box via internet bereikbaar, zet rest-server dan achter HTTPS (een TLS reverse proxy) zodat de repository-inloggegevens niet in leesbare tekst worden verstuurd.",
   "offsite.wizard.password": "Gegenereerd wachtwoord (bewaar dit)",
   "offsite.wizard.step3": "3 · Repository-URL + inloggegevens",
   "offsite.wizard.repoUrl": "Off-site repository-URL",

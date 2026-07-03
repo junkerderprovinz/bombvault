@@ -540,6 +540,7 @@ const fi: Partial<Translations> = {
   "offsite.wizard.regenerate": "Luo uudelleen (uusi salasana)",
   "offsite.wizard.snippetError": "Snippetin luonti epäonnistui",
   "offsite.wizard.passwordWarning": "Tämä salasana näytetään vain KERRAN, eikä BombVault tallenna sitä. Tallenna se nyt — tarvitset sitä alla oleviin tunnuksiin, eikä sitä voi palauttaa.",
+  "offsite.wizard.tlsNote": "Tämä resepti käyttää tavallista HTTP:tä — luotetussa LAN- tai VPN-verkossa se on ongelmatonta. Jos tallennuspalvelin on tavoitettavissa internetistä, sijoita rest-server HTTPS:n taakse (TLS-käänteisproxy), jottei repon tunnuksia lähetetä selväkielisenä.",
   "offsite.wizard.password": "Luotu salasana (tallenna tämä)",
   "offsite.wizard.step3": "3 · Repon URL + tunnukset",
   "offsite.wizard.repoUrl": "Etärepon URL",

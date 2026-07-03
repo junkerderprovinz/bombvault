@@ -543,6 +543,7 @@ const th: Partial<Translations> = {
   "offsite.wizard.regenerate": "สร้างใหม่ (รหัสผ่านใหม่)",
   "offsite.wizard.snippetError": "สร้างสนิปเพ็ตไม่สำเร็จ",
   "offsite.wizard.passwordWarning": "รหัสผ่านนี้จะแสดงเพียงครั้งเดียวและ BombVault จะไม่จัดเก็บไว้ บันทึกไว้ตอนนี้ — คุณต้องใช้สำหรับข้อมูลรับรองด้านล่างและไม่สามารถกู้คืนได้",
+  "offsite.wizard.tlsNote": "สูตรนี้ใช้ HTTP ธรรมดา — ไม่มีปัญหาบน LAN ที่เชื่อถือได้หรือ VPN หากกล่องจัดเก็บข้อมูลเข้าถึงได้ผ่านอินเทอร์เน็ต ให้วาง rest-server ไว้หลัง HTTPS (reverse proxy แบบ TLS) เพื่อไม่ให้ข้อมูลรับรองของรีพอสิทอรีถูกส่งแบบข้อความธรรมดา",
   "offsite.wizard.password": "รหัสผ่านที่สร้างขึ้น (บันทึกไว้)",
   "offsite.wizard.step3": "3 · URL รีพอสิทอรี + ข้อมูลรับรอง",
   "offsite.wizard.repoUrl": "URL รีพอสิทอรีนอกสถานที่",

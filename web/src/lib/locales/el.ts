@@ -540,6 +540,7 @@ const el: Partial<Translations> = {
   "offsite.wizard.regenerate": "Αναδημιουργία (νέος κωδικός)",
   "offsite.wizard.snippetError": "Δεν ήταν δυνατή η δημιουργία του snippet",
   "offsite.wizard.passwordWarning": "Αυτός ο κωδικός εμφανίζεται ΜΙΑ ΦΟΡΑ και δεν αποθηκεύεται ποτέ από το BombVault. Αποθηκεύστε τον τώρα — τον χρειάζεστε για τα διαπιστευτήρια παρακάτω και δεν μπορεί να ανακτηθεί.",
+  "offsite.wizard.tlsNote": "Αυτή η συνταγή χρησιμοποιεί απλό HTTP — μια χαρά σε έμπιστο LAN ή VPN. Αν το storage box είναι προσβάσιμο μέσω internet, βάλε τον rest-server πίσω από HTTPS (έναν αντίστροφο proxy με TLS), ώστε τα διαπιστευτήρια του αποθετηρίου να μην στέλνονται σε καθαρό κείμενο.",
   "offsite.wizard.password": "Παραγόμενος κωδικός (αποθηκεύστε τον)",
   "offsite.wizard.step3": "3 · URL αποθετηρίου + διαπιστευτήρια",
   "offsite.wizard.repoUrl": "URL αποθετηρίου εκτός τόπου",

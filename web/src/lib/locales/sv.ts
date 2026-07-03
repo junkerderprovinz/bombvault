@@ -540,6 +540,7 @@ const sv: Partial<Translations> = {
   "offsite.wizard.regenerate": "Generera om (nytt lösenord)",
   "offsite.wizard.snippetError": "Det gick inte att generera snutten",
   "offsite.wizard.passwordWarning": "Det här lösenordet visas EN gång och lagras aldrig av BombVault. Spara det nu — du behöver det för uppgifterna nedan och det kan inte återställas.",
+  "offsite.wizard.tlsNote": "Det här receptet använder vanlig HTTP — helt okej på ett betrott LAN eller VPN. Om lagringsservern går att nå över internet, placera rest-server bakom HTTPS (en TLS-reverse-proxy) så att repository-uppgifterna inte skickas i klartext.",
   "offsite.wizard.password": "Genererat lösenord (spara detta)",
   "offsite.wizard.step3": "3 · Repository-URL + uppgifter",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",

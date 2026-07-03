@@ -532,6 +532,7 @@ const zh: Partial<Translations> = {
   "offsite.wizard.regenerate": "重新生成（新密码）",
   "offsite.wizard.snippetError": "无法生成片段",
   "offsite.wizard.passwordWarning": "此密码仅显示一次，BombVault 绝不会存储它。请立即保存 — 下方的凭据需要用到它，且无法恢复。",
+  "offsite.wizard.tlsNote": "此方案使用纯 HTTP — 在受信任的 LAN 或 VPN 上没有问题。如果存储主机可通过互联网访问，请将 rest-server 置于 HTTPS（一个 TLS 反向代理）之后，以免仓库凭据以明文传输。",
   "offsite.wizard.password": "生成的密码（请保存）",
   "offsite.wizard.step3": "3 · 仓库 URL + 凭据",
   "offsite.wizard.repoUrl": "异地仓库 URL",
