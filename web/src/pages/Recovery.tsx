@@ -3,7 +3,18 @@ import { useT } from "../lib/i18n";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
-import { discover, discoverVMs, getSettings, putSettings, type Settings } from "../lib/api";
+import {
+  discover,
+  discoverVMs,
+  discoverAll,
+  getSettings,
+  putSettings,
+  listContainers,
+  listVMs,
+  type Settings,
+  type Container,
+  type VM,
+} from "../lib/api";
 
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
 // (they read the mirrored, restic-encrypted definitions), so they are the
@@ -121,6 +132,39 @@ export default function Recovery() {
       setAttachState("error");
     }
   }, [savedSettings, settings, checkReadable, t]);
+
+  // Step 3 — discover everything. Runs discoverAll(), then re-fetches the target
+  // lists (kept for the later review/restore step).
+  const [discovering, setDiscovering] = useState(false);
+  const [discovered, setDiscovered] = useState<{ containers: number; vms: number } | null>(null);
+  const [discoverError, setDiscoverError] = useState<string | null>(null);
+  // Reconstructed target lists — stored now, read by Task 5 (review + restore).
+  const [, setContainers] = useState<Container[]>([]);
+  const [, setVMs] = useState<VM[]>([]);
+
+  const runDiscover = useCallback(async () => {
+    setDiscovering(true);
+    setDiscoverError(null);
+    try {
+      const counts = await discoverAll();
+      // Re-fetch the reconstructed target lists and store them for the restore step.
+      const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
+      setContainers(cs.containers ?? []);
+      setVMs(vs.vms ?? []);
+      setDiscovered(counts);
+    } catch (err) {
+      setDiscoverError(err instanceof Error ? err.message : String(err));
+      setDiscovered(null);
+    } finally {
+      setDiscovering(false);
+    }
+  }, []);
+
+  const discoverStepState: StepState = discovered
+    ? discovered.containers + discovered.vms > 0
+      ? "ok"
+      : "warn"
+    : "idle";
 
   const offsiteInput =
     "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent";
@@ -260,6 +304,41 @@ export default function Recovery() {
           </>
         ) : (
           <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
+        )}
+      </StepCard>
+
+      {/* Step 3 — Discover everything (rebuild targets from the backup defs) */}
+      <StepCard n={3} title={t("recovery.step3")} state={discoverStepState}>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => void runDiscover()}
+            disabled={discovering}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {discovering && (
+              <span
+                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              />
+            )}
+            {discovering ? t("containers.discovering") : t("recovery.discover")}
+          </button>
+
+          {discovered && discovered.containers + discovered.vms > 0 && (
+            <span className="text-sm text-[#6fdc8c]">
+              {t("recovery.foundCounts")
+                .replace("{c}", String(discovered.containers))
+                .replace("{v}", String(discovered.vms))}
+            </span>
+          )}
+        </div>
+
+        {/* 0/0 — nothing found: point back to Step 1/2. */}
+        {discovered && discovered.containers + discovered.vms === 0 && (
+          <p className="text-sm text-[#f1c21b]">{t("recovery.foundNone")}</p>
+        )}
+        {discoverError && (
+          <p className="text-xs text-carbon-textMuted font-mono break-all">{discoverError}</p>
         )}
       </StepCard>
     </div>
