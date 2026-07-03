@@ -70,12 +70,14 @@ function IconSettings() {
   );
 }
 
-// Circular "restore" arrow — a recovery/roll-back glyph for the Recovery tab
+// Circular "restore" arrow — a recovery/roll-back glyph for the Recovery tab.
+// 20×20 viewBox + strokeWidth 1.5 to match the sibling stroked nav icons (was a
+// 16×16 viewBox at 1.4, which rendered a visibly heavier stroke at 22px).
 function IconRecovery() {
   return (
-    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="shrink-0" aria-hidden="true">
-      <path d="M8 2.5a5.5 5.5 0 1 0 5.2 3.7" strokeLinecap="round" />
-      <path d="M13.5 2v3.2H10.3" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
+      <path d="M10 3.125a6.875 6.875 0 1 0 6.5 4.625" strokeLinecap="round" />
+      <path d="M16.875 2.5v4H12.875" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
