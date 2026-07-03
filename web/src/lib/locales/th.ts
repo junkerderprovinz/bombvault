@@ -16,6 +16,7 @@ const th: Partial<Translations> = {
   "nav.reportBug": "รายงานข้อบกพร่อง",
   "nav.advanced": "ขั้นสูง",
   "nav.comingSoon": "เร็วๆ นี้",
+  "nav.recovery": "การกู้คืน",
 
   // Dashboard
   "dashboard.title": "แดชบอร์ด",
@@ -370,6 +371,7 @@ const th: Partial<Translations> = {
   "common.restoreRunning": "กำลังกู้คืนข้อมูลอยู่…",
   "common.backupRunning": "กำลังสำรองข้อมูลอยู่…",
   "common.replicateRunning": "กำลังจำลองข้อมูลอยู่…",
+  "common.close": "ปิด",
 
   // Backup folders selector
   "folders.title": "โฟลเดอร์ที่สำรองข้อมูล",
@@ -439,6 +441,34 @@ const th: Partial<Translations> = {
   "recovery.nagBody":
     "เมื่อเปิดการเข้ารหัส การสูญเสีย APP_KEY หมายถึงการสูญเสียการสำรองข้อมูลของคุณ ดาวน์โหลดชุดกู้คืนและเก็บไว้ในที่ปลอดภัยแบบออฟไลน์",
   "recovery.stored": "ฉันเก็บไว้อย่างปลอดภัยแล้ว",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "การกู้คืนจากภัยพิบัติ",
+  "recovery.intro": "กู้คืนคอนเทนเนอร์และ VMs ของคุณจากการสำรองข้อมูลที่มีอยู่มายังการติดตั้งนี้ ชี้ BombVault ไปยังการสำรองข้อมูลของคุณ ค้นหาว่ามีอะไรอยู่ในนั้น แล้วกู้คืน",
+  "recovery.step1": "BombVault อ่านการสำรองข้อมูลของคุณได้หรือไม่?",
+  "recovery.appKeyExplain": "ในการอ่านการสำรองข้อมูลที่มีอยู่ คอนเทนเนอร์นี้ต้องใช้ APP_KEY เดิมที่เคยใช้ — ซึ่งอยู่ในชุดกู้คืนของคุณ ตั้งค่าใน container template ของ Unraid หากยังไม่ได้ตั้ง แล้วตรวจสอบอีกครั้ง",
+  "recovery.appKeyRemedy": "คีย์เข้ารหัสไม่ตรงกับการสำรองข้อมูลเหล่านี้ ตั้งค่า APP_KEY เดิม (จากชุดกู้คืนของคุณ) ใน container template แล้วตรวจสอบอีกครั้ง",
+  "recovery.readable": "อ่านการสำรองข้อมูลของคุณได้",
+  "recovery.notReachable": "ยังเข้าถึงการสำรองข้อมูลของคุณไม่ได้ — แนบตำแหน่งด้านล่าง แล้วตรวจสอบอีกครั้ง",
+  "recovery.recheck": "ตรวจสอบอีกครั้ง",
+  "recovery.step2": "แนบการสำรองข้อมูลของคุณ",
+  "recovery.attachHint": "ชี้ BombVault ไปยังการสำรองข้อมูลที่มีอยู่: พาธในเครื่องภายใต้จุดเมานต์ของโฮสต์ หรือรีพอสิทอรีนอกสถานที่ (rest / S3 / B2 / sftp / rclone) พร้อมข้อมูลรับรอง จากนั้นเชื่อมต่อเพื่อยืนยัน",
+  "recovery.credsSaveHint": "ข้อมูลรับรองนอกสถานที่จะบันทึกด้วยปุ่มบันทึกของแต่ละการ์ดเอง — บันทึกก่อนที่คุณจะเชื่อมต่อและดูตัวอย่าง",
+  "recovery.connectPreview": "เชื่อมต่อและดูตัวอย่าง",
+  "recovery.step3": "ค้นหาว่ามีอะไรอยู่ในการสำรองข้อมูลของคุณ",
+  "recovery.discover": "ค้นหาการสำรองข้อมูล",
+  "recovery.foundCounts": "พบ {c} คอนเทนเนอร์และ {v} VMs",
+  "recovery.foundNone": "ยังไม่พบอะไร — ตรวจสอบการเชื่อมต่อและการแนบด้านบน หากคุณคาดว่าจะมีการสำรองข้อมูลที่นี่ ตรวจสอบให้แน่ใจว่า APP_KEY ของคุณตรงกับการสำรองข้อมูลเหล่านี้",
+  "recovery.step4": "ตรวจทานและกู้คืน",
+  "recovery.restoreAll": "กู้คืนทั้งหมด (ปล่อยให้หยุดอยู่)",
+  "recovery.restoreAllResult": "กู้คืน {ok} ล้มเหลว {fail} เริ่มการทำงานจากแท็บ Containers/VMs เมื่อพร้อม",
+  "recovery.vmSshNote": "การกู้คืน VM ต้องใช้การเชื่อมต่อ libvirt SSH — ตั้งค่าได้ที่ การตั้งค่า → VM Backup over SSH",
+  "recovery.noneDiscovered": "เรียกใช้ ค้นหาการสำรองข้อมูล ด้านบนก่อน",
+  "recovery.step5": "ชุดกู้คืนของคุณ",
+  "recovery.kitHint": "ดาวน์โหลดและเก็บชุดกู้คืนของคุณไว้ในที่ปลอดภัย — ประกอบด้วยคีย์เข้ารหัสและคำสั่ง restic ที่แน่นอนสำหรับการกู้คืนแม้ไม่มี BombVault",
+  "recovery.kitDownload": "ดาวน์โหลดชุดกู้คืน",
+  "recovery.freshNudge": "กำลังกู้คืนจากเซิร์ฟเวอร์เดิมหรือการสร้างใหม่? กู้คืนการสำรองข้อมูลที่มีอยู่ของคุณ",
+  "recovery.freshNudgeCta": "ไปที่การกู้คืน",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "แบนด์วิดท์นอกสถานที่",

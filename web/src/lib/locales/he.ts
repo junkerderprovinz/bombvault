@@ -16,6 +16,7 @@ const he: Partial<Translations> = {
   "nav.reportBug": "דיווח על באג",
   "nav.advanced": "מתקדם",
   "nav.comingSoon": "בקרוב",
+  "nav.recovery": "התאוששות",
 
   // Dashboard
   "dashboard.title": "לוח בקרה",
@@ -370,6 +371,7 @@ const he: Partial<Translations> = {
   "common.restoreRunning": "מתבצע שחזור…",
   "common.backupRunning": "מתבצע גיבוי…",
   "common.replicateRunning": "מתבצע שכפול…",
+  "common.close": "סגור",
 
   // Backup folders selector
   "folders.title": "תיקיות לגיבוי",
@@ -436,6 +438,34 @@ const he: Partial<Translations> = {
   "recovery.nagTitle": "שמור את ערכת השחזור שלך",
   "recovery.nagBody": "כאשר ההצפנה מופעלת, אובדן ה-APP_KEY שלך משמעו אובדן הגיבויים שלך. הורד את ערכת השחזור ושמור אותה במקום בטוח ולא מקוון.",
   "recovery.stored": "שמרתי אותה בבטחה",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "התאוששות מאסון",
+  "recovery.intro": "שחזר את הקונטיינרים וה-VMs שלך מגיבוי קיים אל התקנה זו. הפנה את BombVault אל הגיבויים שלך, גלה מה יש בהם, ושחזר.",
+  "recovery.step1": "האם BombVault יכול לקרוא את הגיבויים שלך?",
+  "recovery.appKeyExplain": "כדי לקרוא גיבויים קיימים, קונטיינר זה זקוק לאותו APP_KEY שהשתמש בו קודם — הוא נמצא בערכת השחזור שלך. הגדר אותו בתבנית הקונטיינר של Unraid אם עדיין לא, ואז בדוק שוב.",
+  "recovery.appKeyRemedy": "מפתח ההצפנה אינו תואם לגיבויים אלה. הגדר את ה-APP_KEY המקורי (מערכת השחזור שלך) בתבנית הקונטיינר, ואז בדוק שוב.",
+  "recovery.readable": "הגיבויים שלך קריאים.",
+  "recovery.notReachable": "לא ניתן היה להגיע לגיבויים שלך עדיין — צרף את המיקום למטה, ואז בדוק שוב.",
+  "recovery.recheck": "בדוק שוב",
+  "recovery.step2": "צרף את הגיבויים שלך",
+  "recovery.attachHint": "הפנה את BombVault אל הגיבויים הקיימים שלך: נתיב מקומי תחת נקודת העיגון של המארח, או מאגר מחוץ לאתר (rest / S3 / B2 / sftp / rclone) עם פרטי ההתחברות שלו. ואז התחבר לאישור.",
+  "recovery.credsSaveHint": "פרטי ההתחברות מחוץ לאתר נשמרים בעזרת כפתור השמירה של כל כרטיס — שמור אותם לפני שתתחבר ותציג תצוגה מקדימה.",
+  "recovery.connectPreview": "התחבר והצג תצוגה מקדימה",
+  "recovery.step3": "גלה מה יש בגיבויים שלך",
+  "recovery.discover": "גלה גיבויים",
+  "recovery.foundCounts": "נמצאו {c} קונטיינרים ו-{v} VMs.",
+  "recovery.foundNone": "לא נמצא דבר עדיין — בדוק את החיבור והצירוף למעלה. אם ציפית לגיבויים כאן, ודא שה-APP_KEY שלך תואם לגיבויים אלה.",
+  "recovery.step4": "בדוק ושחזר",
+  "recovery.restoreAll": "שחזר הכל (יישאר עצור)",
+  "recovery.restoreAllResult": "שוחזרו {ok}, נכשלו {fail}. הפעל אותם מהלשוניות Containers/VMs כשתהיה מוכן.",
+  "recovery.vmSshNote": "שחזור VM דורש את קישור ה-SSH של libvirt — הגדר אותו תחת הגדרות → VM Backup over SSH.",
+  "recovery.noneDiscovered": "הרץ תחילה את גלה למעלה.",
+  "recovery.step5": "ערכת השחזור שלך",
+  "recovery.kitHint": "הורד ואחסן את ערכת השחזור שלך במקום בטוח — היא מכילה את מפתח ההצפנה ואת פקודות ה-restic המדויקות לשחזור גם ללא BombVault.",
+  "recovery.kitDownload": "הורד ערכת שחזור",
+  "recovery.freshNudge": "משחזר משרת קודם או מהתקנה מחדש? שחזר את הגיבויים הקיימים שלך.",
+  "recovery.freshNudgeCta": "עבור להתאוששות",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "רוחב פס מחוץ לאתר",

@@ -16,6 +16,7 @@ const nl: Partial<Translations> = {
   "nav.reportBug": "Bug melden",
   "nav.advanced": "Geavanceerd",
   "nav.comingSoon": "Binnenkort",
+  "nav.recovery": "Herstel",
 
   // Dashboard
   "dashboard.title": "Dashboard",
@@ -367,6 +368,7 @@ const nl: Partial<Translations> = {
   "common.restoreRunning": "Er wordt een herstel uitgevoerd…",
   "common.backupRunning": "Er wordt een back-up uitgevoerd…",
   "common.replicateRunning": "Er wordt een replicatie uitgevoerd…",
+  "common.close": "Sluiten",
 
   // Backup folders selector
   "folders.title": "Back-upmappen",
@@ -412,6 +414,34 @@ const nl: Partial<Translations> = {
   "recovery.nagTitle": "Bewaar je herstelkit",
   "recovery.nagBody": "Met versleuteling aan betekent het verliezen van je APP_KEY het verliezen van je back-ups. Download de herstelkit en bewaar hem ergens veilig en offline.",
   "recovery.stored": "Ik heb hem veilig bewaard",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Noodherstel",
+  "recovery.intro": "Herstel je containers en VM's uit een bestaande back-up op deze installatie. Wijs BombVault naar je back-ups, ontdek wat erin zit en herstel.",
+  "recovery.step1": "Kan BombVault je back-ups lezen?",
+  "recovery.appKeyExplain": "Om bestaande back-ups te lezen heeft deze container DEZELFDE APP_KEY nodig als voorheen — die staat in je herstelkit. Stel hem in de Unraid-containersjabloon in als dat nog niet is gebeurd en controleer opnieuw.",
+  "recovery.appKeyRemedy": "De encryptiesleutel komt niet overeen met deze back-ups. Stel de originele APP_KEY (uit je herstelkit) in de containersjabloon in en controleer opnieuw.",
+  "recovery.readable": "Je back-ups zijn leesbaar.",
+  "recovery.notReachable": "Je back-ups zijn nog niet bereikbaar — koppel de locatie hieronder en controleer opnieuw.",
+  "recovery.recheck": "Opnieuw controleren",
+  "recovery.step2": "Koppel je back-ups",
+  "recovery.attachHint": "Wijs BombVault naar je bestaande back-ups: een lokaal pad onder de host-mount, of een off-site repo (rest / S3 / B2 / sftp / rclone) met inloggegevens. Maak daarna verbinding om te bevestigen.",
+  "recovery.credsSaveHint": "Off-site inloggegevens worden opgeslagen met de eigen Opslaan-knop van elke kaart — sla ze op voordat je verbindt & een voorbeeld bekijkt.",
+  "recovery.connectPreview": "Verbinden & voorbeeld",
+  "recovery.step3": "Ontdek wat er in je back-ups zit",
+  "recovery.discover": "Back-ups ontdekken",
+  "recovery.foundCounts": "{c} containers en {v} VM's gevonden.",
+  "recovery.foundNone": "Nog niets gevonden — controleer de verbinding en koppeling hierboven. Als je hier back-ups verwachtte, zorg dan dat je APP_KEY bij deze back-ups past.",
+  "recovery.step4": "Controleren en herstellen",
+  "recovery.restoreAll": "Alles herstellen (blijft gestopt)",
+  "recovery.restoreAllResult": "{ok} hersteld, {fail} mislukt. Start ze via de tabs Containers/VM's wanneer je klaar bent.",
+  "recovery.vmSshNote": "VM-herstel vereist de libvirt-SSH-koppeling — stel die in onder Instellingen → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Voer eerst hierboven Ontdekken uit.",
+  "recovery.step5": "Je herstelkit",
+  "recovery.kitHint": "Download je herstelkit en bewaar hem op een veilige plek — hij bevat de encryptiesleutel en de exacte restic-commando's om te herstellen, zelfs zonder BombVault.",
+  "recovery.kitDownload": "Herstelkit downloaden",
+  "recovery.freshNudge": "Herstellen vanaf een vorige server of na een herinstallatie? Herstel je bestaande back-ups.",
+  "recovery.freshNudgeCta": "Ga naar Herstel",
 
   // Snapshot tags + compare (diff)
   "snapshot.tags": "Tags",

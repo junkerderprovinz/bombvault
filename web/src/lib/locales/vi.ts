@@ -16,6 +16,7 @@ const vi: Partial<Translations> = {
   "nav.reportBug": "Báo lỗi",
   "nav.advanced": "Nâng cao",
   "nav.comingSoon": "Sắp ra mắt",
+  "nav.recovery": "Khôi phục",
 
   // Dashboard
   "dashboard.title": "Tổng quan",
@@ -362,6 +363,7 @@ const vi: Partial<Translations> = {
   "common.restoreRunning": "Một tiến trình khôi phục đang chạy…",
   "common.backupRunning": "Một tiến trình sao lưu đang chạy…",
   "common.replicateRunning": "Một tiến trình sao chép đang chạy…",
+  "common.close": "Đóng",
 
   // Backup folders selector
   "folders.title": "Thư mục sao lưu",
@@ -428,6 +430,34 @@ const vi: Partial<Translations> = {
   "recovery.nagTitle": "Lưu bộ khôi phục của bạn",
   "recovery.nagBody": "Khi bật mã hóa, mất APP_KEY đồng nghĩa với mất các bản sao lưu. Hãy tải bộ khôi phục và cất giữ ở nơi an toàn, ngoại tuyến.",
   "recovery.stored": "Tôi đã cất giữ an toàn",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Khôi phục sau thảm họa",
+  "recovery.intro": "Khôi phục các container và VMs của bạn từ một bản sao lưu hiện có vào bản cài đặt này. Trỏ BombVault tới các bản sao lưu của bạn, khám phá những gì có trong đó, rồi khôi phục.",
+  "recovery.step1": "BombVault có đọc được các bản sao lưu của bạn không?",
+  "recovery.appKeyExplain": "Để đọc các bản sao lưu hiện có, container này cần ĐÚNG APP_KEY mà nó đã dùng trước đây — nó nằm trong bộ khôi phục của bạn. Hãy đặt nó trong container template của Unraid nếu chưa đặt, rồi kiểm tra lại.",
+  "recovery.appKeyRemedy": "Khóa mã hóa không khớp với các bản sao lưu này. Hãy đặt APP_KEY gốc (từ bộ khôi phục của bạn) trong container template, rồi kiểm tra lại.",
+  "recovery.readable": "Các bản sao lưu của bạn đọc được.",
+  "recovery.notReachable": "Chưa thể truy cập các bản sao lưu của bạn — đính kèm vị trí bên dưới, rồi kiểm tra lại.",
+  "recovery.recheck": "Kiểm tra lại",
+  "recovery.step2": "Đính kèm các bản sao lưu của bạn",
+  "recovery.attachHint": "Trỏ BombVault tới các bản sao lưu hiện có của bạn: một đường dẫn cục bộ trong điểm gắn kết của host, hoặc một kho off-site (rest / S3 / B2 / sftp / rclone) kèm thông tin đăng nhập. Sau đó kết nối để xác nhận.",
+  "recovery.credsSaveHint": "Thông tin đăng nhập off-site được lưu bằng nút Lưu riêng của từng thẻ — hãy lưu chúng trước khi bạn kết nối và xem trước.",
+  "recovery.connectPreview": "Kết nối và xem trước",
+  "recovery.step3": "Khám phá những gì có trong các bản sao lưu của bạn",
+  "recovery.discover": "Tìm bản sao lưu",
+  "recovery.foundCounts": "Tìm thấy {c} container và {v} VMs.",
+  "recovery.foundNone": "Chưa tìm thấy gì — hãy kiểm tra kết nối và vị trí đã đính kèm ở trên. Nếu bạn mong đợi có bản sao lưu ở đây, hãy đảm bảo APP_KEY của bạn khớp với các bản sao lưu này.",
+  "recovery.step4": "Xem lại và khôi phục",
+  "recovery.restoreAll": "Khôi phục tất cả (để nguyên trạng thái dừng)",
+  "recovery.restoreAllResult": "Đã khôi phục {ok}, thất bại {fail}. Hãy khởi động chúng từ tab Containers/VMs khi sẵn sàng.",
+  "recovery.vmSshNote": "Khôi phục VM cần liên kết libvirt SSH — hãy thiết lập trong Cài đặt → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Hãy chạy Tìm bản sao lưu ở trên trước.",
+  "recovery.step5": "Bộ khôi phục của bạn",
+  "recovery.kitHint": "Tải xuống và cất giữ bộ khôi phục của bạn ở nơi an toàn — nó chứa khóa mã hóa và các lệnh restic chính xác để khôi phục ngay cả khi không có BombVault.",
+  "recovery.kitDownload": "Tải bộ khôi phục",
+  "recovery.freshNudge": "Đang khôi phục từ một máy chủ trước đây hoặc sau khi dựng lại? Hãy khôi phục các bản sao lưu hiện có của bạn.",
+  "recovery.freshNudgeCta": "Đến Khôi phục",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Băng thông off-site",

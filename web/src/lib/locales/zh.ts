@@ -16,6 +16,7 @@ const zh: Partial<Translations> = {
   "nav.reportBug": "报告错误",
   "nav.advanced": "高级",
   "nav.comingSoon": "即将推出",
+  "nav.recovery": "恢复",
 
   // Dashboard
   "dashboard.title": "仪表板",
@@ -362,6 +363,7 @@ const zh: Partial<Translations> = {
   "common.restoreRunning": "正在进行还原…",
   "common.backupRunning": "正在进行备份…",
   "common.replicateRunning": "正在进行复制…",
+  "common.close": "关闭",
 
   // Backup folders selector
   "folders.title": "备份文件夹",
@@ -428,6 +430,34 @@ const zh: Partial<Translations> = {
   "recovery.nagTitle": "保存你的恢复工具包",
   "recovery.nagBody": "启用加密后，丢失 APP_KEY 就等于丢失备份。请下载恢复工具包并离线妥善保存。",
   "recovery.stored": "我已妥善保存",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "灾难恢复",
+  "recovery.intro": "将你的容器和虚拟机从现有备份恢复到此安装。让 BombVault 指向你的备份，发现其中的内容，然后进行恢复。",
+  "recovery.step1": "BombVault 能读取你的备份吗？",
+  "recovery.appKeyExplain": "要读取现有备份，此容器需要与之前相同的 APP_KEY——它就在你的恢复工具包中。若尚未设置，请在 Unraid 容器模板中设置它，然后重新检查。",
+  "recovery.appKeyRemedy": "加密密钥与这些备份不匹配。请在容器模板中设置原始 APP_KEY（来自你的恢复工具包），然后重新检查。",
+  "recovery.readable": "你的备份可以读取。",
+  "recovery.notReachable": "暂时无法访问你的备份——请在下方附加位置，然后重新检查。",
+  "recovery.recheck": "重新检查",
+  "recovery.step2": "附加你的备份",
+  "recovery.attachHint": "让 BombVault 指向你现有的备份：主机挂载下的本地路径，或带凭据的异地仓库（rest / S3 / B2 / sftp / rclone）。然后连接以确认。",
+  "recovery.credsSaveHint": "异地凭据通过每张卡片各自的保存按钮保存——请在连接并预览之前保存它们。",
+  "recovery.connectPreview": "连接并预览",
+  "recovery.step3": "发现你的备份中有哪些内容",
+  "recovery.discover": "发现备份",
+  "recovery.foundCounts": "找到 {c} 个容器和 {v} 台虚拟机。",
+  "recovery.foundNone": "暂未找到任何内容——请检查上方的连接和附加的位置。如果你预期这里有备份，请确保你的 APP_KEY 与这些备份匹配。",
+  "recovery.step4": "查看并恢复",
+  "recovery.restoreAll": "全部恢复（保持停止状态）",
+  "recovery.restoreAllResult": "已恢复 {ok}，失败 {fail}。准备好后从容器/虚拟机标签页启动它们。",
+  "recovery.vmSshNote": "虚拟机恢复需要 libvirt SSH 连接——请在 设置 → VM Backup over SSH 下进行设置。",
+  "recovery.noneDiscovered": "请先运行上方的发现备份。",
+  "recovery.step5": "你的恢复工具包",
+  "recovery.kitHint": "下载并将你的恢复工具包妥善保存在安全的地方——它包含加密密钥以及即使没有 BombVault 也能恢复的精确 restic 命令。",
+  "recovery.kitDownload": "下载恢复工具包",
+  "recovery.freshNudge": "正在从旧服务器或重建中恢复？恢复你现有的备份。",
+  "recovery.freshNudgeCta": "前往恢复",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "异地带宽",

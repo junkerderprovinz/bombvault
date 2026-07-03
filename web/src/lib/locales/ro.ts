@@ -16,6 +16,7 @@ const ro: Partial<Translations> = {
   "nav.reportBug": "Raportează o eroare",
   "nav.advanced": "Avansat",
   "nav.comingSoon": "În curând",
+  "nav.recovery": "Recuperare",
 
   // Dashboard
   "dashboard.title": "Panou principal",
@@ -370,6 +371,7 @@ const ro: Partial<Translations> = {
   "common.restoreRunning": "O restaurare este în curs…",
   "common.backupRunning": "O copie de rezervă este în curs…",
   "common.replicateRunning": "O replicare este în curs…",
+  "common.close": "Închide",
 
   // Backup folders selector
   "folders.title": "Foldere de salvat",
@@ -417,6 +419,34 @@ const ro: Partial<Translations> = {
   "recovery.nagBody":
     "Cu criptarea activată, pierderea APP_KEY înseamnă pierderea backupurilor. Descarcă kitul de recuperare și păstrează-l undeva sigur și offline.",
   "recovery.stored": "L-am păstrat în siguranță",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Recuperare în caz de dezastru",
+  "recovery.intro": "Recuperează containerele și VM-urile dintr-o copie de rezervă existentă pe această instalare. Îndreaptă BombVault către copiile tale, descoperă ce conțin și restaurează.",
+  "recovery.step1": "Poate BombVault să-ți citească copiile de rezervă?",
+  "recovery.appKeyExplain": "Pentru a citi copiile de rezervă existente, acest container are nevoie de ACELAȘI APP_KEY folosit anterior — se află în kitul tău de recuperare. Setează-l în șablonul de container Unraid dacă nu este deja, apoi verifică din nou.",
+  "recovery.appKeyRemedy": "Cheia de criptare nu corespunde acestor copii de rezervă. Setează APP_KEY original (din kitul de recuperare) în șablonul containerului, apoi verifică din nou.",
+  "recovery.readable": "Copiile tale de rezervă sunt lizibile.",
+  "recovery.notReachable": "Copiile de rezervă nu au putut fi accesate încă — atașează locația mai jos, apoi verifică din nou.",
+  "recovery.recheck": "Verifică din nou",
+  "recovery.step2": "Atașează copiile de rezervă",
+  "recovery.attachHint": "Îndreaptă BombVault către copiile tale de rezervă existente: o cale locală sub montarea gazdei sau un repo extern (rest / S3 / B2 / sftp / rclone) cu credențialele sale. Apoi conectează-te pentru a confirma.",
+  "recovery.credsSaveHint": "Credențialele externe se salvează cu butonul Salvează propriu al fiecărui card — salvează-le înainte de a te conecta și previzualiza.",
+  "recovery.connectPreview": "Conectează și previzualizează",
+  "recovery.step3": "Descoperă ce se află în copiile tale de rezervă",
+  "recovery.discover": "Descoperă copii de rezervă",
+  "recovery.foundCounts": "Găsite {c} containere și {v} VM-uri.",
+  "recovery.foundNone": "Încă nimic găsit — verifică conexiunea și atașarea de mai sus. Dacă te așteptai la copii de rezervă aici, asigură-te că APP_KEY corespunde acestor copii.",
+  "recovery.step4": "Verifică și restaurează",
+  "recovery.restoreAll": "Restaurează tot (rămân oprite)",
+  "recovery.restoreAllResult": "Restaurate {ok}, eșuate {fail}. Pornește-le din filele Containere/VM-uri când ești gata.",
+  "recovery.vmSshNote": "Restaurarea VM necesită legătura SSH la libvirt — configureaz-o în Setări → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Rulează mai întâi Descoperă de mai sus.",
+  "recovery.step5": "Kitul tău de recuperare",
+  "recovery.kitHint": "Descarcă și păstrează kitul de recuperare într-un loc sigur — conține cheia de criptare și comenzile restic exacte pentru a restaura chiar și fără BombVault.",
+  "recovery.kitDownload": "Descarcă kitul de recuperare",
+  "recovery.freshNudge": "Restaurezi de pe un server anterior sau după o reinstalare? Recuperează-ți copiile de rezervă existente.",
+  "recovery.freshNudgeCta": "Mergi la Recuperare",
 
   // Backups — delete all
   "snapshots.deleteAll": "Șterge toate copiile de rezervă",

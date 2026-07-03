@@ -16,6 +16,7 @@ const fi: Partial<Translations> = {
   "nav.reportBug": "Ilmoita virheestä",
   "nav.advanced": "Lisäasetukset",
   "nav.comingSoon": "Tulossa pian",
+  "nav.recovery": "Palautus",
 
   // Dashboard
   "dashboard.title": "Kojelauta",
@@ -370,6 +371,7 @@ const fi: Partial<Translations> = {
   "common.restoreRunning": "Palautus on käynnissä…",
   "common.backupRunning": "Varmuuskopiointi on käynnissä…",
   "common.replicateRunning": "Replikointi on käynnissä…",
+  "common.close": "Sulje",
 
   // Backup folders selector
   "folders.title": "Varmuuskopioitavat kansiot",
@@ -436,6 +438,34 @@ const fi: Partial<Translations> = {
   "recovery.nagTitle": "Tallenna palautuspakettisi",
   "recovery.nagBody": "Kun salaus on käytössä, APP_KEY:n menettäminen tarkoittaa varmuuskopioiden menettämistä. Lataa palautuspaketti ja säilytä se turvallisessa ja offline-paikassa.",
   "recovery.stored": "Olen tallentanut sen turvallisesti",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Katastrofista toipuminen",
+  "recovery.intro": "Palauta konttisi ja VM:si olemassa olevasta varmuuskopiosta tähän asennukseen. Osoita BombVault varmuuskopioihisi, selvitä niiden sisältö ja palauta.",
+  "recovery.step1": "Voiko BombVault lukea varmuuskopioitasi?",
+  "recovery.appKeyExplain": "Lukeakseen olemassa olevia varmuuskopioita tämä kontti tarvitsee SAMAN APP_KEY:n, jota se käytti aiemmin — se on palautuspaketissasi. Aseta se Unraidin konttimalliin, ellei sitä ole jo asetettu, ja tarkista sitten uudelleen.",
+  "recovery.appKeyRemedy": "Salausavain ei täsmää näiden varmuuskopioiden kanssa. Aseta alkuperäinen APP_KEY (palautuspaketistasi) konttimalliin ja tarkista sitten uudelleen.",
+  "recovery.readable": "Varmuuskopiosi ovat luettavissa.",
+  "recovery.notReachable": "Varmuuskopioihisi ei vielä saatu yhteyttä — liitä sijainti alla ja tarkista sitten uudelleen.",
+  "recovery.recheck": "Tarkista uudelleen",
+  "recovery.step2": "Liitä varmuuskopiosi",
+  "recovery.attachHint": "Osoita BombVault olemassa oleviin varmuuskopioihisi: paikallinen polku host-liitoksen alla tai etärepo (rest / S3 / B2 / sftp / rclone) tunnuksineen. Yhdistä sitten vahvistaaksesi.",
+  "recovery.credsSaveHint": "Etätunnukset tallennetaan kunkin kortin omalla Tallenna-painikkeella — tallenna ne ennen yhdistämistä ja esikatselua.",
+  "recovery.connectPreview": "Yhdistä ja esikatsele",
+  "recovery.step3": "Selvitä, mitä varmuuskopioissasi on",
+  "recovery.discover": "Tunnista varmuuskopiot",
+  "recovery.foundCounts": "Löytyi {c} konttia ja {v} VM:ää.",
+  "recovery.foundNone": "Mitään ei vielä löytynyt — tarkista yhteys ja liitos yllä. Jos odotit varmuuskopioita tänne, varmista, että APP_KEY täsmää näiden varmuuskopioiden kanssa.",
+  "recovery.step4": "Tarkastele ja palauta",
+  "recovery.restoreAll": "Palauta kaikki (jätetään pysäytetyiksi)",
+  "recovery.restoreAllResult": "Palautettu {ok}, epäonnistui {fail}. Käynnistä ne Kontit/VMs-välilehdiltä, kun olet valmis.",
+  "recovery.vmSshNote": "VM:n palautus tarvitsee libvirtin SSH-yhteyden — määritä se kohdassa Asetukset → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Suorita ensin yllä oleva Tunnista.",
+  "recovery.step5": "Palautuspakettisi",
+  "recovery.kitHint": "Lataa ja säilytä palautuspakettisi turvallisessa paikassa — se sisältää salausavaimen ja tarkat restic-komennot palauttamiseen jopa ilman BombVaultia.",
+  "recovery.kitDownload": "Lataa palautuspaketti",
+  "recovery.freshNudge": "Palautatko aiemmalta palvelimelta tai uudelleenrakennuksesta? Palauta olemassa olevat varmuuskopiosi.",
+  "recovery.freshNudgeCta": "Siirry Palautukseen",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Etäkaistanleveys",

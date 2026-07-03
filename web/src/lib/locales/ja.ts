@@ -16,6 +16,7 @@ const ja: Partial<Translations> = {
   "nav.reportBug": "バグを報告",
   "nav.advanced": "詳細設定",
   "nav.comingSoon": "近日公開",
+  "nav.recovery": "リカバリー",
 
   // Dashboard
   "dashboard.title": "ダッシュボード",
@@ -362,6 +363,7 @@ const ja: Partial<Translations> = {
   "common.restoreRunning": "復元を実行中です…",
   "common.backupRunning": "バックアップを実行中です…",
   "common.replicateRunning": "複製を実行中です…",
+  "common.close": "閉じる",
 
   // Backup folders selector
   "folders.title": "バックアップ対象フォルダ",
@@ -428,6 +430,34 @@ const ja: Partial<Translations> = {
   "recovery.nagTitle": "リカバリーキットを保存してください",
   "recovery.nagBody": "暗号化が有効な場合、APP_KEY を失うとバックアップを失います。リカバリーキットをダウンロードし、安全なオフラインの場所に保管してください。",
   "recovery.stored": "安全に保管しました",
+
+  // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "災害復旧",
+  "recovery.intro": "既存のバックアップからコンテナと VM をこのインストールに復元します。BombVault をバックアップに向け、その内容を検出して復元します。",
+  "recovery.step1": "BombVault はバックアップを読み取れますか？",
+  "recovery.appKeyExplain": "既存のバックアップを読み取るには、このコンテナに以前と同じ APP_KEY が必要です — リカバリーキットに記載されています。まだ設定していなければ Unraid のコンテナテンプレートで設定し、再確認してください。",
+  "recovery.appKeyRemedy": "暗号化キーがこれらのバックアップと一致しません。元の APP_KEY（リカバリーキットに記載）をコンテナテンプレートに設定し、再確認してください。",
+  "recovery.readable": "バックアップは読み取り可能です。",
+  "recovery.notReachable": "まだバックアップに到達できませんでした — 下で保存先を接続し、再確認してください。",
+  "recovery.recheck": "再確認",
+  "recovery.step2": "バックアップを接続",
+  "recovery.attachHint": "BombVault を既存のバックアップに向けます：ホストマウント配下のローカルパス、または認証情報付きのオフサイトリポジトリ（rest / S3 / B2 / sftp / rclone）。その後、接続して確認します。",
+  "recovery.credsSaveHint": "オフサイトの認証情報は各カードの保存ボタンで保存されます — 接続してプレビューする前に保存してください。",
+  "recovery.connectPreview": "接続してプレビュー",
+  "recovery.step3": "バックアップの内容を検出",
+  "recovery.discover": "バックアップを検出",
+  "recovery.foundCounts": "コンテナ {c} 個、VM {v} 個が見つかりました。",
+  "recovery.foundNone": "まだ何も見つかりません — 上の接続と接続先を確認してください。ここにバックアップがあるはずなら、APP_KEY がこれらのバックアップと一致しているか確認してください。",
+  "recovery.step4": "確認して復元",
+  "recovery.restoreAll": "すべて復元（停止したまま）",
+  "recovery.restoreAllResult": "{ok} 件を復元、{fail} 件が失敗しました。準備ができたら、コンテナ/VM タブから起動してください。",
+  "recovery.vmSshNote": "VM の復元には libvirt の SSH リンクが必要です — 設定 → VM Backup over SSH で設定してください。",
+  "recovery.noneDiscovered": "まず上の「検出」を実行してください。",
+  "recovery.step5": "リカバリーキット",
+  "recovery.kitHint": "リカバリーキットをダウンロードして安全な場所に保管してください — 暗号化キーと、BombVault がなくても復元できる正確な restic コマンドが含まれています。",
+  "recovery.kitDownload": "リカバリーキットをダウンロード",
+  "recovery.freshNudge": "以前のサーバーや再構築からの復元ですか？既存のバックアップを復元しましょう。",
+  "recovery.freshNudgeCta": "リカバリーへ移動",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "オフサイト帯域幅",
