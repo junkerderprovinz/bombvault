@@ -662,6 +662,10 @@ const en = {
   "recovery.restoreAllResult": "Restored {ok}, failed {fail}. Start them from the Containers/VMs tabs when ready.",
   "recovery.vmSshNote": "VM restore needs the libvirt SSH link — set it up under Settings → VM Backup over SSH.",
   "recovery.noneDiscovered": "Run Discover above first.",
+  // Step 5 — recovery kit (safety net for next time)
+  "recovery.step5": "Your recovery kit",
+  "recovery.kitHint": "Download and store your recovery kit somewhere safe — it holds the encryption key and the exact restic commands to restore even without BombVault.",
+  "recovery.kitDownload": "Download recovery kit",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1286,6 +1290,10 @@ const de: Translations = {
   "recovery.restoreAllResult": "{ok} wiederhergestellt, {fail} fehlgeschlagen. Starte sie bei Bedarf über die Tabs Container/VMs.",
   "recovery.vmSshNote": "Für die VM-Wiederherstellung wird die libvirt-SSH-Verbindung benötigt — richte sie unter Einstellungen → VM-Backup über SSH ein.",
   "recovery.noneDiscovered": "Führe zuerst oben „Entdecken“ aus.",
+  // Schritt 5 — Recovery-Kit (Sicherheitsnetz fürs nächste Mal)
+  "recovery.step5": "Dein Recovery-Kit",
+  "recovery.kitHint": "Lade dein Recovery-Kit herunter und bewahre es sicher auf — es enthält den Verschlüsselungsschlüssel und die genauen restic-Befehle, um selbst ohne BombVault wiederherzustellen.",
+  "recovery.kitDownload": "Recovery-Kit herunterladen",
 };
 
 // ---------------------------------------------------------------------------

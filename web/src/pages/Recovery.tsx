@@ -20,6 +20,7 @@ import {
   restore,
   restoreVM,
   getVMSSH,
+  recoveryKitUrl,
   type Settings,
   type Container,
   type VM,
@@ -595,6 +596,18 @@ export default function Recovery() {
             )}
           </>
         )}
+      </StepCard>
+
+      {/* Step 5 — Your recovery kit (safety net for next time) */}
+      <StepCard n={5} title={t("recovery.step5")} state="idle">
+        <p className="max-w-2xl">{t("recovery.kitHint")}</p>
+        <a
+          href={recoveryKitUrl()}
+          download="bombvault-recovery-kit.md"
+          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+        >
+          {t("recovery.kitDownload")}
+        </a>
       </StepCard>
     </div>
   );
