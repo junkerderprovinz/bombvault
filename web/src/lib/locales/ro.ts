@@ -543,6 +543,7 @@ const ro: Partial<Translations> = {
   "offsite.wizard.regenerate": "Regenerează (parolă nouă)",
   "offsite.wizard.snippetError": "Fragmentul nu a putut fi generat",
   "offsite.wizard.passwordWarning": "Această parolă este afișată O SINGURĂ DATĂ și nu este niciodată stocată de BombVault. Salveaz-o acum — ai nevoie de ea pentru credențialele de mai jos și nu poate fi recuperată.",
+  "offsite.wizard.tlsNote": "Această rețetă folosește HTTP simplu — în regulă într-un LAN de încredere sau VPN. Dacă storage box-ul este accesibil prin internet, pune rest-server în spatele HTTPS (un proxy invers TLS) ca să nu se trimită credențialele depozitului în clar.",
   "offsite.wizard.password": "Parolă generată (salveaz-o)",
   "offsite.wizard.step3": "3 · URL depozit + credențiale",
   "offsite.wizard.repoUrl": "URL depozit off-site",

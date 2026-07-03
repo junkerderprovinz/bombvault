@@ -535,6 +535,7 @@ const pl: Partial<Translations> = {
   "offsite.wizard.regenerate": "Wygeneruj ponownie (nowe hasło)",
   "offsite.wizard.snippetError": "Nie udało się wygenerować fragmentu",
   "offsite.wizard.passwordWarning": "To hasło jest pokazywane TYLKO RAZ i nigdy nie jest przechowywane przez BombVault. Zapisz je teraz — jest potrzebne do poświadczeń poniżej i nie można go odzyskać.",
+  "offsite.wizard.tlsNote": "Ten przepis używa zwykłego HTTP — w zaufanej sieci LAN lub VPN nie ma problemu. Jeśli serwer magazynu jest osiągalny przez internet, umieść rest-server za HTTPS (odwrotne proxy TLS), aby poświadczenia repozytorium nie były przesyłane otwartym tekstem.",
   "offsite.wizard.password": "Wygenerowane hasło (zapisz je)",
   "offsite.wizard.step3": "3 · Adres URL repozytorium + poświadczenia",
   "offsite.wizard.repoUrl": "Adres URL repozytorium poza siedzibą",

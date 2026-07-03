@@ -532,6 +532,7 @@ const ja: Partial<Translations> = {
   "offsite.wizard.regenerate": "再生成（新しいパスワード）",
   "offsite.wizard.snippetError": "スニペットを生成できませんでした",
   "offsite.wizard.passwordWarning": "このパスワードは一度だけ表示され、BombVault には保存されません。今すぐ保存してください — 下の認証情報で必要になり、後から復元することはできません。",
+  "offsite.wizard.tlsNote": "このレシピは平文の HTTP を使います — 信頼できる LAN や VPN では問題ありません。ストレージボックスがインターネット経由で到達可能な場合は、rest-server を HTTPS（TLS リバースプロキシ）の背後に置き、リポジトリの認証情報が平文で送信されないようにしてください。",
   "offsite.wizard.password": "生成されたパスワード（保存してください）",
   "offsite.wizard.step3": "3 · リポジトリ URL + 認証情報",
   "offsite.wizard.repoUrl": "オフサイトリポジトリ URL",

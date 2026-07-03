@@ -540,6 +540,7 @@ const fr: Partial<Translations> = {
   "offsite.wizard.regenerate": "Régénérer (nouveau mot de passe)",
   "offsite.wizard.snippetError": "Impossible de générer l'extrait",
   "offsite.wizard.passwordWarning": "Ce mot de passe est affiché UNE SEULE FOIS et n'est jamais conservé par BombVault. Enregistrez-le maintenant — il est requis pour les identifiants ci-dessous et ne peut pas être récupéré.",
+  "offsite.wizard.tlsNote": "Cette recette utilise du HTTP simple — sans souci sur un LAN de confiance ou un VPN. Si le serveur de stockage est accessible depuis internet, placez rest-server derrière HTTPS (un reverse proxy TLS) pour que les identifiants du dépôt ne soient pas envoyés en clair.",
   "offsite.wizard.password": "Mot de passe généré (à conserver)",
   "offsite.wizard.step3": "3 · URL du dépôt + identifiants",
   "offsite.wizard.repoUrl": "URL du dépôt hors site",

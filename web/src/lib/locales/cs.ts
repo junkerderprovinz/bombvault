@@ -538,6 +538,7 @@ const cs: Partial<Translations> = {
   "offsite.wizard.regenerate": "Vygenerovat znovu (nové heslo)",
   "offsite.wizard.snippetError": "Úryvek se nepodařilo vygenerovat",
   "offsite.wizard.passwordWarning": "Toto heslo se zobrazí POUZE JEDNOU a BombVault jej nikde neukládá. Uložte si jej teď — budete jej potřebovat pro přihlašovací údaje níže a nelze jej obnovit.",
+  "offsite.wizard.tlsNote": "Tento recept používá prosté HTTP — v důvěryhodné síti LAN nebo VPN bez problémů. Pokud je úložný server dostupný přes internet, umísti rest-server za HTTPS (reverzní proxy s TLS), aby se přihlašovací údaje repozitáře nepřenášely v otevřené podobě.",
   "offsite.wizard.password": "Vygenerované heslo (uložte si je)",
   "offsite.wizard.step3": "3 · URL repozitáře + přihlašovací údaje",
   "offsite.wizard.repoUrl": "URL repozitáře mimo lokalitu",

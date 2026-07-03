@@ -540,6 +540,7 @@ const no: Partial<Translations> = {
   "offsite.wizard.regenerate": "Generer på nytt (nytt passord)",
   "offsite.wizard.snippetError": "Kunne ikke generere snutten",
   "offsite.wizard.passwordWarning": "Dette passordet vises bare ÉN gang og lagres aldri av BombVault. Lagre det nå — du trenger det for legitimasjonen nedenfor, og det kan ikke gjenopprettes.",
+  "offsite.wizard.tlsNote": "Denne oppskriften bruker vanlig HTTP — helt greit på et betrodd LAN eller VPN. Hvis lagringsboksen er tilgjengelig over internett, plasser rest-server bak HTTPS (en TLS-reverse-proxy), slik at repository-legitimasjonen ikke sendes i klartekst.",
   "offsite.wizard.password": "Generert passord (lagre dette)",
   "offsite.wizard.step3": "3 · Repository-URL + legitimasjon",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",

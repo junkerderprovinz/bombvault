@@ -540,6 +540,7 @@ const da: Partial<Translations> = {
   "offsite.wizard.regenerate": "Generér igen (ny adgangskode)",
   "offsite.wizard.snippetError": "Kunne ikke generere snippet",
   "offsite.wizard.passwordWarning": "Denne adgangskode vises KUN ÉN GANG og gemmes aldrig af BombVault. Gem den nu — du skal bruge den til legitimationsoplysningerne nedenfor, og den kan ikke gendannes.",
+  "offsite.wizard.tlsNote": "Denne opskrift bruger almindelig HTTP — helt fint på et betroet LAN eller VPN. Hvis storage-boksen kan nås over internettet, så placer rest-server bag HTTPS (en TLS-reverse-proxy), så repository-legitimationsoplysningerne ikke sendes i klartekst.",
   "offsite.wizard.password": "Genereret adgangskode (gem denne)",
   "offsite.wizard.step3": "3 · Repository-URL + legitimationsoplysninger",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
