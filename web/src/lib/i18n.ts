@@ -656,6 +656,12 @@ const en = {
   "recovery.discover": "Discover backups",
   "recovery.foundCounts": "Found {c} containers and {v} VMs.",
   "recovery.foundNone": "Nothing found yet — check the connection and attachment above.",
+  // Step 4 — review & restore all (left stopped)
+  "recovery.step4": "Review and restore",
+  "recovery.restoreAll": "Restore all (left stopped)",
+  "recovery.restoreAllResult": "Restored {ok}, failed {fail}. Start them from the Containers/VMs tabs when ready.",
+  "recovery.vmSshNote": "VM restore needs the libvirt SSH link — set it up under Settings → VM Backup over SSH.",
+  "recovery.noneDiscovered": "Run Discover above first.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1274,6 +1280,12 @@ const de: Translations = {
   "recovery.discover": "Backups entdecken",
   "recovery.foundCounts": "{c} Container und {v} VMs gefunden.",
   "recovery.foundNone": "Noch nichts gefunden — prüfe Verbindung und Anhang oben.",
+  // Schritt 4 — prüfen & alle wiederherstellen (gestoppt lassen)
+  "recovery.step4": "Prüfen und wiederherstellen",
+  "recovery.restoreAll": "Alle wiederherstellen (gestoppt lassen)",
+  "recovery.restoreAllResult": "{ok} wiederhergestellt, {fail} fehlgeschlagen. Starte sie bei Bedarf über die Tabs Container/VMs.",
+  "recovery.vmSshNote": "Für die VM-Wiederherstellung wird die libvirt-SSH-Verbindung benötigt — richte sie unter Einstellungen → VM-Backup über SSH ein.",
+  "recovery.noneDiscovered": "Führe zuerst oben „Entdecken“ aus.",
 };
 
 // ---------------------------------------------------------------------------

@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
+import { ProgressBar } from "../components/ProgressBar";
+import { RestoreCancelButton } from "../components/RestoreCancelButton";
+import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
+import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import {
   discover,
   discoverVMs,
@@ -11,6 +15,11 @@ import {
   putSettings,
   listContainers,
   listVMs,
+  listSnapshots,
+  listVMSnapshots,
+  restore,
+  restoreVM,
+  getVMSSH,
   type Settings,
   type Container,
   type VM,
@@ -29,6 +38,110 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 function isKeyMismatch(err: string | undefined): boolean {
   return !!err && /APP_KEY/i.test(err);
+}
+
+// RestoreRow — a single discovered target (container or VM) with its latest
+// snapshot and a per-item Restore button. It mirrors the Containers/VMs
+// RestorePanel EXACTLY: useBackupWatch drives the async fire-and-watch, the v4
+// SSE ProgressBar shows live progress, and RestoreCancelButton cancels — so a
+// recovery restore behaves identically to one launched from those tabs. The
+// restore is IN PLACE and LEFT STOPPED (leaveStopped=true): the recovery flow
+// restores everything first, then you start them from the Containers/VMs tabs.
+function RestoreRow({
+  domain,
+  name,
+  t,
+  otherActive,
+}: {
+  domain: "container" | "vm";
+  name: string;
+  t: ReturnType<typeof useT>["t"];
+  otherActive: boolean;
+}) {
+  const progressKey = `${domain}:${name}`;
+  const cancelledRef = useRef(false);
+  const { state, fire, isPending } = useBackupWatch({
+    progressKey,
+    kind: "restore",
+    // Same single-restore call shape as the Containers/VMs RestorePanel, with
+    // the leave-stopped flag set (restore(name,"latest",true,undefined,true) /
+    // restoreVM(name,"latest",true,undefined,true)).
+    start: () =>
+      domain === "container"
+        ? restore(name, "latest", true, undefined, true)
+        : restoreVM(name, "latest", true, undefined, true),
+    matchRun: (r) => r.domain === domain && r.target === name,
+    cancelledRef,
+  });
+  const prog = useProgress()[progressKey];
+  const blockedByOther = otherActive && !isPending;
+
+  // Latest snapshot — DISPLAY ONLY; the restore itself resolves "latest" on the
+  // server. Fetched via listSnapshots / listVMSnapshots per the row's domain.
+  const [snapLabel, setSnapLabel] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    const load = domain === "container" ? listSnapshots(name) : listVMSnapshots(name);
+    load
+      .then((res) => {
+        if (!active) return;
+        const snaps = res.ok ? res.snapshots ?? [] : [];
+        const latest = snaps.length ? snaps.reduce((a, b) => (a.time >= b.time ? a : b)) : undefined;
+        setSnapLabel(latest ? new Date(latest.time).toLocaleString() : "");
+      })
+      .catch(() => {
+        if (active) setSnapLabel("");
+      });
+    return () => {
+      active = false;
+    };
+  }, [domain, name]);
+
+  return (
+    <div className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0">
+      <div className="flex items-center gap-3 text-sm">
+        <span className="text-carbon-text font-medium flex-1 truncate">{name}</span>
+        <span className="text-carbon-textMuted text-xs shrink-0">
+          {snapLabel === null ? "…" : snapLabel || t("containers.never")}
+        </span>
+        <button
+          onClick={() => void fire()}
+          disabled={isPending || blockedByOther || state.phase === "success"}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+        >
+          {isPending ? (
+            <>
+              <span
+                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              />
+              {t("common.restoring")}
+            </>
+          ) : (
+            t("snapshots.restore")
+          )}
+        </button>
+      </div>
+      {isPending && (
+        <div className="flex flex-col gap-1">
+          {prog?.phase === "restore" && prog.active && (
+            <ProgressBar
+              percent={prog.percent}
+              active
+              inline
+              label={prog.percent > 0 ? t("restore.progress").replace("{pct}", String(Math.round(prog.percent))) : undefined}
+            />
+          )}
+          <RestoreCancelButton cancelKey={progressKey} inPlace name={name} t={t} cancelledRef={cancelledRef} />
+        </div>
+      )}
+      {state.phase === "success" && <p className="text-xs text-[#6fdc8c]">{t("common.done")}</p>}
+      {state.phase === "cancelled" && (
+        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
+      )}
+      {state.phase === "error" && <p className="text-xs text-[#ff8389] break-words">{state.message}</p>}
+    </div>
+  );
 }
 
 export default function Recovery() {
@@ -138,9 +251,9 @@ export default function Recovery() {
   const [discovering, setDiscovering] = useState(false);
   const [discovered, setDiscovered] = useState<{ containers: number; vms: number } | null>(null);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
-  // Reconstructed target lists — stored now, read by Task 5 (review + restore).
-  const [, setContainers] = useState<Container[]>([]);
-  const [, setVMs] = useState<VM[]>([]);
+  // Reconstructed target lists — populated by Discover, read by the review step.
+  const [containers, setContainers] = useState<Container[]>([]);
+  const [vms, setVMs] = useState<VM[]>([]);
 
   const runDiscover = useCallback(async () => {
     setDiscovering(true);
@@ -165,6 +278,69 @@ export default function Recovery() {
       ? "ok"
       : "warn"
     : "idle";
+
+  // Step 4 — review & restore all. anyActive() over the shared progress store is
+  // the v4 "something is in flight" signal: it gates "Restore all" (and each
+  // row) so a bulk run can't collide with a live per-item op, and vice-versa.
+  const progressMap = useProgress();
+  const running = anyActive(progressMap);
+  const [restoreAllBusy, setRestoreAllBusy] = useState(false);
+  const [restoreAllResult, setRestoreAllResult] = useState<{ ok: number; fail: number } | null>(null);
+
+  // Is the libvirt SSH link set up? VM restore needs it. VMSSHInfo() errors
+  // (ok:false) precisely when SSH is not wired, so this is the settings check.
+  // Advisory only (a note, never a hard block).
+  const [vmSshConfigured, setVmSshConfigured] = useState<boolean | null>(null);
+  useEffect(() => {
+    getVMSSH()
+      .then((r) => setVmSshConfigured(r.ok && !!r.host))
+      .catch(() => setVmSshConfigured(false));
+  }, []);
+
+  // Restore every discovered container THEN every VM, SEQUENTIALLY and LEFT
+  // STOPPED — exactly the Containers.tsx restoreSelected pattern: fireAndWaitRun
+  // fires one restore and waits for its NEW recorded run to reach a terminal
+  // state before the next, so the shared single-flight guard never rejects the
+  // follow-ups as "already running". Accumulate an ok/fail count.
+  const restoreAll = useCallback(async () => {
+    if (restoreAllBusy) return;
+    if (containers.length === 0 && vms.length === 0) return;
+    if (!window.confirm(t("containers.restoreSelectedConfirm"))) return;
+    setRestoreAllBusy(true);
+    setRestoreAllResult(null);
+    let ok = 0;
+    let fail = 0;
+    for (const c of containers) {
+      const res = await fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "container" && r.target === c.name,
+        start: () => restore(c.name, "latest", true, undefined, true),
+      });
+      if (res.ok) ok++;
+      else fail++;
+    }
+    for (const v of vms) {
+      const res = await fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "vm" && r.target === v.name,
+        start: () => restoreVM(v.name, "latest", true, undefined, true),
+      });
+      if (res.ok) ok++;
+      else fail++;
+    }
+    setRestoreAllResult({ ok, fail });
+    setRestoreAllBusy(false);
+  }, [restoreAllBusy, containers, vms, t]);
+
+  const anyDiscovered = containers.length > 0 || vms.length > 0;
+  const restoreStepState: StepState = restoreAllResult
+    ? restoreAllResult.fail > 0
+      ? "warn"
+      : "ok"
+    : "idle";
+  // Rows are blocked while ANY op runs OR while the bulk loop is mid-flight
+  // (between two items the SSE store can briefly show nothing active).
+  const rowOtherActive = running.active || restoreAllBusy;
 
   const offsiteInput =
     "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent";
@@ -339,6 +515,85 @@ export default function Recovery() {
         )}
         {discoverError && (
           <p className="text-xs text-carbon-textMuted font-mono break-all">{discoverError}</p>
+        )}
+      </StepCard>
+
+      {/* Step 4 — Review & restore everything (in place, left stopped) */}
+      <StepCard n={4} title={t("recovery.step4")} state={restoreStepState}>
+        {!anyDiscovered ? (
+          <p className="text-sm text-carbon-textMuted">{t("recovery.noneDiscovered")}</p>
+        ) : (
+          <>
+            {/* Restore all — every container then VM, sequential + left stopped. */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => void restoreAll()}
+                disabled={restoreAllBusy || running.active}
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {restoreAllBusy && (
+                  <span
+                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+                  />
+                )}
+                {t("recovery.restoreAll")}
+              </button>
+              {running.active && !restoreAllBusy && (
+                <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+              )}
+              {restoreAllResult && (
+                <span
+                  className={`text-sm ${restoreAllResult.fail > 0 ? "text-[#f1c21b]" : "text-[#6fdc8c]"}`}
+                >
+                  {t("recovery.restoreAllResult")
+                    .replace("{ok}", String(restoreAllResult.ok))
+                    .replace("{fail}", String(restoreAllResult.fail))}
+                </span>
+              )}
+            </div>
+
+            {/* VM restore needs the libvirt SSH link — advisory note, not a block. */}
+            {vms.length > 0 && vmSshConfigured === false && (
+              <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+                {t("recovery.vmSshNote")}
+              </div>
+            )}
+
+            {/* Containers first, then VMs. */}
+            {containers.length > 0 && (
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-carbon-textSub pt-1 pb-1">
+                  {t("nav.containers")}
+                </span>
+                {containers.map((c) => (
+                  <RestoreRow
+                    key={`container:${c.name}`}
+                    domain="container"
+                    name={c.name}
+                    t={t}
+                    otherActive={rowOtherActive}
+                  />
+                ))}
+              </div>
+            )}
+            {vms.length > 0 && (
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                  {t("nav.vms")}
+                </span>
+                {vms.map((v) => (
+                  <RestoreRow
+                    key={`vm:${v.name}`}
+                    domain="vm"
+                    name={v.name}
+                    t={t}
+                    otherActive={rowOtherActive}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </StepCard>
     </div>
