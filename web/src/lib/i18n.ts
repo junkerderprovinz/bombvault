@@ -666,6 +666,9 @@ const en = {
   "recovery.step5": "Your recovery kit",
   "recovery.kitHint": "Download and store your recovery kit somewhere safe — it holds the encryption key and the exact restic commands to restore even without BombVault.",
   "recovery.kitDownload": "Download recovery kit",
+  // Dashboard fresh-install nudge → guided Recovery tab
+  "recovery.freshNudge": "New or rebuilt install? Recover your existing backups.",
+  "recovery.freshNudgeCta": "Go to Recovery",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1294,6 +1297,9 @@ const de: Translations = {
   "recovery.step5": "Dein Recovery-Kit",
   "recovery.kitHint": "Lade dein Recovery-Kit herunter und bewahre es sicher auf — es enthält den Verschlüsselungsschlüssel und die genauen restic-Befehle, um selbst ohne BombVault wiederherzustellen.",
   "recovery.kitDownload": "Recovery-Kit herunterladen",
+  // Dashboard-Hinweis bei frischer Installation → geführter Wiederherstellungs-Tab
+  "recovery.freshNudge": "Neue oder neu aufgebaute Installation? Stelle deine vorhandenen Backups wieder her.",
+  "recovery.freshNudgeCta": "Zur Wiederherstellung",
 };
 
 // ---------------------------------------------------------------------------
