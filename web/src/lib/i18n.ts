@@ -640,6 +640,13 @@ const en = {
   "nav.recovery": "Recovery",
   "recovery.pageTitle": "Disaster recovery",
   "recovery.intro": "Recover your containers and VMs from an existing backup onto this install. Point BombVault at your backups, discover what's in them, and restore.",
+  // Step 1 — connection / APP_KEY readability check
+  "recovery.step1": "Can BombVault read your backups?",
+  "recovery.appKeyExplain": "To read existing backups this container needs the SAME APP_KEY it used before — it's in your recovery kit. Set it in the Unraid container template if it isn't already, then re-check.",
+  "recovery.appKeyRemedy": "The encryption key doesn't match these backups. Set the original APP_KEY (from your recovery kit) in the container template, then re-check.",
+  "recovery.readable": "Your backups are readable.",
+  "recovery.notReachable": "Couldn't reach your backups yet — attach the location below, then re-check.",
+  "recovery.recheck": "Re-check",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1242,6 +1249,13 @@ const de: Translations = {
   "nav.recovery": "Wiederherstellung",
   "recovery.pageTitle": "Notfall-Wiederherstellung",
   "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her. Richte BombVault auf deine Backups aus, finde heraus, was darin steckt, und stelle es wieder her.",
+  // Schritt 1 — Verbindungs-/APP_KEY-Lesbarkeitsprüfung
+  "recovery.step1": "Kann BombVault deine Backups lesen?",
+  "recovery.appKeyExplain": "Um vorhandene Backups zu lesen, braucht dieser Container denselben APP_KEY wie zuvor — er steht in deinem Recovery-Kit. Setze ihn im Unraid-Container-Template, falls noch nicht geschehen, und prüfe erneut.",
+  "recovery.appKeyRemedy": "Der Verschlüsselungsschlüssel passt nicht zu diesen Backups. Trage den ursprünglichen APP_KEY (aus deinem Recovery-Kit) im Container-Template ein und prüfe erneut.",
+  "recovery.readable": "Deine Backups sind lesbar.",
+  "recovery.notReachable": "Deine Backups waren noch nicht erreichbar — hänge den Speicherort unten an und prüfe erneut.",
+  "recovery.recheck": "Erneut prüfen",
 };
 
 // ---------------------------------------------------------------------------
