@@ -1108,16 +1108,25 @@ function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Fresh-install nudge — on a brand-new or rebuilt install (no known targets and
-// no domain has ever backed up successfully) point the user at the guided
-// Recovery tab to recover their existing backups. Self-contained (fetches its
-// own data) and dismissible; the dismissal persists in localStorage.
+// Fresh-install nudge — on a brand-new or rebuilt install (no domain has ever
+// backed up successfully) point the user at the guided Recovery tab to recover
+// their existing backups. Dismissible; the dismissal persists in localStorage.
+// The fresh signal is derived purely from the shared /api/status domains the
+// dashboard already fetched — no extra round-trip, and nothing is fetched or
+// computed once dismissed.
 // ---------------------------------------------------------------------------
 
 const RECOVERY_NUDGE_DISMISSED = "bombvault.recoveryNudgeDismissed";
 
-function FreshInstallNudge({ t }: { t: ReturnType<typeof useT>["t"] }) {
-  const [fresh, setFresh] = useState(false);
+function FreshInstallNudge({
+  t,
+  domains,
+  loading,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  domains: DomainStatus[];
+  loading: boolean;
+}) {
   const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(RECOVERY_NUDGE_DISMISSED) === "1";
@@ -1126,24 +1135,10 @@ function FreshInstallNudge({ t }: { t: ReturnType<typeof useT>["t"] }) {
     }
   });
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([listContainers(), listVMs(), getStatus()])
-      .then(([cRes, vRes, sRes]) => {
-        if (!active) return;
-        const containers = cRes.ok ? (cRes.containers ?? []) : [];
-        // listVMs fails/returns empty when the VMs domain is off — treat as none.
-        const vms = vRes.ok ? (vRes.vms ?? []) : [];
-        const domains = sRes.ok ? (sRes.domains ?? []) : [];
-        setFresh(isFreshInstall(containers, vms, domains));
-      })
-      .catch(() => {/* non-fatal — no nudge */});
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (!fresh || dismissed) return null;
+  // Gate: do nothing (and read nothing) once dismissed or while status is still
+  // loading. Only then is the fresh predicate evaluated against shared data.
+  if (dismissed || loading) return null;
+  if (!isFreshInstall(domains)) return null;
 
   const dismiss = () => {
     try {
@@ -1169,6 +1164,7 @@ function FreshInstallNudge({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <button
         type="button"
         onClick={dismiss}
+        aria-label={t("common.close")}
         className="shrink-0 rounded-md border border-carbon-border px-2 py-1 text-sm text-carbon-textSub hover:text-carbon-text transition-colors"
       >
         ✕
@@ -1221,8 +1217,9 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Fresh/rebuilt install → nudge to the guided Recovery tab (dismissible) */}
-      <FreshInstallNudge t={t} />
+      {/* Fresh/rebuilt install → nudge to the guided Recovery tab (dismissible).
+          Reuses the shared /api/status fetch below — no duplicate round-trip. */}
+      <FreshInstallNudge t={t} domains={statusDomains} loading={statusLoading} />
 
       {/* Recovery-kit nag — only while encryption is on and the kit is unstored */}
       <RecoveryNag t={t} />
