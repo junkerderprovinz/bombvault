@@ -293,9 +293,8 @@ export function Sidebar({ settings }: SidebarProps) {
           role="switch"
           aria-checked={advanced}
           onClick={() => setAdvanced(!advanced)}
-          className="flex items-center justify-between gap-2 px-3.5 py-1.5 rounded-lg text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors select-none"
+          className="flex items-center justify-start gap-2.5 px-3.5 py-1.5 rounded-lg text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors select-none"
         >
-          <span>{t("nav.advanced")}</span>
           <span
             className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
               advanced ? "bg-accent" : "bg-carbon-surface3"
@@ -307,6 +306,7 @@ export function Sidebar({ settings }: SidebarProps) {
               }`}
             />
           </span>
+          <span>{t("nav.advanced")}</span>
         </button>
         <NavItem
           to="/settings"
