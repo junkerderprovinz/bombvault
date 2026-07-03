@@ -654,10 +654,21 @@ export function discoverVMs(): Promise<OkEnvelope & { discovered?: number }> {
  * Runs both domain discovers (rebuild containers + VMs from the encrypted backup
  * defs in storage) and returns the counts. The caller then re-fetches
  * listContainers()/listVMs() to show the reconstructed targets.
+ *
+ * handleDiscover answers HTTP 200 with an {ok:false, error} envelope on a real
+ * failure (e.g. a wrong APP_KEY), so a naive `discovered ?? 0` would silently
+ * report "0 found" and hide the actual error. To avoid that, if EITHER discover
+ * fails, its (scrubbed) message is surfaced as `error` — the caller shows the
+ * real failure instead of a misleading "nothing to recover".
  */
-export async function discoverAll(): Promise<{ containers: number; vms: number }> {
+export async function discoverAll(): Promise<{ containers: number; vms: number; error?: string }> {
   const [c, v] = await Promise.all([discover(), discoverVMs()]);
-  return { containers: c.discovered ?? 0, vms: v.discovered ?? 0 };
+  const failed = [c, v].find((r) => !r.ok);
+  return {
+    containers: c.discovered ?? 0,
+    vms: v.discovered ?? 0,
+    ...(failed ? { error: failed.error ?? "discover failed" } : {}),
+  };
 }
 
 /** Delete ALL backups of a container and forget it from the store. */

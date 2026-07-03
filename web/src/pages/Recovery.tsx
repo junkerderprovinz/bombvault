@@ -261,6 +261,15 @@ export default function Recovery() {
     setDiscoverError(null);
     try {
       const counts = await discoverAll();
+      // A discover that returned {ok:false} (e.g. a wrong APP_KEY) surfaces its
+      // real message here — show it instead of the misleading "found none" state.
+      if (counts.error) {
+        setDiscoverError(
+          isKeyMismatch(counts.error) ? t("recovery.appKeyRemedy") : counts.error
+        );
+        setDiscovered(null);
+        return;
+      }
       // Re-fetch the reconstructed target lists and store them for the restore step.
       const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
       setContainers(cs.containers ?? []);
@@ -272,7 +281,7 @@ export default function Recovery() {
     } finally {
       setDiscovering(false);
     }
-  }, []);
+  }, [t]);
 
   const discoverStepState: StepState = discovered
     ? discovered.containers + discovered.vms > 0
@@ -515,7 +524,9 @@ export default function Recovery() {
           <p className="text-sm text-[#f1c21b]">{t("recovery.foundNone")}</p>
         )}
         {discoverError && (
-          <p className="text-xs text-carbon-textMuted font-mono break-all">{discoverError}</p>
+          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed break-words">
+            {discoverError}
+          </div>
         )}
       </StepCard>
 
