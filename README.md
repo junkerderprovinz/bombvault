@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -131,7 +131,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **File-level restore** — expand a container snapshot's **Files**, filter, **tick any number of files and folders**, then restore the whole selection **in place** (original locations) or **into a folder** you pick.
 - **Restore keeps the run-state** — a container (or VM) that was running when backed up comes back running; one that was stopped stays stopped. Tick **Leave stopped after restore** to recreate it without starting it, so you can rebuild a group of dependent containers one by one and start them yourself afterwards.
 - **Restore a whole stack** — containers from the same Docker Compose project (via the `com.docker.compose.project` label) are grouped into a **Stacks** panel. **Restore stack** rebuilds every member from its latest backup **left stopped**, then optionally **starts them in `depends_on` order** — so a compose stack (e.g. managed with Dockhand) comes back without members racing ahead of their dependencies.
-- **Live progress, cancel & busy feedback** *(v4-preview)* — a long restore shows a live percentage bar ("Restoring… NN%") instead of a bare spinner, and can be **cancelled** with a type-aware confirmation (a restore-to-a-folder cancels cleanly; an in-place restore warns it leaves the target partial). A cancelled restore is recorded as *cancelled*, not failed. And starting a backup while a restore (or a scheduled/maintenance op) holds a repository now shows a clear "a restore is running" hint instead of silently doing nothing.
+- **Live progress, cancel & busy feedback** — a long restore shows a live percentage bar ("Restoring… NN%") instead of a bare spinner, and can be **cancelled** with a type-aware confirmation (a restore-to-a-folder cancels cleanly; an in-place restore warns it leaves the target partial). A cancelled restore is recorded as *cancelled*, not failed. And starting a backup while a restore (or a scheduled/maintenance op) holds a repository now shows a clear "a restore is running" hint instead of silently doing nothing.
 
 ### Storage & scheduling
 
@@ -152,9 +152,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)** and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 
-### Ransomware protection *(v4-preview)*
-
-> Landing in v4. Available now on the `v4-preview` image for testing; the marker is removed at release.
+### Ransomware protection
 
 - **Immutable (append-only) off-site** — flag an off-site repo append-only so ransomware (or a compromised host) can't delete or rewrite your backups. The far side (a `restic/rest-server` in `--append-only` mode) *enforces* it; BombVault only ever *verifies* it and never shows green on a configuration claim alone.
 - **Tamper test** — BombVault periodically *proves* the append-only guarantee by actually attempting a delete against the off-site repo (aimed at a non-existent object): refused = protected, accepted = not protected. An inconclusive result (server unreachable, auth error) never flips the stored verdict, and a real protected → unprotected flip fires a single alert.
