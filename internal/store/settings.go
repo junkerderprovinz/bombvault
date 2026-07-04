@@ -39,7 +39,14 @@ type Settings struct {
 	VMsSchedule               string
 	FlashSchedule             string
 	ConfigSchedule            string
-	DefaultLanguage           string
+	// Scheduled flash ZIP export: after a successful flash backup, write the
+	// snapshot out as a plain .zip to FlashZipExportPath (a relative subpath under
+	// the host mount root) for off-server sync. Disabled by default. Keep = how
+	// many timestamped zips to retain (0 = a single overwriting flash-latest.zip).
+	FlashZipExportEnabled bool
+	FlashZipExportPath    string
+	FlashZipExportKeep    int
+	DefaultLanguage       string
 	// AuthPasswordHash is the HMAC-SHA256 password hash set by the admin.
 	// An empty string means authentication is disabled (the default).
 	AuthPasswordHash string
@@ -129,12 +136,14 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       drills_enabled, drills_schedule, drills_subset_pct,
 		       recovery_kit_ack,
 		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable,
-		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target
+		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
+		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, metricsEnabled, drillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable int
+	var flashZipExportEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.RestoreFolder,
@@ -151,6 +160,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&recoveryKitAck,
 		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable,
 		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
+		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -170,6 +180,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.VMsOffsiteImmutable = vmsImmutable != 0
 	s.FlashOffsiteImmutable = flashImmutable != 0
 	s.ConfigOffsiteImmutable = configImmutable != 0
+	s.FlashZipExportEnabled = flashZipExportEnabled != 0
 	return s, nil
 }
 
@@ -226,7 +237,10 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  config_offsite_immutable     = ?,
 		  offsite_growth_budget_gb     = ?,
 		  tamper_test_schedule         = ?,
-		  dr_drill_target              = ?
+		  dr_drill_target              = ?,
+		  flash_zip_export_enabled     = ?,
+		  flash_zip_export_path        = ?,
+		  flash_zip_export_keep        = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -247,6 +261,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.RecoveryKitAck),
 		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable),
 		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,
+		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

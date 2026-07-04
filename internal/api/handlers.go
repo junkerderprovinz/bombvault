@@ -807,7 +807,13 @@ type settingsView struct {
 	VMsSchedule               string `json:"vmsSchedule"`
 	FlashSchedule             string `json:"flashSchedule"`
 	ConfigSchedule            string `json:"configSchedule"`
-	DefaultLanguage           string `json:"defaultLanguage"`
+	// Scheduled flash ZIP export: enable, destination folder (relative subpath
+	// under the mount root), and how many timestamped zips to keep (0 = a single
+	// overwriting flash-latest.zip).
+	FlashZipExportEnabled bool   `json:"flashZipExportEnabled"`
+	FlashZipExportPath    string `json:"flashZipExportPath"`
+	FlashZipExportKeep    int    `json:"flashZipExportKeep"`
+	DefaultLanguage       string `json:"defaultLanguage"`
 	// Retention keep-policy (0 = that dimension off; all 0 = retention off).
 	RetentionKeepLast    int `json:"retentionKeepLast"`
 	RetentionKeepDaily   int `json:"retentionKeepDaily"`
@@ -868,6 +874,9 @@ func toView(s store.Settings) settingsView {
 		VMsSchedule:                 s.VMsSchedule,
 		FlashSchedule:               s.FlashSchedule,
 		ConfigSchedule:              s.ConfigSchedule,
+		FlashZipExportEnabled:       s.FlashZipExportEnabled,
+		FlashZipExportPath:          s.FlashZipExportPath,
+		FlashZipExportKeep:          s.FlashZipExportKeep,
 		DefaultLanguage:             s.DefaultLanguage,
 		RetentionKeepLast:           s.RetentionKeepLast,
 		RetentionKeepDaily:          s.RetentionKeepDaily,
@@ -1045,6 +1054,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		VMsSchedule:                 v.VMsSchedule,
 		FlashSchedule:               v.FlashSchedule,
 		ConfigSchedule:              v.ConfigSchedule,
+		FlashZipExportEnabled:       v.FlashZipExportEnabled,
+		FlashZipExportPath:          v.FlashZipExportPath,
+		FlashZipExportKeep:          max(0, v.FlashZipExportKeep),
 		DefaultLanguage:             v.DefaultLanguage,
 		RetentionKeepLast:           max(0, v.RetentionKeepLast),
 		RetentionKeepDaily:          max(0, v.RetentionKeepDaily),
