@@ -414,6 +414,7 @@ const cs: Partial<Translations> = {
   "notify.matrixToken": "Přístupový token",
   "notify.matrixRoom": "ID místnosti",
   "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.healthchecksLifecycle": "Healthchecks se pinguje po celý životní cyklus zálohy — start, úspěch i selhání — kdykoli je nastavena URL, nezávisle na nastavení 'Oznámit' výše, takže kontrola zůstane při úspěchu zelená i při upozorněních jen na selhání.",
   "notify.unraid": "Oznámení Unraid",
   "notify.unraidHint": "Odeslat do vlastního systému oznámení Unraidu (který umí přeposlat do Pushover, e-mailu, Discordu …). Vyžaduje nastavené připojení SSH (Nastavení → VM Backup over SSH).",
   "notify.save": "Uložit",

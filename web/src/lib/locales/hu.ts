@@ -416,6 +416,7 @@ const hu: Partial<Translations> = {
   "notify.matrixToken": "Hozzáférési token",
   "notify.matrixRoom": "Szoba azonosító",
   "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.healthchecksLifecycle": "A Healthchecks a teljes biztonságimentés-életciklus alatt ping-et kap — indulás, siker és hiba —, amikor be van állítva egy URL, a fenti 'Értesítés' beállítástól függetlenül, így az ellenőrzés sikernél zöld marad még csak hibára szóló értesítések mellett is.",
   "notify.unraid": "Unraid-értesítések",
   "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra …). Beállított SSH-kapcsolat szükséges (Beállítások → VM Backup over SSH).",
   "notify.save": "Mentés",

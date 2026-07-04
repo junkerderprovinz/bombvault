@@ -408,6 +408,7 @@ const vi: Partial<Translations> = {
   "notify.matrixToken": "Mã truy cập",
   "notify.matrixRoom": "ID phòng",
   "notify.healthchecks": "URL ping Healthchecks.io",
+  "notify.healthchecksLifecycle": "Healthchecks được ping trong suốt vòng đời sao lưu — bắt đầu, thành công và thất bại — mỗi khi một URL được đặt, độc lập với cài đặt 'Thông báo' ở trên, để việc kiểm tra vẫn xanh khi thành công ngay cả khi chỉ thông báo khi thất bại.",
   "notify.unraid": "Thông báo Unraid",
   "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord …). Cần thiết lập kết nối SSH (Cài đặt → VM Backup over SSH).",
   "notify.save": "Lưu",

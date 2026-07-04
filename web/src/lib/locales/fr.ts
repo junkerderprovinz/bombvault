@@ -416,6 +416,7 @@ const fr: Partial<Translations> = {
   "notify.matrixToken": "Jeton d'accès",
   "notify.matrixRoom": "ID du salon",
   "notify.healthchecks": "URL de ping Healthchecks.io",
+  "notify.healthchecksLifecycle": "Healthchecks est pingé pendant tout le cycle de vie de la sauvegarde — début, succès et échec — dès qu'une URL est définie, indépendamment du réglage 'Notifier' ci-dessus, afin que la vérification reste au vert en cas de succès même avec des notifications uniquement en cas d'échec.",
   "notify.unraid": "Notifications Unraid",
   "notify.unraidHint": "Envoyer au système de notifications d'Unraid (qui peut relayer vers Pushover, e-mail, Discord …). Nécessite la connexion SSH configurée (Réglages → VM Backup over SSH).",
   "notify.save": "Enregistrer",

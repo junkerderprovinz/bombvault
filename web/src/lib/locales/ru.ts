@@ -409,6 +409,7 @@ const ru: Partial<Translations> = {
   "notify.matrixToken": "Токен доступа",
   "notify.matrixRoom": "ID комнаты",
   "notify.healthchecks": "URL пинга Healthchecks.io",
+  "notify.healthchecksLifecycle": "Healthchecks пингуется на протяжении всего жизненного цикла резервного копирования — старт, успех и сбой — как только задан URL, независимо от настройки 'Уведомлять' выше, поэтому при успехе проверка остаётся зелёной даже при уведомлениях только о сбоях.",
   "notify.unraid": "Уведомления Unraid",
   "notify.unraidHint": "Отправлять в собственную систему уведомлений Unraid (которая может пересылать в Pushover, e-mail, Discord …). Требуется настроенное SSH-подключение (Настройки → VM Backup over SSH).",
   "notify.save": "Сохранить",

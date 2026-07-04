@@ -416,6 +416,7 @@ const es: Partial<Translations> = {
   "notify.matrixToken": "Token de acceso",
   "notify.matrixRoom": "ID de la sala",
   "notify.healthchecks": "URL de ping de Healthchecks.io",
+  "notify.healthchecksLifecycle": "Se hace ping a Healthchecks durante todo el ciclo de vida del backup — inicio, éxito y fallo — siempre que haya una URL configurada, independientemente del ajuste 'Notificar' de arriba, para que la comprobación siga en verde en caso de éxito incluso con notificaciones solo en caso de fallo.",
   "notify.unraid": "Notificaciones de Unraid",
   "notify.unraidHint": "Enviar al sistema de notificaciones de Unraid (que puede reenviar a Pushover, correo, Discord …). Requiere la conexión SSH configurada (Ajustes → VM Backup over SSH).",
   "notify.smtp": "Correo (SMTP)",
