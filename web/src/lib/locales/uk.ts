@@ -17,6 +17,7 @@ const uk: Partial<Translations> = {
   "nav.advanced": "Додатково",
   "nav.comingSoon": "Незабаром",
   "nav.recovery": "Відновлення",
+  "nav.config": "Конфіг",
 
   // Dashboard
   "dashboard.title": "Панель",
@@ -143,6 +144,7 @@ const uk: Partial<Translations> = {
   "settings.containersEnabled": "Контейнери",
   "settings.vmsEnabled": "Віртуальні машини",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Конфігурація застосунку",
   "settings.schedule": "Розклад",
   "settings.scheduleOff": "вимк",
   "settings.language": "Мова",
@@ -462,6 +464,47 @@ const uk: Partial<Translations> = {
   "recovery.freshNudge": "Відновлюєтеся з попереднього сервера чи після перебудови? Відновіть свої наявні резервні копії.",
   "recovery.freshNudgeCta": "Перейти до Відновлення",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "Відновіть власні налаштування BombVault",
+  "recovery.configHint": "На перебудованому сервері спершу відновіть власні налаштування BombVault — його шляхи резервних копій, зовнішні цілі та облікові дані — щоб кроки нижче були заповнені заздалегідь. Спрямуйте його на резервну копію налаштувань, яку ви створили раніше. Немає резервної копії налаштувань? Пропустіть це й під'єднайте свої резервні копії вручну нижче.",
+  "recovery.configAppKeyReminder": "Ваш APP_KEY має збігатися з цією резервною копією — це перевірка з Кроку 1 вище.",
+  "recovery.configSourceLabel": "Де резервна копія налаштувань?",
+  "recovery.configLocalPath": "Локальний шлях",
+  "recovery.configOffsiteUrl": "URL зовнішнього репозиторію",
+  "recovery.configRestore": "Відновити налаштування BombVault",
+  "recovery.configRestoring": "Відновлення…",
+  "recovery.configRestarting": "BombVault перезапускається, щоб застосувати ваші налаштування… ця сторінка перезавантажиться автоматично, коли він повернеться.",
+  "recovery.configManualRestart": "Ваші налаштування підготовлено. Перезапустіть контейнер BombVault в Unraid, потім продовжте — вони застосуються під час наступного завантаження.",
+  "recovery.configReloadWhenBack": "BombVault повертається довше, ніж очікувалося. Перезавантажте цю сторінку, щойно він запрацює, щоб завантажити ваші відновлені налаштування.",
+  "recovery.configReload": "Перезавантажити зараз",
+  "recovery.configSkip": "Пропустити — у мене немає резервної копії налаштувань",
+  "recovery.configSkipped": "Пропущено. Під'єднайте свої резервні копії вручну нижче.",
+
+  // Config Backup page
+  "config.title": "Резервна копія конфігурації",
+  "config.subtitle": "Створюйте резервну копію власних налаштувань BombVault, щоб перебудований сервер міг відновити себе.",
+  "config.settingsTitle": "Налаштування резервного копіювання конфігурації",
+  "config.settingsHint": "Захистіть власну конфігурацію BombVault — його базу налаштувань, зовнішні облікові дані та ключі SSH — щоб нова інсталяція могла відновити себе й продовжити рівно з того місця, де зупинилася.",
+  "config.enabled": "Створювати резервну копію налаштувань BombVault",
+  "config.enabledHint": "Включити власний /config BombVault до розкладу нижче.",
+  "config.path": "Розташування резервної копії",
+  "config.pathHint": "Відносний підшлях у межах кореня монтування хоста, куди записується репозиторій конфігурації.",
+  "config.schedule": "Розклад",
+  "config.schedulePlaceholder": "off · напр. daily 03:30",
+  "config.scheduleHint": "Коли автоматично створювати резервну копію налаштувань. Залиште 'off', щоб копіювати лише за запитом.",
+  "config.offsite": "Зовнішній репозиторій (необов'язково)",
+  "config.offsiteHint": "Реплікувати резервну копію конфігурації до другого, зовнішнього репозиторію після кожного локального копіювання.",
+  "config.offsiteSchedule": "Зовнішній розклад",
+  "config.immutable": "Зовнішній репозиторій append-only (незмінний)",
+  "config.immutableHint": "Пропускати зовнішнє очищення й відхиляти зовнішні видалення — віддалена сторона (append-only) забезпечує це.",
+  "config.backupTitle": "Створити резервну копію налаштувань зараз",
+  "config.backupHint": "Захоплює власний /config BombVault: базу налаштувань, зовнішні облікові дані (rclone.conf) та пару ключів SSH.",
+  "config.backupNow": "Створити резервну копію налаштувань зараз",
+  "config.backingUp": "Копіювання…",
+  "config.snapshotsTitle": "Резервні копії налаштувань",
+  "config.snapshotsHint": "Щоб відновити ці налаштування на перебудованому сервері, скористайтеся вкладкою Відновлення — відновлення налаштувань перезапускає BombVault, щоб застосувати їх, тож воно міститься там разом з рештою процесу аварійного відновлення.",
+  "config.none": "Резервних копій налаштувань ще немає — створіть копію вище.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Зовнішня пропускна здатність",
   "settings.limitUpload": "Ліміт вивантаження (KiB/s)",
@@ -506,6 +549,7 @@ const uk: Partial<Translations> = {
   "dashboard.domainContainers": "Контейнери",
   "dashboard.domainVMs": "Віртуальні машини",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Конфіг",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Стан резервних копій",

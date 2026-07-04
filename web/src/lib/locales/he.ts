@@ -17,6 +17,7 @@ const he: Partial<Translations> = {
   "nav.advanced": "מתקדם",
   "nav.comingSoon": "בקרוב",
   "nav.recovery": "התאוששות",
+  "nav.config": "Config",
 
   // Dashboard
   "dashboard.title": "לוח בקרה",
@@ -145,6 +146,7 @@ const he: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "תצורת האפליקציה",
   "settings.schedule": "לוח זמנים",
   "settings.scheduleOff": "כבוי",
   "settings.language": "שפה",
@@ -467,6 +469,22 @@ const he: Partial<Translations> = {
   "recovery.freshNudge": "משחזר משרת קודם או מהתקנה מחדש? שחזר את הגיבויים הקיימים שלך.",
   "recovery.freshNudgeCta": "עבור להתאוששות",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "שחזר את ההגדרות של BombVault עצמו",
+  "recovery.configHint": "בשרת שנבנה מחדש, שחזר תחילה את ההגדרות של BombVault עצמו — נתיבי הגיבוי, היעדים מחוץ לאתר ופרטי ההתחברות שלו — כדי שהשלבים שלמטה יגיעו מלאים מראש. הפנה אותו אל גיבוי ההגדרות שהגדרת קודם. אין גיבוי הגדרות? דלג על זה וצרף את הגיבויים שלך ידנית למטה.",
+  "recovery.configAppKeyReminder": "ה-APP_KEY שלך חייב להתאים לגיבוי הזה — זו הבדיקה בשלב 1 למעלה.",
+  "recovery.configSourceLabel": "היכן נמצא גיבוי ההגדרות?",
+  "recovery.configLocalPath": "נתיב מקומי",
+  "recovery.configOffsiteUrl": "כתובת URL של מאגר מחוץ לאתר",
+  "recovery.configRestore": "שחזר את ההגדרות של BombVault",
+  "recovery.configRestoring": "משחזר…",
+  "recovery.configRestarting": "BombVault מופעל מחדש כדי להחיל את ההגדרות שלך… הדף הזה ייטען מחדש אוטומטית ברגע שהוא יחזור.",
+  "recovery.configManualRestart": "ההגדרות שלך מוכנות. הפעל מחדש את מכולת BombVault ב-Unraid, ואז המשך — הן יחולו באתחול הבא.",
+  "recovery.configReloadWhenBack": "BombVault לוקח יותר זמן מהצפוי לחזור. טען מחדש את הדף הזה ברגע שהוא פועל כדי לטעון את ההגדרות המשוחזרות שלך.",
+  "recovery.configReload": "טען מחדש עכשיו",
+  "recovery.configSkip": "דלג — אין לי גיבוי הגדרות",
+  "recovery.configSkipped": "דילגת. צרף את הגיבויים שלך ידנית למטה.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "רוחב פס מחוץ לאתר",
   "settings.limitUpload": "מגבלת העלאה (KiB/s)",
@@ -511,6 +529,7 @@ const he: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "בריאות הגיבוי",
@@ -632,6 +651,31 @@ const he: Partial<Translations> = {
   "ransomware.drillNever": "אין עדיין תרגיל שחזור",
   "ransomware.encryptionOn": "הצפנה מופעלת",
   "ransomware.pruneStrategy": "אסטרטגיית גיזום הוגדרה",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "גיבוי הגדרות",
+  "config.subtitle": "גבה את ההגדרות של BombVault עצמו כדי ששרת שנבנה מחדש יוכל לשחזר את עצמו.",
+  "config.settingsTitle": "הגדרות גיבוי התצורה",
+  "config.settingsHint": "הגן על התצורה של BombVault עצמו — מסד ההגדרות שלו, פרטי ההתחברות מחוץ לאתר ומפתחות ה-SSH — כדי שהתקנה חדשה תוכל לשחזר את עצמה ולהמשיך בדיוק מהמקום שבו הפסיקה.",
+  "config.enabled": "גבה את ההגדרות של BombVault",
+  "config.enabledHint": "כלול את ה-/config של BombVault עצמו בלוח הזמנים שלמטה.",
+  "config.path": "מיקום הגיבוי",
+  "config.pathHint": "תת-נתיב יחסי תחת שורש העיגון של המארח שאליו נכתב מאגר ה-config.",
+  "config.schedule": "לוח זמנים",
+  "config.schedulePlaceholder": "off · לדוגמה daily 03:30",
+  "config.scheduleHint": "מתי לגבות אוטומטית את ההגדרות. השאר על 'off' כדי לגבות רק לפי דרישה.",
+  "config.offsite": "מאגר מחוץ לאתר (אופציונלי)",
+  "config.offsiteHint": "שכפל את גיבוי ה-config למאגר שני, מחוץ לאתר, לאחר כל גיבוי מקומי.",
+  "config.offsiteSchedule": "לוח זמנים מחוץ לאתר",
+  "config.immutable": "המאגר מחוץ לאתר הוא append-only (בלתי ניתן לשינוי)",
+  "config.immutableHint": "דלג על גיזום מחוץ לאתר וסרב למחיקות מחוץ לאתר — הצד המרוחק (append-only) אוכף זאת.",
+  "config.backupTitle": "גבה את ההגדרות עכשיו",
+  "config.backupHint": "לוכד את ה-/config של BombVault עצמו: מסד ההגדרות, פרטי ההתחברות מחוץ לאתר (rclone.conf) וזוג מפתחות ה-SSH.",
+  "config.backupNow": "גבה את ההגדרות עכשיו",
+  "config.backingUp": "מגבה…",
+  "config.snapshotsTitle": "גיבויי הגדרות",
+  "config.snapshotsHint": "כדי לשחזר הגדרות אלה על שרת שנבנה מחדש, השתמש בלשונית ההתאוששות — שחזור ההגדרות מפעיל מחדש את BombVault כדי להחיל אותן, ולכן הוא נמצא שם יחד עם שאר תהליך ההתאוששות מאסון.",
+  "config.none": "אין עדיין גיבויי הגדרות — הרץ גיבוי למעלה.",
 };
 
 export default he;

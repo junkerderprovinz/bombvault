@@ -17,6 +17,7 @@ const tr: Partial<Translations> = {
   "nav.advanced": "Gelişmiş",
   "nav.comingSoon": "Yakında",
   "nav.recovery": "Kurtarma",
+  "nav.config": "Yapılandırma",
 
   // Dashboard
   "dashboard.title": "Kontrol Paneli",
@@ -145,6 +146,7 @@ const tr: Partial<Translations> = {
   "settings.containersEnabled": "Konteynerler",
   "settings.vmsEnabled": "VM'ler",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Uygulama yapılandırması",
   "settings.schedule": "Zamanlama",
   "settings.scheduleOff": "kapalı",
   "settings.language": "Dil",
@@ -467,6 +469,47 @@ const tr: Partial<Translations> = {
   "recovery.freshNudge": "Önceki bir sunucudan ya da yeniden kurulumdan mı geri yüklüyorsunuz? Mevcut yedeklerinizi kurtarın.",
   "recovery.freshNudgeCta": "Kurtarma'ya git",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "BombVault'un kendi ayarlarını geri yükle",
+  "recovery.configHint": "Yeniden oluşturulan bir sunucuda önce BombVault'un kendi ayarlarını geri yükleyin — yedekleme yolları, site dışı hedefler ve kimlik bilgileri — böylece aşağıdaki adımlar önceden doldurulur. Daha önce kurduğunuz ayar yedeğine yönlendirin. Ayar yedeği yok mu? Bunu atlayın ve yedeklerinizi aşağıdan elle ekleyin.",
+  "recovery.configAppKeyReminder": "APP_KEY'iniz bu yedekle eşleşmelidir — yukarıdaki 1. Adımdaki denetim budur.",
+  "recovery.configSourceLabel": "Ayar yedeği nerede?",
+  "recovery.configLocalPath": "Yerel yol",
+  "recovery.configOffsiteUrl": "Site dışı depo URL'si",
+  "recovery.configRestore": "BombVault'un ayarlarını geri yükle",
+  "recovery.configRestoring": "Geri yükleniyor…",
+  "recovery.configRestarting": "BombVault, ayarlarınızı uygulamak için yeniden başlatılıyor… geri geldiğinde bu sayfa otomatik olarak yeniden yüklenir.",
+  "recovery.configManualRestart": "Ayarlarınız hazırlandı. Unraid'de BombVault konteynerini yeniden başlatın, ardından devam edin — sonraki açılışta uygulanırlar.",
+  "recovery.configReloadWhenBack": "BombVault'un geri gelmesi beklenenden uzun sürüyor. Geri yüklenen ayarlarınızı yüklemek için açıldığında bu sayfayı yeniden yükleyin.",
+  "recovery.configReload": "Şimdi yeniden yükle",
+  "recovery.configSkip": "Atla — ayar yedeğim yok",
+  "recovery.configSkipped": "Atlandı. Yedeklerinizi aşağıdan elle ekleyin.",
+
+  // Config Backup page
+  "config.title": "Yapılandırma Yedeği",
+  "config.subtitle": "Yeniden oluşturulan bir sunucunun kendini geri yükleyebilmesi için BombVault'un kendi ayarlarını yedekleyin.",
+  "config.settingsTitle": "Yapılandırma yedekleme ayarları",
+  "config.settingsHint": "BombVault'un kendi yapılandırmasını — ayar veritabanı, site dışı kimlik bilgileri ve SSH anahtarları — koruyun; böylece yeni bir kurulum kendini geri yükleyip kaldığı yerden devam edebilir.",
+  "config.enabled": "BombVault'un ayarlarını yedekle",
+  "config.enabledHint": "BombVault'un kendi /config'ini aşağıdaki zamanlamaya dahil et.",
+  "config.path": "Yedekleme konumu",
+  "config.pathHint": "Yapılandırma deposunun yazıldığı, host bağlama kökü altındaki göreli alt yol.",
+  "config.schedule": "Zamanlama",
+  "config.schedulePlaceholder": "off · örn. daily 03:30",
+  "config.scheduleHint": "Ayarların ne zaman otomatik olarak yedekleneceği. Yalnızca istek üzerine yedeklemek için 'off' bırakın.",
+  "config.offsite": "Site dışı depo (isteğe bağlı)",
+  "config.offsiteHint": "Her yerel yedeklemeden sonra yapılandırma yedeğini ikinci bir site dışı depoya çoğaltın.",
+  "config.offsiteSchedule": "Site dışı zamanlama",
+  "config.immutable": "Site dışı depo append-only (değiştirilemez)",
+  "config.immutableHint": "Site dışı budamayı atla ve site dışı silmeleri reddet — karşı taraf (append-only) bunu uygular.",
+  "config.backupTitle": "Ayarları şimdi yedekle",
+  "config.backupHint": "BombVault'un kendi /config'ini yakalar: ayar veritabanı, site dışı kimlik bilgileri (rclone.conf) ve SSH anahtar çifti.",
+  "config.backupNow": "Ayarları şimdi yedekle",
+  "config.backingUp": "Yedekleniyor…",
+  "config.snapshotsTitle": "Ayar yedekleri",
+  "config.snapshotsHint": "Bu ayarları yeniden oluşturulan bir sunucuya geri yüklemek için Kurtarma sekmesini kullanın — ayarları geri yüklemek, bunları uygulamak için BombVault'u yeniden başlatır; bu yüzden felaket kurtarma akışının geri kalanıyla birlikte orada bulunur.",
+  "config.none": "Henüz ayar yedeği yok — yukarıdan bir yedekleme çalıştırın.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Site dışı bant genişliği",
   "settings.limitUpload": "Yükleme sınırı (KiB/s)",
@@ -511,6 +554,7 @@ const tr: Partial<Translations> = {
   "dashboard.domainContainers": "Konteynerler",
   "dashboard.domainVMs": "VM'ler",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Yapılandırma",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Yedek sağlığı",

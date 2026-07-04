@@ -17,6 +17,7 @@ const ja: Partial<Translations> = {
   "nav.advanced": "詳細設定",
   "nav.comingSoon": "近日公開",
   "nav.recovery": "リカバリー",
+  "nav.config": "Config",
 
   // Dashboard
   "dashboard.title": "ダッシュボード",
@@ -145,6 +146,7 @@ const ja: Partial<Translations> = {
   "settings.containersEnabled": "コンテナ",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "フラッシュ",
+  "settings.configEnabled": "アプリ構成",
   "settings.schedule": "スケジュール",
   "settings.scheduleOff": "オフ",
   "settings.language": "言語",
@@ -459,6 +461,22 @@ const ja: Partial<Translations> = {
   "recovery.freshNudge": "以前のサーバーや再構築からの復元ですか？既存のバックアップを復元しましょう。",
   "recovery.freshNudgeCta": "リカバリーへ移動",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "BombVault 自身の設定を復元",
+  "recovery.configHint": "再構築したサーバーでは、まず BombVault 自身の設定 — バックアップパス、オフサイトのターゲット、認証情報 — を復元すると、下の手順があらかじめ入力された状態になります。以前に設定した設定バックアップを指定してください。設定バックアップがありませんか？これをスキップして、下でバックアップを手動で接続してください。",
+  "recovery.configAppKeyReminder": "APP_KEY はこのバックアップと一致している必要があります — これは上のステップ 1 のチェックです。",
+  "recovery.configSourceLabel": "設定バックアップはどこにありますか？",
+  "recovery.configLocalPath": "ローカルパス",
+  "recovery.configOffsiteUrl": "オフサイトリポジトリ URL",
+  "recovery.configRestore": "BombVault の設定を復元",
+  "recovery.configRestoring": "復元中…",
+  "recovery.configRestarting": "設定を適用するために BombVault を再起動しています… 復帰すると、このページは自動的に再読み込みされます。",
+  "recovery.configManualRestart": "設定は準備できています。Unraid で BombVault コンテナを再起動してから続行してください — 次回の起動時に適用されます。",
+  "recovery.configReloadWhenBack": "BombVault の復帰に予想より時間がかかっています。復帰したらこのページを再読み込みして、復元された設定を読み込んでください。",
+  "recovery.configReload": "今すぐ再読み込み",
+  "recovery.configSkip": "スキップ — 設定バックアップがありません",
+  "recovery.configSkipped": "スキップしました。下でバックアップを手動で接続してください。",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "オフサイト帯域幅",
   "settings.limitUpload": "アップロード制限 (KiB/s)",
@@ -503,6 +521,7 @@ const ja: Partial<Translations> = {
   "dashboard.domainContainers": "コンテナ",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "フラッシュ",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "バックアップの健全性",
@@ -624,6 +643,31 @@ const ja: Partial<Translations> = {
   "ransomware.drillNever": "復元ドリル未実施",
   "ransomware.encryptionOn": "暗号化有効",
   "ransomware.pruneStrategy": "整理戦略を設定済み",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Config バックアップ",
+  "config.subtitle": "再構築したサーバーが自身を復元できるよう、BombVault 自身の設定をバックアップします。",
+  "config.settingsTitle": "Config バックアップ設定",
+  "config.settingsHint": "BombVault 自身の構成 — 設定データベース、オフサイトの認証情報、SSH 鍵 — を保護し、新規インストールが自身を復元して中断したところから再開できるようにします。",
+  "config.enabled": "BombVault の設定をバックアップ",
+  "config.enabledHint": "BombVault 自身の /config を下のスケジュールに含めます。",
+  "config.path": "バックアップの保存先",
+  "config.pathHint": "config リポジトリを書き込む、ホストマウントのルート配下の相対サブパス。",
+  "config.schedule": "スケジュール",
+  "config.schedulePlaceholder": "off · 例: daily 03:30",
+  "config.scheduleHint": "設定を自動的にバックアップするタイミング。オンデマンドでのみバックアップするには 'off' のままにします。",
+  "config.offsite": "オフサイトリポジトリ（任意）",
+  "config.offsiteHint": "各ローカルバックアップの後に、config バックアップを2つ目のオフサイトリポジトリに複製します。",
+  "config.offsiteSchedule": "オフサイトスケジュール",
+  "config.immutable": "オフサイトリポジトリは append-only（イミュータブル）",
+  "config.immutableHint": "オフサイトの整理をスキップし、オフサイトの削除を拒否します — リモート側（append-only）が強制します。",
+  "config.backupTitle": "今すぐ設定をバックアップ",
+  "config.backupHint": "BombVault 自身の /config を取得します：設定データベース、オフサイトの認証情報（rclone.conf）、SSH 鍵ペア。",
+  "config.backupNow": "今すぐ設定をバックアップ",
+  "config.backingUp": "バックアップ中…",
+  "config.snapshotsTitle": "設定バックアップ",
+  "config.snapshotsHint": "これらの設定を再構築したサーバーに復元するには、リカバリータブを使用してください — 設定を復元すると BombVault が再起動して適用するため、他の災害復旧フローと共にそこにあります。",
+  "config.none": "設定バックアップはまだありません — 上でバックアップを実行してください。",
 };
 
 export default ja;

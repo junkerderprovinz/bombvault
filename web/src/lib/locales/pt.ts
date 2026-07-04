@@ -467,6 +467,22 @@ const pt: Partial<Translations> = {
   "recovery.freshNudge": "A restaurar de um servidor anterior ou de uma reinstalação? Recupere os seus backups existentes.",
   "recovery.freshNudgeCta": "Ir para Recuperação",
 
+  // Config recovery step (restore BombVault's own settings)
+  "recovery.stepConfig": "Restaurar as definições do próprio BombVault",
+  "recovery.configHint": "Num servidor reconstruído, restaure primeiro as definições do próprio BombVault — os seus caminhos de backup, destinos externos e credenciais — para que os passos abaixo venham pré-preenchidos. Aponte-o para o backup de definições que configurou anteriormente. Sem backup de definições? Ignore este passo e anexe os seus backups manualmente abaixo.",
+  "recovery.configAppKeyReminder": "A sua APP_KEY tem de corresponder a este backup — é essa a verificação no Passo 1 acima.",
+  "recovery.configSourceLabel": "Onde está o backup de definições?",
+  "recovery.configLocalPath": "Caminho local",
+  "recovery.configOffsiteUrl": "URL do repo externo",
+  "recovery.configRestore": "Restaurar as definições do BombVault",
+  "recovery.configRestoring": "A restaurar…",
+  "recovery.configRestarting": "O BombVault está a reiniciar para aplicar as suas definições… esta página recarrega automaticamente quando ele voltar.",
+  "recovery.configManualRestart": "As suas definições estão preparadas. Reinicie o container BombVault no Unraid e depois continue — são aplicadas no próximo arranque.",
+  "recovery.configReloadWhenBack": "O BombVault está a demorar mais do que o esperado a voltar. Recarregue esta página assim que estiver online para carregar as suas definições restauradas.",
+  "recovery.configReload": "Recarregar agora",
+  "recovery.configSkip": "Ignorar — não tenho backup de definições",
+  "recovery.configSkipped": "Ignorado. Anexe os seus backups manualmente abaixo.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Largura de banda externa",
   "settings.limitUpload": "Limite de envio (KiB/s)",
@@ -632,6 +648,34 @@ const pt: Partial<Translations> = {
   "ransomware.drillNever": "ainda sem teste de restauro",
   "ransomware.encryptionOn": "encriptação ativada",
   "ransomware.pruneStrategy": "estratégia de poda definida",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Backup de configuração",
+  "config.subtitle": "Faça backup das definições do próprio BombVault para que um servidor reconstruído se possa restaurar a si mesmo.",
+  "config.settingsTitle": "Definições do backup de configuração",
+  "config.settingsHint": "Proteja a configuração do próprio BombVault — a sua base de dados de definições, credenciais externas e chaves SSH — para que uma instalação nova se possa restaurar a si mesma e continuar exatamente de onde parou.",
+  "config.enabled": "Fazer backup das definições do BombVault",
+  "config.enabledHint": "Incluir o /config do próprio BombVault no agendamento abaixo.",
+  "config.path": "Localização do backup",
+  "config.pathHint": "Subcaminho relativo, sob a raiz do mount do host, onde o repo de configuração é escrito.",
+  "config.schedule": "Agendamento",
+  "config.schedulePlaceholder": "off · ex. daily 03:30",
+  "config.scheduleHint": "Quando fazer backup automático das definições. Deixe 'off' para fazer backup apenas a pedido.",
+  "config.offsite": "Repo externo (opcional)",
+  "config.offsiteHint": "Replicar o backup de configuração para um segundo repo externo após cada backup local.",
+  "config.offsiteSchedule": "Agendamento externo",
+  "config.immutable": "O repo externo é append-only (imutável)",
+  "config.immutableHint": "Ignorar a poda externa e recusar eliminações externas — o lado remoto (append-only) impõe-no.",
+  "config.backupTitle": "Fazer backup das definições agora",
+  "config.backupHint": "Captura o /config do próprio BombVault: a base de dados de definições, as credenciais externas (rclone.conf) e o par de chaves SSH.",
+  "config.backupNow": "Fazer backup das definições agora",
+  "config.backingUp": "A fazer backup…",
+  "config.snapshotsTitle": "Backups de definições",
+  "config.snapshotsHint": "Para restaurar estas definições num servidor reconstruído, use o separador Recuperação — restaurar as definições reinicia o BombVault para as aplicar, por isso fica aí junto com o resto do fluxo de recuperação de desastres.",
+  "config.none": "Ainda sem backups de definições — inicie um backup acima.",
+  "nav.config": "Config",
+  "settings.configEnabled": "Configuração da aplicação",
+  "dashboard.domainConfig": "Config",
 };
 
 export default pt;

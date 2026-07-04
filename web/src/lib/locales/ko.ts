@@ -17,6 +17,7 @@ const ko: Partial<Translations> = {
   "nav.advanced": "고급",
   "nav.comingSoon": "출시 예정",
   "nav.recovery": "복구",
+  "nav.config": "Config",
 
   // Dashboard
   "dashboard.title": "대시보드",
@@ -145,6 +146,7 @@ const ko: Partial<Translations> = {
   "settings.containersEnabled": "컨테이너",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "플래시",
+  "settings.configEnabled": "앱 구성",
   "settings.schedule": "일정",
   "settings.scheduleOff": "끔",
   "settings.language": "언어",
@@ -459,6 +461,22 @@ const ko: Partial<Translations> = {
   "recovery.freshNudge": "이전 서버나 재구축에서 복원하시나요? 기존 백업을 복구하세요.",
   "recovery.freshNudgeCta": "복구로 이동",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "BombVault 자체 설정 복원",
+  "recovery.configHint": "재구축된 서버에서는 먼저 BombVault 자체 설정 — 백업 경로, 오프사이트 대상, 자격 증명 — 을 복원하면 아래 단계가 미리 채워집니다. 이전에 설정한 설정 백업을 지정하세요. 설정 백업이 없나요? 이 단계를 건너뛰고 아래에서 백업을 수동으로 연결하세요.",
+  "recovery.configAppKeyReminder": "APP_KEY가 이 백업과 일치해야 합니다 — 위 1단계의 확인 항목입니다.",
+  "recovery.configSourceLabel": "설정 백업은 어디에 있나요?",
+  "recovery.configLocalPath": "로컬 경로",
+  "recovery.configOffsiteUrl": "오프사이트 저장소 URL",
+  "recovery.configRestore": "BombVault 설정 복원",
+  "recovery.configRestoring": "복원 중…",
+  "recovery.configRestarting": "설정을 적용하기 위해 BombVault가 재시작 중입니다… 다시 돌아오면 이 페이지가 자동으로 새로고침됩니다.",
+  "recovery.configManualRestart": "설정이 준비되었습니다. Unraid에서 BombVault 컨테이너를 재시작한 다음 계속하세요 — 다음 부팅 시 적용됩니다.",
+  "recovery.configReloadWhenBack": "BombVault가 예상보다 오래 돌아오고 있습니다. 다시 가동되면 이 페이지를 새로고침하여 복원된 설정을 불러오세요.",
+  "recovery.configReload": "지금 새로고침",
+  "recovery.configSkip": "건너뛰기 — 설정 백업이 없습니다",
+  "recovery.configSkipped": "건너뛰었습니다. 아래에서 백업을 수동으로 연결하세요.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "오프사이트 대역폭",
   "settings.limitUpload": "업로드 제한 (KiB/s)",
@@ -503,6 +521,7 @@ const ko: Partial<Translations> = {
   "dashboard.domainContainers": "컨테이너",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "플래시",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "백업 상태",
@@ -624,6 +643,31 @@ const ko: Partial<Translations> = {
   "ransomware.drillNever": "아직 복원 훈련 없음",
   "ransomware.encryptionOn": "암호화 켜짐",
   "ransomware.pruneStrategy": "정리 전략 설정됨",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Config 백업",
+  "config.subtitle": "재구축된 서버가 스스로 복원할 수 있도록 BombVault 자체 설정을 백업합니다.",
+  "config.settingsTitle": "Config 백업 설정",
+  "config.settingsHint": "BombVault 자체 구성 — 설정 데이터베이스, 오프사이트 자격 증명, SSH 키 — 을 보호하여 새 설치본이 스스로 복원하고 중단된 지점에서 바로 이어갈 수 있도록 합니다.",
+  "config.enabled": "BombVault 설정 백업",
+  "config.enabledHint": "아래 일정에 BombVault 자체 /config를 포함합니다.",
+  "config.path": "백업 위치",
+  "config.pathHint": "config 저장소가 기록되는 호스트 마운트 루트 아래의 상대 하위 경로.",
+  "config.schedule": "일정",
+  "config.schedulePlaceholder": "off · 예: daily 03:30",
+  "config.scheduleHint": "설정을 자동으로 백업할 시점. 요청 시에만 백업하려면 'off'로 두세요.",
+  "config.offsite": "오프사이트 저장소 (선택)",
+  "config.offsiteHint": "각 로컬 백업 후 config 백업을 두 번째 오프사이트 저장소로 복제합니다.",
+  "config.offsiteSchedule": "오프사이트 일정",
+  "config.immutable": "오프사이트 저장소는 append-only(불변)",
+  "config.immutableHint": "오프사이트 정리를 건너뛰고 오프사이트 삭제를 거부합니다 — 원격 측(append-only)이 이를 강제합니다.",
+  "config.backupTitle": "지금 설정 백업",
+  "config.backupHint": "BombVault 자체 /config를 캡처합니다: 설정 데이터베이스, 오프사이트 자격 증명(rclone.conf), SSH 키 쌍.",
+  "config.backupNow": "지금 설정 백업",
+  "config.backingUp": "백업 중…",
+  "config.snapshotsTitle": "설정 백업",
+  "config.snapshotsHint": "이 설정을 재구축된 서버에 복원하려면 복구 탭을 사용하세요 — 설정을 복원하면 BombVault가 재시작되어 적용되므로, 나머지 재해 복구 흐름과 함께 그곳에 있습니다.",
+  "config.none": "아직 설정 백업이 없습니다 — 위에서 백업을 실행하세요.",
 };
 
 export default ko;

@@ -462,6 +462,22 @@ const pl: Partial<Translations> = {
   "recovery.freshNudge": "Przywracasz z poprzedniego serwera lub po ponownej instalacji? Odzyskaj swoje istniejące kopie zapasowe.",
   "recovery.freshNudgeCta": "Przejdź do Odzyskiwania",
 
+  // Config recovery step (restore BombVault's own settings)
+  "recovery.stepConfig": "Przywróć własne ustawienia BombVault",
+  "recovery.configHint": "Na odbudowanym serwerze najpierw przywróć własne ustawienia BombVault — ścieżki kopii zapasowych, cele off-site i poświadczenia — aby poniższe kroki były już wstępnie wypełnione. Wskaż mu kopię ustawień skonfigurowaną wcześniej. Brak kopii ustawień? Pomiń ten krok i podłącz swoje kopie zapasowe ręcznie poniżej.",
+  "recovery.configAppKeyReminder": "Twój APP_KEY musi pasować do tej kopii zapasowej — to jest sprawdzenie w kroku 1 powyżej.",
+  "recovery.configSourceLabel": "Gdzie jest kopia ustawień?",
+  "recovery.configLocalPath": "Ścieżka lokalna",
+  "recovery.configOffsiteUrl": "Adres URL repo off-site",
+  "recovery.configRestore": "Przywróć ustawienia BombVault",
+  "recovery.configRestoring": "Przywracanie…",
+  "recovery.configRestarting": "BombVault uruchamia się ponownie, aby zastosować Twoje ustawienia… ta strona przeładuje się automatycznie, gdy wróci.",
+  "recovery.configManualRestart": "Twoje ustawienia są przygotowane. Zrestartuj kontener BombVault w Unraid, a następnie kontynuuj — zostaną zastosowane przy następnym uruchomieniu.",
+  "recovery.configReloadWhenBack": "BombVault wraca dłużej niż oczekiwano. Przeładuj tę stronę, gdy tylko wróci, aby wczytać przywrócone ustawienia.",
+  "recovery.configReload": "Przeładuj teraz",
+  "recovery.configSkip": "Pomiń — nie mam kopii ustawień",
+  "recovery.configSkipped": "Pominięto. Podłącz swoje kopie zapasowe ręcznie poniżej.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Przepustowość poza siedzibą",
   "settings.limitUpload": "Limit wysyłania (KiB/s)",
@@ -627,6 +643,34 @@ const pl: Partial<Translations> = {
   "ransomware.drillNever": "brak próby przywracania",
   "ransomware.encryptionOn": "szyfrowanie włączone",
   "ransomware.pruneStrategy": "ustawiono strategię przycinania",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Kopia konfiguracji",
+  "config.subtitle": "Twórz kopię własnych ustawień BombVault, aby odbudowany serwer mógł sam się przywrócić.",
+  "config.settingsTitle": "Ustawienia kopii konfiguracji",
+  "config.settingsHint": "Chroń własną konfigurację BombVault — jego bazę ustawień, poświadczenia off-site i klucze SSH — aby świeża instalacja mogła sama się przywrócić i podjąć pracę dokładnie tam, gdzie ją przerwano.",
+  "config.enabled": "Twórz kopię ustawień BombVault",
+  "config.enabledHint": "Uwzględnij własne /config BombVault w poniższym harmonogramie.",
+  "config.path": "Lokalizacja kopii zapasowej",
+  "config.pathHint": "Względna podścieżka w katalogu montowania hosta, do której zapisywane jest repo konfiguracji.",
+  "config.schedule": "Harmonogram",
+  "config.schedulePlaceholder": "off · np. daily 03:30",
+  "config.scheduleHint": "Kiedy automatycznie tworzyć kopię ustawień. Pozostaw 'off', aby tworzyć kopię tylko na żądanie.",
+  "config.offsite": "Repo off-site (opcjonalnie)",
+  "config.offsiteHint": "Replikuj kopię konfiguracji do drugiego repo off-site po każdej kopii lokalnej.",
+  "config.offsiteSchedule": "Harmonogram off-site",
+  "config.immutable": "Repo off-site jest append-only (niezmienne)",
+  "config.immutableHint": "Pomiń przycinanie off-site i odmawiaj usuwania off-site — druga strona (append-only) to egzekwuje.",
+  "config.backupTitle": "Utwórz kopię ustawień teraz",
+  "config.backupHint": "Przechwytuje własne /config BombVault: bazę ustawień, poświadczenia off-site (rclone.conf) i parę kluczy SSH.",
+  "config.backupNow": "Utwórz kopię ustawień teraz",
+  "config.backingUp": "Tworzenie kopii…",
+  "config.snapshotsTitle": "Kopie ustawień",
+  "config.snapshotsHint": "Aby przywrócić te ustawienia na odbudowanym serwerze, użyj zakładki Odzyskiwanie — przywrócenie ustawień restartuje BombVault, aby je zastosować, dlatego znajduje się tam wraz z resztą procesu odzyskiwania po awarii.",
+  "config.none": "Brak kopii ustawień — utwórz kopię powyżej.",
+  "nav.config": "Config",
+  "settings.configEnabled": "Konfiguracja aplikacji",
+  "dashboard.domainConfig": "Config",
 };
 
 export default pl;

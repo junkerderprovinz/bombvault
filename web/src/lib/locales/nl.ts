@@ -443,6 +443,22 @@ const nl: Partial<Translations> = {
   "recovery.freshNudge": "Herstellen vanaf een vorige server of na een herinstallatie? Herstel je bestaande back-ups.",
   "recovery.freshNudgeCta": "Ga naar Herstel",
 
+  // Config recovery step (restore BombVault's own settings)
+  "recovery.stepConfig": "BombVaults eigen instellingen herstellen",
+  "recovery.configHint": "Herstel op een opnieuw opgebouwde server eerst BombVaults eigen instellingen — de back-uppaden, off-site doelen en inloggegevens — zodat de onderstaande stappen al vooraf zijn ingevuld. Wijs het naar de eerder ingestelde instellingen-back-up. Geen instellingen-back-up? Sla dit over en koppel je back-ups hieronder handmatig.",
+  "recovery.configAppKeyReminder": "Je APP_KEY moet bij deze back-up passen — dat is de controle in stap 1 hierboven.",
+  "recovery.configSourceLabel": "Waar staat de instellingen-back-up?",
+  "recovery.configLocalPath": "Lokaal pad",
+  "recovery.configOffsiteUrl": "Off-site repo-URL",
+  "recovery.configRestore": "BombVaults instellingen herstellen",
+  "recovery.configRestoring": "Herstellen…",
+  "recovery.configRestarting": "BombVault start opnieuw op om je instellingen toe te passen… deze pagina laadt automatisch opnieuw zodra het weer online is.",
+  "recovery.configManualRestart": "Je instellingen staan klaar. Herstart de BombVault-container in Unraid en ga daarna verder — ze worden bij de volgende start toegepast.",
+  "recovery.configReloadWhenBack": "BombVault heeft langer nodig dan verwacht om terug te komen. Herlaad deze pagina zodra het weer draait om je herstelde instellingen te laden.",
+  "recovery.configReload": "Nu herladen",
+  "recovery.configSkip": "Overslaan — ik heb geen instellingen-back-up",
+  "recovery.configSkipped": "Overgeslagen. Koppel je back-ups hieronder handmatig.",
+
   // Snapshot tags + compare (diff)
   "snapshot.tags": "Tags",
   "snapshot.addTag": "Tag toevoegen",
@@ -629,6 +645,34 @@ const nl: Partial<Translations> = {
   "ransomware.drillNever": "nog geen hersteltest",
   "ransomware.encryptionOn": "versleuteling aan",
   "ransomware.pruneStrategy": "prune-strategie ingesteld",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Config-back-up",
+  "config.subtitle": "Maak een back-up van BombVaults eigen instellingen zodat een opnieuw opgebouwde server zichzelf kan herstellen.",
+  "config.settingsTitle": "Config-back-upinstellingen",
+  "config.settingsHint": "Bescherm BombVaults eigen configuratie — de instellingendatabase, off-site inloggegevens en SSH-sleutels — zodat een verse installatie zichzelf kan herstellen en precies verdergaat waar ze was gebleven.",
+  "config.enabled": "BombVaults instellingen back-uppen",
+  "config.enabledHint": "Neem BombVaults eigen /config op in de onderstaande planning.",
+  "config.path": "Back-uplocatie",
+  "config.pathHint": "Relatief subpad onder de host-mount-root waar het config-repo wordt weggeschreven.",
+  "config.schedule": "Planning",
+  "config.schedulePlaceholder": "off · bijv. daily 03:30",
+  "config.scheduleHint": "Wanneer de instellingen automatisch worden geback-upt. Laat 'off' staan om alleen op verzoek te back-uppen.",
+  "config.offsite": "Off-site repo (optioneel)",
+  "config.offsiteHint": "Repliceer het config-back-up na elke lokale back-up naar een tweede, off-site repo.",
+  "config.offsiteSchedule": "Off-site planning",
+  "config.immutable": "Off-site repo is append-only (onveranderlijk)",
+  "config.immutableHint": "Sla off-site opschonen over en weiger off-site verwijderingen — de andere kant (append-only) dwingt dit af.",
+  "config.backupTitle": "Instellingen nu back-uppen",
+  "config.backupHint": "Legt BombVaults eigen /config vast: de instellingendatabase, off-site inloggegevens (rclone.conf) en het SSH-sleutelpaar.",
+  "config.backupNow": "Instellingen nu back-uppen",
+  "config.backingUp": "Back-up maken…",
+  "config.snapshotsTitle": "Instellingen-back-ups",
+  "config.snapshotsHint": "Om deze instellingen op een opnieuw opgebouwde server te herstellen, gebruik je het tabblad Herstel — het herstellen van instellingen start BombVault opnieuw om ze toe te passen, dus het staat daar bij de rest van het noodherstel.",
+  "config.none": "Nog geen instellingen-back-ups — maak er hierboven een.",
+  "nav.config": "Config",
+  "settings.configEnabled": "App-configuratie",
+  "dashboard.domainConfig": "Config",
 };
 
 export default nl;

@@ -448,6 +448,22 @@ const ro: Partial<Translations> = {
   "recovery.freshNudge": "Restaurezi de pe un server anterior sau după o reinstalare? Recuperează-ți copiile de rezervă existente.",
   "recovery.freshNudgeCta": "Mergi la Recuperare",
 
+  // Config recovery step (restore BombVault's own settings)
+  "recovery.stepConfig": "Restaurează propriile setări ale BombVault",
+  "recovery.configHint": "Pe un server reconstruit, restaurează mai întâi propriile setări ale BombVault — căile de backup, țintele off-site și credențialele — astfel încât pașii de mai jos să fie deja precompletați. Îndreaptă-l către backupul de setări configurat anterior. Nu ai backup de setări? Sari peste acest pas și atașează backupurile manual mai jos.",
+  "recovery.configAppKeyReminder": "APP_KEY-ul tău trebuie să corespundă acestui backup — aceasta este verificarea din Pasul 1 de mai sus.",
+  "recovery.configSourceLabel": "Unde este backupul de setări?",
+  "recovery.configLocalPath": "Cale locală",
+  "recovery.configOffsiteUrl": "URL repo off-site",
+  "recovery.configRestore": "Restaurează setările BombVault",
+  "recovery.configRestoring": "Se restaurează…",
+  "recovery.configRestarting": "BombVault repornește pentru a aplica setările tale… această pagină se reîncarcă automat când revine.",
+  "recovery.configManualRestart": "Setările tale sunt pregătite. Repornește containerul BombVault în Unraid, apoi continuă — se aplică la următoarea pornire.",
+  "recovery.configReloadWhenBack": "BombVault durează mai mult decât se aștepta să revină. Reîncarcă această pagină imediat ce e din nou activ pentru a încărca setările restaurate.",
+  "recovery.configReload": "Reîncarcă acum",
+  "recovery.configSkip": "Sari peste — nu am backup de setări",
+  "recovery.configSkipped": "Sărit. Atașează backupurile manual mai jos.",
+
   // Backups — delete all
   "snapshots.deleteAll": "Șterge toate copiile de rezervă",
   "snapshots.deleteAllConfirm": "Ștergeți TOATE copiile de rezervă ale acestei VM din sursa selectată (locală sau externă)? Instantaneele sunt eliminate permanent și depozitul este curățat. Nu poate fi anulat.",
@@ -635,6 +651,34 @@ const ro: Partial<Translations> = {
   "ransomware.drillNever": "încă niciun test de restaurare",
   "ransomware.encryptionOn": "criptare activată",
   "ransomware.pruneStrategy": "strategie de prune setată",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Backup de configurație",
+  "config.subtitle": "Fă backup propriilor setări ale BombVault, astfel încât un server reconstruit să se poată restaura singur.",
+  "config.settingsTitle": "Setări backup de configurație",
+  "config.settingsHint": "Protejează propria configurație a BombVault — baza de date cu setări, credențialele off-site și cheile SSH — astfel încât o instalare nouă să se poată restaura singură și să continue exact de unde a rămas.",
+  "config.enabled": "Fă backup setărilor BombVault",
+  "config.enabledHint": "Include propriul /config al BombVault în programarea de mai jos.",
+  "config.path": "Locația backupului",
+  "config.pathHint": "Subcale relativă sub rădăcina montării gazdei, unde este scris repo-ul de configurație.",
+  "config.schedule": "Programare",
+  "config.schedulePlaceholder": "off · ex. daily 03:30",
+  "config.scheduleHint": "Când să se facă backup automat setărilor. Lasă 'off' pentru a face backup doar la cerere.",
+  "config.offsite": "Repo off-site (opțional)",
+  "config.offsiteHint": "Replică backupul de configurație într-un al doilea repo off-site după fiecare backup local.",
+  "config.offsiteSchedule": "Programare off-site",
+  "config.immutable": "Repo-ul off-site este append-only (imuabil)",
+  "config.immutableHint": "Sari peste prune-ul off-site și refuză ștergerile off-site — partea la distanță (append-only) o impune.",
+  "config.backupTitle": "Fă backup setărilor acum",
+  "config.backupHint": "Capturează propriul /config al BombVault: baza de date cu setări, credențialele off-site (rclone.conf) și perechea de chei SSH.",
+  "config.backupNow": "Fă backup setărilor acum",
+  "config.backingUp": "Se face backup…",
+  "config.snapshotsTitle": "Backupuri de setări",
+  "config.snapshotsHint": "Pentru a restaura aceste setări pe un server reconstruit, folosește fila Recuperare — restaurarea setărilor repornește BombVault pentru a le aplica, așa că se află acolo împreună cu restul fluxului de recuperare în caz de dezastru.",
+  "config.none": "Încă niciun backup de setări — rulează un backup mai sus.",
+  "nav.config": "Config",
+  "settings.configEnabled": "Configurația aplicației",
+  "dashboard.domainConfig": "Config",
 };
 
 export default ro;

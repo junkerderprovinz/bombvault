@@ -17,6 +17,7 @@ const cs: Partial<Translations> = {
   "nav.advanced": "Pokročilé",
   "nav.comingSoon": "Připravujeme",
   "nav.recovery": "Obnova",
+  "nav.config": "Konfigurace",
 
   // Dashboard
   "dashboard.title": "Přehled",
@@ -145,6 +146,7 @@ const cs: Partial<Translations> = {
   "settings.containersEnabled": "Kontejnery",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Konfigurace aplikace",
   "settings.schedule": "Plán",
   "settings.scheduleOff": "vypnuto",
   "settings.language": "Jazyk",
@@ -465,6 +467,47 @@ const cs: Partial<Translations> = {
   "recovery.freshNudge": "Obnovujete z předchozího serveru nebo po přestavbě? Obnovte své existující zálohy.",
   "recovery.freshNudgeCta": "Přejít na Obnovu",
 
+  // Config backup (BombVault's own settings)
+  "config.title": "Záloha konfigurace",
+  "config.subtitle": "Zálohujte vlastní nastavení BombVaultu, aby se znovu sestavený server mohl sám obnovit.",
+  "config.settingsTitle": "Nastavení zálohování konfigurace",
+  "config.settingsHint": "Chraňte vlastní konfiguraci BombVaultu — jeho databázi nastavení, přihlašovací údaje mimo lokalitu a SSH klíče — aby se čistá instalace mohla sama obnovit a navázat přesně tam, kde skončila.",
+  "config.enabled": "Zálohovat nastavení BombVaultu",
+  "config.enabledHint": "Zahrnout vlastní /config BombVaultu do plánu níže.",
+  "config.path": "Umístění zálohy",
+  "config.pathHint": "Relativní podcesta pod kořenem připojení hostitele, kam se zapisuje repozitář konfigurace.",
+  "config.schedule": "Plán",
+  "config.schedulePlaceholder": "off · např. daily 03:30",
+  "config.scheduleHint": "Kdy automaticky zálohovat nastavení. Ponechte 'off' pro zálohování jen na vyžádání.",
+  "config.offsite": "Repozitář mimo lokalitu (volitelné)",
+  "config.offsiteHint": "Po každé místní záloze replikovat zálohu konfigurace do druhého repozitáře mimo lokalitu.",
+  "config.offsiteSchedule": "Plán mimo lokalitu",
+  "config.immutable": "Repozitář mimo lokalitu je append-only (neměnný)",
+  "config.immutableHint": "Přeskočit čištění mimo lokalitu a odmítat mazání mimo lokalitu — vynucuje to vzdálená strana (append-only).",
+  "config.backupTitle": "Zálohovat nastavení nyní",
+  "config.backupHint": "Zachytí vlastní /config BombVaultu: databázi nastavení, přihlašovací údaje mimo lokalitu (rclone.conf) a pár klíčů SSH.",
+  "config.backupNow": "Zálohovat nastavení nyní",
+  "config.backingUp": "Zálohuji…",
+  "config.snapshotsTitle": "Zálohy nastavení",
+  "config.snapshotsHint": "Chcete-li tato nastavení obnovit na znovu sestaveném serveru, použijte kartu Obnova — obnovení nastavení restartuje BombVault, aby se použila, takže patří tam spolu se zbytkem postupu zotavení po havárii.",
+  "config.none": "Zatím žádné zálohy nastavení — spusťte zálohu výše.",
+
+  // Recovery — restore BombVault's own settings step
+  "recovery.stepConfig": "Obnovit vlastní nastavení BombVaultu",
+  "recovery.configHint": "Na znovu sestaveném serveru nejprve obnovte vlastní nastavení BombVaultu — jeho zálohovací cesty, cíle mimo lokalitu a přihlašovací údaje — aby se kroky níže předvyplnily. Nasměrujte jej na zálohu nastavení, kterou jste dříve nastavili. Žádná záloha nastavení? Přeskočte to a připojte své zálohy ručně níže.",
+  "recovery.configAppKeyReminder": "Váš APP_KEY musí odpovídat této záloze — to je kontrola v kroku 1 výše.",
+  "recovery.configSourceLabel": "Kde je záloha nastavení?",
+  "recovery.configLocalPath": "Místní cesta",
+  "recovery.configOffsiteUrl": "URL repozitáře mimo lokalitu",
+  "recovery.configRestore": "Obnovit nastavení BombVaultu",
+  "recovery.configRestoring": "Obnovuji…",
+  "recovery.configRestarting": "BombVault se restartuje, aby použil vaše nastavení… tato stránka se automaticky znovu načte, jakmile bude zpět.",
+  "recovery.configManualRestart": "Vaše nastavení jsou připravena. Restartujte kontejner BombVault v Unraidu a poté pokračujte — použijí se při dalším spuštění.",
+  "recovery.configReloadWhenBack": "Návrat BombVaultu trvá déle, než se čekalo. Jakmile bude opět v provozu, znovu načtěte tuto stránku pro načtení obnovených nastavení.",
+  "recovery.configReload": "Znovu načíst nyní",
+  "recovery.configSkip": "Přeskočit — nemám zálohu nastavení",
+  "recovery.configSkipped": "Přeskočeno. Připojte své zálohy ručně níže.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Šířka pásma mimo lokalitu",
   "settings.limitUpload": "Limit nahrávání (KiB/s)",
@@ -509,6 +552,7 @@ const cs: Partial<Translations> = {
   "dashboard.domainContainers": "Kontejnery",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Konfigurace",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Stav záloh",

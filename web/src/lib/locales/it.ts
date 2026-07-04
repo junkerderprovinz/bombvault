@@ -17,6 +17,7 @@ const it: Partial<Translations> = {
   "nav.advanced": "Avanzate",
   "nav.comingSoon": "Prossimamente",
   "nav.recovery": "Ripristino",
+  "nav.config": "Config",
 
   // Dashboard
   "dashboard.title": "Dashboard",
@@ -145,6 +146,7 @@ const it: Partial<Translations> = {
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Configurazione dell'app",
   "settings.schedule": "Calendario",
   "settings.scheduleOff": "disattivato",
   "settings.language": "Lingua",
@@ -467,6 +469,22 @@ const it: Partial<Translations> = {
   "recovery.freshNudge": "Stai ripristinando da un server precedente o da una ricostruzione? Recupera i tuoi backup esistenti.",
   "recovery.freshNudgeCta": "Vai a Ripristino",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "Ripristina le impostazioni di BombVault",
+  "recovery.configHint": "Su un server ricostruito, ripristina prima le impostazioni di BombVault — i suoi percorsi di backup, le destinazioni off-site e le credenziali — così che i passaggi qui sotto risultino precompilati. Puntalo al backup delle impostazioni che avevi configurato in precedenza. Nessun backup delle impostazioni? Salta questo passaggio e collega i tuoi backup manualmente qui sotto.",
+  "recovery.configAppKeyReminder": "La tua APP_KEY deve corrispondere a questo backup — è il controllo del passaggio 1 qui sopra.",
+  "recovery.configSourceLabel": "Dov'è il backup delle impostazioni?",
+  "recovery.configLocalPath": "Percorso locale",
+  "recovery.configOffsiteUrl": "URL del repo off-site",
+  "recovery.configRestore": "Ripristina le impostazioni di BombVault",
+  "recovery.configRestoring": "Ripristino…",
+  "recovery.configRestarting": "BombVault si sta riavviando per applicare le tue impostazioni… questa pagina si ricarica automaticamente quando è di nuovo attivo.",
+  "recovery.configManualRestart": "Le tue impostazioni sono pronte. Riavvia il container BombVault in Unraid, poi continua — vengono applicate al prossimo avvio.",
+  "recovery.configReloadWhenBack": "BombVault sta impiegando più tempo del previsto a tornare. Ricarica questa pagina una volta che è attivo per caricare le impostazioni ripristinate.",
+  "recovery.configReload": "Ricarica ora",
+  "recovery.configSkip": "Salta — non ho un backup delle impostazioni",
+  "recovery.configSkipped": "Saltato. Collega i tuoi backup manualmente qui sotto.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Larghezza di banda off-site",
   "settings.limitUpload": "Limite upload (KiB/s)",
@@ -501,6 +519,7 @@ const it: Partial<Translations> = {
   "dashboard.domainContainers": "Container",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Salute dei backup",
@@ -632,6 +651,31 @@ const it: Partial<Translations> = {
   "ransomware.drillNever": "nessuna prova di ripristino ancora",
   "ransomware.encryptionOn": "crittografia attiva",
   "ransomware.pruneStrategy": "strategia di potatura impostata",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Backup della config",
+  "config.subtitle": "Esegui il backup delle impostazioni di BombVault così che un server ricostruito possa ripristinarsi da solo.",
+  "config.settingsTitle": "Impostazioni del backup della config",
+  "config.settingsHint": "Proteggi la configurazione di BombVault — il suo database delle impostazioni, le credenziali off-site e le chiavi SSH — così che un'installazione nuova possa ripristinarsi e riprendere esattamente da dove si era interrotta.",
+  "config.enabled": "Esegui il backup delle impostazioni di BombVault",
+  "config.enabledHint": "Includi il /config di BombVault nel calendario qui sotto.",
+  "config.path": "Posizione del backup",
+  "config.pathHint": "Sottopercorso relativo sotto la radice del mount dell'host in cui viene scritto il repo della config.",
+  "config.schedule": "Calendario",
+  "config.schedulePlaceholder": "off · es. daily 03:30",
+  "config.scheduleHint": "Quando eseguire automaticamente il backup delle impostazioni. Lascia « off » per eseguire il backup solo su richiesta.",
+  "config.offsite": "Repo off-site (facoltativo)",
+  "config.offsiteHint": "Replica il backup della config su un secondo repo off-site dopo ogni backup locale.",
+  "config.offsiteSchedule": "Calendario off-site",
+  "config.immutable": "Il repo off-site è append-only (immutabile)",
+  "config.immutableHint": "Salta la potatura off-site e rifiuta le eliminazioni off-site — è il lato remoto (append-only) a imporlo.",
+  "config.backupTitle": "Esegui il backup delle impostazioni ora",
+  "config.backupHint": "Cattura il /config di BombVault: il database delle impostazioni, le credenziali off-site (rclone.conf) e la coppia di chiavi SSH.",
+  "config.backupNow": "Esegui il backup delle impostazioni ora",
+  "config.backingUp": "Backup in corso…",
+  "config.snapshotsTitle": "Backup delle impostazioni",
+  "config.snapshotsHint": "Per ripristinare queste impostazioni su un server ricostruito, usa la scheda Ripristino — ripristinare le impostazioni riavvia BombVault per applicarle, quindi si trova lì insieme al resto del flusso di ripristino di emergenza.",
+  "config.none": "Ancora nessun backup delle impostazioni — avviane uno sopra.",
 };
 
 export default it;

@@ -17,6 +17,7 @@ const hu: Partial<Translations> = {
   "nav.advanced": "Speciális",
   "nav.comingSoon": "Hamarosan",
   "nav.recovery": "Helyreállítás",
+  "nav.config": "Config",
 
   // Dashboard
   "dashboard.title": "Irányítópult",
@@ -145,6 +146,7 @@ const hu: Partial<Translations> = {
   "settings.containersEnabled": "Konténerek",
   "settings.vmsEnabled": "VM-ek",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Alkalmazás-konfiguráció",
   "settings.schedule": "Ütemezés",
   "settings.scheduleOff": "ki",
   "settings.language": "Nyelv",
@@ -470,6 +472,22 @@ const hu: Partial<Translations> = {
   "recovery.freshNudge": "Egy korábbi szerverről vagy újraépítésből állítasz vissza? Állítsd vissza a meglévő mentéseidet.",
   "recovery.freshNudgeCta": "Ugrás a Helyreállításhoz",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "BombVault saját beállításainak visszaállítása",
+  "recovery.configHint": "Egy újraépített szerveren először BombVault saját beállításait állítsd vissza — a mentési útvonalait, a telephelyen kívüli céljait és a hitelesítő adatait —, hogy az alábbi lépések már előre kitöltve jelenjenek meg. Irányítsd a korábban beállított beállítás-mentésre. Nincs beállítás-mentés? Hagyd ki ezt, és csatold a mentéseidet kézzel alább.",
+  "recovery.configAppKeyReminder": "Az APP_KEY-nek egyeznie kell ezzel a mentéssel — ez a fenti 1. lépés ellenőrzése.",
+  "recovery.configSourceLabel": "Hol van a beállítás-mentés?",
+  "recovery.configLocalPath": "Helyi útvonal",
+  "recovery.configOffsiteUrl": "Telephelyen kívüli repó URL",
+  "recovery.configRestore": "BombVault beállításainak visszaállítása",
+  "recovery.configRestoring": "Visszaállítás…",
+  "recovery.configRestarting": "BombVault újraindul, hogy alkalmazza a beállításaidat… ez az oldal automatikusan újratöltődik, amint visszatér.",
+  "recovery.configManualRestart": "A beállításaid elő vannak készítve. Indítsd újra a BombVault konténert az Unraidben, majd folytasd — a következő indításkor lépnek életbe.",
+  "recovery.configReloadWhenBack": "BombVault a vártnál tovább tér vissza. Töltsd újra ezt az oldalt, amint elérhető, hogy betöltsd a visszaállított beállításaidat.",
+  "recovery.configReload": "Újratöltés most",
+  "recovery.configSkip": "Kihagyás — nincs beállítás-mentésem",
+  "recovery.configSkipped": "Kihagyva. Csatold a mentéseidet kézzel alább.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Telephelyen kívüli sávszélesség",
   "settings.limitUpload": "Feltöltési korlát (KiB/s)",
@@ -514,6 +532,7 @@ const hu: Partial<Translations> = {
   "dashboard.domainContainers": "Konténerek",
   "dashboard.domainVMs": "VM-ek",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Mentési állapot",
@@ -635,6 +654,31 @@ const hu: Partial<Translations> = {
   "ransomware.drillNever": "még nincs visszaállítási próba",
   "ransomware.encryptionOn": "titkosítás bekapcsolva",
   "ransomware.pruneStrategy": "nyesési stratégia beállítva",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Config-mentés",
+  "config.subtitle": "Mentsd BombVault saját beállításait, hogy egy újraépített szerver helyre tudja állítani magát.",
+  "config.settingsTitle": "Config-mentés beállításai",
+  "config.settingsHint": "Védd meg BombVault saját konfigurációját — a beállítás-adatbázisát, a telephelyen kívüli hitelesítő adatait és az SSH-kulcsait — hogy egy friss telepítés helyre tudja állítani magát, és pontosan ott folytassa, ahol abbahagyta.",
+  "config.enabled": "BombVault beállításainak mentése",
+  "config.enabledHint": "BombVault saját /config mappájának felvétele az alábbi ütemezésbe.",
+  "config.path": "Mentés helye",
+  "config.pathHint": "Relatív alútvonal a gazdagép csatolási gyökere alatt, ahová a config-repó íródik.",
+  "config.schedule": "Ütemezés",
+  "config.schedulePlaceholder": "off · pl. daily 03:30",
+  "config.scheduleHint": "Mikor mentse automatikusan a beállításokat. Hagyd „off” értéken, hogy csak kérésre mentsen.",
+  "config.offsite": "Telephelyen kívüli repó (opcionális)",
+  "config.offsiteHint": "A config-mentés replikálása egy második, telephelyen kívüli repóba minden helyi mentés után.",
+  "config.offsiteSchedule": "Telephelyen kívüli ütemezés",
+  "config.immutable": "A telephelyen kívüli repó append-only (nem módosítható)",
+  "config.immutableHint": "A telephelyen kívüli nyesés kihagyása és a telephelyen kívüli törlések elutasítása — a túloldal (append-only) kényszeríti ki.",
+  "config.backupTitle": "Beállítások mentése most",
+  "config.backupHint": "Rögzíti BombVault saját /config mappáját: a beállítás-adatbázist, a telephelyen kívüli hitelesítő adatokat (rclone.conf) és az SSH-kulcspárt.",
+  "config.backupNow": "Beállítások mentése most",
+  "config.backingUp": "Mentés…",
+  "config.snapshotsTitle": "Beállítás-mentések",
+  "config.snapshotsHint": "Ezeknek a beállításoknak egy újraépített szerverre való visszaállításához használd a Helyreállítás lapot — a beállítások visszaállítása újraindítja BombVaultot, hogy alkalmazza őket, ezért a többi vészhelyreállítási lépéssel együtt ott található.",
+  "config.none": "Még nincsenek beállítás-mentések — indíts egyet fent.",
 };
 
 export default hu;
