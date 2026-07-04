@@ -2055,11 +2055,15 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.RestoreConfig(r.Context(), body.Snapshot, body.Source); err != nil {
+	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, body.Source)
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	auto := h.svc.ScheduleSelfRestart()
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"staged": true, "autoRestart": auto}))
 }
 

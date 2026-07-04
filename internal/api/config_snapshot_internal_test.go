@@ -60,3 +60,35 @@ func TestStageConfigSnapshot(t *testing.T) {
 		t.Fatalf("staged snapshot is not a readable DB: %v", err)
 	}
 }
+
+// TestStageConfigSnapshotCleansUpOnError proves stageConfigSnapshot never leaves a
+// partial staging dir (which holds the plaintext settings DB + rclone.conf creds +
+// the ssh private key) behind when it fails. The failure is injected by closing the
+// store's DB so VacuumInto errors AFTER the staging dir has been created — the exact
+// window where the caller's `defer os.RemoveAll(stagingDir)` isn't registered yet.
+func TestStageConfigSnapshotCleansUpOnError(t *testing.T) {
+	dataDir := t.TempDir()
+	db, err := store.Open(filepath.Join(dataDir, "bombvault.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	svc := &Service{
+		cfg:   config.Config{AppKey: strings.Repeat("a", 64), DataDir: dataDir},
+		store: store.New(db),
+	}
+	// Close the DB so the VACUUM INTO inside stageConfigSnapshot fails after the
+	// staging dir is created — exercising the cleanup path.
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.stageConfigSnapshot(); err == nil {
+		t.Fatal("expected stageConfigSnapshot to fail after the DB was closed")
+	}
+	if _, err := os.Stat(svc.configSnapshotDir()); !os.IsNotExist(err) {
+		t.Fatalf("partial staging dir (DB + creds + ssh key) must not linger after a failure: %v", err)
+	}
+}

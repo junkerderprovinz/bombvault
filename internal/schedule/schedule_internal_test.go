@@ -76,3 +76,36 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 		t.Fatal("expected config in the local subset drill domains")
 	}
 }
+
+// TestImmutableOffsiteDomainsIncludesConfig verifies the scheduled off-site tamper
+// test covers the config domain when its off-site repo is flagged immutable — the
+// same way containers/vms/flash are. Without this, a config repo advertised as
+// append-only would never be actively verified.
+func TestImmutableOffsiteDomainsIncludesConfig(t *testing.T) {
+	has := func(list []string, want string) bool {
+		for _, d := range list {
+			if d == want {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Not flagged → config must be absent.
+	if got := immutableOffsiteDomains(store.Settings{}); has(got, "config") {
+		t.Fatalf("config must not be a tamper-test domain when ConfigOffsiteImmutable is unset: %v", got)
+	}
+
+	// Flagged → config must be present, alongside the other flagged domains.
+	got := immutableOffsiteDomains(store.Settings{
+		ContainersOffsiteImmutable: true,
+		FlashOffsiteImmutable:      true,
+		ConfigOffsiteImmutable:     true,
+	})
+	if !has(got, "config") {
+		t.Fatalf("config must be a tamper-test domain when ConfigOffsiteImmutable is set: %v", got)
+	}
+	if !has(got, "containers") || !has(got, "flash") {
+		t.Fatalf("flagged domains missing: %v", got)
+	}
+}

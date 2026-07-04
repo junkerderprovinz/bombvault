@@ -430,6 +430,16 @@ func (s *Service) stageConfigSnapshot() (string, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", fmt.Errorf("config snapshot: mkdir staging: %w", err)
 	}
+	// A partial staging holds sensitive plaintext (the settings DB, rclone.conf
+	// creds, the ssh private key). On ANY error path below we return before the
+	// caller (BackupConfig) has registered its `defer os.RemoveAll(stagingDir)`, so
+	// clean up ourselves unless we reach the end with ok=true.
+	ok := false
+	defer func() {
+		if !ok {
+			_ = os.RemoveAll(dir) // never leave a partial snapshot (DB + creds + ssh key) on disk
+		}
+	}()
 	if err := s.store.VacuumInto(filepath.Join(dir, "bombvault.sqlite")); err != nil {
 		return "", err
 	}
@@ -444,6 +454,7 @@ func (s *Service) stageConfigSnapshot() (string, error) {
 			return "", fmt.Errorf("config snapshot: copy ssh: %w", err)
 		}
 	}
+	ok = true
 	return dir, nil
 }
 
@@ -1050,6 +1061,7 @@ type HistoryDay struct {
 	Containers DayStat `json:"containers"`
 	VMs        DayStat `json:"vms"`
 	Flash      DayStat `json:"flash"`
+	Config     DayStat `json:"config"`
 }
 
 // runDomains is the target_id → domain map ("container" | "vm" | "flash" |
@@ -1116,6 +1128,8 @@ func bucketRunsByDay(runs []store.Run, domain map[string]string, startUnix, endU
 			stat = &out[i].VMs
 		case "flash":
 			stat = &out[i].Flash
+		case "config":
+			stat = &out[i].Config
 		default:
 			continue
 		}
@@ -1863,6 +1877,7 @@ func (s *Service) ScheduleSelfRestart() bool {
 		defer cancel()
 		if err := s.docker.Restart(ctx, name, 10*time.Second); err != nil {
 			log.Printf("api: self-restart of %q failed: %v (restart the container manually to apply)", name, err)
+			s.batchActive.Store(false) // release the guard so operations can resume; user restarts manually
 		}
 	}()
 	return true
@@ -4481,6 +4496,40 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 	return nil
 }
 
+// StartRestoreConfig stages a restore of BombVault's own /config and, on success,
+// triggers the self-restart that applies it on the next boot. It takes the shared
+// single-flight guard (batchActive) so it can never overlap another backup/restore
+// — a config self-restart would otherwise kill the container mid-write of an
+// in-flight data restore. Returns (started, autoRestart, err): started=false with a
+// nil err means another operation is already running; autoRestart=false means the
+// caller must ask the user to restart the container manually. When an auto-restart
+// IS scheduled the guard is held until the container goes down (so nothing new can
+// start in the restart window); if the restart later fails, ScheduleSelfRestart
+// releases the guard so operations can resume.
+func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source string) (started bool, autoRestart bool, err error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, false, nil
+	}
+	if op, busy := s.domainBusy("config"); busy {
+		s.batchActive.Store(false)
+		return false, false, fmt.Errorf("%s is running on config", op)
+	}
+	if rerr := s.RestoreConfig(ctx, snapshotID, source); rerr != nil {
+		s.batchActive.Store(false)
+		return false, false, rerr
+	}
+	autoRestart = s.ScheduleSelfRestart()
+	if !autoRestart {
+		// No auto-restart scheduled (Docker self unreachable): let normal operations
+		// resume. The staged restore applies on the next manual boot and does not
+		// affect anything running now.
+		s.batchActive.Store(false)
+	}
+	// autoRestart: keep the guard held; ScheduleSelfRestart's goroutine releases it
+	// if the restart call fails.
+	return true, autoRestart, nil
+}
+
 // SetVMMethod updates the backup method for a VM, creating the target if absent.
 func (s *Service) SetVMMethod(_ context.Context, name, method string) error {
 	if _, err := s.store.GetVMTargetByName(name); err != nil {
@@ -5731,8 +5780,15 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	if err != nil || c.On == "" || c.On == "never" {
 		return
 	}
-	target := "Unraid flash"
-	if domain != "flash" {
+	// Singleton domains have no per-item name, so a "%s %q" label would render an
+	// empty quote (e.g. `config ""`). Give each a clean human label.
+	var target string
+	switch domain {
+	case "flash":
+		target = "Unraid flash"
+	case "config":
+		target = "BombVault configuration"
+	default:
 		target = fmt.Sprintf("%s %q", domain, name)
 	}
 	var msg string

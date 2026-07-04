@@ -605,6 +605,9 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 	if settings.FlashOffsiteImmutable {
 		out = append(out, "flash")
 	}
+	if settings.ConfigOffsiteImmutable {
+		out = append(out, "config")
+	}
 	return out
 }
 

@@ -22,9 +22,10 @@ func TestBucketRunsByDay(t *testing.T) {
 
 	// "unknown" is intentionally absent from the map → it resolves to "".
 	domain := map[string]string{
-		"c1":                "container",
-		"v1":                "vm",
-		store.FlashTargetID: "flash",
+		"c1":                 "container",
+		"v1":                 "vm",
+		store.FlashTargetID:  "flash",
+		store.ConfigTargetID: "config",
 	}
 
 	runs := []store.Run{
@@ -32,6 +33,7 @@ func TestBucketRunsByDay(t *testing.T) {
 		{TargetID: "c1", Kind: "backup", Status: "failed", StartedAt: day0.Unix()},
 		{TargetID: "v1", Kind: "backup", Status: "success", StartedAt: day1.Unix()},
 		{TargetID: store.FlashTargetID, Kind: "backup", Status: "success", StartedAt: day2.Unix()},
+		{TargetID: store.ConfigTargetID, Kind: "backup", Status: "success", StartedAt: day1.Unix()},
 		// Ignored: running status, non-backup kind, unknown target.
 		{TargetID: "c1", Kind: "backup", Status: "running", StartedAt: day2.Unix()},
 		{TargetID: "c1", Kind: "restore", Status: "success", StartedAt: day2.Unix()},
@@ -56,9 +58,13 @@ func TestBucketRunsByDay(t *testing.T) {
 		t.Fatalf("day0 vms/flash should be empty: %+v %+v", got[0].VMs, got[0].Flash)
 	}
 
-	// Day 1: one VM ok.
+	// Day 1: one VM ok and one config ok (config must land in its own bucket,
+	// not be dropped by the switch default).
 	if got[1].VMs != (DayStat{OK: 1}) {
 		t.Fatalf("day1 vms = %+v, want {1 0}", got[1].VMs)
+	}
+	if got[1].Config != (DayStat{OK: 1}) {
+		t.Fatalf("day1 config = %+v, want {1 0}", got[1].Config)
 	}
 
 	// Day 2: one flash ok; running/restore/unknown all ignored.

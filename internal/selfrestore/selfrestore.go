@@ -62,6 +62,9 @@ func ApplyPending(dataDir string) (bool, error) {
 	if !validSQLite(stagedDB) {
 		// Bad or missing staged DB: don't touch the live DB; clear the pending
 		// state and move the bad staging aside so the next boot can't loop on it.
+		// GC any prior .bad first so a second failure's rename can't collide with a
+		// stale one and leave the bad staging under the live root.
+		_ = os.RemoveAll(StagingRoot(dataDir) + ".bad")
 		_ = os.Rename(StagingRoot(dataDir), StagingRoot(dataDir)+".bad")
 		_ = os.Remove(MarkerPath(dataDir))
 		return false, fmt.Errorf("selfrestore: staged config DB missing/invalid at %q; kept live DB", stagedDB)
@@ -92,9 +95,12 @@ func ApplyPending(dataDir string) (bool, error) {
 	return true, nil
 }
 
-// validSQLite reports whether path is an openable SQLite database (a cheap
-// PRAGMA read). A missing file, a non-SQLite file, or an unreadable one all
-// return false, so ApplyPending refuses to swap in a corrupt restore.
+// validSQLite reports whether path is a structurally-sound SQLite database. It
+// runs PRAGMA quick_check (a per-page integrity scan), NOT a header-only probe:
+// a truncated-but-openable file (valid header, missing pages) must be rejected,
+// or ApplyPending could swap a half-written DB over the live settings database. A
+// missing file, a non-SQLite file, an unreadable one, or one that fails the
+// integrity scan all return false.
 func validSQLite(path string) bool {
 	if !fileExists(path) {
 		return false
@@ -104,14 +110,22 @@ func validSQLite(path string) bool {
 		return false
 	}
 	defer func() { _ = db.Close() }()
-	var n int
-	return db.QueryRow("PRAGMA schema_version").Scan(&n) == nil
+	var res string
+	if err := db.QueryRow("PRAGMA quick_check(1)").Scan(&res); err != nil {
+		return false
+	}
+	return res == "ok"
 }
 
-// replace atomically-ish moves src onto dst: it removes dst (if present) then
-// renames src into its place. Both live on the same /config mount, so the rename
-// is atomic on POSIX.
+// replace moves src onto dst. It tries the atomic rename FIRST: on POSIX
+// os.Rename replaces dst in place, so the live file is never momentarily absent
+// — a rename failure then leaves the old dst intact. Only if that errors (Windows
+// rejects a rename onto an existing file) does it fall back to remove-then-rename.
+// Both paths live on the same /config mount, so the rename is atomic on POSIX.
 func replace(src, dst string) error {
+	if err := os.Rename(src, dst); err == nil {
+		return nil
+	}
 	if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("selfrestore: remove %q: %w", dst, err)
 	}

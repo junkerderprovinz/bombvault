@@ -64,3 +64,28 @@ func TestScheduleSelfRestartInvokesRestart(t *testing.T) {
 		t.Fatal("Restart was not called")
 	}
 }
+
+// TestStartRestoreConfigRefusesWhenBusy: with the single-flight guard already held
+// (a backup/restore in flight), StartRestoreConfig must decline WITHOUT staging or
+// scheduling a self-restart — started=false, err=nil — so a config self-restart can
+// never kill the container mid-write of another operation. It returns before
+// touching the store/docker, so a zero-value Service with the guard pre-set is
+// enough to exercise the guard.
+func TestStartRestoreConfigRefusesWhenBusy(t *testing.T) {
+	s := &Service{}
+	s.batchActive.Store(true) // simulate another backup/restore already running
+
+	started, auto, err := s.StartRestoreConfig(context.Background(), "latest", "local")
+	if started {
+		t.Fatal("expected started=false while another operation holds the guard")
+	}
+	if err != nil {
+		t.Fatalf("expected nil error (busy is not an error), got %v", err)
+	}
+	if auto {
+		t.Fatal("expected autoRestart=false when nothing was started")
+	}
+	if !s.batchActive.Load() {
+		t.Fatal("the pre-existing guard must remain held (StartRestoreConfig must not clear it)")
+	}
+}
