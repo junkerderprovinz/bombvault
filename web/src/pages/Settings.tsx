@@ -124,17 +124,19 @@ function SaveBar({
   error,
   onSave,
   t,
+  disabled = false,
 }: {
   state: SaveState;
   error: string | null;
   onSave: () => void;
   t: ReturnType<typeof useT>["t"];
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3 pt-1">
       <button
         onClick={onSave}
-        disabled={state === "saving"}
+        disabled={disabled || state === "saving"}
         className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {state === "saving" ? (
@@ -1135,6 +1137,10 @@ export function SettingsPage() {
   // Flash zip export (#28) — its own save state, persisted via the shared save().
   const [flashZipSaveState, setFlashZipSaveState] = useState<SaveState>("idle");
   const [flashZipSaveError, setFlashZipSaveError] = useState<string | null>(null);
+  // Remembers the last "keep N" the user picked so toggling history OFF (which
+  // zeroes flashZipExportKeep) and back ON restores their count instead of the
+  // default. Updated whenever the keepN input is set to a value >= 1.
+  const [rememberedKeep, setRememberedKeep] = useState(7);
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
   const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
@@ -1442,6 +1448,9 @@ export function SettingsPage() {
         />
         {settings.flashZipExportEnabled && (
           <>
+            <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+              {t("flash.zipExport.plaintextWarn")}
+            </div>
             <FolderBrowser
               label={t("flash.zipExport.path")}
               value={settings.flashZipExportPath}
@@ -1451,17 +1460,20 @@ export function SettingsPage() {
               }
             />
             <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.pathHint")}</p>
+            {!settings.flashZipExportPath.trim() && (
+              <p className="text-xs text-[#ff8389] -mt-1">{t("flash.zipExport.pathRequired")}</p>
+            )}
             <ToggleRow
               label={t("flash.zipExport.keepHistory")}
               description={t("flash.zipExport.keepHistoryHint")}
               // History is "on" whenever we keep more than a single overwritten zip.
-              // Turning it on restores the previous count (or defaults to 7); off
-              // collapses back to 0 = a single flash-latest.zip.
+              // Turning it on restores the last count the user picked (rememberedKeep,
+              // default 7); off collapses back to 0 = a single flash-latest.zip.
               checked={settings.flashZipExportKeep > 0}
               onChange={(v) =>
                 setSettings((prev) =>
                   prev
-                    ? { ...prev, flashZipExportKeep: v ? (prev.flashZipExportKeep > 0 ? prev.flashZipExportKeep : 7) : 0 }
+                    ? { ...prev, flashZipExportKeep: v ? rememberedKeep : 0 }
                     : prev
                 )
               }
@@ -1475,6 +1487,7 @@ export function SettingsPage() {
                   value={settings.flashZipExportKeep}
                   onChange={(e) => {
                     const n = Math.max(1, parseInt(e.target.value, 10) || 1);
+                    setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
                   className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
@@ -1489,6 +1502,7 @@ export function SettingsPage() {
         <SaveBar
           state={flashZipSaveState}
           error={flashZipSaveError}
+          disabled={settings.flashZipExportEnabled && !settings.flashZipExportPath.trim()}
           onSave={() =>
             void save(
               {

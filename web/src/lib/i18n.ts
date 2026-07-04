@@ -613,6 +613,8 @@ const en = {
   "flash.zipExport.keepN": "Zips to keep",
   "flash.zipExport.keepNHint": "The newest N timestamped zips are kept; older ones are deleted automatically.",
   "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
+  "flash.zipExport.plaintextWarn": "The exported .zip is not encrypted, even if your flash repository is. Only sync it somewhere you trust.",
+  "flash.zipExport.pathRequired": "Choose an export folder to turn this on.",
 
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
@@ -1304,6 +1306,8 @@ const de: Translations = {
   "flash.zipExport.keepN": "Zu behaltende ZIPs",
   "flash.zipExport.keepNHint": "Die neuesten N ZIPs mit Zeitstempel werden behalten, ältere automatisch gelöscht.",
   "flash.zipExport.latestNote": "Eine einzige flash-latest.zip wird nach jedem Backup überschrieben.",
+  "flash.zipExport.plaintextWarn": "Das exportierte .zip ist nicht verschlüsselt, auch wenn dein Flash-Repository es ist. Synce es nur an einen vertrauenswürdigen Ort.",
+  "flash.zipExport.pathRequired": "Wähle einen Export-Ordner, um dies zu aktivieren.",
 
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.

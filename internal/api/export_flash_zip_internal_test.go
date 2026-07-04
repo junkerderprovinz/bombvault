@@ -134,6 +134,52 @@ func TestPruneFlashZips(t *testing.T) {
 	}
 }
 
+// TestPruneFlashZipsKeepZeroDeletesAllTimestamped proves that pruning with
+// keep==0 (latest mode) deletes ALL timestamped flash-<ts>.zip history left over
+// from a previous history run, while flash-latest.zip and any non-matching file
+// survive (they never match flashZipRe).
+func TestPruneFlashZipsKeepZeroDeletesAllTimestamped(t *testing.T) {
+	dir := t.TempDir()
+	names := []string{
+		"flash-20260101-000000.zip",
+		"flash-20260102-000000.zip",
+		"flash-20260103-000000.zip",
+		"flash-latest.zip", // does not match flashZipRe → must survive
+		"keepme.zip",       // does not match flashZipRe → must survive
+	}
+	for _, n := range names {
+		if err := os.WriteFile(filepath.Join(dir, n), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	(&Service{}).pruneFlashZips(dir, 0)
+
+	survivors := map[string]bool{}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		survivors[e.Name()] = true
+	}
+
+	for _, ts := range []string{"flash-20260101-000000.zip", "flash-20260102-000000.zip", "flash-20260103-000000.zip"} {
+		if survivors[ts] {
+			t.Errorf("%s should have been deleted by keep==0 prune, dir now = %v", ts, keys(survivors))
+		}
+	}
+	want := []string{"flash-latest.zip", "keepme.zip"}
+	for _, w := range want {
+		if !survivors[w] {
+			t.Errorf("%s should have survived keep==0 prune, dir now = %v", w, keys(survivors))
+		}
+	}
+	if len(survivors) != len(want) {
+		t.Errorf("survivor count = %d (%v), want %d", len(survivors), keys(survivors), len(want))
+	}
+}
+
 // TestExportFlashZipDumpError proves a DumpZip failure surfaces as an error and
 // leaves NOTHING behind — no temp file and no flash-*.zip.
 func TestExportFlashZipDumpError(t *testing.T) {
