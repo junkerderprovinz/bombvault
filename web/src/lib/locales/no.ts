@@ -342,6 +342,19 @@ const no: Partial<Translations> = {
   "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet — den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt.",
   "flash.none": "Ingen flash-sikkerhetskopier ennå — kjør en sikkerhetskopiering ovenfor.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Flash-zip-eksport",
+  "flash.zipExport.hint": "Etter hver flash-sikkerhetskopi skrives øyeblikksbildet også ut som en enkel .zip til en mappe — klar for synkronisering utenfor serveren (Syncthing, rclone, en skystasjon).",
+  "flash.zipExport.enable": "Eksporter en zip etter hver flash-sikkerhetskopi",
+  "flash.zipExport.enableHint": "Hver gang en flash-sikkerhetskopi lykkes, skrives øyeblikksbildet som en .zip til mappen nedenfor.",
+  "flash.zipExport.path": "Eksportmappe",
+  "flash.zipExport.pathHint": "Relativ understi under host-monteringens rot der .zip-filen havner — pek den mot en Syncthing/rclone-mappe for å få flashen automatisk av serveren.",
+  "flash.zipExport.keepHistory": "Behold historikk",
+  "flash.zipExport.keepHistoryHint": "Av: behold en enkelt flash-latest.zip som overskrives hver gang. På: behold de nyeste N flash-<dato>.zip-filene med tidsstempel.",
+  "flash.zipExport.keepN": "Zip-er å beholde",
+  "flash.zipExport.keepNHint": "De nyeste N zip-ene med tidsstempel beholdes; eldre slettes automatisk.",
+  "flash.zipExport.latestNote": "En enkelt flash-latest.zip overskrives etter hver sikkerhetskopi.",
+
   // VM backup (SSH)
   "vm.method": "Metode",
   "vm.method.graceful": "Pent (nedstenging)",

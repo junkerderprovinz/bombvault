@@ -337,6 +337,19 @@ const pl: Partial<Translations> = {
   "flash.restoreNote": "Przywracanie pobiera ZIP migawki — działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash.",
   "flash.none": "Brak kopii Flash — utwórz kopię powyżej.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Eksport zip Flash",
+  "flash.zipExport.hint": "Po każdej kopii Flash zapisuje migawkę także jako zwykły plik .zip do folderu — gotowy do synchronizacji poza serwerem (Syncthing, rclone, dysk w chmurze).",
+  "flash.zipExport.enable": "Eksportuj zip po każdej kopii Flash",
+  "flash.zipExport.enableHint": "Za każdym razem, gdy kopia Flash się powiedzie, migawka jest zapisywana jako .zip do poniższego folderu.",
+  "flash.zipExport.path": "Folder eksportu",
+  "flash.zipExport.pathHint": "Względna podścieżka w katalogu montowania hosta, do której trafia .zip — wskaż folder Syncthing/rclone, aby automatycznie wynosić flash z serwera.",
+  "flash.zipExport.keepHistory": "Zachowaj historię",
+  "flash.zipExport.keepHistoryHint": "Wył.: zachowuje jeden plik flash-latest.zip, nadpisywany za każdym razem. Wł.: zachowuje najnowsze N plików flash-<data>.zip ze znacznikiem czasu.",
+  "flash.zipExport.keepN": "Liczba zipów do zachowania",
+  "flash.zipExport.keepNHint": "Zachowywane są najnowsze N zipów ze znacznikiem czasu; starsze są usuwane automatycznie.",
+  "flash.zipExport.latestNote": "Jeden plik flash-latest.zip jest nadpisywany po każdej kopii.",
+
   // VM backup (SSH)
   "vm.method": "Metoda",
   "vm.method.graceful": "Graceful (zamknięcie)",

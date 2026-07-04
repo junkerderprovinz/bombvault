@@ -337,6 +337,19 @@ const vi: Partial<Translations> = {
   "flash.restoreNote": "Khôi phục sẽ tải về một tệp ZIP của ảnh chụp — phân vùng /boot đang chạy không bao giờ bị đụng đến. Thả tệp .zip thẳng vào trình tạo USB của Unraid, hoặc giải nén nó vào một USB mới để dựng lại flash.",
   "flash.none": "Chưa có bản sao lưu flash nào — chạy một bản sao lưu ở trên.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Xuất ZIP flash",
+  "flash.zipExport.hint": "Sau mỗi lần sao lưu flash, cũng ghi ảnh chụp ra một tệp .zip thường vào một thư mục — sẵn sàng để đồng bộ ngoài máy chủ (Syncthing, rclone, một ổ đĩa đám mây).",
+  "flash.zipExport.enable": "Xuất một tệp ZIP sau mỗi lần sao lưu flash",
+  "flash.zipExport.enableHint": "Mỗi khi một lần sao lưu flash thành công, ảnh chụp được ghi thành tệp .zip vào thư mục bên dưới.",
+  "flash.zipExport.path": "Thư mục xuất",
+  "flash.zipExport.pathHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host nơi tệp .zip được ghi tới — trỏ nó tới một thư mục Syncthing/rclone để tự động đưa flash ra khỏi máy chủ.",
+  "flash.zipExport.keepHistory": "Giữ lịch sử",
+  "flash.zipExport.keepHistoryHint": "Tắt: giữ một tệp flash-latest.zip duy nhất bị ghi đè mỗi lần. Bật: giữ N tệp flash-<ngày>.zip có dấu thời gian mới nhất.",
+  "flash.zipExport.keepN": "Số tệp ZIP cần giữ",
+  "flash.zipExport.keepNHint": "N tệp ZIP có dấu thời gian mới nhất được giữ lại; những tệp cũ hơn bị xóa tự động.",
+  "flash.zipExport.latestNote": "Một tệp flash-latest.zip duy nhất bị ghi đè sau mỗi lần sao lưu.",
+
   "vm.method": "Phương thức",
   "vm.method.graceful": "Êm ái (tắt máy)",
   "vm.method.live": "Snapshot trực tiếp",

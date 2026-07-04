@@ -342,6 +342,19 @@ const pt: Partial<Translations> = {
   "flash.restoreNote": "A restauração baixa um ZIP do snapshot — o /boot em execução nunca é tocado. Solte o .zip direto no criador de USB do Unraid, ou descompacte-o em um USB novo para reconstruir o flash.",
   "flash.none": "Ainda sem backups do flash — inicie um backup acima.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Exportação zip do flash",
+  "flash.zipExport.hint": "Após cada backup do flash, escreve também o snapshot como um .zip simples para uma pasta — pronto para sincronização fora do servidor (Syncthing, rclone, um drive na nuvem).",
+  "flash.zipExport.enable": "Exportar um zip após cada backup do flash",
+  "flash.zipExport.enableHint": "Sempre que um backup do flash é bem-sucedido, o snapshot é escrito como .zip para a pasta abaixo.",
+  "flash.zipExport.path": "Pasta de exportação",
+  "flash.zipExport.pathHint": "Subcaminho relativo, sob a raiz do mount do host, onde o .zip é colocado — aponte-o para uma pasta Syncthing/rclone para levar o flash para fora do servidor automaticamente.",
+  "flash.zipExport.keepHistory": "Manter histórico",
+  "flash.zipExport.keepHistoryHint": "Desligado: manter um único flash-latest.zip que é sobrescrito de cada vez. Ligado: manter os N ficheiros flash-<data>.zip mais recentes com marca temporal.",
+  "flash.zipExport.keepN": "Zips a manter",
+  "flash.zipExport.keepNHint": "São mantidos os N zips mais recentes com marca temporal; os mais antigos são eliminados automaticamente.",
+  "flash.zipExport.latestNote": "Um único flash-latest.zip é sobrescrito após cada backup.",
+
   // VM backup (SSH)
   "vm.method": "Método",
   "vm.method.graceful": "Ordenado (encerramento)",

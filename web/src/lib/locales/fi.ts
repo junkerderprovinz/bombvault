@@ -344,6 +344,19 @@ const fi: Partial<Translations> = {
   "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston — käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi.",
   "flash.none": "Ei vielä flash-varmuuskopioita — suorita varmuuskopio yllä.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Flashin zip-vienti",
+  "flash.zipExport.hint": "Jokaisen flash-varmuuskopion jälkeen tilannevedos kirjoitetaan myös tavallisena .zip-tiedostona kansioon — valmiina palvelimen ulkopuoliseen synkronointiin (Syncthing, rclone, pilviasema).",
+  "flash.zipExport.enable": "Vie zip jokaisen flash-varmuuskopion jälkeen",
+  "flash.zipExport.enableHint": "Aina kun flash-varmuuskopio onnistuu, tilannevedos kirjoitetaan .zip-tiedostona alla olevaan kansioon.",
+  "flash.zipExport.path": "Vientikansio",
+  "flash.zipExport.pathHint": "Suhteellinen alipolku isäntäkoneen liitosjuuren alla, johon .zip päätyy — osoita se Syncthing/rclone-kansioon, niin flash siirtyy palvelimelta pois automaattisesti.",
+  "flash.zipExport.keepHistory": "Säilytä historia",
+  "flash.zipExport.keepHistoryHint": "Pois: säilytä yksi flash-latest.zip, joka korvataan joka kerta. Päällä: säilytä N uusinta aikaleimattua flash-<date>.zip-tiedostoa.",
+  "flash.zipExport.keepN": "Säilytettävien zipien määrä",
+  "flash.zipExport.keepNHint": "N uusinta aikaleimattua zipiä säilytetään; vanhemmat poistetaan automaattisesti.",
+  "flash.zipExport.latestNote": "Yksi flash-latest.zip korvataan jokaisen varmuuskopion jälkeen.",
+
   // VM backup (SSH)
   "vm.method": "Menetelmä",
   "vm.method.graceful": "Hallittu (sammutus)",

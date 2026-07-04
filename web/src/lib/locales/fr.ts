@@ -344,6 +344,19 @@ const fr: Partial<Translations> = {
   "flash.restoreNote": "La restauration télécharge un ZIP de l'instantané — le /boot en cours d'exécution n'est jamais touché. Glissez le .zip directement dans le créateur de clé USB d'Unraid, ou décompressez-le sur une clé USB neuve pour reconstruire votre flash.",
   "flash.none": "Aucune sauvegarde flash pour l'instant — lancez-en une ci-dessus.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Export Flash en zip",
+  "flash.zipExport.hint": "Après chaque sauvegarde flash, écrit aussi l'instantané sous forme de .zip simple dans un dossier — prêt pour une synchronisation hors serveur (Syncthing, rclone, un disque cloud).",
+  "flash.zipExport.enable": "Exporter un zip après chaque sauvegarde flash",
+  "flash.zipExport.enableHint": "Chaque fois qu'une sauvegarde flash réussit, l'instantané est écrit sous forme de .zip dans le dossier ci-dessous.",
+  "flash.zipExport.path": "Dossier d'export",
+  "flash.zipExport.pathHint": "Sous-chemin relatif sous la racine du montage hôte où le .zip est déposé — pointez-le vers un dossier Syncthing/rclone pour sortir le flash du serveur automatiquement.",
+  "flash.zipExport.keepHistory": "Conserver l'historique",
+  "flash.zipExport.keepHistoryHint": "Désactivé : conserver un seul flash-latest.zip écrasé à chaque fois. Activé : conserver les N fichiers flash-<date>.zip horodatés les plus récents.",
+  "flash.zipExport.keepN": "Zips à conserver",
+  "flash.zipExport.keepNHint": "Les N zips horodatés les plus récents sont conservés ; les plus anciens sont supprimés automatiquement.",
+  "flash.zipExport.latestNote": "Un seul flash-latest.zip est écrasé après chaque sauvegarde.",
+
   // VM backup (SSH)
   "vm.method": "Méthode",
   "vm.method.graceful": "Propre (arrêt)",

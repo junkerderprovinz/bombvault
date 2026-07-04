@@ -339,6 +339,19 @@ const nl: Partial<Translations> = {
   "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot — de actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen.",
   "flash.none": "Nog geen flash-back-ups — maak er hierboven een.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Flash-zip-export",
+  "flash.zipExport.hint": "Na elke flash-back-up de snapshot ook als gewone .zip naar een map wegschrijven — klaar voor synchronisatie buiten de server (Syncthing, rclone, een cloud-drive).",
+  "flash.zipExport.enable": "Een zip exporteren na elke flash-back-up",
+  "flash.zipExport.enableHint": "Telkens als een flash-back-up slaagt, wordt de snapshot als .zip naar de onderstaande map geschreven.",
+  "flash.zipExport.path": "Exportmap",
+  "flash.zipExport.pathHint": "Relatief subpad onder de host-mount-root waar de .zip terechtkomt — wijs het naar een Syncthing/rclone-map om de flash automatisch van de server te halen.",
+  "flash.zipExport.keepHistory": "Geschiedenis bewaren",
+  "flash.zipExport.keepHistoryHint": "Uit: één flash-latest.zip bewaren die elke keer wordt overschreven. Aan: de nieuwste N flash-<datum>.zip-bestanden met tijdstempel bewaren.",
+  "flash.zipExport.keepN": "Te bewaren zips",
+  "flash.zipExport.keepNHint": "De nieuwste N zips met tijdstempel worden bewaard; oudere worden automatisch verwijderd.",
+  "flash.zipExport.latestNote": "Eén flash-latest.zip wordt na elke back-up overschreven.",
+
   // VM backup (SSH)
   "vm.method": "Methode",
   "vm.method.graceful": "Net (afsluiten)",

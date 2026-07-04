@@ -337,6 +337,19 @@ const ja: Partial<Translations> = {
   "flash.restoreNote": "復元はスナップショットの ZIP をダウンロードします。実行中の /boot には一切触れません。.zip をそのまま Unraid の USB クリエーターに入れるか、新しい USB に展開してフラッシュを再構築してください。",
   "flash.none": "フラッシュバックアップはまだありません — 上でバックアップを実行してください。",
 
+  // Flash zip export
+  "flash.zipExport.title": "フラッシュ ZIP エクスポート",
+  "flash.zipExport.hint": "各フラッシュバックアップの後、スナップショットをプレーンな .zip としてフォルダーにも書き出します — サーバー外への同期（Syncthing、rclone、クラウドドライブ）にすぐ使えます。",
+  "flash.zipExport.enable": "各フラッシュバックアップの後に ZIP をエクスポート",
+  "flash.zipExport.enableHint": "フラッシュバックアップが成功するたびに、スナップショットが .zip として下のフォルダーに書き込まれます。",
+  "flash.zipExport.path": "エクスポートフォルダー",
+  "flash.zipExport.pathHint": "ホストマウントのルート配下の相対サブパスで、.zip が置かれる場所です — Syncthing/rclone のフォルダーに向けると、フラッシュが自動的にサーバー外へ送られます。",
+  "flash.zipExport.keepHistory": "履歴を保持",
+  "flash.zipExport.keepHistoryHint": "オフ：毎回上書きされる単一の flash-latest.zip を保持します。オン：最新の N 個のタイムスタンプ付き flash-<日付>.zip ファイルを保持します。",
+  "flash.zipExport.keepN": "保持する ZIP 数",
+  "flash.zipExport.keepNHint": "最新の N 個のタイムスタンプ付き zip が保持され、古いものは自動的に削除されます。",
+  "flash.zipExport.latestNote": "単一の flash-latest.zip が毎回のバックアップ後に上書きされます。",
+
   "vm.method": "方式",
   "vm.method.graceful": "グレースフル（シャットダウン）",
   "vm.method.live": "ライブスナップショット",

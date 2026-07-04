@@ -337,6 +337,19 @@ const ko: Partial<Translations> = {
   "flash.restoreNote": "복원은 스냅샷의 ZIP을 다운로드합니다. 실행 중인 /boot은 절대 건드리지 않습니다. .zip을 Unraid USB 작성기에 바로 넣거나 새 USB에 압축 해제하여 플래시를 다시 구성하세요.",
   "flash.none": "아직 플래시 백업이 없습니다 — 위에서 백업을 실행하세요.",
 
+  // Flash zip export
+  "flash.zipExport.title": "플래시 zip 내보내기",
+  "flash.zipExport.hint": "각 플래시 백업 후 스냅샷을 일반 .zip으로도 폴더에 기록합니다 — 서버 외부 동기화(Syncthing, rclone, 클라우드 드라이브)에 바로 사용할 수 있습니다.",
+  "flash.zipExport.enable": "각 플래시 백업 후 zip 내보내기",
+  "flash.zipExport.enableHint": "플래시 백업이 성공할 때마다 스냅샷이 .zip으로 아래 폴더에 기록됩니다.",
+  "flash.zipExport.path": "내보내기 폴더",
+  "flash.zipExport.pathHint": ".zip이 저장되는 호스트 마운트 루트 아래의 상대 하위 경로 — Syncthing/rclone 폴더를 가리키게 하면 플래시가 자동으로 서버 밖으로 나갑니다.",
+  "flash.zipExport.keepHistory": "기록 보관",
+  "flash.zipExport.keepHistoryHint": "끔: 매번 덮어쓰이는 단일 flash-latest.zip을 보관합니다. 켬: 가장 최근 N개의 타임스탬프가 찍힌 flash-<날짜>.zip 파일을 보관합니다.",
+  "flash.zipExport.keepN": "보관할 zip 수",
+  "flash.zipExport.keepNHint": "가장 최근 N개의 타임스탬프가 찍힌 zip이 보관되며, 오래된 것은 자동으로 삭제됩니다.",
+  "flash.zipExport.latestNote": "단일 flash-latest.zip이 매 백업 후 덮어쓰기됩니다.",
+
   "vm.method": "방식",
   "vm.method.graceful": "정상 종료 (셧다운)",
   "vm.method.live": "라이브 스냅샷",
