@@ -17,7 +17,7 @@
 
 <p align="center">
 Your Unraid data, <b>sealed in a vault</b>. Armed with a fuse.<br>
-BombVault backs up Docker containers, KVM VMs, appdata and the Unraid flash config —
+BombVault backs up Docker containers, KVM VMs, appdata, the Unraid flash config — and even itself —
 and restores everything with a single click. Containers <b>automatically reappear in the
 Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
 reconfiguration, no drama.<br>
@@ -37,7 +37,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b> and <b>Unraid flash</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b>, <b>Unraid flash</b> and <b>app configuration</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -62,7 +62,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery** of your Docker containers and KVM/libvirt VMs. It runs as a single Docker container, gives you a modern dark web UI, and handles the whole lifecycle:
 
-- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), and the whole Unraid flash (`/boot`).
+- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), and its own `/config` (settings database + off-site credentials).
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups in the background (per domain) from the **Plans** tab — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
 
@@ -118,6 +118,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 | **Docker containers** | Appdata directory + container definition (image, env vars, ports, labels, volumes) |
 | **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH). Live snapshots **fall back to a graceful backup automatically** if the snapshot can't be created, so a VM backup never just errors out |
 | **Unraid flash** | The whole USB flash (`/boot`) — OS, license, array config, shares, network + plugin config. Restore is a one-click **`.zip` download** (never overwrites the live flash) |
+| **App configuration** | BombVault's own `/config` — its settings database, off-site credentials (`rclone.conf`) and libvirt SSH keypair, snapshotted with SQLite `VACUUM INTO` so a WAL-mode database is never captured mid-write. No container stop. Restore is from the **Recovery** tab, staged and applied by a self-restart so the live database is never overwritten under an open handle |
 
 ### Restore (the good part)
 
@@ -132,7 +133,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Restore keeps the run-state** — a container (or VM) that was running when backed up comes back running; one that was stopped stays stopped. Tick **Leave stopped after restore** to recreate it without starting it, so you can rebuild a group of dependent containers one by one and start them yourself afterwards.
 - **Restore a whole stack** — containers from the same Docker Compose project (via the `com.docker.compose.project` label) are grouped into a **Stacks** panel. **Restore stack** rebuilds every member from its latest backup **left stopped**, then optionally **starts them in `depends_on` order** — so a compose stack (e.g. managed with Dockhand) comes back without members racing ahead of their dependencies.
 - **Live progress, cancel & busy feedback** — a long restore shows a live percentage bar ("Restoring… NN%") instead of a bare spinner, and can be **cancelled** with a type-aware confirmation (a restore-to-a-folder cancels cleanly; an in-place restore warns it leaves the target partial). A cancelled restore is recorded as *cancelled*, not failed. And starting a backup while a restore (or a scheduled/maintenance op) holds a repository now shows a clear "a restore is running" hint instead of silently doing nothing.
-- **Guided recovery** — a dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case: it checks BombVault can read your backups (the encryption-key gotcha up front), lets you point at your existing repo (local or off-site), **discovers** the containers and VMs stored in it, and **restores them all** (left stopped, so you start them deliberately) — with your recovery kit one click away. Everything a disaster recovery needs, in one place.
+- **Guided recovery** — a dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case: it **restores BombVault's own settings first** (so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled — applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle), checks BombVault can read your backups (the encryption-key gotcha up front), lets you point at your existing repo (local or off-site), **discovers** the containers and VMs stored in it, and **restores them all** (left stopped, so you start them deliberately) — with your recovery kit one click away. Everything a disaster recovery needs, in one place.
 
 ### Storage & scheduling
 
@@ -146,7 +147,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 ### Insight, verification & monitoring
 
 - **Protection status (RPO)** — the Dashboard shows a green / amber / red indicator per domain comparing the last successful backup against its schedule, so an overdue backup turns red instead of hiding in a log.
-- **Backup-health heatmap** — a GitHub-contributions-style calendar of per-day backup outcomes per domain (green = all OK, red = a failure), with a Containers / VMs / Flash toggle.
+- **Backup-health heatmap** — a GitHub-contributions-style calendar of per-day backup outcomes per domain (green = all OK, red = a failure), with a Containers / VMs / Flash / Config toggle.
 - **Repository size & dedup trend** — current repo size, deduplication ratio and snapshot count per domain, with a sparkline of how storage grows over time.
 - **Restore-verification drills** — BombVault periodically *proves* your backups are restorable (`restic check --read-data-subset`, bounded — never a disk-filling full restore) and shows a **"last verified restorable"** badge per domain (Settings → Verify).
 - **Encryption-key recovery kit** — one-click download of the master key, the derived restic password and the exact repo locations + commands, so you can restore **without a running BombVault**. A Dashboard reminder nags until you've stored it.
@@ -189,6 +190,7 @@ Browser ──HTTPS──> BombVault container
                    ├─ qemu+ssh://host       ─> libvirt / KVM on the HOST over SSH (no mount)
                    ├─ /mnt/user/            ─> appdata, VM disks + restic repos (read/write)
                    ├─ /boot/ ─> /host/boot  ─> Unraid flash backup (whole USB)
+                   ├─ /config               ─> BombVault's own settings + credentials (self-backup)
                    └─ <repo path>           ─> restic repository (local; remote planned)
 ```
 
@@ -290,7 +292,7 @@ Or add the template manually:
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only. |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§6](#6-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
+Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash,config}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§6](#6-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
 
 > [!NOTE]
 > **Host integration check:** open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
