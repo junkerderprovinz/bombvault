@@ -3822,6 +3822,65 @@ func TestRecoveryKitCredentials(t *testing.T) {
 	})
 }
 
+// TestBackupConfigEndToEnd drives a full config self-backup against a temp local
+// repo with the fake restic engine: BackupConfig stages a VACUUM-INTO snapshot of
+// the live DB, hands restic the STAGED snapshot dir (never the live /config),
+// records a successful run against the reserved config target id, and always
+// removes the staging dir afterwards. The store is opened on-disk because VACUUM
+// INTO is only meaningful from a real file source.
+func TestBackupConfigEndToEnd(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+
+	db, err := store.Open(filepath.Join(dir, "bombvault.sqlite"))
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() }) // close before TempDir cleanup (Windows file lock)
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	st := store.New(db)
+
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ConfigEnabled = true
+	s.ConfigPath = "backups/config" // resolved under HostMountRoot to a real local repo
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	sum, err := svc.BackupConfig(context.Background())
+	if err != nil {
+		t.Fatalf("BackupConfig: %v", err)
+	}
+	if sum.SnapshotID == "" {
+		t.Fatal("no snapshot id recorded")
+	}
+
+	// restic must have been handed the STAGED snapshot dir, not the live /config.
+	staging := filepath.Join(dir, ".snapshot")
+	if len(eng.lastPaths) != 1 || eng.lastPaths[0] != staging {
+		t.Fatalf("restic backed up %v, want [%s]", eng.lastPaths, staging)
+	}
+
+	// The staging dir is always removed after the backup — the snapshot never lingers.
+	if _, statErr := os.Stat(staging); !os.IsNotExist(statErr) {
+		t.Fatalf("staging dir not cleaned up: %v", statErr)
+	}
+
+	// A successful config run was recorded against the reserved config target id.
+	if ts, lErr := st.LastSuccessfulConfigBackup(); lErr != nil {
+		t.Fatalf("LastSuccessfulConfigBackup: %v", lErr)
+	} else if ts.IsZero() {
+		t.Fatal("no successful config run recorded")
+	}
+}
+
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {
 	t.Helper()
 	s, err := st.GetSettings()

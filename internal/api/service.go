@@ -215,6 +215,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 			"containers": {},
 			"vms":        {},
 			"flash":      {},
+			"config":     {},
 		},
 		domainActivity:    map[string]string{},
 		runCancels:        map[string]context.CancelFunc{},
@@ -404,6 +405,11 @@ func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.FlashPath)
 }
 
+// configRepoPath resolves the restic repo for the config self-backup domain.
+func (s *Service) configRepoPath(settings store.Settings) (string, error) {
+	return s.resolveRepo(settings.ConfigPath)
+}
+
 // configSnapshotDir is the staging directory for the config self-backup — a
 // consistent, restic-ready copy of BombVault's own /config state, rebuilt fresh
 // before each config backup and removed afterwards. It lives under DataDir so it
@@ -583,6 +589,8 @@ func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string 
 		return settings.VMsOffsite
 	case "flash":
 		return settings.FlashOffsite
+	case "config":
+		return settings.ConfigOffsite
 	}
 	return ""
 }
@@ -598,6 +606,8 @@ func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) str
 		return settings.VMsOffsiteSchedule
 	case "flash":
 		return settings.FlashOffsiteSchedule
+	case "config":
+		return settings.ConfigOffsiteSchedule
 	}
 	return ""
 }
@@ -616,6 +626,8 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 		return s.VMsOffsiteImmutable
 	case "flash":
 		return s.FlashOffsiteImmutable
+	case "config":
+		return s.ConfigOffsiteImmutable
 	}
 	return false
 }
@@ -2054,6 +2066,29 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFlash(bctx); err != nil {
 			log.Printf("api: backup flash failed: %v", err)
+		}
+	}()
+	return true, nil
+}
+
+// StartBackupConfig launches the singleton config self-backup in a background
+// goroutine and returns immediately, mirroring StartBackupFlash. Progress is
+// published under "config". Shares batchActive; returns (false, nil) if a backup
+// is already running, or (false, err) if the config domain is already busy with
+// another op.
+func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	if op, busy := s.domainBusy("config"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on config", op)
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		if _, err := s.BackupConfig(bctx); err != nil {
+			log.Printf("api: backup config failed: %v", err)
 		}
 	}()
 	return true, nil
@@ -4163,6 +4198,62 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	return sum, nil
 }
 
+// resticAdapter also satisfies the config domain's backup surface.
+var _ backup.ConfigRestic = (*resticAdapter)(nil)
+
+// BackupConfig backs up BombVault's own /config folder (the settings DB +
+// rclone.conf + ssh/ keypair) to the config repo via restic. Unlike flash it
+// never hands restic the live folder: it first stages a consistent, restic-ready
+// snapshot (VACUUM-INTO of the WAL-mode DB + verbatim static files) and always
+// removes that snapshot afterwards, so a rebuilt Unraid box can recover BombVault
+// itself with no container stop.
+func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
+	// Survive the client that triggered it disconnecting (see Backup): detach from
+	// the request's cancellation with a generous hard cap.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	defer cancel()
+	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
+	}
+	// Build the consistent staging snapshot of /config; restic backs THIS up, never
+	// the live WAL-mode DB. Always removed afterwards so the snapshot never lingers.
+	stagingDir, err := s.stageConfigSnapshot()
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	defer func() { _ = os.RemoveAll(stagingDir) }()
+	repo, err := s.configRepoPath(settings)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	mode := s.ModeFor(settings)
+	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+		return backup.Summary{}, err
+	}
+	// Clear any stale lock left by a previously interrupted run so it can't block
+	// this backup (BombVault is the sole writer; an active lock is never stale).
+	s.unlockStale(ctx, repo, mode)
+	fctx := s.progBegin(ctx, "config", "backup")
+	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
+		SourceDir: stagingDir,
+		Repo:      repo,
+		TargetID:  store.ConfigTargetID,
+		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Runs:      runsAdapter{s.store},
+	})
+	s.progEnd("config", "backup", err == nil)
+	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	s.applyRetention(ctx, repo, settings, mode)
+	s.replicateOffsite(ctx, "config", settings, mode, repo)
+	s.maybeCollectStats(ctx, "config")
+	return sum, nil
+}
+
 // FlashDownloadName is the suggested filename for a flash zip download.
 func FlashDownloadName(id string) string { return "flash-" + id + ".zip" }
 
@@ -4398,7 +4489,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // a passing and a failing drill ARE recorded; a failure also fires a notification.
 func (s *Service) runSubsetDrill(ctx context.Context, domain, source string) (store.RestoreDrill, error) {
 	switch domain {
-	case "containers", "vms", "flash":
+	case "containers", "vms", "flash", "config":
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -4854,6 +4945,8 @@ func (s *Service) repoFor(settings store.Settings, domain, source string) (strin
 		return s.vmsRepoPath(settings)
 	case "flash":
 		return s.flashRepoPath(settings)
+	case "config":
+		return s.configRepoPath(settings)
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
