@@ -404,6 +404,101 @@ func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.FlashPath)
 }
 
+// configSnapshotDir is the staging directory for the config self-backup — a
+// consistent, restic-ready copy of BombVault's own /config state, rebuilt fresh
+// before each config backup and removed afterwards. It lives under DataDir so it
+// travels with the /config mount but is excluded from being its own live state.
+func (s *Service) configSnapshotDir() string { return filepath.Join(s.cfg.DataDir, ".snapshot") }
+
+// stageConfigSnapshot builds a consistent, restic-ready copy of BombVault's own
+// /config state in a staging dir: a VACUUM-INTO snapshot of the live DB plus the
+// rclone.conf and ssh/ keypair (copied as-is; they are static files). The live
+// DB is never handed to restic directly (WAL mode can tear a raw file copy).
+// Returns the staging dir; the caller removes it after the backup.
+func (s *Service) stageConfigSnapshot() (string, error) {
+	dir := s.configSnapshotDir()
+	if err := os.RemoveAll(dir); err != nil {
+		return "", fmt.Errorf("config snapshot: clear staging: %w", err)
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", fmt.Errorf("config snapshot: mkdir staging: %w", err)
+	}
+	if err := s.store.VacuumInto(filepath.Join(dir, "bombvault.sqlite")); err != nil {
+		return "", err
+	}
+	// rclone.conf + ssh/ are static on disk; copy verbatim if present.
+	if src := filepath.Join(s.cfg.DataDir, "rclone.conf"); fileExists(src) {
+		if err := copyFile(src, filepath.Join(dir, "rclone.conf"), 0o600); err != nil {
+			return "", fmt.Errorf("config snapshot: copy rclone.conf: %w", err)
+		}
+	}
+	if src := filepath.Join(s.cfg.DataDir, "ssh"); dirExists(src) {
+		if err := copyTree(src, filepath.Join(dir, "ssh")); err != nil {
+			return "", fmt.Errorf("config snapshot: copy ssh: %w", err)
+		}
+	}
+	return dir, nil
+}
+
+// dirExists reports whether p exists and is a directory.
+func dirExists(p string) bool {
+	fi, err := os.Stat(p)
+	return err == nil && fi.IsDir()
+}
+
+// copyFile copies src to dst with the given mode, truncating dst if it exists.
+func copyFile(src, dst string, mode os.FileMode) error {
+	in, err := os.Open(src) //nolint:gosec // G304: src is an internal DataDir path (rclone.conf / ssh key), not user-supplied
+	if err != nil {
+		return err
+	}
+	// in is read-only; a close error is not actionable.
+	defer func() { _ = in.Close() }()
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode) //nolint:gosec // G304: dst is under our staging dir
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close() //nolint:errcheck,gosec // cleanup on error path; original error takes priority
+		return err
+	}
+	return out.Close()
+}
+
+// copyTree recursively copies the directory src to dst, preserving file modes.
+func copyTree(src, dst string) error {
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(dst, 0o700); err != nil {
+		return err
+	}
+	for _, e := range entries {
+		sp := filepath.Join(src, e.Name())
+		dp := filepath.Join(dst, e.Name())
+		if e.IsDir() {
+			if err := copyTree(sp, dp); err != nil {
+				return err
+			}
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			return err
+		}
+		// Cap at 0o600: these are private keys/config; never widen perms on copy.
+		mode := info.Mode().Perm()
+		if mode > 0o600 {
+			mode = 0o600
+		}
+		if err := copyFile(sp, dp, mode); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // toContainerPath translates a HOST path under HostSourceRoot to its
 // container-visible equivalent under HostMountRoot (the broad Host Data mount,
 // e.g. /mnt → /host/user). Returns ("", false) when the host path is not
