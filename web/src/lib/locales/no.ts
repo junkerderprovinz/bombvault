@@ -467,6 +467,22 @@ const no: Partial<Translations> = {
   "recovery.freshNudge": "Gjenoppretter du fra en tidligere server eller en ny installasjon? Gjenopprett dine eksisterende sikkerhetskopier.",
   "recovery.freshNudgeCta": "Gå til Gjenoppretting",
 
+  // Config recovery step (restore BombVault's own settings)
+  "recovery.stepConfig": "Gjenopprett BombVaults egne innstillinger",
+  "recovery.configHint": "På en gjenoppbygd server, gjenopprett først BombVaults egne innstillinger — sikkerhetskopistiene, off-site-målene og legitimasjonen — slik at trinnene nedenfor blir forhåndsutfylt. Pek den mot innstillings-sikkerhetskopien du satte opp tidligere. Ingen innstillings-sikkerhetskopi? Hopp over dette og koble til sikkerhetskopiene dine manuelt nedenfor.",
+  "recovery.configAppKeyReminder": "APP_KEY-en din må stemme med denne sikkerhetskopien — det er sjekken i trinn 1 ovenfor.",
+  "recovery.configSourceLabel": "Hvor er innstillings-sikkerhetskopien?",
+  "recovery.configLocalPath": "Lokal sti",
+  "recovery.configOffsiteUrl": "Off-site-repo-URL",
+  "recovery.configRestore": "Gjenopprett BombVaults innstillinger",
+  "recovery.configRestoring": "Gjenoppretter…",
+  "recovery.configRestarting": "BombVault starter på nytt for å bruke innstillingene dine… denne siden lastes automatisk inn på nytt når den er tilbake.",
+  "recovery.configManualRestart": "Innstillingene dine er klargjort. Start BombVault-kontaineren på nytt i Unraid, og fortsett deretter — de tas i bruk ved neste oppstart.",
+  "recovery.configReloadWhenBack": "BombVault bruker lengre tid enn forventet på å komme tilbake. Last inn denne siden på nytt når den er oppe, for å laste de gjenopprettede innstillingene dine.",
+  "recovery.configReload": "Last inn på nytt nå",
+  "recovery.configSkip": "Hopp over — jeg har ingen innstillings-sikkerhetskopi",
+  "recovery.configSkipped": "Hoppet over. Koble til sikkerhetskopiene dine manuelt nedenfor.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Ekstern båndbredde",
   "settings.limitUpload": "Opplastingsgrense (KiB/s)",
@@ -632,6 +648,34 @@ const no: Partial<Translations> = {
   "ransomware.drillNever": "ingen gjenopprettingsøvelse ennå",
   "ransomware.encryptionOn": "kryptering på",
   "ransomware.pruneStrategy": "beskjæringsstrategi satt",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Config-sikkerhetskopi",
+  "config.subtitle": "Sikkerhetskopier BombVaults egne innstillinger så en gjenoppbygd server kan gjenopprette seg selv.",
+  "config.settingsTitle": "Innstillinger for config-sikkerhetskopi",
+  "config.settingsHint": "Beskytt BombVaults egen konfigurasjon — innstillingsdatabasen, off-site-legitimasjonen og SSH-nøklene — så en fersk installasjon kan gjenopprette seg selv og fortsette akkurat der den slapp.",
+  "config.enabled": "Sikkerhetskopier BombVaults innstillinger",
+  "config.enabledHint": "Ta med BombVaults eget /config i tidsplanen nedenfor.",
+  "config.path": "Sikkerhetskopiplassering",
+  "config.pathHint": "Relativ understi under host-monteringens rot der config-repoet skrives.",
+  "config.schedule": "Tidsplan",
+  "config.schedulePlaceholder": "off · f.eks. daily 03:30",
+  "config.scheduleHint": "Når innstillingene skal sikkerhetskopieres automatisk. La stå 'off' for kun å sikkerhetskopiere ved behov.",
+  "config.offsite": "Off-site-repo (valgfritt)",
+  "config.offsiteHint": "Replikér config-sikkerhetskopien til et annet, off-site-repo etter hver lokale sikkerhetskopi.",
+  "config.offsiteSchedule": "Off-site-tidsplan",
+  "config.immutable": "Off-site-repoet er append-only (uforanderlig)",
+  "config.immutableHint": "Hopp over off-site-beskjæring og avvis off-site-slettinger — fjernsiden (append-only) håndhever det.",
+  "config.backupTitle": "Sikkerhetskopier innstillinger nå",
+  "config.backupHint": "Fanger BombVaults eget /config: innstillingsdatabasen, off-site-legitimasjonen (rclone.conf) og SSH-nøkkelparet.",
+  "config.backupNow": "Sikkerhetskopier innstillinger nå",
+  "config.backingUp": "Sikkerhetskopierer…",
+  "config.snapshotsTitle": "Innstillings-sikkerhetskopier",
+  "config.snapshotsHint": "For å gjenopprette disse innstillingene på en gjenoppbygd server, bruk Gjenopprettings-fanen — å gjenopprette innstillingene starter BombVault på nytt for å bruke dem, så det ligger der sammen med resten av katastrofegjenopprettingsflyten.",
+  "config.none": "Ingen innstillings-sikkerhetskopier ennå — kjør en sikkerhetskopiering ovenfor.",
+  "nav.config": "Config",
+  "settings.configEnabled": "App-konfigurasjon",
+  "dashboard.domainConfig": "Config",
 };
 
 export default no;

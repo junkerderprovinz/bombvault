@@ -17,6 +17,7 @@ const da: Partial<Translations> = {
   "nav.advanced": "Avanceret",
   "nav.comingSoon": "Kommer snart",
   "nav.recovery": "Gendannelse",
+  "nav.config": "Konfiguration",
 
   // Dashboard
   "dashboard.title": "Oversigt",
@@ -145,6 +146,7 @@ const da: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "App-konfiguration",
   "settings.schedule": "Tidsplan",
   "settings.scheduleOff": "fra",
   "settings.language": "Sprog",
@@ -467,6 +469,47 @@ const da: Partial<Translations> = {
   "recovery.freshNudge": "Gendanner du fra en tidligere server eller en genopbygning? Gendan dine eksisterende sikkerhedskopier.",
   "recovery.freshNudgeCta": "Gå til Gendannelse",
 
+  // Config backup (BombVault's own settings)
+  "config.title": "Sikkerhedskopi af konfiguration",
+  "config.subtitle": "Sikkerhedskopiér BombVaults egne indstillinger, så en genopbygget server kan gendanne sig selv.",
+  "config.settingsTitle": "Indstillinger for konfigurationssikkerhedskopi",
+  "config.settingsHint": "Beskyt BombVaults egen konfiguration — dens indstillingsdatabase, off-site-legitimationsoplysninger og SSH-nøgler — så en frisk installation kan gendanne sig selv og fortsætte præcis, hvor den slap.",
+  "config.enabled": "Sikkerhedskopiér BombVaults indstillinger",
+  "config.enabledHint": "Inkluder BombVaults eget /config i tidsplanen nedenfor.",
+  "config.path": "Sikkerhedskopiplacering",
+  "config.pathHint": "Relativ understi under host-monteringsroden, hvor konfigurationsrepoet skrives.",
+  "config.schedule": "Tidsplan",
+  "config.schedulePlaceholder": "off · f.eks. daily 03:30",
+  "config.scheduleHint": "Hvornår indstillingerne automatisk skal sikkerhedskopieres. Lad 'off' stå for kun at sikkerhedskopiere efter behov.",
+  "config.offsite": "Off-site-repo (valgfrit)",
+  "config.offsiteHint": "Replikér konfigurationssikkerhedskopien til et andet, off-site-repo efter hver lokal sikkerhedskopi.",
+  "config.offsiteSchedule": "Off-site-tidsplan",
+  "config.immutable": "Off-site-repoet er append-only (uforanderligt)",
+  "config.immutableHint": "Spring off-site-beskæring over og afvis off-site-sletninger — fjernsiden (append-only) håndhæver det.",
+  "config.backupTitle": "Sikkerhedskopiér indstillinger nu",
+  "config.backupHint": "Fanger BombVaults eget /config: indstillingsdatabasen, off-site-legitimationsoplysninger (rclone.conf) og SSH-nøgleparret.",
+  "config.backupNow": "Sikkerhedskopiér indstillinger nu",
+  "config.backingUp": "Sikkerhedskopierer…",
+  "config.snapshotsTitle": "Indstillingssikkerhedskopier",
+  "config.snapshotsHint": "For at gendanne disse indstillinger på en genopbygget server skal du bruge fanen Gendannelse — gendannelse af indstillinger genstarter BombVault for at anvende dem, så det hører til der sammen med resten af katastrofegendannelsesforløbet.",
+  "config.none": "Ingen indstillingssikkerhedskopier endnu — kør en sikkerhedskopiering ovenfor.",
+
+  // Recovery — restore BombVault's own settings step
+  "recovery.stepConfig": "Gendan BombVaults egne indstillinger",
+  "recovery.configHint": "På en genopbygget server skal du først gendanne BombVaults egne indstillinger — dens sikkerhedskopistier, off-site-mål og legitimationsoplysninger — så trinene nedenfor kommer forudfyldt. Peg den mod den indstillingssikkerhedskopi, du opsatte tidligere. Ingen indstillingssikkerhedskopi? Spring dette over, og tilknyt dine sikkerhedskopier manuelt nedenfor.",
+  "recovery.configAppKeyReminder": "Din APP_KEY skal matche denne sikkerhedskopi — det er tjekket i trin 1 ovenfor.",
+  "recovery.configSourceLabel": "Hvor er indstillingssikkerhedskopien?",
+  "recovery.configLocalPath": "Lokal sti",
+  "recovery.configOffsiteUrl": "Off-site-repo-URL",
+  "recovery.configRestore": "Gendan BombVaults indstillinger",
+  "recovery.configRestoring": "Gendanner…",
+  "recovery.configRestarting": "BombVault genstarter for at anvende dine indstillinger… denne side genindlæses automatisk, når den er tilbage.",
+  "recovery.configManualRestart": "Dine indstillinger er klargjort. Genstart BombVault-containeren i Unraid, og fortsæt derefter — de anvendes ved næste opstart.",
+  "recovery.configReloadWhenBack": "BombVault er længere tid om at komme tilbage end forventet. Genindlæs denne side, når den er oppe, for at indlæse dine gendannede indstillinger.",
+  "recovery.configReload": "Genindlæs nu",
+  "recovery.configSkip": "Spring over — jeg har ingen indstillingssikkerhedskopi",
+  "recovery.configSkipped": "Sprunget over. Tilknyt dine sikkerhedskopier manuelt nedenfor.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site-båndbredde",
   "settings.limitUpload": "Upload-grænse (KiB/s)",
@@ -511,6 +554,7 @@ const da: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Konfiguration",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Sikkerhedskopiers tilstand",

@@ -17,6 +17,7 @@ const vi: Partial<Translations> = {
   "nav.advanced": "Nâng cao",
   "nav.comingSoon": "Sắp ra mắt",
   "nav.recovery": "Khôi phục",
+  "nav.config": "Cấu hình",
 
   // Dashboard
   "dashboard.title": "Tổng quan",
@@ -145,6 +146,7 @@ const vi: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Cấu hình ứng dụng",
   "settings.schedule": "Lịch trình",
   "settings.scheduleOff": "tắt",
   "settings.language": "Ngôn ngữ",
@@ -459,6 +461,47 @@ const vi: Partial<Translations> = {
   "recovery.freshNudge": "Đang khôi phục từ một máy chủ trước đây hoặc sau khi dựng lại? Hãy khôi phục các bản sao lưu hiện có của bạn.",
   "recovery.freshNudgeCta": "Đến Khôi phục",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "Khôi phục cài đặt của chính BombVault",
+  "recovery.configHint": "Trên một máy chủ dựng lại, hãy khôi phục cài đặt của chính BombVault trước — đường dẫn sao lưu, đích off-site và thông tin đăng nhập — để các bước bên dưới được điền sẵn. Trỏ nó tới bản sao lưu cài đặt mà bạn đã thiết lập trước đó. Không có bản sao lưu cài đặt? Bỏ qua bước này và đính kèm các bản sao lưu của bạn thủ công bên dưới.",
+  "recovery.configAppKeyReminder": "APP_KEY của bạn phải khớp với bản sao lưu này — đó là bước kiểm tra ở Bước 1 phía trên.",
+  "recovery.configSourceLabel": "Bản sao lưu cài đặt ở đâu?",
+  "recovery.configLocalPath": "Đường dẫn cục bộ",
+  "recovery.configOffsiteUrl": "URL kho off-site",
+  "recovery.configRestore": "Khôi phục cài đặt của BombVault",
+  "recovery.configRestoring": "Đang khôi phục…",
+  "recovery.configRestarting": "BombVault đang khởi động lại để áp dụng cài đặt của bạn… trang này sẽ tự động tải lại khi nó trở lại.",
+  "recovery.configManualRestart": "Cài đặt của bạn đã được chuẩn bị. Khởi động lại container BombVault trong Unraid, rồi tiếp tục — chúng sẽ được áp dụng ở lần khởi động tiếp theo.",
+  "recovery.configReloadWhenBack": "BombVault mất nhiều thời gian hơn dự kiến để trở lại. Hãy tải lại trang này khi nó hoạt động để nạp các cài đặt đã khôi phục của bạn.",
+  "recovery.configReload": "Tải lại ngay",
+  "recovery.configSkip": "Bỏ qua — tôi không có bản sao lưu cài đặt",
+  "recovery.configSkipped": "Đã bỏ qua. Đính kèm các bản sao lưu của bạn thủ công bên dưới.",
+
+  // Config Backup page
+  "config.title": "Sao lưu cấu hình",
+  "config.subtitle": "Sao lưu các cài đặt của chính BombVault để một máy chủ dựng lại có thể tự khôi phục.",
+  "config.settingsTitle": "Cài đặt sao lưu cấu hình",
+  "config.settingsHint": "Bảo vệ cấu hình của chính BombVault — cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site và khóa SSH — để một bản cài đặt mới có thể tự khôi phục và tiếp tục ngay từ chỗ đã dừng.",
+  "config.enabled": "Sao lưu cài đặt của BombVault",
+  "config.enabledHint": "Đưa /config của chính BombVault vào lịch trình bên dưới.",
+  "config.path": "Vị trí sao lưu",
+  "config.pathHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host, nơi ghi kho cấu hình.",
+  "config.schedule": "Lịch trình",
+  "config.schedulePlaceholder": "off · vd. daily 03:30",
+  "config.scheduleHint": "Thời điểm tự động sao lưu cài đặt. Để 'off' để chỉ sao lưu theo yêu cầu.",
+  "config.offsite": "Kho off-site (tùy chọn)",
+  "config.offsiteHint": "Sao chép bản sao lưu cấu hình sang một kho off-site thứ hai sau mỗi lần sao lưu cục bộ.",
+  "config.offsiteSchedule": "Lịch trình off-site",
+  "config.immutable": "Kho off-site là append-only (bất biến)",
+  "config.immutableHint": "Bỏ qua việc dọn bớt off-site và từ chối xóa off-site — phía bên kia (append-only) thực thi điều đó.",
+  "config.backupTitle": "Sao lưu cài đặt ngay",
+  "config.backupHint": "Chụp /config của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site (rclone.conf) và cặp khóa SSH.",
+  "config.backupNow": "Sao lưu cài đặt ngay",
+  "config.backingUp": "Đang sao lưu…",
+  "config.snapshotsTitle": "Bản sao lưu cài đặt",
+  "config.snapshotsHint": "Để khôi phục các cài đặt này lên một máy chủ dựng lại, hãy dùng tab Khôi phục — việc khôi phục cài đặt sẽ khởi động lại BombVault để áp dụng chúng, nên nó nằm ở đó cùng với phần còn lại của quy trình khôi phục sau thảm họa.",
+  "config.none": "Chưa có bản sao lưu cài đặt nào — chạy một bản sao lưu ở trên.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Băng thông off-site",
   "settings.limitUpload": "Giới hạn tải lên (KiB/s)",
@@ -503,6 +546,7 @@ const vi: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Cấu hình",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Tình trạng sao lưu",

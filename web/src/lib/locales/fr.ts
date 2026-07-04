@@ -17,6 +17,7 @@ const fr: Partial<Translations> = {
   "nav.advanced": "Avancé",
   "nav.comingSoon": "Bientôt disponible",
   "nav.recovery": "Récupération",
+  "nav.config": "Config",
 
   // Dashboard
   "dashboard.title": "Tableau de bord",
@@ -145,6 +146,7 @@ const fr: Partial<Translations> = {
   "settings.containersEnabled": "Conteneurs",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Configuration de l'application",
   "settings.schedule": "Planning",
   "settings.scheduleOff": "désactivé",
   "settings.language": "Langue",
@@ -467,6 +469,22 @@ const fr: Partial<Translations> = {
   "recovery.freshNudge": "Vous restaurez depuis un serveur précédent ou une réinstallation ? Récupérez vos sauvegardes existantes.",
   "recovery.freshNudgeCta": "Aller à Récupération",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "Restaurer les propres réglages de BombVault",
+  "recovery.configHint": "Sur un serveur reconstruit, restaurez d'abord les propres réglages de BombVault — ses chemins de sauvegarde, ses cibles hors site et ses identifiants — pour que les étapes ci-dessous soient préremplies. Pointez-le vers la sauvegarde des réglages que vous aviez configurée. Pas de sauvegarde des réglages ? Passez cette étape et attachez vos sauvegardes manuellement ci-dessous.",
+  "recovery.configAppKeyReminder": "Votre APP_KEY doit correspondre à cette sauvegarde — c'est la vérification de l'étape 1 ci-dessus.",
+  "recovery.configSourceLabel": "Où se trouve la sauvegarde des réglages ?",
+  "recovery.configLocalPath": "Chemin local",
+  "recovery.configOffsiteUrl": "URL du dépôt hors site",
+  "recovery.configRestore": "Restaurer les réglages de BombVault",
+  "recovery.configRestoring": "Restauration…",
+  "recovery.configRestarting": "BombVault redémarre pour appliquer vos réglages… cette page se recharge automatiquement dès qu'il est de retour.",
+  "recovery.configManualRestart": "Vos réglages sont prêts. Redémarrez le conteneur BombVault dans Unraid, puis continuez — ils s'appliquent au prochain démarrage.",
+  "recovery.configReloadWhenBack": "BombVault met plus de temps que prévu à revenir. Rechargez cette page une fois qu'il est actif pour charger vos réglages restaurés.",
+  "recovery.configReload": "Recharger maintenant",
+  "recovery.configSkip": "Passer — je n'ai pas de sauvegarde des réglages",
+  "recovery.configSkipped": "Ignoré. Attachez vos sauvegardes manuellement ci-dessous.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Bande passante hors site",
   "settings.limitUpload": "Limite d'envoi (KiB/s)",
@@ -511,6 +529,7 @@ const fr: Partial<Translations> = {
   "dashboard.domainContainers": "Conteneurs",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Santé des sauvegardes",
@@ -632,6 +651,31 @@ const fr: Partial<Translations> = {
   "ransomware.drillNever": "aucun exercice de restauration",
   "ransomware.encryptionOn": "chiffrement activé",
   "ransomware.pruneStrategy": "stratégie d'élagage définie",
+
+  // Config backup (BombVault's own settings)
+  "config.title": "Sauvegarde de la config",
+  "config.subtitle": "Sauvegardez les propres réglages de BombVault pour qu'un serveur reconstruit puisse se restaurer lui-même.",
+  "config.settingsTitle": "Réglages de la sauvegarde de config",
+  "config.settingsHint": "Protégez la propre configuration de BombVault — sa base de réglages, ses identifiants hors site et ses clés SSH — pour qu'une installation neuve puisse se restaurer et reprendre exactement là où elle s'était arrêtée.",
+  "config.enabled": "Sauvegarder les réglages de BombVault",
+  "config.enabledHint": "Inclure le /config propre à BombVault dans le planning ci-dessous.",
+  "config.path": "Emplacement de sauvegarde",
+  "config.pathHint": "Sous-chemin relatif sous la racine du montage hôte où le dépôt de config est écrit.",
+  "config.schedule": "Planning",
+  "config.schedulePlaceholder": "off · p. ex. daily 03:30",
+  "config.scheduleHint": "Quand sauvegarder automatiquement les réglages. Laissez « off » pour ne sauvegarder qu'à la demande.",
+  "config.offsite": "Dépôt hors site (facultatif)",
+  "config.offsiteHint": "Répliquer la sauvegarde de config vers un second dépôt hors site après chaque sauvegarde locale.",
+  "config.offsiteSchedule": "Planning hors site",
+  "config.immutable": "Le dépôt hors site est en append-only (immuable)",
+  "config.immutableHint": "Ignorer l'élagage hors site et refuser les suppressions hors site — c'est le côté distant (append-only) qui l'applique.",
+  "config.backupTitle": "Sauvegarder les réglages maintenant",
+  "config.backupHint": "Capture le /config propre à BombVault : la base de réglages, les identifiants hors site (rclone.conf) et la paire de clés SSH.",
+  "config.backupNow": "Sauvegarder les réglages maintenant",
+  "config.backingUp": "Sauvegarde…",
+  "config.snapshotsTitle": "Sauvegardes des réglages",
+  "config.snapshotsHint": "Pour restaurer ces réglages sur un serveur reconstruit, utilisez l'onglet Récupération — restaurer les réglages redémarre BombVault pour les appliquer, il se trouve donc là avec le reste du flux de récupération après sinistre.",
+  "config.none": "Aucune sauvegarde des réglages pour l'instant — lancez-en une ci-dessus.",
 };
 
 export default fr;

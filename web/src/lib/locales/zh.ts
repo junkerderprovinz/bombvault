@@ -17,6 +17,7 @@ const zh: Partial<Translations> = {
   "nav.advanced": "高级",
   "nav.comingSoon": "即将推出",
   "nav.recovery": "恢复",
+  "nav.config": "配置",
 
   // Dashboard
   "dashboard.title": "仪表板",
@@ -145,6 +146,7 @@ const zh: Partial<Translations> = {
   "settings.containersEnabled": "容器",
   "settings.vmsEnabled": "虚拟机",
   "settings.flashEnabled": "闪存",
+  "settings.configEnabled": "应用配置",
   "settings.schedule": "计划",
   "settings.scheduleOff": "关闭",
   "settings.language": "语言",
@@ -459,6 +461,47 @@ const zh: Partial<Translations> = {
   "recovery.freshNudge": "正在从旧服务器或重建中恢复？恢复你现有的备份。",
   "recovery.freshNudgeCta": "前往恢复",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "还原 BombVault 自身的设置",
+  "recovery.configHint": "在重建的服务器上，先还原 BombVault 自身的设置——它的备份路径、异地目标和凭据——这样下面的步骤会预先填好。让它指向你之前设置的设置备份。没有设置备份？跳过此步，在下方手动附加你的备份。",
+  "recovery.configAppKeyReminder": "你的 APP_KEY 必须与此备份匹配——这就是上方第 1 步中的检查。",
+  "recovery.configSourceLabel": "设置备份在哪里？",
+  "recovery.configLocalPath": "本地路径",
+  "recovery.configOffsiteUrl": "异地仓库 URL",
+  "recovery.configRestore": "还原 BombVault 的设置",
+  "recovery.configRestoring": "还原中…",
+  "recovery.configRestarting": "BombVault 正在重启以应用你的设置……恢复后此页面会自动重新加载。",
+  "recovery.configManualRestart": "你的设置已准备就绪。在 Unraid 中重启 BombVault 容器，然后继续——它们会在下次启动时生效。",
+  "recovery.configReloadWhenBack": "BombVault 恢复的时间比预期更久。等它启动后，重新加载此页面以载入你还原的设置。",
+  "recovery.configReload": "立即重新加载",
+  "recovery.configSkip": "跳过——我没有设置备份",
+  "recovery.configSkipped": "已跳过。在下方手动附加你的备份。",
+
+  // Config Backup page
+  "config.title": "配置备份",
+  "config.subtitle": "备份 BombVault 自身的设置，让重建的服务器能够自我还原。",
+  "config.settingsTitle": "配置备份设置",
+  "config.settingsHint": "保护 BombVault 自身的配置——它的设置数据库、异地凭据和 SSH 密钥——这样全新安装就能自我还原并从上次中断处继续。",
+  "config.enabled": "备份 BombVault 的设置",
+  "config.enabledHint": "将 BombVault 自身的 /config 纳入下面的计划。",
+  "config.path": "备份位置",
+  "config.pathHint": "写入配置仓库的位置，为主机挂载根目录下的相对子路径。",
+  "config.schedule": "计划",
+  "config.schedulePlaceholder": "off · 例：daily 03:30",
+  "config.scheduleHint": "何时自动备份设置。保留 'off' 则仅按需备份。",
+  "config.offsite": "异地仓库（可选）",
+  "config.offsiteHint": "每次本地备份后，将配置备份复制到第二个异地仓库。",
+  "config.offsiteSchedule": "异地计划",
+  "config.immutable": "异地仓库为 append-only（不可变）",
+  "config.immutableHint": "跳过异地清理并拒绝异地删除——由对端（append-only）强制执行。",
+  "config.backupTitle": "立即备份设置",
+  "config.backupHint": "捕获 BombVault 自身的 /config：设置数据库、异地凭据（rclone.conf）和 SSH 密钥对。",
+  "config.backupNow": "立即备份设置",
+  "config.backingUp": "备份中…",
+  "config.snapshotsTitle": "设置备份",
+  "config.snapshotsHint": "要将这些设置还原到重建的服务器上，请使用恢复标签页——还原设置会重启 BombVault 以应用它们，因此它与灾难恢复流程的其余部分放在一起。",
+  "config.none": "尚无设置备份——请在上方运行一次备份。",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "异地带宽",
   "settings.limitUpload": "上传限制 (KiB/s)",
@@ -503,6 +546,7 @@ const zh: Partial<Translations> = {
   "dashboard.domainContainers": "容器",
   "dashboard.domainVMs": "虚拟机",
   "dashboard.domainFlash": "闪存",
+  "dashboard.domainConfig": "配置",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "备份健康度",

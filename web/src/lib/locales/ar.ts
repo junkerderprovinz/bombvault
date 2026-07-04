@@ -17,6 +17,7 @@ const ar: Partial<Translations> = {
   "nav.advanced": "متقدم",
   "nav.comingSoon": "قريباً",
   "nav.recovery": "الاستعادة",
+  "nav.config": "التهيئة",
 
   // Dashboard
   "dashboard.title": "لوحة التحكم",
@@ -145,6 +146,7 @@ const ar: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "إعدادات التطبيق",
   "settings.schedule": "الجدول الزمني",
   "settings.scheduleOff": "إيقاف",
   "settings.language": "اللغة",
@@ -470,6 +472,47 @@ const ar: Partial<Translations> = {
   "recovery.freshNudge": "تستعيد من خادم سابق أو بعد إعادة بناء؟ استعد نسخك الاحتياطية الموجودة.",
   "recovery.freshNudgeCta": "الانتقال إلى الاستعادة",
 
+  // Config backup (BombVault's own settings)
+  "config.title": "النسخ الاحتياطي للإعدادات",
+  "config.subtitle": "انسخ إعدادات BombVault الخاصة احتياطياً حتى يتمكن خادم مُعاد بناؤه من استعادة نفسه.",
+  "config.settingsTitle": "إعدادات النسخ الاحتياطي للإعدادات",
+  "config.settingsHint": "احمِ إعدادات BombVault الخاصة — قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع ومفاتيح SSH — حتى يتمكن تثبيت جديد من استعادة نفسه ومتابعة العمل من حيث توقّف.",
+  "config.enabled": "نسخ إعدادات BombVault احتياطياً",
+  "config.enabledHint": "تضمين /config الخاص بـ BombVault في الجدول الزمني أدناه.",
+  "config.path": "موقع النسخ الاحتياطي",
+  "config.pathHint": "مسار فرعي نسبي ضمن جذر نقطة تركيب المضيف حيث يُكتب مستودع الإعدادات.",
+  "config.schedule": "الجدول الزمني",
+  "config.schedulePlaceholder": "off · مثل daily 03:30",
+  "config.scheduleHint": "متى تُنسخ الإعدادات احتياطياً تلقائياً. اترك 'off' للنسخ عند الطلب فقط.",
+  "config.offsite": "مستودع خارج الموقع (اختياري)",
+  "config.offsiteHint": "انسخ نسخة الإعدادات الاحتياطية إلى مستودع ثانٍ خارج الموقع بعد كل نسخة احتياطية محلية.",
+  "config.offsiteSchedule": "الجدول الزمني خارج الموقع",
+  "config.immutable": "المستودع خارج الموقع هو append-only (غير قابل للتغيير)",
+  "config.immutableHint": "تخطَّ التقليم خارج الموقع وارفض عمليات الحذف خارج الموقع — الطرف البعيد (append-only) يفرض ذلك.",
+  "config.backupTitle": "انسخ الإعدادات احتياطياً الآن",
+  "config.backupHint": "يلتقط /config الخاص بـ BombVault: قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع (rclone.conf) وزوج مفاتيح SSH.",
+  "config.backupNow": "انسخ الإعدادات احتياطياً الآن",
+  "config.backingUp": "جارٍ النسخ الاحتياطي…",
+  "config.snapshotsTitle": "نسخ الإعدادات الاحتياطية",
+  "config.snapshotsHint": "لاستعادة هذه الإعدادات على خادم مُعاد بناؤه، استخدم تبويب الاستعادة — استعادة الإعدادات تعيد تشغيل BombVault لتطبيقها، لذا فهي موجودة هناك مع بقية سير التعافي من الكوارث.",
+  "config.none": "لا توجد نسخ احتياطية للإعدادات بعد — شغّل نسخاً احتياطياً أعلاه.",
+
+  // Recovery — restore BombVault's own settings step
+  "recovery.stepConfig": "استعادة إعدادات BombVault الخاصة",
+  "recovery.configHint": "على خادم مُعاد بناؤه، استعِد أولاً إعدادات BombVault الخاصة — مسارات النسخ الاحتياطي وأهداف خارج الموقع وبيانات الاعتماد — لتأتي الخطوات أدناه معبّأة مسبقاً. وجّهه إلى نسخة الإعدادات الاحتياطية التي أعددتها سابقاً. لا توجد نسخة إعدادات احتياطية؟ تخطَّ هذا وأرفق نسخك الاحتياطية يدوياً أدناه.",
+  "recovery.configAppKeyReminder": "يجب أن يطابق APP_KEY هذه النسخة الاحتياطية — وهذا هو الفحص في الخطوة 1 أعلاه.",
+  "recovery.configSourceLabel": "أين توجد نسخة الإعدادات الاحتياطية؟",
+  "recovery.configLocalPath": "المسار المحلي",
+  "recovery.configOffsiteUrl": "رابط المستودع خارج الموقع",
+  "recovery.configRestore": "استعادة إعدادات BombVault",
+  "recovery.configRestoring": "جارٍ الاستعادة…",
+  "recovery.configRestarting": "يُعاد تشغيل BombVault لتطبيق إعداداتك… ستُعاد هذه الصفحة تلقائياً عند عودته.",
+  "recovery.configManualRestart": "تم تجهيز إعداداتك. أعد تشغيل حاوية BombVault في Unraid ثم تابع — تُطبَّق عند الإقلاع التالي.",
+  "recovery.configReloadWhenBack": "يستغرق عودة BombVault وقتاً أطول من المتوقع. أعد تحميل هذه الصفحة بمجرد عودته لتحميل إعداداتك المستعادة.",
+  "recovery.configReload": "أعد التحميل الآن",
+  "recovery.configSkip": "تخطَّ — ليس لديّ نسخة إعدادات احتياطية",
+  "recovery.configSkipped": "تم التخطي. أرفق نسخك الاحتياطية يدوياً أدناه.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "نطاق التراسل خارج الموقع",
   "settings.limitUpload": "حد الرفع (KiB/s)",
@@ -514,6 +557,7 @@ const ar: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "التهيئة",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "سلامة النسخ الاحتياطي",

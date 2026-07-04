@@ -17,6 +17,7 @@ const el: Partial<Translations> = {
   "nav.advanced": "Για προχωρημένους",
   "nav.comingSoon": "Σύντομα",
   "nav.recovery": "Ανάκτηση",
+  "nav.config": "Διαμόρφωση",
 
   // Dashboard
   "dashboard.title": "Πίνακας ελέγχου",
@@ -145,6 +146,7 @@ const el: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Διαμόρφωση εφαρμογής",
   "settings.schedule": "Χρονοδιάγραμμα",
   "settings.scheduleOff": "ανενεργό",
   "settings.language": "Γλώσσα",
@@ -467,6 +469,47 @@ const el: Partial<Translations> = {
   "recovery.freshNudge": "Κάνετε επαναφορά από προηγούμενο διακομιστή ή μετά από ανακατασκευή; Ανακτήστε τα υπάρχοντα αντίγραφά σας.",
   "recovery.freshNudgeCta": "Μετάβαση στην Ανάκτηση",
 
+  // Config backup (BombVault's own settings)
+  "config.title": "Αντίγραφο ρυθμίσεων",
+  "config.subtitle": "Δημιουργήστε αντίγραφο των ρυθμίσεων του BombVault ώστε ένας ανακατασκευασμένος διακομιστής να μπορεί να αυτοανακτηθεί.",
+  "config.settingsTitle": "Ρυθμίσεις αντιγράφου ρυθμίσεων",
+  "config.settingsHint": "Προστατέψτε τη διαμόρφωση του ίδιου του BombVault — τη βάση δεδομένων ρυθμίσεων, τα διαπιστευτήρια εκτός τόπου και τα κλειδιά SSH — ώστε μια νέα εγκατάσταση να μπορεί να αυτοανακτηθεί και να συνεχίσει ακριβώς από εκεί που σταμάτησε.",
+  "config.enabled": "Δημιουργία αντιγράφου των ρυθμίσεων του BombVault",
+  "config.enabledHint": "Συμπερίληψη του /config του BombVault στο χρονοδιάγραμμα παρακάτω.",
+  "config.path": "Θέση αντιγράφου",
+  "config.pathHint": "Σχετική υποδιαδρομή κάτω από τη ρίζα προσάρτησης του host όπου γράφεται το αποθετήριο ρυθμίσεων.",
+  "config.schedule": "Χρονοδιάγραμμα",
+  "config.schedulePlaceholder": "off · π.χ. daily 03:30",
+  "config.scheduleHint": "Πότε να δημιουργείται αυτόματα αντίγραφο των ρυθμίσεων. Αφήστε 'off' για αντίγραφο μόνο κατ' απαίτηση.",
+  "config.offsite": "Αποθετήριο εκτός τόπου (προαιρετικό)",
+  "config.offsiteHint": "Αναπαραγωγή του αντιγράφου ρυθμίσεων σε ένα δεύτερο, εκτός τόπου αποθετήριο μετά από κάθε τοπικό αντίγραφο.",
+  "config.offsiteSchedule": "Χρονοδιάγραμμα εκτός τόπου",
+  "config.immutable": "Το αποθετήριο εκτός τόπου είναι append-only (αμετάβλητο)",
+  "config.immutableHint": "Παράλειψη του κλαδέματος εκτός τόπου και άρνηση των διαγραφών εκτός τόπου — η απέναντι πλευρά (append-only) το επιβάλλει.",
+  "config.backupTitle": "Δημιουργία αντιγράφου ρυθμίσεων τώρα",
+  "config.backupHint": "Καταγράφει το /config του BombVault: τη βάση δεδομένων ρυθμίσεων, τα διαπιστευτήρια εκτός τόπου (rclone.conf) και το ζεύγος κλειδιών SSH.",
+  "config.backupNow": "Δημιουργία αντιγράφου ρυθμίσεων τώρα",
+  "config.backingUp": "Δημιουργία αντιγράφου…",
+  "config.snapshotsTitle": "Αντίγραφα ρυθμίσεων",
+  "config.snapshotsHint": "Για να επαναφέρετε αυτές τις ρυθμίσεις σε έναν ανακατασκευασμένο διακομιστή, χρησιμοποιήστε την καρτέλα Ανάκτηση — η επαναφορά των ρυθμίσεων επανεκκινεί το BombVault για να τις εφαρμόσει, γι' αυτό βρίσκεται εκεί μαζί με την υπόλοιπη ροή ανάκτησης από καταστροφή.",
+  "config.none": "Δεν υπάρχουν ακόμα αντίγραφα ρυθμίσεων — εκτελέστε ένα αντίγραφο παραπάνω.",
+
+  // Recovery — restore BombVault's own settings step
+  "recovery.stepConfig": "Επαναφορά των ρυθμίσεων του ίδιου του BombVault",
+  "recovery.configHint": "Σε έναν ανακατασκευασμένο διακομιστή, επαναφέρετε πρώτα τις ρυθμίσεις του ίδιου του BombVault — τις διαδρομές αντιγράφων, τους στόχους εκτός τόπου και τα διαπιστευτήρια — ώστε τα παρακάτω βήματα να είναι προσυμπληρωμένα. Κατευθύνετέ το στο αντίγραφο ρυθμίσεων που ρυθμίσατε νωρίτερα. Δεν έχετε αντίγραφο ρυθμίσεων; Παραλείψτε το και επισυνάψτε τα αντίγραφά σας χειροκίνητα παρακάτω.",
+  "recovery.configAppKeyReminder": "Το APP_KEY σας πρέπει να ταιριάζει με αυτό το αντίγραφο — αυτός είναι ο έλεγχος στο Βήμα 1 παραπάνω.",
+  "recovery.configSourceLabel": "Πού βρίσκεται το αντίγραφο ρυθμίσεων;",
+  "recovery.configLocalPath": "Τοπική διαδρομή",
+  "recovery.configOffsiteUrl": "URL αποθετηρίου εκτός τόπου",
+  "recovery.configRestore": "Επαναφορά των ρυθμίσεων του BombVault",
+  "recovery.configRestoring": "Επαναφορά…",
+  "recovery.configRestarting": "Το BombVault επανεκκινεί για να εφαρμόσει τις ρυθμίσεις σας… αυτή η σελίδα φορτώνεται ξανά αυτόματα μόλις επανέλθει.",
+  "recovery.configManualRestart": "Οι ρυθμίσεις σας έχουν προετοιμαστεί. Επανεκκινήστε το container BombVault στο Unraid και μετά συνεχίστε — εφαρμόζονται στην επόμενη εκκίνηση.",
+  "recovery.configReloadWhenBack": "Το BombVault αργεί περισσότερο από το αναμενόμενο να επανέλθει. Φορτώστε ξανά αυτή τη σελίδα μόλις επανέλθει για να φορτωθούν οι επαναφερμένες ρυθμίσεις σας.",
+  "recovery.configReload": "Επαναφόρτωση τώρα",
+  "recovery.configSkip": "Παράλειψη — δεν έχω αντίγραφο ρυθμίσεων",
+  "recovery.configSkipped": "Παραλείφθηκε. Επισυνάψτε τα αντίγραφά σας χειροκίνητα παρακάτω.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Εύρος ζώνης εκτός τόπου",
   "settings.limitUpload": "Όριο αποστολής (KiB/s)",
@@ -511,6 +554,7 @@ const el: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Διαμόρφωση",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Υγεία αντιγράφων",

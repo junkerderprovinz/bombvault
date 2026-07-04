@@ -17,6 +17,7 @@ const es: Partial<Translations> = {
   "nav.advanced": "Avanzado",
   "nav.comingSoon": "Próximamente",
   "nav.recovery": "Recuperación",
+  "nav.config": "Configuración",
 
   // Dashboard
   "dashboard.title": "Panel",
@@ -145,6 +146,7 @@ const es: Partial<Translations> = {
   "settings.containersEnabled": "Contenedores",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Configuración de la app",
   "settings.schedule": "Calendario",
   "settings.scheduleOff": "desactivado",
   "settings.language": "Idioma",
@@ -475,6 +477,47 @@ const es: Partial<Translations> = {
   "recovery.freshNudge": "¿Restaurando desde un servidor anterior o una reconstrucción? Recupera tus copias existentes.",
   "recovery.freshNudgeCta": "Ir a Recuperación",
 
+  // Config backup (BombVault's own settings)
+  "config.title": "Copia de la configuración",
+  "config.subtitle": "Haz una copia de la propia configuración de BombVault para que un servidor reconstruido pueda restaurarse a sí mismo.",
+  "config.settingsTitle": "Ajustes de la copia de configuración",
+  "config.settingsHint": "Protege la propia configuración de BombVault — su base de datos de ajustes, las credenciales externas y las claves SSH — para que una instalación nueva pueda restaurarse a sí misma y continuar justo donde lo dejó.",
+  "config.enabled": "Copiar los ajustes de BombVault",
+  "config.enabledHint": "Incluye el propio /config de BombVault en el calendario de abajo.",
+  "config.path": "Ubicación de la copia",
+  "config.pathHint": "Subruta relativa bajo la raíz del montaje del host donde se escribe el repositorio de configuración.",
+  "config.schedule": "Calendario",
+  "config.schedulePlaceholder": "off · p. ej. daily 03:30",
+  "config.scheduleHint": "Cuándo copiar automáticamente los ajustes. Deja 'off' para copiar solo bajo demanda.",
+  "config.offsite": "Repo externo (opcional)",
+  "config.offsiteHint": "Replica la copia de configuración a un segundo repositorio externo tras cada copia local.",
+  "config.offsiteSchedule": "Calendario externo",
+  "config.immutable": "El repo externo es append-only (inmutable)",
+  "config.immutableHint": "Omite la poda externa y rechaza los borrados externos — el otro extremo (append-only) lo impone.",
+  "config.backupTitle": "Copiar ajustes ahora",
+  "config.backupHint": "Captura el propio /config de BombVault: la base de datos de ajustes, las credenciales externas (rclone.conf) y el par de claves SSH.",
+  "config.backupNow": "Copiar ajustes ahora",
+  "config.backingUp": "Copiando…",
+  "config.snapshotsTitle": "Copias de configuración",
+  "config.snapshotsHint": "Para restaurar estos ajustes en un servidor reconstruido, usa la pestaña Recuperación — restaurar los ajustes reinicia BombVault para aplicarlos, por eso vive ahí junto con el resto del flujo de recuperación ante desastres.",
+  "config.none": "Aún no hay copias de configuración — inicia una copia arriba.",
+
+  // Recovery — restore BombVault's own settings step
+  "recovery.stepConfig": "Restaurar la propia configuración de BombVault",
+  "recovery.configHint": "En un servidor reconstruido, restaura primero la propia configuración de BombVault — sus rutas de copia, destinos externos y credenciales — para que los pasos de abajo vengan rellenados. Apúntalo a la copia de configuración que preparaste antes. ¿No tienes copia de configuración? Omite esto y adjunta tus copias manualmente abajo.",
+  "recovery.configAppKeyReminder": "Tu APP_KEY debe coincidir con esta copia — es la comprobación del Paso 1 de arriba.",
+  "recovery.configSourceLabel": "¿Dónde está la copia de configuración?",
+  "recovery.configLocalPath": "Ruta local",
+  "recovery.configOffsiteUrl": "URL del repo externo",
+  "recovery.configRestore": "Restaurar los ajustes de BombVault",
+  "recovery.configRestoring": "Restaurando…",
+  "recovery.configRestarting": "BombVault se está reiniciando para aplicar tus ajustes… esta página se recarga automáticamente cuando vuelva.",
+  "recovery.configManualRestart": "Tus ajustes están preparados. Reinicia el contenedor de BombVault en Unraid y luego continúa — se aplican en el siguiente arranque.",
+  "recovery.configReloadWhenBack": "BombVault está tardando más de lo esperado en volver. Recarga esta página cuando esté activo para cargar tus ajustes restaurados.",
+  "recovery.configReload": "Recargar ahora",
+  "recovery.configSkip": "Omitir — no tengo copia de configuración",
+  "recovery.configSkipped": "Omitido. Adjunta tus copias manualmente abajo.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Ancho de banda externo",
   "settings.limitUpload": "Límite de subida (KiB/s)",
@@ -509,6 +552,7 @@ const es: Partial<Translations> = {
   "dashboard.domainContainers": "Contenedores",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Configuración",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Salud de las copias",

@@ -17,6 +17,7 @@ const fi: Partial<Translations> = {
   "nav.advanced": "Lisäasetukset",
   "nav.comingSoon": "Tulossa pian",
   "nav.recovery": "Palautus",
+  "nav.config": "Konfiguraatio",
 
   // Dashboard
   "dashboard.title": "Kojelauta",
@@ -145,6 +146,7 @@ const fi: Partial<Translations> = {
   "settings.containersEnabled": "Kontit",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "Sovelluksen konfiguraatio",
   "settings.schedule": "Aikataulu",
   "settings.scheduleOff": "pois",
   "settings.language": "Kieli",
@@ -467,6 +469,47 @@ const fi: Partial<Translations> = {
   "recovery.freshNudge": "Palautatko aiemmalta palvelimelta tai uudelleenrakennuksesta? Palauta olemassa olevat varmuuskopiosi.",
   "recovery.freshNudgeCta": "Siirry Palautukseen",
 
+  // Config backup (BombVault's own settings)
+  "config.title": "Asetusten varmuuskopio",
+  "config.subtitle": "Varmuuskopioi BombVaultin omat asetukset, jotta uudelleenrakennettu palvelin voi palauttaa itsensä.",
+  "config.settingsTitle": "Asetusten varmuuskopioinnin asetukset",
+  "config.settingsHint": "Suojaa BombVaultin oma konfiguraatio — sen asetustietokanta, etätunnukset ja SSH-avaimet — jotta uusi asennus voi palauttaa itsensä ja jatkaa juuri siitä, mihin se jäi.",
+  "config.enabled": "Varmuuskopioi BombVaultin asetukset",
+  "config.enabledHint": "Sisällytä BombVaultin oma /config alla olevaan aikatauluun.",
+  "config.path": "Varmuuskopion sijainti",
+  "config.pathHint": "Suhteellinen alipolku host-liitoksen juuren alla, johon konfiguraatiorepo kirjoitetaan.",
+  "config.schedule": "Aikataulu",
+  "config.schedulePlaceholder": "off · esim. daily 03:30",
+  "config.scheduleHint": "Milloin asetukset varmuuskopioidaan automaattisesti. Jätä 'off', jos haluat varmuuskopioida vain pyydettäessä.",
+  "config.offsite": "Etärepo (valinnainen)",
+  "config.offsiteHint": "Monista asetusten varmuuskopio toiseen, etäsijaintiin sijaitsevaan repoon jokaisen paikallisen varmuuskopion jälkeen.",
+  "config.offsiteSchedule": "Etäaikataulu",
+  "config.immutable": "Etärepo on append-only (muuttumaton)",
+  "config.immutableHint": "Ohita etäkarsinta ja kieltäydy etäpoistoista — vastapuoli (append-only) valvoo sitä.",
+  "config.backupTitle": "Varmuuskopioi asetukset nyt",
+  "config.backupHint": "Tallentaa BombVaultin oman /config-hakemiston: asetustietokannan, etätunnukset (rclone.conf) ja SSH-avainparin.",
+  "config.backupNow": "Varmuuskopioi asetukset nyt",
+  "config.backingUp": "Varmuuskopioidaan…",
+  "config.snapshotsTitle": "Asetusten varmuuskopiot",
+  "config.snapshotsHint": "Palauttaaksesi nämä asetukset uudelleenrakennetulle palvelimelle käytä Palautus-välilehteä — asetusten palautus käynnistää BombVaultin uudelleen ottaakseen ne käyttöön, joten se sijaitsee siellä muun katastrofista toipumisen kulun kanssa.",
+  "config.none": "Ei vielä asetusten varmuuskopioita — suorita varmuuskopio yllä.",
+
+  // Recovery — restore BombVault's own settings step
+  "recovery.stepConfig": "Palauta BombVaultin omat asetukset",
+  "recovery.configHint": "Uudelleenrakennetulla palvelimella palauta ensin BombVaultin omat asetukset — sen varmuuskopiopolut, etäkohteet ja tunnukset — jotta alla olevat vaiheet tulevat esitäytettyinä. Osoita se aiemmin määrittämääsi asetusten varmuuskopioon. Eikö asetusten varmuuskopiota ole? Ohita tämä ja liitä varmuuskopiosi manuaalisesti alla.",
+  "recovery.configAppKeyReminder": "APP_KEY:si on täsmättävä tämän varmuuskopion kanssa — se on yllä olevan vaiheen 1 tarkistus.",
+  "recovery.configSourceLabel": "Missä asetusten varmuuskopio on?",
+  "recovery.configLocalPath": "Paikallinen polku",
+  "recovery.configOffsiteUrl": "Etärepon URL",
+  "recovery.configRestore": "Palauta BombVaultin asetukset",
+  "recovery.configRestoring": "Palautetaan…",
+  "recovery.configRestarting": "BombVault käynnistyy uudelleen ottaakseen asetuksesi käyttöön… tämä sivu latautuu automaattisesti uudelleen, kun se palaa.",
+  "recovery.configManualRestart": "Asetuksesi on valmisteltu. Käynnistä BombVault-kontti uudelleen Unraidissa ja jatka sitten — ne otetaan käyttöön seuraavalla käynnistyksellä.",
+  "recovery.configReloadWhenBack": "BombVaultin paluu kestää odotettua kauemmin. Lataa tämä sivu uudelleen, kun se on taas käynnissä, ladataksesi palautetut asetuksesi.",
+  "recovery.configReload": "Lataa uudelleen nyt",
+  "recovery.configSkip": "Ohita — minulla ei ole asetusten varmuuskopiota",
+  "recovery.configSkipped": "Ohitettu. Liitä varmuuskopiosi manuaalisesti alla.",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "Etäkaistanleveys",
   "settings.limitUpload": "Lähetysraja (KiB/s)",
@@ -511,6 +554,7 @@ const fi: Partial<Translations> = {
   "dashboard.domainContainers": "Kontit",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Konfiguraatio",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Varmuuskopioiden kunto",

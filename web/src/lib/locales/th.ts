@@ -17,6 +17,7 @@ const th: Partial<Translations> = {
   "nav.advanced": "ขั้นสูง",
   "nav.comingSoon": "เร็วๆ นี้",
   "nav.recovery": "การกู้คืน",
+  "nav.config": "คอนฟิก",
 
   // Dashboard
   "dashboard.title": "แดชบอร์ด",
@@ -145,6 +146,7 @@ const th: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "การกำหนดค่าแอป",
   "settings.schedule": "ตารางเวลา",
   "settings.scheduleOff": "ปิด",
   "settings.language": "ภาษา",
@@ -470,6 +472,47 @@ const th: Partial<Translations> = {
   "recovery.freshNudge": "กำลังกู้คืนจากเซิร์ฟเวอร์เดิมหรือการสร้างใหม่? กู้คืนการสำรองข้อมูลที่มีอยู่ของคุณ",
   "recovery.freshNudgeCta": "ไปที่การกู้คืน",
 
+  // Recovery — restore BombVault's own settings (config)
+  "recovery.stepConfig": "กู้คืนการตั้งค่าของ BombVault เอง",
+  "recovery.configHint": "บนเซิร์ฟเวอร์ที่สร้างใหม่ ให้กู้คืนการตั้งค่าของ BombVault เองก่อน — พาธการสำรองข้อมูล เป้าหมายนอกสถานที่ และข้อมูลรับรอง — เพื่อให้ขั้นตอนด้านล่างถูกกรอกไว้ล่วงหน้า ชี้ไปยังการสำรองข้อมูลการตั้งค่าที่คุณตั้งไว้ก่อนหน้านี้ ไม่มีการสำรองข้อมูลการตั้งค่า? ข้ามขั้นตอนนี้แล้วแนบการสำรองข้อมูลของคุณด้วยตนเองด้านล่าง",
+  "recovery.configAppKeyReminder": "APP_KEY ของคุณต้องตรงกับการสำรองข้อมูลนี้ — นั่นคือการตรวจสอบในขั้นตอนที่ 1 ด้านบน",
+  "recovery.configSourceLabel": "การสำรองข้อมูลการตั้งค่าอยู่ที่ไหน?",
+  "recovery.configLocalPath": "พาธในเครื่อง",
+  "recovery.configOffsiteUrl": "URL รีพอสิทอรีนอกสถานที่",
+  "recovery.configRestore": "กู้คืนการตั้งค่าของ BombVault",
+  "recovery.configRestoring": "กำลังกู้คืน…",
+  "recovery.configRestarting": "BombVault กำลังรีสตาร์ทเพื่อใช้การตั้งค่าของคุณ… หน้านี้จะโหลดใหม่โดยอัตโนมัติเมื่อกลับมา",
+  "recovery.configManualRestart": "การตั้งค่าของคุณเตรียมพร้อมแล้ว รีสตาร์ทคอนเทนเนอร์ BombVault ใน Unraid แล้วดำเนินการต่อ — จะมีผลเมื่อบูตครั้งถัดไป",
+  "recovery.configReloadWhenBack": "BombVault ใช้เวลานานกว่าที่คาดในการกลับมา โหลดหน้านี้ใหม่เมื่อมันพร้อมเพื่อโหลดการตั้งค่าที่กู้คืนของคุณ",
+  "recovery.configReload": "โหลดใหม่เดี๋ยวนี้",
+  "recovery.configSkip": "ข้าม — ฉันไม่มีการสำรองข้อมูลการตั้งค่า",
+  "recovery.configSkipped": "ข้ามแล้ว แนบการสำรองข้อมูลของคุณด้วยตนเองด้านล่าง",
+
+  // Config Backup page
+  "config.title": "สำรองข้อมูลคอนฟิก",
+  "config.subtitle": "สำรองการตั้งค่าของ BombVault เอง เพื่อให้เซิร์ฟเวอร์ที่สร้างใหม่สามารถกู้คืนตัวเองได้",
+  "config.settingsTitle": "การตั้งค่าการสำรองข้อมูลคอนฟิก",
+  "config.settingsHint": "ปกป้องการกำหนดค่าของ BombVault เอง — ฐานข้อมูลการตั้งค่า ข้อมูลรับรองนอกสถานที่ และคีย์ SSH — เพื่อให้การติดตั้งใหม่สามารถกู้คืนตัวเองและทำงานต่อจากจุดที่ค้างไว้ได้ทันที",
+  "config.enabled": "สำรองข้อมูลการตั้งค่าของ BombVault",
+  "config.enabledHint": "รวม /config ของ BombVault เองไว้ในตารางเวลาด้านล่าง",
+  "config.path": "ตำแหน่งสำรองข้อมูล",
+  "config.pathHint": "พาธย่อยแบบสัมพัทธ์ภายใต้รากการเมานต์ของโฮสต์ที่จะเขียนรีพอสิทอรีคอนฟิก",
+  "config.schedule": "ตารางเวลา",
+  "config.schedulePlaceholder": "off · เช่น daily 03:30",
+  "config.scheduleHint": "เวลาที่จะสำรองข้อมูลการตั้งค่าโดยอัตโนมัติ ปล่อยไว้เป็น 'off' เพื่อสำรองข้อมูลตามต้องการเท่านั้น",
+  "config.offsite": "รีพอสิทอรีนอกสถานที่ (ไม่บังคับ)",
+  "config.offsiteHint": "จำลองการสำรองข้อมูลคอนฟิกไปยังรีพอสิทอรีนอกสถานที่ที่สองหลังการสำรองข้อมูลในเครื่องแต่ละครั้ง",
+  "config.offsiteSchedule": "ตารางเวลานอกสถานที่",
+  "config.immutable": "รีพอสิทอรีนอกสถานที่เป็นแบบ append-only (เปลี่ยนแปลงไม่ได้)",
+  "config.immutableHint": "ข้ามการพรูนนอกสถานที่และปฏิเสธการลบนอกสถานที่ — ฝั่งปลายทาง (append-only) เป็นผู้บังคับใช้",
+  "config.backupTitle": "สำรองข้อมูลการตั้งค่าเดี๋ยวนี้",
+  "config.backupHint": "บันทึก /config ของ BombVault เอง: ฐานข้อมูลการตั้งค่า ข้อมูลรับรองนอกสถานที่ (rclone.conf) และคู่คีย์ SSH",
+  "config.backupNow": "สำรองข้อมูลการตั้งค่าเดี๋ยวนี้",
+  "config.backingUp": "กำลังสำรองข้อมูล…",
+  "config.snapshotsTitle": "การสำรองข้อมูลการตั้งค่า",
+  "config.snapshotsHint": "หากต้องการกู้คืนการตั้งค่าเหล่านี้ไปยังเซิร์ฟเวอร์ที่สร้างใหม่ ให้ใช้แท็บการกู้คืน — การกู้คืนการตั้งค่าจะรีสตาร์ท BombVault เพื่อนำไปใช้ ดังนั้นมันจึงอยู่ที่นั่นพร้อมกับส่วนที่เหลือของกระบวนการกู้คืนจากภัยพิบัติ",
+  "config.none": "ยังไม่มีการสำรองข้อมูลการตั้งค่า — เรียกใช้การสำรองข้อมูลด้านบน",
+
   // Off-site bandwidth
   "settings.offsiteLimits": "แบนด์วิดท์นอกสถานที่",
   "settings.limitUpload": "ขีดจำกัดการอัปโหลด (KiB/s)",
@@ -514,6 +557,7 @@ const th: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "คอนฟิก",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "สุขภาพการสำรองข้อมูล",
