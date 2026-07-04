@@ -1132,6 +1132,9 @@ export function SettingsPage() {
 
   const [pathSaveState, setPathSaveState] = useState<SaveState>("idle");
   const [pathSaveError, setPathSaveError] = useState<string | null>(null);
+  // Flash zip export (#28) — its own save state, persisted via the shared save().
+  const [flashZipSaveState, setFlashZipSaveState] = useState<SaveState>("idle");
+  const [flashZipSaveError, setFlashZipSaveError] = useState<string | null>(null);
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
   const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
@@ -1421,6 +1424,86 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Flash zip export (#28) — a plain .zip written after each flash      */}
+      {/* backup, for off-server sync. Only relevant when Flash is enabled.   */}
+      {/* ------------------------------------------------------------------ */}
+      {settings.flashEnabled && (
+      <Card title={t("flash.zipExport.title")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.hint")}</p>
+        <ToggleRow
+          label={t("flash.zipExport.enable")}
+          description={t("flash.zipExport.enableHint")}
+          checked={settings.flashZipExportEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, flashZipExportEnabled: v } : prev)
+          }
+        />
+        {settings.flashZipExportEnabled && (
+          <>
+            <FolderBrowser
+              label={t("flash.zipExport.path")}
+              value={settings.flashZipExportPath}
+              hostMountRoot={hostMountRoot}
+              onChange={(v) =>
+                setSettings((prev) => prev ? { ...prev, flashZipExportPath: v } : prev)
+              }
+            />
+            <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.pathHint")}</p>
+            <ToggleRow
+              label={t("flash.zipExport.keepHistory")}
+              description={t("flash.zipExport.keepHistoryHint")}
+              // History is "on" whenever we keep more than a single overwritten zip.
+              // Turning it on restores the previous count (or defaults to 7); off
+              // collapses back to 0 = a single flash-latest.zip.
+              checked={settings.flashZipExportKeep > 0}
+              onChange={(v) =>
+                setSettings((prev) =>
+                  prev
+                    ? { ...prev, flashZipExportKeep: v ? (prev.flashZipExportKeep > 0 ? prev.flashZipExportKeep : 7) : 0 }
+                    : prev
+                )
+              }
+            />
+            {settings.flashZipExportKeep > 0 ? (
+              <label className="flex flex-col gap-1 max-w-[10rem]">
+                <span className="text-xs text-carbon-textSub">{t("flash.zipExport.keepN")}</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={settings.flashZipExportKeep}
+                  onChange={(e) => {
+                    const n = Math.max(1, parseInt(e.target.value, 10) || 1);
+                    setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
+                  }}
+                  className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+                />
+                <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
+              </label>
+            ) : (
+              <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
+            )}
+          </>
+        )}
+        <SaveBar
+          state={flashZipSaveState}
+          error={flashZipSaveError}
+          onSave={() =>
+            void save(
+              {
+                flashZipExportEnabled: settings.flashZipExportEnabled,
+                flashZipExportPath: settings.flashZipExportPath,
+                flashZipExportKeep: settings.flashZipExportKeep,
+              },
+              setFlashZipSaveState,
+              setFlashZipSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Off-site copy (restic copy replication)                            */}

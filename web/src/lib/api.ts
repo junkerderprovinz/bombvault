@@ -88,6 +88,13 @@ export interface Settings {
   flashPath: string;
   configPath: string;
   restoreFolder: string;
+  // Flash zip export (#28): after each flash backup, also write the snapshot out
+  // as a plain .zip to this folder for off-server sync. Keep=0 → a single
+  // flash-latest.zip that's overwritten; Keep=N → keep the newest N timestamped
+  // flash-<date>.zip files.
+  flashZipExportEnabled: boolean;
+  flashZipExportPath: string;
+  flashZipExportKeep: number;
   containersOffsite: string;
   vmsOffsite: string;
   flashOffsite: string;
