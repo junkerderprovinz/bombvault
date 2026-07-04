@@ -635,6 +635,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
           placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
       </label>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
 
       {/* Email (SMTP), sent via the configured mail server. */}
       <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
