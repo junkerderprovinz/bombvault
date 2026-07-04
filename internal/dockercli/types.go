@@ -38,6 +38,11 @@ type Docker interface {
 	Allocations(ctx context.Context) ([]model.Allocation, error)
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 	Start(ctx context.Context, name string) error
+	// Restart asks the daemon to restart the named container (stop then start).
+	// The daemon performs both halves even if THIS process is killed during the
+	// stop, so it is the robust way for BombVault to relaunch its OWN container
+	// after staging a config restore (no dependency on a --restart policy).
+	Restart(ctx context.Context, name string, timeout time.Duration) error
 	// WaitRunning blocks until the named container reports Running, or until
 	// timeout. Used after restarting a backed-up container so its network-namespace
 	// dependents (network_mode: container:<ref>) can attach to a live target.

@@ -46,6 +46,7 @@ type fakeServiceDocker struct {
 
 	stopErr       error
 	startErr      error
+	restartErr    error
 	removeErr     error
 	pullErr       error
 	createErr     error
@@ -80,6 +81,11 @@ func (f *fakeServiceDocker) Start(_ context.Context, name string) error {
 	f.calls = append(f.calls, "start:"+name)
 	f.started = true
 	return f.startErr
+}
+
+func (f *fakeServiceDocker) Restart(_ context.Context, name string, _ time.Duration) error {
+	f.calls = append(f.calls, "restart:"+name)
+	return f.restartErr
 }
 
 func (f *fakeServiceDocker) WaitRunning(_ context.Context, name string, _ time.Duration) error {

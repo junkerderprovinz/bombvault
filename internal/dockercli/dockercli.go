@@ -159,6 +159,19 @@ func (c *Client) Start(ctx context.Context, name string) error {
 	return nil
 }
 
+// Restart asks the daemon to restart the named container (stop then start). Used
+// for BombVault's own restart-to-apply after a config restore: the daemon does
+// both halves even though THIS process is killed during the stop, so it is the
+// robust way to relaunch ourselves (no dependency on a --restart policy). The
+// grace period is expressed in whole seconds, mirroring Stop.
+func (c *Client) Restart(ctx context.Context, name string, timeout time.Duration) error {
+	secs := int(timeout.Seconds())
+	if err := c.api.ContainerRestart(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
+		return fmt.Errorf("dockercli: restart %q: %w", name, err)
+	}
+	return nil
+}
+
 // WaitRunning polls until the named container reports Running, or until timeout.
 // ContainerStart returns as soon as the daemon accepts the request, before the
 // container is actually up; a dependent that shares this container's network
