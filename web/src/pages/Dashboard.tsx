@@ -1232,9 +1232,12 @@ export function Dashboard() {
       {/* Protection (RPO) status — "are my backups current?" indicator */}
       <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} />
 
-      {/* Ransomware protection — off-site immutability scorecard (only rendered
-          when at least one enabled domain has a protection posture) */}
-      <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />
+      {/* Ransomware protection — off-site immutability scorecard (advanced-gated;
+          shown only in Advanced view, and only when at least one enabled domain
+          has a protection posture) */}
+      {advanced && (
+        <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />
+      )}
 
       {/* 2-column grid for last backups + run history */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -1248,7 +1251,7 @@ export function Dashboard() {
       {/* Storage — repo size + dedup trend per domain — full width */}
       <StorageCard t={t} />
 
-      {/* Spike (host-integration) status is the only advanced-gated dashboard card. */}
+      {/* Spike (host-integration) status — advanced-gated, like the ransomware card. */}
       {advanced && <SpikeCard t={t} />}
     </div>
   );
