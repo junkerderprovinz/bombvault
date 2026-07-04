@@ -322,27 +322,19 @@ export function Sidebar({ settings }: SidebarProps) {
       {/* Bottom group: language, then dark/light, then advanced, then settings */}
       <div className="flex flex-col gap-1 p-3 border-t border-carbon-border">
         <SidebarControls />
-        {/* Advanced mode — a proper switch, above Settings; reveals expert
-            controls across the app (per-browser preference). */}
-        <button
-          role="switch"
-          aria-checked={advanced}
-          onClick={() => setAdvanced(!advanced)}
-          className="flex items-center justify-start gap-2.5 px-3.5 py-1.5 rounded-lg text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors select-none"
-        >
-          <span
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-              advanced ? "bg-accent" : "bg-carbon-surface3"
-            }`}
-          >
-            <span
-              className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                advanced ? "translate-x-[18px]" : "translate-x-[3px]"
-              }`}
-            />
-          </span>
+        {/* Advanced mode — a checkbox above Settings; reveals expert controls
+            across the app (per-browser preference). Styled like the language /
+            theme / Settings rows so the label matches their font. */}
+        <label className={`${navBase} ${navInactive} w-full cursor-pointer`}>
+          <input
+            type="checkbox"
+            checked={advanced}
+            onChange={() => setAdvanced(!advanced)}
+            className="h-[18px] w-[18px] shrink-0"
+            style={{ accentColor: "var(--accent)" }}
+          />
           <span>{t("nav.advanced")}</span>
-        </button>
+        </label>
         <NavItem
           to="/settings"
           label={t("nav.settings")}
