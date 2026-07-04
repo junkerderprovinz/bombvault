@@ -88,6 +88,29 @@ func TestNotifyBackupUnraidSkippedWithoutSSH(t *testing.T) {
 	s.notifyBackup(context.Background(), "flash", "", true, backup.Summary{}, nil) // must not panic
 }
 
+// TestNotifyBackupConfigLabel: the singleton config domain (no per-item name) must
+// render a clean human label ("BombVault configuration"), never the empty-quote
+// `config ""` a generic "%s %q" format would produce.
+func TestNotifyBackupConfigLabel(t *testing.T) {
+	ssh := &fakeHostSSH{}
+	s := unraidNotifyService(t, ssh)
+	if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	s.notifyBackup(context.Background(), "config", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	if len(ssh.runs) != 1 {
+		t.Fatalf("expected 1 Unraid notify for a config backup, got %d", len(ssh.runs))
+	}
+	joined := strings.Join(ssh.runs[0], " ")
+	if !strings.Contains(joined, "BombVault configuration") {
+		t.Fatalf("config backup should use the clean label: %v", ssh.runs[0])
+	}
+	if strings.Contains(joined, `config ""`) {
+		t.Fatalf("config backup must not render the empty-quote label: %v", ssh.runs[0])
+	}
+}
+
 // TestTestNotifyUnraid: the Test button path sends a test through the Unraid
 // channel over SSH.
 func TestTestNotifyUnraid(t *testing.T) {

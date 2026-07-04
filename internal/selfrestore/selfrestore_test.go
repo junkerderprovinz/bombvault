@@ -131,6 +131,56 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	}
 }
 
+// TestApplyPendingRejectsTruncatedDB: a staged DB whose SQLite HEADER is intact but
+// whose pages have been truncated away must be rejected — proving validSQLite runs a
+// real integrity scan (PRAGMA quick_check), not a header-only probe. Such a file
+// opens fine yet is not a usable database; swapping it over the live settings DB
+// would destroy it. The live DB must be left untouched and the bad staging moved
+// aside to <root>.bad.
+func TestApplyPendingRejectsTruncatedDB(t *testing.T) {
+	dataDir := newDataDir(t)
+
+	live := filepath.Join(dataDir, "bombvault.sqlite")
+	writeSQLiteMarker(t, live, "OLD")
+
+	staged := selfrestore.RestoredSnapshotDir(dataDir)
+	if err := os.MkdirAll(staged, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	stagedDB := filepath.Join(staged, "bombvault.sqlite")
+	// Build a real, valid multi-page SQLite DB, then truncate it so the header
+	// survives but the data pages are gone — a header-only check would wrongly pass.
+	writeSQLiteMarker(t, stagedDB, "NEW")
+	if fi, err := os.Stat(stagedDB); err != nil {
+		t.Fatal(err)
+	} else if fi.Size() <= 200 {
+		t.Fatalf("expected a multi-page DB to truncate; got only %d bytes", fi.Size())
+	}
+	if err := os.Truncate(stagedDB, 200); err != nil {
+		t.Fatal(err)
+	}
+	if err := selfrestore.WriteMarker(dataDir); err != nil {
+		t.Fatal(err)
+	}
+
+	applied, err := selfrestore.ApplyPending(dataDir)
+	if applied {
+		t.Fatal("must NOT apply a truncated (header-valid but incomplete) staged DB")
+	}
+	if err == nil {
+		t.Fatal("expected an error describing the invalid staged DB")
+	}
+	if got := readSQLiteMarker(t, live); got != "OLD" {
+		t.Fatalf("live DB was modified: marker=%q, want OLD", got)
+	}
+	if _, err := os.Stat(selfrestore.MarkerPath(dataDir)); !os.IsNotExist(err) {
+		t.Fatalf("marker not cleared after truncated staging: %v", err)
+	}
+	if _, err := os.Stat(selfrestore.StagingRoot(dataDir) + ".bad"); err != nil {
+		t.Fatalf("bad staging not preserved as .bad: %v", err)
+	}
+}
+
 // TestApplyPendingNoMarkerIsNoop: with no pending marker, ApplyPending does
 // nothing and reports applied=false, err=nil (the ordinary boot path).
 func TestApplyPendingNoMarkerIsNoop(t *testing.T) {

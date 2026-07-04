@@ -51,7 +51,7 @@ var tamperHTTPClient = &http.Client{
 // protected→unprotected flip fires a protection-loss notification.
 func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdict, error) {
 	switch domain {
-	case "containers", "vms", "flash":
+	case "containers", "vms", "flash", "config":
 	default:
 		return TamperVerdict{}, fmt.Errorf("unknown domain %q", domain)
 	}
