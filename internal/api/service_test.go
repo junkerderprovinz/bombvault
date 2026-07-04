@@ -21,6 +21,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
@@ -3907,6 +3908,53 @@ func TestBackupConfigEndToEnd(t *testing.T) {
 		t.Fatalf("LastSuccessfulConfigBackup: %v", lErr)
 	} else if ts.IsZero() {
 		t.Fatal("no successful config run recorded")
+	}
+}
+
+// TestRestoreConfigStagesAndWritesMarker verifies RestoreConfig STAGES a config
+// restore rather than overwriting the live DB: it restic-restores the config
+// snapshot subtree (<DataDir>/.snapshot) into the staging root and writes the
+// boot-swap marker. It does NOT touch the live DB (that swap happens on the next
+// boot via selfrestore.ApplyPending).
+func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.RestoreConfig(context.Background(), "", "local"); err != nil {
+		t.Fatalf("RestoreConfig: %v", err)
+	}
+
+	// The boot-swap marker must be written so the next restart applies the restore.
+	if _, err := os.Stat(selfrestore.MarkerPath(dir)); err != nil {
+		t.Fatalf("restore marker not written: %v", err)
+	}
+	// RestoreInclude must be called with the config snapshot source (<DataDir>/.snapshot)
+	// as the include path and the staging root as the target — the exact pairing the
+	// boot swap relies on to find the restored subtree.
+	wantInclude := filepath.Join(dir, ".snapshot")
+	wantTarget := selfrestore.StagingRoot(dir)
+	found := false
+	for _, r := range eng.restored {
+		if strings.HasSuffix(r, ":"+wantInclude+"->"+wantTarget) {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("RestoreInclude not called with %q -> %q; recorded=%v", wantInclude, wantTarget, eng.restored)
+	}
+	// The live DB must be left untouched by the staging step.
+	if _, err := os.Stat(filepath.Join(dir, "bombvault.sqlite")); !os.IsNotExist(err) {
+		t.Fatalf("live DB should not be created/touched by staging; stat err=%v", err)
 	}
 }
 

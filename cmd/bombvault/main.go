@@ -18,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/sshconn"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -63,6 +64,16 @@ func run() error {
 	// layer and settings/targets/password silently reset on every restart.
 	if err := ensureDataDirWritable(cfg.DataDir); err != nil {
 		return err
+	}
+
+	// Apply any staged config self-restore BEFORE the DB is opened — the only safe
+	// moment to swap BombVault's own settings database, which the running process
+	// otherwise holds open (WAL). Fail-safe: on any error the boot continues on the
+	// existing live DB (ApplyPending has already cleared the pending state).
+	if applied, err := selfrestore.ApplyPending(cfg.DataDir); err != nil {
+		log.Printf("selfrestore: %v", err) // fail-safe: boot continues on the live DB
+	} else if applied {
+		log.Printf("selfrestore: applied a staged config restore; booting on the restored settings")
 	}
 
 	db, err := store.Open(cfg.DBPath)
