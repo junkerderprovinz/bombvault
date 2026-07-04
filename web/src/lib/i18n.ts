@@ -601,6 +601,18 @@ const en = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore downloads a ZIP of the snapshot — the running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
   "flash.none": "No flash backups yet — run a backup above.",
+  // Scheduled flash zip export (#28): a plain .zip written to a folder after each flash backup.
+  "flash.zipExport.title": "Flash zip export",
+  "flash.zipExport.hint": "After each flash backup, also write the snapshot out as a plain .zip to a folder — ready for off-server sync (Syncthing, rclone, a cloud drive).",
+  "flash.zipExport.enable": "Export a zip after each flash backup",
+  "flash.zipExport.enableHint": "Every time a flash backup succeeds, the snapshot is written as a .zip to the folder below.",
+  "flash.zipExport.path": "Export folder",
+  "flash.zipExport.pathHint": "Relative subpath under the host mount root where the .zip lands — point it at a Syncthing/rclone folder to get the flash off the server automatically.",
+  "flash.zipExport.keepHistory": "Keep history",
+  "flash.zipExport.keepHistoryHint": "Off: keep a single flash-latest.zip that's overwritten each time. On: keep the newest N timestamped flash-<date>.zip files.",
+  "flash.zipExport.keepN": "Zips to keep",
+  "flash.zipExport.keepNHint": "The newest N timestamped zips are kept; older ones are deleted automatically.",
+  "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
 
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
@@ -1280,6 +1292,18 @@ const de: Translations = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter — der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen.",
   "flash.none": "Noch keine Flash-Backups — oben eines starten.",
+  // Geplanter Flash-ZIP-Export (#28): ein einfaches .zip, das nach jedem Flash-Backup in einen Ordner geschrieben wird.
+  "flash.zipExport.title": "Flash-ZIP-Export",
+  "flash.zipExport.hint": "Nach jedem Flash-Backup den Snapshot zusätzlich als einfaches .zip in einen Ordner schreiben — bereit für Off-Server-Sync (Syncthing, rclone, ein Cloud-Laufwerk).",
+  "flash.zipExport.enable": "Nach jedem Flash-Backup ein ZIP exportieren",
+  "flash.zipExport.enableHint": "Bei jedem erfolgreichen Flash-Backup wird der Snapshot als .zip in den Ordner unten geschrieben.",
+  "flash.zipExport.path": "Export-Ordner",
+  "flash.zipExport.pathHint": "Relativer Unterpfad unter dem Host-Mount-Root, in den das .zip geschrieben wird — auf einen Syncthing-/rclone-Ordner zeigen lassen, um den Flash automatisch vom Server zu bekommen.",
+  "flash.zipExport.keepHistory": "Verlauf behalten",
+  "flash.zipExport.keepHistoryHint": "Aus: eine einzige flash-latest.zip behalten, die jedes Mal überschrieben wird. An: die neuesten N flash-<Datum>.zip-Dateien mit Zeitstempel behalten.",
+  "flash.zipExport.keepN": "Zu behaltende ZIPs",
+  "flash.zipExport.keepNHint": "Die neuesten N ZIPs mit Zeitstempel werden behalten, ältere automatisch gelöscht.",
+  "flash.zipExport.latestNote": "Eine einzige flash-latest.zip wird nach jedem Backup überschrieben.",
 
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.
