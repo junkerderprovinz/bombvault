@@ -18,6 +18,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -409,6 +411,19 @@ func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
 // configRepoPath resolves the restic repo for the config self-backup domain.
 func (s *Service) configRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.ConfigPath)
+}
+
+// flashZipExportDir resolves the operator-configured output folder for the
+// scheduled flash zip export. Unlike flashRepoPath (which, via resolveRepo, may
+// hand a remote-backend string like "s3:…" straight to restic), this is always a
+// plain LOCAL folder, so it applies only the containment half of resolveRepo:
+// paths.Resolve(HostMountRoot, …), which rejects absolute paths and traversal.
+func (s *Service) flashZipExportDir(settings store.Settings) (string, error) {
+	dir, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashZipExportPath)
+	if err != nil {
+		return "", fmt.Errorf("flash zip export: resolve path: %w", err)
+	}
+	return dir, nil
 }
 
 // configSnapshotDir is the staging directory for the config self-backup — a
@@ -4248,7 +4263,83 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	s.applyRetention(ctx, repo, settings, mode)
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
 	s.maybeCollectStats(ctx, "flash")
+	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
+		log.Printf("flash zip export failed (backup is still valid): %v", err)
+	}
 	return sum, nil
+}
+
+// flashZipRe matches ONLY the timestamped export filenames pruneFlashZips is
+// allowed to delete (flash-<YYYYMMDD>-<HHMMSS>.zip). flash-latest.zip and any
+// unrelated file the operator drops in the folder never match, so they survive.
+var flashZipRe = regexp.MustCompile(`^flash-\d{8}-\d{6}\.zip$`)
+
+// exportFlashZip writes the just-backed-up flash snapshot to the configured
+// folder as a plain .zip, for off-server sync (Syncthing etc.). It is non-fatal:
+// any failure is returned to the caller (BackupFlash logs it) and never fails the
+// backup itself. The write is atomic — a temp file is renamed into place — so a
+// sync tool never sees a half-written zip.
+func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, snapshotID string, mode restic.Mode, repo string) error {
+	if !settings.FlashZipExportEnabled || settings.FlashZipExportPath == "" {
+		return nil
+	}
+	dir, err := s.flashZipExportDir(settings)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // G301: operator-configured sync folder must be readable by the off-server sync tool
+		return fmt.Errorf("flash zip export: mkdir: %w", err)
+	}
+	tmp := filepath.Join(dir, ".flash-export.tmp.zip")
+	f, err := os.Create(tmp) //nolint:gosec // G304: dir is an operator-configured path under the host mount root
+	if err != nil {
+		return fmt.Errorf("flash zip export: create temp: %w", err)
+	}
+	dumpErr := s.engine.DumpZip(ctx, repo, snapshotID, s.cfg.FlashDir, f, mode)
+	closeErr := f.Close()
+	if dumpErr != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("flash zip export: dump: %w", dumpErr)
+	}
+	if closeErr != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("flash zip export: close temp: %w", closeErr)
+	}
+	name := "flash-latest.zip"
+	if settings.FlashZipExportKeep > 0 {
+		name = "flash-" + time.Now().Format("20060102-150405") + ".zip"
+	}
+	if err := os.Rename(tmp, filepath.Join(dir, name)); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("flash zip export: finalize: %w", err)
+	}
+	if settings.FlashZipExportKeep > 0 {
+		s.pruneFlashZips(dir, settings.FlashZipExportKeep)
+	}
+	return nil
+}
+
+// pruneFlashZips keeps the newest `keep` timestamped flash-*.zip files, deleting
+// older ones. Best-effort; only files matching the exact flash-<ts>.zip pattern
+// are ever touched (flash-latest.zip and unrelated files are left alone).
+func (s *Service) pruneFlashZips(dir string, keep int) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	var zips []string
+	for _, e := range entries {
+		if !e.IsDir() && flashZipRe.MatchString(e.Name()) {
+			zips = append(zips, e.Name())
+		}
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(zips))) // timestamp names sort chronologically → newest first
+	if keep >= len(zips) {
+		return
+	}
+	for _, name := range zips[keep:] {
+		_ = os.Remove(filepath.Join(dir, name))
+	}
 }
 
 // resticAdapter also satisfies the config domain's backup surface.
