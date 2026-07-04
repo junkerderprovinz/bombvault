@@ -417,6 +417,8 @@ const el: Partial<Translations> = {
   "notify.matrixRoom": "ID δωματίου",
   "notify.healthchecks": "URL ping Healthchecks.io",
   "notify.healthchecksLifecycle": "Το Healthchecks δέχεται ping σε όλον τον κύκλο ζωής του αντιγράφου — έναρξη, επιτυχία και αποτυχία — όποτε έχει οριστεί URL, ανεξάρτητα από τη ρύθμιση 'Ειδοποίηση' παραπάνω, ώστε ο έλεγχος να παραμένει πράσινος στην επιτυχία ακόμη και με ειδοποιήσεις μόνο σε αποτυχία.",
+  "notify.hcPerDomain": "Έλεγχοι ανά τομέα (για προχωρημένους)",
+  "notify.hcPerDomainHint": "Αφήστε ένα πεδίο κενό για να χρησιμοποιήσετε το γενικό URL παραπάνω. Ένας τομέας με δικό του URL αποκτά δικό του έλεγχο, με δικό του χρόνο εκτέλεσης και ιστορικό.",
   "notify.unraid": "Ειδοποιήσεις Unraid",
   "notify.unraidHint": "Αποστολή στο σύστημα ειδοποιήσεων του Unraid (που μπορεί να προωθεί σε Pushover, email, Discord …). Απαιτεί ρυθμισμένη σύνδεση SSH (Ρυθμίσεις → VM Backup over SSH).",
   "notify.save": "Αποθήκευση",

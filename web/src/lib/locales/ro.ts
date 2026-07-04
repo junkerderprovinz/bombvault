@@ -415,6 +415,8 @@ const ro: Partial<Translations> = {
   "notify.matrixRoom": "ID cameră",
   "notify.healthchecks": "URL ping Healthchecks.io",
   "notify.healthchecksLifecycle": "Healthchecks primește ping pe tot parcursul ciclului de viață al backupului — pornire, succes și eșec — de îndată ce este setat un URL, independent de setarea 'Notifică' de mai sus, astfel încât verificarea rămâne verde la succes chiar și cu notificări doar la eșec.",
+  "notify.hcPerDomain": "Verificări pe domeniu (avansat)",
+  "notify.hcPerDomainHint": "Lasă un câmp gol pentru a folosi URL-ul global de mai sus. Un domeniu cu propriul URL primește propria verificare, cu propriul timp de execuție și istoric.",
   "notify.unraid": "Notificări Unraid",
   "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord …). Necesită conexiunea SSH configurată (Setări → VM Backup over SSH).",
   "notify.save": "Salvează",
