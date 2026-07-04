@@ -1841,6 +1841,33 @@ func (s *Service) SelfContainerName(ctx context.Context) string {
 	return s.selfContainerName(ctx)
 }
 
+// selfRestartDelay is the brief pause before BombVault restarts its own container,
+// so the HTTP response for the triggering request flushes to the client first.
+// A package var (not a const) so tests can shrink it.
+var selfRestartDelay = 1500 * time.Millisecond
+
+// ScheduleSelfRestart restarts BombVault's own container over the Docker socket
+// shortly after returning, so a staged config restore is applied on the reboot
+// (the daemon completes the stop+start even though this process dies mid-stop).
+// It returns whether an auto-restart was scheduled: false when the self container
+// can't be resolved (Docker unreachable / not in a container), in which case the
+// caller instructs the user to restart the container manually.
+func (s *Service) ScheduleSelfRestart() bool {
+	name := s.selfContainerName(context.Background())
+	if name == "" {
+		return false
+	}
+	go func() {
+		time.Sleep(selfRestartDelay)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := s.docker.Restart(ctx, name, 10*time.Second); err != nil {
+			log.Printf("api: self-restart of %q failed: %v (restart the container manually to apply)", name, err)
+		}
+	}()
+	return true
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
