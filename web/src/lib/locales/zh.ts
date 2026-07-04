@@ -349,6 +349,8 @@ const zh: Partial<Translations> = {
   "flash.zipExport.keepN": "保留的 ZIP 数量",
   "flash.zipExport.keepNHint": "保留最新的 N 个带时间戳的 ZIP；较旧的会被自动删除。",
   "flash.zipExport.latestNote": "每次备份后都会覆盖同一个 flash-latest.zip。",
+  "flash.zipExport.plaintextWarn": "导出的 .zip 不会加密，即使你的 flash 仓库已加密也是如此。只可将其同步到你信任的位置。",
+  "flash.zipExport.pathRequired": "选择一个导出文件夹以开启此功能。",
 
   "vm.method": "方式",
   "vm.method.graceful": "优雅（关机）",

@@ -354,6 +354,8 @@ const ro: Partial<Translations> = {
   "flash.zipExport.keepN": "ZIP-uri de păstrat",
   "flash.zipExport.keepNHint": "Cele mai noi N fișiere ZIP cu marcaj temporal sunt păstrate; cele mai vechi sunt șterse automat.",
   "flash.zipExport.latestNote": "Un singur flash-latest.zip este suprascris după fiecare backup.",
+  "flash.zipExport.plaintextWarn": "Fișierul .zip exportat nu este criptat, chiar dacă depozitul tău Flash este. Sincronizează-l doar către un loc în care ai încredere.",
+  "flash.zipExport.pathRequired": "Alege un folder de export pentru a activa acest lucru.",
 
   // VM backup (SSH)
   "vm.method": "Metodă",

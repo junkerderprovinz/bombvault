@@ -349,6 +349,8 @@ const ja: Partial<Translations> = {
   "flash.zipExport.keepN": "保持する ZIP 数",
   "flash.zipExport.keepNHint": "最新の N 個のタイムスタンプ付き zip が保持され、古いものは自動的に削除されます。",
   "flash.zipExport.latestNote": "単一の flash-latest.zip が毎回のバックアップ後に上書きされます。",
+  "flash.zipExport.plaintextWarn": "エクスポートされた .zip は暗号化されません。フラッシュリポジトリが暗号化されていても同様です。信頼できる場所にのみ同期してください。",
+  "flash.zipExport.pathRequired": "これを有効にするにはエクスポートフォルダーを選択してください。",
 
   "vm.method": "方式",
   "vm.method.graceful": "グレースフル（シャットダウン）",

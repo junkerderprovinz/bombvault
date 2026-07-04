@@ -349,6 +349,8 @@ const ko: Partial<Translations> = {
   "flash.zipExport.keepN": "보관할 zip 수",
   "flash.zipExport.keepNHint": "가장 최근 N개의 타임스탬프가 찍힌 zip이 보관되며, 오래된 것은 자동으로 삭제됩니다.",
   "flash.zipExport.latestNote": "단일 flash-latest.zip이 매 백업 후 덮어쓰기됩니다.",
+  "flash.zipExport.plaintextWarn": "내보낸 .zip은 암호화되지 않습니다. 플래시 리포지토리가 암호화되어 있어도 마찬가지입니다. 신뢰할 수 있는 곳에만 동기화하세요.",
+  "flash.zipExport.pathRequired": "이 기능을 켜려면 내보내기 폴더를 선택하세요.",
 
   "vm.method": "방식",
   "vm.method.graceful": "정상 종료 (셧다운)",

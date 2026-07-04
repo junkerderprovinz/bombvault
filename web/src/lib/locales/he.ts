@@ -356,6 +356,8 @@ const he: Partial<Translations> = {
   "flash.zipExport.keepN": "מספר קובצי zip לשמירה",
   "flash.zipExport.keepNHint": "N קובצי ה-zip העדכניים ביותר עם חותמת זמן נשמרים; הישנים יותר נמחקים אוטומטית.",
   "flash.zipExport.latestNote": "קובץ flash-latest.zip יחיד נדרס אחרי כל גיבוי.",
+  "flash.zipExport.plaintextWarn": "קובץ ה-.zip המיוצא אינו מוצפן, גם אם מאגר ה-flash שלך מוצפן. סנכרן אותו רק למקום שאתה סומך עליו.",
+  "flash.zipExport.pathRequired": "בחר תיקיית ייצוא כדי להפעיל זאת.",
 
   // VM backup (SSH)
   "vm.method": "שיטה",

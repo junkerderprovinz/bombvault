@@ -351,6 +351,8 @@ const uk: Partial<Translations> = {
   "flash.zipExport.keepN": "Скільки ZIP зберігати",
   "flash.zipExport.keepNHint": "Зберігаються найновіші N ZIP з мітками часу; старіші видаляються автоматично.",
   "flash.zipExport.latestNote": "Єдиний flash-latest.zip перезаписується після кожної копії.",
+  "flash.zipExport.plaintextWarn": "Експортований .zip не зашифрований, навіть якщо ваш репозиторій Flash зашифрований. Синхронізуйте його лише в надійне місце.",
+  "flash.zipExport.pathRequired": "Виберіть папку експорту, щоб увімкнути це.",
 
   // VM backup (SSH)
   "vm.method": "Метод",

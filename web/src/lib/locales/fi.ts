@@ -356,6 +356,8 @@ const fi: Partial<Translations> = {
   "flash.zipExport.keepN": "Säilytettävien zipien määrä",
   "flash.zipExport.keepNHint": "N uusinta aikaleimattua zipiä säilytetään; vanhemmat poistetaan automaattisesti.",
   "flash.zipExport.latestNote": "Yksi flash-latest.zip korvataan jokaisen varmuuskopion jälkeen.",
+  "flash.zipExport.plaintextWarn": "Viety .zip ei ole salattu, vaikka flash-repositoriosi olisi. Synkronoi se vain paikkaan, johon luotat.",
+  "flash.zipExport.pathRequired": "Valitse vientikansio ottaaksesi tämän käyttöön.",
 
   // VM backup (SSH)
   "vm.method": "Menetelmä",
