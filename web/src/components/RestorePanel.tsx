@@ -42,12 +42,14 @@ function humanBytes(n: number): string {
   return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
 }
 
-// displayTags drops the internal ownership tag (container:<name>) and shows only
-// any OTHER tags as chips — the ownership tag is an implementation detail every
-// snapshot carries, so showing it would just be noise.
+// displayTags drops internal marker tags and shows only user-facing tags as chips.
+// The ownership tag (container:<name>) is an implementation detail every snapshot
+// carries, and "p1" is an internal orchestrator marker — both are noise in the UI,
+// so they're hidden here. They stay in restic's metadata untouched.
+const INTERNAL_TAGS = new Set(["p1"]);
 function displayTags(snap: Snapshot, containerName: string): string[] {
   const owner = `container:${containerName}`;
-  return (snap.tags ?? []).filter((tg) => tg !== owner);
+  return (snap.tags ?? []).filter((tg) => tg !== owner && !INTERNAL_TAGS.has(tg));
 }
 
 // ---------------------------------------------------------------------------
