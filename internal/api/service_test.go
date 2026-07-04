@@ -3737,6 +3737,37 @@ func TestRecoveryKit(t *testing.T) {
 			t.Error("kit must still contain the manual `restic restore` step")
 		}
 	})
+
+	t.Run("config domain: kit lists the settings-backup repo location", func(t *testing.T) {
+		dir := t.TempDir()
+		appKey := strings.Repeat("f", 64)
+		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.ConfigEnabled = true
+		s.ConfigPath = "backups/config" // resolved under HostMountRoot into the kit
+		s.ConfigOffsite = "rest:https://user@host:8000/bombvault-config"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		if !strings.Contains(kit, "config domain") {
+			t.Error("kit must contain the BombVault settings-backup (config domain) section")
+		}
+		// The resolved local config-repo path is the one bootstrap seed a rebuilt box
+		// needs, so a fresh install can find where its own settings live.
+		if !strings.Contains(kit, "backups/config") {
+			t.Error("kit must list the resolved config repo (local) path")
+		}
+		if !strings.Contains(kit, s.ConfigOffsite) {
+			t.Error("kit must list the config off-site location when one is set")
+		}
+	})
 }
 
 func TestRecoveryKitCredentials(t *testing.T) {
