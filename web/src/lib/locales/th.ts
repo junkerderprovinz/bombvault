@@ -344,6 +344,19 @@ const th: Partial<Translations> = {
   "flash.restoreNote": "การกู้คืนจะดาวน์โหลดไฟล์ ZIP ของสแนปช็อต — /boot ที่กำลังทำงานจะไม่ถูกแตะต้อง วางไฟล์ .zip ลงในตัวสร้าง USB ของ Unraid โดยตรง หรือแตกไฟล์ลงใน USB ใหม่เพื่อสร้างแฟลชของคุณใหม่",
   "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช — เรียกใช้การสำรองข้อมูลด้านบน",
 
+  // Flash zip export
+  "flash.zipExport.title": "ส่งออก ZIP ของแฟลช",
+  "flash.zipExport.hint": "หลังการสำรองข้อมูลแฟลชแต่ละครั้ง ให้เขียนสแนปช็อตออกมาเป็นไฟล์ .zip ธรรมดาไปยังโฟลเดอร์ด้วย — พร้อมสำหรับการซิงค์นอกเซิร์ฟเวอร์ (Syncthing, rclone, ไดรฟ์คลาวด์)",
+  "flash.zipExport.enable": "ส่งออก ZIP หลังการสำรองข้อมูลแฟลชแต่ละครั้ง",
+  "flash.zipExport.enableHint": "ทุกครั้งที่การสำรองข้อมูลแฟลชสำเร็จ สแนปช็อตจะถูกเขียนเป็นไฟล์ .zip ไปยังโฟลเดอร์ด้านล่าง",
+  "flash.zipExport.path": "โฟลเดอร์ส่งออก",
+  "flash.zipExport.pathHint": "พาธย่อยแบบสัมพัทธ์ภายใต้รากการเมานต์ของโฮสต์ที่ไฟล์ .zip จะไปอยู่ — ชี้ไปยังโฟลเดอร์ Syncthing/rclone เพื่อนำแฟลชออกจากเซิร์ฟเวอร์โดยอัตโนมัติ",
+  "flash.zipExport.keepHistory": "เก็บประวัติ",
+  "flash.zipExport.keepHistoryHint": "ปิด: เก็บ flash-latest.zip เพียงไฟล์เดียวที่ถูกเขียนทับทุกครั้ง เปิด: เก็บไฟล์ flash-<วันที่>.zip ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์",
+  "flash.zipExport.keepN": "จำนวน ZIP ที่จะเก็บ",
+  "flash.zipExport.keepNHint": "ระบบจะเก็บไฟล์ ZIP ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์; ไฟล์ที่เก่ากว่าจะถูกลบโดยอัตโนมัติ",
+  "flash.zipExport.latestNote": "flash-latest.zip เพียงไฟล์เดียวจะถูกเขียนทับหลังการสำรองข้อมูลทุกครั้ง",
+
   // VM backup (SSH)
   "vm.method": "วิธีการ",
   "vm.method.graceful": "แบบราบรื่น (ปิดเครื่อง)",

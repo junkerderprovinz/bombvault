@@ -342,6 +342,19 @@ const cs: Partial<Translations> = {
   "flash.restoreNote": "Obnovení stáhne ZIP snímku — běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash.",
   "flash.none": "Zatím žádné zálohy Flash — spusťte zálohu výše.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Export Flash do zip",
+  "flash.zipExport.hint": "Po každé záloze flashe zapiš snímek také jako prostý .zip do složky — připravený pro synchronizaci mimo server (Syncthing, rclone, cloudový disk).",
+  "flash.zipExport.enable": "Exportovat zip po každé záloze flashe",
+  "flash.zipExport.enableHint": "Pokaždé, když záloha flashe uspěje, se snímek zapíše jako .zip do složky níže.",
+  "flash.zipExport.path": "Složka pro export",
+  "flash.zipExport.pathHint": "Relativní podcesta pod kořenem připojení hostitele, kam se ukládá .zip — nasměrujte ji na složku Syncthing/rclone, aby se flash automaticky dostal ze serveru pryč.",
+  "flash.zipExport.keepHistory": "Uchovávat historii",
+  "flash.zipExport.keepHistoryHint": "Vypnuto: uchovat jediný flash-latest.zip, který se pokaždé přepíše. Zapnuto: uchovat nejnovějších N časově označených souborů flash-<date>.zip.",
+  "flash.zipExport.keepN": "Počet zipů k uchování",
+  "flash.zipExport.keepNHint": "Uchovává se nejnovějších N časově označených zipů; starší se automaticky mažou.",
+  "flash.zipExport.latestNote": "Jediný flash-latest.zip se přepíše po každé záloze.",
+
   // VM backup (SSH)
   "vm.method": "Metoda",
   "vm.method.graceful": "Graceful (vypnutí)",

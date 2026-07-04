@@ -344,6 +344,19 @@ const el: Partial<Translations> = {
   "flash.restoreNote": "Η επαναφορά κατεβάζει ένα ZIP του στιγμιότυπου — το /boot που εκτελείται δεν αγγίζεται ποτέ. Ρίξτε το .zip απευθείας στο εργαλείο δημιουργίας USB του Unraid ή αποσυμπιέστε το σε ένα νέο USB για να αναδημιουργήσετε το flash.",
   "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash — εκτελέστε ένα αντίγραφο παραπάνω.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Εξαγωγή Flash σε zip",
+  "flash.zipExport.hint": "Μετά από κάθε αντίγραφο flash, το στιγμιότυπο γράφεται επίσης ως απλό .zip σε έναν φάκελο — έτοιμο για συγχρονισμό εκτός διακομιστή (Syncthing, rclone, δίσκος cloud).",
+  "flash.zipExport.enable": "Εξαγωγή ενός zip μετά από κάθε αντίγραφο flash",
+  "flash.zipExport.enableHint": "Κάθε φορά που ένα αντίγραφο flash πετυχαίνει, το στιγμιότυπο γράφεται ως .zip στον παρακάτω φάκελο.",
+  "flash.zipExport.path": "Φάκελος εξαγωγής",
+  "flash.zipExport.pathHint": "Σχετική υποδιαδρομή κάτω από τη ρίζα προσάρτησης του host όπου καταλήγει το .zip — κατευθύνετέ το σε έναν φάκελο Syncthing/rclone για να βγάζετε το flash από τον διακομιστή αυτόματα.",
+  "flash.zipExport.keepHistory": "Διατήρηση ιστορικού",
+  "flash.zipExport.keepHistoryHint": "Ανενεργό: διατήρηση ενός μόνο flash-latest.zip που αντικαθίσταται κάθε φορά. Ενεργό: διατήρηση των πιο πρόσφατων N χρονοσημασμένων αρχείων flash-<date>.zip.",
+  "flash.zipExport.keepN": "Πλήθος zip προς διατήρηση",
+  "flash.zipExport.keepNHint": "Διατηρούνται τα πιο πρόσφατα N χρονοσημασμένα zip· τα παλαιότερα διαγράφονται αυτόματα.",
+  "flash.zipExport.latestNote": "Ένα μόνο flash-latest.zip αντικαθίσταται μετά από κάθε αντίγραφο.",
+
   // VM backup (SSH)
   "vm.method": "Μέθοδος",
   "vm.method.graceful": "Ομαλή (τερματισμός)",

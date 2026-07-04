@@ -339,6 +339,19 @@ const uk: Partial<Translations> = {
   "flash.restoreNote": "Відновлення завантажує ZIP знімка — робочий /boot ніколи не зачіпається. Передайте .zip прямо у створювач USB Unraid або розпакуйте його на нову флешку, щоб відтворити flash.",
   "flash.none": "Копій Flash ще немає — створіть копію вище.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Експорт flash у ZIP",
+  "flash.zipExport.hint": "Після кожної копії flash також записувати знімок у вигляді звичайного .zip до папки — готового для синхронізації поза сервером (Syncthing, rclone, хмарний диск).",
+  "flash.zipExport.enable": "Експортувати ZIP після кожної копії flash",
+  "flash.zipExport.enableHint": "Щоразу, коли копія flash успішна, знімок записується як .zip до папки нижче.",
+  "flash.zipExport.path": "Папка експорту",
+  "flash.zipExport.pathHint": "Відносний підшлях у межах кореня монтування хоста, куди потрапляє .zip — вкажіть папку Syncthing/rclone, щоб автоматично надсилати flash за межі сервера.",
+  "flash.zipExport.keepHistory": "Зберігати історію",
+  "flash.zipExport.keepHistoryHint": "Вимк.: зберігати єдиний flash-latest.zip, який щоразу перезаписується. Увімк.: зберігати найновіші N файлів flash-<дата>.zip з мітками часу.",
+  "flash.zipExport.keepN": "Скільки ZIP зберігати",
+  "flash.zipExport.keepNHint": "Зберігаються найновіші N ZIP з мітками часу; старіші видаляються автоматично.",
+  "flash.zipExport.latestNote": "Єдиний flash-latest.zip перезаписується після кожної копії.",
+
   // VM backup (SSH)
   "vm.method": "Метод",
   "vm.method.graceful": "Graceful (вимкнення)",

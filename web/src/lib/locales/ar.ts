@@ -344,6 +344,19 @@ const ar: Partial<Translations> = {
   "flash.restoreNote": "يقوم الاستعادة بتنزيل ملف ZIP للقطة — لا يتم المساس بـ /boot قيد التشغيل أبدًا. ضع ملف .zip مباشرة في أداة إنشاء USB من Unraid، أو فك ضغطه على USB جديد لإعادة بناء الفلاش.",
   "flash.none": "لا توجد نسخ احتياطية للفلاش بعد — شغّل نسخاً احتياطياً أعلاه.",
 
+  // Flash zip export
+  "flash.zipExport.title": "تصدير Flash إلى zip",
+  "flash.zipExport.hint": "بعد كل نسخة احتياطية للفلاش، تُكتب اللقطة أيضاً كملف .zip عادي إلى مجلد — جاهزة للمزامنة خارج الخادم (Syncthing أو rclone أو قرص سحابي).",
+  "flash.zipExport.enable": "تصدير ملف zip بعد كل نسخة احتياطية للفلاش",
+  "flash.zipExport.enableHint": "في كل مرة تنجح فيها نسخة احتياطية للفلاش، تُكتب اللقطة كملف .zip في المجلد أدناه.",
+  "flash.zipExport.path": "مجلد التصدير",
+  "flash.zipExport.pathHint": "مسار فرعي نسبي ضمن جذر نقطة تركيب المضيف حيث يُوضع ملف .zip — وجّهه إلى مجلد Syncthing/rclone لإخراج الفلاش من الخادم تلقائياً.",
+  "flash.zipExport.keepHistory": "الاحتفاظ بالسجل",
+  "flash.zipExport.keepHistoryHint": "إيقاف: الاحتفاظ بملف flash-latest.zip واحد يُستبدل في كل مرة. تشغيل: الاحتفاظ بأحدث N ملفات flash-<date>.zip مؤرّخة.",
+  "flash.zipExport.keepN": "عدد ملفات zip المحتفظ بها",
+  "flash.zipExport.keepNHint": "يُحتفظ بأحدث N ملفات zip مؤرّخة؛ وتُحذف الأقدم تلقائياً.",
+  "flash.zipExport.latestNote": "يُستبدل ملف flash-latest.zip واحد بعد كل نسخة احتياطية.",
+
   // VM backup (SSH)
   "vm.method": "الطريقة",
   "vm.method.graceful": "آمنة (إيقاف تشغيل)",

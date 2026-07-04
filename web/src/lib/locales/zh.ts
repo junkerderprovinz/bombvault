@@ -337,6 +337,19 @@ const zh: Partial<Translations> = {
   "flash.restoreNote": "恢复会下载快照的 ZIP — 运行中的 /boot 绝不会被改动。把 .zip 直接放进 Unraid USB 创建器，或解压到全新 U 盘以重建你的 flash。",
   "flash.none": "尚无 Flash 备份——请在上方运行一次备份。",
 
+  // Flash zip export
+  "flash.zipExport.title": "Flash ZIP 导出",
+  "flash.zipExport.hint": "每次 flash 备份后，另外将快照以普通 .zip 形式写出到一个文件夹 — 便于服务器外同步（Syncthing、rclone、云盘）。",
+  "flash.zipExport.enable": "每次 flash 备份后导出一个 ZIP",
+  "flash.zipExport.enableHint": "每当一次 flash 备份成功，快照就会以 .zip 形式写入下面的文件夹。",
+  "flash.zipExport.path": "导出文件夹",
+  "flash.zipExport.pathHint": "主机挂载根目录下 .zip 落地的相对子路径 — 将其指向一个 Syncthing/rclone 文件夹，即可自动把 flash 移出服务器。",
+  "flash.zipExport.keepHistory": "保留历史",
+  "flash.zipExport.keepHistoryHint": "关闭：仅保留一个每次都被覆盖的 flash-latest.zip。开启：保留最新的 N 个带时间戳的 flash-<日期>.zip 文件。",
+  "flash.zipExport.keepN": "保留的 ZIP 数量",
+  "flash.zipExport.keepNHint": "保留最新的 N 个带时间戳的 ZIP；较旧的会被自动删除。",
+  "flash.zipExport.latestNote": "每次备份后都会覆盖同一个 flash-latest.zip。",
+
   "vm.method": "方式",
   "vm.method.graceful": "优雅（关机）",
   "vm.method.live": "实时快照",

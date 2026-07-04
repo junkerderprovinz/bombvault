@@ -344,6 +344,19 @@ const tr: Partial<Translations> = {
   "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir — çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın.",
   "flash.none": "Henüz flash yedeği yok — yukarıdan bir yedekleme çalıştırın.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Flash ZIP dışa aktarma",
+  "flash.zipExport.hint": "Her flash yedeğinden sonra anlık görüntüyü ayrıca düz bir .zip olarak bir klasöre yaz — sunucu dışı senkronizasyon için hazır (Syncthing, rclone, bir bulut sürücüsü).",
+  "flash.zipExport.enable": "Her flash yedeğinden sonra bir ZIP dışa aktar",
+  "flash.zipExport.enableHint": "Bir flash yedeği her başarılı olduğunda, anlık görüntü aşağıdaki klasöre .zip olarak yazılır.",
+  "flash.zipExport.path": "Dışa aktarma klasörü",
+  "flash.zipExport.pathHint": "Host bağlama kökü altında .zip dosyasının ineceği göreli alt yol — flash'ı sunucudan otomatik olarak çıkarmak için bir Syncthing/rclone klasörüne yönlendirin.",
+  "flash.zipExport.keepHistory": "Geçmişi tut",
+  "flash.zipExport.keepHistoryHint": "Kapalı: her seferinde üzerine yazılan tek bir flash-latest.zip tutulur. Açık: zaman damgalı en yeni N flash-<tarih>.zip dosyası tutulur.",
+  "flash.zipExport.keepN": "Tutulacak ZIP sayısı",
+  "flash.zipExport.keepNHint": "Zaman damgalı en yeni N ZIP tutulur; daha eskiler otomatik olarak silinir.",
+  "flash.zipExport.latestNote": "Her yedeklemeden sonra tek bir flash-latest.zip'in üzerine yazılır.",
+
   // VM backup (SSH)
   "vm.method": "Yöntem",
   "vm.method.graceful": "Düzgün (kapatma)",

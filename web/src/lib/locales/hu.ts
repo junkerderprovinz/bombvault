@@ -344,6 +344,19 @@ const hu: Partial<Translations> = {
   "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját — a futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez.",
   "flash.none": "Még nincs flash mentés — indítson egyet fent.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Flash ZIP-exportálás",
+  "flash.zipExport.hint": "Minden flash mentés után a pillanatképet egyszerű .zip fájlként is kiírja egy mappába — készen a szerveren kívüli szinkronizáláshoz (Syncthing, rclone, felhőmeghajtó).",
+  "flash.zipExport.enable": "ZIP exportálása minden flash mentés után",
+  "flash.zipExport.enableHint": "Minden sikeres flash mentéskor a pillanatkép .zip fájlként az alábbi mappába íródik.",
+  "flash.zipExport.path": "Exportálási mappa",
+  "flash.zipExport.pathHint": "Relatív alútvonal a gazdagép csatolási gyökere alatt, ahová a .zip kerül — irányítsd egy Syncthing/rclone mappára, hogy a flash automatikusan lekerüljön a szerverről.",
+  "flash.zipExport.keepHistory": "Előzmények megtartása",
+  "flash.zipExport.keepHistoryHint": "Ki: egyetlen flash-latest.zip megtartása, amely minden alkalommal felülíródik. Be: a legújabb N időbélyeggel ellátott flash-<dátum>.zip fájl megtartása.",
+  "flash.zipExport.keepN": "Megtartandó ZIP-ek",
+  "flash.zipExport.keepNHint": "A legújabb N időbélyeggel ellátott ZIP marad meg; a régebbieket automatikusan törli.",
+  "flash.zipExport.latestNote": "Egyetlen flash-latest.zip íródik felül minden mentés után.",
+
   // VM backup (SSH)
   "vm.method": "Módszer",
   "vm.method.graceful": "Szabályos (leállítás)",

@@ -344,6 +344,19 @@ const he: Partial<Translations> = {
   "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה — ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash.",
   "flash.none": "אין עדיין גיבויי flash — הרץ גיבוי למעלה.",
 
+  // Flash zip export
+  "flash.zipExport.title": "ייצוא Flash ל-zip",
+  "flash.zipExport.hint": "אחרי כל גיבוי flash, כותב את התמונה גם כקובץ .zip פשוט לתיקייה — מוכן לסנכרון מחוץ לשרת (Syncthing, rclone, כונן ענן).",
+  "flash.zipExport.enable": "ייצא zip אחרי כל גיבוי flash",
+  "flash.zipExport.enableHint": "בכל פעם שגיבוי flash מצליח, התמונה נכתבת כקובץ .zip לתיקייה שלמטה.",
+  "flash.zipExport.path": "תיקיית ייצוא",
+  "flash.zipExport.pathHint": "תת-נתיב יחסי תחת שורש נקודת העיגון של המארח שאליו מגיע ה-.zip — הפנה אותו לתיקיית Syncthing/rclone כדי להוציא את ה-flash מהשרת אוטומטית.",
+  "flash.zipExport.keepHistory": "שמור היסטוריה",
+  "flash.zipExport.keepHistoryHint": "כבוי: שמור קובץ flash-latest.zip יחיד שנדרס בכל פעם. דלוק: שמור את N הקבצים flash-<date>.zip העדכניים ביותר עם חותמת זמן.",
+  "flash.zipExport.keepN": "מספר קובצי zip לשמירה",
+  "flash.zipExport.keepNHint": "N קובצי ה-zip העדכניים ביותר עם חותמת זמן נשמרים; הישנים יותר נמחקים אוטומטית.",
+  "flash.zipExport.latestNote": "קובץ flash-latest.zip יחיד נדרס אחרי כל גיבוי.",
+
   // VM backup (SSH)
   "vm.method": "שיטה",
   "vm.method.graceful": "מסודרת (כיבוי)",

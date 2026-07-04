@@ -342,6 +342,19 @@ const ro: Partial<Translations> = {
   "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului — /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul.",
   "flash.none": "Încă nicio copie de rezervă flash — rulați un backup mai sus.",
 
+  // Flash zip export
+  "flash.zipExport.title": "Export ZIP flash",
+  "flash.zipExport.hint": "După fiecare backup flash, scrie snapshotul și ca un simplu .zip într-un folder — gata pentru sincronizare în afara serverului (Syncthing, rclone, un drive cloud).",
+  "flash.zipExport.enable": "Exportă un ZIP după fiecare backup flash",
+  "flash.zipExport.enableHint": "De fiecare dată când un backup flash reușește, snapshotul este scris ca .zip în folderul de mai jos.",
+  "flash.zipExport.path": "Folder de export",
+  "flash.zipExport.pathHint": "Subcale relativă sub rădăcina montării gazdei unde ajunge fișierul .zip — îndreapt-o către un folder Syncthing/rclone pentru a scoate automat flash-ul de pe server.",
+  "flash.zipExport.keepHistory": "Păstrează istoricul",
+  "flash.zipExport.keepHistoryHint": "Dezactivat: păstrează un singur flash-latest.zip care este suprascris de fiecare dată. Activat: păstrează cele mai noi N fișiere flash-<dată>.zip cu marcaj temporal.",
+  "flash.zipExport.keepN": "ZIP-uri de păstrat",
+  "flash.zipExport.keepNHint": "Cele mai noi N fișiere ZIP cu marcaj temporal sunt păstrate; cele mai vechi sunt șterse automat.",
+  "flash.zipExport.latestNote": "Un singur flash-latest.zip este suprascris după fiecare backup.",
+
   // VM backup (SSH)
   "vm.method": "Metodă",
   "vm.method.graceful": "Controlat (oprire)",
