@@ -5613,6 +5613,26 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("NOT itself a repository, and the off-site repo only has snapshots once off-site\n")
 	w("replication has actually run. Add each domain repo on its own.\n\n")
 
+	// BombVault's own settings backup (the "config" self-backup domain). This repo is
+	// the single bootstrap seed a rebuilt box needs: restore it FIRST to bring
+	// BombVault's own configuration back, then the data domains above follow. It uses
+	// the SAME APP_KEY-derived restic password already documented above, so no new
+	// secret appears here. A resolution failure leaves the local line blank rather
+	// than failing the kit; the off-site line prints only when one is configured.
+	w("## BombVault settings backup (config domain)\n\n")
+	w("This repository holds BombVault's OWN settings. On a rebuilt box, restore it\n")
+	w("FIRST to bring BombVault's configuration back, then use the data repositories\n")
+	w("above. It is the one location to write down so a fresh install can find itself.\n\n")
+	configLocal := ""
+	if loc, cErr := s.configRepoPath(settings); cErr == nil {
+		configLocal = loc
+	}
+	w("- config (local): %s\n", orNone(configLocal))
+	if settings.ConfigOffsite != "" {
+		w("- config (off-site): %s\n", settings.ConfigOffsite)
+	}
+	w("\n")
+
 	// Off-site/cloud credentials — the stored rest-server / S3 keys and rclone
 	// config a user needs to reach a remote repository after losing BombVault.
 	// These are secrets too, covered by the master-secret WARNING above; like the
