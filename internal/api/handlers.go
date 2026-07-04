@@ -789,19 +789,24 @@ type settingsView struct {
 	ContainersEnabled         bool   `json:"containersEnabled"`
 	VMsEnabled                bool   `json:"vmsEnabled"`
 	FlashEnabled              bool   `json:"flashEnabled"`
+	ConfigEnabled             bool   `json:"configEnabled"`
 	ContainersPath            string `json:"containersPath"`
 	VMsPath                   string `json:"vmsPath"`
 	FlashPath                 string `json:"flashPath"`
+	ConfigPath                string `json:"configPath"`
 	RestoreFolder             string `json:"restoreFolder"`
 	ContainersOffsite         string `json:"containersOffsite"`
 	VMsOffsite                string `json:"vmsOffsite"`
 	FlashOffsite              string `json:"flashOffsite"`
+	ConfigOffsite             string `json:"configOffsite"`
 	ContainersOffsiteSchedule string `json:"containersOffsiteSchedule"`
 	VMsOffsiteSchedule        string `json:"vmsOffsiteSchedule"`
 	FlashOffsiteSchedule      string `json:"flashOffsiteSchedule"`
+	ConfigOffsiteSchedule     string `json:"configOffsiteSchedule"`
 	ContainersSchedule        string `json:"containersSchedule"`
 	VMsSchedule               string `json:"vmsSchedule"`
 	FlashSchedule             string `json:"flashSchedule"`
+	ConfigSchedule            string `json:"configSchedule"`
 	DefaultLanguage           string `json:"defaultLanguage"`
 	// Retention keep-policy (0 = that dimension off; all 0 = retention off).
 	RetentionKeepLast    int `json:"retentionKeepLast"`
@@ -831,6 +836,7 @@ type settingsView struct {
 	ContainersOffsiteImmutable bool `json:"containersOffsiteImmutable"`
 	VMsOffsiteImmutable        bool `json:"vmsOffsiteImmutable"`
 	FlashOffsiteImmutable      bool `json:"flashOffsiteImmutable"`
+	ConfigOffsiteImmutable     bool `json:"configOffsiteImmutable"`
 	// Off-site growth budget in GB (0 = alarm off) + tamper-test cadence +
 	// DR-drill target container ('' = auto).
 	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
@@ -844,19 +850,24 @@ func toView(s store.Settings) settingsView {
 		ContainersEnabled:           s.ContainersEnabled,
 		VMsEnabled:                  s.VMsEnabled,
 		FlashEnabled:                s.FlashEnabled,
+		ConfigEnabled:               s.ConfigEnabled,
 		ContainersPath:              s.ContainersPath,
 		VMsPath:                     s.VMsPath,
 		FlashPath:                   s.FlashPath,
+		ConfigPath:                  s.ConfigPath,
 		RestoreFolder:               s.RestoreFolder,
 		ContainersOffsite:           s.ContainersOffsite,
 		VMsOffsite:                  s.VMsOffsite,
 		FlashOffsite:                s.FlashOffsite,
+		ConfigOffsite:               s.ConfigOffsite,
 		ContainersOffsiteSchedule:   s.ContainersOffsiteSchedule,
 		VMsOffsiteSchedule:          s.VMsOffsiteSchedule,
 		FlashOffsiteSchedule:        s.FlashOffsiteSchedule,
+		ConfigOffsiteSchedule:       s.ConfigOffsiteSchedule,
 		ContainersSchedule:          s.ContainersSchedule,
 		VMsSchedule:                 s.VMsSchedule,
 		FlashSchedule:               s.FlashSchedule,
+		ConfigSchedule:              s.ConfigSchedule,
 		DefaultLanguage:             s.DefaultLanguage,
 		RetentionKeepLast:           s.RetentionKeepLast,
 		RetentionKeepDaily:          s.RetentionKeepDaily,
@@ -877,6 +888,7 @@ func toView(s store.Settings) settingsView {
 		ContainersOffsiteImmutable:  s.ContainersOffsiteImmutable,
 		VMsOffsiteImmutable:         s.VMsOffsiteImmutable,
 		FlashOffsiteImmutable:       s.FlashOffsiteImmutable,
+		ConfigOffsiteImmutable:      s.ConfigOffsiteImmutable,
 		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
@@ -924,8 +936,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
 	// a local path must stay under the mount root.
 	for _, sub := range []string{
-		v.ContainersPath, v.VMsPath, v.FlashPath, v.RestoreFolder,
-		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite,
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.RestoreFolder,
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite,
 	} {
 		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
@@ -952,8 +964,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// Validate each cadence parses (backup schedules + off-site + drills +
 	// tamper-test schedules).
 	for _, cad := range []string{
-		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule,
-		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule,
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule,
+		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule,
 		v.DrillsSchedule, v.TamperTestSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
@@ -967,7 +979,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// have no per-domain last-run gate, so an everyN cadence would silently fire
 	// daily. Restrict them to off / daily / weekly / cron, which all fire on an
 	// exact schedule.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule} {
+	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
@@ -1015,19 +1027,24 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ContainersEnabled:           v.ContainersEnabled,
 		VMsEnabled:                  v.VMsEnabled,
 		FlashEnabled:                v.FlashEnabled,
+		ConfigEnabled:               v.ConfigEnabled,
 		ContainersPath:              v.ContainersPath,
 		VMsPath:                     v.VMsPath,
 		FlashPath:                   v.FlashPath,
+		ConfigPath:                  v.ConfigPath,
 		RestoreFolder:               v.RestoreFolder,
 		ContainersOffsite:           v.ContainersOffsite,
 		VMsOffsite:                  v.VMsOffsite,
 		FlashOffsite:                v.FlashOffsite,
+		ConfigOffsite:               v.ConfigOffsite,
 		ContainersOffsiteSchedule:   v.ContainersOffsiteSchedule,
 		VMsOffsiteSchedule:          v.VMsOffsiteSchedule,
 		FlashOffsiteSchedule:        v.FlashOffsiteSchedule,
+		ConfigOffsiteSchedule:       v.ConfigOffsiteSchedule,
 		ContainersSchedule:          v.ContainersSchedule,
 		VMsSchedule:                 v.VMsSchedule,
 		FlashSchedule:               v.FlashSchedule,
+		ConfigSchedule:              v.ConfigSchedule,
 		DefaultLanguage:             v.DefaultLanguage,
 		RetentionKeepLast:           max(0, v.RetentionKeepLast),
 		RetentionKeepDaily:          max(0, v.RetentionKeepDaily),
@@ -1048,6 +1065,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ContainersOffsiteImmutable:  v.ContainersOffsiteImmutable,
 		VMsOffsiteImmutable:         v.VMsOffsiteImmutable,
 		FlashOffsiteImmutable:       v.FlashOffsiteImmutable,
+		ConfigOffsiteImmutable:      v.ConfigOffsiteImmutable,
 		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
 		TamperTestSchedule:          v.TamperTestSchedule,
 		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
@@ -1070,7 +1088,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// until enforced far-side. The "warnings" array is a backward-compatible
 	// extension of the ok envelope (absent when there is nothing to warn about).
 	var warnings []string
-	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable) &&
+	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
 			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
 		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
@@ -1536,8 +1554,8 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 	}
 	// Resolve target_id → (name, domain). Best-effort: an unknown id (e.g. a
 	// deleted target) just leaves the name blank.
-	name := map[string]string{store.FlashTargetID: "Unraid flash"}
-	domain := map[string]string{store.FlashTargetID: "flash"}
+	name := map[string]string{store.FlashTargetID: "Unraid flash", store.ConfigTargetID: "App configuration"}
+	domain := map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
 	if cts, lErr := h.store.ListTargets(); lErr == nil {
 		for _, t := range cts {
 			name[t.ID] = t.ContainerName
@@ -1989,6 +2007,60 @@ func (h *Handler) handleSnapshotsFlash(w http.ResponseWriter, r *http.Request) {
 		snaps = []restic.Snapshot{}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
+}
+
+// handleBackupConfig starts the singleton config self-backup — BombVault's own
+// /config (settings DB + rclone.conf + ssh keypair) — ON THE SERVER and returns
+// immediately, mirroring handleBackupFlash. The SPA watches the "config" progress
+// key over SSE.
+func (h *Handler) handleBackupConfig(w http.ResponseWriter, r *http.Request) {
+	started, err := h.svc.StartBackupConfig(r.Context())
+	if err != nil { // the config domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// handleSnapshotsConfig lists config snapshots (BombVault's own /config backups).
+func (h *Handler) handleSnapshotsConfig(w http.ResponseWriter, r *http.Request) {
+	snaps, err := h.svc.SnapshotsConfig(r.Context(), sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if snaps == nil {
+		snaps = []restic.Snapshot{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
+}
+
+// handleRestoreConfig STAGES a restore of BombVault's own /config and then triggers
+// a self-restart so the boot-time staging→live swap applies it (see RestoreConfig /
+// selfrestore.ApplyPending — the live SQLite DB can't be swapped while this process
+// holds it open). It reports whether an auto-restart was scheduled; when it wasn't
+// (Docker unreachable), autoRestart:false tells the SPA to ask the user to restart
+// the container manually. Restore errors are mapped exactly like the other restore
+// handlers — a scrubbed fail envelope (e.g. an APP_KEY / encryption mismatch surfaces
+// as a plain message, not a raw restic error).
+func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Source   string `json:"source"`
+		Snapshot string `json:"snapshot"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.RestoreConfig(r.Context(), body.Snapshot, body.Source); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	auto := h.svc.ScheduleSelfRestart()
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"staged": true, "autoRestart": auto}))
 }
 
 // headerOnFirstWrite defers the download headers (and so the 200 status) until

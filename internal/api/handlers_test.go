@@ -455,6 +455,118 @@ func TestSettingsPutRejectsTraversalPath(t *testing.T) {
 	}
 }
 
+// TestSettingsConfigFieldsRoundTrip pins the settings DTO's config self-backup
+// fields: a PUT carrying every config* field is persisted and comes back verbatim
+// on the following GET (the JSON DTO round-trips them both directions, like flash).
+func TestSettingsConfigFieldsRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"configEnabled": true,
+		"configPath": "backups/config",
+		"configSchedule": "daily 03:30",
+		"configOffsite": "rest:http://192.168.1.2:8000/config",
+		"configOffsiteSchedule": "weekly Sun 04:00",
+		"configOffsiteImmutable": true
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	for k, want := range map[string]any{
+		"configEnabled":          true,
+		"configPath":             "backups/config",
+		"configSchedule":         "daily 03:30",
+		"configOffsite":          "rest:http://192.168.1.2:8000/config",
+		"configOffsiteSchedule":  "weekly Sun 04:00",
+		"configOffsiteImmutable": true,
+	} {
+		if settings[k] != want {
+			t.Fatalf("%s not round-tripped: got %v, want %v", k, settings[k], want)
+		}
+	}
+}
+
+// TestRestoreConfigHandlerStagesAndAutoRestarts drives POST /api/config/restore
+// end-to-end over the real service + fakes: the restore is staged (staged:true)
+// and, because the self container name resolves, the response reports an
+// auto-restart was scheduled (autoRestart:true — the SPA then waits for the app
+// to come back rather than telling the user to restart manually).
+func TestRestoreConfigHandlerStagesAndAutoRestarts(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // ignore any ambient override; resolve via docker.Self
+	d := &fakeServiceDocker{selfName: "BombVault"}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	h, st, _ := newTestRouterSvc(t, d, eng)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ConfigEnabled = true
+	s.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/config/restore", `{"source":"local","snapshot":"latest"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true || m["staged"] != true {
+		t.Fatalf("expected ok:true, staged:true, got %v", m)
+	}
+	if m["autoRestart"] != true {
+		t.Fatalf("expected autoRestart:true when the self container is known, got %v", m["autoRestart"])
+	}
+}
+
+// TestRestoreConfigHandlerManualRestartWhenSelfUnknown pins the fallback: when the
+// own-container name can't be resolved (Docker unreachable / not in a container),
+// the restore is still staged but autoRestart:false — the SPA then instructs the
+// user to restart the BombVault container manually to apply the restore.
+func TestRestoreConfigHandlerManualRestartWhenSelfUnknown(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // no ambient override; docker.Self returns "" below
+	d := &fakeServiceDocker{selfName: ""}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	h, st, _ := newTestRouterSvc(t, d, eng)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/config/restore", `{"source":"local","snapshot":"latest"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true || m["staged"] != true {
+		t.Fatalf("expected ok:true, staged:true, got %v", m)
+	}
+	if m["autoRestart"] != false {
+		t.Fatalf("expected autoRestart:false when the self container is unknown, got %v", m["autoRestart"])
+	}
+}
+
 func TestSpike(t *testing.T) {
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "plex"}}}
 	// Inject a single stub probe so the test does not depend on a real restic.

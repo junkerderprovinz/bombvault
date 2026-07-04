@@ -157,5 +157,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/flash/snapshots", h.handleSnapshotsFlash)
 	mux.HandleFunc("GET /api/flash/download", h.handleDownloadFlash)
 
+	// Config endpoints (singleton domain — BombVault's own /config self-backup).
+	mux.HandleFunc("POST /api/config/backup", h.handleBackupConfig)
+	mux.HandleFunc("GET /api/config/snapshots", h.handleSnapshotsConfig)
+	mux.HandleFunc("POST /api/config/restore", h.handleRestoreConfig)
+
 	return h.authGate(mux)
 }
