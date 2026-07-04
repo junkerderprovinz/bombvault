@@ -1052,13 +1052,13 @@ type HistoryDay struct {
 	Flash      DayStat `json:"flash"`
 }
 
-// runDomains is the target_id → domain map ("container" | "vm" | "flash") used
-// to attribute each run to its domain. It mirrors the same mapping handleRuns
-// uses: container targets, VM targets, and the singleton flash id. Best-effort —
-// an unknown id (e.g. a deleted target) maps to "" and is ignored by the
-// bucketer.
+// runDomains is the target_id → domain map ("container" | "vm" | "flash" |
+// "config") used to attribute each run to its domain. It mirrors the same mapping
+// handleRuns uses: container targets, VM targets, and the singleton flash/config
+// ids. Best-effort — an unknown id (e.g. a deleted target) maps to "" and is
+// ignored by the bucketer.
 func (s *Service) runDomains() map[string]string {
-	domain := map[string]string{store.FlashTargetID: "flash"}
+	domain := map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
 	if cts, err := s.store.ListTargets(); err == nil {
 		for _, t := range cts {
 			domain[t.ID] = "container"
