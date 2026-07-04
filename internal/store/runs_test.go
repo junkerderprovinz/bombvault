@@ -221,3 +221,36 @@ func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 		t.Fatalf("LastSuccessfulContainerBackup should be zero (a VM backup must not satisfy the containers gate), got %v", cLast)
 	}
 }
+
+// TestLastSuccessfulConfigBackupAndCounts verifies the config self-backup domain
+// helpers: a run tagged with the reserved ConfigTargetID satisfies the config
+// everyN due-gate and is attributed to the "config" domain by RunCounts.
+func TestLastSuccessfulConfigBackupAndCounts(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	id, err := r.StartRun(store.ConfigTargetID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if err := r.FinishRun(id, "success", "snap1", 100, ""); err != nil {
+		t.Fatal(err)
+	}
+	ts, err := r.LastSuccessfulConfigBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts.IsZero() {
+		t.Fatal("expected a last-success time for config")
+	}
+	counts, err := r.RunCounts()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts["config"]["success"] != 1 {
+		t.Fatalf("expected 1 config success, got %v", counts["config"])
+	}
+}
