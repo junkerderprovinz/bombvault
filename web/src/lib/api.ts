@@ -220,6 +220,7 @@ export interface HistoryDay {
   containers: DayStat;
   vms: DayStat;
   flash: DayStat;
+  config: DayStat;
 }
 
 export interface HistoryResponse {
@@ -312,6 +313,45 @@ async function fetchJSON<T>(
 
 export function getHealth(): Promise<{ ok: boolean; version?: string }> {
   return fetchJSON("/api/health");
+}
+
+/**
+ * Poll the lightest endpoint (GET /api/health) until BombVault is reachable
+ * again after it restarts itself to apply a config restore (Recovery tab). It
+ * resolves `true` once health answers 200 — by default only AFTER it has first
+ * been seen unreachable, so a poll that starts before the old process dies
+ * doesn't return prematurely — and `false` once `timeoutMs` elapses. Pure and
+ * testable: all timing knobs are parameters, and it uses raw `fetch` (not
+ * getHealth) so a failing request is caught rather than thrown.
+ */
+export async function waitForAppBack(opts?: {
+  timeoutMs?: number;
+  intervalMs?: number;
+  requireDownFirst?: boolean;
+}): Promise<boolean> {
+  const timeoutMs = opts?.timeoutMs ?? 180000;
+  const intervalMs = opts?.intervalMs ?? 2000;
+  const requireDownFirst = opts?.requireDownFirst ?? true;
+  const deadline = Date.now() + timeoutMs;
+  // When requireDownFirst is false, treat the app as already "seen down" so the
+  // first successful probe resolves immediately.
+  let sawDown = !requireDownFirst;
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch("/api/health", { cache: "no-store" });
+      if (res.ok) {
+        if (sawDown) return true;
+        // Reachable but we never saw it go down yet — still the pre-restart
+        // process; keep polling until it drops, then comes back.
+      } else {
+        sawDown = true; // a non-2xx (e.g. 502 from the proxy) means it's cycling
+      }
+    } catch {
+      sawDown = true; // network error → the container is down/restarting
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  return false;
 }
 
 export function listContainers(): Promise<ListContainersResponse> {

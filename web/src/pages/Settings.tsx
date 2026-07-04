@@ -1332,6 +1332,14 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, flashEnabled: v } : prev)
           }
         />
+        <ToggleRow
+          label={t("settings.configEnabled")}
+          description="BombVault's own settings, targets and credentials (self-backup)"
+          checked={settings.configEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, configEnabled: v } : prev)
+          }
+        />
         <SaveBar
           state={domSaveState}
           error={domSaveError}
@@ -1341,6 +1349,7 @@ export function SettingsPage() {
                 containersEnabled: settings.containersEnabled,
                 vmsEnabled: settings.vmsEnabled,
                 flashEnabled: settings.flashEnabled,
+                configEnabled: settings.configEnabled,
               },
               setDomSaveState,
               setDomSaveError

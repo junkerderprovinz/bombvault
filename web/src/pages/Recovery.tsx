@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { FolderBrowser } from "../components/FolderBrowser";
+import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
@@ -17,6 +18,8 @@ import {
   listVMs,
   restore,
   restoreVM,
+  restoreConfig,
+  waitForAppBack,
   getVMSSH,
   recoveryKitUrl,
   type Settings,
@@ -149,6 +152,17 @@ export default function Recovery() {
   const [attachError, setAttachError] = useState<string | null>(null);
   const [previewed, setPreviewed] = useState(false);
 
+  // Config-restore step (runs BEFORE attach/discover): restore BombVault's OWN
+  // settings first so the attach + discover steps come pre-filled. Optional and
+  // skippable — a user without a settings backup just attaches manually below.
+  // The location (local path / off-site URL) is stored on `settings` and saved
+  // right before the restore so the backend resolves the right repo.
+  const [configSource, setConfigSource] = useState<RepoSource>("local");
+  type ConfigPhase = "idle" | "saving" | "restarting" | "manual" | "reload" | "error";
+  const [configPhase, setConfigPhase] = useState<ConfigPhase>("idle");
+  const [configError, setConfigError] = useState<string | null>(null);
+  const [configSkipped, setConfigSkipped] = useState(false);
+
   useEffect(() => {
     getSettings()
       .then((res) => {
@@ -238,6 +252,69 @@ export default function Recovery() {
       setAttachState("error");
     }
   }, [savedSettings, settings, checkReadable, t]);
+
+  // restoreOwnConfig stages a restore of BombVault's OWN settings and drives the
+  // self-restart that applies it. It first persists the chosen config-repo
+  // location (merged onto the server baseline, like connectPreview), then calls
+  // restoreConfig("latest", source). On autoRestart it polls the health endpoint
+  // until BombVault returns and reloads so the restored settings load; without an
+  // auto-restart it shows the manual container-restart instruction.
+  const restoreOwnConfig = useCallback(async () => {
+    const base = savedSettings ?? settings;
+    if (!base || !settings) return;
+    setConfigPhase("saving");
+    setConfigError(null);
+    const patch: Partial<Settings> =
+      configSource === "offsite"
+        ? { configOffsite: settings.configOffsite }
+        : { configPath: settings.configPath };
+    const updated: Settings = { ...base, ...patch };
+    try {
+      const saveRes = await putSettings(updated);
+      if (!saveRes.ok) {
+        setConfigError(saveRes.error ?? t("settings.error"));
+        setConfigPhase("error");
+        return;
+      }
+      setSavedSettings(updated);
+      setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
+      const res = await restoreConfig("latest", configSource === "offsite" ? "offsite" : undefined);
+      if (!res.ok) {
+        // e.g. an APP_KEY / encryption mismatch — show the mapped remedy.
+        setConfigError(isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : res.error ?? t("settings.error"));
+        setConfigPhase("error");
+        return;
+      }
+      if (res.autoRestart) {
+        // BombVault is restarting itself to apply the staged restore. Poll the
+        // health endpoint until it answers again, then reload so the restored
+        // paths / off-site / creds populate this page (and the steps below).
+        setConfigPhase("restarting");
+        const back = await waitForAppBack();
+        if (back) {
+          window.location.reload();
+        } else {
+          // Poll window elapsed — the restore is already applied on boot, so let
+          // the user reload manually once BombVault is back.
+          setConfigPhase("reload");
+        }
+      } else {
+        // Docker socket unreachable: the restore is staged + persisted, but the
+        // user must restart the container themselves to apply it.
+        setConfigPhase("manual");
+      }
+    } catch (err) {
+      setConfigError(err instanceof Error ? err.message : t("settings.error"));
+      setConfigPhase("error");
+    }
+  }, [savedSettings, settings, configSource, t]);
+
+  const configStepState: StepState =
+    configPhase === "error"
+      ? "bad"
+      : configPhase === "manual" || configPhase === "reload"
+        ? "warn"
+        : "idle";
 
   // Step 3 — discover everything. Runs discoverAll(), then re-fetches the target
   // lists (kept for the later review/restore step).
@@ -399,8 +476,114 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 2 — Attach your backups (consolidated; cloud creds un-gated here) */}
-      <StepCard n={2} title={t("recovery.step2")} state={previewed ? readableState : "idle"}>
+      {/* Step 2 — Restore BombVault's OWN settings first (optional, pre-attach).
+          On a rebuilt box this pre-fills the attach + discover steps below; it
+          ends with a self-restart, so it lives here rather than on the Config
+          page. Skippable — a user without a settings backup attaches manually. */}
+      <StepCard n={2} title={t("recovery.stepConfig")} state={configStepState}>
+        {configSkipped ? (
+          <p className="text-sm text-carbon-textMuted">{t("recovery.configSkipped")}</p>
+        ) : (
+          <>
+            <p className="max-w-2xl">{t("recovery.configHint")}</p>
+            <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.configAppKeyReminder")}</p>
+
+            {settings ? (
+              <>
+                {/* Where the config backup lives: a local path or an off-site URL. */}
+                <div className="flex items-center gap-2 flex-wrap pt-1">
+                  <span className="text-xs text-carbon-textMuted">{t("recovery.configSourceLabel")}</span>
+                  <SourceToggle
+                    source={configSource}
+                    onChange={setConfigSource}
+                    disabled={configPhase === "saving" || configPhase === "restarting"}
+                  />
+                </div>
+
+                {configSource === "local" ? (
+                  <FolderBrowser
+                    label={t("recovery.configLocalPath")}
+                    value={settings.configPath}
+                    hostMountRoot={hostMountRoot}
+                    onChange={(v) => setSettings((prev) => (prev ? { ...prev, configPath: v } : prev))}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-carbon-textSub">{t("recovery.configOffsiteUrl")}</label>
+                    <input
+                      value={settings.configOffsite}
+                      spellCheck={false}
+                      onChange={(e) =>
+                        setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))
+                      }
+                      placeholder="rest:http://host:8000/repo"
+                      className={offsiteInput}
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <button
+                    onClick={() => void restoreOwnConfig()}
+                    disabled={configPhase === "saving" || configPhase === "restarting"}
+                    className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {(configPhase === "saving" || configPhase === "restarting") && (
+                      <span
+                        className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                        style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+                      />
+                    )}
+                    {configPhase === "saving" ? t("recovery.configRestoring") : t("recovery.configRestore")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfigSkipped(true)}
+                    disabled={configPhase === "saving" || configPhase === "restarting"}
+                    className="text-xs text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
+                  >
+                    {t("recovery.configSkip")}
+                  </button>
+                </div>
+
+                {/* Restarting — optimistic; waitForAppBack() reloads on return. */}
+                {configPhase === "restarting" && (
+                  <p className="text-sm text-[#78a9ff]">{t("recovery.configRestarting")}</p>
+                )}
+                {/* Manual restart needed (Docker socket unreachable). */}
+                {configPhase === "manual" && (
+                  <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+                    {t("recovery.configManualRestart")}
+                  </div>
+                )}
+                {/* Auto-restart poll timed out — offer a manual reload. */}
+                {configPhase === "reload" && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs text-[#f1c21b]">{t("recovery.configReloadWhenBack")}</span>
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+                    >
+                      {t("recovery.configReload")}
+                    </button>
+                  </div>
+                )}
+                {configPhase === "error" && configError && (
+                  <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed break-words">
+                    {configError}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
+            )}
+          </>
+        )}
+      </StepCard>
+
+      {/* Step 3 — Attach your backups (consolidated; cloud creds un-gated here) */}
+      <StepCard n={3} title={t("recovery.step2")} state={previewed ? readableState : "idle"}>
         <p className="max-w-2xl">{t("recovery.attachHint")}</p>
 
         {settings ? (
@@ -494,8 +677,8 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 3 — Discover everything (rebuild targets from the backup defs) */}
-      <StepCard n={3} title={t("recovery.step3")} state={discoverStepState}>
+      {/* Step 4 — Discover everything (rebuild targets from the backup defs) */}
+      <StepCard n={4} title={t("recovery.step3")} state={discoverStepState}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => void runDiscover()}
@@ -531,8 +714,8 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 4 — Review & restore everything (in place, left stopped) */}
-      <StepCard n={4} title={t("recovery.step4")} state={restoreStepState}>
+      {/* Step 5 — Review & restore everything (in place, left stopped) */}
+      <StepCard n={5} title={t("recovery.step4")} state={restoreStepState}>
         {!anyDiscovered ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.noneDiscovered")}</p>
         ) : (
@@ -612,8 +795,8 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 5 — Your recovery kit (safety net for next time) */}
-      <StepCard n={5} title={t("recovery.step5")} state="idle">
+      {/* Step 6 — Your recovery kit (safety net for next time) */}
+      <StepCard n={6} title={t("recovery.step5")} state="idle">
         <p className="max-w-2xl">{t("recovery.kitHint")}</p>
         <a
           href={recoveryKitUrl()}
