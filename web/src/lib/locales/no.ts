@@ -414,6 +414,7 @@ const no: Partial<Translations> = {
   "notify.matrixToken": "Tilgangstoken",
   "notify.matrixRoom": "Rom-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.healthchecksLifecycle": "Healthchecks pinges gjennom hele sikkerhetskopi-livssyklusen — start, suksess og feil — så snart en URL er satt, uavhengig av 'Varsle'-innstillingen ovenfor, slik at kontrollen holder seg grønn ved suksess selv med varsler kun ved feil.",
   "notify.unraid": "Unraid-varsler",
   "notify.unraidHint": "Send til Unraids eget varslingssystem (som kan videresende til Pushover, e-post, Discord …). Krever oppsatt SSH-tilkobling (Innstillinger → VM Backup over SSH).",
   "notify.save": "Lagre",

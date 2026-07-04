@@ -409,6 +409,7 @@ const pl: Partial<Translations> = {
   "notify.matrixToken": "Token dostępu",
   "notify.matrixRoom": "ID pokoju",
   "notify.healthchecks": "Adres URL ping Healthchecks.io",
+  "notify.healthchecksLifecycle": "Healthchecks jest pingowany przez cały cykl życia kopii zapasowej — start, sukces i niepowodzenie — gdy tylko ustawiono adres URL, niezależnie od ustawienia 'Powiadom' powyżej, dzięki czemu kontrola pozostaje zielona przy sukcesie nawet przy powiadomieniach tylko o niepowodzeniach.",
   "notify.unraid": "Powiadomienia Unraid",
   "notify.unraidHint": "Wyślij do własnego systemu powiadomień Unraida (który może przekazywać do Pushover, e-maila, Discorda …). Wymaga skonfigurowanego połączenia SSH (Ustawienia → VM Backup over SSH).",
   "notify.save": "Zapisz",

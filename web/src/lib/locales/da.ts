@@ -416,6 +416,7 @@ const da: Partial<Translations> = {
   "notify.matrixToken": "Adgangstoken",
   "notify.matrixRoom": "Rum-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.healthchecksLifecycle": "Healthchecks pinges gennem hele backup-livscyklussen — start, succes og fejl — når en URL er angivet, uafhængigt af 'Underret'-indstillingen ovenfor, så tjekket forbliver grønt ved succes selv med kun-fejl-notifikationer.",
   "notify.unraid": "Unraid-notifikationer",
   "notify.unraidHint": "Send til Unraids eget notifikationssystem (som kan videresende til Pushover, e-mail, Discord …). Kræver opsat SSH-forbindelse (Indstillinger → VM Backup over SSH).",
   "notify.save": "Gem",

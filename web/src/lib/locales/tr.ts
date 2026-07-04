@@ -416,6 +416,7 @@ const tr: Partial<Translations> = {
   "notify.matrixToken": "Erişim belirteci",
   "notify.matrixRoom": "Oda kimliği",
   "notify.healthchecks": "Healthchecks.io ping URL'si",
+  "notify.healthchecksLifecycle": "Healthchecks, bir URL ayarlandığında tüm yedekleme yaşam döngüsü boyunca pinglenir — başlangıç, başarı ve başarısızlık — yukarıdaki 'Bildir' ayarından bağımsız olarak, böylece yalnızca başarısızlıkta bildirim seçili olsa bile denetim başarıda yeşil kalır.",
   "notify.unraid": "Unraid bildirimleri",
   "notify.unraidHint": "Unraid'in kendi bildirim sistemine gönder (Pushover, e-posta, Discord … iletilebilir). Kurulu SSH bağlantısı gerekir (Ayarlar → VM Backup over SSH).",
   "notify.save": "Kaydet",

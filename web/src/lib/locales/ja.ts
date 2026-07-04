@@ -408,6 +408,7 @@ const ja: Partial<Translations> = {
   "notify.matrixToken": "アクセストークン",
   "notify.matrixRoom": "ルーム ID",
   "notify.healthchecks": "Healthchecks.io ping URL",
+  "notify.healthchecksLifecycle": "URL が設定されていれば、上の『通知する』設定に関係なく、バックアップのライフサイクル全体 — 開始、成功、失敗 — にわたって Healthchecks に ping が送信されます。そのため、失敗時のみの通知でも成功時にはチェックが緑のままになります。",
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord などへ転送可能）。SSH 接続の設定が必要です（設定 → VM Backup over SSH）。",
   "notify.save": "保存",

@@ -416,6 +416,7 @@ const fi: Partial<Translations> = {
   "notify.matrixToken": "Käyttötunniste",
   "notify.matrixRoom": "Huoneen tunnus",
   "notify.healthchecks": "Healthchecks.io ping-URL",
+  "notify.healthchecksLifecycle": "Healthchecksiin lähetetään ping koko varmuuskopion elinkaaren ajan — aloitus, onnistuminen ja epäonnistuminen — aina kun URL on asetettu, riippumatta yllä olevasta 'Ilmoita'-asetuksesta, jotta tarkistus pysyy vihreänä onnistuessa myös pelkillä epäonnistumisilmoituksilla.",
   "notify.unraid": "Unraid-ilmoitukset",
   "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin …). Vaatii määritetyn SSH-yhteyden (Asetukset → VM Backup over SSH).",
   "notify.save": "Tallenna",
