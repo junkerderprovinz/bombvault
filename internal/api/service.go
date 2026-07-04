@@ -641,7 +641,7 @@ var errOffsiteAppendOnly = errors.New("repo is append-only; prune far-side or us
 // domain's backups are current relative to its schedule. It drives the
 // dashboard's green/amber/red "are my backups current?" indicator.
 type DomainStatusEntry struct {
-	Domain        string `json:"domain"`        // "containers" | "vms" | "flash"
+	Domain        string `json:"domain"`        // "containers" | "vms" | "flash" | "config"
 	Enabled       bool   `json:"enabled"`       // domain switched on in Settings
 	Schedule      string `json:"schedule"`      // the cadence string (e.g. "daily 02:30")
 	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
@@ -909,6 +909,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, s.store.LastSuccessfulContainerBackup},
 		{"vms", settings.VMsEnabled, settings.VMsSchedule, s.store.LastSuccessfulVMBackup},
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
+		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
 	}
 
 	out := make([]DomainStatusEntry, 0, len(domains))
@@ -1262,6 +1263,7 @@ func (s *Service) CollectStatsOnStartup() {
 		{"containers", settings.ContainersEnabled},
 		{"vms", settings.VMsEnabled},
 		{"flash", settings.FlashEnabled},
+		{"config", settings.ConfigEnabled},
 	} {
 		if d.enabled {
 			s.CollectStatsAsync(d.name, "local")

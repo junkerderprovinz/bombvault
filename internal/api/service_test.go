@@ -960,6 +960,35 @@ func TestDomainStatus(t *testing.T) {
 	}
 }
 
+// TestDomainStatusIncludesConfig pins that the config self-backup domain surfaces
+// in DomainStatus (and therefore in the dashboard scorecard + Prometheus metrics,
+// which iterate DomainStatus generically) once it is enabled in Settings.
+func TestDomainStatusIncludesConfig(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir()}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigSchedule = "daily 03:30"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	entries, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	found := false
+	for _, d := range entries {
+		if d.Domain == "config" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("DomainStatus missing config entry")
+	}
+}
+
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	dir := t.TempDir()
 	// HostMountRoot must be writable so EnsureRepo can create the repo dir, and
