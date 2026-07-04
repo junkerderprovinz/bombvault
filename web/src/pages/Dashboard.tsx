@@ -740,7 +740,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // Backup health heatmap (GitHub-contributions style)
 // ---------------------------------------------------------------------------
 
-type HeatDomain = "containers" | "vms" | "flash";
+type HeatDomain = "containers" | "vms" | "flash" | "config";
 
 // cellColor maps a day's outcome (for the selected domain) to a fill color:
 // any failure → red; all-ok → green shades that deepen with more successful
@@ -818,12 +818,14 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         return t("dashboard.domainVMs");
       case "flash":
         return t("dashboard.domainFlash");
+      case "config":
+        return t("dashboard.domainConfig");
     }
   };
 
   const toggle = (
     <div className="flex items-center gap-1">
-      {(["containers", "vms", "flash"] as HeatDomain[]).map((d) => (
+      {(["containers", "vms", "flash", "config"] as HeatDomain[]).map((d) => (
         <button
           key={d}
           type="button"

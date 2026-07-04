@@ -303,6 +303,7 @@ const en = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "App configuration",
   "settings.schedule": "Schedule",
   "settings.scheduleOff": "off",
   "settings.language": "Language",
@@ -453,6 +454,7 @@ const en = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Ransomware protection",
@@ -675,7 +677,22 @@ const en = {
   "recovery.readable": "Your backups are readable.",
   "recovery.notReachable": "Couldn't reach your backups yet — attach the location below, then re-check.",
   "recovery.recheck": "Re-check",
-  // Step 2 — attach your backups
+  // Step 2 — restore BombVault's own settings first (optional, before attach)
+  "recovery.stepConfig": "Restore BombVault's own settings",
+  "recovery.configHint": "On a rebuilt server, restore BombVault's own settings first — its backup paths, off-site targets and credentials — so the steps below come pre-filled. Point it at the settings backup you set up earlier. No settings backup? Skip this and attach your backups manually below.",
+  "recovery.configAppKeyReminder": "Your APP_KEY must match this backup — that's the check in Step 1 above.",
+  "recovery.configSourceLabel": "Where is the settings backup?",
+  "recovery.configLocalPath": "Local path",
+  "recovery.configOffsiteUrl": "Off-site repo URL",
+  "recovery.configRestore": "Restore BombVault's settings",
+  "recovery.configRestoring": "Restoring…",
+  "recovery.configRestarting": "BombVault is restarting to apply your settings… this page reloads automatically when it's back.",
+  "recovery.configManualRestart": "Your settings are staged. Restart the BombVault container in Unraid, then continue — they apply on the next boot.",
+  "recovery.configReloadWhenBack": "BombVault is taking longer than expected to come back. Reload this page once it's up to load your restored settings.",
+  "recovery.configReload": "Reload now",
+  "recovery.configSkip": "Skip — I don't have a settings backup",
+  "recovery.configSkipped": "Skipped. Attach your backups manually below.",
+  // Step 3 — attach your backups
   "recovery.step2": "Attach your backups",
   "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
   "recovery.credsSaveHint": "Off-site credentials save with each card's own Save button — save them before you connect & preview.",
@@ -965,6 +982,7 @@ const de: Translations = {
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
+  "settings.configEnabled": "App-Konfiguration",
   "settings.schedule": "Zeitplan",
   "settings.scheduleOff": "aus",
   "settings.language": "Sprache",
@@ -1115,6 +1133,7 @@ const de: Translations = {
   "dashboard.domainContainers": "Container",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
+  "dashboard.domainConfig": "Config",
 
   // Dashboard-Ransomware-Schutz-Karte (v4)
   "ransomware.title": "Ransomware-Schutz",
@@ -1335,7 +1354,22 @@ const de: Translations = {
   "recovery.readable": "Deine Backups sind lesbar.",
   "recovery.notReachable": "Deine Backups waren noch nicht erreichbar — hänge den Speicherort unten an und prüfe erneut.",
   "recovery.recheck": "Erneut prüfen",
-  // Schritt 2 — Backups anhängen
+  // Schritt 2 — zuerst BombVaults eigene Einstellungen wiederherstellen (optional)
+  "recovery.stepConfig": "BombVaults eigene Einstellungen wiederherstellen",
+  "recovery.configHint": "Stelle auf einem neu aufgesetzten Server zuerst BombVaults eigene Einstellungen wieder her — Backup-Pfade, Off-site-Ziele und Zugangsdaten — damit die Schritte unten schon vorausgefüllt sind. Richte es auf das zuvor eingerichtete Einstellungs-Backup aus. Kein Einstellungs-Backup? Überspringe dies und hänge deine Backups unten manuell an.",
+  "recovery.configAppKeyReminder": "Dein APP_KEY muss zu diesem Backup passen — das ist die Prüfung in Schritt 1 oben.",
+  "recovery.configSourceLabel": "Wo liegt das Einstellungs-Backup?",
+  "recovery.configLocalPath": "Lokaler Pfad",
+  "recovery.configOffsiteUrl": "Off-site-Repo-URL",
+  "recovery.configRestore": "BombVaults Einstellungen wiederherstellen",
+  "recovery.configRestoring": "Stelle wieder her…",
+  "recovery.configRestarting": "BombVault startet neu, um deine Einstellungen anzuwenden… diese Seite lädt automatisch neu, sobald es wieder da ist.",
+  "recovery.configManualRestart": "Deine Einstellungen sind bereitgestellt. Starte den BombVault-Container in Unraid neu und fahre dann fort — sie werden beim nächsten Start angewendet.",
+  "recovery.configReloadWhenBack": "BombVault braucht länger als erwartet, um zurückzukommen. Lade diese Seite neu, sobald es wieder läuft, um deine wiederhergestellten Einstellungen zu laden.",
+  "recovery.configReload": "Jetzt neu laden",
+  "recovery.configSkip": "Überspringen — ich habe kein Einstellungs-Backup",
+  "recovery.configSkipped": "Übersprungen. Hänge deine Backups unten manuell an.",
+  // Schritt 3 — Backups anhängen
   "recovery.step2": "Backups anhängen",
   "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
   "recovery.credsSaveHint": "Off-site-Zugangsdaten werden über den eigenen Speichern-Button der jeweiligen Karte gespeichert — speichere sie, bevor du „Verbinden & prüfen“ klickst.",
