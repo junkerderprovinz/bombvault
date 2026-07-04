@@ -349,6 +349,8 @@ const vi: Partial<Translations> = {
   "flash.zipExport.keepN": "Số tệp ZIP cần giữ",
   "flash.zipExport.keepNHint": "N tệp ZIP có dấu thời gian mới nhất được giữ lại; những tệp cũ hơn bị xóa tự động.",
   "flash.zipExport.latestNote": "Một tệp flash-latest.zip duy nhất bị ghi đè sau mỗi lần sao lưu.",
+  "flash.zipExport.plaintextWarn": "Tệp .zip đã xuất không được mã hóa, ngay cả khi kho lưu trữ flash của bạn được mã hóa. Chỉ đồng bộ nó tới nơi bạn tin tưởng.",
+  "flash.zipExport.pathRequired": "Chọn một thư mục xuất để bật tính năng này.",
 
   "vm.method": "Phương thức",
   "vm.method.graceful": "Êm ái (tắt máy)",

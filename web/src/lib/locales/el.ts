@@ -356,6 +356,8 @@ const el: Partial<Translations> = {
   "flash.zipExport.keepN": "Πλήθος zip προς διατήρηση",
   "flash.zipExport.keepNHint": "Διατηρούνται τα πιο πρόσφατα N χρονοσημασμένα zip· τα παλαιότερα διαγράφονται αυτόματα.",
   "flash.zipExport.latestNote": "Ένα μόνο flash-latest.zip αντικαθίσταται μετά από κάθε αντίγραφο.",
+  "flash.zipExport.plaintextWarn": "Το εξαγόμενο .zip δεν είναι κρυπτογραφημένο, ακόμη κι αν το αποθετήριο flash σας είναι. Συγχρονίστε το μόνο σε μέρος που εμπιστεύεστε.",
+  "flash.zipExport.pathRequired": "Επιλέξτε έναν φάκελο εξαγωγής για να το ενεργοποιήσετε.",
 
   // VM backup (SSH)
   "vm.method": "Μέθοδος",

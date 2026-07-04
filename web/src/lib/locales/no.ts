@@ -354,6 +354,8 @@ const no: Partial<Translations> = {
   "flash.zipExport.keepN": "Zip-er å beholde",
   "flash.zipExport.keepNHint": "De nyeste N zip-ene med tidsstempel beholdes; eldre slettes automatisk.",
   "flash.zipExport.latestNote": "En enkelt flash-latest.zip overskrives etter hver sikkerhetskopi.",
+  "flash.zipExport.plaintextWarn": "Den eksporterte .zip er ikke kryptert, selv om flash-repositoriet ditt er det. Synkroniser den bare til et sted du stoler på.",
+  "flash.zipExport.pathRequired": "Velg en eksportmappe for å slå på dette.",
 
   // VM backup (SSH)
   "vm.method": "Metode",

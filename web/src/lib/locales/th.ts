@@ -356,6 +356,8 @@ const th: Partial<Translations> = {
   "flash.zipExport.keepN": "จำนวน ZIP ที่จะเก็บ",
   "flash.zipExport.keepNHint": "ระบบจะเก็บไฟล์ ZIP ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์; ไฟล์ที่เก่ากว่าจะถูกลบโดยอัตโนมัติ",
   "flash.zipExport.latestNote": "flash-latest.zip เพียงไฟล์เดียวจะถูกเขียนทับหลังการสำรองข้อมูลทุกครั้ง",
+  "flash.zipExport.plaintextWarn": "ไฟล์ .zip ที่ส่งออกจะไม่ถูกเข้ารหัส แม้ว่าที่เก็บแฟลชของคุณจะเข้ารหัสก็ตาม ให้ซิงค์ไปยังที่ที่คุณไว้วางใจเท่านั้น",
+  "flash.zipExport.pathRequired": "เลือกโฟลเดอร์ส่งออกเพื่อเปิดใช้งานสิ่งนี้",
 
   // VM backup (SSH)
   "vm.method": "วิธีการ",

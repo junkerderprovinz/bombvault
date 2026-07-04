@@ -356,6 +356,8 @@ const ar: Partial<Translations> = {
   "flash.zipExport.keepN": "عدد ملفات zip المحتفظ بها",
   "flash.zipExport.keepNHint": "يُحتفظ بأحدث N ملفات zip مؤرّخة؛ وتُحذف الأقدم تلقائياً.",
   "flash.zipExport.latestNote": "يُستبدل ملف flash-latest.zip واحد بعد كل نسخة احتياطية.",
+  "flash.zipExport.plaintextWarn": "ملف .zip المُصدَّر غير مشفَّر، حتى لو كان مستودع الفلاش لديك مشفَّراً. زامنه فقط إلى مكان تثق به.",
+  "flash.zipExport.pathRequired": "اختر مجلد تصدير لتفعيل هذا.",
 
   // VM backup (SSH)
   "vm.method": "الطريقة",

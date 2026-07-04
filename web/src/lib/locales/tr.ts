@@ -356,6 +356,8 @@ const tr: Partial<Translations> = {
   "flash.zipExport.keepN": "Tutulacak ZIP sayısı",
   "flash.zipExport.keepNHint": "Zaman damgalı en yeni N ZIP tutulur; daha eskiler otomatik olarak silinir.",
   "flash.zipExport.latestNote": "Her yedeklemeden sonra tek bir flash-latest.zip'in üzerine yazılır.",
+  "flash.zipExport.plaintextWarn": "Dışa aktarılan .zip, flash deponuz şifreli olsa bile şifrelenmez. Yalnızca güvendiğiniz bir yere senkronize edin.",
+  "flash.zipExport.pathRequired": "Bunu açmak için bir dışa aktarma klasörü seçin.",
 
   // VM backup (SSH)
   "vm.method": "Yöntem",

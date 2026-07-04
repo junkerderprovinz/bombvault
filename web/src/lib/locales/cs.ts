@@ -354,6 +354,8 @@ const cs: Partial<Translations> = {
   "flash.zipExport.keepN": "Počet zipů k uchování",
   "flash.zipExport.keepNHint": "Uchovává se nejnovějších N časově označených zipů; starší se automaticky mažou.",
   "flash.zipExport.latestNote": "Jediný flash-latest.zip se přepíše po každé záloze.",
+  "flash.zipExport.plaintextWarn": "Exportovaný .zip není šifrovaný, i když váš flash repozitář ano. Synchronizujte jej jen někam, kde tomu důvěřujete.",
+  "flash.zipExport.pathRequired": "Vyberte složku pro export, abyste to zapnuli.",
 
   // VM backup (SSH)
   "vm.method": "Metoda",

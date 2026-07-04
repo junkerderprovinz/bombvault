@@ -356,6 +356,8 @@ const it: Partial<Translations> = {
   "flash.zipExport.keepN": "Zip da mantenere",
   "flash.zipExport.keepNHint": "Vengono mantenuti i più recenti N zip con marca temporale; i più vecchi vengono eliminati automaticamente.",
   "flash.zipExport.latestNote": "Un unico flash-latest.zip viene sovrascritto dopo ogni backup.",
+  "flash.zipExport.plaintextWarn": "Lo .zip esportato non è cifrato, anche se il tuo repository flash lo è. Sincronizzalo solo in un luogo di cui ti fidi.",
+  "flash.zipExport.pathRequired": "Scegli una cartella di esportazione per attivarlo.",
 
   // VM backup (SSH)
   "vm.method": "Metodo",

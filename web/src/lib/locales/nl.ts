@@ -351,6 +351,8 @@ const nl: Partial<Translations> = {
   "flash.zipExport.keepN": "Te bewaren zips",
   "flash.zipExport.keepNHint": "De nieuwste N zips met tijdstempel worden bewaard; oudere worden automatisch verwijderd.",
   "flash.zipExport.latestNote": "Eén flash-latest.zip wordt na elke back-up overschreven.",
+  "flash.zipExport.plaintextWarn": "De geëxporteerde .zip is niet versleuteld, ook al is je Flash-repository dat wel. Synchroniseer hem alleen naar een vertrouwde locatie.",
+  "flash.zipExport.pathRequired": "Kies een exportmap om dit in te schakelen.",
 
   // VM backup (SSH)
   "vm.method": "Methode",

@@ -356,6 +356,8 @@ const hu: Partial<Translations> = {
   "flash.zipExport.keepN": "Megtartandó ZIP-ek",
   "flash.zipExport.keepNHint": "A legújabb N időbélyeggel ellátott ZIP marad meg; a régebbieket automatikusan törli.",
   "flash.zipExport.latestNote": "Egyetlen flash-latest.zip íródik felül minden mentés után.",
+  "flash.zipExport.plaintextWarn": "Az exportált .zip nincs titkosítva, még akkor sem, ha a flash repód igen. Csak megbízható helyre szinkronizáld.",
+  "flash.zipExport.pathRequired": "Válassz egy exportálási mappát ennek bekapcsolásához.",
 
   // VM backup (SSH)
   "vm.method": "Módszer",
