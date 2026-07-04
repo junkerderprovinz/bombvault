@@ -4307,15 +4307,17 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	}
 	name := "flash-latest.zip"
 	if settings.FlashZipExportKeep > 0 {
-		name = "flash-" + time.Now().Format("20060102-150405") + ".zip"
+		name = "flash-" + time.Now().UTC().Format("20060102-150405") + ".zip"
 	}
 	if err := os.Rename(tmp, filepath.Join(dir, name)); err != nil {
 		_ = os.Remove(tmp)
 		return fmt.Errorf("flash zip export: finalize: %w", err)
 	}
-	if settings.FlashZipExportKeep > 0 {
-		s.pruneFlashZips(dir, settings.FlashZipExportKeep)
-	}
+	// Prune in BOTH modes: in latest mode (Keep==0) the user opted out of history,
+	// so this deletes any stale flash-<ts>.zip left over from a previous history
+	// run; in history mode (Keep>0) it trims to the newest N. flash-latest.zip never
+	// matches flashZipRe, so it is never touched.
+	s.pruneFlashZips(dir, settings.FlashZipExportKeep)
 	return nil
 }
 
@@ -4325,6 +4327,7 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 func (s *Service) pruneFlashZips(dir string, keep int) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
+		log.Printf("flash zip export: prune: read dir: %v", err)
 		return
 	}
 	var zips []string
@@ -4338,7 +4341,9 @@ func (s *Service) pruneFlashZips(dir string, keep int) {
 		return
 	}
 	for _, name := range zips[keep:] {
-		_ = os.Remove(filepath.Join(dir, name))
+		if err := os.Remove(filepath.Join(dir, name)); err != nil {
+			log.Printf("flash zip export: prune: remove %q: %v", name, err)
+		}
 	}
 }
 
