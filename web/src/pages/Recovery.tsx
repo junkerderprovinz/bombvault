@@ -285,6 +285,13 @@ export default function Recovery() {
         setConfigPhase("error");
         return;
       }
+      if (!res.staged) {
+        // Contract drift guard: ok:true but the snapshot was NOT staged — don't drive
+        // the restart/reload flow (nothing would be applied). Surface it as an error.
+        setConfigError(res.error ?? t("settings.error"));
+        setConfigPhase("error");
+        return;
+      }
       if (res.autoRestart) {
         // BombVault is restarting itself to apply the staged restore. Poll the
         // health endpoint until it answers again, then reload so the restored
@@ -546,9 +553,21 @@ export default function Recovery() {
                   </button>
                 </div>
 
-                {/* Restarting — optimistic; waitForAppBack() reloads on return. */}
+                {/* Restarting — optimistic; waitForAppBack() reloads on return. The
+                    manual reload is offered right away too: if BombVault comes back
+                    faster than the poll's down-detection window, the user isn't stuck
+                    watching the spinner and can reload the moment the app is up. */}
                 {configPhase === "restarting" && (
-                  <p className="text-sm text-[#78a9ff]">{t("recovery.configRestarting")}</p>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm text-[#78a9ff]">{t("recovery.configRestarting")}</p>
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="self-start text-xs text-carbon-textSub hover:text-carbon-text transition-colors underline"
+                    >
+                      {t("recovery.configReload")}
+                    </button>
+                  </div>
                 )}
                 {/* Manual restart needed (Docker socket unreachable). */}
                 {configPhase === "manual" && (

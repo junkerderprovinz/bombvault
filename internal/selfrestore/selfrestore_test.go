@@ -99,6 +99,16 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(staged, "ssh", "id_ed25519"), []byte("NEWKEY"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	// A stale <root>.bad from an earlier failed restore (holding a plaintext
+	// rclone.conf + ssh private key) must be GC'd by a SUCCESSFUL apply, not left to
+	// linger until the next failed rename reuses the name.
+	badRoot := selfrestore.StagingRoot(dataDir) + ".bad"
+	if err := os.MkdirAll(badRoot, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(badRoot, "id_ed25519"), []byte("STALEKEY"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if err := selfrestore.WriteMarker(dataDir); err != nil {
 		t.Fatal(err)
 	}
@@ -128,6 +138,9 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	}
 	if _, err := os.Stat(selfrestore.StagingRoot(dataDir)); !os.IsNotExist(err) {
 		t.Fatalf("staging root not removed: %v", err)
+	}
+	if _, err := os.Stat(selfrestore.StagingRoot(dataDir) + ".bad"); !os.IsNotExist(err) {
+		t.Fatalf("stale <root>.bad secret copy not GC'd after successful apply: %v", err)
 	}
 }
 

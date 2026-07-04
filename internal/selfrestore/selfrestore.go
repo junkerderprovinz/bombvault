@@ -91,6 +91,10 @@ func ApplyPending(dataDir string) (bool, error) {
 		return false, err
 	}
 	_ = os.RemoveAll(StagingRoot(dataDir))
+	// GC any prior <root>.bad from an earlier failed restore now that we've applied a
+	// good one: it holds a plaintext copy of rclone.conf + the ssh private key and
+	// would otherwise linger until the NEXT failed rename reused the name.
+	_ = os.RemoveAll(StagingRoot(dataDir) + ".bad")
 	_ = os.Remove(MarkerPath(dataDir))
 	return true, nil
 }

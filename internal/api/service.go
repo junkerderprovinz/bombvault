@@ -440,8 +440,16 @@ func (s *Service) stageConfigSnapshot() (string, error) {
 			_ = os.RemoveAll(dir) // never leave a partial snapshot (DB + creds + ssh key) on disk
 		}
 	}()
-	if err := s.store.VacuumInto(filepath.Join(dir, "bombvault.sqlite")); err != nil {
+	stagedDB := filepath.Join(dir, "bombvault.sqlite")
+	if err := s.store.VacuumInto(stagedDB); err != nil {
 		return "", err
+	}
+	// The SQLite driver creates the VACUUM'd DB at its default mode (~0o644); tighten
+	// it to 0o600 so the staged settings DB is never group/other-readable, matching
+	// the rclone.conf + ssh copies below. Defense-in-depth: the staging dir is already
+	// 0o700, but the DB should not rely on the dir mode alone.
+	if err := os.Chmod(stagedDB, 0o600); err != nil {
+		return "", fmt.Errorf("config snapshot: chmod db: %w", err)
 	}
 	// rclone.conf + ssh/ are static on disk; copy verbatim if present.
 	if src := filepath.Join(s.cfg.DataDir, "rclone.conf"); fileExists(src) {
@@ -4476,6 +4484,10 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 	if err := os.RemoveAll(root); err != nil {
 		return fmt.Errorf("config restore: clear staging: %w", err)
 	}
+	// Also clear any stale <root>.bad left by a failed restore on a prior boot: it
+	// contains a plaintext rclone.conf + ssh private key, so a fresh attempt should
+	// not let it linger. Best-effort — a leftover .bad must never block a restore.
+	_ = os.RemoveAll(root + ".bad")
 	runID, err := s.store.StartRun(store.ConfigTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("config restore: start run: %w", err)
