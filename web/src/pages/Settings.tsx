@@ -637,6 +637,36 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
 
+      {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
+        <span className="text-xs font-medium text-carbon-textSub">{t("notify.hcPerDomain")}</span>
+        {(
+          [
+            ["container", t("nav.containers")],
+            ["VM", t("nav.vms")],
+            ["flash", t("nav.flash")],
+            ["config", t("nav.config")],
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key} className={labelCls}>
+            {label}
+            <input
+              value={cfg.healthchecksByDomain?.[key] ?? ""}
+              onChange={(e) =>
+                setCfg((c) => ({
+                  ...c,
+                  healthchecksByDomain: { ...c.healthchecksByDomain, [key]: e.target.value },
+                }))
+              }
+              spellCheck={false}
+              placeholder="https://hc-ping.com/your-uuid"
+              className={inputCls}
+            />
+          </label>
+        ))}
+        <p className="text-xs text-carbon-textMuted">{t("notify.hcPerDomainHint")}</p>
+      </div>
+
       {/* Email (SMTP), sent via the configured mail server. */}
       <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
         <label className="flex items-start gap-2 cursor-pointer">

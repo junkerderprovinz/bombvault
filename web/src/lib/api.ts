@@ -613,6 +613,10 @@ export interface NotifyConfig {
   matrixToken: string;
   matrixRoom: string;
   healthchecksUrl: string;
+  // Optional per-domain Healthchecks ping URLs, keyed by domain ("container",
+  // "VM", "flash", "config"). A set URL overrides healthchecksUrl for that
+  // domain; a blank/absent entry falls back to the global healthchecksUrl.
+  healthchecksByDomain?: Record<string, string>;
   unraid: boolean;
   smtpEnabled: boolean;
   smtpHost: string;
