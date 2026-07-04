@@ -1924,6 +1924,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
+	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	repo, err := s.containersRepoPath(settings)
 	if err != nil {
 		return backup.Summary{}, err
@@ -3736,6 +3737,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
+	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	repo, err := s.vmsRepoPath(settings)
 	if err != nil {
 		return backup.Summary{}, err
@@ -4233,6 +4235,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
+	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	if _, statErr := os.Stat(s.cfg.FlashDir); errors.Is(statErr, fs.ErrNotExist) {
 		return backup.Summary{}, fmt.Errorf("flash backup: the Unraid flash is not mounted — add the /boot → %s mount to the container template", s.cfg.FlashDir)
 	}
@@ -4366,6 +4369,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
+	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	// Build the consistent staging snapshot of /config; restic backs THIS up, never
 	// the live WAL-mode DB. Always removed afterwards so the snapshot never lingers.
 	stagingDir, err := s.stageConfigSnapshot()
@@ -5921,6 +5925,17 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 			log.Printf("notify: unraid: %v", e)
 		}
 	}
+}
+
+// notifyBackupStart pings the Healthchecks /start endpoint at the beginning of a
+// backup (best-effort; never affects the backup). The message channels have no
+// "start" concept, so this is Healthchecks-only.
+func (s *Service) notifyBackupStart(ctx context.Context) {
+	c, err := s.NotifyConfig()
+	if err != nil {
+		return
+	}
+	notify.SendStart(ctx, c)
 }
 
 // sendUnraidNotify triggers Unraid's native notification system by running the

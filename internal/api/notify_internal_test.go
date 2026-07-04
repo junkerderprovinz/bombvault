@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -129,5 +131,40 @@ func TestTestNotifyNothingConfigured(t *testing.T) {
 	s := unraidNotifyService(t, &fakeHostSSH{})
 	if err := s.TestNotify(context.Background(), notify.Config{}); err == nil {
 		t.Fatal("expected an error when no channel is configured")
+	}
+}
+
+// TestNotifyBackupStartPingsHealthchecks: notifyBackupStart pings the Healthchecks
+// /start endpoint at the beginning of a backup when a URL is configured — even under
+// On="failure", since Healthchecks tracks the whole lifecycle independent of policy.
+func TestNotifyBackupStartPingsHealthchecks(t *testing.T) {
+	var path string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
+	defer srv.Close()
+
+	s := unraidNotifyService(t, nil) // SendStart is HTTP-only; no SSH needed
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	s.notifyBackupStart(context.Background())
+	if path != "/start" {
+		t.Fatalf("notifyBackupStart should ping /start, got %q", path)
+	}
+}
+
+// TestNotifyBackupStartSuppressedWhenNever: with On="never" the start ping is a no-op,
+// so a Healthchecks server configured only for reference is never contacted.
+func TestNotifyBackupStartSuppressedWhenNever(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "never", HealthchecksURL: srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	s.notifyBackupStart(context.Background())
+	if hits != 0 {
+		t.Fatalf("notifyBackupStart under On=never should not ping, hits=%d", hits)
 	}
 }
