@@ -1354,6 +1354,12 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	if err = s.EnsureRepo(ctx, dest, mode); err != nil {
 		return fmt.Errorf("ensure off-site repo: %w", err)
 	}
+	// Clear any stale lock a previously interrupted off-site op (replication copy /
+	// integrity check) left on the destination repo, so restic copy can take its
+	// lock instead of failing with "repository is already locked". BombVault is the
+	// sole writer, so an existing off-site lock is always stale — this self-heals the
+	// off-site repo on the next run (defence-in-depth for bug #29).
+	s.unlockStale(ctx, dest, mode)
 	// Cap the transfer rate so off-site replication doesn't saturate the WAN
 	// (zero limits = unlimited, the default).
 	if err = s.engine.Copy(ctx, dest, localRepo, nil, s.offsiteLimits(settings), mode); err != nil {
@@ -3222,7 +3228,16 @@ func (s *Service) TagSnapshot(ctx context.Context, name, source, snapID string, 
 	if err != nil {
 		return err
 	}
-	return s.engine.TagAdd(ctx, repo, snapID, tags, s.ModeFor(settings))
+	mode := s.ModeFor(settings)
+	// Clear any stale lock left by a previously interrupted run before taking
+	// restic's exclusive tag lock — the off-site repo can carry a lock left by an
+	// interrupted off-site op (replication copy / integrity check), and `restic tag`
+	// would otherwise fail with "repository is already locked". BombVault is the sole
+	// writer, so an existing lock is always stale. Every other repo-mutating path
+	// (backups, PruneDomain, DeleteSnapshot) does this; TagSnapshot was missing it,
+	// which made adding a tag on the off-site repo fail (bug #29).
+	s.unlockStale(ctx, repo, mode)
+	return s.engine.TagAdd(ctx, repo, snapID, tags, mode)
 }
 
 // snapshotBelongs reports whether id (exact or unique prefix) is present in the
@@ -4744,7 +4759,13 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
-	return s.engine.Check(ctx, repo, s.ModeFor(settings))
+	mode := s.ModeFor(settings)
+	// Clear any stale lock a previously interrupted off-site op (replication copy /
+	// integrity check) left behind before `restic check` takes its lock, so a verify
+	// can't fail with "repository is already locked". BombVault is the sole writer,
+	// so an existing lock is always stale (defence-in-depth for bug #29).
+	s.unlockStale(ctx, repo, mode)
+	return s.engine.Check(ctx, repo, mode)
 }
 
 // drillSubsetPct clamps the configured drill subset percentage into restic's

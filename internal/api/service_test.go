@@ -2333,6 +2333,54 @@ func TestTagSnapshot(t *testing.T) {
 	}
 }
 
+// TestTagSnapshotUnlocksStaleLockBeforeTag pins bug #29's fix: TagSnapshot must
+// self-heal a stale restic lock (via unlockStale → Unlock) BEFORE taking restic's
+// exclusive tag lock, otherwise a lock left on the off-site repo by an interrupted
+// off-site op makes `restic tag` fail with "repository is already locked". The
+// engine records an ordered call log, and we assert Unlock precedes TagAdd on the
+// resolved repo.
+func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex"}},
+	}}
+	svc := diffTagTestService(t, eng)
+	ctx := context.Background()
+
+	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"keep"}); err != nil {
+		t.Fatalf("TagSnapshot: %v", err)
+	}
+
+	// Both calls must have happened, in the order Unlock → TagAdd (the stale-lock
+	// clear must precede the exclusive tag lock).
+	unlockIdx, tagIdx := -1, -1
+	for i, call := range eng.callLog {
+		switch call {
+		case "Unlock":
+			if unlockIdx == -1 {
+				unlockIdx = i
+			}
+		case "TagAdd":
+			if tagIdx == -1 {
+				tagIdx = i
+			}
+		}
+	}
+	if unlockIdx == -1 {
+		t.Fatalf("TagSnapshot must clear a stale lock (Unlock) before tagging; call log = %v", eng.callLog)
+	}
+	if tagIdx == -1 {
+		t.Fatalf("TagSnapshot must tag the snapshot (TagAdd); call log = %v", eng.callLog)
+	}
+	if unlockIdx > tagIdx {
+		t.Fatalf("Unlock must precede TagAdd, got call log %v", eng.callLog)
+	}
+
+	// The stale-unlock is a plain (non-remove-all) unlock on the resolved repo.
+	if len(eng.unlockRemoveAll) == 0 || eng.unlockRemoveAll[0] {
+		t.Fatalf("stale-unlock must be a plain unlock (removeAll=false), got %v", eng.unlockRemoveAll)
+	}
+}
+
 // TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
 // backups forgets only that container's snapshots (tag-filtered) and removes its
 // target from the store — the path used to clean up no-longer-installed containers.
@@ -2684,6 +2732,7 @@ type fakeResticEngine struct {
 	diffResult      restic.DiffResult // returned by Diff
 	diffPairs       []string          // "snap1->snap2" of each Diff call
 	taggedSnaps     []string          // "snapID:tag,tag" of each TagAdd call
+	callLog         []string          // ordered method-call log (currently Unlock/TagAdd) for ordering assertions
 	forgetPruned    bool              // prune flag of the last Forget call
 	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
 	// (non-zero) overrides the byte total it reports so a test can force a
@@ -2858,6 +2907,7 @@ func (f *fakeResticEngine) CheckData(_ context.Context, repo string, subsetPerce
 func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool, _ restic.Mode) error {
 	f.unlockedRepos = append(f.unlockedRepos, repo)
 	f.unlockRemoveAll = append(f.unlockRemoveAll, removeAll)
+	f.callLog = append(f.callLog, "Unlock")
 	return f.unlockErr
 }
 
@@ -2913,6 +2963,7 @@ func (f *fakeResticEngine) Diff(_ context.Context, _, snap1, snap2 string, _ res
 
 func (f *fakeResticEngine) TagAdd(_ context.Context, _, snapID string, tags []string, _ restic.Mode) error {
 	f.taggedSnaps = append(f.taggedSnaps, snapID+":"+strings.Join(tags, ","))
+	f.callLog = append(f.callLog, "TagAdd")
 	return nil
 }
 
