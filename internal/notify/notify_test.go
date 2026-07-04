@@ -145,6 +145,23 @@ func TestSendStartSuppressed(t *testing.T) {
 	}
 }
 
+// TestSendUnknownPolicySuppressed: an unrecognized On value must be treated like
+// "never" (positive allowlist matching shouldSend), so neither Send nor SendStart
+// contacts any endpoint — including the Healthchecks monitor.
+func TestSendUnknownPolicySuppressed(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+
+	cfg := notify.Config{On: "bogus", HealthchecksURL: srv.URL, WebhookURL: srv.URL, WebhookFormat: "generic"}
+	notify.Send(context.Background(), cfg, notify.Event{OK: true})
+	notify.Send(context.Background(), cfg, notify.Event{OK: false})
+	notify.SendStart(context.Background(), cfg)
+	if hits != 0 {
+		t.Fatalf("unknown On policy must ping nothing, hits=%d", hits)
+	}
+}
+
 // TestHealthchecksPhasePaths exercises the phase→path mapping through the exported
 // API: /start (SendStart), base (Send success) and /fail (Send failure).
 func TestHealthchecksPhasePaths(t *testing.T) {
