@@ -3709,6 +3709,119 @@ func TestRecoveryKit(t *testing.T) {
 	})
 }
 
+func TestRecoveryKitCredentials(t *testing.T) {
+	// rcloneConf is a small but complete rclone remote definition — it holds the
+	// remote's own secrets, so the kit must reproduce it verbatim.
+	const rcloneConf = "[offsite]\ntype = s3\nprovider = Wasabi\naccess_key_id = RCLONEKEY123\nsecret_access_key = RCLONESECRET456\n"
+
+	t.Run("with cloud creds + rclone config: kit contains the secrets and env-var names", func(t *testing.T) {
+		dir := t.TempDir()
+		appKey := strings.Repeat("c", 64)
+		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.EncryptionEnabled = true
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		creds := api.CloudCreds{
+			S3KeyID:      "AKIAEXAMPLEKEYID",
+			S3Secret:     "s3-secret-value-xyz",
+			S3Region:     "eu-central-1",
+			RESTUser:     "restuser",
+			RESTPassword: "rest-pass-word",
+		}
+		if err := svc.SetCloudCreds(creds); err != nil {
+			t.Fatalf("SetCloudCreds: %v", err)
+		}
+		if err := svc.SetRcloneConf(rcloneConf); err != nil {
+			t.Fatalf("SetRcloneConf: %v", err)
+		}
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+
+		if !strings.Contains(kit, "## Repository credentials") {
+			t.Error("kit must contain the Repository credentials section")
+		}
+		// Each set field must appear as a restic `ENV_VAR=value` line — this proves
+		// both the stored value and the env-var name restic expects. The `=` form is
+		// unique to the credentials section (the generic restore notes reference the
+		// bare names in prose).
+		for _, want := range []string{
+			"RESTIC_REST_USERNAME=" + creds.RESTUser,
+			"RESTIC_REST_PASSWORD=" + creds.RESTPassword,
+			"AWS_ACCESS_KEY_ID=" + creds.S3KeyID,
+			"AWS_SECRET_ACCESS_KEY=" + creds.S3Secret,
+			"AWS_DEFAULT_REGION=" + creds.S3Region,
+		} {
+			if !strings.Contains(kit, want) {
+				t.Errorf("kit must contain the credential line %q", want)
+			}
+		}
+		// The rclone config (which holds the remote's own secrets) must be verbatim.
+		if !strings.Contains(kit, rcloneConf) {
+			t.Error("kit must include the rclone config verbatim")
+		}
+		if !strings.Contains(kit, "RCLONESECRET456") {
+			t.Error("kit must include the rclone remote's secret")
+		}
+	})
+
+	t.Run("only S3 set: kit omits the unset rest-server env-var names", func(t *testing.T) {
+		dir := t.TempDir()
+		appKey := strings.Repeat("d", 64)
+		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		if err := svc.SetCloudCreds(api.CloudCreds{S3KeyID: "ONLYKEY", S3Secret: "onlysecret"}); err != nil {
+			t.Fatalf("SetCloudCreds: %v", err)
+		}
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		if !strings.Contains(kit, "AWS_ACCESS_KEY_ID=ONLYKEY") {
+			t.Error("kit must show the S3 key that IS set")
+		}
+		// S3Region + rest-server were NOT set — their credential lines must be absent
+		// (assert on the `NAME=` form; the bare names appear in the generic notes).
+		if strings.Contains(kit, "AWS_DEFAULT_REGION=") {
+			t.Error("kit must NOT show an AWS_DEFAULT_REGION line when no region is set")
+		}
+		if strings.Contains(kit, "RESTIC_REST_USERNAME=") || strings.Contains(kit, "RESTIC_REST_PASSWORD=") {
+			t.Error("kit must NOT show rest-server credential lines when no rest creds are set")
+		}
+	})
+
+	t.Run("no cloud creds: credentials section says none", func(t *testing.T) {
+		dir := t.TempDir()
+		appKey := strings.Repeat("e", 64)
+		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		if !strings.Contains(kit, "No off-site/cloud credentials are stored") {
+			t.Error("kit must state that no off-site/cloud credentials are stored")
+		}
+		// No stray credential lines when nothing is configured (assert on the `NAME=`
+		// form; the bare names still appear in the generic restore notes).
+		if strings.Contains(kit, "AWS_ACCESS_KEY_ID=") || strings.Contains(kit, "RESTIC_REST_USERNAME=") {
+			t.Error("kit must not print credential lines when nothing is stored")
+		}
+	})
+}
+
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {
 	t.Helper()
 	s, err := st.GetSettings()

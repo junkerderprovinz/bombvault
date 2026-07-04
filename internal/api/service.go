@@ -5027,6 +5027,24 @@ func (s *Service) RcloneRemotes() ([]string, error) {
 	return parseRcloneRemotes(string(plain)), nil
 }
 
+// decodeRcloneConf returns the decrypted rclone config text stored in settings
+// (an empty/blank rclone_conf yields "", no error). Unlike RcloneRemotes it keeps
+// the full contents — used by the recovery kit, which needs the remote secrets.
+func (s *Service) decodeRcloneConf(settings store.Settings) (string, error) {
+	if strings.TrimSpace(settings.RcloneConf) == "" {
+		return "", nil
+	}
+	enc, err := base64.StdEncoding.DecodeString(settings.RcloneConf)
+	if err != nil {
+		return "", err
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return "", err
+	}
+	return string(plain), nil
+}
+
 // parseRcloneRemotes extracts the [name] section headers from an rclone config.
 func parseRcloneRemotes(conf string) []string {
 	var out []string
@@ -5279,6 +5297,61 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("backrest) at the specific per-domain path — the parent folder that holds them is\n")
 	w("NOT itself a repository, and the off-site repo only has snapshots once off-site\n")
 	w("replication has actually run. Add each domain repo on its own.\n\n")
+
+	// Off-site/cloud credentials — the stored rest-server / S3 keys and rclone
+	// config a user needs to reach a remote repository after losing BombVault.
+	// These are secrets too, covered by the master-secret WARNING above; like the
+	// APP_KEY they go ONLY into this downloaded kit and are never logged. Only the
+	// fields that are actually set are printed (mirrors cloudEnv), so the section
+	// never shows an empty label.
+	creds, _ := s.decodeCloud(settings)
+	rcloneConf, _ := s.decodeRcloneConf(settings)
+	hasREST := creds.RESTUser != "" || creds.RESTPassword != ""
+	hasS3 := creds.S3KeyID != "" || creds.S3Secret != "" || creds.S3Region != ""
+	hasRclone := strings.TrimSpace(rcloneConf) != ""
+
+	w("## Repository credentials\n\n")
+	if !hasREST && !hasS3 && !hasRclone {
+		w("No off-site/cloud credentials are stored in BombVault.\n\n")
+	} else {
+		w("These are the stored off-site backend credentials — the same secrets restic\n")
+		w("reads from its environment (or the rclone config) to reach a remote repository.\n")
+		w("They are as sensitive as the APP_KEY above; keep them just as safe.\n\n")
+
+		if hasREST {
+			w("rest-server (restic REST backend) — restic reads these from the environment:\n\n")
+			if creds.RESTUser != "" {
+				w("    RESTIC_REST_USERNAME=%s\n", creds.RESTUser)
+			}
+			if creds.RESTPassword != "" {
+				w("    RESTIC_REST_PASSWORD=%s\n", creds.RESTPassword)
+			}
+			w("\n")
+			w("Export these before running restic against a rest: repository. They can also\n")
+			w("live inside the URL, e.g. rest:https://user:pass@host:8000/path.\n\n")
+		}
+
+		if hasS3 {
+			w("S3-compatible backend — restic reads these from the environment:\n\n")
+			if creds.S3KeyID != "" {
+				w("    AWS_ACCESS_KEY_ID=%s\n", creds.S3KeyID)
+			}
+			if creds.S3Secret != "" {
+				w("    AWS_SECRET_ACCESS_KEY=%s\n", creds.S3Secret)
+			}
+			if creds.S3Region != "" {
+				w("    AWS_DEFAULT_REGION=%s\n", creds.S3Region)
+			}
+			w("\n")
+			w("Export these before running restic against an s3: repository.\n\n")
+		}
+
+		if hasRclone {
+			w("rclone config — holds each remote's own secrets. Save it verbatim as\n")
+			w("~/.config/rclone/rclone.conf, then use the repo as rclone:<remote>:<path>:\n\n")
+			w("```\n%s\n```\n\n", strings.TrimRight(rcloneConf, "\n"))
+		}
+	}
 
 	w("## Manual restore without BombVault\n\n")
 	w("You can restore directly with the restic CLI, no BombVault container required.\n\n")
