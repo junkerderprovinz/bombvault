@@ -196,7 +196,7 @@ func (s *Service) notifyProtectionLost(ctx context.Context, domain, detail strin
 	}
 	subject := "Off-site protection LOST for " + domain
 	msg := fmt.Sprintf("The off-site tamper test for %s reports the append-only protection is GONE — the far side accepted a delete: %s", domain, detail)
-	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
 	if c.Unraid && s.ssh != nil {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
