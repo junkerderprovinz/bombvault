@@ -146,7 +146,7 @@ func TestNotifyBackupStartPingsHealthchecks(t *testing.T) {
 	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}
-	s.notifyBackupStart(context.Background())
+	s.notifyBackupStart(context.Background(), "container")
 	if path != "/start" {
 		t.Fatalf("notifyBackupStart should ping /start, got %q", path)
 	}
@@ -163,8 +163,43 @@ func TestNotifyBackupStartSuppressedWhenNever(t *testing.T) {
 	if err := s.SetNotifyConfig(notify.Config{On: "never", HealthchecksURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}
-	s.notifyBackupStart(context.Background())
+	s.notifyBackupStart(context.Background(), "container")
 	if hits != 0 {
 		t.Fatalf("notifyBackupStart under On=never should not ping, hits=%d", hits)
+	}
+}
+
+// TestNotifyBackupStartPerDomainURL: notifyBackupStart routes the /start ping to the
+// domain's own Healthchecks URL when HealthchecksByDomain has an entry for it, while a
+// domain without an entry falls back to the global URL.
+func TestNotifyBackupStartPerDomainURL(t *testing.T) {
+	var flashPath string
+	var globalHits int
+	flash := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { flashPath = r.URL.Path }))
+	defer flash.Close()
+	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
+	defer global.Close()
+
+	s := unraidNotifyService(t, nil) // SendStart is HTTP-only; no SSH needed
+	if err := s.SetNotifyConfig(notify.Config{
+		On:                   "failure",
+		HealthchecksURL:      global.URL,
+		HealthchecksByDomain: map[string]string{"flash": flash.URL},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	s.notifyBackupStart(context.Background(), "flash")
+	if flashPath != "/start" {
+		t.Fatalf("notifyBackupStart(flash) should ping the flash /start, got %q", flashPath)
+	}
+	if globalHits != 0 {
+		t.Fatalf("global URL must not be pinged for the flash domain, hits=%d", globalHits)
+	}
+
+	// A domain without a per-domain entry falls back to the global URL.
+	s.notifyBackupStart(context.Background(), "config")
+	if globalHits != 1 {
+		t.Fatalf("config domain (no per-domain entry) should ping the global URL once, hits=%d", globalHits)
 	}
 }

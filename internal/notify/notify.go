@@ -47,6 +47,11 @@ type Config struct {
 	MatrixToken      string `json:"matrixToken"`
 	MatrixRoom       string `json:"matrixRoom"`
 	HealthchecksURL  string `json:"healthchecksUrl"`
+	// HealthchecksByDomain maps a backup domain ("container"|"VM"|"flash"|"config")
+	// to its own Healthchecks check URL. A per-domain URL replaces (does not add to)
+	// the global HealthchecksURL for that domain; a blank/absent entry falls back to
+	// the global URL.
+	HealthchecksByDomain map[string]string `json:"healthchecksByDomain"`
 	// Unraid sends each event to Unraid's native notification system (which can
 	// itself forward to Pushover/email/Discord/…). It is delivered over SSH by the
 	// service layer (the host's notify script), not by this package's HTTP Send.
@@ -80,9 +85,44 @@ func (c Config) shouldSend(ok bool) bool {
 	}
 }
 
-// Configured reports whether at least one channel is set.
+// Configured reports whether at least one channel is set. Healthchecks counts when
+// the global URL or any per-domain URL is set.
 func (c Config) Configured() bool {
-	return c.WebhookURL != "" || c.matrixReady() || c.HealthchecksURL != "" || c.smtpReady()
+	return c.WebhookURL != "" || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady()
+}
+
+// healthchecksURLFor returns the per-domain Healthchecks URL when one is set for
+// domain, otherwise the global HealthchecksURL. A per-domain URL replaces (does
+// not add to) the global for that domain.
+func (c Config) healthchecksURLFor(domain string) string {
+	if u := c.HealthchecksByDomain[domain]; u != "" {
+		return u
+	}
+	return c.HealthchecksURL
+}
+
+// healthchecksURLs returns every distinct configured Healthchecks URL — the global
+// HealthchecksURL plus each non-empty per-domain value — de-duplicated. Used by
+// SendTest to ping every check exactly once and by Configured.
+func (c Config) healthchecksURLs() []string {
+	seen := map[string]bool{}
+	var urls []string
+	for _, u := range append([]string{c.HealthchecksURL}, mapValues(c.HealthchecksByDomain)...) {
+		if u != "" && !seen[u] {
+			seen[u] = true
+			urls = append(urls, u)
+		}
+	}
+	return urls
+}
+
+// mapValues returns m's values in an unspecified order.
+func mapValues(m map[string]string) []string {
+	out := make([]string, 0, len(m))
+	for _, v := range m {
+		out = append(out, v)
+	}
+	return out
 }
 
 func (c Config) matrixReady() bool {
@@ -98,7 +138,7 @@ func (c Config) smtpReady() bool {
 // outcomes whenever configured (except when notifications are "never"). The On
 // policy governs only the message channels (webhook/matrix/smtp). Each channel's
 // error is logged, never returned (best-effort).
-func Send(ctx context.Context, c Config, ev Event) {
+func Send(ctx context.Context, c Config, domain string, ev Event) {
 	if c.On != "always" && c.On != "failure" {
 		return
 	}
@@ -108,13 +148,14 @@ func Send(ctx context.Context, c Config, ev Event) {
 
 	// Healthchecks is a monitor, not a human message: it must get the success ping
 	// to stay green, so it fires on both outcomes whenever configured — the On
-	// policy governs only the message channels below.
-	if c.HealthchecksURL != "" {
+	// policy governs only the message channels below. The domain selects its own
+	// check when one is configured, else the global URL.
+	if hcURL := c.healthchecksURLFor(domain); hcURL != "" {
 		phase := "success"
 		if !ev.OK {
 			phase = "fail"
 		}
-		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, phase); err != nil {
+		if err := pingHealthchecks(ctx, client, hcURL, phase); err != nil {
 			log.Printf("notify: healthchecks: %v", redactErr(err))
 		}
 	}
@@ -143,14 +184,15 @@ func Send(ctx context.Context, c Config, ev Event) {
 // SendStart pings the Healthchecks check's /start endpoint at the beginning of a
 // backup, so the check can measure duration and detect a hung/never-finished run.
 // Healthchecks-only (message channels have no "start" concept); best-effort.
-func SendStart(ctx context.Context, c Config) {
-	if (c.On != "always" && c.On != "failure") || c.HealthchecksURL == "" {
+func SendStart(ctx context.Context, c Config, domain string) {
+	hcURL := c.healthchecksURLFor(domain)
+	if (c.On != "always" && c.On != "failure") || hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	client := &http.Client{Timeout: sendTimeout}
-	if err := pingHealthchecks(ctx, client, c.HealthchecksURL, "start"); err != nil {
+	if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
 		log.Printf("notify: healthchecks start: %v", redactErr(err))
 	}
 }
@@ -176,8 +218,8 @@ func SendTest(ctx context.Context, c Config) error {
 			return fmt.Errorf("matrix: %w", err)
 		}
 	}
-	if c.HealthchecksURL != "" {
-		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, "success"); err != nil {
+	for _, u := range c.healthchecksURLs() {
+		if err := pingHealthchecks(ctx, client, u, "success"); err != nil {
 			return fmt.Errorf("healthchecks: %w", err)
 		}
 	}

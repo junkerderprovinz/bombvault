@@ -18,11 +18,11 @@ func TestSendRespectsPolicy(t *testing.T) {
 	defer srv.Close()
 
 	cfg := notify.Config{On: "failure", WebhookURL: srv.URL, WebhookFormat: "generic"}
-	notify.Send(context.Background(), cfg, notify.Event{OK: true}) // success under failure-policy → no send
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: true}) // success under failure-policy → no send
 	if hits != 0 {
 		t.Fatalf("success under failure-policy should not send, hits=%d", hits)
 	}
-	notify.Send(context.Background(), cfg, notify.Event{OK: false}) // failure → send
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: false}) // failure → send
 	if hits != 1 {
 		t.Fatalf("failure under failure-policy should send once, hits=%d", hits)
 	}
@@ -37,7 +37,7 @@ func TestWebhookDiscordPayload(t *testing.T) {
 	defer srv.Close()
 	notify.Send(context.Background(),
 		notify.Config{On: "always", WebhookURL: srv.URL, WebhookFormat: "discord"},
-		notify.Event{Title: "BombVault", Message: "hi", OK: true})
+		"", notify.Event{Title: "BombVault", Message: "hi", OK: true})
 	if got["content"] != "BombVault: hi" {
 		t.Fatalf("discord content = %v", got["content"])
 	}
@@ -54,7 +54,7 @@ func TestMatrixEndpointAndAuth(t *testing.T) {
 	defer srv.Close()
 	notify.Send(context.Background(),
 		notify.Config{On: "always", MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"},
-		notify.Event{Title: "BombVault", Message: "done", OK: true})
+		"", notify.Event{Title: "BombVault", Message: "done", OK: true})
 	if !strings.HasPrefix(path, "/_matrix/client/v3/rooms/") || !strings.Contains(path, "/send/m.room.message/") {
 		t.Fatalf("matrix path = %q", path)
 	}
@@ -72,7 +72,7 @@ func TestHealthchecksFailEndpoint(t *testing.T) {
 	defer srv.Close()
 	notify.Send(context.Background(),
 		notify.Config{On: "always", HealthchecksURL: srv.URL},
-		notify.Event{OK: false})
+		"", notify.Event{OK: false})
 	if !strings.HasSuffix(path, "/fail") {
 		t.Fatalf("healthchecks failure should hit /fail, got %q", path)
 	}
@@ -91,7 +91,7 @@ func TestSendHealthchecksSuccessDecoupledFromPolicy(t *testing.T) {
 
 	notify.Send(context.Background(),
 		notify.Config{On: "failure", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic"},
-		notify.Event{OK: true})
+		"", notify.Event{OK: true})
 
 	if hcPath != "/" {
 		t.Fatalf("success ping should hit the base path, got %q", hcPath)
@@ -110,7 +110,7 @@ func TestSendHealthchecksFailPathUnderFailurePolicy(t *testing.T) {
 	defer srv.Close()
 	notify.Send(context.Background(),
 		notify.Config{On: "failure", HealthchecksURL: srv.URL},
-		notify.Event{OK: false})
+		"", notify.Event{OK: false})
 	if path != "/fail" {
 		t.Fatalf("failure should hit /fail, got %q", path)
 	}
@@ -122,7 +122,7 @@ func TestSendStartPingsStart(t *testing.T) {
 	var path string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
 	defer srv.Close()
-	notify.SendStart(context.Background(), notify.Config{On: "failure", HealthchecksURL: srv.URL})
+	notify.SendStart(context.Background(), notify.Config{On: "failure", HealthchecksURL: srv.URL}, "")
 	if path != "/start" {
 		t.Fatalf("SendStart should hit /start, got %q", path)
 	}
@@ -135,11 +135,11 @@ func TestSendStartSuppressed(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer srv.Close()
 
-	notify.SendStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL})
+	notify.SendStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "")
 	if hits != 0 {
 		t.Fatalf("SendStart under On=never should not ping, hits=%d", hits)
 	}
-	notify.SendStart(context.Background(), notify.Config{On: "always"}) // no URL
+	notify.SendStart(context.Background(), notify.Config{On: "always"}, "") // no URL
 	if hits != 0 {
 		t.Fatalf("SendStart with no URL should not ping, hits=%d", hits)
 	}
@@ -154,9 +154,9 @@ func TestSendUnknownPolicySuppressed(t *testing.T) {
 	defer srv.Close()
 
 	cfg := notify.Config{On: "bogus", HealthchecksURL: srv.URL, WebhookURL: srv.URL, WebhookFormat: "generic"}
-	notify.Send(context.Background(), cfg, notify.Event{OK: true})
-	notify.Send(context.Background(), cfg, notify.Event{OK: false})
-	notify.SendStart(context.Background(), cfg)
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: true})
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
+	notify.SendStart(context.Background(), cfg, "")
 	if hits != 0 {
 		t.Fatalf("unknown On policy must ping nothing, hits=%d", hits)
 	}
@@ -170,17 +170,123 @@ func TestHealthchecksPhasePaths(t *testing.T) {
 	defer srv.Close()
 	base := notify.Config{On: "always", HealthchecksURL: srv.URL}
 
-	notify.SendStart(context.Background(), base)
+	notify.SendStart(context.Background(), base, "")
 	if path != "/start" {
 		t.Fatalf("start phase → %q, want /start", path)
 	}
-	notify.Send(context.Background(), base, notify.Event{OK: true})
+	notify.Send(context.Background(), base, "", notify.Event{OK: true})
 	if path != "/" {
 		t.Fatalf("success phase → %q, want /", path)
 	}
-	notify.Send(context.Background(), base, notify.Event{OK: false})
+	notify.Send(context.Background(), base, "", notify.Event{OK: false})
 	if path != "/fail" {
 		t.Fatalf("fail phase → %q, want /fail", path)
+	}
+}
+
+// TestSendPerDomainURLRouted: a domain with its own Healthchecks URL pings ONLY that
+// check, never the global one — the per-domain URL replaces the global for that domain.
+func TestSendPerDomainURLRouted(t *testing.T) {
+	var flashHits, globalHits int
+	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
+	defer flash.Close()
+	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
+	defer global.Close()
+
+	cfg := notify.Config{
+		On:                   "always",
+		HealthchecksURL:      global.URL,
+		HealthchecksByDomain: map[string]string{"flash": flash.URL},
+	}
+	notify.Send(context.Background(), cfg, "flash", notify.Event{OK: true})
+	if flashHits != 1 {
+		t.Fatalf("flash per-domain URL should be pinged once, hits=%d", flashHits)
+	}
+	if globalHits != 0 {
+		t.Fatalf("global URL must not be pinged for a per-domain-routed domain, hits=%d", globalHits)
+	}
+}
+
+// TestSendUnmappedDomainFallsBackToGlobal: a domain with no per-domain entry pings the
+// global Healthchecks URL.
+func TestSendUnmappedDomainFallsBackToGlobal(t *testing.T) {
+	var flashHits, globalHits int
+	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
+	defer flash.Close()
+	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
+	defer global.Close()
+
+	cfg := notify.Config{
+		On:                   "always",
+		HealthchecksURL:      global.URL,
+		HealthchecksByDomain: map[string]string{"flash": flash.URL},
+	}
+	notify.Send(context.Background(), cfg, "config", notify.Event{OK: true})
+	if globalHits != 1 {
+		t.Fatalf("unmapped domain should ping the global URL once, hits=%d", globalHits)
+	}
+	if flashHits != 0 {
+		t.Fatalf("the flash per-domain URL must not be pinged for the config domain, hits=%d", flashHits)
+	}
+}
+
+// TestSendStartPerDomainURL: SendStart routes the /start ping to the domain's own
+// Healthchecks URL when one is configured.
+func TestSendStartPerDomainURL(t *testing.T) {
+	var flashPath string
+	var globalHits int
+	flash := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { flashPath = r.URL.Path }))
+	defer flash.Close()
+	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
+	defer global.Close()
+
+	cfg := notify.Config{
+		On:                   "always",
+		HealthchecksURL:      global.URL,
+		HealthchecksByDomain: map[string]string{"flash": flash.URL},
+	}
+	notify.SendStart(context.Background(), cfg, "flash")
+	if flashPath != "/start" {
+		t.Fatalf("SendStart should hit the flash /start, got %q", flashPath)
+	}
+	if globalHits != 0 {
+		t.Fatalf("global URL must not be pinged when the domain has its own URL, hits=%d", globalHits)
+	}
+}
+
+// TestSendTestPingsEveryDistinctURL: SendTest pings the global URL plus each distinct
+// per-domain URL exactly once (de-duplicated across recorders).
+func TestSendTestPingsEveryDistinctURL(t *testing.T) {
+	var globalHits, flashHits, configHits int
+	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
+	defer global.Close()
+	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
+	defer flash.Close()
+	config := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { configHits++ }))
+	defer config.Close()
+
+	cfg := notify.Config{
+		HealthchecksURL: global.URL,
+		HealthchecksByDomain: map[string]string{
+			"flash":     flash.URL,
+			"config":    config.URL,
+			"container": global.URL, // duplicate of the global URL → must not double-ping
+		},
+	}
+	if err := notify.SendTest(context.Background(), cfg); err != nil {
+		t.Fatalf("SendTest: %v", err)
+	}
+	if globalHits != 1 || flashHits != 1 || configHits != 1 {
+		t.Fatalf("each distinct URL should be pinged once: global=%d flash=%d config=%d", globalHits, flashHits, configHits)
+	}
+}
+
+// TestConfiguredWithOnlyPerDomainURL: a config whose only Healthchecks setting is a
+// per-domain URL still counts as configured.
+func TestConfiguredWithOnlyPerDomainURL(t *testing.T) {
+	cfg := notify.Config{HealthchecksByDomain: map[string]string{"flash": "https://hc/flash"}}
+	if !cfg.Configured() {
+		t.Fatal("Configured() should be true when only a per-domain Healthchecks URL is set")
 	}
 }
 

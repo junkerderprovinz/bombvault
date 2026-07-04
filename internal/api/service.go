@@ -1444,7 +1444,7 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 	}
 	subject := "Off-site backup over budget for " + domain
 	msg := fmt.Sprintf("The off-site repository for %s has grown to %s, over the configured growth budget of %s. Prune the far side or raise the budget.", domain, humanBytes(size), humanBytes(budget))
-	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
 	if c.Unraid && s.ssh != nil {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -1511,7 +1511,7 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 	}
 	subject := "Off-site replication FAILED for " + domain
 	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
-	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
 	if c.Unraid && s.ssh != nil {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -1977,7 +1977,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	pkey := "container:" + name
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
-	s.notifyBackupStart(ctx)
+	s.notifyBackupStart(ctx, "container")
 	bctx := s.progBegin(ctx, pkey, "backup")
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:         name,
@@ -3927,7 +3927,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return
 	// (incl. the ErrVMNotInstalled skip), so the paired done/fail notifyBackup below
 	// always follows (no dangling /start).
-	s.notifyBackupStart(ctx)
+	s.notifyBackupStart(ctx, "VM")
 	bctx := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
 	if live {
@@ -4271,7 +4271,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	s.unlockStale(ctx, repo, mode)
 	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
-	s.notifyBackupStart(ctx)
+	s.notifyBackupStart(ctx, "flash")
 	fctx := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
@@ -4411,7 +4411,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	s.unlockStale(ctx, repo, mode)
 	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
-	s.notifyBackupStart(ctx)
+	s.notifyBackupStart(ctx, "config")
 	fctx := s.progBegin(ctx, "config", "backup")
 	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
 		SourceDir: stagingDir,
@@ -5236,7 +5236,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 		target = domain
 	}
 	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
-	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: msg, OK: false})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
 	if c.Unraid && s.ssh != nil {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -5939,7 +5939,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	} else {
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
-	notify.Send(ctx, c, notify.Event{Title: "BombVault", Message: msg, OK: ok})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok})
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
 	// Honour the same policy: notifyBackup already returned for "never", so send
@@ -5960,12 +5960,12 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 // notifyBackupStart pings the Healthchecks /start endpoint at the beginning of a
 // backup (best-effort; never affects the backup). The message channels have no
 // "start" concept, so this is Healthchecks-only.
-func (s *Service) notifyBackupStart(ctx context.Context) {
+func (s *Service) notifyBackupStart(ctx context.Context, domain string) {
 	c, err := s.NotifyConfig()
 	if err != nil {
 		return
 	}
-	notify.SendStart(ctx, c)
+	notify.SendStart(ctx, c, domain)
 }
 
 // sendUnraidNotify triggers Unraid's native notification system by running the

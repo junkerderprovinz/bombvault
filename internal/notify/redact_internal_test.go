@@ -69,6 +69,29 @@ func TestSplitRecipients(t *testing.T) {
 	}
 }
 
+// TestHealthchecksURLFor pins the per-domain resolver: a domain with a non-empty
+// entry uses that URL; a blank entry, an absent domain, or a nil map all fall back
+// to the global HealthchecksURL.
+func TestHealthchecksURLFor(t *testing.T) {
+	c := Config{
+		HealthchecksURL:      "https://hc/global",
+		HealthchecksByDomain: map[string]string{"flash": "https://hc/flash", "config": ""},
+	}
+	if got := c.healthchecksURLFor("flash"); got != "https://hc/flash" {
+		t.Fatalf("flash → %q, want the per-domain URL", got)
+	}
+	if got := c.healthchecksURLFor("config"); got != "https://hc/global" {
+		t.Fatalf("blank per-domain entry should fall back to global, got %q", got)
+	}
+	if got := c.healthchecksURLFor("VM"); got != "https://hc/global" {
+		t.Fatalf("absent domain should fall back to global, got %q", got)
+	}
+	nilMap := Config{HealthchecksURL: "https://hc/global"}
+	if got := nilMap.healthchecksURLFor("flash"); got != "https://hc/global" {
+		t.Fatalf("nil map should fall back to global, got %q", got)
+	}
+}
+
 // TestSMTPReadyGating: smtpReady only fires when enabled AND host/from/to are set.
 func TestSMTPReadyGating(t *testing.T) {
 	if (Config{SMTPHost: "smtp.x.com", SMTPFrom: "a@x.com", SMTPTo: "b@x.com"}).smtpReady() {
