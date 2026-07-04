@@ -417,6 +417,8 @@ const hu: Partial<Translations> = {
   "notify.matrixRoom": "Szoba azonosító",
   "notify.healthchecks": "Healthchecks.io ping URL",
   "notify.healthchecksLifecycle": "A Healthchecks a teljes biztonságimentés-életciklus alatt ping-et kap — indulás, siker és hiba —, amikor be van állítva egy URL, a fenti 'Értesítés' beállítástól függetlenül, így az ellenőrzés sikernél zöld marad még csak hibára szóló értesítések mellett is.",
+  "notify.hcPerDomain": "Tartományonkénti ellenőrzések (haladó)",
+  "notify.hcPerDomainHint": "Hagyjon egy mezőt üresen a fenti globális URL használatához. A saját URL-lel rendelkező tartomány saját ellenőrzést kap, saját futásidővel és előzményekkel.",
   "notify.unraid": "Unraid-értesítések",
   "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra …). Beállított SSH-kapcsolat szükséges (Beállítások → VM Backup over SSH).",
   "notify.save": "Mentés",

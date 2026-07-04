@@ -412,6 +412,8 @@ const nl: Partial<Translations> = {
   "notify.matrixRoom": "Room-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
   "notify.healthchecksLifecycle": "Healthchecks wordt gepingd gedurende de hele back-uplevenscyclus — start, succes en mislukking — zodra er een URL is ingesteld, onafhankelijk van de 'Melden'-instelling hierboven, zodat de controle bij succes groen blijft, zelfs met meldingen alleen bij mislukking.",
+  "notify.hcPerDomain": "Controles per domein (geavanceerd)",
+  "notify.hcPerDomainHint": "Laat een veld leeg om de globale URL hierboven te gebruiken. Een domein met een eigen URL krijgt een eigen controle, met eigen looptijd en geschiedenis.",
   "notify.unraid": "Unraid-meldingen",
   "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord …). Vereist een ingestelde SSH-verbinding (Instellingen → VM Backup over SSH).",
   "notify.save": "Opslaan",

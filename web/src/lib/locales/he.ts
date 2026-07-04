@@ -417,6 +417,8 @@ const he: Partial<Translations> = {
   "notify.matrixRoom": "מזהה חדר",
   "notify.healthchecks": "כתובת ping של Healthchecks.io",
   "notify.healthchecksLifecycle": "Healthchecks מקבל ping לאורך כל מחזור החיים של הגיבוי — התחלה, הצלחה וכישלון — בכל פעם שמוגדרת כתובת URL, ללא תלות בהגדרת 'התראה' שלמעלה, כך שהבדיקה נשארת ירוקה בהצלחה גם עם התראות על כישלון בלבד.",
+  "notify.hcPerDomain": "בדיקות לכל דומיין (מתקדם)",
+  "notify.hcPerDomainHint": "השאירו שדה ריק כדי להשתמש בכתובת ה-URL הגלובלית שלמעלה. דומיין עם כתובת URL משלו מקבל בדיקה משלו, עם זמן ריצה והיסטוריה משלו.",
   "notify.unraid": "התראות Unraid",
   "notify.unraidHint": "שלח למערכת ההתראות של Unraid (שיכולה להעביר ל-Pushover, אימייל, Discord …). דורש חיבור SSH מוגדר (הגדרות → VM Backup over SSH).",
   "notify.save": "שמור",

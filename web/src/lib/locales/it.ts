@@ -417,6 +417,8 @@ const it: Partial<Translations> = {
   "notify.matrixRoom": "ID della stanza",
   "notify.healthchecks": "URL di ping di Healthchecks.io",
   "notify.healthchecksLifecycle": "Healthchecks riceve un ping per l'intero ciclo di vita del backup — avvio, successo ed errore — ogni volta che è impostato un URL, indipendentemente dall'impostazione 'Notifica' qui sopra, così il controllo resta verde in caso di successo anche con notifiche solo in caso di errore.",
+  "notify.hcPerDomain": "Controlli per dominio (avanzato)",
+  "notify.hcPerDomainHint": "Lascia vuoto un campo per usare l'URL globale qui sopra. Un dominio con un proprio URL ottiene un controllo dedicato, con tempo di esecuzione e cronologia propri.",
   "notify.unraid": "Notifiche Unraid",
   "notify.unraidHint": "Invia al sistema di notifiche di Unraid (che può inoltrare a Pushover, email, Discord …). Richiede la connessione SSH configurata (Impostazioni → VM Backup over SSH).",
   "notify.save": "Salva",

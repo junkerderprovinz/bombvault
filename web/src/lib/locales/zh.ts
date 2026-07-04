@@ -409,6 +409,8 @@ const zh: Partial<Translations> = {
   "notify.matrixRoom": "房间 ID",
   "notify.healthchecks": "Healthchecks.io ping 网址",
   "notify.healthchecksLifecycle": "只要设置了 URL，Healthchecks 就会在整个备份生命周期中被 ping — 开始、成功和失败 — 独立于上方的“通知”设置，因此即使仅在失败时通知，检查在成功时也会保持绿色。",
+  "notify.hcPerDomain": "按域检查（高级）",
+  "notify.hcPerDomainHint": "留空某个字段可使用上方的全局 URL。拥有自己 URL 的域会获得自己的检查，拥有各自的运行时长和历史记录。",
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "发送到 Unraid 自带的通知系统（可转发到 Pushover、邮件、Discord 等）。需要已设置的 SSH 连接（设置 → VM Backup over SSH）。",
   "notify.save": "保存",

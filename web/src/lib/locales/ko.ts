@@ -409,6 +409,8 @@ const ko: Partial<Translations> = {
   "notify.matrixRoom": "방 ID",
   "notify.healthchecks": "Healthchecks.io ping URL",
   "notify.healthchecksLifecycle": "URL이 설정되어 있으면 위의 '알림' 설정과 관계없이 백업 전체 수명 주기 — 시작, 성공, 실패 — 에 걸쳐 Healthchecks에 ping이 전송됩니다. 따라서 실패 시에만 알림을 보내더라도 성공 시 검사가 녹색으로 유지됩니다.",
+  "notify.hcPerDomain": "도메인별 검사 (고급)",
+  "notify.hcPerDomainHint": "위의 전역 URL을 사용하려면 필드를 비워 두세요. 자체 URL이 있는 도메인은 자체 실행 시간과 기록을 가진 전용 검사를 받습니다.",
   "notify.unraid": "Unraid 알림",
   "notify.unraidHint": "Unraid 자체 알림 시스템으로 전송합니다(Pushover, 이메일, Discord 등으로 전달 가능). SSH 연결 설정이 필요합니다(설정 → VM Backup over SSH).",
   "notify.save": "저장",

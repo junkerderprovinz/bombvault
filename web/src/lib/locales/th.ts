@@ -417,6 +417,8 @@ const th: Partial<Translations> = {
   "notify.matrixRoom": "ID ห้อง",
   "notify.healthchecks": "URL ping ของ Healthchecks.io",
   "notify.healthchecksLifecycle": "Healthchecks จะถูก ping ตลอดวงจรชีวิตของการสำรองข้อมูล — เริ่มต้น สำเร็จ และล้มเหลว — เมื่อใดก็ตามที่ตั้งค่า URL ไว้ โดยไม่ขึ้นกับการตั้งค่า 'แจ้งเตือน' ด้านบน ดังนั้นการตรวจสอบจะยังคงเป็นสีเขียวเมื่อสำเร็จ แม้จะตั้งค่าให้แจ้งเตือนเฉพาะเมื่อล้มเหลว",
+  "notify.hcPerDomain": "การตรวจสอบต่อโดเมน (ขั้นสูง)",
+  "notify.hcPerDomainHint": "เว้นช่องว่างไว้เพื่อใช้ URL ส่วนกลางด้านบน โดเมนที่มี URL ของตัวเองจะได้รับการตรวจสอบของตัวเอง พร้อมด้วยรันไทม์และประวัติของตัวเอง",
   "notify.unraid": "การแจ้งเตือน Unraid",
   "notify.unraidHint": "ส่งไปยังระบบแจ้งเตือนของ Unraid เอง (ซึ่งสามารถส่งต่อไปยัง Pushover อีเมล Discord …) ต้องตั้งค่าการเชื่อมต่อ SSH ก่อน (ตั้งค่า → VM Backup over SSH)",
   "notify.save": "บันทึก",

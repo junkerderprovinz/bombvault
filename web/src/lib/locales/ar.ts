@@ -417,6 +417,8 @@ const ar: Partial<Translations> = {
   "notify.matrixRoom": "معرّف الغرفة",
   "notify.healthchecks": "رابط ping الخاص بـ Healthchecks.io",
   "notify.healthchecksLifecycle": "يُرسَل ping إلى Healthchecks طوال دورة حياة النسخ الاحتياطي — البدء والنجاح والفشل — عند تعيين رابط، بغض النظر عن إعداد 'الإشعار عند' أعلاه، ليبقى الفحص أخضر عند النجاح حتى مع الإشعارات عند الفشل فقط.",
+  "notify.hcPerDomain": "فحوصات لكل نطاق (متقدم)",
+  "notify.hcPerDomainHint": "اترك الحقل فارغاً لاستخدام الرابط العام أعلاه. يحصل النطاق الذي له رابطه الخاص على فحصه الخاص، بمدة تشغيله وسجله الخاصّين.",
   "notify.unraid": "إشعارات Unraid",
   "notify.unraidHint": "أرسل إلى نظام إشعارات Unraid نفسه (الذي يمكنه إعادة التوجيه إلى Pushover والبريد وDiscord …). يتطلب إعداد اتصال SSH (الإعدادات ← VM Backup over SSH).",
   "notify.save": "حفظ",

@@ -412,6 +412,8 @@ const uk: Partial<Translations> = {
   "notify.matrixRoom": "ID кімнати",
   "notify.healthchecks": "URL пінгу Healthchecks.io",
   "notify.healthchecksLifecycle": "Healthchecks пінгується протягом усього життєвого циклу резервного копіювання — старт, успіх і збій — щойно задано URL, незалежно від налаштування 'Сповіщати' вище, тож перевірка залишається зеленою при успіху навіть за сповіщень лише про збої.",
+  "notify.hcPerDomain": "Перевірки за доменами (додатково)",
+  "notify.hcPerDomainHint": "Залиште поле порожнім, щоб використати глобальний URL вище. Домен із власним URL отримує власну перевірку, з власним часом виконання та історією.",
   "notify.unraid": "Сповіщення Unraid",
   "notify.unraidHint": "Надсилати у власну систему сповіщень Unraid (яка може пересилати в Pushover, e-mail, Discord …). Потрібне налаштоване SSH-з'єднання (Налаштування → VM Backup over SSH).",
   "notify.save": "Зберегти",

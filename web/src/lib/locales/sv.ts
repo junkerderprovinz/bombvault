@@ -417,6 +417,8 @@ const sv: Partial<Translations> = {
   "notify.matrixRoom": "Rums-ID",
   "notify.healthchecks": "Healthchecks.io ping-URL",
   "notify.healthchecksLifecycle": "Healthchecks pingas under hela säkerhetskopieringens livscykel — start, lyckat och fel — så snart en URL är angiven, oberoende av 'Avisera'-inställningen ovan, så att kontrollen förblir grön vid lyckat även med aviseringar endast vid fel.",
+  "notify.hcPerDomain": "Kontroller per domän (avancerat)",
+  "notify.hcPerDomainHint": "Lämna ett fält tomt för att använda den globala URL:en ovan. En domän med en egen URL får en egen kontroll, med egen körtid och historik.",
   "notify.unraid": "Unraid-aviseringar",
   "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord …). Kräver konfigurerad SSH-anslutning (Inställningar → VM Backup over SSH).",
   "notify.save": "Spara",
