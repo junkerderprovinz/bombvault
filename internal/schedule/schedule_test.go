@@ -525,7 +525,7 @@ func TestSchedulerReloadWithDueChecksEveryNFires(t *testing.T) {
 		VMsSchedule:        "off",
 		FlashSchedule:      "off",
 	}
-	if err := sched.ReloadWithDueChecks(settings, lastRun, nil, nil); err != nil {
+	if err := sched.ReloadWithDueChecks(settings, lastRun, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks returned error: %v", err)
 	}
 	sched.Stop()

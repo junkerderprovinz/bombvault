@@ -155,6 +155,10 @@ func run() error {
 		_, bErr := svc.BackupFlash(context.Background())
 		return bErr
 	})
+	scheduler.SetConfigJob(func() error {
+		_, bErr := svc.BackupConfig(context.Background())
+		return bErr
+	})
 	scheduler.SetOffsiteJob(func(domain string) error {
 		return svc.ScheduledReplicateOffsite(context.Background(), domain)
 	})
@@ -171,9 +175,10 @@ func run() error {
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
 	vmsLastRun := schedule.LastRunFunc(st.LastSuccessfulVMBackup)
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
+	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun); rErr != nil {
+		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {

@@ -27,6 +27,7 @@ type Handler struct {
 	containersLastRun schedule.LastRunFunc
 	vmsLastRun        schedule.LastRunFunc
 	flashLastRun      schedule.LastRunFunc
+	configLastRun     schedule.LastRunFunc
 
 	// Cached host-integration check, warmed once at startup so the dashboard
 	// shows the result list instantly. Guarded by spikeMu; refreshed on POST.
@@ -61,6 +62,7 @@ func NewHandler(
 		containersLastRun: schedule.LastRunFunc(st.LastSuccessfulContainerBackup),
 		vmsLastRun:        schedule.LastRunFunc(st.LastSuccessfulVMBackup),
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
+		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
 	}
 }
 

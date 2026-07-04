@@ -246,6 +246,7 @@ type Scheduler struct {
 	backupVM       BackupFunc                              // nil until SetVMJob wires VM backup
 	listVMsFn      ListVMTargetsFunc                       // nil until SetVMJob wires VM backup
 	backupFlash    func() error                            // nil until SetFlashJob wires flash backup
+	configJob      func() error                            // nil until SetConfigJob wires config self-backup
 	replicateOffFn func(domain string) error               // nil until SetOffsiteJob wires off-site replication
 	drillFn        func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
 	tamperFn       func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
@@ -279,6 +280,14 @@ func (s *Scheduler) SetVMJob(backupVMFn BackupFunc, listVMsFn ListVMTargetsFunc)
 // this is called the flash domain is a no-op (logged). Call before Reload.
 func (s *Scheduler) SetFlashJob(backupFlashFn func() error) {
 	s.backupFlash = backupFlashFn
+}
+
+// SetConfigJob wires the config domain so a scheduled self-backup of BombVault's
+// own settings actually runs. Config is a singleton (BombVault's own state), so
+// the job takes no arguments. Until this is called the config domain is a no-op
+// (logged). Call before Reload.
+func (s *Scheduler) SetConfigJob(backupConfigFn func() error) {
+	s.configJob = backupConfigFn
 }
 
 // SetOffsiteJob wires off-site replication so the per-domain off-site schedules
@@ -337,7 +346,7 @@ type domainSpec struct {
 // to disable the due-gate (used when a domain does not yet have a backing store
 // query, e.g. VMs / flash in Phase 1).
 func (s *Scheduler) Reload(settings store.Settings) error {
-	return s.ReloadWithDueChecks(settings, nil, nil, nil)
+	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil)
 }
 
 // ReloadWithDueChecks is the full-fidelity Reload that accepts per-domain
@@ -345,7 +354,7 @@ func (s *Scheduler) Reload(settings store.Settings) error {
 // that does not need the gate (it is then equivalent to a plain daily trigger).
 func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
-	containersLastRun, vmsLastRun, flashLastRun LastRunFunc,
+	containersLastRun, vmsLastRun, flashLastRun, configLastRun LastRunFunc,
 ) error {
 	// Remove all existing entries.
 	for _, id := range s.entryIDs {
@@ -399,6 +408,20 @@ func (s *Scheduler) ReloadWithDueChecks(
 			},
 			lastRun: flashLastRun,
 		},
+		{
+			cadence: settings.ConfigSchedule,
+			name:    "config",
+			fn: func() {
+				if s.configJob == nil {
+					log.Print("schedule: config job skipped — config backup not wired (SetConfigJob)")
+					return
+				}
+				if err := s.configJob(); err != nil {
+					log.Printf("schedule: config job: backup failed: %v", err)
+				}
+			},
+			lastRun: configLastRun,
+		},
 	}
 
 	// Off-site replication on its own per-domain schedule (decoupled from the
@@ -423,6 +446,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		offsite("containers", settings.ContainersOffsiteSchedule),
 		offsite("vms", settings.VMsOffsiteSchedule),
 		offsite("flash", settings.FlashOffsiteSchedule),
+		offsite("config", settings.ConfigOffsiteSchedule),
 	)
 
 	// Restore-verification drills run on a single schedule across a set of
@@ -527,9 +551,11 @@ type drillTask struct {
 
 // drillTasks returns the scheduled drill tasks for the current settings: a local
 // "subset" integrity check for every enabled domain, plus a real off-site "dr"
-// drill for containers + flash when their off-site repo is configured. VMs are
-// intentionally excluded from DR drills — their disk images are too large to
-// sandbox-restore (they still get the local subset check).
+// drill for containers + flash when their off-site repo is configured. VMs and
+// config are intentionally excluded from DR drills — VM disk images are too large
+// to sandbox-restore, and a sandbox restore of BombVault's own settings DB is
+// meaningless (its real recovery path is the in-place staged restart). Both still
+// get the local subset integrity check.
 func drillTasks(settings store.Settings) []drillTask {
 	var out []drillTask
 	for _, d := range enabledDrillDomains(settings) {
@@ -557,6 +583,9 @@ func enabledDrillDomains(settings store.Settings) []string {
 	}
 	if settings.FlashEnabled {
 		out = append(out, "flash")
+	}
+	if settings.ConfigEnabled {
+		out = append(out, "config")
 	}
 	return out
 }
