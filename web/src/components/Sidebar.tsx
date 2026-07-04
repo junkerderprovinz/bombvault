@@ -57,6 +57,18 @@ function IconFlash() {
   );
 }
 
+// Sliders/tuner glyph for the Config self-backup tab — settings-like, but
+// deliberately distinct from the Settings cog below so the two never read alike.
+function IconConfig() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
+      <path d="M3 6h9M15 6h2M3 14h2M8 14h9" strokeLinecap="round" />
+      <circle cx="13.5" cy="6" r="2" fill="var(--sidebar-surface, transparent)" />
+      <circle cx="6.5" cy="14" r="2" fill="var(--sidebar-surface, transparent)" />
+    </svg>
+  );
+}
+
 function IconSettings() {
   // Standard 8-tooth cog/gear — conventional settings symbol
   return (
@@ -253,6 +265,7 @@ export function Sidebar({ settings }: SidebarProps) {
   const { advanced, setAdvanced } = useAdvanced();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
+  const configEnabled = settings?.configEnabled ?? false;
 
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
@@ -299,6 +312,10 @@ export function Sidebar({ settings }: SidebarProps) {
         )}
         {flashEnabled && (
           <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} />
+        )}
+        {/* Config self-backup tab appears only once its domain is enabled. */}
+        {configEnabled && (
+          <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} />
         )}
       </nav>
 

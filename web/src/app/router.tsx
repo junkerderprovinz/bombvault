@@ -4,6 +4,7 @@ import { Dashboard } from "../pages/Dashboard";
 import { Containers } from "../pages/Containers";
 import { VMs } from "../pages/VMs";
 import { Flash } from "../pages/Flash";
+import { Config } from "../pages/Config";
 import { SettingsPage } from "../pages/Settings";
 import { Jobs } from "../pages/Jobs";
 import Recovery from "../pages/Recovery";
@@ -20,6 +21,7 @@ export function AppRouter() {
             <Route path="/containers" element={<Containers />} />
             <Route path="/vms" element={<VMs />} />
             <Route path="/flash" element={<Flash />} />
+            <Route path="/config" element={<Config />} />
             <Route path="/recovery" element={<Recovery />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/settings" element={<SettingsPage />} />

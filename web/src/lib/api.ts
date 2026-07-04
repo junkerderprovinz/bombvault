@@ -82,19 +82,24 @@ export interface Settings {
   containersEnabled: boolean;
   vmsEnabled: boolean;
   flashEnabled: boolean;
+  configEnabled: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
+  configPath: string;
   restoreFolder: string;
   containersOffsite: string;
   vmsOffsite: string;
   flashOffsite: string;
+  configOffsite: string;
   containersOffsiteSchedule: string;
   vmsOffsiteSchedule: string;
   flashOffsiteSchedule: string;
+  configOffsiteSchedule: string;
   containersSchedule: string;
   vmsSchedule: string;
   flashSchedule: string;
+  configSchedule: string;
   defaultLanguage: string;
   retentionKeepLast: number;
   retentionKeepDaily: number;
@@ -120,6 +125,7 @@ export interface Settings {
   containersOffsiteImmutable: boolean;
   vmsOffsiteImmutable: boolean;
   flashOffsiteImmutable: boolean;
+  configOffsiteImmutable: boolean;
   /** Off-site growth budget in GB (0 = alarm off). */
   offsiteGrowthBudgetGB: number;
   /** Cadence for the scheduled off-site tamper test (default "weekly Sun 04:30"). */
@@ -1081,6 +1087,44 @@ export function listFlashSnapshots(source?: string): Promise<ListSnapshotsRespon
  */
 export function flashDownloadURL(snapshotId: string, source?: string): string {
   return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`;
+}
+
+// ---------------------------------------------------------------------------
+// Config API (singleton domain — BombVault's OWN settings self-backup)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/config/backup — start a backup of BombVault's own /config (settings
+ * DB + rclone.conf + ssh keypair) so a rebuilt server can restore itself.
+ * ASYNC — mirrors backupFlashNow: the server fires the job detached and answers
+ * immediately; watch the "config" progress key + the recorded run for the outcome.
+ */
+export function backupConfigNow(): Promise<BackupResponse> {
+  return fetchJSON("/api/config/backup", { method: "POST" });
+}
+
+/** GET /api/config/snapshots — list BombVault's own config self-backups. */
+export function listConfigSnapshots(source?: string): Promise<ListSnapshotsResponse> {
+  return fetchJSON(`/api/config/snapshots${srcParam(source)}`);
+}
+
+/**
+ * POST /api/config/restore — STAGE a restore of BombVault's own settings and
+ * trigger the self-restart that applies it (the live SQLite DB can't be swapped
+ * in-process). `staged` confirms the snapshot was written to the staging area;
+ * `autoRestart` is true when a container restart was scheduled, false when Docker
+ * was unreachable and the user must restart the container manually. On a restore
+ * error the 200 body carries {ok:false, error} (an APP_KEY / encryption mismatch
+ * surfaces as a scrubbed message). Consumed by the Recovery tab (Task 13).
+ */
+export function restoreConfig(
+  snapshot: string,
+  source?: string
+): Promise<OkEnvelope & { staged?: boolean; autoRestart?: boolean }> {
+  return fetchJSON("/api/config/restore", {
+    method: "POST",
+    body: JSON.stringify({ snapshot, source }),
+  });
 }
 
 // ---------------------------------------------------------------------------
