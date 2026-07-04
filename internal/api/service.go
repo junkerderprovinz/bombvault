@@ -34,6 +34,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -4354,6 +4355,103 @@ func (s *Service) SnapshotsFlash(ctx context.Context, source string) ([]restic.S
 		return nil, nil // no backups yet
 	}
 	return s.listSnapshots(ctx, repo, mode)
+}
+
+// resolveConfigSnapshot maps a user-supplied selector ("" / "latest", a full id,
+// or a short prefix) to the single matching full snapshot id in the config repo.
+// It is resolveFlashSnapshot with a config-worded empty message: the config repo
+// is dedicated to BombVault's own /config snapshots, so an empty repo means the
+// app has never backed itself up yet.
+func resolveConfigSnapshot(snaps []restic.Snapshot, selector string) (string, error) {
+	if len(snaps) == 0 {
+		return "", errors.New("BombVault's configuration has not been backed up yet")
+	}
+	if selector == "" || selector == "latest" {
+		return snaps[len(snaps)-1].ID, nil
+	}
+	var match string
+	for _, s := range snaps {
+		if s.ID == selector {
+			return s.ID, nil // exact id wins outright
+		}
+		if strings.HasPrefix(s.ID, selector) {
+			if match != "" {
+				return "", errors.New("ambiguous snapshot id")
+			}
+			match = s.ID
+		}
+	}
+	if match == "" {
+		return "", errors.New("snapshot not found")
+	}
+	return match, nil
+}
+
+// SnapshotsConfig lists restic snapshots in the config repo (the repo is
+// dedicated to the config self-backup, so all of its snapshots are config
+// backups). Mirrors SnapshotsFlash.
+func (s *Service) SnapshotsConfig(ctx context.Context, source string) ([]restic.Snapshot, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "config", source)
+	if err != nil {
+		return nil, err
+	}
+	mode := s.ModeFor(settings)
+	if localRepoMissing(repo) {
+		return nil, nil // no backups yet
+	}
+	return s.listSnapshots(ctx, repo, mode)
+}
+
+// RestoreConfig STAGES a restore of BombVault's own /config: it cannot overwrite
+// the live SQLite settings DB in place while this process holds it open (WAL), so
+// it restic-restores the chosen snapshot into a staging root and writes a marker.
+// The boot-time selfrestore.ApplyPending (called from main BEFORE store.Open on
+// the next restart) performs the file-level staging→live swap. The restart is
+// triggered separately (docker self-restart / manual), so this call only stages.
+func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "config", source)
+	if err != nil {
+		return err
+	}
+	mode := s.ModeFor(settings)
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return err
+	}
+	id, err := resolveConfigSnapshot(snaps, snapshotID)
+	if err != nil {
+		return err
+	}
+	root := selfrestore.StagingRoot(s.cfg.DataDir)
+	if err := os.RemoveAll(root); err != nil {
+		return fmt.Errorf("config restore: clear staging: %w", err)
+	}
+	runID, err := s.store.StartRun(store.ConfigTargetID, "restore")
+	if err != nil {
+		return fmt.Errorf("config restore: start run: %w", err)
+	}
+	// Restore ONLY the config snapshot's subtree (<DataDir>/.snapshot) into the
+	// staging root; restic recreates that absolute path beneath --target, landing
+	// it at selfrestore.RestoredSnapshotDir(DataDir) — the exact path the boot swap
+	// reads. The swap applies it on the next restart.
+	if rerr := s.engine.RestoreInclude(ctx, repo, id, s.configSnapshotDir(), root, mode); rerr != nil {
+		_ = s.store.FinishRun(runID, "failed", "", 0, rerr.Error())
+		return rerr
+	}
+	if merr := selfrestore.WriteMarker(s.cfg.DataDir); merr != nil {
+		_ = s.store.FinishRun(runID, "failed", "", 0, merr.Error())
+		return merr
+	}
+	_ = s.store.FinishRun(runID, "success", id, 0, "")
+	return nil
 }
 
 // SetVMMethod updates the backup method for a VM, creating the target if absent.
