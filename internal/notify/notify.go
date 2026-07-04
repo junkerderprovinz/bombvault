@@ -93,15 +93,35 @@ func (c Config) smtpReady() bool {
 	return c.SMTPEnabled && c.SMTPHost != "" && c.SMTPFrom != "" && c.SMTPTo != ""
 }
 
-// Send dispatches ev to every configured channel, honouring the On policy. Each
-// channel's error is logged, never returned (best-effort).
+// Send dispatches ev to the configured channels. Healthchecks is a monitor, not a
+// human message: it must get the success ping to stay green, so it fires on both
+// outcomes whenever configured (except when notifications are "never"). The On
+// policy governs only the message channels (webhook/matrix/smtp). Each channel's
+// error is logged, never returned (best-effort).
 func Send(ctx context.Context, c Config, ev Event) {
-	if !c.shouldSend(ev.OK) {
+	if c.On == "never" || c.On == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	client := &http.Client{Timeout: sendTimeout}
+
+	// Healthchecks is a monitor, not a human message: it must get the success ping
+	// to stay green, so it fires on both outcomes whenever configured — the On
+	// policy governs only the message channels below.
+	if c.HealthchecksURL != "" {
+		phase := "success"
+		if !ev.OK {
+			phase = "fail"
+		}
+		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, phase); err != nil {
+			log.Printf("notify: healthchecks: %v", redactErr(err))
+		}
+	}
+
+	if !c.shouldSend(ev.OK) {
+		return
+	}
 
 	if c.WebhookURL != "" {
 		if err := sendWebhook(ctx, client, c, ev); err != nil {
@@ -113,15 +133,25 @@ func Send(ctx context.Context, c Config, ev Event) {
 			log.Printf("notify: matrix: %v", redactErr(err))
 		}
 	}
-	if c.HealthchecksURL != "" {
-		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, ev.OK); err != nil {
-			log.Printf("notify: healthchecks: %v", redactErr(err))
-		}
-	}
 	if c.smtpReady() {
 		if err := sendSMTP(ctx, c, ev); err != nil {
 			log.Printf("notify: smtp: %v", err)
 		}
+	}
+}
+
+// SendStart pings the Healthchecks check's /start endpoint at the beginning of a
+// backup, so the check can measure duration and detect a hung/never-finished run.
+// Healthchecks-only (message channels have no "start" concept); best-effort.
+func SendStart(ctx context.Context, c Config) {
+	if c.On == "never" || c.On == "" || c.HealthchecksURL == "" {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+	client := &http.Client{Timeout: sendTimeout}
+	if err := pingHealthchecks(ctx, client, c.HealthchecksURL, "start"); err != nil {
+		log.Printf("notify: healthchecks start: %v", redactErr(err))
 	}
 }
 
@@ -147,7 +177,7 @@ func SendTest(ctx context.Context, c Config) error {
 		}
 	}
 	if c.HealthchecksURL != "" {
-		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, true); err != nil {
+		if err := pingHealthchecks(ctx, client, c.HealthchecksURL, "success"); err != nil {
 			return fmt.Errorf("healthchecks: %w", err)
 		}
 	}
@@ -209,10 +239,14 @@ func sendMatrix(ctx context.Context, client *http.Client, c Config, ev Event) er
 	return do(client, req)
 }
 
-// pingHealthchecks pings the check URL (success) or its /fail endpoint (failure).
-func pingHealthchecks(ctx context.Context, client *http.Client, base string, ok bool) error {
+// pingHealthchecks pings the check for a lifecycle phase: "start" (<base>/start),
+// "success" (<base>) or "fail" (<base>/fail).
+func pingHealthchecks(ctx context.Context, client *http.Client, base, phase string) error {
 	u := strings.TrimRight(base, "/")
-	if !ok {
+	switch phase {
+	case "start":
+		u += "/start"
+	case "fail":
 		u += "/fail"
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)

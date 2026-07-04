@@ -78,6 +78,95 @@ func TestHealthchecksFailEndpoint(t *testing.T) {
 	}
 }
 
+// TestSendHealthchecksSuccessDecoupledFromPolicy: Healthchecks is a monitor, not a
+// human message — a successful backup must ping the base URL (keeping the check
+// green) even under On=failure, while the webhook message channel stays suppressed.
+func TestSendHealthchecksSuccessDecoupledFromPolicy(t *testing.T) {
+	var hcPath string
+	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { hcPath = r.URL.Path }))
+	defer hc.Close()
+	var webhookHits int
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
+	defer wh.Close()
+
+	notify.Send(context.Background(),
+		notify.Config{On: "failure", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic"},
+		notify.Event{OK: true})
+
+	if hcPath != "/" {
+		t.Fatalf("success ping should hit the base path, got %q", hcPath)
+	}
+	if webhookHits != 0 {
+		t.Fatalf("webhook must stay suppressed on success under failure-policy, hits=%d", webhookHits)
+	}
+}
+
+// TestSendHealthchecksFailPathUnderFailurePolicy: a failed backup pings /fail under
+// the failure policy (and the message channels fire too, but here we assert the
+// Healthchecks lifecycle path).
+func TestSendHealthchecksFailPathUnderFailurePolicy(t *testing.T) {
+	var path string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
+	defer srv.Close()
+	notify.Send(context.Background(),
+		notify.Config{On: "failure", HealthchecksURL: srv.URL},
+		notify.Event{OK: false})
+	if path != "/fail" {
+		t.Fatalf("failure should hit /fail, got %q", path)
+	}
+}
+
+// TestSendStartPingsStart: SendStart pings the /start endpoint when a URL is set and
+// notifications are not "never".
+func TestSendStartPingsStart(t *testing.T) {
+	var path string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
+	defer srv.Close()
+	notify.SendStart(context.Background(), notify.Config{On: "failure", HealthchecksURL: srv.URL})
+	if path != "/start" {
+		t.Fatalf("SendStart should hit /start, got %q", path)
+	}
+}
+
+// TestSendStartSuppressed: SendStart is a no-op when notifications are "never" or no
+// Healthchecks URL is configured.
+func TestSendStartSuppressed(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+
+	notify.SendStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL})
+	if hits != 0 {
+		t.Fatalf("SendStart under On=never should not ping, hits=%d", hits)
+	}
+	notify.SendStart(context.Background(), notify.Config{On: "always"}) // no URL
+	if hits != 0 {
+		t.Fatalf("SendStart with no URL should not ping, hits=%d", hits)
+	}
+}
+
+// TestHealthchecksPhasePaths exercises the phase→path mapping through the exported
+// API: /start (SendStart), base (Send success) and /fail (Send failure).
+func TestHealthchecksPhasePaths(t *testing.T) {
+	var path string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
+	defer srv.Close()
+	base := notify.Config{On: "always", HealthchecksURL: srv.URL}
+
+	notify.SendStart(context.Background(), base)
+	if path != "/start" {
+		t.Fatalf("start phase → %q, want /start", path)
+	}
+	notify.Send(context.Background(), base, notify.Event{OK: true})
+	if path != "/" {
+		t.Fatalf("success phase → %q, want /", path)
+	}
+	notify.Send(context.Background(), base, notify.Event{OK: false})
+	if path != "/fail" {
+		t.Fatalf("fail phase → %q, want /fail", path)
+	}
+}
+
 func TestSendTestNoChannel(t *testing.T) {
 	if err := notify.SendTest(context.Background(), notify.Config{}); err == nil {
 		t.Fatal("SendTest with no channel should error")
