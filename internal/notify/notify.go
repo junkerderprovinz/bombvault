@@ -95,10 +95,26 @@ func (c Config) Configured() bool {
 // domain, otherwise the global HealthchecksURL. A per-domain URL replaces (does
 // not add to) the global for that domain.
 func (c Config) healthchecksURLFor(domain string) string {
-	if u := c.HealthchecksByDomain[domain]; u != "" {
+	if u := c.HealthchecksByDomain[normalizeHCDomain(domain)]; u != "" {
 		return u
 	}
 	return c.HealthchecksURL
+}
+
+// normalizeHCDomain maps the domain spellings used across the codebase to the
+// canonical HealthchecksByDomain keys ("container"|"VM"|"flash"|"config"). Backups
+// use "container"/"VM"; the off-site and tamper failure notifiers use the plural
+// "containers"/"vms". Normalizing here means a per-domain check catches ALL of a
+// domain's events (backup + replication/drill/tamper failures), not just backups.
+func normalizeHCDomain(domain string) string {
+	switch domain {
+	case "containers":
+		return "container"
+	case "vms", "VMs", "vm":
+		return "VM"
+	default:
+		return domain
+	}
 }
 
 // healthchecksURLs returns every distinct configured Healthchecks URL — the global

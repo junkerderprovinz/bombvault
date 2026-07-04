@@ -90,6 +90,15 @@ func TestHealthchecksURLFor(t *testing.T) {
 	if got := nilMap.healthchecksURLFor("flash"); got != "https://hc/global" {
 		t.Fatalf("nil map should fall back to global, got %q", got)
 	}
+	// The off-site/tamper notifiers use the plural "containers"/"vms"; they must
+	// normalize to the same per-domain check as the "container"/"VM" backup pings.
+	norm := Config{HealthchecksByDomain: map[string]string{"container": "https://hc/ct", "VM": "https://hc/vm"}}
+	if got := norm.healthchecksURLFor("containers"); got != "https://hc/ct" {
+		t.Fatalf("containers should normalize to the container check, got %q", got)
+	}
+	if got := norm.healthchecksURLFor("vms"); got != "https://hc/vm" {
+		t.Fatalf("vms should normalize to the VM check, got %q", got)
+	}
 }
 
 // TestSMTPReadyGating: smtpReady only fires when enabled AND host/from/to are set.
