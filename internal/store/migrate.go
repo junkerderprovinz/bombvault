@@ -425,6 +425,21 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 49, name: "settings_config_offsite_immutable",
 		sql: "ALTER TABLE settings ADD COLUMN config_offsite_immutable INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// Scheduled flash ZIP export (#28): after a successful flash backup, write
+		// the snapshot out as a plain .zip to a user-chosen folder for off-server
+		// sync. One ALTER per column (SQLite ADD COLUMN is single-column).
+		version: 50, name: "settings_flash_zip_export_enabled",
+		sql: "ALTER TABLE settings ADD COLUMN flash_zip_export_enabled INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 51, name: "settings_flash_zip_export_path",
+		sql: "ALTER TABLE settings ADD COLUMN flash_zip_export_path TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 52, name: "settings_flash_zip_export_keep",
+		sql: "ALTER TABLE settings ADD COLUMN flash_zip_export_keep INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

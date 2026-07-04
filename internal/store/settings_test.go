@@ -121,6 +121,44 @@ func TestSettingsConfigFieldsRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSettingsFlashZipExportRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// Defaults from migration: disabled, empty path, keep 0.
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.FlashZipExportEnabled {
+		t.Fatal("default flash_zip_export_enabled must be false")
+	}
+	if s.FlashZipExportPath != "" {
+		t.Fatalf("default flash_zip_export_path wrong: %q", s.FlashZipExportPath)
+	}
+	if s.FlashZipExportKeep != 0 {
+		t.Fatalf("default flash_zip_export_keep wrong: %d", s.FlashZipExportKeep)
+	}
+
+	s.FlashZipExportEnabled = true
+	s.FlashZipExportPath = "backups/flash-zip"
+	s.FlashZipExportKeep = 3
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.FlashZipExportEnabled || got.FlashZipExportPath != "backups/flash-zip" ||
+		got.FlashZipExportKeep != 3 {
+		t.Fatalf("flash zip export fields not round-tripped: %+v", got)
+	}
+}
+
 func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
