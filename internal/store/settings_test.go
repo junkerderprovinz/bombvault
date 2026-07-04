@@ -76,6 +76,51 @@ func TestSettingsRoundtrip(t *testing.T) {
 	}
 }
 
+func TestSettingsConfigFieldsRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Defaults from migration: disabled, canonical path, schedule off.
+	if s.ConfigEnabled {
+		t.Fatal("default config_enabled must be false")
+	}
+	if s.ConfigPath != "user/bombvault/config" {
+		t.Fatalf("default config_path wrong: %q", s.ConfigPath)
+	}
+	if s.ConfigSchedule != "off" {
+		t.Fatalf("default config_schedule wrong: %q", s.ConfigSchedule)
+	}
+	if s.ConfigOffsite != "" || s.ConfigOffsiteSchedule != "" || s.ConfigOffsiteImmutable {
+		t.Fatalf("default config off-site fields must be empty/false: %+v", s)
+	}
+
+	s.ConfigEnabled = true
+	s.ConfigPath = "user/bombvault/config"
+	s.ConfigSchedule = "daily 03:30"
+	s.ConfigOffsite = "rclone:remote:bombvault-config"
+	s.ConfigOffsiteSchedule = "weekly Sun 04:00"
+	s.ConfigOffsiteImmutable = true
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.ConfigEnabled || got.ConfigPath != "user/bombvault/config" ||
+		got.ConfigSchedule != "daily 03:30" || got.ConfigOffsite != "rclone:remote:bombvault-config" ||
+		got.ConfigOffsiteSchedule != "weekly Sun 04:00" || !got.ConfigOffsiteImmutable {
+		t.Fatalf("config fields not round-tripped: %+v", got)
+	}
+}
+
 func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

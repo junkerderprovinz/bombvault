@@ -398,6 +398,33 @@ ALTER TABLE targets ADD COLUMN post_hook TEXT NOT NULL DEFAULT '';`,
 CREATE INDEX IF NOT EXISTS idx_offsite_runs_domain_started ON offsite_runs(domain, started_at);
 CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_drills(domain, source, kind, at);`,
 	},
+	{
+		// The `config` self-backup domain: BombVault backs up its own /config folder
+		// (settings DB + rclone.conf + ssh keypair). Mirrors the flash domain's
+		// settings columns. One ALTER per column (SQLite ADD COLUMN is single-column).
+		version: 44, name: "settings_config_enabled",
+		sql: "ALTER TABLE settings ADD COLUMN config_enabled INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 45, name: "settings_config_path",
+		sql: "ALTER TABLE settings ADD COLUMN config_path TEXT NOT NULL DEFAULT 'user/bombvault/config';",
+	},
+	{
+		version: 46, name: "settings_config_schedule",
+		sql: "ALTER TABLE settings ADD COLUMN config_schedule TEXT NOT NULL DEFAULT 'off';",
+	},
+	{
+		version: 47, name: "settings_config_offsite",
+		sql: "ALTER TABLE settings ADD COLUMN config_offsite TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 48, name: "settings_config_offsite_schedule",
+		sql: "ALTER TABLE settings ADD COLUMN config_offsite_schedule TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 49, name: "settings_config_offsite_immutable",
+		sql: "ALTER TABLE settings ADD COLUMN config_offsite_immutable INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
