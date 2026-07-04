@@ -99,7 +99,7 @@ func (c Config) smtpReady() bool {
 // policy governs only the message channels (webhook/matrix/smtp). Each channel's
 // error is logged, never returned (best-effort).
 func Send(ctx context.Context, c Config, ev Event) {
-	if c.On == "never" || c.On == "" {
+	if c.On != "always" && c.On != "failure" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -144,7 +144,7 @@ func Send(ctx context.Context, c Config, ev Event) {
 // backup, so the check can measure duration and detect a hung/never-finished run.
 // Healthchecks-only (message channels have no "start" concept); best-effort.
 func SendStart(ctx context.Context, c Config) {
-	if c.On == "never" || c.On == "" || c.HealthchecksURL == "" {
+	if (c.On != "always" && c.On != "failure") || c.HealthchecksURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)

@@ -1924,7 +1924,6 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
-	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	repo, err := s.containersRepoPath(settings)
 	if err != nil {
 		return backup.Summary{}, err
@@ -1970,6 +1969,9 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	}
 
 	pkey := "container:" + name
+	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
+	// so the paired done/fail notifyBackup below always follows (no dangling /start).
+	s.notifyBackupStart(ctx)
 	bctx := s.progBegin(ctx, pkey, "backup")
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:         name,
@@ -3737,7 +3739,6 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
-	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	repo, err := s.vmsRepoPath(settings)
 	if err != nil {
 		return backup.Summary{}, err
@@ -3908,6 +3909,10 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		}
 	}
 	vkey := "vm:" + name
+	// Healthchecks /start ping: deferred to here, past every pre-flight early-return
+	// (incl. the ErrVMNotInstalled skip), so the paired done/fail notifyBackup below
+	// always follows (no dangling /start).
+	s.notifyBackupStart(ctx)
 	bctx := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
 	if live {
@@ -4235,7 +4240,6 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
-	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	if _, statErr := os.Stat(s.cfg.FlashDir); errors.Is(statErr, fs.ErrNotExist) {
 		return backup.Summary{}, fmt.Errorf("flash backup: the Unraid flash is not mounted — add the /boot → %s mount to the container template", s.cfg.FlashDir)
 	}
@@ -4250,6 +4254,9 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	// Clear any stale lock left by a previously interrupted run so it can't block
 	// this backup (BombVault is the sole writer; an active lock is never stale).
 	s.unlockStale(ctx, repo, mode)
+	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
+	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
+	s.notifyBackupStart(ctx)
 	fctx := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
@@ -4369,7 +4376,6 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
-	s.notifyBackupStart(ctx) // Healthchecks /start ping (best-effort; before any restic work)
 	// Build the consistent staging snapshot of /config; restic backs THIS up, never
 	// the live WAL-mode DB. Always removed afterwards so the snapshot never lingers.
 	stagingDir, err := s.stageConfigSnapshot()
@@ -4388,6 +4394,9 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	// Clear any stale lock left by a previously interrupted run so it can't block
 	// this backup (BombVault is the sole writer; an active lock is never stale).
 	s.unlockStale(ctx, repo, mode)
+	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
+	// so the paired done/fail notifyBackup below always follows (no dangling /start).
+	s.notifyBackupStart(ctx)
 	fctx := s.progBegin(ctx, "config", "backup")
 	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
 		SourceDir: stagingDir,
