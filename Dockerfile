@@ -72,7 +72,7 @@ ARG RCLONE_VERSION=1.74.2
 ARG TARGETARCH
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client bzip2 wget unzip; \
+    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini bzip2 wget unzip; \
     rm -rf /var/lib/apt/lists/*; \
     case "${TARGETARCH}" in \
         amd64) restic_arch="amd64" ;; \
@@ -103,5 +103,12 @@ ENV DATA_DIR=/config \
 VOLUME /config
 EXPOSE 3000 3443
 
-# The binary prints its own ASCII init + READY banner; no entrypoint script.
-ENTRYPOINT ["/usr/local/bin/bombvault"]
+# tini is PID 1 (the container init) so orphaned grandchild processes get reaped.
+# BombVault shells out to restic, which forks its own `rclone` child for off-site
+# repos; when restic is cancelled/killed (a cancelled backup, the off-site check
+# timeout, a WAN drop) restic dies and its rclone child is orphaned onto PID 1.
+# BombVault-as-PID-1 was not a reaping init, so those piled up as `[rclone]
+# <defunct>` (#35). tini reaps them (and virsh→ssh orphans) automatically; `-g`
+# forwards SIGTERM/SIGINT to the whole process group for a clean `docker stop`.
+# The binary still prints its own ASCII init + READY banner; no entrypoint script.
+ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/usr/local/bin/bombvault"]

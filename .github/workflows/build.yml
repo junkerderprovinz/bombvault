@@ -60,6 +60,19 @@ jobs:
           echo "✗ container did not become healthy in time"
           docker logs bv-smoke || true
           exit 1
+      - name: Verify tini is PID 1 (zombie reaper, #35)
+        run: |
+          # BombVault shells out to restic, which forks rclone for off-site repos.
+          # A cancelled/killed restic orphans its rclone child onto PID 1; if PID 1
+          # is not a reaping init those pile up as [rclone] <defunct> (#35). tini as
+          # PID 1 reaps them. /proc/1/comm is the live proof the ENTRYPOINT took.
+          pid1=$(docker exec bv-smoke cat /proc/1/comm)
+          echo "PID 1 is: $pid1"
+          if [ "$pid1" != "tini" ]; then
+            echo "✗ PID 1 is '$pid1', not tini — the zombie reaper is missing (#35 would regress)"
+            exit 1
+          fi
+          echo "✓ tini is PID 1 — orphaned rclone/ssh grandchildren get reaped"
       - name: Cleanup
         if: always()
         run: docker rm -f bv-smoke || true
