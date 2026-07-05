@@ -658,6 +658,7 @@ const pl: Partial<Translations> = {
   "ransomware.replicationNever": "jeszcze nie replikowano",
   "ransomware.drillOffsite": "próba przywracania (poza siedzibą)",
   "ransomware.drillOverdue": "próba przywracania zaległa",
+  "ransomware.drillFailed": "próba przywracania nieudana",
   "ransomware.drillNever": "brak próby przywracania",
   "ransomware.encryptionOn": "szyfrowanie włączone",
   "ransomware.pruneStrategy": "ustawiono strategię przycinania",

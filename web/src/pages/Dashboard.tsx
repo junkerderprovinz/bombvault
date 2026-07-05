@@ -494,6 +494,10 @@ function RansomwareCard({
     switch (d.drillState) {
       case "ok":
         return { label: t("ransomware.drillOffsite"), state: "ok", at: d.lastDrDrillAt };
+      case "failed":
+        // The latest off-site DR drill FAILED — red, matching the "proven
+        // restorable" pill, regardless of how recently it ran.
+        return { label: t("ransomware.drillFailed"), state: "bad", at: d.lastDrDrillAt };
       case "overdue":
         return { label: t("ransomware.drillOverdue"), state: "amber", at: d.lastDrDrillAt };
       case "never":
@@ -1189,16 +1193,24 @@ export function Dashboard() {
   const [statusLoading, setStatusLoading] = useState(true);
   useEffect(() => {
     let active = true;
-    getStatus()
-      .then((res) => {
-        if (active && res.ok) setStatusDomains(res.domains ?? []);
-      })
-      .catch(() => {/* non-fatal */})
-      .finally(() => {
-        if (active) setStatusLoading(false);
-      });
+    const load = () => {
+      getStatus()
+        .then((res) => {
+          if (active && res.ok) setStatusDomains(res.domains ?? []);
+        })
+        .catch(() => {/* non-fatal */})
+        .finally(() => {
+          if (active) setStatusLoading(false);
+        });
+    };
+    load();
+    // Live-refresh when protection-relevant state changes elsewhere (e.g. a manual
+    // restore drill on the Settings page, which dispatches this event) so the
+    // scorecard pills reflect the new outcome without a page reload.
+    window.addEventListener("bv:settings-changed", load);
     return () => {
       active = false;
+      window.removeEventListener("bv:settings-changed", load);
     };
   }, []);
 

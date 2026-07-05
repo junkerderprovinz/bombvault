@@ -691,6 +691,7 @@ const tr: Partial<Translations> = {
   "ransomware.replicationNever": "henüz çoğaltılmadı",
   "ransomware.drillOffsite": "geri yükleme tatbikatı (site dışı)",
   "ransomware.drillOverdue": "geri yükleme tatbikatı gecikmiş",
+  "ransomware.drillFailed": "geri yükleme tatbikatı başarısız",
   "ransomware.drillNever": "henüz geri yükleme tatbikatı yok",
   "ransomware.encryptionOn": "şifreleme açık",
   "ransomware.pruneStrategy": "budama stratejisi ayarlandı",

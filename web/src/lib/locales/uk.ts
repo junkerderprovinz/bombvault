@@ -686,6 +686,7 @@ const uk: Partial<Translations> = {
   "ransomware.replicationNever": "ще не реплікувалося",
   "ransomware.drillOffsite": "тест відновлення (зовнішнє)",
   "ransomware.drillOverdue": "тест відновлення прострочено",
+  "ransomware.drillFailed": "тест відновлення не пройдено",
   "ransomware.drillNever": "тесту відновлення ще не було",
   "ransomware.encryptionOn": "шифрування увімкнено",
   "ransomware.pruneStrategy": "стратегію очищення задано",

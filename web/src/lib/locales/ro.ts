@@ -666,6 +666,7 @@ const ro: Partial<Translations> = {
   "ransomware.replicationNever": "nereplicat încă",
   "ransomware.drillOffsite": "test de restaurare (off-site)",
   "ransomware.drillOverdue": "test de restaurare restant",
+  "ransomware.drillFailed": "test de restaurare eșuat",
   "ransomware.drillNever": "încă niciun test de restaurare",
   "ransomware.encryptionOn": "criptare activată",
   "ransomware.pruneStrategy": "strategie de prune setată",

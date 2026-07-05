@@ -663,6 +663,7 @@ const no: Partial<Translations> = {
   "ransomware.replicationNever": "ikke replikert ennå",
   "ransomware.drillOffsite": "gjenopprettingsøvelse (off-site)",
   "ransomware.drillOverdue": "gjenopprettingsøvelse forfalt",
+  "ransomware.drillFailed": "gjenopprettingsøvelse mislyktes",
   "ransomware.drillNever": "ingen gjenopprettingsøvelse ennå",
   "ransomware.encryptionOn": "kryptering på",
   "ransomware.pruneStrategy": "beskjæringsstrategi satt",

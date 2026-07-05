@@ -683,6 +683,7 @@ const vi: Partial<Translations> = {
   "ransomware.replicationNever": "chưa sao chép",
   "ransomware.drillOffsite": "diễn tập khôi phục (off-site)",
   "ransomware.drillOverdue": "diễn tập khôi phục quá hạn",
+  "ransomware.drillFailed": "diễn tập khôi phục thất bại",
   "ransomware.drillNever": "chưa có diễn tập khôi phục",
   "ransomware.encryptionOn": "đã bật mã hóa",
   "ransomware.pruneStrategy": "đã đặt chiến lược dọn bớt",

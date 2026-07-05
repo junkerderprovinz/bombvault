@@ -660,6 +660,7 @@ const nl: Partial<Translations> = {
   "ransomware.replicationNever": "nog niet gerepliceerd",
   "ransomware.drillOffsite": "hersteltest (off-site)",
   "ransomware.drillOverdue": "hersteltest te laat",
+  "ransomware.drillFailed": "hersteltest mislukt",
   "ransomware.drillNever": "nog geen hersteltest",
   "ransomware.encryptionOn": "versleuteling aan",
   "ransomware.pruneStrategy": "prune-strategie ingesteld",

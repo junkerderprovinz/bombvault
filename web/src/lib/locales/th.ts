@@ -694,6 +694,7 @@ const th: Partial<Translations> = {
   "ransomware.replicationNever": "ยังไม่ได้จำลอง",
   "ransomware.drillOffsite": "การทดสอบกู้คืน (นอกสถานที่)",
   "ransomware.drillOverdue": "การทดสอบกู้คืนเกินกำหนด",
+  "ransomware.drillFailed": "การทดสอบกู้คืนล้มเหลว",
   "ransomware.drillNever": "ยังไม่มีการทดสอบกู้คืน",
   "ransomware.encryptionOn": "เปิดการเข้ารหัส",
   "ransomware.pruneStrategy": "ตั้งกลยุทธ์การพรูนแล้ว",

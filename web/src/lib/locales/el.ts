@@ -691,6 +691,7 @@ const el: Partial<Translations> = {
   "ransomware.replicationNever": "δεν έχει αναπαραχθεί ακόμα",
   "ransomware.drillOffsite": "δοκιμή επαναφοράς (εκτός τόπου)",
   "ransomware.drillOverdue": "δοκιμή επαναφοράς εκπρόθεσμη",
+  "ransomware.drillFailed": "αποτυχία δοκιμής επαναφοράς",
   "ransomware.drillNever": "καμία δοκιμή επαναφοράς ακόμα",
   "ransomware.encryptionOn": "κρυπτογράφηση ενεργή",
   "ransomware.pruneStrategy": "στρατηγική κλαδέματος ορισμένη",

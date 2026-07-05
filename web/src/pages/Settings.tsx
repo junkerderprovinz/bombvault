@@ -955,6 +955,11 @@ function IntegrityCard({
         setLastDrill((m) => ({ ...m, [domain]: drill }));
         setState((s) => ({ ...s, [key]: drill.ok ? "ok" : "fail" }));
         if (!drill.ok) setMsg((m) => ({ ...m, [key]: drill.detail || t("verify.failed") }));
+        // A recorded drill (pass OR fail) changes the shared /api/status the
+        // dashboard scorecard reads. Broadcast so the Dashboard refetches its
+        // drill / "proven restorable" pills without a page reload — mirrors how
+        // saving settings signals the app to refresh.
+        window.dispatchEvent(new Event("bv:settings-changed"));
       } else {
         setState((s) => ({ ...s, [key]: "fail" }));
         setMsg((m) => ({ ...m, [key]: r.error ?? t("verify.failed") }));

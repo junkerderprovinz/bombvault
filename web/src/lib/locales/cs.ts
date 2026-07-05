@@ -689,6 +689,7 @@ const cs: Partial<Translations> = {
   "ransomware.replicationNever": "zatím nereplikováno",
   "ransomware.drillOffsite": "cvičení obnovy (mimo lokalitu)",
   "ransomware.drillOverdue": "cvičení obnovy po termínu",
+  "ransomware.drillFailed": "cvičení obnovy selhalo",
   "ransomware.drillNever": "zatím žádné cvičení obnovy",
   "ransomware.encryptionOn": "šifrování zapnuto",
   "ransomware.pruneStrategy": "strategie čištění nastavena",
