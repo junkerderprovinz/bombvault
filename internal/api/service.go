@@ -2033,6 +2033,20 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		return backup.Summary{}, fmt.Errorf("upsert target: %w", err)
 	}
 
+	// Give each dependency its own run-state so the backup never starts a
+	// container the user had already stopped (#33): inspect each by name and
+	// carry WasRunning (mirroring the target's in.Running). A dependency we
+	// cannot inspect (e.g. removed) is logged and left untouched.
+	var deps []backup.StopContainer
+	for _, dep := range tg.StopContainers {
+		di, dErr := s.docker.Inspect(ctx, dep)
+		if dErr != nil {
+			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
+			continue
+		}
+		deps = append(deps, backup.StopContainer{Name: dep, WasRunning: di.Running})
+	}
+
 	pkey := "container:" + name
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
@@ -2050,7 +2064,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		WasRunning:           in.Running,
 		PreHook:              tg.PreHook,
 		PostHook:             tg.PostHook,
-		StopContainers:       tg.StopContainers,
+		StopContainers:       deps,
 		Docker:               s.docker,
 		Restic:               &resticAdapter{engine: s.engine, mode: mode},
 		Templates:            templatesAdapter{},

@@ -117,6 +117,15 @@ type Runs interface {
 // BackupDeps / RestoreDeps
 // ---------------------------------------------------------------------------
 
+// StopContainer is an OTHER container stopped for the duration of a backup
+// (e.g. a database). WasRunning is its run-state at backup time: a dependency
+// that was already stopped is left exactly as it was — neither stopped nor
+// restarted — so a backup never starts a container the user had off (#33).
+type StopContainer struct {
+	Name       string
+	WasRunning bool
+}
+
 // BackupDeps bundles everything BackupContainer needs.
 type BackupDeps struct {
 	// ContainerRef is the name/id used for stop/start and the `container:<ref>` tag.
@@ -149,10 +158,12 @@ type BackupDeps struct {
 	// Hooks only run when WasRunning (you cannot exec in a stopped container).
 	PreHook  string
 	PostHook string
-	// StopContainers are OTHER container names to stop for the duration of this
-	// backup (e.g. a database) and restart afterwards. Stop/start is best-effort:
-	// a failure is logged but never fails the backup. Independent of WasRunning.
-	StopContainers []string
+	// StopContainers are OTHER containers to stop for the duration of this
+	// backup (e.g. a database) and restart afterwards. Each carries its own
+	// WasRunning: a dependency that was already stopped is left untouched
+	// (neither stopped nor restarted). Stop/start is best-effort: a failure is
+	// logged but never fails the backup.
+	StopContainers []StopContainer
 
 	Docker    Docker
 	Restic    Restic
@@ -334,11 +345,14 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// a stop failure is logged and that dep is left out of the restart set. They
 		// are restarted by the defer above, AFTER the target is confirmed running.
 		for _, dep := range d.StopContainers {
-			if stopErr := d.Docker.Stop(ctx, dep, stopTimeout); stopErr != nil {
-				log.Printf("backup: stop dependency %q failed (continuing): %v", dep, stopErr)
+			if !dep.WasRunning {
+				continue // already stopped: leave it exactly as it was (#33)
+			}
+			if stopErr := d.Docker.Stop(ctx, dep.Name, stopTimeout); stopErr != nil {
+				log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
 				continue
 			}
-			stoppedDeps = append(stoppedDeps, dep)
+			stoppedDeps = append(stoppedDeps, dep.Name)
 		}
 
 		// A container with no existing source paths (a stateless app, or appdata

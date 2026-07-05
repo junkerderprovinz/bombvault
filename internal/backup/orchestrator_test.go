@@ -373,14 +373,17 @@ func TestBackupStopsAndRestartsDependencies(t *testing.T) {
 	runs := &fakeRuns{}
 
 	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
-		ContainerRef:         "app",
-		ContainerName:        "App",
-		RepoPath:             "/repo",
-		AppdataPaths:         []string{"/host/user/appdata/app"},
-		StopTimeout:          30 * time.Second,
-		TargetID:             "target-1",
-		WasRunning:           true,
-		StopContainers:       []string{"mariadb"},
+		ContainerRef:  "app",
+		ContainerName: "App",
+		RepoPath:      "/repo",
+		AppdataPaths:  []string{"/host/user/appdata/app"},
+		StopTimeout:   30 * time.Second,
+		TargetID:      "target-1",
+		WasRunning:    true,
+		StopContainers: []backup.StopContainer{
+			{Name: "mariadb", WasRunning: true}, // running dep → stopped then restarted
+			{Name: "redis", WasRunning: false},  // already stopped → never touched
+		},
 		SnapshotTemplatesDir: "/data/templates",
 		FlashTemplatesDir:    "/boot/templates",
 		Docker:               d,
@@ -406,6 +409,11 @@ func TestBackupStopsAndRestartsDependencies(t *testing.T) {
 	if stopDep > startDep {
 		t.Fatalf("dependency stop must precede its restart: %v", d.log)
 	}
+	// A dependency that was already stopped must be left exactly as it was —
+	// neither stopped nor restarted (#33).
+	if idx("stop:redis") >= 0 || idx("start:redis") >= 0 {
+		t.Fatalf("an already-stopped dependency must not be stopped or started: %v", d.log)
+	}
 	// The backed-up TARGET must come back AND be confirmed running BEFORE its
 	// dependents restart — some dependents share the target's network namespace
 	// (network_mode: container:<target>) and cannot start until it is live. The
@@ -419,23 +427,28 @@ func TestBackupStopsAndRestartsDependencies(t *testing.T) {
 	}
 }
 
-// TestBackupRestartsDepsEvenWhenTargetWasStopped: a target that was already
-// stopped is backed up in place and never started, but its stopped dependents
-// must still be restarted (and the target must not be waited-for-running).
-func TestBackupRestartsDepsEvenWhenTargetWasStopped(t *testing.T) {
+// TestBackupDepsFollowRunStateWhenTargetWasStopped: a target that was already
+// stopped is backed up in place and never started. Its dependencies follow
+// their OWN run-state: a running dependency is stopped for the backup and
+// restarted, while an already-stopped dependency is left exactly as it was —
+// neither stopped nor started (#33).
+func TestBackupDepsFollowRunStateWhenTargetWasStopped(t *testing.T) {
 	d := &fakeDocker{}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
 	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
 	runs := &fakeRuns{}
 
 	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
-		ContainerRef:         "app",
-		ContainerName:        "App",
-		RepoPath:             "/repo",
-		AppdataPaths:         []string{"/host/user/appdata/app"},
-		TargetID:             "target-1",
-		WasRunning:           false, // already stopped → never started/waited
-		StopContainers:       []string{"mariadb"},
+		ContainerRef:  "app",
+		ContainerName: "App",
+		RepoPath:      "/repo",
+		AppdataPaths:  []string{"/host/user/appdata/app"},
+		TargetID:      "target-1",
+		WasRunning:    false, // already stopped → never started/waited
+		StopContainers: []backup.StopContainer{
+			{Name: "mariadb", WasRunning: true}, // running dep → stopped then restarted
+			{Name: "redis", WasRunning: false},  // already stopped → left untouched
+		},
 		SnapshotTemplatesDir: "/data/templates",
 		FlashTemplatesDir:    "/boot/templates",
 		Docker:               d,
@@ -458,7 +471,10 @@ func TestBackupRestartsDepsEvenWhenTargetWasStopped(t *testing.T) {
 		t.Fatalf("a not-running target must not be stopped/started/waited: %v", d.log)
 	}
 	if !has("stop:mariadb") || !has("start:mariadb") {
-		t.Fatalf("dependents must still be stopped and restarted: %v", d.log)
+		t.Fatalf("a running dependency must still be stopped and restarted: %v", d.log)
+	}
+	if has("stop:redis") || has("start:redis") {
+		t.Fatalf("an already-stopped dependency must not be stopped or started: %v", d.log)
 	}
 }
 
