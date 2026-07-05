@@ -1260,7 +1260,7 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash":
+	case "containers", "vms", "flash", "config":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -1277,7 +1277,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash":
+	case "containers", "vms", "flash", "config":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return

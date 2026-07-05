@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   backupConfigNow,
   listConfigSnapshots,
+  deleteSnapshot,
   getSettings,
   putSettings,
 } from "../lib/api";
@@ -223,6 +224,63 @@ function ConfigSettingsCard({
 }
 
 // ---------------------------------------------------------------------------
+// Snapshot row — id + timestamp, with a delete affordance (mirrors Flash's
+// FlashSnapshotRow, minus the zip download). Delete targets the currently viewed
+// repo via `source`; an off-site append-only repo refuses the delete server-side,
+// so the returned error is surfaced in `deleteErr` rather than hidden.
+// ---------------------------------------------------------------------------
+
+function ConfigSnapshotRow({
+  snap,
+  source,
+  onDeleted,
+  t,
+}: {
+  snap: Snapshot;
+  source: RepoSource;
+  onDeleted: () => void;
+  t: T;
+}) {
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    setDeleting(true);
+    setDeleteErr(null);
+    try {
+      const res = await deleteSnapshot("config", snap.id, source);
+      if (res.ok) onDeleted();
+      else setDeleteErr(res.error ?? "Delete failed");
+    } catch (err) {
+      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
+      <div className="flex items-center gap-3 text-sm">
+        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
+        <span className="text-carbon-textMuted text-xs flex-1">
+          {new Date(snap.time).toLocaleString()}
+        </span>
+        <button
+          onClick={() => void handleDelete()}
+          disabled={deleting}
+          title={t("snapshots.delete")}
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+        >
+          {deleting ? "…" : t("snapshots.delete")}
+        </button>
+      </div>
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Config page — BombVault's OWN settings self-backup. Backup + status only; the
 // restore flow (which restarts the app to swap the live DB) lives in the Recovery
 // tab, so the self-referential restart stays in one place.
@@ -299,7 +357,7 @@ export function Config() {
         )}
       </div>
 
-      {/* Snapshots card — read-only status; restoring settings lives in Recovery. */}
+      {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
       <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("config.snapshotsTitle")}
@@ -324,15 +382,13 @@ export function Config() {
         {!loading && snapshots.length > 0 && (
           <div className="rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
-              <div
+              <ConfigSnapshotRow
                 key={snap.id}
-                className="flex items-center gap-3 py-2.5 text-sm border-b border-carbon-border last:border-0"
-              >
-                <span className="font-mono text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
-                <span className="text-carbon-textMuted text-xs flex-1">
-                  {new Date(snap.time).toLocaleString()}
-                </span>
-              </div>
+                snap={snap}
+                source={source}
+                onDeleted={() => void load()}
+                t={t}
+              />
             ))}
           </div>
         )}
