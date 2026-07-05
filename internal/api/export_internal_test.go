@@ -8,7 +8,19 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+// SetDrillLockTimingsForTest overrides the scheduled-drill bounded-wait timings
+// (drillLockWait/drillLockPoll) so external (api_test) tests can exercise the
+// wait/timeout paths without real multi-hour/second delays. It returns a restore
+// func to defer. Test-only: it lives in a _test.go file, so it is never compiled
+// into the production binary.
+func SetDrillLockTimingsForTest(wait, poll time.Duration) (restore func()) {
+	oldWait, oldPoll := drillLockWait, drillLockPoll
+	drillLockWait, drillLockPoll = wait, poll
+	return func() { drillLockWait, drillLockPoll = oldWait, oldPoll }
+}
 
 // TestDedupPaths verifies exact duplicates and paths nested under another are
 // dropped, so overlapping selections never archive a file twice.

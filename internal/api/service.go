@@ -309,6 +309,31 @@ func (s *Service) tryLockDomain(domain string) (func(), bool) {
 	return s.tryLockDomainFor(domain, "maintenance")
 }
 
+// drillLockWait is the most a SCHEDULED drill waits for the per-domain lock to
+// free (matches the backup cap); drillLockPoll is how often it re-tries the lock
+// while waiting. They are package-level vars (not consts) purely so tests can
+// shrink them to sub-second values via a hook — production behaviour is fixed.
+var (
+	drillLockWait = 12 * time.Hour   // max a scheduled drill waits for the domain to free (matches the backup cap)
+	drillLockPoll = 15 * time.Second // how often it re-tries the domain lock while waiting
+)
+
+// waitLockDomainFor acquires the per-domain lock, waiting up to drillLockWait by
+// polling tryLock (so a wedged lock-holder can't block a scheduled drill forever
+// or pile up goroutines). Returns (unlock, true) on acquire, (nil, false) on timeout.
+func (s *Service) waitLockDomainFor(domain, reason string) (func(), bool) {
+	deadline := time.Now().Add(drillLockWait)
+	for {
+		if unlock, ok := s.tryLockDomainFor(domain, reason); ok {
+			return unlock, true
+		}
+		if time.Now().After(deadline) {
+			return nil, false
+		}
+		time.Sleep(drillLockPoll)
+	}
+}
+
 // SetHostSSH wires the SSH connection used for VM NVRAM transfer + the UI's
 // key/test endpoints. Called from main after the key is ensured.
 func (s *Service) SetHostSSH(ssh HostSSH) { s.ssh = ssh }
@@ -839,7 +864,10 @@ func replicationState(now int64, in protInputs) string {
 //   - amber protection exists but a scheduled time-check is overdue by the SAME
 //     period-doubling rule backups use (rpoStatus "overdue"): the off-site
 //     replication (only when a decoupled off-site schedule is set) or the
-//     off-site DR drill (only when a drill schedule is set).
+//     off-site DR drill (only when a drill schedule is set); OR the latest
+//     scheduled DR drill FAILED — a failed restorability proof is a real posture
+//     concern, so the chip can't read green over the red "failed" drill row, but
+//     it stays amber (not full red) because other protections may still be fine.
 //   - green otherwise.
 func protectionLevel(now int64, in protInputs) string {
 	if !in.enabled {
@@ -861,6 +889,13 @@ func protectionLevel(now int64, in protInputs) string {
 	if replicationState(now, in) == "overdue" {
 		return "amber"
 	}
+	// A recorded DR drill that FAILED downgrades the chip to amber (never green over
+	// a red row). This mirrors protectionChecks' "failed" branch EXACTLY (same guard:
+	// a drill schedule is set AND the latest recorded drill failed), so the chip and
+	// the scorecard row can never disagree on a failed drill.
+	if in.drillPeriod > 0 && in.lastDRDrillAt != 0 && !in.lastDRDrillOK {
+		return "amber"
+	}
 	if rpoStatus(now, in.lastDRDrillAt, in.drillPeriod, in.drillPeriod > 0) == "overdue" {
 		return "amber"
 	}
@@ -871,9 +906,10 @@ func protectionLevel(now int64, in protInputs) string {
 // Replication are derived from the SAME protInputs protectionLevel aggregates, so
 // those rows can never contradict the chip. Drill additionally honors the latest
 // DR drill's OUTCOME (a failed drill reads "failed"/red) to agree with the
-// dedicated off-site "proven restorable" pill, so it may read red while the
-// aggregate chip is still green. An empty state ("") means the check makes no
-// claim (and so is rendered muted, not as a failure).
+// dedicated off-site "proven restorable" pill; protectionLevel downgrades that
+// same failed-drill case to amber, so a red "failed" Drill row coincides with an
+// (at least) amber chip — never a green one. An empty state ("") means the check
+// makes no claim (and so is rendered muted, not as a failure).
 type protChecks struct {
 	Tamper      string // "" | "never" | "failed" | "stale" | "ok"
 	Replication string // "" | "never" | "overdue" | "ok"
@@ -891,7 +927,8 @@ type protChecks struct {
 //   - Drill mirrors that currency (never/overdue/ok) for a PASSED drill, but a
 //     recorded DR drill that FAILED reads "failed" (red) regardless of recency, so
 //     the row agrees with the off-site "proven restorable" pill (lastDRDrillOK).
-//     This is the one row that can read red while the aggregate chip is green.
+//     protectionLevel downgrades this same failed-drill case to amber, so the red
+//     row coincides with an (at least) amber chip — never a green one.
 //
 // Replication still does NOT surface a red "replication failed": nothing else
 // consumes lastReplicationOK, so only its currency is mirrored.
@@ -1048,7 +1085,11 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			drillPeriod:       drillPeriod,
 		}
 		// protection (the chip) and checks (each row) are derived from the SAME
-		// inputs, so a row can never contradict the chip.
+		// protInputs. Tamper/Replication rows mirror the chip's red/amber branches
+		// exactly. The Drill row additionally honors the latest drill's OUTCOME (a
+		// failed drill reads a red "failed"); to keep the chip from reading green over
+		// that red row, protectionLevel downgrades a failed drill to amber under the
+		// same guard — so no row can contradict the chip.
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
 
@@ -4854,7 +4895,15 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	// MANUAL drill fails fast with immediate busy feedback WITHOUT recording (#30).
 	var unlock func()
 	if wait {
-		unlock = s.lockDomainFor(domain, "verify")
+		// Bounded wait: poll the lock up to drillLockWait, then LOG + skip (record
+		// nothing, like the manual-busy path) so a wedged lock-holder can't block a
+		// scheduled drill forever or pile up a goroutine each night.
+		u, ok := s.waitLockDomainFor(domain, "verify")
+		if !ok {
+			log.Printf("api: drill: %q busy longer than %v, skipping this scheduled run", domain, drillLockWait) //nolint:gosec // G706: domain is %q-quoted and validated to a fixed allow-list above
+			return store.RestoreDrill{}, errDomainBusy
+		}
+		unlock = u
 	} else {
 		u, ok := s.tryLockDomainFor(domain, "verify")
 		if !ok {
@@ -4974,7 +5023,15 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 	// drill fails fast with immediate busy feedback WITHOUT recording (#30).
 	var unlock func()
 	if wait {
-		unlock = s.lockDomainFor(domain, "verify")
+		// Bounded wait: poll the lock up to drillLockWait, then LOG + skip (record
+		// nothing, like the manual-busy path) so a wedged lock-holder can't block a
+		// scheduled drill forever or pile up a goroutine each night.
+		u, ok := s.waitLockDomainFor(domain, "verify")
+		if !ok {
+			log.Printf("api: drill: %q busy longer than %v, skipping this scheduled run", domain, drillLockWait) //nolint:gosec // G706: domain is %q-quoted and validated to a fixed allow-list above
+			return store.RestoreDrill{}, errDomainBusy
+		}
+		unlock = u
 	} else {
 		u, ok := s.tryLockDomainFor(domain, "verify")
 		if !ok {
