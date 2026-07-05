@@ -3433,6 +3433,11 @@ func TestRunSubsetDrillManualBusyRecordsNothing(t *testing.T) {
 // the lock instead of vanishing, then record a row once the lock releases — so the
 // dashboard can never read "never" just because a nightly backup co-fired.
 func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
+	// The bounded wait polls the lock every drillLockPoll; shrink it so the drill
+	// re-acquires promptly once the restore releases the lock (the wait deadline is
+	// irrelevant here — the lock frees in milliseconds, well under it).
+	defer api.SetDrillLockTimingsForTest(time.Hour, 5*time.Millisecond)()
+
 	eng := &fakeResticEngine{
 		blockRestore:   make(chan struct{}),
 		restoreEntered: make(chan struct{}, 1),
@@ -3493,6 +3498,51 @@ func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
 	if len(eng.checkDataRepos) != 1 {
 		t.Fatalf("a scheduled drill must run exactly one CheckData, got %v", eng.checkDataRepos)
 	}
+}
+
+// TestRunSubsetDrillScheduledLockWaitTimesOut pins the bounded-wait cap: a
+// SCHEDULED drill (wait=true) whose domain lock stays held past drillLockWait must
+// give up with errDomainBusy and record NOTHING (no CheckData, no row) rather than
+// block forever / pile up a goroutine. The timings are shrunk to milliseconds via
+// a test hook so the deadline elapses without a real 12h wait.
+func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
+	// Tiny deadline + poll so the wait times out in milliseconds, not hours.
+	defer api.SetDrillLockTimingsForTest(40*time.Millisecond, 5*time.Millisecond)()
+
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Hold the "containers" domain lock with an in-flight (blocked) restore for the
+	// whole wait window, so the scheduled drill can never acquire before the deadline.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	// wait=true, but the lock stays held past the (tiny) deadline → bounded skip.
+	_, err := svc.RunRestoreDrill(ctx, "containers", "local", "subset", true)
+	if err == nil || !strings.Contains(err.Error(), "currently running") {
+		t.Fatalf("a scheduled drill that waits past the deadline must return busy, got %v", err)
+	}
+	if len(eng.checkDataRepos) != 0 {
+		t.Fatalf("a timed-out scheduled drill must not run CheckData, got %v", eng.checkDataRepos)
+	}
+	if _, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil {
+		t.Fatalf("LatestDrill: %v", fErr)
+	} else if found {
+		t.Fatal("a timed-out scheduled drill must record no row")
+	}
+
+	close(eng.blockRestore)   // let the restore finish
+	waitForBackupDone(t, svc) // terminal → temp-dir cleanup race-free
 }
 
 // TestRunSubsetDrillClearsStaleLockBeforeCheckData pins #30-A2 for the subset drill:

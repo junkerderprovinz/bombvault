@@ -146,6 +146,18 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 			wantChecks: protChecks{Drill: "overdue"},
 			wantLevel:  "amber",
 		},
+		{
+			// A recent but FAILED DR drill: the row reads a red "failed", so the chip
+			// must NOT read green over it — protectionLevel downgrades it to amber (a
+			// failed restorability proof needs attention; other protections are fine).
+			name: "failed recent drill → failed row + amber chip (chip can't be green over a red row)",
+			in: protInputs{
+				enabled: true, offsiteConfigured: true,
+				lastDRDrillAt: now - day, lastDRDrillOK: false, drillPeriod: week,
+			},
+			wantChecks: protChecks{Drill: "failed"},
+			wantLevel:  "amber",
+		},
 	}
 	for _, c := range cases {
 		gotChecks := protectionChecks(now, c.in)
@@ -164,6 +176,10 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 		// Invariant: an "overdue" replication/drill must coincide with (at least) amber.
 		if (gotChecks.Replication == "overdue" || gotChecks.Drill == "overdue") && gotLevel == "green" {
 			t.Errorf("%s: an overdue check must not coincide with a green chip", c.name)
+		}
+		// Invariant: a red "failed" drill row must not coincide with a green chip.
+		if gotChecks.Drill == "failed" && gotLevel == "green" {
+			t.Errorf("%s: a failed drill row must not coincide with a green chip, got %q", c.name, gotLevel)
 		}
 	}
 }
