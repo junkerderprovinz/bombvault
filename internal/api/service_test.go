@@ -2732,7 +2732,7 @@ type fakeResticEngine struct {
 	diffResult      restic.DiffResult // returned by Diff
 	diffPairs       []string          // "snap1->snap2" of each Diff call
 	taggedSnaps     []string          // "snapID:tag,tag" of each TagAdd call
-	callLog         []string          // ordered method-call log (currently Unlock/TagAdd) for ordering assertions
+	callLog         []string          // ordered method-call log (Unlock/TagAdd/CheckData/RestoreInclude) for ordering assertions
 	forgetPruned    bool              // prune flag of the last Forget call
 	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
 	// (non-zero) overrides the byte total it reports so a test can force a
@@ -2865,6 +2865,7 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 
 func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
 	f.restoreCtxErrs = append(f.restoreCtxErrs, ctx.Err())
+	f.callLog = append(f.callLog, "RestoreInclude")
 	f.blockIfArmed()
 	if f.restoreErr != nil {
 		return f.restoreErr
@@ -2901,6 +2902,7 @@ func (f *fakeResticEngine) Check(_ context.Context, repo string, _ restic.Mode) 
 func (f *fakeResticEngine) CheckData(_ context.Context, repo string, subsetPercent int, _ restic.Mode) error {
 	f.checkDataRepos = append(f.checkDataRepos, repo)
 	f.checkDataPct = append(f.checkDataPct, subsetPercent)
+	f.callLog = append(f.callLog, "CheckData")
 	return f.checkDataErr
 }
 
@@ -3025,7 +3027,7 @@ func TestRunRestoreDrillRecordsResult(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	svc := initRepoSvc(t, eng)
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset", false)
 	if err != nil {
 		t.Fatalf("RunRestoreDrill: %v", err)
 	}
@@ -3055,7 +3057,7 @@ func TestRunRestoreDrillNoBackups(t *testing.T) {
 	eng := &fakeResticEngine{} // snaps nil → empty repo
 	svc := initRepoSvc(t, eng)
 
-	_, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset")
+	_, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset", false)
 	if err == nil {
 		t.Fatal("expected an error when there are no snapshots to verify")
 	}
@@ -3079,7 +3081,7 @@ func TestRunRestoreDrillFailureRecorded(t *testing.T) {
 	}
 	svc := initRepoSvc(t, eng)
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset", false)
 	if err == nil {
 		t.Fatal("expected the drill to surface the CheckData failure")
 	}
@@ -3158,7 +3160,7 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 	}
 	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err != nil {
 		t.Fatalf("RunRestoreDrill dr: %v", err)
 	}
@@ -3201,7 +3203,7 @@ func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
 	}
 	svc := drDrillService(t, eng, "flash", "rest:http://192.168.20.9:8000/flash", "")
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "flash", "offsite", "dr")
+	drill, err := svc.RunRestoreDrill(context.Background(), "flash", "offsite", "dr", false)
 	if err != nil {
 		t.Fatalf("RunRestoreDrill dr flash: %v", err)
 	}
@@ -3223,7 +3225,7 @@ func TestRunDRDrillVMRefused(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"vm:win11"}}}}
 	svc := drDrillService(t, eng, "vms", "rest:http://192.168.20.9:8000/vms", "")
 
-	_, err := svc.RunRestoreDrill(context.Background(), "vms", "offsite", "dr")
+	_, err := svc.RunRestoreDrill(context.Background(), "vms", "offsite", "dr", false)
 	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "vm") {
 		t.Fatalf("VM dr drill must be refused with a clear error, got %v", err)
 	}
@@ -3243,7 +3245,7 @@ func TestRunDRDrillNoOffsite(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
 	svc := drDrillService(t, eng, "containers", "", "plex") // no off-site set
 
-	_, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	_, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil || !strings.Contains(err.Error(), "off-site") {
 		t.Fatalf("want a clear no-off-site error, got %v", err)
 	}
@@ -3265,7 +3267,7 @@ func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 	}
 	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil {
 		t.Fatal("a verification mismatch must surface an error")
 	}
@@ -3305,7 +3307,7 @@ func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 	}
 	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil {
 		t.Fatal("a truncated restore (exact-byte mismatch) must FAIL the drill, not record ok=true")
 	}
@@ -3330,7 +3332,7 @@ func TestRunDRDrillEmptySnapshotSkips(t *testing.T) {
 	}
 	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
-	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr")
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "nothing to drill") {
 		t.Fatalf("an empty snapshot must return a clear 'nothing to drill' message, got err=%v", err)
 	}
@@ -3363,7 +3365,7 @@ func TestRunDRDrillDetachedAndBounded(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // parent is already cancelled before the drill starts
 
-	drill, err := svc.RunRestoreDrill(ctx, "containers", "offsite", "dr")
+	drill, err := svc.RunRestoreDrill(ctx, "containers", "offsite", "dr", false)
 	if err != nil {
 		t.Fatalf("a cancelled parent ctx must NOT abort the drill, got %v", err)
 	}
@@ -3383,6 +3385,189 @@ func TestRunDRDrillDetachedAndBounded(t *testing.T) {
 	}
 	if !eng.snapshotsCtxDeadline[0] {
 		t.Fatal("the drill's snapshot listing must run under a bounded ctx (a deadline)")
+	}
+}
+
+// TestRunSubsetDrillManualBusyRecordsNothing pins #30-A1 for a MANUAL drill: with
+// the domain lock held by an in-flight op, a manual subset drill (wait=false) must
+// fail fast with errDomainBusy and record NOTHING (no misleading row, no CheckData).
+func TestRunSubsetDrillManualBusyRecordsNothing(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Hold the "containers" domain lock with an in-flight (blocked) restore.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	_, err := svc.RunRestoreDrill(ctx, "containers", "local", "subset", false)
+	if err == nil || !strings.Contains(err.Error(), "currently running") {
+		t.Fatalf("a manual drill on a busy domain must return busy, got %v", err)
+	}
+	if len(eng.checkDataRepos) != 0 {
+		t.Fatalf("a busy manual drill must not run CheckData, got %v", eng.checkDataRepos)
+	}
+	if _, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil {
+		t.Fatalf("LatestDrill: %v", fErr)
+	} else if found {
+		t.Fatal("a busy manual drill must record no row")
+	}
+
+	close(eng.blockRestore)   // let the restore finish
+	waitForBackupDone(t, svc) // terminal → temp-dir cleanup race-free
+}
+
+// TestRunSubsetDrillScheduledWaitsForLock pins #30-A1 for a SCHEDULED drill: with
+// the domain lock briefly held, a scheduled subset drill (wait=true) must BLOCK on
+// the lock instead of vanishing, then record a row once the lock releases — so the
+// dashboard can never read "never" just because a nightly backup co-fired.
+func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Hold the "containers" domain lock with an in-flight (blocked) restore.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	// The scheduled drill runs in a goroutine because it BLOCKS on the held lock.
+	type drillResult struct {
+		drill store.RestoreDrill
+		err   error
+	}
+	done := make(chan drillResult, 1)
+	go func() {
+		d, err := svc.RunRestoreDrill(ctx, "containers", "local", "subset", true)
+		done <- drillResult{d, err}
+	}()
+
+	// While the restore holds the lock the drill must still be blocked (not recorded).
+	select {
+	case <-done:
+		t.Fatal("scheduled drill completed while the domain lock was held")
+	case <-time.After(200 * time.Millisecond):
+		// Still blocked behind the restore, exactly as intended.
+	}
+
+	close(eng.blockRestore) // restore finishes → releases the domain lock
+	waitForBackupDone(t, svc)
+
+	select {
+	case res := <-done:
+		if res.err != nil {
+			t.Fatalf("scheduled drill after the lock released: %v", res.err)
+		}
+		if !res.drill.OK || res.drill.Domain != "containers" {
+			t.Fatalf("a scheduled drill must complete + record, got %+v", res.drill)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("scheduled drill never completed after the lock released")
+	}
+
+	// The whole point: a row is recorded, so the dashboard is not stuck on "never".
+	if latest, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil || !found {
+		t.Fatalf("a scheduled drill must record a row: found=%v err=%v", found, fErr)
+	} else if !latest.OK {
+		t.Fatalf("scheduled drill row = %+v, want ok=true", latest)
+	}
+	if len(eng.checkDataRepos) != 1 {
+		t.Fatalf("a scheduled drill must run exactly one CheckData, got %v", eng.checkDataRepos)
+	}
+}
+
+// TestRunSubsetDrillClearsStaleLockBeforeCheckData pins #30-A2 for the subset drill:
+// it clears a stale restic lock (Unlock) BEFORE the read-data check (CheckData),
+// mirroring CheckDomain — else a lock left by an interrupted off-site op makes the
+// drill fail "repository is already locked" (the #29 regression).
+func TestRunSubsetDrillClearsStaleLockBeforeCheckData(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := initRepoSvc(t, eng)
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset", false); err != nil {
+		t.Fatalf("RunRestoreDrill: %v", err)
+	}
+	unlockIdx, checkIdx := -1, -1
+	for i, call := range eng.callLog {
+		switch call {
+		case "Unlock":
+			if unlockIdx == -1 {
+				unlockIdx = i
+			}
+		case "CheckData":
+			if checkIdx == -1 {
+				checkIdx = i
+			}
+		}
+	}
+	if unlockIdx == -1 {
+		t.Fatalf("subset drill must clear a stale lock (Unlock) before CheckData; call log = %v", eng.callLog)
+	}
+	if checkIdx == -1 {
+		t.Fatalf("subset drill must run CheckData; call log = %v", eng.callLog)
+	}
+	if unlockIdx > checkIdx {
+		t.Fatalf("Unlock must precede CheckData, got call log %v", eng.callLog)
+	}
+	// The stale-unlock is a plain (non-remove-all) unlock on the resolved repo.
+	if len(eng.unlockRemoveAll) == 0 || eng.unlockRemoveAll[0] {
+		t.Fatalf("stale-unlock must be a plain unlock (removeAll=false), got %v", eng.unlockRemoveAll)
+	}
+}
+
+// TestRunDRDrillClearsStaleLockBeforeRestore pins #30-A2 for the DR drill: it clears
+// a stale restic lock (Unlock) BEFORE the sandbox restore (RestoreInclude), mirroring
+// CheckDomain — the #29 regression guard for the off-site DR path.
+func TestRunDRDrillClearsStaleLockBeforeRestore(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+		},
+	}
+	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false); err != nil {
+		t.Fatalf("RunRestoreDrill dr: %v", err)
+	}
+	unlockIdx, restoreIdx := -1, -1
+	for i, call := range eng.callLog {
+		switch call {
+		case "Unlock":
+			if unlockIdx == -1 {
+				unlockIdx = i
+			}
+		case "RestoreInclude":
+			if restoreIdx == -1 {
+				restoreIdx = i
+			}
+		}
+	}
+	if unlockIdx == -1 {
+		t.Fatalf("dr drill must clear a stale lock (Unlock) before RestoreInclude; call log = %v", eng.callLog)
+	}
+	if restoreIdx == -1 {
+		t.Fatalf("dr drill must run RestoreInclude; call log = %v", eng.callLog)
+	}
+	if unlockIdx > restoreIdx {
+		t.Fatalf("Unlock must precede RestoreInclude, got call log %v", eng.callLog)
 	}
 }
 

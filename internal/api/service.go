@@ -4785,12 +4785,17 @@ func drillSubsetPct(pct int) int {
 // kind "subset" (or "") is the classic in-place integrity check; kind "dr" is a
 // real off-site sandbox restore (see runDRDrill). domain is {containers,vms,flash};
 // source is {local,offsite} (ignored for kind "dr", which is always off-site).
-func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind string) (store.RestoreDrill, error) {
+// wait selects the lock discipline for the underlying drill: a SCHEDULED drill
+// passes wait=true so it BLOCKS for the per-domain lock and always records a
+// result (a nightly backup/replication co-fire must not make it silently vanish
+// → dashboard "never"); a MANUAL drill passes wait=false for immediate
+// errDomainBusy feedback, recording nothing (#30).
+func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind string, wait bool) (store.RestoreDrill, error) {
 	switch kind {
 	case "", "subset":
-		return s.runSubsetDrill(ctx, domain, source)
+		return s.runSubsetDrill(ctx, domain, source, wait)
 	case "dr":
-		return s.runDRDrill(ctx, domain)
+		return s.runDRDrill(ctx, domain, wait)
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown drill kind %q", kind)
 	}
@@ -4805,7 +4810,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // returns errDomainBusy and records nothing. A missing/empty repo returns a clear
 // "no backups to verify" error and records nothing (no misleading failure). Both
 // a passing and a failing drill ARE recorded; a failure also fires a notification.
-func (s *Service) runSubsetDrill(ctx context.Context, domain, source string) (store.RestoreDrill, error) {
+func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (store.RestoreDrill, error) {
 	switch domain {
 	case "containers", "vms", "flash", "config":
 	default:
@@ -4825,11 +4830,19 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string) (st
 		return store.RestoreDrill{}, err
 	}
 
-	// Serialise with backups (and other maintenance) so a drill never reads a repo
-	// a backup is actively writing. Busy → report it WITHOUT recording a drill.
-	unlock, ok := s.tryLockDomainFor(domain, "verify")
-	if !ok {
-		return store.RestoreDrill{}, errDomainBusy
+	// Serialise with backups (and other maintenance) so a drill never reads a repo a
+	// backup is actively writing. A SCHEDULED drill (wait) BLOCKS for the domain so it
+	// always records a result even when a nightly backup/replication co-fires; a
+	// MANUAL drill fails fast with immediate busy feedback WITHOUT recording (#30).
+	var unlock func()
+	if wait {
+		unlock = s.lockDomainFor(domain, "verify")
+	} else {
+		u, ok := s.tryLockDomainFor(domain, "verify")
+		if !ok {
+			return store.RestoreDrill{}, errDomainBusy
+		}
+		unlock = u
 	}
 	defer unlock()
 
@@ -4844,6 +4857,11 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string) (st
 		return store.RestoreDrill{}, errors.New("no backups to verify yet")
 	}
 
+	// Clear any stale lock a previously interrupted off-site op (replication copy /
+	// integrity check) left behind before `restic check --read-data-subset` takes its
+	// lock, so a drill can't fail "repository is already locked" — BombVault is the
+	// sole writer, so an existing lock is always stale (mirrors CheckDomain; #29).
+	s.unlockStale(ctx, repo, mode)
 	// Reading back a subset of real pack data can be slow on a large repo; bound it.
 	dctx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancel()
@@ -4910,7 +4928,7 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // lock exactly like a real restore, so a scheduled backup can never fire mid-drill
 // and vice-versa; busy → errDomainBusy, recording nothing. A failure records
 // kind='dr' ok=false AND fires the drill-failure notification.
-func (s *Service) runDRDrill(ctx context.Context, domain string) (store.RestoreDrill, error) {
+func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (store.RestoreDrill, error) {
 	switch domain {
 	case "containers", "flash":
 	case "vms":
@@ -4933,10 +4951,18 @@ func (s *Service) runDRDrill(ctx context.Context, domain string) (store.RestoreD
 	}
 
 	// Serialise with backups/restores on the domain repo — a scheduled backup must
-	// never fire mid-drill and vice-versa. Busy → report it WITHOUT recording.
-	unlock, ok := s.tryLockDomainFor(domain, "verify")
-	if !ok {
-		return store.RestoreDrill{}, errDomainBusy
+	// never fire mid-drill and vice-versa. A SCHEDULED drill (wait) BLOCKS for the
+	// domain so it always records a result even when a nightly op co-fires; a MANUAL
+	// drill fails fast with immediate busy feedback WITHOUT recording (#30).
+	var unlock func()
+	if wait {
+		unlock = s.lockDomainFor(domain, "verify")
+	} else {
+		u, ok := s.tryLockDomainFor(domain, "verify")
+		if !ok {
+			return store.RestoreDrill{}, errDomainBusy
+		}
+		unlock = u
 	}
 	defer unlock()
 
@@ -4955,6 +4981,11 @@ func (s *Service) runDRDrill(ctx context.Context, domain string) (store.RestoreD
 		return store.RestoreDrill{}, err
 	}
 
+	// Clear any stale lock a previously interrupted off-site op left behind before the
+	// sandbox restore takes its lock, so a drill can't fail "repository is already
+	// locked" — BombVault is the sole writer, so an existing lock is always stale
+	// (mirrors CheckDomain; #29). drillCtx (detached) matches the restore below.
+	s.unlockStale(drillCtx, repo, mode)
 	// Restore into the sandbox, verify, and clean up (marker-guarded). The outcome
 	// is recorded either way; a failure also notifies. An empty (0-file/0-byte)
 	// snapshot records NOTHING — neither a false green nor a false red.

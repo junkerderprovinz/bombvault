@@ -1186,7 +1186,9 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r), kindParam(r))
+	// Manual: fail fast with immediate busy feedback (wait=false) so the UI can tell
+	// the user a backup is running rather than blocking the request.
+	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r), kindParam(r), false)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
