@@ -163,7 +163,9 @@ func run() error {
 		return svc.ScheduledReplicateOffsite(context.Background(), domain)
 	})
 	scheduler.SetDrillJob(func(domain, source, kind string) error {
-		_, dErr := svc.RunRestoreDrill(context.Background(), domain, source, kind)
+		// Scheduled: wait for the domain lock so a nightly backup/replication co-fire
+		// can't make the drill silently vanish (records nothing → dashboard "never").
+		_, dErr := svc.RunRestoreDrill(context.Background(), domain, source, kind, true)
 		return dErr
 	})
 	scheduler.SetTamperJob(func(domain string) error {
