@@ -63,10 +63,14 @@ LABEL org.opencontainers.image.title="bombvault" \
 # too old, so pull the official static binary from GitHub for the target arch.
 # (amd64 → linux_amd64, arm64 → linux_arm64.)
 ARG RESTIC_VERSION=0.17.3
+# rclone: Debian's apt package is far too old (v1.60.1) and fails on some backends
+# — e.g. Jottacloud returns HTTP 500 "AllocationException" on `restic init` (#32) —
+# so pull the official current static binary instead, same approach as restic.
+ARG RCLONE_VERSION=1.74.2
 ARG TARGETARCH
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client rclone bzip2 wget; \
+    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client bzip2 wget unzip; \
     rm -rf /var/lib/apt/lists/*; \
     case "${TARGETARCH}" in \
         amd64) restic_arch="amd64" ;; \
@@ -78,8 +82,14 @@ RUN set -eux; \
     bunzip2 /tmp/restic.bz2; \
     install -m 0755 /tmp/restic /usr/local/bin/restic; \
     rm -f /tmp/restic; \
-    apt-get purge -y --auto-remove bzip2 wget; \
-    restic version
+    wget -O /tmp/rclone.zip \
+        "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-${restic_arch}.zip"; \
+    unzip -j /tmp/rclone.zip "rclone-v${RCLONE_VERSION}-linux-${restic_arch}/rclone" -d /tmp; \
+    install -m 0755 /tmp/rclone /usr/local/bin/rclone; \
+    rm -f /tmp/rclone.zip /tmp/rclone; \
+    apt-get purge -y --auto-remove bzip2 wget unzip; \
+    restic version; \
+    rclone version
 
 COPY --from=build /out/bombvault /usr/local/bin/bombvault
 
