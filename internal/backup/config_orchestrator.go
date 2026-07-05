@@ -9,7 +9,7 @@ import (
 // flash it is a plain directory backup (of a staged snapshot of /config), so
 // there is no lifecycle to manage.
 type ConfigRestic interface {
-	Backup(ctx context.Context, repo string, paths, tags []string) (Summary, error)
+	Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (Summary, error)
 }
 
 // ConfigBackupDeps bundles everything BackupConfig needs. SourceDir is the staged

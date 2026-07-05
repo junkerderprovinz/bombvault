@@ -181,8 +181,10 @@ func CatConfigArgs(repo string, m Mode) []string {
 }
 
 // BackupArgs returns the argv slice for `restic backup`.
-// Tags are added with --tag; paths are placed after -- (arg-injection guard).
-func BackupArgs(repo string, paths []string, tags []string, m Mode) []string {
+// Tags are added with --tag; each exclude is added with --exclude (restic matches
+// a bare name like ".git" by basename at any depth); paths are placed after --
+// (arg-injection guard).
+func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...string) []string {
 	args := repoFlag(repo)
 	args = append(args, "backup")
 	if !m.Encrypted {
@@ -195,6 +197,9 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode) []string {
 	args = append(args, "--host", backupHost)
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
+	}
+	for _, ex := range excludes {
+		args = append(args, "--exclude", ex)
 	}
 	args = append(args, "--")
 	args = append(args, paths...)
@@ -780,8 +785,8 @@ func (r Restic) RepoOpens(ctx context.Context, repo string, m Mode) bool {
 
 // Backup backs up paths into the repo, tagging each snapshot with tags, and
 // returns the parsed backup summary.
-func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode) (Summary, error) {
-	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m), m)
+func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode, excludes ...string) (Summary, error) {
+	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m, excludes...), m)
 	if err != nil {
 		return Summary{}, err
 	}

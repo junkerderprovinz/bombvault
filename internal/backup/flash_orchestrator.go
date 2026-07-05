@@ -11,7 +11,7 @@ import (
 // the browser by the service layer, never an in-place or to-folder restore over
 // the live flash.
 type FlashRestic interface {
-	Backup(ctx context.Context, repo string, paths, tags []string) (Summary, error)
+	Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (Summary, error)
 }
 
 // FlashBackupDeps bundles everything BackupFlash needs.
@@ -33,7 +33,10 @@ func BackupFlash(ctx context.Context, d FlashBackupDeps) (Summary, error) {
 	if err != nil {
 		return Summary{}, fmt.Errorf("flash backup: start run: %w", err)
 	}
-	summary, err := d.Restic.Backup(ctx, d.Repo, []string{d.SourceDir}, []string{"flash"})
+	// Exclude .git so a user/plugin-created /boot/.git never flows into the flash
+	// snapshot (or the download/export zips) — matching Unraid's own flash backup,
+	// which omits it (#31). restic matches the bare ".git" by basename at any depth.
+	summary, err := d.Restic.Backup(ctx, d.Repo, []string{d.SourceDir}, []string{"flash"}, ".git")
 	if err != nil {
 		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(err))
 		return Summary{}, err

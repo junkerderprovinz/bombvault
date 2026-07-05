@@ -12,11 +12,13 @@ import (
 // a zip download handled in the service layer, not the orchestrator).
 type fakeFlashRestic struct {
 	backedUpPaths []string
+	excludes      []string
 	backupErr     error
 }
 
-func (f *fakeFlashRestic) Backup(_ context.Context, _ string, paths, _ []string) (backup.Summary, error) {
+func (f *fakeFlashRestic) Backup(_ context.Context, _ string, paths, _ []string, excludes ...string) (backup.Summary, error) {
 	f.backedUpPaths = paths
+	f.excludes = excludes
 	if f.backupErr != nil {
 		return backup.Summary{}, f.backupErr
 	}
@@ -41,6 +43,11 @@ func TestBackupFlash(t *testing.T) {
 	}
 	if len(rc.backedUpPaths) != 1 || rc.backedUpPaths[0] != "/host/boot" {
 		t.Fatalf("expected to back up /host/boot, got %v", rc.backedUpPaths)
+	}
+	// The flash backup must exclude .git so a /boot/.git never enters the snapshot
+	// or the download/export zips — matching Unraid's own flash backup (#31).
+	if len(rc.excludes) != 1 || rc.excludes[0] != ".git" {
+		t.Fatalf("expected flash backup to exclude .git, got %v", rc.excludes)
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("expected one success run, got %v", runs.finishes)
