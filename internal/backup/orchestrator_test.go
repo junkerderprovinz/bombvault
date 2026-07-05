@@ -97,11 +97,12 @@ func (d *fakeDocker) Exec(_ context.Context, name string, cmd []string) error {
 type fakeRestic struct {
 	log []string
 
-	backupErr     error
-	restoreErr    error
-	verifyErr     error // non-nil => VerifySnapshot fails (missing snapshot / unreadable repo)
-	summary       backup.Summary
-	capturedPaths []string
+	backupErr        error
+	restoreErr       error
+	verifyErr        error // non-nil => VerifySnapshot fails (missing snapshot / unreadable repo)
+	summary          backup.Summary
+	capturedPaths    []string
+	capturedExcludes []string // --exclude args passed to the last Backup call
 }
 
 func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) error {
@@ -109,8 +110,9 @@ func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) 
 	return r.verifyErr
 }
 
-func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string) (backup.Summary, error) {
+func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
 	r.log = append(r.log, "backup:"+repo+":"+strings.Join(paths, ",")+":"+strings.Join(tags, ","))
+	r.capturedExcludes = excludes
 	if r.backupErr != nil {
 		return backup.Summary{}, r.backupErr
 	}

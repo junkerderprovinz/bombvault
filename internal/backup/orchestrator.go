@@ -84,7 +84,10 @@ type Docker interface {
 
 // Restic is the subset of the backup engine the orchestrator needs.
 type Restic interface {
-	Backup(ctx context.Context, repo string, paths, tags []string) (Summary, error)
+	// Backup snapshots paths into repo, tagging with tags. Optional excludes are
+	// passed to restic --exclude (variadic so container/VM callers pass none); the
+	// flash domain passes ".git" to match Unraid's own flash backup.
+	Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (Summary, error)
 	// RestorePaths restores each backed-up path back to its own location as a
 	// subtree, so restic never reconciles shared parent dirs (SEC §8 / DR).
 	RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error

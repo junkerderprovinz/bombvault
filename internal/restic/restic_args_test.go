@@ -164,6 +164,16 @@ func TestBackupArgsUnencrypted(t *testing.T) {
 	}
 }
 
+func TestBackupArgsExcludes(t *testing.T) {
+	// The flash backup passes ".git" so it is dropped by restic --exclude, placed
+	// after the --tag flags and before the -- path separator (#31).
+	got := restic.BackupArgs("/repo", []string{"/host/boot"}, []string{"flash"}, restic.Mode{Encrypted: true}, ".git")
+	want := []string{"-r", "/repo", "backup", "--json", "--host", "bombvault", "--tag", "flash", "--exclude", ".git", "--", "/host/boot"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := restic.DumpZipArgs("/repo", "abc123", "/host/boot", restic.Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}

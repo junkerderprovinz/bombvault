@@ -2703,6 +2703,7 @@ type fakeResticEngine struct {
 	inited          []string
 	backedUp        []string
 	lastPaths       []string
+	lastExcludes    []string
 	restored        []string
 	restoreErrPath  string // when set, RestoreInclude fails on this include path
 	restoreErr      error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
@@ -2789,12 +2790,13 @@ func (f *fakeResticEngine) RepoOpens(_ context.Context, repo string, m restic.Mo
 	return err == nil
 }
 
-func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []string, _ restic.Mode) (restic.Summary, error) {
+func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.block != nil {
 		<-f.block
 	}
 	f.backedUp = append(f.backedUp, repo)
 	f.lastPaths = paths
+	f.lastExcludes = excludes
 	if f.backupErr != nil {
 		return restic.Summary{}, f.backupErr
 	}

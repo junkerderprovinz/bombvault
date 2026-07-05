@@ -63,7 +63,7 @@ type ResticEngine interface {
 	// a cheap existence + encryption-mode probe (`restic cat config`). Used by
 	// EnsureRepo to reconcile the configured mode against the repo's actual mode.
 	RepoOpens(ctx context.Context, repo string, mode restic.Mode) bool
-	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode) (restic.Summary, error)
+	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
 	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
 	// (flash restore — a non-destructive zip download; the live /boot is never
@@ -3483,8 +3483,8 @@ type resticAdapter struct {
 
 var _ backup.Restic = (*resticAdapter)(nil)
 
-func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string) (backup.Summary, error) {
-	sum, err := a.engine.Backup(ctx, repo, paths, tags, a.mode)
+func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
+	sum, err := a.engine.Backup(ctx, repo, paths, tags, a.mode, excludes...)
 	if err != nil {
 		return backup.Summary{}, err
 	}
