@@ -871,7 +871,7 @@ export function unlockDomain(
 
 /** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
 export function pruneDomain(
-  domain: "containers" | "vms" | "flash",
+  domain: "containers" | "vms" | "flash" | "config",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
@@ -935,7 +935,7 @@ export function tamperTest(
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
 export function deleteSnapshot(
-  domain: "containers" | "vms" | "flash",
+  domain: "containers" | "vms" | "flash" | "config",
   id: string,
   source?: string
 ): Promise<OkEnvelope> {
