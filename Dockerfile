@@ -66,6 +66,8 @@ ARG RESTIC_VERSION=0.17.3
 # rclone: Debian's apt package is far too old (v1.60.1) and fails on some backends
 # — e.g. Jottacloud returns HTTP 500 "AllocationException" on `restic init` (#32) —
 # so pull the official current static binary instead, same approach as restic.
+# NOTE: rclone reads RCLONE_* env vars as flag overrides, so this build ARG shadows
+# rclone's --version flag; the `rclone version` check below runs with it unset.
 ARG RCLONE_VERSION=1.74.2
 ARG TARGETARCH
 RUN set -eux; \
@@ -89,7 +91,7 @@ RUN set -eux; \
     rm -f /tmp/rclone.zip /tmp/rclone; \
     apt-get purge -y --auto-remove bzip2 wget unzip; \
     restic version; \
-    rclone version
+    env -u RCLONE_VERSION rclone version
 
 COPY --from=build /out/bombvault /usr/local/bin/bombvault
 
