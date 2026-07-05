@@ -136,10 +136,12 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 			wantLevel:  "amber",
 		},
 		{
+			// A PASSED but stale drill: currency drives the row (a failed drill would
+			// instead read "failed", covered by TestProtectionChecksDrillHonorsOutcome).
 			name: "overdue drill → overdue + amber",
 			in: protInputs{
 				enabled: true, offsiteConfigured: true,
-				lastDRDrillAt: now - 30*day, drillPeriod: week,
+				lastDRDrillAt: now - 30*day, lastDRDrillOK: true, drillPeriod: week,
 			},
 			wantChecks: protChecks{Drill: "overdue"},
 			wantLevel:  "amber",
@@ -162,6 +164,47 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 		// Invariant: an "overdue" replication/drill must coincide with (at least) amber.
 		if (gotChecks.Replication == "overdue" || gotChecks.Drill == "overdue") && gotLevel == "green" {
 			t.Errorf("%s: an overdue check must not coincide with a green chip", c.name)
+		}
+	}
+}
+
+// TestProtectionChecksDrillHonorsOutcome pins that the DR-drill scorecard row
+// reflects the latest drill's OUTCOME, not just its recency: a recorded DR drill
+// that FAILED reads "failed" (a red row) even when it is recent, so the row can't
+// go green-by-currency while the off-site "proven restorable" pill (lastDRDrillOK)
+// reads red. A passed recent drill stays "ok"; no drill yet stays "never"; and a
+// failed drill beats currency (still "failed" even when also overdue).
+func TestProtectionChecksDrillHonorsOutcome(t *testing.T) {
+	const day = int64(86400)
+	now := int64(1_700_000_000)
+	week := 7 * day
+
+	// A domain with a drill schedule set and an off-site configured, so the Drill
+	// row makes a claim; each case then varies only the latest drill's at/ok.
+	base := func() protInputs {
+		return protInputs{enabled: true, offsiteConfigured: true, drillPeriod: week}
+	}
+	with := func(at int64, ok bool) protInputs {
+		in := base()
+		in.lastDRDrillAt = at
+		in.lastDRDrillOK = ok
+		return in
+	}
+
+	cases := []struct {
+		name string
+		in   protInputs
+		want string
+	}{
+		{"recent failed drill → failed (not green-by-recency)", with(now-day, false), "failed"},
+		{"recent passed drill → ok", with(now-day, true), "ok"},
+		{"no drill yet → never", base(), "never"},
+		{"overdue passed drill → overdue", with(now-30*day, true), "overdue"},
+		{"overdue failed drill → failed (outcome beats currency)", with(now-30*day, false), "failed"},
+	}
+	for _, c := range cases {
+		if got := protectionChecks(now, c.in).Drill; got != c.want {
+			t.Errorf("%s: Drill = %q, want %q", c.name, got, c.want)
 		}
 	}
 }

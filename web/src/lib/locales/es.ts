@@ -689,6 +689,7 @@ const es: Partial<Translations> = {
   "ransomware.replicationNever": "aún sin replicar",
   "ransomware.drillOffsite": "simulacro de restauración (externo)",
   "ransomware.drillOverdue": "simulacro de restauración atrasado",
+  "ransomware.drillFailed": "simulacro de restauración fallido",
   "ransomware.drillNever": "aún sin simulacro de restauración",
   "ransomware.encryptionOn": "cifrado activado",
   "ransomware.pruneStrategy": "estrategia de poda definida",

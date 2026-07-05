@@ -666,6 +666,7 @@ const he: Partial<Translations> = {
   "ransomware.replicationNever": "טרם שוכפל",
   "ransomware.drillOffsite": "תרגיל שחזור (מחוץ לאתר)",
   "ransomware.drillOverdue": "תרגיל השחזור באיחור",
+  "ransomware.drillFailed": "תרגיל השחזור נכשל",
   "ransomware.drillNever": "אין עדיין תרגיל שחזור",
   "ransomware.encryptionOn": "הצפנה מופעלת",
   "ransomware.pruneStrategy": "אסטרטגיית גיזום הוגדרה",

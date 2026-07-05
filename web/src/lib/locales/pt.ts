@@ -663,6 +663,7 @@ const pt: Partial<Translations> = {
   "ransomware.replicationNever": "ainda não replicado",
   "ransomware.drillOffsite": "teste de restauro (externo)",
   "ransomware.drillOverdue": "teste de restauro em atraso",
+  "ransomware.drillFailed": "teste de restauro falhou",
   "ransomware.drillNever": "ainda sem teste de restauro",
   "ransomware.encryptionOn": "encriptação ativada",
   "ransomware.pruneStrategy": "estratégia de poda definida",

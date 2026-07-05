@@ -691,6 +691,7 @@ const sv: Partial<Translations> = {
   "ransomware.replicationNever": "inte replikerad än",
   "ransomware.drillOffsite": "återställningsövning (off-site)",
   "ransomware.drillOverdue": "återställningsövning försenad",
+  "ransomware.drillFailed": "återställningsövning misslyckades",
   "ransomware.drillNever": "ingen återställningsövning än",
   "ransomware.encryptionOn": "kryptering på",
   "ransomware.pruneStrategy": "rensningsstrategi vald",

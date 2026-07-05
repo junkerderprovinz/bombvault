@@ -658,6 +658,7 @@ const ko: Partial<Translations> = {
   "ransomware.replicationNever": "아직 복제 안 됨",
   "ransomware.drillOffsite": "복원 훈련 (오프사이트)",
   "ransomware.drillOverdue": "복원 훈련 기한 초과",
+  "ransomware.drillFailed": "복원 훈련 실패",
   "ransomware.drillNever": "아직 복원 훈련 없음",
   "ransomware.encryptionOn": "암호화 켜짐",
   "ransomware.pruneStrategy": "정리 전략 설정됨",

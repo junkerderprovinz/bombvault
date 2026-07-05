@@ -683,6 +683,7 @@ const zh: Partial<Translations> = {
   "ransomware.replicationNever": "尚未复制",
   "ransomware.drillOffsite": "还原演练（异地）",
   "ransomware.drillOverdue": "还原演练已逾期",
+  "ransomware.drillFailed": "还原演练失败",
   "ransomware.drillNever": "尚无还原演练",
   "ransomware.encryptionOn": "加密已启用",
   "ransomware.pruneStrategy": "已设置清理策略",

@@ -713,7 +713,7 @@ type DomainStatusEntry struct {
 	// server-side so the card needs no separate /api/settings round-trip.
 	TamperState      string `json:"tamperState"`      // "" | "never" | "failed" | "stale" | "ok"
 	ReplicationState string `json:"replicationState"` // "" | "never" | "overdue" | "ok"
-	DrillState       string `json:"drillState"`       // "" | "never" | "overdue" | "ok"
+	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
 	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
 }
@@ -774,6 +774,7 @@ type protInputs struct {
 	lastBackupAt      int64 // last SUCCESSFUL backup (coupled-replication currency basis)
 	backupPeriod      int64 // seconds; the domain's backup RPO period (coupled-grace basis)
 	lastDRDrillAt     int64
+	lastDRDrillOK     bool  // outcome of the latest DR drill (only meaningful when lastDRDrillAt != 0)
 	drillPeriod       int64 // seconds; 0 = no drill schedule
 }
 
@@ -866,27 +867,34 @@ func protectionLevel(now int64, in protInputs) string {
 	return "green"
 }
 
-// protChecks is the per-check state the ransomware scorecard renders. Each field
-// is derived from the SAME protInputs protectionLevel aggregates, so a checklist
-// row can NEVER contradict the chip. An empty state ("") means the check makes no
+// protChecks is the per-check state the ransomware scorecard renders. Tamper and
+// Replication are derived from the SAME protInputs protectionLevel aggregates, so
+// those rows can never contradict the chip. Drill additionally honors the latest
+// DR drill's OUTCOME (a failed drill reads "failed"/red) to agree with the
+// dedicated off-site "proven restorable" pill, so it may read red while the
+// aggregate chip is still green. An empty state ("") means the check makes no
 // claim (and so is rendered muted, not as a failure).
 type protChecks struct {
 	Tamper      string // "" | "never" | "failed" | "stale" | "ok"
 	Replication string // "" | "never" | "overdue" | "ok"
-	Drill       string // "" | "never" | "overdue" | "ok"
+	Drill       string // "" | "never" | "failed" | "overdue" | "ok"
 }
 
-// protectionChecks mirrors protectionLevel exactly:
+// protectionChecks mirrors protectionLevel for Tamper and Replication, and layers
+// the DR-drill OUTCOME on top of currency for Drill:
 //
 //   - Tamper ∈ {never,failed,stale} is precisely the immutable branch that turns
 //     the chip red; a non-immutable off-site makes no append-only claim → "".
-//   - Replication/Drill "overdue" is precisely the amber branch (rpoStatus
-//     "overdue", the same period-doubling rule). "never"/"ok" stay non-amber so
-//     they match a green chip.
+//   - Replication "overdue" is precisely the amber branch (rpoStatus "overdue",
+//     the same period-doubling rule). "never"/"ok" stay non-amber so they match a
+//     green chip.
+//   - Drill mirrors that currency (never/overdue/ok) for a PASSED drill, but a
+//     recorded DR drill that FAILED reads "failed" (red) regardless of recency, so
+//     the row agrees with the off-site "proven restorable" pill (lastDRDrillOK).
+//     This is the one row that can read red while the aggregate chip is green.
 //
-// It deliberately does NOT surface a red "replication failed"/"drill failed":
-// protectionLevel ignores lastReplicationOK/lastDRDrillOK, so a red row there
-// would contradict a green chip. Only currency (timing) is mirrored.
+// Replication still does NOT surface a red "replication failed": nothing else
+// consumes lastReplicationOK, so only its currency is mirrored.
 func protectionChecks(now int64, in protInputs) protChecks {
 	var c protChecks
 
@@ -909,15 +917,24 @@ func protectionChecks(now int64, in protInputs) protChecks {
 	// replicationState). "" when there is nothing to claim yet.
 	c.Replication = replicationState(now, in)
 
-	// DR drill currency — only when a drill schedule is set.
+	// DR drill outcome + currency — only when a drill schedule is set. A recorded
+	// DR drill that FAILED reads "failed" (a red row) regardless of recency, so the
+	// row can't go green-by-currency while the off-site "proven restorable" pill
+	// (lastDRDrillOK) reads red. "never" stays for no drill yet; a PASSED drill keeps
+	// the overdue/ok currency logic.
 	if in.drillPeriod > 0 {
-		switch rpoStatus(now, in.lastDRDrillAt, in.drillPeriod, true) {
-		case "overdue":
-			c.Drill = "overdue"
-		case "never":
-			c.Drill = "never"
+		switch {
+		case in.lastDRDrillAt != 0 && !in.lastDRDrillOK:
+			c.Drill = "failed"
 		default:
-			c.Drill = "ok"
+			switch rpoStatus(now, in.lastDRDrillAt, in.drillPeriod, true) {
+			case "overdue":
+				c.Drill = "overdue"
+			case "never":
+				c.Drill = "never"
+			default:
+				c.Drill = "ok"
+			}
 		}
 	}
 
@@ -1027,6 +1044,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			lastBackupAt:      lastUnix,
 			backupPeriod:      period,
 			lastDRDrillAt:     lastDRDrillAt,
+			lastDRDrillOK:     lastDRDrillOK,
 			drillPeriod:       drillPeriod,
 		}
 		// protection (the chip) and checks (each row) are derived from the SAME

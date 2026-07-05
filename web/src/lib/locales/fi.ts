@@ -691,6 +691,7 @@ const fi: Partial<Translations> = {
   "ransomware.replicationNever": "ei vielä replikoitu",
   "ransomware.drillOffsite": "palautusharjoitus (etä)",
   "ransomware.drillOverdue": "palautusharjoitus myöhässä",
+  "ransomware.drillFailed": "palautusharjoitus epäonnistui",
   "ransomware.drillNever": "ei vielä palautusharjoitusta",
   "ransomware.encryptionOn": "salaus käytössä",
   "ransomware.pruneStrategy": "karsintastrategia asetettu",

@@ -694,6 +694,7 @@ const ar: Partial<Translations> = {
   "ransomware.replicationNever": "لم يُنسخ بعد",
   "ransomware.drillOffsite": "تمرين الاستعادة (خارج الموقع)",
   "ransomware.drillOverdue": "تمرين الاستعادة متأخر",
+  "ransomware.drillFailed": "فشل تمرين الاستعادة",
   "ransomware.drillNever": "لا يوجد تمرين استعادة بعد",
   "ransomware.encryptionOn": "التشفير مُفعَّل",
   "ransomware.pruneStrategy": "تم ضبط استراتيجية التقليم",

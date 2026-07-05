@@ -658,6 +658,7 @@ const ru: Partial<Translations> = {
   "ransomware.replicationNever": "ещё не реплицировано",
   "ransomware.drillOffsite": "проверка восстановления (внешняя)",
   "ransomware.drillOverdue": "проверка восстановления просрочена",
+  "ransomware.drillFailed": "проверка восстановления не пройдена",
   "ransomware.drillNever": "проверки восстановления ещё не было",
   "ransomware.encryptionOn": "шифрование включено",
   "ransomware.pruneStrategy": "стратегия очистки задана",

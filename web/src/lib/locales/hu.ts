@@ -669,6 +669,7 @@ const hu: Partial<Translations> = {
   "ransomware.replicationNever": "még nincs replikálva",
   "ransomware.drillOffsite": "visszaállítási próba (telephelyen kívüli)",
   "ransomware.drillOverdue": "visszaállítási próba késésben",
+  "ransomware.drillFailed": "visszaállítási próba sikertelen",
   "ransomware.drillNever": "még nincs visszaállítási próba",
   "ransomware.encryptionOn": "titkosítás bekapcsolva",
   "ransomware.pruneStrategy": "nyesési stratégia beállítva",

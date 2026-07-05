@@ -195,7 +195,7 @@ export interface DomainStatus {
   // facts the card also renders (no separate /api/settings round-trip needed).
   tamperState: string; // "" | "never" | "failed" | "stale" | "ok"
   replicationState: string; // "" | "never" | "overdue" | "ok"
-  drillState: string; // "" | "never" | "overdue" | "ok"
+  drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
   pruneStrategySet: boolean; // an off-site retention strategy is configured
 }

@@ -658,6 +658,7 @@ const ja: Partial<Translations> = {
   "ransomware.replicationNever": "未複製",
   "ransomware.drillOffsite": "復元ドリル（オフサイト）",
   "ransomware.drillOverdue": "復元ドリルが期限切れ",
+  "ransomware.drillFailed": "復元ドリル失敗",
   "ransomware.drillNever": "復元ドリル未実施",
   "ransomware.encryptionOn": "暗号化有効",
   "ransomware.pruneStrategy": "整理戦略を設定済み",
