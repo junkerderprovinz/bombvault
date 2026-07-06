@@ -2877,6 +2877,43 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 // shared across all containers, so snapshots are filtered by the
 // `container:<name>` tag the backup writes — otherwise the restore UI for one
 // container would list (and could restore) another container's snapshots.
+// LatestContainerBackupTimes returns, per container name, the unix time of its
+// NEWEST local snapshot (read from the container:<name> tag). It gives an orphan
+// row a real "last backup" date when its target was rebuilt by Discover and so
+// has NO run record — which would otherwise read "Never" even though the
+// container clearly still has backups in the repo (#44). One snapshot listing.
+func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]int64, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "containers", "local")
+	if err != nil {
+		return nil, err
+	}
+	if localRepoMissing(repo) {
+		return nil, nil
+	}
+	all, err := s.listSnapshots(ctx, repo, s.ModeFor(settings))
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]int64, len(all))
+	for _, snap := range all {
+		ts, perr := time.Parse(time.RFC3339Nano, snap.Time)
+		if perr != nil {
+			continue
+		}
+		unix := ts.Unix()
+		for _, tag := range snap.Tags {
+			if name, ok := strings.CutPrefix(tag, "container:"); ok && name != "" && unix > out[name] {
+				out[name] = unix
+			}
+		}
+	}
+	return out, nil
+}
+
 func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
