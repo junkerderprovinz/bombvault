@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit, runDrill } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
@@ -289,6 +289,45 @@ function ProtectionCard({
 }) {
   const { lang } = useT();
 
+  // Manual off-site DR run, triggered from a failing DR row so a pass clears the
+  // red. `drRunning` is the domain whose DR check is in flight; `drRunError`
+  // holds the last returned failure detail per domain (shown next to the button).
+  const [drRunning, setDrRunning] = useState<string | null>(null);
+  const [drRunError, setDrRunError] = useState<Record<string, string>>({});
+
+  const runOffsiteDr = (domain: string) => {
+    setDrRunning(domain);
+    setDrRunError((e) => {
+      const next = { ...e };
+      delete next[domain];
+      return next;
+    });
+    void runDrill(domain, "offsite", "dr")
+      .then((res) => {
+        // Surface the returned drill's detail on failure (or the error envelope);
+        // a pass clears the red via the refetch below.
+        const detail =
+          res.drill && !res.drill.ok
+            ? res.drill.detail
+            : !res.ok
+              ? (res.error ?? t("verify.failed"))
+              : "";
+        if (detail) setDrRunError((e) => ({ ...e, [domain]: detail }));
+      })
+      .catch((err) => {
+        setDrRunError((e) => ({
+          ...e,
+          [domain]: err instanceof Error ? err.message : t("verify.failed"),
+        }));
+      })
+      .finally(() => {
+        setDrRunning((cur) => (cur === domain ? null : cur));
+        // Refetch the shared /api/status so a pass clears the red DR pill + reason
+        // (the Dashboard page listens for this event and reloads getStatus()).
+        window.dispatchEvent(new Event("bv:settings-changed"));
+      });
+  };
+
   const domainLabel = (domain: string): string => {
     switch (domain) {
       case "containers":
@@ -326,63 +365,99 @@ function ProtectionCard({
         <div className="divide-y divide-carbon-border">
           {domains.map((d) => {
             const off = d.status === "off";
+            // The red "proven restorable off-site" state — the ONLY driver of the
+            // red DR pill. A failing off-site DR drill (recorded, not-ok).
+            const drFailed = !off && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
             return (
-              <div key={d.domain} className="flex items-center gap-3 py-2.5 text-sm">
-                <span
-                  className={`font-medium w-28 shrink-0 truncate ${
-                    off ? "text-carbon-textMuted" : "text-carbon-text"
-                  }`}
-                >
-                  {domainLabel(d.domain)}
-                </span>
-                {off ? (
-                  <span className="text-xs text-carbon-textMuted flex-1">
-                    {t("dashboard.rpoOff")}
+              <div key={d.domain} className="flex flex-col gap-1 py-2.5 text-sm">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`font-medium w-28 shrink-0 truncate ${
+                      off ? "text-carbon-textMuted" : "text-carbon-text"
+                    }`}
+                  >
+                    {domainLabel(d.domain)}
                   </span>
-                ) : (
-                  <>
-                    <StatusChip status={chipForRpo(d.status)} />
-                    <span className="text-carbon-text flex-1 truncate">
-                      {rpoLabel(d.status)}
+                  {off ? (
+                    <span className="text-xs text-carbon-textMuted flex-1">
+                      {t("dashboard.rpoOff")}
                     </span>
-                    <span className="text-carbon-textMuted text-xs shrink-0">
-                      {formatCadence(d.schedule, t, lang)}
-                    </span>
-                    <span
-                      className="text-carbon-textMuted text-xs shrink-0 w-20 text-right"
-                      title={formatTs(d.lastSuccess)}
-                    >
-                      {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
-                    </span>
-                    {d.lastVerified ? (
-                      <span
-                        title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
-                          d.lastVerifiedOK
-                            ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                            : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
-                        }`}
-                      >
-                        {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
+                  ) : (
+                    <>
+                      <StatusChip status={chipForRpo(d.status)} />
+                      <span className="text-carbon-text flex-1 truncate">
+                        {rpoLabel(d.status)}
                       </span>
-                    ) : null}
-                    {/* Off-site restorability badge — mirrors the local-verify shield
-                        above (same pills), but proves the backup is recoverable from
-                        the OFF-SITE repo (a real DR sandbox restore). Only containers
-                        + flash ever run a DR drill, so VMs never show this pill. */}
-                    {d.lastDrDrillAt ? (
-                      <span
-                        title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
-                          d.lastDrDrillOK
-                            ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                            : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
-                        }`}
-                      >
-                        {d.lastDrDrillOK ? "✓" : "✗"} {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                      <span className="text-carbon-textMuted text-xs shrink-0">
+                        {formatCadence(d.schedule, t, lang)}
                       </span>
-                    ) : null}
-                  </>
+                      <span
+                        className="text-carbon-textMuted text-xs shrink-0 w-20 text-right"
+                        title={formatTs(d.lastSuccess)}
+                      >
+                        {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
+                      </span>
+                      {d.lastVerified ? (
+                        <span
+                          title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
+                            d.lastVerifiedOK
+                              ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                              : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                          }`}
+                        >
+                          {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
+                        </span>
+                      ) : null}
+                      {/* Off-site restorability badge — mirrors the local-verify shield
+                          above (same pills), but proves the backup is recoverable from
+                          the OFF-SITE repo (a real DR sandbox restore). Only containers
+                          + flash ever run a DR drill, so VMs never show this pill. On a
+                          failure the tooltip names WHICH check + the reason. */}
+                      {d.lastDrDrillAt ? (
+                        <span
+                          title={
+                            !d.lastDrDrillOK && d.drillDetail
+                              ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
+                              : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
+                          }
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
+                            d.lastDrDrillOK
+                              ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                              : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                          }`}
+                        >
+                          {d.lastDrDrillOK ? "✓" : "✗"} {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+                {/* Failing off-site DR drill: name WHICH check + WHY, and (where
+                    off-site is configured) offer a manual re-run so a pass clears
+                    the red. Only the off-site DR row drives this red — a local
+                    subset pass can't clear it, so we run {offsite,dr} explicitly. */}
+                {drFailed && (d.drillDetail || d.offsiteConfigured) && (
+                  <div className="flex flex-wrap items-center gap-2 pl-1">
+                    {d.drillDetail && (
+                      <span className="text-xs text-[#ff8389] break-words" title={d.drillDetail}>
+                        {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
+                      </span>
+                    )}
+                    {d.offsiteConfigured && (
+                      <button
+                        type="button"
+                        onClick={() => runOffsiteDr(d.domain)}
+                        disabled={drRunning === d.domain}
+                        className="rounded-md border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                      >
+                        {drRunning === d.domain ? t("drill.runningOffsiteDr") : t("drill.runOffsiteDr")}
+                      </button>
+                    )}
+                    {drRunError[d.domain] && (
+                      <span className="text-xs text-[#ff8389] break-words">✗ {drRunError[d.domain]}</span>
+                    )}
+                  </div>
                 )}
               </div>
             );
@@ -490,14 +565,15 @@ function RansomwareCard({
         return { label: t("ransomware.replicationCurrent"), state: "muted" };
     }
   };
-  const drillRow = (d: DomainStatus): { label: string; state: RowState; at?: number } => {
+  const drillRow = (d: DomainStatus): { label: string; state: RowState; at?: number; detail?: string } => {
     switch (d.drillState) {
       case "ok":
         return { label: t("ransomware.drillOffsite"), state: "ok", at: d.lastDrDrillAt };
       case "failed":
         // The latest off-site DR drill FAILED — red, matching the "proven
-        // restorable" pill, regardless of how recently it ran.
-        return { label: t("ransomware.drillFailed"), state: "bad", at: d.lastDrDrillAt };
+        // restorable" pill, regardless of how recently it ran. Carry the scrubbed
+        // reason so the row can say WHY (and WHICH check) it failed.
+        return { label: t("ransomware.drillFailed"), state: "bad", at: d.lastDrDrillAt, detail: d.drillDetail };
       case "overdue":
         return { label: t("ransomware.drillOverdue"), state: "amber", at: d.lastDrDrillAt };
       case "never":
@@ -519,7 +595,7 @@ function RansomwareCard({
           const ao = appendOnlyRow(d);
           const rep = replicationRow(d);
           const dr = drillRow(d);
-          const rows: { key: string; label: string; state: RowState; at?: number }[] = [
+          const rows: { key: string; label: string; state: RowState; at?: number; detail?: string }[] = [
             {
               key: "configured",
               label: t("ransomware.configured"),
@@ -568,17 +644,25 @@ function RansomwareCard({
                         ? "text-carbon-textMuted"
                         : "text-carbon-textSub";
                   return (
-                    <div key={row.key} className="flex items-center gap-2 text-sm">
-                      <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
-                      {row.state === "bad" ? (
-                        <Link to="/settings#offsite" className="text-[#ff8389] hover:underline flex-1 truncate">
-                          {row.label}
-                        </Link>
-                      ) : (
-                        <span className={`flex-1 truncate ${labelColor}`}>{row.label}</span>
-                      )}
-                      {row.at !== undefined && (
-                        <span className="text-xs text-carbon-textMuted shrink-0">{ageText(row.at)}</span>
+                    <div key={row.key} className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
+                        {row.state === "bad" ? (
+                          <Link to="/settings#offsite" className="text-[#ff8389] hover:underline flex-1 truncate">
+                            {row.label}
+                          </Link>
+                        ) : (
+                          <span className={`flex-1 truncate ${labelColor}`}>{row.label}</span>
+                        )}
+                        {row.at !== undefined && (
+                          <span className="text-xs text-carbon-textMuted shrink-0">{ageText(row.at)}</span>
+                        )}
+                      </div>
+                      {/* WHICH check + WHY it failed (off-site DR reason from /api/status). */}
+                      {row.detail && (
+                        <span className="text-xs text-[#ff8389] break-words pl-6" title={row.detail}>
+                          {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {row.detail}
+                        </span>
                       )}
                     </div>
                   );
