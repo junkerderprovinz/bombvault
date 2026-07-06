@@ -698,6 +698,17 @@ const ar: Partial<Translations> = {
   "ransomware.drillNever": "لا يوجد تمرين استعادة بعد",
   "ransomware.encryptionOn": "التشفير مُفعَّل",
   "ransomware.pruneStrategy": "تم ضبط استراتيجية التقليم",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "أنماط الاستبعاد",
+  "excludes.hint": "نمط واحد لكل سطر. يُطابَق مسار الحاوية (مثل /config/Library/.../Cache) مع وحدة التخزين المنسوخة احتياطياً؛ أما اسم مجرد مثل .git فيطابق على أي عمق. لا تُدعم قوائم الأقواس المعقوفة مثل {a,b}؛ استخدم سطراً لكل واحدة.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "حفظ الاستبعادات",
+  "excludes.saved": "تم حفظ الاستبعادات",
+  "excludes.error": "تعذّر حفظ الاستبعادات",
+  "excludes.resolvedTo": "يتحوّل إلى:",
+  "excludes.noMatch": "يُمرَّر إلى restic كما هو (ليس مساراً معروفاً للحاوية).",
+  "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
 };
 
 export default ar;

@@ -695,6 +695,17 @@ const sv: Partial<Translations> = {
   "ransomware.drillNever": "ingen återställningsövning än",
   "ransomware.encryptionOn": "kryptering på",
   "ransomware.pruneStrategy": "rensningsstrategi vald",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Uteslutningsmönster",
+  "excludes.hint": "Ett mönster per rad. En containersökväg (t.ex. /config/Library/.../Cache) matchas mot den säkerhetskopierade volymen; ett rent namn som .git matchar på valfritt djup. Listor med klammerparenteser som {a,b} stöds inte; använd en rad per styck.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Spara uteslutningar",
+  "excludes.saved": "Uteslutningar sparade",
+  "excludes.error": "Det gick inte att spara uteslutningarna",
+  "excludes.resolvedTo": "översätts till:",
+  "excludes.noMatch": "Skickas till restic som det är (ingen igenkänd containersökväg).",
+  "excludes.excludesNothing": "Den här mappens volym finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
 };
 
 export default sv;

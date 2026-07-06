@@ -687,6 +687,17 @@ const vi: Partial<Translations> = {
   "ransomware.drillNever": "chưa có diễn tập khôi phục",
   "ransomware.encryptionOn": "đã bật mã hóa",
   "ransomware.pruneStrategy": "đã đặt chiến lược dọn bớt",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Mẫu loại trừ",
+  "excludes.hint": "Mỗi dòng một mẫu. Một đường dẫn container (ví dụ /config/Library/.../Cache) được so khớp với ổ đĩa đã sao lưu; một tên đơn giản như .git khớp ở mọi độ sâu. Không hỗ trợ danh sách trong ngoặc nhọn như {a,b}; hãy dùng mỗi mục một dòng.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Lưu loại trừ",
+  "excludes.saved": "Đã lưu loại trừ",
+  "excludes.error": "Không thể lưu loại trừ",
+  "excludes.resolvedTo": "chuyển thành:",
+  "excludes.noMatch": "Được chuyển tới restic nguyên trạng (không phải đường dẫn container được nhận diện).",
+  "excludes.excludesNothing": "Ổ đĩa của thư mục này không nằm trong bản sao lưu, nên dòng này không loại trừ gì cả.",
 };
 
 export default vi;

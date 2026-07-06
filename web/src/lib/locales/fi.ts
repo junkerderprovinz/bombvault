@@ -695,6 +695,17 @@ const fi: Partial<Translations> = {
   "ransomware.drillNever": "ei vielä palautusharjoitusta",
   "ransomware.encryptionOn": "salaus käytössä",
   "ransomware.pruneStrategy": "karsintastrategia asetettu",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Poissulkumallit",
+  "excludes.hint": "Yksi malli riviä kohti. Kontin polku (esim. /config/Library/.../Cache) täsmätään varmuuskopioituun taltioon; pelkkä nimi kuten .git täsmää millä tahansa syvyydellä. Aaltosulkulistoja kuten {a,b} ei tueta; käytä yhtä riviä kullekin.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Tallenna poissulkemiset",
+  "excludes.saved": "Poissulkemiset tallennettu",
+  "excludes.error": "Poissulkemisia ei voitu tallentaa",
+  "excludes.resolvedTo": "vastaa:",
+  "excludes.noMatch": "Välitetään resticille sellaisenaan (ei tunnistettu kontin polku).",
+  "excludes.excludesNothing": "Tämän kansion taltio ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
 };
 
 export default fi;

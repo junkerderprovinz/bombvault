@@ -687,6 +687,17 @@ const ja: Partial<Translations> = {
   "config.snapshotsTitle": "設定バックアップ",
   "config.snapshotsHint": "これらの設定を再構築したサーバーに復元するには、リカバリータブを使用してください — 設定を復元すると BombVault が再起動して適用するため、他の災害復旧フローと共にそこにあります。",
   "config.none": "設定バックアップはまだありません — 上でバックアップを実行してください。",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "除外パターン",
+  "excludes.hint": "1 行に 1 パターン。コンテナパス（例: /config/Library/.../Cache）はバックアップ対象のボリュームと照合されます。.git のような単純な名前は任意の深さで一致します。{a,b} のような波かっこリストはサポートされていません。それぞれ 1 行ずつ記述してください。",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "除外を保存",
+  "excludes.saved": "除外を保存しました",
+  "excludes.error": "除外を保存できませんでした",
+  "excludes.resolvedTo": "解決結果:",
+  "excludes.noMatch": "restic にそのまま渡されます（認識されたコンテナパスではありません）。",
+  "excludes.excludesNothing": "このフォルダのボリュームはバックアップに含まれていないため、この行は何も除外しません。",
 };
 
 export default ja;

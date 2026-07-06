@@ -695,6 +695,17 @@ const he: Partial<Translations> = {
   "config.snapshotsTitle": "גיבויי הגדרות",
   "config.snapshotsHint": "כדי לשחזר הגדרות אלה על שרת שנבנה מחדש, השתמש בלשונית ההתאוששות — שחזור ההגדרות מפעיל מחדש את BombVault כדי להחיל אותן, ולכן הוא נמצא שם יחד עם שאר תהליך ההתאוששות מאסון.",
   "config.none": "אין עדיין גיבויי הגדרות — הרץ גיבוי למעלה.",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "תבניות החרגה",
+  "excludes.hint": "תבנית אחת בכל שורה. נתיב מכל (למשל /config/Library/.../Cache) מושווה אל אמצעי האחסון המגובה; שם פשוט כמו .git תואם בכל עומק. רשימות בסוגריים מסולסלים כמו {a,b} אינן נתמכות; השתמש בשורה אחת לכל אחת.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "שמור החרגות",
+  "excludes.saved": "ההחרגות נשמרו",
+  "excludes.error": "לא ניתן היה לשמור את ההחרגות",
+  "excludes.resolvedTo": "מתפרש כ:",
+  "excludes.noMatch": "מועבר ל-restic כפי שהוא (אינו נתיב מוכר של מכל).",
+  "excludes.excludesNothing": "אמצעי האחסון של תיקייה זו אינו בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
 };
 
 export default he;

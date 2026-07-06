@@ -433,6 +433,17 @@ const en = {
   "export.exportedTo": "Exported to:",
   "backup.configOnly": "Config only — no data folders (definition saved for recreate)",
 
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Exclude patterns",
+  "excludes.hint": "One pattern per line. A container path (e.g. /config/Library/.../Cache) is matched against the backed-up volume; a bare name like .git matches at any depth. Brace lists like {a,b} are not supported; use one line each.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Save excludes",
+  "excludes.saved": "Excludes saved",
+  "excludes.error": "Could not save excludes",
+  "excludes.resolvedTo": "resolves to:",
+  "excludes.noMatch": "Passed to restic as-is (not a recognized container path).",
+  "excludes.excludesNothing": "This folder's volume is not in the backup, so this line excludes nothing.",
+
   // Appearance / Accent
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
@@ -1129,6 +1140,17 @@ const de: Translations = {
   "export.button": "Export (Plain-tar)",
   "export.exportedTo": "Exportiert nach:",
   "backup.configOnly": "Nur Konfiguration — keine Datenordner (Definition für Wiederherstellung gesichert)",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Ausschlussmuster",
+  "excludes.hint": "Ein Muster pro Zeile. Ein Container-Pfad (z. B. /config/Library/.../Cache) wird gegen das gesicherte Volume abgeglichen; ein reiner Name wie .git passt in jeder Tiefe. Klammerlisten wie {a,b} werden nicht unterstützt; nutze je eine Zeile.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Ausschlüsse speichern",
+  "excludes.saved": "Ausschlüsse gespeichert",
+  "excludes.error": "Ausschlüsse konnten nicht gespeichert werden",
+  "excludes.resolvedTo": "wird aufgelöst zu:",
+  "excludes.noMatch": "Wird unverändert an restic übergeben (kein erkannter Container-Pfad).",
+  "excludes.excludesNothing": "Das Volume dieses Ordners ist nicht im Backup, diese Zeile schließt also nichts aus.",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",

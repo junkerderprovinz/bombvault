@@ -698,6 +698,17 @@ const th: Partial<Translations> = {
   "ransomware.drillNever": "ยังไม่มีการทดสอบกู้คืน",
   "ransomware.encryptionOn": "เปิดการเข้ารหัส",
   "ransomware.pruneStrategy": "ตั้งกลยุทธ์การพรูนแล้ว",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "รูปแบบการยกเว้น",
+  "excludes.hint": "หนึ่งรูปแบบต่อบรรทัด พาธคอนเทนเนอร์ (เช่น /config/Library/.../Cache) จะถูกจับคู่กับวอลุ่มที่สำรองไว้ ส่วนชื่อล้วน ๆ อย่าง .git จะจับคู่ที่ระดับความลึกใดก็ได้ ไม่รองรับรายการในวงเล็บปีกกาอย่าง {a,b} ให้ใช้บรรทัดละหนึ่งรายการ",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "บันทึกการยกเว้น",
+  "excludes.saved": "บันทึกการยกเว้นแล้ว",
+  "excludes.error": "ไม่สามารถบันทึกการยกเว้นได้",
+  "excludes.resolvedTo": "แปลงเป็น:",
+  "excludes.noMatch": "ส่งให้ restic ตามที่เป็น (ไม่ใช่พาธคอนเทนเนอร์ที่รู้จัก)",
+  "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
 };
 
 export default th;

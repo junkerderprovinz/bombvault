@@ -698,6 +698,17 @@ const ro: Partial<Translations> = {
   "nav.config": "Config",
   "settings.configEnabled": "Configurația aplicației",
   "dashboard.domainConfig": "Config",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Modele de excludere",
+  "excludes.hint": "Un model pe linie. O cale de container (ex. /config/Library/.../Cache) este comparată cu volumul inclus în backup; un nume simplu precum .git se potrivește la orice adâncime. Listele între acolade precum {a,b} nu sunt acceptate; folosește câte o linie pentru fiecare.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Salvează excluderile",
+  "excludes.saved": "Excluderile au fost salvate",
+  "excludes.error": "Excluderile nu au putut fi salvate",
+  "excludes.resolvedTo": "se rezolvă în:",
+  "excludes.noMatch": "Transmis către restic ca atare (cale de container nerecunoscută).",
+  "excludes.excludesNothing": "Volumul acestui folder nu este în backup, așa că această linie nu exclude nimic.",
 };
 
 export default ro;

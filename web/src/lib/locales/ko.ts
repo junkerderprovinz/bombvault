@@ -687,6 +687,17 @@ const ko: Partial<Translations> = {
   "config.snapshotsTitle": "설정 백업",
   "config.snapshotsHint": "이 설정을 재구축된 서버에 복원하려면 복구 탭을 사용하세요 — 설정을 복원하면 BombVault가 재시작되어 적용되므로, 나머지 재해 복구 흐름과 함께 그곳에 있습니다.",
   "config.none": "아직 설정 백업이 없습니다 — 위에서 백업을 실행하세요.",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "제외 패턴",
+  "excludes.hint": "한 줄에 하나의 패턴. 컨테이너 경로(예: /config/Library/.../Cache)는 백업된 볼륨과 대조됩니다. .git 같은 단순 이름은 임의의 깊이에서 일치합니다. {a,b} 같은 중괄호 목록은 지원되지 않으므로 각각 한 줄씩 사용하세요.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "제외 저장",
+  "excludes.saved": "제외가 저장됨",
+  "excludes.error": "제외를 저장할 수 없습니다",
+  "excludes.resolvedTo": "다음으로 해석됨:",
+  "excludes.noMatch": "restic에 그대로 전달됩니다(인식된 컨테이너 경로 아님).",
+  "excludes.excludesNothing": "이 폴더의 볼륨이 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
 };
 
 export default ko;

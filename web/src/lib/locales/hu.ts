@@ -698,6 +698,17 @@ const hu: Partial<Translations> = {
   "config.snapshotsTitle": "Beállítás-mentések",
   "config.snapshotsHint": "Ezeknek a beállításoknak egy újraépített szerverre való visszaállításához használd a Helyreállítás lapot — a beállítások visszaállítása újraindítja BombVaultot, hogy alkalmazza őket, ezért a többi vészhelyreállítási lépéssel együtt ott található.",
   "config.none": "Még nincsenek beállítás-mentések — indíts egyet fent.",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Kizárási minták",
+  "excludes.hint": "Soronként egy minta. Egy konténer-útvonal (pl. /config/Library/.../Cache) a mentett kötethez lesz illesztve; egy önálló név, mint a .git, bármilyen mélységben illeszkedik. A kapcsos zárójeles listák, mint a {a,b}, nem támogatottak; használj soronként egyet.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Kizárások mentése",
+  "excludes.saved": "Kizárások mentve",
+  "excludes.error": "A kizárásokat nem sikerült menteni",
+  "excludes.resolvedTo": "erre oldódik fel:",
+  "excludes.noMatch": "Változatlanul átadva a resticnek (nem felismert konténer-útvonal).",
+  "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
 };
 
 export default hu;

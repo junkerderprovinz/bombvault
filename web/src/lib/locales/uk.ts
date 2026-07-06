@@ -690,6 +690,17 @@ const uk: Partial<Translations> = {
   "ransomware.drillNever": "тесту відновлення ще не було",
   "ransomware.encryptionOn": "шифрування увімкнено",
   "ransomware.pruneStrategy": "стратегію очищення задано",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Шаблони виключень",
+  "excludes.hint": "По одному шаблону в рядку. Шлях контейнера (наприклад /config/Library/.../Cache) зіставляється зі збереженим у резервній копії томом; проста назва на кшталт .git збігається на будь-якій глибині. Списки у фігурних дужках на кшталт {a,b} не підтримуються; використовуйте по одному рядку для кожного.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Зберегти виключення",
+  "excludes.saved": "Виключення збережено",
+  "excludes.error": "Не вдалося зберегти виключення",
+  "excludes.resolvedTo": "розгортається у:",
+  "excludes.noMatch": "Передається в restic як є (нерозпізнаний шлях контейнера).",
+  "excludes.excludesNothing": "Том цієї папки не входить у резервну копію, тож цей рядок нічого не виключає.",
 };
 
 export default uk;

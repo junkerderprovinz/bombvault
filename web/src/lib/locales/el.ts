@@ -695,6 +695,17 @@ const el: Partial<Translations> = {
   "ransomware.drillNever": "καμία δοκιμή επαναφοράς ακόμα",
   "ransomware.encryptionOn": "κρυπτογράφηση ενεργή",
   "ransomware.pruneStrategy": "στρατηγική κλαδέματος ορισμένη",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Μοτίβα εξαίρεσης",
+  "excludes.hint": "Ένα μοτίβο ανά γραμμή. Μια διαδρομή κοντέινερ (π.χ. /config/Library/.../Cache) αντιπαραβάλλεται με τον τόμο του αντιγράφου ασφαλείας· ένα σκέτο όνομα όπως .git ταιριάζει σε οποιοδήποτε βάθος. Λίστες σε άγκιστρα όπως {a,b} δεν υποστηρίζονται· χρησιμοποιήστε μία γραμμή για την καθεμία.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Αποθήκευση εξαιρέσεων",
+  "excludes.saved": "Οι εξαιρέσεις αποθηκεύτηκαν",
+  "excludes.error": "Δεν ήταν δυνατή η αποθήκευση των εξαιρέσεων",
+  "excludes.resolvedTo": "αντιστοιχεί σε:",
+  "excludes.noMatch": "Μεταβιβάζεται στο restic ως έχει (μη αναγνωρισμένη διαδρομή κοντέινερ).",
+  "excludes.excludesNothing": "Ο τόμος αυτού του φακέλου δεν είναι στο αντίγραφο ασφαλείας, επομένως αυτή η γραμμή δεν εξαιρεί τίποτα.",
 };
 
 export default el;

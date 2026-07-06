@@ -692,6 +692,17 @@ const nl: Partial<Translations> = {
   "nav.config": "Config",
   "settings.configEnabled": "App-configuratie",
   "dashboard.domainConfig": "Config",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Uitsluitpatronen",
+  "excludes.hint": "Eén patroon per regel. Een containerpad (bijv. /config/Library/.../Cache) wordt vergeleken met het geback-upte volume; een kale naam zoals .git komt op elke diepte overeen. Accolade-lijsten zoals {a,b} worden niet ondersteund; gebruik één regel per stuk.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Uitsluitingen opslaan",
+  "excludes.saved": "Uitsluitingen opgeslagen",
+  "excludes.error": "Kon uitsluitingen niet opslaan",
+  "excludes.resolvedTo": "wordt omgezet naar:",
+  "excludes.noMatch": "Wordt ongewijzigd aan restic doorgegeven (geen herkend containerpad).",
+  "excludes.excludesNothing": "Het volume van deze map zit niet in de back-up, dus deze regel sluit niets uit.",
 };
 
 export default nl;

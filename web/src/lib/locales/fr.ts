@@ -695,6 +695,17 @@ const fr: Partial<Translations> = {
   "config.snapshotsTitle": "Sauvegardes des réglages",
   "config.snapshotsHint": "Pour restaurer ces réglages sur un serveur reconstruit, utilisez l'onglet Récupération — restaurer les réglages redémarre BombVault pour les appliquer, il se trouve donc là avec le reste du flux de récupération après sinistre.",
   "config.none": "Aucune sauvegarde des réglages pour l'instant — lancez-en une ci-dessus.",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Motifs d'exclusion",
+  "excludes.hint": "Un motif par ligne. Un chemin de conteneur (p. ex. /config/Library/.../Cache) est comparé au volume sauvegardé ; un nom simple comme .git correspond à n'importe quelle profondeur. Les listes entre accolades comme {a,b} ne sont pas prises en charge ; utilisez une ligne par motif.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Enregistrer les exclusions",
+  "excludes.saved": "Exclusions enregistrées",
+  "excludes.error": "Impossible d'enregistrer les exclusions",
+  "excludes.resolvedTo": "se résout en :",
+  "excludes.noMatch": "Transmis tel quel à restic (chemin de conteneur non reconnu).",
+  "excludes.excludesNothing": "Le volume de ce dossier n'est pas dans la sauvegarde, cette ligne n'exclut donc rien.",
 };
 
 export default fr;
