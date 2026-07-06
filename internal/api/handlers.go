@@ -228,6 +228,22 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	// Orphans: targets with backups whose container is no longer installed. The
 	// image comes from the stored recreate definition (so the row is recognisable
 	// even though the container is gone).
+	//
+	// A Discover-rebuilt orphan has a fresh target id with NO run record, so its
+	// run-based "last backup" is nil and would read "Never" despite having
+	// snapshots (#44). Fall back to the newest snapshot's time — listed once, and
+	// only when an orphan actually exists.
+	var snapTimes map[string]int64
+	for _, t := range targets {
+		if !live[t.ContainerName] {
+			if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
+				log.Printf("api: list containers: latest backup times: %v", sErr)
+			} else {
+				snapTimes = m
+			}
+			break
+		}
+	}
 	for _, t := range targets {
 		if live[t.ContainerName] {
 			continue
@@ -248,6 +264,11 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
 			v.LastBackupStarted = &run.StartedAt
+		} else if ts, ok := snapTimes[t.ContainerName]; ok && ts > 0 {
+			// No run record (Discover-rebuilt target) but snapshots exist → show the
+			// newest snapshot's time instead of "Never" (#44).
+			tsCopy := ts
+			v.LastBackup = &tsCopy
 		}
 		views = append(views, v)
 	}
