@@ -24,6 +24,8 @@ export interface Container {
   postHook: string;
   /** Other container names to stop during this container's backup. */
   stopContainers: string[];
+  /** restic --exclude patterns for this container's backup, one per line. */
+  excludes: string[];
   /** Compose project (com.docker.compose.project label) this container belongs to,
    *  "" if none. Drives the "restore whole stack" panel. */
   stack: string;
@@ -694,6 +696,32 @@ export function setStopContainers(name: string, stopContainers: string[]): Promi
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ stopContainers }),
+  });
+}
+
+/** PATCH /api/containers/{name} — set this container's restic --exclude patterns. */
+export function setContainerExcludes(name: string, excludes: string[]): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ excludes }),
+  });
+}
+
+/**
+ * POST /api/containers/{name}/excludes/preview — resolve candidate exclude lines
+ * against the container's live mounts WITHOUT saving them. Each preview entry
+ * reports the resolved `--exclude` pattern, how it was derived (`status`:
+ * "basename" | "translated" | "passthrough"), and whether it would exclude
+ * anything in this container's backup (`matches`) so the UI can warn on a line
+ * that matches nothing.
+ */
+export function previewContainerExcludes(
+  name: string,
+  patterns: string[]
+): Promise<{ ok: boolean; preview: { raw: string; resolved: string; status: string; matches: boolean }[] }> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/preview`, {
+    method: "POST",
+    body: JSON.stringify({ patterns }),
   });
 }
 
