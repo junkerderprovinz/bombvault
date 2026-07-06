@@ -690,6 +690,17 @@ const ru: Partial<Translations> = {
   "nav.config": "Config",
   "settings.configEnabled": "Конфигурация приложения",
   "dashboard.domainConfig": "Config",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Шаблоны исключений",
+  "excludes.hint": "По одному шаблону в строке. Путь контейнера (например /config/Library/.../Cache) сопоставляется с сохранённым в резервной копии томом; простое имя вроде .git совпадает на любой глубине. Списки в фигурных скобках вроде {a,b} не поддерживаются; используйте по одной строке для каждого.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Сохранить исключения",
+  "excludes.saved": "Исключения сохранены",
+  "excludes.error": "Не удалось сохранить исключения",
+  "excludes.resolvedTo": "разрешается в:",
+  "excludes.noMatch": "Передаётся в restic как есть (нераспознанный путь контейнера).",
+  "excludes.excludesNothing": "Том этой папки не входит в резервную копию, поэтому эта строка ничего не исключает.",
 };
 
 export default ru;

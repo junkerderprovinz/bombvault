@@ -695,6 +695,17 @@ const tr: Partial<Translations> = {
   "ransomware.drillNever": "henüz geri yükleme tatbikatı yok",
   "ransomware.encryptionOn": "şifreleme açık",
   "ransomware.pruneStrategy": "budama stratejisi ayarlandı",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Hariç tutma desenleri",
+  "excludes.hint": "Her satıra bir desen. Bir kapsayıcı yolu (ör. /config/Library/.../Cache) yedeklenen birimle eşleştirilir; .git gibi düz bir ad her derinlikte eşleşir. {a,b} gibi süslü parantez listeleri desteklenmez; her biri için bir satır kullanın.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Hariç tutmaları kaydet",
+  "excludes.saved": "Hariç tutmalar kaydedildi",
+  "excludes.error": "Hariç tutmalar kaydedilemedi",
+  "excludes.resolvedTo": "şuna dönüşür:",
+  "excludes.noMatch": "restic'e olduğu gibi iletilir (tanınan bir kapsayıcı yolu değil).",
+  "excludes.excludesNothing": "Bu klasörün birimi yedeğe dahil değil, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
 };
 
 export default tr;

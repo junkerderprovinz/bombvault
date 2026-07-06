@@ -687,6 +687,17 @@ const zh: Partial<Translations> = {
   "ransomware.drillNever": "尚无还原演练",
   "ransomware.encryptionOn": "加密已启用",
   "ransomware.pruneStrategy": "已设置清理策略",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "排除模式",
+  "excludes.hint": "每行一个模式。容器路径（例如 /config/Library/.../Cache）会与已备份的卷进行匹配；像 .git 这样的纯名称可在任意深度匹配。不支持像 {a,b} 这样的花括号列表；请每项单独一行。",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "保存排除项",
+  "excludes.saved": "排除项已保存",
+  "excludes.error": "无法保存排除项",
+  "excludes.resolvedTo": "解析为：",
+  "excludes.noMatch": "按原样传递给 restic（不是可识别的容器路径）。",
+  "excludes.excludesNothing": "此文件夹的卷不在备份中，因此此行不会排除任何内容。",
 };
 
 export default zh;

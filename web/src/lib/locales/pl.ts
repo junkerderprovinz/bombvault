@@ -690,6 +690,17 @@ const pl: Partial<Translations> = {
   "nav.config": "Config",
   "settings.configEnabled": "Konfiguracja aplikacji",
   "dashboard.domainConfig": "Config",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Wzorce wykluczeń",
+  "excludes.hint": "Jeden wzorzec na wiersz. Ścieżka kontenera (np. /config/Library/.../Cache) jest dopasowywana do kopii zapasowej woluminu; sama nazwa jak .git pasuje na dowolnej głębokości. Listy w nawiasach klamrowych jak {a,b} nie są obsługiwane; użyj po jednym wierszu dla każdego.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Zapisz wykluczenia",
+  "excludes.saved": "Wykluczenia zapisane",
+  "excludes.error": "Nie udało się zapisać wykluczeń",
+  "excludes.resolvedTo": "przekłada się na:",
+  "excludes.noMatch": "Przekazywane do restic bez zmian (nierozpoznana ścieżka kontenera).",
+  "excludes.excludesNothing": "Wolumin tego folderu nie jest w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
 };
 
 export default pl;

@@ -695,6 +695,17 @@ const no: Partial<Translations> = {
   "nav.config": "Config",
   "settings.configEnabled": "App-konfigurasjon",
   "dashboard.domainConfig": "Config",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Ekskluderingsmønstre",
+  "excludes.hint": "Ett mønster per linje. En containersti (f.eks. /config/Library/.../Cache) matches mot det sikkerhetskopierte volumet; et rent navn som .git matcher på et hvilket som helst nivå. Lister med krøllparenteser som {a,b} støttes ikke; bruk én linje for hver.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Lagre ekskluderinger",
+  "excludes.saved": "Ekskluderinger lagret",
+  "excludes.error": "Kunne ikke lagre ekskluderingene",
+  "excludes.resolvedTo": "oversettes til:",
+  "excludes.noMatch": "Sendes til restic som det er (ingen gjenkjent containersti).",
+  "excludes.excludesNothing": "Denne mappens volum er ikke med i sikkerhetskopien, så denne linjen ekskluderer ingenting.",
 };
 
 export default no;

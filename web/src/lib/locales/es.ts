@@ -693,6 +693,17 @@ const es: Partial<Translations> = {
   "ransomware.drillNever": "aún sin simulacro de restauración",
   "ransomware.encryptionOn": "cifrado activado",
   "ransomware.pruneStrategy": "estrategia de poda definida",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Patrones de exclusión",
+  "excludes.hint": "Un patrón por línea. Una ruta de contenedor (p. ej. /config/Library/.../Cache) se compara con el volumen incluido en la copia; un nombre simple como .git coincide a cualquier profundidad. Las listas entre llaves como {a,b} no se admiten; usa una línea para cada uno.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Guardar exclusiones",
+  "excludes.saved": "Exclusiones guardadas",
+  "excludes.error": "No se pudieron guardar las exclusiones",
+  "excludes.resolvedTo": "se resuelve a:",
+  "excludes.noMatch": "Se pasa a restic tal cual (no es una ruta de contenedor reconocida).",
+  "excludes.excludesNothing": "El volumen de esta carpeta no está en la copia, por lo que esta línea no excluye nada.",
 };
 
 export default es;

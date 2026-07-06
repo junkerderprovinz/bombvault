@@ -695,6 +695,17 @@ const it: Partial<Translations> = {
   "config.snapshotsTitle": "Backup delle impostazioni",
   "config.snapshotsHint": "Per ripristinare queste impostazioni su un server ricostruito, usa la scheda Ripristino — ripristinare le impostazioni riavvia BombVault per applicarle, quindi si trova lì insieme al resto del flusso di ripristino di emergenza.",
   "config.none": "Ancora nessun backup delle impostazioni — avviane uno sopra.",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Pattern di esclusione",
+  "excludes.hint": "Un pattern per riga. Un percorso del contenitore (es. /config/Library/.../Cache) viene confrontato con il volume di cui si esegue il backup; un nome semplice come .git corrisponde a qualsiasi profondità. Gli elenchi tra parentesi graffe come {a,b} non sono supportati; usa una riga ciascuno.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Salva esclusioni",
+  "excludes.saved": "Esclusioni salvate",
+  "excludes.error": "Impossibile salvare le esclusioni",
+  "excludes.resolvedTo": "si risolve in:",
+  "excludes.noMatch": "Passato a restic così com'è (non è un percorso del contenitore riconosciuto).",
+  "excludes.excludesNothing": "Il volume di questa cartella non è nel backup, quindi questa riga non esclude nulla.",
 };
 
 export default it;

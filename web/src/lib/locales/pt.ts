@@ -695,6 +695,17 @@ const pt: Partial<Translations> = {
   "nav.config": "Config",
   "settings.configEnabled": "Configuração da aplicação",
   "dashboard.domainConfig": "Config",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Padrões de exclusão",
+  "excludes.hint": "Um padrão por linha. Um caminho do contentor (p. ex. /config/Library/.../Cache) é comparado com o volume incluído na cópia; um nome simples como .git corresponde a qualquer profundidade. Listas entre chavetas como {a,b} não são suportadas; use uma linha para cada.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Guardar exclusões",
+  "excludes.saved": "Exclusões guardadas",
+  "excludes.error": "Não foi possível guardar as exclusões",
+  "excludes.resolvedTo": "resolve para:",
+  "excludes.noMatch": "Passado ao restic tal como está (não é um caminho de contentor reconhecido).",
+  "excludes.excludesNothing": "O volume desta pasta não está na cópia, por isso esta linha não exclui nada.",
 };
 
 export default pt;

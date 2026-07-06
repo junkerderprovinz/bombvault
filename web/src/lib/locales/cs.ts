@@ -693,6 +693,17 @@ const cs: Partial<Translations> = {
   "ransomware.drillNever": "zatím žádné cvičení obnovy",
   "ransomware.encryptionOn": "šifrování zapnuto",
   "ransomware.pruneStrategy": "strategie čištění nastavena",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Vzory vyloučení",
+  "excludes.hint": "Jeden vzor na řádek. Cesta kontejneru (např. /config/Library/.../Cache) se porovnává se zálohovaným svazkem; samotný název jako .git odpovídá v jakékoli hloubce. Seznamy ve složených závorkách jako {a,b} nejsou podporovány; použijte jeden řádek pro každý.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Uložit vyloučení",
+  "excludes.saved": "Vyloučení uložena",
+  "excludes.error": "Vyloučení se nepodařilo uložit",
+  "excludes.resolvedTo": "překládá se na:",
+  "excludes.noMatch": "Předáno do restic tak, jak je (nerozpoznaná cesta kontejneru).",
+  "excludes.excludesNothing": "Svazek této složky není v záloze, takže tento řádek nic nevylučuje.",
 };
 
 export default cs;

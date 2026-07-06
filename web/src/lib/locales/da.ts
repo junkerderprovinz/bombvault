@@ -695,6 +695,17 @@ const da: Partial<Translations> = {
   "ransomware.drillNever": "ingen gendannelsestest endnu",
   "ransomware.encryptionOn": "kryptering slået til",
   "ransomware.pruneStrategy": "prune-strategi angivet",
+
+  // Per-container exclude patterns (#36)
+  "excludes.title": "Udelukkelsesmønstre",
+  "excludes.hint": "Ét mønster pr. linje. En containersti (f.eks. /config/Library/.../Cache) matches mod den sikkerhedskopierede volumen; et rent navn som .git matcher i enhver dybde. Lister med tuborgparenteser som {a,b} understøttes ikke; brug én linje til hver.",
+  "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
+  "excludes.save": "Gem udelukkelser",
+  "excludes.saved": "Udelukkelser gemt",
+  "excludes.error": "Kunne ikke gemme udelukkelserne",
+  "excludes.resolvedTo": "oversættes til:",
+  "excludes.noMatch": "Sendes til restic som det er (ingen genkendt containersti).",
+  "excludes.excludesNothing": "Denne mappes volumen er ikke med i sikkerhedskopien, så denne linje udelukker intet.",
 };
 
 export default da;
