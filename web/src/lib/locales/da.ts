@@ -706,6 +706,9 @@ const da: Partial<Translations> = {
   "excludes.resolvedTo": "oversættes til:",
   "excludes.noMatch": "Sendes til restic som det er (ingen genkendt containersti).",
   "excludes.excludesNothing": "Denne mappes volumen er ikke med i sikkerhedskopien, så denne linje udelukker intet.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "udelukkes fra sikkerhedskopien",
+  "excludes.matchesAnywhere": "udelukkes overalt hvor det forekommer",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "off-site DR-gendannelse",

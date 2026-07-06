@@ -698,6 +698,9 @@ const zh: Partial<Translations> = {
   "excludes.resolvedTo": "解析为：",
   "excludes.noMatch": "按原样传递给 restic（不是可识别的容器路径）。",
   "excludes.excludesNothing": "此文件夹的卷不在备份中，因此此行不会排除任何内容。",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "将从备份中排除",
+  "excludes.matchesAnywhere": "将在其出现的任何位置被排除",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "异地 DR 还原",

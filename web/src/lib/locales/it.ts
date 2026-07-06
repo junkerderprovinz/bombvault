@@ -706,6 +706,9 @@ const it: Partial<Translations> = {
   "excludes.resolvedTo": "si risolve in:",
   "excludes.noMatch": "Passato a restic così com'è (non è un percorso del contenitore riconosciuto).",
   "excludes.excludesNothing": "Il volume di questa cartella non è nel backup, quindi questa riga non esclude nulla.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "sarà escluso dal backup",
+  "excludes.matchesAnywhere": "sarà escluso ovunque compaia",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "ripristino DR off-site",

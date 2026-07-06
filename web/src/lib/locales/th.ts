@@ -709,6 +709,9 @@ const th: Partial<Translations> = {
   "excludes.resolvedTo": "แปลงเป็น:",
   "excludes.noMatch": "ส่งให้ restic ตามที่เป็น (ไม่ใช่พาธคอนเทนเนอร์ที่รู้จัก)",
   "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "จะถูกยกเว้นจากข้อมูลสำรอง",
+  "excludes.matchesAnywhere": "จะถูกยกเว้นทุกที่ที่ปรากฏ",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "การกู้คืน DR นอกสถานที่",

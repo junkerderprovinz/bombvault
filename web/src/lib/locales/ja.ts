@@ -698,6 +698,9 @@ const ja: Partial<Translations> = {
   "excludes.resolvedTo": "解決結果:",
   "excludes.noMatch": "restic にそのまま渡されます（認識されたコンテナパスではありません）。",
   "excludes.excludesNothing": "このフォルダのボリュームはバックアップに含まれていないため、この行は何も除外しません。",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "バックアップから除外されます",
+  "excludes.matchesAnywhere": "出現する場所すべてで除外されます",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "オフサイト DR 復元",

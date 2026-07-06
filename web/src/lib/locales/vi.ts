@@ -698,6 +698,9 @@ const vi: Partial<Translations> = {
   "excludes.resolvedTo": "chuyển thành:",
   "excludes.noMatch": "Được chuyển tới restic nguyên trạng (không phải đường dẫn container được nhận diện).",
   "excludes.excludesNothing": "Ổ đĩa của thư mục này không nằm trong bản sao lưu, nên dòng này không loại trừ gì cả.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "sẽ bị loại trừ khỏi bản sao lưu",
+  "excludes.matchesAnywhere": "sẽ bị loại trừ ở bất kỳ nơi nào xuất hiện",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "khôi phục DR ngoài site",

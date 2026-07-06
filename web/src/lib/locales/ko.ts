@@ -698,6 +698,9 @@ const ko: Partial<Translations> = {
   "excludes.resolvedTo": "다음으로 해석됨:",
   "excludes.noMatch": "restic에 그대로 전달됩니다(인식된 컨테이너 경로 아님).",
   "excludes.excludesNothing": "이 폴더의 볼륨이 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "백업에서 제외됩니다",
+  "excludes.matchesAnywhere": "나타나는 모든 위치에서 제외됩니다",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "오프사이트 DR 복원",

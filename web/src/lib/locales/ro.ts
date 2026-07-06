@@ -709,6 +709,9 @@ const ro: Partial<Translations> = {
   "excludes.resolvedTo": "se rezolvă în:",
   "excludes.noMatch": "Transmis către restic ca atare (cale de container nerecunoscută).",
   "excludes.excludesNothing": "Volumul acestui folder nu este în backup, așa că această linie nu exclude nimic.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "va fi exclus din backup",
+  "excludes.matchesAnywhere": "va fi exclus oriunde apare",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "restaurare DR externă",

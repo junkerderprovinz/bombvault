@@ -706,6 +706,9 @@ const pt: Partial<Translations> = {
   "excludes.resolvedTo": "resolve para:",
   "excludes.noMatch": "Passado ao restic tal como está (não é um caminho de contentor reconhecido).",
   "excludes.excludesNothing": "O volume desta pasta não está na cópia, por isso esta linha não exclui nada.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "será excluído da cópia de segurança",
+  "excludes.matchesAnywhere": "será excluído onde quer que apareça",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "restauro DR externo",

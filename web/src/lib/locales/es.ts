@@ -704,6 +704,9 @@ const es: Partial<Translations> = {
   "excludes.resolvedTo": "se resuelve a:",
   "excludes.noMatch": "Se pasa a restic tal cual (no es una ruta de contenedor reconocida).",
   "excludes.excludesNothing": "El volumen de esta carpeta no está en la copia, por lo que esta línea no excluye nada.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "se excluirá de la copia de seguridad",
+  "excludes.matchesAnywhere": "se excluirá dondequiera que aparezca",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "restauración DR externa",
