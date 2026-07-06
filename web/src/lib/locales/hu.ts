@@ -709,6 +709,9 @@ const hu: Partial<Translations> = {
   "excludes.resolvedTo": "erre oldódik fel:",
   "excludes.noMatch": "Változatlanul átadva a resticnek (nem felismert konténer-útvonal).",
   "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "ki lesz zárva a biztonsági mentésből",
+  "excludes.matchesAnywhere": "mindenhol ki lesz zárva, ahol előfordul",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "telephelyen kívüli DR-visszaállítás",

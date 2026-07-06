@@ -701,6 +701,9 @@ const pl: Partial<Translations> = {
   "excludes.resolvedTo": "przekłada się na:",
   "excludes.noMatch": "Przekazywane do restic bez zmian (nierozpoznana ścieżka kontenera).",
   "excludes.excludesNothing": "Wolumin tego folderu nie jest w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "zostanie wykluczony z kopii zapasowej",
+  "excludes.matchesAnywhere": "zostanie wykluczony wszędzie, gdzie występuje",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "przywracanie DR poza siedzibą",

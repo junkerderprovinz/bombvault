@@ -706,6 +706,9 @@ const el: Partial<Translations> = {
   "excludes.resolvedTo": "αντιστοιχεί σε:",
   "excludes.noMatch": "Μεταβιβάζεται στο restic ως έχει (μη αναγνωρισμένη διαδρομή κοντέινερ).",
   "excludes.excludesNothing": "Ο τόμος αυτού του φακέλου δεν είναι στο αντίγραφο ασφαλείας, επομένως αυτή η γραμμή δεν εξαιρεί τίποτα.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "θα εξαιρεθεί από το αντίγραφο ασφαλείας",
+  "excludes.matchesAnywhere": "θα εξαιρείται όπου κι αν εμφανίζεται",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "επαναφορά DR εκτός τόπου",

@@ -703,6 +703,9 @@ const nl: Partial<Translations> = {
   "excludes.resolvedTo": "wordt omgezet naar:",
   "excludes.noMatch": "Wordt ongewijzigd aan restic doorgegeven (geen herkend containerpad).",
   "excludes.excludesNothing": "Het volume van deze map zit niet in de back-up, dus deze regel sluit niets uit.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "wordt uitgesloten van de back-up",
+  "excludes.matchesAnywhere": "wordt overal uitgesloten waar het voorkomt",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "off-site DR-herstel",

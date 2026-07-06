@@ -450,6 +450,9 @@ const en = {
   "excludes.resolvedTo": "resolves to:",
   "excludes.noMatch": "Passed to restic as-is (not a recognized container path).",
   "excludes.excludesNothing": "This folder's volume is not in the backup, so this line excludes nothing.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "will be excluded from the backup",
+  "excludes.matchesAnywhere": "will be excluded wherever it appears",
 
   // Appearance / Accent
   "settings.appearance": "Appearance",
@@ -1165,6 +1168,9 @@ const de: Translations = {
   "excludes.resolvedTo": "wird aufgelöst zu:",
   "excludes.noMatch": "Wird unverändert an restic übergeben (kein erkannter Container-Pfad).",
   "excludes.excludesNothing": "Das Volume dieses Ordners ist nicht im Backup, diese Zeile schließt also nichts aus.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "wird vom Backup ausgeschlossen",
+  "excludes.matchesAnywhere": "wird überall ausgeschlossen, wo es vorkommt",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",

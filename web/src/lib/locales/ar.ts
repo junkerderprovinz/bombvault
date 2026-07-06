@@ -709,6 +709,9 @@ const ar: Partial<Translations> = {
   "excludes.resolvedTo": "يتحوّل إلى:",
   "excludes.noMatch": "يُمرَّر إلى restic كما هو (ليس مساراً معروفاً للحاوية).",
   "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "سيتم استبعاده من النسخة الاحتياطية",
+  "excludes.matchesAnywhere": "سيتم استبعاده أينما ظهر",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "استعادة DR خارج الموقع",

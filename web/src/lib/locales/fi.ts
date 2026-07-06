@@ -706,6 +706,9 @@ const fi: Partial<Translations> = {
   "excludes.resolvedTo": "vastaa:",
   "excludes.noMatch": "Välitetään resticille sellaisenaan (ei tunnistettu kontin polku).",
   "excludes.excludesNothing": "Tämän kansion taltio ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "suljetaan pois varmuuskopiosta",
+  "excludes.matchesAnywhere": "suljetaan pois kaikkialta, missä se esiintyy",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "etä-DR-palautus",

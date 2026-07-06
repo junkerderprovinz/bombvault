@@ -706,6 +706,9 @@ const sv: Partial<Translations> = {
   "excludes.resolvedTo": "översätts till:",
   "excludes.noMatch": "Skickas till restic som det är (ingen igenkänd containersökväg).",
   "excludes.excludesNothing": "Den här mappens volym finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "utesluts från säkerhetskopian",
+  "excludes.matchesAnywhere": "utesluts överallt där det förekommer",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "off-site DR-återställning",

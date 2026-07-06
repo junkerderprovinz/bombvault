@@ -706,6 +706,9 @@ const tr: Partial<Translations> = {
   "excludes.resolvedTo": "şuna dönüşür:",
   "excludes.noMatch": "restic'e olduğu gibi iletilir (tanınan bir kapsayıcı yolu değil).",
   "excludes.excludesNothing": "Bu klasörün birimi yedeğe dahil değil, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
+  // Exclude preview status (#38)
+  "excludes.willExclude": "yedekten hariç tutulacak",
+  "excludes.matchesAnywhere": "göründüğü her yerde hariç tutulacak",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "site dışı DR geri yükleme",
