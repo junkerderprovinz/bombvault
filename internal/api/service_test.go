@@ -743,6 +743,56 @@ func TestDomainStatusDrillCurrencyIgnoresDisabledDrills(t *testing.T) {
 	}
 }
 
+// TestDomainStatusOffsiteDrillOptOutNeutralNotRed pins #37: with DrillsEnabled true
+// but OffsiteDrillsEnabled false the scheduler runs no OFF-SITE DR drill, so even a
+// recent FAILED DR drill must NOT push the chip amber/red for DR — DrillState is ""
+// (no currency claim), Protection stays green (replication/tamper OK), and the
+// dashboard's OffsiteDrillScheduled flag is false (drives the muted "manual only" pill).
+func TestDomainStatusOffsiteDrillOptOutNeutralNotRed(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.DrillsEnabled = true         // scheduled drills on in general...
+	s.OffsiteDrillsEnabled = false // ...but the OFF-SITE DR drill is opted out (#37)
+	s.DrillsSchedule = "weekly Sun 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// A recent FAILED DR drill: would read amber "failed" if the off-site DR drill
+	// were scheduled; opting out must neutralise it, not surface it as red/amber.
+	now := time.Now().Unix()
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", At: now - 3600, OK: false, Kind: "dr", Detail: "dr boom"}); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	var c api.DomainStatusEntry
+	for _, d := range statuses {
+		if d.Domain == "containers" {
+			c = d
+		}
+	}
+	if c.DrillState != "" {
+		t.Fatalf("off-site DR opt-out → DrillState must be \"\" (no currency claim), got %q", c.DrillState)
+	}
+	if c.Protection == "amber" || c.Protection == "red" {
+		t.Fatalf("a failed DR drill must not colour the chip when the off-site DR drill is opted out, got %q", c.Protection)
+	}
+	if c.Protection != "green" {
+		t.Fatalf("with replication/tamper OK and DR neutralised, Protection must be green, got %q", c.Protection)
+	}
+	if c.OffsiteDrillScheduled {
+		t.Fatalf("OffsiteDrillScheduled must be false when OffsiteDrillsEnabled is off, got true")
+	}
+}
+
 // TestDomainStatusCarriesDrillDetail pins #30: buildStatus must carry the scrubbed
 // failure reason of the last LOCAL subset drill and the last OFF-SITE DR drill into
 // the status entry (VerifiedDetail / DrillDetail) so the dashboard can show WHY +
