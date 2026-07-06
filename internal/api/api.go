@@ -101,6 +101,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/restore/cancel", h.handleRestoreCancel)
 	mux.HandleFunc("POST /api/stacks/{project}/restore", h.handleRestoreStack)
 	mux.HandleFunc("GET /api/containers/{name}/mounts", h.handleContainerMounts)
+	mux.HandleFunc("POST /api/containers/{name}/excludes/preview", h.handleExcludesPreview)
 	mux.HandleFunc("POST /api/containers/{name}/export", h.handleExportContainer)
 	mux.HandleFunc("GET /api/containers/{name}/files", h.handleListFiles)
 	mux.HandleFunc("POST /api/containers/{name}/restore-files", h.handleRestoreFiles)

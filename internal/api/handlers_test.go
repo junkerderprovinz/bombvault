@@ -333,6 +333,76 @@ func TestPatchIncludeBeforeFirstBackup(t *testing.T) {
 	}
 }
 
+// TestPatchExcludesAndPreview pins Task 4's API surface: a PATCH carrying
+// "excludes" persists to the target and surfaces in the container list view, and
+// the preview endpoint resolves a candidate list into one entry per non-empty
+// line.
+func TestPatchExcludesAndPreview(t *testing.T) {
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			{ID: "abc", Name: "plex", Image: "plex:latest", State: "running", Status: "Up 2h"},
+		},
+		inspect: model.Inspect{
+			Name: "/plex",
+			Mounts: []model.Mount{
+				{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+			},
+		},
+	}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	// PATCH excludes → persisted on the target (trimmed, order preserved).
+	w, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex",
+		`{"excludes":["/config/Cache",".git"]}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("patch status=%d body=%s", w.Code, w.Body.String())
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tg.Excludes) != 2 || tg.Excludes[0] != "/config/Cache" || tg.Excludes[1] != ".git" {
+		t.Fatalf("excludes not persisted: %+v", tg.Excludes)
+	}
+
+	// The list view exposes the persisted excludes.
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/containers", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("list status=%d body=%s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Containers []struct {
+			Name     string   `json:"name"`
+			Excludes []string `json:"excludes"`
+		} `json:"containers"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if len(resp.Containers) != 1 || len(resp.Containers[0].Excludes) != 2 {
+		t.Fatalf("list view excludes = %+v", resp.Containers)
+	}
+
+	// The preview endpoint returns one entry per non-empty candidate line.
+	w, m = doJSON(t, h, http.MethodPost, "/api/containers/plex/excludes/preview",
+		`{"patterns":["/config/Cache",".git","   "]}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("preview status=%d body=%s", w.Code, w.Body.String())
+	}
+	preview, ok := m["preview"].([]any)
+	if !ok || len(preview) != 2 {
+		t.Fatalf("expected 2 preview entries (blank dropped), got %v", m["preview"])
+	}
+	first, _ := preview[0].(map[string]any)
+	if first["raw"] != "/config/Cache" || first["status"] == nil {
+		t.Fatalf("unexpected first preview entry: %v", preview[0])
+	}
+}
+
 func TestSettingsGetPut(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})

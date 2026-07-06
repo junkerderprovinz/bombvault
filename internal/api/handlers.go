@@ -171,6 +171,7 @@ type containerView struct {
 	PreHook           string   `json:"preHook"`
 	PostHook          string   `json:"postHook"`
 	StopContainers    []string `json:"stopContainers"`
+	Excludes          []string `json:"excludes"`
 	// Stack is the compose project (com.docker.compose.project label) this
 	// container belongs to, "" if none. Drives the "restore whole stack" panel.
 	Stack string `json:"stack"`
@@ -214,6 +215,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.PreHook = t.PreHook
 			v.PostHook = t.PostHook
 			v.StopContainers = t.StopContainers
+			v.Excludes = t.Excludes
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 			}
@@ -704,6 +706,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		PostHook          *string   `json:"postHook"`
 		BackupPaths       *[]string `json:"backupPaths"`
 		StopContainers    *[]string `json:"stopContainers"`
+		Excludes          *[]string `json:"excludes"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -729,6 +732,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.StopContainers != nil {
 		if err := h.svc.SetStopContainers(r.Context(), name, *body.StopContainers); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.Excludes != nil {
+		if err := h.svc.SetExcludes(r.Context(), name, *body.Excludes); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -773,6 +782,33 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 		custom = []string{}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"mounts": mounts, "custom": custom}))
+}
+
+// handleExcludesPreview resolves a candidate list of exclude patterns against a
+// container's live mounts and reports, per line, the restic --exclude pattern
+// that will actually be used plus whether it would match anything in this
+// container's backup (so the UI can warn on a line that excludes nothing).
+// POST /api/containers/{name}/excludes/preview  body {patterns:[...]}
+func (h *Handler) handleExcludesPreview(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Patterns []string `json:"patterns"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	preview, err := h.svc.PreviewExcludes(r.Context(), name, body.Patterns)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if preview == nil {
+		preview = []ExcludePreview{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": preview}))
 }
 
 // strOr returns *p or "" when p is nil.
