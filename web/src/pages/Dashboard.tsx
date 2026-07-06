@@ -437,7 +437,7 @@ function ProtectionCard({
                           the OFF-SITE repo (a real DR sandbox restore). Only containers
                           + flash ever run a DR drill, so VMs never show this pill. On a
                           failure the tooltip names WHICH check + the reason. */}
-                      {d.lastDrDrillAt && d.lastDrDrillOK ? (
+                      {drCapable && d.lastDrDrillAt && d.lastDrDrillOK ? (
                         // GREEN — proven restorable off-site. A real passed run (even
                         // a MANUAL one) is honest proof, so it's kept even when the
                         // scheduled DR drill is opted out.
