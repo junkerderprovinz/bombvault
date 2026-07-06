@@ -427,6 +427,41 @@ func TestBackupStopsAndRestartsDependencies(t *testing.T) {
 	}
 }
 
+// TestBackupForwardsExcludes pins that BackupDeps.Excludes reaches the restic
+// Backup call as the --exclude variadic (the per-container exclude patterns from
+// #36). Mirrors the flash argv test (flash_orchestrator_test.go): the fakeRestic
+// captures the excludes and we assert the exact set is forwarded.
+func TestBackupForwardsExcludes(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
+	runs := &fakeRuns{}
+
+	excludes := []string{"/host/user/user/appdata/plex/Cache", ".git"}
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef:         "plex",
+		ContainerName:        "Plex",
+		RepoPath:             "/repo",
+		AppdataPaths:         []string{"/host/user/user/appdata/plex"},
+		StopTimeout:          30 * time.Second,
+		TargetID:             "target-1",
+		WasRunning:           true,
+		Excludes:             excludes,
+		SnapshotTemplatesDir: "/data/templates",
+		FlashTemplatesDir:    "/boot/templates",
+		Docker:               d,
+		Restic:               r,
+		Templates:            tpl,
+		Runs:                 runs,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !equalStrings(r.capturedExcludes, excludes) {
+		t.Fatalf("restic excludes = %v, want %v", r.capturedExcludes, excludes)
+	}
+}
+
 // TestBackupDepsFollowRunStateWhenTargetWasStopped: a target that was already
 // stopped is backed up in place and never started. Its dependencies follow
 // their OWN run-state: a running dependency is stopped for the backup and

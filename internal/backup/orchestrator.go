@@ -164,6 +164,9 @@ type BackupDeps struct {
 	// (neither stopped nor restarted). Stop/start is best-effort: a failure is
 	// logged but never fails the backup.
 	StopContainers []StopContainer
+	// Excludes are restic --exclude patterns for this container's backup
+	// (already resolved to the paths restic stores).
+	Excludes []string
 
 	Docker    Docker
 	Restic    Restic
@@ -361,7 +364,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// recreated on restore. We just skip restic — handing it zero/absent paths
 		// fails with "Fatal: all source directories do not exist".
 		if len(d.AppdataPaths) > 0 {
-			summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, d.AppdataPaths, tags)
+			summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, d.AppdataPaths, tags, d.Excludes...)
 			if backupErr != nil {
 				return
 			}
