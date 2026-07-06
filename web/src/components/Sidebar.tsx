@@ -268,20 +268,21 @@ export function Sidebar({ settings }: SidebarProps) {
   const configEnabled = settings?.configEnabled ?? false;
 
   return (
-    <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-sidebar border-r border-carbon-border">
+    <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-sidebar">
       {/* Logo + wordmark → Dashboard. Frameless SVG on the darker sidebar so the
-          logo stands out; clicking anywhere on it returns to the Dashboard. */}
+          logo stands out; clicking anywhere on it returns to the Dashboard.
+          Borderless throughout — the darker sidebar tone alone separates the rail. */}
       <NavLink
         to="/dashboard"
         aria-label={t("nav.dashboard")}
-        className="flex items-center gap-3 px-4 py-5 border-b border-carbon-border hover:opacity-90 transition-opacity"
+        className="flex items-center gap-2.5 px-4 py-5 hover:opacity-90 transition-opacity"
       >
         <img
           src="/logo.svg"
           alt="BombVault"
-          className="h-11 w-11 object-contain shrink-0"
+          className="h-16 w-16 object-contain shrink-0"
         />
-        <span className="text-carbon-text font-bold text-2xl tracking-tight leading-none">
+        <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
           BombVault
         </span>
       </NavLink>
@@ -323,7 +324,7 @@ export function Sidebar({ settings }: SidebarProps) {
       </nav>
 
       {/* Bottom group: language, then dark/light, then advanced, then settings */}
-      <div className="flex flex-col gap-1 p-3 border-t border-carbon-border">
+      <div className="flex flex-col gap-1 p-3">
         <SidebarControls />
         {/* Advanced mode — a checkbox above Settings; reveals expert controls
             across the app (per-browser preference). Styled like the language /
