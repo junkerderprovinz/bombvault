@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -1161,10 +1161,23 @@ function IntegrityCard({
   );
 }
 
+// TabKey enumerates the 7 Settings tabs. The active tab is the single source of
+// truth for which card group renders; SettingsPage owns all shared state so every
+// tab shares one `settings`/`save()` instance regardless of which tab is visible.
+type TabKey =
+  | "general"
+  | "storage"
+  | "schedules"
+  | "offsite"
+  | "notifications"
+  | "integrity"
+  | "system";
+
 export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
 
+  const [tab, setTab] = useState<TabKey>("general");
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedSettings is the server's last-confirmed state. Each card's Save persists
   // its own fields merged onto THIS baseline (not the live, possibly-edited
@@ -1239,20 +1252,29 @@ export function SettingsPage() {
       });
   }, []);
 
-  // Deep-link support: /settings#offsite scrolls the off-site card into view once
-  // it has rendered (the card only exists after settings load, so this waits for
-  // that). The ref guard makes it fire exactly once, not on every settings edit.
-  const scrolledToHash = useRef(false);
+  // Deep-link support: /settings#offsite (and every other tab hash) selects the
+  // matching tab instead of scrolling. Read once on mount, and also listen for
+  // hashchange so an in-app "#offsite" link fired while already on /settings
+  // switches the tab (no remount happens in that case). The Dashboard's
+  // "Link to /settings#offsite" therefore lands on the Off-site tab.
   useEffect(() => {
-    if (scrolledToHash.current) return;
-    if (settings && window.location.hash === "#offsite") {
-      const el = document.getElementById("offsite");
-      if (el) {
-        el.scrollIntoView();
-        scrolledToHash.current = true;
-      }
-    }
-  }, [settings]);
+    const tabs: TabKey[] = [
+      "general",
+      "storage",
+      "schedules",
+      "offsite",
+      "notifications",
+      "integrity",
+      "system",
+    ];
+    const applyHash = () => {
+      const h = window.location.hash.replace(/^#/, "");
+      if ((tabs as string[]).includes(h)) setTab(h as TabKey);
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Generic save helper
@@ -1359,13 +1381,65 @@ export function SettingsPage() {
           {t("settings.title")}
         </h1>
         <p className="mt-1 text-sm text-carbon-textSub">
-          BombVault configuration — changes take effect immediately.
+          {t("settings.subtitle")}
         </p>
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Domains                                                            */}
+      {/* Segmented tab bar (7 tabs). `tab` is the single owner of which card  */}
+      {/* group renders; it wraps/scrolls gracefully for narrow widths.        */}
       {/* ------------------------------------------------------------------ */}
+      <div className="flex flex-wrap gap-1">
+        {([
+          ["general", t("settings.tab.general")],
+          ["storage", t("settings.tab.storage")],
+          ["schedules", t("settings.tab.schedules")],
+          ["offsite", t("settings.tab.offsite")],
+          ["notifications", t("settings.tab.notifications")],
+          ["integrity", t("settings.tab.integrity")],
+          ["system", t("settings.tab.system")],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setTab(key);
+              // Keep the URL hash in sync so reload/bookmark restores the tab
+              // (replaceState avoids polluting history and won't re-fire applyHash).
+              try {
+                window.history.replaceState(null, "", `#${key}`);
+              } catch {
+                /* history unavailable — tab state still switches */
+              }
+            }}
+            className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+              tab === key
+                ? "border-accent bg-accent text-accentContrast"
+                : "border-carbon-border text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* SCHEDULES — section skeleton only. The unified CadenceBuilder editor */}
+      {/* + Jobs migration land in a later wave; these are titled placeholders. */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "schedules" && (
+        <>
+          <Card title={t("settings.schedulesBackup")}>{null}</Card>
+          <Card title={t("settings.schedulesOffsite")}>{null}</Card>
+          <Card title={t("settings.schedulesSelfBackup")}>{null}</Card>
+          <Card title={t("settings.schedulesChecks")}>{null}</Card>
+        </>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* GENERAL — Domains                                                   */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "general" && (
       <Card title={t("settings.domains")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           Turn each backup domain on or off. Enabling VMs or Flash reveals its
@@ -1421,10 +1495,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Backup paths                                                       */}
+      {/* STORAGE — Backup paths                                             */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
       <Card title={t("settings.paths")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           Relative subpaths under the host mount root (
@@ -1484,12 +1560,13 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Flash zip export (#28) — a plain .zip written after each flash      */}
-      {/* backup, for off-server sync. Only relevant when Flash is enabled.   */}
+      {/* STORAGE — Flash zip export (#28) — a plain .zip written after each   */}
+      {/* flash backup, for off-server sync. Only relevant when Flash is on.   */}
       {/* ------------------------------------------------------------------ */}
-      {settings.flashEnabled && (
+      {tab === "storage" && settings.flashEnabled && (
       <Card title={t("flash.zipExport.title")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.hint")}</p>
         <ToggleRow
@@ -1574,10 +1651,12 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Off-site copy (restic copy replication)                            */}
+      {/* OFFSITE — Off-site copy (restic copy replication)                  */}
       {/* Default-mode feature (v4): off-site + ransomware protection is a      */}
-      {/* first-class flow, not advanced-only. Deep-linked via /settings#offsite. */}
+      {/* first-class flow, not advanced-only. Deep-linked via /settings#offsite */}
+      {/* selects this tab (id kept for back-compat).                          */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "offsite" && (
       <div id="offsite">
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
@@ -1661,10 +1740,12 @@ export function SettingsPage() {
         />
       </Card>
       </div>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Retention — default-mode feature (v4), paired with off-site above.   */}
+      {/* OFFSITE — Retention (default-mode, paired with off-site above).      */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "offsite" && (
       <Card title={t("settings.retentionTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           {t("settings.retentionHint")}
@@ -1739,10 +1820,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Off-site bandwidth                                                  */}
+      {/* OFFSITE — Off-site bandwidth                                        */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "offsite" && (
       <Advanced>
       <Card title={t("settings.offsiteLimits")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
@@ -1785,10 +1868,12 @@ export function SettingsPage() {
         />
       </Card>
       </Advanced>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Monitoring (Prometheus)                                            */}
+      {/* SYSTEM — Monitoring (Prometheus)                                   */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "system" && (
       <Advanced>
       <Card title={t("settings.metrics")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
@@ -1831,10 +1916,12 @@ export function SettingsPage() {
         />
       </Card>
       </Advanced>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Encryption                                                         */}
+      {/* STORAGE — Encryption                                               */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
       <Card title={t("settings.encryption")}>
         <ToggleRow
           label={
@@ -1880,46 +1967,52 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* VM Backup over SSH                                                 */}
+      {/* SYSTEM — VM Backup over SSH                                        */}
+      {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you    */}
+      {/* need to make VM backups work is never hidden behind Advanced.       */}
       {/* ------------------------------------------------------------------ */}
-      {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you
-          need to make VM backups work is never hidden behind Advanced. */}
-      {(advanced || settings.vmsEnabled) && <VMSSHCard t={t} />}
+      {tab === "system" && (advanced || settings.vmsEnabled) && <VMSSHCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Off-site (rclone)                                                    */}
+      {/* OFFSITE — Off-site backends (rclone + cloud credentials)            */}
       {/* ------------------------------------------------------------------ */}
-      <Advanced><RcloneCard t={t} /></Advanced>
+      {tab === "offsite" && <Advanced><RcloneCard t={t} /></Advanced>}
 
-      <Advanced><CloudCard t={t} /></Advanced>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Notifications                                                       */}
-      {/* ------------------------------------------------------------------ */}
-      <NotifyCard t={t} />
+      {tab === "offsite" && <Advanced><CloudCard t={t} /></Advanced>}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Spike                                                              */}
+      {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "notifications" && <NotifyCard t={t} />}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* SYSTEM — Spike (host-integration check; KEEP — it is LIVE).         */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "system" && (
       <Advanced>
         <Card title={t("spike.title")}>
           <SpikePanel t={t} />
         </Card>
       </Advanced>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Integrity, maintenance & restore drills                             */}
+      {/* INTEGRITY — Integrity, maintenance & restore drills                 */}
       {/* Default-visible (v4): manual restore drills — including the real     */}
       {/* off-site DR restore — are part of the core ransomware-protection     */}
       {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "integrity" && (
       <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} />
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Security                                                           */}
+      {/* SYSTEM — Security                                                  */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "system" && (
       <Card title={t("auth.security")}>
         {/* Status badge */}
         <div className="flex items-center gap-2">
@@ -2005,10 +2098,12 @@ export function SettingsPage() {
           </div>
         )}
       </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Appearance                                                         */}
+      {/* GENERAL — Appearance                                               */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "general" && (
       <Card title={t("settings.appearance")}>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
@@ -2062,9 +2157,10 @@ export function SettingsPage() {
           </div>
         </div>
       </Card>
+      )}
 
-      {/* Version + report-a-bug live here (kept out of the sidebar for a clean UI). */}
-      <AboutFooter />
+      {/* SYSTEM — Version + report-a-bug (kept out of the sidebar for a clean UI). */}
+      {tab === "system" && <AboutFooter />}
     </div>
   );
 }
