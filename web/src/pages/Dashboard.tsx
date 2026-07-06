@@ -295,15 +295,17 @@ function ProtectionCard({
   const [drRunning, setDrRunning] = useState<string | null>(null);
   const [drRunError, setDrRunError] = useState<Record<string, string>>({});
 
-  // Drop a domain's transient manual-run message once its DR row is no longer
-  // failing, so a later refetch (including one triggered by ANOTHER domain's run)
-  // can't resurface a stale error next to a fresh reason.
+  // Keep a domain's transient manual-run message only where the Run-DR button is
+  // actually reachable (a DR-capable, non-off domain with an off-site repo), and
+  // drop it elsewhere so a refetch (including one triggered by ANOTHER domain's
+  // run) can't resurface a stale error. The next run for that domain clears it.
   useEffect(() => {
     setDrRunError((prev) => {
       const next: Record<string, string> = {};
       for (const d of domains) {
-        const drFailed = d.status !== "off" && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
-        if (drFailed && prev[d.domain] !== undefined) next[d.domain] = prev[d.domain];
+        const drCapable = d.domain === "containers" || d.domain === "flash";
+        const reachable = drCapable && d.status !== "off" && d.offsiteConfigured;
+        if (reachable && prev[d.domain] !== undefined) next[d.domain] = prev[d.domain];
       }
       return Object.keys(next).length === Object.keys(prev).length ? prev : next;
     });
@@ -377,15 +379,18 @@ function ProtectionCard({
         <div className="divide-y divide-carbon-border">
           {domains.map((d) => {
             const off = d.status === "off";
+            // Only containers + flash ever run an off-site DR drill (schedule.go
+            // drillTasks / runDRDrill). VMs + config can have an off-site repo but
+            // cannot be DR-drilled, so they must show NO DR pill or Run-DR button.
+            const drCapable = d.domain === "containers" || d.domain === "flash";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
-            // domain that HAS an off-site repo. In that case the scorecard/pill go
-            // NEUTRAL ("manual only") instead of red — the user still runs the DR
-            // check manually, so a stale/failed scheduled result must not read as red.
-            const drUnscheduled = d.offsiteConfigured && !d.offsiteDrillScheduled;
-            // The red "proven restorable off-site" state — the ONLY driver of the
-            // red DR pill. A failing off-site DR drill (recorded, not-ok). Suppressed
-            // when the scheduled drill is opted out (drUnscheduled).
-            const drFailed = !off && d.lastDrDrillAt > 0 && !d.lastDrDrillOK && !drUnscheduled;
+            // DR-capable domain that HAS an off-site repo. The pill then reads NEUTRAL
+            // ("manual only") — but only when there is no failing result to show.
+            const drUnscheduled = drCapable && d.offsiteConfigured && !d.offsiteDrillScheduled;
+            // The red "proven restorable off-site" state: a recorded off-site DR drill
+            // that failed. A real failure (scheduled OR a manual run) is ALWAYS shown,
+            // never masked by the opt-out — only "never drilled" goes neutral.
+            const drFailed = !off && drCapable && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
             return (
               <div key={d.domain} className="flex flex-col gap-1 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
@@ -442,17 +447,10 @@ function ProtectionCard({
                         >
                           ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                         </span>
-                      ) : drUnscheduled ? (
-                        // NEUTRAL — scheduled off-site DR is opted out (manual only):
-                        // muted, never red. Reuses the file's muted/no-claim styling.
-                        <span
-                          title={t("drill.manualOnlyTitle")}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
-                        >
-                          {t("drill.manualOnly")}
-                        </span>
-                      ) : d.lastDrDrillAt ? (
-                        // RED — a scheduled off-site DR drill failed.
+                      ) : drFailed ? (
+                        // RED — a recorded off-site DR drill FAILED (scheduled or a
+                        // manual run). Always shown; the opt-out never masks a real
+                        // failure — only "never drilled" goes neutral below.
                         <span
                           title={
                             d.drillDetail
@@ -462,6 +460,15 @@ function ProtectionCard({
                           className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
                         >
                           ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                        </span>
+                      ) : drUnscheduled ? (
+                        // NEUTRAL — off-site DR not scheduled (manual only) and nothing
+                        // failing to show: muted, never red. File's no-claim styling.
+                        <span
+                          title={t("drill.manualOnlyTitle")}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
+                        >
+                          {t("drill.manualOnly")}
                         </span>
                       ) : null}
                     </>
@@ -473,7 +480,7 @@ function ProtectionCard({
                     WHY reason stays gated to an actual scheduled failure (drFailed).
                     Only the off-site DR row drives that red — a local subset pass
                     can't clear it, so we run {offsite,dr} explicitly. */}
-                {!off && (drFailed || d.offsiteConfigured) && (
+                {!off && drCapable && (drFailed || d.offsiteConfigured) && (
                   <div className="flex flex-wrap items-center gap-2 pl-1">
                     {drFailed && d.drillDetail && (
                       <span className="text-xs text-[#ff8389] break-words" title={d.drillDetail}>
