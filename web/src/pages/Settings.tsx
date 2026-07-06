@@ -1113,13 +1113,28 @@ function IntegrityCard({
                     {state[dKey] === "fail" && (
                       <span className="text-sm text-[#ff8389] break-words">✗ {msg[dKey] || t("verify.failed")}</span>
                     )}
-                    {/* Last recorded drill for this domain/source (idle state only). */}
+                    {/* Last recorded drill for this domain/source (idle state only).
+                        Names WHICH check ran (off-site DR vs local integrity) and,
+                        on a stored failure, the scrubbed reason. */}
                     {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
-                      <span className="text-xs text-carbon-textMuted">
-                        {drill
-                          ? `${t("verify.last").replace("{time}", relativeTime(t, drill.at))} ${drill.ok ? "✓" : "✗"}`
-                          : t("verify.never")}
-                      </span>
+                      drill ? (
+                        <>
+                          <span className="text-xs text-carbon-textMuted">
+                            {drill.source === "offsite" && drill.kind === "dr"
+                              ? t("drill.checkOffsiteDr")
+                              : t("drill.checkLocal")}
+                            {" · "}
+                            {t("verify.last").replace("{time}", relativeTime(t, drill.at))} {drill.ok ? "✓" : "✗"}
+                          </span>
+                          {!drill.ok && drill.detail && (
+                            <span className="text-xs text-[#ff8389] break-words" title={drill.detail}>
+                              {t("drill.failReasonPrefix")} {drill.detail}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs text-carbon-textMuted">{t("verify.never")}</span>
+                      )
                     )}
                   </>
                 )}

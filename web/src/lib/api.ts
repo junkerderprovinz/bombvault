@@ -211,6 +211,10 @@ export interface RestoreDrill {
   at: number; // unix seconds the drill ran
   ok: boolean; // true when the checked data was intact
   detail: string; // short scrubbed reason on failure; empty on success
+  // Drill flavour: "subset" (restic check --read-data-subset) or "dr" (a real
+  // off-site sandbox restore). Distinguishes an off-site DR check from a local
+  // subset integrity check (which can also run against the off-site repo).
+  kind: string;
 }
 
 export interface StatusResponse {
