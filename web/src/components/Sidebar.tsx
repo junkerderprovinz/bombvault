@@ -269,19 +269,21 @@ export function Sidebar({ settings }: SidebarProps) {
 
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
-      {/* Logo / brand — sized to echo the README banner */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-carbon-border">
-        {/* The logo ships with its own white frame, so it reads on both dark and
-            light surfaces with no background box or glow (see .app-logo). */}
+      {/* Logo → Dashboard. Enlarged to fill the sidebar column; the wordmark is
+          dropped (the logo already reads as the brand). Clicking it always
+          returns to the Dashboard. The logo ships with its own white frame, so
+          it reads on both dark and light surfaces (see .app-logo). */}
+      <NavLink
+        to="/dashboard"
+        aria-label={t("nav.dashboard")}
+        className="block border-b border-carbon-border p-3 hover:opacity-90 transition-opacity"
+      >
         <img
           src="/logo.png"
           alt="BombVault"
-          className="app-logo h-11 w-11 object-contain shrink-0"
+          className="app-logo w-full h-auto object-contain"
         />
-        <span className="text-carbon-text font-bold text-2xl tracking-tight leading-none">
-          BombVault
-        </span>
-      </div>
+      </NavLink>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1 p-3 flex-1">
