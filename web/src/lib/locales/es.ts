@@ -14,13 +14,15 @@ const es: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Ajustes",
   "nav.reportBug": "Informar de un error",
-  "nav.advanced": "Avanzado",
-  "nav.comingSoon": "Próximamente",
+  "mode.simple": "Simple",
+  "mode.advanced": "Avanzado",
+  "mode.hint": "Avanzado muestra los controles para expertos",
   "nav.recovery": "Recuperación",
-  "nav.config": "Configuración",
+  "nav.config": "Autocopia",
 
   // Dashboard
   "dashboard.title": "Panel",
+  "dashboard.subtitle": "El estado de tus copias de seguridad de un vistazo.",
   "dashboard.lastBackups": "Últimas copias",
   "dashboard.recentRuns": "Ejecuciones recientes",
   "dashboard.spikeStatus": "Estado del sistema",
@@ -146,7 +148,7 @@ const es: Partial<Translations> = {
   "settings.containersEnabled": "Contenedores",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Configuración de la app",
+  "settings.configEnabled": "Autocopia",
   "settings.schedule": "Calendario",
   "settings.scheduleOff": "desactivado",
   "settings.language": "Idioma",
@@ -162,8 +164,8 @@ const es: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Contenedores",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Tareas activas",
-  "dashboard.statPausedJobs": "Tareas en pausa",
+  "dashboard.statActiveJobs": "Planes activos",
+  "dashboard.statPausedJobs": "Planes en pausa",
   "dashboard.statErrors": "Errores",
   "dashboard.statMissingContainers": "Contenedores perdidos",
   "dashboard.statMissingVMs": "VMs perdidas",
@@ -293,7 +295,7 @@ const es: Partial<Translations> = {
   "files.more": "Afina el filtro para ver más archivos.",
 
   // Retention
-  "settings.retentionTitle": "Retención",
+  "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cuántas copias conservar por elemento. Tras cada copia, restic poda las instantáneas más antiguas según esta política. Todo a cero = conservar todo (desactivado).",
   "settings.retentionLast": "Conservar últimas",
   "settings.retentionDaily": "Conservar diarias",
@@ -351,7 +353,7 @@ const es: Partial<Translations> = {
   "flash.zipExport.enableHint": "Cada vez que una copia del flash se realiza con éxito, la instantánea se escribe como un .zip en la carpeta de abajo.",
   "flash.zipExport.path": "Carpeta de exportación",
   "flash.zipExport.pathHint": "Subruta relativa bajo la raíz del montaje del host donde se coloca el .zip — apúntala a una carpeta de Syncthing/rclone para sacar el flash del servidor automáticamente.",
-  "flash.zipExport.keepHistory": "Conservar historial",
+  "flash.zipExport.keepHistory": "Conservar los archivos zip exportados",
   "flash.zipExport.keepHistoryHint": "Desactivado: conserva un único flash-latest.zip que se sobrescribe cada vez. Activado: conserva los N archivos flash-<date>.zip más recientes con marca de tiempo. Esto es independiente de la retención de restic: desactivado conserva un único archivo que siempre se sobrescribe (nunca llena el destino); activado conserva los N más recientes y elimina los más antiguos.",
   "flash.zipExport.keepN": "Zips a conservar",
   "flash.zipExport.keepNHint": "Se conservan los N zips con marca de tiempo más recientes; los más antiguos se eliminan automáticamente.",
@@ -496,9 +498,9 @@ const es: Partial<Translations> = {
   "recovery.freshNudgeCta": "Ir a Recuperación",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Copia de la configuración",
+  "config.title": "Autocopia",
   "config.subtitle": "Haz una copia de la propia configuración de BombVault para que un servidor reconstruido pueda restaurarse a sí mismo.",
-  "config.settingsTitle": "Ajustes de la copia de configuración",
+  "config.settingsTitle": "Ajustes de la autocopia",
   "config.settingsHint": "Protege la propia configuración de BombVault — su base de datos de ajustes, las credenciales externas y las claves SSH — para que una instalación nueva pueda restaurarse a sí misma y continuar justo donde lo dejó.",
   "config.enabled": "Copiar los ajustes de BombVault",
   "config.enabledHint": "Incluye el propio /config de BombVault en el calendario de abajo.",
@@ -570,7 +572,7 @@ const es: Partial<Translations> = {
   "dashboard.domainContainers": "Contenedores",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Configuración",
+  "dashboard.domainConfig": "Autocopia",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Salud de las copias",

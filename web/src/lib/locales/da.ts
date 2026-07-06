@@ -14,13 +14,15 @@ const da: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Indstillinger",
   "nav.reportBug": "Rapportér en fejl",
-  "nav.advanced": "Avanceret",
-  "nav.comingSoon": "Kommer snart",
+  "mode.simple": "Enkel",
+  "mode.advanced": "Avanceret",
+  "mode.hint": "Avanceret viser ekspertindstillinger",
   "nav.recovery": "Gendannelse",
-  "nav.config": "Konfiguration",
+  "nav.config": "Auto-sikkerhedskopi",
 
   // Dashboard
   "dashboard.title": "Oversigt",
+  "dashboard.subtitle": "Din sikkerhedskopieringsstatus med et blik.",
   "dashboard.lastBackups": "Seneste sikkerhedskopier",
   "dashboard.recentRuns": "Seneste kørsler",
   "dashboard.spikeStatus": "Systemstatus",
@@ -146,7 +148,7 @@ const da: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "App-konfiguration",
+  "settings.configEnabled": "Auto-sikkerhedskopi",
   "settings.schedule": "Tidsplan",
   "settings.scheduleOff": "fra",
   "settings.language": "Sprog",
@@ -162,8 +164,8 @@ const da: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Aktive job",
-  "dashboard.statPausedJobs": "Pausede job",
+  "dashboard.statActiveJobs": "Aktive planer",
+  "dashboard.statPausedJobs": "Pausede planer",
   "dashboard.statErrors": "Fejl",
   "dashboard.statMissingContainers": "Manglende containers",
   "dashboard.statMissingVMs": "Manglende VMs",
@@ -293,7 +295,7 @@ const da: Partial<Translations> = {
   "files.more": "Forfin filteret for at se flere filer.",
 
   // Retention
-  "settings.retentionTitle": "Opbevaring",
+  "settings.retentionTitle": "Opbevaring af snapshots",
   "settings.retentionHint": "Hvor mange sikkerhedskopier der beholdes pr. element. Efter hver sikkerhedskopiering renser restic ældre øjebliksbilleder efter denne politik. Alt 0 = behold alt (fra).",
   "settings.retentionLast": "Behold seneste",
   "settings.retentionDaily": "Behold daglige",
@@ -351,7 +353,7 @@ const da: Partial<Translations> = {
   "flash.zipExport.enableHint": "Hver gang en flash-sikkerhedskopi lykkes, skrives snapshottet som en .zip til mappen nedenfor.",
   "flash.zipExport.path": "Eksportmappe",
   "flash.zipExport.pathHint": "Relativ understi under host-monteringsroden, hvor .zip'en lander — peg den mod en Syncthing/rclone-mappe for automatisk at få flashen væk fra serveren.",
-  "flash.zipExport.keepHistory": "Bevar historik",
+  "flash.zipExport.keepHistory": "Bevar eksporterede zip-filer",
   "flash.zipExport.keepHistoryHint": "Fra: behold en enkelt flash-latest.zip, der overskrives hver gang. Til: behold de nyeste N tidsstemplede flash-<date>.zip-filer. Dette er uafhængigt af restic-opbevaringen: fra beholder en enkelt fil, der altid overskrives (fylder aldrig destinationen); til beholder de nyeste N og sletter ældre.",
   "flash.zipExport.keepN": "Antal zips at beholde",
   "flash.zipExport.keepNHint": "De nyeste N tidsstemplede zips beholdes; ældre slettes automatisk.",
@@ -488,9 +490,9 @@ const da: Partial<Translations> = {
   "recovery.freshNudgeCta": "Gå til Gendannelse",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Sikkerhedskopi af konfiguration",
+  "config.title": "Auto-sikkerhedskopi",
   "config.subtitle": "Sikkerhedskopiér BombVaults egne indstillinger, så en genopbygget server kan gendanne sig selv.",
-  "config.settingsTitle": "Indstillinger for konfigurationssikkerhedskopi",
+  "config.settingsTitle": "Indstillinger for auto-sikkerhedskopi",
   "config.settingsHint": "Beskyt BombVaults egen konfiguration — dens indstillingsdatabase, off-site-legitimationsoplysninger og SSH-nøgler — så en frisk installation kan gendanne sig selv og fortsætte præcis, hvor den slap.",
   "config.enabled": "Sikkerhedskopiér BombVaults indstillinger",
   "config.enabledHint": "Inkluder BombVaults eget /config i tidsplanen nedenfor.",
@@ -572,7 +574,7 @@ const da: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Konfiguration",
+  "dashboard.domainConfig": "Auto-sikkerhedskopi",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Sikkerhedskopiers tilstand",

@@ -14,13 +14,15 @@ const fr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Paramètres",
   "nav.reportBug": "Signaler un bug",
-  "nav.advanced": "Avancé",
-  "nav.comingSoon": "Bientôt disponible",
+  "mode.simple": "Simple",
+  "mode.advanced": "Avancé",
+  "mode.hint": "Avancé affiche les contrôles experts",
   "nav.recovery": "Récupération",
-  "nav.config": "Config",
+  "nav.config": "Auto-sauvegarde",
 
   // Dashboard
   "dashboard.title": "Tableau de bord",
+  "dashboard.subtitle": "Votre état de sauvegarde en un coup d'œil.",
   "dashboard.lastBackups": "Dernières sauvegardes",
   "dashboard.recentRuns": "Exécutions récentes",
   "dashboard.spikeStatus": "État du système",
@@ -146,7 +148,7 @@ const fr: Partial<Translations> = {
   "settings.containersEnabled": "Conteneurs",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Configuration de l'application",
+  "settings.configEnabled": "Auto-sauvegarde",
   "settings.schedule": "Planning",
   "settings.scheduleOff": "désactivé",
   "settings.language": "Langue",
@@ -162,8 +164,8 @@ const fr: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Conteneurs",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Tâches actives",
-  "dashboard.statPausedJobs": "Tâches en pause",
+  "dashboard.statActiveJobs": "Plans actifs",
+  "dashboard.statPausedJobs": "Plans en pause",
   "dashboard.statErrors": "Erreurs",
   "dashboard.statMissingContainers": "Conteneurs manquants",
   "dashboard.statMissingVMs": "VMs manquantes",
@@ -293,7 +295,7 @@ const fr: Partial<Translations> = {
   "files.more": "Affinez le filtre pour voir plus de fichiers.",
 
   // Retention
-  "settings.retentionTitle": "Rétention",
+  "settings.retentionTitle": "Rétention des instantanés",
   "settings.retentionHint": "Combien de sauvegardes conserver par élément. Après chaque sauvegarde, restic élague les instantanés plus anciens selon cette règle. Tout à zéro = tout conserver (désactivé).",
   "settings.retentionLast": "Conserver les dernières",
   "settings.retentionDaily": "Conserver quotidiennes",
@@ -351,7 +353,7 @@ const fr: Partial<Translations> = {
   "flash.zipExport.enableHint": "Chaque fois qu'une sauvegarde flash réussit, l'instantané est écrit sous forme de .zip dans le dossier ci-dessous.",
   "flash.zipExport.path": "Dossier d'export",
   "flash.zipExport.pathHint": "Sous-chemin relatif sous la racine du montage hôte où le .zip est déposé — pointez-le vers un dossier Syncthing/rclone pour sortir le flash du serveur automatiquement.",
-  "flash.zipExport.keepHistory": "Conserver l'historique",
+  "flash.zipExport.keepHistory": "Conserver les fichiers zip exportés",
   "flash.zipExport.keepHistoryHint": "Désactivé : conserver un seul flash-latest.zip écrasé à chaque fois. Activé : conserver les N fichiers flash-<date>.zip horodatés les plus récents. C'est indépendant de la rétention restic : désactivé conserve un seul fichier, toujours écrasé (ne remplit jamais la destination) ; activé conserve les N plus récents et supprime les plus anciens.",
   "flash.zipExport.keepN": "Zips à conserver",
   "flash.zipExport.keepNHint": "Les N zips horodatés les plus récents sont conservés ; les plus anciens sont supprimés automatiquement.",
@@ -547,7 +549,7 @@ const fr: Partial<Translations> = {
   "dashboard.domainContainers": "Conteneurs",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "Auto-sauvegarde",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Santé des sauvegardes",
@@ -685,9 +687,9 @@ const fr: Partial<Translations> = {
   "ransomware.pruneStrategy": "stratégie d'élagage définie",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Sauvegarde de la config",
+  "config.title": "Auto-sauvegarde",
   "config.subtitle": "Sauvegardez les propres réglages de BombVault pour qu'un serveur reconstruit puisse se restaurer lui-même.",
-  "config.settingsTitle": "Réglages de la sauvegarde de config",
+  "config.settingsTitle": "Réglages de l'auto-sauvegarde",
   "config.settingsHint": "Protégez la propre configuration de BombVault — sa base de réglages, ses identifiants hors site et ses clés SSH — pour qu'une installation neuve puisse se restaurer et reprendre exactement là où elle s'était arrêtée.",
   "config.enabled": "Sauvegarder les réglages de BombVault",
   "config.enabledHint": "Inclure le /config propre à BombVault dans le planning ci-dessous.",

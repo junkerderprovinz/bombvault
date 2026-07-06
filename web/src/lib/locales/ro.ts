@@ -14,12 +14,14 @@ const ro: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Setări",
   "nav.reportBug": "Raportează o eroare",
-  "nav.advanced": "Avansat",
-  "nav.comingSoon": "În curând",
+  "mode.simple": "Simplu",
+  "mode.advanced": "Avansat",
+  "mode.hint": "Avansat afișează controalele pentru experți",
   "nav.recovery": "Recuperare",
 
   // Dashboard
   "dashboard.title": "Panou principal",
+  "dashboard.subtitle": "Starea backupurilor tale dintr-o privire.",
   "dashboard.lastBackups": "Ultimele copii de rezervă",
   "dashboard.recentRuns": "Rulări recente",
   "dashboard.spikeStatus": "Starea sistemului",
@@ -160,8 +162,8 @@ const ro: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containere",
   "dashboard.statVMs": "VM-uri",
-  "dashboard.statActiveJobs": "Sarcini active",
-  "dashboard.statPausedJobs": "Sarcini suspendate",
+  "dashboard.statActiveJobs": "Planuri active",
+  "dashboard.statPausedJobs": "Planuri suspendate",
   "dashboard.statErrors": "Erori",
   "dashboard.statMissingContainers": "Containere lipsă",
   "dashboard.statMissingVMs": "VM-uri lipsă",
@@ -291,7 +293,7 @@ const ro: Partial<Translations> = {
   "files.more": "Rafinați filtrul pentru a vedea mai multe fișiere.",
 
   // Retention
-  "settings.retentionTitle": "Retenție",
+  "settings.retentionTitle": "Retenția instantaneelor",
   "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
   "settings.retentionLast": "Păstrează ultimele",
   "settings.retentionDaily": "Păstrează zilnic",
@@ -349,7 +351,7 @@ const ro: Partial<Translations> = {
   "flash.zipExport.enableHint": "De fiecare dată când un backup flash reușește, snapshotul este scris ca .zip în folderul de mai jos.",
   "flash.zipExport.path": "Folder de export",
   "flash.zipExport.pathHint": "Subcale relativă sub rădăcina montării gazdei unde ajunge fișierul .zip — îndreapt-o către un folder Syncthing/rclone pentru a scoate automat flash-ul de pe server.",
-  "flash.zipExport.keepHistory": "Păstrează istoricul",
+  "flash.zipExport.keepHistory": "Păstrează fișierele zip exportate",
   "flash.zipExport.keepHistoryHint": "Dezactivat: păstrează un singur flash-latest.zip care este suprascris de fiecare dată. Activat: păstrează cele mai noi N fișiere flash-<dată>.zip cu marcaj temporal. Aceasta este independentă de retenția restic: dezactivat păstrează un singur fișier, mereu suprascris (nu umple niciodată destinația); activat păstrează cele mai noi N și le șterge pe cele mai vechi.",
   "flash.zipExport.keepN": "ZIP-uri de păstrat",
   "flash.zipExport.keepNHint": "Cele mai noi N fișiere ZIP cu marcaj temporal sunt păstrate; cele mai vechi sunt șterse automat.",
@@ -685,9 +687,9 @@ const ro: Partial<Translations> = {
   "ransomware.pruneStrategy": "strategie de prune setată",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Backup de configurație",
+  "config.title": "Auto-backup",
   "config.subtitle": "Fă backup propriilor setări ale BombVault, astfel încât un server reconstruit să se poată restaura singur.",
-  "config.settingsTitle": "Setări backup de configurație",
+  "config.settingsTitle": "Setări auto-backup",
   "config.settingsHint": "Protejează propria configurație a BombVault — baza de date cu setări, credențialele off-site și cheile SSH — astfel încât o instalare nouă să se poată restaura singură și să continue exact de unde a rămas.",
   "config.enabled": "Fă backup setărilor BombVault",
   "config.enabledHint": "Include propriul /config al BombVault în programarea de mai jos.",
@@ -708,9 +710,9 @@ const ro: Partial<Translations> = {
   "config.snapshotsTitle": "Backupuri de setări",
   "config.snapshotsHint": "Pentru a restaura aceste setări pe un server reconstruit, folosește fila Recuperare — restaurarea setărilor repornește BombVault pentru a le aplica, așa că se află acolo împreună cu restul fluxului de recuperare în caz de dezastru.",
   "config.none": "Încă niciun backup de setări — rulează un backup mai sus.",
-  "nav.config": "Config",
-  "settings.configEnabled": "Configurația aplicației",
-  "dashboard.domainConfig": "Config",
+  "nav.config": "Auto-backup",
+  "settings.configEnabled": "Auto-backup",
+  "dashboard.domainConfig": "Auto-backup",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Modele de excludere",

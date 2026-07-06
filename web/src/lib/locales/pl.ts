@@ -14,12 +14,14 @@ const pl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Ustawienia",
   "nav.reportBug": "Zgłoś błąd",
-  "nav.advanced": "Zaawansowane",
-  "nav.comingSoon": "Wkrótce",
+  "mode.simple": "Prosty",
+  "mode.advanced": "Zaawansowane",
+  "mode.hint": "Zaawansowane pokazuje opcje dla ekspertów",
   "nav.recovery": "Odzyskiwanie",
 
   // Dashboard
   "dashboard.title": "Panel",
+  "dashboard.subtitle": "Stan Twoich kopii zapasowych w skrócie.",
   "dashboard.lastBackups": "Ostatnie kopie zapasowe",
   "dashboard.recentRuns": "Ostatnie uruchomienia",
   "dashboard.spikeStatus": "Stan systemu",
@@ -158,8 +160,8 @@ const pl: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "Maszyny wirtualne",
-  "dashboard.statActiveJobs": "Aktywne zadania",
-  "dashboard.statPausedJobs": "Wstrzymane zadania",
+  "dashboard.statActiveJobs": "Aktywne plany",
+  "dashboard.statPausedJobs": "Wstrzymane plany",
   "dashboard.statErrors": "Błędy",
   "dashboard.statMissingContainers": "Brakujące kontenery",
   "dashboard.statMissingVMs": "Brakujące maszyny wirtualne",
@@ -286,7 +288,7 @@ const pl: Partial<Translations> = {
   "files.more": "Zawęź filtr, aby zobaczyć więcej plików.",
 
   // Retention
-  "settings.retentionTitle": "Przechowywanie",
+  "settings.retentionTitle": "Przechowywanie migawek",
   "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
   "settings.retentionLast": "Zachowaj ostatnie",
   "settings.retentionDaily": "Zachowaj dzienne",
@@ -344,7 +346,7 @@ const pl: Partial<Translations> = {
   "flash.zipExport.enableHint": "Za każdym razem, gdy kopia Flash się powiedzie, migawka jest zapisywana jako .zip do poniższego folderu.",
   "flash.zipExport.path": "Folder eksportu",
   "flash.zipExport.pathHint": "Względna podścieżka w katalogu montowania hosta, do której trafia .zip — wskaż folder Syncthing/rclone, aby automatycznie wynosić flash z serwera.",
-  "flash.zipExport.keepHistory": "Zachowaj historię",
+  "flash.zipExport.keepHistory": "Zachowaj wyeksportowane pliki zip",
   "flash.zipExport.keepHistoryHint": "Wył.: zachowuje jeden plik flash-latest.zip, nadpisywany za każdym razem. Wł.: zachowuje najnowsze N plików flash-<data>.zip ze znacznikiem czasu. Jest to niezależne od retencji restic: wyłączone zachowuje jeden plik, zawsze nadpisywany (nigdy nie zapełnia celu); włączone zachowuje N najnowszych i usuwa starsze.",
   "flash.zipExport.keepN": "Liczba zipów do zachowania",
   "flash.zipExport.keepNHint": "Zachowywane są najnowsze N zipów ze znacznikiem czasu; starsze są usuwane automatycznie.",
@@ -677,9 +679,9 @@ const pl: Partial<Translations> = {
   "ransomware.pruneStrategy": "ustawiono strategię przycinania",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Kopia konfiguracji",
+  "config.title": "Autokopia",
   "config.subtitle": "Twórz kopię własnych ustawień BombVault, aby odbudowany serwer mógł sam się przywrócić.",
-  "config.settingsTitle": "Ustawienia kopii konfiguracji",
+  "config.settingsTitle": "Ustawienia autokopii",
   "config.settingsHint": "Chroń własną konfigurację BombVault — jego bazę ustawień, poświadczenia off-site i klucze SSH — aby świeża instalacja mogła sama się przywrócić i podjąć pracę dokładnie tam, gdzie ją przerwano.",
   "config.enabled": "Twórz kopię ustawień BombVault",
   "config.enabledHint": "Uwzględnij własne /config BombVault w poniższym harmonogramie.",
@@ -700,9 +702,9 @@ const pl: Partial<Translations> = {
   "config.snapshotsTitle": "Kopie ustawień",
   "config.snapshotsHint": "Aby przywrócić te ustawienia na odbudowanym serwerze, użyj zakładki Odzyskiwanie — przywrócenie ustawień restartuje BombVault, aby je zastosować, dlatego znajduje się tam wraz z resztą procesu odzyskiwania po awarii.",
   "config.none": "Brak kopii ustawień — utwórz kopię powyżej.",
-  "nav.config": "Config",
-  "settings.configEnabled": "Konfiguracja aplikacji",
-  "dashboard.domainConfig": "Config",
+  "nav.config": "Autokopia",
+  "settings.configEnabled": "Autokopia",
+  "dashboard.domainConfig": "Autokopia",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Wzorce wykluczeń",

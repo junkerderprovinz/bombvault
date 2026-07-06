@@ -14,13 +14,15 @@ const cs: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Nastavení",
   "nav.reportBug": "Nahlásit chybu",
-  "nav.advanced": "Pokročilé",
-  "nav.comingSoon": "Připravujeme",
+  "mode.simple": "Jednoduchý",
+  "mode.advanced": "Pokročilé",
+  "mode.hint": "Pokročilé zobrazí odborné ovládací prvky",
   "nav.recovery": "Obnova",
-  "nav.config": "Konfigurace",
+  "nav.config": "Autozáloha",
 
   // Dashboard
   "dashboard.title": "Přehled",
+  "dashboard.subtitle": "Stav vašich záloh na první pohled.",
   "dashboard.lastBackups": "Poslední zálohy",
   "dashboard.recentRuns": "Nedávné běhy",
   "dashboard.spikeStatus": "Stav systému",
@@ -146,7 +148,7 @@ const cs: Partial<Translations> = {
   "settings.containersEnabled": "Kontejnery",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Konfigurace aplikace",
+  "settings.configEnabled": "Autozáloha",
   "settings.schedule": "Plán",
   "settings.scheduleOff": "vypnuto",
   "settings.language": "Jazyk",
@@ -162,8 +164,8 @@ const cs: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Kontejnery",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Aktivní úlohy",
-  "dashboard.statPausedJobs": "Pozastavené úlohy",
+  "dashboard.statActiveJobs": "Aktivní plány",
+  "dashboard.statPausedJobs": "Pozastavené plány",
   "dashboard.statErrors": "Chyby",
   "dashboard.statMissingContainers": "Chybějící kontejnery",
   "dashboard.statMissingVMs": "Chybějící VMs",
@@ -291,7 +293,7 @@ const cs: Partial<Translations> = {
   "files.more": "Upřesněte filtr pro zobrazení dalších souborů.",
 
   // Retention
-  "settings.retentionTitle": "Uchovávání",
+  "settings.retentionTitle": "Uchovávání snímků",
   "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
   "settings.retentionLast": "Ponechat poslední",
   "settings.retentionDaily": "Ponechat denní",
@@ -349,7 +351,7 @@ const cs: Partial<Translations> = {
   "flash.zipExport.enableHint": "Pokaždé, když záloha flashe uspěje, se snímek zapíše jako .zip do složky níže.",
   "flash.zipExport.path": "Složka pro export",
   "flash.zipExport.pathHint": "Relativní podcesta pod kořenem připojení hostitele, kam se ukládá .zip — nasměrujte ji na složku Syncthing/rclone, aby se flash automaticky dostal ze serveru pryč.",
-  "flash.zipExport.keepHistory": "Uchovávat historii",
+  "flash.zipExport.keepHistory": "Uchovávat exportované soubory zip",
   "flash.zipExport.keepHistoryHint": "Vypnuto: uchovat jediný flash-latest.zip, který se pokaždé přepíše. Zapnuto: uchovat nejnovějších N časově označených souborů flash-<date>.zip. Toto je nezávislé na uchovávání restic: vypnuto zachová jediný soubor, který se pokaždé přepíše (nikdy nezaplní cíl); zapnuto zachová N nejnovějších a starší smaže.",
   "flash.zipExport.keepN": "Počet zipů k uchování",
   "flash.zipExport.keepNHint": "Uchovává se nejnovějších N časově označených zipů; starší se automaticky mažou.",
@@ -486,9 +488,9 @@ const cs: Partial<Translations> = {
   "recovery.freshNudgeCta": "Přejít na Obnovu",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Záloha konfigurace",
+  "config.title": "Autozáloha",
   "config.subtitle": "Zálohujte vlastní nastavení BombVaultu, aby se znovu sestavený server mohl sám obnovit.",
-  "config.settingsTitle": "Nastavení zálohování konfigurace",
+  "config.settingsTitle": "Nastavení autozálohy",
   "config.settingsHint": "Chraňte vlastní konfiguraci BombVaultu — jeho databázi nastavení, přihlašovací údaje mimo lokalitu a SSH klíče — aby se čistá instalace mohla sama obnovit a navázat přesně tam, kde skončila.",
   "config.enabled": "Zálohovat nastavení BombVaultu",
   "config.enabledHint": "Zahrnout vlastní /config BombVaultu do plánu níže.",
@@ -570,7 +572,7 @@ const cs: Partial<Translations> = {
   "dashboard.domainContainers": "Kontejnery",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Konfigurace",
+  "dashboard.domainConfig": "Autozáloha",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Stav záloh",

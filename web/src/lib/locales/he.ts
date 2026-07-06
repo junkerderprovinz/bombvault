@@ -14,13 +14,15 @@ const he: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "הגדרות",
   "nav.reportBug": "דיווח על באג",
-  "nav.advanced": "מתקדם",
-  "nav.comingSoon": "בקרוב",
+  "mode.simple": "פשוט",
+  "mode.advanced": "מתקדם",
+  "mode.hint": "מצב מתקדם חושף בקרות מומחה",
   "nav.recovery": "התאוששות",
-  "nav.config": "Config",
+  "nav.config": "גיבוי עצמי",
 
   // Dashboard
   "dashboard.title": "לוח בקרה",
+  "dashboard.subtitle": "מצב הגיבוי שלך במבט אחד.",
   "dashboard.lastBackups": "גיבויים אחרונים",
   "dashboard.recentRuns": "הרצות אחרונות",
   "dashboard.spikeStatus": "מצב המערכת",
@@ -146,7 +148,7 @@ const he: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "תצורת האפליקציה",
+  "settings.configEnabled": "גיבוי עצמי",
   "settings.schedule": "לוח זמנים",
   "settings.scheduleOff": "כבוי",
   "settings.language": "שפה",
@@ -162,8 +164,8 @@ const he: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "משימות פעילות",
-  "dashboard.statPausedJobs": "משימות מושהות",
+  "dashboard.statActiveJobs": "תוכניות פעילות",
+  "dashboard.statPausedJobs": "תוכניות מושהות",
   "dashboard.statErrors": "שגיאות",
   "dashboard.statMissingContainers": "Containers חסרים",
   "dashboard.statMissingVMs": "VMs חסרים",
@@ -293,7 +295,7 @@ const he: Partial<Translations> = {
   "files.more": "צמצם את הסינון כדי לראות עוד קבצים.",
 
   // Retention
-  "settings.retentionTitle": "שמירה",
+  "settings.retentionTitle": "שמירת תמונות מצב",
   "settings.retentionHint": "כמה גיבויים לשמור לכל פריט. אחרי כל גיבוי, restic גוזם snapshots ישנים לפי מדיניות זו. הכל 0 = לשמור הכל (כבוי).",
   "settings.retentionLast": "שמור אחרונים",
   "settings.retentionDaily": "שמור יומיים",
@@ -351,7 +353,7 @@ const he: Partial<Translations> = {
   "flash.zipExport.enableHint": "בכל פעם שגיבוי flash מצליח, התמונה נכתבת כקובץ .zip לתיקייה שלמטה.",
   "flash.zipExport.path": "תיקיית ייצוא",
   "flash.zipExport.pathHint": "תת-נתיב יחסי תחת שורש נקודת העיגון של המארח שאליו מגיע ה-.zip — הפנה אותו לתיקיית Syncthing/rclone כדי להוציא את ה-flash מהשרת אוטומטית.",
-  "flash.zipExport.keepHistory": "שמור היסטוריה",
+  "flash.zipExport.keepHistory": "שמור קבצי zip מיוצאים",
   "flash.zipExport.keepHistoryHint": "כבוי: שמור קובץ flash-latest.zip יחיד שנדרס בכל פעם. דלוק: שמור את N הקבצים flash-<date>.zip העדכניים ביותר עם חותמת זמן. זה נפרד משמירת restic: כבוי שומר קובץ יחיד שנדרס תמיד (לעולם לא ממלא את היעד); דלוק שומר את N העדכניים ביותר ומוחק ישנים יותר.",
   "flash.zipExport.keepN": "מספר קובצי zip לשמירה",
   "flash.zipExport.keepNHint": "N קובצי ה-zip העדכניים ביותר עם חותמת זמן נשמרים; הישנים יותר נמחקים אוטומטית.",
@@ -547,7 +549,7 @@ const he: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "גיבוי עצמי",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "בריאות הגיבוי",
@@ -685,9 +687,9 @@ const he: Partial<Translations> = {
   "ransomware.pruneStrategy": "אסטרטגיית גיזום הוגדרה",
 
   // Config backup (BombVault's own settings)
-  "config.title": "גיבוי הגדרות",
+  "config.title": "גיבוי עצמי",
   "config.subtitle": "גבה את ההגדרות של BombVault עצמו כדי ששרת שנבנה מחדש יוכל לשחזר את עצמו.",
-  "config.settingsTitle": "הגדרות גיבוי התצורה",
+  "config.settingsTitle": "הגדרות גיבוי עצמי",
   "config.settingsHint": "הגן על התצורה של BombVault עצמו — מסד ההגדרות שלו, פרטי ההתחברות מחוץ לאתר ומפתחות ה-SSH — כדי שהתקנה חדשה תוכל לשחזר את עצמה ולהמשיך בדיוק מהמקום שבו הפסיקה.",
   "config.enabled": "גבה את ההגדרות של BombVault",
   "config.enabledHint": "כלול את ה-/config של BombVault עצמו בלוח הזמנים שלמטה.",

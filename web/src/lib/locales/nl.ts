@@ -14,12 +14,14 @@ const nl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Instellingen",
   "nav.reportBug": "Bug melden",
-  "nav.advanced": "Geavanceerd",
-  "nav.comingSoon": "Binnenkort",
+  "mode.simple": "Eenvoudig",
+  "mode.advanced": "Geavanceerd",
+  "mode.hint": "Geavanceerd toont expertopties",
   "nav.recovery": "Herstel",
 
   // Dashboard
   "dashboard.title": "Dashboard",
+  "dashboard.subtitle": "Je back-upstatus in één oogopslag.",
   "dashboard.lastBackups": "Laatste back-ups",
   "dashboard.recentRuns": "Recente uitvoeringen",
   "dashboard.spikeStatus": "Systeemstatus",
@@ -158,8 +160,8 @@ const nl: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VM's",
-  "dashboard.statActiveJobs": "Actieve taken",
-  "dashboard.statPausedJobs": "Gepauzeerde taken",
+  "dashboard.statActiveJobs": "Actieve plannen",
+  "dashboard.statPausedJobs": "Gepauzeerde plannen",
   "dashboard.statErrors": "Fouten",
   "dashboard.statMissingContainers": "Ontbrekende containers",
   "dashboard.statMissingVMs": "Ontbrekende VM's",
@@ -288,7 +290,7 @@ const nl: Partial<Translations> = {
   "files.more": "Verfijn het filter om meer bestanden te zien.",
 
   // Retention
-  "settings.retentionTitle": "Bewaarbeleid",
+  "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
   "settings.retentionLast": "Laatste bewaren",
   "settings.retentionDaily": "Dagelijks bewaren",
@@ -346,7 +348,7 @@ const nl: Partial<Translations> = {
   "flash.zipExport.enableHint": "Telkens als een flash-back-up slaagt, wordt de snapshot als .zip naar de onderstaande map geschreven.",
   "flash.zipExport.path": "Exportmap",
   "flash.zipExport.pathHint": "Relatief subpad onder de host-mount-root waar de .zip terechtkomt — wijs het naar een Syncthing/rclone-map om de flash automatisch van de server te halen.",
-  "flash.zipExport.keepHistory": "Geschiedenis bewaren",
+  "flash.zipExport.keepHistory": "Geëxporteerde zip-bestanden bewaren",
   "flash.zipExport.keepHistoryHint": "Uit: één flash-latest.zip bewaren die elke keer wordt overschreven. Aan: de nieuwste N flash-<datum>.zip-bestanden met tijdstempel bewaren. Dit staat los van de restic-retentie: uit bewaart één enkel bestand dat altijd wordt overschreven (vult de bestemming nooit); aan bewaart de nieuwste N en verwijdert oudere.",
   "flash.zipExport.keepN": "Te bewaren zips",
   "flash.zipExport.keepNHint": "De nieuwste N zips met tijdstempel worden bewaard; oudere worden automatisch verwijderd.",
@@ -679,9 +681,9 @@ const nl: Partial<Translations> = {
   "ransomware.pruneStrategy": "prune-strategie ingesteld",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Config-back-up",
+  "config.title": "Zelf-back-up",
   "config.subtitle": "Maak een back-up van BombVaults eigen instellingen zodat een opnieuw opgebouwde server zichzelf kan herstellen.",
-  "config.settingsTitle": "Config-back-upinstellingen",
+  "config.settingsTitle": "Zelf-back-upinstellingen",
   "config.settingsHint": "Bescherm BombVaults eigen configuratie — de instellingendatabase, off-site inloggegevens en SSH-sleutels — zodat een verse installatie zichzelf kan herstellen en precies verdergaat waar ze was gebleven.",
   "config.enabled": "BombVaults instellingen back-uppen",
   "config.enabledHint": "Neem BombVaults eigen /config op in de onderstaande planning.",
@@ -702,9 +704,9 @@ const nl: Partial<Translations> = {
   "config.snapshotsTitle": "Instellingen-back-ups",
   "config.snapshotsHint": "Om deze instellingen op een opnieuw opgebouwde server te herstellen, gebruik je het tabblad Herstel — het herstellen van instellingen start BombVault opnieuw om ze toe te passen, dus het staat daar bij de rest van het noodherstel.",
   "config.none": "Nog geen instellingen-back-ups — maak er hierboven een.",
-  "nav.config": "Config",
-  "settings.configEnabled": "App-configuratie",
-  "dashboard.domainConfig": "Config",
+  "nav.config": "Zelf-back-up",
+  "settings.configEnabled": "Zelf-back-up",
+  "dashboard.domainConfig": "Zelf-back-up",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Uitsluitpatronen",

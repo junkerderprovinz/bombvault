@@ -14,13 +14,15 @@ const tr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Ayarlar",
   "nav.reportBug": "Hata bildir",
-  "nav.advanced": "Gelişmiş",
-  "nav.comingSoon": "Yakında",
+  "mode.simple": "Basit",
+  "mode.advanced": "Gelişmiş",
+  "mode.hint": "Gelişmiş, uzman denetimlerini gösterir",
   "nav.recovery": "Kurtarma",
-  "nav.config": "Yapılandırma",
+  "nav.config": "Öz yedek",
 
   // Dashboard
   "dashboard.title": "Kontrol Paneli",
+  "dashboard.subtitle": "Yedekleme durumunuz bir bakışta.",
   "dashboard.lastBackups": "Son Yedeklemeler",
   "dashboard.recentRuns": "Son Çalışmalar",
   "dashboard.spikeStatus": "Sistem Durumu",
@@ -146,7 +148,7 @@ const tr: Partial<Translations> = {
   "settings.containersEnabled": "Konteynerler",
   "settings.vmsEnabled": "VM'ler",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Uygulama yapılandırması",
+  "settings.configEnabled": "Öz yedek",
   "settings.schedule": "Zamanlama",
   "settings.scheduleOff": "kapalı",
   "settings.language": "Dil",
@@ -162,8 +164,8 @@ const tr: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Konteynerler",
   "dashboard.statVMs": "VM'ler",
-  "dashboard.statActiveJobs": "Etkin işler",
-  "dashboard.statPausedJobs": "Duraklatılmış işler",
+  "dashboard.statActiveJobs": "Etkin planlar",
+  "dashboard.statPausedJobs": "Duraklatılmış planlar",
   "dashboard.statErrors": "Hatalar",
   "dashboard.statMissingContainers": "Eksik konteynerler",
   "dashboard.statMissingVMs": "Eksik VM'ler",
@@ -293,7 +295,7 @@ const tr: Partial<Translations> = {
   "files.more": "Daha fazla dosya görmek için filtreyi daraltın.",
 
   // Retention
-  "settings.retentionTitle": "Saklama",
+  "settings.retentionTitle": "Anlık görüntü saklama",
   "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
   "settings.retentionLast": "Son yedekleri tut",
   "settings.retentionDaily": "Günlük tut",
@@ -351,7 +353,7 @@ const tr: Partial<Translations> = {
   "flash.zipExport.enableHint": "Bir flash yedeği her başarılı olduğunda, anlık görüntü aşağıdaki klasöre .zip olarak yazılır.",
   "flash.zipExport.path": "Dışa aktarma klasörü",
   "flash.zipExport.pathHint": "Host bağlama kökü altında .zip dosyasının ineceği göreli alt yol — flash'ı sunucudan otomatik olarak çıkarmak için bir Syncthing/rclone klasörüne yönlendirin.",
-  "flash.zipExport.keepHistory": "Geçmişi tut",
+  "flash.zipExport.keepHistory": "Dışa aktarılan zip dosyalarını tut",
   "flash.zipExport.keepHistoryHint": "Kapalı: her seferinde üzerine yazılan tek bir flash-latest.zip tutulur. Açık: zaman damgalı en yeni N flash-<tarih>.zip dosyası tutulur. Bu, restic saklamasından bağımsızdır: kapalı her seferinde üzerine yazılan tek bir dosya tutar (hedefi asla doldurmaz); açık en yeni N tanesini tutar ve daha eskilerini siler.",
   "flash.zipExport.keepN": "Tutulacak ZIP sayısı",
   "flash.zipExport.keepNHint": "Zaman damgalı en yeni N ZIP tutulur; daha eskiler otomatik olarak silinir.",
@@ -504,9 +506,9 @@ const tr: Partial<Translations> = {
   "recovery.configSkipped": "Atlandı. Yedeklerinizi aşağıdan elle ekleyin.",
 
   // Config Backup page
-  "config.title": "Yapılandırma Yedeği",
+  "config.title": "Öz yedek",
   "config.subtitle": "Yeniden oluşturulan bir sunucunun kendini geri yükleyebilmesi için BombVault'un kendi ayarlarını yedekleyin.",
-  "config.settingsTitle": "Yapılandırma yedekleme ayarları",
+  "config.settingsTitle": "Öz yedek ayarları",
   "config.settingsHint": "BombVault'un kendi yapılandırmasını — ayar veritabanı, site dışı kimlik bilgileri ve SSH anahtarları — koruyun; böylece yeni bir kurulum kendini geri yükleyip kaldığı yerden devam edebilir.",
   "config.enabled": "BombVault'un ayarlarını yedekle",
   "config.enabledHint": "BombVault'un kendi /config'ini aşağıdaki zamanlamaya dahil et.",
@@ -572,7 +574,7 @@ const tr: Partial<Translations> = {
   "dashboard.domainContainers": "Konteynerler",
   "dashboard.domainVMs": "VM'ler",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Yapılandırma",
+  "dashboard.domainConfig": "Öz yedek",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Yedek sağlığı",

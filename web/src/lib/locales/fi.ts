@@ -14,13 +14,15 @@ const fi: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Asetukset",
   "nav.reportBug": "Ilmoita virheestä",
-  "nav.advanced": "Lisäasetukset",
-  "nav.comingSoon": "Tulossa pian",
+  "mode.simple": "Yksinkertainen",
+  "mode.advanced": "Lisäasetukset",
+  "mode.hint": "Lisäasetukset paljastaa asiantuntija-asetukset",
   "nav.recovery": "Palautus",
-  "nav.config": "Konfiguraatio",
+  "nav.config": "Itsevarmuuskopio",
 
   // Dashboard
   "dashboard.title": "Kojelauta",
+  "dashboard.subtitle": "Varmuuskopioidesi tila yhdellä silmäyksellä.",
   "dashboard.lastBackups": "Viimeisimmät varmuuskopiot",
   "dashboard.recentRuns": "Viimeisimmät ajot",
   "dashboard.spikeStatus": "Järjestelmän tila",
@@ -146,7 +148,7 @@ const fi: Partial<Translations> = {
   "settings.containersEnabled": "Kontit",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Sovelluksen konfiguraatio",
+  "settings.configEnabled": "Itsevarmuuskopio",
   "settings.schedule": "Aikataulu",
   "settings.scheduleOff": "pois",
   "settings.language": "Kieli",
@@ -162,8 +164,8 @@ const fi: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Kontit",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Aktiiviset tehtävät",
-  "dashboard.statPausedJobs": "Tauolla olevat tehtävät",
+  "dashboard.statActiveJobs": "Aktiiviset suunnitelmat",
+  "dashboard.statPausedJobs": "Keskeytetyt suunnitelmat",
   "dashboard.statErrors": "Virheet",
   "dashboard.statMissingContainers": "Puuttuvat kontit",
   "dashboard.statMissingVMs": "Puuttuvat VMs",
@@ -293,7 +295,7 @@ const fi: Partial<Translations> = {
   "files.more": "Tarkenna suodatinta nähdäksesi lisää tiedostoja.",
 
   // Retention
-  "settings.retentionTitle": "Säilytys",
+  "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
   "settings.retentionLast": "Säilytä viimeisimmät",
   "settings.retentionDaily": "Säilytä päivittäin",
@@ -351,7 +353,7 @@ const fi: Partial<Translations> = {
   "flash.zipExport.enableHint": "Aina kun flash-varmuuskopio onnistuu, tilannevedos kirjoitetaan .zip-tiedostona alla olevaan kansioon.",
   "flash.zipExport.path": "Vientikansio",
   "flash.zipExport.pathHint": "Suhteellinen alipolku isäntäkoneen liitosjuuren alla, johon .zip päätyy — osoita se Syncthing/rclone-kansioon, niin flash siirtyy palvelimelta pois automaattisesti.",
-  "flash.zipExport.keepHistory": "Säilytä historia",
+  "flash.zipExport.keepHistory": "Säilytä viedyt zip-tiedostot",
   "flash.zipExport.keepHistoryHint": "Pois: säilytä yksi flash-latest.zip, joka korvataan joka kerta. Päällä: säilytä N uusinta aikaleimattua flash-<date>.zip-tiedostoa. Tämä on riippumaton restic-säilytyksestä: pois säilyttää yhden tiedoston, joka korvataan aina (ei koskaan täytä kohdetta); päällä säilyttää N uusinta ja poistaa vanhemmat.",
   "flash.zipExport.keepN": "Säilytettävien zipien määrä",
   "flash.zipExport.keepNHint": "N uusinta aikaleimattua zipiä säilytetään; vanhemmat poistetaan automaattisesti.",
@@ -488,9 +490,9 @@ const fi: Partial<Translations> = {
   "recovery.freshNudgeCta": "Siirry Palautukseen",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Asetusten varmuuskopio",
+  "config.title": "Itsevarmuuskopio",
   "config.subtitle": "Varmuuskopioi BombVaultin omat asetukset, jotta uudelleenrakennettu palvelin voi palauttaa itsensä.",
-  "config.settingsTitle": "Asetusten varmuuskopioinnin asetukset",
+  "config.settingsTitle": "Itsevarmuuskopion asetukset",
   "config.settingsHint": "Suojaa BombVaultin oma konfiguraatio — sen asetustietokanta, etätunnukset ja SSH-avaimet — jotta uusi asennus voi palauttaa itsensä ja jatkaa juuri siitä, mihin se jäi.",
   "config.enabled": "Varmuuskopioi BombVaultin asetukset",
   "config.enabledHint": "Sisällytä BombVaultin oma /config alla olevaan aikatauluun.",
@@ -572,7 +574,7 @@ const fi: Partial<Translations> = {
   "dashboard.domainContainers": "Kontit",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Konfiguraatio",
+  "dashboard.domainConfig": "Itsevarmuuskopio",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Varmuuskopioiden kunto",

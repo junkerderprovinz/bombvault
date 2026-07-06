@@ -14,13 +14,15 @@ const th: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "การตั้งค่า",
   "nav.reportBug": "รายงานข้อบกพร่อง",
-  "nav.advanced": "ขั้นสูง",
-  "nav.comingSoon": "เร็วๆ นี้",
+  "mode.simple": "ง่าย",
+  "mode.advanced": "ขั้นสูง",
+  "mode.hint": "ขั้นสูงจะแสดงตัวควบคุมสำหรับผู้เชี่ยวชาญ",
   "nav.recovery": "การกู้คืน",
-  "nav.config": "คอนฟิก",
+  "nav.config": "สำรองข้อมูลตัวเอง",
 
   // Dashboard
   "dashboard.title": "แดชบอร์ด",
+  "dashboard.subtitle": "สถานะการสำรองข้อมูลของคุณในพริบตา",
   "dashboard.lastBackups": "การสำรองข้อมูลล่าสุด",
   "dashboard.recentRuns": "การทำงานล่าสุด",
   "dashboard.spikeStatus": "สถานะระบบ",
@@ -146,7 +148,7 @@ const th: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "การกำหนดค่าแอป",
+  "settings.configEnabled": "สำรองข้อมูลตัวเอง",
   "settings.schedule": "ตารางเวลา",
   "settings.scheduleOff": "ปิด",
   "settings.language": "ภาษา",
@@ -162,8 +164,8 @@ const th: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "งานที่ทำงานอยู่",
-  "dashboard.statPausedJobs": "งานที่หยุดชั่วคราว",
+  "dashboard.statActiveJobs": "แผนที่ทำงานอยู่",
+  "dashboard.statPausedJobs": "แผนที่หยุดชั่วคราว",
   "dashboard.statErrors": "ข้อผิดพลาด",
   "dashboard.statMissingContainers": "Containers ที่หายไป",
   "dashboard.statMissingVMs": "VMs ที่หายไป",
@@ -293,7 +295,7 @@ const th: Partial<Translations> = {
   "files.more": "ปรับการกรองให้แคบลงเพื่อดูไฟล์เพิ่มเติม",
 
   // Retention
-  "settings.retentionTitle": "การเก็บรักษา",
+  "settings.retentionTitle": "การเก็บรักษาสแนปช็อต",
   "settings.retentionHint": "จำนวนการสำรองข้อมูลที่เก็บไว้ต่อรายการ หลังการสำรองข้อมูลแต่ละครั้ง restic จะตัดสแนปช็อตเก่าตามนโยบายนี้ ทั้งหมดเป็น 0 = เก็บทุกอย่าง (ปิด)",
   "settings.retentionLast": "เก็บล่าสุด",
   "settings.retentionDaily": "เก็บรายวัน",
@@ -351,7 +353,7 @@ const th: Partial<Translations> = {
   "flash.zipExport.enableHint": "ทุกครั้งที่การสำรองข้อมูลแฟลชสำเร็จ สแนปช็อตจะถูกเขียนเป็นไฟล์ .zip ไปยังโฟลเดอร์ด้านล่าง",
   "flash.zipExport.path": "โฟลเดอร์ส่งออก",
   "flash.zipExport.pathHint": "พาธย่อยแบบสัมพัทธ์ภายใต้รากการเมานต์ของโฮสต์ที่ไฟล์ .zip จะไปอยู่ — ชี้ไปยังโฟลเดอร์ Syncthing/rclone เพื่อนำแฟลชออกจากเซิร์ฟเวอร์โดยอัตโนมัติ",
-  "flash.zipExport.keepHistory": "เก็บประวัติ",
+  "flash.zipExport.keepHistory": "เก็บไฟล์ zip ที่ส่งออก",
   "flash.zipExport.keepHistoryHint": "ปิด: เก็บ flash-latest.zip เพียงไฟล์เดียวที่ถูกเขียนทับทุกครั้ง เปิด: เก็บไฟล์ flash-<วันที่>.zip ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์ สิ่งนี้แยกจากการเก็บรักษาของ restic: ปิดจะเก็บไฟล์เดียวที่ถูกเขียนทับเสมอ (ไม่ทำให้ปลายทางเต็ม) เปิดจะเก็บ N ไฟล์ล่าสุดและลบไฟล์ที่เก่ากว่า",
   "flash.zipExport.keepN": "จำนวน ZIP ที่จะเก็บ",
   "flash.zipExport.keepNHint": "ระบบจะเก็บไฟล์ ZIP ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์; ไฟล์ที่เก่ากว่าจะถูกลบโดยอัตโนมัติ",
@@ -507,9 +509,9 @@ const th: Partial<Translations> = {
   "recovery.configSkipped": "ข้ามแล้ว แนบการสำรองข้อมูลของคุณด้วยตนเองด้านล่าง",
 
   // Config Backup page
-  "config.title": "สำรองข้อมูลคอนฟิก",
+  "config.title": "สำรองข้อมูลตัวเอง",
   "config.subtitle": "สำรองการตั้งค่าของ BombVault เอง เพื่อให้เซิร์ฟเวอร์ที่สร้างใหม่สามารถกู้คืนตัวเองได้",
-  "config.settingsTitle": "การตั้งค่าการสำรองข้อมูลคอนฟิก",
+  "config.settingsTitle": "การตั้งค่าสำรองข้อมูลตัวเอง",
   "config.settingsHint": "ปกป้องการกำหนดค่าของ BombVault เอง — ฐานข้อมูลการตั้งค่า ข้อมูลรับรองนอกสถานที่ และคีย์ SSH — เพื่อให้การติดตั้งใหม่สามารถกู้คืนตัวเองและทำงานต่อจากจุดที่ค้างไว้ได้ทันที",
   "config.enabled": "สำรองข้อมูลการตั้งค่าของ BombVault",
   "config.enabledHint": "รวม /config ของ BombVault เองไว้ในตารางเวลาด้านล่าง",
@@ -575,7 +577,7 @@ const th: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "คอนฟิก",
+  "dashboard.domainConfig": "สำรองข้อมูลตัวเอง",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "สุขภาพการสำรองข้อมูล",

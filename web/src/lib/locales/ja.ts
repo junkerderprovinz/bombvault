@@ -14,13 +14,15 @@ const ja: Partial<Translations> = {
   "nav.flash": "フラッシュ",
   "nav.settings": "設定",
   "nav.reportBug": "バグを報告",
-  "nav.advanced": "詳細設定",
-  "nav.comingSoon": "近日公開",
+  "mode.simple": "シンプル",
+  "mode.advanced": "詳細設定",
+  "mode.hint": "詳細設定で専門的なオプションを表示",
   "nav.recovery": "リカバリー",
-  "nav.config": "Config",
+  "nav.config": "セルフバックアップ",
 
   // Dashboard
   "dashboard.title": "ダッシュボード",
+  "dashboard.subtitle": "バックアップ状況を一目で。",
   "dashboard.lastBackups": "直近のバックアップ",
   "dashboard.recentRuns": "最近の実行",
   "dashboard.spikeStatus": "システム状態",
@@ -146,7 +148,7 @@ const ja: Partial<Translations> = {
   "settings.containersEnabled": "コンテナ",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "フラッシュ",
-  "settings.configEnabled": "アプリ構成",
+  "settings.configEnabled": "セルフバックアップ",
   "settings.schedule": "スケジュール",
   "settings.scheduleOff": "オフ",
   "settings.language": "言語",
@@ -162,8 +164,8 @@ const ja: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "コンテナ",
   "dashboard.statVMs": "VM",
-  "dashboard.statActiveJobs": "アクティブなジョブ",
-  "dashboard.statPausedJobs": "一時停止中のジョブ",
+  "dashboard.statActiveJobs": "アクティブなプラン",
+  "dashboard.statPausedJobs": "一時停止中のプラン",
   "dashboard.statErrors": "エラー",
   "dashboard.statMissingContainers": "不足しているコンテナ",
   "dashboard.statMissingVMs": "不足している VM",
@@ -290,7 +292,7 @@ const ja: Partial<Translations> = {
   "files.loadFailed": "ファイルの読み込みに失敗しました",
   "files.more": "フィルターを絞り込むと、より多くのファイルが表示されます。",
 
-  "settings.retentionTitle": "保持",
+  "settings.retentionTitle": "スナップショットの保持",
   "settings.retentionHint": "項目ごとに保持するバックアップ数。バックアップのたびに restic がこのポリシーに従って古いスナップショットを削除します。すべて 0 = すべて保持（オフ）。",
   "settings.retentionLast": "直近を保持",
   "settings.retentionDaily": "日次を保持",
@@ -344,7 +346,7 @@ const ja: Partial<Translations> = {
   "flash.zipExport.enableHint": "フラッシュバックアップが成功するたびに、スナップショットが .zip として下のフォルダーに書き込まれます。",
   "flash.zipExport.path": "エクスポートフォルダー",
   "flash.zipExport.pathHint": "ホストマウントのルート配下の相対サブパスで、.zip が置かれる場所です — Syncthing/rclone のフォルダーに向けると、フラッシュが自動的にサーバー外へ送られます。",
-  "flash.zipExport.keepHistory": "履歴を保持",
+  "flash.zipExport.keepHistory": "エクスポートしたzipファイルを保持",
   "flash.zipExport.keepHistoryHint": "オフ：毎回上書きされる単一の flash-latest.zip を保持します。オン：最新の N 個のタイムスタンプ付き flash-<日付>.zip ファイルを保持します。 これは restic の保持設定とは別です。オフは常に上書きされる単一ファイルを保持し（保存先を決して満杯にしません）、オンは最新の N 個を保持して古いものを削除します。",
   "flash.zipExport.keepN": "保持する ZIP 数",
   "flash.zipExport.keepNHint": "最新の N 個のタイムスタンプ付き zip が保持され、古いものは自動的に削除されます。",
@@ -539,7 +541,7 @@ const ja: Partial<Translations> = {
   "dashboard.domainContainers": "コンテナ",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "フラッシュ",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "セルフバックアップ",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "バックアップの健全性",
@@ -677,9 +679,9 @@ const ja: Partial<Translations> = {
   "ransomware.pruneStrategy": "整理戦略を設定済み",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Config バックアップ",
+  "config.title": "セルフバックアップ",
   "config.subtitle": "再構築したサーバーが自身を復元できるよう、BombVault 自身の設定をバックアップします。",
-  "config.settingsTitle": "Config バックアップ設定",
+  "config.settingsTitle": "セルフバックアップ設定",
   "config.settingsHint": "BombVault 自身の構成 — 設定データベース、オフサイトの認証情報、SSH 鍵 — を保護し、新規インストールが自身を復元して中断したところから再開できるようにします。",
   "config.enabled": "BombVault の設定をバックアップ",
   "config.enabledHint": "BombVault 自身の /config を下のスケジュールに含めます。",

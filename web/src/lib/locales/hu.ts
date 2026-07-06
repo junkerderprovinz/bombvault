@@ -14,13 +14,15 @@ const hu: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Beállítások",
   "nav.reportBug": "Hiba jelentése",
-  "nav.advanced": "Speciális",
-  "nav.comingSoon": "Hamarosan",
+  "mode.simple": "Egyszerű",
+  "mode.advanced": "Speciális",
+  "mode.hint": "A speciális mód szakértői beállításokat jelenít meg",
   "nav.recovery": "Helyreállítás",
-  "nav.config": "Config",
+  "nav.config": "Önmentés",
 
   // Dashboard
   "dashboard.title": "Irányítópult",
+  "dashboard.subtitle": "Biztonsági mentéseid állapota egy pillantással.",
   "dashboard.lastBackups": "Utolsó biztonsági mentések",
   "dashboard.recentRuns": "Legutóbbi futások",
   "dashboard.spikeStatus": "Rendszerállapot",
@@ -146,7 +148,7 @@ const hu: Partial<Translations> = {
   "settings.containersEnabled": "Konténerek",
   "settings.vmsEnabled": "VM-ek",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Alkalmazás-konfiguráció",
+  "settings.configEnabled": "Önmentés",
   "settings.schedule": "Ütemezés",
   "settings.scheduleOff": "ki",
   "settings.language": "Nyelv",
@@ -162,8 +164,8 @@ const hu: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Konténerek",
   "dashboard.statVMs": "VM-ek",
-  "dashboard.statActiveJobs": "Aktív feladatok",
-  "dashboard.statPausedJobs": "Szüneteltetett feladatok",
+  "dashboard.statActiveJobs": "Aktív tervek",
+  "dashboard.statPausedJobs": "Szüneteltetett tervek",
   "dashboard.statErrors": "Hibák",
   "dashboard.statMissingContainers": "Hiányzó konténerek",
   "dashboard.statMissingVMs": "Hiányzó VM-ek",
@@ -293,7 +295,7 @@ const hu: Partial<Translations> = {
   "files.more": "Finomítsa a szűrőt további fájlok megtekintéséhez.",
 
   // Retention
-  "settings.retentionTitle": "Megőrzés",
+  "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
   "settings.retentionLast": "Utolsók megtartása",
   "settings.retentionDaily": "Napi megtartása",
@@ -351,7 +353,7 @@ const hu: Partial<Translations> = {
   "flash.zipExport.enableHint": "Minden sikeres flash mentéskor a pillanatkép .zip fájlként az alábbi mappába íródik.",
   "flash.zipExport.path": "Exportálási mappa",
   "flash.zipExport.pathHint": "Relatív alútvonal a gazdagép csatolási gyökere alatt, ahová a .zip kerül — irányítsd egy Syncthing/rclone mappára, hogy a flash automatikusan lekerüljön a szerverről.",
-  "flash.zipExport.keepHistory": "Előzmények megtartása",
+  "flash.zipExport.keepHistory": "Exportált zip-fájlok megtartása",
   "flash.zipExport.keepHistoryHint": "Ki: egyetlen flash-latest.zip megtartása, amely minden alkalommal felülíródik. Be: a legújabb N időbélyeggel ellátott flash-<dátum>.zip fájl megtartása. Ez független a restic megőrzéstől: kikapcsolva egyetlen, mindig felülírt fájlt tart meg (soha nem tölti meg a célt); bekapcsolva a legújabb N fájlt tartja meg, a régebbieket törli.",
   "flash.zipExport.keepN": "Megtartandó ZIP-ek",
   "flash.zipExport.keepNHint": "A legújabb N időbélyeggel ellátott ZIP marad meg; a régebbieket automatikusan törli.",
@@ -550,7 +552,7 @@ const hu: Partial<Translations> = {
   "dashboard.domainContainers": "Konténerek",
   "dashboard.domainVMs": "VM-ek",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "Önmentés",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Mentési állapot",
@@ -688,9 +690,9 @@ const hu: Partial<Translations> = {
   "ransomware.pruneStrategy": "nyesési stratégia beállítva",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Config-mentés",
+  "config.title": "Önmentés",
   "config.subtitle": "Mentsd BombVault saját beállításait, hogy egy újraépített szerver helyre tudja állítani magát.",
-  "config.settingsTitle": "Config-mentés beállításai",
+  "config.settingsTitle": "Önmentés beállításai",
   "config.settingsHint": "Védd meg BombVault saját konfigurációját — a beállítás-adatbázisát, a telephelyen kívüli hitelesítő adatait és az SSH-kulcsait — hogy egy friss telepítés helyre tudja állítani magát, és pontosan ott folytassa, ahol abbahagyta.",
   "config.enabled": "BombVault beállításainak mentése",
   "config.enabledHint": "BombVault saját /config mappájának felvétele az alábbi ütemezésbe.",

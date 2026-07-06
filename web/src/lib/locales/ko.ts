@@ -14,13 +14,15 @@ const ko: Partial<Translations> = {
   "nav.flash": "플래시",
   "nav.settings": "설정",
   "nav.reportBug": "버그 신고",
-  "nav.advanced": "고급",
-  "nav.comingSoon": "출시 예정",
+  "mode.simple": "간단",
+  "mode.advanced": "고급",
+  "mode.hint": "고급 모드에서 전문가 옵션 표시",
   "nav.recovery": "복구",
-  "nav.config": "Config",
+  "nav.config": "셀프 백업",
 
   // Dashboard
   "dashboard.title": "대시보드",
+  "dashboard.subtitle": "백업 상태를 한눈에.",
   "dashboard.lastBackups": "최근 백업",
   "dashboard.recentRuns": "최근 실행",
   "dashboard.spikeStatus": "시스템 상태",
@@ -146,7 +148,7 @@ const ko: Partial<Translations> = {
   "settings.containersEnabled": "컨테이너",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "플래시",
-  "settings.configEnabled": "앱 구성",
+  "settings.configEnabled": "셀프 백업",
   "settings.schedule": "일정",
   "settings.scheduleOff": "끔",
   "settings.language": "언어",
@@ -162,8 +164,8 @@ const ko: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "컨테이너",
   "dashboard.statVMs": "VM",
-  "dashboard.statActiveJobs": "활성 작업",
-  "dashboard.statPausedJobs": "일시 중지된 작업",
+  "dashboard.statActiveJobs": "활성 플랜",
+  "dashboard.statPausedJobs": "일시 중지된 플랜",
   "dashboard.statErrors": "오류",
   "dashboard.statMissingContainers": "누락된 컨테이너",
   "dashboard.statMissingVMs": "누락된 VM",
@@ -290,7 +292,7 @@ const ko: Partial<Translations> = {
   "files.loadFailed": "파일을 불러오지 못했습니다",
   "files.more": "필터를 좁히면 더 많은 파일이 표시됩니다.",
 
-  "settings.retentionTitle": "보존",
+  "settings.retentionTitle": "스냅샷 보존",
   "settings.retentionHint": "항목별로 유지할 백업 수입니다. 백업할 때마다 restic이 이 정책에 따라 오래된 스냅샷을 정리합니다. 모두 0 = 전부 보존(끔).",
   "settings.retentionLast": "최근 보존",
   "settings.retentionDaily": "일별 보존",
@@ -344,7 +346,7 @@ const ko: Partial<Translations> = {
   "flash.zipExport.enableHint": "플래시 백업이 성공할 때마다 스냅샷이 .zip으로 아래 폴더에 기록됩니다.",
   "flash.zipExport.path": "내보내기 폴더",
   "flash.zipExport.pathHint": ".zip이 저장되는 호스트 마운트 루트 아래의 상대 하위 경로 — Syncthing/rclone 폴더를 가리키게 하면 플래시가 자동으로 서버 밖으로 나갑니다.",
-  "flash.zipExport.keepHistory": "기록 보관",
+  "flash.zipExport.keepHistory": "내보낸 zip 파일 보관",
   "flash.zipExport.keepHistoryHint": "끔: 매번 덮어쓰이는 단일 flash-latest.zip을 보관합니다. 켬: 가장 최근 N개의 타임스탬프가 찍힌 flash-<날짜>.zip 파일을 보관합니다. 이는 restic 보존과 별개입니다. 끔은 항상 덮어쓰이는 단일 파일을 유지하여(대상을 절대 가득 채우지 않음), 켬은 최신 N개를 유지하고 오래된 것을 삭제합니다.",
   "flash.zipExport.keepN": "보관할 zip 수",
   "flash.zipExport.keepNHint": "가장 최근 N개의 타임스탬프가 찍힌 zip이 보관되며, 오래된 것은 자동으로 삭제됩니다.",
@@ -539,7 +541,7 @@ const ko: Partial<Translations> = {
   "dashboard.domainContainers": "컨테이너",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "플래시",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "셀프 백업",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "백업 상태",
@@ -677,9 +679,9 @@ const ko: Partial<Translations> = {
   "ransomware.pruneStrategy": "정리 전략 설정됨",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Config 백업",
+  "config.title": "셀프 백업",
   "config.subtitle": "재구축된 서버가 스스로 복원할 수 있도록 BombVault 자체 설정을 백업합니다.",
-  "config.settingsTitle": "Config 백업 설정",
+  "config.settingsTitle": "셀프 백업 설정",
   "config.settingsHint": "BombVault 자체 구성 — 설정 데이터베이스, 오프사이트 자격 증명, SSH 키 — 을 보호하여 새 설치본이 스스로 복원하고 중단된 지점에서 바로 이어갈 수 있도록 합니다.",
   "config.enabled": "BombVault 설정 백업",
   "config.enabledHint": "아래 일정에 BombVault 자체 /config를 포함합니다.",

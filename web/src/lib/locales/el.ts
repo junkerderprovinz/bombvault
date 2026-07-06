@@ -14,13 +14,15 @@ const el: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Ρυθμίσεις",
   "nav.reportBug": "Αναφορά σφάλματος",
-  "nav.advanced": "Για προχωρημένους",
-  "nav.comingSoon": "Σύντομα",
+  "mode.simple": "Απλό",
+  "mode.advanced": "Για προχωρημένους",
+  "mode.hint": "Οι σύνθετες ρυθμίσεις εμφανίζουν επιλογές για ειδικούς",
   "nav.recovery": "Ανάκτηση",
-  "nav.config": "Διαμόρφωση",
+  "nav.config": "Αυτο-αντίγραφο",
 
   // Dashboard
   "dashboard.title": "Πίνακας ελέγχου",
+  "dashboard.subtitle": "Η κατάσταση των αντιγράφων σας με μια ματιά.",
   "dashboard.lastBackups": "Τελευταία αντίγραφα ασφαλείας",
   "dashboard.recentRuns": "Πρόσφατες εκτελέσεις",
   "dashboard.spikeStatus": "Κατάσταση συστήματος",
@@ -146,7 +148,7 @@ const el: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Διαμόρφωση εφαρμογής",
+  "settings.configEnabled": "Αυτο-αντίγραφο",
   "settings.schedule": "Χρονοδιάγραμμα",
   "settings.scheduleOff": "ανενεργό",
   "settings.language": "Γλώσσα",
@@ -162,8 +164,8 @@ const el: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Ενεργές εργασίες",
-  "dashboard.statPausedJobs": "Εργασίες σε παύση",
+  "dashboard.statActiveJobs": "Ενεργά πλάνα",
+  "dashboard.statPausedJobs": "Πλάνα σε παύση",
   "dashboard.statErrors": "Σφάλματα",
   "dashboard.statMissingContainers": "Ελλείποντα containers",
   "dashboard.statMissingVMs": "Ελλείποντα VMs",
@@ -293,7 +295,7 @@ const el: Partial<Translations> = {
   "files.more": "Περιορίστε το φίλτρο για να δείτε περισσότερα αρχεία.",
 
   // Retention
-  "settings.retentionTitle": "Διατήρηση",
+  "settings.retentionTitle": "Διατήρηση στιγμιότυπων",
   "settings.retentionHint": "Πόσα αντίγραφα να διατηρούνται ανά στοιχείο. Μετά από κάθε αντίγραφο, το restic κλαδεύει παλαιότερα στιγμιότυπα βάσει αυτής της πολιτικής. Όλα μηδέν = διατήρηση όλων (ανενεργό).",
   "settings.retentionLast": "Διατήρηση τελευταίων",
   "settings.retentionDaily": "Διατήρηση ημερήσιων",
@@ -351,7 +353,7 @@ const el: Partial<Translations> = {
   "flash.zipExport.enableHint": "Κάθε φορά που ένα αντίγραφο flash πετυχαίνει, το στιγμιότυπο γράφεται ως .zip στον παρακάτω φάκελο.",
   "flash.zipExport.path": "Φάκελος εξαγωγής",
   "flash.zipExport.pathHint": "Σχετική υποδιαδρομή κάτω από τη ρίζα προσάρτησης του host όπου καταλήγει το .zip — κατευθύνετέ το σε έναν φάκελο Syncthing/rclone για να βγάζετε το flash από τον διακομιστή αυτόματα.",
-  "flash.zipExport.keepHistory": "Διατήρηση ιστορικού",
+  "flash.zipExport.keepHistory": "Διατήρηση εξαγόμενων αρχείων zip",
   "flash.zipExport.keepHistoryHint": "Ανενεργό: διατήρηση ενός μόνο flash-latest.zip που αντικαθίσταται κάθε φορά. Ενεργό: διατήρηση των πιο πρόσφατων N χρονοσημασμένων αρχείων flash-<date>.zip. Αυτό είναι ανεξάρτητο από τη διατήρηση του restic: ανενεργό διατηρεί ένα μόνο αρχείο που αντικαθίσταται πάντα (δεν γεμίζει ποτέ τον προορισμό)· ενεργό διατηρεί τα N πιο πρόσφατα και διαγράφει τα παλαιότερα.",
   "flash.zipExport.keepN": "Πλήθος zip προς διατήρηση",
   "flash.zipExport.keepNHint": "Διατηρούνται τα πιο πρόσφατα N χρονοσημασμένα zip· τα παλαιότερα διαγράφονται αυτόματα.",
@@ -488,9 +490,9 @@ const el: Partial<Translations> = {
   "recovery.freshNudgeCta": "Μετάβαση στην Ανάκτηση",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Αντίγραφο ρυθμίσεων",
+  "config.title": "Αυτο-αντίγραφο",
   "config.subtitle": "Δημιουργήστε αντίγραφο των ρυθμίσεων του BombVault ώστε ένας ανακατασκευασμένος διακομιστής να μπορεί να αυτοανακτηθεί.",
-  "config.settingsTitle": "Ρυθμίσεις αντιγράφου ρυθμίσεων",
+  "config.settingsTitle": "Ρυθμίσεις αυτο-αντιγράφου",
   "config.settingsHint": "Προστατέψτε τη διαμόρφωση του ίδιου του BombVault — τη βάση δεδομένων ρυθμίσεων, τα διαπιστευτήρια εκτός τόπου και τα κλειδιά SSH — ώστε μια νέα εγκατάσταση να μπορεί να αυτοανακτηθεί και να συνεχίσει ακριβώς από εκεί που σταμάτησε.",
   "config.enabled": "Δημιουργία αντιγράφου των ρυθμίσεων του BombVault",
   "config.enabledHint": "Συμπερίληψη του /config του BombVault στο χρονοδιάγραμμα παρακάτω.",
@@ -572,7 +574,7 @@ const el: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Διαμόρφωση",
+  "dashboard.domainConfig": "Αυτο-αντίγραφο",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Υγεία αντιγράφων",
