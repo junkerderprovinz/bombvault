@@ -377,9 +377,15 @@ function ProtectionCard({
         <div className="divide-y divide-carbon-border">
           {domains.map((d) => {
             const off = d.status === "off";
+            // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
+            // domain that HAS an off-site repo. In that case the scorecard/pill go
+            // NEUTRAL ("manual only") instead of red — the user still runs the DR
+            // check manually, so a stale/failed scheduled result must not read as red.
+            const drUnscheduled = d.offsiteConfigured && !d.offsiteDrillScheduled;
             // The red "proven restorable off-site" state — the ONLY driver of the
-            // red DR pill. A failing off-site DR drill (recorded, not-ok).
-            const drFailed = !off && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
+            // red DR pill. A failing off-site DR drill (recorded, not-ok). Suppressed
+            // when the scheduled drill is opted out (drUnscheduled).
+            const drFailed = !off && d.lastDrDrillAt > 0 && !d.lastDrDrillOK && !drUnscheduled;
             return (
               <div key={d.domain} className="flex flex-col gap-1 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
@@ -426,32 +432,50 @@ function ProtectionCard({
                           the OFF-SITE repo (a real DR sandbox restore). Only containers
                           + flash ever run a DR drill, so VMs never show this pill. On a
                           failure the tooltip names WHICH check + the reason. */}
-                      {d.lastDrDrillAt ? (
+                      {d.lastDrDrillAt && d.lastDrDrillOK ? (
+                        // GREEN — proven restorable off-site. A real passed run (even
+                        // a MANUAL one) is honest proof, so it's kept even when the
+                        // scheduled DR drill is opted out.
+                        <span
+                          title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                        >
+                          ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                        </span>
+                      ) : drUnscheduled ? (
+                        // NEUTRAL — scheduled off-site DR is opted out (manual only):
+                        // muted, never red. Reuses the file's muted/no-claim styling.
+                        <span
+                          title={t("drill.manualOnlyTitle")}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
+                        >
+                          {t("drill.manualOnly")}
+                        </span>
+                      ) : d.lastDrDrillAt ? (
+                        // RED — a scheduled off-site DR drill failed.
                         <span
                           title={
-                            !d.lastDrDrillOK && d.drillDetail
+                            d.drillDetail
                               ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                               : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                           }
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
-                            d.lastDrDrillOK
-                              ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                              : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
-                          }`}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
                         >
-                          {d.lastDrDrillOK ? "✓" : "✗"} {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                          ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                         </span>
                       ) : null}
                     </>
                   )}
                 </div>
-                {/* Failing off-site DR drill: name WHICH check + WHY, and (where
-                    off-site is configured) offer a manual re-run so a pass clears
-                    the red. Only the off-site DR row drives this red — a local
-                    subset pass can't clear it, so we run {offsite,dr} explicitly. */}
-                {drFailed && (d.drillDetail || d.offsiteConfigured) && (
+                {/* Manual off-site DR: the "Run off-site DR check" button is always
+                    reachable for a configured domain (so a manual run works when
+                    opted out AND when currently green), while the red WHICH-check +
+                    WHY reason stays gated to an actual scheduled failure (drFailed).
+                    Only the off-site DR row drives that red — a local subset pass
+                    can't clear it, so we run {offsite,dr} explicitly. */}
+                {!off && (drFailed || d.offsiteConfigured) && (
                   <div className="flex flex-wrap items-center gap-2 pl-1">
-                    {d.drillDetail && (
+                    {drFailed && d.drillDetail && (
                       <span className="text-xs text-[#ff8389] break-words" title={d.drillDetail}>
                         {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
                       </span>

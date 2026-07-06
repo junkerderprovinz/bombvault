@@ -123,6 +123,9 @@ export interface Settings {
   metricsEnabled: boolean;
   metricsToken: string;
   drillsEnabled: boolean;
+  /** Scheduled off-site DR drill; default on. When off, only the manual
+   *  off-site DR button runs (the free local integrity check still runs). */
+  offsiteDrillsEnabled: boolean;
   drillsSchedule: string;
   drillsSubsetPct: number;
   /** True once the user has downloaded + safely stored the encryption recovery
@@ -192,6 +195,10 @@ export interface DomainStatus {
   lastReplicationOK: boolean; // whether that replication succeeded
   lastDrDrillAt: number; // unix seconds of the last off-site DR drill; 0 = never
   lastDrDrillOK: boolean; // whether that DR drill passed
+  // Whether the scheduled off-site DR drill is active (DrillsEnabled &&
+  // OffsiteDrillsEnabled && offsiteConfigured). When false but offsiteConfigured,
+  // the dashboard shows a neutral "manual only" pill instead of a red failure.
+  offsiteDrillScheduled: boolean;
   protection: string; // "" (disabled) | "red" | "amber" | "green"
   // Per-check states derived server-side from the SAME inputs as `protection`, so
   // the dashboard card renders each row as a pure function of the backend and can

@@ -1919,6 +1919,18 @@ export function SettingsPage() {
             setSettings((prev) => (prev ? { ...prev, drillsEnabled: v } : prev))
           }
         />
+        {/* Sub-toggle: only meaningful while scheduled drills are on. */}
+        <div className={settings.drillsEnabled ? "" : "opacity-50"}>
+          <ToggleRow
+            label={t("settings.offsiteDrills")}
+            description={t("settings.offsiteDrillsHelp")}
+            checked={settings.offsiteDrillsEnabled}
+            disabled={!settings.drillsEnabled}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, offsiteDrillsEnabled: v } : prev))
+            }
+          />
+        </div>
         <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
           <CadenceBuilder
             label={t("settings.schedule")}
@@ -1951,6 +1963,7 @@ export function SettingsPage() {
             void save(
               {
                 drillsEnabled: settings.drillsEnabled,
+                offsiteDrillsEnabled: settings.offsiteDrillsEnabled,
                 drillsSchedule: settings.drillsSchedule,
                 drillsSubsetPct: settings.drillsSubsetPct,
               },
