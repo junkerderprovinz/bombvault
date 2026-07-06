@@ -352,7 +352,7 @@ const th: Partial<Translations> = {
   "flash.zipExport.path": "โฟลเดอร์ส่งออก",
   "flash.zipExport.pathHint": "พาธย่อยแบบสัมพัทธ์ภายใต้รากการเมานต์ของโฮสต์ที่ไฟล์ .zip จะไปอยู่ — ชี้ไปยังโฟลเดอร์ Syncthing/rclone เพื่อนำแฟลชออกจากเซิร์ฟเวอร์โดยอัตโนมัติ",
   "flash.zipExport.keepHistory": "เก็บประวัติ",
-  "flash.zipExport.keepHistoryHint": "ปิด: เก็บ flash-latest.zip เพียงไฟล์เดียวที่ถูกเขียนทับทุกครั้ง เปิด: เก็บไฟล์ flash-<วันที่>.zip ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์",
+  "flash.zipExport.keepHistoryHint": "ปิด: เก็บ flash-latest.zip เพียงไฟล์เดียวที่ถูกเขียนทับทุกครั้ง เปิด: เก็บไฟล์ flash-<วันที่>.zip ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์ สิ่งนี้แยกจากการเก็บรักษาของ restic: ปิดจะเก็บไฟล์เดียวที่ถูกเขียนทับเสมอ (ไม่ทำให้ปลายทางเต็ม) เปิดจะเก็บ N ไฟล์ล่าสุดและลบไฟล์ที่เก่ากว่า",
   "flash.zipExport.keepN": "จำนวน ZIP ที่จะเก็บ",
   "flash.zipExport.keepNHint": "ระบบจะเก็บไฟล์ ZIP ที่มีการประทับเวลาใหม่ล่าสุด N ไฟล์; ไฟล์ที่เก่ากว่าจะถูกลบโดยอัตโนมัติ",
   "flash.zipExport.latestNote": "flash-latest.zip เพียงไฟล์เดียวจะถูกเขียนทับหลังการสำรองข้อมูลทุกครั้ง",
@@ -587,6 +587,19 @@ const th: Partial<Translations> = {
   "dashboard.dedup": "ลดข้อมูลซ้ำ",
   "dashboard.snapshotsLabel": "สแนปช็อต",
   "dashboard.noStats": "ยังไม่มีข้อมูล",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "ระยะเวลา",
+  "containers.searchPlaceholder": "ค้นหาคอนเทนเนอร์…",
+  "vms.searchPlaceholder": "ค้นหา VM…",
+  "filter.all": "ทั้งหมด",
+  "filter.scheduled": "มีตารางเวลา",
+  "filter.notScheduled": "ไม่มีตารางเวลา",
+  "filter.backedUp": "สำรองแล้ว",
+  "filter.neverBackedUp": "ไม่เคยสำรอง",
+  "filter.schedule": "ตารางเวลา",
+  "filter.backup": "สำรองข้อมูล",
+  "filter.noMatch": "ไม่มีรายการที่ตรงกับตัวกรองปัจจุบัน",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "ใช้ตารางเวลาของ Containers สำหรับ VMs และ Flash ด้วย",

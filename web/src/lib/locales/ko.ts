@@ -345,7 +345,7 @@ const ko: Partial<Translations> = {
   "flash.zipExport.path": "내보내기 폴더",
   "flash.zipExport.pathHint": ".zip이 저장되는 호스트 마운트 루트 아래의 상대 하위 경로 — Syncthing/rclone 폴더를 가리키게 하면 플래시가 자동으로 서버 밖으로 나갑니다.",
   "flash.zipExport.keepHistory": "기록 보관",
-  "flash.zipExport.keepHistoryHint": "끔: 매번 덮어쓰이는 단일 flash-latest.zip을 보관합니다. 켬: 가장 최근 N개의 타임스탬프가 찍힌 flash-<날짜>.zip 파일을 보관합니다.",
+  "flash.zipExport.keepHistoryHint": "끔: 매번 덮어쓰이는 단일 flash-latest.zip을 보관합니다. 켬: 가장 최근 N개의 타임스탬프가 찍힌 flash-<날짜>.zip 파일을 보관합니다. 이는 restic 보존과 별개입니다. 끔은 항상 덮어쓰이는 단일 파일을 유지하여(대상을 절대 가득 채우지 않음), 켬은 최신 N개를 유지하고 오래된 것을 삭제합니다.",
   "flash.zipExport.keepN": "보관할 zip 수",
   "flash.zipExport.keepNHint": "가장 최근 N개의 타임스탬프가 찍힌 zip이 보관되며, 오래된 것은 자동으로 삭제됩니다.",
   "flash.zipExport.latestNote": "단일 flash-latest.zip이 매 백업 후 덮어쓰기됩니다.",
@@ -551,6 +551,19 @@ const ko: Partial<Translations> = {
   "dashboard.dedup": "중복 제거",
   "dashboard.snapshotsLabel": "스냅샷",
   "dashboard.noStats": "아직 데이터 없음",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "소요 시간",
+  "containers.searchPlaceholder": "컨테이너 검색…",
+  "vms.searchPlaceholder": "VM 검색…",
+  "filter.all": "전체",
+  "filter.scheduled": "예약됨",
+  "filter.notScheduled": "예약 안 됨",
+  "filter.backedUp": "백업됨",
+  "filter.neverBackedUp": "백업 안 됨",
+  "filter.schedule": "일정",
+  "filter.backup": "백업",
+  "filter.noMatch": "현재 필터와 일치하는 항목이 없습니다.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "VM과 Flash에도 컨테이너 일정을 사용",

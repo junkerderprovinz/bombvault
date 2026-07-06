@@ -352,7 +352,7 @@ const it: Partial<Translations> = {
   "flash.zipExport.path": "Cartella di esportazione",
   "flash.zipExport.pathHint": "Sottopercorso relativo sotto la radice del mount dell'host dove finisce il .zip — puntalo a una cartella Syncthing/rclone per portare il flash fuori dal server automaticamente.",
   "flash.zipExport.keepHistory": "Mantieni cronologia",
-  "flash.zipExport.keepHistoryHint": "Off: mantieni un unico flash-latest.zip che viene sovrascritto ogni volta. On: mantieni i più recenti N file flash-<data>.zip con marca temporale.",
+  "flash.zipExport.keepHistoryHint": "Off: mantieni un unico flash-latest.zip che viene sovrascritto ogni volta. On: mantieni i più recenti N file flash-<data>.zip con marca temporale. È indipendente dalla ritenzione di restic: off mantiene un unico file, sempre sovrascritto (non riempie mai la destinazione); on mantiene i più recenti N ed elimina i più vecchi.",
   "flash.zipExport.keepN": "Zip da mantenere",
   "flash.zipExport.keepNHint": "Vengono mantenuti i più recenti N zip con marca temporale; i più vecchi vengono eliminati automaticamente.",
   "flash.zipExport.latestNote": "Un unico flash-latest.zip viene sovrascritto dopo ogni backup.",
@@ -549,6 +549,19 @@ const it: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshot",
   "dashboard.noStats": "Ancora nessun dato",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Durata",
+  "containers.searchPlaceholder": "Cerca container…",
+  "vms.searchPlaceholder": "Cerca VM…",
+  "filter.all": "Tutti",
+  "filter.scheduled": "Pianificato",
+  "filter.notScheduled": "Non pianificato",
+  "filter.backedUp": "Con backup",
+  "filter.neverBackedUp": "Mai sottoposto a backup",
+  "filter.schedule": "Calendario",
+  "filter.backup": "Backup",
+  "filter.noMatch": "Nessun elemento corrisponde ai filtri attuali.",
 
   // Notifications — email (SMTP)
   "notify.smtp": "Email (SMTP)",

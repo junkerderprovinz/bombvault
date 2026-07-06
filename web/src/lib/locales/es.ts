@@ -352,7 +352,7 @@ const es: Partial<Translations> = {
   "flash.zipExport.path": "Carpeta de exportación",
   "flash.zipExport.pathHint": "Subruta relativa bajo la raíz del montaje del host donde se coloca el .zip — apúntala a una carpeta de Syncthing/rclone para sacar el flash del servidor automáticamente.",
   "flash.zipExport.keepHistory": "Conservar historial",
-  "flash.zipExport.keepHistoryHint": "Desactivado: conserva un único flash-latest.zip que se sobrescribe cada vez. Activado: conserva los N archivos flash-<date>.zip más recientes con marca de tiempo.",
+  "flash.zipExport.keepHistoryHint": "Desactivado: conserva un único flash-latest.zip que se sobrescribe cada vez. Activado: conserva los N archivos flash-<date>.zip más recientes con marca de tiempo. Esto es independiente de la retención de restic: desactivado conserva un único archivo que siempre se sobrescribe (nunca llena el destino); activado conserva los N más recientes y elimina los más antiguos.",
   "flash.zipExport.keepN": "Zips a conservar",
   "flash.zipExport.keepNHint": "Se conservan los N zips con marca de tiempo más recientes; los más antiguos se eliminan automáticamente.",
   "flash.zipExport.latestNote": "Un único flash-latest.zip se sobrescribe tras cada copia.",
@@ -582,6 +582,19 @@ const es: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Instantáneas",
   "dashboard.noStats": "Aún no hay datos",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Duración",
+  "containers.searchPlaceholder": "Buscar contenedores…",
+  "vms.searchPlaceholder": "Buscar VMs…",
+  "filter.all": "Todos",
+  "filter.scheduled": "Programado",
+  "filter.notScheduled": "Sin programar",
+  "filter.backedUp": "Con copia",
+  "filter.neverBackedUp": "Sin copia",
+  "filter.schedule": "Calendario",
+  "filter.backup": "Copia",
+  "filter.noMatch": "Ningún elemento coincide con los filtros actuales.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Usar el calendario de Contenedores también para las VMs y Flash",

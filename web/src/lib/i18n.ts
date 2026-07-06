@@ -518,6 +518,19 @@ const en = {
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "No data yet",
 
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Duration",
+  "containers.searchPlaceholder": "Search containers…",
+  "vms.searchPlaceholder": "Search VMs…",
+  "filter.all": "All",
+  "filter.scheduled": "Scheduled",
+  "filter.notScheduled": "Not scheduled",
+  "filter.backedUp": "Backed up",
+  "filter.neverBackedUp": "Never backed up",
+  "filter.schedule": "Schedule",
+  "filter.backup": "Backup",
+  "filter.noMatch": "No items match the current filters.",
+
   // Jobs page
   "nav.jobs": "Plans",
   "jobs.title": "Plans",
@@ -640,7 +653,7 @@ const en = {
   "flash.zipExport.path": "Export folder",
   "flash.zipExport.pathHint": "Relative subpath under the host mount root where the .zip lands — point it at a Syncthing/rclone folder to get the flash off the server automatically.",
   "flash.zipExport.keepHistory": "Keep history",
-  "flash.zipExport.keepHistoryHint": "Off: keep a single flash-latest.zip that's overwritten each time. On: keep the newest N timestamped flash-<date>.zip files.",
+  "flash.zipExport.keepHistoryHint": "Off: keep a single flash-latest.zip that's overwritten each time. On: keep the newest N timestamped flash-<date>.zip files. This is separate from the restic retention: off keeps a single, always-overwritten file (never fills the destination); on keeps the newest N and deletes older ones.",
   "flash.zipExport.keepN": "Zips to keep",
   "flash.zipExport.keepNHint": "The newest N timestamped zips are kept; older ones are deleted automatically.",
   "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
@@ -1242,6 +1255,19 @@ const de: Translations = {
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "Noch keine Daten",
 
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Dauer",
+  "containers.searchPlaceholder": "Container suchen…",
+  "vms.searchPlaceholder": "VMs suchen…",
+  "filter.all": "Alle",
+  "filter.scheduled": "Geplant",
+  "filter.notScheduled": "Nicht geplant",
+  "filter.backedUp": "Gesichert",
+  "filter.neverBackedUp": "Nie gesichert",
+  "filter.schedule": "Zeitplan",
+  "filter.backup": "Backup",
+  "filter.noMatch": "Keine Einträge entsprechen den aktuellen Filtern.",
+
   // Jobs page
   "nav.jobs": "Pläne",
   "jobs.title": "Pläne",
@@ -1364,7 +1390,7 @@ const de: Translations = {
   "flash.zipExport.path": "Export-Ordner",
   "flash.zipExport.pathHint": "Relativer Unterpfad unter dem Host-Mount-Root, in den das .zip geschrieben wird — auf einen Syncthing-/rclone-Ordner zeigen lassen, um den Flash automatisch vom Server zu bekommen.",
   "flash.zipExport.keepHistory": "Verlauf behalten",
-  "flash.zipExport.keepHistoryHint": "Aus: eine einzige flash-latest.zip behalten, die jedes Mal überschrieben wird. An: die neuesten N flash-<Datum>.zip-Dateien mit Zeitstempel behalten.",
+  "flash.zipExport.keepHistoryHint": "Aus: eine einzige flash-latest.zip behalten, die jedes Mal überschrieben wird. An: die neuesten N flash-<Datum>.zip-Dateien mit Zeitstempel behalten. Das ist unabhängig von der restic-Aufbewahrung: aus behält eine einzige, immer überschriebene Datei (füllt das Ziel nie); an behält die neuesten N und löscht ältere.",
   "flash.zipExport.keepN": "Zu behaltende ZIPs",
   "flash.zipExport.keepNHint": "Die neuesten N ZIPs mit Zeitstempel werden behalten, ältere automatisch gelöscht.",
   "flash.zipExport.latestNote": "Eine einzige flash-latest.zip wird nach jedem Backup überschrieben.",

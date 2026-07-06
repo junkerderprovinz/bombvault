@@ -352,7 +352,7 @@ const da: Partial<Translations> = {
   "flash.zipExport.path": "Eksportmappe",
   "flash.zipExport.pathHint": "Relativ understi under host-monteringsroden, hvor .zip'en lander — peg den mod en Syncthing/rclone-mappe for automatisk at få flashen væk fra serveren.",
   "flash.zipExport.keepHistory": "Bevar historik",
-  "flash.zipExport.keepHistoryHint": "Fra: behold en enkelt flash-latest.zip, der overskrives hver gang. Til: behold de nyeste N tidsstemplede flash-<date>.zip-filer.",
+  "flash.zipExport.keepHistoryHint": "Fra: behold en enkelt flash-latest.zip, der overskrives hver gang. Til: behold de nyeste N tidsstemplede flash-<date>.zip-filer. Dette er uafhængigt af restic-opbevaringen: fra beholder en enkelt fil, der altid overskrives (fylder aldrig destinationen); til beholder de nyeste N og sletter ældre.",
   "flash.zipExport.keepN": "Antal zips at beholde",
   "flash.zipExport.keepNHint": "De nyeste N tidsstemplede zips beholdes; ældre slettes automatisk.",
   "flash.zipExport.latestNote": "En enkelt flash-latest.zip overskrives efter hver sikkerhedskopi.",
@@ -584,6 +584,19 @@ const da: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Øjebliksbilleder",
   "dashboard.noStats": "Ingen data endnu",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Varighed",
+  "containers.searchPlaceholder": "Søg containere…",
+  "vms.searchPlaceholder": "Søg VM'er…",
+  "filter.all": "Alle",
+  "filter.scheduled": "Planlagt",
+  "filter.notScheduled": "Ikke planlagt",
+  "filter.backedUp": "Sikkerhedskopieret",
+  "filter.neverBackedUp": "Aldrig sikkerhedskopieret",
+  "filter.schedule": "Tidsplan",
+  "filter.backup": "Sikkerhedskopi",
+  "filter.noMatch": "Ingen elementer matcher de aktuelle filtre.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Brug Containers-tidsplanen til VMs og Flash også",

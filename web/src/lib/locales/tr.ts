@@ -352,7 +352,7 @@ const tr: Partial<Translations> = {
   "flash.zipExport.path": "Dışa aktarma klasörü",
   "flash.zipExport.pathHint": "Host bağlama kökü altında .zip dosyasının ineceği göreli alt yol — flash'ı sunucudan otomatik olarak çıkarmak için bir Syncthing/rclone klasörüne yönlendirin.",
   "flash.zipExport.keepHistory": "Geçmişi tut",
-  "flash.zipExport.keepHistoryHint": "Kapalı: her seferinde üzerine yazılan tek bir flash-latest.zip tutulur. Açık: zaman damgalı en yeni N flash-<tarih>.zip dosyası tutulur.",
+  "flash.zipExport.keepHistoryHint": "Kapalı: her seferinde üzerine yazılan tek bir flash-latest.zip tutulur. Açık: zaman damgalı en yeni N flash-<tarih>.zip dosyası tutulur. Bu, restic saklamasından bağımsızdır: kapalı her seferinde üzerine yazılan tek bir dosya tutar (hedefi asla doldurmaz); açık en yeni N tanesini tutar ve daha eskilerini siler.",
   "flash.zipExport.keepN": "Tutulacak ZIP sayısı",
   "flash.zipExport.keepNHint": "Zaman damgalı en yeni N ZIP tutulur; daha eskiler otomatik olarak silinir.",
   "flash.zipExport.latestNote": "Her yedeklemeden sonra tek bir flash-latest.zip'in üzerine yazılır.",
@@ -584,6 +584,19 @@ const tr: Partial<Translations> = {
   "dashboard.dedup": "Yinelemesizleştirme",
   "dashboard.snapshotsLabel": "Anlık görüntüler",
   "dashboard.noStats": "Henüz veri yok",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Süre",
+  "containers.searchPlaceholder": "Konteyner ara…",
+  "vms.searchPlaceholder": "VM ara…",
+  "filter.all": "Tümü",
+  "filter.scheduled": "Zamanlanmış",
+  "filter.notScheduled": "Zamanlanmamış",
+  "filter.backedUp": "Yedeklendi",
+  "filter.neverBackedUp": "Hiç yedeklenmedi",
+  "filter.schedule": "Zamanlama",
+  "filter.backup": "Yedekleme",
+  "filter.noMatch": "Geçerli filtrelerle eşleşen öğe yok.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Konteyner zamanlamasını VM'ler ve Flash için de kullan",

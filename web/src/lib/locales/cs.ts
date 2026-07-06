@@ -350,7 +350,7 @@ const cs: Partial<Translations> = {
   "flash.zipExport.path": "Složka pro export",
   "flash.zipExport.pathHint": "Relativní podcesta pod kořenem připojení hostitele, kam se ukládá .zip — nasměrujte ji na složku Syncthing/rclone, aby se flash automaticky dostal ze serveru pryč.",
   "flash.zipExport.keepHistory": "Uchovávat historii",
-  "flash.zipExport.keepHistoryHint": "Vypnuto: uchovat jediný flash-latest.zip, který se pokaždé přepíše. Zapnuto: uchovat nejnovějších N časově označených souborů flash-<date>.zip.",
+  "flash.zipExport.keepHistoryHint": "Vypnuto: uchovat jediný flash-latest.zip, který se pokaždé přepíše. Zapnuto: uchovat nejnovějších N časově označených souborů flash-<date>.zip. Toto je nezávislé na uchovávání restic: vypnuto zachová jediný soubor, který se pokaždé přepíše (nikdy nezaplní cíl); zapnuto zachová N nejnovějších a starší smaže.",
   "flash.zipExport.keepN": "Počet zipů k uchování",
   "flash.zipExport.keepNHint": "Uchovává se nejnovějších N časově označených zipů; starší se automaticky mažou.",
   "flash.zipExport.latestNote": "Jediný flash-latest.zip se přepíše po každé záloze.",
@@ -582,6 +582,19 @@ const cs: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snímky",
   "dashboard.noStats": "Zatím žádná data",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Doba trvání",
+  "containers.searchPlaceholder": "Hledat kontejnery…",
+  "vms.searchPlaceholder": "Hledat VM…",
+  "filter.all": "Vše",
+  "filter.scheduled": "Naplánováno",
+  "filter.notScheduled": "Neplánováno",
+  "filter.backedUp": "Zálohováno",
+  "filter.neverBackedUp": "Nikdy nezálohováno",
+  "filter.schedule": "Plán",
+  "filter.backup": "Záloha",
+  "filter.noMatch": "Žádné položky neodpovídají aktuálním filtrům.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Použít plán kontejnerů i pro VM a Flash",

@@ -352,7 +352,7 @@ const he: Partial<Translations> = {
   "flash.zipExport.path": "תיקיית ייצוא",
   "flash.zipExport.pathHint": "תת-נתיב יחסי תחת שורש נקודת העיגון של המארח שאליו מגיע ה-.zip — הפנה אותו לתיקיית Syncthing/rclone כדי להוציא את ה-flash מהשרת אוטומטית.",
   "flash.zipExport.keepHistory": "שמור היסטוריה",
-  "flash.zipExport.keepHistoryHint": "כבוי: שמור קובץ flash-latest.zip יחיד שנדרס בכל פעם. דלוק: שמור את N הקבצים flash-<date>.zip העדכניים ביותר עם חותמת זמן.",
+  "flash.zipExport.keepHistoryHint": "כבוי: שמור קובץ flash-latest.zip יחיד שנדרס בכל פעם. דלוק: שמור את N הקבצים flash-<date>.zip העדכניים ביותר עם חותמת זמן. זה נפרד משמירת restic: כבוי שומר קובץ יחיד שנדרס תמיד (לעולם לא ממלא את היעד); דלוק שומר את N העדכניים ביותר ומוחק ישנים יותר.",
   "flash.zipExport.keepN": "מספר קובצי zip לשמירה",
   "flash.zipExport.keepNHint": "N קובצי ה-zip העדכניים ביותר עם חותמת זמן נשמרים; הישנים יותר נמחקים אוטומטית.",
   "flash.zipExport.latestNote": "קובץ flash-latest.zip יחיד נדרס אחרי כל גיבוי.",
@@ -559,6 +559,19 @@ const he: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "אין נתונים עדיין",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "משך",
+  "containers.searchPlaceholder": "חיפוש מכלים…",
+  "vms.searchPlaceholder": "חיפוש מכונות וירטואליות…",
+  "filter.all": "הכל",
+  "filter.scheduled": "מתוזמן",
+  "filter.notScheduled": "לא מתוזמן",
+  "filter.backedUp": "עם גיבוי",
+  "filter.neverBackedUp": "ללא גיבוי",
+  "filter.schedule": "לוח זמנים",
+  "filter.backup": "גיבוי",
+  "filter.noMatch": "אין פריטים התואמים למסננים הנוכחיים.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "השתמש בלוח הזמנים של Containers גם עבור VMs ו-Flash",

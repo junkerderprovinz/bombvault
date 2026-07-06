@@ -350,7 +350,7 @@ const ro: Partial<Translations> = {
   "flash.zipExport.path": "Folder de export",
   "flash.zipExport.pathHint": "Subcale relativă sub rădăcina montării gazdei unde ajunge fișierul .zip — îndreapt-o către un folder Syncthing/rclone pentru a scoate automat flash-ul de pe server.",
   "flash.zipExport.keepHistory": "Păstrează istoricul",
-  "flash.zipExport.keepHistoryHint": "Dezactivat: păstrează un singur flash-latest.zip care este suprascris de fiecare dată. Activat: păstrează cele mai noi N fișiere flash-<dată>.zip cu marcaj temporal.",
+  "flash.zipExport.keepHistoryHint": "Dezactivat: păstrează un singur flash-latest.zip care este suprascris de fiecare dată. Activat: păstrează cele mai noi N fișiere flash-<dată>.zip cu marcaj temporal. Aceasta este independentă de retenția restic: dezactivat păstrează un singur fișier, mereu suprascris (nu umple niciodată destinația); activat păstrează cele mai noi N și le șterge pe cele mai vechi.",
   "flash.zipExport.keepN": "ZIP-uri de păstrat",
   "flash.zipExport.keepNHint": "Cele mai noi N fișiere ZIP cu marcaj temporal sunt păstrate; cele mai vechi sunt șterse automat.",
   "flash.zipExport.latestNote": "Un singur flash-latest.zip este suprascris după fiecare backup.",
@@ -559,6 +559,19 @@ const ro: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Instantanee",
   "dashboard.noStats": "Încă niciun date",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Durată",
+  "containers.searchPlaceholder": "Caută containere…",
+  "vms.searchPlaceholder": "Caută VM-uri…",
+  "filter.all": "Toate",
+  "filter.scheduled": "Programat",
+  "filter.notScheduled": "Neprogramat",
+  "filter.backedUp": "Cu copie",
+  "filter.neverBackedUp": "Fără copie",
+  "filter.schedule": "Programare",
+  "filter.backup": "Copie de rezervă",
+  "filter.noMatch": "Niciun element nu corespunde filtrelor curente.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Folosește programarea Containerelor și pentru VM-uri și Flash",
