@@ -18,6 +18,17 @@ function formatTs(unix: number | null | undefined): string {
   return new Date(unix * 1000).toLocaleString();
 }
 
+// formatDuration renders a whole-second span compactly and plural-free
+// (e.g. "12s", "3m 5s", "1h 2m"). A negative or non-finite input yields ""
+// so a missing/older start time never produces a broken duration.
+function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "";
+  const s = Math.floor(seconds);
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}
+
 // humanBytes formats a byte count with a binary (1024) unit and one decimal.
 function humanBytes(n: number): string {
   if (!n || n <= 0) return "0 B";
@@ -838,15 +849,35 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       {withBackups.length > 0 && (
         <div className="divide-y divide-carbon-border">
-          {withBackups.map((c) => (
-            <div key={c.name} className="flex items-center gap-3 py-2.5 text-sm">
-              <div className="w-2 h-2 rounded-full bg-[#6fdc8c] shrink-0" />
-              <span className="text-carbon-text font-medium flex-1 truncate">{c.name}</span>
-              <span className="text-carbon-textMuted text-xs shrink-0">
-                {formatTs(c.lastBackup)}
-              </span>
-            </div>
-          ))}
+          {withBackups.map((c) => {
+            // Older data (or a run before the start time was recorded) has no
+            // lastBackupStarted — fall back to just the finish time, never a
+            // negative/broken duration.
+            const hasStart = c.lastBackupStarted != null && c.lastBackup != null;
+            const duration = hasStart
+              ? formatDuration((c.lastBackup as number) - (c.lastBackupStarted as number))
+              : "";
+            return (
+              <div key={c.name} className="flex items-center gap-3 py-2.5 text-sm">
+                <div className="w-2 h-2 rounded-full bg-[#6fdc8c] shrink-0" />
+                <span className="text-carbon-text font-medium flex-1 truncate">{c.name}</span>
+                {hasStart ? (
+                  <span className="text-carbon-textMuted text-xs shrink-0 text-right">
+                    {formatTs(c.lastBackupStarted)} → {formatTs(c.lastBackup)}
+                    {duration && (
+                      <span className="ml-1" title={t("dashboard.duration")} aria-label={t("dashboard.duration")}>
+                        ({duration})
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-carbon-textMuted text-xs shrink-0">
+                    {formatTs(c.lastBackup)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
