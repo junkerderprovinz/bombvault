@@ -440,6 +440,12 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 52, name: "settings_flash_zip_export_keep",
 		sql: "ALTER TABLE settings ADD COLUMN flash_zip_export_keep INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// Per-container restic --exclude patterns applied to this container's backup.
+		// JSON array; '[]' = none. Owned by SetExcludes (never reset by Upsert).
+		version: 53, name: "target_excludes",
+		sql: "ALTER TABLE targets ADD COLUMN excludes TEXT NOT NULL DEFAULT '[]';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

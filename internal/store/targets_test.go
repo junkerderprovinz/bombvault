@@ -56,6 +56,45 @@ func TestSetBackupPathsRoundTripAndUpsertPreserves(t *testing.T) {
 	}
 }
 
+func TestSetExcludesRoundTripAndUpsertPreserves(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// SetExcludes creates the target row when none exists yet.
+	if err := r.SetExcludes("plex", []string{"/config/x/Cache", ".git"}); err != nil {
+		t.Fatalf("SetExcludes: %v", err)
+	}
+	got, err := r.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Excludes) != 2 || got.Excludes[0] != "/config/x/Cache" || got.Excludes[1] != ".git" {
+		t.Fatalf("excludes not stored: %v", got.Excludes)
+	}
+
+	// A subsequent backup-time UpsertTarget (which sets AppdataPaths/Definition)
+	// must NOT clobber the user's excludes (the ON CONFLICT omission).
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if len(got.Excludes) != 2 || got.Excludes[0] != "/config/x/Cache" || got.Excludes[1] != ".git" {
+		t.Fatalf("Upsert clobbered excludes: %v", got.Excludes)
+	}
+
+	// An empty set clears the excludes.
+	if err := r.SetExcludes("plex", nil); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if len(got.Excludes) != 0 {
+		t.Fatalf("excludes should be cleared, got %v", got.Excludes)
+	}
+}
+
 func TestTargetIncludeToggle(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
