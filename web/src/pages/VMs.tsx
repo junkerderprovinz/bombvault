@@ -971,6 +971,24 @@ export function VMs() {
     setSelected(allLiveSelected ? new Set() : new Set(live.map((v) => v.name)));
   }
 
+  // Keep the selection in sync with what's actually visible: when a search or
+  // filter hides a previously-selected VM, drop it, so the bulk-bar count stays
+  // honest and a bulk action — including the DESTRUCTIVE "Restore selected" —
+  // can never overwrite a VM the user can no longer see.
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const visible = new Set(live.map((v) => v.name));
+      let changed = false;
+      const next = new Set<string>();
+      for (const n of prev) {
+        if (visible.has(n)) next.add(n);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [search, scheduleFilter, backupFilter, vms]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function runBulk(action: (name: string) => Promise<{ ok: boolean }>) {
     setBulkBusy(true);
     setBulkMsg(null);

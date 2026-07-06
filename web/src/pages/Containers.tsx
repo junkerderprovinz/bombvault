@@ -1269,6 +1269,25 @@ export function Containers() {
     setSelected(allLiveSelected ? new Set() : new Set(selectable.map((c) => c.name)));
   }
 
+  // Keep the selection in sync with what's actually visible+selectable: when a
+  // search or filter hides a previously-selected container, drop it. This keeps
+  // the bulk-bar count honest and, crucially, stops a bulk action — including the
+  // DESTRUCTIVE "Restore selected" — from ever touching a row the user can no
+  // longer see. Deps are exactly the inputs that change `selectable`'s membership.
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const visible = new Set(selectable.map((c) => c.name));
+      let changed = false;
+      const next = new Set<string>();
+      for (const n of prev) {
+        if (visible.has(n)) next.add(n);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [search, scheduleFilter, backupFilter, filterKey, containers]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Run an action over every selected container, then refresh + clear.
   async function runBulk(action: (name: string) => Promise<{ ok: boolean }>) {
     setBulkBusy(true);
