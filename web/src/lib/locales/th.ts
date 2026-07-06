@@ -709,6 +709,13 @@ const th: Partial<Translations> = {
   "excludes.resolvedTo": "แปลงเป็น:",
   "excludes.noMatch": "ส่งให้ restic ตามที่เป็น (ไม่ใช่พาธคอนเทนเนอร์ที่รู้จัก)",
   "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "การกู้คืน DR นอกสถานที่",
+  "drill.checkLocal": "การตรวจสอบความสมบูรณ์ในเครื่อง",
+  "drill.failReasonPrefix": "เหตุผล:",
+  "drill.runOffsiteDr": "เรียกใช้การตรวจสอบ DR นอกสถานที่",
+  "drill.runningOffsiteDr": "กำลังเรียกใช้การตรวจสอบ DR นอกสถานที่…",
 };
 
 export default th;

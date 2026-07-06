@@ -698,6 +698,13 @@ const ko: Partial<Translations> = {
   "excludes.resolvedTo": "다음으로 해석됨:",
   "excludes.noMatch": "restic에 그대로 전달됩니다(인식된 컨테이너 경로 아님).",
   "excludes.excludesNothing": "이 폴더의 볼륨이 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "오프사이트 DR 복원",
+  "drill.checkLocal": "로컬 무결성 검사",
+  "drill.failReasonPrefix": "이유:",
+  "drill.runOffsiteDr": "오프사이트 DR 검사 실행",
+  "drill.runningOffsiteDr": "오프사이트 DR 검사 실행 중…",
 };
 
 export default ko;

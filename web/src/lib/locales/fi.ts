@@ -706,6 +706,13 @@ const fi: Partial<Translations> = {
   "excludes.resolvedTo": "vastaa:",
   "excludes.noMatch": "Välitetään resticille sellaisenaan (ei tunnistettu kontin polku).",
   "excludes.excludesNothing": "Tämän kansion taltio ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "etä-DR-palautus",
+  "drill.checkLocal": "paikallinen eheystarkistus",
+  "drill.failReasonPrefix": "syy:",
+  "drill.runOffsiteDr": "Suorita etä-DR-tarkistus",
+  "drill.runningOffsiteDr": "Suoritetaan etä-DR-tarkistusta…",
 };
 
 export default fi;

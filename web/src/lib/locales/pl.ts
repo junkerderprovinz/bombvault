@@ -701,6 +701,13 @@ const pl: Partial<Translations> = {
   "excludes.resolvedTo": "przekłada się na:",
   "excludes.noMatch": "Przekazywane do restic bez zmian (nierozpoznana ścieżka kontenera).",
   "excludes.excludesNothing": "Wolumin tego folderu nie jest w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "przywracanie DR poza siedzibą",
+  "drill.checkLocal": "lokalne sprawdzenie integralności",
+  "drill.failReasonPrefix": "powód:",
+  "drill.runOffsiteDr": "Uruchom sprawdzenie DR poza siedzibą",
+  "drill.runningOffsiteDr": "Sprawdzanie DR poza siedzibą…",
 };
 
 export default pl;

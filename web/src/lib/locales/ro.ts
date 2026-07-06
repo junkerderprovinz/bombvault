@@ -709,6 +709,13 @@ const ro: Partial<Translations> = {
   "excludes.resolvedTo": "se rezolvă în:",
   "excludes.noMatch": "Transmis către restic ca atare (cale de container nerecunoscută).",
   "excludes.excludesNothing": "Volumul acestui folder nu este în backup, așa că această linie nu exclude nimic.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "restaurare DR externă",
+  "drill.checkLocal": "verificare de integritate locală",
+  "drill.failReasonPrefix": "motiv:",
+  "drill.runOffsiteDr": "Rulează verificarea DR externă",
+  "drill.runningOffsiteDr": "Se rulează verificarea DR externă…",
 };
 
 export default ro;

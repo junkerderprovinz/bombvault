@@ -701,6 +701,13 @@ const ru: Partial<Translations> = {
   "excludes.resolvedTo": "разрешается в:",
   "excludes.noMatch": "Передаётся в restic как есть (нераспознанный путь контейнера).",
   "excludes.excludesNothing": "Том этой папки не входит в резервную копию, поэтому эта строка ничего не исключает.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "внешнее DR-восстановление",
+  "drill.checkLocal": "локальная проверка целостности",
+  "drill.failReasonPrefix": "причина:",
+  "drill.runOffsiteDr": "Запустить внешнюю DR-проверку",
+  "drill.runningOffsiteDr": "Выполняется внешняя DR-проверка…",
 };
 
 export default ru;

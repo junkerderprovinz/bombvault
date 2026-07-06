@@ -698,6 +698,13 @@ const zh: Partial<Translations> = {
   "excludes.resolvedTo": "解析为：",
   "excludes.noMatch": "按原样传递给 restic（不是可识别的容器路径）。",
   "excludes.excludesNothing": "此文件夹的卷不在备份中，因此此行不会排除任何内容。",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "异地 DR 还原",
+  "drill.checkLocal": "本地完整性检查",
+  "drill.failReasonPrefix": "原因：",
+  "drill.runOffsiteDr": "运行异地 DR 检查",
+  "drill.runningOffsiteDr": "正在运行异地 DR 检查…",
 };
 
 export default zh;

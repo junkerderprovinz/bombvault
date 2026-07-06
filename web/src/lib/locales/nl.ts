@@ -703,6 +703,13 @@ const nl: Partial<Translations> = {
   "excludes.resolvedTo": "wordt omgezet naar:",
   "excludes.noMatch": "Wordt ongewijzigd aan restic doorgegeven (geen herkend containerpad).",
   "excludes.excludesNothing": "Het volume van deze map zit niet in de back-up, dus deze regel sluit niets uit.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "off-site DR-herstel",
+  "drill.checkLocal": "lokale integriteitscontrole",
+  "drill.failReasonPrefix": "reden:",
+  "drill.runOffsiteDr": "Off-site DR-controle uitvoeren",
+  "drill.runningOffsiteDr": "Off-site DR-controle uitvoeren…",
 };
 
 export default nl;

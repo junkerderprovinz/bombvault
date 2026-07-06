@@ -706,6 +706,13 @@ const el: Partial<Translations> = {
   "excludes.resolvedTo": "αντιστοιχεί σε:",
   "excludes.noMatch": "Μεταβιβάζεται στο restic ως έχει (μη αναγνωρισμένη διαδρομή κοντέινερ).",
   "excludes.excludesNothing": "Ο τόμος αυτού του φακέλου δεν είναι στο αντίγραφο ασφαλείας, επομένως αυτή η γραμμή δεν εξαιρεί τίποτα.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "επαναφορά DR εκτός τόπου",
+  "drill.checkLocal": "τοπικός έλεγχος ακεραιότητας",
+  "drill.failReasonPrefix": "αιτία:",
+  "drill.runOffsiteDr": "Εκτέλεση ελέγχου DR εκτός τόπου",
+  "drill.runningOffsiteDr": "Εκτέλεση ελέγχου DR εκτός τόπου…",
 };
 
 export default el;

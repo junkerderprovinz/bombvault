@@ -709,6 +709,13 @@ const ar: Partial<Translations> = {
   "excludes.resolvedTo": "يتحوّل إلى:",
   "excludes.noMatch": "يُمرَّر إلى restic كما هو (ليس مساراً معروفاً للحاوية).",
   "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "استعادة DR خارج الموقع",
+  "drill.checkLocal": "فحص السلامة المحلي",
+  "drill.failReasonPrefix": "السبب:",
+  "drill.runOffsiteDr": "تشغيل فحص DR خارج الموقع",
+  "drill.runningOffsiteDr": "جارٍ تشغيل فحص DR خارج الموقع…",
 };
 
 export default ar;

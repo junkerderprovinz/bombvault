@@ -706,6 +706,13 @@ const pt: Partial<Translations> = {
   "excludes.resolvedTo": "resolve para:",
   "excludes.noMatch": "Passado ao restic tal como está (não é um caminho de contentor reconhecido).",
   "excludes.excludesNothing": "O volume desta pasta não está na cópia, por isso esta linha não exclui nada.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "restauro DR externo",
+  "drill.checkLocal": "verificação de integridade local",
+  "drill.failReasonPrefix": "motivo:",
+  "drill.runOffsiteDr": "Executar verificação DR externa",
+  "drill.runningOffsiteDr": "A executar verificação DR externa…",
 };
 
 export default pt;

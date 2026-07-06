@@ -706,6 +706,13 @@ const fr: Partial<Translations> = {
   "excludes.resolvedTo": "se résout en :",
   "excludes.noMatch": "Transmis tel quel à restic (chemin de conteneur non reconnu).",
   "excludes.excludesNothing": "Le volume de ce dossier n'est pas dans la sauvegarde, cette ligne n'exclut donc rien.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "restauration DR hors site",
+  "drill.checkLocal": "vérification d'intégrité locale",
+  "drill.failReasonPrefix": "raison :",
+  "drill.runOffsiteDr": "Lancer la vérification DR hors site",
+  "drill.runningOffsiteDr": "Vérification DR hors site…",
 };
 
 export default fr;
