@@ -14,13 +14,15 @@ const zh: Partial<Translations> = {
   "nav.flash": "闪存",
   "nav.settings": "设置",
   "nav.reportBug": "报告错误",
-  "nav.advanced": "高级",
-  "nav.comingSoon": "即将推出",
+  "mode.simple": "简单",
+  "mode.advanced": "高级",
+  "mode.hint": "高级模式显示专家选项",
   "nav.recovery": "恢复",
-  "nav.config": "配置",
+  "nav.config": "自我备份",
 
   // Dashboard
   "dashboard.title": "仪表板",
+  "dashboard.subtitle": "一览您的备份状态。",
   "dashboard.lastBackups": "最近备份",
   "dashboard.recentRuns": "最近运行",
   "dashboard.spikeStatus": "系统状态",
@@ -146,7 +148,7 @@ const zh: Partial<Translations> = {
   "settings.containersEnabled": "容器",
   "settings.vmsEnabled": "虚拟机",
   "settings.flashEnabled": "闪存",
-  "settings.configEnabled": "应用配置",
+  "settings.configEnabled": "自我备份",
   "settings.schedule": "计划",
   "settings.scheduleOff": "关闭",
   "settings.language": "语言",
@@ -162,8 +164,8 @@ const zh: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "容器",
   "dashboard.statVMs": "虚拟机",
-  "dashboard.statActiveJobs": "活动任务",
-  "dashboard.statPausedJobs": "已暂停任务",
+  "dashboard.statActiveJobs": "活动计划",
+  "dashboard.statPausedJobs": "已暂停计划",
   "dashboard.statErrors": "错误",
   "dashboard.statMissingContainers": "缺失容器",
   "dashboard.statMissingVMs": "缺失虚拟机",
@@ -290,7 +292,7 @@ const zh: Partial<Translations> = {
   "files.loadFailed": "加载文件失败",
   "files.more": "细化筛选条件以查看更多文件。",
 
-  "settings.retentionTitle": "保留",
+  "settings.retentionTitle": "快照保留",
   "settings.retentionHint": "每个项目保留的备份数量。每次备份后，restic 会按此策略清理较旧的快照。全部为 0 = 全部保留（关闭）。",
   "settings.retentionLast": "保留最近",
   "settings.retentionDaily": "保留每日",
@@ -344,7 +346,7 @@ const zh: Partial<Translations> = {
   "flash.zipExport.enableHint": "每当一次 flash 备份成功，快照就会以 .zip 形式写入下面的文件夹。",
   "flash.zipExport.path": "导出文件夹",
   "flash.zipExport.pathHint": "主机挂载根目录下 .zip 落地的相对子路径 — 将其指向一个 Syncthing/rclone 文件夹，即可自动把 flash 移出服务器。",
-  "flash.zipExport.keepHistory": "保留历史",
+  "flash.zipExport.keepHistory": "保留导出的 zip 文件",
   "flash.zipExport.keepHistoryHint": "关闭：仅保留一个每次都被覆盖的 flash-latest.zip。开启：保留最新的 N 个带时间戳的 flash-<日期>.zip 文件。 这与 restic 的保留策略无关：关闭时仅保留一个每次都被覆盖的文件（永远不会填满目标）；开启时保留最新的 N 个并删除较早的文件。",
   "flash.zipExport.keepN": "保留的 ZIP 数量",
   "flash.zipExport.keepNHint": "保留最新的 N 个带时间戳的 ZIP；较旧的会被自动删除。",
@@ -496,9 +498,9 @@ const zh: Partial<Translations> = {
   "recovery.configSkipped": "已跳过。在下方手动附加你的备份。",
 
   // Config Backup page
-  "config.title": "配置备份",
+  "config.title": "自我备份",
   "config.subtitle": "备份 BombVault 自身的设置，让重建的服务器能够自我还原。",
-  "config.settingsTitle": "配置备份设置",
+  "config.settingsTitle": "自我备份设置",
   "config.settingsHint": "保护 BombVault 自身的配置——它的设置数据库、异地凭据和 SSH 密钥——这样全新安装就能自我还原并从上次中断处继续。",
   "config.enabled": "备份 BombVault 的设置",
   "config.enabledHint": "将 BombVault 自身的 /config 纳入下面的计划。",
@@ -564,7 +566,7 @@ const zh: Partial<Translations> = {
   "dashboard.domainContainers": "容器",
   "dashboard.domainVMs": "虚拟机",
   "dashboard.domainFlash": "闪存",
-  "dashboard.domainConfig": "配置",
+  "dashboard.domainConfig": "自我备份",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "备份健康度",

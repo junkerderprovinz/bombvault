@@ -79,7 +79,7 @@ function StatCard({
   );
 }
 
-function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanced: boolean }) {
   const [data, setData] = useState<StatData | null>(null);
 
   useEffect(() => {
@@ -127,14 +127,22 @@ function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
   if (!data) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+    <div className={`grid grid-cols-2 gap-3 ${advanced ? "sm:grid-cols-4 lg:grid-cols-7" : "sm:grid-cols-3"}`}>
       <StatCard label={t("dashboard.statContainers")} value={data.containers} />
       <StatCard label={t("dashboard.statVMs")} value={data.vms} />
-      <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
-      <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
+      {advanced && (
+        <>
+          <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
+          <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
+        </>
+      )}
       <StatCard label={t("dashboard.statErrors")} value={data.errors} danger />
-      <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
-      <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
+      {advanced && (
+        <>
+          <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
+          <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
+        </>
+      )}
     </div>
   );
 }
@@ -1212,7 +1220,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // recovery kit so disaster recovery works even without a running BombVault.
 // ---------------------------------------------------------------------------
 
-function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppressed?: boolean }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [dismissing, setDismissing] = useState(false);
 
@@ -1228,6 +1236,7 @@ function RecoveryNag({ t }: { t: ReturnType<typeof useT>["t"] }) {
     };
   }, []);
 
+  if (suppressed) return null;
   if (!settings || !settings.encryptionEnabled || settings.recoveryKitAck) {
     return null;
   }
@@ -1286,32 +1295,19 @@ function FreshInstallNudge({
   t,
   domains,
   loading,
+  dismissed,
+  onDismiss,
 }: {
   t: ReturnType<typeof useT>["t"];
   domains: DomainStatus[];
   loading: boolean;
+  dismissed: boolean;
+  onDismiss: () => void;
 }) {
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(RECOVERY_NUDGE_DISMISSED) === "1";
-    } catch {
-      return false;
-    }
-  });
-
   // Gate: do nothing (and read nothing) once dismissed or while status is still
   // loading. Only then is the fresh predicate evaluated against shared data.
   if (dismissed || loading) return null;
   if (!isFreshInstall(domains)) return null;
-
-  const dismiss = () => {
-    try {
-      localStorage.setItem(RECOVERY_NUDGE_DISMISSED, "1");
-    } catch {
-      /* storage unavailable — dismiss for this session only */
-    }
-    setDismissed(true);
-  };
 
   return (
     <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex items-center gap-4">
@@ -1327,7 +1323,7 @@ function FreshInstallNudge({
       </div>
       <button
         type="button"
-        onClick={dismiss}
+        onClick={onDismiss}
         aria-label={t("common.close")}
         className="shrink-0 rounded-md border border-carbon-border px-2 py-1 text-sm text-carbon-textSub hover:text-carbon-text transition-colors"
       >
@@ -1349,6 +1345,27 @@ export function Dashboard() {
   // duplicate round-trip — both cards read the same extended domain status).
   const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
+
+  // Page-level banners are capped at one: the Fresh-install nudge wins over the
+  // Recovery-kit nag. Fresh dismissal persists in localStorage (shared key), and
+  // while Fresh is showing the Recovery nag is suppressed.
+  const [freshDismissed, setFreshDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(RECOVERY_NUDGE_DISMISSED) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const dismissFresh = () => {
+    try {
+      localStorage.setItem(RECOVERY_NUDGE_DISMISSED, "1");
+    } catch {
+      /* storage unavailable — dismiss for this session only */
+    }
+    setFreshDismissed(true);
+  };
+  const freshShown = !statusLoading && !freshDismissed && isFreshInstall(statusDomains);
+
   useEffect(() => {
     let active = true;
     const load = () => {
@@ -1380,7 +1397,7 @@ export function Dashboard() {
           {t("dashboard.title")}
         </h1>
         <p className="mt-1 text-sm text-carbon-textSub">
-          BombVault — container backup overview
+          {t("dashboard.subtitle")}
         </p>
         <div className="mt-2 flex flex-col gap-1">
           <OffsiteIndicator domain="containers" withLabel />
@@ -1391,13 +1408,19 @@ export function Dashboard() {
 
       {/* Fresh/rebuilt install → nudge to the guided Recovery tab (dismissible).
           Reuses the shared /api/status fetch below — no duplicate round-trip. */}
-      <FreshInstallNudge t={t} domains={statusDomains} loading={statusLoading} />
+      <FreshInstallNudge
+        t={t}
+        domains={statusDomains}
+        loading={statusLoading}
+        dismissed={freshDismissed}
+        onDismiss={dismissFresh}
+      />
 
       {/* Recovery-kit nag — only while encryption is on and the kit is unstored */}
-      <RecoveryNag t={t} />
+      <RecoveryNag t={t} suppressed={freshShown} />
 
       {/* Stat cards — compact summary row */}
-      <StatCardsRow t={t} />
+      <StatCardsRow t={t} advanced={advanced} />
 
       {/* Protection (RPO) status — "are my backups current?" indicator */}
       <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} />

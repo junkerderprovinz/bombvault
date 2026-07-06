@@ -14,12 +14,14 @@ const pt: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Definições",
   "nav.reportBug": "Reportar um erro",
-  "nav.advanced": "Avançado",
-  "nav.comingSoon": "Em breve",
+  "mode.simple": "Simples",
+  "mode.advanced": "Avançado",
+  "mode.hint": "Avançado revela controlos de especialista",
   "nav.recovery": "Recuperação",
 
   // Dashboard
   "dashboard.title": "Painel",
+  "dashboard.subtitle": "O estado dos seus backups num relance.",
   "dashboard.lastBackups": "Últimos backups",
   "dashboard.recentRuns": "Execuções recentes",
   "dashboard.spikeStatus": "Estado do sistema",
@@ -160,8 +162,8 @@ const pt: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Tarefas ativas",
-  "dashboard.statPausedJobs": "Tarefas em pausa",
+  "dashboard.statActiveJobs": "Planos ativos",
+  "dashboard.statPausedJobs": "Planos em pausa",
   "dashboard.statErrors": "Erros",
   "dashboard.statMissingContainers": "Containers em falta",
   "dashboard.statMissingVMs": "VMs em falta",
@@ -291,7 +293,7 @@ const pt: Partial<Translations> = {
   "files.more": "Refine o filtro para ver mais ficheiros.",
 
   // Retention
-  "settings.retentionTitle": "Retenção",
+  "settings.retentionTitle": "Retenção de instantâneos",
   "settings.retentionHint": "Quantos backups manter por item. Após cada backup, o restic elimina os instantâneos mais antigos segundo esta política. Tudo a zero = manter tudo (desativado).",
   "settings.retentionLast": "Manter últimos",
   "settings.retentionDaily": "Manter diários",
@@ -349,7 +351,7 @@ const pt: Partial<Translations> = {
   "flash.zipExport.enableHint": "Sempre que um backup do flash é bem-sucedido, o snapshot é escrito como .zip para a pasta abaixo.",
   "flash.zipExport.path": "Pasta de exportação",
   "flash.zipExport.pathHint": "Subcaminho relativo, sob a raiz do mount do host, onde o .zip é colocado — aponte-o para uma pasta Syncthing/rclone para levar o flash para fora do servidor automaticamente.",
-  "flash.zipExport.keepHistory": "Manter histórico",
+  "flash.zipExport.keepHistory": "Manter os ficheiros zip exportados",
   "flash.zipExport.keepHistoryHint": "Desligado: manter um único flash-latest.zip que é sobrescrito de cada vez. Ligado: manter os N ficheiros flash-<data>.zip mais recentes com marca temporal. Isto é independente da retenção do restic: desligado mantém um único ficheiro, sempre sobrescrito (nunca enche o destino); ligado mantém os N mais recentes e elimina os mais antigos.",
   "flash.zipExport.keepN": "Zips a manter",
   "flash.zipExport.keepNHint": "São mantidos os N zips mais recentes com marca temporal; os mais antigos são eliminados automaticamente.",
@@ -682,9 +684,9 @@ const pt: Partial<Translations> = {
   "ransomware.pruneStrategy": "estratégia de poda definida",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Backup de configuração",
+  "config.title": "Auto-backup",
   "config.subtitle": "Faça backup das definições do próprio BombVault para que um servidor reconstruído se possa restaurar a si mesmo.",
-  "config.settingsTitle": "Definições do backup de configuração",
+  "config.settingsTitle": "Definições do auto-backup",
   "config.settingsHint": "Proteja a configuração do próprio BombVault — a sua base de dados de definições, credenciais externas e chaves SSH — para que uma instalação nova se possa restaurar a si mesma e continuar exatamente de onde parou.",
   "config.enabled": "Fazer backup das definições do BombVault",
   "config.enabledHint": "Incluir o /config do próprio BombVault no agendamento abaixo.",
@@ -705,9 +707,9 @@ const pt: Partial<Translations> = {
   "config.snapshotsTitle": "Backups de definições",
   "config.snapshotsHint": "Para restaurar estas definições num servidor reconstruído, use o separador Recuperação — restaurar as definições reinicia o BombVault para as aplicar, por isso fica aí junto com o resto do fluxo de recuperação de desastres.",
   "config.none": "Ainda sem backups de definições — inicie um backup acima.",
-  "nav.config": "Config",
-  "settings.configEnabled": "Configuração da aplicação",
-  "dashboard.domainConfig": "Config",
+  "nav.config": "Auto-backup",
+  "settings.configEnabled": "Auto-backup",
+  "dashboard.domainConfig": "Auto-backup",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Padrões de exclusão",

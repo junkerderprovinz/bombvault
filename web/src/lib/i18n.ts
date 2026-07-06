@@ -48,14 +48,18 @@ const en = {
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",
-  "nav.config": "Config",
+  "nav.config": "Self-Backup",
   "nav.settings": "Settings",
   "nav.reportBug": "Report a bug",
-  "nav.advanced": "Advanced",
-  "nav.comingSoon": "Coming soon",
+
+  // Mode toggle
+  "mode.simple": "Simple",
+  "mode.advanced": "Advanced",
+  "mode.hint": "Advanced reveals expert controls",
 
   // Dashboard
   "dashboard.title": "Dashboard",
+  "dashboard.subtitle": "Your backup status at a glance.",
   "dashboard.lastBackups": "Last Backups",
   "dashboard.recentRuns": "Recent Runs",
   "dashboard.spikeStatus": "System Status",
@@ -303,7 +307,7 @@ const en = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "App configuration",
+  "settings.configEnabled": "Self-Backup",
   "settings.schedule": "Schedule",
   "settings.scheduleOff": "off",
   "settings.language": "Language",
@@ -312,7 +316,7 @@ const en = {
   "settings.error": "Error saving settings",
 
   // Retention
-  "settings.retentionTitle": "Retention",
+  "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
   "settings.retentionLast": "Keep last",
   "settings.retentionDaily": "Keep daily",
@@ -468,8 +472,8 @@ const en = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Active jobs",
-  "dashboard.statPausedJobs": "Paused jobs",
+  "dashboard.statActiveJobs": "Active plans",
+  "dashboard.statPausedJobs": "Paused plans",
   "dashboard.statErrors": "Errors",
   "dashboard.statMissingContainers": "Missing containers",
   "dashboard.statMissingVMs": "Missing VMs",
@@ -484,7 +488,7 @@ const en = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "Self-Backup",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Ransomware protection",
@@ -652,7 +656,7 @@ const en = {
   "flash.zipExport.enableHint": "Every time a flash backup succeeds, the snapshot is written as a .zip to the folder below.",
   "flash.zipExport.path": "Export folder",
   "flash.zipExport.pathHint": "Relative subpath under the host mount root where the .zip lands — point it at a Syncthing/rclone folder to get the flash off the server automatically.",
-  "flash.zipExport.keepHistory": "Keep history",
+  "flash.zipExport.keepHistory": "Keep exported zip files",
   "flash.zipExport.keepHistoryHint": "Off: keep a single flash-latest.zip that's overwritten each time. On: keep the newest N timestamped flash-<date>.zip files. This is separate from the restic retention: off keeps a single, always-overwritten file (never fills the destination); on keeps the newest N and deletes older ones.",
   "flash.zipExport.keepN": "Zips to keep",
   "flash.zipExport.keepNHint": "The newest N timestamped zips are kept; older ones are deleted automatically.",
@@ -662,9 +666,9 @@ const en = {
 
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
-  "config.title": "Config Backup",
+  "config.title": "Self-Backup",
   "config.subtitle": "Back up BombVault's own settings so a rebuilt server can restore itself.",
-  "config.settingsTitle": "Config backup settings",
+  "config.settingsTitle": "Self-Backup settings",
   "config.settingsHint": "Protect BombVault's own configuration — its settings database, off-site credentials and SSH keys — so a fresh install can restore itself and pick up right where it left off.",
   "config.enabled": "Back up BombVault's settings",
   "config.enabledHint": "Include BombVault's own /config in the schedule below.",
@@ -792,13 +796,16 @@ const de: Translations = {
   "nav.containers": "Container",
   "nav.vms": "VMs",
   "nav.flash": "Flash",
-  "nav.config": "Config",
+  "nav.config": "Selbst-Backup",
   "nav.settings": "Einstellungen",
   "nav.reportBug": "Fehler melden",
-  "nav.advanced": "Erweitert",
-  "nav.comingSoon": "Demnächst",
+
+  "mode.simple": "Einfach",
+  "mode.advanced": "Erweitert",
+  "mode.hint": "Erweitert zeigt Expertenoptionen",
 
   "dashboard.title": "Dashboard",
+  "dashboard.subtitle": "Dein Backup-Status auf einen Blick.",
   "dashboard.lastBackups": "Letzte Backups",
   "dashboard.recentRuns": "Letzte Ausführungen",
   "dashboard.spikeStatus": "Systemstatus",
@@ -1040,7 +1047,7 @@ const de: Translations = {
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "App-Konfiguration",
+  "settings.configEnabled": "Selbst-Backup",
   "settings.schedule": "Zeitplan",
   "settings.scheduleOff": "aus",
   "settings.language": "Sprache",
@@ -1049,7 +1056,7 @@ const de: Translations = {
   "settings.error": "Fehler beim Speichern",
 
   // Retention
-  "settings.retentionTitle": "Aufbewahrung",
+  "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
   "settings.retentionLast": "Letzte behalten",
   "settings.retentionDaily": "Täglich behalten",
@@ -1205,8 +1212,8 @@ const de: Translations = {
   // Dashboard stat cards
   "dashboard.statContainers": "Container",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Aktive Jobs",
-  "dashboard.statPausedJobs": "Pausierte Jobs",
+  "dashboard.statActiveJobs": "Aktive Pläne",
+  "dashboard.statPausedJobs": "Pausierte Pläne",
   "dashboard.statErrors": "Fehler",
   "dashboard.statMissingContainers": "Fehlende Container",
   "dashboard.statMissingVMs": "Fehlende VMs",
@@ -1221,7 +1228,7 @@ const de: Translations = {
   "dashboard.domainContainers": "Container",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Config",
+  "dashboard.domainConfig": "Selbst-Backup",
 
   // Dashboard-Ransomware-Schutz-Karte (v4)
   "ransomware.title": "Ransomware-Schutz",
@@ -1389,7 +1396,7 @@ const de: Translations = {
   "flash.zipExport.enableHint": "Bei jedem erfolgreichen Flash-Backup wird der Snapshot als .zip in den Ordner unten geschrieben.",
   "flash.zipExport.path": "Export-Ordner",
   "flash.zipExport.pathHint": "Relativer Unterpfad unter dem Host-Mount-Root, in den das .zip geschrieben wird — auf einen Syncthing-/rclone-Ordner zeigen lassen, um den Flash automatisch vom Server zu bekommen.",
-  "flash.zipExport.keepHistory": "Verlauf behalten",
+  "flash.zipExport.keepHistory": "Exportierte ZIP-Dateien behalten",
   "flash.zipExport.keepHistoryHint": "Aus: eine einzige flash-latest.zip behalten, die jedes Mal überschrieben wird. An: die neuesten N flash-<Datum>.zip-Dateien mit Zeitstempel behalten. Das ist unabhängig von der restic-Aufbewahrung: aus behält eine einzige, immer überschriebene Datei (füllt das Ziel nie); an behält die neuesten N und löscht ältere.",
   "flash.zipExport.keepN": "Zu behaltende ZIPs",
   "flash.zipExport.keepNHint": "Die neuesten N ZIPs mit Zeitstempel werden behalten, ältere automatisch gelöscht.",
@@ -1399,9 +1406,9 @@ const de: Translations = {
 
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.
-  "config.title": "Config-Backup",
+  "config.title": "Selbst-Backup",
   "config.subtitle": "Sichert BombVaults eigene Einstellungen, damit sich ein neu aufgesetzter Server selbst wiederherstellen kann.",
-  "config.settingsTitle": "Config-Backup-Einstellungen",
+  "config.settingsTitle": "Selbst-Backup-Einstellungen",
   "config.settingsHint": "Schützt BombVaults eigene Konfiguration — die Einstellungsdatenbank, Offsite-Zugangsdaten und SSH-Schlüssel — damit eine frische Installation sich selbst wiederherstellt und genau dort weitermacht, wo sie aufgehört hat.",
   "config.enabled": "BombVaults Einstellungen sichern",
   "config.enabledHint": "BombVaults eigenes /config in den unten stehenden Zeitplan aufnehmen.",

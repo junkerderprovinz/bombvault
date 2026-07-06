@@ -14,13 +14,15 @@ const uk: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Налаштування",
   "nav.reportBug": "Повідомити про помилку",
-  "nav.advanced": "Додатково",
-  "nav.comingSoon": "Незабаром",
+  "mode.simple": "Простий",
+  "mode.advanced": "Додатково",
+  "mode.hint": "Розширений режим відкриває експертні налаштування",
   "nav.recovery": "Відновлення",
-  "nav.config": "Конфіг",
+  "nav.config": "Автобекап",
 
   // Dashboard
   "dashboard.title": "Панель",
+  "dashboard.subtitle": "Стан ваших резервних копій з першого погляду.",
   "dashboard.lastBackups": "Останні резервні копії",
   "dashboard.recentRuns": "Останні запуски",
   "dashboard.spikeStatus": "Стан системи",
@@ -144,7 +146,7 @@ const uk: Partial<Translations> = {
   "settings.containersEnabled": "Контейнери",
   "settings.vmsEnabled": "Віртуальні машини",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Конфігурація застосунку",
+  "settings.configEnabled": "Автобекап",
   "settings.schedule": "Розклад",
   "settings.scheduleOff": "вимк",
   "settings.language": "Мова",
@@ -160,8 +162,8 @@ const uk: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнери",
   "dashboard.statVMs": "Віртуальні машини",
-  "dashboard.statActiveJobs": "Активні завдання",
-  "dashboard.statPausedJobs": "Призупинені завдання",
+  "dashboard.statActiveJobs": "Активні плани",
+  "dashboard.statPausedJobs": "Призупинені плани",
   "dashboard.statErrors": "Помилки",
   "dashboard.statMissingContainers": "Відсутні контейнери",
   "dashboard.statMissingVMs": "Відсутні віртуальні машини",
@@ -288,7 +290,7 @@ const uk: Partial<Translations> = {
   "files.more": "Уточніть фільтр, щоб побачити більше файлів.",
 
   // Retention
-  "settings.retentionTitle": "Зберігання",
+  "settings.retentionTitle": "Зберігання знімків",
   "settings.retentionHint": "Скільки резервних копій зберігати для кожного елемента. Після кожної копії restic видаляє старіші знімки згідно з цією політикою. Усі нулі = зберігати все (вимкнено).",
   "settings.retentionLast": "Зберігати останні",
   "settings.retentionDaily": "Зберігати щоденні",
@@ -346,7 +348,7 @@ const uk: Partial<Translations> = {
   "flash.zipExport.enableHint": "Щоразу, коли копія flash успішна, знімок записується як .zip до папки нижче.",
   "flash.zipExport.path": "Папка експорту",
   "flash.zipExport.pathHint": "Відносний підшлях у межах кореня монтування хоста, куди потрапляє .zip — вкажіть папку Syncthing/rclone, щоб автоматично надсилати flash за межі сервера.",
-  "flash.zipExport.keepHistory": "Зберігати історію",
+  "flash.zipExport.keepHistory": "Зберігати експортовані zip-файли",
   "flash.zipExport.keepHistoryHint": "Вимк.: зберігати єдиний flash-latest.zip, який щоразу перезаписується. Увімк.: зберігати найновіші N файлів flash-<дата>.zip з мітками часу. Це не пов'язано зі зберіганням restic: вимк. зберігає один файл, який щоразу перезаписується (ніколи не заповнює призначення); увімк. зберігає N найновіших і видаляє старіші.",
   "flash.zipExport.keepN": "Скільки ZIP зберігати",
   "flash.zipExport.keepNHint": "Зберігаються найновіші N ZIP з мітками часу; старіші видаляються автоматично.",
@@ -499,9 +501,9 @@ const uk: Partial<Translations> = {
   "recovery.configSkipped": "Пропущено. Під'єднайте свої резервні копії вручну нижче.",
 
   // Config Backup page
-  "config.title": "Резервна копія конфігурації",
+  "config.title": "Автобекап",
   "config.subtitle": "Створюйте резервну копію власних налаштувань BombVault, щоб перебудований сервер міг відновити себе.",
-  "config.settingsTitle": "Налаштування резервного копіювання конфігурації",
+  "config.settingsTitle": "Налаштування автобекапу",
   "config.settingsHint": "Захистіть власну конфігурацію BombVault — його базу налаштувань, зовнішні облікові дані та ключі SSH — щоб нова інсталяція могла відновити себе й продовжити рівно з того місця, де зупинилася.",
   "config.enabled": "Створювати резервну копію налаштувань BombVault",
   "config.enabledHint": "Включити власний /config BombVault до розкладу нижче.",
@@ -567,7 +569,7 @@ const uk: Partial<Translations> = {
   "dashboard.domainContainers": "Контейнери",
   "dashboard.domainVMs": "Віртуальні машини",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Конфіг",
+  "dashboard.domainConfig": "Автобекап",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Стан резервних копій",

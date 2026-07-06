@@ -13,8 +13,6 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
-  disabled?: boolean;
-  comingSoon?: boolean;
 }
 
 // Simple inline SVG icons (monochrome, 20×20)
@@ -112,25 +110,8 @@ const navActive =
   "bg-accent text-accentContrast";
 const navInactive =
   "text-[var(--sidebar-text)] hover:bg-carbon-hover hover:text-carbon-text";
-const navDisabled =
-  "text-carbon-textMuted cursor-default opacity-50";
 
-function NavItem({ to, label, icon, disabled, comingSoon }: NavItem) {
-  if (disabled) {
-    return (
-      <div className="relative group">
-        <div className={`${navBase} ${navDisabled}`}>
-          {icon}
-          <span>{label}</span>
-        </div>
-        {comingSoon && (
-          <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 whitespace-nowrap rounded-md bg-carbon-surface2 border border-carbon-border px-2 py-1 text-xs text-carbon-textSub opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Coming soon
-          </div>
-        )}
-      </div>
-    );
-  }
+function NavItem({ to, label, icon }: NavItem) {
   return (
     <NavLink
       to={to}
@@ -326,19 +307,36 @@ export function Sidebar({ settings }: SidebarProps) {
       {/* Bottom group: language, then dark/light, then advanced, then settings */}
       <div className="flex flex-col gap-1 p-3">
         <SidebarControls />
-        {/* Advanced mode — a checkbox above Settings; reveals expert controls
-            across the app (per-browser preference). Styled like the language /
-            theme / Settings rows so the label matches their font. */}
-        <label className={`${navBase} ${navInactive} w-full cursor-pointer`}>
-          <input
-            type="checkbox"
-            checked={advanced}
-            onChange={() => setAdvanced(!advanced)}
-            className="h-[18px] w-[18px] shrink-0"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          <span>{t("nav.advanced")}</span>
-        </label>
+        {/* Simple / Advanced mode — a visible 2-segment switch above Settings;
+            reveals expert controls across the app (per-browser preference).
+            Mirrors the SourceToggle segmented-control pattern. */}
+        <div className="inline-flex rounded-lg border border-carbon-border overflow-hidden w-full">
+          <button
+            type="button"
+            onClick={() => setAdvanced(false)}
+            className={`flex-1 px-3 py-1.5 text-sm transition-colors ${
+              !advanced
+                ? "bg-accent text-accentContrast"
+                : "text-carbon-textSub hover:text-carbon-text"
+            }`}
+          >
+            {t("mode.simple")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdvanced(true)}
+            className={`flex-1 px-3 py-1.5 text-sm transition-colors ${
+              advanced
+                ? "bg-accent text-accentContrast"
+                : "text-carbon-textSub hover:text-carbon-text"
+            }`}
+          >
+            {t("mode.advanced")}
+          </button>
+        </div>
+        <span className="px-1 text-[11px] leading-snug text-carbon-textMuted">
+          {t("mode.hint")}
+        </span>
         <NavItem
           to="/settings"
           label={t("nav.settings")}

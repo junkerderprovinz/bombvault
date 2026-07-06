@@ -14,12 +14,14 @@ const no: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Innstillinger",
   "nav.reportBug": "Rapporter en feil",
-  "nav.advanced": "Avansert",
-  "nav.comingSoon": "Kommer snart",
+  "mode.simple": "Enkel",
+  "mode.advanced": "Avansert",
+  "mode.hint": "Avansert viser ekspertinnstillinger",
   "nav.recovery": "Gjenoppretting",
 
   // Dashboard
   "dashboard.title": "Dashboard",
+  "dashboard.subtitle": "Sikkerhetskopieringsstatusen din med ett blikk.",
   "dashboard.lastBackups": "Siste sikkerhetskopier",
   "dashboard.recentRuns": "Siste kjøringer",
   "dashboard.spikeStatus": "Systemstatus",
@@ -160,8 +162,8 @@ const no: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Kontainere",
   "dashboard.statVMs": "VM-er",
-  "dashboard.statActiveJobs": "Aktive jobber",
-  "dashboard.statPausedJobs": "Pausede jobber",
+  "dashboard.statActiveJobs": "Aktive planer",
+  "dashboard.statPausedJobs": "Pausede planer",
   "dashboard.statErrors": "Feil",
   "dashboard.statMissingContainers": "Manglende kontainere",
   "dashboard.statMissingVMs": "Manglende VM-er",
@@ -291,7 +293,7 @@ const no: Partial<Translations> = {
   "files.more": "Avgrens filteret for å se flere filer.",
 
   // Retention
-  "settings.retentionTitle": "Oppbevaring",
+  "settings.retentionTitle": "Oppbevaring av øyeblikksbilder",
   "settings.retentionHint": "Hvor mange sikkerhetskopier som beholdes per element. Etter hver sikkerhetskopiering rydder restic eldre snapshots etter denne regelen. Alt 0 = behold alt (av).",
   "settings.retentionLast": "Behold siste",
   "settings.retentionDaily": "Behold daglige",
@@ -349,7 +351,7 @@ const no: Partial<Translations> = {
   "flash.zipExport.enableHint": "Hver gang en flash-sikkerhetskopi lykkes, skrives øyeblikksbildet som en .zip til mappen nedenfor.",
   "flash.zipExport.path": "Eksportmappe",
   "flash.zipExport.pathHint": "Relativ understi under host-monteringens rot der .zip-filen havner — pek den mot en Syncthing/rclone-mappe for å få flashen automatisk av serveren.",
-  "flash.zipExport.keepHistory": "Behold historikk",
+  "flash.zipExport.keepHistory": "Behold eksporterte zip-filer",
   "flash.zipExport.keepHistoryHint": "Av: behold en enkelt flash-latest.zip som overskrives hver gang. På: behold de nyeste N flash-<dato>.zip-filene med tidsstempel. Dette er uavhengig av restic-oppbevaringen: av beholder én enkelt fil som alltid overskrives (fyller aldri målet); på beholder de nyeste N og sletter eldre.",
   "flash.zipExport.keepN": "Zip-er å beholde",
   "flash.zipExport.keepNHint": "De nyeste N zip-ene med tidsstempel beholdes; eldre slettes automatisk.",
@@ -682,9 +684,9 @@ const no: Partial<Translations> = {
   "ransomware.pruneStrategy": "beskjæringsstrategi satt",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Config-sikkerhetskopi",
+  "config.title": "Auto-sikkerhetskopi",
   "config.subtitle": "Sikkerhetskopier BombVaults egne innstillinger så en gjenoppbygd server kan gjenopprette seg selv.",
-  "config.settingsTitle": "Innstillinger for config-sikkerhetskopi",
+  "config.settingsTitle": "Innstillinger for auto-sikkerhetskopi",
   "config.settingsHint": "Beskytt BombVaults egen konfigurasjon — innstillingsdatabasen, off-site-legitimasjonen og SSH-nøklene — så en fersk installasjon kan gjenopprette seg selv og fortsette akkurat der den slapp.",
   "config.enabled": "Sikkerhetskopier BombVaults innstillinger",
   "config.enabledHint": "Ta med BombVaults eget /config i tidsplanen nedenfor.",
@@ -705,9 +707,9 @@ const no: Partial<Translations> = {
   "config.snapshotsTitle": "Innstillings-sikkerhetskopier",
   "config.snapshotsHint": "For å gjenopprette disse innstillingene på en gjenoppbygd server, bruk Gjenopprettings-fanen — å gjenopprette innstillingene starter BombVault på nytt for å bruke dem, så det ligger der sammen med resten av katastrofegjenopprettingsflyten.",
   "config.none": "Ingen innstillings-sikkerhetskopier ennå — kjør en sikkerhetskopiering ovenfor.",
-  "nav.config": "Config",
-  "settings.configEnabled": "App-konfigurasjon",
-  "dashboard.domainConfig": "Config",
+  "nav.config": "Auto-sikkerhetskopi",
+  "settings.configEnabled": "Auto-sikkerhetskopi",
+  "dashboard.domainConfig": "Auto-sikkerhetskopi",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Ekskluderingsmønstre",

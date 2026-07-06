@@ -501,6 +501,9 @@ const emptyNotify: NotifyConfig = {
 // Stored encrypted at rest; the form pre-fills from the saved config and Test
 // sends to the CURRENT form values (no save needed).
 function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  // Simple mode still gets notify-on-failure via Unraid; the extra channels
+  // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
+  const { advanced } = useAdvanced();
   const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
   const [state, setState] = useState<SaveState>("idle");
   const [msg, setMsg] = useState<string | null>(null);
@@ -592,6 +595,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         </span>
       </label>
 
+      {advanced && (
+        <>
       <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3">
         <label className={labelCls}>
           {t("notify.webhook")}
@@ -721,6 +726,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           </>
         )}
       </div>
+        </>
+      )}
 
       <div className="flex items-center gap-3 pt-1 flex-wrap">
         <button onClick={() => void handleSave()} disabled={state === "saving"}
@@ -1891,7 +1898,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Notifications                                                       */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && <NotifyCard t={t} />}
+      <NotifyCard t={t} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Spike                                                              */}

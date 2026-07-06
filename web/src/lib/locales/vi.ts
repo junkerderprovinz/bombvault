@@ -14,13 +14,15 @@ const vi: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Cài đặt",
   "nav.reportBug": "Báo lỗi",
-  "nav.advanced": "Nâng cao",
-  "nav.comingSoon": "Sắp ra mắt",
+  "mode.simple": "Đơn giản",
+  "mode.advanced": "Nâng cao",
+  "mode.hint": "Nâng cao hiển thị các tùy chọn chuyên gia",
   "nav.recovery": "Khôi phục",
-  "nav.config": "Cấu hình",
+  "nav.config": "Tự sao lưu",
 
   // Dashboard
   "dashboard.title": "Tổng quan",
+  "dashboard.subtitle": "Trạng thái sao lưu của bạn trong nháy mắt.",
   "dashboard.lastBackups": "Bản sao lưu gần đây",
   "dashboard.recentRuns": "Lần chạy gần đây",
   "dashboard.spikeStatus": "Trạng thái hệ thống",
@@ -146,7 +148,7 @@ const vi: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "Cấu hình ứng dụng",
+  "settings.configEnabled": "Tự sao lưu",
   "settings.schedule": "Lịch trình",
   "settings.scheduleOff": "tắt",
   "settings.language": "Ngôn ngữ",
@@ -162,8 +164,8 @@ const vi: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "Tác vụ đang chạy",
-  "dashboard.statPausedJobs": "Tác vụ tạm dừng",
+  "dashboard.statActiveJobs": "Kế hoạch đang chạy",
+  "dashboard.statPausedJobs": "Kế hoạch tạm dừng",
   "dashboard.statErrors": "Lỗi",
   "dashboard.statMissingContainers": "Containers bị thiếu",
   "dashboard.statMissingVMs": "VMs bị thiếu",
@@ -290,7 +292,7 @@ const vi: Partial<Translations> = {
   "files.loadFailed": "Không tải được tập tin",
   "files.more": "Tinh chỉnh bộ lọc để xem thêm tập tin.",
 
-  "settings.retentionTitle": "Lưu giữ",
+  "settings.retentionTitle": "Lưu giữ ảnh chụp nhanh",
   "settings.retentionHint": "Số bản sao lưu cần giữ cho mỗi mục. Sau mỗi lần sao lưu, restic sẽ dọn các snapshot cũ theo chính sách này. Tất cả bằng 0 = giữ tất cả (tắt).",
   "settings.retentionLast": "Giữ gần nhất",
   "settings.retentionDaily": "Giữ theo ngày",
@@ -344,7 +346,7 @@ const vi: Partial<Translations> = {
   "flash.zipExport.enableHint": "Mỗi khi một lần sao lưu flash thành công, ảnh chụp được ghi thành tệp .zip vào thư mục bên dưới.",
   "flash.zipExport.path": "Thư mục xuất",
   "flash.zipExport.pathHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host nơi tệp .zip được ghi tới — trỏ nó tới một thư mục Syncthing/rclone để tự động đưa flash ra khỏi máy chủ.",
-  "flash.zipExport.keepHistory": "Giữ lịch sử",
+  "flash.zipExport.keepHistory": "Giữ các tệp zip đã xuất",
   "flash.zipExport.keepHistoryHint": "Tắt: giữ một tệp flash-latest.zip duy nhất bị ghi đè mỗi lần. Bật: giữ N tệp flash-<ngày>.zip có dấu thời gian mới nhất. Điều này độc lập với việc lưu giữ của restic: tắt sẽ giữ một tệp duy nhất luôn bị ghi đè (không bao giờ làm đầy đích); bật sẽ giữ N tệp mới nhất và xóa các tệp cũ hơn.",
   "flash.zipExport.keepN": "Số tệp ZIP cần giữ",
   "flash.zipExport.keepNHint": "N tệp ZIP có dấu thời gian mới nhất được giữ lại; những tệp cũ hơn bị xóa tự động.",
@@ -496,9 +498,9 @@ const vi: Partial<Translations> = {
   "recovery.configSkipped": "Đã bỏ qua. Đính kèm các bản sao lưu của bạn thủ công bên dưới.",
 
   // Config Backup page
-  "config.title": "Sao lưu cấu hình",
+  "config.title": "Tự sao lưu",
   "config.subtitle": "Sao lưu các cài đặt của chính BombVault để một máy chủ dựng lại có thể tự khôi phục.",
-  "config.settingsTitle": "Cài đặt sao lưu cấu hình",
+  "config.settingsTitle": "Cài đặt tự sao lưu",
   "config.settingsHint": "Bảo vệ cấu hình của chính BombVault — cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site và khóa SSH — để một bản cài đặt mới có thể tự khôi phục và tiếp tục ngay từ chỗ đã dừng.",
   "config.enabled": "Sao lưu cài đặt của BombVault",
   "config.enabledHint": "Đưa /config của chính BombVault vào lịch trình bên dưới.",
@@ -564,7 +566,7 @@ const vi: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "Cấu hình",
+  "dashboard.domainConfig": "Tự sao lưu",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "Tình trạng sao lưu",

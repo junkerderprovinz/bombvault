@@ -14,12 +14,14 @@ const ru: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "Настройки",
   "nav.reportBug": "Сообщить об ошибке",
-  "nav.advanced": "Дополнительно",
-  "nav.comingSoon": "Скоро",
+  "mode.simple": "Простой",
+  "mode.advanced": "Дополнительно",
+  "mode.hint": "Расширенный режим открывает экспертные настройки",
   "nav.recovery": "Восстановление",
 
   // Dashboard
   "dashboard.title": "Панель",
+  "dashboard.subtitle": "Состояние ваших резервных копий с первого взгляда.",
   "dashboard.lastBackups": "Последние резервные копии",
   "dashboard.recentRuns": "Последние запуски",
   "dashboard.spikeStatus": "Состояние системы",
@@ -158,8 +160,8 @@ const ru: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнеры",
   "dashboard.statVMs": "Виртуальные машины",
-  "dashboard.statActiveJobs": "Активные задания",
-  "dashboard.statPausedJobs": "Приостановленные задания",
+  "dashboard.statActiveJobs": "Активные планы",
+  "dashboard.statPausedJobs": "Приостановленные планы",
   "dashboard.statErrors": "Ошибки",
   "dashboard.statMissingContainers": "Отсутствующие контейнеры",
   "dashboard.statMissingVMs": "Отсутствующие виртуальные машины",
@@ -286,7 +288,7 @@ const ru: Partial<Translations> = {
   "files.more": "Уточните фильтр, чтобы увидеть больше файлов.",
 
   // Retention
-  "settings.retentionTitle": "Хранение",
+  "settings.retentionTitle": "Хранение снимков",
   "settings.retentionHint": "Сколько резервных копий хранить для каждого элемента. После каждой копии restic удаляет более старые снимки согласно этой политике. Все нули = хранить всё (отключено).",
   "settings.retentionLast": "Хранить последние",
   "settings.retentionDaily": "Хранить ежедневные",
@@ -344,7 +346,7 @@ const ru: Partial<Translations> = {
   "flash.zipExport.enableHint": "При каждой успешной копии flash снимок записывается как .zip в папку ниже.",
   "flash.zipExport.path": "Папка экспорта",
   "flash.zipExport.pathHint": "Относительный подпуть в корне монтирования хоста, куда попадает .zip — укажите папку Syncthing/rclone, чтобы автоматически отправлять flash за пределы сервера.",
-  "flash.zipExport.keepHistory": "Хранить историю",
+  "flash.zipExport.keepHistory": "Сохранять экспортированные zip-файлы",
   "flash.zipExport.keepHistoryHint": "Выкл.: хранить единственный flash-latest.zip, который перезаписывается каждый раз. Вкл.: хранить новейшие N файлов flash-<дата>.zip с метками времени. Это не связано с хранением restic: выкл. хранит один файл, который всегда перезаписывается (никогда не заполняет хранилище); вкл. хранит N новейших и удаляет более старые.",
   "flash.zipExport.keepN": "Сколько ZIP хранить",
   "flash.zipExport.keepNHint": "Хранятся новейшие N ZIP с метками времени; более старые удаляются автоматически.",
@@ -677,9 +679,9 @@ const ru: Partial<Translations> = {
   "ransomware.pruneStrategy": "стратегия очистки задана",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Резервная копия конфигурации",
+  "config.title": "Автобэкап",
   "config.subtitle": "Создайте резервную копию собственных настроек BombVault, чтобы пересобранный сервер мог восстановить себя сам.",
-  "config.settingsTitle": "Настройки резервного копирования конфигурации",
+  "config.settingsTitle": "Настройки автобэкапа",
   "config.settingsHint": "Защитите собственную конфигурацию BombVault — его базу настроек, внешние учётные данные и SSH-ключи — чтобы свежая установка могла восстановить себя сама и продолжить ровно с того места, где остановилась.",
   "config.enabled": "Создавать резервную копию настроек BombVault",
   "config.enabledHint": "Включить собственный /config BombVault в расписание ниже.",
@@ -700,9 +702,9 @@ const ru: Partial<Translations> = {
   "config.snapshotsTitle": "Резервные копии настроек",
   "config.snapshotsHint": "Чтобы восстановить эти настройки на пересобранном сервере, используйте вкладку Восстановление — восстановление настроек перезапускает BombVault для их применения, поэтому оно находится там вместе с остальным процессом аварийного восстановления.",
   "config.none": "Резервных копий настроек пока нет — создайте копию выше.",
-  "nav.config": "Config",
-  "settings.configEnabled": "Конфигурация приложения",
-  "dashboard.domainConfig": "Config",
+  "nav.config": "Автобэкап",
+  "settings.configEnabled": "Автобэкап",
+  "dashboard.domainConfig": "Автобэкап",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Шаблоны исключений",

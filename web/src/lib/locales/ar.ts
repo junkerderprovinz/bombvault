@@ -14,13 +14,15 @@ const ar: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.settings": "الإعدادات",
   "nav.reportBug": "الإبلاغ عن خطأ",
-  "nav.advanced": "متقدم",
-  "nav.comingSoon": "قريباً",
+  "mode.simple": "بسيط",
+  "mode.advanced": "متقدم",
+  "mode.hint": "الوضع المتقدم يكشف عناصر تحكم الخبراء",
   "nav.recovery": "الاستعادة",
-  "nav.config": "التهيئة",
+  "nav.config": "النسخ الذاتي",
 
   // Dashboard
   "dashboard.title": "لوحة التحكم",
+  "dashboard.subtitle": "حالة النسخ الاحتياطي لديك في لمحة.",
   "dashboard.lastBackups": "آخر النسخ الاحتياطية",
   "dashboard.recentRuns": "آخر التشغيلات",
   "dashboard.spikeStatus": "حالة النظام",
@@ -146,7 +148,7 @@ const ar: Partial<Translations> = {
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
-  "settings.configEnabled": "إعدادات التطبيق",
+  "settings.configEnabled": "النسخ الذاتي",
   "settings.schedule": "الجدول الزمني",
   "settings.scheduleOff": "إيقاف",
   "settings.language": "اللغة",
@@ -162,8 +164,8 @@ const ar: Partial<Translations> = {
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
   "dashboard.statVMs": "VMs",
-  "dashboard.statActiveJobs": "المهام النشطة",
-  "dashboard.statPausedJobs": "المهام الموقوفة",
+  "dashboard.statActiveJobs": "الخطط النشطة",
+  "dashboard.statPausedJobs": "الخطط الموقوفة",
   "dashboard.statErrors": "الأخطاء",
   "dashboard.statMissingContainers": "Containers مفقودة",
   "dashboard.statMissingVMs": "VMs مفقودة",
@@ -293,7 +295,7 @@ const ar: Partial<Translations> = {
   "files.more": "نقّح التصفية لرؤية المزيد من الملفات.",
 
   // Retention
-  "settings.retentionTitle": "الاحتفاظ",
+  "settings.retentionTitle": "الاحتفاظ باللقطات",
   "settings.retentionHint": "عدد النسخ الاحتياطية المحتفظ بها لكل عنصر. بعد كل نسخة احتياطية، يقلّم restic اللقطات الأقدم وفق هذه السياسة. الكل صفر = الاحتفاظ بكل شيء (معطّل).",
   "settings.retentionLast": "الاحتفاظ بالأخيرة",
   "settings.retentionDaily": "الاحتفاظ اليومي",
@@ -351,7 +353,7 @@ const ar: Partial<Translations> = {
   "flash.zipExport.enableHint": "في كل مرة تنجح فيها نسخة احتياطية للفلاش، تُكتب اللقطة كملف .zip في المجلد أدناه.",
   "flash.zipExport.path": "مجلد التصدير",
   "flash.zipExport.pathHint": "مسار فرعي نسبي ضمن جذر نقطة تركيب المضيف حيث يُوضع ملف .zip — وجّهه إلى مجلد Syncthing/rclone لإخراج الفلاش من الخادم تلقائياً.",
-  "flash.zipExport.keepHistory": "الاحتفاظ بالسجل",
+  "flash.zipExport.keepHistory": "الاحتفاظ بملفات zip المُصدَّرة",
   "flash.zipExport.keepHistoryHint": "إيقاف: الاحتفاظ بملف flash-latest.zip واحد يُستبدل في كل مرة. تشغيل: الاحتفاظ بأحدث N ملفات flash-<date>.zip مؤرّخة. هذا مستقل عن استبقاء restic: الإيقاف يحتفظ بملف واحد يُستبدل دائمًا (لا يملأ الوجهة أبدًا)؛ التشغيل يحتفظ بأحدث N ويحذف الأقدم.",
   "flash.zipExport.keepN": "عدد ملفات zip المحتفظ بها",
   "flash.zipExport.keepNHint": "يُحتفظ بأحدث N ملفات zip مؤرّخة؛ وتُحذف الأقدم تلقائياً.",
@@ -491,9 +493,9 @@ const ar: Partial<Translations> = {
   "recovery.freshNudgeCta": "الانتقال إلى الاستعادة",
 
   // Config backup (BombVault's own settings)
-  "config.title": "النسخ الاحتياطي للإعدادات",
+  "config.title": "النسخ الذاتي",
   "config.subtitle": "انسخ إعدادات BombVault الخاصة احتياطياً حتى يتمكن خادم مُعاد بناؤه من استعادة نفسه.",
-  "config.settingsTitle": "إعدادات النسخ الاحتياطي للإعدادات",
+  "config.settingsTitle": "إعدادات النسخ الذاتي",
   "config.settingsHint": "احمِ إعدادات BombVault الخاصة — قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع ومفاتيح SSH — حتى يتمكن تثبيت جديد من استعادة نفسه ومتابعة العمل من حيث توقّف.",
   "config.enabled": "نسخ إعدادات BombVault احتياطياً",
   "config.enabledHint": "تضمين /config الخاص بـ BombVault في الجدول الزمني أدناه.",
@@ -575,7 +577,7 @@ const ar: Partial<Translations> = {
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
-  "dashboard.domainConfig": "التهيئة",
+  "dashboard.domainConfig": "النسخ الذاتي",
 
   // Dashboard backup-health heatmap
   "dashboard.healthTitle": "سلامة النسخ الاحتياطي",
