@@ -822,15 +822,20 @@ type DomainStatusEntry struct {
 	// red/amber/green aggregate (see protectionLevel); it is "" for a disabled
 	// domain (the dashboard then shows nothing for it). These extend /api/status so
 	// the dashboard card needs no second round-trip.
-	OffsiteConfigured bool   `json:"offsiteConfigured"`
-	OffsiteImmutable  bool   `json:"offsiteImmutable"`
-	LastTamperAt      int64  `json:"lastTamperAt"`
-	LastTamperOK      bool   `json:"lastTamperOK"`
-	LastReplicationAt int64  `json:"lastReplicationAt"`
-	LastReplicationOK bool   `json:"lastReplicationOK"`
-	LastDRDrillAt     int64  `json:"lastDrDrillAt"`
-	LastDRDrillOK     bool   `json:"lastDrDrillOK"`
-	Protection        string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
+	OffsiteConfigured bool  `json:"offsiteConfigured"`
+	OffsiteImmutable  bool  `json:"offsiteImmutable"`
+	LastTamperAt      int64 `json:"lastTamperAt"`
+	LastTamperOK      bool  `json:"lastTamperOK"`
+	LastReplicationAt int64 `json:"lastReplicationAt"`
+	LastReplicationOK bool  `json:"lastReplicationOK"`
+	LastDRDrillAt     int64 `json:"lastDrDrillAt"`
+	LastDRDrillOK     bool  `json:"lastDrDrillOK"`
+	// OffsiteDrillScheduled is true only when the scheduler actually runs an
+	// off-site DR drill for this domain (DrillsEnabled AND OffsiteDrillsEnabled AND
+	// an off-site repo configured). When false but the domain has an off-site repo,
+	// the dashboard shows a muted "manual only" pill instead of a red drFailed (#37).
+	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
+	Protection            string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
 
 	// Per-check states derived from the SAME inputs Protection aggregates (see
 	// protectionChecks), so the dashboard card can render each checklist row as a
@@ -1167,9 +1172,13 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		}
 
 		// The DR-drill currency only has a claim when the scheduler actually runs
-		// drills (DrillsEnabled); otherwise a stale lastDRDrillAt must not read overdue.
+		// off-site DR drills (DrillsEnabled AND OffsiteDrillsEnabled); otherwise a
+		// stale lastDRDrillAt must not read overdue. Opting out of the scheduled
+		// off-site DR drill (#37) thus reuses the proven global-drills-off neutral
+		// path: drillPeriod stays 0, so DrillState is "" (muted) and protectionLevel
+		// ignores DR (both its DR branches are drillPeriod>0-guarded).
 		var drillPeriod int64
-		if settings.DrillsEnabled {
+		if settings.DrillsEnabled && settings.OffsiteDrillsEnabled {
 			drillPeriod = cadencePeriodSeconds(settings.DrillsSchedule)
 		}
 
@@ -1208,30 +1217,31 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			settings.OffsiteRetentionKeepMonthly > 0
 
 		out = append(out, DomainStatusEntry{
-			Domain:            d.name,
-			Enabled:           d.enabled,
-			Schedule:          d.schedule,
-			LastSuccess:       lastUnix,
-			PeriodSeconds:     period,
-			Status:            rpoStatus(now, lastUnix, period, scheduled),
-			LastVerified:      lastVerified,
-			LastVerifiedOK:    lastVerifiedOK,
-			VerifiedDetail:    verifiedDetail,
-			OffsiteConfigured: offsiteConfigured,
-			OffsiteImmutable:  offsiteImmutable,
-			LastTamperAt:      lastTamperAt,
-			LastTamperOK:      lastTamperOK,
-			LastReplicationAt: lastReplicationAt,
-			LastReplicationOK: lastReplicationOK,
-			LastDRDrillAt:     lastDRDrillAt,
-			LastDRDrillOK:     lastDRDrillOK,
-			DrillDetail:       drDetail,
-			Protection:        protection,
-			TamperState:       checks.Tamper,
-			ReplicationState:  checks.Replication,
-			DrillState:        checks.Drill,
-			EncryptionOn:      settings.EncryptionEnabled,
-			PruneStrategySet:  pruneStrategySet,
+			Domain:                d.name,
+			Enabled:               d.enabled,
+			Schedule:              d.schedule,
+			LastSuccess:           lastUnix,
+			PeriodSeconds:         period,
+			Status:                rpoStatus(now, lastUnix, period, scheduled),
+			LastVerified:          lastVerified,
+			LastVerifiedOK:        lastVerifiedOK,
+			VerifiedDetail:        verifiedDetail,
+			OffsiteConfigured:     offsiteConfigured,
+			OffsiteImmutable:      offsiteImmutable,
+			LastTamperAt:          lastTamperAt,
+			LastTamperOK:          lastTamperOK,
+			LastReplicationAt:     lastReplicationAt,
+			LastReplicationOK:     lastReplicationOK,
+			LastDRDrillAt:         lastDRDrillAt,
+			LastDRDrillOK:         lastDRDrillOK,
+			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
+			DrillDetail:           drDetail,
+			Protection:            protection,
+			TamperState:           checks.Tamper,
+			ReplicationState:      checks.Replication,
+			DrillState:            checks.Drill,
+			EncryptionOn:          settings.EncryptionEnabled,
+			PruneStrategySet:      pruneStrategySet,
 		})
 	}
 	return out, nil

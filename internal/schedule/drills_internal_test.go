@@ -11,9 +11,10 @@ import (
 // off-site is configured — and NEVER a dr drill for VMs.
 func TestDrillTasks(t *testing.T) {
 	base := store.Settings{
-		ContainersEnabled: true,
-		VMsEnabled:        true,
-		FlashEnabled:      true,
+		ContainersEnabled:    true,
+		VMsEnabled:           true,
+		FlashEnabled:         true,
+		OffsiteDrillsEnabled: true, // default on: scheduled off-site DR drills run
 	}
 
 	t.Run("subset per enabled domain, no dr without off-site", func(t *testing.T) {
@@ -64,6 +65,29 @@ func TestDrillTasks(t *testing.T) {
 		for _, tk := range drillTasks(s) {
 			if tk.domain == "containers" {
 				t.Fatalf("a disabled domain must yield no drill task, got %+v", tk)
+			}
+		}
+	})
+
+	// #37: opting out of the scheduled off-site DR drill drops the {*,offsite,dr}
+	// tasks but KEEPS the local {*,subset} integrity checks for every enabled domain.
+	t.Run("OffsiteDrillsEnabled false omits dr tasks but keeps local subset", func(t *testing.T) {
+		s := base
+		s.OffsiteDrillsEnabled = false
+		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers"
+		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
+		subset := map[string]bool{}
+		for _, tk := range drillTasks(s) {
+			if tk.kind == "dr" {
+				t.Fatalf("no off-site dr task expected when OffsiteDrillsEnabled is false, got %+v", tk)
+			}
+			if tk.kind == "subset" && tk.source == "local" {
+				subset[tk.domain] = true
+			}
+		}
+		for _, d := range []string{"containers", "vms", "flash"} {
+			if !subset[d] {
+				t.Fatalf("local subset drill for %q must remain when off-site DR is opted out", d)
 			}
 		}
 	})

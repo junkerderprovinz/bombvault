@@ -561,11 +561,17 @@ func drillTasks(settings store.Settings) []drillTask {
 	for _, d := range enabledDrillDomains(settings) {
 		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
 	}
-	if settings.ContainersEnabled && settings.ContainersOffsite != "" {
-		out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
-	}
-	if settings.FlashEnabled && settings.FlashOffsite != "" {
-		out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
+	// The scheduled off-site DR drills are gated behind OffsiteDrillsEnabled: they
+	// re-download the whole off-site snapshot each run (egress cost on metered
+	// clouds), so the user can opt out of them while keeping the free local subset
+	// integrity check above and running the off-site DR check manually (#37).
+	if settings.OffsiteDrillsEnabled {
+		if settings.ContainersEnabled && settings.ContainersOffsite != "" {
+			out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
+		}
+		if settings.FlashEnabled && settings.FlashOffsite != "" {
+			out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
+		}
 	}
 	return out
 }
