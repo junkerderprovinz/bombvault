@@ -737,6 +737,22 @@ const it: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Ripristina l'intero snapshot off-site secondo la pianificazione della prova per dimostrare il ripristino remoto. Ogni esecuzione riscarica l'intero backup, con costi di egress sui cloud a consumo (per esempio Backblaze B2). Disattiva per mantenere solo il controllo di integrità locale gratuito ed eseguire il controllo DR off-site manualmente.",
   "drill.manualOnly": "DR off-site: solo manuale",
   "drill.manualOnlyTitle": "La prova DR off-site pianificata è disattivata. Esegui il controllo off-site manualmente con il pulsante.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Generale",
+  "settings.tab.storage": "Percorsi e archiviazione",
+  "settings.tab.schedules": "Pianificazioni",
+  "settings.tab.offsite": "Off-site",
+  "settings.tab.notifications": "Notifiche",
+  "settings.tab.integrity": "Integrità",
+  "settings.tab.system": "Sistema",
+  "settings.schedulesBackup": "Pianificazioni di backup",
+  "settings.schedulesOffsite": "Pianificazioni di replica off-site",
+  "settings.schedulesSelfBackup": "Pianificazione di auto-backup",
+  "settings.schedulesChecks": "Pianificazione di verifica del ripristino",
+  "settings.subtitle": "Configurazione di BombVault — le modifiche hanno effetto immediato.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtri",
 };
 
 export default it;

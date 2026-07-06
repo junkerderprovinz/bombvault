@@ -737,6 +737,22 @@ const el: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Επαναφέρει το πλήρες στιγμιότυπο εκτός τόπου σύμφωνα με το πρόγραμμα δοκιμών για να αποδείξει την απομακρυσμένη ανάκτηση. Κάθε εκτέλεση κατεβάζει ξανά ολόκληρο το αντίγραφο ασφαλείας, γεγονός που κοστίζει egress σε νέφη με χρέωση βάσει χρήσης (για παράδειγμα Backblaze B2). Απενεργοποιήστε το για να διατηρήσετε μόνο τον δωρεάν τοπικό έλεγχο ακεραιότητας και να εκτελείτε τον έλεγχο DR εκτός τόπου χειροκίνητα.",
   "drill.manualOnly": "DR εκτός τόπου: μόνο χειροκίνητα",
   "drill.manualOnlyTitle": "Η προγραμματισμένη δοκιμή DR εκτός τόπου είναι απενεργοποιημένη. Εκτελέστε τον έλεγχο εκτός τόπου χειροκίνητα με το κουμπί.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Γενικά",
+  "settings.tab.storage": "Διαδρομές και αποθήκευση",
+  "settings.tab.schedules": "Προγραμματισμοί",
+  "settings.tab.offsite": "Εκτός τόπου",
+  "settings.tab.notifications": "Ειδοποιήσεις",
+  "settings.tab.integrity": "Ακεραιότητα",
+  "settings.tab.system": "Σύστημα",
+  "settings.schedulesBackup": "Προγραμματισμοί αντιγράφων ασφαλείας",
+  "settings.schedulesOffsite": "Προγραμματισμοί αναπαραγωγής εκτός τόπου",
+  "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
+  "settings.schedulesChecks": "Προγραμματισμός ελέγχου επαναφοράς",
+  "settings.subtitle": "Διαμόρφωση BombVault — οι αλλαγές τίθενται σε ισχύ αμέσως.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Φίλτρα",
 };
 
 export default el;

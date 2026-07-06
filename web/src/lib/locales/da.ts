@@ -737,6 +737,22 @@ const da: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Gendanner hele off-site-snapshottet efter testplanen for at bevise fjerngendannelse. Hver kørsel henter hele sikkerhedskopien igen, hvilket koster egress hos skyer med forbrugsafregning (for eksempel Backblaze B2). Slå fra for kun at beholde det gratis lokale integritetstjek og køre off-site DR-tjekket manuelt.",
   "drill.manualOnly": "Off-site DR: kun manuelt",
   "drill.manualOnlyTitle": "Den planlagte off-site DR-test er slået fra. Kør off-site-tjekket manuelt med knappen.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Generelt",
+  "settings.tab.storage": "Stier og lagring",
+  "settings.tab.schedules": "Tidsplaner",
+  "settings.tab.offsite": "Off-site",
+  "settings.tab.notifications": "Notifikationer",
+  "settings.tab.integrity": "Integritet",
+  "settings.tab.system": "System",
+  "settings.schedulesBackup": "Sikkerhedskopierings-tidsplaner",
+  "settings.schedulesOffsite": "Off-site-replikerings-tidsplaner",
+  "settings.schedulesSelfBackup": "Tidsplan for selv-sikkerhedskopiering",
+  "settings.schedulesChecks": "Tidsplan for gendannelsestjek",
+  "settings.subtitle": "BombVault-konfiguration — ændringer træder i kraft med det samme.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtre",
 };
 
 export default da;

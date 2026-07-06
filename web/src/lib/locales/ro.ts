@@ -740,6 +740,22 @@ const ro: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Restaurează snapshotul extern complet conform programului testului pentru a dovedi recuperarea la distanță. Fiecare rulare descarcă din nou întreaga copie de rezervă, ceea ce generează costuri de egress pe cloudurile taxate în funcție de consum (de exemplu Backblaze B2). Dezactivează pentru a păstra doar verificarea de integritate locală gratuită și a rula manual verificarea DR externă.",
   "drill.manualOnly": "DR extern: doar manual",
   "drill.manualOnlyTitle": "Testul DR extern programat este dezactivat. Rulează verificarea externă manual cu butonul.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "General",
+  "settings.tab.storage": "Căi și stocare",
+  "settings.tab.schedules": "Programări",
+  "settings.tab.offsite": "Extern",
+  "settings.tab.notifications": "Notificări",
+  "settings.tab.integrity": "Integritate",
+  "settings.tab.system": "Sistem",
+  "settings.schedulesBackup": "Programări de backup",
+  "settings.schedulesOffsite": "Programări de replicare externă",
+  "settings.schedulesSelfBackup": "Programare de auto-backup",
+  "settings.schedulesChecks": "Programare de verificare a restaurării",
+  "settings.subtitle": "Configurația BombVault — modificările au efect imediat.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtre",
 };
 
 export default ro;

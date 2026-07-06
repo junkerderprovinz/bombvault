@@ -735,6 +735,22 @@ const es: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Restaura la instantánea externa completa según la programación del simulacro para demostrar la recuperación remota. Cada ejecución vuelve a descargar toda la copia de seguridad, lo que genera costes de salida en nubes de pago por uso (por ejemplo Backblaze B2). Desactívalo para conservar solo la comprobación de integridad local gratuita y ejecutar la comprobación DR externa manualmente.",
   "drill.manualOnly": "DR externo: solo manual",
   "drill.manualOnlyTitle": "El simulacro DR externo programado está desactivado. Ejecuta la comprobación externa manualmente con el botón.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "General",
+  "settings.tab.storage": "Rutas y almacenamiento",
+  "settings.tab.schedules": "Programaciones",
+  "settings.tab.offsite": "Externo",
+  "settings.tab.notifications": "Notificaciones",
+  "settings.tab.integrity": "Integridad",
+  "settings.tab.system": "Sistema",
+  "settings.schedulesBackup": "Programaciones de copia de seguridad",
+  "settings.schedulesOffsite": "Programaciones de replicación externa",
+  "settings.schedulesSelfBackup": "Programación de autocopia",
+  "settings.schedulesChecks": "Programación de verificación de restauración",
+  "settings.subtitle": "Configuración de BombVault — los cambios surten efecto de inmediato.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtros",
 };
 
 export default es;

@@ -737,6 +737,22 @@ const he: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "משחזר את תמונת המצב המלאה מחוץ לאתר לפי לוח הזמנים של התרגיל כדי להוכיח שחזור מרחוק. כל הרצה מורידה מחדש את כל הגיבוי, מה שגורם לעלויות תעבורה יוצאת בענני חיוב לפי שימוש (למשל Backblaze B2). כבה כדי לשמור רק על בדיקת השלמות המקומית החינמית ולהריץ את בדיקת ה-DR מחוץ לאתר ידנית.",
   "drill.manualOnly": "DR מחוץ לאתר: ידני בלבד",
   "drill.manualOnlyTitle": "תרגיל ה-DR המתוזמן מחוץ לאתר כבוי. הרץ את הבדיקה מחוץ לאתר ידנית באמצעות הכפתור.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "כללי",
+  "settings.tab.storage": "נתיבים ואחסון",
+  "settings.tab.schedules": "תזמונים",
+  "settings.tab.offsite": "מחוץ לאתר",
+  "settings.tab.notifications": "התראות",
+  "settings.tab.integrity": "שלמות",
+  "settings.tab.system": "מערכת",
+  "settings.schedulesBackup": "תזמוני גיבוי",
+  "settings.schedulesOffsite": "תזמוני שכפול מחוץ לאתר",
+  "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",
+  "settings.schedulesChecks": "תזמון בדיקת שחזור",
+  "settings.subtitle": "תצורת BombVault — השינויים נכנסים לתוקף מיד.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "מסננים",
 };
 
 export default he;

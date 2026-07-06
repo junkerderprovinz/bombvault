@@ -737,6 +737,22 @@ const tr: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Uzaktan kurtarmayı kanıtlamak için tatbikat zamanlamasına göre tam site dışı anlık görüntüyü geri yükler. Her çalıştırma yedeğin tamamını yeniden indirir; bu da kullanıma göre ücretlendirilen bulutlarda (örneğin Backblaze B2) egress maliyeti oluşturur. Yalnızca ücretsiz yerel bütünlük denetimini tutmak ve site dışı DR denetimini elle çalıştırmak için kapatın.",
   "drill.manualOnly": "Site dışı DR: yalnızca elle",
   "drill.manualOnlyTitle": "Zamanlanmış site dışı DR tatbikatı kapalı. Site dışı denetimi düğmeyle elle çalıştırın.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Genel",
+  "settings.tab.storage": "Yollar ve depolama",
+  "settings.tab.schedules": "Zamanlamalar",
+  "settings.tab.offsite": "Site dışı",
+  "settings.tab.notifications": "Bildirimler",
+  "settings.tab.integrity": "Bütünlük",
+  "settings.tab.system": "Sistem",
+  "settings.schedulesBackup": "Yedekleme zamanlamaları",
+  "settings.schedulesOffsite": "Site dışı çoğaltma zamanlamaları",
+  "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",
+  "settings.schedulesChecks": "Geri yükleme denetimi zamanlaması",
+  "settings.subtitle": "BombVault yapılandırması — değişiklikler hemen etkili olur.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtreler",
 };
 
 export default tr;

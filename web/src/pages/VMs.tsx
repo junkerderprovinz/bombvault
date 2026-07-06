@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
+import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -161,6 +161,56 @@ function ChipFilter<K extends string>({
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Filter popover (#2.6)
+// ---------------------------------------------------------------------------
+// Collapses the top controls (search + schedule/backup chips + sort) behind a
+// single "Filters" button so the toolbar stays uncluttered. Mirrors the same
+// change on Containers so the two pages stay consistent. Closes on outside
+// click / Escape; the controls inside keep all their own state + persistence.
+
+function FilterPopover({ t, children }: { t: T; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M1 2.5h10M2.5 6h7M4.5 9.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        {t("filter.button")}
+      </button>
+      {open && (
+        <div className="absolute left-0 z-20 mt-2 w-max min-w-[16rem] max-w-[calc(100vw-2rem)] rounded-lg border border-carbon-border bg-carbon-surface p-4 shadow-lg flex flex-col gap-4">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -343,7 +393,6 @@ function VMBackupButton({
   // Fire-and-watch (see useBackupWatch): the server backs the VM up detached and
   // answers immediately, so we watch the "vm:<name>" progress + recorded run for
   // the outcome instead of awaiting the whole backup.
-  const { advanced } = useAdvanced();
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `vm:${name}`,
     start: () => backupVMNow(name),
@@ -376,7 +425,7 @@ function VMBackupButton({
         <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
       )}
       {/* Plain export is an advanced-only extra. */}
-      {advanced && <VMExportButton name={name} t={t} />}
+      <Advanced><VMExportButton name={name} t={t} /></Advanced>
       {state.phase === "success" && (
         <span className="text-xs text-[#6fdc8c]">
           ✓ {t("common.done")}
@@ -557,7 +606,6 @@ function VMSnapshotRow({
 }
 
 function VMRestorePanel({ name, t }: { name: string; t: T }) {
-  const { advanced } = useAdvanced();
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -624,12 +672,10 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-              {advanced && (
-                <>
-                  <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-                  <SourceToggle source={source} onChange={setSource} disabled={loading} />
-                </>
-              )}
+              <Advanced>
+                <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+                <SourceToggle source={source} onChange={setSource} disabled={loading} />
+              </Advanced>
               {snapshots.length > 0 && (
                 <button
                   onClick={handleDeleteAll}
@@ -873,7 +919,6 @@ function ScheduleIncludeAllControl({
 
 export function VMs() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
   const running = anyActive(useProgress());
@@ -1076,39 +1121,41 @@ export function VMs() {
         </div>
       )}
 
-      {/* Controls: search + schedule/backup filters + sort + select-all. */}
+      {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all. */}
       {!loading && vms.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("vms.searchPlaceholder")}
-            spellCheck={false}
-            autoComplete="off"
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
-          />
-          <ChipFilter<ScheduleFilterKey>
-            label={t("filter.schedule")}
-            value={scheduleFilter}
-            onChange={handleScheduleFilterChange}
-            options={[
-              { key: "all", label: t("filter.all") },
-              { key: "scheduled", label: t("filter.scheduled") },
-              { key: "notScheduled", label: t("filter.notScheduled") },
-            ]}
-          />
-          <ChipFilter<BackupFilterKey>
-            label={t("filter.backup")}
-            value={backupFilter}
-            onChange={handleBackupFilterChange}
-            options={[
-              { key: "all", label: t("filter.all") },
-              { key: "backedUp", label: t("filter.backedUp") },
-              { key: "neverBackedUp", label: t("filter.neverBackedUp") },
-            ]}
-          />
-          <SortControl value={sortKey} onChange={handleSortChange} t={t} />
+          <FilterPopover t={t}>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("vms.searchPlaceholder")}
+              spellCheck={false}
+              autoComplete="off"
+              className="w-full rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            />
+            <ChipFilter<ScheduleFilterKey>
+              label={t("filter.schedule")}
+              value={scheduleFilter}
+              onChange={handleScheduleFilterChange}
+              options={[
+                { key: "all", label: t("filter.all") },
+                { key: "scheduled", label: t("filter.scheduled") },
+                { key: "notScheduled", label: t("filter.notScheduled") },
+              ]}
+            />
+            <ChipFilter<BackupFilterKey>
+              label={t("filter.backup")}
+              value={backupFilter}
+              onChange={handleBackupFilterChange}
+              options={[
+                { key: "all", label: t("filter.all") },
+                { key: "backedUp", label: t("filter.backedUp") },
+                { key: "neverBackedUp", label: t("filter.neverBackedUp") },
+              ]}
+            />
+            <SortControl value={sortKey} onChange={handleSortChange} t={t} />
+          </FilterPopover>
           {live.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
               <input
@@ -1143,7 +1190,7 @@ export function VMs() {
             {t("vms.backupSelected")}
           </button>
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-          {advanced && (
+          <Advanced>
             <button
               onClick={restoreSelected}
               disabled={bulkBusy || running.active}
@@ -1151,7 +1198,7 @@ export function VMs() {
             >
               {t("vms.restoreSelected")}
             </button>
-          )}
+          </Advanced>
           <button
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}

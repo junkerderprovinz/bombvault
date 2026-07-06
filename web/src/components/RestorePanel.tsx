@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
+import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { ProgressBar } from "./ProgressBar";
@@ -855,11 +855,11 @@ function SnapshotRow({
           {new Date(snap.time).toLocaleString()}
         </span>
         {/* Tags (chips + inline add-tag) — ownership tag hidden. Advanced only. */}
-        {advanced && (
+        <Advanced>
           <div className="hidden sm:flex">
             <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
           </div>
-        )}
+        </Advanced>
 
         {/* Consolidated restore toggle: opens the inline panel with 3 modes */}
         <button
@@ -888,7 +888,7 @@ function SnapshotRow({
         <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
           {/* Mode radios (Individual files / To a folder) are advanced; in basic
               mode only the in-place restore below is shown. */}
-          {advanced && (
+          <Advanced>
             <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
                 <input
@@ -921,7 +921,7 @@ function SnapshotRow({
                 {t("restore.mode.toFolder")}
               </label>
             </div>
-          )}
+          </Advanced>
 
           {/* In place — the destructive recreate (confirm-gated). */}
           {effectiveMode === "inPlace" && (
@@ -1037,7 +1037,6 @@ function SnapshotRow({
 const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
 export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
-  const { advanced } = useAdvanced();
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -1108,7 +1107,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
       {open && (
         <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
           {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-          {advanced && (
+          <Advanced>
             <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
@@ -1116,7 +1115,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               </div>
               <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
             </div>
-          )}
+          </Advanced>
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
@@ -1136,9 +1135,9 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               )}
             </div>
           )}
-          {advanced && !loading && !error && snapshots.length >= 2 && (
+          <Advanced when={!loading && !error && snapshots.length >= 2}>
             <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
-          )}
+          </Advanced>
           {!loading && snapshots.map((snap) => (
             <SnapshotRow
               key={snap.id}

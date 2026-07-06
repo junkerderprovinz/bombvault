@@ -777,6 +777,22 @@ const en = {
   // Dashboard fresh-install nudge → guided Recovery tab
   "recovery.freshNudge": "Restoring from a previous server or a rebuild? Recover your existing backups.",
   "recovery.freshNudgeCta": "Go to Recovery",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "General",
+  "settings.tab.storage": "Paths & Storage",
+  "settings.tab.schedules": "Schedules",
+  "settings.tab.offsite": "Off-site",
+  "settings.tab.notifications": "Notifications",
+  "settings.tab.integrity": "Integrity",
+  "settings.tab.system": "System",
+  "settings.schedulesBackup": "Backup schedules",
+  "settings.schedulesOffsite": "Off-site replication schedules",
+  "settings.schedulesSelfBackup": "Self-backup schedule",
+  "settings.schedulesChecks": "Restore-check schedule",
+  "settings.subtitle": "BombVault configuration — changes take effect immediately.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filters",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1515,6 +1531,22 @@ const de: Translations = {
   // Dashboard-Hinweis bei frischer Installation → geführter Wiederherstellungs-Tab
   "recovery.freshNudge": "Wiederherstellung von einem früheren Server oder nach einem Neuaufbau? Stelle deine vorhandenen Backups wieder her.",
   "recovery.freshNudgeCta": "Zur Wiederherstellung",
+
+  // Einstellungen — Bereichs-Tabs + Zeitplan-Überschriften + Untertitel (v5-Redesign)
+  "settings.tab.general": "Allgemein",
+  "settings.tab.storage": "Pfade & Speicher",
+  "settings.tab.schedules": "Zeitpläne",
+  "settings.tab.offsite": "Off-site",
+  "settings.tab.notifications": "Benachrichtigungen",
+  "settings.tab.integrity": "Integrität",
+  "settings.tab.system": "System",
+  "settings.schedulesBackup": "Backup-Zeitpläne",
+  "settings.schedulesOffsite": "Off-site-Replikations-Zeitpläne",
+  "settings.schedulesSelfBackup": "Selbst-Backup-Zeitplan",
+  "settings.schedulesChecks": "Wiederherstellungs-Prüfplan",
+  "settings.subtitle": "BombVault-Konfiguration — Änderungen wirken sofort.",
+  // Filter-Auslöser (v5-Redesign)
+  "filter.button": "Filter",
 };
 
 // ---------------------------------------------------------------------------

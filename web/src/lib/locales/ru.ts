@@ -732,6 +732,22 @@ const ru: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Восстанавливает полный внешний снимок по расписанию проверки, чтобы подтвердить удалённое восстановление. При каждом запуске заново скачивается вся резервная копия, что приводит к плате за исходящий трафик в облаках с тарификацией по объёму (например, Backblaze B2). Отключите, чтобы оставить только бесплатную локальную проверку целостности и запускать внешнюю DR-проверку вручную.",
   "drill.manualOnly": "Внешнее DR: только вручную",
   "drill.manualOnlyTitle": "Запланированная внешняя DR-проверка отключена. Запустите внешнюю проверку вручную с помощью кнопки.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Общие",
+  "settings.tab.storage": "Пути и хранилище",
+  "settings.tab.schedules": "Расписания",
+  "settings.tab.offsite": "Внешнее",
+  "settings.tab.notifications": "Уведомления",
+  "settings.tab.integrity": "Целостность",
+  "settings.tab.system": "Система",
+  "settings.schedulesBackup": "Расписания резервного копирования",
+  "settings.schedulesOffsite": "Расписания внешней репликации",
+  "settings.schedulesSelfBackup": "Расписание самокопирования",
+  "settings.schedulesChecks": "Расписание проверки восстановления",
+  "settings.subtitle": "Конфигурация BombVault — изменения вступают в силу немедленно.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Фильтры",
 };
 
 export default ru;

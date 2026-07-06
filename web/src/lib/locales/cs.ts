@@ -735,6 +735,22 @@ const cs: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Obnoví celý snapshot mimo lokalitu podle plánu cvičení, aby prokázalo vzdálené obnovení. Každé spuštění znovu stáhne celou zálohu, což znamená náklady na odchozí přenos u cloudů účtovaných podle objemu (například Backblaze B2). Vypněte, chcete-li ponechat pouze bezplatnou místní kontrolu integrity a spouštět kontrolu DR mimo lokalitu ručně.",
   "drill.manualOnly": "DR mimo lokalitu: pouze ručně",
   "drill.manualOnlyTitle": "Naplánované cvičení DR mimo lokalitu je vypnuté. Spusťte kontrolu mimo lokalitu ručně pomocí tlačítka.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Obecné",
+  "settings.tab.storage": "Cesty a úložiště",
+  "settings.tab.schedules": "Plány",
+  "settings.tab.offsite": "Mimo lokalitu",
+  "settings.tab.notifications": "Oznámení",
+  "settings.tab.integrity": "Integrita",
+  "settings.tab.system": "Systém",
+  "settings.schedulesBackup": "Plány zálohování",
+  "settings.schedulesOffsite": "Plány replikace mimo lokalitu",
+  "settings.schedulesSelfBackup": "Plán vlastního zálohování",
+  "settings.schedulesChecks": "Plán kontroly obnovení",
+  "settings.subtitle": "Konfigurace BombVault — změny se projeví okamžitě.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtry",
 };
 
 export default cs;

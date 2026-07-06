@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, exportContainer, setIncludeAll, ApiError } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
+import { Advanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
@@ -238,6 +238,62 @@ function ChipFilter<K extends string>({
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Filter popover (#2.6)
+// ---------------------------------------------------------------------------
+// Collapses the page's filter controls (search + installed/schedule/backup
+// chips) behind a single "Filters" button. The controls themselves are
+// unchanged and keep their own state + localStorage persistence — this only
+// relocates where they render. Accessible: the trigger reports aria-expanded,
+// the panel is a role=dialog, and it closes on click-outside or Escape.
+
+function FilterPopover({ label, children }: { label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+        {label}
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          aria-label={label}
+          className="absolute left-0 top-full z-20 mt-2 w-max max-w-[min(90vw,26rem)] rounded-card border border-carbon-border bg-carbon-surface p-4 shadow-lg flex flex-col gap-4"
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -796,7 +852,6 @@ function ContainerRow({
   selected?: boolean;
   onToggleSelect?: () => void;
 }) {
-  const { advanced } = useAdvanced();
   const installed = container.installed;
   const progressMap = useProgress();
   const progress = progressMap[`container:${container.name}`];
@@ -872,7 +927,7 @@ function ContainerRow({
                 <>
                   <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} />
                   {/* Plain tar+xml export is an advanced-only extra. */}
-                  {advanced && <ExportButton name={container.name} t={t} />}
+                  <Advanced><ExportButton name={container.name} t={t} /></Advanced>
                 </>
               )}
             </div>
@@ -885,19 +940,17 @@ function ContainerRow({
 
       {/* Backup-folder selection + stop-other-containers + pre/post hooks
           (installed only). These expert editors are advanced-only. */}
-      {installed && advanced && (
-        <>
-          <FoldersEditor name={container.name} t={t} />
-          <StopContainersEditor name={container.name} initial={container.stopContainers ?? []} t={t} />
-          <ExcludesEditor name={container.name} initial={container.excludes ?? []} t={t} />
-          <HooksEditor
-            name={container.name}
-            initialPre={container.preHook}
-            initialPost={container.postHook}
-            t={t}
-          />
-        </>
-      )}
+      <Advanced when={installed}>
+        <FoldersEditor name={container.name} t={t} />
+        <StopContainersEditor name={container.name} initial={container.stopContainers ?? []} t={t} />
+        <ExcludesEditor name={container.name} initial={container.excludes ?? []} t={t} />
+        <HooksEditor
+          name={container.name}
+          initialPre={container.preHook}
+          initialPost={container.postHook}
+          t={t}
+        />
+      </Advanced>
 
       {/* Backups / Restore disclosure (works even when not installed) */}
       <RestorePanel name={container.name} t={t} installed={installed} />
@@ -1173,7 +1226,6 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
 
 export function Containers() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1428,36 +1480,38 @@ export function Containers() {
       {/* Controls: search + filter (installed / schedule / backup) + sort. */}
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("containers.searchPlaceholder")}
-            spellCheck={false}
-            autoComplete="off"
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
-          />
-          <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
-          <ChipFilter<ScheduleFilterKey>
-            label={t("filter.schedule")}
-            value={scheduleFilter}
-            onChange={handleScheduleFilterChange}
-            options={[
-              { key: "all", label: t("filter.all") },
-              { key: "scheduled", label: t("filter.scheduled") },
-              { key: "notScheduled", label: t("filter.notScheduled") },
-            ]}
-          />
-          <ChipFilter<BackupFilterKey>
-            label={t("filter.backup")}
-            value={backupFilter}
-            onChange={handleBackupFilterChange}
-            options={[
-              { key: "all", label: t("filter.all") },
-              { key: "backedUp", label: t("filter.backedUp") },
-              { key: "neverBackedUp", label: t("filter.neverBackedUp") },
-            ]}
-          />
+          <FilterPopover label={t("filter.button")}>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("containers.searchPlaceholder")}
+              spellCheck={false}
+              autoComplete="off"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            />
+            <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
+            <ChipFilter<ScheduleFilterKey>
+              label={t("filter.schedule")}
+              value={scheduleFilter}
+              onChange={handleScheduleFilterChange}
+              options={[
+                { key: "all", label: t("filter.all") },
+                { key: "scheduled", label: t("filter.scheduled") },
+                { key: "notScheduled", label: t("filter.notScheduled") },
+              ]}
+            />
+            <ChipFilter<BackupFilterKey>
+              label={t("filter.backup")}
+              value={backupFilter}
+              onChange={handleBackupFilterChange}
+              options={[
+                { key: "all", label: t("filter.all") },
+                { key: "backedUp", label: t("filter.backedUp") },
+                { key: "neverBackedUp", label: t("filter.neverBackedUp") },
+              ]}
+            />
+          </FilterPopover>
           <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           {filterKey !== "notInstalled" && selectable.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
@@ -1493,7 +1547,7 @@ export function Containers() {
             {t("containers.backupSelected")}
           </button>
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-          {advanced && (
+          <Advanced>
             <button
               onClick={restoreSelected}
               disabled={bulkBusy || running.active}
@@ -1501,7 +1555,7 @@ export function Containers() {
             >
               {t("containers.restoreSelected")}
             </button>
-          )}
+          </Advanced>
           <button
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}

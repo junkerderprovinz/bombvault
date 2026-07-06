@@ -737,6 +737,22 @@ const sv: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Återställer hela off-site-snapshoten enligt övningsschemat för att bevisa fjärråterställning. Varje körning laddar ner hela säkerhetskopian på nytt, vilket ger egress-kostnader hos moln med förbrukningsdebitering (till exempel Backblaze B2). Stäng av för att bara behålla den kostnadsfria lokala integritetskontrollen och köra off-site DR-kontrollen manuellt.",
   "drill.manualOnly": "Off-site DR: endast manuellt",
   "drill.manualOnlyTitle": "Den schemalagda off-site DR-övningen är av. Kör off-site-kontrollen manuellt med knappen.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Allmänt",
+  "settings.tab.storage": "Sökvägar och lagring",
+  "settings.tab.schedules": "Scheman",
+  "settings.tab.offsite": "Off-site",
+  "settings.tab.notifications": "Aviseringar",
+  "settings.tab.integrity": "Integritet",
+  "settings.tab.system": "System",
+  "settings.schedulesBackup": "Säkerhetskopieringsscheman",
+  "settings.schedulesOffsite": "Off-site-replikeringsscheman",
+  "settings.schedulesSelfBackup": "Schema för självsäkerhetskopiering",
+  "settings.schedulesChecks": "Schema för återställningskontroll",
+  "settings.subtitle": "BombVault-konfiguration — ändringar träder i kraft omedelbart.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filter",
 };
 
 export default sv;

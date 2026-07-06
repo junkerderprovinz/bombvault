@@ -737,6 +737,22 @@ const pt: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Restaura o snapshot externo completo de acordo com o agendamento do teste para comprovar a recuperação remota. Cada execução volta a transferir todo o backup, o que gera custos de saída em nuvens tarifadas por utilização (por exemplo Backblaze B2). Desative para manter apenas a verificação de integridade local gratuita e executar a verificação DR externa manualmente.",
   "drill.manualOnly": "DR externo: apenas manual",
   "drill.manualOnlyTitle": "O teste DR externo agendado está desativado. Execute a verificação externa manualmente com o botão.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Geral",
+  "settings.tab.storage": "Caminhos e armazenamento",
+  "settings.tab.schedules": "Agendamentos",
+  "settings.tab.offsite": "Externo",
+  "settings.tab.notifications": "Notificações",
+  "settings.tab.integrity": "Integridade",
+  "settings.tab.system": "Sistema",
+  "settings.schedulesBackup": "Agendamentos de backup",
+  "settings.schedulesOffsite": "Agendamentos de replicação externa",
+  "settings.schedulesSelfBackup": "Agendamento de auto-backup",
+  "settings.schedulesChecks": "Agendamento de verificação de restauração",
+  "settings.subtitle": "Configuração do BombVault — as alterações têm efeito imediato.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtros",
 };
 
 export default pt;

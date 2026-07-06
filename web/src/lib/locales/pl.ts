@@ -732,6 +732,22 @@ const pl: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Przywraca pełny snapshot poza siedzibą zgodnie z harmonogramem próby, aby potwierdzić odzyskiwanie zdalne. Każde uruchomienie ponownie pobiera całą kopię zapasową, co generuje koszty transferu wychodzącego w chmurach rozliczanych za użycie (na przykład Backblaze B2). Wyłącz, aby zachować tylko bezpłatne lokalne sprawdzenie integralności i uruchamiać sprawdzenie DR poza siedzibą ręcznie.",
   "drill.manualOnly": "DR poza siedzibą: tylko ręcznie",
   "drill.manualOnlyTitle": "Zaplanowana próba DR poza siedzibą jest wyłączona. Uruchom sprawdzenie poza siedzibą ręcznie za pomocą przycisku.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Ogólne",
+  "settings.tab.storage": "Ścieżki i pamięć",
+  "settings.tab.schedules": "Harmonogramy",
+  "settings.tab.offsite": "Poza siedzibą",
+  "settings.tab.notifications": "Powiadomienia",
+  "settings.tab.integrity": "Integralność",
+  "settings.tab.system": "System",
+  "settings.schedulesBackup": "Harmonogramy kopii zapasowych",
+  "settings.schedulesOffsite": "Harmonogramy replikacji poza siedzibą",
+  "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",
+  "settings.schedulesChecks": "Harmonogram sprawdzania przywracania",
+  "settings.subtitle": "Konfiguracja BombVault — zmiany są stosowane natychmiast.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtry",
 };
 
 export default pl;

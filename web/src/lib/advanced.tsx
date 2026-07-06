@@ -36,3 +36,8 @@ export function AdvancedProvider({ children }: { children: ReactNode }) {
 export function useAdvanced() {
   return useContext(Ctx);
 }
+
+export function Advanced({ when = true, children }: { when?: boolean; children: ReactNode }) {
+  const { advanced } = useAdvanced();
+  return advanced && when ? <>{children}</> : null;
+}

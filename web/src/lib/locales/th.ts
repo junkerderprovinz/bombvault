@@ -740,6 +740,22 @@ const th: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "กู้คืนสแนปช็อตนอกสถานที่แบบเต็มตามกำหนดการทดสอบเพื่อพิสูจน์การกู้คืนจากระยะไกล การรันแต่ละครั้งจะดาวน์โหลดข้อมูลสำรองทั้งหมดใหม่ ซึ่งทำให้เกิดค่าใช้จ่าย egress บนคลาวด์ที่คิดค่าบริการตามการใช้งาน (เช่น Backblaze B2) ปิดเพื่อคงไว้เฉพาะการตรวจสอบความสมบูรณ์ในเครื่องที่ไม่มีค่าใช้จ่าย และรันการตรวจสอบ DR นอกสถานที่ด้วยตนเอง",
   "drill.manualOnly": "DR นอกสถานที่: ด้วยตนเองเท่านั้น",
   "drill.manualOnlyTitle": "การทดสอบ DR นอกสถานที่ตามกำหนดเวลาถูกปิดอยู่ เรียกใช้การตรวจสอบนอกสถานที่ด้วยตนเองโดยใช้ปุ่ม",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "ทั่วไป",
+  "settings.tab.storage": "เส้นทางและที่จัดเก็บ",
+  "settings.tab.schedules": "กำหนดการ",
+  "settings.tab.offsite": "นอกสถานที่",
+  "settings.tab.notifications": "การแจ้งเตือน",
+  "settings.tab.integrity": "ความสมบูรณ์",
+  "settings.tab.system": "ระบบ",
+  "settings.schedulesBackup": "กำหนดการสำรองข้อมูล",
+  "settings.schedulesOffsite": "กำหนดการจำลองข้อมูลนอกสถานที่",
+  "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
+  "settings.schedulesChecks": "กำหนดการตรวจสอบการกู้คืน",
+  "settings.subtitle": "การกำหนดค่า BombVault — การเปลี่ยนแปลงมีผลทันที",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "ตัวกรอง",
 };
 
 export default th;

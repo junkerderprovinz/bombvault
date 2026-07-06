@@ -729,6 +729,22 @@ const zh: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "按演练计划还原完整的异地快照，以证明远程恢复能力。每次运行都会重新下载整个备份，在按用量计费的云（例如 Backblaze B2）上会产生出站流量费用。关闭后仅保留免费的本地完整性检查，并手动运行异地 DR 检查。",
   "drill.manualOnly": "异地 DR：仅手动",
   "drill.manualOnlyTitle": "计划的异地 DR 演练已关闭。请使用按钮手动运行异地检查。",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "常规",
+  "settings.tab.storage": "路径与存储",
+  "settings.tab.schedules": "计划",
+  "settings.tab.offsite": "异地",
+  "settings.tab.notifications": "通知",
+  "settings.tab.integrity": "完整性",
+  "settings.tab.system": "系统",
+  "settings.schedulesBackup": "备份计划",
+  "settings.schedulesOffsite": "异地复制计划",
+  "settings.schedulesSelfBackup": "自备份计划",
+  "settings.schedulesChecks": "还原检查计划",
+  "settings.subtitle": "BombVault 配置 — 更改立即生效。",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "筛选",
 };
 
 export default zh;
