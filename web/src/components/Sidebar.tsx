@@ -269,19 +269,17 @@ export function Sidebar({ settings }: SidebarProps) {
 
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
-      {/* Logo → Dashboard. Enlarged to fill the sidebar column; the wordmark is
-          dropped (the logo already reads as the brand). Clicking it always
-          returns to the Dashboard. The logo ships with its own white frame, so
-          it reads on both dark and light surfaces (see .app-logo). */}
+      {/* Logo → Dashboard. Frameless SVG (no white frame), the wordmark is
+          dropped, clicking it always returns to the Dashboard. */}
       <NavLink
         to="/dashboard"
         aria-label={t("nav.dashboard")}
         className="block border-b border-carbon-border p-3 hover:opacity-90 transition-opacity"
       >
         <img
-          src="/logo.png"
+          src="/logo.svg"
           alt="BombVault"
-          className="app-logo block mx-auto w-1/2 h-auto object-contain"
+          className="block mx-auto w-1/2 h-auto object-contain"
         />
       </NavLink>
 
