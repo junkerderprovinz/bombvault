@@ -295,6 +295,20 @@ function ProtectionCard({
   const [drRunning, setDrRunning] = useState<string | null>(null);
   const [drRunError, setDrRunError] = useState<Record<string, string>>({});
 
+  // Drop a domain's transient manual-run message once its DR row is no longer
+  // failing, so a later refetch (including one triggered by ANOTHER domain's run)
+  // can't resurface a stale error next to a fresh reason.
+  useEffect(() => {
+    setDrRunError((prev) => {
+      const next: Record<string, string> = {};
+      for (const d of domains) {
+        const drFailed = d.status !== "off" && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
+        if (drFailed && prev[d.domain] !== undefined) next[d.domain] = prev[d.domain];
+      }
+      return Object.keys(next).length === Object.keys(prev).length ? prev : next;
+    });
+  }, [domains]);
+
   const runOffsiteDr = (domain: string) => {
     setDrRunning(domain);
     setDrRunError((e) => {
@@ -304,15 +318,13 @@ function ProtectionCard({
     });
     void runDrill(domain, "offsite", "dr")
       .then((res) => {
-        // Surface the returned drill's detail on failure (or the error envelope);
-        // a pass clears the red via the refetch below.
-        const detail =
-          res.drill && !res.drill.ok
-            ? res.drill.detail
-            : !res.ok
-              ? (res.error ?? t("verify.failed"))
-              : "";
-        if (detail) setDrRunError((e) => ({ ...e, [domain]: detail }));
+        // A drill that actually ran (pass OR fail) is recorded and surfaced by the
+        // status refetch below via d.drillDetail — don't duplicate it here. Only a
+        // run that produced NO recorded row (e.g. the repo was busy) needs its own
+        // transient message next to the button.
+        if (!res.ok && !res.drill) {
+          setDrRunError((e) => ({ ...e, [domain]: res.error ?? t("verify.failed") }));
+        }
       })
       .catch((err) => {
         setDrRunError((e) => ({
