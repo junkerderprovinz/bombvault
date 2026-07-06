@@ -706,6 +706,13 @@ const it: Partial<Translations> = {
   "excludes.resolvedTo": "si risolve in:",
   "excludes.noMatch": "Passato a restic così com'è (non è un percorso del contenitore riconosciuto).",
   "excludes.excludesNothing": "Il volume di questa cartella non è nel backup, quindi questa riga non esclude nulla.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "ripristino DR off-site",
+  "drill.checkLocal": "controllo di integrità locale",
+  "drill.failReasonPrefix": "motivo:",
+  "drill.runOffsiteDr": "Avvia controllo DR off-site",
+  "drill.runningOffsiteDr": "Controllo DR off-site in corso…",
 };
 
 export default it;

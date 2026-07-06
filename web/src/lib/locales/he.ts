@@ -706,6 +706,13 @@ const he: Partial<Translations> = {
   "excludes.resolvedTo": "מתפרש כ:",
   "excludes.noMatch": "מועבר ל-restic כפי שהוא (אינו נתיב מוכר של מכל).",
   "excludes.excludesNothing": "אמצעי האחסון של תיקייה זו אינו בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "שחזור DR מחוץ לאתר",
+  "drill.checkLocal": "בדיקת שלמות מקומית",
+  "drill.failReasonPrefix": "סיבה:",
+  "drill.runOffsiteDr": "הרץ בדיקת DR מחוץ לאתר",
+  "drill.runningOffsiteDr": "מריץ בדיקת DR מחוץ לאתר…",
 };
 
 export default he;

@@ -412,6 +412,13 @@ const en = {
   "drill.confirmDR": "This performs a REAL restore of the newest off-site snapshot into a temporary sandbox to prove it is recoverable, then deletes it. It downloads real data and can take a while. Continue?",
   "drill.provenOffsite": "proven restorable from off-site",
 
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "off-site DR restore",
+  "drill.checkLocal": "local integrity check",
+  "drill.failReasonPrefix": "reason:",
+  "drill.runOffsiteDr": "Run off-site DR check",
+  "drill.runningOffsiteDr": "Running off-site DR check…",
+
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
   "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
@@ -1119,6 +1126,13 @@ const de: Translations = {
   "drill.runningDR": "Stelle wieder her…",
   "drill.confirmDR": "Dies führt eine ECHTE Wiederherstellung des neuesten Off-site-Snapshots in eine temporäre Sandbox durch, um die Wiederherstellbarkeit zu beweisen, und löscht sie danach. Dabei werden echte Daten geladen, das kann dauern. Fortfahren?",
   "drill.provenOffsite": "nachweislich aus Off-site wiederherstellbar",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "Off-site-DR-Wiederherstellung",
+  "drill.checkLocal": "Lokale Integritätsprüfung",
+  "drill.failReasonPrefix": "Grund:",
+  "drill.runOffsiteDr": "Off-site-DR-Prüfung starten",
+  "drill.runningOffsiteDr": "Off-site-DR-Prüfung läuft…",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",

@@ -709,6 +709,13 @@ const hu: Partial<Translations> = {
   "excludes.resolvedTo": "erre oldódik fel:",
   "excludes.noMatch": "Változatlanul átadva a resticnek (nem felismert konténer-útvonal).",
   "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "telephelyen kívüli DR-visszaállítás",
+  "drill.checkLocal": "helyi integritásellenőrzés",
+  "drill.failReasonPrefix": "ok:",
+  "drill.runOffsiteDr": "Telephelyen kívüli DR-ellenőrzés indítása",
+  "drill.runningOffsiteDr": "Telephelyen kívüli DR-ellenőrzés fut…",
 };
 
 export default hu;

@@ -701,6 +701,13 @@ const uk: Partial<Translations> = {
   "excludes.resolvedTo": "розгортається у:",
   "excludes.noMatch": "Передається в restic як є (нерозпізнаний шлях контейнера).",
   "excludes.excludesNothing": "Том цієї папки не входить у резервну копію, тож цей рядок нічого не виключає.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "зовнішнє DR-відновлення",
+  "drill.checkLocal": "локальна перевірка цілісності",
+  "drill.failReasonPrefix": "причина:",
+  "drill.runOffsiteDr": "Запустити зовнішню DR-перевірку",
+  "drill.runningOffsiteDr": "Виконується зовнішня DR-перевірка…",
 };
 
 export default uk;

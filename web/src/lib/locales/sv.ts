@@ -706,6 +706,13 @@ const sv: Partial<Translations> = {
   "excludes.resolvedTo": "översätts till:",
   "excludes.noMatch": "Skickas till restic som det är (ingen igenkänd containersökväg).",
   "excludes.excludesNothing": "Den här mappens volym finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "off-site DR-återställning",
+  "drill.checkLocal": "lokal integritetskontroll",
+  "drill.failReasonPrefix": "orsak:",
+  "drill.runOffsiteDr": "Kör off-site DR-kontroll",
+  "drill.runningOffsiteDr": "Kör off-site DR-kontroll…",
 };
 
 export default sv;

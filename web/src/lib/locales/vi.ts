@@ -698,6 +698,13 @@ const vi: Partial<Translations> = {
   "excludes.resolvedTo": "chuyển thành:",
   "excludes.noMatch": "Được chuyển tới restic nguyên trạng (không phải đường dẫn container được nhận diện).",
   "excludes.excludesNothing": "Ổ đĩa của thư mục này không nằm trong bản sao lưu, nên dòng này không loại trừ gì cả.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "khôi phục DR ngoài site",
+  "drill.checkLocal": "kiểm tra toàn vẹn cục bộ",
+  "drill.failReasonPrefix": "lý do:",
+  "drill.runOffsiteDr": "Chạy kiểm tra DR ngoài site",
+  "drill.runningOffsiteDr": "Đang chạy kiểm tra DR ngoài site…",
 };
 
 export default vi;

@@ -704,6 +704,13 @@ const es: Partial<Translations> = {
   "excludes.resolvedTo": "se resuelve a:",
   "excludes.noMatch": "Se pasa a restic tal cual (no es una ruta de contenedor reconocida).",
   "excludes.excludesNothing": "El volumen de esta carpeta no está en la copia, por lo que esta línea no excluye nada.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "restauración DR externa",
+  "drill.checkLocal": "comprobación de integridad local",
+  "drill.failReasonPrefix": "motivo:",
+  "drill.runOffsiteDr": "Ejecutar comprobación DR externa",
+  "drill.runningOffsiteDr": "Ejecutando comprobación DR externa…",
 };
 
 export default es;

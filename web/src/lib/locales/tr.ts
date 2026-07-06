@@ -706,6 +706,13 @@ const tr: Partial<Translations> = {
   "excludes.resolvedTo": "şuna dönüşür:",
   "excludes.noMatch": "restic'e olduğu gibi iletilir (tanınan bir kapsayıcı yolu değil).",
   "excludes.excludesNothing": "Bu klasörün birimi yedeğe dahil değil, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "site dışı DR geri yükleme",
+  "drill.checkLocal": "yerel bütünlük denetimi",
+  "drill.failReasonPrefix": "neden:",
+  "drill.runOffsiteDr": "Site dışı DR denetimini çalıştır",
+  "drill.runningOffsiteDr": "Site dışı DR denetimi çalışıyor…",
 };
 
 export default tr;

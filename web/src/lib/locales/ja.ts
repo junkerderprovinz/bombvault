@@ -698,6 +698,13 @@ const ja: Partial<Translations> = {
   "excludes.resolvedTo": "解決結果:",
   "excludes.noMatch": "restic にそのまま渡されます（認識されたコンテナパスではありません）。",
   "excludes.excludesNothing": "このフォルダのボリュームはバックアップに含まれていないため、この行は何も除外しません。",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "オフサイト DR 復元",
+  "drill.checkLocal": "ローカル整合性チェック",
+  "drill.failReasonPrefix": "理由:",
+  "drill.runOffsiteDr": "オフサイト DR チェックを実行",
+  "drill.runningOffsiteDr": "オフサイト DR チェックを実行中…",
 };
 
 export default ja;

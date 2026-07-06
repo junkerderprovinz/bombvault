@@ -704,6 +704,13 @@ const cs: Partial<Translations> = {
   "excludes.resolvedTo": "překládá se na:",
   "excludes.noMatch": "Předáno do restic tak, jak je (nerozpoznaná cesta kontejneru).",
   "excludes.excludesNothing": "Svazek této složky není v záloze, takže tento řádek nic nevylučuje.",
+
+  // Drill reason + check labels (#30)
+  "drill.checkOffsiteDr": "obnova DR mimo lokalitu",
+  "drill.checkLocal": "místní kontrola integrity",
+  "drill.failReasonPrefix": "důvod:",
+  "drill.runOffsiteDr": "Spustit kontrolu DR mimo lokalitu",
+  "drill.runningOffsiteDr": "Probíhá kontrola DR mimo lokalitu…",
 };
 
 export default cs;
