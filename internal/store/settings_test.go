@@ -39,6 +39,11 @@ func TestSettingsRoundtrip(t *testing.T) {
 	if s.DRDrillTarget != "" {
 		t.Fatalf("default dr_drill_target must be empty, got %q", s.DRDrillTarget)
 	}
+	// Off-site DR drill defaults ON (migration DEFAULT 1) so upgrades preserve the
+	// current scheduled-DR behavior.
+	if !s.OffsiteDrillsEnabled {
+		t.Fatal("default offsite_drills_enabled should be true")
+	}
 
 	s.ContainersPath = "custom/path"
 	s.ContainersSchedule = "daily 03:00"
@@ -48,6 +53,7 @@ func TestSettingsRoundtrip(t *testing.T) {
 	s.OffsiteGrowthBudgetGB = 500
 	s.TamperTestSchedule = "daily 05:15"
 	s.DRDrillTarget = "plex"
+	s.OffsiteDrillsEnabled = false
 	if err := r.UpdateSettings(s); err != nil {
 		t.Fatalf("UpdateSettings: %v", err)
 	}
@@ -73,6 +79,9 @@ func TestSettingsRoundtrip(t *testing.T) {
 	}
 	if s2.DRDrillTarget != "plex" {
 		t.Fatalf("dr_drill_target not persisted: %q", s2.DRDrillTarget)
+	}
+	if s2.OffsiteDrillsEnabled {
+		t.Fatalf("offsite_drills_enabled not persisted as false: %+v", s2)
 	}
 }
 
