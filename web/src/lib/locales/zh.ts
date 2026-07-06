@@ -708,6 +708,12 @@ const zh: Partial<Translations> = {
   "drill.failReasonPrefix": "原因：",
   "drill.runOffsiteDr": "运行异地 DR 检查",
   "drill.runningOffsiteDr": "正在运行异地 DR 检查…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "计划的异地 DR 演练",
+  "settings.offsiteDrillsHelp": "按演练计划还原完整的异地快照，以证明远程恢复能力。每次运行都会重新下载整个备份，在按用量计费的云（例如 Backblaze B2）上会产生出站流量费用。关闭后仅保留免费的本地完整性检查，并手动运行异地 DR 检查。",
+  "drill.manualOnly": "异地 DR：仅手动",
+  "drill.manualOnlyTitle": "计划的异地 DR 演练已关闭。请使用按钮手动运行异地检查。",
 };
 
 export default zh;

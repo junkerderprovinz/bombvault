@@ -708,6 +708,12 @@ const ko: Partial<Translations> = {
   "drill.failReasonPrefix": "이유:",
   "drill.runOffsiteDr": "오프사이트 DR 검사 실행",
   "drill.runningOffsiteDr": "오프사이트 DR 검사 실행 중…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "예약된 오프사이트 DR 훈련",
+  "settings.offsiteDrillsHelp": "훈련 일정에 따라 전체 오프사이트 스냅샷을 복원하여 원격 복구를 입증합니다. 실행할 때마다 전체 백업을 다시 다운로드하므로 사용량 기반 과금 클라우드(예: Backblaze B2)에서 egress 비용이 발생합니다. 끄면 무료 로컬 무결성 검사만 유지하고 오프사이트 DR 검사는 수동으로 실행합니다.",
+  "drill.manualOnly": "오프사이트 DR: 수동 전용",
+  "drill.manualOnlyTitle": "예약된 오프사이트 DR 훈련이 꺼져 있습니다. 버튼으로 오프사이트 검사를 수동으로 실행하세요.",
 };
 
 export default ko;

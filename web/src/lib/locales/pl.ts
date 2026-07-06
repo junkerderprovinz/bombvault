@@ -711,6 +711,12 @@ const pl: Partial<Translations> = {
   "drill.failReasonPrefix": "powód:",
   "drill.runOffsiteDr": "Uruchom sprawdzenie DR poza siedzibą",
   "drill.runningOffsiteDr": "Sprawdzanie DR poza siedzibą…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Zaplanowana próba DR poza siedzibą",
+  "settings.offsiteDrillsHelp": "Przywraca pełny snapshot poza siedzibą zgodnie z harmonogramem próby, aby potwierdzić odzyskiwanie zdalne. Każde uruchomienie ponownie pobiera całą kopię zapasową, co generuje koszty transferu wychodzącego w chmurach rozliczanych za użycie (na przykład Backblaze B2). Wyłącz, aby zachować tylko bezpłatne lokalne sprawdzenie integralności i uruchamiać sprawdzenie DR poza siedzibą ręcznie.",
+  "drill.manualOnly": "DR poza siedzibą: tylko ręcznie",
+  "drill.manualOnlyTitle": "Zaplanowana próba DR poza siedzibą jest wyłączona. Uruchom sprawdzenie poza siedzibą ręcznie za pomocą przycisku.",
 };
 
 export default pl;

@@ -716,6 +716,12 @@ const fr: Partial<Translations> = {
   "drill.failReasonPrefix": "raison :",
   "drill.runOffsiteDr": "Lancer la vérification DR hors site",
   "drill.runningOffsiteDr": "Vérification DR hors site…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Exercice DR hors site planifié",
+  "settings.offsiteDrillsHelp": "Restaure l'instantané hors site complet selon le planning d'exercice pour prouver la reprise à distance. Chaque exécution retélécharge la totalité de la sauvegarde, ce qui engendre des frais de sortie sur les clouds facturés au volume (par exemple Backblaze B2). Désactivez pour ne conserver que la vérification d'intégrité locale gratuite et lancer la vérification DR hors site manuellement.",
+  "drill.manualOnly": "DR hors site : manuel uniquement",
+  "drill.manualOnlyTitle": "L'exercice DR hors site planifié est désactivé. Lancez la vérification hors site manuellement avec le bouton.",
 };
 
 export default fr;

@@ -716,6 +716,12 @@ const fi: Partial<Translations> = {
   "drill.failReasonPrefix": "syy:",
   "drill.runOffsiteDr": "Suorita etä-DR-tarkistus",
   "drill.runningOffsiteDr": "Suoritetaan etä-DR-tarkistusta…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Ajastettu etä-DR-harjoitus",
+  "settings.offsiteDrillsHelp": "Palauttaa koko etätilannevedoksen harjoitusaikataulun mukaan todistaakseen etäpalautuksen. Jokainen ajo lataa koko varmuuskopion uudelleen, mikä aiheuttaa egress-kuluja käytön mukaan laskutettavissa pilvissä (esimerkiksi Backblaze B2). Poista käytöstä, jos haluat säilyttää vain maksuttoman paikallisen eheystarkistuksen ja suorittaa etä-DR-tarkistuksen manuaalisesti.",
+  "drill.manualOnly": "Etä-DR: vain manuaalisesti",
+  "drill.manualOnlyTitle": "Ajastettu etä-DR-harjoitus on pois päältä. Suorita etätarkistus manuaalisesti painikkeella.",
 };
 
 export default fi;

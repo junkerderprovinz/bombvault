@@ -713,6 +713,12 @@ const nl: Partial<Translations> = {
   "drill.failReasonPrefix": "reden:",
   "drill.runOffsiteDr": "Off-site DR-controle uitvoeren",
   "drill.runningOffsiteDr": "Off-site DR-controle uitvoeren…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Geplande off-site DR-test",
+  "settings.offsiteDrillsHelp": "Herstelt de volledige off-site snapshot volgens het testschema om herstel op afstand te bewijzen. Elke uitvoering downloadt de volledige back-up opnieuw, wat egress-kosten oplevert bij clouds met verbruiksafrekening (bijvoorbeeld Backblaze B2). Schakel uit om alleen de gratis lokale integriteitscontrole te behouden en de off-site DR-controle handmatig uit te voeren.",
+  "drill.manualOnly": "Off-site DR: alleen handmatig",
+  "drill.manualOnlyTitle": "De geplande off-site DR-test is uit. Voer de off-site controle handmatig uit met de knop.",
 };
 
 export default nl;

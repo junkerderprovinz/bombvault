@@ -708,6 +708,12 @@ const ja: Partial<Translations> = {
   "drill.failReasonPrefix": "理由:",
   "drill.runOffsiteDr": "オフサイト DR チェックを実行",
   "drill.runningOffsiteDr": "オフサイト DR チェックを実行中…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "スケジュールされたオフサイト DR ドリル",
+  "settings.offsiteDrillsHelp": "ドリルのスケジュールに従って完全なオフサイトスナップショットを復元し、リモート復旧を実証します。実行のたびにバックアップ全体を再ダウンロードするため、従量課金のクラウド（例: Backblaze B2）ではエグレス料金が発生します。オフにすると、無料のローカル整合性チェックのみを残し、オフサイト DR チェックは手動で実行します。",
+  "drill.manualOnly": "オフサイト DR: 手動のみ",
+  "drill.manualOnlyTitle": "スケジュールされたオフサイト DR ドリルはオフです。ボタンでオフサイトチェックを手動で実行してください。",
 };
 
 export default ja;

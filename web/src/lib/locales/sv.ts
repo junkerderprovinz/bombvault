@@ -716,6 +716,12 @@ const sv: Partial<Translations> = {
   "drill.failReasonPrefix": "orsak:",
   "drill.runOffsiteDr": "Kör off-site DR-kontroll",
   "drill.runningOffsiteDr": "Kör off-site DR-kontroll…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Schemalagd off-site DR-övning",
+  "settings.offsiteDrillsHelp": "Återställer hela off-site-snapshoten enligt övningsschemat för att bevisa fjärråterställning. Varje körning laddar ner hela säkerhetskopian på nytt, vilket ger egress-kostnader hos moln med förbrukningsdebitering (till exempel Backblaze B2). Stäng av för att bara behålla den kostnadsfria lokala integritetskontrollen och köra off-site DR-kontrollen manuellt.",
+  "drill.manualOnly": "Off-site DR: endast manuellt",
+  "drill.manualOnlyTitle": "Den schemalagda off-site DR-övningen är av. Kör off-site-kontrollen manuellt med knappen.",
 };
 
 export default sv;

@@ -716,6 +716,12 @@ const da: Partial<Translations> = {
   "drill.failReasonPrefix": "årsag:",
   "drill.runOffsiteDr": "Kør off-site DR-tjek",
   "drill.runningOffsiteDr": "Kører off-site DR-tjek…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Planlagt off-site DR-test",
+  "settings.offsiteDrillsHelp": "Gendanner hele off-site-snapshottet efter testplanen for at bevise fjerngendannelse. Hver kørsel henter hele sikkerhedskopien igen, hvilket koster egress hos skyer med forbrugsafregning (for eksempel Backblaze B2). Slå fra for kun at beholde det gratis lokale integritetstjek og køre off-site DR-tjekket manuelt.",
+  "drill.manualOnly": "Off-site DR: kun manuelt",
+  "drill.manualOnlyTitle": "Den planlagte off-site DR-test er slået fra. Kør off-site-tjekket manuelt med knappen.",
 };
 
 export default da;

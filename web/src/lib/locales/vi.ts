@@ -708,6 +708,12 @@ const vi: Partial<Translations> = {
   "drill.failReasonPrefix": "lý do:",
   "drill.runOffsiteDr": "Chạy kiểm tra DR ngoài site",
   "drill.runningOffsiteDr": "Đang chạy kiểm tra DR ngoài site…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Diễn tập DR ngoài site theo lịch",
+  "settings.offsiteDrillsHelp": "Khôi phục toàn bộ snapshot ngoài site theo lịch diễn tập để chứng minh khả năng khôi phục từ xa. Mỗi lần chạy sẽ tải lại toàn bộ bản sao lưu, gây phí egress trên các đám mây tính theo mức sử dụng (ví dụ Backblaze B2). Tắt để chỉ giữ lại kiểm tra toàn vẹn cục bộ miễn phí và chạy kiểm tra DR ngoài site thủ công.",
+  "drill.manualOnly": "DR ngoài site: chỉ thủ công",
+  "drill.manualOnlyTitle": "Diễn tập DR ngoài site theo lịch đang tắt. Chạy kiểm tra ngoài site thủ công bằng nút bấm.",
 };
 
 export default vi;
