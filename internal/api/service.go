@@ -5429,8 +5429,8 @@ func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, setti
 	if err != nil {
 		return fmt.Errorf("walk sandbox: %w", err)
 	}
-	if !drillVerifyOK(lsFiles, statsFiles, gotFiles, wantBytes, gotBytes) {
-		return fmt.Errorf("verification mismatch: restic reports %d files / %d bytes, restored sandbox has %d files / %d bytes", lsFiles, wantBytes, gotFiles, gotBytes)
+	if !drillVerifyOK(lsFiles, gotFiles, wantBytes, gotBytes) {
+		return fmt.Errorf("verification mismatch: restic ls %d files, stats %d files / %d bytes; restored sandbox %d files / %d bytes", lsFiles, statsFiles, wantBytes, gotFiles, gotBytes)
 	}
 	return nil
 }
@@ -5462,20 +5462,25 @@ func walkDrillSandbox(sandbox string) (files int, bytes int64, err error) {
 }
 
 // drillVerifyOK reports whether a restored sandbox matches restic's own
-// accounting. It cross-checks three counts and requires an EXACT-byte match:
+// accounting. The completeness proof is the ON-DISK restore versus restic:
 //
 //   - the on-disk file count == restic ls file count (a completed restore
-//     materialises every file);
-//   - restic stats' file count == restic ls file count where stats reports one
-//     (>0) — guards a truncated restore that leaves the count unchanged;
+//     materialises every file node restic recorded);
 //   - the on-disk bytes == restic's restore-size bytes to within only
 //     drillByteToleranceFloor (a few KB for fs metadata), NOT a percentage — a
 //     content-addressed restore reproduces the exact logical bytes.
-func drillVerifyOK(lsFiles, statsFiles, gotFiles int, statsBytes, gotBytes int64) bool {
+//
+// NOTE: restic's `stats --mode restore-size` file COUNT is deliberately NOT
+// compared against `ls` here. The two restic counters legitimately differ on
+// real snapshots (e.g. hardlinks, and how restore-size tallies files vs how ls
+// enumerates nodes), so requiring statsFiles == lsFiles produced false
+// "verification mismatch" failures on perfectly restorable backups — e.g. the
+// Unraid flash restoring the exact file count and bytes yet being flagged (#30).
+// A truncated restore is already caught by gotFiles != lsFiles and the byte
+// check, both of which measure the ACTUAL restored sandbox; statsFiles measures
+// neither, so it can only add false negatives.
+func drillVerifyOK(lsFiles, gotFiles int, statsBytes, gotBytes int64) bool {
 	if gotFiles != lsFiles {
-		return false
-	}
-	if statsFiles > 0 && statsFiles != lsFiles {
 		return false
 	}
 	diff := statsBytes - gotBytes
