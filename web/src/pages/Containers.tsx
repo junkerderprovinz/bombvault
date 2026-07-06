@@ -187,6 +187,62 @@ function FilterControl({
 }
 
 // ---------------------------------------------------------------------------
+// Schedule / backup chip filters (#41)
+// ---------------------------------------------------------------------------
+// Generic sibling of FilterControl: same chip look + localStorage pattern, but
+// parameterised over its option set so the schedule and backup dimensions can
+// each instantiate it without duplicating the markup.
+
+type ScheduleFilterKey = "all" | "scheduled" | "notScheduled";
+type BackupFilterKey = "all" | "backedUp" | "neverBackedUp";
+
+const SCHEDULE_FILTER_STORAGE_KEY = "bv-containers-schedule-filter";
+const BACKUP_FILTER_STORAGE_KEY = "bv-containers-backup-filter";
+
+function loadScheduleFilterKey(): ScheduleFilterKey {
+  const v = localStorage.getItem(SCHEDULE_FILTER_STORAGE_KEY);
+  if (v === "all" || v === "scheduled" || v === "notScheduled") return v;
+  return "all";
+}
+
+function loadBackupFilterKey(): BackupFilterKey {
+  const v = localStorage.getItem(BACKUP_FILTER_STORAGE_KEY);
+  if (v === "all" || v === "backedUp" || v === "neverBackedUp") return v;
+  return "all";
+}
+
+function ChipFilter<K extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { key: K; label: string }[];
+  value: K;
+  onChange: (k: K) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-carbon-textMuted">{label}</span>
+      {options.map((o) => (
+        <button
+          key={o.key}
+          onClick={() => onChange(o.key)}
+          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+            value === o.key
+              ? "bg-accent text-accentContrast"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Container row
 // ---------------------------------------------------------------------------
 
@@ -1123,6 +1179,9 @@ export function Containers() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
   const [filterKey, setFilterKey] = useState<FilterKey>(loadFilterKey);
+  const [search, setSearch] = useState("");
+  const [scheduleFilter, setScheduleFilter] = useState<ScheduleFilterKey>(loadScheduleFilterKey);
+  const [backupFilter, setBackupFilter] = useState<BackupFilterKey>(loadBackupFilterKey);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
@@ -1160,9 +1219,38 @@ export function Containers() {
     localStorage.setItem(FILTER_STORAGE_KEY, k);
   }
 
-  const sorted = sortContainers(containers, sortKey);
+  function handleScheduleFilterChange(k: ScheduleFilterKey) {
+    setScheduleFilter(k);
+    localStorage.setItem(SCHEDULE_FILTER_STORAGE_KEY, k);
+  }
+
+  function handleBackupFilterChange(k: BackupFilterKey) {
+    setBackupFilter(k);
+    localStorage.setItem(BACKUP_FILTER_STORAGE_KEY, k);
+  }
+
+  // Compose search (#40) + schedule/backup chips (#41) into one predicate applied
+  // BEFORE sort + live/orphans split, so they combine with the installed toggle.
+  const query = search.trim().toLowerCase();
+  const filtered = containers.filter((c) => {
+    if (query && !(c.name.toLowerCase().includes(query) || c.image.toLowerCase().includes(query)))
+      return false;
+    if (scheduleFilter === "scheduled" && !c.includeInSchedule) return false;
+    if (scheduleFilter === "notScheduled" && c.includeInSchedule) return false;
+    if (backupFilter === "backedUp" && c.lastBackup == null) return false;
+    if (backupFilter === "neverBackedUp" && c.lastBackup != null) return false;
+    return true;
+  });
+
+  const sorted = sortContainers(filtered, sortKey);
   const live = sorted.filter((c) => c.installed);
   const orphans = sorted.filter((c) => !c.installed);
+
+  // Sections the installed toggle actually renders below; when none show but the
+  // box has containers, the filters excluded everything → show the no-match hint.
+  const liveVisible = filterKey !== "notInstalled" && live.length > 0;
+  const orphansVisible = filterKey !== "installed" && orphans.length > 0;
+  const noMatch = containers.length > 0 && !liveVisible && !orphansVisible;
 
   function toggleSelect(name: string) {
     setSelected((prev) => {
@@ -1318,10 +1406,39 @@ export function Containers() {
           </p>
         </div>
       )}
-      {/* Controls: filter (installed / not installed) + sort. */}
+      {/* Controls: search + filter (installed / schedule / backup) + sort. */}
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("containers.searchPlaceholder")}
+            spellCheck={false}
+            autoComplete="off"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+          />
           <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
+          <ChipFilter<ScheduleFilterKey>
+            label={t("filter.schedule")}
+            value={scheduleFilter}
+            onChange={handleScheduleFilterChange}
+            options={[
+              { key: "all", label: t("filter.all") },
+              { key: "scheduled", label: t("filter.scheduled") },
+              { key: "notScheduled", label: t("filter.notScheduled") },
+            ]}
+          />
+          <ChipFilter<BackupFilterKey>
+            label={t("filter.backup")}
+            value={backupFilter}
+            onChange={handleBackupFilterChange}
+            options={[
+              { key: "all", label: t("filter.all") },
+              { key: "backedUp", label: t("filter.backedUp") },
+              { key: "neverBackedUp", label: t("filter.neverBackedUp") },
+            ]}
+          />
           <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           {filterKey !== "notInstalled" && selectable.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
@@ -1422,6 +1539,11 @@ export function Containers() {
             <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
           ))}
         </div>
+      )}
+
+      {/* No container matches the active search / schedule / backup / installed filters. */}
+      {!loading && !error && noMatch && (
+        <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
     </div>
   );
