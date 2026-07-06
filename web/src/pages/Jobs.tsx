@@ -3,6 +3,7 @@ import { getSettings, putSettings, listContainers } from "../lib/api";
 import type { Settings, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { CadenceBuilder } from "../components/CadenceBuilder";
+import { ToggleRow } from "./Settings";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -300,6 +301,66 @@ function FlashSection({
 }
 
 // ---------------------------------------------------------------------------
+// Domain section — Restore checks (scheduled restore-verification drills)
+// Moved here from Settings so the drill schedule sits beside the backup
+// schedules. Always visible in Plans (not advanced-gated).
+// ---------------------------------------------------------------------------
+
+function RestoreChecksSection({
+  settings,
+  update,
+  t,
+}: {
+  settings: Settings;
+  update: (patch: Partial<Settings>) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  return (
+    <Card title={t("verify.auto")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
+      <ToggleRow
+        label={t("verify.auto")}
+        checked={settings.drillsEnabled}
+        onChange={(v) => update({ drillsEnabled: v })}
+      />
+      {/* Sub-toggle: only meaningful while scheduled drills are on. */}
+      <div className={settings.drillsEnabled ? "" : "opacity-50"}>
+        <ToggleRow
+          label={t("settings.offsiteDrills")}
+          description={t("settings.offsiteDrillsHelp")}
+          checked={settings.offsiteDrillsEnabled}
+          disabled={!settings.drillsEnabled}
+          onChange={(v) => update({ offsiteDrillsEnabled: v })}
+        />
+      </div>
+      <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
+        <CadenceBuilder
+          label={t("settings.schedule")}
+          value={settings.drillsSchedule}
+          disabled={!settings.drillsEnabled}
+          onChange={(v) => update({ drillsSchedule: v })}
+        />
+      </div>
+      <label className="flex flex-col gap-1 max-w-[10rem]">
+        <span className="text-xs text-carbon-textSub">{t("verify.subsetPct")}</span>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={settings.drillsSubsetPct}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
+            update({ drillsSubsetPct: clamped });
+          }}
+          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+        />
+      </label>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Jobs page
 // ---------------------------------------------------------------------------
 
@@ -385,6 +446,11 @@ export function Jobs() {
       patch.vmsSchedule = settings.vmsSchedule;
       patch.flashSchedule = settings.flashSchedule;
     }
+    // Restore-check (drill) schedule — moved here from Settings (#42).
+    patch.drillsEnabled = settings.drillsEnabled;
+    patch.offsiteDrillsEnabled = settings.offsiteDrillsEnabled;
+    patch.drillsSchedule = settings.drillsSchedule;
+    patch.drillsSubsetPct = settings.drillsSubsetPct;
     return patch;
   }
 
@@ -401,6 +467,9 @@ export function Jobs() {
         setSavedSettings(updated);
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
         setSaveState("saved");
+        // The drill schedule now lives here (#42); tell the Dashboard/Layout to
+        // refetch so the drill pills reflect the change without a page reload.
+        window.dispatchEvent(new Event("bv:settings-changed"));
         setTimeout(() => setSaveState("idle"), 3000);
       } else {
         setSaveError(res.error ?? t("settings.error"));
@@ -468,7 +537,16 @@ export function Jobs() {
             t={t}
           />
 
-          {/* One Save persists all three domain schedules. */}
+          {/* Restore-check (drill) schedule — moved here from Settings (#42). */}
+          <RestoreChecksSection
+            settings={settings}
+            update={(patch) =>
+              setSettings((prev) => (prev ? { ...prev, ...patch } : prev))
+            }
+            t={t}
+          />
+
+          {/* One Save persists all schedules, including the restore-check drills. */}
           <SaveBar state={saveState} error={saveError} onSave={() => void handleSave()} t={t} />
         </>
       )}
