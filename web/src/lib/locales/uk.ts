@@ -732,6 +732,22 @@ const uk: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Відновлює повний зовнішній знімок за розкладом перевірки, щоб підтвердити віддалене відновлення. Кожен запуск повторно завантажує всю резервну копію, що спричиняє плату за вихідний трафік у хмарах із тарифікацією за обсяг (наприклад, Backblaze B2). Вимкніть, щоб залишити лише безкоштовну локальну перевірку цілісності та запускати зовнішню DR-перевірку вручну.",
   "drill.manualOnly": "Зовнішнє DR: лише вручну",
   "drill.manualOnlyTitle": "Заплановану зовнішню DR-перевірку вимкнено. Запустіть зовнішню перевірку вручну за допомогою кнопки.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Загальні",
+  "settings.tab.storage": "Шляхи та сховище",
+  "settings.tab.schedules": "Розклади",
+  "settings.tab.offsite": "Зовнішнє",
+  "settings.tab.notifications": "Сповіщення",
+  "settings.tab.integrity": "Цілісність",
+  "settings.tab.system": "Система",
+  "settings.schedulesBackup": "Розклади резервного копіювання",
+  "settings.schedulesOffsite": "Розклади зовнішньої реплікації",
+  "settings.schedulesSelfBackup": "Розклад самокопіювання",
+  "settings.schedulesChecks": "Розклад перевірки відновлення",
+  "settings.subtitle": "Конфігурація BombVault — зміни набувають чинності негайно.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Фільтри",
 };
 
 export default uk;

@@ -734,6 +734,22 @@ const nl: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Herstelt de volledige off-site snapshot volgens het testschema om herstel op afstand te bewijzen. Elke uitvoering downloadt de volledige back-up opnieuw, wat egress-kosten oplevert bij clouds met verbruiksafrekening (bijvoorbeeld Backblaze B2). Schakel uit om alleen de gratis lokale integriteitscontrole te behouden en de off-site DR-controle handmatig uit te voeren.",
   "drill.manualOnly": "Off-site DR: alleen handmatig",
   "drill.manualOnlyTitle": "De geplande off-site DR-test is uit. Voer de off-site controle handmatig uit met de knop.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Algemeen",
+  "settings.tab.storage": "Paden en opslag",
+  "settings.tab.schedules": "Schema's",
+  "settings.tab.offsite": "Off-site",
+  "settings.tab.notifications": "Meldingen",
+  "settings.tab.integrity": "Integriteit",
+  "settings.tab.system": "Systeem",
+  "settings.schedulesBackup": "Back-upschema's",
+  "settings.schedulesOffsite": "Off-site-replicatieschema's",
+  "settings.schedulesSelfBackup": "Zelf-back-upschema",
+  "settings.schedulesChecks": "Herstelcontroleschema",
+  "settings.subtitle": "BombVault-configuratie — wijzigingen worden meteen van kracht.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filters",
 };
 
 export default nl;

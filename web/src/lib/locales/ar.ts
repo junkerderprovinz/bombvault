@@ -740,6 +740,22 @@ const ar: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "يستعيد اللقطة الكاملة خارج الموقع وفق جدول التمرين لإثبات الاستعادة عن بُعد. تعيد كل عملية تشغيل تنزيل النسخة الاحتياطية بالكامل، مما يكلّف رسوم بيانات صادرة على السُّحُب المحسوبة بالاستخدام (على سبيل المثال Backblaze B2). أوقِف التشغيل للإبقاء على فحص السلامة المحلي المجاني فقط وتشغيل فحص DR خارج الموقع يدويًا.",
   "drill.manualOnly": "DR خارج الموقع: يدوي فقط",
   "drill.manualOnlyTitle": "تمرين DR المجدول خارج الموقع مُعطَّل. شغِّل فحص خارج الموقع يدويًا باستخدام الزر.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "عام",
+  "settings.tab.storage": "المسارات والتخزين",
+  "settings.tab.schedules": "الجداول",
+  "settings.tab.offsite": "خارج الموقع",
+  "settings.tab.notifications": "الإشعارات",
+  "settings.tab.integrity": "السلامة",
+  "settings.tab.system": "النظام",
+  "settings.schedulesBackup": "جداول النسخ الاحتياطي",
+  "settings.schedulesOffsite": "جداول النسخ المتماثل خارج الموقع",
+  "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",
+  "settings.schedulesChecks": "جدول فحص الاستعادة",
+  "settings.subtitle": "تكوين BombVault — تسري التغييرات فوراً.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "عوامل التصفية",
 };
 
 export default ar;

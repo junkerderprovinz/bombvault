@@ -740,6 +740,22 @@ const hu: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "A próba ütemezése szerint visszaállítja a teljes telephelyen kívüli pillanatképet a távoli helyreállítás igazolására. Minden futás újratölti a teljes biztonsági mentést, ami kimenő forgalmi költséget okoz a használat alapján díjazott felhőkben (például Backblaze B2). Kapcsold ki, hogy csak az ingyenes helyi integritásellenőrzés maradjon, a telephelyen kívüli DR-ellenőrzést pedig manuálisan futtasd.",
   "drill.manualOnly": "Telephelyen kívüli DR: csak manuálisan",
   "drill.manualOnlyTitle": "Az ütemezett telephelyen kívüli DR-próba ki van kapcsolva. Futtasd a telephelyen kívüli ellenőrzést manuálisan a gombbal.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Általános",
+  "settings.tab.storage": "Útvonalak és tárolás",
+  "settings.tab.schedules": "Ütemezések",
+  "settings.tab.offsite": "Telephelyen kívüli",
+  "settings.tab.notifications": "Értesítések",
+  "settings.tab.integrity": "Integritás",
+  "settings.tab.system": "Rendszer",
+  "settings.schedulesBackup": "Biztonsági mentési ütemezések",
+  "settings.schedulesOffsite": "Telephelyen kívüli replikációs ütemezések",
+  "settings.schedulesSelfBackup": "Önmentési ütemezés",
+  "settings.schedulesChecks": "Visszaállítás-ellenőrzési ütemezés",
+  "settings.subtitle": "BombVault-konfiguráció — a módosítások azonnal életbe lépnek.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Szűrők",
 };
 
 export default hu;

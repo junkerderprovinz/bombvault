@@ -729,6 +729,22 @@ const ja: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "ドリルのスケジュールに従って完全なオフサイトスナップショットを復元し、リモート復旧を実証します。実行のたびにバックアップ全体を再ダウンロードするため、従量課金のクラウド（例: Backblaze B2）ではエグレス料金が発生します。オフにすると、無料のローカル整合性チェックのみを残し、オフサイト DR チェックは手動で実行します。",
   "drill.manualOnly": "オフサイト DR: 手動のみ",
   "drill.manualOnlyTitle": "スケジュールされたオフサイト DR ドリルはオフです。ボタンでオフサイトチェックを手動で実行してください。",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "一般",
+  "settings.tab.storage": "パスとストレージ",
+  "settings.tab.schedules": "スケジュール",
+  "settings.tab.offsite": "オフサイト",
+  "settings.tab.notifications": "通知",
+  "settings.tab.integrity": "整合性",
+  "settings.tab.system": "システム",
+  "settings.schedulesBackup": "バックアップスケジュール",
+  "settings.schedulesOffsite": "オフサイトレプリケーションスケジュール",
+  "settings.schedulesSelfBackup": "セルフバックアップスケジュール",
+  "settings.schedulesChecks": "復元チェックスケジュール",
+  "settings.subtitle": "BombVault の設定 — 変更は即座に反映されます。",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "フィルター",
 };
 
 export default ja;

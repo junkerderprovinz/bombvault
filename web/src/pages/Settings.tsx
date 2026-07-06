@@ -5,7 +5,7 @@ import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import type { Settings, NotifyConfig, RestoreDrill, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
+import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
 import { relativeTime } from "../lib/reltime";
@@ -1743,7 +1743,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Off-site bandwidth                                                  */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && (
+      <Advanced>
       <Card title={t("settings.offsiteLimits")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           {t("settings.limitHint")}
@@ -1784,12 +1784,12 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      )}
+      </Advanced>
 
       {/* ------------------------------------------------------------------ */}
       {/* Monitoring (Prometheus)                                            */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && (
+      <Advanced>
       <Card title={t("settings.metrics")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
         <ToggleRow
@@ -1830,7 +1830,7 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      )}
+      </Advanced>
 
       {/* ------------------------------------------------------------------ */}
       {/* Encryption                                                         */}
@@ -1891,9 +1891,9 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Off-site (rclone)                                                    */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && <RcloneCard t={t} />}
+      <Advanced><RcloneCard t={t} /></Advanced>
 
-      {advanced && <CloudCard t={t} />}
+      <Advanced><CloudCard t={t} /></Advanced>
 
       {/* ------------------------------------------------------------------ */}
       {/* Notifications                                                       */}
@@ -1903,11 +1903,11 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Spike                                                              */}
       {/* ------------------------------------------------------------------ */}
-      {advanced && (
+      <Advanced>
         <Card title={t("spike.title")}>
           <SpikePanel t={t} />
         </Card>
-      )}
+      </Advanced>
 
       {/* ------------------------------------------------------------------ */}
       {/* Integrity, maintenance & restore drills                             */}

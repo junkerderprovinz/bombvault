@@ -737,6 +737,22 @@ const fr: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Restaure l'instantané hors site complet selon le planning d'exercice pour prouver la reprise à distance. Chaque exécution retélécharge la totalité de la sauvegarde, ce qui engendre des frais de sortie sur les clouds facturés au volume (par exemple Backblaze B2). Désactivez pour ne conserver que la vérification d'intégrité locale gratuite et lancer la vérification DR hors site manuellement.",
   "drill.manualOnly": "DR hors site : manuel uniquement",
   "drill.manualOnlyTitle": "L'exercice DR hors site planifié est désactivé. Lancez la vérification hors site manuellement avec le bouton.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Général",
+  "settings.tab.storage": "Chemins et stockage",
+  "settings.tab.schedules": "Plannings",
+  "settings.tab.offsite": "Hors site",
+  "settings.tab.notifications": "Notifications",
+  "settings.tab.integrity": "Intégrité",
+  "settings.tab.system": "Système",
+  "settings.schedulesBackup": "Plannings de sauvegarde",
+  "settings.schedulesOffsite": "Plannings de réplication hors site",
+  "settings.schedulesSelfBackup": "Planning d'auto-sauvegarde",
+  "settings.schedulesChecks": "Planning de vérification de restauration",
+  "settings.subtitle": "Configuration de BombVault — les modifications prennent effet immédiatement.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Filtres",
 };
 
 export default fr;

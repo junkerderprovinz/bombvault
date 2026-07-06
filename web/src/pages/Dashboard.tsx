@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit, runDrill } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
+import { useAdvanced, Advanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence } from "../components/CadenceBuilder";
 import { relativeTime } from "../lib/reltime";
@@ -1428,9 +1428,9 @@ export function Dashboard() {
       {/* Ransomware protection — off-site immutability scorecard (advanced-gated;
           shown only in Advanced view, and only when at least one enabled domain
           has a protection posture) */}
-      {advanced && (
+      <Advanced>
         <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />
-      )}
+      </Advanced>
 
       {/* 2-column grid for last backups + run history */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -1445,7 +1445,7 @@ export function Dashboard() {
       <StorageCard t={t} />
 
       {/* Spike (host-integration) status — advanced-gated, like the ransomware card. */}
-      {advanced && <SpikeCard t={t} />}
+      <Advanced><SpikeCard t={t} /></Advanced>
     </div>
   );
 }

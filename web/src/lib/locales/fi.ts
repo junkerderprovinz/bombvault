@@ -737,6 +737,22 @@ const fi: Partial<Translations> = {
   "settings.offsiteDrillsHelp": "Palauttaa koko etätilannevedoksen harjoitusaikataulun mukaan todistaakseen etäpalautuksen. Jokainen ajo lataa koko varmuuskopion uudelleen, mikä aiheuttaa egress-kuluja käytön mukaan laskutettavissa pilvissä (esimerkiksi Backblaze B2). Poista käytöstä, jos haluat säilyttää vain maksuttoman paikallisen eheystarkistuksen ja suorittaa etä-DR-tarkistuksen manuaalisesti.",
   "drill.manualOnly": "Etä-DR: vain manuaalisesti",
   "drill.manualOnlyTitle": "Ajastettu etä-DR-harjoitus on pois päältä. Suorita etätarkistus manuaalisesti painikkeella.",
+
+  // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
+  "settings.tab.general": "Yleiset",
+  "settings.tab.storage": "Polut ja tallennus",
+  "settings.tab.schedules": "Aikataulut",
+  "settings.tab.offsite": "Etä",
+  "settings.tab.notifications": "Ilmoitukset",
+  "settings.tab.integrity": "Eheys",
+  "settings.tab.system": "Järjestelmä",
+  "settings.schedulesBackup": "Varmuuskopioinnin aikataulut",
+  "settings.schedulesOffsite": "Etäreplikoinnin aikataulut",
+  "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",
+  "settings.schedulesChecks": "Palautustarkistuksen aikataulu",
+  "settings.subtitle": "BombVaultin asetukset — muutokset tulevat voimaan heti.",
+  // Filter drawer trigger (v5 redesign)
+  "filter.button": "Suodattimet",
 };
 
 export default fi;
