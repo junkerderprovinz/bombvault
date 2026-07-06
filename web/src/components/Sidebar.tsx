@@ -281,7 +281,7 @@ export function Sidebar({ settings }: SidebarProps) {
         <img
           src="/logo.png"
           alt="BombVault"
-          className="app-logo w-full h-auto object-contain"
+          className="app-logo block mx-auto w-1/2 h-auto object-contain"
         />
       </NavLink>
 
