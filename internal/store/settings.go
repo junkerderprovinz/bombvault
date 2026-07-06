@@ -90,6 +90,11 @@ type Settings struct {
 	// (drills read back real pack data, so they cost I/O), so existing setups are
 	// unchanged until the user opts in.
 	DrillsEnabled bool
+	// OffsiteDrillsEnabled gates ONLY the scheduled off-site DR drill; default on
+	// (true) so upgrades preserve current behavior. When off, the scheduled off-site
+	// DR drill is skipped — the free scheduled local integrity check keeps running
+	// and the off-site DR check can still be run manually.
+	OffsiteDrillsEnabled bool
 	// DrillsSchedule is the cadence for scheduled drills (same grammar as the backup
 	// schedules). 'off' (the default) = no scheduled drills.
 	DrillsSchedule string
@@ -133,7 +138,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       offsite_limit_upload, offsite_limit_download,
 		       rclone_conf, notify_conf, cloud_conf,
 		       metrics_enabled, metrics_token,
-		       drills_enabled, drills_schedule, drills_subset_pct,
+		       drills_enabled, drills_schedule, drills_subset_pct, offsite_drills_enabled,
 		       recovery_kit_ack,
 		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable,
 		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
@@ -141,7 +146,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		FROM settings WHERE id = 1`)
 
 	var s Settings
-	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, metricsEnabled, drillsEnabled, recoveryKitAck int
+	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable int
 	var flashZipExportEnabled int
 	err := row.Scan(
@@ -156,7 +161,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.OffsiteLimitUpload, &s.OffsiteLimitDownload,
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
 		&metricsEnabled, &s.MetricsToken,
-		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct,
+		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct, &offsiteDrillsEnabled,
 		&recoveryKitAck,
 		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable,
 		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
@@ -175,6 +180,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.ConfigEnabled = configEnabled != 0
 	s.MetricsEnabled = metricsEnabled != 0
 	s.DrillsEnabled = drillsEnabled != 0
+	s.OffsiteDrillsEnabled = offsiteDrillsEnabled != 0
 	s.RecoveryKitAck = recoveryKitAck != 0
 	s.ContainersOffsiteImmutable = contImmutable != 0
 	s.VMsOffsiteImmutable = vmsImmutable != 0
@@ -230,6 +236,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  drills_enabled         = ?,
 		  drills_schedule        = ?,
 		  drills_subset_pct      = ?,
+		  offsite_drills_enabled = ?,
 		  recovery_kit_ack       = ?,
 		  containers_offsite_immutable = ?,
 		  vms_offsite_immutable        = ?,
@@ -257,7 +264,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.OffsiteLimitUpload, s.OffsiteLimitDownload,
 		s.RcloneConf, s.NotifyConf, s.CloudConf,
 		boolInt(s.MetricsEnabled), s.MetricsToken,
-		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct,
+		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct, boolInt(s.OffsiteDrillsEnabled),
 		boolInt(s.RecoveryKitAck),
 		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable),
 		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,

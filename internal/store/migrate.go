@@ -446,6 +446,14 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 53, name: "target_excludes",
 		sql: "ALTER TABLE targets ADD COLUMN excludes TEXT NOT NULL DEFAULT '[]';",
 	},
+	{
+		// Opt out of the scheduled off-site DR drill (#37). The DR drill re-downloads
+		// the whole off-site snapshot each run (egress cost on metered clouds), so this
+		// gates ONLY the scheduled off-site drill. DEFAULT 1 (ON) preserves current
+		// behavior for upgraders + fresh installs.
+		version: 54, name: "settings_offsite_drills_enabled",
+		sql: "ALTER TABLE settings ADD COLUMN offsite_drills_enabled INTEGER NOT NULL DEFAULT 1;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
