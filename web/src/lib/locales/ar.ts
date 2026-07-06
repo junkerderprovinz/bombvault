@@ -352,7 +352,7 @@ const ar: Partial<Translations> = {
   "flash.zipExport.path": "مجلد التصدير",
   "flash.zipExport.pathHint": "مسار فرعي نسبي ضمن جذر نقطة تركيب المضيف حيث يُوضع ملف .zip — وجّهه إلى مجلد Syncthing/rclone لإخراج الفلاش من الخادم تلقائياً.",
   "flash.zipExport.keepHistory": "الاحتفاظ بالسجل",
-  "flash.zipExport.keepHistoryHint": "إيقاف: الاحتفاظ بملف flash-latest.zip واحد يُستبدل في كل مرة. تشغيل: الاحتفاظ بأحدث N ملفات flash-<date>.zip مؤرّخة.",
+  "flash.zipExport.keepHistoryHint": "إيقاف: الاحتفاظ بملف flash-latest.zip واحد يُستبدل في كل مرة. تشغيل: الاحتفاظ بأحدث N ملفات flash-<date>.zip مؤرّخة. هذا مستقل عن استبقاء restic: الإيقاف يحتفظ بملف واحد يُستبدل دائمًا (لا يملأ الوجهة أبدًا)؛ التشغيل يحتفظ بأحدث N ويحذف الأقدم.",
   "flash.zipExport.keepN": "عدد ملفات zip المحتفظ بها",
   "flash.zipExport.keepNHint": "يُحتفظ بأحدث N ملفات zip مؤرّخة؛ وتُحذف الأقدم تلقائياً.",
   "flash.zipExport.latestNote": "يُستبدل ملف flash-latest.zip واحد بعد كل نسخة احتياطية.",
@@ -587,6 +587,19 @@ const ar: Partial<Translations> = {
   "dashboard.dedup": "إزالة التكرار",
   "dashboard.snapshotsLabel": "اللقطات",
   "dashboard.noStats": "لا توجد بيانات بعد",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "المدة",
+  "containers.searchPlaceholder": "بحث في الحاويات…",
+  "vms.searchPlaceholder": "بحث في الأجهزة الافتراضية…",
+  "filter.all": "الكل",
+  "filter.scheduled": "مجدوَل",
+  "filter.notScheduled": "غير مجدوَل",
+  "filter.backedUp": "تم نسخه احتياطيًا",
+  "filter.neverBackedUp": "لم يُنسخ احتياطيًا مطلقًا",
+  "filter.schedule": "الجدول الزمني",
+  "filter.backup": "نسخ احتياطي",
+  "filter.noMatch": "لا توجد عناصر تطابق عوامل التصفية الحالية.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "استخدم جدول Containers أيضاً لـ VMs وFlash",

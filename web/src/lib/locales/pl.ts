@@ -345,7 +345,7 @@ const pl: Partial<Translations> = {
   "flash.zipExport.path": "Folder eksportu",
   "flash.zipExport.pathHint": "Względna podścieżka w katalogu montowania hosta, do której trafia .zip — wskaż folder Syncthing/rclone, aby automatycznie wynosić flash z serwera.",
   "flash.zipExport.keepHistory": "Zachowaj historię",
-  "flash.zipExport.keepHistoryHint": "Wył.: zachowuje jeden plik flash-latest.zip, nadpisywany za każdym razem. Wł.: zachowuje najnowsze N plików flash-<data>.zip ze znacznikiem czasu.",
+  "flash.zipExport.keepHistoryHint": "Wył.: zachowuje jeden plik flash-latest.zip, nadpisywany za każdym razem. Wł.: zachowuje najnowsze N plików flash-<data>.zip ze znacznikiem czasu. Jest to niezależne od retencji restic: wyłączone zachowuje jeden plik, zawsze nadpisywany (nigdy nie zapełnia celu); włączone zachowuje N najnowszych i usuwa starsze.",
   "flash.zipExport.keepN": "Liczba zipów do zachowania",
   "flash.zipExport.keepNHint": "Zachowywane są najnowsze N zipów ze znacznikiem czasu; starsze są usuwane automatycznie.",
   "flash.zipExport.latestNote": "Jeden plik flash-latest.zip jest nadpisywany po każdej kopii.",
@@ -551,6 +551,19 @@ const pl: Partial<Translations> = {
   "dashboard.dedup": "Deduplikacja",
   "dashboard.snapshotsLabel": "Migawki",
   "dashboard.noStats": "Brak danych",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Czas trwania",
+  "containers.searchPlaceholder": "Szukaj kontenerów…",
+  "vms.searchPlaceholder": "Szukaj VM…",
+  "filter.all": "Wszystkie",
+  "filter.scheduled": "Zaplanowane",
+  "filter.notScheduled": "Bez harmonogramu",
+  "filter.backedUp": "Z kopią",
+  "filter.neverBackedUp": "Bez kopii",
+  "filter.schedule": "Harmonogram",
+  "filter.backup": "Kopia zapasowa",
+  "filter.noMatch": "Żaden element nie pasuje do bieżących filtrów.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Użyj harmonogramu Containers także dla VMs i Flash",

@@ -345,7 +345,7 @@ const vi: Partial<Translations> = {
   "flash.zipExport.path": "Thư mục xuất",
   "flash.zipExport.pathHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host nơi tệp .zip được ghi tới — trỏ nó tới một thư mục Syncthing/rclone để tự động đưa flash ra khỏi máy chủ.",
   "flash.zipExport.keepHistory": "Giữ lịch sử",
-  "flash.zipExport.keepHistoryHint": "Tắt: giữ một tệp flash-latest.zip duy nhất bị ghi đè mỗi lần. Bật: giữ N tệp flash-<ngày>.zip có dấu thời gian mới nhất.",
+  "flash.zipExport.keepHistoryHint": "Tắt: giữ một tệp flash-latest.zip duy nhất bị ghi đè mỗi lần. Bật: giữ N tệp flash-<ngày>.zip có dấu thời gian mới nhất. Điều này độc lập với việc lưu giữ của restic: tắt sẽ giữ một tệp duy nhất luôn bị ghi đè (không bao giờ làm đầy đích); bật sẽ giữ N tệp mới nhất và xóa các tệp cũ hơn.",
   "flash.zipExport.keepN": "Số tệp ZIP cần giữ",
   "flash.zipExport.keepNHint": "N tệp ZIP có dấu thời gian mới nhất được giữ lại; những tệp cũ hơn bị xóa tự động.",
   "flash.zipExport.latestNote": "Một tệp flash-latest.zip duy nhất bị ghi đè sau mỗi lần sao lưu.",
@@ -576,6 +576,19 @@ const vi: Partial<Translations> = {
   "dashboard.dedup": "Khử trùng lặp",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "Chưa có dữ liệu",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Thời lượng",
+  "containers.searchPlaceholder": "Tìm kiếm container…",
+  "vms.searchPlaceholder": "Tìm kiếm VM…",
+  "filter.all": "Tất cả",
+  "filter.scheduled": "Đã lên lịch",
+  "filter.notScheduled": "Chưa lên lịch",
+  "filter.backedUp": "Đã sao lưu",
+  "filter.neverBackedUp": "Chưa từng sao lưu",
+  "filter.schedule": "Lịch trình",
+  "filter.backup": "Sao lưu",
+  "filter.noMatch": "Không có mục nào khớp với bộ lọc hiện tại.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Dùng lịch của Containers cho cả VMs và Flash",

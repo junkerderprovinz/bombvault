@@ -352,7 +352,7 @@ const fi: Partial<Translations> = {
   "flash.zipExport.path": "Vientikansio",
   "flash.zipExport.pathHint": "Suhteellinen alipolku isäntäkoneen liitosjuuren alla, johon .zip päätyy — osoita se Syncthing/rclone-kansioon, niin flash siirtyy palvelimelta pois automaattisesti.",
   "flash.zipExport.keepHistory": "Säilytä historia",
-  "flash.zipExport.keepHistoryHint": "Pois: säilytä yksi flash-latest.zip, joka korvataan joka kerta. Päällä: säilytä N uusinta aikaleimattua flash-<date>.zip-tiedostoa.",
+  "flash.zipExport.keepHistoryHint": "Pois: säilytä yksi flash-latest.zip, joka korvataan joka kerta. Päällä: säilytä N uusinta aikaleimattua flash-<date>.zip-tiedostoa. Tämä on riippumaton restic-säilytyksestä: pois säilyttää yhden tiedoston, joka korvataan aina (ei koskaan täytä kohdetta); päällä säilyttää N uusinta ja poistaa vanhemmat.",
   "flash.zipExport.keepN": "Säilytettävien zipien määrä",
   "flash.zipExport.keepNHint": "N uusinta aikaleimattua zipiä säilytetään; vanhemmat poistetaan automaattisesti.",
   "flash.zipExport.latestNote": "Yksi flash-latest.zip korvataan jokaisen varmuuskopion jälkeen.",
@@ -584,6 +584,19 @@ const fi: Partial<Translations> = {
   "dashboard.dedup": "Deduplikointi",
   "dashboard.snapshotsLabel": "Tilannevedokset",
   "dashboard.noStats": "Ei vielä tietoja",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Kesto",
+  "containers.searchPlaceholder": "Hae kontteja…",
+  "vms.searchPlaceholder": "Hae virtuaalikoneita…",
+  "filter.all": "Kaikki",
+  "filter.scheduled": "Aikataulutettu",
+  "filter.notScheduled": "Ei aikataulutettu",
+  "filter.backedUp": "Varmuuskopioitu",
+  "filter.neverBackedUp": "Ei koskaan varmuuskopioitu",
+  "filter.schedule": "Aikataulu",
+  "filter.backup": "Varmuuskopio",
+  "filter.noMatch": "Mikään kohde ei vastaa nykyisiä suodattimia.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Käytä konttien aikataulua myös VM:ille ja Flashille",

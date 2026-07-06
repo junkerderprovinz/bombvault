@@ -352,7 +352,7 @@ const hu: Partial<Translations> = {
   "flash.zipExport.path": "Exportálási mappa",
   "flash.zipExport.pathHint": "Relatív alútvonal a gazdagép csatolási gyökere alatt, ahová a .zip kerül — irányítsd egy Syncthing/rclone mappára, hogy a flash automatikusan lekerüljön a szerverről.",
   "flash.zipExport.keepHistory": "Előzmények megtartása",
-  "flash.zipExport.keepHistoryHint": "Ki: egyetlen flash-latest.zip megtartása, amely minden alkalommal felülíródik. Be: a legújabb N időbélyeggel ellátott flash-<dátum>.zip fájl megtartása.",
+  "flash.zipExport.keepHistoryHint": "Ki: egyetlen flash-latest.zip megtartása, amely minden alkalommal felülíródik. Be: a legújabb N időbélyeggel ellátott flash-<dátum>.zip fájl megtartása. Ez független a restic megőrzéstől: kikapcsolva egyetlen, mindig felülírt fájlt tart meg (soha nem tölti meg a célt); bekapcsolva a legújabb N fájlt tartja meg, a régebbieket törli.",
   "flash.zipExport.keepN": "Megtartandó ZIP-ek",
   "flash.zipExport.keepNHint": "A legújabb N időbélyeggel ellátott ZIP marad meg; a régebbieket automatikusan törli.",
   "flash.zipExport.latestNote": "Egyetlen flash-latest.zip íródik felül minden mentés után.",
@@ -562,6 +562,19 @@ const hu: Partial<Translations> = {
   "dashboard.dedup": "Deduplikáció",
   "dashboard.snapshotsLabel": "Pillanatképek",
   "dashboard.noStats": "Még nincs adat",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Időtartam",
+  "containers.searchPlaceholder": "Konténerek keresése…",
+  "vms.searchPlaceholder": "VM-ek keresése…",
+  "filter.all": "Összes",
+  "filter.scheduled": "Ütemezett",
+  "filter.notScheduled": "Nincs ütemezve",
+  "filter.backedUp": "Mentve",
+  "filter.neverBackedUp": "Soha nem mentve",
+  "filter.schedule": "Ütemezés",
+  "filter.backup": "Mentés",
+  "filter.noMatch": "Egyetlen elem sem felel meg a jelenlegi szűrőknek.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "A konténerek ütemezésének használata a VM-ekhez és a Flashhez is",

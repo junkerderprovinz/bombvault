@@ -350,7 +350,7 @@ const pt: Partial<Translations> = {
   "flash.zipExport.path": "Pasta de exportação",
   "flash.zipExport.pathHint": "Subcaminho relativo, sob a raiz do mount do host, onde o .zip é colocado — aponte-o para uma pasta Syncthing/rclone para levar o flash para fora do servidor automaticamente.",
   "flash.zipExport.keepHistory": "Manter histórico",
-  "flash.zipExport.keepHistoryHint": "Desligado: manter um único flash-latest.zip que é sobrescrito de cada vez. Ligado: manter os N ficheiros flash-<data>.zip mais recentes com marca temporal.",
+  "flash.zipExport.keepHistoryHint": "Desligado: manter um único flash-latest.zip que é sobrescrito de cada vez. Ligado: manter os N ficheiros flash-<data>.zip mais recentes com marca temporal. Isto é independente da retenção do restic: desligado mantém um único ficheiro, sempre sobrescrito (nunca enche o destino); ligado mantém os N mais recentes e elimina os mais antigos.",
   "flash.zipExport.keepN": "Zips a manter",
   "flash.zipExport.keepNHint": "São mantidos os N zips mais recentes com marca temporal; os mais antigos são eliminados automaticamente.",
   "flash.zipExport.latestNote": "Um único flash-latest.zip é sobrescrito após cada backup.",
@@ -556,6 +556,19 @@ const pt: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Instantâneos",
   "dashboard.noStats": "Ainda sem dados",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Duração",
+  "containers.searchPlaceholder": "Procurar contentores…",
+  "vms.searchPlaceholder": "Procurar VMs…",
+  "filter.all": "Todos",
+  "filter.scheduled": "Agendado",
+  "filter.notScheduled": "Não agendado",
+  "filter.backedUp": "Com backup",
+  "filter.neverBackedUp": "Sem backup",
+  "filter.schedule": "Agendamento",
+  "filter.backup": "Backup",
+  "filter.noMatch": "Nenhum item corresponde aos filtros atuais.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Usar o agendamento dos Containers também para as VMs e Flash",

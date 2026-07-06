@@ -345,7 +345,7 @@ const zh: Partial<Translations> = {
   "flash.zipExport.path": "导出文件夹",
   "flash.zipExport.pathHint": "主机挂载根目录下 .zip 落地的相对子路径 — 将其指向一个 Syncthing/rclone 文件夹，即可自动把 flash 移出服务器。",
   "flash.zipExport.keepHistory": "保留历史",
-  "flash.zipExport.keepHistoryHint": "关闭：仅保留一个每次都被覆盖的 flash-latest.zip。开启：保留最新的 N 个带时间戳的 flash-<日期>.zip 文件。",
+  "flash.zipExport.keepHistoryHint": "关闭：仅保留一个每次都被覆盖的 flash-latest.zip。开启：保留最新的 N 个带时间戳的 flash-<日期>.zip 文件。 这与 restic 的保留策略无关：关闭时仅保留一个每次都被覆盖的文件（永远不会填满目标）；开启时保留最新的 N 个并删除较早的文件。",
   "flash.zipExport.keepN": "保留的 ZIP 数量",
   "flash.zipExport.keepNHint": "保留最新的 N 个带时间戳的 ZIP；较旧的会被自动删除。",
   "flash.zipExport.latestNote": "每次备份后都会覆盖同一个 flash-latest.zip。",
@@ -576,6 +576,19 @@ const zh: Partial<Translations> = {
   "dashboard.dedup": "去重",
   "dashboard.snapshotsLabel": "快照",
   "dashboard.noStats": "暂无数据",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "时长",
+  "containers.searchPlaceholder": "搜索容器…",
+  "vms.searchPlaceholder": "搜索虚拟机…",
+  "filter.all": "全部",
+  "filter.scheduled": "已计划",
+  "filter.notScheduled": "未计划",
+  "filter.backedUp": "已备份",
+  "filter.neverBackedUp": "从未备份",
+  "filter.schedule": "计划",
+  "filter.backup": "备份",
+  "filter.noMatch": "没有符合当前筛选条件的项目。",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "VMs 和 Flash 也使用容器的计划",

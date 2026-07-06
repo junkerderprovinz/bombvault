@@ -347,7 +347,7 @@ const nl: Partial<Translations> = {
   "flash.zipExport.path": "Exportmap",
   "flash.zipExport.pathHint": "Relatief subpad onder de host-mount-root waar de .zip terechtkomt — wijs het naar een Syncthing/rclone-map om de flash automatisch van de server te halen.",
   "flash.zipExport.keepHistory": "Geschiedenis bewaren",
-  "flash.zipExport.keepHistoryHint": "Uit: één flash-latest.zip bewaren die elke keer wordt overschreven. Aan: de nieuwste N flash-<datum>.zip-bestanden met tijdstempel bewaren.",
+  "flash.zipExport.keepHistoryHint": "Uit: één flash-latest.zip bewaren die elke keer wordt overschreven. Aan: de nieuwste N flash-<datum>.zip-bestanden met tijdstempel bewaren. Dit staat los van de restic-retentie: uit bewaart één enkel bestand dat altijd wordt overschreven (vult de bestemming nooit); aan bewaart de nieuwste N en verwijdert oudere.",
   "flash.zipExport.keepN": "Te bewaren zips",
   "flash.zipExport.keepNHint": "De nieuwste N zips met tijdstempel worden bewaard; oudere worden automatisch verwijderd.",
   "flash.zipExport.latestNote": "Eén flash-latest.zip wordt na elke back-up overschreven.",
@@ -553,6 +553,19 @@ const nl: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "Nog geen gegevens",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Duur",
+  "containers.searchPlaceholder": "Containers zoeken…",
+  "vms.searchPlaceholder": "VM's zoeken…",
+  "filter.all": "Alle",
+  "filter.scheduled": "Gepland",
+  "filter.notScheduled": "Niet gepland",
+  "filter.backedUp": "Met back-up",
+  "filter.neverBackedUp": "Zonder back-up",
+  "filter.schedule": "Planning",
+  "filter.backup": "Back-up",
+  "filter.noMatch": "Geen items komen overeen met de huidige filters.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Gebruik de planning van Containers ook voor VM's en Flash",

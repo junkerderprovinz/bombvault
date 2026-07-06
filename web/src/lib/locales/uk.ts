@@ -347,7 +347,7 @@ const uk: Partial<Translations> = {
   "flash.zipExport.path": "Папка експорту",
   "flash.zipExport.pathHint": "Відносний підшлях у межах кореня монтування хоста, куди потрапляє .zip — вкажіть папку Syncthing/rclone, щоб автоматично надсилати flash за межі сервера.",
   "flash.zipExport.keepHistory": "Зберігати історію",
-  "flash.zipExport.keepHistoryHint": "Вимк.: зберігати єдиний flash-latest.zip, який щоразу перезаписується. Увімк.: зберігати найновіші N файлів flash-<дата>.zip з мітками часу.",
+  "flash.zipExport.keepHistoryHint": "Вимк.: зберігати єдиний flash-latest.zip, який щоразу перезаписується. Увімк.: зберігати найновіші N файлів flash-<дата>.zip з мітками часу. Це не пов'язано зі зберіганням restic: вимк. зберігає один файл, який щоразу перезаписується (ніколи не заповнює призначення); увімк. зберігає N найновіших і видаляє старіші.",
   "flash.zipExport.keepN": "Скільки ZIP зберігати",
   "flash.zipExport.keepNHint": "Зберігаються найновіші N ZIP з мітками часу; старіші видаляються автоматично.",
   "flash.zipExport.latestNote": "Єдиний flash-latest.zip перезаписується після кожної копії.",
@@ -579,6 +579,19 @@ const uk: Partial<Translations> = {
   "dashboard.dedup": "Дедуплікація",
   "dashboard.snapshotsLabel": "Знімки",
   "dashboard.noStats": "Даних ще немає",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Тривалість",
+  "containers.searchPlaceholder": "Пошук контейнерів…",
+  "vms.searchPlaceholder": "Пошук ВМ…",
+  "filter.all": "Всі",
+  "filter.scheduled": "Заплановано",
+  "filter.notScheduled": "Без розкладу",
+  "filter.backedUp": "Є копія",
+  "filter.neverBackedUp": "Без копій",
+  "filter.schedule": "Розклад",
+  "filter.backup": "Резервне копіювання",
+  "filter.noMatch": "Немає елементів, що відповідають поточним фільтрам.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Використовувати розклад контейнерів також для VM і Flash",

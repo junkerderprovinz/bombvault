@@ -345,7 +345,7 @@ const ja: Partial<Translations> = {
   "flash.zipExport.path": "エクスポートフォルダー",
   "flash.zipExport.pathHint": "ホストマウントのルート配下の相対サブパスで、.zip が置かれる場所です — Syncthing/rclone のフォルダーに向けると、フラッシュが自動的にサーバー外へ送られます。",
   "flash.zipExport.keepHistory": "履歴を保持",
-  "flash.zipExport.keepHistoryHint": "オフ：毎回上書きされる単一の flash-latest.zip を保持します。オン：最新の N 個のタイムスタンプ付き flash-<日付>.zip ファイルを保持します。",
+  "flash.zipExport.keepHistoryHint": "オフ：毎回上書きされる単一の flash-latest.zip を保持します。オン：最新の N 個のタイムスタンプ付き flash-<日付>.zip ファイルを保持します。 これは restic の保持設定とは別です。オフは常に上書きされる単一ファイルを保持し（保存先を決して満杯にしません）、オンは最新の N 個を保持して古いものを削除します。",
   "flash.zipExport.keepN": "保持する ZIP 数",
   "flash.zipExport.keepNHint": "最新の N 個のタイムスタンプ付き zip が保持され、古いものは自動的に削除されます。",
   "flash.zipExport.latestNote": "単一の flash-latest.zip が毎回のバックアップ後に上書きされます。",
@@ -551,6 +551,19 @@ const ja: Partial<Translations> = {
   "dashboard.dedup": "重複排除",
   "dashboard.snapshotsLabel": "スナップショット",
   "dashboard.noStats": "データなし",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "所要時間",
+  "containers.searchPlaceholder": "コンテナを検索…",
+  "vms.searchPlaceholder": "VM を検索…",
+  "filter.all": "すべて",
+  "filter.scheduled": "スケジュール済み",
+  "filter.notScheduled": "未スケジュール",
+  "filter.backedUp": "バックアップ済み",
+  "filter.neverBackedUp": "未バックアップ",
+  "filter.schedule": "スケジュール",
+  "filter.backup": "バックアップ",
+  "filter.noMatch": "現在のフィルターに一致する項目はありません。",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "コンテナのスケジュールを VM とフラッシュにも使用する",

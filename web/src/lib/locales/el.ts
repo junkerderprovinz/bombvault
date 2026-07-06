@@ -352,7 +352,7 @@ const el: Partial<Translations> = {
   "flash.zipExport.path": "Φάκελος εξαγωγής",
   "flash.zipExport.pathHint": "Σχετική υποδιαδρομή κάτω από τη ρίζα προσάρτησης του host όπου καταλήγει το .zip — κατευθύνετέ το σε έναν φάκελο Syncthing/rclone για να βγάζετε το flash από τον διακομιστή αυτόματα.",
   "flash.zipExport.keepHistory": "Διατήρηση ιστορικού",
-  "flash.zipExport.keepHistoryHint": "Ανενεργό: διατήρηση ενός μόνο flash-latest.zip που αντικαθίσταται κάθε φορά. Ενεργό: διατήρηση των πιο πρόσφατων N χρονοσημασμένων αρχείων flash-<date>.zip.",
+  "flash.zipExport.keepHistoryHint": "Ανενεργό: διατήρηση ενός μόνο flash-latest.zip που αντικαθίσταται κάθε φορά. Ενεργό: διατήρηση των πιο πρόσφατων N χρονοσημασμένων αρχείων flash-<date>.zip. Αυτό είναι ανεξάρτητο από τη διατήρηση του restic: ανενεργό διατηρεί ένα μόνο αρχείο που αντικαθίσταται πάντα (δεν γεμίζει ποτέ τον προορισμό)· ενεργό διατηρεί τα N πιο πρόσφατα και διαγράφει τα παλαιότερα.",
   "flash.zipExport.keepN": "Πλήθος zip προς διατήρηση",
   "flash.zipExport.keepNHint": "Διατηρούνται τα πιο πρόσφατα N χρονοσημασμένα zip· τα παλαιότερα διαγράφονται αυτόματα.",
   "flash.zipExport.latestNote": "Ένα μόνο flash-latest.zip αντικαθίσταται μετά από κάθε αντίγραφο.",
@@ -584,6 +584,19 @@ const el: Partial<Translations> = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Στιγμιότυπα",
   "dashboard.noStats": "Κανένα δεδομένο ακόμα",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Διάρκεια",
+  "containers.searchPlaceholder": "Αναζήτηση κοντέινερ…",
+  "vms.searchPlaceholder": "Αναζήτηση VM…",
+  "filter.all": "Όλα",
+  "filter.scheduled": "Προγραμματισμένο",
+  "filter.notScheduled": "Μη προγραμματισμένο",
+  "filter.backedUp": "Με αντίγραφο",
+  "filter.neverBackedUp": "Χωρίς αντίγραφο",
+  "filter.schedule": "Χρονοδιάγραμμα",
+  "filter.backup": "Αντίγραφο ασφαλείας",
+  "filter.noMatch": "Κανένα στοιχείο δεν ταιριάζει με τα τρέχοντα φίλτρα.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Χρήση του χρονοδιαγράμματος Containers και για VMs και Flash",

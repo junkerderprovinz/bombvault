@@ -352,7 +352,7 @@ const fr: Partial<Translations> = {
   "flash.zipExport.path": "Dossier d'export",
   "flash.zipExport.pathHint": "Sous-chemin relatif sous la racine du montage hôte où le .zip est déposé — pointez-le vers un dossier Syncthing/rclone pour sortir le flash du serveur automatiquement.",
   "flash.zipExport.keepHistory": "Conserver l'historique",
-  "flash.zipExport.keepHistoryHint": "Désactivé : conserver un seul flash-latest.zip écrasé à chaque fois. Activé : conserver les N fichiers flash-<date>.zip horodatés les plus récents.",
+  "flash.zipExport.keepHistoryHint": "Désactivé : conserver un seul flash-latest.zip écrasé à chaque fois. Activé : conserver les N fichiers flash-<date>.zip horodatés les plus récents. C'est indépendant de la rétention restic : désactivé conserve un seul fichier, toujours écrasé (ne remplit jamais la destination) ; activé conserve les N plus récents et supprime les plus anciens.",
   "flash.zipExport.keepN": "Zips à conserver",
   "flash.zipExport.keepNHint": "Les N zips horodatés les plus récents sont conservés ; les plus anciens sont supprimés automatiquement.",
   "flash.zipExport.latestNote": "Un seul flash-latest.zip est écrasé après chaque sauvegarde.",
@@ -559,6 +559,19 @@ const fr: Partial<Translations> = {
   "dashboard.dedup": "Déduplication",
   "dashboard.snapshotsLabel": "Instantanés",
   "dashboard.noStats": "Aucune donnée",
+
+  // Domain filters + dashboard duration (#39/#40/#41)
+  "dashboard.duration": "Durée",
+  "containers.searchPlaceholder": "Rechercher des conteneurs…",
+  "vms.searchPlaceholder": "Rechercher des VMs…",
+  "filter.all": "Tous",
+  "filter.scheduled": "Planifié",
+  "filter.notScheduled": "Non planifié",
+  "filter.backedUp": "Sauvegardé",
+  "filter.neverBackedUp": "Jamais sauvegardé",
+  "filter.schedule": "Planning",
+  "filter.backup": "Sauvegarde",
+  "filter.noMatch": "Aucun élément ne correspond aux filtres actuels.",
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Utiliser le planning des Conteneurs aussi pour les VMs et Flash",
