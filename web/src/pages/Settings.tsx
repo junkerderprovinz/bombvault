@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
-import { CadenceBuilder } from "../components/CadenceBuilder";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import type { Settings, NotifyConfig, RestoreDrill, Container } from "../lib/api";
@@ -1209,9 +1208,6 @@ export function SettingsPage() {
   const [metricsSaveState, setMetricsSaveState] = useState<SaveState>("idle");
   const [metricsSaveError, setMetricsSaveError] = useState<string | null>(null);
 
-  const [drillsSaveState, setDrillsSaveState] = useState<SaveState>("idle");
-  const [drillsSaveError, setDrillsSaveError] = useState<string | null>(null);
-
   useEffect(() => {
     getSettings()
       .then((res) => {
@@ -1904,76 +1900,6 @@ export function SettingsPage() {
         <Card title={t("spike.title")}>
           <SpikePanel t={t} />
         </Card>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Automatic restore checks (scheduled restore-verification drills)    */}
-      {/* ------------------------------------------------------------------ */}
-      {advanced && (
-      <Card title={t("verify.auto")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
-        <ToggleRow
-          label={t("verify.auto")}
-          checked={settings.drillsEnabled}
-          onChange={(v) =>
-            setSettings((prev) => (prev ? { ...prev, drillsEnabled: v } : prev))
-          }
-        />
-        {/* Sub-toggle: only meaningful while scheduled drills are on. */}
-        <div className={settings.drillsEnabled ? "" : "opacity-50"}>
-          <ToggleRow
-            label={t("settings.offsiteDrills")}
-            description={t("settings.offsiteDrillsHelp")}
-            checked={settings.offsiteDrillsEnabled}
-            disabled={!settings.drillsEnabled}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, offsiteDrillsEnabled: v } : prev))
-            }
-          />
-        </div>
-        <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
-          <CadenceBuilder
-            label={t("settings.schedule")}
-            value={settings.drillsSchedule}
-            disabled={!settings.drillsEnabled}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, drillsSchedule: v } : prev))
-            }
-          />
-        </div>
-        <label className="flex flex-col gap-1 max-w-[10rem]">
-          <span className="text-xs text-carbon-textSub">{t("verify.subsetPct")}</span>
-          <input
-            type="number"
-            min={1}
-            max={100}
-            value={settings.drillsSubsetPct}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
-              setSettings((prev) => (prev ? { ...prev, drillsSubsetPct: clamped } : prev));
-            }}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
-          />
-        </label>
-        <SaveBar
-          state={drillsSaveState}
-          error={drillsSaveError}
-          onSave={() =>
-            void save(
-              {
-                drillsEnabled: settings.drillsEnabled,
-                offsiteDrillsEnabled: settings.offsiteDrillsEnabled,
-                drillsSchedule: settings.drillsSchedule,
-                drillsSubsetPct: settings.drillsSubsetPct,
-              },
-              setDrillsSaveState,
-              setDrillsSaveError
-            )
-          }
-          t={t}
-        />
-      </Card>
       )}
 
       {/* ------------------------------------------------------------------ */}
