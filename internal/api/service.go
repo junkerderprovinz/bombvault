@@ -808,6 +808,12 @@ type DomainStatusEntry struct {
 	// without an extra round-trip.
 	LastVerified   int64 `json:"lastVerified"`
 	LastVerifiedOK bool  `json:"lastVerifiedOK"`
+	// VerifiedDetail / DrillDetail carry the scrubbed failure reason of the last
+	// LOCAL subset drill and the last OFF-SITE DR drill so the dashboard can show
+	// WHY + WHICH check failed (#30). Both are "" on success (Detail is empty then),
+	// so carrying them unconditionally is safe.
+	VerifiedDetail string `json:"verifiedDetail"`
+	DrillDetail    string `json:"drillDetail"`
 
 	// Ransomware-protection scorecard facts (Task 8): whether the domain has an
 	// off-site copy, whether it is flagged append-only (immutable), and the
@@ -1122,9 +1128,11 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		// (0 / false) rather than failing the whole status query.
 		var lastVerified int64
 		var lastVerifiedOK bool
+		var verifiedDetail string
 		if drill, found, dErr := s.store.LatestRestoreDrill(d.name, "local"); dErr == nil && found {
 			lastVerified = drill.At
 			lastVerifiedOK = drill.OK
+			verifiedDetail = drill.Detail
 		}
 
 		// Ransomware-protection scorecard facts. All reads are best-effort: a store
@@ -1151,9 +1159,11 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		}
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
+		var drDetail string
 		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
+			drDetail = dr.Detail
 		}
 
 		// The DR-drill currency only has a claim when the scheduler actually runs
@@ -1206,6 +1216,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			Status:            rpoStatus(now, lastUnix, period, scheduled),
 			LastVerified:      lastVerified,
 			LastVerifiedOK:    lastVerifiedOK,
+			VerifiedDetail:    verifiedDetail,
 			OffsiteConfigured: offsiteConfigured,
 			OffsiteImmutable:  offsiteImmutable,
 			LastTamperAt:      lastTamperAt,
@@ -1214,6 +1225,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			LastReplicationOK: lastReplicationOK,
 			LastDRDrillAt:     lastDRDrillAt,
 			LastDRDrillOK:     lastDRDrillOK,
+			DrillDetail:       drDetail,
 			Protection:        protection,
 			TamperState:       checks.Tamper,
 			ReplicationState:  checks.Replication,
@@ -5040,7 +5052,22 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 		u, ok := s.waitLockDomainFor(domain, "verify")
 		if !ok {
 			log.Printf("api: drill: %q busy longer than %v, skipping this scheduled run", domain, drillLockWait) //nolint:gosec // G706: domain is %q-quoted and validated to a fixed allow-list above
-			return store.RestoreDrill{}, errDomainBusy
+			// Record the skip as a dated failed row (instead of silently returning) so
+			// the dashboard shows WHY the check did not run rather than freezing the
+			// previous red with no reason (#30).
+			skip := store.RestoreDrill{
+				Domain: domain,
+				Source: source,
+				Kind:   "subset",
+				At:     time.Now().Unix(),
+				OK:     false,
+				Detail: "skipped: repository busy longer than " + drillLockWait.String() + " (a backup or off-site copy held it)",
+			}
+			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
+				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
+			}
+			s.notifyDrillFailure(ctx, domain, source, skip.Detail)
+			return skip, errDomainBusy
 		}
 		unlock = u
 	} else {
@@ -5168,7 +5195,22 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 		u, ok := s.waitLockDomainFor(domain, "verify")
 		if !ok {
 			log.Printf("api: drill: %q busy longer than %v, skipping this scheduled run", domain, drillLockWait) //nolint:gosec // G706: domain is %q-quoted and validated to a fixed allow-list above
-			return store.RestoreDrill{}, errDomainBusy
+			// Record the skip as a dated failed row (instead of silently returning) so
+			// the dashboard shows WHY the off-site DR check did not run rather than
+			// freezing the red with no reason (#30).
+			skip := store.RestoreDrill{
+				Domain: domain,
+				Source: "offsite",
+				Kind:   "dr",
+				At:     time.Now().Unix(),
+				OK:     false,
+				Detail: "skipped: repository busy longer than " + drillLockWait.String() + " (a backup or off-site copy held it)",
+			}
+			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
+				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
+			}
+			s.notifyDrillFailure(ctx, domain, "offsite", skip.Detail)
+			return skip, errDomainBusy
 		}
 		unlock = u
 	} else {

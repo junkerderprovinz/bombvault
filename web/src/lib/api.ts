@@ -180,6 +180,8 @@ export interface DomainStatus {
   status: string; // "off" | "never" | "overdue" | "warn" | "ok"
   lastVerified: number; // unix seconds of the last restore-verification drill; 0 = never
   lastVerifiedOK: boolean; // whether that last drill passed
+  verifiedDetail: string; // scrubbed reason of the last LOCAL subset drill; "" on success
+  drillDetail: string; // scrubbed reason of the last OFF-SITE DR drill; "" on success
   // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
   // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
   offsiteConfigured: boolean; // an off-site repo is configured for this domain

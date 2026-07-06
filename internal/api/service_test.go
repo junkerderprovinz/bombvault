@@ -743,6 +743,51 @@ func TestDomainStatusDrillCurrencyIgnoresDisabledDrills(t *testing.T) {
 	}
 }
 
+// TestDomainStatusCarriesDrillDetail pins #30: buildStatus must carry the scrubbed
+// failure reason of the last LOCAL subset drill and the last OFF-SITE DR drill into
+// the status entry (VerifiedDetail / DrillDetail) so the dashboard can show WHY +
+// WHICH check failed. It also proves the Detail survives an AddRestoreDrill +
+// LatestRestoreDrill / LatestRestoreDrillKind store round-trip.
+func TestDomainStatusCarriesDrillDetail(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.ContainersSchedule = "daily 02:30"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Unix()
+	// A failed LOCAL subset drill carrying a scrubbed reason.
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "local", At: now - 3600, OK: false, Kind: "subset", Detail: "subset boom: pack broken"}); err != nil {
+		t.Fatal(err)
+	}
+	// A failed OFF-SITE DR drill carrying a scrubbed reason (drives the dashboard red).
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", At: now - 1800, OK: false, Kind: "dr", Detail: "dr boom: file count mismatch"}); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	var c api.DomainStatusEntry
+	for _, d := range statuses {
+		if d.Domain == "containers" {
+			c = d
+		}
+	}
+	if c.VerifiedDetail != "subset boom: pack broken" {
+		t.Fatalf("VerifiedDetail must carry the local subset drill reason, got %q", c.VerifiedDetail)
+	}
+	if c.DrillDetail != "dr boom: file count mismatch" {
+		t.Fatalf("DrillDetail must carry the off-site DR drill reason, got %q", c.DrillDetail)
+	}
+}
+
 // newImmutableOffsiteSvc builds a service whose containers repo is initialised
 // locally and whose off-site repo is a remote flagged immutable — the setup for
 // the delete/prune-refusal and unlock-allowed tests.
@@ -3500,11 +3545,13 @@ func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
 	}
 }
 
-// TestRunSubsetDrillScheduledLockWaitTimesOut pins the bounded-wait cap: a
-// SCHEDULED drill (wait=true) whose domain lock stays held past drillLockWait must
-// give up with errDomainBusy and record NOTHING (no CheckData, no row) rather than
-// block forever / pile up a goroutine. The timings are shrunk to milliseconds via
-// a test hook so the deadline elapses without a real 12h wait.
+// TestRunSubsetDrillScheduledLockWaitTimesOut pins the bounded-wait cap + busy-skip
+// recording (#30): a SCHEDULED drill (wait=true) whose domain lock stays held past
+// drillLockWait must give up with errDomainBusy WITHOUT running CheckData, but now
+// records a dated failed "skipped: repository busy" row so the dashboard shows WHY
+// the check did not run instead of silently freezing the previous state. The timings
+// are shrunk to milliseconds via a test hook so the deadline elapses without a real
+// 12h wait.
 func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
 	// Tiny deadline + poll so the wait times out in milliseconds, not hours.
 	defer api.SetDrillLockTimingsForTest(40*time.Millisecond, 5*time.Millisecond)()
@@ -3535,10 +3582,14 @@ func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
 	if len(eng.checkDataRepos) != 0 {
 		t.Fatalf("a timed-out scheduled drill must not run CheckData, got %v", eng.checkDataRepos)
 	}
-	if _, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil {
+	// The busy-skip is now RECORDED as a dated failed row (was: recorded nothing) so
+	// the dashboard can show WHY the scheduled check did not run (#30).
+	if latest, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil {
 		t.Fatalf("LatestDrill: %v", fErr)
-	} else if found {
-		t.Fatal("a timed-out scheduled drill must record no row")
+	} else if !found {
+		t.Fatal("a timed-out scheduled drill must record a dated busy-skip row")
+	} else if latest.OK || !strings.Contains(latest.Detail, "skipped: repository busy") {
+		t.Fatalf("busy-skip row = %+v, want ok=false + a 'skipped: repository busy' detail", latest)
 	}
 
 	close(eng.blockRestore)   // let the restore finish
