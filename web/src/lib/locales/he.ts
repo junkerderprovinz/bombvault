@@ -716,6 +716,12 @@ const he: Partial<Translations> = {
   "drill.failReasonPrefix": "סיבה:",
   "drill.runOffsiteDr": "הרץ בדיקת DR מחוץ לאתר",
   "drill.runningOffsiteDr": "מריץ בדיקת DR מחוץ לאתר…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "תרגיל DR מתוזמן מחוץ לאתר",
+  "settings.offsiteDrillsHelp": "משחזר את תמונת המצב המלאה מחוץ לאתר לפי לוח הזמנים של התרגיל כדי להוכיח שחזור מרחוק. כל הרצה מורידה מחדש את כל הגיבוי, מה שגורם לעלויות תעבורה יוצאת בענני חיוב לפי שימוש (למשל Backblaze B2). כבה כדי לשמור רק על בדיקת השלמות המקומית החינמית ולהריץ את בדיקת ה-DR מחוץ לאתר ידנית.",
+  "drill.manualOnly": "DR מחוץ לאתר: ידני בלבד",
+  "drill.manualOnlyTitle": "תרגיל ה-DR המתוזמן מחוץ לאתר כבוי. הרץ את הבדיקה מחוץ לאתר ידנית באמצעות הכפתור.",
 };
 
 export default he;

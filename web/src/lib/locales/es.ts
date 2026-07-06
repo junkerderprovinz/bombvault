@@ -714,6 +714,12 @@ const es: Partial<Translations> = {
   "drill.failReasonPrefix": "motivo:",
   "drill.runOffsiteDr": "Ejecutar comprobación DR externa",
   "drill.runningOffsiteDr": "Ejecutando comprobación DR externa…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Simulacro DR externo programado",
+  "settings.offsiteDrillsHelp": "Restaura la instantánea externa completa según la programación del simulacro para demostrar la recuperación remota. Cada ejecución vuelve a descargar toda la copia de seguridad, lo que genera costes de salida en nubes de pago por uso (por ejemplo Backblaze B2). Desactívalo para conservar solo la comprobación de integridad local gratuita y ejecutar la comprobación DR externa manualmente.",
+  "drill.manualOnly": "DR externo: solo manual",
+  "drill.manualOnlyTitle": "El simulacro DR externo programado está desactivado. Ejecuta la comprobación externa manualmente con el botón.",
 };
 
 export default es;

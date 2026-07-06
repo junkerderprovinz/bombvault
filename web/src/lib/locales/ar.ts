@@ -719,6 +719,12 @@ const ar: Partial<Translations> = {
   "drill.failReasonPrefix": "السبب:",
   "drill.runOffsiteDr": "تشغيل فحص DR خارج الموقع",
   "drill.runningOffsiteDr": "جارٍ تشغيل فحص DR خارج الموقع…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "تمرين DR مجدول خارج الموقع",
+  "settings.offsiteDrillsHelp": "يستعيد اللقطة الكاملة خارج الموقع وفق جدول التمرين لإثبات الاستعادة عن بُعد. تعيد كل عملية تشغيل تنزيل النسخة الاحتياطية بالكامل، مما يكلّف رسوم بيانات صادرة على السُّحُب المحسوبة بالاستخدام (على سبيل المثال Backblaze B2). أوقِف التشغيل للإبقاء على فحص السلامة المحلي المجاني فقط وتشغيل فحص DR خارج الموقع يدويًا.",
+  "drill.manualOnly": "DR خارج الموقع: يدوي فقط",
+  "drill.manualOnlyTitle": "تمرين DR المجدول خارج الموقع مُعطَّل. شغِّل فحص خارج الموقع يدويًا باستخدام الزر.",
 };
 
 export default ar;

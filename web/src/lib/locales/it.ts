@@ -716,6 +716,12 @@ const it: Partial<Translations> = {
   "drill.failReasonPrefix": "motivo:",
   "drill.runOffsiteDr": "Avvia controllo DR off-site",
   "drill.runningOffsiteDr": "Controllo DR off-site in corso…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Prova DR off-site pianificata",
+  "settings.offsiteDrillsHelp": "Ripristina l'intero snapshot off-site secondo la pianificazione della prova per dimostrare il ripristino remoto. Ogni esecuzione riscarica l'intero backup, con costi di egress sui cloud a consumo (per esempio Backblaze B2). Disattiva per mantenere solo il controllo di integrità locale gratuito ed eseguire il controllo DR off-site manualmente.",
+  "drill.manualOnly": "DR off-site: solo manuale",
+  "drill.manualOnlyTitle": "La prova DR off-site pianificata è disattivata. Esegui il controllo off-site manualmente con il pulsante.",
 };
 
 export default it;

@@ -719,6 +719,12 @@ const ro: Partial<Translations> = {
   "drill.failReasonPrefix": "motiv:",
   "drill.runOffsiteDr": "Rulează verificarea DR externă",
   "drill.runningOffsiteDr": "Se rulează verificarea DR externă…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Test DR extern programat",
+  "settings.offsiteDrillsHelp": "Restaurează snapshotul extern complet conform programului testului pentru a dovedi recuperarea la distanță. Fiecare rulare descarcă din nou întreaga copie de rezervă, ceea ce generează costuri de egress pe cloudurile taxate în funcție de consum (de exemplu Backblaze B2). Dezactivează pentru a păstra doar verificarea de integritate locală gratuită și a rula manual verificarea DR externă.",
+  "drill.manualOnly": "DR extern: doar manual",
+  "drill.manualOnlyTitle": "Testul DR extern programat este dezactivat. Rulează verificarea externă manual cu butonul.",
 };
 
 export default ro;

@@ -719,6 +719,12 @@ const hu: Partial<Translations> = {
   "drill.failReasonPrefix": "ok:",
   "drill.runOffsiteDr": "Telephelyen kívüli DR-ellenőrzés indítása",
   "drill.runningOffsiteDr": "Telephelyen kívüli DR-ellenőrzés fut…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Ütemezett telephelyen kívüli DR-próba",
+  "settings.offsiteDrillsHelp": "A próba ütemezése szerint visszaállítja a teljes telephelyen kívüli pillanatképet a távoli helyreállítás igazolására. Minden futás újratölti a teljes biztonsági mentést, ami kimenő forgalmi költséget okoz a használat alapján díjazott felhőkben (például Backblaze B2). Kapcsold ki, hogy csak az ingyenes helyi integritásellenőrzés maradjon, a telephelyen kívüli DR-ellenőrzést pedig manuálisan futtasd.",
+  "drill.manualOnly": "Telephelyen kívüli DR: csak manuálisan",
+  "drill.manualOnlyTitle": "Az ütemezett telephelyen kívüli DR-próba ki van kapcsolva. Futtasd a telephelyen kívüli ellenőrzést manuálisan a gombbal.",
 };
 
 export default hu;

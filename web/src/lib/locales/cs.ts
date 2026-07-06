@@ -714,6 +714,12 @@ const cs: Partial<Translations> = {
   "drill.failReasonPrefix": "důvod:",
   "drill.runOffsiteDr": "Spustit kontrolu DR mimo lokalitu",
   "drill.runningOffsiteDr": "Probíhá kontrola DR mimo lokalitu…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Naplánované cvičení DR mimo lokalitu",
+  "settings.offsiteDrillsHelp": "Obnoví celý snapshot mimo lokalitu podle plánu cvičení, aby prokázalo vzdálené obnovení. Každé spuštění znovu stáhne celou zálohu, což znamená náklady na odchozí přenos u cloudů účtovaných podle objemu (například Backblaze B2). Vypněte, chcete-li ponechat pouze bezplatnou místní kontrolu integrity a spouštět kontrolu DR mimo lokalitu ručně.",
+  "drill.manualOnly": "DR mimo lokalitu: pouze ručně",
+  "drill.manualOnlyTitle": "Naplánované cvičení DR mimo lokalitu je vypnuté. Spusťte kontrolu mimo lokalitu ručně pomocí tlačítka.",
 };
 
 export default cs;

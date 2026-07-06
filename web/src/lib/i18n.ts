@@ -419,6 +419,12 @@ const en = {
   "drill.runOffsiteDr": "Run off-site DR check",
   "drill.runningOffsiteDr": "Running off-site DR check…",
 
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Scheduled off-site DR drill",
+  "settings.offsiteDrillsHelp": "Restores the full off-site snapshot on the drill schedule to prove remote recovery. This re-downloads the whole backup each run, which costs egress on metered clouds (for example Backblaze B2). Turn off to keep only the free local integrity check and run the off-site DR check manually.",
+  "drill.manualOnly": "Off-site DR: manual only",
+  "drill.manualOnlyTitle": "Scheduled off-site DR drill is off. Run the off-site check manually with the button.",
+
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
   "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
@@ -1136,6 +1142,12 @@ const de: Translations = {
   "drill.failReasonPrefix": "Grund:",
   "drill.runOffsiteDr": "Off-site-DR-Prüfung starten",
   "drill.runningOffsiteDr": "Off-site-DR-Prüfung läuft…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Geplanter Off-site-DR-Test",
+  "settings.offsiteDrillsHelp": "Stellt den vollständigen Off-site-Snapshot nach dem Test-Zeitplan wieder her, um die Wiederherstellung aus der Ferne zu beweisen. Dabei wird bei jedem Lauf das gesamte Backup erneut heruntergeladen, was bei kostenpflichtigen Clouds (zum Beispiel Backblaze B2) Egress-Kosten verursacht. Schalte ihn aus, um nur die kostenlose lokale Integritätsprüfung zu behalten und die Off-site-DR-Prüfung manuell auszuführen.",
+  "drill.manualOnly": "Off-site-DR: nur manuell",
+  "drill.manualOnlyTitle": "Der geplante Off-site-DR-Test ist aus. Führe die Off-site-Prüfung manuell über den Button aus.",
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",

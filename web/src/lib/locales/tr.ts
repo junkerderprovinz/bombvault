@@ -716,6 +716,12 @@ const tr: Partial<Translations> = {
   "drill.failReasonPrefix": "neden:",
   "drill.runOffsiteDr": "Site dışı DR denetimini çalıştır",
   "drill.runningOffsiteDr": "Site dışı DR denetimi çalışıyor…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Zamanlanmış site dışı DR tatbikatı",
+  "settings.offsiteDrillsHelp": "Uzaktan kurtarmayı kanıtlamak için tatbikat zamanlamasına göre tam site dışı anlık görüntüyü geri yükler. Her çalıştırma yedeğin tamamını yeniden indirir; bu da kullanıma göre ücretlendirilen bulutlarda (örneğin Backblaze B2) egress maliyeti oluşturur. Yalnızca ücretsiz yerel bütünlük denetimini tutmak ve site dışı DR denetimini elle çalıştırmak için kapatın.",
+  "drill.manualOnly": "Site dışı DR: yalnızca elle",
+  "drill.manualOnlyTitle": "Zamanlanmış site dışı DR tatbikatı kapalı. Site dışı denetimi düğmeyle elle çalıştırın.",
 };
 
 export default tr;

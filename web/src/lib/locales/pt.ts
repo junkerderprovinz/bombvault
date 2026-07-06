@@ -716,6 +716,12 @@ const pt: Partial<Translations> = {
   "drill.failReasonPrefix": "motivo:",
   "drill.runOffsiteDr": "Executar verificação DR externa",
   "drill.runningOffsiteDr": "A executar verificação DR externa…",
+
+  // Off-site DR opt-out (#37)
+  "settings.offsiteDrills": "Teste DR externo agendado",
+  "settings.offsiteDrillsHelp": "Restaura o snapshot externo completo de acordo com o agendamento do teste para comprovar a recuperação remota. Cada execução volta a transferir todo o backup, o que gera custos de saída em nuvens tarifadas por utilização (por exemplo Backblaze B2). Desative para manter apenas a verificação de integridade local gratuita e executar a verificação DR externa manualmente.",
+  "drill.manualOnly": "DR externo: apenas manual",
+  "drill.manualOnlyTitle": "O teste DR externo agendado está desativado. Execute a verificação externa manualmente com o botão.",
 };
 
 export default pt;
