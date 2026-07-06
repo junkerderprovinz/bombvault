@@ -681,23 +681,33 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
           />
           {preview.length > 0 && (
             <div className="flex flex-col gap-1">
-              {preview.map((row, i) => (
-                <div key={i} className="text-xs font-mono break-words leading-snug">
-                  <span className="text-carbon-textSub">{row.raw}</span>
-                  {row.status === "translated" && (
-                    <span className="text-carbon-textMuted">
-                      {" "}
-                      {t("excludes.resolvedTo")} {row.resolved}
+              {preview.map((row, i) => {
+                // Show a plain, reassuring confirmation — NOT the raw internal
+                // restic path (BombVault's rebased host-mount view, e.g.
+                // /host/user/user/appdata/…), which looked like an invalid path
+                // and confused users (#38). The exact pattern is still available
+                // on hover (title) for the curious.
+                const good = row.matches;
+                const msg = good
+                  ? row.status === "basename"
+                    ? t("excludes.matchesAnywhere")
+                    : t("excludes.willExclude")
+                  : row.status === "passthrough"
+                    ? t("excludes.noMatch")
+                    : t("excludes.excludesNothing");
+                return (
+                  <div
+                    key={i}
+                    className="text-xs break-words leading-snug flex items-baseline gap-1.5"
+                    title={row.status === "translated" ? row.resolved : undefined}
+                  >
+                    <span className="font-mono text-carbon-textSub">{row.raw}</span>
+                    <span className={good ? "text-[#6fdc8c]" : "text-[#ff8389]"}>
+                      {good ? "✓" : "⚠"} {msg}
                     </span>
-                  )}
-                  {row.matches === false && (
-                    <span className="text-[#ff8389]">
-                      {" "}
-                      {row.status === "passthrough" ? t("excludes.noMatch") : t("excludes.excludesNothing")}
-                    </span>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
           <div className="flex items-center gap-3 pt-0.5">
