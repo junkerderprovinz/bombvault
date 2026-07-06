@@ -108,6 +108,64 @@ function SortControl({
 }
 
 // ---------------------------------------------------------------------------
+// Schedule / backup chip filters (#41)
+// ---------------------------------------------------------------------------
+// Generic sibling of the sort chips: same chip look + localStorage pattern, but
+// parameterised over its option set so the schedule and backup dimensions each
+// instantiate it without duplicating the markup. Mirrors Containers.tsx's
+// ChipFilter. VMs have NO installed/not-installed FilterControl — the state-
+// based live/orphans split already covers that dimension.
+
+type ScheduleFilterKey = "all" | "scheduled" | "notScheduled";
+type BackupFilterKey = "all" | "backedUp" | "neverBackedUp";
+
+const SCHEDULE_FILTER_STORAGE_KEY = "bv-vms-schedule-filter";
+const BACKUP_FILTER_STORAGE_KEY = "bv-vms-backup-filter";
+
+function loadScheduleFilterKey(): ScheduleFilterKey {
+  const v = localStorage.getItem(SCHEDULE_FILTER_STORAGE_KEY);
+  if (v === "all" || v === "scheduled" || v === "notScheduled") return v;
+  return "all";
+}
+
+function loadBackupFilterKey(): BackupFilterKey {
+  const v = localStorage.getItem(BACKUP_FILTER_STORAGE_KEY);
+  if (v === "all" || v === "backedUp" || v === "neverBackedUp") return v;
+  return "all";
+}
+
+function ChipFilter<K extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { key: K; label: string }[];
+  value: K;
+  onChange: (k: K) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-carbon-textMuted">{label}</span>
+      {options.map((o) => (
+        <button
+          key={o.key}
+          onClick={() => onChange(o.key)}
+          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+            value === o.key
+              ? "bg-accent text-accentContrast"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // VM-aware IncludeToggle variant
 // ---------------------------------------------------------------------------
 
@@ -823,6 +881,9 @@ export function VMs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
+  const [search, setSearch] = useState("");
+  const [scheduleFilter, setScheduleFilter] = useState<ScheduleFilterKey>(loadScheduleFilterKey);
+  const [backupFilter, setBackupFilter] = useState<BackupFilterKey>(loadBackupFilterKey);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
@@ -865,9 +926,36 @@ export function VMs() {
     localStorage.setItem(SORT_STORAGE_KEY, k);
   }
 
-  const sorted = sortVMs(vms, sortKey);
+  function handleScheduleFilterChange(k: ScheduleFilterKey) {
+    setScheduleFilter(k);
+    localStorage.setItem(SCHEDULE_FILTER_STORAGE_KEY, k);
+  }
+
+  function handleBackupFilterChange(k: BackupFilterKey) {
+    setBackupFilter(k);
+    localStorage.setItem(BACKUP_FILTER_STORAGE_KEY, k);
+  }
+
+  // Compose search (#40) + schedule/backup chips (#41) into one predicate applied
+  // BEFORE sort + the live/orphans split, so they combine. VMs have no image, so
+  // the search matches the name only.
+  const query = search.trim().toLowerCase();
+  const filtered = vms.filter((v) => {
+    if (query && !v.name.toLowerCase().includes(query)) return false;
+    if (scheduleFilter === "scheduled" && !v.includeInSchedule) return false;
+    if (scheduleFilter === "notScheduled" && v.includeInSchedule) return false;
+    if (backupFilter === "backedUp" && v.lastBackup == null) return false;
+    if (backupFilter === "neverBackedUp" && v.lastBackup != null) return false;
+    return true;
+  });
+
+  const sorted = sortVMs(filtered, sortKey);
   const live = sorted.filter((v) => v.state !== "not-installed");
   const orphans = sorted.filter((v) => v.state === "not-installed");
+
+  // When the list has VMs but the filters excluded them all, show a no-match hint
+  // (distinct from the "no VMs at all" empty state, which keys off vms.length).
+  const noMatch = vms.length > 0 && live.length === 0 && orphans.length === 0;
 
   function toggleSelect(name: string) {
     setSelected((prev) => {
@@ -970,9 +1058,38 @@ export function VMs() {
         </div>
       )}
 
-      {/* Sort + select-all controls */}
+      {/* Controls: search + schedule/backup filters + sort + select-all. */}
       {!loading && vms.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("vms.searchPlaceholder")}
+            spellCheck={false}
+            autoComplete="off"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+          />
+          <ChipFilter<ScheduleFilterKey>
+            label={t("filter.schedule")}
+            value={scheduleFilter}
+            onChange={handleScheduleFilterChange}
+            options={[
+              { key: "all", label: t("filter.all") },
+              { key: "scheduled", label: t("filter.scheduled") },
+              { key: "notScheduled", label: t("filter.notScheduled") },
+            ]}
+          />
+          <ChipFilter<BackupFilterKey>
+            label={t("filter.backup")}
+            value={backupFilter}
+            onChange={handleBackupFilterChange}
+            options={[
+              { key: "all", label: t("filter.all") },
+              { key: "backedUp", label: t("filter.backedUp") },
+              { key: "neverBackedUp", label: t("filter.neverBackedUp") },
+            ]}
+          />
           <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           {live.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
@@ -1069,6 +1186,11 @@ export function VMs() {
             <VMRow key={v.name} vm={v} t={t} onRefresh={() => void loadVMs()} />
           ))}
         </div>
+      )}
+
+      {/* No VM matches the active search / schedule / backup filters. */}
+      {!loading && !error && noMatch && (
+        <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
     </div>
   );
