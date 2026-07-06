@@ -9,6 +9,7 @@ export default {
         // toggling data-theme on <html> instantly re-colours the whole app.
         carbon: {
           background: "var(--carbon-bg)",
+          sidebar:    "var(--carbon-sidebar)",
           surface:    "var(--carbon-surface)",
           surface2:   "var(--carbon-surface2)",
           surface3:   "var(--carbon-surface3)",

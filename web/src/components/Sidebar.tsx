@@ -268,19 +268,22 @@ export function Sidebar({ settings }: SidebarProps) {
   const configEnabled = settings?.configEnabled ?? false;
 
   return (
-    <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-surface border-r border-carbon-border">
-      {/* Logo → Dashboard. Frameless SVG (no white frame), the wordmark is
-          dropped, clicking it always returns to the Dashboard. */}
+    <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-sidebar border-r border-carbon-border">
+      {/* Logo + wordmark → Dashboard. Frameless SVG on the darker sidebar so the
+          logo stands out; clicking anywhere on it returns to the Dashboard. */}
       <NavLink
         to="/dashboard"
         aria-label={t("nav.dashboard")}
-        className="block border-b border-carbon-border p-3 hover:opacity-90 transition-opacity"
+        className="flex items-center gap-3 px-4 py-5 border-b border-carbon-border hover:opacity-90 transition-opacity"
       >
         <img
           src="/logo.svg"
           alt="BombVault"
-          className="block mx-auto w-1/2 h-auto object-contain"
+          className="h-11 w-11 object-contain shrink-0"
         />
+        <span className="text-carbon-text font-bold text-2xl tracking-tight leading-none">
+          BombVault
+        </span>
       </NavLink>
 
       {/* Navigation */}

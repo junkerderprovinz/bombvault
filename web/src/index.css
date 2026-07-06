@@ -23,6 +23,10 @@
   --carbon-border:    #393939;
   --carbon-hover:     #353535;
 
+  /* Sidebar background — darker than the content (--carbon-bg #161616) so the
+     nav rail reads as a distinct, recessed column AND the dark logo stands out. */
+  --carbon-sidebar:   #0b0b0b;
+
   /* Sidebar nav text — a touch brighter than --carbon-text-sub so the
      navigation reads clearly against the dark sidebar surface. */
   --sidebar-text:     #e0e0e0;
@@ -44,6 +48,9 @@
   --carbon-text-muted:#6f6f6f;
   --carbon-border:    #e0e0e0;
   --carbon-hover:     #e8e8e8;
+
+  /* Sidebar background (light theme) — keep it the soft surface tone. */
+  --carbon-sidebar:   #f4f4f4;
 
   /* Sidebar nav text — darker than --carbon-text-sub for stronger contrast
      on the light sidebar surface. */
