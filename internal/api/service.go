@@ -583,6 +583,101 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 	return "", false // not reachable through the mount
 }
 
+// ExcludePreview is one exclude line resolved against a container's live mounts:
+// Resolved is the restic --exclude pattern that will actually be used, Status is
+// how it was derived, Matches reports whether it would exclude anything in this
+// container's backup (so the UI can warn on a line that matches nothing).
+type ExcludePreview struct {
+	Raw      string `json:"raw"`
+	Resolved string `json:"resolved"`
+	Status   string `json:"status"` // "basename" | "translated" | "passthrough"
+	Matches  bool   `json:"matches"`
+}
+
+// resolveExcludeLine turns one raw user line into a restic --exclude pattern.
+// No slash → verbatim (restic matches a bare name at any depth). A line under a
+// container mount Destination → translated through that mount's Source +
+// toContainerPath into the exact anchored path restic stored. Anything else →
+// verbatim (advanced host/glob patterns), never silently dropped.
+func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, status string) {
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return "", ""
+	}
+	if !strings.Contains(line, "/") {
+		return line, "basename"
+	}
+	clean := path.Clean(line)
+	var bestSrc, bestDest string
+	for _, m := range in.Mounts {
+		d := path.Clean(m.Destination)
+		if d == "" || d == "/" || m.Source == "" {
+			continue
+		}
+		if clean == d || strings.HasPrefix(clean, d+"/") {
+			if len(d) > len(bestDest) {
+				bestDest, bestSrc = d, m.Source
+			}
+		}
+	}
+	if bestDest != "" {
+		host := path.Clean(bestSrc + strings.TrimPrefix(clean, bestDest))
+		if cp, ok := s.toContainerPath(host); ok {
+			return cp, "translated"
+		}
+	}
+	return line, "passthrough"
+}
+
+// resolveExcludePatterns maps each raw user line through resolveExcludeLine and
+// returns the resolved restic --exclude patterns (empty lines dropped). This is
+// what feeds BackupDeps.Excludes for a container backup.
+func (s *Service) resolveExcludePatterns(raw []string, in model.Inspect) []string {
+	var out []string
+	for _, line := range raw {
+		pattern, status := s.resolveExcludeLine(line, in)
+		if status == "" || pattern == "" {
+			continue // blank line
+		}
+		out = append(out, pattern)
+	}
+	return out
+}
+
+// isUnderAny reports whether path p equals, or lives under, one of roots.
+func isUnderAny(p string, roots []string) bool {
+	for _, root := range roots {
+		if p == root || strings.HasPrefix(p, root+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// previewExcludes resolves each non-empty raw line against the live inspect and
+// reports, per line, the resolved --exclude pattern and whether it would match
+// anything in this container's backup (effective = the volumes actually backed
+// up). A basename matches at any depth; a translated path matches only when it
+// is under a backed-up volume; a passthrough is reported as matching nothing.
+// The user's original text round-trips in Raw.
+func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []string) []ExcludePreview {
+	var out []ExcludePreview
+	for _, line := range raw {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		pattern, status := s.resolveExcludeLine(line, in)
+		matches := status == "basename" || (status == "translated" && isUnderAny(pattern, effective))
+		out = append(out, ExcludePreview{
+			Raw:      line,
+			Resolved: pattern,
+			Status:   status,
+			Matches:  matches,
+		})
+	}
+	return out
+}
+
 // retentionPolicy maps the stored settings to a restic keep-policy.
 func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolicy {
 	return restic.RetentionPolicy{
@@ -2065,6 +2160,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		PreHook:              tg.PreHook,
 		PostHook:             tg.PostHook,
 		StopContainers:       deps,
+		Excludes:             s.resolveExcludePatterns(tg.Excludes, in),
 		Docker:               s.docker,
 		Restic:               &resticAdapter{engine: s.engine, mode: mode},
 		Templates:            templatesAdapter{},
@@ -4816,6 +4912,35 @@ func (s *Service) SetStopContainers(_ context.Context, name string, stop []strin
 		clean = append(clean, c)
 	}
 	return s.store.SetStopContainers(name, clean)
+}
+
+// SetExcludes stores the restic --exclude patterns for a container's backup.
+// Lines are trimmed; blanks and exact duplicates are dropped (order preserved).
+func (s *Service) SetExcludes(_ context.Context, name string, excludes []string) error {
+	var clean []string
+	seen := map[string]bool{}
+	for _, e := range excludes {
+		e = strings.TrimSpace(e)
+		if e == "" || seen[e] {
+			continue // skip blanks and duplicates
+		}
+		seen[e] = true
+		clean = append(clean, e)
+	}
+	return s.store.SetExcludes(name, clean)
+}
+
+// PreviewExcludes resolves candidate exclude lines against the container's live
+// mounts and returns, per line, the resolved --exclude pattern and whether it
+// would exclude anything in this container's backup, so the UI can warn on a
+// line that matches nothing. Stateless: nothing is persisted.
+func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []string) ([]ExcludePreview, error) {
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("inspect container: %w", err)
+	}
+	effective := s.effectiveBackupPaths(name, in)
+	return s.previewExcludes(candidate, in, effective), nil
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).
