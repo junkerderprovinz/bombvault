@@ -20,6 +20,7 @@ export interface Container {
   installed: boolean;
   includeInSchedule: boolean;
   lastBackup: number | null;
+  lastBackupStarted: number | null;
   preHook: string;
   postHook: string;
   /** Other container names to stop during this container's backup. */
@@ -1073,6 +1074,7 @@ export interface VM {
   method: string;
   includeInSchedule: boolean;
   lastBackup: number | null;
+  lastBackupStarted: number | null;
 }
 
 export interface ListVMsResponse {

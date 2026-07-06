@@ -168,6 +168,7 @@ type containerView struct {
 	Installed         bool     `json:"installed"`
 	IncludeInSchedule bool     `json:"includeInSchedule"`
 	LastBackup        *int64   `json:"lastBackup"`
+	LastBackupStarted *int64   `json:"lastBackupStarted"`
 	PreHook           string   `json:"preHook"`
 	PostHook          string   `json:"postHook"`
 	StopContainers    []string `json:"stopContainers"`
@@ -218,6 +219,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.Excludes = t.Excludes
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
+				v.LastBackupStarted = &run.StartedAt
 			}
 		}
 		views = append(views, v)
@@ -245,6 +247,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		}
 		if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
+			v.LastBackupStarted = &run.StartedAt
 		}
 		views = append(views, v)
 	}

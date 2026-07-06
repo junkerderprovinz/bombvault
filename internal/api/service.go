@@ -3756,6 +3756,7 @@ type VMView struct {
 	Method            string `json:"method"`
 	IncludeInSchedule bool   `json:"includeInSchedule"`
 	LastBackup        *int64 `json:"lastBackup"`
+	LastBackupStarted *int64 `json:"lastBackupStarted"`
 }
 
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
@@ -3794,6 +3795,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.IncludeInSchedule = t.IncludeInSchedule
 			if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
+				v.LastBackupStarted = &run.StartedAt
 			}
 		}
 		views = append(views, v)
@@ -3806,6 +3808,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		v := VMView{Name: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule}
 		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
+			v.LastBackupStarted = &run.StartedAt
 		}
 		views = append(views, v)
 	}
