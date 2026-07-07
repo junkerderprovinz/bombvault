@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -201,5 +202,134 @@ func TestNotifyBackupStartPerDomainURL(t *testing.T) {
 	s.notifyBackupStart(context.Background(), "config")
 	if globalHits != 1 {
 		t.Fatalf("config domain (no per-domain entry) should ping the global URL once, hits=%d", globalHits)
+	}
+}
+
+// runScheduledContainers simulates one SCHEDULED containers-domain run the way
+// cmd/bombvault/main.go + the scheduler wire it: ONE aggregate /start, then every item
+// backed up under a Healthchecks-suppressed context (its per-item ping folded into the
+// run), then ONE aggregate success/fail. fail names the items that should fail.
+func runScheduledContainers(s *Service, items []string, fail map[string]bool) {
+	s.ScheduledHealthchecksStart(context.Background(), "containers")
+	attempted, failed := 0, 0
+	for _, name := range items {
+		attempted++
+		ictx := notify.WithHealthchecksSuppressed(context.Background())
+		s.notifyBackupStart(ictx, "container")
+		ok := !fail[name]
+		var berr error
+		if !ok {
+			failed++
+			berr = errors.New("boom")
+		}
+		s.notifyBackup(ictx, "container", name, ok, backup.Summary{SnapshotID: "deadbeef"}, berr)
+	}
+	s.ScheduledHealthchecksResult(context.Background(), "containers", attempted, failed)
+}
+
+// TestScheduledContainersRunSendsOneStartOneSuccess: a scheduled containers run of 3
+// items sends exactly ONE Healthchecks /start and ONE success ping for the whole run
+// (no per-item pings), while every item still fires its own message channel (#49).
+func TestScheduledContainersRunSendsOneStartOneSuccess(t *testing.T) {
+	var mu sync.Mutex
+	var hcPaths []string
+	var webhookHits int
+	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hcPaths = append(hcPaths, r.URL.Path)
+		mu.Unlock()
+	}))
+	defer hc.Close()
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		mu.Lock()
+		webhookHits++
+		mu.Unlock()
+	}))
+	defer wh.Close()
+
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{
+		On: "always", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	runScheduledContainers(s, []string{"a", "b", "c"}, nil)
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(hcPaths) != 2 || hcPaths[0] != "/start" || hcPaths[1] != "/" {
+		t.Fatalf("scheduled run should send exactly [/start /] to Healthchecks, got %v", hcPaths)
+	}
+	if webhookHits != 3 {
+		t.Fatalf("each of the 3 items must still fire its webhook, hits=%d", webhookHits)
+	}
+}
+
+// TestScheduledContainersRunFailsWhenAnyItemFails: if any item in a scheduled run
+// fails, the whole run pings Healthchecks /fail exactly once (after one /start), and
+// the message channels still fire per item.
+func TestScheduledContainersRunFailsWhenAnyItemFails(t *testing.T) {
+	var mu sync.Mutex
+	var hcPaths []string
+	var webhookHits int
+	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hcPaths = append(hcPaths, r.URL.Path)
+		mu.Unlock()
+	}))
+	defer hc.Close()
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		mu.Lock()
+		webhookHits++
+		mu.Unlock()
+	}))
+	defer wh.Close()
+
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{
+		On: "always", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	runScheduledContainers(s, []string{"a", "b", "c"}, map[string]bool{"b": true})
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(hcPaths) != 2 || hcPaths[0] != "/start" || hcPaths[1] != "/fail" {
+		t.Fatalf("a run with a failed item should send exactly [/start /fail], got %v", hcPaths)
+	}
+	if webhookHits != 3 {
+		t.Fatalf("each of the 3 items must still fire its webhook, hits=%d", webhookHits)
+	}
+}
+
+// TestManualSingleBackupStillPingsHealthchecksOnce: a MANUAL single backup uses a
+// normal (unsuppressed) context, so it keeps pinging its own Healthchecks lifecycle
+// (/start then success) — the aggregation is scheduled-run only and must not change it.
+func TestManualSingleBackupStillPingsHealthchecksOnce(t *testing.T) {
+	var mu sync.Mutex
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		paths = append(paths, r.URL.Path)
+		mu.Unlock()
+	}))
+	defer srv.Close()
+
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "always", HealthchecksURL: srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background() // manual path: not suppressed
+	s.notifyBackupStart(ctx, "container")
+	s.notifyBackup(ctx, "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(paths) != 2 || paths[0] != "/start" || paths[1] != "/" {
+		t.Fatalf("manual single backup should ping /start then success, got %v", paths)
 	}
 }

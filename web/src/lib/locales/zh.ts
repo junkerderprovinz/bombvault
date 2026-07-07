@@ -760,6 +760,13 @@ const zh: Partial<Translations> = {
   "settings.subtitle": "BombVault 配置 — 更改立即生效。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "筛选",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "{version} 新增内容",
+  "whatsnew.loading": "正在加载发行说明…",
+  "whatsnew.loadFailed": "无法在此加载发行说明。请在 GitHub 上打开。",
+  "whatsnew.viewOnGitHub": "在 GitHub 上查看完整发行版",
+  "whatsnew.close": "关闭",
 };
 
 export default zh;

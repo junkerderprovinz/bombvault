@@ -760,6 +760,13 @@ const ja: Partial<Translations> = {
   "settings.subtitle": "BombVault の設定 — 変更は即座に反映されます。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "フィルター",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "{version} の新機能",
+  "whatsnew.loading": "リリースノートを読み込んでいます…",
+  "whatsnew.loadFailed": "ここでリリースノートを読み込めませんでした。GitHub で開いてください。",
+  "whatsnew.viewOnGitHub": "GitHub で完全なリリースを表示",
+  "whatsnew.close": "閉じる",
 };
 
 export default ja;

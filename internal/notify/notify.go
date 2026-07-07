@@ -38,6 +38,27 @@ func redactErr(err error) error {
 
 const sendTimeout = 15 * time.Second
 
+// hcSuppressKey is the context key that suppresses the per-call Healthchecks ping
+// in Send and SendStart while leaving every message channel (webhook/Matrix/SMTP)
+// untouched. A SCHEDULED per-domain run sets it on each item's context so the many
+// per-item Healthchecks pings collapse into ONE aggregate start/success/fail ping
+// for the whole domain job (see PingDomainStart / PingDomainResult and #49).
+type hcSuppressKey struct{}
+
+// WithHealthchecksSuppressed returns a child context that suppresses the
+// Healthchecks ping in Send and SendStart. ONLY the Healthchecks ping is affected;
+// every other channel still fires per call. Used by scheduled per-domain runs,
+// which ping Healthchecks once for the whole run instead of once per item.
+func WithHealthchecksSuppressed(ctx context.Context) context.Context {
+	return context.WithValue(ctx, hcSuppressKey{}, true)
+}
+
+// healthchecksSuppressed reports whether ctx carries the suppress flag.
+func healthchecksSuppressed(ctx context.Context) bool {
+	v, _ := ctx.Value(hcSuppressKey{}).(bool)
+	return v
+}
+
 // Config holds the notification channels. An empty field disables that channel.
 type Config struct {
 	On               string `json:"on"` // "never" | "failure" | "always"
@@ -165,8 +186,10 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 	// Healthchecks is a monitor, not a human message: it must get the success ping
 	// to stay green, so it fires on both outcomes whenever configured — the On
 	// policy governs only the message channels below. The domain selects its own
-	// check when one is configured, else the global URL.
-	if hcURL := c.healthchecksURLFor(domain); hcURL != "" {
+	// check when one is configured, else the global URL. A scheduled per-domain run
+	// suppresses this per-item ping (context flag) so its ONE aggregate ping speaks
+	// for the whole run; the message channels below still fire per item.
+	if hcURL := c.healthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
 		phase := "success"
 		if !ev.OK {
 			phase = "fail"
@@ -202,7 +225,9 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 // Healthchecks-only (message channels have no "start" concept); best-effort.
 func SendStart(ctx context.Context, c Config, domain string) {
 	hcURL := c.healthchecksURLFor(domain)
-	if (c.On != "always" && c.On != "failure") || hcURL == "" {
+	// A scheduled per-domain run suppresses this per-item /start (context flag) so the
+	// run's ONE aggregate /start (PingDomainStart) speaks for the whole domain job.
+	if (c.On != "always" && c.On != "failure") || hcURL == "" || healthchecksSuppressed(ctx) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -210,6 +235,48 @@ func SendStart(ctx context.Context, c Config, domain string) {
 	client := &http.Client{Timeout: sendTimeout}
 	if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
 		log.Printf("notify: healthchecks start: %v", redactErr(err))
+	}
+}
+
+// PingDomainStart pings a SCHEDULED per-domain run's Healthchecks check /start once,
+// at the start of the whole run — the aggregate counterpart to the per-item SendStart
+// (which the run suppresses). No-op when the domain has no check configured or
+// notifications are off; best-effort. The suppress flag does NOT apply here: this IS
+// the aggregate ping. domain may be the plural scheduler spelling ("containers"|"vms");
+// healthchecksURLFor normalises it to the per-domain check key.
+func PingDomainStart(ctx context.Context, c Config, domain string) {
+	hcURL := c.healthchecksURLFor(domain)
+	if (c.On != "always" && c.On != "failure") || hcURL == "" {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+	client := &http.Client{Timeout: sendTimeout}
+	if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
+		log.Printf("notify: healthchecks domain start: %v", redactErr(err))
+	}
+}
+
+// PingDomainResult pings a SCHEDULED per-domain run's Healthchecks check once at the
+// end of the whole run: the success endpoint when ok, else <base>/fail. summary (e.g.
+// "3 of 3 items succeeded" or "1 of 3 items failed") is POSTed as the request body so
+// it shows in the check's event log. It is the aggregate counterpart to the per-item
+// success/fail ping inside Send (which the run suppresses). No-op when the domain has
+// no check configured or notifications are off; best-effort.
+func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, summary string) {
+	hcURL := c.healthchecksURLFor(domain)
+	if (c.On != "always" && c.On != "failure") || hcURL == "" {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+	client := &http.Client{Timeout: sendTimeout}
+	phase := "success"
+	if !ok {
+		phase = "fail"
+	}
+	if err := pingHealthchecksBody(ctx, client, hcURL, phase, summary); err != nil {
+		log.Printf("notify: healthchecks domain result: %v", redactErr(err))
 	}
 }
 
@@ -298,8 +365,16 @@ func sendMatrix(ctx context.Context, client *http.Client, c Config, ev Event) er
 }
 
 // pingHealthchecks pings the check for a lifecycle phase: "start" (<base>/start),
-// "success" (<base>) or "fail" (<base>/fail).
+// "success" (<base>) or "fail" (<base>/fail). Bodyless (GET) — the per-item pings.
 func pingHealthchecks(ctx context.Context, client *http.Client, base, phase string) error {
+	return pingHealthchecksBody(ctx, client, base, phase, "")
+}
+
+// pingHealthchecksBody pings the check for a lifecycle phase, optionally attaching a
+// body that Healthchecks records in the check's event feed. An empty body sends a
+// plain GET (the per-item lifecycle pings); a non-empty body is POSTed (the aggregate
+// per-domain-run summary — see PingDomainResult).
+func pingHealthchecksBody(ctx context.Context, client *http.Client, base, phase, body string) error {
 	u := strings.TrimRight(base, "/")
 	switch phase {
 	case "start":
@@ -307,7 +382,13 @@ func pingHealthchecks(ctx context.Context, client *http.Client, base, phase stri
 	case "fail":
 		u += "/fail"
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	method := http.MethodGet
+	var reqBody io.Reader
+	if body != "" {
+		method = http.MethodPost
+		reqBody = strings.NewReader(body)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u, reqBody)
 	if err != nil {
 		return err
 	}

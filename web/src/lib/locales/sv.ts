@@ -768,6 +768,13 @@ const sv: Partial<Translations> = {
   "settings.subtitle": "BombVault-konfiguration — ändringar träder i kraft omedelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filter",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Nyheter i {version}",
+  "whatsnew.loading": "Läser in versionsinformation…",
+  "whatsnew.loadFailed": "Det gick inte att läsa in versionsinformationen här. Öppna den på GitHub.",
+  "whatsnew.viewOnGitHub": "Visa hela versionen på GitHub",
+  "whatsnew.close": "Stäng",
 };
 
 export default sv;

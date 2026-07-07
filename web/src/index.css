@@ -165,6 +165,12 @@ body {
   to   { opacity: 1; }
 }
 
+/* What's-new modal (#48) — gentle enter; reduced-motion users get just a fade. */
+@keyframes bv-modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* The logo mark hosts the normal <img> plus (at boom) the fragment grid. The FX
    overlay (.bv-boom-fx) is a sibling so the flash / shockwave / cloud / sparks are
    never clipped or transformed by the mark. Both overflow the 64px box freely and
@@ -268,6 +274,10 @@ body {
   }
 
   .bv-page-enter { animation: bv-page-in 320ms cubic-bezier(.2, .6, .2, 1) both; }
+
+  /* What's-new modal enter (#48). */
+  .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }
+  .bv-modal-card { animation: bv-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -278,4 +288,8 @@ body {
   .bv-egg-boom .bv-logo-img { animation: bv-egg-fade-pulse 600ms ease-in-out; }
   .bv-frag-grid, .bv-boom-fx { display: none; }
   .bv-page-enter { animation: bv-fade-in 200ms ease both; }
+
+  /* Reduced motion: the modal only fades — no slide or scale. */
+  .bv-modal-backdrop { animation: bv-fade-in 150ms ease both; }
+  .bv-modal-card { animation: bv-fade-in 150ms ease both; }
 }

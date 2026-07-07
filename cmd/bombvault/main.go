@@ -15,6 +15,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -133,23 +134,37 @@ func run() error {
 	}
 
 	// Per-domain scheduler; the containers job calls the service's Backup, the
-	// VMs job calls BackupVM (wired via SetVMJob below).
+	// VMs job calls BackupVM (wired via SetVMJob below). Each scheduled item runs
+	// with its own Healthchecks ping suppressed (context flag) so the run's ONE
+	// aggregate start/success/fail ping — wired via SetHealthchecksAggregator below —
+	// represents the whole domain job, not each container/VM (#49). Every other
+	// notification channel still fires per item.
 	scheduler := schedule.New(
 		func(name string) error {
-			_, bErr := svc.Backup(context.Background(), name)
+			ctx := notify.WithHealthchecksSuppressed(context.Background())
+			_, bErr := svc.Backup(ctx, name)
 			return bErr
 		},
 		st.ListTargets,
 	)
 	scheduler.SetVMJob(
 		func(name string) error {
-			_, bErr := svc.BackupVM(context.Background(), name)
+			ctx := notify.WithHealthchecksSuppressed(context.Background())
+			_, bErr := svc.BackupVM(ctx, name)
 			if errors.Is(bErr, backup.ErrVMNotInstalled) {
 				return nil // VM no longer on the host: a skip (already logged), not a job failure
 			}
 			return bErr
 		},
 		st.ListVMTargets,
+	)
+	// Aggregate the per-domain Healthchecks lifecycle for scheduled multi-item runs:
+	// one /start before the first item, one success/fail after the last (#49).
+	scheduler.SetHealthchecksAggregator(
+		func(domain string) { svc.ScheduledHealthchecksStart(context.Background(), domain) },
+		func(domain string, attempted, failed int) {
+			svc.ScheduledHealthchecksResult(context.Background(), domain, attempted, failed)
+		},
 	)
 	scheduler.SetFlashJob(func() error {
 		_, bErr := svc.BackupFlash(context.Background())

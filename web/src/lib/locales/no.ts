@@ -768,6 +768,13 @@ const no: Partial<Translations> = {
   "settings.subtitle": "BombVault-konfigurasjon — endringer trer i kraft umiddelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Nyheter i {version}",
+  "whatsnew.loading": "Laster inn utgivelsesnotater…",
+  "whatsnew.loadFailed": "Utgivelsesnotatene kunne ikke lastes inn her. Åpne dem på GitHub.",
+  "whatsnew.viewOnGitHub": "Se hele utgivelsen på GitHub",
+  "whatsnew.close": "Lukk",
 };
 
 export default no;

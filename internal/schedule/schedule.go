@@ -250,7 +250,14 @@ type Scheduler struct {
 	replicateOffFn func(domain string) error               // nil until SetOffsiteJob wires off-site replication
 	drillFn        func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
 	tamperFn       func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
-	entryIDs       []cron.EntryID
+	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
+	// multi-item domain run (containers/VMs): one /start before the first item and
+	// one success/fail after the last, instead of once per item (#49). nil until
+	// SetHealthchecksAggregator wires them; then per-item pings are suppressed by the
+	// injected backup closures (see cmd/bombvault/main.go).
+	hcRunStart  func(domain string)
+	hcRunFinish func(domain string, attempted, failed int)
+	entryIDs    []cron.EntryID
 }
 
 // New creates a Scheduler. backupFn is called for each due container;
@@ -316,6 +323,23 @@ func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
 	s.tamperFn = tamperFn
 }
 
+// SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
+// multi-item runs (containers + VMs). A scheduled run then pings the domain's check
+// /start ONCE via startFn before the first item and success/fail ONCE via finishFn
+// after the last — instead of once per item — so the check reflects the whole domain
+// job rather than each container/VM (#49). finishFn receives the run's attempted and
+// failed counts (success when failed == 0). The per-item Healthchecks ping is
+// suppressed separately: the backup closures injected into New/SetVMJob run each item
+// with a suppress-flagged context (see cmd/bombvault/main.go). Passing nil funcs
+// leaves scheduled runs un-aggregated (each item pings as before). Call before Reload.
+func (s *Scheduler) SetHealthchecksAggregator(
+	startFn func(domain string),
+	finishFn func(domain string, attempted, failed int),
+) {
+	s.hcRunStart = startFn
+	s.hcRunFinish = finishFn
+}
+
 // Start starts the underlying cron runner. Call once at app startup.
 func (s *Scheduler) Start() {
 	s.c.Start()
@@ -373,7 +397,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
-				RunContainersJob(targets, s.backup)
+				s.runAggregatedHC("containers", func() (int, int) {
+					return RunContainersJob(targets, s.backup)
+				})
 			},
 			lastRun: containersLastRun,
 		},
@@ -390,7 +416,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: vms job: list VM targets: %v", err)
 					return
 				}
-				RunVMsJob(vms, s.backupVM)
+				s.runAggregatedHC("vms", func() (int, int) {
+					return RunVMsJob(vms, s.backupVM)
+				})
 			},
 			lastRun: vmsLastRun,
 		},
@@ -617,34 +645,58 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 	return out
 }
 
+// runAggregatedHC runs a scheduled per-domain item loop bracketed by a single
+// Healthchecks /start (before the first item) and success/fail (after the last) ping
+// when the aggregator is wired (SetHealthchecksAggregator). run performs the loop and
+// returns (attempted, failed). When the aggregator is not wired it just runs the loop —
+// no pings — so container-only callers and the schedule package's tests are unchanged.
+func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed int)) {
+	if s.hcRunStart != nil {
+		s.hcRunStart(domain)
+	}
+	attempted, failed := run()
+	if s.hcRunFinish != nil {
+		s.hcRunFinish(domain, attempted, failed)
+	}
+}
+
 // RunContainersJob backs up each target that has IncludeInSchedule=true,
 // calling backupFn sequentially. Errors from individual containers are logged
-// but do not abort the remaining containers.
+// but do not abort the remaining containers. It returns how many targets were
+// attempted (IncludeInSchedule=true) and how many of those failed, so a scheduled
+// run can aggregate the outcome into a single Healthchecks ping (see runAggregatedHC).
 //
 // This function is exported so tests can invoke the job synchronously without
 // waiting for real wall-clock time.
-func RunContainersJob(targets []store.Target, backupFn BackupFunc) {
+func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, failed int) {
 	for _, t := range targets {
 		if !t.IncludeInSchedule {
 			continue
 		}
+		attempted++
 		if err := backupFn(t.ContainerName); err != nil {
+			failed++
 			log.Printf("schedule: containers job: backup %q failed: %v", t.ContainerName, err)
 		}
 	}
+	return attempted, failed
 }
 
 // RunVMsJob backs up each VM target that has IncludeInSchedule=true, calling
 // backupFn sequentially. As with RunContainersJob, an individual VM failure is
-// logged but does not abort the remaining VMs. Exported so tests can invoke the
-// job synchronously without waiting for real wall-clock time.
-func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) {
+// logged but does not abort the remaining VMs, and it returns the attempted/failed
+// counts for Healthchecks aggregation. Exported so tests can invoke the job
+// synchronously without waiting for real wall-clock time.
+func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int) {
 	for _, v := range vms {
 		if !v.IncludeInSchedule {
 			continue
 		}
+		attempted++
 		if err := backupFn(v.Name); err != nil {
+			failed++
 			log.Printf("schedule: vms job: backup %q failed: %v", v.Name, err)
 		}
 	}
+	return attempted, failed
 }

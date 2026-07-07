@@ -760,6 +760,13 @@ const ko: Partial<Translations> = {
   "settings.subtitle": "BombVault 구성 — 변경 사항이 즉시 적용됩니다.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "필터",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "{version}의 새로운 기능",
+  "whatsnew.loading": "릴리스 노트를 불러오는 중…",
+  "whatsnew.loadFailed": "여기에서 릴리스 노트를 불러올 수 없습니다. GitHub에서 여세요.",
+  "whatsnew.viewOnGitHub": "GitHub에서 전체 릴리스 보기",
+  "whatsnew.close": "닫기",
 };
 
 export default ko;

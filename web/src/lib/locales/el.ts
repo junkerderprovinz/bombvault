@@ -768,6 +768,13 @@ const el: Partial<Translations> = {
   "settings.subtitle": "Διαμόρφωση BombVault — οι αλλαγές τίθενται σε ισχύ αμέσως.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Φίλτρα",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Τι νέο υπάρχει στην {version}",
+  "whatsnew.loading": "Φόρτωση σημειώσεων έκδοσης…",
+  "whatsnew.loadFailed": "Δεν ήταν δυνατή η φόρτωση των σημειώσεων έκδοσης εδώ. Ανοίξτε τις στο GitHub.",
+  "whatsnew.viewOnGitHub": "Προβολή πλήρους έκδοσης στο GitHub",
+  "whatsnew.close": "Κλείσιμο",
 };
 
 export default el;

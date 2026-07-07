@@ -1,8 +1,13 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { useEffect, useState, useCallback } from "react";
-import { getSettings, getAuth, type Settings } from "../lib/api";
+import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
+import { WhatsNewDialog } from "../components/WhatsNewDialog";
+
+// Per-browser record of the last BombVault version this browser saw. When the
+// running version differs, the "What's new" dialog (#48) is shown once.
+const LAST_SEEN_VERSION_KEY = "bombvault.lastSeenVersion";
 
 // Auth probe state: null = not yet fetched, false = auth off or authed,
 // true = auth on AND not authed (show login).
@@ -11,6 +16,8 @@ type AuthGateState = "loading" | "pass" | "blocked";
 export function Layout() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [authGate, setAuthGate] = useState<AuthGateState>("loading");
+  // The version to show the "What's new" dialog for (null = don't show).
+  const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
 
   // Check auth state; used on mount and after a successful login.
@@ -59,6 +66,53 @@ export function Layout() {
     return () => window.removeEventListener("bv:settings-changed", onChange);
   }, [loadSettings]);
 
+  // "What's new" detection (#48): once past the auth gate, compare the running
+  // version against the last one this browser saw. Show the dialog when it
+  // differs from a previously stored value; on a brand-new browser just record
+  // the version silently (don't nag a first-time user). "dev"/unknown builds are
+  // ignored. lastSeenVersion is updated the moment we decide to show it, so a
+  // new version can never re-nag on the next mount.
+  useEffect(() => {
+    if (authGate !== "pass") return;
+    let active = true;
+    getHealth()
+      .then((h) => {
+        if (!active) return;
+        const version = h.version;
+        if (!version || version === "dev") return;
+        let last: string | null = null;
+        try {
+          last = localStorage.getItem(LAST_SEEN_VERSION_KEY);
+        } catch {
+          /* localStorage unavailable — skip the dialog entirely */
+          return;
+        }
+        if (last === null) {
+          // First ever open on this browser: remember it, don't show the dialog.
+          try {
+            localStorage.setItem(LAST_SEEN_VERSION_KEY, version);
+          } catch {
+            /* ignore */
+          }
+          return;
+        }
+        if (last !== version) {
+          try {
+            localStorage.setItem(LAST_SEEN_VERSION_KEY, version);
+          } catch {
+            /* ignore */
+          }
+          setWhatsNewVersion(version);
+        }
+      })
+      .catch(() => {
+        /* version is best-effort; no dialog on a failed health probe */
+      });
+    return () => {
+      active = false;
+    };
+  }, [authGate]);
+
   // While loading the auth state show nothing (avoids flash of app content).
   if (authGate === "loading") {
     return null;
@@ -79,6 +133,9 @@ export function Layout() {
           <Outlet />
         </div>
       </main>
+      {whatsNewVersion && (
+        <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
+      )}
     </div>
   );
 }

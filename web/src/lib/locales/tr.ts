@@ -768,6 +768,13 @@ const tr: Partial<Translations> = {
   "settings.subtitle": "BombVault yapılandırması — değişiklikler hemen etkili olur.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtreler",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "{version} sürümündeki yenilikler",
+  "whatsnew.loading": "Sürüm notları yükleniyor…",
+  "whatsnew.loadFailed": "Sürüm notları burada yüklenemedi. GitHub'da açın.",
+  "whatsnew.viewOnGitHub": "Sürümün tamamını GitHub'da görüntüle",
+  "whatsnew.close": "Kapat",
 };
 
 export default tr;

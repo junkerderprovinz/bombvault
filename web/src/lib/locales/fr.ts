@@ -768,6 +768,13 @@ const fr: Partial<Translations> = {
   "settings.subtitle": "Configuration de BombVault — les modifications prennent effet immédiatement.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtres",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Nouveautés de {version}",
+  "whatsnew.loading": "Chargement des notes de version…",
+  "whatsnew.loadFailed": "Impossible de charger les notes de version ici. Ouvrez-les sur GitHub.",
+  "whatsnew.viewOnGitHub": "Voir la version complète sur GitHub",
+  "whatsnew.close": "Fermer",
 };
 
 export default fr;
