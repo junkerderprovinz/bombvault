@@ -34,6 +34,19 @@ const hu: Partial<Translations> = {
   "dashboard.allOk": "Minden rendszer rendben",
   "dashboard.degraded": "Leromlott",
   "dashboard.checking": "Ellenőrzés…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Testreszabás",
+  "dashboard.customizeDone": "Kész",
+  "dashboard.customizeHint": "Húzz egy kártyát az átrendezéshez, vagy rejtsd el, amire nincs szükséged. Ebben a böngészőben mentve.",
+  "dashboard.moveUp": "Mozgatás felfelé",
+  "dashboard.moveDown": "Mozgatás lefelé",
+  "dashboard.hideCard": "Elrejtés",
+  "dashboard.showCard": "Megjelenítés",
+  "dashboard.hiddenCards": "Rejtett kártyák",
+  "dashboard.resetLayout": "Visszaállítás alapértelmezettre",
+  "dashboard.blockSummary": "Áttekintés",
+  "dashboard.blockStats": "Statisztika",
+  "dashboard.blockBackups": "Biztonsági mentések és előzmények",
 
   // Spike
   "spike.title": "Hosztintegráció",

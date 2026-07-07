@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit, runDrill } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { useAdvanced, Advanced } from "../lib/advanced";
+import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
 import type { CadenceState } from "../components/CadenceBuilder";
 import { relativeTime } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
+import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1547,9 +1548,131 @@ export function Dashboard() {
     };
   }, []);
 
+  // Customizable dashboard (#46) — everything below the heading + banners is a
+  // reorderable / hideable block, persisted per-browser via useDashboardLayout.
+  const [editing, setEditing] = useState(false);
+
+  // Ordered block list. Each block has a stable id, a label, the rendered node
+  // (props preserved exactly from the original render) and an advancedOnly flag.
+  // advancedOnly blocks are dropped from BOTH the render and the customize list
+  // when not in Advanced view — their order/hidden state still persists.
+  const blocks: {
+    id: string;
+    label: string;
+    advancedOnly?: boolean;
+    node: React.ReactNode;
+  }[] = [
+    {
+      id: "summary",
+      label: t("dashboard.blockSummary"),
+      node: (
+        <SummaryTier
+          t={t}
+          lang={lang}
+          domains={statusDomains}
+          loading={statusLoading}
+          newestRun={runs[0] ?? null}
+        />
+      ),
+    },
+    {
+      id: "stats",
+      label: t("dashboard.blockStats"),
+      node: <StatCardsRow t={t} advanced={advanced} />,
+    },
+    {
+      id: "protection",
+      label: t("dashboard.protectionTitle"),
+      node: <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} />,
+    },
+    {
+      id: "ransomware",
+      label: t("ransomware.title"),
+      advancedOnly: true,
+      node: <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />,
+    },
+    {
+      id: "backups",
+      label: t("dashboard.blockBackups"),
+      node: (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <LastBackupsCard t={t} />
+          <RunsCard t={t} />
+        </div>
+      ),
+    },
+    {
+      id: "heatmap",
+      label: t("dashboard.healthTitle"),
+      node: <HealthHeatmapCard t={t} />,
+    },
+    {
+      id: "storage",
+      label: t("dashboard.storageTitle"),
+      node: <StorageCard t={t} />,
+    },
+    {
+      id: "spike",
+      label: t("spike.title"),
+      advancedOnly: true,
+      node: <SpikeCard t={t} />,
+    },
+  ];
+
+  const defaultOrder = blocks.map((b) => b.id);
+  const { order, hidden, reorder, toggleHidden, reset } =
+    useDashboardLayout(defaultOrder);
+
+  // Persisted order → concrete blocks. Unknown/stale ids are guarded out, and
+  // advancedOnly blocks are dropped while not in Advanced view.
+  const byId = new Map(blocks.map((b) => [b.id, b]));
+  const orderedAvailable = order
+    .map((id) => byId.get(id))
+    .filter(
+      (b): b is (typeof blocks)[number] => !!b && (advanced || !b.advancedOnly)
+    );
+  const visibleBlocks = orderedAvailable.filter((b) => !hidden.has(b.id));
+  const hiddenBlocks = orderedAvailable.filter((b) => hidden.has(b.id));
+
+  // Native HTML5 drag-and-drop — the dragged id lives in a ref (no re-render
+  // mid-drag); onDrop reorders relative to the drop-target block. The move
+  // up/down buttons on each block are the accessible + touch fallback.
+  const draggingId = useRef<string | null>(null);
+  const dragHandlersFor = (blockId: string): BlockDragHandlers => ({
+    onDragStart: (e) => {
+      draggingId.current = blockId;
+      e.dataTransfer.effectAllowed = "move";
+      try {
+        e.dataTransfer.setData("text/plain", blockId);
+      } catch {
+        /* some browsers restrict setData during dragstart — the ref suffices */
+      }
+    },
+    onDragOver: (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    },
+    onDrop: (e) => {
+      e.preventDefault();
+      let dragged = draggingId.current;
+      if (!dragged) {
+        try {
+          dragged = e.dataTransfer.getData("text/plain") || null;
+        } catch {
+          dragged = null;
+        }
+      }
+      if (dragged && dragged !== blockId) reorder(dragged, blockId);
+      draggingId.current = null;
+    },
+    onDragEnd: () => {
+      draggingId.current = null;
+    },
+  });
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-      {/* Page heading */}
+      {/* Page heading — fixed (contextual, not customizable) */}
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">
           {t("dashboard.title")}
@@ -1564,19 +1687,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Summary tier — compact three-cell overview (health · next backup · last
-          result) sitting above the banners + detail cards. Reuses the shared
-          /api/status domains and the newest run; no structural change below. */}
-      <SummaryTier
-        t={t}
-        lang={lang}
-        domains={statusDomains}
-        loading={statusLoading}
-        newestRun={runs[0] ?? null}
-      />
-
-      {/* Fresh/rebuilt install → nudge to the guided Recovery tab (dismissible).
-          Reuses the shared /api/status fetch below — no duplicate round-trip. */}
+      {/* Fresh/rebuilt install nudge to the guided Recovery tab — fixed
+          (contextual). Reuses the shared /api/status fetch below. */}
       <FreshInstallNudge
         t={t}
         domains={statusDomains}
@@ -1585,36 +1697,98 @@ export function Dashboard() {
         onDismiss={dismissFresh}
       />
 
-      {/* Recovery-kit nag — only while encryption is on and the kit is unstored */}
+      {/* Recovery-kit nag — fixed (contextual): only while encryption is on and
+          the recovery kit is unstored. */}
       <RecoveryNag t={t} suppressed={freshShown} />
 
-      {/* Stat cards — compact summary row */}
-      <StatCardsRow t={t} advanced={advanced} />
-
-      {/* Protection (RPO) status — "are my backups current?" indicator */}
-      <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} />
-
-      {/* Ransomware protection — off-site immutability scorecard (advanced-gated;
-          shown only in Advanced view, and only when at least one enabled domain
-          has a protection posture) */}
-      <Advanced>
-        <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />
-      </Advanced>
-
-      {/* 2-column grid for last backups + run history */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <LastBackupsCard t={t} />
-        <RunsCard t={t} />
+      {/* Customize toolbar — toggles edit mode; Reset + hint show while editing. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setEditing((v) => !v)}
+            className={
+              editing
+                ? "rounded-md bg-carbon-surface3 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-border motion-safe:transition-colors"
+                : "rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text motion-safe:transition-colors"
+            }
+          >
+            {editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
+          </button>
+          {editing && (
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text motion-safe:transition-colors"
+            >
+              {t("dashboard.resetLayout")}
+            </button>
+          )}
+        </div>
+        {editing && (
+          <p className="text-xs text-carbon-textMuted">{t("dashboard.customizeHint")}</p>
+        )}
       </div>
 
-      {/* Backup health heatmap — full width */}
-      <HealthHeatmapCard t={t} />
+      {/* Ordered, visible blocks. In edit mode each carries a control bar +
+          native drag-and-drop; otherwise the card renders plainly. */}
+      <div className="flex flex-col gap-6">
+        {visibleBlocks.map((b, i) => (
+          <CustomizableBlock
+            key={b.id}
+            id={b.id}
+            label={b.label}
+            index={i}
+            total={visibleBlocks.length}
+            isFirst={i === 0}
+            isLast={i === visibleBlocks.length - 1}
+            editing={editing}
+            dragHandlers={dragHandlersFor(b.id)}
+            /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
+               blocks in the stored order) so a single press always reorders. */
+            onMoveUp={() => {
+              if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
+            }}
+            onMoveDown={() => {
+              if (i < visibleBlocks.length - 1)
+                reorder(b.id, visibleBlocks[i + 1].id);
+            }}
+            onHide={() => toggleHidden(b.id)}
+            t={t}
+          >
+            {b.node}
+          </CustomizableBlock>
+        ))}
+      </div>
 
-      {/* Storage — repo size + dedup trend per domain — full width */}
-      <StorageCard t={t} />
-
-      {/* Spike (host-integration) status — advanced-gated, like the ransomware card. */}
-      <Advanced><SpikeCard t={t} /></Advanced>
+      {/* Hidden-cards tray — only while editing and something is hidden. */}
+      {editing && hiddenBlocks.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-carbon-textSub">
+            {t("dashboard.hiddenCards")}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {hiddenBlocks.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center gap-2 rounded-md border border-carbon-border bg-carbon-surface2 px-2.5 py-1.5"
+              >
+                <span className="max-w-[12rem] truncate text-xs text-carbon-textSub">
+                  {b.label}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => toggleHidden(b.id)}
+                  aria-label={`${t("dashboard.showCard")} ${b.label}`}
+                  className="rounded px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
+                >
+                  {t("dashboard.showCard")}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

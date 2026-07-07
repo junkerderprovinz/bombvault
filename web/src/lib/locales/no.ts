@@ -33,6 +33,19 @@ const no: Partial<Translations> = {
   "dashboard.allOk": "Alle systemer OK",
   "dashboard.degraded": "Svekket",
   "dashboard.checking": "Sjekker…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Tilpass",
+  "dashboard.customizeDone": "Ferdig",
+  "dashboard.customizeHint": "Dra et kort for å omorganisere det, eller skjul dem du ikke trenger. Lagret i denne nettleseren.",
+  "dashboard.moveUp": "Flytt opp",
+  "dashboard.moveDown": "Flytt ned",
+  "dashboard.hideCard": "Skjul",
+  "dashboard.showCard": "Vis",
+  "dashboard.hiddenCards": "Skjulte kort",
+  "dashboard.resetLayout": "Tilbakestill til standard",
+  "dashboard.blockSummary": "Oversikt",
+  "dashboard.blockStats": "Statistikk",
+  "dashboard.blockBackups": "Sikkerhetskopier og historikk",
 
   // Spike
   "spike.title": "Host-integrasjon",

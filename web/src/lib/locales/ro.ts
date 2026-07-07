@@ -33,6 +33,19 @@ const ro: Partial<Translations> = {
   "dashboard.allOk": "Toate sistemele funcționează",
   "dashboard.degraded": "Degradat",
   "dashboard.checking": "Verificare…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Personalizează",
+  "dashboard.customizeDone": "Gata",
+  "dashboard.customizeHint": "Trage un card pentru a-l reordona sau ascunde-le pe cele de care nu ai nevoie. Salvat în acest browser.",
+  "dashboard.moveUp": "Mută în sus",
+  "dashboard.moveDown": "Mută în jos",
+  "dashboard.hideCard": "Ascunde",
+  "dashboard.showCard": "Afișează",
+  "dashboard.hiddenCards": "Carduri ascunse",
+  "dashboard.resetLayout": "Resetează la implicit",
+  "dashboard.blockSummary": "Prezentare generală",
+  "dashboard.blockStats": "Statistici",
+  "dashboard.blockBackups": "Backupuri și istoric",
 
   // Spike
   "spike.title": "Integrare gazdă",

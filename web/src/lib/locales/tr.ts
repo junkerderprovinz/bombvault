@@ -34,6 +34,19 @@ const tr: Partial<Translations> = {
   "dashboard.allOk": "Tüm sistemler normal",
   "dashboard.degraded": "Bozulmuş",
   "dashboard.checking": "Denetleniyor…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Özelleştir",
+  "dashboard.customizeDone": "Bitti",
+  "dashboard.customizeHint": "Yeniden sıralamak için bir kartı sürükleyin veya ihtiyaç duymadıklarınızı gizleyin. Bu tarayıcıda kaydedilir.",
+  "dashboard.moveUp": "Yukarı taşı",
+  "dashboard.moveDown": "Aşağı taşı",
+  "dashboard.hideCard": "Gizle",
+  "dashboard.showCard": "Göster",
+  "dashboard.hiddenCards": "Gizli kartlar",
+  "dashboard.resetLayout": "Varsayılana sıfırla",
+  "dashboard.blockSummary": "Genel bakış",
+  "dashboard.blockStats": "İstatistikler",
+  "dashboard.blockBackups": "Yedekler ve geçmiş",
 
   // Spike
   "spike.title": "Host Entegrasyonu",

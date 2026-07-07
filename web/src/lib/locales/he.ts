@@ -34,6 +34,19 @@ const he: Partial<Translations> = {
   "dashboard.allOk": "כל המערכות תקינות",
   "dashboard.degraded": "פגום",
   "dashboard.checking": "בודק…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "התאמה אישית",
+  "dashboard.customizeDone": "סיום",
+  "dashboard.customizeHint": "גרור כרטיס כדי לסדר מחדש, או הסתר את אלה שאינך צריך. נשמר בדפדפן זה.",
+  "dashboard.moveUp": "הזז למעלה",
+  "dashboard.moveDown": "הזז למטה",
+  "dashboard.hideCard": "הסתר",
+  "dashboard.showCard": "הצג",
+  "dashboard.hiddenCards": "כרטיסים מוסתרים",
+  "dashboard.resetLayout": "אפס לברירת המחדל",
+  "dashboard.blockSummary": "סקירה",
+  "dashboard.blockStats": "סטטיסטיקה",
+  "dashboard.blockBackups": "גיבויים והיסטוריה",
 
   // Spike
   "spike.title": "שילוב מארח",

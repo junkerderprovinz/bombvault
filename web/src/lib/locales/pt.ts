@@ -33,6 +33,19 @@ const pt: Partial<Translations> = {
   "dashboard.allOk": "Todos os sistemas OK",
   "dashboard.degraded": "Degradado",
   "dashboard.checking": "A verificar…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Personalizar",
+  "dashboard.customizeDone": "Concluído",
+  "dashboard.customizeHint": "Arraste um cartão para reordenar ou oculte os que não precisa. Guardado neste navegador.",
+  "dashboard.moveUp": "Mover para cima",
+  "dashboard.moveDown": "Mover para baixo",
+  "dashboard.hideCard": "Ocultar",
+  "dashboard.showCard": "Mostrar",
+  "dashboard.hiddenCards": "Cartões ocultos",
+  "dashboard.resetLayout": "Repor predefinições",
+  "dashboard.blockSummary": "Visão geral",
+  "dashboard.blockStats": "Estatísticas",
+  "dashboard.blockBackups": "Backups e histórico",
 
   // Spike
   "spike.title": "Integração com o host",

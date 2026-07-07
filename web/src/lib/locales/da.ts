@@ -34,6 +34,19 @@ const da: Partial<Translations> = {
   "dashboard.allOk": "Alle systemer OK",
   "dashboard.degraded": "Forringet",
   "dashboard.checking": "Tjekker…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Tilpas",
+  "dashboard.customizeDone": "Færdig",
+  "dashboard.customizeHint": "Træk et kort for at omarrangere det, eller skjul dem, du ikke har brug for. Gemt i denne browser.",
+  "dashboard.moveUp": "Flyt op",
+  "dashboard.moveDown": "Flyt ned",
+  "dashboard.hideCard": "Skjul",
+  "dashboard.showCard": "Vis",
+  "dashboard.hiddenCards": "Skjulte kort",
+  "dashboard.resetLayout": "Nulstil til standard",
+  "dashboard.blockSummary": "Oversigt",
+  "dashboard.blockStats": "Statistik",
+  "dashboard.blockBackups": "Sikkerhedskopier og historik",
 
   // Spike
   "spike.title": "Vært-integration",

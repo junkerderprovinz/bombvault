@@ -33,6 +33,19 @@ const ru: Partial<Translations> = {
   "dashboard.allOk": "Все системы в норме",
   "dashboard.degraded": "Сбой",
   "dashboard.checking": "Проверка…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Настроить",
+  "dashboard.customizeDone": "Готово",
+  "dashboard.customizeHint": "Перетащите карточку, чтобы изменить порядок, или скройте ненужные. Сохраняется в этом браузере.",
+  "dashboard.moveUp": "Вверх",
+  "dashboard.moveDown": "Вниз",
+  "dashboard.hideCard": "Скрыть",
+  "dashboard.showCard": "Показать",
+  "dashboard.hiddenCards": "Скрытые карточки",
+  "dashboard.resetLayout": "Сбросить по умолчанию",
+  "dashboard.blockSummary": "Обзор",
+  "dashboard.blockStats": "Статистика",
+  "dashboard.blockBackups": "Резервные копии и история",
 
   // Spike
   "spike.title": "Интеграция с хостом",

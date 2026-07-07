@@ -34,6 +34,19 @@ const uk: Partial<Translations> = {
   "dashboard.allOk": "Всі системи в нормі",
   "dashboard.degraded": "Збій",
   "dashboard.checking": "Перевірка…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Налаштувати",
+  "dashboard.customizeDone": "Готово",
+  "dashboard.customizeHint": "Перетягніть картку, щоб змінити порядок, або приховайте непотрібні. Зберігається в цьому браузері.",
+  "dashboard.moveUp": "Вгору",
+  "dashboard.moveDown": "Вниз",
+  "dashboard.hideCard": "Приховати",
+  "dashboard.showCard": "Показати",
+  "dashboard.hiddenCards": "Приховані картки",
+  "dashboard.resetLayout": "Скинути до типових",
+  "dashboard.blockSummary": "Огляд",
+  "dashboard.blockStats": "Статистика",
+  "dashboard.blockBackups": "Резервні копії та історія",
 
   // Spike
   "spike.title": "Інтеграція з хостом",

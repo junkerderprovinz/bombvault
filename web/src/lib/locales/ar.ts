@@ -34,6 +34,19 @@ const ar: Partial<Translations> = {
   "dashboard.allOk": "جميع الأنظمة تعمل بشكل جيد",
   "dashboard.degraded": "متدهور",
   "dashboard.checking": "جارٍ الفحص…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "تخصيص",
+  "dashboard.customizeDone": "تم",
+  "dashboard.customizeHint": "اسحب بطاقة لإعادة ترتيبها، أو أخفِ ما لا تحتاجه. يُحفظ في هذا المتصفح.",
+  "dashboard.moveUp": "تحريك لأعلى",
+  "dashboard.moveDown": "تحريك لأسفل",
+  "dashboard.hideCard": "إخفاء",
+  "dashboard.showCard": "إظهار",
+  "dashboard.hiddenCards": "البطاقات المخفية",
+  "dashboard.resetLayout": "إعادة التعيين إلى الافتراضي",
+  "dashboard.blockSummary": "نظرة عامة",
+  "dashboard.blockStats": "إحصائيات",
+  "dashboard.blockBackups": "النسخ الاحتياطية والسجل",
 
   // Spike
   "spike.title": "تكامل المضيف",

@@ -34,6 +34,19 @@ const fr: Partial<Translations> = {
   "dashboard.allOk": "Tous les systèmes OK",
   "dashboard.degraded": "Dégradé",
   "dashboard.checking": "Vérification…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Personnaliser",
+  "dashboard.customizeDone": "Terminé",
+  "dashboard.customizeHint": "Faites glisser une carte pour la réorganiser, ou masquez celles dont vous n'avez pas besoin. Enregistré dans ce navigateur.",
+  "dashboard.moveUp": "Monter",
+  "dashboard.moveDown": "Descendre",
+  "dashboard.hideCard": "Masquer",
+  "dashboard.showCard": "Afficher",
+  "dashboard.hiddenCards": "Cartes masquées",
+  "dashboard.resetLayout": "Réinitialiser par défaut",
+  "dashboard.blockSummary": "Aperçu",
+  "dashboard.blockStats": "Statistiques",
+  "dashboard.blockBackups": "Sauvegardes et historique",
 
   // Spike
   "spike.title": "Intégration hôte",

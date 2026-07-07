@@ -34,6 +34,19 @@ const fi: Partial<Translations> = {
   "dashboard.allOk": "Kaikki järjestelmät kunnossa",
   "dashboard.degraded": "Heikentynyt",
   "dashboard.checking": "Tarkistetaan…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Mukauta",
+  "dashboard.customizeDone": "Valmis",
+  "dashboard.customizeHint": "Järjestä kortit uudelleen vetämällä tai piilota tarpeettomat. Tallennettu tähän selaimeen.",
+  "dashboard.moveUp": "Siirrä ylös",
+  "dashboard.moveDown": "Siirrä alas",
+  "dashboard.hideCard": "Piilota",
+  "dashboard.showCard": "Näytä",
+  "dashboard.hiddenCards": "Piilotetut kortit",
+  "dashboard.resetLayout": "Palauta oletukset",
+  "dashboard.blockSummary": "Yleiskatsaus",
+  "dashboard.blockStats": "Tilastot",
+  "dashboard.blockBackups": "Varmuuskopiot ja historia",
 
   // Spike
   "spike.title": "Isäntäintegraatio",

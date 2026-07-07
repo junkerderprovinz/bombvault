@@ -34,6 +34,19 @@ const el: Partial<Translations> = {
   "dashboard.allOk": "Όλα τα συστήματα ΟΚ",
   "dashboard.degraded": "Υποβαθμισμένο",
   "dashboard.checking": "Έλεγχος…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Προσαρμογή",
+  "dashboard.customizeDone": "Τέλος",
+  "dashboard.customizeHint": "Σύρετε μια κάρτα για αναδιάταξη ή αποκρύψτε όσες δεν χρειάζεστε. Αποθηκεύεται σε αυτό το πρόγραμμα περιήγησης.",
+  "dashboard.moveUp": "Μετακίνηση πάνω",
+  "dashboard.moveDown": "Μετακίνηση κάτω",
+  "dashboard.hideCard": "Απόκρυψη",
+  "dashboard.showCard": "Εμφάνιση",
+  "dashboard.hiddenCards": "Κρυμμένες κάρτες",
+  "dashboard.resetLayout": "Επαναφορά στις προεπιλογές",
+  "dashboard.blockSummary": "Επισκόπηση",
+  "dashboard.blockStats": "Στατιστικά",
+  "dashboard.blockBackups": "Αντίγραφα & ιστορικό",
 
   // Spike
   "spike.title": "Ενσωμάτωση host",
