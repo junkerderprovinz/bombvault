@@ -23,6 +23,9 @@ const he: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "לוח בקרה",
   "dashboard.subtitle": "מצב הגיבוי שלך במבט אחד.",
+  "dashboard.summaryHealth": "מצב כללי",
+  "dashboard.summaryNextBackup": "הגיבוי הבא",
+  "dashboard.summaryLastResult": "התוצאה האחרונה",
   "dashboard.lastBackups": "גיבויים אחרונים",
   "dashboard.recentRuns": "הרצות אחרונות",
   "dashboard.spikeStatus": "מצב המערכת",
@@ -106,6 +109,9 @@ const he: Partial<Translations> = {
   "restore.progress": "משחזר… {pct}%",
   "restore.preview": "תצוגה מקדימה",
   "restore.started": "השחזור התחיל",
+  "restore.completeContainer": "השחזור הושלם — הקונטיינר נוצר מחדש.",
+  "restore.completeVM": "השחזור הושלם — דיסקי ה-VM הוחלפו.",
+  "restore.recreateComplete": "יצירה מחדש הושלמה — הקונטיינר נוצר מחדש.",
 
   // Runs
   "run.kindBackup": "גיבוי",
@@ -141,6 +147,7 @@ const he: Partial<Translations> = {
   "source.hint": "שחזור ומחיקה פועלים רק על המקור הנבחר — מחיקת גיבוי מקומי לעולם לא נוגעת בעותק מחוץ לאתר, ולהפך.",
   "offsite.schedulePlaceholder": "ריק = אחרי כל גיבוי · לדוגמה weekly Sun 03:00",
   "offsite.replicateNow": "שכפל עכשיו",
+  "offsite.sectionTitle": "הגנה מחוץ לאתר",
   "offsite.replicating": "משכפל…",
   "offsite.replicateFailed": "השכפול נכשל",
   "flash.downloading": "מוריד…",

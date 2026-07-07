@@ -23,6 +23,9 @@ const cs: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Přehled",
   "dashboard.subtitle": "Stav vašich záloh na první pohled.",
+  "dashboard.summaryHealth": "Celkový stav",
+  "dashboard.summaryNextBackup": "Další záloha",
+  "dashboard.summaryLastResult": "Poslední výsledek",
   "dashboard.lastBackups": "Poslední zálohy",
   "dashboard.recentRuns": "Nedávné běhy",
   "dashboard.spikeStatus": "Stav systému",
@@ -106,6 +109,9 @@ const cs: Partial<Translations> = {
   "restore.progress": "Obnovuji… {pct}%",
   "restore.preview": "Náhled",
   "restore.started": "Obnova spuštěna",
+  "restore.completeContainer": "Obnova dokončena — kontejner se znovu vytváří.",
+  "restore.completeVM": "Obnova dokončena — disky VM byly nahrazeny.",
+  "restore.recreateComplete": "Opětovné vytvoření dokončeno — kontejner byl znovu vytvořen.",
 
   // Runs
   "run.kindBackup": "Záloha",
@@ -141,6 +147,7 @@ const cs: Partial<Translations> = {
   "source.hint": "Obnovení a mazání se týkají jen vybraného zdroje — smazání místní zálohy se nikdy nedotkne kopie mimo lokalitu a naopak.",
   "offsite.schedulePlaceholder": "prázdné = po každé záloze · např. weekly Sun 03:00",
   "offsite.replicateNow": "Replikovat nyní",
+  "offsite.sectionTitle": "Ochrana mimo lokalitu",
   "offsite.replicating": "Replikace…",
   "offsite.replicateFailed": "Replikace selhala",
   "flash.downloading": "Stahování…",

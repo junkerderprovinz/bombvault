@@ -22,6 +22,9 @@ const ro: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panou principal",
   "dashboard.subtitle": "Starea backupurilor tale dintr-o privire.",
+  "dashboard.summaryHealth": "Stare generală",
+  "dashboard.summaryNextBackup": "Următorul backup",
+  "dashboard.summaryLastResult": "Ultimul rezultat",
   "dashboard.lastBackups": "Ultimele copii de rezervă",
   "dashboard.recentRuns": "Rulări recente",
   "dashboard.spikeStatus": "Starea sistemului",
@@ -105,6 +108,9 @@ const ro: Partial<Translations> = {
   "restore.progress": "Se restaurează… {pct}%",
   "restore.preview": "Previzualizare",
   "restore.started": "Restaurare pornită",
+  "restore.completeContainer": "Restaurare finalizată — containerul este recreat.",
+  "restore.completeVM": "Restaurare finalizată — discurile VM-ului au fost înlocuite.",
+  "restore.recreateComplete": "Recreare finalizată — containerul a fost recreat.",
 
   // Runs
   "run.kindBackup": "Copie de rezervă",
@@ -140,6 +146,7 @@ const ro: Partial<Translations> = {
   "source.hint": "Restaurarea și ștergerea acționează doar asupra sursei selectate — ștergerea unui backup local nu atinge niciodată copia externă și invers.",
   "offsite.schedulePlaceholder": "gol = după fiecare backup · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replică acum",
+  "offsite.sectionTitle": "Protecție externă",
   "offsite.replicating": "Se replică…",
   "offsite.replicateFailed": "Replicarea a eșuat",
   "flash.downloading": "Se descarcă…",

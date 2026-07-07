@@ -22,6 +22,9 @@ const ru: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Панель",
   "dashboard.subtitle": "Состояние ваших резервных копий с первого взгляда.",
+  "dashboard.summaryHealth": "Общее состояние",
+  "dashboard.summaryNextBackup": "Следующая резервная копия",
+  "dashboard.summaryLastResult": "Последний результат",
   "dashboard.lastBackups": "Последние резервные копии",
   "dashboard.recentRuns": "Последние запуски",
   "dashboard.spikeStatus": "Состояние системы",
@@ -104,6 +107,9 @@ const ru: Partial<Translations> = {
   "restore.progress": "Восстановление… {pct}%",
   "restore.preview": "Предпросмотр",
   "restore.started": "Восстановление запущено",
+  "restore.completeContainer": "Восстановление завершено — контейнер пересоздаётся.",
+  "restore.completeVM": "Восстановление завершено — диски VM заменены.",
+  "restore.recreateComplete": "Пересоздание завершено — контейнер пересоздан.",
 
   // Runs
   "run.kindBackup": "Резервное копирование",
@@ -138,6 +144,7 @@ const ru: Partial<Translations> = {
   "source.hint": "Восстановление и удаление действуют только на выбранный источник — удаление локального бэкапа никогда не затрагивает внешнюю копию, и наоборот.",
   "offsite.schedulePlaceholder": "пусто = после каждого бэкапа · напр. weekly Sun 03:00",
   "offsite.replicateNow": "Реплицировать сейчас",
+  "offsite.sectionTitle": "Внешняя защита",
   "offsite.replicating": "Репликация…",
   "offsite.replicateFailed": "Ошибка репликации",
   "flash.downloading": "Загрузка…",

@@ -23,6 +23,9 @@ const ko: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "대시보드",
   "dashboard.subtitle": "백업 상태를 한눈에.",
+  "dashboard.summaryHealth": "전체 상태",
+  "dashboard.summaryNextBackup": "다음 백업",
+  "dashboard.summaryLastResult": "마지막 결과",
   "dashboard.lastBackups": "최근 백업",
   "dashboard.recentRuns": "최근 실행",
   "dashboard.spikeStatus": "시스템 상태",
@@ -106,6 +109,9 @@ const ko: Partial<Translations> = {
   "restore.progress": "복원 중… {pct}%",
   "restore.preview": "미리 보기",
   "restore.started": "복원이 시작되었습니다",
+  "restore.completeContainer": "복원 완료 — 컨테이너를 다시 만드는 중입니다.",
+  "restore.completeVM": "복원 완료 — VM 디스크가 교체되었습니다.",
+  "restore.recreateComplete": "다시 만들기 완료 — 컨테이너가 다시 생성되었습니다.",
 
   // Runs
   "run.kindBackup": "백업",
@@ -141,6 +147,7 @@ const ko: Partial<Translations> = {
   "source.hint": "복원과 삭제는 선택한 소스에만 적용됩니다. 로컬 백업을 삭제해도 오프사이트 사본은 건드리지 않으며 그 반대도 마찬가지입니다.",
   "offsite.schedulePlaceholder": "비움 = 매 백업 후 · 예: weekly Sun 03:00",
   "offsite.replicateNow": "지금 복제",
+  "offsite.sectionTitle": "오프사이트 보호",
   "offsite.replicating": "복제 중…",
   "offsite.replicateFailed": "복제 실패",
   "flash.downloading": "다운로드 중…",

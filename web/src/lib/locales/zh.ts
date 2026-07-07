@@ -23,6 +23,9 @@ const zh: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "仪表板",
   "dashboard.subtitle": "一览您的备份状态。",
+  "dashboard.summaryHealth": "整体状态",
+  "dashboard.summaryNextBackup": "下次备份",
+  "dashboard.summaryLastResult": "上次结果",
   "dashboard.lastBackups": "最近备份",
   "dashboard.recentRuns": "最近运行",
   "dashboard.spikeStatus": "系统状态",
@@ -106,6 +109,9 @@ const zh: Partial<Translations> = {
   "restore.progress": "还原中… {pct}%",
   "restore.preview": "预览",
   "restore.started": "还原已启动",
+  "restore.completeContainer": "还原完成 — 正在重新创建容器。",
+  "restore.completeVM": "还原完成 — 虚拟机磁盘已替换。",
+  "restore.recreateComplete": "重新创建完成 — 容器已重新创建。",
 
   // Runs
   "run.kindBackup": "备份",
@@ -141,6 +147,7 @@ const zh: Partial<Translations> = {
   "source.hint": "恢复和删除仅作用于所选来源——删除本地备份绝不会影响异地副本，反之亦然。",
   "offsite.schedulePlaceholder": "留空 = 每次备份后 · 例：weekly Sun 03:00",
   "offsite.replicateNow": "立即复制",
+  "offsite.sectionTitle": "异地保护",
   "offsite.replicating": "复制中…",
   "offsite.replicateFailed": "复制失败",
   "flash.downloading": "下载中…",

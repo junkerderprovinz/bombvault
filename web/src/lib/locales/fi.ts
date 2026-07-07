@@ -23,6 +23,9 @@ const fi: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Kojelauta",
   "dashboard.subtitle": "Varmuuskopioidesi tila yhdellä silmäyksellä.",
+  "dashboard.summaryHealth": "Yleistila",
+  "dashboard.summaryNextBackup": "Seuraava varmuuskopio",
+  "dashboard.summaryLastResult": "Viimeisin tulos",
   "dashboard.lastBackups": "Viimeisimmät varmuuskopiot",
   "dashboard.recentRuns": "Viimeisimmät ajot",
   "dashboard.spikeStatus": "Järjestelmän tila",
@@ -106,6 +109,9 @@ const fi: Partial<Translations> = {
   "restore.progress": "Palautetaan… {pct}%",
   "restore.preview": "Esikatselu",
   "restore.started": "Palautus käynnistetty",
+  "restore.completeContainer": "Palautus valmis — konttia luodaan uudelleen.",
+  "restore.completeVM": "Palautus valmis — VM:n levyt on korvattu.",
+  "restore.recreateComplete": "Uudelleenluonti valmis — kontti on luotu uudelleen.",
 
   // Runs
   "run.kindBackup": "Varmuuskopio",
@@ -141,6 +147,7 @@ const fi: Partial<Translations> = {
   "source.hint": "Palautus ja poisto kohdistuvat vain valittuun lähteeseen — paikallisen varmuuskopion poisto ei koskaan vaikuta etäkopioon ja päinvastoin.",
   "offsite.schedulePlaceholder": "tyhjä = jokaisen varmuuskopion jälkeen · esim. weekly Sun 03:00",
   "offsite.replicateNow": "Replikoi nyt",
+  "offsite.sectionTitle": "Etäsuojaus",
   "offsite.replicating": "Replikoidaan…",
   "offsite.replicateFailed": "Replikointi epäonnistui",
   "flash.downloading": "Ladataan…",

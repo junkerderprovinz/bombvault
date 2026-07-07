@@ -23,6 +23,9 @@ const uk: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Панель",
   "dashboard.subtitle": "Стан ваших резервних копій з першого погляду.",
+  "dashboard.summaryHealth": "Загальний стан",
+  "dashboard.summaryNextBackup": "Наступна резервна копія",
+  "dashboard.summaryLastResult": "Останній результат",
   "dashboard.lastBackups": "Останні резервні копії",
   "dashboard.recentRuns": "Останні запуски",
   "dashboard.spikeStatus": "Стан системи",
@@ -105,6 +108,9 @@ const uk: Partial<Translations> = {
   "restore.progress": "Відновлення… {pct}%",
   "restore.preview": "Перегляд",
   "restore.started": "Відновлення розпочато",
+  "restore.completeContainer": "Відновлення завершено — контейнер відтворюється.",
+  "restore.completeVM": "Відновлення завершено — диски VM замінено.",
+  "restore.recreateComplete": "Відтворення завершено — контейнер відтворено.",
 
   // Runs
   "run.kindBackup": "Резервне копіювання",
@@ -139,6 +145,7 @@ const uk: Partial<Translations> = {
   "source.hint": "Відновлення та видалення діють лише на вибране джерело — видалення локальної копії ніколи не зачіпає зовнішню, і навпаки.",
   "offsite.schedulePlaceholder": "порожньо = після кожного бекапу · напр. weekly Sun 03:00",
   "offsite.replicateNow": "Реплікувати зараз",
+  "offsite.sectionTitle": "Зовнішній захист",
   "offsite.replicating": "Реплікація…",
   "offsite.replicateFailed": "Помилка реплікації",
   "flash.downloading": "Завантаження…",

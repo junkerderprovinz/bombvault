@@ -5,7 +5,8 @@ import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, Da
 import { useT } from "../lib/i18n";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import { formatCadence } from "../components/CadenceBuilder";
+import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
+import type { CadenceState } from "../components/CadenceBuilder";
 import { relativeTime } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 
@@ -1334,17 +1335,172 @@ function FreshInstallNudge({
 }
 
 // ---------------------------------------------------------------------------
+// Summary tier — a compact three-cell overview above the detail cards. It
+// reuses the same Card/StatCard surface + StatusChip visual language as the
+// detail tier below, reading the shared /api/status domains and the newest
+// listRuns entry (no extra round-trips beyond the one runs fetch in the parent).
+// ---------------------------------------------------------------------------
+
+// cadencePeriodDays approximates how often a parsed cadence fires, in days, so
+// the soonest (most frequent) enabled schedule can be picked WITHOUT a live
+// next-run timestamp (the backend has none). Smaller = fires sooner; "off"
+// yields Infinity so it never wins.
+function cadencePeriodDays(s: CadenceState): number {
+  switch (s.mode) {
+    case "daily":
+      return 1;
+    case "everyN":
+      return Math.max(1, s.intervalDays);
+    case "weekly":
+      return 7 / Math.max(1, s.weekdays.length);
+    default:
+      return Infinity;
+  }
+}
+
+// minutesOfDay turns "HH:MM" into minutes since midnight — a stable tiebreak
+// between two equally-frequent schedules (the earlier clock time wins).
+function minutesOfDay(hhmm: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 24 * 60;
+}
+
+function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-2">
+      <span className="text-xs text-carbon-textMuted uppercase tracking-widest">{label}</span>
+      <div className="flex items-center gap-2 min-h-[1.75rem]">{children}</div>
+    </div>
+  );
+}
+
+function SummaryTier({
+  t,
+  lang,
+  domains,
+  loading,
+  newestRun,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  lang: string;
+  domains: DomainStatus[];
+  loading: boolean;
+  newestRun: Run | null;
+}) {
+  // Cell 1 — worst RPO status across enabled, non-off domains: any overdue/never
+  // is red, else any warn is amber, else any ok is green, else all off = neutral.
+  // The representative status reuses chipForRpo + the existing rpo* labels below.
+  const active = domains.filter((d) => d.enabled && d.status !== "off");
+  const health: "overdue" | "warn" | "ok" | "off" = active.some(
+    (d) => d.status === "overdue" || d.status === "never"
+  )
+    ? "overdue"
+    : active.some((d) => d.status === "warn")
+      ? "warn"
+      : active.some((d) => d.status === "ok")
+        ? "ok"
+        : "off";
+  const healthLabel =
+    health === "overdue"
+      ? t("dashboard.rpoOverdue")
+      : health === "warn"
+        ? t("dashboard.rpoWarn")
+        : health === "ok"
+          ? t("dashboard.rpoOk")
+          : t("dashboard.rpoOff");
+
+  // Cell 2 — the soonest (most frequent) enabled schedule, shown as human cadence
+  // text (e.g. "Daily 03:00"). NOTE: there is no next-run timestamp on the
+  // backend and no client-side cron calculator, so this is deliberately NOT a
+  // live countdown — just which enabled schedule fires soonest. Empty when every
+  // domain is off/unscheduled, in which case we show the "not scheduled" label.
+  const scheduled = domains
+    .filter((d) => d.enabled)
+    .map((d) => ({ raw: d.schedule, s: parseCadenceString(d.schedule) }))
+    .filter((x) => x.s.mode !== "off")
+    .sort(
+      (a, b) =>
+        cadencePeriodDays(a.s) - cadencePeriodDays(b.s) ||
+        minutesOfDay(a.s.time) - minutesOfDay(b.s.time)
+    );
+  const nextCadence = scheduled.length > 0 ? formatCadence(scheduled[0].raw, t, lang) : "";
+
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {/* Overall health — worst RPO status across enabled domains */}
+      <SummaryCell label={t("dashboard.summaryHealth")}>
+        {loading ? (
+          <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
+        ) : (
+          <>
+            <StatusChip status={chipForRpo(health)} />
+            <span className="text-sm text-carbon-text truncate">{healthLabel}</span>
+          </>
+        )}
+      </SummaryCell>
+
+      {/* Next backup — soonest scheduled cadence as human text (not a countdown) */}
+      <SummaryCell label={t("dashboard.summaryNextBackup")}>
+        {loading ? (
+          <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
+        ) : (
+          <span className="text-sm text-carbon-text truncate">
+            {nextCadence || t("dashboard.rpoOff")}
+          </span>
+        )}
+      </SummaryCell>
+
+      {/* Last result — the newest run: status chip + target + relative time */}
+      <SummaryCell label={t("dashboard.summaryLastResult")}>
+        {newestRun ? (
+          <>
+            <StatusChip status={newestRun.status} />
+            <span className="text-sm text-carbon-text flex-1 truncate">
+              {newestRun.target || `${newestRun.targetId.slice(0, 12)}…`}
+            </span>
+            <span
+              className="text-xs text-carbon-textMuted shrink-0"
+              title={formatTs(newestRun.startedAt)}
+            >
+              {relativeTime(t, newestRun.startedAt)}
+            </span>
+          </>
+        ) : (
+          <span className="text-sm text-carbon-textMuted">{t("dashboard.noRuns")}</span>
+        )}
+      </SummaryCell>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard page
 // ---------------------------------------------------------------------------
 
 export function Dashboard() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { advanced } = useAdvanced();
 
   // Single /api/status fetch shared by the Protection + Ransomware cards (no
   // duplicate round-trip — both cards read the same extended domain status).
   const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
+
+  // Newest run for the summary tier's "Last result" cell. listRuns returns
+  // newest-first, so runs[0] is the latest. Fetched once here (the detail-tier
+  // RunsCard keeps its own fetch for the filtered list).
+  const [runs, setRuns] = useState<Run[]>([]);
+  useEffect(() => {
+    let active = true;
+    listRuns()
+      .then((res) => {
+        if (active && res.ok) setRuns(res.runs ?? []);
+      })
+      .catch(() => {/* non-fatal — summary "Last result" falls back to empty */});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Page-level banners are capped at one: the Fresh-install nudge wins over the
   // Recovery-kit nag. Fresh dismissal persists in localStorage (shared key), and
@@ -1405,6 +1561,17 @@ export function Dashboard() {
           <OffsiteIndicator domain="flash" withLabel />
         </div>
       </div>
+
+      {/* Summary tier — compact three-cell overview (health · next backup · last
+          result) sitting above the banners + detail cards. Reuses the shared
+          /api/status domains and the newest run; no structural change below. */}
+      <SummaryTier
+        t={t}
+        lang={lang}
+        domains={statusDomains}
+        loading={statusLoading}
+        newestRun={runs[0] ?? null}
+      />
 
       {/* Fresh/rebuilt install → nudge to the guided Recovery tab (dismissible).
           Reuses the shared /api/status fetch below — no duplicate round-trip. */}

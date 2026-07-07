@@ -60,6 +60,9 @@ const en = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Your backup status at a glance.",
+  "dashboard.summaryHealth": "Overall health",
+  "dashboard.summaryNextBackup": "Next backup",
+  "dashboard.summaryLastResult": "Last result",
   "dashboard.lastBackups": "Last Backups",
   "dashboard.recentRuns": "Recent Runs",
   "dashboard.spikeStatus": "System Status",
@@ -190,6 +193,9 @@ const en = {
   "restore.leaveStopped": "Leave stopped after restore (don't start it)",
   "restore.bgHint":
     "Running in the background — you can close this panel; the outcome appears in the run history.",
+  "restore.completeContainer": "Restore complete — container is being recreated.",
+  "restore.completeVM": "Restore complete — VM disks have been replaced.",
+  "restore.recreateComplete": "Recreate complete — the container has been recreated.",
 
   // Stacks (compose-project restore)
   "stack.title": "Stacks",
@@ -251,6 +257,7 @@ const en = {
   "source.local": "Local",
   "source.offsite": "Off-site",
   "source.hint": "Restore and delete act on the selected source only — deleting a local backup never touches the off-site copy, and vice versa.",
+  "offsite.sectionTitle": "Off-site protection",
   "offsite.schedulePlaceholder": "blank = after each backup · e.g. weekly Sun 03:00",
   "offsite.replicateNow": "Replicate now",
   "offsite.replicating": "Replicating…",
@@ -823,6 +830,9 @@ const de: Translations = {
 
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Dein Backup-Status auf einen Blick.",
+  "dashboard.summaryHealth": "Gesamtzustand",
+  "dashboard.summaryNextBackup": "Nächstes Backup",
+  "dashboard.summaryLastResult": "Letztes Ergebnis",
   "dashboard.lastBackups": "Letzte Backups",
   "dashboard.recentRuns": "Letzte Ausführungen",
   "dashboard.spikeStatus": "Systemstatus",
@@ -949,6 +959,9 @@ const de: Translations = {
   "restore.leaveStopped": "Nach dem Restore gestoppt lassen (nicht starten)",
   "restore.bgHint":
     "Läuft im Hintergrund — du kannst dieses Panel schließen; das Ergebnis erscheint im Ausführungsverlauf.",
+  "restore.completeContainer": "Wiederherstellung abgeschlossen — Container wird neu erstellt.",
+  "restore.completeVM": "Wiederherstellung abgeschlossen — VM-Datenträger wurden ersetzt.",
+  "restore.recreateComplete": "Neuerstellung abgeschlossen — der Container wurde neu erstellt.",
 
   // Stacks (Compose-Projekt-Wiederherstellung)
   "stack.title": "Stacks",
@@ -1008,6 +1021,7 @@ const de: Translations = {
   "source.local": "Lokal",
   "source.offsite": "Offsite",
   "source.hint": "Restore und Löschen wirken nur auf die gewählte Quelle — ein lokales Backup zu löschen rührt die Offsite-Kopie nie an und umgekehrt.",
+  "offsite.sectionTitle": "Offsite-Schutz",
   "offsite.schedulePlaceholder": "leer = nach jedem Backup · z.B. weekly Sun 03:00",
   "offsite.replicateNow": "Jetzt replizieren",
   "offsite.replicating": "Repliziere…",

@@ -2116,6 +2116,9 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <div id="offsite">
+      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
+        {t("offsite.sectionTitle")}
+      </h2>
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
         {([

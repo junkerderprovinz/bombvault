@@ -23,6 +23,9 @@ const th: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "แดชบอร์ด",
   "dashboard.subtitle": "สถานะการสำรองข้อมูลของคุณในพริบตา",
+  "dashboard.summaryHealth": "สถานะโดยรวม",
+  "dashboard.summaryNextBackup": "การสำรองข้อมูลครั้งถัดไป",
+  "dashboard.summaryLastResult": "ผลลัพธ์ล่าสุด",
   "dashboard.lastBackups": "การสำรองข้อมูลล่าสุด",
   "dashboard.recentRuns": "การทำงานล่าสุด",
   "dashboard.spikeStatus": "สถานะระบบ",
@@ -106,6 +109,9 @@ const th: Partial<Translations> = {
   "restore.progress": "กำลังกู้คืน… {pct}%",
   "restore.preview": "ดูตัวอย่าง",
   "restore.started": "เริ่มการกู้คืนแล้ว",
+  "restore.completeContainer": "กู้คืนเสร็จสมบูรณ์ — กำลังสร้างคอนเทนเนอร์ใหม่",
+  "restore.completeVM": "กู้คืนเสร็จสมบูรณ์ — แทนที่ดิสก์ของ VM แล้ว",
+  "restore.recreateComplete": "สร้างใหม่เสร็จสมบูรณ์ — สร้างคอนเทนเนอร์ใหม่แล้ว",
 
   // Runs
   "run.kindBackup": "สำรองข้อมูล",
@@ -141,6 +147,7 @@ const th: Partial<Translations> = {
   "source.hint": "การกู้คืนและการลบจะมีผลเฉพาะกับแหล่งที่เลือกเท่านั้น — การลบข้อมูลสำรองในเครื่องจะไม่แตะต้องสำเนานอกสถานที่ และในทางกลับกัน",
   "offsite.schedulePlaceholder": "ว่าง = หลังการสำรองทุกครั้ง · เช่น weekly Sun 03:00",
   "offsite.replicateNow": "จำลองตอนนี้",
+  "offsite.sectionTitle": "การป้องกันนอกสถานที่",
   "offsite.replicating": "กำลังจำลอง…",
   "offsite.replicateFailed": "การจำลองล้มเหลว",
   "flash.downloading": "กำลังดาวน์โหลด…",

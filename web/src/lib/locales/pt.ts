@@ -22,6 +22,9 @@ const pt: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Painel",
   "dashboard.subtitle": "O estado dos seus backups num relance.",
+  "dashboard.summaryHealth": "Estado geral",
+  "dashboard.summaryNextBackup": "Próximo backup",
+  "dashboard.summaryLastResult": "Último resultado",
   "dashboard.lastBackups": "Últimos backups",
   "dashboard.recentRuns": "Execuções recentes",
   "dashboard.spikeStatus": "Estado do sistema",
@@ -105,6 +108,9 @@ const pt: Partial<Translations> = {
   "restore.progress": "A restaurar… {pct}%",
   "restore.preview": "Pré-visualizar",
   "restore.started": "Restauro iniciado",
+  "restore.completeContainer": "Restauro concluído — o container está a ser recriado.",
+  "restore.completeVM": "Restauro concluído — os discos da VM foram substituídos.",
+  "restore.recreateComplete": "Recriação concluída — o container foi recriado.",
 
   // Runs
   "run.kindBackup": "Backup",
@@ -140,6 +146,7 @@ const pt: Partial<Translations> = {
   "source.hint": "Restaurar e excluir agem apenas na origem selecionada — excluir um backup local nunca toca na cópia externa, e vice-versa.",
   "offsite.schedulePlaceholder": "vazio = após cada backup · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar agora",
+  "offsite.sectionTitle": "Proteção externa",
   "offsite.replicating": "Replicando…",
   "offsite.replicateFailed": "Falha na replicação",
   "flash.downloading": "Baixando…",

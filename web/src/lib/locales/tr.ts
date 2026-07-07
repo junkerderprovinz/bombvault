@@ -23,6 +23,9 @@ const tr: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Kontrol Paneli",
   "dashboard.subtitle": "Yedekleme durumunuz bir bakışta.",
+  "dashboard.summaryHealth": "Genel durum",
+  "dashboard.summaryNextBackup": "Sonraki yedek",
+  "dashboard.summaryLastResult": "Son sonuç",
   "dashboard.lastBackups": "Son Yedeklemeler",
   "dashboard.recentRuns": "Son Çalışmalar",
   "dashboard.spikeStatus": "Sistem Durumu",
@@ -106,6 +109,9 @@ const tr: Partial<Translations> = {
   "restore.progress": "Geri yükleniyor… {pct}%",
   "restore.preview": "Önizleme",
   "restore.started": "Geri yükleme başladı",
+  "restore.completeContainer": "Geri yükleme tamamlandı — konteyner yeniden oluşturuluyor.",
+  "restore.completeVM": "Geri yükleme tamamlandı — VM diskleri değiştirildi.",
+  "restore.recreateComplete": "Yeniden oluşturma tamamlandı — konteyner yeniden oluşturuldu.",
 
   // Runs
   "run.kindBackup": "Yedekleme",
@@ -141,6 +147,7 @@ const tr: Partial<Translations> = {
   "source.hint": "Geri yükleme ve silme yalnızca seçili kaynağı etkiler — yerel bir yedeği silmek site dışı kopyaya asla dokunmaz ve tersi de geçerlidir.",
   "offsite.schedulePlaceholder": "boş = her yedeklemeden sonra · örn. weekly Sun 03:00",
   "offsite.replicateNow": "Şimdi çoğalt",
+  "offsite.sectionTitle": "Site dışı koruma",
   "offsite.replicating": "Çoğaltılıyor…",
   "offsite.replicateFailed": "Çoğaltma başarısız",
   "flash.downloading": "İndiriliyor…",

@@ -23,6 +23,9 @@ const vi: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Tổng quan",
   "dashboard.subtitle": "Trạng thái sao lưu của bạn trong nháy mắt.",
+  "dashboard.summaryHealth": "Tình trạng tổng thể",
+  "dashboard.summaryNextBackup": "Bản sao lưu tiếp theo",
+  "dashboard.summaryLastResult": "Kết quả gần nhất",
   "dashboard.lastBackups": "Bản sao lưu gần đây",
   "dashboard.recentRuns": "Lần chạy gần đây",
   "dashboard.spikeStatus": "Trạng thái hệ thống",
@@ -106,6 +109,9 @@ const vi: Partial<Translations> = {
   "restore.progress": "Đang khôi phục… {pct}%",
   "restore.preview": "Xem trước",
   "restore.started": "Đã bắt đầu khôi phục",
+  "restore.completeContainer": "Khôi phục hoàn tất — container đang được tạo lại.",
+  "restore.completeVM": "Khôi phục hoàn tất — các đĩa của VM đã được thay thế.",
+  "restore.recreateComplete": "Tạo lại hoàn tất — container đã được tạo lại.",
 
   // Runs
   "run.kindBackup": "Sao lưu",
@@ -141,6 +147,7 @@ const vi: Partial<Translations> = {
   "source.hint": "Khôi phục và xóa chỉ tác động đến nguồn đã chọn — xóa bản sao lưu cục bộ không bao giờ ảnh hưởng đến bản sao ngoài site, và ngược lại.",
   "offsite.schedulePlaceholder": "trống = sau mỗi lần sao lưu · vd. weekly Sun 03:00",
   "offsite.replicateNow": "Sao chép ngay",
+  "offsite.sectionTitle": "Bảo vệ ngoài site",
   "offsite.replicating": "Đang sao chép…",
   "offsite.replicateFailed": "Sao chép thất bại",
   "flash.downloading": "Đang tải xuống…",

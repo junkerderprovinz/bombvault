@@ -23,6 +23,9 @@ const it: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Lo stato dei tuoi backup a colpo d'occhio.",
+  "dashboard.summaryHealth": "Stato generale",
+  "dashboard.summaryNextBackup": "Prossimo backup",
+  "dashboard.summaryLastResult": "Ultimo risultato",
   "dashboard.lastBackups": "Ultimi backup",
   "dashboard.recentRuns": "Esecuzioni recenti",
   "dashboard.spikeStatus": "Stato del sistema",
@@ -106,6 +109,9 @@ const it: Partial<Translations> = {
   "restore.progress": "Ripristino… {pct}%",
   "restore.preview": "Anteprima",
   "restore.started": "Ripristino avviato",
+  "restore.completeContainer": "Ripristino completato — il container viene ricreato.",
+  "restore.completeVM": "Ripristino completato — i dischi della VM sono stati sostituiti.",
+  "restore.recreateComplete": "Ricreazione completata — il container è stato ricreato.",
 
   // Runs
   "run.kindBackup": "Backup",
@@ -141,6 +147,7 @@ const it: Partial<Translations> = {
   "source.hint": "Ripristino ed eliminazione agiscono solo sulla sorgente selezionata — eliminare un backup locale non tocca mai la copia off-site, e viceversa.",
   "offsite.schedulePlaceholder": "vuoto = dopo ogni backup · es. weekly Sun 03:00",
   "offsite.replicateNow": "Replica ora",
+  "offsite.sectionTitle": "Protezione off-site",
   "offsite.replicating": "Replica in corso…",
   "offsite.replicateFailed": "Replica non riuscita",
   "flash.downloading": "Download…",

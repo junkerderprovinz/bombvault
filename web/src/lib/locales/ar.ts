@@ -23,6 +23,9 @@ const ar: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "لوحة التحكم",
   "dashboard.subtitle": "حالة النسخ الاحتياطي لديك في لمحة.",
+  "dashboard.summaryHealth": "الحالة العامة",
+  "dashboard.summaryNextBackup": "النسخة الاحتياطية التالية",
+  "dashboard.summaryLastResult": "آخر نتيجة",
   "dashboard.lastBackups": "آخر النسخ الاحتياطية",
   "dashboard.recentRuns": "آخر التشغيلات",
   "dashboard.spikeStatus": "حالة النظام",
@@ -106,6 +109,9 @@ const ar: Partial<Translations> = {
   "restore.progress": "جارٍ الاستعادة… {pct}%",
   "restore.preview": "معاينة",
   "restore.started": "بدأت الاستعادة",
+  "restore.completeContainer": "اكتملت الاستعادة — تتم إعادة إنشاء الحاوية.",
+  "restore.completeVM": "اكتملت الاستعادة — تم استبدال أقراص VM.",
+  "restore.recreateComplete": "اكتملت إعادة الإنشاء — تمت إعادة إنشاء الحاوية.",
 
   // Runs
   "run.kindBackup": "نسخ احتياطي",
@@ -141,6 +147,7 @@ const ar: Partial<Translations> = {
   "source.hint": "الاستعادة والحذف يؤثران فقط على المصدر المحدد — حذف نسخة محلية لا يمس النسخة خارج الموقع أبدًا، والعكس صحيح.",
   "offsite.schedulePlaceholder": "فارغ = بعد كل نسخة احتياطية · مثل weekly Sun 03:00",
   "offsite.replicateNow": "نسخ الآن",
+  "offsite.sectionTitle": "الحماية خارج الموقع",
   "offsite.replicating": "جارٍ النسخ…",
   "offsite.replicateFailed": "فشل النسخ",
   "flash.downloading": "جارٍ التنزيل…",

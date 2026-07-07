@@ -23,6 +23,9 @@ const hu: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Irányítópult",
   "dashboard.subtitle": "Biztonsági mentéseid állapota egy pillantással.",
+  "dashboard.summaryHealth": "Általános állapot",
+  "dashboard.summaryNextBackup": "Következő mentés",
+  "dashboard.summaryLastResult": "Utolsó eredmény",
   "dashboard.lastBackups": "Utolsó biztonsági mentések",
   "dashboard.recentRuns": "Legutóbbi futások",
   "dashboard.spikeStatus": "Rendszerállapot",
@@ -106,6 +109,9 @@ const hu: Partial<Translations> = {
   "restore.progress": "Visszaállítás… {pct}%",
   "restore.preview": "Előnézet",
   "restore.started": "Visszaállítás elindult",
+  "restore.completeContainer": "A visszaállítás befejeződött — a konténer újra létrejön.",
+  "restore.completeVM": "A visszaállítás befejeződött — a VM lemezei lecserélődtek.",
+  "restore.recreateComplete": "Az újralétrehozás befejeződött — a konténer újra létrejött.",
 
   // Runs
   "run.kindBackup": "Mentés",
@@ -141,6 +147,7 @@ const hu: Partial<Translations> = {
   "source.hint": "A visszaállítás és a törlés csak a kiválasztott forrásra hat — egy helyi mentés törlése soha nem érinti a telephelyen kívüli másolatot, és fordítva.",
   "offsite.schedulePlaceholder": "üres = minden mentés után · pl. weekly Sun 03:00",
   "offsite.replicateNow": "Replikálás most",
+  "offsite.sectionTitle": "Telephelyen kívüli védelem",
   "offsite.replicating": "Replikálás…",
   "offsite.replicateFailed": "A replikálás sikertelen",
   "flash.downloading": "Letöltés…",

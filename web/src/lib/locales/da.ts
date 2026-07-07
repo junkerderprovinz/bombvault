@@ -23,6 +23,9 @@ const da: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Oversigt",
   "dashboard.subtitle": "Din sikkerhedskopieringsstatus med et blik.",
+  "dashboard.summaryHealth": "Samlet status",
+  "dashboard.summaryNextBackup": "Næste sikkerhedskopi",
+  "dashboard.summaryLastResult": "Seneste resultat",
   "dashboard.lastBackups": "Seneste sikkerhedskopier",
   "dashboard.recentRuns": "Seneste kørsler",
   "dashboard.spikeStatus": "Systemstatus",
@@ -106,6 +109,9 @@ const da: Partial<Translations> = {
   "restore.progress": "Gendanner… {pct}%",
   "restore.preview": "Forhåndsvisning",
   "restore.started": "Gendannelse startet",
+  "restore.completeContainer": "Gendannelse fuldført — containeren genoprettes.",
+  "restore.completeVM": "Gendannelse fuldført — VM'ens diske er blevet erstattet.",
+  "restore.recreateComplete": "Genoprettelse fuldført — containeren er blevet genoprettet.",
 
   // Runs
   "run.kindBackup": "Sikkerhedskopi",
@@ -141,6 +147,7 @@ const da: Partial<Translations> = {
   "source.hint": "Gendannelse og sletning gælder kun den valgte kilde — at slette en lokal sikkerhedskopi rører aldrig den eksterne kopi, og omvendt.",
   "offsite.schedulePlaceholder": "tom = efter hver sikkerhedskopi · f.eks. weekly Sun 03:00",
   "offsite.replicateNow": "Replikér nu",
+  "offsite.sectionTitle": "Ekstern beskyttelse",
   "offsite.replicating": "Replikerer…",
   "offsite.replicateFailed": "Replikering mislykkedes",
   "flash.downloading": "Downloader…",
