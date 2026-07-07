@@ -753,6 +753,7 @@ const hu: Partial<Translations> = {
   "settings.schedulesOffsite": "Telephelyen kívüli replikációs ütemezések",
   "settings.schedulesSelfBackup": "Önmentési ütemezés",
   "settings.schedulesChecks": "Visszaállítás-ellenőrzési ütemezés",
+  "settings.tamperTestSchedule": "Manipulációs teszt ütemezése",
   "settings.subtitle": "BombVault-konfiguráció — a módosítások azonnal életbe lépnek.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Szűrők",

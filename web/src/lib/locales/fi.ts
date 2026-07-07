@@ -750,6 +750,7 @@ const fi: Partial<Translations> = {
   "settings.schedulesOffsite": "Etäreplikoinnin aikataulut",
   "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",
   "settings.schedulesChecks": "Palautustarkistuksen aikataulu",
+  "settings.tamperTestSchedule": "Peukalointitestin aikataulu",
   "settings.subtitle": "BombVaultin asetukset — muutokset tulevat voimaan heti.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Suodattimet",

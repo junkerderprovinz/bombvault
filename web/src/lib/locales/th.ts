@@ -753,6 +753,7 @@ const th: Partial<Translations> = {
   "settings.schedulesOffsite": "กำหนดการจำลองข้อมูลนอกสถานที่",
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
   "settings.schedulesChecks": "กำหนดการตรวจสอบการกู้คืน",
+  "settings.tamperTestSchedule": "กำหนดการทดสอบการงัดแงะ",
   "settings.subtitle": "การกำหนดค่า BombVault — การเปลี่ยนแปลงมีผลทันที",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "ตัวกรอง",

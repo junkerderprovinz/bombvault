@@ -790,6 +790,7 @@ const en = {
   "settings.schedulesOffsite": "Off-site replication schedules",
   "settings.schedulesSelfBackup": "Self-backup schedule",
   "settings.schedulesChecks": "Restore-check schedule",
+  "settings.tamperTestSchedule": "Tamper-test schedule",
   "settings.subtitle": "BombVault configuration — changes take effect immediately.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
@@ -1544,6 +1545,7 @@ const de: Translations = {
   "settings.schedulesOffsite": "Off-site-Replikations-Zeitpläne",
   "settings.schedulesSelfBackup": "Selbst-Backup-Zeitplan",
   "settings.schedulesChecks": "Wiederherstellungs-Prüfplan",
+  "settings.tamperTestSchedule": "Tamper-Test-Zeitplan",
   "settings.subtitle": "BombVault-Konfiguration — Änderungen wirken sofort.",
   // Filter-Auslöser (v5-Redesign)
   "filter.button": "Filter",

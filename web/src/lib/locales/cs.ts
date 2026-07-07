@@ -748,6 +748,7 @@ const cs: Partial<Translations> = {
   "settings.schedulesOffsite": "Plány replikace mimo lokalitu",
   "settings.schedulesSelfBackup": "Plán vlastního zálohování",
   "settings.schedulesChecks": "Plán kontroly obnovení",
+  "settings.tamperTestSchedule": "Plán testu manipulace",
   "settings.subtitle": "Konfigurace BombVault — změny se projeví okamžitě.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtry",

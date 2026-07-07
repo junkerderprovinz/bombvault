@@ -128,7 +128,21 @@ function ConfigSettingsCard({
     setSaveState("saving");
     setSaveError(null);
     try {
-      const res = await putSettings(settings);
+      // Re-fetch the latest settings and merge only the fields THIS card owns,
+      // then PUT. Since the self-backup + off-site cadences moved to Settings ›
+      // Schedules (the sole schedule owner), a full-object PUT of this page's
+      // mount-time snapshot could otherwise re-assert a stale configSchedule/
+      // configOffsiteSchedule and silently disable a schedule set elsewhere.
+      const latest = await getSettings();
+      const base = latest.ok ? latest.settings : settings;
+      const merged: Settings = {
+        ...base,
+        configEnabled: settings.configEnabled,
+        configPath: settings.configPath,
+        configOffsite: settings.configOffsite,
+        configOffsiteImmutable: settings.configOffsiteImmutable,
+      };
+      const res = await putSettings(merged);
       if (res.ok) {
         setSaveState("saved");
         setTimeout(() => setSaveState("idle"), 3000);
@@ -164,27 +178,14 @@ function ConfigSettingsCard({
         t("config.pathHint")
       )}
 
-      {labelledInput(
-        t("config.schedule"),
-        settings.configSchedule,
-        (v) => setSettings((prev) => ({ ...prev, configSchedule: v })),
-        t("config.schedulePlaceholder"),
-        t("config.scheduleHint")
-      )}
-
+      {/* The self-backup + off-site cadences moved to Settings › Schedules (the
+          single schedule owner). Only path / off-site repo / immutable live here. */}
       {labelledInput(
         t("config.offsite"),
         settings.configOffsite,
         (v) => setSettings((prev) => ({ ...prev, configOffsite: v })),
         "rest:http://host:8000/repo",
         t("config.offsiteHint")
-      )}
-
-      {labelledInput(
-        t("config.offsiteSchedule"),
-        settings.configOffsiteSchedule,
-        (v) => setSettings((prev) => ({ ...prev, configOffsiteSchedule: v })),
-        t("offsite.schedulePlaceholder")
       )}
 
       <ToggleRow

@@ -745,6 +745,7 @@ const pl: Partial<Translations> = {
   "settings.schedulesOffsite": "Harmonogramy replikacji poza siedzibą",
   "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",
   "settings.schedulesChecks": "Harmonogram sprawdzania przywracania",
+  "settings.tamperTestSchedule": "Harmonogram testu manipulacji",
   "settings.subtitle": "Konfiguracja BombVault — zmiany są stosowane natychmiast.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtry",

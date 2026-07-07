@@ -742,6 +742,7 @@ const zh: Partial<Translations> = {
   "settings.schedulesOffsite": "异地复制计划",
   "settings.schedulesSelfBackup": "自备份计划",
   "settings.schedulesChecks": "还原检查计划",
+  "settings.tamperTestSchedule": "篡改测试计划",
   "settings.subtitle": "BombVault 配置 — 更改立即生效。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "筛选",

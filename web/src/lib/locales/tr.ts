@@ -750,6 +750,7 @@ const tr: Partial<Translations> = {
   "settings.schedulesOffsite": "Site dışı çoğaltma zamanlamaları",
   "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",
   "settings.schedulesChecks": "Geri yükleme denetimi zamanlaması",
+  "settings.tamperTestSchedule": "Kurcalama testi zamanlaması",
   "settings.subtitle": "BombVault yapılandırması — değişiklikler hemen etkili olur.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtreler",

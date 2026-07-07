@@ -742,6 +742,7 @@ const vi: Partial<Translations> = {
   "settings.schedulesOffsite": "Lịch sao chép ngoài site",
   "settings.schedulesSelfBackup": "Lịch tự sao lưu",
   "settings.schedulesChecks": "Lịch kiểm tra khôi phục",
+  "settings.tamperTestSchedule": "Lịch kiểm tra giả mạo",
   "settings.subtitle": "Cấu hình BombVault — các thay đổi có hiệu lực ngay lập tức.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Bộ lọc",

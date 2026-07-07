@@ -750,6 +750,7 @@ const no: Partial<Translations> = {
   "settings.schedulesOffsite": "Off-site-replikeringsplaner",
   "settings.schedulesSelfBackup": "Plan for selvsikkerhetskopiering",
   "settings.schedulesChecks": "Plan for gjenopprettingssjekk",
+  "settings.tamperTestSchedule": "Plan for tukletest",
   "settings.subtitle": "BombVault-konfigurasjon — endringer trer i kraft umiddelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",

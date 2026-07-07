@@ -3,6 +3,7 @@ import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, t
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { CadenceBuilder } from "../components/CadenceBuilder";
 import type { Settings, NotifyConfig, RestoreDrill, Container } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced, Advanced } from "../lib/advanced";
@@ -1161,6 +1162,280 @@ function IntegrityCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Schedule editors — migrated verbatim from the retired Plans page (Jobs.tsx).
+// The Schedules tab is now the single owner of every backup/off-site/self-backup/
+// restore-check cadence. These render their own Cards (same as on the old Plans
+// page); behaviour is unchanged.
+// ---------------------------------------------------------------------------
+
+/** Convert a cadence string to a human-readable label. */
+function cadenceLabel(raw: string, t: ReturnType<typeof useT>["t"]): string {
+  const s = (raw ?? "").trim();
+  if (!s || s === "off") return t("jobs.notScheduled");
+
+  const dailyM = /^daily\s+(\d{1,2}:\d{2})$/.exec(s);
+  if (dailyM) return t("jobs.cadenceDaily").replace("{time}", dailyM[1]);
+
+  const weeklyM = /^weekly\s+([\w,]+)\s+(\d{1,2}:\d{2})$/.exec(s);
+  if (weeklyM) return t("jobs.cadenceWeekly").replace("{days}", weeklyM[1]).replace("{time}", weeklyM[2]);
+
+  const everyNM = /^everyN\s+(\d+)\s+(\d{1,2}:\d{2})$/.exec(s);
+  if (everyNM) return t("jobs.cadenceEveryN").replace("{n}", everyNM[1]).replace("{time}", everyNM[2]);
+
+  return s;
+}
+
+type ScheduleStatus = "active" | "paused" | "off";
+
+function scheduleStatus(schedule: string): ScheduleStatus {
+  if (!schedule || schedule === "off") return "off";
+  return "active";
+}
+
+function ScheduleBadge({
+  status,
+  label,
+}: {
+  status: ScheduleStatus;
+  label: string;
+}) {
+  const cls: Record<ScheduleStatus, string> = {
+    active: "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]",
+    paused: "bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]",
+    off:    "bg-carbon-surface2 text-carbon-textSub border border-carbon-border",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls[status]}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+// Domain section — Containers (editable schedule + included-containers list)
+function ContainersSection({
+  settings,
+  containers,
+  onChange,
+  t,
+}: {
+  settings: Settings;
+  containers: Container[];
+  onChange: (schedule: string) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const schedule = settings.containersSchedule;
+  const status = scheduleStatus(schedule);
+  // Exclude BombVault's own container: it can never be backed up, so it must
+  // never appear as a schedule member even if a stale flag lingers on its row.
+  const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
+
+  return (
+    <Card title={t("jobs.containersSection")}>
+      {/* Cadence row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
+        <ScheduleBadge
+          status={status}
+          label={
+            status === "off"
+              ? t("jobs.notScheduled")
+              : cadenceLabel(schedule, t)
+          }
+        />
+      </div>
+
+      {/* Editable cadence builder */}
+      <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
+        <CadenceBuilder
+          label={t("jobs.containersSection")}
+          value={schedule}
+          onChange={onChange}
+        />
+      </div>
+
+      {/* Member list */}
+      {included.length === 0 ? (
+        <p className="text-sm text-carbon-textMuted">{t("jobs.noContainersIncluded")}</p>
+      ) : (
+        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+          {included.map((c) => (
+            <div
+              key={c.name}
+              className="flex items-center gap-3 py-2 text-sm"
+            >
+              <div
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  c.state.toLowerCase() === "running"
+                    ? "bg-[#6fdc8c]"
+                    : "bg-carbon-surface3"
+                }`}
+              />
+              <span className="font-medium text-carbon-text flex-1 truncate">
+                {c.name}
+              </span>
+              {c.image && (
+                <span className="text-xs text-carbon-textMuted truncate hidden sm:block max-w-xs">
+                  {c.image}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// Domain section — VMs (editable schedule)
+function VMsSection({
+  settings,
+  syncSchedules,
+  onChange,
+  t,
+}: {
+  settings: Settings;
+  syncSchedules: boolean;
+  onChange: (schedule: string) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const schedule = syncSchedules ? settings.containersSchedule : settings.vmsSchedule;
+  const status = scheduleStatus(schedule);
+
+  return (
+    <Card title={t("jobs.vmsSection")}>
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
+        <ScheduleBadge
+          status={status}
+          label={
+            status === "off"
+              ? t("jobs.notScheduled")
+              : cadenceLabel(schedule, t)
+          }
+        />
+      </div>
+      <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+        <CadenceBuilder
+          label={t("jobs.vmsSection")}
+          value={schedule}
+          disabled={syncSchedules}
+          onChange={onChange}
+        />
+        {!syncSchedules && (
+          <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.vmIncludeHint")}</p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+// Domain section — Flash (editable schedule)
+function FlashSection({
+  settings,
+  syncSchedules,
+  onChange,
+  t,
+}: {
+  settings: Settings;
+  syncSchedules: boolean;
+  onChange: (schedule: string) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const schedule = syncSchedules ? settings.containersSchedule : settings.flashSchedule;
+  const status = scheduleStatus(schedule);
+
+  return (
+    <Card title={t("jobs.flashSection")}>
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
+        <ScheduleBadge
+          status={status}
+          label={
+            status === "off"
+              ? t("jobs.notScheduled")
+              : cadenceLabel(schedule, t)
+          }
+        />
+      </div>
+      <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+        <CadenceBuilder
+          label={t("jobs.flashSection")}
+          value={schedule}
+          disabled={syncSchedules}
+          onChange={onChange}
+        />
+        {!syncSchedules && (
+          <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.flashNotImplemented")}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-3 py-2 text-sm border-t border-carbon-border">
+        <div className="w-2 h-2 rounded-full bg-carbon-surface3 shrink-0" />
+        <span className="font-medium text-carbon-text flex-1">{t("jobs.flashRow")}</span>
+        <span className="text-xs text-carbon-textMuted italic">{t("jobs.flashPlanned")}</span>
+      </div>
+    </Card>
+  );
+}
+
+// Domain section — Restore checks (scheduled restore-verification drills).
+// The drill schedule sits beside the backup schedules; always visible.
+function RestoreChecksSection({
+  settings,
+  update,
+  t,
+}: {
+  settings: Settings;
+  update: (patch: Partial<Settings>) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  return (
+    <Card title={t("verify.auto")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
+      <ToggleRow
+        label={t("verify.auto")}
+        checked={settings.drillsEnabled}
+        onChange={(v) => update({ drillsEnabled: v })}
+      />
+      {/* Sub-toggle: only meaningful while scheduled drills are on. */}
+      <div className={settings.drillsEnabled ? "" : "opacity-50"}>
+        <ToggleRow
+          label={t("settings.offsiteDrills")}
+          description={t("settings.offsiteDrillsHelp")}
+          checked={settings.offsiteDrillsEnabled}
+          disabled={!settings.drillsEnabled}
+          onChange={(v) => update({ offsiteDrillsEnabled: v })}
+        />
+      </div>
+      <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
+        <CadenceBuilder
+          label={t("settings.schedule")}
+          value={settings.drillsSchedule}
+          disabled={!settings.drillsEnabled}
+          onChange={(v) => update({ drillsSchedule: v })}
+        />
+      </div>
+      <label className="flex flex-col gap-1 max-w-[10rem]">
+        <span className="text-xs text-carbon-textSub">{t("verify.subsetPct")}</span>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={settings.drillsSubsetPct}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
+            update({ drillsSubsetPct: clamped });
+          }}
+          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+        />
+      </label>
+    </Card>
+  );
+}
+
 // TabKey enumerates the 7 Settings tabs. The active tab is the single source of
 // truth for which card group renders; SettingsPage owns all shared state so every
 // tab shares one `settings`/`save()` instance regardless of which tab is visible.
@@ -1228,6 +1503,14 @@ export function SettingsPage() {
   const [metricsSaveState, setMetricsSaveState] = useState<SaveState>("idle");
   const [metricsSaveError, setMetricsSaveError] = useState<string | null>(null);
 
+  // Schedules tab (migrated from the retired Plans page). The container list
+  // feeds the Containers schedule section's included-members list; syncSchedules
+  // applies the Containers cadence to VMs + Flash; schedSave* drives its SaveBar.
+  const [containers, setContainers] = useState<Container[]>([]);
+  const [syncSchedules, setSyncSchedules] = useState(false);
+  const [schedSaveState, setSchedSaveState] = useState<SaveState>("idle");
+  const [schedSaveError, setSchedSaveError] = useState<string | null>(null);
+
   useEffect(() => {
     getSettings()
       .then((res) => {
@@ -1235,6 +1518,18 @@ export function SettingsPage() {
           setSettings(res.settings);
           setSavedSettings(res.settings);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+          // Detect whether the domain schedules are already in sync (Containers ==
+          // VMs == Flash, and not off), so the Schedules tab's sync checkbox
+          // reflects it on load. Reproduced from the retired Plans page.
+          const s = res.settings;
+          if (
+            s.vmsSchedule === s.containersSchedule &&
+            s.flashSchedule === s.containersSchedule &&
+            s.containersSchedule !== "off" &&
+            s.containersSchedule !== ""
+          ) {
+            setSyncSchedules(true);
+          }
         } else {
           setLoadError("Failed to load settings");
         }
@@ -1249,6 +1544,16 @@ export function SettingsPage() {
       })
       .catch(() => {
         // Non-fatal: Security card shows auth as off.
+      });
+
+    // Load the container list for the Schedules tab's Containers section (its
+    // included-members list). Non-fatal: an empty list just shows no members.
+    listContainers()
+      .then((r) => {
+        if (r.ok) setContainers(r.containers ?? []);
+      })
+      .catch(() => {
+        // Non-fatal: the Containers schedule section shows an empty member list.
       });
   }, []);
 
@@ -1275,6 +1580,24 @@ export function SettingsPage() {
     window.addEventListener("hashchange", applyHash);
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
+
+  // While "sync" is on, mirror the Containers cadence onto VMs + Flash in live
+  // state (not just in the save patch), so unchecking sync doesn't snap the
+  // VM/Flash editors back to stale pre-sync values. The equality guard stops
+  // re-renders from looping. Reproduced verbatim from the retired Plans page.
+  useEffect(() => {
+    if (!syncSchedules) return;
+    setSettings((prev) => {
+      if (!prev) return prev;
+      if (
+        prev.vmsSchedule === prev.containersSchedule &&
+        prev.flashSchedule === prev.containersSchedule
+      ) {
+        return prev;
+      }
+      return { ...prev, vmsSchedule: prev.containersSchedule, flashSchedule: prev.containersSchedule };
+    });
+  }, [syncSchedules, settings?.containersSchedule]);
 
   // ---------------------------------------------------------------------------
   // Generic save helper
@@ -1318,6 +1641,38 @@ export function SettingsPage() {
       setSaveState("error");
       return false;
     }
+  }
+
+  // buildSchedulePatch collects EVERY schedule field for the Schedules tab's one
+  // SaveBar, applying Jobs' exact sync semantics: Containers always; VMs + Flash
+  // mirror Containers when synced, else their own value. Persisted via save(),
+  // which merges onto the savedSettings baseline (never clobbering other tabs).
+  function buildSchedulePatch(): Partial<Settings> {
+    if (!settings) return {};
+    const patch: Partial<Settings> = {
+      containersSchedule: settings.containersSchedule,
+    };
+    if (syncSchedules) {
+      patch.vmsSchedule = settings.containersSchedule;
+      patch.flashSchedule = settings.containersSchedule;
+    } else {
+      patch.vmsSchedule = settings.vmsSchedule;
+      patch.flashSchedule = settings.flashSchedule;
+    }
+    // Restore-check (drill) schedule.
+    patch.drillsEnabled = settings.drillsEnabled;
+    patch.offsiteDrillsEnabled = settings.offsiteDrillsEnabled;
+    patch.drillsSchedule = settings.drillsSchedule;
+    patch.drillsSubsetPct = settings.drillsSubsetPct;
+    // Off-site replication cadences (+ config) — sole owner is now this tab.
+    patch.containersOffsiteSchedule = settings.containersOffsiteSchedule;
+    patch.vmsOffsiteSchedule = settings.vmsOffsiteSchedule;
+    patch.flashOffsiteSchedule = settings.flashOffsiteSchedule;
+    patch.configOffsiteSchedule = settings.configOffsiteSchedule;
+    // Self-backup cadence + scheduled off-site tamper test.
+    patch.configSchedule = settings.configSchedule;
+    patch.tamperTestSchedule = settings.tamperTestSchedule;
+    return patch;
   }
 
   if (loadError) {
@@ -1424,15 +1779,118 @@ export function SettingsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* SCHEDULES — section skeleton only. The unified CadenceBuilder editor */}
-      {/* + Jobs migration land in a later wave; these are titled placeholders. */}
+      {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
+      {/* Backup schedules reuse the proven per-domain sections + sync checkbox; */}
+      {/* off-site / self-backup / restore-check cadences are edited here too.   */}
+      {/* One SaveBar persists them all via the shared baseline-merging save().  */}
       {/* ------------------------------------------------------------------ */}
       {tab === "schedules" && (
         <>
-          <Card title={t("settings.schedulesBackup")}>{null}</Card>
-          <Card title={t("settings.schedulesOffsite")}>{null}</Card>
-          <Card title={t("settings.schedulesSelfBackup")}>{null}</Card>
-          <Card title={t("settings.schedulesChecks")}>{null}</Card>
+          {/* Backup schedules (schedulesBackup): Containers + sync + VMs + Flash.
+              A group heading (Card-title style) labels the three domain cards,
+              matching the single-Card off-site / self-backup / checks groups. */}
+          <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
+            {t("settings.schedulesBackup")}
+          </h2>
+          <ContainersSection
+            settings={settings}
+            containers={containers}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, containersSchedule: v } : prev))
+            }
+            t={t}
+          />
+          {/* Sync checkbox — applies the Containers cadence to VMs + Flash too. */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={syncSchedules}
+              onChange={(e) => setSyncSchedules(e.target.checked)}
+              className="h-4 w-4 rounded border-carbon-border bg-carbon-surface2 accent-[var(--accent)]"
+            />
+            <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
+          </label>
+          <VMsSection
+            settings={settings}
+            syncSchedules={syncSchedules}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, vmsSchedule: v } : prev))
+            }
+            t={t}
+          />
+          <FlashSection
+            settings={settings}
+            syncSchedules={syncSchedules}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, flashSchedule: v } : prev))
+            }
+            t={t}
+          />
+
+          {/* Off-site replication schedules (schedulesOffsite): one cadence per
+              domain (+ config). Editors here are the sole owner of these fields. */}
+          <Card title={t("settings.schedulesOffsite")}>
+            {([
+              ["containersOffsiteSchedule", "nav.containers"],
+              ["vmsOffsiteSchedule", "nav.vms"],
+              ["flashOffsiteSchedule", "nav.flash"],
+              ["configOffsiteSchedule", "nav.config"],
+            ] as const).map(([key, label]) => (
+              <div key={key} className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
+                <CadenceBuilder
+                  label={t(label)}
+                  value={settings[key]}
+                  onChange={(v) =>
+                    setSettings((prev) => (prev ? { ...prev, [key]: v } : prev))
+                  }
+                />
+              </div>
+            ))}
+          </Card>
+
+          {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config. */}
+          <Card title={t("settings.schedulesSelfBackup")}>
+            <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
+              <CadenceBuilder
+                label={t("nav.config")}
+                value={settings.configSchedule}
+                onChange={(v) =>
+                  setSettings((prev) => (prev ? { ...prev, configSchedule: v } : prev))
+                }
+              />
+            </div>
+          </Card>
+
+          {/* Restore-check drills (RestoreChecksSection renders its own Card). */}
+          <RestoreChecksSection
+            settings={settings}
+            update={(patch) =>
+              setSettings((prev) => (prev ? { ...prev, ...patch } : prev))
+            }
+            t={t}
+          />
+
+          {/* Restore-check schedule (schedulesChecks): the scheduled off-site
+              append-only tamper test. Previously had no UI editor at all. */}
+          <Card title={t("settings.schedulesChecks")}>
+            <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
+              <CadenceBuilder
+                label={t("settings.tamperTestSchedule")}
+                value={settings.tamperTestSchedule}
+                onChange={(v) =>
+                  setSettings((prev) => (prev ? { ...prev, tamperTestSchedule: v } : prev))
+                }
+              />
+            </div>
+          </Card>
+
+          {/* One Save persists every schedule field via the shared save(). */}
+          <SaveBar
+            state={schedSaveState}
+            error={schedSaveError}
+            onSave={() => void save(buildSchedulePatch(), setSchedSaveState, setSchedSaveError)}
+            t={t}
+          />
         </>
       )}
 
@@ -1661,10 +2119,10 @@ export function SettingsPage() {
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
         {([
-          ["containersOffsite", "containersOffsiteSchedule", "nav.containers", "containers"],
-          ["vmsOffsite", "vmsOffsiteSchedule", "nav.vms", "vms"],
-          ["flashOffsite", "flashOffsiteSchedule", "nav.flash", "flash"],
-        ] as const).map(([repoKey, schedKey, label, domain]) => {
+          ["containersOffsite", "nav.containers", "containers"],
+          ["vmsOffsite", "nav.vms", "vms"],
+          ["flashOffsite", "nav.flash", "flash"],
+        ] as const).map(([repoKey, label, domain]) => {
           const wizardOpen = offsiteWizard === domain;
           return (
           <div key={repoKey} className="flex flex-col gap-1 border-b border-carbon-border pb-3 last:border-0">
@@ -1695,26 +2153,15 @@ export function SettingsPage() {
                 t={t}
               />
             ) : (
-              <>
-                <input
-                  value={settings[repoKey]}
-                  spellCheck={false}
-                  onChange={(e) =>
-                    setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
-                  }
-                  placeholder="rest:http://host:8000/repo"
-                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-                />
-                <input
-                  value={settings[schedKey]}
-                  spellCheck={false}
-                  onChange={(e) =>
-                    setSettings((prev) => (prev ? { ...prev, [schedKey]: e.target.value } : prev))
-                  }
-                  placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-                />
-              </>
+              <input
+                value={settings[repoKey]}
+                spellCheck={false}
+                onChange={(e) =>
+                  setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
+                }
+                placeholder="rest:http://host:8000/repo"
+                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+              />
             )}
           </div>
           );
@@ -1723,14 +2170,13 @@ export function SettingsPage() {
           state={offsiteSaveState}
           error={offsiteSaveError}
           onSave={() =>
+            // Repo URLs only — the off-site *cadences* are owned by the Schedules
+            // tab now, so this Save no longer writes (or clobbers) them.
             void save(
               {
                 containersOffsite: settings.containersOffsite,
                 vmsOffsite: settings.vmsOffsite,
                 flashOffsite: settings.flashOffsite,
-                containersOffsiteSchedule: settings.containersOffsiteSchedule,
-                vmsOffsiteSchedule: settings.vmsOffsiteSchedule,
-                flashOffsiteSchedule: settings.flashOffsiteSchedule,
               },
               setOffsiteSaveState,
               setOffsiteSaveError

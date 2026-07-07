@@ -753,6 +753,7 @@ const ar: Partial<Translations> = {
   "settings.schedulesOffsite": "جداول النسخ المتماثل خارج الموقع",
   "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",
   "settings.schedulesChecks": "جدول فحص الاستعادة",
+  "settings.tamperTestSchedule": "جدول اختبار العبث",
   "settings.subtitle": "تكوين BombVault — تسري التغييرات فوراً.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "عوامل التصفية",

@@ -750,6 +750,7 @@ const fr: Partial<Translations> = {
   "settings.schedulesOffsite": "Plannings de réplication hors site",
   "settings.schedulesSelfBackup": "Planning d'auto-sauvegarde",
   "settings.schedulesChecks": "Planning de vérification de restauration",
+  "settings.tamperTestSchedule": "Planning de test d'altération",
   "settings.subtitle": "Configuration de BombVault — les modifications prennent effet immédiatement.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtres",

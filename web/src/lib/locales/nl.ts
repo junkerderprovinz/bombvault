@@ -747,6 +747,7 @@ const nl: Partial<Translations> = {
   "settings.schedulesOffsite": "Off-site-replicatieschema's",
   "settings.schedulesSelfBackup": "Zelf-back-upschema",
   "settings.schedulesChecks": "Herstelcontroleschema",
+  "settings.tamperTestSchedule": "Tamper-test-schema",
   "settings.subtitle": "BombVault-configuratie — wijzigingen worden meteen van kracht.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",

@@ -745,6 +745,7 @@ const uk: Partial<Translations> = {
   "settings.schedulesOffsite": "Розклади зовнішньої реплікації",
   "settings.schedulesSelfBackup": "Розклад самокопіювання",
   "settings.schedulesChecks": "Розклад перевірки відновлення",
+  "settings.tamperTestSchedule": "Розклад тесту на втручання",
   "settings.subtitle": "Конфігурація BombVault — зміни набувають чинності негайно.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Фільтри",

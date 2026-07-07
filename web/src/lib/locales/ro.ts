@@ -753,6 +753,7 @@ const ro: Partial<Translations> = {
   "settings.schedulesOffsite": "Programări de replicare externă",
   "settings.schedulesSelfBackup": "Programare de auto-backup",
   "settings.schedulesChecks": "Programare de verificare a restaurării",
+  "settings.tamperTestSchedule": "Programare de test tamper",
   "settings.subtitle": "Configurația BombVault — modificările au efect imediat.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",
