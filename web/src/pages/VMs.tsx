@@ -6,7 +6,7 @@ import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
-import { RestoreCancelButton } from "../components/RestoreCancelButton";
+import { RestoreAction } from "../components/restore/RestoreAction";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
@@ -462,26 +462,11 @@ function VMSnapshotRow({
   onDeleted: () => void;
   t: T;
 }) {
-  const [confirmed, setConfirmed] = useState(false);
-  // leaveStopped overrides the captured run-state so the VM is restored but not
-  // booted (mirrors the container restore option).
-  const [leaveStopped, setLeaveStopped] = useState(false);
-  // Fire-and-watch (see useBackupWatch): the restore runs detached on the
-  // server — a multi-hour VM disk restore must survive this connection (and
-  // this panel) going away — so we watch the "vm:<name>" progress + the
-  // recorded run for the outcome instead of awaiting the whole restore.
-  const cancelledRef = useRef(false);
-  const { state: restoreState, fire, isPending } = useBackupWatch({
-    progressKey: `vm:${vmName}`,
-    kind: "restore",
-    start: () => restoreVM(vmName, snap.id, true, source, leaveStopped),
-    matchRun: (r) => r.domain === "vm" && r.target === vmName,
-    cancelledRef,
-  });
   const progressMap = useProgress();
-  const prog = progressMap[`vm:${vmName}`];
+  // Busy-guard handed to the shared RestoreAction: block a new restore while any
+  // OTHER backup/restore/replication runs (this VM's own in-flight restore is
+  // covered inside RestoreAction via isPending, never self-blocked).
   const running = anyActive(progressMap);
-  const blockedByOther = running.active && !isPending;
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -500,11 +485,6 @@ function VMSnapshotRow({
     }
   }
 
-  function handleRestore() {
-    if (!confirmed) return;
-    void fire();
-  }
-
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
@@ -519,87 +499,28 @@ function VMSnapshotRow({
             {snap.tags.join(", ")}
           </span>
         )}
-        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer shrink-0">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            disabled={isPending || restoreState.phase === "success"}
-            className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("restore.confirm")}
-        </label>
-        <button
-          onClick={handleRestore}
-          disabled={!confirmed || isPending || blockedByOther || restoreState.phase === "success"}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-        >
-          {isPending ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.restoring")}
-            </>
-          ) : (
-            t("snapshots.restore")
-          )}
-        </button>
-        {blockedByOther && (
-          <span className="text-[11px] text-carbon-textMuted shrink-0">{t(busyPhraseKey(running.phase))}</span>
-        )}
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting || isPending}
+          disabled={deleting || running.active}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {/* Leave stopped: restore the VM but don't boot it. */}
-      <label className="flex items-center gap-1.5 text-[11px] text-carbon-textSub cursor-pointer pl-24">
-        <input
-          type="checkbox"
-          checked={leaveStopped}
-          onChange={(e) => setLeaveStopped(e.target.checked)}
-          disabled={isPending || restoreState.phase === "success"}
-          className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-          style={{ accentColor: "var(--accent)" }}
+      {/* Restore control (confirm + leave-stopped + progress banner), indented
+          under the id column (pl-24) to match the row's content alignment. */}
+      <div className="pl-24">
+        <RestoreAction
+          domain="vm"
+          name={vmName}
+          snapshotId={snap.id}
+          source={source}
+          otherActive={running}
+          successMessage={t("restore.completeVM")}
+          t={t}
         />
-        {t("restore.leaveStopped")}
-      </label>
-      {isPending && (
-        <div className="flex flex-col gap-1 pl-24">
-          <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-          <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
-          {prog?.phase === "restore" && prog.active && (
-            <ProgressBar
-              percent={prog.percent}
-              active
-              inline
-              label={prog.percent > 0 ? t("restore.progress").replace("{pct}", String(Math.round(prog.percent))) : undefined}
-            />
-          )}
-          {/* A VM restore replaces the disk in place — the hard warning. */}
-          <RestoreCancelButton cancelKey={`vm:${vmName}`} inPlace name={vmName} t={t} cancelledRef={cancelledRef} />
-        </div>
-      )}
-      {restoreState.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c] pl-24">
-          Restore complete — VM disks have been replaced.
-        </p>
-      )}
-      {restoreState.phase === "cancelled" && (
-        <p className="text-xs text-carbon-textSub pl-24 break-words">{t("restore.cancelled")}</p>
-      )}
-      {restoreState.phase === "error" && (
-        <p className="text-xs text-[#ff8389] pl-24 break-words">
-          {restoreState.message}
-        </p>
-      )}
+      </div>
       {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
     </div>
   );

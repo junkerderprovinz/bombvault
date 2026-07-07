@@ -5,22 +5,10 @@ import type { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
-import { ProgressBar } from "./ProgressBar";
-import { RestoreCancelButton } from "./RestoreCancelButton";
+import { RestoreProgress } from "./restore/RestoreProgress";
+import { RestoreAction } from "./restore/RestoreAction";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
-
-// restoreProgressBar renders the shared inline restore ProgressBar + a
-// "Restoring… NN%" caption for a given progress key, while the fire-and-watch is
-// pending. Indeterminate until the first percent arrives (mirrors the backup
-// bars). Returns null when nothing is streaming for this key yet.
-function restoreProgressCaption(
-  t: T,
-  prog: { phase: string; percent: number; active: boolean } | undefined
-): string | undefined {
-  if (!prog || prog.phase !== "restore" || prog.percent <= 0) return undefined;
-  return t("restore.progress").replace("{pct}", String(Math.round(prog.percent)));
-}
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -360,37 +348,21 @@ function SnapshotFileBrowser({
               <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
             )}
           </div>
-          {isPending && (
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-              <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
-              {prog?.phase === "restore" && prog.active && (
-                <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
-              )}
-              {/* file-level cancel is in-place ONLY when restoring to original
-                  locations; restoring to a folder is non-destructive (safe). */}
-              <RestoreCancelButton
-                cancelKey={`container:${containerName}`}
-                inPlace={dest === "inPlace"}
-                name={containerName}
-                t={t}
-                cancelledRef={cancelledRef}
-              />
-            </div>
-          )}
-          {restoreState.phase === "success" && (
-            <p className="text-xs text-[#6fdc8c] break-words">
-              {restoredTarget
+          <RestoreProgress
+            state={restoreState}
+            isPending={isPending}
+            prog={prog}
+            cancelKey={`container:${containerName}`}
+            inPlace={dest === "inPlace"}
+            name={containerName}
+            cancelledRef={cancelledRef}
+            successMessage={
+              restoredTarget
                 ? t("restore.restoredTo").replace("{path}", restoredTarget)
-                : t("files.restoredInPlace")}
-            </p>
-          )}
-          {restoreState.phase === "cancelled" && (
-            <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
-          )}
-          {restoreState.phase === "error" && (
-            <p className="text-xs text-[#ff8389] break-words">{restoreState.message}</p>
-          )}
+                : t("files.restoredInPlace")
+            }
+            t={t}
+          />
         </div>
       )}
     </div>
@@ -441,26 +413,17 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
       {blockedByOther && (
         <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
       )}
-      {isPending && (
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-          <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
-          {prog?.phase === "restore" && prog.active && (
-            <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
-          )}
-          {/* Recreate rebuilds the container in place — the hard warning. */}
-          <RestoreCancelButton cancelKey={`container:${name}`} inPlace name={name} t={t} cancelledRef={cancelledRef} />
-        </div>
-      )}
-      {state.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c]">Recreate complete — the container has been recreated.</p>
-      )}
-      {state.phase === "cancelled" && (
-        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
-      )}
-      {state.phase === "error" && (
-        <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
-      )}
+      <RestoreProgress
+        state={state}
+        isPending={isPending}
+        prog={prog}
+        cancelKey={`container:${name}`}
+        inPlace
+        name={name}
+        cancelledRef={cancelledRef}
+        successMessage={t("restore.recreateComplete")}
+        t={t}
+      />
     </div>
   );
 }
@@ -538,28 +501,17 @@ function RestoreToFolder({
           <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
         )}
       </div>
-      {isPending && (
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-          <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
-          {prog?.phase === "restore" && prog.active && (
-            <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
-          )}
-          {/* Extract to a folder is non-destructive — the light (safe) warning. */}
-          <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace={false} name={containerName} t={t} cancelledRef={cancelledRef} />
-        </div>
-      )}
-      {state.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c] break-words">
-          {t("restore.restoredTo").replace("{path}", target)}
-        </p>
-      )}
-      {state.phase === "cancelled" && (
-        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
-      )}
-      {state.phase === "error" && (
-        <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
-      )}
+      <RestoreProgress
+        state={state}
+        isPending={isPending}
+        prog={prog}
+        cancelKey={`container:${containerName}`}
+        inPlace={false}
+        name={containerName}
+        cancelledRef={cancelledRef}
+        successMessage={t("restore.restoredTo").replace("{path}", target)}
+        t={t}
+      />
     </div>
   );
 }
@@ -783,7 +735,7 @@ function SnapshotRow({
 }: {
   snap: Snapshot;
   containerName: string;
-  source: string;
+  source: RepoSource;
   hostMountRoot: string;
   defaultFolder: string;
   onDeleted: () => void;
@@ -791,26 +743,11 @@ function SnapshotRow({
   t: T;
 }) {
   const { advanced } = useAdvanced();
-  const [confirmed, setConfirmed] = useState(false);
-  // leaveStopped overrides the captured run-state so an in-place restore recreates
-  // the container without starting it (rebuild a stack member by member).
-  const [leaveStopped, setLeaveStopped] = useState(false);
-  // Fire-and-watch (see useBackupWatch): the restore runs detached on the
-  // server (surviving this connection — and this panel — going away), so we
-  // watch the "container:<name>" progress + the recorded run for the outcome
-  // instead of awaiting the whole restore.
-  const cancelledRef = useRef(false);
-  const { state: restoreState, fire, isPending } = useBackupWatch({
-    progressKey: `container:${containerName}`,
-    kind: "restore",
-    start: () => restore(containerName, snap.id, true, source, leaveStopped),
-    matchRun: (r) => r.domain === "container" && r.target === containerName,
-    cancelledRef,
-  });
   const progressMap = useProgress();
-  const prog = progressMap[`container:${containerName}`];
+  // Busy-guard handed to the shared RestoreAction: block a new restore while any
+  // OTHER backup/restore/replication runs (this snapshot's own in-flight restore
+  // is covered inside RestoreAction via isPending, never self-blocked).
   const running = anyActive(progressMap);
-  const blockedByOther = running.active && !isPending;
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
   // In basic mode only the in-place restore is offered; the mode radios (files /
@@ -833,11 +770,6 @@ function SnapshotRow({
     } finally {
       setDeleting(false);
     }
-  }
-
-  function handleRestore() {
-    if (!confirmed) return;
-    void fire();
   }
 
   // Group name so the three radios are mutually exclusive PER snapshot.
@@ -874,7 +806,7 @@ function SnapshotRow({
         {/* Delete this backup (restic forget) */}
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting || isPending}
+          disabled={deleting || running.active}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
         >
@@ -927,75 +859,15 @@ function SnapshotRow({
           {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-[11px] text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <label className="flex items-center gap-1.5 text-carbon-textSub cursor-pointer shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={confirmed}
-                    onChange={(e) => setConfirmed(e.target.checked)}
-                    disabled={isPending || restoreState.phase === "success"}
-                    className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-                    style={{ accentColor: "var(--accent)" }}
-                  />
-                  {t("restore.confirm")}
-                </label>
-                <button
-                  onClick={handleRestore}
-                  disabled={!confirmed || isPending || blockedByOther || restoreState.phase === "success"}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                >
-                  {isPending ? (
-                    <>
-                      <span
-                        className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                        style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                      />
-                      {t("common.restoring")}
-                    </>
-                  ) : (
-                    t("snapshots.restore")
-                  )}
-                </button>
-                {blockedByOther && (
-                  <span className="text-[11px] text-carbon-textMuted shrink-0">{t(busyPhraseKey(running.phase))}</span>
-                )}
-              </div>
-              {/* Leave stopped: recreate but don't start (rebuild a stack in order). */}
-              <label className="flex items-center gap-1.5 text-[11px] text-carbon-textSub cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={leaveStopped}
-                  onChange={(e) => setLeaveStopped(e.target.checked)}
-                  disabled={isPending || restoreState.phase === "success"}
-                  className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                {t("restore.leaveStopped")}
-              </label>
-              {isPending && (
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-                  <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
-                  {prog?.phase === "restore" && prog.active && (
-                    <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
-                  )}
-                  {/* Whole-snapshot in-place restore recreates the container — hard warning. */}
-                  <RestoreCancelButton cancelKey={`container:${containerName}`} inPlace name={containerName} t={t} cancelledRef={cancelledRef} />
-                </div>
-              )}
-              {restoreState.phase === "success" && (
-                <p className="text-xs text-[#6fdc8c]">
-                  Restore complete — container is being recreated.
-                </p>
-              )}
-              {restoreState.phase === "cancelled" && (
-                <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
-              )}
-              {restoreState.phase === "error" && (
-                <p className="text-xs text-[#ff8389] break-words">
-                  {restoreState.message}
-                </p>
-              )}
+              <RestoreAction
+                domain="container"
+                name={containerName}
+                snapshotId={snap.id}
+                source={source}
+                otherActive={running}
+                successMessage={t("restore.completeContainer")}
+                t={t}
+              />
             </div>
           )}
 

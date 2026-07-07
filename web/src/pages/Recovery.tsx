@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useT } from "../lib/i18n";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
-import { ProgressBar } from "../components/ProgressBar";
-import { RestoreCancelButton } from "../components/RestoreCancelButton";
-import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
+import { RestoreAction } from "../components/restore/RestoreAction";
+import { fireAndWaitRun } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import {
   discover,
@@ -43,12 +42,11 @@ function isKeyMismatch(err: string | undefined): boolean {
 }
 
 // RestoreRow — a single discovered target (container or VM) with its latest
-// snapshot and a per-item Restore button. It mirrors the Containers/VMs
-// RestorePanel EXACTLY: useBackupWatch drives the async fire-and-watch, the v4
-// SSE ProgressBar shows live progress, and RestoreCancelButton cancels — so a
-// recovery restore behaves identically to one launched from those tabs. The
-// restore is IN PLACE and LEFT STOPPED (leaveStopped=true): the recovery flow
-// restores everything first, then you start them from the Containers/VMs tabs.
+// snapshot and a per-item Restore button. The restore mechanics are the shared
+// <RestoreAction> (the same control the Containers/VMs tabs use), so a recovery
+// restore behaves identically to one launched from those tabs. The restore is
+// IN PLACE and LEFT STOPPED (forceLeaveStopped): the recovery flow restores
+// everything first, then you start them from the Containers/VMs tabs.
 function RestoreRow({
   domain,
   name,
@@ -62,24 +60,6 @@ function RestoreRow({
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
 }) {
-  const progressKey = `${domain}:${name}`;
-  const cancelledRef = useRef(false);
-  const { state, fire, isPending } = useBackupWatch({
-    progressKey,
-    kind: "restore",
-    // Same single-restore call shape as the Containers/VMs RestorePanel, with
-    // the leave-stopped flag set (restore(name,"latest",true,undefined,true) /
-    // restoreVM(name,"latest",true,undefined,true)).
-    start: () =>
-      domain === "container"
-        ? restore(name, "latest", true, undefined, true)
-        : restoreVM(name, "latest", true, undefined, true),
-    matchRun: (r) => r.domain === domain && r.target === name,
-    cancelledRef,
-  });
-  const prog = useProgress()[progressKey];
-  const blockedByOther = otherActive && !isPending;
-
   // Latest-backup label — DISPLAY ONLY, read straight from the target list's own
   // lastBackup field (unix seconds). No per-row snapshot fetch: a discovered list
   // of N containers + M VMs would otherwise spawn N+M concurrent restic processes
@@ -93,42 +73,24 @@ function RestoreRow({
         <span className="text-carbon-textMuted text-xs shrink-0">
           {snapLabel || t("containers.never")}
         </span>
-        <button
-          onClick={() => void fire()}
-          disabled={isPending || blockedByOther || state.phase === "success"}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-        >
-          {isPending ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.restoring")}
-            </>
-          ) : (
-            t("snapshots.restore")
-          )}
-        </button>
       </div>
-      {isPending && (
-        <div className="flex flex-col gap-1">
-          {prog?.phase === "restore" && prog.active && (
-            <ProgressBar
-              percent={prog.percent}
-              active
-              inline
-              label={prog.percent > 0 ? t("restore.progress").replace("{pct}", String(Math.round(prog.percent))) : undefined}
-            />
-          )}
-          <RestoreCancelButton cancelKey={progressKey} inPlace name={name} t={t} cancelledRef={cancelledRef} />
-        </div>
-      )}
-      {state.phase === "success" && <p className="text-xs text-[#6fdc8c]">{t("common.done")}</p>}
-      {state.phase === "cancelled" && (
-        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
-      )}
-      {state.phase === "error" && <p className="text-xs text-[#ff8389] break-words">{state.message}</p>}
+      {/* In-place restore, LEFT STOPPED (forceLeaveStopped): the recovery flow
+          restores everything first, then you start them from the Containers/VMs
+          tabs. source omitted => the backend-default repo. */}
+      <RestoreAction
+        domain={domain}
+        name={name}
+        snapshotId="latest"
+        otherActive={{ active: otherActive }}
+        successMessage={t("common.done")}
+        requireConfirm={false}
+        showLeaveStopped={false}
+        forceLeaveStopped
+        showBusyHint={false}
+        showStartedHint={false}
+        label={t("snapshots.restore")}
+        t={t}
+      />
     </div>
   );
 }
