@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bree Serif — BombVault's brand typeface (SIL OFL 1.1, TypeTogether). Self-hosted
+   (latin subset) so the wordmark renders offline, with no runtime CDN request.
+   License ships alongside at /fonts/BreeSerif-OFL.txt. */
+@font-face {
+  font-family: "Bree Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/bree-serif-latin.woff2") format("woff2");
+}
+
+/* The brand wordmark uses Bree Serif at its natural weight (the face ships only
+   weight 400, so avoid font-bold — it would synthesize a faux-bold). */
+.font-brand {
+  font-family: "Bree Serif", Georgia, "Times New Roman", serif;
+}
+
 /* ---------------------------------------------------------------------------
    Carbon palette as CSS custom properties.
    Dark is default; [data-theme="light"] overrides to an IBM Carbon light theme.
@@ -61,6 +78,13 @@
   --accent-contrast:  #161616;
 }
 
+/* Easter-egg shatter uses whichever logo is currently on screen: the dark sidebar
+   surface shows the light mark, the light surface shows the dark mark. Mirror the
+   <img> swap so the fragments reassemble into the visible logo. Equal-specificity
+   rules, so [data-theme="dark"] must come after :root to win in dark mode. */
+:root               { --egg-logo: url("/logo.svg"); }
+[data-theme="dark"] { --egg-logo: url("/logo-light.svg"); }
+
 body {
   margin: 0;
   background-color: var(--carbon-bg);
@@ -97,34 +121,55 @@ body {
   50%      { transform: rotate(2.5deg); }
 }
 
-/* Easter-egg wobble → explode (Item 6) */
+/* Easter-egg: wobble → shatter + explosion cloud (Item 6). The logo breaks into an
+   N×N grid of fragments that fly outward under a little gravity, while a flash,
+   shockwave, billowing fire→smoke cloud and sparks fire behind them. */
 @keyframes bv-egg-shake {
-  0%, 100% { transform: translateX(0) rotate(0deg); }
-  20%      { transform: translateX(-2px) rotate(-7deg); }
-  40%      { transform: translateX(2px) rotate(6deg); }
-  60%      { transform: translateX(-2px) rotate(-5deg); }
-  80%      { transform: translateX(2px) rotate(5deg); }
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  15%      { transform: translate(-2px, 1px) rotate(-8deg); }
+  30%      { transform: translate(2px, -1px) rotate(7deg); }
+  45%      { transform: translate(-2px, 1px) rotate(-6deg); }
+  60%      { transform: translate(2px, -1px) rotate(6deg); }
+  80%      { transform: translate(-1px, 0) rotate(-4deg); }
 }
-@keyframes bv-egg-explode {
-  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
-  25%  { transform: scale(1.3) rotate(8deg); opacity: 1; }
-  100% { transform: scale(2.4) rotate(38deg); opacity: 0; }
+
+/* Each fragment flies from rest to its per-tile (--dx,--dy) with spin, a downward
+   gravity nudge, shrink and fade. Custom props are set inline per tile in the TSX. */
+@keyframes bv-frag-fly {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  12%  { opacity: 1; }
+  100% { transform: translate(var(--dx, 0), calc(var(--dy, 0) + 24px)) rotate(var(--rot, 0deg)) scale(.22); opacity: 0; }
 }
+
+/* Bright central flash — pops white/yellow and is gone fast. */
 @keyframes bv-egg-flash {
-  0%   { transform: translate(-50%, -50%) scale(.3); opacity: .9; }
-  100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+  0%   { transform: translate(-50%, -50%) scale(.25); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
 }
+
+/* Shockwave ring expanding outward. */
 @keyframes bv-egg-shock {
-  0%   { transform: translate(-50%, -50%) scale(.2); opacity: .8; }
-  100% { transform: translate(-50%, -50%) scale(2.9); opacity: 0; }
+  0%   { transform: translate(-50%, -50%) scale(.2); opacity: .85; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
 }
-@keyframes bv-particle-fly {
+
+/* Billowing explosion cloud — each puff scales up, drifts to (--cx,--cy) and fades. */
+@keyframes bv-cloud-billow {
+  0%   { transform: translate(-50%, -50%) translate(0, 0) scale(.2); opacity: 0; }
+  18%  { opacity: .95; }
+  55%  { opacity: .7; }
+  100% { transform: translate(-50%, -50%) translate(var(--cx, 0), var(--cy, 0)) scale(2.7); opacity: 0; }
+}
+
+/* Flying sparks — outward to (--tx,--ty) with a little gravity, shrink and fade. */
+@keyframes bv-spark-fly {
   0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -50%) translate(var(--tx, 0), var(--ty, 0)) scale(.2); opacity: 0; }
+  100% { transform: translate(-50%, -50%) translate(var(--tx, 0), calc(var(--ty, 0) + 18px)) scale(.2); opacity: 0; }
 }
+
 @keyframes bv-egg-fade-pulse {
   0%, 100% { opacity: 1; }
-  50%      { opacity: .6; }
+  50%      { opacity: .55; }
 }
 
 /* Route/page enter (Item 7c) */
@@ -137,12 +182,28 @@ body {
   to   { opacity: 1; }
 }
 
-/* The exploding logo mark is the animation target; the FX overlay (.bv-boom-fx) is
-   a sibling so the flash / shockwave / particles are not scaled by the mark's own
-   transform. */
-.bv-logo-mark { transform-origin: center; will-change: transform, opacity; }
+/* The logo mark hosts the normal <img> plus (at boom) the fragment grid. The FX
+   overlay (.bv-boom-fx) is a sibling so the flash / shockwave / cloud / sparks are
+   never clipped or transformed by the mark. Both overflow the 64px box freely and
+   are absolutely positioned, so the boom never shifts the sidebar layout. */
+.bv-logo-mark { transform-origin: center; will-change: transform; overflow: visible; }
 
-.bv-boom-fx { position: absolute; inset: 0; pointer-events: none; }
+/* Fragment shatter grid — a 6×6 set of slices of the current logo, overlaid on the
+   64px box. Each tile paints its own slice via --egg-logo + a per-tile
+   background-position, so at rest they reassemble the whole mark; at boom they fly
+   apart. Tile left/top/size/background-position + --dx/--dy/--rot/--delay are inline. */
+.bv-frag-grid { position: absolute; inset: 0; pointer-events: none; }
+.bv-frag {
+  position: absolute;
+  background-image: var(--egg-logo);
+  background-size: 64px 64px;
+  background-repeat: no-repeat;
+  transform-origin: center;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+
+.bv-boom-fx { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .bv-boom-fx::before,
 .bv-boom-fx::after {
   content: "";
@@ -151,11 +212,11 @@ body {
   top: 50%;
   border-radius: 9999px;
 }
-.bv-boom-fx::before { /* flash core */
-  width: 44px;
-  height: 44px;
-  background: radial-gradient(circle, var(--accent) 0%, rgba(252, 196, 25, .45) 45%, transparent 70%);
-  transform: translate(-50%, -50%) scale(.3);
+.bv-boom-fx::before { /* flash core — white/yellow, gone fast */
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(circle, #ffffff 0%, #fff57c 40%, rgba(246, 142, 50, .5) 65%, transparent 78%);
+  transform: translate(-50%, -50%) scale(.25);
   opacity: 0;
 }
 .bv-boom-fx::after { /* shockwave ring */
@@ -165,6 +226,27 @@ body {
   transform: translate(-50%, -50%) scale(.2);
   opacity: 0;
 }
+
+/* Soft overlapping radial puffs that build the billowing fire→smoke cloud. Hot puffs
+   keep a yellow/orange core; smoke puffs fade to the logo's cool greys. */
+.bv-cloud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%) scale(.2);
+  opacity: 0;
+  filter: blur(2px);
+}
+.bv-cloud--hot {
+  background: radial-gradient(circle, rgba(255, 245, 124, .95) 0%, rgba(246, 142, 50, .82) 38%, rgba(125, 116, 110, .5) 66%, transparent 80%);
+}
+.bv-cloud--smoke {
+  background: radial-gradient(circle, rgba(246, 142, 50, .55) 0%, rgba(138, 130, 124, .55) 45%, rgba(92, 88, 84, .42) 70%, transparent 82%);
+}
+
 .bv-particle {
   position: absolute;
   left: 50%;
@@ -172,7 +254,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: var(--accent);
+  background: var(--spark, var(--accent));
   transform: translate(-50%, -50%);
   opacity: 0;
 }
@@ -181,20 +263,36 @@ body {
   /* Gentle sway on hover, only while the logo is idle (not mid-egg). */
   .bv-logo-btn:hover .bv-logo-idle { animation: bv-logo-sway 2.4s ease-in-out infinite; }
 
-  .bv-egg-wobble { animation: bv-egg-shake 260ms ease-in-out infinite; }
-  .bv-egg-boom   { animation: bv-egg-explode 700ms cubic-bezier(.34, .6, .3, 1) forwards; }
+  .bv-egg-wobble { animation: bv-egg-shake 240ms ease-in-out infinite; }
 
-  .bv-boom-fx::before { animation: bv-egg-flash 520ms ease-out forwards; }
-  .bv-boom-fx::after  { animation: bv-egg-shock 640ms ease-out forwards; }
-  .bv-particle        { animation: bv-particle-fly 680ms cubic-bezier(.2, .6, .3, 1) forwards; }
+  /* At boom the static logo vanishes (opacity, not display — so it doesn't fight the
+     Tailwind block/dark:block swap) and the mark shatters into flying tiles. */
+  .bv-egg-boom .bv-logo-img { opacity: 0; }
+  .bv-egg-boom .bv-frag {
+    animation: bv-frag-fly 950ms cubic-bezier(.22, .61, .3, 1) forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+
+  .bv-boom-fx::before { animation: bv-egg-flash 160ms ease-out forwards; }
+  .bv-boom-fx::after  { animation: bv-egg-shock 620ms ease-out forwards; }
+  .bv-cloud {
+    animation: bv-cloud-billow 840ms cubic-bezier(.2, .6, .3, 1) forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+  .bv-particle {
+    animation: bv-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
+    animation-delay: var(--delay, 0ms);
+  }
 
   .bv-page-enter { animation: bv-page-in 320ms cubic-bezier(.2, .6, .2, 1) both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No violent shake/explosion — just a quiet fade, and no flash/particles. */
+  /* No violent shatter or explosion — just a quiet fade-pulse of the logo; the
+     cloud, fragments and sparks stay hidden so reduced-motion users get something
+     gentle instead of a shattering blast. */
   .bv-egg-wobble { animation: bv-egg-fade-pulse 900ms ease-in-out; }
-  .bv-egg-boom   { opacity: 0; transition: opacity 300ms ease; }
-  .bv-boom-fx    { display: none; }
+  .bv-egg-boom .bv-logo-img { animation: bv-egg-fade-pulse 600ms ease-in-out; }
+  .bv-frag-grid, .bv-boom-fx { display: none; }
   .bv-page-enter { animation: bv-fade-in 200ms ease both; }
 }
