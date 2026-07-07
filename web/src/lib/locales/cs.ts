@@ -34,6 +34,19 @@ const cs: Partial<Translations> = {
   "dashboard.allOk": "Vše v pořádku",
   "dashboard.degraded": "Degradováno",
   "dashboard.checking": "Kontroluji…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Přizpůsobit",
+  "dashboard.customizeDone": "Hotovo",
+  "dashboard.customizeHint": "Přetažením kartu přeuspořádáte, nebo skryjte ty, které nepotřebujete. Uloženo v tomto prohlížeči.",
+  "dashboard.moveUp": "Přesunout nahoru",
+  "dashboard.moveDown": "Přesunout dolů",
+  "dashboard.hideCard": "Skrýt",
+  "dashboard.showCard": "Zobrazit",
+  "dashboard.hiddenCards": "Skryté karty",
+  "dashboard.resetLayout": "Obnovit výchozí",
+  "dashboard.blockSummary": "Přehled",
+  "dashboard.blockStats": "Statistiky",
+  "dashboard.blockBackups": "Zálohy a historie",
 
   // Spike
   "spike.title": "Integrace hostitele",

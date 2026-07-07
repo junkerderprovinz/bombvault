@@ -33,6 +33,19 @@ const nl: Partial<Translations> = {
   "dashboard.allOk": "Alle systemen OK",
   "dashboard.degraded": "Verslechterd",
   "dashboard.checking": "Controleren…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Aanpassen",
+  "dashboard.customizeDone": "Klaar",
+  "dashboard.customizeHint": "Sleep een kaart om deze te herschikken, of verberg wat je niet nodig hebt. Opgeslagen in deze browser.",
+  "dashboard.moveUp": "Omhoog verplaatsen",
+  "dashboard.moveDown": "Omlaag verplaatsen",
+  "dashboard.hideCard": "Verbergen",
+  "dashboard.showCard": "Weergeven",
+  "dashboard.hiddenCards": "Verborgen kaarten",
+  "dashboard.resetLayout": "Standaard herstellen",
+  "dashboard.blockSummary": "Overzicht",
+  "dashboard.blockStats": "Statistieken",
+  "dashboard.blockBackups": "Back-ups en geschiedenis",
 
   // Spike
   "spike.title": "Host-integratie",

@@ -34,6 +34,19 @@ const th: Partial<Translations> = {
   "dashboard.allOk": "ระบบทั้งหมดปกติ",
   "dashboard.degraded": "ประสิทธิภาพลดลง",
   "dashboard.checking": "กำลังตรวจสอบ…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "ปรับแต่ง",
+  "dashboard.customizeDone": "เสร็จ",
+  "dashboard.customizeHint": "ลากการ์ดเพื่อจัดเรียงใหม่ หรือซ่อนการ์ดที่ไม่ต้องการ บันทึกไว้ในเบราว์เซอร์นี้",
+  "dashboard.moveUp": "เลื่อนขึ้น",
+  "dashboard.moveDown": "เลื่อนลง",
+  "dashboard.hideCard": "ซ่อน",
+  "dashboard.showCard": "แสดง",
+  "dashboard.hiddenCards": "การ์ดที่ซ่อนไว้",
+  "dashboard.resetLayout": "รีเซ็ตเป็นค่าเริ่มต้น",
+  "dashboard.blockSummary": "ภาพรวม",
+  "dashboard.blockStats": "สถิติ",
+  "dashboard.blockBackups": "การสำรองข้อมูลและประวัติ",
 
   // Spike
   "spike.title": "การผสานรวมโฮสต์",

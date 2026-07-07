@@ -34,6 +34,19 @@ const ko: Partial<Translations> = {
   "dashboard.allOk": "모든 시스템 정상",
   "dashboard.degraded": "성능 저하",
   "dashboard.checking": "확인 중…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "사용자 지정",
+  "dashboard.customizeDone": "완료",
+  "dashboard.customizeHint": "카드를 드래그하여 순서를 바꾸거나 필요 없는 카드를 숨기세요. 이 브라우저에 저장됩니다.",
+  "dashboard.moveUp": "위로 이동",
+  "dashboard.moveDown": "아래로 이동",
+  "dashboard.hideCard": "숨기기",
+  "dashboard.showCard": "표시",
+  "dashboard.hiddenCards": "숨긴 카드",
+  "dashboard.resetLayout": "기본값으로 재설정",
+  "dashboard.blockSummary": "개요",
+  "dashboard.blockStats": "통계",
+  "dashboard.blockBackups": "백업 및 기록",
 
   // Spike
   "spike.title": "호스트 통합",

@@ -34,6 +34,19 @@ const zh: Partial<Translations> = {
   "dashboard.allOk": "所有系统正常",
   "dashboard.degraded": "性能下降",
   "dashboard.checking": "检查中…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "自定义",
+  "dashboard.customizeDone": "完成",
+  "dashboard.customizeHint": "拖动卡片可重新排序，或隐藏不需要的卡片。保存在此浏览器中。",
+  "dashboard.moveUp": "上移",
+  "dashboard.moveDown": "下移",
+  "dashboard.hideCard": "隐藏",
+  "dashboard.showCard": "显示",
+  "dashboard.hiddenCards": "隐藏的卡片",
+  "dashboard.resetLayout": "重置为默认",
+  "dashboard.blockSummary": "概览",
+  "dashboard.blockStats": "统计",
+  "dashboard.blockBackups": "备份与历史",
 
   // Spike
   "spike.title": "主机集成",

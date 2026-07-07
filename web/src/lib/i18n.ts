@@ -72,6 +72,20 @@ const en = {
   "dashboard.degraded": "Degraded",
   "dashboard.checking": "Checking…",
 
+  // Dashboard customization (#46) — reorder + hide cards, persisted per-browser
+  "dashboard.customize": "Customize",
+  "dashboard.customizeDone": "Done",
+  "dashboard.customizeHint": "Drag a card to reorder it, or hide the ones you don't need. Saved in this browser.",
+  "dashboard.moveUp": "Move up",
+  "dashboard.moveDown": "Move down",
+  "dashboard.hideCard": "Hide",
+  "dashboard.showCard": "Show",
+  "dashboard.hiddenCards": "Hidden cards",
+  "dashboard.resetLayout": "Reset to default",
+  "dashboard.blockSummary": "Overview",
+  "dashboard.blockStats": "Statistics",
+  "dashboard.blockBackups": "Backups & history",
+
   // Spike
   "spike.title": "Host Integration",
   "spike.overall": "Overall:",
@@ -835,6 +849,19 @@ const de: Translations = {
   "dashboard.allOk": "Alle Systeme OK",
   "dashboard.degraded": "Eingeschränkt",
   "dashboard.checking": "Prüfe…",
+
+  "dashboard.customize": "Anpassen",
+  "dashboard.customizeDone": "Fertig",
+  "dashboard.customizeHint": "Karte ziehen zum Umsortieren, oder ausblenden, was du nicht brauchst. In diesem Browser gespeichert.",
+  "dashboard.moveUp": "Nach oben",
+  "dashboard.moveDown": "Nach unten",
+  "dashboard.hideCard": "Ausblenden",
+  "dashboard.showCard": "Einblenden",
+  "dashboard.hiddenCards": "Ausgeblendete Karten",
+  "dashboard.resetLayout": "Auf Standard zurücksetzen",
+  "dashboard.blockSummary": "Überblick",
+  "dashboard.blockStats": "Statistik",
+  "dashboard.blockBackups": "Backups & Verlauf",
 
   "spike.title": "Host-Integration",
   "spike.overall": "Gesamt:",

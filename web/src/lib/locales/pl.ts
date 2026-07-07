@@ -33,6 +33,19 @@ const pl: Partial<Translations> = {
   "dashboard.allOk": "Wszystkie systemy sprawne",
   "dashboard.degraded": "Zdegradowany",
   "dashboard.checking": "Sprawdzanie…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Dostosuj",
+  "dashboard.customizeDone": "Gotowe",
+  "dashboard.customizeHint": "Przeciągnij kartę, aby zmienić kolejność, lub ukryj te, których nie potrzebujesz. Zapisano w tej przeglądarce.",
+  "dashboard.moveUp": "Przenieś w górę",
+  "dashboard.moveDown": "Przenieś w dół",
+  "dashboard.hideCard": "Ukryj",
+  "dashboard.showCard": "Pokaż",
+  "dashboard.hiddenCards": "Ukryte karty",
+  "dashboard.resetLayout": "Przywróć domyślne",
+  "dashboard.blockSummary": "Przegląd",
+  "dashboard.blockStats": "Statystyki",
+  "dashboard.blockBackups": "Kopie zapasowe i historia",
 
   // Spike
   "spike.title": "Integracja z hostem",

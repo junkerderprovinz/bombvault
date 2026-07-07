@@ -34,6 +34,19 @@ const vi: Partial<Translations> = {
   "dashboard.allOk": "Mọi hệ thống đều ổn",
   "dashboard.degraded": "Suy giảm",
   "dashboard.checking": "Đang kiểm tra…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Tùy chỉnh",
+  "dashboard.customizeDone": "Xong",
+  "dashboard.customizeHint": "Kéo một thẻ để sắp xếp lại, hoặc ẩn những thẻ bạn không cần. Được lưu trong trình duyệt này.",
+  "dashboard.moveUp": "Di chuyển lên",
+  "dashboard.moveDown": "Di chuyển xuống",
+  "dashboard.hideCard": "Ẩn",
+  "dashboard.showCard": "Hiện",
+  "dashboard.hiddenCards": "Thẻ đã ẩn",
+  "dashboard.resetLayout": "Đặt lại mặc định",
+  "dashboard.blockSummary": "Tổng quan",
+  "dashboard.blockStats": "Thống kê",
+  "dashboard.blockBackups": "Sao lưu và lịch sử",
 
   // Spike
   "spike.title": "Tích hợp máy chủ",

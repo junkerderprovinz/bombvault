@@ -34,6 +34,19 @@ const ja: Partial<Translations> = {
   "dashboard.allOk": "すべて正常",
   "dashboard.degraded": "低下",
   "dashboard.checking": "確認中…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "カスタマイズ",
+  "dashboard.customizeDone": "完了",
+  "dashboard.customizeHint": "カードをドラッグして並べ替えるか、不要なものを非表示にできます。このブラウザに保存されます。",
+  "dashboard.moveUp": "上へ移動",
+  "dashboard.moveDown": "下へ移動",
+  "dashboard.hideCard": "非表示",
+  "dashboard.showCard": "表示",
+  "dashboard.hiddenCards": "非表示のカード",
+  "dashboard.resetLayout": "デフォルトに戻す",
+  "dashboard.blockSummary": "概要",
+  "dashboard.blockStats": "統計",
+  "dashboard.blockBackups": "バックアップと履歴",
 
   // Spike
   "spike.title": "ホスト統合",

@@ -34,6 +34,19 @@ const sv: Partial<Translations> = {
   "dashboard.allOk": "Alla system OK",
   "dashboard.degraded": "Försämrat",
   "dashboard.checking": "Kontrollerar…",
+  // Dashboard customize (#46)
+  "dashboard.customize": "Anpassa",
+  "dashboard.customizeDone": "Klar",
+  "dashboard.customizeHint": "Dra ett kort för att ordna om det, eller dölj dem du inte behöver. Sparas i denna webbläsare.",
+  "dashboard.moveUp": "Flytta upp",
+  "dashboard.moveDown": "Flytta ner",
+  "dashboard.hideCard": "Dölj",
+  "dashboard.showCard": "Visa",
+  "dashboard.hiddenCards": "Dolda kort",
+  "dashboard.resetLayout": "Återställ till standard",
+  "dashboard.blockSummary": "Översikt",
+  "dashboard.blockStats": "Statistik",
+  "dashboard.blockBackups": "Säkerhetskopior och historik",
 
   // Spike
   "spike.title": "Värdintegration",
