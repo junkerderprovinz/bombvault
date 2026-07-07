@@ -64,7 +64,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 
 - **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), and its own `/config` (settings database + off-site credentials).
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
-- **Schedules** incremental backups in the background (per domain) from the **Plans** tab — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
+- **Schedules** incremental backups in the background (per domain) from one place — the **Schedules** tab under Settings — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
 
 The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#11-credits).
 
@@ -109,7 +109,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ## 3. Features
 
-> **Simple by default.** The interface shows only the essentials (back up, restore, schedule). Flip the **Advanced** toggle in the sidebar to reveal the expert controls — retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics, integrity/maintenance tools and more. It's a per-browser preference, off by default, so newcomers get a clean UI and power users get everything.
+> **Simple by default.** The interface shows only the essentials (back up, restore, schedule). Use the **Simple / Advanced** switch in the sidebar to reveal the expert controls — retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics, integrity/maintenance tools and more. It's a per-browser preference, off by default, so newcomers get a clean UI and power users get everything.
 
 ### Backup scope
 
@@ -140,7 +140,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
 - Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
-- **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain under Settings → Off-site copy; BombVault replicates new snapshots there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary. Each domain has its own **off-site schedule**: leave it blank to replicate after every local backup, or set a cadence (e.g. `weekly Sun 03:00`) to ship off-site less often than you back up locally — plus a **Replicate now** button for on-demand runs. While a replication is in flight, an **off-site replication indicator** shows which domain is running (on its page and the Dashboard); it is an active indicator, not a percentage bar, since `restic copy` exposes no machine-readable progress.
+- **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain on the **Settings → Off-site** tab; BombVault replicates new snapshots there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary. Each domain has its own **off-site schedule** (edited alongside every other schedule on the **Settings → Schedules** tab): leave it blank to replicate after every local backup, or set a cadence (e.g. `weekly Sun 03:00`) to ship off-site less often than you back up locally — plus a **Replicate now** button for on-demand runs. While a replication is in flight, an **off-site replication indicator** shows which domain is running (on its page and the Dashboard); it is an active indicator, not a percentage bar, since `restic copy` exposes no machine-readable progress.
 - Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup. Set it **per source** — a separate policy for the **local** repo and the **off-site** repo, so you can keep off-site copies longer as an archive. Leave the off-site policy all-zero to never auto-trim off-site snapshots.
 - Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
 - **Off-site bandwidth limits** (Settings → Off-site copy) — cap the `restic` upload/download rate so replication doesn't saturate your WAN.
