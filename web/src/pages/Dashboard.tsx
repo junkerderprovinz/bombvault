@@ -794,7 +794,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </select>
           </div>
           {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-96 overflow-y-auto pr-2">
+          <div className="divide-y divide-carbon-border max-h-[32rem] overflow-y-auto pr-2">
             {shown.map((run) => (
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
@@ -805,8 +805,10 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   <span className="text-carbon-text flex-1 truncate">
                     {run.target || `${run.targetId.slice(0, 12)}…`}
                   </span>
-                  <span className="text-carbon-textMuted text-xs shrink-0" title={formatTs(run.startedAt)}>
-                    {relativeTime(t, run.startedAt)}
+                  {/* Absolute date + time, with the relative age underneath (#45). */}
+                  <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
+                    <span className="text-carbon-textSub whitespace-nowrap">{formatTs(run.startedAt)}</span>
+                    <span className="text-carbon-textMuted">{relativeTime(t, run.startedAt)}</span>
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
