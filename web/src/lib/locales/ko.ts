@@ -178,15 +178,9 @@ const ko: Partial<Translations> = {
   "dashboard.statMissingVMs": "누락된 VM",
 
   // Jobs page
-  "nav.jobs": "작업",
-  "jobs.title": "작업",
-  "jobs.subtitle": "도메인별 백업 계획",
-  "jobs.configureInSettings": "설정에서 일정을 구성하세요",
   "jobs.containersSection": "컨테이너",
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "플래시",
-  "jobs.active": "활성",
-  "jobs.paused": "일시 중지",
   "jobs.notScheduled": "예약 안 됨",
   "jobs.cadenceDaily": "매일 {time}",
   "jobs.cadenceWeekly": "매주（{days}）{time}",
@@ -223,11 +217,9 @@ const ko: Partial<Translations> = {
   "containers.emptyDocker": "컨테이너를 찾을 수 없습니다. Docker가 실행 중인가요?",
   "containers.bulkResult": "성공 {ok}, 실패 {fail}",
   "vm.method.saveFailed": "백업 방식을 변경할 수 없습니다 — 변경되지 않았습니다.",
-  "jobs.noVMs": "VM 없음",
   "jobs.noContainersIncluded": "일정에 포함된 컨테이너가 없습니다.",
   "jobs.flashRow": "Unraid 플래시 구성",
   "jobs.flashPlanned": "계획됨",
-  "jobs.vmPlanned": "VM 백업 실행기가 아직 구현되지 않았습니다.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

@@ -178,15 +178,9 @@ const th: Partial<Translations> = {
   "dashboard.statMissingVMs": "VMs ที่หายไป",
 
   // Jobs page
-  "nav.jobs": "งาน",
-  "jobs.title": "งาน",
-  "jobs.subtitle": "แผนการสำรองข้อมูลตามโดเมน",
-  "jobs.configureInSettings": "กำหนดตารางเวลาในการตั้งค่า",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "ทำงานอยู่",
-  "jobs.paused": "หยุดชั่วคราว",
   "jobs.notScheduled": "ไม่มีตารางเวลา",
   "jobs.cadenceDaily": "ทุกวันเวลา {time}",
   "jobs.cadenceWeekly": "ทุกสัปดาห์ ({days}) เวลา {time}",
@@ -223,11 +217,9 @@ const th: Partial<Translations> = {
   "containers.emptyDocker": "ไม่พบคอนเทนเนอร์ Docker กำลังทำงานอยู่หรือไม่?",
   "containers.bulkResult": "สำเร็จ {ok} ล้มเหลว {fail}",
   "vm.method.saveFailed": "เปลี่ยนวิธีสำรองข้อมูลไม่ได้ — ยังไม่ถูกเปลี่ยน",
-  "jobs.noVMs": "ยังไม่มี VMs",
   "jobs.noContainersIncluded": "ไม่มี containers ในตารางเวลา",
   "jobs.flashRow": "การตั้งค่า Unraid flash",
   "jobs.flashPlanned": "วางแผนแล้ว",
-  "jobs.vmPlanned": "ยังไม่ได้พัฒนาตัวประมวลผลสำรองข้อมูล VM",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

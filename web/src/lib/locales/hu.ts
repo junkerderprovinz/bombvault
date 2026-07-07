@@ -178,15 +178,9 @@ const hu: Partial<Translations> = {
   "dashboard.statMissingVMs": "Hiányzó VM-ek",
 
   // Jobs page
-  "nav.jobs": "Feladatok",
-  "jobs.title": "Feladatok",
-  "jobs.subtitle": "Mentési tervek tartományonként",
-  "jobs.configureInSettings": "Ütemezések beállítása a Beállításokban",
   "jobs.containersSection": "Konténerek",
   "jobs.vmsSection": "VM-ek",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Aktív",
-  "jobs.paused": "Szüneteltetve",
   "jobs.notScheduled": "Nincs ütemezve",
   "jobs.cadenceDaily": "Naponta {time}-kor",
   "jobs.cadenceWeekly": "Hetente ({days}) {time}-kor",
@@ -223,11 +217,9 @@ const hu: Partial<Translations> = {
   "containers.emptyDocker": "Nem található konténer. Fut a Docker?",
   "containers.bulkResult": "{ok} rendben, {fail} sikertelen",
   "vm.method.saveFailed": "A mentési módszer nem módosítható — nem változott.",
-  "jobs.noVMs": "Még nincsenek VM-ek",
   "jobs.noContainersIncluded": "Nincsenek konténerek az ütemezésben.",
   "jobs.flashRow": "Unraid flash-konfiguráció",
   "jobs.flashPlanned": "tervezett",
-  "jobs.vmPlanned": "A VM mentési végrehajtó még nincs megvalósítva.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

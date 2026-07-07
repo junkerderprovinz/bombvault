@@ -176,15 +176,9 @@ const ro: Partial<Translations> = {
   "dashboard.statMissingVMs": "VM-uri lipsă",
 
   // Jobs page
-  "nav.jobs": "Sarcini",
-  "jobs.title": "Sarcini",
-  "jobs.subtitle": "Planuri de copiere de rezervă pe domeniu",
-  "jobs.configureInSettings": "Configurați programările în Setări",
   "jobs.containersSection": "Containere",
   "jobs.vmsSection": "VM-uri",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Activ",
-  "jobs.paused": "Suspendat",
   "jobs.notScheduled": "Neprogramat",
   "jobs.cadenceDaily": "Zilnic la {time}",
   "jobs.cadenceWeekly": "Săptămânal ({days}) la {time}",
@@ -221,11 +215,9 @@ const ro: Partial<Translations> = {
   "containers.emptyDocker": "Niciun container găsit. Rulează Docker?",
   "containers.bulkResult": "{ok} ok, {fail} eșuate",
   "vm.method.saveFailed": "Metoda de backup nu a putut fi schimbată — nu a fost modificată.",
-  "jobs.noVMs": "Niciun VM deocamdată",
   "jobs.noContainersIncluded": "Niciun container inclus în programare.",
   "jobs.flashRow": "Configurație Unraid flash",
   "jobs.flashPlanned": "planificat",
-  "jobs.vmPlanned": "Executorul de copii de rezervă VM nu este încă implementat.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

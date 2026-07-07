@@ -178,15 +178,9 @@ const tr: Partial<Translations> = {
   "dashboard.statMissingVMs": "Eksik VM'ler",
 
   // Jobs page
-  "nav.jobs": "İşler",
-  "jobs.title": "İşler",
-  "jobs.subtitle": "Etki alanına göre yedekleme planları",
-  "jobs.configureInSettings": "Zamanlamaları Ayarlar'dan yapılandırın",
   "jobs.containersSection": "Konteynerler",
   "jobs.vmsSection": "VM'ler",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Etkin",
-  "jobs.paused": "Duraklatılmış",
   "jobs.notScheduled": "Zamanlanmamış",
   "jobs.cadenceDaily": "Her gün {time}",
   "jobs.cadenceWeekly": "Haftalık ({days}) {time}",
@@ -223,11 +217,9 @@ const tr: Partial<Translations> = {
   "containers.emptyDocker": "Konteyner bulunamadı. Docker çalışıyor mu?",
   "containers.bulkResult": "{ok} tamam, {fail} başarısız",
   "vm.method.saveFailed": "Yedekleme yöntemi değiştirilemedi — değiştirilmedi.",
-  "jobs.noVMs": "Henüz VM yok",
   "jobs.noContainersIncluded": "Zamanlamaya eklenmiş konteyner yok.",
   "jobs.flashRow": "Unraid flash yapılandırması",
   "jobs.flashPlanned": "planlandı",
-  "jobs.vmPlanned": "VM yedekleme yürütücüsü henüz uygulanmadı.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

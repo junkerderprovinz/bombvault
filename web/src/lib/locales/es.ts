@@ -178,15 +178,9 @@ const es: Partial<Translations> = {
   "dashboard.statMissingVMs": "VMs perdidas",
 
   // Jobs page
-  "nav.jobs": "Tareas",
-  "jobs.title": "Tareas",
-  "jobs.subtitle": "Planes de copia por dominio",
-  "jobs.configureInSettings": "Configurar calendarios en Ajustes",
   "jobs.containersSection": "Contenedores",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Activo",
-  "jobs.paused": "En pausa",
   "jobs.notScheduled": "Sin programar",
   "jobs.cadenceDaily": "Diario a las {time}",
   "jobs.cadenceWeekly": "Semanal ({days}) a las {time}",
@@ -223,11 +217,9 @@ const es: Partial<Translations> = {
   "containers.emptyDocker": "No se encontraron contenedores. ¿Está Docker en marcha?",
   "containers.bulkResult": "{ok} ok, {fail} con error",
   "vm.method.saveFailed": "No se pudo cambiar el método de copia — no se modificó.",
-  "jobs.noVMs": "Sin VMs todavía",
   "jobs.noContainersIncluded": "Ningún contenedor incluido en el calendario.",
   "jobs.flashRow": "Configuración flash de Unraid",
   "jobs.flashPlanned": "planificado",
-  "jobs.vmPlanned": "El ejecutor de copias de VM aún no está implementado.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

@@ -176,15 +176,9 @@ const uk: Partial<Translations> = {
   "dashboard.statMissingVMs": "Відсутні віртуальні машини",
 
   // Jobs page
-  "nav.jobs": "Завдання",
-  "jobs.title": "Завдання",
-  "jobs.subtitle": "Плани резервного копіювання за доменами",
-  "jobs.configureInSettings": "Налаштуйте розклади в Налаштуваннях",
   "jobs.containersSection": "Контейнери",
   "jobs.vmsSection": "Віртуальні машини",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Активно",
-  "jobs.paused": "Призупинено",
   "jobs.notScheduled": "Без розкладу",
   "jobs.cadenceDaily": "Щодня о {time}",
   "jobs.cadenceWeekly": "Щотижня ({days}) о {time}",
@@ -221,11 +215,9 @@ const uk: Partial<Translations> = {
   "containers.emptyDocker": "Контейнери не знайдено. Docker запущено?",
   "containers.bulkResult": "{ok} ок, {fail} з помилкою",
   "vm.method.saveFailed": "Не вдалося змінити метод резервного копіювання — його не змінено.",
-  "jobs.noVMs": "Віртуальних машин немає",
   "jobs.noContainersIncluded": "Жоден контейнер не включено до розкладу.",
   "jobs.flashRow": "Конфігурація Unraid flash",
   "jobs.flashPlanned": "заплановано",
-  "jobs.vmPlanned": "Виконавець резервного копіювання VM ще не реалізовано.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

@@ -1433,7 +1433,7 @@ function SummaryTier({
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
           <>
-            <StatusChip status={chipForRpo(health)} />
+            {health !== "off" && <StatusChip status={chipForRpo(health)} />}
             <span className="text-sm text-carbon-text truncate">{healthLabel}</span>
           </>
         )}

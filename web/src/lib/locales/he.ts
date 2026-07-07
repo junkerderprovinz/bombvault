@@ -178,15 +178,9 @@ const he: Partial<Translations> = {
   "dashboard.statMissingVMs": "VMs חסרים",
 
   // Jobs page
-  "nav.jobs": "משימות",
-  "jobs.title": "משימות",
-  "jobs.subtitle": "תוכניות גיבוי לפי דומיין",
-  "jobs.configureInSettings": "הגדר לוחות זמנים בהגדרות",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "פעיל",
-  "jobs.paused": "מושהה",
   "jobs.notScheduled": "לא מתוזמן",
   "jobs.cadenceDaily": "מדי יום ב-{time}",
   "jobs.cadenceWeekly": "שבועי ({days}) ב-{time}",
@@ -223,11 +217,9 @@ const he: Partial<Translations> = {
   "containers.emptyDocker": "לא נמצאו קונטיינרים. האם Docker פועל?",
   "containers.bulkResult": "{ok} תקין, {fail} נכשלו",
   "vm.method.saveFailed": "לא ניתן לשנות את שיטת הגיבוי — היא לא שונתה.",
-  "jobs.noVMs": "אין VMs עדיין",
   "jobs.noContainersIncluded": "אין containers בלוח הזמנים.",
   "jobs.flashRow": "הגדרת Unraid flash",
   "jobs.flashPlanned": "מתוכנן",
-  "jobs.vmPlanned": "מנוע גיבוי VM טרם מומש.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

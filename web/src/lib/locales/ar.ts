@@ -178,15 +178,9 @@ const ar: Partial<Translations> = {
   "dashboard.statMissingVMs": "VMs مفقودة",
 
   // Jobs page
-  "nav.jobs": "المهام",
-  "jobs.title": "المهام",
-  "jobs.subtitle": "خطط النسخ الاحتياطي حسب النطاق",
-  "jobs.configureInSettings": "تكوين الجداول في الإعدادات",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "نشط",
-  "jobs.paused": "موقوف",
   "jobs.notScheduled": "غير مجدوَل",
   "jobs.cadenceDaily": "يوميًا في {time}",
   "jobs.cadenceWeekly": "أسبوعيًا ({days}) في {time}",
@@ -223,11 +217,9 @@ const ar: Partial<Translations> = {
   "containers.emptyDocker": "لم يتم العثور على حاويات. هل Docker قيد التشغيل؟",
   "containers.bulkResult": "{ok} ناجحة، {fail} فاشلة",
   "vm.method.saveFailed": "تعذّر تغيير طريقة النسخ الاحتياطي — لم تتغيّر.",
-  "jobs.noVMs": "لا توجد VMs بعد",
   "jobs.noContainersIncluded": "لا توجد containers مدرجة في الجدول.",
   "jobs.flashRow": "إعداد Unraid flash",
   "jobs.flashPlanned": "مخطَّط",
-  "jobs.vmPlanned": "منفذ نسخ VM الاحتياطي لم يُنفَّذ بعد.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

@@ -174,15 +174,9 @@ const pl: Partial<Translations> = {
   "dashboard.statMissingVMs": "Brakujące maszyny wirtualne",
 
   // Jobs page
-  "nav.jobs": "Zadania",
-  "jobs.title": "Zadania",
-  "jobs.subtitle": "Plany kopii zapasowych według domeny",
-  "jobs.configureInSettings": "Skonfiguruj harmonogramy w Ustawieniach",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "Maszyny wirtualne",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Aktywne",
-  "jobs.paused": "Wstrzymane",
   "jobs.notScheduled": "Bez harmonogramu",
   "jobs.cadenceDaily": "Codziennie o {time}",
   "jobs.cadenceWeekly": "Co tydzień ({days}) o {time}",
@@ -219,11 +213,9 @@ const pl: Partial<Translations> = {
   "containers.emptyDocker": "Nie znaleziono kontenerów. Czy Docker działa?",
   "containers.bulkResult": "{ok} ok, {fail} nieudane",
   "vm.method.saveFailed": "Nie udało się zmienić metody kopii — nie została zmieniona.",
-  "jobs.noVMs": "Brak maszyn wirtualnych",
   "jobs.noContainersIncluded": "Żaden kontener nie jest uwzględniony w harmonogramie.",
   "jobs.flashRow": "Konfiguracja Unraid flash",
   "jobs.flashPlanned": "zaplanowane",
-  "jobs.vmPlanned": "Executor kopii zapasowych VM nie jest jeszcze zaimplementowany.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

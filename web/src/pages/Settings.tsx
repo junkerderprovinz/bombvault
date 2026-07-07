@@ -1836,13 +1836,16 @@ export function SettingsPage() {
               ["flashOffsiteSchedule", "nav.flash"],
               ["configOffsiteSchedule", "nav.config"],
             ] as const).map(([key, label]) => (
-              <div key={key} className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
-                <CadenceBuilder
-                  label={t(label)}
+              <div key={key} className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">{t(label)}</span>
+                <input
                   value={settings[key]}
-                  onChange={(v) =>
-                    setSettings((prev) => (prev ? { ...prev, [key]: v } : prev))
+                  spellCheck={false}
+                  onChange={(e) =>
+                    setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
+                  placeholder={t("offsite.schedulePlaceholder")}
+                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
             ))}
@@ -1850,14 +1853,18 @@ export function SettingsPage() {
 
           {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config. */}
           <Card title={t("settings.schedulesSelfBackup")}>
-            <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
-              <CadenceBuilder
-                label={t("nav.config")}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("nav.config")}</span>
+              <input
                 value={settings.configSchedule}
-                onChange={(v) =>
-                  setSettings((prev) => (prev ? { ...prev, configSchedule: v } : prev))
+                spellCheck={false}
+                onChange={(e) =>
+                  setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
+                placeholder={t("config.schedulePlaceholder")}
+                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
               />
+              <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
           </Card>
 

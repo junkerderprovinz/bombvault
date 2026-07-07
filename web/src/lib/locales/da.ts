@@ -178,15 +178,9 @@ const da: Partial<Translations> = {
   "dashboard.statMissingVMs": "Manglende VMs",
 
   // Jobs page
-  "nav.jobs": "Job",
-  "jobs.title": "Job",
-  "jobs.subtitle": "Sikkerhedskopieringsplaner pr. domæne",
-  "jobs.configureInSettings": "Konfigurer tidsplaner i Indstillinger",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Aktiv",
-  "jobs.paused": "Pauset",
   "jobs.notScheduled": "Ikke planlagt",
   "jobs.cadenceDaily": "Dagligt kl. {time}",
   "jobs.cadenceWeekly": "Ugentligt ({days}) kl. {time}",
@@ -223,11 +217,9 @@ const da: Partial<Translations> = {
   "containers.emptyDocker": "Ingen containere fundet. Kører Docker?",
   "containers.bulkResult": "{ok} ok, {fail} mislykkedes",
   "vm.method.saveFailed": "Kunne ikke ændre sikkerhedskopieringsmetoden — den blev ikke ændret.",
-  "jobs.noVMs": "Ingen VMs endnu",
   "jobs.noContainersIncluded": "Ingen containers er inkluderet i tidsplanen.",
   "jobs.flashRow": "Unraid Flash-konfiguration",
   "jobs.flashPlanned": "planlagt",
-  "jobs.vmPlanned": "VM-sikkerhedskopieringseksekutor er endnu ikke implementeret.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

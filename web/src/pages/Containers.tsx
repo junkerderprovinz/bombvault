@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, exportContainer, setIncludeAll, ApiError } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
+import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { Advanced } from "../lib/advanced";
@@ -238,62 +239,6 @@ function ChipFilter<K extends string>({
           {o.label}
         </button>
       ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Filter popover (#2.6)
-// ---------------------------------------------------------------------------
-// Collapses the page's filter controls (search + installed/schedule/backup
-// chips) behind a single "Filters" button. The controls themselves are
-// unchanged and keep their own state + localStorage persistence — this only
-// relocates where they render. Accessible: the trigger reports aria-expanded,
-// the panel is a role=dialog, and it closes on click-outside or Escape.
-
-function FilterPopover({ label, children }: { label: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
-        </svg>
-        {label}
-      </button>
-      {open && (
-        <div
-          role="dialog"
-          aria-label={label}
-          className="absolute left-0 top-full z-20 mt-2 w-max max-w-[min(90vw,26rem)] rounded-card border border-carbon-border bg-carbon-surface p-4 shadow-lg flex flex-col gap-4"
-        >
-          {children}
-        </div>
-      )}
     </div>
   );
 }
@@ -1294,6 +1239,15 @@ export function Containers() {
     return true;
   });
 
+  // Any contained filter off its default narrows the list. The chips persist to
+  // localStorage, so a restored non-"all" value would silently shrink the list
+  // behind the collapsed "Filters" button — surface it via the trigger's dot.
+  const filtersActive =
+    query !== "" ||
+    filterKey !== "all" ||
+    scheduleFilter !== "all" ||
+    backupFilter !== "all";
+
   const sorted = sortContainers(filtered, sortKey);
   const live = sorted.filter((c) => c.installed);
   const orphans = sorted.filter((c) => !c.installed);
@@ -1480,7 +1434,7 @@ export function Containers() {
       {/* Controls: search + filter (installed / schedule / backup) + sort. */}
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
-          <FilterPopover label={t("filter.button")}>
+          <FilterPopover label={t("filter.button")} active={filtersActive}>
             <input
               type="text"
               value={search}

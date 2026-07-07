@@ -178,15 +178,9 @@ const fi: Partial<Translations> = {
   "dashboard.statMissingVMs": "Puuttuvat VMs",
 
   // Jobs page
-  "nav.jobs": "Tehtävät",
-  "jobs.title": "Tehtävät",
-  "jobs.subtitle": "Varmuuskopiointisuunnitelmat toimialueittain",
-  "jobs.configureInSettings": "Määritä aikataulut Asetuksissa",
   "jobs.containersSection": "Kontit",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Aktiivinen",
-  "jobs.paused": "Tauolla",
   "jobs.notScheduled": "Ei aikataulutettu",
   "jobs.cadenceDaily": "Päivittäin klo {time}",
   "jobs.cadenceWeekly": "Viikoittain ({days}) klo {time}",
@@ -223,11 +217,9 @@ const fi: Partial<Translations> = {
   "containers.emptyDocker": "Kontteja ei löytynyt. Onko Docker käynnissä?",
   "containers.bulkResult": "{ok} ok, {fail} epäonnistui",
   "vm.method.saveFailed": "Varmuuskopiointitapaa ei voitu vaihtaa — sitä ei muutettu.",
-  "jobs.noVMs": "Ei VM:iä vielä",
   "jobs.noContainersIncluded": "Aikatauluun ei ole sisällytetty kontteja.",
   "jobs.flashRow": "Unraid Flash -kokoonpano",
   "jobs.flashPlanned": "suunniteltu",
-  "jobs.vmPlanned": "VM-varmuuskopiointisuoritin ei ole vielä toteutettu.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
