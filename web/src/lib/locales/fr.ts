@@ -23,6 +23,9 @@ const fr: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Tableau de bord",
   "dashboard.subtitle": "Votre état de sauvegarde en un coup d'œil.",
+  "dashboard.summaryHealth": "État général",
+  "dashboard.summaryNextBackup": "Prochaine sauvegarde",
+  "dashboard.summaryLastResult": "Dernier résultat",
   "dashboard.lastBackups": "Dernières sauvegardes",
   "dashboard.recentRuns": "Exécutions récentes",
   "dashboard.spikeStatus": "État du système",
@@ -106,6 +109,9 @@ const fr: Partial<Translations> = {
   "restore.progress": "Restauration… {pct} %",
   "restore.preview": "Aperçu",
   "restore.started": "Restauration démarrée",
+  "restore.completeContainer": "Restauration terminée — le conteneur est en cours de recréation.",
+  "restore.completeVM": "Restauration terminée — les disques de la VM ont été remplacés.",
+  "restore.recreateComplete": "Recréation terminée — le conteneur a été recréé.",
 
   // Runs
   "run.kindBackup": "Sauvegarde",
@@ -141,6 +147,7 @@ const fr: Partial<Translations> = {
   "source.hint": "La restauration et la suppression n'agissent que sur la source sélectionnée — supprimer une sauvegarde locale ne touche jamais la copie hors site, et inversement.",
   "offsite.schedulePlaceholder": "vide = après chaque sauvegarde · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Répliquer maintenant",
+  "offsite.sectionTitle": "Protection hors site",
   "offsite.replicating": "Réplication…",
   "offsite.replicateFailed": "Échec de la réplication",
   "flash.downloading": "Téléchargement…",

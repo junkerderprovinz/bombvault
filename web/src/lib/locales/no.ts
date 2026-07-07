@@ -22,6 +22,9 @@ const no: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Sikkerhetskopieringsstatusen din med ett blikk.",
+  "dashboard.summaryHealth": "Samlet status",
+  "dashboard.summaryNextBackup": "Neste sikkerhetskopi",
+  "dashboard.summaryLastResult": "Siste resultat",
   "dashboard.lastBackups": "Siste sikkerhetskopier",
   "dashboard.recentRuns": "Siste kjøringer",
   "dashboard.spikeStatus": "Systemstatus",
@@ -105,6 +108,9 @@ const no: Partial<Translations> = {
   "restore.progress": "Gjenoppretter… {pct}%",
   "restore.preview": "Forhåndsvisning",
   "restore.started": "Gjenoppretting startet",
+  "restore.completeContainer": "Gjenoppretting fullført — kontaineren opprettes på nytt.",
+  "restore.completeVM": "Gjenoppretting fullført — VM-ens disker er erstattet.",
+  "restore.recreateComplete": "Ny oppretting fullført — kontaineren er opprettet på nytt.",
 
   // Runs
   "run.kindBackup": "Sikkerhetskopiering",
@@ -140,6 +146,7 @@ const no: Partial<Translations> = {
   "source.hint": "Gjenoppretting og sletting gjelder kun den valgte kilden — å slette en lokal sikkerhetskopi rører aldri den eksterne kopien, og omvendt.",
   "offsite.schedulePlaceholder": "tom = etter hver sikkerhetskopi · f.eks. weekly Sun 03:00",
   "offsite.replicateNow": "Replikér nå",
+  "offsite.sectionTitle": "Ekstern beskyttelse",
   "offsite.replicating": "Replikerer…",
   "offsite.replicateFailed": "Replikering mislyktes",
   "flash.downloading": "Laster ned…",

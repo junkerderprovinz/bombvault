@@ -22,6 +22,9 @@ const nl: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Je back-upstatus in één oogopslag.",
+  "dashboard.summaryHealth": "Algehele status",
+  "dashboard.summaryNextBackup": "Volgende back-up",
+  "dashboard.summaryLastResult": "Laatste resultaat",
   "dashboard.lastBackups": "Laatste back-ups",
   "dashboard.recentRuns": "Recente uitvoeringen",
   "dashboard.spikeStatus": "Systeemstatus",
@@ -104,6 +107,9 @@ const nl: Partial<Translations> = {
   "restore.progress": "Herstellen… {pct}%",
   "restore.preview": "Voorbeeld",
   "restore.started": "Herstel gestart",
+  "restore.completeContainer": "Herstel voltooid — de container wordt opnieuw aangemaakt.",
+  "restore.completeVM": "Herstel voltooid — de schijven van de VM zijn vervangen.",
+  "restore.recreateComplete": "Opnieuw aanmaken voltooid — de container is opnieuw aangemaakt.",
 
   // Runs
   "run.kindBackup": "Back-up",
@@ -138,6 +144,7 @@ const nl: Partial<Translations> = {
   "source.hint": "Herstellen en verwijderen werken alleen op de geselecteerde bron — een lokale back-up verwijderen raakt nooit de off-site kopie, en omgekeerd.",
   "offsite.schedulePlaceholder": "leeg = na elke back-up · bijv. weekly Sun 03:00",
   "offsite.replicateNow": "Nu repliceren",
+  "offsite.sectionTitle": "Offsite-bescherming",
   "offsite.replicating": "Repliceren…",
   "offsite.replicateFailed": "Replicatie mislukt",
   "flash.downloading": "Downloaden…",

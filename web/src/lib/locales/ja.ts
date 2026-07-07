@@ -23,6 +23,9 @@ const ja: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "ダッシュボード",
   "dashboard.subtitle": "バックアップ状況を一目で。",
+  "dashboard.summaryHealth": "全体の状態",
+  "dashboard.summaryNextBackup": "次回のバックアップ",
+  "dashboard.summaryLastResult": "最後の結果",
   "dashboard.lastBackups": "直近のバックアップ",
   "dashboard.recentRuns": "最近の実行",
   "dashboard.spikeStatus": "システム状態",
@@ -106,6 +109,9 @@ const ja: Partial<Translations> = {
   "restore.progress": "復元中… {pct}%",
   "restore.preview": "プレビュー",
   "restore.started": "復元を開始しました",
+  "restore.completeContainer": "復元が完了しました — コンテナを再作成しています。",
+  "restore.completeVM": "復元が完了しました — VM のディスクを置き換えました。",
+  "restore.recreateComplete": "再作成が完了しました — コンテナを再作成しました。",
 
   // Runs
   "run.kindBackup": "バックアップ",
@@ -141,6 +147,7 @@ const ja: Partial<Translations> = {
   "source.hint": "復元と削除は選択中のソースにのみ作用します。ローカルバックアップを削除してもオフサイトのコピーには影響せず、その逆も同様です。",
   "offsite.schedulePlaceholder": "空欄 = 毎回のバックアップ後 · 例: weekly Sun 03:00",
   "offsite.replicateNow": "今すぐ複製",
+  "offsite.sectionTitle": "オフサイト保護",
   "offsite.replicating": "複製中…",
   "offsite.replicateFailed": "複製に失敗しました",
   "flash.downloading": "ダウンロード中…",

@@ -23,6 +23,9 @@ const el: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Πίνακας ελέγχου",
   "dashboard.subtitle": "Η κατάσταση των αντιγράφων σας με μια ματιά.",
+  "dashboard.summaryHealth": "Γενική κατάσταση",
+  "dashboard.summaryNextBackup": "Επόμενο αντίγραφο ασφαλείας",
+  "dashboard.summaryLastResult": "Τελευταίο αποτέλεσμα",
   "dashboard.lastBackups": "Τελευταία αντίγραφα ασφαλείας",
   "dashboard.recentRuns": "Πρόσφατες εκτελέσεις",
   "dashboard.spikeStatus": "Κατάσταση συστήματος",
@@ -106,6 +109,9 @@ const el: Partial<Translations> = {
   "restore.progress": "Επαναφορά… {pct}%",
   "restore.preview": "Προεπισκόπηση",
   "restore.started": "Η επαναφορά ξεκίνησε",
+  "restore.completeContainer": "Η επαναφορά ολοκληρώθηκε — το κοντέινερ αναδημιουργείται.",
+  "restore.completeVM": "Η επαναφορά ολοκληρώθηκε — οι δίσκοι της VM αντικαταστάθηκαν.",
+  "restore.recreateComplete": "Η αναδημιουργία ολοκληρώθηκε — το κοντέινερ αναδημιουργήθηκε.",
 
   // Runs
   "run.kindBackup": "Αντίγραφο ασφαλείας",
@@ -141,6 +147,7 @@ const el: Partial<Translations> = {
   "source.hint": "Η επαναφορά και η διαγραφή επενεργούν μόνο στην επιλεγμένη πηγή — η διαγραφή τοπικού αντιγράφου δεν αγγίζει ποτέ το αντίγραφο εκτός τόπου, και αντίστροφα.",
   "offsite.schedulePlaceholder": "κενό = μετά από κάθε αντίγραφο · π.χ. weekly Sun 03:00",
   "offsite.replicateNow": "Αναπαραγωγή τώρα",
+  "offsite.sectionTitle": "Προστασία εκτός τόπου",
   "offsite.replicating": "Αναπαραγωγή…",
   "offsite.replicateFailed": "Η αναπαραγωγή απέτυχε",
   "flash.downloading": "Λήψη…",

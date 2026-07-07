@@ -22,6 +22,9 @@ const pl: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panel",
   "dashboard.subtitle": "Stan Twoich kopii zapasowych w skrócie.",
+  "dashboard.summaryHealth": "Ogólny stan",
+  "dashboard.summaryNextBackup": "Następna kopia zapasowa",
+  "dashboard.summaryLastResult": "Ostatni wynik",
   "dashboard.lastBackups": "Ostatnie kopie zapasowe",
   "dashboard.recentRuns": "Ostatnie uruchomienia",
   "dashboard.spikeStatus": "Stan systemu",
@@ -104,6 +107,9 @@ const pl: Partial<Translations> = {
   "restore.progress": "Przywracanie… {pct}%",
   "restore.preview": "Podgląd",
   "restore.started": "Przywracanie uruchomione",
+  "restore.completeContainer": "Przywracanie zakończone — kontener jest odtwarzany.",
+  "restore.completeVM": "Przywracanie zakończone — dyski maszyny wirtualnej zostały zastąpione.",
+  "restore.recreateComplete": "Odtwarzanie zakończone — kontener został odtworzony.",
 
   // Runs
   "run.kindBackup": "Kopia zapasowa",
@@ -138,6 +144,7 @@ const pl: Partial<Translations> = {
   "source.hint": "Przywracanie i usuwanie działają tylko na wybranym źródle — usunięcie kopii lokalnej nigdy nie narusza kopii poza siedzibą i odwrotnie.",
   "offsite.schedulePlaceholder": "puste = po każdej kopii · np. weekly Sun 03:00",
   "offsite.replicateNow": "Replikuj teraz",
+  "offsite.sectionTitle": "Ochrona poza siedzibą",
   "offsite.replicating": "Replikowanie…",
   "offsite.replicateFailed": "Replikacja nie powiodła się",
   "flash.downloading": "Pobieranie…",

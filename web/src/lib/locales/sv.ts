@@ -23,6 +23,9 @@ const sv: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Översikt",
   "dashboard.subtitle": "Din säkerhetskopieringsstatus med en blick.",
+  "dashboard.summaryHealth": "Övergripande status",
+  "dashboard.summaryNextBackup": "Nästa säkerhetskopia",
+  "dashboard.summaryLastResult": "Senaste resultat",
   "dashboard.lastBackups": "Senaste säkerhetskopior",
   "dashboard.recentRuns": "Senaste körningar",
   "dashboard.spikeStatus": "Systemstatus",
@@ -106,6 +109,9 @@ const sv: Partial<Translations> = {
   "restore.progress": "Återställer… {pct}%",
   "restore.preview": "Förhandsgranska",
   "restore.started": "Återställning startad",
+  "restore.completeContainer": "Återställning klar — containern återskapas.",
+  "restore.completeVM": "Återställning klar — VM:ens diskar har ersatts.",
+  "restore.recreateComplete": "Återskapande klart — containern har återskapats.",
 
   // Runs
   "run.kindBackup": "Säkerhetskopia",
@@ -141,6 +147,7 @@ const sv: Partial<Translations> = {
   "source.hint": "Återställning och radering påverkar bara den valda källan — att radera en lokal säkerhetskopia rör aldrig kopian utanför platsen, och tvärtom.",
   "offsite.schedulePlaceholder": "tomt = efter varje säkerhetskopia · t.ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replikera nu",
+  "offsite.sectionTitle": "Skydd utanför platsen",
   "offsite.replicating": "Replikerar…",
   "offsite.replicateFailed": "Replikering misslyckades",
   "flash.downloading": "Laddar ner…",

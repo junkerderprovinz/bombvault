@@ -23,6 +23,9 @@ const es: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panel",
   "dashboard.subtitle": "El estado de tus copias de seguridad de un vistazo.",
+  "dashboard.summaryHealth": "Estado general",
+  "dashboard.summaryNextBackup": "Próxima copia",
+  "dashboard.summaryLastResult": "Último resultado",
   "dashboard.lastBackups": "Últimas copias",
   "dashboard.recentRuns": "Ejecuciones recientes",
   "dashboard.spikeStatus": "Estado del sistema",
@@ -106,6 +109,9 @@ const es: Partial<Translations> = {
   "restore.progress": "Restaurando… {pct}%",
   "restore.preview": "Vista previa",
   "restore.started": "Restauración iniciada",
+  "restore.completeContainer": "Restauración completada — se está recreando el contenedor.",
+  "restore.completeVM": "Restauración completada — los discos de la VM se han reemplazado.",
+  "restore.recreateComplete": "Recreación completada — el contenedor se ha recreado.",
 
   // Runs
   "run.kindBackup": "Copia",
@@ -141,6 +147,7 @@ const es: Partial<Translations> = {
   "source.hint": "Restaurar y eliminar solo afectan a la fuente seleccionada — eliminar una copia local nunca toca la copia externa, y viceversa.",
   "offsite.schedulePlaceholder": "vacío = tras cada copia · p. ej. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar ahora",
+  "offsite.sectionTitle": "Protección externa",
   "offsite.replicating": "Replicando…",
   "offsite.replicateFailed": "Error de replicación",
   "flash.downloading": "Descargando…",
