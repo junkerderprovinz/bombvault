@@ -18,15 +18,53 @@ interface NavItem {
 // Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
 type EggState = "idle" | "wobble" | "boom";
 
-// Pre-computed radial offsets for the explosion particles. Each flies from the
-// logo's centre out to (tx,ty); kept module-level so the array stays stable
-// across renders (no re-allocation, no re-randomising mid-boom).
-const BOOM_PARTICLES = Array.from({ length: 10 }, (_, i) => {
-  const angle = (Math.PI * 2 * i) / 10;
-  const dist = 38 + (i % 2) * 10;
+// Fragment shatter grid (Item 6). On boom the logo breaks into an N×N grid of tiles,
+// each painting its OWN slice of the current logo (via --egg-logo + a per-tile
+// background-position, so at rest they reassemble the whole mark) and flying outward
+// from the centre with spin + a little gravity. Corner tiles point at the corners;
+// magnitude is randomised per tile. Pre-computed once at module load so the pattern
+// stays stable across the re-renders the boom triggers (no re-randomising mid-boom).
+const FRAG_N = 6; // 6×6 = 36 fragments
+const FRAG_TILES = Array.from({ length: FRAG_N * FRAG_N }, (_, i) => {
+  const row = Math.floor(i / FRAG_N);
+  const col = i % FRAG_N;
+  const mid = (FRAG_N - 1) / 2;
+  const vx = col - mid; // outward direction from centre
+  const vy = row - mid;
+  const spread = 15 + Math.random() * 13; // per-unit magnitude, randomised
+  const dx = Math.round(vx * spread + (Math.random() - 0.5) * 12);
+  const dy = Math.round(vy * spread + (Math.random() - 0.5) * 12);
+  return {
+    left: `${(col * 100) / FRAG_N}%`,
+    top: `${(row * 100) / FRAG_N}%`,
+    size: `${100 / FRAG_N}%`,
+    bgPos: `${(col / (FRAG_N - 1)) * 100}% ${(row / (FRAG_N - 1)) * 100}%`,
+    dx: `${dx}px`,
+    dy: `${dy}px`,
+    rot: `${Math.round((Math.random() - 0.5) * 560)}deg`,
+    delay: `${Math.round(Math.random() * 90)}ms`,
+  };
+});
+
+// Overlapping soft radial puffs that build the billowing fire→smoke explosion cloud.
+const BOOM_CLOUD = [
+  { cx: "-6px", cy: "-4px", delay: "0ms", hot: true },
+  { cx: "16px", cy: "-8px", delay: "40ms", hot: true },
+  { cx: "-18px", cy: "6px", delay: "70ms", hot: false },
+  { cx: "10px", cy: "14px", delay: "110ms", hot: false },
+  { cx: "0px", cy: "-16px", delay: "150ms", hot: false },
+];
+
+// Flying sparks — alternating hot yellow / orange, radial from the centre, staggered.
+// Kept module-level so the array stays stable across renders (no re-randomising).
+const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
+  const angle = (Math.PI * 2 * i) / 14 + (i % 2) * 0.22;
+  const dist = 34 + (i % 3) * 12;
   return {
     tx: `${Math.round(Math.cos(angle) * dist)}px`,
     ty: `${Math.round(Math.sin(angle) * dist)}px`,
+    spark: i % 2 === 0 ? "#fff57c" : "#f68e32",
+    delay: `${Math.round((i % 4) * 18)}ms`,
   };
 });
 
@@ -301,7 +339,7 @@ export function Sidebar({ settings }: SidebarProps) {
         const toIdle = window.setTimeout(() => {
           setEggState("idle");
           firedRef.current = false;
-        }, 700);
+        }, 1400);
         seqRef.current.push(toIdle);
       }, 900);
       seqRef.current.push(toBoom);
@@ -357,28 +395,69 @@ export function Sidebar({ settings }: SidebarProps) {
               src="/logo.svg"
               alt="BombVault"
               draggable={false}
-              className="h-16 w-16 object-contain shrink-0 block dark:hidden"
+              className="bv-logo-img h-16 w-16 object-contain shrink-0 block dark:hidden"
             />
             <img
               src="/logo-light.svg"
               alt="BombVault"
               draggable={false}
-              className="h-16 w-16 object-contain shrink-0 hidden dark:block"
+              className="bv-logo-img h-16 w-16 object-contain shrink-0 hidden dark:block"
             />
+            {/* At boom the <img> is hidden (CSS) and the mark shatters into flying
+                tiles, each showing its own slice of the current logo. */}
+            {eggState === "boom" && (
+              <span className="bv-frag-grid" aria-hidden="true">
+                {FRAG_TILES.map((f, i) => (
+                  <span
+                    key={i}
+                    className="bv-frag"
+                    style={
+                      {
+                        left: f.left,
+                        top: f.top,
+                        width: f.size,
+                        height: f.size,
+                        backgroundPosition: f.bgPos,
+                        "--dx": f.dx,
+                        "--dy": f.dy,
+                        "--rot": f.rot,
+                        "--delay": f.delay,
+                      } as React.CSSProperties
+                    }
+                  />
+                ))}
+              </span>
+            )}
           </span>
           {eggState === "boom" && (
             <span className="bv-boom-fx" aria-hidden="true">
+              {/* Billowing fire→smoke cloud behind the flying fragments. */}
+              {BOOM_CLOUD.map((c, i) => (
+                <span
+                  key={`c${i}`}
+                  className={`bv-cloud ${c.hot ? "bv-cloud--hot" : "bv-cloud--smoke"}`}
+                  style={{ "--cx": c.cx, "--cy": c.cy, "--delay": c.delay } as React.CSSProperties}
+                />
+              ))}
+              {/* Flying sparks for extra energy. */}
               {BOOM_PARTICLES.map((p, i) => (
                 <span
-                  key={i}
+                  key={`p${i}`}
                   className="bv-particle"
-                  style={{ "--tx": p.tx, "--ty": p.ty } as React.CSSProperties}
+                  style={
+                    {
+                      "--tx": p.tx,
+                      "--ty": p.ty,
+                      "--spark": p.spark,
+                      "--delay": p.delay,
+                    } as React.CSSProperties
+                  }
                 />
               ))}
             </span>
           )}
         </span>
-        <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
+        <span className="font-brand text-carbon-text text-xl tracking-tight leading-none whitespace-nowrap">
           BombVault
         </span>
       </button>
