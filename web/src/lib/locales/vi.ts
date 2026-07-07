@@ -178,15 +178,9 @@ const vi: Partial<Translations> = {
   "dashboard.statMissingVMs": "VMs bị thiếu",
 
   // Jobs page
-  "nav.jobs": "Tác vụ",
-  "jobs.title": "Tác vụ",
-  "jobs.subtitle": "Kế hoạch sao lưu theo miền",
-  "jobs.configureInSettings": "Cấu hình lịch trình trong Cài đặt",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Đang hoạt động",
-  "jobs.paused": "Tạm dừng",
   "jobs.notScheduled": "Chưa lên lịch",
   "jobs.cadenceDaily": "Hằng ngày lúc {time}",
   "jobs.cadenceWeekly": "Hằng tuần ({days}) lúc {time}",
@@ -223,11 +217,9 @@ const vi: Partial<Translations> = {
   "containers.emptyDocker": "Không tìm thấy container. Docker có đang chạy không?",
   "containers.bulkResult": "{ok} ổn, {fail} thất bại",
   "vm.method.saveFailed": "Không thể đổi phương thức sao lưu — phương thức không thay đổi.",
-  "jobs.noVMs": "Chưa có VMs",
   "jobs.noContainersIncluded": "Không có containers nào trong lịch trình.",
   "jobs.flashRow": "Cấu hình Unraid flash",
   "jobs.flashPlanned": "đã lên kế hoạch",
-  "jobs.vmPlanned": "Bộ thực thi sao lưu VM chưa được triển khai.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

@@ -748,6 +748,11 @@ function SnapshotRow({
   // OTHER backup/restore/replication runs (this snapshot's own in-flight restore
   // is covered inside RestoreAction via isPending, never self-blocked).
   const running = anyActive(progressMap);
+  // Delete only needs to be blocked while THIS container's own op is in flight
+  // (deleting a snapshot mid-restore/backup of the same repo). An unrelated
+  // container's activity must not disable it — so guard on the row-local key,
+  // not the global anyActive.
+  const busy = progressMap[`container:${containerName}`]?.active ?? false;
   // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
   const [showRestore, setShowRestore] = useState(false);
   // In basic mode only the in-place restore is offered; the mode radios (files /
@@ -806,7 +811,7 @@ function SnapshotRow({
         {/* Delete this backup (restic forget) */}
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting || running.active}
+          disabled={deleting || busy}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
         >

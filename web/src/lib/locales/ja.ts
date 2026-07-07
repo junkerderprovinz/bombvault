@@ -178,15 +178,9 @@ const ja: Partial<Translations> = {
   "dashboard.statMissingVMs": "不足している VM",
 
   // Jobs page
-  "nav.jobs": "ジョブ",
-  "jobs.title": "ジョブ",
-  "jobs.subtitle": "ドメイン別バックアッププラン",
-  "jobs.configureInSettings": "設定でスケジュールを構成してください",
   "jobs.containersSection": "コンテナ",
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "フラッシュ",
-  "jobs.active": "アクティブ",
-  "jobs.paused": "一時停止",
   "jobs.notScheduled": "未スケジュール",
   "jobs.cadenceDaily": "毎日 {time}",
   "jobs.cadenceWeekly": "毎週（{days}）{time}",
@@ -223,11 +217,9 @@ const ja: Partial<Translations> = {
   "containers.emptyDocker": "コンテナが見つかりません。Docker は実行中ですか？",
   "containers.bulkResult": "成功 {ok}、失敗 {fail}",
   "vm.method.saveFailed": "バックアップ方式を変更できませんでした — 変更されていません。",
-  "jobs.noVMs": "VM がありません",
   "jobs.noContainersIncluded": "スケジュールに含まれているコンテナがありません。",
   "jobs.flashRow": "Unraid フラッシュ設定",
   "jobs.flashPlanned": "計画済み",
-  "jobs.vmPlanned": "VM バックアップ実行機能は未実装です。",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

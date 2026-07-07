@@ -134,9 +134,18 @@ function ConfigSettingsCard({
       // mount-time snapshot could otherwise re-assert a stale configSchedule/
       // configOffsiteSchedule and silently disable a schedule set elsewhere.
       const latest = await getSettings();
-      const base = latest.ok ? latest.settings : settings;
+      // Do NOT fall back to the stale mount-time snapshot on a failed re-fetch:
+      // the backend returns {ok:false} at HTTP 200 (does not throw), and PUTting
+      // the old snapshot would re-assert a stale configSchedule/configOffsiteSchedule
+      // now owned by Settings › Schedules, silently reverting a schedule set
+      // elsewhere. Abort the save instead.
+      if (!latest.ok) {
+        setSaveState("error");
+        setSaveError(latest.error ?? "Could not load current settings");
+        return;
+      }
       const merged: Settings = {
-        ...base,
+        ...latest.settings,
         configEnabled: settings.configEnabled,
         configPath: settings.configPath,
         configOffsite: settings.configOffsite,

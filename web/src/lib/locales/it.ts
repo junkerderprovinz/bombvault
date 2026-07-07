@@ -178,15 +178,9 @@ const it: Partial<Translations> = {
   "dashboard.statMissingVMs": "VM mancanti",
 
   // Jobs page
-  "nav.jobs": "Attività",
-  "jobs.title": "Attività",
-  "jobs.subtitle": "Piani di backup per dominio",
-  "jobs.configureInSettings": "Configura i calendari in Impostazioni",
   "jobs.containersSection": "Container",
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Attivo",
-  "jobs.paused": "In pausa",
   "jobs.notScheduled": "Non pianificato",
   "jobs.cadenceDaily": "Ogni giorno alle {time}",
   "jobs.cadenceWeekly": "Settimanale ({days}) alle {time}",
@@ -223,11 +217,9 @@ const it: Partial<Translations> = {
   "containers.emptyDocker": "Nessun container trovato. Docker è in esecuzione?",
   "containers.bulkResult": "{ok} ok, {fail} falliti",
   "vm.method.saveFailed": "Impossibile cambiare il metodo di backup — non è stato modificato.",
-  "jobs.noVMs": "Nessuna VM",
   "jobs.noContainersIncluded": "Nessun container incluso nel calendario.",
   "jobs.flashRow": "Configurazione flash Unraid",
   "jobs.flashPlanned": "pianificato",
-  "jobs.vmPlanned": "L'esecutore di backup VM non è ancora implementato.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

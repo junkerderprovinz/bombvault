@@ -178,15 +178,9 @@ const el: Partial<Translations> = {
   "dashboard.statMissingVMs": "Ελλείποντα VMs",
 
   // Jobs page
-  "nav.jobs": "Εργασίες",
-  "jobs.title": "Εργασίες",
-  "jobs.subtitle": "Σχέδια αντιγράφων ανά τομέα",
-  "jobs.configureInSettings": "Ρυθμίστε τα χρονοδιαγράμματα στις Ρυθμίσεις",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Ενεργό",
-  "jobs.paused": "Σε παύση",
   "jobs.notScheduled": "Μη προγραμματισμένο",
   "jobs.cadenceDaily": "Καθημερινά στις {time}",
   "jobs.cadenceWeekly": "Εβδομαδιαία ({days}) στις {time}",
@@ -223,11 +217,9 @@ const el: Partial<Translations> = {
   "containers.emptyDocker": "Δεν βρέθηκαν κοντέινερ. Εκτελείται το Docker;",
   "containers.bulkResult": "{ok} εντάξει, {fail} απέτυχαν",
   "vm.method.saveFailed": "Δεν ήταν δυνατή η αλλαγή της μεθόδου αντιγράφου — δεν άλλαξε.",
-  "jobs.noVMs": "Δεν υπάρχουν VMs ακόμα",
   "jobs.noContainersIncluded": "Δεν περιλαμβάνονται containers στο χρονοδιάγραμμα.",
   "jobs.flashRow": "Διαμόρφωση Unraid flash",
   "jobs.flashPlanned": "προγραμματισμένο",
-  "jobs.vmPlanned": "Ο εκτελεστής αντιγράφων VM δεν έχει υλοποιηθεί ακόμα.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

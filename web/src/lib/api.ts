@@ -152,6 +152,8 @@ export interface GetSettingsResponse {
   settings: Settings;
   /** The resolved host mount root (e.g. "/host/user"), sourced from cfg.HostMountRoot. */
   hostMountRoot: string;
+  /** Present only on the graceful failure envelope ({ok:false} at HTTP 200). */
+  error?: string;
 }
 
 /** A run record from GET /api/runs — camelCase matches store.Run JSON tags */

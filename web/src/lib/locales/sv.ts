@@ -178,15 +178,9 @@ const sv: Partial<Translations> = {
   "dashboard.statMissingVMs": "Saknade VMs",
 
   // Jobs page
-  "nav.jobs": "Jobb",
-  "jobs.title": "Jobb",
-  "jobs.subtitle": "Säkerhetskopieringsplaner per domän",
-  "jobs.configureInSettings": "Konfigurera scheman i Inställningar",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Aktiv",
-  "jobs.paused": "Pausad",
   "jobs.notScheduled": "Ej schemalagd",
   "jobs.cadenceDaily": "Dagligen kl. {time}",
   "jobs.cadenceWeekly": "Veckovis ({days}) kl. {time}",
@@ -223,11 +217,9 @@ const sv: Partial<Translations> = {
   "containers.emptyDocker": "Inga containrar hittades. Körs Docker?",
   "containers.bulkResult": "{ok} ok, {fail} misslyckades",
   "vm.method.saveFailed": "Det gick inte att ändra säkerhetskopieringsmetoden — den ändrades inte.",
-  "jobs.noVMs": "Inga VMs än",
   "jobs.noContainersIncluded": "Inga containers ingår i schemat.",
   "jobs.flashRow": "Unraid Flash-konfiguration",
   "jobs.flashPlanned": "planerad",
-  "jobs.vmPlanned": "VM-säkerhetskopieringsexekutorn är ännu inte implementerad.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

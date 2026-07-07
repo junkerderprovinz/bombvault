@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
@@ -161,56 +162,6 @@ function ChipFilter<K extends string>({
           {o.label}
         </button>
       ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Filter popover (#2.6)
-// ---------------------------------------------------------------------------
-// Collapses the top controls (search + schedule/backup chips + sort) behind a
-// single "Filters" button so the toolbar stays uncluttered. Mirrors the same
-// change on Containers so the two pages stay consistent. Closes on outside
-// click / Escape; the controls inside keep all their own state + persistence.
-
-function FilterPopover({ t, children }: { t: T; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M1 2.5h10M2.5 6h7M4.5 9.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        {t("filter.button")}
-      </button>
-      {open && (
-        <div className="absolute left-0 z-20 mt-2 w-max min-w-[16rem] max-w-[calc(100vw-2rem)] rounded-lg border border-carbon-border bg-carbon-surface p-4 shadow-lg flex flex-col gap-4">
-          {children}
-        </div>
-      )}
     </div>
   );
 }
@@ -467,6 +418,10 @@ function VMSnapshotRow({
   // OTHER backup/restore/replication runs (this VM's own in-flight restore is
   // covered inside RestoreAction via isPending, never self-blocked).
   const running = anyActive(progressMap);
+  // The delete button is guarded only against THIS VM's own in-flight
+  // backup/restore, not any global activity — deleting VM A's snapshot must stay
+  // available while VM B is backing up.
+  const busy = progressMap[`vm:${vmName}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
@@ -501,7 +456,7 @@ function VMSnapshotRow({
         )}
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting || running.active}
+          disabled={deleting || busy}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
         >
@@ -915,6 +870,13 @@ export function VMs() {
     return true;
   });
 
+  // Any contained filter off its default narrows the list. The schedule/backup
+  // chips persist to localStorage, so a restored non-"all" value would silently
+  // shrink the list behind the collapsed "Filters" button — surface it via the
+  // trigger's dot. Sort is not a filter (it never hides rows), so it is excluded.
+  const filtersActive =
+    query !== "" || scheduleFilter !== "all" || backupFilter !== "all";
+
   const sorted = sortVMs(filtered, sortKey);
   const live = sorted.filter((v) => v.state !== "not-installed");
   const orphans = sorted.filter((v) => v.state === "not-installed");
@@ -1045,7 +1007,7 @@ export function VMs() {
       {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all. */}
       {!loading && vms.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
-          <FilterPopover t={t}>
+          <FilterPopover label={t("filter.button")} active={filtersActive}>
             <input
               type="text"
               value={search}

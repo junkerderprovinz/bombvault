@@ -178,15 +178,9 @@ const cs: Partial<Translations> = {
   "dashboard.statMissingVMs": "Chybějící VMs",
 
   // Jobs page
-  "nav.jobs": "Úlohy",
-  "jobs.title": "Úlohy",
-  "jobs.subtitle": "Zálohovací plány podle domény",
-  "jobs.configureInSettings": "Konfigurujte plány v Nastavení",
   "jobs.containersSection": "Kontejnery",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Aktivní",
-  "jobs.paused": "Pozastaveno",
   "jobs.notScheduled": "Neplánováno",
   "jobs.cadenceDaily": "Denně v {time}",
   "jobs.cadenceWeekly": "Týdně ({days}) v {time}",
@@ -223,11 +217,9 @@ const cs: Partial<Translations> = {
   "containers.emptyDocker": "Nenalezeny žádné kontejnery. Běží Docker?",
   "containers.bulkResult": "{ok} ok, {fail} selhalo",
   "vm.method.saveFailed": "Nepodařilo se změnit metodu zálohování — nebyla změněna.",
-  "jobs.noVMs": "Zatím žádné VMs",
   "jobs.noContainersIncluded": "Do plánu nejsou zahrnuty žádné kontejnery.",
   "jobs.flashRow": "Konfigurace Unraid Flash",
   "jobs.flashPlanned": "plánováno",
-  "jobs.vmPlanned": "Executor záloh VM zatím není implementován.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

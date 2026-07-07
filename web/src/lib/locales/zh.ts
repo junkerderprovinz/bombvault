@@ -178,15 +178,9 @@ const zh: Partial<Translations> = {
   "dashboard.statMissingVMs": "缺失虚拟机",
 
   // Jobs page
-  "nav.jobs": "任务",
-  "jobs.title": "任务",
-  "jobs.subtitle": "按域划分的备份计划",
-  "jobs.configureInSettings": "在设置中配置计划",
   "jobs.containersSection": "容器",
   "jobs.vmsSection": "虚拟机",
   "jobs.flashSection": "闪存",
-  "jobs.active": "活动",
-  "jobs.paused": "已暂停",
   "jobs.notScheduled": "未计划",
   "jobs.cadenceDaily": "每天 {time}",
   "jobs.cadenceWeekly": "每周（{days}）{time}",
@@ -223,11 +217,9 @@ const zh: Partial<Translations> = {
   "containers.emptyDocker": "未找到容器。Docker 正在运行吗？",
   "containers.bulkResult": "成功 {ok}，失败 {fail}",
   "vm.method.saveFailed": "无法更改备份方式 — 未做更改。",
-  "jobs.noVMs": "暂无虚拟机",
   "jobs.noContainersIncluded": "计划中没有包含任何容器。",
   "jobs.flashRow": "Unraid 闪存配置",
   "jobs.flashPlanned": "已计划",
-  "jobs.vmPlanned": "虚拟机备份执行器尚未实现。",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

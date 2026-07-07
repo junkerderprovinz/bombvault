@@ -174,15 +174,9 @@ const ru: Partial<Translations> = {
   "dashboard.statMissingVMs": "Отсутствующие виртуальные машины",
 
   // Jobs page
-  "nav.jobs": "Задания",
-  "jobs.title": "Задания",
-  "jobs.subtitle": "Планы резервного копирования по доменам",
-  "jobs.configureInSettings": "Настройте расписания в Настройках",
   "jobs.containersSection": "Контейнеры",
   "jobs.vmsSection": "Виртуальные машины",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Активно",
-  "jobs.paused": "Приостановлено",
   "jobs.notScheduled": "Без расписания",
   "jobs.cadenceDaily": "Ежедневно в {time}",
   "jobs.cadenceWeekly": "Еженедельно ({days}) в {time}",
@@ -219,11 +213,9 @@ const ru: Partial<Translations> = {
   "containers.emptyDocker": "Контейнеры не найдены. Docker запущен?",
   "containers.bulkResult": "{ok} ок, {fail} с ошибкой",
   "vm.method.saveFailed": "Не удалось изменить метод резервного копирования — он не был изменён.",
-  "jobs.noVMs": "Виртуальных машин нет",
   "jobs.noContainersIncluded": "Ни один контейнер не включён в расписание.",
   "jobs.flashRow": "Конфигурация Unraid flash",
   "jobs.flashPlanned": "запланировано",
-  "jobs.vmPlanned": "Исполнитель резервного копирования VM ещё не реализован.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

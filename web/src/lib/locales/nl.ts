@@ -174,15 +174,9 @@ const nl: Partial<Translations> = {
   "dashboard.statMissingVMs": "Ontbrekende VM's",
 
   // Jobs page
-  "nav.jobs": "Taken",
-  "jobs.title": "Taken",
-  "jobs.subtitle": "Back-upplannen per domein",
-  "jobs.configureInSettings": "Planningen configureren in Instellingen",
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VM's",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Actief",
-  "jobs.paused": "Gepauzeerd",
   "jobs.notScheduled": "Niet gepland",
   "jobs.cadenceDaily": "Dagelijks om {time}",
   "jobs.cadenceWeekly": "Wekelijks ({days}) om {time}",
@@ -219,11 +213,9 @@ const nl: Partial<Translations> = {
   "containers.emptyDocker": "Geen containers gevonden. Draait Docker?",
   "containers.bulkResult": "{ok} ok, {fail} mislukt",
   "vm.method.saveFailed": "Kon de back-upmethode niet wijzigen — er is niets veranderd.",
-  "jobs.noVMs": "Nog geen VM's",
   "jobs.noContainersIncluded": "Geen containers opgenomen in planning.",
   "jobs.flashRow": "Unraid flash-configuratie",
   "jobs.flashPlanned": "gepland",
-  "jobs.vmPlanned": "VM-back-upuitvoerder nog niet geïmplementeerd.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

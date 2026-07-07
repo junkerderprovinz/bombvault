@@ -178,15 +178,9 @@ const fr: Partial<Translations> = {
   "dashboard.statMissingVMs": "VMs manquantes",
 
   // Jobs page
-  "nav.jobs": "Tâches",
-  "jobs.title": "Tâches",
-  "jobs.subtitle": "Plans de sauvegarde par domaine",
-  "jobs.configureInSettings": "Configurer les plannings dans Paramètres",
   "jobs.containersSection": "Conteneurs",
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
-  "jobs.active": "Actif",
-  "jobs.paused": "En pause",
   "jobs.notScheduled": "Non planifié",
   "jobs.cadenceDaily": "Tous les jours à {time}",
   "jobs.cadenceWeekly": "Hebdomadaire ({days}) à {time}",
@@ -223,11 +217,9 @@ const fr: Partial<Translations> = {
   "containers.emptyDocker": "Aucun conteneur trouvé. Docker est-il démarré ?",
   "containers.bulkResult": "{ok} ok, {fail} en échec",
   "vm.method.saveFailed": "Impossible de changer la méthode de sauvegarde — elle n'a pas été modifiée.",
-  "jobs.noVMs": "Aucune VM pour l'instant",
   "jobs.noContainersIncluded": "Aucun conteneur inclus dans le planning.",
   "jobs.flashRow": "Configuration flash Unraid",
   "jobs.flashPlanned": "planifié",
-  "jobs.vmPlanned": "L'exécuteur de sauvegarde VM n'est pas encore implémenté.",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
