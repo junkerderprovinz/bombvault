@@ -134,6 +134,7 @@ const vi: Partial<Translations> = {
   "run.historyTitle": "Lịch sử chạy",
   "run.filterDay": "Ngày:",
   "run.allDays": "Tất cả các ngày",
+  "run.recentTitle": "Lần chạy gần đây",
   "run.colKind": "Loại",
   "run.colStatus": "Trạng thái",
   "run.colStarted": "Bắt đầu",

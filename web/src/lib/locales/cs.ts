@@ -134,6 +134,7 @@ const cs: Partial<Translations> = {
   "run.historyTitle": "Historie běhů",
   "run.filterDay": "Den:",
   "run.allDays": "Všechny dny",
+  "run.recentTitle": "Nedávné běhy",
   "run.colKind": "Typ",
   "run.colStatus": "Stav",
   "run.colStarted": "Spuštěno",

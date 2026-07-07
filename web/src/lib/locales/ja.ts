@@ -134,6 +134,7 @@ const ja: Partial<Translations> = {
   "run.historyTitle": "実行履歴",
   "run.filterDay": "日付：",
   "run.allDays": "すべての日",
+  "run.recentTitle": "最近の実行",
   "run.colKind": "種別",
   "run.colStatus": "状態",
   "run.colStarted": "開始",

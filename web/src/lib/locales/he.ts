@@ -134,6 +134,7 @@ const he: Partial<Translations> = {
   "run.historyTitle": "היסטוריית הרצות",
   "run.filterDay": "יום:",
   "run.allDays": "כל הימים",
+  "run.recentTitle": "הרצות אחרונות",
   "run.colKind": "סוג",
   "run.colStatus": "סטטוס",
   "run.colStarted": "התחיל",

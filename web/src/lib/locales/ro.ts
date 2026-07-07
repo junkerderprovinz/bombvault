@@ -133,6 +133,7 @@ const ro: Partial<Translations> = {
   "run.historyTitle": "Istoricul rulărilor",
   "run.filterDay": "Zi:",
   "run.allDays": "Toate zilele",
+  "run.recentTitle": "Rulări recente",
   "run.colKind": "Tip",
   "run.colStatus": "Stare",
   "run.colStarted": "Început",

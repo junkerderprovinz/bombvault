@@ -134,6 +134,7 @@ const sv: Partial<Translations> = {
   "run.historyTitle": "Körningshistorik",
   "run.filterDay": "Dag:",
   "run.allDays": "Alla dagar",
+  "run.recentTitle": "Senaste körningar",
   "run.colKind": "Typ",
   "run.colStatus": "Status",
   "run.colStarted": "Startad",

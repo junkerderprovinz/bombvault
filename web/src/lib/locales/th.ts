@@ -134,6 +134,7 @@ const th: Partial<Translations> = {
   "run.historyTitle": "ประวัติการทำงาน",
   "run.filterDay": "วัน:",
   "run.allDays": "ทุกวัน",
+  "run.recentTitle": "การทำงานล่าสุด",
   "run.colKind": "ประเภท",
   "run.colStatus": "สถานะ",
   "run.colStarted": "เริ่มต้น",

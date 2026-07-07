@@ -134,6 +134,7 @@ const da: Partial<Translations> = {
   "run.historyTitle": "Kørselsoversigt",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dage",
+  "run.recentTitle": "Seneste kørsler",
   "run.colKind": "Type",
   "run.colStatus": "Status",
   "run.colStarted": "Startet",
