@@ -739,14 +739,20 @@ export function previewContainerExcludes(
   });
 }
 
-/** Rebuild the target list from the backup storage (disaster recovery after a fresh install). */
-export function discover(): Promise<OkEnvelope & { discovered?: number }> {
-  return fetchJSON("/api/discover", { method: "POST" });
+/**
+ * Rebuild the target list from the backup storage (disaster recovery after a fresh
+ * install). `probe` makes it READ-ONLY: it opens + decrypts the repo to prove it is
+ * readable with the current APP_KEY and returns the same count, but writes no
+ * targets — used by the Recovery readiness check so merely testing readability
+ * never resurrects orphan entries (#44). The default rebuilds the targets.
+ */
+export function discover(probe = false): Promise<OkEnvelope & { discovered?: number }> {
+  return fetchJSON(`/api/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
-/** Rebuild the VM target list from backup storage (restore a VM deleted from the host). */
-export function discoverVMs(): Promise<OkEnvelope & { discovered?: number }> {
-  return fetchJSON("/api/vms/discover", { method: "POST" });
+/** Rebuild the VM target list from backup storage. `probe` = read-only readiness check (see discover, #44). */
+export function discoverVMs(probe = false): Promise<OkEnvelope & { discovered?: number }> {
+  return fetchJSON(`/api/vms/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
 /**
