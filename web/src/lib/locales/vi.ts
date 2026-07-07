@@ -760,6 +760,13 @@ const vi: Partial<Translations> = {
   "settings.subtitle": "Cấu hình BombVault — các thay đổi có hiệu lực ngay lập tức.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Bộ lọc",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Có gì mới trong {version}",
+  "whatsnew.loading": "Đang tải ghi chú phát hành…",
+  "whatsnew.loadFailed": "Không thể tải ghi chú phát hành tại đây. Hãy mở trên GitHub.",
+  "whatsnew.viewOnGitHub": "Xem bản phát hành đầy đủ trên GitHub",
+  "whatsnew.close": "Đóng",
 };
 
 export default vi;

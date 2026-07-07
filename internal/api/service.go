@@ -2219,6 +2219,12 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 // 409, instead of launching a goroutine that then blocks silently on the lock.
 // Progress is published under "batch:containers" for an overall indicator, while
 // each container still publishes its own "container:<name>" bar as it runs.
+//
+// Unlike a SCHEDULED domain run (which aggregates its Healthchecks pings into one
+// per run, #49), this manual multi-select keeps the per-item Healthchecks ping: it
+// backs up an arbitrary user-chosen SUBSET, not the whole domain, so pinging the
+// domain check "success" here would reset the scheduled-cadence monitor and could
+// mask a genuinely overdue scheduled backup. Each item therefore pings as normal.
 func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
@@ -6320,6 +6326,41 @@ func (s *Service) notifyBackupStart(ctx context.Context, domain string) {
 		return
 	}
 	notify.SendStart(ctx, c, domain)
+}
+
+// ScheduledHealthchecksStart pings the domain's Healthchecks check /start once at the
+// beginning of a SCHEDULED per-domain run (containers/VMs). The scheduler runs each
+// item with its own per-item /start suppressed (see main.go), so this single ping
+// represents the whole domain job instead of one ping per container/VM (#49). It is
+// best-effort and a no-op when the domain has no check configured or notifications are
+// off. domain is the scheduler's spelling ("containers"|"vms"); notify normalises it.
+func (s *Service) ScheduledHealthchecksStart(ctx context.Context, domain string) {
+	c, err := s.NotifyConfig()
+	if err != nil {
+		return
+	}
+	notify.PingDomainStart(ctx, c, domain)
+}
+
+// ScheduledHealthchecksResult pings the domain's Healthchecks check once at the end of
+// a SCHEDULED per-domain run: success when every item succeeded (failed == 0), else
+// /fail with a short aggregate summary ("N of M items failed"). It is the aggregate
+// counterpart to the per-item success/fail ping, which the run suppresses, so the check
+// reflects the whole domain job (#49). Best-effort; a no-op when the domain has no
+// check configured or notifications are off.
+func (s *Service) ScheduledHealthchecksResult(ctx context.Context, domain string, attempted, failed int) {
+	c, err := s.NotifyConfig()
+	if err != nil {
+		return
+	}
+	ok := failed == 0
+	var summary string
+	if ok {
+		summary = fmt.Sprintf("%d of %d items succeeded", attempted, attempted)
+	} else {
+		summary = fmt.Sprintf("%d of %d items failed", failed, attempted)
+	}
+	notify.PingDomainResult(ctx, c, domain, ok, summary)
 }
 
 // sendUnraidNotify triggers Unraid's native notification system by running the

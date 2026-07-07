@@ -771,6 +771,13 @@ const th: Partial<Translations> = {
   "settings.subtitle": "การกำหนดค่า BombVault — การเปลี่ยนแปลงมีผลทันที",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "ตัวกรอง",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "มีอะไรใหม่ใน {version}",
+  "whatsnew.loading": "กำลังโหลดบันทึกการเผยแพร่…",
+  "whatsnew.loadFailed": "ไม่สามารถโหลดบันทึกการเผยแพร่ที่นี่ได้ เปิดบน GitHub",
+  "whatsnew.viewOnGitHub": "ดูรุ่นเต็มบน GitHub",
+  "whatsnew.close": "ปิด",
 };
 
 export default th;

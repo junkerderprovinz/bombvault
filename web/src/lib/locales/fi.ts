@@ -768,6 +768,13 @@ const fi: Partial<Translations> = {
   "settings.subtitle": "BombVaultin asetukset — muutokset tulevat voimaan heti.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Suodattimet",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Uutta versiossa {version}",
+  "whatsnew.loading": "Ladataan julkaisutietoja…",
+  "whatsnew.loadFailed": "Julkaisutietoja ei voitu ladata tässä. Avaa ne GitHubissa.",
+  "whatsnew.viewOnGitHub": "Näytä koko julkaisu GitHubissa",
+  "whatsnew.close": "Sulje",
 };
 
 export default fi;

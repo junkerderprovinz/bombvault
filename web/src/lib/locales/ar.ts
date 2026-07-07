@@ -771,6 +771,13 @@ const ar: Partial<Translations> = {
   "settings.subtitle": "تكوين BombVault — تسري التغييرات فوراً.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "عوامل التصفية",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "الجديد في {version}",
+  "whatsnew.loading": "جارٍ تحميل ملاحظات الإصدار…",
+  "whatsnew.loadFailed": "تعذّر تحميل ملاحظات الإصدار هنا. افتحها على GitHub.",
+  "whatsnew.viewOnGitHub": "عرض الإصدار الكامل على GitHub",
+  "whatsnew.close": "إغلاق",
 };
 
 export default ar;

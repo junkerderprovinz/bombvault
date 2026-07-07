@@ -771,6 +771,13 @@ const hu: Partial<Translations> = {
   "settings.subtitle": "BombVault-konfiguráció — a módosítások azonnal életbe lépnek.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Szűrők",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Újdonságok a(z) {version} verzióban",
+  "whatsnew.loading": "Kiadási megjegyzések betöltése…",
+  "whatsnew.loadFailed": "A kiadási megjegyzéseket itt nem sikerült betölteni. Nyissa meg őket a GitHubon.",
+  "whatsnew.viewOnGitHub": "Teljes kiadás megtekintése a GitHubon",
+  "whatsnew.close": "Bezárás",
 };
 
 export default hu;

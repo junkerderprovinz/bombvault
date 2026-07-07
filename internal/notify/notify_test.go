@@ -333,3 +333,82 @@ func TestSendTestSMTPUnreachableErrorsClearly(t *testing.T) {
 		t.Fatalf("expected a clear smtp error, got %q", err)
 	}
 }
+
+// TestSuppressedHealthchecksSkipsPingNotChannels: a context flagged with
+// WithHealthchecksSuppressed folds out the per-call Healthchecks ping in Send and
+// SendStart, while the message channels (here a webhook) still fire. This is what a
+// scheduled per-domain run sets on each item so the run's ONE aggregate ping
+// represents the whole domain (#49).
+func TestSuppressedHealthchecksSkipsPingNotChannels(t *testing.T) {
+	var hcHits, webhookHits int
+	hc := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hcHits++ }))
+	defer hc.Close()
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
+	defer wh.Close()
+
+	cfg := notify.Config{On: "always", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic"}
+	ctx := notify.WithHealthchecksSuppressed(context.Background())
+
+	notify.SendStart(ctx, cfg, "container") // suppressed → no /start ping
+	notify.Send(ctx, cfg, "container", notify.Event{Title: "BombVault", Message: "ok", OK: true})
+
+	if hcHits != 0 {
+		t.Fatalf("suppressed context must not ping Healthchecks, hits=%d", hcHits)
+	}
+	if webhookHits != 1 {
+		t.Fatalf("message channels must still fire under suppression, webhook hits=%d", webhookHits)
+	}
+}
+
+// TestPingDomainStartAndResultEndpoints: the aggregate per-domain-run pings hit the
+// right lifecycle endpoints — /start for the run start, the base URL (success) when
+// every item passed, and /fail when any failed — and carry the summary as the body so
+// it shows in the check's event feed.
+func TestPingDomainStartAndResultEndpoints(t *testing.T) {
+	var path, body string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		path = r.URL.Path
+		b, _ := io.ReadAll(r.Body)
+		body = string(b)
+	}))
+	defer srv.Close()
+	cfg := notify.Config{On: "always", HealthchecksURL: srv.URL}
+
+	notify.PingDomainStart(context.Background(), cfg, "containers")
+	if path != "/start" {
+		t.Fatalf("PingDomainStart should hit /start, got %q", path)
+	}
+
+	notify.PingDomainResult(context.Background(), cfg, "containers", true, "3 of 3 items succeeded")
+	if path != "/" {
+		t.Fatalf("PingDomainResult(ok) should hit the success base path, got %q", path)
+	}
+	if body != "3 of 3 items succeeded" {
+		t.Fatalf("success summary should be sent as the body, got %q", body)
+	}
+
+	notify.PingDomainResult(context.Background(), cfg, "containers", false, "1 of 3 items failed")
+	if path != "/fail" {
+		t.Fatalf("PingDomainResult(!ok) should hit /fail, got %q", path)
+	}
+	if body != "1 of 3 items failed" {
+		t.Fatalf("fail summary should be sent as the body, got %q", body)
+	}
+}
+
+// TestPingDomainSuppressedWhenNeverOrNoURL: the aggregate pings honour the same gates
+// as the rest of the package — a no-op under On=never and when the domain resolves to
+// no Healthchecks URL.
+func TestPingDomainSuppressedWhenNeverOrNoURL(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+
+	notify.PingDomainStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers")
+	notify.PingDomainResult(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers", true, "x")
+	notify.PingDomainStart(context.Background(), notify.Config{On: "always"}, "containers") // no URL
+	notify.PingDomainResult(context.Background(), notify.Config{On: "always"}, "containers", true, "x")
+	if hits != 0 {
+		t.Fatalf("aggregate pings must be a no-op under never/no-URL, hits=%d", hits)
+	}
+}

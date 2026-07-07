@@ -809,6 +809,13 @@ const en = {
   "settings.subtitle": "BombVault configuration — changes take effect immediately.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
+
+  // What's new dialog (#48) — shown once when a new version is running
+  "whatsnew.title": "What's new in {version}",
+  "whatsnew.loading": "Loading release notes…",
+  "whatsnew.loadFailed": "Couldn't load the release notes here. Open them on GitHub.",
+  "whatsnew.viewOnGitHub": "View full release on GitHub",
+  "whatsnew.close": "Close",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1578,6 +1585,13 @@ const de: Translations = {
   "settings.subtitle": "BombVault-Konfiguration — Änderungen wirken sofort.",
   // Filter-Auslöser (v5-Redesign)
   "filter.button": "Filter",
+
+  // Neu-Dialog (#48) — einmalig bei einer neuen laufenden Version
+  "whatsnew.title": "Neu in {version}",
+  "whatsnew.loading": "Lade Release-Notes…",
+  "whatsnew.loadFailed": "Release-Notes konnten hier nicht geladen werden. Auf GitHub öffnen.",
+  "whatsnew.viewOnGitHub": "Vollständige Release-Notes auf GitHub",
+  "whatsnew.close": "Schließen",
 };
 
 // ---------------------------------------------------------------------------

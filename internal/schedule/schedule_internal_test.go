@@ -1,10 +1,85 @@
 package schedule
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// TestScheduledRunAggregatesHealthchecksPings verifies the scheduled per-domain run
+// wraps its item loop in exactly ONE Healthchecks start + ONE finish, and that the
+// finish carries the run's attempted/failed counts (success when nothing failed, a
+// failure count when any item did) — the core of #49.
+func TestScheduledRunAggregatesHealthchecksPings(t *testing.T) {
+	sc := New(func(string) error { return nil }, func() ([]store.Target, error) { return nil, nil })
+
+	var starts []string
+	type finish struct {
+		domain            string
+		attempted, failed int
+	}
+	var finishes []finish
+	sc.SetHealthchecksAggregator(
+		func(domain string) { starts = append(starts, domain) },
+		func(domain string, attempted, failed int) {
+			finishes = append(finishes, finish{domain, attempted, failed})
+		},
+	)
+
+	targets := []store.Target{
+		{ContainerName: "a", IncludeInSchedule: true},
+		{ContainerName: "b", IncludeInSchedule: true},
+		{ContainerName: "c", IncludeInSchedule: true},
+	}
+
+	// All three succeed → one aggregate start, one success finish for the whole run.
+	sc.runAggregatedHC("containers", func() (int, int) {
+		return RunContainersJob(targets, func(string) error { return nil })
+	})
+	if len(starts) != 1 || starts[0] != "containers" {
+		t.Fatalf("expected exactly one aggregate start for the run, got %v", starts)
+	}
+	if len(finishes) != 1 || finishes[0] != (finish{"containers", 3, 0}) {
+		t.Fatalf("expected one success finish (attempted 3, failed 0), got %v", finishes)
+	}
+
+	// One item fails → still exactly one finish, now reporting the failure count.
+	sc.runAggregatedHC("containers", func() (int, int) {
+		return RunContainersJob(targets, func(name string) error {
+			if name == "b" {
+				return errors.New("boom")
+			}
+			return nil
+		})
+	})
+	if len(starts) != 2 {
+		t.Fatalf("expected a second aggregate start, got %v", starts)
+	}
+	if len(finishes) != 2 || finishes[1] != (finish{"containers", 3, 1}) {
+		t.Fatalf("expected one fail finish (attempted 3, failed 1), got %v", finishes)
+	}
+}
+
+// TestScheduledRunNoAggregatorStillRunsEveryItem: without an aggregator wired the run
+// still backs up every scheduled item (backwards-compatible) and simply sends no
+// aggregate pings — the container-only callers and tests are unaffected.
+func TestScheduledRunNoAggregatorStillRunsEveryItem(t *testing.T) {
+	sc := New(nil, nil)
+	var called int
+	sc.runAggregatedHC("containers", func() (int, int) {
+		return RunContainersJob(
+			[]store.Target{
+				{ContainerName: "a", IncludeInSchedule: true},
+				{ContainerName: "b", IncludeInSchedule: true},
+			},
+			func(string) error { called++; return nil },
+		)
+	})
+	if called != 2 {
+		t.Fatalf("item loop must still run without an aggregator, called=%d", called)
+	}
+}
 
 // TestConfigJobScheduledAndExcludedFromDrills verifies the config self-backup
 // domain is wired end to end: (a) a config backup job registers when it has a

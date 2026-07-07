@@ -765,6 +765,13 @@ const nl: Partial<Translations> = {
   "settings.subtitle": "BombVault-configuratie — wijzigingen worden meteen van kracht.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Nieuw in {version}",
+  "whatsnew.loading": "Release-opmerkingen laden…",
+  "whatsnew.loadFailed": "De release-opmerkingen konden hier niet worden geladen. Open ze op GitHub.",
+  "whatsnew.viewOnGitHub": "Volledige release op GitHub bekijken",
+  "whatsnew.close": "Sluiten",
 };
 
 export default nl;

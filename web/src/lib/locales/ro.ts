@@ -771,6 +771,13 @@ const ro: Partial<Translations> = {
   "settings.subtitle": "Configurația BombVault — modificările au efect imediat.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "Noutăți în {version}",
+  "whatsnew.loading": "Se încarcă notele de lansare…",
+  "whatsnew.loadFailed": "Notele de lansare nu au putut fi încărcate aici. Deschideți-le pe GitHub.",
+  "whatsnew.viewOnGitHub": "Vedeți lansarea completă pe GitHub",
+  "whatsnew.close": "Închide",
 };
 
 export default ro;

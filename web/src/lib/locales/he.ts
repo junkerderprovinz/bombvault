@@ -768,6 +768,13 @@ const he: Partial<Translations> = {
   "settings.subtitle": "תצורת BombVault — השינויים נכנסים לתוקף מיד.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "מסננים",
+
+  // What's new dialog (#48)
+  "whatsnew.title": "מה חדש ב-{version}",
+  "whatsnew.loading": "טוען הערות גרסה…",
+  "whatsnew.loadFailed": "לא ניתן היה לטעון כאן את הערות הגרסה. פתחו אותן ב-GitHub.",
+  "whatsnew.viewOnGitHub": "הצגת ההשקה המלאה ב-GitHub",
+  "whatsnew.close": "סגירה",
 };
 
 export default he;
