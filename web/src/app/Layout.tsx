@@ -9,6 +9,18 @@ import { WhatsNewDialog } from "../components/WhatsNewDialog";
 // running version differs, the "What's new" dialog (#48) is shown once.
 const LAST_SEEN_VERSION_KEY = "bombvault.lastSeenVersion";
 
+// releaseTag reduces a build version to its GitHub release tag. :latest builds
+// carry SemVer build metadata (e.g. "v5.0.0+main.fcc0544", issue #22); both the
+// release-notes lookup and the seen-version comparison want the plain tag
+// "v5.0.0" — otherwise the dialog fetches a tag that doesn't exist (404) and the
+// changing short SHA re-nags on every :latest rebuild (issue #48). Returns null
+// for "dev" / "0.0.0" / anything without an x.y.z core, so those never nag.
+function releaseTag(version: string): string | null {
+  const m = version.match(/\d+\.\d+\.\d+/);
+  if (!m || m[0] === "0.0.0") return null;
+  return `v${m[0]}`;
+}
+
 // Auth probe state: null = not yet fetched, false = auth off or authed,
 // true = auth on AND not authed (show login).
 type AuthGateState = "loading" | "pass" | "blocked";
@@ -78,8 +90,11 @@ export function Layout() {
     getHealth()
       .then((h) => {
         if (!active) return;
-        const version = h.version;
-        if (!version || version === "dev") return;
+        // Compare + store the plain release tag, not the raw build string, so
+        // the dialog looks up an existing GitHub tag and :latest's changing
+        // short SHA doesn't re-nag on every rebuild (issue #48).
+        const tag = h.version ? releaseTag(h.version) : null;
+        if (!tag) return;
         let last: string | null = null;
         try {
           last = localStorage.getItem(LAST_SEEN_VERSION_KEY);
@@ -90,19 +105,19 @@ export function Layout() {
         if (last === null) {
           // First ever open on this browser: remember it, don't show the dialog.
           try {
-            localStorage.setItem(LAST_SEEN_VERSION_KEY, version);
+            localStorage.setItem(LAST_SEEN_VERSION_KEY, tag);
           } catch {
             /* ignore */
           }
           return;
         }
-        if (last !== version) {
+        if (last !== tag) {
           try {
-            localStorage.setItem(LAST_SEEN_VERSION_KEY, version);
+            localStorage.setItem(LAST_SEEN_VERSION_KEY, tag);
           } catch {
             /* ignore */
           }
-          setWhatsNewVersion(version);
+          setWhatsNewVersion(tag);
         }
       })
       .catch(() => {
