@@ -2428,7 +2428,13 @@ func defFileName(name string) (string, error) {
 // definition, and upserts a target so the container can be restored. Returns the
 // number of containers discovered. Containers whose definition is missing or
 // undecryptable are skipped (logged).
-func (s *Service) Discover(ctx context.Context) (int, error) {
+//
+// dryRun makes it READ-ONLY: it opens the repo and decrypts the definitions
+// (proving the repo is reachable and the APP_KEY is correct) and returns the
+// same count, but writes NO targets. The Recovery tab's readability probe uses
+// this so merely checking "is my backup readable?" never resurrects orphan
+// entries; only the explicit "Discover backups" action rebuilds targets (#44).
+func (s *Service) Discover(ctx context.Context, dryRun bool) (int, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return 0, fmt.Errorf("read settings: %w", err)
@@ -2485,13 +2491,15 @@ func (s *Service) Discover(ctx context.Context) (int, error) {
 			log.Printf("api: discover: definition for %q is corrupt — skipping: %v", name, jErr) //nolint:gosec // G706: %q-quoted
 			continue
 		}
-		if _, uErr := s.store.UpsertTarget(store.Target{
-			ContainerName: name,
-			AppdataPaths:  def.AppdataPaths,
-			Definition:    string(plain),
-		}); uErr != nil {
-			log.Printf("api: discover: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
-			continue
+		if !dryRun {
+			if _, uErr := s.store.UpsertTarget(store.Target{
+				ContainerName: name,
+				AppdataPaths:  def.AppdataPaths,
+				Definition:    string(plain),
+			}); uErr != nil {
+				log.Printf("api: discover: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
+				continue
+			}
 		}
 		discovered++
 	}
@@ -2540,8 +2548,10 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name string, defJ
 // again. It lists the vms repo's snapshots (tagged vm:<name>), reads + decrypts
 // each VM's mirrored definition, and upserts a target. VMs whose definition is
 // missing (backed up before mirroring existed) or undecryptable are skipped.
-// Returns the number of VMs discovered.
-func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
+// Returns the number of VMs discovered. dryRun makes it READ-ONLY (open + decrypt
+// to prove readability + APP_KEY, return the count, but write no targets) — used
+// by the Recovery readability probe so it never resurrects orphan VM entries (#44).
+func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (int, error) {
 	settings, repo, err := s.domainRepo("vms")
 	if err != nil {
 		return 0, err
@@ -2596,13 +2606,15 @@ func (s *Service) DiscoverVMs(ctx context.Context) (int, error) {
 		if method == "" {
 			method = "graceful"
 		}
-		if _, uErr := s.store.UpsertVMTarget(store.VMTarget{
-			Name:       name,
-			Method:     method,
-			Definition: string(plain),
-		}); uErr != nil {
-			log.Printf("api: discover vms: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
-			continue
+		if !dryRun {
+			if _, uErr := s.store.UpsertVMTarget(store.VMTarget{
+				Name:       name,
+				Method:     method,
+				Definition: string(plain),
+			}); uErr != nil {
+				log.Printf("api: discover vms: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
+				continue
+			}
 		}
 		discovered++
 	}
