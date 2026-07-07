@@ -457,7 +457,7 @@ export function Sidebar({ settings }: SidebarProps) {
             </span>
           )}
         </span>
-        <span className="font-brand text-carbon-text text-xl tracking-tight leading-none whitespace-nowrap">
+        <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
           BombVault
         </span>
       </button>
