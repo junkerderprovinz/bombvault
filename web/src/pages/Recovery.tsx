@@ -138,12 +138,15 @@ export default function Recovery() {
   }, []);
 
   // checkReadable runs the discover probe and classifies the outcome. Shared by
-  // Step 1's "Re-check" and Step 2's "Connect & preview".
+  // Step 1's "Re-check" and Step 2's "Connect & preview". It uses the READ-ONLY
+  // probe (probe=true) so merely checking readability never rebuilds the target
+  // list — only Step 3's explicit "Discover" does (#44). The count + error
+  // classification are identical to a real discover.
   const checkReadable = useCallback(async () => {
     setChecking(true);
     setLastError(null);
     try {
-      const [c, v] = await Promise.all([discover(), discoverVMs()]);
+      const [c, v] = await Promise.all([discover(true), discoverVMs(true)]);
       const results: DiscoverResult[] = [c, v];
       const keyErr = results.find((r) => !r.ok && isKeyMismatch(r.error));
       if (keyErr) {
