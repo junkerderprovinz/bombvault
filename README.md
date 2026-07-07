@@ -73,36 +73,29 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 ## 2. Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — protection-status traffic lights, run history and backup-health heatmap" width="90%">
-  <br><em>Dashboard — RPO protection-status traffic lights per domain, last backups, run history, a backup-health heatmap and per-domain storage/dedup.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
+  <br><em>Dashboard — a compact health summary (overall status, next backup, last result) above protection status per domain, last backups, run history and a backup-health heatmap.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers tab — per-container backup with schedule toggle, hooks and export" width="90%">
-  <br><em>Containers — per-container backup with include-in-schedule toggle, backup folders/hooks, one-click backup and plain-tar export.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Recovery — guided disaster-recovery flow onto a fresh install" width="90%">
+  <br><em>Recovery — a guided disaster-recovery flow: confirm your backups are readable, restore BombVault's own settings, then attach and restore your container, VM and flash backups onto a fresh install.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/vms.png" alt="BombVault VMs tab — KVM/libvirt VM backups over SSH" width="90%">
-  <br><em>VMs — KVM/libvirt VM backups over SSH, graceful or live method, schedule inclusion and export.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers tab — per-container backup with schedule toggle, filters and bulk include/exclude" width="90%">
+  <br><em>Containers — per-container backup with an include-in-schedule toggle, collapsible filters, bulk include/exclude, one-click backup and an expandable per-container history.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/flash.png" alt="BombVault Flash tab — whole-USB flash backup with live progress bar" width="90%">
-  <br><em>Flash — whole-/boot USB flash backup with a live progress bar; restore downloads a ZIP and never touches the running flash.</em>
-</p>
-
-<br>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings — backup paths, off-site copy and retention" width="90%">
-  <br><em>Settings — backup paths, optional off-site copy (restic copy) and staggered local/off-site retention.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings — tabbed configuration for domains, paths, schedules, off-site, notifications and integrity" width="90%">
+  <br><em>Settings — organised into tabs (General · Paths &amp; Storage · Schedules · Off-site · Notifications · Integrity · System); enable each backup domain and pick an accent colour.</em>
 </p>
 
 <br>
