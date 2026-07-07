@@ -23,9 +23,10 @@
   --carbon-border:    #393939;
   --carbon-hover:     #353535;
 
-  /* Sidebar background — darker than the content (--carbon-bg #161616) so the
-     nav rail reads as a distinct, recessed column AND the dark logo stands out. */
-  --carbon-sidebar:   #0b0b0b;
+  /* Sidebar background — matches --carbon-surface (#262626), one step up from the
+     content (--carbon-bg #161616) so the nav rail still reads as a distinct column.
+     The theme-appropriate logo (light mark on this dark surface) reads on its own. */
+  --carbon-sidebar:   #262626;
 
   /* Sidebar nav text — a touch brighter than --carbon-text-sub so the
      navigation reads clearly against the dark sidebar surface. */
@@ -72,12 +73,128 @@ body {
   box-sizing: border-box;
 }
 
-/* Sidebar brand logo. The mark now ships with its own white frame, so it reads
-   on both the dark and light sidebar surfaces without any extra glow/tile. */
+/* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
+   variant (dark mark on the light surface, light mark on the dark surface), so the
+   logo always reads on --carbon-sidebar without any frame, glow or tile. */
 
 /* Indeterminate progress bar — a small accent segment sliding left→right on
    loop, used by ProgressBar.tsx when restic reports no numeric percentage. */
 @keyframes bv-indeterminate {
   0%   { left: -35%; }
   100% { left: 100%; }
+}
+
+/* ---------------------------------------------------------------------------
+   Motion — tasteful, Carbon-clean micro-interactions + the logo easter egg.
+   All energetic motion lives under (prefers-reduced-motion: no-preference);
+   reduced-motion users get a quiet fade fallback instead (never a violent shake).
+   The Tailwind-driven nav hover/press transforms are motion-safe-gated inline.
+   --------------------------------------------------------------------------- */
+
+/* Logo idle hover sway (Item 7b) */
+@keyframes bv-logo-sway {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50%      { transform: rotate(2.5deg); }
+}
+
+/* Easter-egg wobble → explode (Item 6) */
+@keyframes bv-egg-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20%      { transform: translateX(-2px) rotate(-7deg); }
+  40%      { transform: translateX(2px) rotate(6deg); }
+  60%      { transform: translateX(-2px) rotate(-5deg); }
+  80%      { transform: translateX(2px) rotate(5deg); }
+}
+@keyframes bv-egg-explode {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  25%  { transform: scale(1.3) rotate(8deg); opacity: 1; }
+  100% { transform: scale(2.4) rotate(38deg); opacity: 0; }
+}
+@keyframes bv-egg-flash {
+  0%   { transform: translate(-50%, -50%) scale(.3); opacity: .9; }
+  100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+}
+@keyframes bv-egg-shock {
+  0%   { transform: translate(-50%, -50%) scale(.2); opacity: .8; }
+  100% { transform: translate(-50%, -50%) scale(2.9); opacity: 0; }
+}
+@keyframes bv-particle-fly {
+  0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--tx, 0), var(--ty, 0)) scale(.2); opacity: 0; }
+}
+@keyframes bv-egg-fade-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .6; }
+}
+
+/* Route/page enter (Item 7c) */
+@keyframes bv-page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes bv-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* The exploding logo mark is the animation target; the FX overlay (.bv-boom-fx) is
+   a sibling so the flash / shockwave / particles are not scaled by the mark's own
+   transform. */
+.bv-logo-mark { transform-origin: center; will-change: transform, opacity; }
+
+.bv-boom-fx { position: absolute; inset: 0; pointer-events: none; }
+.bv-boom-fx::before,
+.bv-boom-fx::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 9999px;
+}
+.bv-boom-fx::before { /* flash core */
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(circle, var(--accent) 0%, rgba(252, 196, 25, .45) 45%, transparent 70%);
+  transform: translate(-50%, -50%) scale(.3);
+  opacity: 0;
+}
+.bv-boom-fx::after { /* shockwave ring */
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--accent);
+  transform: translate(-50%, -50%) scale(.2);
+  opacity: 0;
+}
+.bv-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Gentle sway on hover, only while the logo is idle (not mid-egg). */
+  .bv-logo-btn:hover .bv-logo-idle { animation: bv-logo-sway 2.4s ease-in-out infinite; }
+
+  .bv-egg-wobble { animation: bv-egg-shake 260ms ease-in-out infinite; }
+  .bv-egg-boom   { animation: bv-egg-explode 700ms cubic-bezier(.34, .6, .3, 1) forwards; }
+
+  .bv-boom-fx::before { animation: bv-egg-flash 520ms ease-out forwards; }
+  .bv-boom-fx::after  { animation: bv-egg-shock 640ms ease-out forwards; }
+  .bv-particle        { animation: bv-particle-fly 680ms cubic-bezier(.2, .6, .3, 1) forwards; }
+
+  .bv-page-enter { animation: bv-page-in 320ms cubic-bezier(.2, .6, .2, 1) both; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No violent shake/explosion — just a quiet fade, and no flash/particles. */
+  .bv-egg-wobble { animation: bv-egg-fade-pulse 900ms ease-in-out; }
+  .bv-egg-boom   { opacity: 0; transition: opacity 300ms ease; }
+  .bv-boom-fx    { display: none; }
+  .bv-page-enter { animation: bv-fade-in 200ms ease both; }
 }
