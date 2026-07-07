@@ -2759,7 +2759,19 @@ func TestDiscoverRebuildsTargetsFromStorage(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	n, err := svc.Discover(context.Background())
+	// dryRun=true first: a readability probe must report the same count WITHOUT
+	// writing any target (#44 — the Recovery readiness check must not resurrect
+	// orphan entries).
+	if pn, pErr := svc.Discover(context.Background(), true); pErr != nil {
+		t.Fatalf("discover probe: %v", pErr)
+	} else if pn != 1 {
+		t.Fatalf("probe discovered = %d, want 1", pn)
+	}
+	if _, err := st.GetTargetByContainer("plex"); err == nil {
+		t.Fatalf("probe (dryRun) must NOT create the plex target, but it exists")
+	}
+
+	n, err := svc.Discover(context.Background(), false)
 	if err != nil {
 		t.Fatalf("discover: %v", err)
 	}
@@ -3907,7 +3919,18 @@ func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"vm:Tailscale", "p2"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	n, err := svc.DiscoverVMs(context.Background())
+	// dryRun=true first: the readability probe reports the count but must NOT
+	// recreate the VM target (#44).
+	if pn, pErr := svc.DiscoverVMs(context.Background(), true); pErr != nil {
+		t.Fatalf("DiscoverVMs probe: %v", pErr)
+	} else if pn != 1 {
+		t.Fatalf("probe discovered = %d, want 1", pn)
+	}
+	if _, err := st.GetVMTargetByName("Tailscale"); err == nil {
+		t.Fatalf("probe (dryRun) must NOT create the Tailscale VM target, but it exists")
+	}
+
+	n, err := svc.DiscoverVMs(context.Background(), false)
 	if err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}

@@ -380,7 +380,11 @@ func (h *Handler) handleForgetVM(w http.ResponseWriter, r *http.Request) {
 // handleDiscover rebuilds the target list from the backup storage (disaster
 // recovery after a fresh install / loss of /config).
 func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
-	n, err := h.svc.Discover(r.Context())
+	// ?probe=true = a read-only readability check (Recovery tab): open + decrypt
+	// to prove the repo/APP_KEY, but write no targets — so a readiness check never
+	// resurrects orphan entries. The default (no probe) is the real rebuild (#44).
+	probe := r.URL.Query().Get("probe") == "true"
+	n, err := h.svc.Discover(r.Context(), probe)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -391,7 +395,8 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 // handleDiscoverVMs rebuilds the VM target list from backup storage, so a VM
 // deleted from the host (or lost with the database) becomes restorable again.
 func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
-	n, err := h.svc.DiscoverVMs(r.Context())
+	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
+	n, err := h.svc.DiscoverVMs(r.Context(), probe)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
