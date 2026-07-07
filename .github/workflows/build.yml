@@ -4,7 +4,7 @@ name: Build Docker Image
 # Unraid box (e.g. for the integration spike). Pull requests build only (no push).
 on:
   push:
-    branches: [main, feat/v4, feat/v5]
+    branches: [main]
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
     paths-ignore:
       - "**.md"
@@ -114,9 +114,6 @@ jobs:
           tags: |
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=v4-preview,enable=${{ github.ref == 'refs/heads/feat/v4' }}
-            type=raw,value=v5-preview,enable=${{ github.ref == 'refs/heads/feat/v5' }}
-            type=raw,value=go-preview,enable=${{ github.ref == 'refs/heads/feat/go-rewrite' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
