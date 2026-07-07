@@ -2,23 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Bree Serif — BombVault's brand typeface (SIL OFL 1.1, TypeTogether). Self-hosted
-   (latin subset) so the wordmark renders offline, with no runtime CDN request.
-   License ships alongside at /fonts/BreeSerif-OFL.txt. */
-@font-face {
-  font-family: "Bree Serif";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/bree-serif-latin.woff2") format("woff2");
-}
-
-/* The brand wordmark uses Bree Serif at its natural weight (the face ships only
-   weight 400, so avoid font-bold — it would synthesize a faux-bold). */
-.font-brand {
-  font-family: "Bree Serif", Georgia, "Times New Roman", serif;
-}
-
 /* ---------------------------------------------------------------------------
    Carbon palette as CSS custom properties.
    Dark is default; [data-theme="light"] overrides to an IBM Carbon light theme.
