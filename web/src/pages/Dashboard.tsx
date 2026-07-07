@@ -794,7 +794,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </select>
           </div>
           {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-96 overflow-y-auto">
+          <div className="divide-y divide-carbon-border max-h-96 overflow-y-auto pr-2">
             {shown.map((run) => (
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">

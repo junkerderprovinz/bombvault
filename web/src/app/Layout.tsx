@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { useEffect, useState, useCallback } from "react";
 import { getSettings, getAuth, type Settings } from "../lib/api";
@@ -11,6 +11,7 @@ type AuthGateState = "loading" | "pass" | "blocked";
 export function Layout() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [authGate, setAuthGate] = useState<AuthGateState>("loading");
+  const location = useLocation();
 
   // Check auth state; used on mount and after a successful login.
   const checkAuth = useCallback(() => {
@@ -72,7 +73,11 @@ export function Layout() {
     <div className="flex h-screen overflow-hidden bg-carbon-background">
       <Sidebar settings={settings} />
       <main className="flex-1 overflow-y-auto p-6 min-w-0">
-        <Outlet />
+        {/* Keyed on the route so the content re-mounts and plays a short
+            fade-in-up on every navigation (Item 7c). */}
+        <div key={location.pathname} className="bv-page-enter">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

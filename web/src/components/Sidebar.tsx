@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -14,6 +14,21 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
 }
+
+// Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
+type EggState = "idle" | "wobble" | "boom";
+
+// Pre-computed radial offsets for the explosion particles. Each flies from the
+// logo's centre out to (tx,ty); kept module-level so the array stays stable
+// across renders (no re-allocation, no re-randomising mid-boom).
+const BOOM_PARTICLES = Array.from({ length: 10 }, (_, i) => {
+  const angle = (Math.PI * 2 * i) / 10;
+  const dist = 38 + (i % 2) * 10;
+  return {
+    tx: `${Math.round(Math.cos(angle) * dist)}px`,
+    ty: `${Math.round(Math.sin(angle) * dist)}px`,
+  };
+});
 
 // Simple inline SVG icons (monochrome, 20×20)
 function IconDashboard() {
@@ -92,12 +107,27 @@ function IconRecovery() {
   );
 }
 
+// Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
+// controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
+function IconLayers() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" className="shrink-0" aria-hidden="true">
+      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+      <path d="m2 17 10 5 10-5" />
+      <path d="m2 12 10 5 10-5" />
+    </svg>
+  );
+}
+
+// `transition` (not just `transition-colors`) so the transform-based hover/press
+// micro-interactions below animate too; all transforms are motion-safe-gated so
+// reduced-motion users get colour-only feedback (Item 7a/7d).
 const navBase =
-  "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 select-none";
+  "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
 const navActive =
   "bg-accent text-accentContrast";
 const navInactive =
-  "text-[var(--sidebar-text)] hover:bg-carbon-hover hover:text-carbon-text";
+  "text-[var(--sidebar-text)] hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5";
 
 function NavItem({ to, label, icon }: NavItem) {
   return (
@@ -128,6 +158,7 @@ function Flag({ code }: { code: string }) {
 
 function SidebarControls() {
   const { t, lang, setLanguage, languages } = useT();
+  const { advanced, setAdvanced } = useAdvanced();
   const [theme, setThemeState] = useState(getTheme);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -225,36 +256,132 @@ function SidebarControls() {
         )}
         <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
       </button>
+
+      {/* Simple / Advanced view — a single-click toggle that mirrors the theme row
+          above (same height, hover, press feedback). The label shows the CURRENT
+          view; a click flips it. Replaces the old segmented switch + hint (Item 4). */}
+      <button
+        onClick={() => setAdvanced(!advanced)}
+        title={advanced ? t("mode.advancedView") : t("mode.simpleView")}
+        aria-pressed={advanced}
+        className={`${navBase} ${navInactive} w-full`}
+      >
+        <IconLayers />
+        <span>{advanced ? t("mode.advancedView") : t("mode.simpleView")}</span>
+      </button>
     </div>
   );
 }
 
 export function Sidebar({ settings }: SidebarProps) {
   const { t } = useT();
-  const { advanced, setAdvanced } = useAdvanced();
+  const navigate = useNavigate();
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
   const configEnabled = settings?.configEnabled ?? false;
 
+  // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
+  // then reappears. A short click still navigates to the Dashboard; once the
+  // hold has fired the egg, the trailing click is suppressed.
+  const [eggState, setEggState] = useState<EggState>("idle");
+  const holdRef = useRef<number | null>(null); // 500ms pre-fire hold timer
+  const seqRef = useRef<number[]>([]);         // wobble→boom→idle sequence timers
+  const firedRef = useRef(false);              // did the hold fire the egg?
+
+  function startHold() {
+    if (eggState !== "idle") return; // ignore new presses while an egg is playing
+    firedRef.current = false;
+    if (holdRef.current !== null) window.clearTimeout(holdRef.current);
+    holdRef.current = window.setTimeout(() => {
+      holdRef.current = null;
+      firedRef.current = true; // the click that follows the release must not navigate
+      setEggState("wobble");
+      const toBoom = window.setTimeout(() => {
+        setEggState("boom");
+        const toIdle = window.setTimeout(() => {
+          setEggState("idle");
+          firedRef.current = false;
+        }, 700);
+        seqRef.current.push(toIdle);
+      }, 900);
+      seqRef.current.push(toBoom);
+    }, 500);
+  }
+
+  // Release/leave before the hold fires → cancel so the click navigates normally.
+  // If the egg already fired we leave the sequence running to play out.
+  function cancelHold() {
+    if (holdRef.current !== null) {
+      window.clearTimeout(holdRef.current);
+      holdRef.current = null;
+    }
+  }
+
+  function handleLogoClick() {
+    if (firedRef.current) return; // the hold fired the egg → swallow the navigation
+    navigate("/dashboard");
+  }
+
+  // Clear any pending timers on unmount.
+  useEffect(() => {
+    return () => {
+      if (holdRef.current !== null) window.clearTimeout(holdRef.current);
+      for (const id of seqRef.current) window.clearTimeout(id);
+    };
+  }, []);
+
+  const eggClass =
+    eggState === "wobble" ? "bv-egg-wobble" : eggState === "boom" ? "bv-egg-boom" : "bv-logo-idle";
+
   return (
     <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-sidebar">
-      {/* Logo + wordmark → Dashboard. Frameless SVG on the darker sidebar so the
-          logo stands out; clicking anywhere on it returns to the Dashboard.
-          Borderless throughout — the darker sidebar tone alone separates the rail. */}
-      <NavLink
-        to="/dashboard"
+      {/* Logo + wordmark → Dashboard. Two theme-specific marks auto-switch via the
+          `dark:` variant (dark mark on the light surface, light mark on the dark
+          surface). A short click navigates to the Dashboard; press-and-hold fires
+          the easter egg (Item 6). It's a button (not a link) so click vs. long-press
+          is fully under our control. */}
+      <button
+        type="button"
         aria-label={t("nav.dashboard")}
-        className="flex items-center gap-2.5 px-4 py-5 hover:opacity-90 transition-opacity"
+        onClick={handleLogoClick}
+        onPointerDown={startHold}
+        onPointerUp={cancelHold}
+        onPointerLeave={cancelHold}
+        onPointerCancel={cancelHold}
+        onContextMenu={(e) => e.preventDefault()}
+        className="bv-logo-btn flex items-center gap-2.5 px-4 py-5 w-full text-left cursor-pointer select-none hover:opacity-90 transition-opacity"
       >
-        <img
-          src="/logo.svg"
-          alt="BombVault"
-          className="h-16 w-16 object-contain shrink-0"
-        />
+        <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
+          <span className={`bv-logo-mark flex h-16 w-16 items-center justify-center ${eggClass}`}>
+            <img
+              src="/logo.svg"
+              alt="BombVault"
+              draggable={false}
+              className="h-16 w-16 object-contain shrink-0 block dark:hidden"
+            />
+            <img
+              src="/logo-light.svg"
+              alt="BombVault"
+              draggable={false}
+              className="h-16 w-16 object-contain shrink-0 hidden dark:block"
+            />
+          </span>
+          {eggState === "boom" && (
+            <span className="bv-boom-fx" aria-hidden="true">
+              {BOOM_PARTICLES.map((p, i) => (
+                <span
+                  key={i}
+                  className="bv-particle"
+                  style={{ "--tx": p.tx, "--ty": p.ty } as React.CSSProperties}
+                />
+              ))}
+            </span>
+          )}
+        </span>
         <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
           BombVault
         </span>
-      </NavLink>
+      </button>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1 p-3 flex-1">
@@ -287,39 +414,10 @@ export function Sidebar({ settings }: SidebarProps) {
         )}
       </nav>
 
-      {/* Bottom group: language, then dark/light, then advanced, then settings */}
+      {/* Bottom group: language, dark/light and the Simple/Advanced view toggle
+          (all in SidebarControls), then Settings. */}
       <div className="flex flex-col gap-1 p-3">
         <SidebarControls />
-        {/* Simple / Advanced mode — a visible 2-segment switch above Settings;
-            reveals expert controls across the app (per-browser preference).
-            Mirrors the SourceToggle segmented-control pattern. */}
-        <div className="inline-flex rounded-lg border border-carbon-border overflow-hidden w-full">
-          <button
-            type="button"
-            onClick={() => setAdvanced(false)}
-            className={`flex-1 px-3 py-1.5 text-sm transition-colors ${
-              !advanced
-                ? "bg-accent text-accentContrast"
-                : "text-carbon-textSub hover:text-carbon-text"
-            }`}
-          >
-            {t("mode.simple")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdvanced(true)}
-            className={`flex-1 px-3 py-1.5 text-sm transition-colors ${
-              advanced
-                ? "bg-accent text-accentContrast"
-                : "text-carbon-textSub hover:text-carbon-text"
-            }`}
-          >
-            {t("mode.advanced")}
-          </button>
-        </div>
-        <span className="px-1 text-[11px] leading-snug text-carbon-textMuted">
-          {t("mode.hint")}
-        </span>
         <NavItem
           to="/settings"
           label={t("nav.settings")}
