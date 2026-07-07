@@ -742,6 +742,7 @@ const ko: Partial<Translations> = {
   "settings.schedulesOffsite": "오프사이트 복제 일정",
   "settings.schedulesSelfBackup": "자체 백업 일정",
   "settings.schedulesChecks": "복원 확인 일정",
+  "settings.tamperTestSchedule": "변조 테스트 일정",
   "settings.subtitle": "BombVault 구성 — 변경 사항이 즉시 적용됩니다.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "필터",

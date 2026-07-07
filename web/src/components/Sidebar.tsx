@@ -92,18 +92,6 @@ function IconRecovery() {
   );
 }
 
-// Calendar/list icon for Jobs
-function IconJobs() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
-      <rect x="3" y="4" width="14" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M7 2v4M13 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M3 8h14" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M6 12h8M6 15h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 const navBase =
   "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 select-none";
 const navActive =
@@ -274,11 +262,6 @@ export function Sidebar({ settings }: SidebarProps) {
           to="/dashboard"
           label={t("nav.dashboard")}
           icon={<IconDashboard />}
-        />
-        <NavItem
-          to="/jobs"
-          label={t("nav.jobs")}
-          icon={<IconJobs />}
         />
         {/* Always visible: disaster recovery is a core, non-expert flow. */}
         <NavItem

@@ -750,6 +750,7 @@ const el: Partial<Translations> = {
   "settings.schedulesOffsite": "Προγραμματισμοί αναπαραγωγής εκτός τόπου",
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
   "settings.schedulesChecks": "Προγραμματισμός ελέγχου επαναφοράς",
+  "settings.tamperTestSchedule": "Προγραμματισμός δοκιμής παραποίησης",
   "settings.subtitle": "Διαμόρφωση BombVault — οι αλλαγές τίθενται σε ισχύ αμέσως.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Φίλτρα",

@@ -26,11 +26,8 @@ const REPO_KEY = {
   vms: "vmsOffsite",
   flash: "flashOffsite",
 } as const;
-const SCHED_KEY = {
-  containers: "containersOffsiteSchedule",
-  vms: "vmsOffsiteSchedule",
-  flash: "flashOffsiteSchedule",
-} as const;
+// The off-site schedule is owned by Settings › Schedules — the wizard no longer
+// edits it, so there is no SCHED_KEY map here.
 const IMM_KEY = {
   containers: "containersOffsiteImmutable",
   vms: "vmsOffsiteImmutable",
@@ -101,7 +98,6 @@ export function OffsiteWizard({
   t: T;
 }) {
   const repoKey = REPO_KEY[domain];
-  const schedKey = SCHED_KEY[domain];
   const immKey = IMM_KEY[domain];
 
   const repoURL = settings[repoKey];
@@ -180,9 +176,6 @@ export function OffsiteWizard({
 
   function patchRepo(v: string) {
     setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-  }
-  function patchSched(v: string) {
-    setSettings((prev) => (prev ? { ...prev, [schedKey]: v } : prev));
   }
 
   async function genSnippet() {
@@ -399,22 +392,14 @@ export function OffsiteWizard({
             className={inputCls}
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("settings.schedule")}</span>
-          <input
-            value={settings[schedKey]}
-            spellCheck={false}
-            onChange={(e) => patchSched(e.target.value)}
-            placeholder={t("offsite.schedulePlaceholder")}
-            className={inputCls}
-          />
-        </label>
+        {/* The off-site schedule is edited in Settings › Schedules now; the wizard
+            saves only the repo URL so it can never clobber that cadence. */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() =>
               void save(
-                { [repoKey]: settings[repoKey], [schedKey]: settings[schedKey] } as Partial<Settings>,
+                { [repoKey]: settings[repoKey] } as Partial<Settings>,
                 setRepoState,
                 setRepoErr
               )

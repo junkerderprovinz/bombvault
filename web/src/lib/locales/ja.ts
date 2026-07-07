@@ -742,6 +742,7 @@ const ja: Partial<Translations> = {
   "settings.schedulesOffsite": "オフサイトレプリケーションスケジュール",
   "settings.schedulesSelfBackup": "セルフバックアップスケジュール",
   "settings.schedulesChecks": "復元チェックスケジュール",
+  "settings.tamperTestSchedule": "改ざんテストスケジュール",
   "settings.subtitle": "BombVault の設定 — 変更は即座に反映されます。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "フィルター",

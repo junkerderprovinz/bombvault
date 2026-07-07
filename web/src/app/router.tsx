@@ -6,7 +6,6 @@ import { VMs } from "../pages/VMs";
 import { Flash } from "../pages/Flash";
 import { Config } from "../pages/Config";
 import { SettingsPage } from "../pages/Settings";
-import { Jobs } from "../pages/Jobs";
 import Recovery from "../pages/Recovery";
 import { I18nProvider } from "../lib/i18n";
 
@@ -23,7 +22,9 @@ export function AppRouter() {
             <Route path="/flash" element={<Flash />} />
             <Route path="/config" element={<Config />} />
             <Route path="/recovery" element={<Recovery />} />
-            <Route path="/jobs" element={<Jobs />} />
+            {/* The Plans page was retired into Settings › Schedules; keep /jobs
+                as a redirect so old links/bookmarks land on the Schedules tab. */}
+            <Route path="/jobs" element={<Navigate to="/settings#schedules" replace />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>

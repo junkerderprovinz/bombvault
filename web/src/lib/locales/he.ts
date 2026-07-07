@@ -750,6 +750,7 @@ const he: Partial<Translations> = {
   "settings.schedulesOffsite": "תזמוני שכפול מחוץ לאתר",
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",
   "settings.schedulesChecks": "תזמון בדיקת שחזור",
+  "settings.tamperTestSchedule": "תזמון בדיקת חבלה",
   "settings.subtitle": "תצורת BombVault — השינויים נכנסים לתוקף מיד.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "מסננים",
