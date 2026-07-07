@@ -134,6 +134,7 @@ const it: Partial<Translations> = {
   "run.historyTitle": "Cronologia esecuzioni",
   "run.filterDay": "Giorno:",
   "run.allDays": "Tutti i giorni",
+  "run.recentTitle": "Esecuzioni recenti",
   "run.colKind": "Tipo",
   "run.colStatus": "Stato",
   "run.colStarted": "Avviato",

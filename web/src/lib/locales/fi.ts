@@ -134,6 +134,7 @@ const fi: Partial<Translations> = {
   "run.historyTitle": "Ajohistoria",
   "run.filterDay": "Päivä:",
   "run.allDays": "Kaikki päivät",
+  "run.recentTitle": "Viimeisimmät ajot",
   "run.colKind": "Tyyppi",
   "run.colStatus": "Tila",
   "run.colStarted": "Aloitettu",

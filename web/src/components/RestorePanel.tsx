@@ -9,6 +9,7 @@ import { RestoreProgress } from "./restore/RestoreProgress";
 import { RestoreAction } from "./restore/RestoreAction";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
+import { RecentRunsList } from "./RecentRunsList";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -993,6 +994,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
               <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
             </div>
           </Advanced>
+          <RecentRunsList name={name} domain="container" t={t} />
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}

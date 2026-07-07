@@ -23,3 +23,26 @@ export function relativeTime(t: T, unix: number): string {
   const n = Math.floor(diff / 86400);
   return n === 1 ? t("time.dayAgo") : t("time.daysAgo").replace("{n}", String(n));
 }
+
+/**
+ * formatTs renders a unix timestamp as a localized date + time, or "—" when the
+ * value is missing. Shared by the dashboard cards, the runs list and the
+ * per-domain recent-runs list so absolute times read the same everywhere.
+ */
+export function formatTs(unix: number | null | undefined): string {
+  if (!unix) return "—";
+  return new Date(unix * 1000).toLocaleString();
+}
+
+/**
+ * formatDuration renders a whole-second span compactly and plural-free
+ * (e.g. "12s", "3m 5s", "1h 2m"). A negative or non-finite input yields ""
+ * so a missing/older start time never produces a broken duration.
+ */
+export function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "";
+  const s = Math.floor(seconds);
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}

@@ -132,6 +132,7 @@ const ru: Partial<Translations> = {
   "run.historyTitle": "История запусков",
   "run.filterDay": "День:",
   "run.allDays": "Все дни",
+  "run.recentTitle": "Последние запуски",
   "run.colKind": "Тип",
   "run.colStatus": "Статус",
   "run.colStarted": "Начало",

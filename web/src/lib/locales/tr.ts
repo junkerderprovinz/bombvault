@@ -134,6 +134,7 @@ const tr: Partial<Translations> = {
   "run.historyTitle": "Çalışma Geçmişi",
   "run.filterDay": "Gün:",
   "run.allDays": "Tüm günler",
+  "run.recentTitle": "Son çalışmalar",
   "run.colKind": "Tür",
   "run.colStatus": "Durum",
   "run.colStarted": "Başladı",

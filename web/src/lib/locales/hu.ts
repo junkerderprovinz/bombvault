@@ -134,6 +134,7 @@ const hu: Partial<Translations> = {
   "run.historyTitle": "Futási előzmények",
   "run.filterDay": "Nap:",
   "run.allDays": "Minden nap",
+  "run.recentTitle": "Legutóbbi futások",
   "run.colKind": "Típus",
   "run.colStatus": "Állapot",
   "run.colStarted": "Indítva",

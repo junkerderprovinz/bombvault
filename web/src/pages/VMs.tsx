@@ -8,6 +8,7 @@ import { useT, stateLabel } from "../lib/i18n";
 import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
+import { RecentRunsList } from "../components/RecentRunsList";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
@@ -564,6 +565,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
             </div>
             <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
           </div>
+          <RecentRunsList name={name} domain="vm" t={t} />
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}

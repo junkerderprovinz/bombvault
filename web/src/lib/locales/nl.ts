@@ -132,6 +132,7 @@ const nl: Partial<Translations> = {
   "run.historyTitle": "Uitvoeringsgeschiedenis",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dagen",
+  "run.recentTitle": "Recente uitvoeringen",
   "run.colKind": "Soort",
   "run.colStatus": "Status",
   "run.colStarted": "Gestart",

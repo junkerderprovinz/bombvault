@@ -133,6 +133,7 @@ const uk: Partial<Translations> = {
   "run.historyTitle": "Історія запусків",
   "run.filterDay": "День:",
   "run.allDays": "Усі дні",
+  "run.recentTitle": "Останні запуски",
   "run.colKind": "Тип",
   "run.colStatus": "Статус",
   "run.colStarted": "Початок",

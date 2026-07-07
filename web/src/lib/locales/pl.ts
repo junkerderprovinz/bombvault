@@ -132,6 +132,7 @@ const pl: Partial<Translations> = {
   "run.historyTitle": "Historia uruchomień",
   "run.filterDay": "Dzień:",
   "run.allDays": "Wszystkie dni",
+  "run.recentTitle": "Ostatnie uruchomienia",
   "run.colKind": "Typ",
   "run.colStatus": "Status",
   "run.colStarted": "Uruchomiono",

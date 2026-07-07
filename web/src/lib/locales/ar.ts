@@ -134,6 +134,7 @@ const ar: Partial<Translations> = {
   "run.historyTitle": "سجل التشغيلات",
   "run.filterDay": "اليوم:",
   "run.allDays": "كل الأيام",
+  "run.recentTitle": "أحدث التشغيلات",
   "run.colKind": "النوع",
   "run.colStatus": "الحالة",
   "run.colStarted": "بدأ",

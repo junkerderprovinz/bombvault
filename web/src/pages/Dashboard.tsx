@@ -7,29 +7,9 @@ import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
 import type { CadenceState } from "../components/CadenceBuilder";
-import { relativeTime } from "../lib/reltime";
+import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatTs(unix: number | null | undefined): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleString();
-}
-
-// formatDuration renders a whole-second span compactly and plural-free
-// (e.g. "12s", "3m 5s", "1h 2m"). A negative or non-finite input yields ""
-// so a missing/older start time never produces a broken duration.
-function formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return "";
-  const s = Math.floor(seconds);
-  if (s < 60) return `${s}s`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
-  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
-}
 
 // humanBytes formats a byte count with a binary (1024) unit and one decimal.
 function humanBytes(n: number): string {
@@ -796,7 +776,9 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           </div>
           {/* Scrollable list — all runs in the window (filtered by day) */}
           <div className="divide-y divide-carbon-border max-h-[32rem] overflow-y-auto pr-2">
-            {shown.map((run) => (
+            {shown.map((run) => {
+              const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
+              return (
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
                   <StatusChip status={run.status} />
@@ -806,17 +788,24 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   <span className="text-carbon-text flex-1 truncate">
                     {run.target || `${run.targetId.slice(0, 12)}…`}
                   </span>
-                  {/* Absolute date + time, with the relative age underneath (#45). */}
+                  {/* Start → end + duration, with the relative age underneath (#45/#50). */}
                   <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
-                    <span className="text-carbon-textSub whitespace-nowrap">{formatTs(run.startedAt)}</span>
-                    <span className="text-carbon-textMuted">{relativeTime(t, run.startedAt)}</span>
+                    <span className="text-carbon-textSub whitespace-nowrap">
+                      {formatTs(run.startedAt)}
+                      {run.finishedAt != null ? ` → ${formatTs(run.finishedAt)}` : ""}
+                    </span>
+                    <span className="text-carbon-textMuted whitespace-nowrap">
+                      {dur ? `(${dur}) · ` : ""}
+                      {relativeTime(t, run.startedAt)}
+                    </span>
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
                   <p className="pl-16 text-xs text-[#ff8389] break-words">{run.error}</p>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

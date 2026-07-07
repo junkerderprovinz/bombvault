@@ -133,6 +133,7 @@ const no: Partial<Translations> = {
   "run.historyTitle": "Kjørehistorikk",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dager",
+  "run.recentTitle": "Siste kjøringer",
   "run.colKind": "Type",
   "run.colStatus": "Status",
   "run.colStarted": "Startet",

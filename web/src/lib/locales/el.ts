@@ -134,6 +134,7 @@ const el: Partial<Translations> = {
   "run.historyTitle": "Ιστορικό εκτελέσεων",
   "run.filterDay": "Ημέρα:",
   "run.allDays": "Όλες οι ημέρες",
+  "run.recentTitle": "Πρόσφατες εκτελέσεις",
   "run.colKind": "Τύπος",
   "run.colStatus": "Κατάσταση",
   "run.colStarted": "Έναρξη",
