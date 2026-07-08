@@ -315,6 +315,7 @@ const ko: Partial<Translations> = {
   "settings.retentionMonthly": "월별 보존",
   "settings.retentionLocal": "로컬 저장소",
   "settings.retentionOffsite": "오프사이트 저장소",
+  "settings.retentionOffsiteTitle": "오프사이트 보존",
   "settings.retentionOffsiteHint": "오프사이트 저장소를 위한 별도 정책으로, 아카이브로 더 오래 보관할 수 있습니다. 모두 0 = 모든 오프사이트 백업 보관(오프사이트 정리 없음).",
 
   "rclone.title": "오프사이트 (rclone)",

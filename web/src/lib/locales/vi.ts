@@ -315,6 +315,7 @@ const vi: Partial<Translations> = {
   "settings.retentionMonthly": "Giữ theo tháng",
   "settings.retentionLocal": "Kho cục bộ",
   "settings.retentionOffsite": "Kho off-site",
+  "settings.retentionOffsiteTitle": "Lưu giữ off-site",
   "settings.retentionOffsiteHint": "Một chính sách riêng cho kho off-site, để giữ lâu hơn như kho lưu trữ. Tất cả bằng 0 = giữ mọi bản sao lưu off-site (không dọn off-site).",
 
   "rclone.title": "Ngoại vi (rclone)",

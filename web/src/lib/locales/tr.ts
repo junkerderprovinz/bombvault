@@ -318,6 +318,7 @@ const tr: Partial<Translations> = {
   "settings.retentionMonthly": "Aylık tut",
   "settings.retentionLocal": "Yerel repo",
   "settings.retentionOffsite": "Uzak repo",
+  "settings.retentionOffsiteTitle": "Uzak saklama",
   "settings.retentionOffsiteHint": "Uzak repo için ayrı bir politika; arşiv olarak daha uzun tutabilirsin. Hepsi 0 = her uzak yedeği sakla (uzak budama yok).",
 
   // Off-site (rclone)

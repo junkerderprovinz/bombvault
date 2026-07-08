@@ -318,6 +318,7 @@ const el: Partial<Translations> = {
   "settings.retentionMonthly": "Διατήρηση μηνιαίων",
   "settings.retentionLocal": "Τοπικό repo",
   "settings.retentionOffsite": "Απομακρυσμένο repo",
+  "settings.retentionOffsiteTitle": "Απομακρυσμένη διατήρηση",
   "settings.retentionOffsiteHint": "Ξεχωριστή πολιτική για το απομακρυσμένο repo, ώστε να το κρατάς περισσότερο ως αρχείο. Όλα 0 = κράτα κάθε απομακρυσμένο αντίγραφο (χωρίς απομακρυσμένο κλάδεμα).",
 
   // Off-site (rclone)

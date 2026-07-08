@@ -318,6 +318,7 @@ const sv: Partial<Translations> = {
   "settings.retentionMonthly": "Behåll månadsvisa",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
+  "settings.retentionOffsiteTitle": "Off-site-lagring",
   "settings.retentionOffsiteHint": "En separat policy för off-site-repot, så att du kan behålla det längre som arkiv. Allt 0 = behåll varje off-site-säkerhetskopia (ingen off-site-rensning).",
 
   // Off-site (rclone)

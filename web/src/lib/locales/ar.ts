@@ -318,6 +318,7 @@ const ar: Partial<Translations> = {
   "settings.retentionMonthly": "الاحتفاظ الشهري",
   "settings.retentionLocal": "المستودع المحلي",
   "settings.retentionOffsite": "المستودع الخارجي",
+  "settings.retentionOffsiteTitle": "الاحتفاظ الخارجي",
   "settings.retentionOffsiteHint": "سياسة منفصلة للمستودع الخارجي لتحتفظ به أطول كأرشيف. الكل 0 = الاحتفاظ بكل نسخة خارجية (دون تقليم خارجي).",
 
   // Off-site (rclone)

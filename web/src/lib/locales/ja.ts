@@ -315,6 +315,7 @@ const ja: Partial<Translations> = {
   "settings.retentionMonthly": "月次を保持",
   "settings.retentionLocal": "ローカルリポジトリ",
   "settings.retentionOffsite": "オフサイトリポジトリ",
+  "settings.retentionOffsiteTitle": "オフサイトの保持",
   "settings.retentionOffsiteHint": "オフサイトリポジトリ用の別ポリシー。アーカイブとして長く保持できます。すべて0＝オフサイトのバックアップをすべて保持（オフサイトの整理なし）。",
 
   "rclone.title": "オフサイト (rclone)",

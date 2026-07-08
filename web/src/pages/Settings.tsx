@@ -1497,6 +1497,9 @@ export function SettingsPage() {
   const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
   const [retSaveError, setRetSaveError] = useState<string | null>(null);
 
+  const [offRetSaveState, setOffRetSaveState] = useState<SaveState>("idle");
+  const [offRetSaveError, setOffRetSaveError] = useState<string | null>(null);
+
   const [limSaveState, setLimSaveState] = useState<SaveState>("idle");
   const [limSaveError, setLimSaveError] = useState<string | null>(null);
 
@@ -2028,6 +2031,57 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — Local snapshot retention (#51 — moved here from Off-site,  */}
+      {/* so it sits with the local backup paths it prunes).                   */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Card title={t("settings.retentionTitle")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">
+          {t("settings.retentionHint")}
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {([
+            ["retentionKeepLast", "settings.retentionLast"],
+            ["retentionKeepDaily", "settings.retentionDaily"],
+            ["retentionKeepWeekly", "settings.retentionWeekly"],
+            ["retentionKeepMonthly", "settings.retentionMonthly"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              <input
+                type="number"
+                min={0}
+                value={settings[key]}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+              />
+            </label>
+          ))}
+        </div>
+        <SaveBar
+          state={retSaveState}
+          error={retSaveError}
+          onSave={() =>
+            void save(
+              {
+                retentionKeepLast: settings.retentionKeepLast,
+                retentionKeepDaily: settings.retentionKeepDaily,
+                retentionKeepWeekly: settings.retentionKeepWeekly,
+                retentionKeepMonthly: settings.retentionKeepMonthly,
+              },
+              setRetSaveState,
+              setRetSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
       {/* STORAGE — Flash zip export (#28) — a plain .zip written after each   */}
       {/* flash backup, for off-server sync. Only relevant when Flash is on.   */}
       {/* ------------------------------------------------------------------ */}
@@ -2199,38 +2253,11 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* OFFSITE — Retention (default-mode, paired with off-site above).      */}
+      {/* OFFSITE — Retention (off-site repo only; local retention now lives   */}
+      {/* in the Storage tab, #51).                                            */}
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
-      <Card title={t("settings.retentionTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          {t("settings.retentionHint")}
-        </p>
-        <span className="text-xs font-medium text-carbon-textSub">{t("settings.retentionLocal")}</span>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {([
-            ["retentionKeepLast", "settings.retentionLast"],
-            ["retentionKeepDaily", "settings.retentionDaily"],
-            ["retentionKeepWeekly", "settings.retentionWeekly"],
-            ["retentionKeepMonthly", "settings.retentionMonthly"],
-          ] as const).map(([key, label]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t(label)}</span>
-              <input
-                type="number"
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
-              />
-            </label>
-          ))}
-        </div>
-
-        <span className="text-xs font-medium text-carbon-textSub mt-2">{t("settings.retentionOffsite")}</span>
+      <Card title={t("settings.retentionOffsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.retentionOffsiteHint")}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -2255,22 +2282,18 @@ export function SettingsPage() {
           ))}
         </div>
         <SaveBar
-          state={retSaveState}
-          error={retSaveError}
+          state={offRetSaveState}
+          error={offRetSaveError}
           onSave={() =>
             void save(
               {
-                retentionKeepLast: settings.retentionKeepLast,
-                retentionKeepDaily: settings.retentionKeepDaily,
-                retentionKeepWeekly: settings.retentionKeepWeekly,
-                retentionKeepMonthly: settings.retentionKeepMonthly,
                 offsiteRetentionKeepLast: settings.offsiteRetentionKeepLast,
                 offsiteRetentionKeepDaily: settings.offsiteRetentionKeepDaily,
                 offsiteRetentionKeepWeekly: settings.offsiteRetentionKeepWeekly,
                 offsiteRetentionKeepMonthly: settings.offsiteRetentionKeepMonthly,
               },
-              setRetSaveState,
-              setRetSaveError
+              setOffRetSaveState,
+              setOffRetSaveError
             )
           }
           t={t}
