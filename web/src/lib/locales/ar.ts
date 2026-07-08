@@ -441,7 +441,7 @@ const ar: Partial<Translations> = {
   "notify.hcPerDomain": "فحوصات لكل نطاق (متقدم)",
   "notify.hcPerDomainHint": "اترك الحقل فارغاً لاستخدام الرابط العام أعلاه. يحصل النطاق الذي له رابطه الخاص على فحصه الخاص، بمدة تشغيله وسجله الخاصّين.",
   "notify.unraid": "إشعارات Unraid",
-  "notify.unraidHint": "أرسل إلى نظام إشعارات Unraid نفسه (الذي يمكنه إعادة التوجيه إلى Pushover والبريد وDiscord …). يتطلب إعداد اتصال SSH (الإعدادات ← VM Backup over SSH).",
+  "notify.unraidHint": "أرسل إلى نظام إشعارات Unraid نفسه (الذي يمكنه إعادة التوجيه إلى Pushover والبريد الإلكتروني وDiscord، …). يعمل عبر اتصال SSH من الإعدادات → VM Backup over SSH، لذا يجب أن يكون المفتاح مُصرّحًا به هناك — لكن libvirt/VMs غير مطلوبة (تجاهل نتيجة «libvirt not reachable» إذا كنت لا تنسخ VMs احتياطيًا). للتحقق، استخدم «إرسال اختبار» بالأسفل.",
   "notify.save": "حفظ",
   "notify.test": "إرسال اختبار",
   "notify.tested": "تم إرسال الاختبار",

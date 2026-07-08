@@ -4501,7 +4501,14 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 	if err := s.ssh.EnsureKnownHost(ctx); err != nil {
 		return err // SSH/auth/reachability problem — clearer than libvirt's error
 	}
-	return s.ssh.Test(ctx)
+	if err := s.ssh.Test(ctx); err != nil {
+		// EnsureKnownHost passed, so SSH auth + reachability are fine — only
+		// libvirt is missing. Say so, so a notifications-only user (who needs the
+		// SSH connection but not libvirt) isn't misled into thinking their SSH is
+		// broken (#53).
+		return fmt.Errorf("%w. The SSH connection itself is working — libvirt is only needed for VM backups, not for Unraid notifications", err)
+	}
+	return nil
 }
 
 // LibvirtReachable reports whether libvirt is reachable over SSH, for the

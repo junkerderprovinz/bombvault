@@ -439,7 +439,7 @@ const pt: Partial<Translations> = {
   "notify.hcPerDomain": "Verificações por domínio (avançado)",
   "notify.hcPerDomainHint": "Deixe um campo em branco para usar o URL global acima. Um domínio com o seu próprio URL recebe a sua própria verificação, com o seu próprio tempo de execução e histórico.",
   "notify.unraid": "Notificações do Unraid",
-  "notify.unraidHint": "Enviar para o sistema de notificações do próprio Unraid (que pode encaminhar para Pushover, e-mail, Discord …). Requer a conexão SSH configurada (Configurações → VM Backup over SSH).",
+  "notify.unraidHint": "Enviar para o sistema de notificações do próprio Unraid (que pode encaminhar para Pushover, e-mail, Discord, …). Funciona pela conexão SSH de Configurações → VM Backup over SSH, então a chave precisa estar autorizada ali — mas libvirt/VMs NÃO são necessários (ignore um resultado “libvirt not reachable” se você não faz backup de VMs). Para verificar, use “Enviar teste” abaixo.",
   "notify.save": "Guardar",
   "notify.test": "Enviar teste",
   "notify.tested": "Teste enviado",

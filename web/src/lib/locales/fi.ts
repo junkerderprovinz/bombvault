@@ -441,7 +441,7 @@ const fi: Partial<Translations> = {
   "notify.hcPerDomain": "Toimialuekohtaiset tarkistukset (edistynyt)",
   "notify.hcPerDomainHint": "Jätä kenttä tyhjäksi käyttääksesi yllä olevaa yleistä URL-osoitetta. Toimialue, jolla on oma URL-osoite, saa oman tarkistuksensa, jolla on oma suoritusaika ja historia.",
   "notify.unraid": "Unraid-ilmoitukset",
-  "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin …). Vaatii määritetyn SSH-yhteyden (Asetukset → VM Backup over SSH).",
+  "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin, …). Toimii Asetukset → VM Backup over SSH -kohdan SSH-yhteyden kautta, joten avain on valtuutettava siellä — mutta libvirt/VMs EIVÄT ole pakollisia (ohita ”libvirt not reachable” -tulos, jos et varmuuskopioi VMs). Tarkista se alla olevalla ”Lähetä testi” -painikkeella.",
   "notify.save": "Tallenna",
   "notify.test": "Lähetä testi",
   "notify.tested": "Testi lähetetty",

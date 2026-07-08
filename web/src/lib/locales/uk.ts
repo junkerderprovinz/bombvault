@@ -436,7 +436,7 @@ const uk: Partial<Translations> = {
   "notify.hcPerDomain": "Перевірки за доменами (додатково)",
   "notify.hcPerDomainHint": "Залиште поле порожнім, щоб використати глобальний URL вище. Домен із власним URL отримує власну перевірку, з власним часом виконання та історією.",
   "notify.unraid": "Сповіщення Unraid",
-  "notify.unraidHint": "Надсилати у власну систему сповіщень Unraid (яка може пересилати в Pushover, e-mail, Discord …). Потрібне налаштоване SSH-з'єднання (Налаштування → VM Backup over SSH).",
+  "notify.unraidHint": "Надсилати у власну систему сповіщень Unraid (яка може пересилати в Pushover, e-mail, Discord, …). Працює через SSH-з'єднання з Налаштування → VM Backup over SSH, тож ключ має бути авторизований там — але libvirt/VMs НЕ потрібні (проігноруйте результат «libvirt not reachable», якщо ви не робите резервні копії VMs). Щоб перевірити, натисніть «Надіслати тест» нижче.",
   "notify.save": "Зберегти",
   "notify.test": "Надіслати тест",
   "notify.tested": "Тест надіслано",

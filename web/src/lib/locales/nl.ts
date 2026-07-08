@@ -436,7 +436,7 @@ const nl: Partial<Translations> = {
   "notify.hcPerDomain": "Controles per domein (geavanceerd)",
   "notify.hcPerDomainHint": "Laat een veld leeg om de globale URL hierboven te gebruiken. Een domein met een eigen URL krijgt een eigen controle, met eigen looptijd en geschiedenis.",
   "notify.unraid": "Unraid-meldingen",
-  "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord …). Vereist een ingestelde SSH-verbinding (Instellingen → VM Backup over SSH).",
+  "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord, …). Werkt via de SSH-verbinding uit Instellingen → VM Backup over SSH, dus de sleutel moet daar geautoriseerd zijn — maar libvirt/VMs zijn NIET vereist (negeer een “libvirt not reachable”-resultaat als je geen VMs back-upt). Controleer het met “Test versturen” hieronder.",
   "notify.save": "Opslaan",
   "notify.test": "Test versturen",
   "notify.tested": "Test verstuurd",

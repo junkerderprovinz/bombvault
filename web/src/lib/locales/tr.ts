@@ -441,7 +441,7 @@ const tr: Partial<Translations> = {
   "notify.hcPerDomain": "Etki alanı başına denetimler (gelişmiş)",
   "notify.hcPerDomainHint": "Yukarıdaki genel URL'yi kullanmak için bir alanı boş bırakın. Kendi URL'si olan bir etki alanı, kendi çalışma süresi ve geçmişiyle kendi denetimini alır.",
   "notify.unraid": "Unraid bildirimleri",
-  "notify.unraidHint": "Unraid'in kendi bildirim sistemine gönder (Pushover, e-posta, Discord … iletilebilir). Kurulu SSH bağlantısı gerekir (Ayarlar → VM Backup over SSH).",
+  "notify.unraidHint": "Unraid'in kendi bildirim sistemine gönderir (Pushover, e-posta, Discord, … iletebilir). Ayarlar → VM Backup over SSH bölümündeki SSH bağlantısı üzerinden çalışır, bu nedenle anahtarın orada yetkilendirilmiş olması gerekir — ancak libvirt/VMs gerekli DEĞİLDİR (VMs yedeklemiyorsanız “libvirt not reachable” sonucunu yok sayın). Kontrol etmek için aşağıdaki “Test gönder” düğmesini kullanın.",
   "notify.save": "Kaydet",
   "notify.test": "Test gönder",
   "notify.tested": "Test gönderildi",

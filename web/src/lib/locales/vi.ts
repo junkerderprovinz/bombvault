@@ -433,7 +433,7 @@ const vi: Partial<Translations> = {
   "notify.hcPerDomain": "Kiểm tra theo miền (nâng cao)",
   "notify.hcPerDomainHint": "Để trống một trường để dùng URL toàn cục ở trên. Một miền có URL riêng sẽ có phần kiểm tra riêng, với thời gian chạy và lịch sử riêng.",
   "notify.unraid": "Thông báo Unraid",
-  "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord …). Cần thiết lập kết nối SSH (Cài đặt → VM Backup over SSH).",
+  "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord, …). Chạy qua kết nối SSH từ Cài đặt → VM Backup over SSH, nên khóa phải được ủy quyền ở đó — nhưng KHÔNG bắt buộc phải có libvirt/VMs (bỏ qua kết quả “libvirt not reachable” nếu bạn không sao lưu VMs). Để kiểm tra, dùng “Gửi thử” bên dưới.",
   "notify.save": "Lưu",
   "notify.test": "Gửi thử",
   "notify.tested": "Đã gửi thử",

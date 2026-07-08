@@ -441,7 +441,7 @@ const es: Partial<Translations> = {
   "notify.hcPerDomain": "Comprobaciones por dominio (avanzado)",
   "notify.hcPerDomainHint": "Deja un campo en blanco para usar la URL global de arriba. Un dominio con su propia URL obtiene su propia comprobación, con su propio tiempo de ejecución e historial.",
   "notify.unraid": "Notificaciones de Unraid",
-  "notify.unraidHint": "Enviar al sistema de notificaciones de Unraid (que puede reenviar a Pushover, correo, Discord …). Requiere la conexión SSH configurada (Ajustes → VM Backup over SSH).",
+  "notify.unraidHint": "Enviar al sistema de notificaciones del propio Unraid (que puede reenviar a Pushover, correo, Discord, …). Funciona a través de la conexión SSH de Ajustes → VM Backup over SSH, por lo que la clave debe estar autorizada allí — pero libvirt/VMs NO son necesarios (ignora un resultado «libvirt not reachable» si no haces copia de seguridad de VMs). Para comprobarlo, usa «Enviar prueba» abajo.",
   "notify.smtp": "Correo (SMTP)",
   "notify.smtpHost": "Host SMTP",
   "notify.smtpPort": "Puerto",

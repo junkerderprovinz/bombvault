@@ -441,7 +441,7 @@ const sv: Partial<Translations> = {
   "notify.hcPerDomain": "Kontroller per domän (avancerat)",
   "notify.hcPerDomainHint": "Lämna ett fält tomt för att använda den globala URL:en ovan. En domän med en egen URL får en egen kontroll, med egen körtid och historik.",
   "notify.unraid": "Unraid-aviseringar",
-  "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord …). Kräver konfigurerad SSH-anslutning (Inställningar → VM Backup over SSH).",
+  "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord, …). Körs via SSH-anslutningen från Inställningar → VM Backup over SSH, så nyckeln måste vara auktoriserad där — men libvirt/VMs krävs INTE (ignorera ett ”libvirt not reachable”-resultat om du inte säkerhetskopierar VMs). Kontrollera med ”Skicka test” nedan.",
   "notify.save": "Spara",
   "notify.test": "Skicka test",
   "notify.tested": "Test skickat",
