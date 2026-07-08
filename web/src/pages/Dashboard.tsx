@@ -1580,15 +1580,17 @@ export function Dashboard() {
       advancedOnly: true,
       node: <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />,
     },
+    // Last Backups and Run History are separate blocks (#50 follow-up) so each
+    // can be hidden, reordered and read at full width independently.
     {
-      id: "backups",
-      label: t("dashboard.blockBackups"),
-      node: (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <LastBackupsCard t={t} />
-          <RunsCard t={t} />
-        </div>
-      ),
+      id: "lastBackups",
+      label: t("dashboard.lastBackups"),
+      node: <LastBackupsCard t={t} />,
+    },
+    {
+      id: "runHistory",
+      label: t("run.historyTitle"),
+      node: <RunsCard t={t} />,
     },
     {
       id: "heatmap",
