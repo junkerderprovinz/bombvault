@@ -49,6 +49,11 @@ type Docker interface {
 	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
+	// ImageID returns the local image ID (sha256:…) currently resolved for a
+	// registry reference (e.g. "plexinc/pms-docker:latest"), or "" when the
+	// reference is not present locally. Used after a Pull to decide whether a
+	// newer image actually arrived before recreating a container (#52).
+	ImageID(ctx context.Context, ref string) (string, error)
 	// CreateAndStart recreates the container from the captured inspect and starts
 	// it only when start is true (the caller decides, e.g. from the captured
 	// run-state and a "leave stopped" restore option).

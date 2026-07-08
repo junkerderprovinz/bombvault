@@ -128,6 +128,9 @@ const he: Partial<Translations> = {
   // Runs
   "run.kindBackup": "גיבוי",
   "run.kindRestore": "שחזור",
+  "run.kindUpdate": "עדכון",
+  "update.afterBackup": "עדכון לאחר גיבוי מוצלח",
+  "update.afterBackupHint": "מושך את הדימוי ובונה מחדש את הקונטיינר כשזמין דימוי חדש יותר — רק אחרי גיבוי מוצלח, כך שתמיד תהיה לך קודם נקודת שחזור טרייה.",
   "run.statusRunning": "פועל",
   "run.statusSuccess": "הצלחה",
   "run.statusFailed": "כשל",

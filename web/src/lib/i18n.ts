@@ -228,6 +228,9 @@ const en = {
   // Runs
   "run.kindBackup": "Backup",
   "run.kindRestore": "Restore",
+  "run.kindUpdate": "Update",
+  "update.afterBackup": "Update after successful backup",
+  "update.afterBackupHint": "Pull the image and recreate this container when a newer image is available — only after a successful backup, so you always have a fresh restore point first.",
   "run.statusRunning": "Running",
   "run.statusSuccess": "Success",
   "run.statusFailed": "Failed",
@@ -1009,6 +1012,9 @@ const de: Translations = {
 
   "run.kindBackup": "Backup",
   "run.kindRestore": "Wiederherstellung",
+  "run.kindUpdate": "Update",
+  "update.afterBackup": "Nach erfolgreichem Backup updaten",
+  "update.afterBackupHint": "Zieht das Image und baut diesen Container neu, wenn ein neueres Image verfügbar ist — nur nach einem erfolgreichen Backup, du hast also immer zuerst einen frischen Wiederherstellungspunkt.",
   "run.statusRunning": "Läuft",
   "run.statusSuccess": "Erfolgreich",
   "run.statusFailed": "Fehlgeschlagen",

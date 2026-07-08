@@ -128,6 +128,9 @@ const th: Partial<Translations> = {
   // Runs
   "run.kindBackup": "สำรองข้อมูล",
   "run.kindRestore": "กู้คืน",
+  "run.kindUpdate": "อัปเดต",
+  "update.afterBackup": "อัปเดตหลังจากสำรองข้อมูลสำเร็จ",
+  "update.afterBackupHint": "ดึงอิมเมจและสร้างคอนเทนเนอร์นี้ใหม่เมื่อมีอิมเมจที่ใหม่กว่า — เฉพาะหลังจากสำรองข้อมูลสำเร็จ คุณจึงมีจุดกู้คืนใหม่ก่อนเสมอ",
   "run.statusRunning": "กำลังทำงาน",
   "run.statusSuccess": "สำเร็จ",
   "run.statusFailed": "ล้มเหลว",

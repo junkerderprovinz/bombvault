@@ -128,6 +128,9 @@ const ko: Partial<Translations> = {
   // Runs
   "run.kindBackup": "백업",
   "run.kindRestore": "복원",
+  "run.kindUpdate": "업데이트",
+  "update.afterBackup": "백업 성공 후 업데이트",
+  "update.afterBackupHint": "최신 이미지가 있으면 이미지를 받아 이 컨테이너를 다시 만듭니다 — 백업이 성공한 뒤에만 실행되므로 항상 먼저 최신 복원 지점이 확보됩니다.",
   "run.statusRunning": "실행 중",
   "run.statusSuccess": "성공",
   "run.statusFailed": "실패",

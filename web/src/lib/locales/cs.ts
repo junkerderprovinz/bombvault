@@ -128,6 +128,9 @@ const cs: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Záloha",
   "run.kindRestore": "Obnova",
+  "run.kindUpdate": "Aktualizace",
+  "update.afterBackup": "Aktualizovat po úspěšné záloze",
+  "update.afterBackupHint": "Stáhne image a znovu vytvoří tento kontejner, když je k dispozici novější image — jen po úspěšné záloze, takže máte vždy nejdřív čerstvý bod obnovení.",
   "run.statusRunning": "Probíhá",
   "run.statusSuccess": "Úspěch",
   "run.statusFailed": "Selhalo",

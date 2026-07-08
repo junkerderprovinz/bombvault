@@ -128,6 +128,9 @@ const fi: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Varmuuskopio",
   "run.kindRestore": "Palautus",
+  "run.kindUpdate": "Päivitys",
+  "update.afterBackup": "Päivitä onnistuneen varmuuskopioinnin jälkeen",
+  "update.afterBackupHint": "Hakee imagen ja luo tämän kontin uudelleen, kun uudempi image on saatavilla — vain onnistuneen varmuuskopioinnin jälkeen, joten sinulla on aina ensin tuore palautuspiste.",
   "run.statusRunning": "Käynnissä",
   "run.statusSuccess": "Onnistui",
   "run.statusFailed": "Epäonnistui",

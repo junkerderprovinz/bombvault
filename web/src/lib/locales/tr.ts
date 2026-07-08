@@ -128,6 +128,9 @@ const tr: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Yedekleme",
   "run.kindRestore": "Geri Yükleme",
+  "run.kindUpdate": "Güncelleme",
+  "update.afterBackup": "Başarılı yedeklemeden sonra güncelle",
+  "update.afterBackupHint": "Daha yeni bir imaj olduğunda imajı çeker ve bu konteyneri yeniden oluşturur — yalnızca başarılı bir yedeklemeden sonra, böylece her zaman önce taze bir geri yükleme noktanız olur.",
   "run.statusRunning": "Çalışıyor",
   "run.statusSuccess": "Başarılı",
   "run.statusFailed": "Başarısız",

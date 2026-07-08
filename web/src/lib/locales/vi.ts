@@ -128,6 +128,9 @@ const vi: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Sao lưu",
   "run.kindRestore": "Khôi phục",
+  "run.kindUpdate": "Cập nhật",
+  "update.afterBackup": "Cập nhật sau khi sao lưu thành công",
+  "update.afterBackupHint": "Kéo image và tạo lại container này khi có image mới hơn — chỉ sau khi sao lưu thành công, nên bạn luôn có sẵn một điểm khôi phục mới trước.",
   "run.statusRunning": "Đang chạy",
   "run.statusSuccess": "Thành công",
   "run.statusFailed": "Thất bại",

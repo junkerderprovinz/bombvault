@@ -126,6 +126,9 @@ const pl: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Kopia zapasowa",
   "run.kindRestore": "Przywracanie",
+  "run.kindUpdate": "Aktualizacja",
+  "update.afterBackup": "Aktualizuj po udanej kopii zapasowej",
+  "update.afterBackupHint": "Pobiera obraz i odtwarza ten kontener, gdy dostępny jest nowszy obraz — tylko po udanej kopii zapasowej, więc zawsze masz najpierw świeży punkt przywracania.",
   "run.statusRunning": "W toku",
   "run.statusSuccess": "Sukces",
   "run.statusFailed": "Niepowodzenie",

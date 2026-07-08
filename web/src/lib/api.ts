@@ -27,6 +27,9 @@ export interface Container {
   stopContainers: string[];
   /** restic --exclude patterns for this container's backup, one per line. */
   excludes: string[];
+  /** Opt-in (#52): after a successful backup, pull the image and recreate the
+   *  container if a newer image is available. Off by default. */
+  updateAfterBackup?: boolean;
   /** Compose project (com.docker.compose.project label) this container belongs to,
    *  "" if none. Drives the "restore whole stack" panel. */
   stack: string;
@@ -712,6 +715,14 @@ export function setStopContainers(name: string, stopContainers: string[]): Promi
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ stopContainers }),
+  });
+}
+
+/** PATCH /api/containers/{name} — toggle the post-backup image update (#52). */
+export function setUpdateAfterBackup(name: string, updateAfterBackup: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ updateAfterBackup }),
   });
 }
 

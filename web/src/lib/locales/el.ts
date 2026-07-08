@@ -128,6 +128,9 @@ const el: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Αντίγραφο ασφαλείας",
   "run.kindRestore": "Επαναφορά",
+  "run.kindUpdate": "Ενημέρωση",
+  "update.afterBackup": "Ενημέρωση μετά από επιτυχές αντίγραφο ασφαλείας",
+  "update.afterBackupHint": "Τραβά την εικόνα και αναδημιουργεί αυτό το κοντέινερ όταν είναι διαθέσιμη νεότερη εικόνα — μόνο μετά από επιτυχές αντίγραφο ασφαλείας, ώστε να έχετε πάντα πρώτα ένα φρέσκο σημείο επαναφοράς.",
   "run.statusRunning": "Σε εξέλιξη",
   "run.statusSuccess": "Επιτυχία",
   "run.statusFailed": "Αποτυχία",

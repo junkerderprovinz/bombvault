@@ -127,6 +127,9 @@ const ro: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Copie de rezervă",
   "run.kindRestore": "Restaurare",
+  "run.kindUpdate": "Actualizare",
+  "update.afterBackup": "Actualizează după o copie de rezervă reușită",
+  "update.afterBackupHint": "Descarcă imaginea și recreează acest container când e disponibilă o imagine mai nouă — doar după o copie de rezervă reușită, ca să ai mereu mai întâi un punct de restaurare proaspăt.",
   "run.statusRunning": "În rulare",
   "run.statusSuccess": "Succes",
   "run.statusFailed": "Eșuat",

@@ -49,6 +49,8 @@ type fakeServiceDocker struct {
 	restartErr    error
 	removeErr     error
 	pullErr       error
+	imageID       string // returned by ImageID (post-pull image id, for #52 update tests)
+	imageIDErr    error
 	createErr     error
 	createErrName string // when set, CreateAndStart fails for this container name
 	started       bool
@@ -101,6 +103,11 @@ func (f *fakeServiceDocker) Remove(_ context.Context, name string) error {
 func (f *fakeServiceDocker) Pull(_ context.Context, image string) error {
 	f.calls = append(f.calls, "pull:"+image)
 	return f.pullErr
+}
+
+func (f *fakeServiceDocker) ImageID(_ context.Context, ref string) (string, error) {
+	f.calls = append(f.calls, "imageID:"+ref)
+	return f.imageID, f.imageIDErr
 }
 
 func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) error {

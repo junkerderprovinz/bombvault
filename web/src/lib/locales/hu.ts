@@ -128,6 +128,9 @@ const hu: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Mentés",
   "run.kindRestore": "Visszaállítás",
+  "run.kindUpdate": "Frissítés",
+  "update.afterBackup": "Frissítés sikeres mentés után",
+  "update.afterBackupHint": "Lehúzza a képet, és újra létrehozza ezt a konténert, ha újabb kép érhető el — csak sikeres mentés után, így mindig van előbb friss visszaállítási pont.",
   "run.statusRunning": "Fut",
   "run.statusSuccess": "Sikeres",
   "run.statusFailed": "Sikertelen",

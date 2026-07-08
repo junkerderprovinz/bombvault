@@ -128,6 +128,9 @@ const zh: Partial<Translations> = {
   // Runs
   "run.kindBackup": "备份",
   "run.kindRestore": "还原",
+  "run.kindUpdate": "更新",
+  "update.afterBackup": "备份成功后更新",
+  "update.afterBackupHint": "当有更新的镜像时拉取镜像并重建此容器 — 仅在备份成功后执行，因此你总是先有一个新的恢复点。",
   "run.statusRunning": "运行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失败",

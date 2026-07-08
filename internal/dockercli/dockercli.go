@@ -268,6 +268,21 @@ func (c *Client) Pull(ctx context.Context, img string) error {
 	return nil
 }
 
+// ImageID returns the local image ID (sha256:…) resolved for a registry
+// reference, or "" when the reference is not present locally. Used after a Pull
+// to compare against a running container's image and skip a needless recreate
+// when the image did not actually change (#52).
+func (c *Client) ImageID(ctx context.Context, ref string) (string, error) {
+	insp, err := c.api.ImageInspect(ctx, ref)
+	if err != nil {
+		if cerrdefs.IsNotFound(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("dockercli: image inspect: %w", err)
+	}
+	return insp.ID, nil
+}
+
 // CreateAndStart recreates a container from a captured inspect and starts it
 // when start is true. Security-relevant fields (User, Cap*, Privileged,
 // SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/

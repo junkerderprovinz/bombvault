@@ -783,7 +783,11 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 <div className="flex items-center gap-3">
                   <StatusChip status={run.status} />
                   <span className="text-carbon-text font-medium w-16 shrink-0">
-                    {run.kind === "backup" ? t("run.kindBackup") : t("run.kindRestore")}
+                    {run.kind === "backup"
+                      ? t("run.kindBackup")
+                      : run.kind === "update"
+                        ? t("run.kindUpdate")
+                        : t("run.kindRestore")}
                   </span>
                   <span className="text-carbon-text flex-1 truncate">
                     {run.target || `${run.targetId.slice(0, 12)}…`}

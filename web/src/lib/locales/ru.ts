@@ -126,6 +126,9 @@ const ru: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Резервное копирование",
   "run.kindRestore": "Восстановление",
+  "run.kindUpdate": "Обновление",
+  "update.afterBackup": "Обновлять после успешного резервного копирования",
+  "update.afterBackupHint": "Загружает образ и пересоздаёт этот контейнер, когда доступен более новый образ — только после успешного резервного копирования, чтобы у вас всегда сначала была свежая точка восстановления.",
   "run.statusRunning": "Выполняется",
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Ошибка",
