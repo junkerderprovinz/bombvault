@@ -316,6 +316,7 @@ const cs: Partial<Translations> = {
   "settings.retentionMonthly": "Ponechat měsíční",
   "settings.retentionLocal": "Místní repo",
   "settings.retentionOffsite": "Vzdálené repo",
+  "settings.retentionOffsiteTitle": "Vzdálené uchovávání",
   "settings.retentionOffsiteHint": "Samostatná zásada pro vzdálené repo, aby se dalo držet déle jako archiv. Vše 0 = zachovat každou vzdálenou zálohu (bez čištění vzdáleného).",
 
   // Off-site (rclone)

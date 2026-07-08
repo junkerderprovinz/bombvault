@@ -318,6 +318,7 @@ const es: Partial<Translations> = {
   "settings.retentionMonthly": "Conservar mensuales",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
+  "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Una política separada para el repo externo, para conservarlo más tiempo como archivo. Todo en 0 = conservar cada copia externa (sin purga externa).",
 
   // Off-site (rclone)

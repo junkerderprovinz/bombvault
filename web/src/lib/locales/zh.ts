@@ -315,6 +315,7 @@ const zh: Partial<Translations> = {
   "settings.retentionMonthly": "保留每月",
   "settings.retentionLocal": "本地仓库",
   "settings.retentionOffsite": "异地仓库",
+  "settings.retentionOffsiteTitle": "异地保留",
   "settings.retentionOffsiteHint": "为异地仓库设置单独策略，可作为归档保留更久。全为 0 = 保留每个异地备份（不清理异地）。",
 
   "rclone.title": "异地 (rclone)",

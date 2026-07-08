@@ -318,6 +318,7 @@ const th: Partial<Translations> = {
   "settings.retentionMonthly": "เก็บรายเดือน",
   "settings.retentionLocal": "ที่เก็บในเครื่อง",
   "settings.retentionOffsite": "ที่เก็บนอกสถานที่",
+  "settings.retentionOffsiteTitle": "การเก็บรักษานอกสถานที่",
   "settings.retentionOffsiteHint": "นโยบายแยกสำหรับที่เก็บนอกสถานที่ เพื่อเก็บไว้นานขึ้นเป็นคลังเก็บ ตั้งเป็น 0 ทั้งหมด = เก็บข้อมูลสำรองนอกสถานที่ทุกชุด (ไม่พรูนนอกสถานที่)",
 
   // Off-site (rclone)

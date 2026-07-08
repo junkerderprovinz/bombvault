@@ -318,6 +318,7 @@ const fi: Partial<Translations> = {
   "settings.retentionMonthly": "Säilytä kuukausittain",
   "settings.retentionLocal": "Paikallinen repo",
   "settings.retentionOffsite": "Etärepo",
+  "settings.retentionOffsiteTitle": "Etäsäilytys",
   "settings.retentionOffsiteHint": "Erillinen käytäntö etärepolle, jotta voit säilyttää sitä pidempään arkistona. Kaikki 0 = säilytä jokainen etävarmuuskopio (ei etäkarsintaa).",
 
   // Off-site (rclone)
