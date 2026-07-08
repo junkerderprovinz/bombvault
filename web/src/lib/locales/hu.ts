@@ -441,7 +441,7 @@ const hu: Partial<Translations> = {
   "notify.hcPerDomain": "Tartományonkénti ellenőrzések (haladó)",
   "notify.hcPerDomainHint": "Hagyjon egy mezőt üresen a fenti globális URL használatához. A saját URL-lel rendelkező tartomány saját ellenőrzést kap, saját futásidővel és előzményekkel.",
   "notify.unraid": "Unraid-értesítések",
-  "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra …). Beállított SSH-kapcsolat szükséges (Beállítások → VM Backup over SSH).",
+  "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra, …). A Beállítások → VM Backup over SSH SSH-kapcsolatán keresztül fut, ezért a kulcsot ott engedélyezni kell — de a libvirt/VMs NEM szükséges (hagyd figyelmen kívül a „libvirt not reachable” eredményt, ha nem mentesz VMs-t). Az ellenőrzéshez használd a lenti „Teszt küldése” gombot.",
   "notify.save": "Mentés",
   "notify.test": "Teszt küldése",
   "notify.tested": "Teszt elküldve",

@@ -439,7 +439,7 @@ const ro: Partial<Translations> = {
   "notify.hcPerDomain": "Verificări pe domeniu (avansat)",
   "notify.hcPerDomainHint": "Lasă un câmp gol pentru a folosi URL-ul global de mai sus. Un domeniu cu propriul URL primește propria verificare, cu propriul timp de execuție și istoric.",
   "notify.unraid": "Notificări Unraid",
-  "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord …). Necesită conexiunea SSH configurată (Setări → VM Backup over SSH).",
+  "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord, …). Funcționează prin conexiunea SSH din Setări → VM Backup over SSH, deci cheia trebuie autorizată acolo — dar libvirt/VMs NU sunt necesare (ignoră un rezultat „libvirt not reachable” dacă nu faci backup pentru VMs). Pentru verificare, folosește „Trimite test” de mai jos.",
   "notify.save": "Salvează",
   "notify.test": "Trimite test",
   "notify.tested": "Test trimis",

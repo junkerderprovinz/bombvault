@@ -433,7 +433,7 @@ const zh: Partial<Translations> = {
   "notify.hcPerDomain": "按域检查（高级）",
   "notify.hcPerDomainHint": "留空某个字段可使用上方的全局 URL。拥有自己 URL 的域会获得自己的检查，拥有各自的运行时长和历史记录。",
   "notify.unraid": "Unraid 通知",
-  "notify.unraidHint": "发送到 Unraid 自带的通知系统（可转发到 Pushover、邮件、Discord 等）。需要已设置的 SSH 连接（设置 → VM Backup over SSH）。",
+  "notify.unraidHint": "发送到 Unraid 自带的通知系统（可转发到 Pushover、邮件、Discord、…）。它通过 设置 → VM Backup over SSH 中的 SSH 连接运行，因此密钥必须在那里获得授权 — 但不需要 libvirt/VMs（如果你不备份 VMs，请忽略“libvirt not reachable”结果）。使用下方的“发送测试”进行检查。",
   "notify.save": "保存",
   "notify.test": "发送测试",
   "notify.tested": "测试已发送",

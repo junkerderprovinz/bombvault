@@ -441,7 +441,7 @@ const th: Partial<Translations> = {
   "notify.hcPerDomain": "การตรวจสอบต่อโดเมน (ขั้นสูง)",
   "notify.hcPerDomainHint": "เว้นช่องว่างไว้เพื่อใช้ URL ส่วนกลางด้านบน โดเมนที่มี URL ของตัวเองจะได้รับการตรวจสอบของตัวเอง พร้อมด้วยรันไทม์และประวัติของตัวเอง",
   "notify.unraid": "การแจ้งเตือน Unraid",
-  "notify.unraidHint": "ส่งไปยังระบบแจ้งเตือนของ Unraid เอง (ซึ่งสามารถส่งต่อไปยัง Pushover อีเมล Discord …) ต้องตั้งค่าการเชื่อมต่อ SSH ก่อน (ตั้งค่า → VM Backup over SSH)",
+  "notify.unraidHint": "ส่งไปยังระบบแจ้งเตือนของ Unraid เอง (ซึ่งสามารถส่งต่อไปยัง Pushover อีเมล Discord, …) ทำงานผ่านการเชื่อมต่อ SSH จาก ตั้งค่า → VM Backup over SSH ดังนั้นต้องอนุญาตคีย์ที่นั่น — แต่ไม่จำเป็นต้องมี libvirt/VMs (ให้เพิกเฉยต่อผลลัพธ์ “libvirt not reachable” หากคุณไม่ได้สำรองข้อมูล VMs) ตรวจสอบได้โดยใช้ “ส่งทดสอบ” ด้านล่าง",
   "notify.save": "บันทึก",
   "notify.test": "ส่งทดสอบ",
   "notify.tested": "ส่งการทดสอบแล้ว",

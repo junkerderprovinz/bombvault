@@ -439,7 +439,7 @@ const no: Partial<Translations> = {
   "notify.hcPerDomain": "Sjekker per domene (avansert)",
   "notify.hcPerDomainHint": "La et felt stå tomt for å bruke den globale URL-en ovenfor. Et domene med egen URL får sin egen sjekk, med egen kjøretid og historikk.",
   "notify.unraid": "Unraid-varsler",
-  "notify.unraidHint": "Send til Unraids eget varslingssystem (som kan videresende til Pushover, e-post, Discord …). Krever oppsatt SSH-tilkobling (Innstillinger → VM Backup over SSH).",
+  "notify.unraidHint": "Send til Unraids eget varslingssystem (som kan videresende til Pushover, e-post, Discord, …). Kjører via SSH-tilkoblingen fra Innstillinger → VM Backup over SSH, så nøkkelen må være autorisert der — men libvirt/VMs er IKKE påkrevd (ignorer et «libvirt not reachable»-resultat hvis du ikke sikkerhetskopierer VMs). Sjekk det med «Send test» nedenfor.",
   "notify.save": "Lagre",
   "notify.test": "Send test",
   "notify.tested": "Test sendt",

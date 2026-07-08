@@ -433,7 +433,7 @@ const ja: Partial<Translations> = {
   "notify.hcPerDomain": "ドメインごとのチェック（詳細）",
   "notify.hcPerDomainHint": "フィールドを空欄のままにすると、上のグローバル URL が使用されます。独自の URL を持つドメインは、独自の実行時間と履歴を備えた専用のチェックを取得します。",
   "notify.unraid": "Unraid 通知",
-  "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord などへ転送可能）。SSH 接続の設定が必要です（設定 → VM Backup over SSH）。",
+  "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord、… へ転送可能）。設定 → VM Backup over SSH の SSH 接続経由で動作するため、キーはそこで承認されている必要があります — ただし libvirt/VMs は不要です（VMs をバックアップしない場合は「libvirt not reachable」の結果を無視してください）。確認するには下の「テスト送信」を使用してください。",
   "notify.save": "保存",
   "notify.test": "テスト送信",
   "notify.tested": "テストを送信しました",
