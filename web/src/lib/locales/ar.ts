@@ -128,6 +128,9 @@ const ar: Partial<Translations> = {
   // Runs
   "run.kindBackup": "نسخ احتياطي",
   "run.kindRestore": "استعادة",
+  "run.kindUpdate": "تحديث",
+  "update.afterBackup": "التحديث بعد نجاح النسخ الاحتياطي",
+  "update.afterBackupHint": "يسحب الصورة ويعيد إنشاء هذه الحاوية عند توفر صورة أحدث — فقط بعد نسخة احتياطية ناجحة، بحيث يكون لديك دائمًا نقطة استعادة حديثة أولاً.",
   "run.statusRunning": "يعمل",
   "run.statusSuccess": "ناجح",
   "run.statusFailed": "فشل",

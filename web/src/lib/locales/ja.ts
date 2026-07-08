@@ -128,6 +128,9 @@ const ja: Partial<Translations> = {
   // Runs
   "run.kindBackup": "バックアップ",
   "run.kindRestore": "復元",
+  "run.kindUpdate": "更新",
+  "update.afterBackup": "バックアップ成功後に更新",
+  "update.afterBackupHint": "新しいイメージが利用可能なときにイメージを取得してこのコンテナを再作成します — バックアップ成功後のみ実行されるため、常に先に新しい復元ポイントが確保されます。",
   "run.statusRunning": "実行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失敗",

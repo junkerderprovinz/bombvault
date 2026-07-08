@@ -454,6 +454,13 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 54, name: "settings_offsite_drills_enabled",
 		sql: "ALTER TABLE settings ADD COLUMN offsite_drills_enabled INTEGER NOT NULL DEFAULT 1;",
 	},
+	{
+		// Per-container opt-in (#52): after a successful backup, pull the image and
+		// recreate the container if a newer image exists. DEFAULT 0 (off) so
+		// upgraders and fresh installs never auto-update unless the user enables it.
+		version: 55, name: "target_update_after_backup",
+		sql: "ALTER TABLE targets ADD COLUMN update_after_backup INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

@@ -127,6 +127,9 @@ const uk: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Резервне копіювання",
   "run.kindRestore": "Відновлення",
+  "run.kindUpdate": "Оновлення",
+  "update.afterBackup": "Оновлювати після успішного резервного копіювання",
+  "update.afterBackupHint": "Завантажує образ і перестворює цей контейнер, коли доступний новіший образ — лише після успішного резервного копіювання, тож у вас завжди спершу є свіжа точка відновлення.",
   "run.statusRunning": "Виконується",
   "run.statusSuccess": "Успішно",
   "run.statusFailed": "Помилка",

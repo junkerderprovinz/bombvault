@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, exportContainer, setIncludeAll, ApiError } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, ApiError } from "../lib/api";
 import type { Container, MountInfo } from "../lib/api";
 import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -415,6 +415,57 @@ function HooksEditor({
 // FoldersEditor lets the user choose which of a container's mapped folders get
 // backed up (appdata is the default), plus add custom paths under the host
 // mount. Collapsible; loads the mount list lazily on first open.
+// UpdateAfterBackupRow toggles the per-container "update after successful backup"
+// opt-in (#52): after a backup, BombVault pulls the image and recreates the
+// container only when a newer image is available (the fresh backup is the safety
+// net). Off by default; advanced-only.
+function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boolean; t: T }) {
+  const [enabled, setEnabled] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => setEnabled(initial), [initial]);
+
+  async function handle(next: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await setUpdateAfterBackup(name, next);
+      if (res.ok) setEnabled(next);
+      else setError(res.error ?? "Failed to update setting");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update setting");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-1 flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-xs text-carbon-textSub">{t("update.afterBackup")}</span>
+        <span className="text-[11px] text-carbon-textMuted">{t("update.afterBackupHint")}</span>
+        {error && <span className="text-[11px] text-[#ff8389]">{error}</span>}
+      </div>
+      <button
+        role="switch"
+        aria-label={t("update.afterBackup")}
+        aria-checked={enabled}
+        disabled={busy}
+        onClick={() => void handle(!enabled)}
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+          enabled ? "bg-accent" : "bg-carbon-surface3"
+        }`}
+      >
+        <span
+          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
+            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 function FoldersEditor({ name, t }: { name: string; t: T }) {
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -895,6 +946,7 @@ function ContainerRow({
           initialPost={container.postHook}
           t={t}
         />
+        <UpdateAfterBackupRow name={container.name} initial={container.updateAfterBackup ?? false} t={t} />
       </Advanced>
 
       {/* Backups / Restore disclosure (works even when not installed) */}

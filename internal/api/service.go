@@ -2203,7 +2203,71 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	s.applyRetention(ctx, repo, settings, mode)
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	s.maybeCollectStats(ctx, "containers")
+
+	// #52: optional post-backup image update. Runs LAST — the backup + fresh
+	// snapshot are the safety net — and only for a running container the user
+	// opted in. Any failure is logged + recorded as a failed "update" run, but
+	// never fails the backup that already succeeded.
+	if tg.UpdateAfterBackup && in.Running {
+		s.updateContainerAfterBackup(ctx, name, in, tg.ID)
+	}
 	return sum, nil
+}
+
+// updateContainerAfterBackup implements the per-container "update after backup"
+// opt-in (#52): pull the container's image and, only if a newer image actually
+// arrived, recreate the container from its live inspect (which then resolves to
+// the new image). Recorded as its own "update" run so the recreate is visible
+// in Run History. Best-effort: a failure here never fails the backup — the fresh
+// snapshot lets the user roll back a bad update.
+func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) {
+	ref := in.Config.Image
+	if ref == "" {
+		ref = in.Image
+	}
+	if err := s.docker.Pull(ctx, ref); err != nil {
+		log.Printf("api: update-after-backup: pull %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	newID, err := s.docker.ImageID(ctx, ref)
+	if err != nil {
+		log.Printf("api: update-after-backup: resolve image id for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	// Nothing newer arrived → no recreate, no run record (keeps Run History clean
+	// on the common "already up to date" nightly-backup path).
+	if newID == "" || newID == in.Image {
+		return
+	}
+	runID, rErr := runsAdapter{s.store}.Start(targetID, "update")
+	if rErr != nil {
+		log.Printf("api: update-after-backup: start run for %q: %v", name, rErr) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	if err := s.recreateForUpdate(ctx, name, in); err != nil {
+		_ = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	_ = runsAdapter{s.store}.Finish(runID, "success", "", 0, "")
+}
+
+// recreateForUpdate stops, removes and recreates+starts the container from its
+// captured inspect — which, after the preceding Pull, resolves to the newer
+// image. Mirrors the restore recreate path minus the appdata restore (the data
+// is already current). Note: containers that share this one's network namespace
+// (network_mode: container:<name>) may need a manual restart afterwards.
+func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect) error {
+	if err := s.docker.Stop(ctx, name, 30*time.Second); err != nil {
+		_ = err // absent/already-stopped is fine; a real problem surfaces at Remove
+	}
+	if err := s.docker.Remove(ctx, name); err != nil {
+		return fmt.Errorf("remove container: %w", err)
+	}
+	if err := s.docker.CreateAndStart(ctx, in, true); err != nil {
+		return fmt.Errorf("recreate container: %w", err)
+	}
+	return nil
 }
 
 // StartBackupAll launches a server-side batch backup of the named containers,
@@ -4976,6 +5040,11 @@ func (s *Service) SetVMIncludeAll(ctx context.Context, include bool) error {
 // SetContainerHooks stores the pre/post-backup hook commands for a container.
 func (s *Service) SetContainerHooks(_ context.Context, name, preHook, postHook string) error {
 	return s.store.SetHooks(name, preHook, postHook)
+}
+
+// SetUpdateAfterBackup toggles the post-backup image update for a container (#52).
+func (s *Service) SetUpdateAfterBackup(_ context.Context, name string, updateAfterBackup bool) error {
+	return s.store.SetUpdateAfterBackup(name, updateAfterBackup)
 }
 
 // SetStopContainers stores the other container names to stop during this

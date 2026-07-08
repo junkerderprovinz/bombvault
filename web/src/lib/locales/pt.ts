@@ -127,6 +127,9 @@ const pt: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Backup",
   "run.kindRestore": "Restauro",
+  "run.kindUpdate": "Atualização",
+  "update.afterBackup": "Atualizar após um backup bem-sucedido",
+  "update.afterBackupHint": "Baixa a imagem e recria este contêiner quando há uma imagem mais recente — apenas após um backup bem-sucedido, para você ter sempre antes um ponto de restauração recente.",
   "run.statusRunning": "Em curso",
   "run.statusSuccess": "Concluído",
   "run.statusFailed": "Falhado",

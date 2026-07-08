@@ -32,6 +32,11 @@ type Target struct {
 	// Excludes are restic --exclude patterns applied to this container's backup.
 	// Owned by SetExcludes (never reset by Upsert).
 	Excludes []string
+	// UpdateAfterBackup opts this container into a post-backup image update (#52):
+	// after a successful backup, pull the image and recreate the container if a
+	// newer image is available. Owned by SetUpdateAfterBackup (never reset by
+	// Upsert). Off by default.
+	UpdateAfterBackup bool
 }
 
 // UpsertTarget inserts or updates the target by container name.
@@ -69,13 +74,13 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	// intentionally NOT in the ON CONFLICT update set, so a backup's UpsertTarget
 	// never clobbers the user's choices (same pattern as include_in_schedule/hooks).
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON),
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), boolInt(t.UpdateAfterBackup),
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -88,7 +93,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -96,7 +101,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -141,6 +146,24 @@ func (r *Repo) SetHooks(containerName, preHook, postHook string) error {
 	if n, _ := res.RowsAffected(); n == 0 {
 		if _, err := r.UpsertTarget(Target{ContainerName: containerName, PreHook: preHook, PostHook: postHook}); err != nil {
 			return fmt.Errorf("SetHooks create target: %w", err)
+		}
+	}
+	return nil
+}
+
+// SetUpdateAfterBackup toggles the post-backup image update for a container (#52),
+// creating the target row if it does not exist yet (so it can be set before the
+// first backup). Never reset by UpsertTarget.
+func (r *Repo) SetUpdateAfterBackup(containerName string, updateAfterBackup bool) error {
+	res, err := r.db.Exec(
+		`UPDATE targets SET update_after_backup = ? WHERE container_name = ?`,
+		boolInt(updateAfterBackup), containerName)
+	if err != nil {
+		return fmt.Errorf("SetUpdateAfterBackup: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, UpdateAfterBackup: updateAfterBackup}); err != nil {
+			return fmt.Errorf("SetUpdateAfterBackup create target: %w", err)
 		}
 	}
 	return nil
@@ -253,8 +276,8 @@ type scanner interface {
 func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON string
-	var include int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON)
+	var include, updateAfter int
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &updateAfter)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
@@ -271,5 +294,6 @@ func scanTarget(s scanner) (Target, error) {
 		return Target{}, fmt.Errorf("scanTarget unmarshal excludes: %w", err)
 	}
 	t.IncludeInSchedule = include != 0
+	t.UpdateAfterBackup = updateAfter != 0
 	return t, nil
 }

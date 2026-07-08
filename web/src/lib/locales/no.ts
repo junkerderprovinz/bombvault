@@ -127,6 +127,9 @@ const no: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Sikkerhetskopiering",
   "run.kindRestore": "Gjenoppretting",
+  "run.kindUpdate": "Oppdatering",
+  "update.afterBackup": "Oppdater etter vellykket sikkerhetskopiering",
+  "update.afterBackupHint": "Henter imaget og gjenskaper denne containeren når et nyere image er tilgjengelig — bare etter en vellykket sikkerhetskopiering, så du alltid har et ferskt gjenopprettingspunkt først.",
   "run.statusRunning": "Kjører",
   "run.statusSuccess": "Vellykket",
   "run.statusFailed": "Mislyktes",

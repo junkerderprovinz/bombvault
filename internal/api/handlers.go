@@ -173,6 +173,7 @@ type containerView struct {
 	PostHook          string   `json:"postHook"`
 	StopContainers    []string `json:"stopContainers"`
 	Excludes          []string `json:"excludes"`
+	UpdateAfterBackup bool     `json:"updateAfterBackup"`
 	// Stack is the compose project (com.docker.compose.project label) this
 	// container belongs to, "" if none. Drives the "restore whole stack" panel.
 	Stack string `json:"stack"`
@@ -217,6 +218,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.PostHook = t.PostHook
 			v.StopContainers = t.StopContainers
 			v.Excludes = t.Excludes
+			v.UpdateAfterBackup = t.UpdateAfterBackup
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -736,6 +738,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		BackupPaths       *[]string `json:"backupPaths"`
 		StopContainers    *[]string `json:"stopContainers"`
 		Excludes          *[]string `json:"excludes"`
+		UpdateAfterBackup *bool     `json:"updateAfterBackup"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -767,6 +770,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Excludes != nil {
 		if err := h.svc.SetExcludes(r.Context(), name, *body.Excludes); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.UpdateAfterBackup != nil {
+		if err := h.svc.SetUpdateAfterBackup(r.Context(), name, *body.UpdateAfterBackup); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}

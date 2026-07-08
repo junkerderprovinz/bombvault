@@ -128,6 +128,9 @@ const fr: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Sauvegarde",
   "run.kindRestore": "Restauration",
+  "run.kindUpdate": "Mise à jour",
+  "update.afterBackup": "Mettre à jour après une sauvegarde réussie",
+  "update.afterBackupHint": "Récupère l'image et recrée ce conteneur lorsqu'une image plus récente est disponible — uniquement après une sauvegarde réussie, pour que vous ayez toujours d'abord un point de restauration récent.",
   "run.statusRunning": "En cours",
   "run.statusSuccess": "Réussi",
   "run.statusFailed": "Échoué",

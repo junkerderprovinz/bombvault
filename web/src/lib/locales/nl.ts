@@ -126,6 +126,9 @@ const nl: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Back-up",
   "run.kindRestore": "Herstel",
+  "run.kindUpdate": "Update",
+  "update.afterBackup": "Bijwerken na een geslaagde back-up",
+  "update.afterBackupHint": "Haalt de image op en maakt deze container opnieuw aan wanneer een nieuwere image beschikbaar is — alleen na een geslaagde back-up, zodat je altijd eerst een vers herstelpunt hebt.",
   "run.statusRunning": "Actief",
   "run.statusSuccess": "Geslaagd",
   "run.statusFailed": "Mislukt",

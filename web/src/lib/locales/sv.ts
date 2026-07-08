@@ -128,6 +128,9 @@ const sv: Partial<Translations> = {
   // Runs
   "run.kindBackup": "Säkerhetskopia",
   "run.kindRestore": "Återställning",
+  "run.kindUpdate": "Uppdatering",
+  "update.afterBackup": "Uppdatera efter lyckad säkerhetskopiering",
+  "update.afterBackupHint": "Hämtar imagen och återskapar den här containern när en nyare image finns — bara efter en lyckad säkerhetskopiering, så du alltid har en färsk återställningspunkt först.",
   "run.statusRunning": "Körs",
   "run.statusSuccess": "Lyckades",
   "run.statusFailed": "Misslyckades",
