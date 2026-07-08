@@ -1667,19 +1667,51 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-      {/* Page heading — fixed (contextual, not customizable) */}
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">
-          {t("dashboard.title")}
-        </h1>
-        <p className="mt-1 text-sm text-carbon-textSub">
-          {t("dashboard.subtitle")}
-        </p>
-        <div className="mt-2 flex flex-col gap-1">
-          <OffsiteIndicator domain="containers" withLabel />
-          <OffsiteIndicator domain="vms" withLabel />
-          <OffsiteIndicator domain="flash" withLabel />
+      {/* Page heading — fixed (contextual, not customizable). The pencil in the
+          top-right corner toggles the customize/edit mode. */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-carbon-text">
+            {t("dashboard.title")}
+          </h1>
+          <p className="mt-1 text-sm text-carbon-textSub">
+            {t("dashboard.subtitle")}
+          </p>
+          <div className="mt-2 flex flex-col gap-1">
+            <OffsiteIndicator domain="containers" withLabel />
+            <OffsiteIndicator domain="vms" withLabel />
+            <OffsiteIndicator domain="flash" withLabel />
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setEditing((v) => !v)}
+          aria-label={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
+          aria-pressed={editing}
+          title={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
+          className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
+            editing
+              ? "bg-accent text-accentContrast"
+              : "border border-carbon-border text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 20h4L18.5 9.5a2.121 2.121 0 0 0-3-3L5 17v3z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M13.5 6.5l3 3"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* Fresh/rebuilt install nudge to the guided Recovery tab — fixed
@@ -1696,34 +1728,20 @@ export function Dashboard() {
           the recovery kit is unstored. */}
       <RecoveryNag t={t} suppressed={freshShown} />
 
-      {/* Customize toolbar — toggles edit mode; Reset + hint show while editing. */}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Customize controls — the pencil in the heading toggles edit mode; while
+          editing, the Reset button + hint appear here. */}
+      {editing && (
+        <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => setEditing((v) => !v)}
-            className={
-              editing
-                ? "rounded-md bg-carbon-surface3 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-border motion-safe:transition-colors"
-                : "rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text motion-safe:transition-colors"
-            }
+            onClick={reset}
+            className="self-start rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text motion-safe:transition-colors"
           >
-            {editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
+            {t("dashboard.resetLayout")}
           </button>
-          {editing && (
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text motion-safe:transition-colors"
-            >
-              {t("dashboard.resetLayout")}
-            </button>
-          )}
-        </div>
-        {editing && (
           <p className="text-xs text-carbon-textMuted">{t("dashboard.customizeHint")}</p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Ordered, visible blocks. In edit mode each carries a control bar +
           native drag-and-drop; otherwise the card renders plainly. */}
