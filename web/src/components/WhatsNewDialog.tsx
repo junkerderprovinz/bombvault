@@ -148,17 +148,24 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
 
   const tagUrl = `${RELEASES_PAGE}/tag/${encodeURIComponent(version)}`;
 
-  // Fetch the release notes for this version once (unauthenticated, CORS-OK).
+  // Fetch the notes from BombVault's OWN backend, not api.github.com — the app's
+  // Content-Security-Policy (connect-src 'self') blocks the cross-origin call, so
+  // the dialog always failed (#54). The backend serves its embedded release notes
+  // same-origin; the GitHub releases page stays only as the "view full" link.
   useEffect(() => {
     let active = true;
     setState("loading");
-    fetch(`https://api.github.com/repos/${REPO}/releases/tags/${encodeURIComponent(version)}`, {
-      headers: { Accept: "application/vnd.github+json" },
+    fetch(`/api/release-notes?version=${encodeURIComponent(version)}`, {
+      headers: { Accept: "application/json" },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((data: { body?: string; html_url?: string }) => {
+      .then((data: { ok?: boolean; body?: string; htmlUrl?: string }) => {
         if (!active) return;
-        setInfo({ body: (data.body ?? "").trim(), htmlUrl: data.html_url ?? tagUrl });
+        if (!data.ok || !data.body) {
+          setState("error");
+          return;
+        }
+        setInfo({ body: data.body.trim(), htmlUrl: data.htmlUrl ?? tagUrl });
         setState("ok");
       })
       .catch(() => {

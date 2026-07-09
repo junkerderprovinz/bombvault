@@ -17,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/releasenotes"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -1580,6 +1581,31 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleReleaseNotes serves the running version's own embedded release notes so
+// the "What's new" dialog (#48) works without a runtime call to api.github.com —
+// which the app's own CSP (connect-src 'self') blocks, so the dialog always
+// failed (#54). Same-origin, so the CSP allows it. GET /api/release-notes?version=vX.Y.Z
+// (version defaults to the running build). Returns {ok, version, body, htmlUrl};
+// ok=false when there are no bundled notes so the dialog shows its GitHub link.
+func (h *Handler) handleReleaseNotes(w http.ResponseWriter, r *http.Request) {
+	version := r.URL.Query().Get("version")
+	if version == "" {
+		version = Version
+	}
+	tag := releasenotes.Tag(version)
+	htmlURL := "https://github.com/junkerderprovinz/bombvault/releases"
+	if tag != "" {
+		htmlURL += "/tag/" + tag
+	}
+	body, ok := releasenotes.Notes(version)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":      ok,
+		"version": tag,
+		"body":    body,
+		"htmlUrl": htmlURL,
+	})
 }
 
 // runSpikeAndCache executes the host-integration probes and stores the result
