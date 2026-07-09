@@ -461,6 +461,15 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 55, name: "target_update_after_backup",
 		sql: "ALTER TABLE targets ADD COLUMN update_after_backup INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// #55: remember which local repo destinations were successfully established,
+		// so a repo that later fails to open (its backing store gone — e.g. a remote
+		// share that mounts late at boot) is treated as "not mounted" instead of
+		// re-initialised (which would write an empty repo shadowing the real one).
+		// Lives in /config (always mounted), so it survives the unmounted window.
+		version: 56, name: "established_repos",
+		sql: "CREATE TABLE IF NOT EXISTS established_repos (repo TEXT PRIMARY KEY, created_at INTEGER NOT NULL DEFAULT 0);",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

@@ -1755,6 +1755,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// first, and it replaces the old `config`-marker stat (which never checked the
 	// mode) with one that does.
 	if s.engine.RepoOpens(ctx, repo, mode) {
+		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
 		return nil
 	}
 	// It did not open. Probe the OPPOSITE encryption mode (same backend creds): if
@@ -1768,10 +1769,22 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 			"new, empty repository location",
 			encryptionWord(!mode.Encrypted), enabledWord(mode.Encrypted), enabledWord(!mode.Encrypted))
 	}
-	// Opens with neither mode → treat as not initialised (or a brand-new location)
-	// and create it. Local repos need their directory created first; remote
-	// backends do not.
+	// Opens with neither mode → not initialised (a brand-new location) OR its
+	// backing store vanished. Local repos need their directory; remote backends do not.
 	if !restic.IsRemoteRepo(repo) {
+		// #55: if a repo was established here before but its `config` is now
+		// physically gone, the destination vanished (typically a remote share that
+		// mounts AFTER the container started, so it is invisible to the running
+		// container). REFUSE to re-init — that would write an empty repo shadowing
+		// the real backups once the share reappears — and surface a clear "not
+		// mounted" error instead. (A repo the user deleted clears its marker, so
+		// this only fires for an unexpectedly-vanished repo.)
+		if localRepoMissing(repo) && s.repoEstablished(repo) {
+			return ErrBackupPathNotMounted
+		}
+		// Genuine first run (marker unset): create the repo dir chain as before.
+		// The marker guard above is what prevents re-initialising over an
+		// established-but-now-unmounted repo, so MkdirAll here is safe.
 		if err := paths.EnsureDir(repo); err != nil {
 			return fmt.Errorf("ensure repo dir: %w", err)
 		}
@@ -1780,13 +1793,54 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 		// Tolerate a race / pre-existing repo: the scrubbed adapter error may not
 		// name the cause, so re-probe with the configured mode before failing.
 		if s.engine.RepoOpens(ctx, repo, mode) {
+			s.markRepoEstablished(repo)
 			return nil
 		}
 		if !strings.Contains(strings.ToLower(err.Error()), "already") {
 			return fmt.Errorf("init repo: %w", err)
 		}
 	}
+	// Mark established only when the repo VERIFIABLY opens now (a real config was
+	// written), never on a no-op init, so the not-mounted guard can only trip on a
+	// location that genuinely held a repo.
+	if s.engine.RepoOpens(ctx, repo, mode) {
+		s.markRepoEstablished(repo)
+	}
 	return nil
+}
+
+// ErrBackupPathNotMounted is returned when a LOCAL backup repo BombVault
+// previously established is now unreadable — typically a remote share (e.g. under
+// /mnt/remotes) that mounts AFTER the container started, so it stays invisible to
+// the running container until the mount is restored. BombVault refuses to
+// re-initialise an empty repo over it (which would shadow the real backups) and
+// surfaces this instead of a misleading "no backups" (#55).
+var ErrBackupPathNotMounted = errors.New("backup path is not mounted yet — a remote backup share may mount late at boot; it recovers once the mount is available (restart BombVault if it persists)")
+
+// markRepoEstablished records a successfully created/opened LOCAL repo so a later
+// open-failure can be told apart from a fresh location (#55). Remote repos have
+// no local backing store to vanish, so they are not tracked. Best-effort.
+func (s *Service) markRepoEstablished(repo string) {
+	if restic.IsRemoteRepo(repo) {
+		return
+	}
+	if err := s.store.MarkRepoEstablished(repo); err != nil {
+		log.Printf("api: mark repo established: %v", err)
+	}
+}
+
+// repoEstablished reports whether a LOCAL repo destination was previously
+// established. False for remote repos and on any store error (never blocks).
+func (s *Service) repoEstablished(repo string) bool {
+	if restic.IsRemoteRepo(repo) {
+		return false
+	}
+	ok, err := s.store.IsRepoEstablished(repo)
+	if err != nil {
+		log.Printf("api: is repo established: %v", err)
+		return false
+	}
+	return ok
 }
 
 // oppositeMode returns mode with its encryption flag flipped, preserving backend
@@ -3011,6 +3065,9 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	// Remote repos skip this local check and are listed directly (see
 	// localRepoMissing), so an off-site view is never wrongly shown as empty.
 	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) {
+			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		}
 		return nil, nil
 	}
 	all, err := s.listSnapshots(ctx, repo, mode)
@@ -4540,6 +4597,9 @@ func (s *Service) SnapshotsVM(ctx context.Context, name, source string) ([]resti
 	mode := s.ModeFor(settings)
 	// A listing before any backup has run is "no snapshots yet", not an error.
 	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) {
+			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		}
 		return nil, nil
 	}
 	all, err := s.listSnapshots(ctx, repo, mode)
@@ -4846,6 +4906,9 @@ func (s *Service) SnapshotsFlash(ctx context.Context, source string) ([]restic.S
 	}
 	mode := s.ModeFor(settings)
 	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) {
+			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		}
 		return nil, nil // no backups yet
 	}
 	return s.listSnapshots(ctx, repo, mode)
@@ -4895,6 +4958,9 @@ func (s *Service) SnapshotsConfig(ctx context.Context, source string) ([]restic.
 	}
 	mode := s.ModeFor(settings)
 	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) {
+			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		}
 		return nil, nil // no backups yet
 	}
 	return s.listSnapshots(ctx, repo, mode)
