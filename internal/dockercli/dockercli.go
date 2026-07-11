@@ -358,6 +358,13 @@ func isNoSuchContainer(err error) bool {
 	return strings.Contains(strings.ToLower(err.Error()), "no such container")
 }
 
+// IsNotFound reports whether err is the daemon's "no such container" error,
+// unwrapping through the package's inspect wrappers (the containerd typed error
+// survives the fmt.Errorf("%w") wraps). Exported so the API layer can treat a
+// scheduled backup of a removed container as a skip rather than a failure, the
+// same way virshcli.IsNotFound serves the VM path.
+func IsNotFound(err error) bool { return err != nil && isNoSuchContainer(err) }
+
 // ---- mapping helpers -------------------------------------------------------
 
 // mapInspect converts the SDK inspect response into our captured subset.

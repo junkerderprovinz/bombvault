@@ -76,6 +76,14 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
           {state.message}
         </span>
       )}
+
+      {/* Neutral terminal: the container is gone, so the backup was skipped (not
+          failed). Reuses the existing "Not installed (backups only)" wording. */}
+      {state.phase === "skipped" && (
+        <span className="text-xs text-carbon-textMuted max-w-[18rem] break-words">
+          ↷ {t("containers.notInstalledTitle")}
+        </span>
+      )}
     </div>
   );
 }

@@ -323,14 +323,19 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 	return args
 }
 
-// SnapshotsArgs returns the argv slice for `restic snapshots --json`.
+// SnapshotsArgs returns the argv slice for `restic snapshots --no-lock --json`.
+// Listing snapshots is strictly read-only, so it takes --no-lock: it must never
+// collide with the exclusive lock a concurrent backup/forget/prune holds (which
+// would surface "repository is already locked exclusively" and make the
+// latest-backup-times / restore listing read blank). Worst case is a marginally
+// stale listing, never corruption, and the writer is never blocked (#57).
 func SnapshotsArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, "snapshots")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	args = append(args, "--json")
+	args = append(args, "--no-lock", "--json")
 	return args
 }
 
