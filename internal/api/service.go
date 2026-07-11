@@ -2174,6 +2174,18 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
+		// The container is gone (removed) but is still a scheduled target. A
+		// scheduled target can outlive its container, so skip it with a sentinel
+		// instead of failing — the scheduler treats ErrContainerNotInstalled as a
+		// skip, so the nightly job no longer errors or false-alarms Healthchecks
+		// (#57). Record a "skipped" run (so the dashboard shows it and agrees with
+		// the green aggregate ping) and warn the user once. Mirrors the VM path
+		// (BackupVM → ErrVMNotInstalled). Returns before any real run is recorded.
+		if dockercli.IsNotFound(err) {
+			log.Printf("api: Backup: skipping %q — not present on host (not installed; backups only)", name) //nolint:gosec // G706: name is %q-quoted
+			s.recordAndNotifyContainerSkip(ctx, name)
+			return backup.Summary{}, backup.ErrContainerNotInstalled
+		}
 		return backup.Summary{}, fmt.Errorf("inspect container: %w", err)
 	}
 	// The paths actually backed up: the explicit folder selection if set, else the
@@ -2370,18 +2382,23 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 		total := len(queue)
 		const key = "batch:containers"
 		s.publishBatch(key, 0, true)
-		ok, fail := 0, 0
+		ok, fail, skipped := 0, 0, 0
 		for i, n := range queue {
 			if _, err := s.Backup(bctx, n); err != nil {
-				fail++
-				log.Printf("api: backup-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
+				if errors.Is(err, backup.ErrContainerNotInstalled) {
+					skipped++                                                                   // removed container: a skip (already recorded), not a batch failure (#57)
+					log.Printf("api: backup-all: %q skipped — not installed (backups only)", n) //nolint:gosec // G706: n is %q-quoted
+				} else {
+					fail++
+					log.Printf("api: backup-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
+				}
 			} else {
 				ok++
 			}
 			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
 		}
 		s.publishBatch(key, 100, false)
-		log.Printf("api: backup-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(names))
+		log.Printf("api: backup-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(names))
 	}()
 	return true, nil
 }
@@ -2412,7 +2429,11 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	go func() {
 		defer s.batchActive.Store(false)
 		if _, err := s.Backup(bctx, name); err != nil {
-			log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+			if errors.Is(err, backup.ErrContainerNotInstalled) {
+				log.Printf("api: backup: %q skipped — not installed (backups only)", name) //nolint:gosec // G706: name is %q-quoted
+			} else {
+				log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+			}
 		}
 	}()
 	return true, nil
@@ -6454,6 +6475,59 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 			subject = "BombVault: backup FAILED"
 		}
 		if e := s.sendUnraidNotify(ctx, subject, msg, level); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
+}
+
+// statusSkipped marks a run BombVault intentionally did NOT perform because the
+// target's container no longer exists on the host (#57). runs.status is free-text,
+// so this needs no schema migration (cf. the orchestrator's "cancelled" status).
+const statusSkipped = "skipped"
+
+// recordAndNotifyContainerSkip handles a scheduled target whose container is gone
+// (#57): it records a "skipped" run so the dashboard reflects it — and agrees with
+// the green aggregate Healthchecks ping instead of showing nothing — and warns the
+// user, debounced to the FIRST miss so a permanently-removed container doesn't spam
+// a notification every night. The warning never pings Healthchecks (a skip is not a
+// backup failure), so it can never turn a green monitor red.
+func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string) {
+	tg, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		log.Printf("api: Backup: skip %q: load target: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	// Debounce: warn only when the previous run for this target wasn't already a skip.
+	firstMiss := true
+	if last, lErr := s.store.LastRunForTarget(tg.ID); lErr == nil && last != nil && last.Status == statusSkipped {
+		firstMiss = false
+	}
+	// Always record the skip so Run History shows it every run (a cheap, honest audit
+	// trail) rather than the removed target silently vanishing from the dashboard.
+	if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr != nil {
+		log.Printf("api: Backup: skip %q: start skipped run: %v", name, sErr) //nolint:gosec // G706: name is %q-quoted
+	} else if fErr := s.store.FinishRun(runID, statusSkipped, "", 0, "container no longer exists on the host"); fErr != nil {
+		log.Printf("api: Backup: skip %q: finish skipped run: %v", name, fErr) //nolint:gosec // G706: name is %q-quoted
+	}
+	if !firstMiss {
+		return
+	}
+	c, err := s.NotifyConfig()
+	// Honour the notify policy on BOTH channels (message + Unraid): when muted
+	// ("never"/unset) the skipped run row and the dashboard chip already surface it,
+	// so no push should fire — otherwise a benign skip would be noisier than a real
+	// backup failure (which notifyBackup stays silent about under the same policy).
+	if err != nil || (c.On != "always" && c.On != "failure") {
+		return
+	}
+	msg := fmt.Sprintf("Container %q no longer exists on the host but is still a scheduled backup target. It was skipped (not failed). Remove it in BombVault if this is intentional.", name)
+	// Suppress the per-call Healthchecks ping unconditionally: a skip must never flip
+	// the monitor to fail, and the scheduled run's aggregate ping already speaks for
+	// the domain. The message channels (webhook/matrix/email) still fire.
+	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "containers",
+		notify.Event{Title: "BombVault: backup target skipped", Message: msg, OK: false})
+	if c.Unraid && s.ssh != nil {
+		if e := s.sendUnraidNotify(ctx, "BombVault: backup target skipped", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
 	}

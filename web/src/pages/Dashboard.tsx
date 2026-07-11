@@ -136,7 +136,7 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 function StatusChip({
   status,
 }: {
-  status: "success" | "failed" | "running" | "ok" | "degraded" | "checking" | string;
+  status: "success" | "failed" | "running" | "ok" | "degraded" | "checking" | "skipped" | string;
 }) {
   const map: Record<string, string> = {
     success: "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]",
@@ -146,6 +146,10 @@ function StatusChip({
     running: "bg-[#1c2a3a] text-[#78a9ff] border border-[#2a3a5a]",
     checking:"bg-[#1c2a3a] text-[#78a9ff] border border-[#2a3a5a]",
     info:    "bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]",
+    // A skip is neither success nor failure: a muted, neutral chip so a removed
+    // container's scheduled target reads as "intentionally not run", distinct
+    // from green success and red failure (#57).
+    skipped: "bg-[#2a2a2e] text-[#a8a8b0] border border-[#3a3a40]",
   };
   const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
@@ -806,6 +810,9 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 </div>
                 {run.status === "failed" && run.error && (
                   <p className="pl-16 text-xs text-[#ff8389] break-words">{run.error}</p>
+                )}
+                {run.status === "skipped" && run.error && (
+                  <p className="pl-16 text-xs text-carbon-textMuted break-words">{run.error}</p>
                 )}
               </div>
               );

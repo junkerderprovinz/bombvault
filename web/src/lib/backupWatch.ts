@@ -35,6 +35,10 @@ export type BackupWatchState =
   // A user-cancelled restore is a NEUTRAL terminal (sticky, no red error banner):
   // the recorded run's status is "cancelled", distinct from a real failure.
   | { phase: "cancelled" }
+  // The container was removed from the host but is still a target: the recorded
+  // run's status is "skipped" — a NEUTRAL terminal (no false success, no red
+  // error), so the watcher completes instead of spinning to timeout (#57).
+  | { phase: "skipped" }
   | { phase: "error"; message: string };
 
 /** The run kind being watched (matches the recorded run's `kind` field). */
@@ -175,6 +179,13 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
         // Neutral terminal: the user cancelled — finish() leaves it sticky and
         // does NOT fire onDone or the red error banner (see the union comment).
         finish({ phase: "cancelled" });
+        return "resolved";
+      }
+      if (run.status === "skipped") {
+        // Neutral terminal: the container no longer exists, so the backup was
+        // skipped (not failed). Complete the watch instead of polling to the 13h
+        // timeout, and show neither a green success nor a red error (#57).
+        finish({ phase: "skipped" });
         return "resolved";
       }
       return "inconclusive"; // still running
@@ -336,6 +347,7 @@ export async function fireAndWaitRun(opts: {
       const runs = await listRuns();
       const run = runs.runs?.find((r) => mine(r) && !baseline.has(r.id));
       if (run && run.status === "success") return { ok: true };
+      if (run && run.status === "skipped") return { ok: true }; // removed target: a neutral skip, not a failure (#57)
       if (run && run.status === "failed") return { ok: false, error: run.error };
     } catch {
       // transient — keep polling

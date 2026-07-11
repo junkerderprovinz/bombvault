@@ -21,6 +21,8 @@ function statusDotClass(status: string): string {
       return "bg-[#ff8389]";
     case "running":
       return "bg-[#78a9ff]";
+    case "skipped":
+      return "bg-[#8a8a92]";
     default:
       return "bg-carbon-surface3";
   }

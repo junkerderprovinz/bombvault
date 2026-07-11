@@ -143,6 +143,9 @@ func run() error {
 		func(name string) error {
 			ctx := notify.WithHealthchecksSuppressed(context.Background())
 			_, bErr := svc.Backup(ctx, name)
+			if errors.Is(bErr, backup.ErrContainerNotInstalled) {
+				return nil // container no longer on the host: a skip (already recorded), not a job failure (#57)
+			}
 			return bErr
 		},
 		st.ListTargets,

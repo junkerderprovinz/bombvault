@@ -94,6 +94,27 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 	return &run, nil
 }
 
+// LastRunForTarget returns the most recent backup run for targetID regardless of
+// status (success, failed, skipped, running), or nil when there is none. Used to
+// debounce repeated "container missing" skip warnings: warn on the first miss,
+// stay quiet while the target keeps being skipped.
+func (r *Repo) LastRunForTarget(targetID string) (*Run, error) {
+	row := r.db.QueryRow(`
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error
+		FROM runs
+		WHERE target_id = ? AND kind = 'backup'
+		ORDER BY started_at DESC
+		LIMIT 1`, targetID)
+	run, err := scanRun(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("LastRunForTarget: %w", err)
+	}
+	return &run, nil
+}
+
 // LastSuccessfulContainerBackup returns the time of the most recent successful
 // backup run across ALL container targets, or a zero time when there has been
 // none. This is used by the scheduler's everyN due-gate to decide whether the

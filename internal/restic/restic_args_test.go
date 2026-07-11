@@ -250,14 +250,14 @@ func TestRestorePathArgs(t *testing.T) {
 func TestSnapshotsArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: true})
-		want := []string{"-r", "/repo", "snapshots", "--json"}
+		want := []string{"-r", "/repo", "snapshots", "--no-lock", "--json"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted", func(t *testing.T) {
 		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "snapshots", "--insecure-no-password", "--json"}
+		want := []string{"-r", "/repo", "snapshots", "--insecure-no-password", "--no-lock", "--json"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}

@@ -50,6 +50,12 @@ var (
 	// treats it as a skip, not a failure, so a leftover schedule entry for a
 	// removed VM doesn't error every night.
 	ErrVMNotInstalled = errors.New("vm not installed on host (backups only); skipped")
+	// ErrContainerNotInstalled is the container counterpart to ErrVMNotInstalled:
+	// returned when the host no longer has the container (removed, but still a
+	// scheduled backup target). The scheduled job treats it as a skip, not a
+	// failure, so a leftover schedule entry for a removed container doesn't error
+	// every night (#57).
+	ErrContainerNotInstalled = errors.New("container not present on host (backups only); skipped")
 )
 
 // Summary is the result of a successful backup.
