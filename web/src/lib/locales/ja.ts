@@ -772,6 +772,14 @@ const ja: Partial<Translations> = {
   "whatsnew.loadFailed": "ここでリリースノートを読み込めませんでした。GitHub で開いてください。",
   "whatsnew.viewOnGitHub": "GitHub で完全なリリースを表示",
   "whatsnew.close": "閉じる",
+  "notify.scheduledSummary": "スケジュール実行をまとめて通知",
+  "notify.scheduledSummaryHint": "スケジュールされたバックアップ実行ごとに、コンテナや VM 個別のメッセージではなく、まとめて 1 通の要約を送信します（例: 45 件中 42 件成功）。Healthchecks はすでに要約されています。手動バックアップは引き続き項目ごとに通知します。",
+  "notify.notifyOnUpdate": "コンテナ更新時に通知",
+  "notify.notifyOnUpdateHint": "バックアップ後の更新でコンテナが新しい image にアップグレードされたら、正常に動作するか確認できるようメッセージを送信します。更新されたコンテナごとに通知します（更新はまれです）。",
+  "settings.imageCleanupTitle": "image のクリーンアップ",
+  "settings.imageCleanupHint": "オプションのバックアップ後コンテナ更新機能のための整理処理です。",
+  "settings.pruneImageAfterUpdate": "更新後に古い image を削除",
+  "settings.pruneImageAfterUpdateHint": "コンテナが新しい image に更新された後、置き換えられた古い image を削除します。デフォルトはオフです。残しておくとロールバックが容易になります（BombVault のスナップショットが復元するのはデータであり、古い image ではありません）。共有ベース image は削除されません。",
 };
 
 export default ja;

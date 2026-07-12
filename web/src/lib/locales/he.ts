@@ -780,6 +780,14 @@ const he: Partial<Translations> = {
   "whatsnew.loadFailed": "לא ניתן היה לטעון כאן את הערות הגרסה. פתחו אותן ב-GitHub.",
   "whatsnew.viewOnGitHub": "הצגת ההשקה המלאה ב-GitHub",
   "whatsnew.close": "סגירה",
+  "notify.scheduledSummary": "סיכום הרצות מתוזמנות",
+  "notify.scheduledSummaryHint": "שליחת סיכום אחד לכל הרצת גיבוי מתוזמנת (לדוגמה: 42 מתוך 45 הצליחו) במקום הודעה נפרדת לכל container או VM. Healthchecks כבר מסוכם. גיבויים ידניים עדיין שולחים התראה לכל פריט.",
+  "notify.notifyOnUpdate": "התראה על עדכון container",
+  "notify.notifyOnUpdateHint": "כאשר עדכון-לאחר-גיבוי משדרג container ל-image חדש יותר, נשלחת הודעה כדי שתוכל לוודא שהוא עדיין עובד. נשלח לכל container שעודכן (עדכונים הם נדירים).",
+  "settings.imageCleanupTitle": "ניקוי images",
+  "settings.imageCleanupHint": "תחזוקה עבור התכונה האופציונלית של עדכון container לאחר גיבוי.",
+  "settings.pruneImageAfterUpdate": "הסרת ה-image הישן לאחר עדכון",
+  "settings.pruneImageAfterUpdateHint": "לאחר ש-container עודכן ל-image חדש יותר, מחיקת ה-image הישן שהוחלף. כבוי כברירת מחדל: שמירתו מוזילה את החזרה לאחור (snapshot של BombVault משחזר נתונים, לא את ה-image הישן). image בסיס משותף לעולם לא נמחק.",
 };
 
 export default he;

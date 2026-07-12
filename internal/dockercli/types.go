@@ -54,6 +54,10 @@ type Docker interface {
 	// reference is not present locally. Used after a Pull to decide whether a
 	// newer image actually arrived before recreating a container (#52).
 	ImageID(ctx context.Context, ref string) (string, error)
+	// ImageRemove removes a local image by ID (sha256:…) with force=false, so the
+	// daemon refuses if another container still references it. Used to prune the
+	// superseded image after an update-after-backup when the user opts in (#56).
+	ImageRemove(ctx context.Context, id string) error
 	// CreateAndStart recreates the container from the captured inspect and starts
 	// it only when start is true (the caller decides, e.g. from the captured
 	// run-state and a "leave stopped" restore option).

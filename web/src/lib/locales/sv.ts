@@ -780,6 +780,14 @@ const sv: Partial<Translations> = {
   "whatsnew.loadFailed": "Det gick inte att läsa in versionsinformationen här. Öppna den på GitHub.",
   "whatsnew.viewOnGitHub": "Visa hela versionen på GitHub",
   "whatsnew.close": "Stäng",
+  "notify.scheduledSummary": "Sammanfatta schemalagda körningar",
+  "notify.scheduledSummaryHint": "Skicka EN sammanfattning per schemalagd säkerhetskopieringskörning (till exempel: 42 av 45 lyckades) i stället för ett separat meddelande för varje container eller VM. Healthchecks sammanfattas redan. Manuella säkerhetskopior aviserar fortfarande per objekt.",
+  "notify.notifyOnUpdate": "Avisera vid containeruppdatering",
+  "notify.notifyOnUpdateHint": "När uppdatera-efter-säkerhetskopiering uppgraderar en container till en nyare image skickas ett meddelande så att du kan kontrollera att den fortfarande fungerar. Utlöses per uppdaterad container (uppdateringar är sällsynta).",
+  "settings.imageCleanupTitle": "Image-rensning",
+  "settings.imageCleanupHint": "Städning för den valfria funktionen uppdatera-container-efter-säkerhetskopiering.",
+  "settings.pruneImageAfterUpdate": "Ta bort den gamla imagen efter en uppdatering",
+  "settings.pruneImageAfterUpdateHint": "När en container har uppdaterats till en nyare image tas den ersatta gamla imagen bort. Av som standard: att behålla den gör det billigt att rulla tillbaka (en BombVault-ögonblicksbild återställer data, inte den gamla imagen). En delad basimage tas aldrig bort.",
 };
 
 export default sv;

@@ -783,6 +783,14 @@ const ar: Partial<Translations> = {
   "whatsnew.loadFailed": "تعذّر تحميل ملاحظات الإصدار هنا. افتحها على GitHub.",
   "whatsnew.viewOnGitHub": "عرض الإصدار الكامل على GitHub",
   "whatsnew.close": "إغلاق",
+  "notify.scheduledSummary": "تلخيص عمليات التشغيل المجدولة",
+  "notify.scheduledSummaryHint": "أرسل ملخصاً واحداً لكل عملية نسخ احتياطي مجدولة (مثلاً: نجحت 42 من 45) بدلاً من رسالة منفصلة لكل حاوية أو جهاز ظاهري. Healthchecks مُلخَّص بالفعل. أما النسخ الاحتياطية اليدوية فتُرسِل إشعاراً لكل عنصر.",
+  "notify.notifyOnUpdate": "إشعار عند تحديث الحاوية",
+  "notify.notifyOnUpdateHint": "عندما يرقّي «التحديث بعد النسخ الاحتياطي» حاوية إلى صورة أحدث، يُرسَل إشعار لتتحقق من أنها لا تزال تعمل. يُرسَل لكل حاوية مُحدَّثة (التحديثات نادرة).",
+  "settings.imageCleanupTitle": "تنظيف الصور",
+  "settings.imageCleanupHint": "صيانة لميزة «تحديث الحاوية بعد النسخ الاحتياطي» الاختيارية.",
+  "settings.pruneImageAfterUpdate": "إزالة الصورة القديمة بعد التحديث",
+  "settings.pruneImageAfterUpdateHint": "بعد تحديث حاوية إلى صورة أحدث، احذف الصورة القديمة المُستبدَلة. معطَّل افتراضياً: الإبقاء عليها يجعل التراجع سهلاً (لقطة BombVault تستعيد البيانات لا الصورة القديمة). لا تُحذف الصورة الأساسية المشتركة أبداً.",
 };
 
 export default ar;

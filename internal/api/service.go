@@ -2316,6 +2316,31 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		return
 	}
 	_ = runsAdapter{s.store}.Finish(runID, "success", "", 0, "")
+
+	// #56: optionally remove the now-superseded old image. Opt-in (default off) — the
+	// old image is what makes a fresh-snapshot rollback cheap, so we never prune by
+	// default. Best-effort with force=false, so the daemon refuses if another
+	// container still references the image (a shared base image is never deleted).
+	if st, sErr := s.store.GetSettings(); sErr == nil && st.PruneImageAfterUpdate && in.Image != "" {
+		if rErr := s.docker.ImageRemove(ctx, in.Image); rErr != nil {
+			log.Printf("api: update-after-backup: prune old image %s for %q: %v (kept)", shortID(in.Image), name, rErr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
+
+	// #56: notify per updated container (opt-in), so the user can verify it still
+	// works. Fires per container (updates are rare), NOT folded into the scheduled
+	// summary. Healthchecks is suppressed so an update can't flip the domain monitor;
+	// the message ctx carries no message-suppress flag, so it delivers in summary mode.
+	if c, cErr := s.NotifyConfig(); cErr == nil && c.NotifyOnUpdate {
+		msg := fmt.Sprintf("Updated container %q to a newer image. Please verify it still works.", name)
+		notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
+			notify.Event{Title: "BombVault", Message: msg, OK: true})
+		if c.Unraid && s.ssh != nil && c.On == "always" {
+			if e := s.sendUnraidNotify(ctx, "BombVault: container updated", msg, "normal"); e != nil {
+				log.Printf("notify: unraid: %v", e)
+			}
+		}
+	}
 }
 
 // recreateForUpdate stops, removes and recreates+starts the container from its
@@ -6466,8 +6491,10 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
 	// Honour the same policy: notifyBackup already returned for "never", so send
-	// on "always" or on any failure.
-	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) {
+	// on "always" or on any failure. In scheduled summary mode, drop the per-item
+	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
+	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) &&
+		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
 		if !ok {
@@ -6523,8 +6550,10 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	msg := fmt.Sprintf("Container %q no longer exists on the host but is still a scheduled backup target. It was skipped (not failed). Remove it in BombVault if this is intentional.", name)
 	// Suppress the per-call Healthchecks ping unconditionally: a skip must never flip
 	// the monitor to fail, and the scheduled run's aggregate ping already speaks for
-	// the domain. The message channels (webhook/matrix/email) still fire.
-	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "containers",
+	// the domain. Base the ctx on Background (not the scheduled ctx) so the message is
+	// NOT swept up by scheduled-summary suppression — a "target no longer exists"
+	// warning must reach the user even in summary mode (like the update notice).
+	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 		notify.Event{Title: "BombVault: backup target skipped", Message: msg, OK: false})
 	if c.Unraid && s.ssh != nil {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backup target skipped", msg, "warning"); e != nil {
@@ -6577,6 +6606,48 @@ func (s *Service) ScheduledHealthchecksResult(ctx context.Context, domain string
 		summary = fmt.Sprintf("%d of %d items failed", failed, attempted)
 	}
 	notify.PingDomainResult(ctx, c, domain, ok, summary)
+}
+
+// ScheduledNotifyResult sends ONE summary message per SCHEDULED per-domain run on the
+// message channels (webhook/Matrix/SMTP + Unraid) instead of one per item — the
+// message-channel counterpart to ScheduledHealthchecksResult (#56). No-op unless
+// Config.ScheduledSummary is on (in which case the per-item messages were suppressed);
+// the On policy still governs whether an all-success run notifies at all. domain is the
+// scheduler spelling ("containers"|"vms").
+func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, attempted, failed int) {
+	c, err := s.NotifyConfig()
+	// Honour the notify policy on ALL channels (message + Unraid): muted ("never"/
+	// unset) sends nothing, so the Unraid push below can't leak past a muted policy.
+	if err != nil || !c.ScheduledSummary || attempted == 0 ||
+		(c.On != "always" && c.On != "failure") {
+		return
+	}
+	ok := failed == 0
+	// "no failures" rather than "all succeeded": attempted counts every scheduled item
+	// including any that were SKIPPED because their container is gone (#57) — a skip is
+	// not a failure, but it isn't a success either, so don't overstate it. The skipped
+	// target still gets its own per-item warning (recordAndNotifyContainerSkip).
+	var summary string
+	if ok {
+		summary = fmt.Sprintf("Scheduled %s backup: %d items, no failures.", domain, attempted)
+	} else {
+		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.", domain, failed, attempted)
+	}
+	// Reuse Send for the message channels with the Healthchecks ping suppressed
+	// (ScheduledHealthchecksResult already sent the one aggregate HC ping). The summary
+	// ctx carries no message-suppress flag, so Send delivers it (shouldSend still gates
+	// an all-success summary out under On="failure").
+	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
+		notify.Event{Title: "BombVault", Message: summary, OK: ok})
+	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) {
+		level := "normal"
+		if !ok {
+			level = "warning"
+		}
+		if e := s.sendUnraidNotify(ctx, "BombVault: scheduled "+domain+" backup", summary, level); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
 }
 
 // sendUnraidNotify triggers Unraid's native notification system by running the

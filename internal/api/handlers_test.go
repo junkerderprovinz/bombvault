@@ -573,6 +573,40 @@ func TestSettingsConfigFieldsRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsPruneImageAfterUpdateRoundTrip guards the /api/settings wire boundary
+// for the #56 image-prune toggle: the strict decoder rejects unknown fields, so the
+// field must be in settingsView (PUT) and mapped by toView (GET). Regression test for
+// the DTO omission that made the Save button always error and the toggle unreachable.
+func TestSettingsPruneImageAfterUpdateRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"pruneImageAfterUpdate": true
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	if settings["pruneImageAfterUpdate"] != true {
+		t.Fatalf("pruneImageAfterUpdate not round-tripped: got %v", settings["pruneImageAfterUpdate"])
+	}
+}
+
 // TestRestoreConfigHandlerStagesAndAutoRestarts drives POST /api/config/restore
 // end-to-end over the real service + fakes: the restore is staged (staged:true)
 // and, because the self container name resolves, the response reports an

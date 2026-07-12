@@ -783,6 +783,14 @@ const hu: Partial<Translations> = {
   "whatsnew.loadFailed": "A kiadási megjegyzéseket itt nem sikerült betölteni. Nyissa meg őket a GitHubon.",
   "whatsnew.viewOnGitHub": "Teljes kiadás megtekintése a GitHubon",
   "whatsnew.close": "Bezárás",
+  "notify.scheduledSummary": "Ütemezett futások összegzése",
+  "notify.scheduledSummaryHint": "Ütemezett biztonsági mentésenként EGYETLEN összegzést küld (például: 45-ből 42 sikerült) minden egyes container vagy VM külön üzenete helyett. A Healthchecks már összegezve van. A kézi mentések továbbra is elemenként küldenek értesítést.",
+  "notify.notifyOnUpdate": "Értesítés container frissítésekor",
+  "notify.notifyOnUpdateHint": "Amikor a mentés utáni frissítés egy containert újabb image-re frissít, üzenetet küld, hogy ellenőrizhesd, továbbra is működik-e. Frissített containerenként fut le (a frissítések ritkák).",
+  "settings.imageCleanupTitle": "Image-tisztítás",
+  "settings.imageCleanupHint": "Karbantartás a választható mentés utáni container-frissítés funkcióhoz.",
+  "settings.pruneImageAfterUpdate": "A régi image eltávolítása frissítés után",
+  "settings.pruneImageAfterUpdateHint": "Miután egy container újabb image-re frissült, törli a lecserélt régi image-et. Alapértelmezetten kikapcsolva: a megtartása olcsóvá teszi a visszagörgetést (a BombVault pillanatkép az adatokat állítja vissza, nem a régi image-et). A megosztott alap-image soha nem törlődik.",
 };
 
 export default hu;

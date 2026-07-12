@@ -470,6 +470,14 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 56, name: "established_repos",
 		sql: "CREATE TABLE IF NOT EXISTS established_repos (repo TEXT PRIMARY KEY, created_at INTEGER NOT NULL DEFAULT 0);",
 	},
+	{
+		// #56: after a post-backup container update, optionally remove the superseded
+		// (old) image. DEFAULT 0 (off) — keeping the old image is what makes a
+		// fresh-snapshot rollback cheap, so upgraders/fresh installs never prune unless
+		// the user opts in.
+		version: 57, name: "settings_prune_image_after_update",
+		sql: "ALTER TABLE settings ADD COLUMN prune_image_after_update INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

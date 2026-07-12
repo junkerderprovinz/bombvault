@@ -141,7 +141,7 @@ func run() error {
 	// notification channel still fires per item.
 	scheduler := schedule.New(
 		func(name string) error {
-			ctx := notify.WithHealthchecksSuppressed(context.Background())
+			ctx := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
 			_, bErr := svc.Backup(ctx, name)
 			if errors.Is(bErr, backup.ErrContainerNotInstalled) {
 				return nil // container no longer on the host: a skip (already recorded), not a job failure (#57)
@@ -152,7 +152,7 @@ func run() error {
 	)
 	scheduler.SetVMJob(
 		func(name string) error {
-			ctx := notify.WithHealthchecksSuppressed(context.Background())
+			ctx := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
 			_, bErr := svc.BackupVM(ctx, name)
 			if errors.Is(bErr, backup.ErrVMNotInstalled) {
 				return nil // VM no longer on the host: a skip (already logged), not a job failure
@@ -167,6 +167,7 @@ func run() error {
 		func(domain string) { svc.ScheduledHealthchecksStart(context.Background(), domain) },
 		func(domain string, attempted, failed int) {
 			svc.ScheduledHealthchecksResult(context.Background(), domain, attempted, failed)
+			svc.ScheduledNotifyResult(context.Background(), domain, attempted, failed)
 		},
 	)
 	scheduler.SetFlashJob(func() error {

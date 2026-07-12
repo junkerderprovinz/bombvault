@@ -780,6 +780,14 @@ const pt: Partial<Translations> = {
   "whatsnew.loadFailed": "Não foi possível carregar aqui as notas de lançamento. Abra-as no GitHub.",
   "whatsnew.viewOnGitHub": "Ver o lançamento completo no GitHub",
   "whatsnew.close": "Fechar",
+  "notify.scheduledSummary": "Resumir execuções agendadas",
+  "notify.scheduledSummaryHint": "Enviar UM resumo por execução de backup agendada (por exemplo: 42 de 45 concluídos com sucesso) em vez de uma mensagem separada para cada container ou VM. O Healthchecks já é resumido. Os backups manuais continuam a notificar por item.",
+  "notify.notifyOnUpdate": "Notificar ao atualizar container",
+  "notify.notifyOnUpdateHint": "Quando a atualização após backup atualiza um container para uma image mais recente, envia uma mensagem para poder verificar se continua a funcionar. Ocorre por cada container atualizado (as atualizações são raras).",
+  "settings.imageCleanupTitle": "Limpeza de images",
+  "settings.imageCleanupHint": "Manutenção para a funcionalidade opcional de atualizar o container após o backup.",
+  "settings.pruneImageAfterUpdate": "Remover a image antiga após uma atualização",
+  "settings.pruneImageAfterUpdateHint": "Depois de um container ser atualizado para uma image mais recente, elimina a image antiga substituída. Desativado por predefinição: mantê-la torna a reversão simples (um snapshot do BombVault restaura os dados, não a image antiga). Uma image base partilhada nunca é eliminada.",
 };
 
 export default pt;

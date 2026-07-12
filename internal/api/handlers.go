@@ -926,6 +926,7 @@ type settingsView struct {
 	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
 	TamperTestSchedule    string `json:"tamperTestSchedule"`
 	DRDrillTarget         string `json:"drDrillTarget"`
+	PruneImageAfterUpdate bool   `json:"pruneImageAfterUpdate"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -980,6 +981,7 @@ func toView(s store.Settings) settingsView {
 		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
+		PruneImageAfterUpdate:       s.PruneImageAfterUpdate,
 	}
 }
 
@@ -1161,6 +1163,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
 		TamperTestSchedule:          v.TamperTestSchedule,
 		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
+		PruneImageAfterUpdate:       v.PruneImageAfterUpdate,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,

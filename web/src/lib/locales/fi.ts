@@ -780,6 +780,14 @@ const fi: Partial<Translations> = {
   "whatsnew.loadFailed": "Julkaisutietoja ei voitu ladata tässä. Avaa ne GitHubissa.",
   "whatsnew.viewOnGitHub": "Näytä koko julkaisu GitHubissa",
   "whatsnew.close": "Sulje",
+  "notify.scheduledSummary": "Tiivistä ajastetut ajot",
+  "notify.scheduledSummaryHint": "Lähetä YKSI yhteenveto jokaista ajastettua varmuuskopiointiajoa kohti (esimerkiksi: 42/45 onnistui) sen sijaan, että jokaisesta containerista tai VM:stä lähetettäisiin erillinen viesti. Healthchecks tiivistetään jo valmiiksi. Manuaaliset varmuuskopiot ilmoittavat edelleen kohdekohtaisesti.",
+  "notify.notifyOnUpdate": "Ilmoita containerin päivityksestä",
+  "notify.notifyOnUpdateHint": "Kun containeria päivitetään varmuuskopioinnin jälkeen uudempaan imageen, lähetä viesti, jotta voit varmistaa, että se toimii edelleen. Laukeaa jokaista päivitettyä containeria kohti (päivitykset ovat harvinaisia).",
+  "settings.imageCleanupTitle": "Imagejen siivous",
+  "settings.imageCleanupHint": "Ylläpitotoimet valinnaiselle 'päivitä container varmuuskopioinnin jälkeen' -ominaisuudelle.",
+  "settings.pruneImageAfterUpdate": "Poista vanha image päivityksen jälkeen",
+  "settings.pruneImageAfterUpdateHint": "Kun container on päivitetty uudempaan imageen, poista korvattu vanha image. Oletuksena pois päältä: sen säilyttäminen tekee edelliseen versioon palaamisesta vaivatonta (BombVault-tilannevedos palauttaa datan, ei vanhaa imagea). Jaettua perus-imagea ei koskaan poisteta.",
 };
 
 export default fi;

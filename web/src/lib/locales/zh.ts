@@ -772,6 +772,14 @@ const zh: Partial<Translations> = {
   "whatsnew.loadFailed": "无法在此加载发行说明。请在 GitHub 上打开。",
   "whatsnew.viewOnGitHub": "在 GitHub 上查看完整发行版",
   "whatsnew.close": "关闭",
+  "notify.scheduledSummary": "汇总计划运行",
+  "notify.scheduledSummaryHint": "每次计划备份运行只发送一条汇总消息（例如：45 个中成功 42 个），而不是为每个容器或虚拟机单独发送一条消息。Healthchecks 已自动汇总。手动备份仍会逐项通知。",
+  "notify.notifyOnUpdate": "容器更新时通知",
+  "notify.notifyOnUpdateHint": "当“备份后更新”将容器升级到较新镜像时，发送一条消息，以便你确认它仍能正常工作。每个已更新的容器各触发一次（更新很少发生）。",
+  "settings.imageCleanupTitle": "镜像清理",
+  "settings.imageCleanupHint": "用于可选的“备份后更新容器”功能的清理维护。",
+  "settings.pruneImageAfterUpdate": "更新后删除旧镜像",
+  "settings.pruneImageAfterUpdateHint": "当容器更新到较新镜像后，删除已被取代的旧镜像。默认关闭：保留旧镜像可让回滚更省事（BombVault 快照恢复的是数据，而非旧镜像）。共享的基础镜像永远不会被删除。",
 };
 
 export default zh;

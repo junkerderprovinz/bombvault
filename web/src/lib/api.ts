@@ -148,6 +148,9 @@ export interface Settings {
   tamperTestSchedule: string;
   /** DR-drill target container ("" = auto: the most recently backed-up container). */
   drDrillTarget: string;
+  /** #56: after a post-backup container update, remove the superseded old image.
+   *  Opt-in (default off) — keeping the old image makes a snapshot rollback cheap. */
+  pruneImageAfterUpdate: boolean;
 }
 
 export interface GetSettingsResponse {
@@ -647,6 +650,10 @@ export interface NotifyConfig {
   smtpFrom: string;
   smtpTo: string;
   smtpTls: string; // "starttls" | "tls" | "none"
+  // #56: collapse a scheduled per-domain run's per-item messages into one summary.
+  scheduledSummary: boolean;
+  // #56: notify per container updated by the post-backup image update.
+  notifyOnUpdate: boolean;
 }
 
 export interface GetNotifyResponse extends OkEnvelope {

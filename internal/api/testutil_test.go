@@ -44,19 +44,20 @@ type fakeServiceDocker struct {
 	allocations []model.Allocation
 	allocErr    error
 
-	stopErr       error
-	startErr      error
-	restartErr    error
-	removeErr     error
-	pullErr       error
-	imageID       string // returned by ImageID (post-pull image id, for #52 update tests)
-	imageIDErr    error
-	createErr     error
-	createErrName string // when set, CreateAndStart fails for this container name
-	started       bool
-	createdIn     model.Inspect
-	createdStart  bool
-	calls         []string
+	stopErr        error
+	startErr       error
+	restartErr     error
+	removeErr      error
+	pullErr        error
+	imageID        string // returned by ImageID (post-pull image id, for #52 update tests)
+	imageIDErr     error
+	imageRemoveErr error
+	createErr      error
+	createErrName  string // when set, CreateAndStart fails for this container name
+	started        bool
+	createdIn      model.Inspect
+	createdStart   bool
+	calls          []string
 }
 
 var _ dockercli.Docker = (*fakeServiceDocker)(nil)
@@ -108,6 +109,11 @@ func (f *fakeServiceDocker) Pull(_ context.Context, image string) error {
 func (f *fakeServiceDocker) ImageID(_ context.Context, ref string) (string, error) {
 	f.calls = append(f.calls, "imageID:"+ref)
 	return f.imageID, f.imageIDErr
+}
+
+func (f *fakeServiceDocker) ImageRemove(_ context.Context, id string) error {
+	f.calls = append(f.calls, "imageRemove:"+id)
+	return f.imageRemoveErr
 }
 
 func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) error {

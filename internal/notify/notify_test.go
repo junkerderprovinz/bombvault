@@ -412,3 +412,32 @@ func TestPingDomainSuppressedWhenNeverOrNoURL(t *testing.T) {
 		t.Fatalf("aggregate pings must be a no-op under never/no-URL, hits=%d", hits)
 	}
 }
+
+// TestScheduledSummarySuppressesPerItemMessages: with ScheduledSummary on, a
+// message marked WithMessagesSuppressed (a scheduled per-item backup) is dropped so
+// the ONE domain summary speaks for the run; a non-marked message (the summary
+// itself, or a per-updated-container notice) still fires; and with the toggle OFF a
+// marked message fires as before (#56).
+func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
+	var hits int
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer wh.Close()
+	cfg := notify.Config{On: "always", WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
+
+	// per-item scheduled message → suppressed in summary mode
+	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})
+	if hits != 0 {
+		t.Fatalf("summary mode must suppress a per-item message, hits=%d", hits)
+	}
+	// non-marked message (the summary / an update notice) → still fires
+	notify.Send(context.Background(), cfg, "containers", notify.Event{OK: true})
+	if hits != 1 {
+		t.Fatalf("a non-marked message must still send, hits=%d", hits)
+	}
+	// toggle off → a marked per-item message fires as before
+	cfg.ScheduledSummary = false
+	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})
+	if hits != 2 {
+		t.Fatalf("with summary off a marked message must send, hits=%d", hits)
+	}
+}
