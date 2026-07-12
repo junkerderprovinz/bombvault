@@ -2267,6 +2267,7 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	s.applyRetention(ctx, repo, settings, mode)
+	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	s.maybeCollectStats(ctx, "containers")
 
@@ -2545,10 +2546,23 @@ func (s *Service) publishBatch(key string, percent float64, active bool) {
 	s.progress.Publish(progress.Event{Key: key, Phase: "backup", Percent: percent, Active: active})
 }
 
-// defsDir returns the directory (a sibling of the containers repo, on the same
-// backup storage) where encrypted container definitions are mirrored for
-// disaster recovery.
+// defsDir returns the directory INSIDE the containers repo (repo/def) where the
+// encrypted container definitions are mirrored for disaster recovery. Keeping them
+// inside the repo makes a copy of the repo folder self-contained — the DR
+// definitions travel with it — and leaves the backup root uncluttered. "def" never
+// collides with restic's own repo entries (config, data, index, keys, locks,
+// snapshots), and restic ignores unknown subdirectories.
 func (s *Service) defsDir(settings store.Settings) (string, error) {
+	repo, err := s.containersRepoPath(settings)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(repo, "def"), nil
+}
+
+// legacyDefsDir is the pre-v5.4.1 container defs location (a sibling of the repo).
+// Still read as a fallback and migrated away by migrateLegacyDefs.
+func (s *Service) legacyDefsDir(settings store.Settings) (string, error) {
 	repo, err := s.containersRepoPath(settings)
 	if err != nil {
 		return "", err
@@ -2579,11 +2593,104 @@ func ensureDefsDir(dir string) error {
 // wrote at 0600 (and to defeat a strict process umask); the contents are always
 // APP_KEY-encrypted, so 0644 exposes nothing.
 func writeDef(dir, fn string, enc []byte) error {
-	p := filepath.Join(dir, fn)
-	if err := os.WriteFile(p, enc, 0o644); err != nil { //nolint:gosec // G306: encrypted contents; backup share must be sync-readable. fn validated by defFileName; dir is operator-configured
+	final := filepath.Join(dir, fn)
+	tmp := final + ".tmp"
+	if err := os.WriteFile(tmp, enc, 0o644); err != nil { //nolint:gosec // G306: encrypted contents; backup share must be sync-readable. fn validated by defFileName; dir is operator-configured
 		return err
 	}
-	return os.Chmod(p, 0o644) //nolint:gosec // G302: see above — heals a pre-existing 0600 file so the sync tool can read it
+	// os.WriteFile keeps an EXISTING file's mode, so force 0644 (and defeat a strict
+	// umask) to heal a leftover tmp and guarantee the sync tool can read it.
+	if cErr := os.Chmod(tmp, 0o644); cErr != nil { //nolint:gosec // G302: see above
+		_ = os.Remove(tmp) //nolint:gosec // G703: tmp = final+".tmp"; final = Join(dir, fn); fn validated by defFileName, dir operator-configured
+		return cErr
+	}
+	// Atomic swap so a reader — or migrateLegacyDefs, which deletes the legacy source
+	// once the destination exists — can never observe a half-written def as complete
+	// (both paths sit on the same backup storage, so os.Rename is atomic).
+	if rErr := os.Rename(tmp, final); rErr != nil { //nolint:gosec // G703: tmp/final derived from Join(dir, fn); fn validated by defFileName, dir operator-configured
+		_ = os.Remove(tmp) //nolint:gosec // G703: see above
+		return rErr
+	}
+	return nil
+}
+
+// makeRepoReadable relaxes a LOCAL restic repo tree so the operator can copy it
+// off-box (e.g. a second drive over SMB) as a non-root user. restic, run as root,
+// writes the repo 0700/0600, which locks a non-root sync tool out of the whole
+// folder; the repo is encrypted, so adding group/other READ (and dir traverse)
+// exposes nothing. Only entries actually missing the bits are chmod'd, so a repeat
+// walk issues almost no chmod syscalls; the directory walk itself still runs after
+// every backup, but its cost is negligible next to the backup it follows. It runs
+// per-container backup (the single choke point for every code path) rather than
+// once per batch, trading a redundant walk for simplicity and total coverage.
+// Best-effort: a walk/chmod error must never fail a good backup, and a non-local
+// repo path (an off-site rclone remote) simply yields a walk error and is skipped.
+func makeRepoReadable(repo string) {
+	_ = filepath.WalkDir(repo, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil //nolint:nilerr // best-effort; a walk error must not fail the backup
+		}
+		info, ierr := d.Info()
+		if ierr != nil {
+			return nil
+		}
+		perm := info.Mode().Perm()
+		want := perm | 0o044 // group+other read
+		if d.IsDir() {
+			want |= 0o011 // group+other traverse
+		}
+		if want != perm {
+			// Perm() drops setuid/setgid/sticky; re-add them so a group-inheritance
+			// (setgid) dir on a shared NAS keeps its special bit through the chmod.
+			special := info.Mode() & (os.ModeSetuid | os.ModeSetgid | os.ModeSticky)
+			_ = os.Chmod(p, want|special) //nolint:gosec // G302: encrypted repo; must be readable by the operator's off-box sync tool
+		}
+		return nil
+	})
+}
+
+// readStoredDef reads an encrypted definition, preferring the new in-repo location
+// (repo/def) and falling back to the pre-v5.4.1 sibling location so a restore from
+// a backup made before the move still finds its definitions.
+func readStoredDef(newDir, legacyDir, fn string) ([]byte, error) {
+	enc, err := os.ReadFile(filepath.Join(newDir, fn)) //nolint:gosec // G304: fn validated by defFileName; dirs are operator-configured
+	if err == nil {
+		return enc, nil
+	}
+	return os.ReadFile(filepath.Join(legacyDir, fn)) //nolint:gosec // G304: fn validated by defFileName; dirs are operator-configured
+}
+
+// migrateLegacyDefs best-effort moves any pre-v5.4.1 def files from the legacy
+// sibling dir into the new in-repo dir, then removes the legacy dir once empty, so
+// the backup root cleans itself up after the first backup following the upgrade.
+// Never fails a backup; both dirs sit on the same backup storage so os.Rename works.
+func migrateLegacyDefs(newDir, legacyDir string) {
+	entries, err := os.ReadDir(legacyDir)
+	if err != nil {
+		return // no legacy dir (fresh install or already migrated)
+	}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".def") {
+			continue
+		}
+		src := filepath.Join(legacyDir, e.Name())
+		dst := filepath.Join(newDir, e.Name())
+		if _, statErr := os.Stat(dst); statErr == nil {
+			_ = os.Remove(src) // already present in the new location → drop the stale copy
+			continue
+		}
+		if renErr := os.Rename(src, dst); renErr != nil {
+			// cross-device or race: copy + remove as a fallback, never lose the def.
+			if b, rErr := os.ReadFile(src); rErr == nil { //nolint:gosec // G304: legacy .def under an operator-configured dir
+				if wErr := writeDef(newDir, e.Name(), b); wErr == nil {
+					_ = os.Remove(src)
+				}
+			}
+			continue
+		}
+		_ = os.Chmod(dst, 0o644) //nolint:gosec // G302: encrypted def; must be sync-readable (rename kept the old 0600)
+	}
+	_ = os.Remove(legacyDir) // succeeds only when the dir is now empty
 }
 
 // writeDefToStorage encrypts the definition with the APP_KEY-derived key and
@@ -2609,6 +2716,11 @@ func (s *Service) writeDefToStorage(settings store.Settings, name string, defJSO
 	}
 	if err := writeDef(dir, fn, enc); err != nil {
 		return fmt.Errorf("write definition: %w", err)
+	}
+	// Move any pre-v5.4.1 defs from the old sibling dir into the repo and remove
+	// the old dir once empty (best-effort; a good backup never fails over this).
+	if legacy, lErr := s.legacyDefsDir(settings); lErr == nil {
+		migrateLegacyDefs(dir, legacy)
 	}
 	return nil
 }
@@ -2670,6 +2782,10 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	legacyDir, err := s.legacyDefsDir(settings)
+	if err != nil {
+		return 0, err
+	}
 	discovered := 0
 	for name := range names {
 		fn, fnErr := defFileName(name)
@@ -2677,7 +2793,7 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (int, error) {
 			log.Printf("api: discover: skipping unsafe container name %q: %v", name, fnErr) //nolint:gosec // G706: %q-quoted
 			continue
 		}
-		enc, rErr := os.ReadFile(filepath.Join(dir, fn)) //nolint:gosec // G304: fn validated by defFileName; dir is operator-configured
+		enc, rErr := readStoredDef(dir, legacyDir, fn)
 		if rErr != nil {
 			log.Printf("api: discover: no stored definition for %q — skipping (cannot recreate): %v", name, rErr) //nolint:gosec // G706: %q-quoted
 			continue
@@ -2707,9 +2823,22 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (int, error) {
 	return discovered, nil
 }
 
-// vmDefsDir returns the directory (a sibling of the vms repo, on the same backup
-// storage) where encrypted VM definitions are mirrored for disaster recovery.
+// vmDefsDir returns the directory INSIDE the vms repo (repo/vm-def) where the
+// encrypted VM definitions are mirrored for disaster recovery — a sibling-free
+// layout so the backup root stays clean and a repo-folder copy is self-contained.
+// The dir is "vm-def" (not "def") so that even if the operator points the
+// containers and vms repos at the SAME folder, a same-named container and VM never
+// collide (mirrors the old bombvault-defs / bombvault-vm-defs distinction).
 func (s *Service) vmDefsDir(settings store.Settings) (string, error) {
+	repo, err := s.vmsRepoPath(settings)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(repo, "vm-def"), nil
+}
+
+// legacyVMDefsDir is the pre-v5.4.1 VM defs location (a sibling of the vms repo).
+func (s *Service) legacyVMDefsDir(settings store.Settings) (string, error) {
 	repo, err := s.vmsRepoPath(settings)
 	if err != nil {
 		return "", err
@@ -2739,6 +2868,9 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name string, defJ
 	}
 	if err := writeDef(dir, fn, enc); err != nil {
 		return fmt.Errorf("write vm definition: %w", err)
+	}
+	if legacy, lErr := s.legacyVMDefsDir(settings); lErr == nil {
+		migrateLegacyDefs(dir, legacy)
 	}
 	return nil
 }
@@ -2781,6 +2913,10 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	legacyDir, err := s.legacyVMDefsDir(settings)
+	if err != nil {
+		return 0, err
+	}
 	discovered := 0
 	for name := range names {
 		fn, fnErr := defFileName(name)
@@ -2788,7 +2924,7 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (int, error) {
 			log.Printf("api: discover vms: skipping unsafe name %q: %v", name, fnErr) //nolint:gosec // G706: %q-quoted
 			continue
 		}
-		enc, rErr := os.ReadFile(filepath.Join(dir, fn)) //nolint:gosec // G304: fn validated by defFileName; dir is operator-configured
+		enc, rErr := readStoredDef(dir, legacyDir, fn)
 		if rErr != nil {
 			log.Printf("api: discover vms: no stored definition for %q — skipping (cannot recreate): %v", name, rErr) //nolint:gosec // G706: %q-quoted
 			continue
@@ -4400,6 +4536,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		log.Printf("api: backup vm: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	s.applyRetention(ctx, repo, settings, mode)
+	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
 	s.maybeCollectStats(ctx, "vms")
 	return sum, nil
@@ -4743,6 +4880,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		return backup.Summary{}, err
 	}
 	s.applyRetention(ctx, repo, settings, mode)
+	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
 	s.maybeCollectStats(ctx, "flash")
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
