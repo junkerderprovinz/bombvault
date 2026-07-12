@@ -2556,10 +2556,41 @@ func (s *Service) defsDir(settings store.Settings) (string, error) {
 	return filepath.Join(filepath.Dir(repo), "bombvault-defs"), nil
 }
 
+// ensureDefsDir creates the disaster-recovery defs directory and makes sure it is
+// world-traversable (0755). It lives on the operator's backup storage — typically
+// a network share the operator also copies off-box for a second copy — so a
+// non-root SMB user must be able to read it; the .def files inside are ALWAYS
+// APP_KEY-encrypted, so the looser mode exposes nothing (the restic repo beside it
+// is likewise readable). Chmod (not just MkdirAll) heals a directory an older
+// version created at 0700, which locked SMB users out of the whole backup folder.
+func ensureDefsDir(dir string) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // G301: backup share must be readable by the off-server sync tool; .def contents are encrypted
+		return err
+	}
+	if err := os.Chmod(dir, 0o755); err != nil { //nolint:gosec // G302: see above — must be sync-readable; contents are encrypted
+		return err
+	}
+	return nil
+}
+
+// writeDef writes an encrypted definition into the defs dir readable (0644) by the
+// off-server sync tool that copies the backup share. os.WriteFile keeps the mode of
+// an EXISTING file, so an explicit Chmod is required to heal a .def an older version
+// wrote at 0600 (and to defeat a strict process umask); the contents are always
+// APP_KEY-encrypted, so 0644 exposes nothing.
+func writeDef(dir, fn string, enc []byte) error {
+	p := filepath.Join(dir, fn)
+	if err := os.WriteFile(p, enc, 0o644); err != nil { //nolint:gosec // G306: encrypted contents; backup share must be sync-readable. fn validated by defFileName; dir is operator-configured
+		return err
+	}
+	return os.Chmod(p, 0o644) //nolint:gosec // G302: see above — heals a pre-existing 0600 file so the sync tool can read it
+}
+
 // writeDefToStorage encrypts the definition with the APP_KEY-derived key and
-// writes it to <defsDir>/<name>.def (0600). The env vars inside the definition
-// are sensitive, so the file is always encrypted regardless of the restic
-// encryption setting.
+// writes it to <defsDir>/<name>.def (0644 — readable by the off-server sync tool
+// that copies the backup share; the contents are always encrypted). The env vars
+// inside the definition are sensitive, so the file is always encrypted regardless
+// of the restic encryption setting.
 func (s *Service) writeDefToStorage(settings store.Settings, name string, defJSON []byte) error {
 	fn, err := defFileName(name)
 	if err != nil {
@@ -2569,14 +2600,14 @@ func (s *Service) writeDefToStorage(settings store.Settings, name string, defJSO
 	if err != nil {
 		return err
 	}
-	if err := paths.EnsureDir(dir); err != nil {
+	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure defs dir: %w", err)
 	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
 	if err != nil {
 		return fmt.Errorf("encrypt definition: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, fn), enc, 0o600); err != nil { //nolint:gosec // G703: fn validated by defFileName (no separators/..); dir is operator-configured
+	if err := writeDef(dir, fn, enc); err != nil {
 		return fmt.Errorf("write definition: %w", err)
 	}
 	return nil
@@ -2699,14 +2730,14 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name string, defJ
 	if err != nil {
 		return err
 	}
-	if err := paths.EnsureDir(dir); err != nil {
+	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure vm defs dir: %w", err)
 	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
 	if err != nil {
 		return fmt.Errorf("encrypt vm definition: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, fn), enc, 0o600); err != nil { //nolint:gosec // G703: fn validated by defFileName; dir is operator-configured
+	if err := writeDef(dir, fn, enc); err != nil {
 		return fmt.Errorf("write vm definition: %w", err)
 	}
 	return nil
