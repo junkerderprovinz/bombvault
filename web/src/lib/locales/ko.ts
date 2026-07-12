@@ -772,6 +772,14 @@ const ko: Partial<Translations> = {
   "whatsnew.loadFailed": "여기에서 릴리스 노트를 불러올 수 없습니다. GitHub에서 여세요.",
   "whatsnew.viewOnGitHub": "GitHub에서 전체 릴리스 보기",
   "whatsnew.close": "닫기",
+  "notify.scheduledSummary": "예약 실행 요약",
+  "notify.scheduledSummaryHint": "예약 백업 실행마다 컨테이너나 VM별로 개별 메시지를 보내는 대신 요약 하나만 보냅니다(예: 45개 중 42개 성공). Healthchecks는 이미 요약되어 있습니다. 수동 백업은 여전히 항목별로 알립니다.",
+  "notify.notifyOnUpdate": "컨테이너 업데이트 시 알림",
+  "notify.notifyOnUpdateHint": "백업 후 업데이트로 컨테이너가 최신 image로 업그레이드되면 정상 작동 여부를 확인할 수 있도록 메시지를 보냅니다. 업데이트된 컨테이너마다 발생합니다(업데이트는 드뭅니다).",
+  "settings.imageCleanupTitle": "Image 정리",
+  "settings.imageCleanupHint": "선택적 백업 후 컨테이너 업데이트 기능을 위한 정리 작업입니다.",
+  "settings.pruneImageAfterUpdate": "업데이트 후 이전 image 제거",
+  "settings.pruneImageAfterUpdateHint": "컨테이너가 최신 image로 업데이트된 후 대체된 이전 image를 삭제합니다. 기본값은 꺼짐입니다. 이전 image를 유지하면 롤백이 간편해집니다(BombVault 스냅샷은 이전 image가 아니라 데이터를 복원합니다). 공유 베이스 image는 절대 삭제되지 않습니다.",
 };
 
 export default ko;

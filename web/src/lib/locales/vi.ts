@@ -772,6 +772,14 @@ const vi: Partial<Translations> = {
   "whatsnew.loadFailed": "Không thể tải ghi chú phát hành tại đây. Hãy mở trên GitHub.",
   "whatsnew.viewOnGitHub": "Xem bản phát hành đầy đủ trên GitHub",
   "whatsnew.close": "Đóng",
+  "notify.scheduledSummary": "Tóm tắt các lần chạy theo lịch",
+  "notify.scheduledSummaryHint": "Gửi MỘT bản tóm tắt cho mỗi lần sao lưu theo lịch (ví dụ: 42 trên 45 thành công) thay vì một thông báo riêng cho từng container hoặc VM. Healthchecks vốn đã được tóm tắt. Sao lưu thủ công vẫn thông báo theo từng mục.",
+  "notify.notifyOnUpdate": "Thông báo khi container được cập nhật",
+  "notify.notifyOnUpdateHint": "Khi tính năng cập-nhật-sau-sao-lưu nâng cấp một container lên image mới hơn, gửi một thông báo để bạn kiểm tra xem nó còn hoạt động không. Kích hoạt cho từng container được cập nhật (việc cập nhật hiếm khi xảy ra).",
+  "settings.imageCleanupTitle": "Dọn dẹp image",
+  "settings.imageCleanupHint": "Dọn dẹp cho tính năng tùy chọn cập-nhật-container-sau-sao-lưu.",
+  "settings.pruneImageAfterUpdate": "Xóa image cũ sau khi cập nhật",
+  "settings.pruneImageAfterUpdateHint": "Sau khi một container được cập nhật lên image mới hơn, xóa image cũ đã bị thay thế. Mặc định tắt: giữ lại giúp việc quay về phiên bản cũ trở nên dễ dàng (một bản snapshot của BombVault khôi phục dữ liệu, không phải image cũ). Image nền dùng chung sẽ không bao giờ bị xóa.",
 };
 
 export default vi;

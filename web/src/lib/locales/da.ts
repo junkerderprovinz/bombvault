@@ -780,6 +780,14 @@ const da: Partial<Translations> = {
   "whatsnew.loadFailed": "Udgivelsesnoterne kunne ikke indlæses her. Åbn dem på GitHub.",
   "whatsnew.viewOnGitHub": "Se hele udgivelsen på GitHub",
   "whatsnew.close": "Luk",
+  "notify.scheduledSummary": "Opsummer planlagte kørsler",
+  "notify.scheduledSummaryHint": "Send ÉN opsummering pr. planlagt backupkørsel (for eksempel: 42 af 45 lykkedes) i stedet for en separat besked for hver container eller VM. Healthchecks er allerede opsummeret. Manuelle backups giver stadig besked pr. element.",
+  "notify.notifyOnUpdate": "Giv besked ved containeropdatering",
+  "notify.notifyOnUpdateHint": "Når opdatér-efter-backup opgraderer en container til et nyere image, sendes en besked, så du kan bekræfte, at den stadig virker. Udløses pr. opdateret container (opdateringer er sjældne).",
+  "settings.imageCleanupTitle": "Image-oprydning",
+  "settings.imageCleanupHint": "Vedligeholdelse for den valgfrie funktion opdatér-container-efter-backup.",
+  "settings.pruneImageAfterUpdate": "Fjern det gamle image efter en opdatering",
+  "settings.pruneImageAfterUpdateHint": "Når en container er opdateret til et nyere image, slettes det gamle, erstattede image. Slået fra som standard: at beholde det gør det billigt at rulle tilbage (et BombVault-snapshot gendanner data, ikke det gamle image). Et delt base-image slettes aldrig.",
 };
 
 export default da;

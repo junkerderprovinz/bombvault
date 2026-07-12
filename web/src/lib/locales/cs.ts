@@ -778,6 +778,14 @@ const cs: Partial<Translations> = {
   "whatsnew.loadFailed": "Poznámky k vydání se zde nepodařilo načíst. Otevřete je na GitHubu.",
   "whatsnew.viewOnGitHub": "Zobrazit celé vydání na GitHubu",
   "whatsnew.close": "Zavřít",
+  "notify.scheduledSummary": "Shrnout naplánované běhy",
+  "notify.scheduledSummaryHint": "Odeslat JEDNO shrnutí za každý naplánovaný běh zálohy (například: 42 z 45 úspěšných) místo samostatné zprávy pro každý kontejner nebo VM. Healthchecks se už shrnuje. Ruční zálohy stále upozorňují pro každou položku.",
+  "notify.notifyOnUpdate": "Upozornit na aktualizaci kontejneru",
+  "notify.notifyOnUpdateHint": "Když aktualizace po záloze povýší kontejner na novější image, odeslat zprávu, abyste mohli ověřit, že stále funguje. Spustí se pro každý aktualizovaný kontejner (aktualizace jsou vzácné).",
+  "settings.imageCleanupTitle": "Čištění image",
+  "settings.imageCleanupHint": "Údržba pro volitelnou funkci aktualizace kontejneru po záloze.",
+  "settings.pruneImageAfterUpdate": "Odstranit starý image po aktualizaci",
+  "settings.pruneImageAfterUpdateHint": "Po aktualizaci kontejneru na novější image smazat nahrazený starý image. Ve výchozím nastavení vypnuto: jeho ponechání zlevňuje návrat zpět (snímek BombVault obnoví data, ne starý image). Sdílený základní image se nikdy nesmaže.",
 };
 
 export default cs;

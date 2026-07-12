@@ -59,6 +59,28 @@ func healthchecksSuppressed(ctx context.Context) bool {
 	return v
 }
 
+// msgSuppressKey is the context key that marks a per-item MESSAGE send (webhook/
+// Matrix/SMTP) as a candidate for domain-level summarisation. A scheduled per-domain
+// run sets it on each backup item; Send then skips the per-item message ONLY when the
+// config also asks for a summary (Config.ScheduledSummary), so the many per-item
+// messages collapse into ONE "N of M" summary for the whole run (#56). It is separate
+// from hcSuppressKey so a per-container update notice (which suppresses only the HC
+// ping) still delivers its message. See WithMessagesSuppressed.
+type msgSuppressKey struct{}
+
+// WithMessagesSuppressed marks ctx as a per-item scheduled-backup message: Send drops
+// the per-item webhook/Matrix/SMTP send when the config's ScheduledSummary is on.
+func WithMessagesSuppressed(ctx context.Context) context.Context {
+	return context.WithValue(ctx, msgSuppressKey{}, true)
+}
+
+// MessagesSuppressed reports whether ctx is a per-item scheduled-backup message. The
+// service layer reads it to drop its own per-item Unraid push in summary mode.
+func MessagesSuppressed(ctx context.Context) bool {
+	v, _ := ctx.Value(msgSuppressKey{}).(bool)
+	return v
+}
+
 // Config holds the notification channels. An empty field disables that channel.
 type Config struct {
 	On               string `json:"on"` // "never" | "failure" | "always"
@@ -86,6 +108,17 @@ type Config struct {
 	SMTPFrom     string `json:"smtpFrom"`
 	SMTPTo       string `json:"smtpTo"`
 	SMTPTLS      string `json:"smtpTls"` // "starttls" (default) | "tls" | "none"
+	// ScheduledSummary collapses a scheduled per-domain run's per-item messages into
+	// ONE "N of M succeeded/failed" summary on the message channels (webhook/Matrix/
+	// SMTP/Unraid), instead of one message per container/VM (#56). Off by default, so
+	// existing setups keep their per-item notifications. Healthchecks is already
+	// aggregated regardless. Manual multi-select backups stay per-item.
+	ScheduledSummary bool `json:"scheduledSummary"`
+	// NotifyOnUpdate sends a message when a container is updated by the post-backup
+	// image update (#52/#56): "Updated <name> to a newer image", so the user can
+	// verify it still works. Off by default; fires per updated container (updates are
+	// rare) and is NOT folded into the scheduled summary.
+	NotifyOnUpdate bool `json:"notifyOnUpdate"`
 }
 
 // Event is a completed backup, rendered into each channel's message.
@@ -200,6 +233,12 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 	}
 
 	if !c.shouldSend(ev.OK) {
+		return
+	}
+
+	// Scheduled per-domain run with summary mode on: drop this per-item message so the
+	// single "N of M" summary (Service.ScheduledNotifyResult) speaks for the whole run.
+	if MessagesSuppressed(ctx) && c.ScheduledSummary {
 		return
 	}
 

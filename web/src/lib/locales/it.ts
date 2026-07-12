@@ -780,6 +780,14 @@ const it: Partial<Translations> = {
   "whatsnew.loadFailed": "Impossibile caricare le note di rilascio qui. Aprile su GitHub.",
   "whatsnew.viewOnGitHub": "Vedi la versione completa su GitHub",
   "whatsnew.close": "Chiudi",
+  "notify.scheduledSummary": "Riepiloga le esecuzioni pianificate",
+  "notify.scheduledSummaryHint": "Invia UN solo riepilogo per ogni esecuzione di backup pianificata (per esempio: 42 di 45 riuscite) invece di un messaggio separato per ogni container o VM. Healthchecks è già riepilogato. I backup manuali notificano comunque per ogni singolo elemento.",
+  "notify.notifyOnUpdate": "Notifica all'aggiornamento del container",
+  "notify.notifyOnUpdateHint": "Quando l'aggiornamento dopo il backup porta un container a un'image più recente, invia un messaggio così puoi verificare che continui a funzionare. Viene inviato per ogni container aggiornato (gli aggiornamenti sono rari).",
+  "settings.imageCleanupTitle": "Pulizia delle image",
+  "settings.imageCleanupHint": "Manutenzione per la funzione opzionale di aggiornamento del container dopo il backup.",
+  "settings.pruneImageAfterUpdate": "Rimuovi la vecchia image dopo un aggiornamento",
+  "settings.pruneImageAfterUpdateHint": "Dopo che un container è stato aggiornato a un'image più recente, elimina la vecchia image ormai sostituita. Disattivato di default: mantenerla rende il rollback poco costoso (uno snapshot di BombVault ripristina i dati, non la vecchia image). Un'image di base condivisa non viene mai eliminata.",
 };
 
 export default it;

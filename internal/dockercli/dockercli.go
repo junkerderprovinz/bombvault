@@ -283,6 +283,23 @@ func (c *Client) ImageID(ctx context.Context, ref string) (string, error) {
 	return insp.ID, nil
 }
 
+// ImageRemove removes a local image by ID (sha256:…). force=false, so the daemon
+// refuses if any container still references it — a shared base image is never
+// deleted. Used to prune the superseded image after an update-after-backup (#56).
+// A not-found image counts as already-gone (nil).
+func (c *Client) ImageRemove(ctx context.Context, id string) error {
+	if id == "" {
+		return nil
+	}
+	if _, err := c.api.ImageRemove(ctx, id, image.RemoveOptions{Force: false, PruneChildren: false}); err != nil {
+		if cerrdefs.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("dockercli: image remove: %w", err)
+	}
+	return nil
+}
+
 // CreateAndStart recreates a container from a captured inspect and starts it
 // when start is true. Security-relevant fields (User, Cap*, Privileged,
 // SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/

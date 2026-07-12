@@ -777,6 +777,14 @@ const nl: Partial<Translations> = {
   "whatsnew.loadFailed": "De release-opmerkingen konden hier niet worden geladen. Open ze op GitHub.",
   "whatsnew.viewOnGitHub": "Volledige release op GitHub bekijken",
   "whatsnew.close": "Sluiten",
+  "notify.scheduledSummary": "Geplande runs samenvatten",
+  "notify.scheduledSummaryHint": "Verstuur ÉÉN samenvatting per geplande backuprun (bijvoorbeeld: 42 van 45 geslaagd) in plaats van een apart bericht voor elke container of VM. Healthchecks wordt al samengevat. Handmatige backups blijven per item melden.",
+  "notify.notifyOnUpdate": "Melden bij containerupdate",
+  "notify.notifyOnUpdateHint": "Wanneer update-na-backup een container bijwerkt naar een nieuwere image, wordt er een bericht verstuurd zodat je kunt controleren of alles nog werkt. Wordt per bijgewerkte container verstuurd (updates zijn zeldzaam).",
+  "settings.imageCleanupTitle": "Image opruimen",
+  "settings.imageCleanupHint": "Onderhoud voor de optionele functie 'container bijwerken na backup'.",
+  "settings.pruneImageAfterUpdate": "Oude image verwijderen na een update",
+  "settings.pruneImageAfterUpdateHint": "Nadat een container is bijgewerkt naar een nieuwere image, wordt de vervangen oude image verwijderd. Standaard uit: door deze te bewaren is terugrollen goedkoop (een BombVault-snapshot herstelt gegevens, niet de oude image). Een gedeelde base-image wordt nooit verwijderd.",
 };
 
 export default nl;

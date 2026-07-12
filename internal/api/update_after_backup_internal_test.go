@@ -47,6 +47,11 @@ func (f *updateFakeDocker) CreateAndStart(_ context.Context, in model.Inspect, _
 	return nil
 }
 
+func (f *updateFakeDocker) ImageRemove(_ context.Context, id string) error {
+	f.calls = append(f.calls, "imageRemove:"+id)
+	return nil
+}
+
 func newUpdateTestSvc(t *testing.T) (*Service, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
@@ -80,6 +85,10 @@ func TestUpdateAfterBackup_RecreatesOnNewerImage(t *testing.T) {
 		if !strings.Contains(calls, want) {
 			t.Fatalf("a newer image must recreate the container: missing %q in calls %v", want, f.calls)
 		}
+	}
+	// Prune is opt-in (default off): the superseded image must be kept.
+	if strings.Contains(calls, "imageRemove:") {
+		t.Fatalf("prune is off by default — the old image must NOT be removed; calls %v", f.calls)
 	}
 	runs, err := st.ListRuns(10)
 	if err != nil {
@@ -122,5 +131,32 @@ func TestUpdateAfterBackup_SkipsWhenUpToDate(t *testing.T) {
 		if r.Kind == "update" {
 			t.Fatalf("an up-to-date image must not record an update run; got %v", runs)
 		}
+	}
+}
+
+// With prune-after-update opted in, a successful update removes the superseded
+// (old) image (#56).
+func TestUpdateAfterBackup_PrunesOldImageWhenEnabled(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	cfg, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.PruneImageAfterUpdate = true
+	if err := st.UpdateSettings(cfg); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := &updateFakeDocker{imageID: "sha256:NEW"}
+	svc.docker = f
+
+	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+
+	if !strings.Contains(strings.Join(f.calls, ","), "imageRemove:sha256:OLD") {
+		t.Fatalf("prune-after-update must remove the OLD image; calls %v", f.calls)
 	}
 }

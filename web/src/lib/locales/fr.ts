@@ -780,6 +780,14 @@ const fr: Partial<Translations> = {
   "whatsnew.loadFailed": "Impossible de charger les notes de version ici. Ouvrez-les sur GitHub.",
   "whatsnew.viewOnGitHub": "Voir la version complète sur GitHub",
   "whatsnew.close": "Fermer",
+  "notify.scheduledSummary": "Résumer les exécutions planifiées",
+  "notify.scheduledSummaryHint": "Envoyer UN seul résumé par sauvegarde planifiée (par exemple : 42 sur 45 réussies) au lieu d'un message distinct pour chaque container ou VM. Healthchecks est déjà résumé. Les sauvegardes manuelles notifient toujours élément par élément.",
+  "notify.notifyOnUpdate": "Notifier lors de la mise à jour d'un container",
+  "notify.notifyOnUpdateHint": "Lorsque la mise à jour après sauvegarde fait passer un container à une image plus récente, envoyer un message pour que vous puissiez vérifier qu'il fonctionne toujours. Se déclenche pour chaque container mis à jour (les mises à jour sont rares).",
+  "settings.imageCleanupTitle": "Nettoyage des images",
+  "settings.imageCleanupHint": "Entretien pour la fonction facultative de mise à jour des containers après sauvegarde.",
+  "settings.pruneImageAfterUpdate": "Supprimer l'ancienne image après une mise à jour",
+  "settings.pruneImageAfterUpdateHint": "Après la mise à jour d'un container vers une image plus récente, supprimer l'ancienne image remplacée. Désactivé par défaut : la conserver rend le retour en arrière peu coûteux (un instantané BombVault restaure les données, pas l'ancienne image). Une image de base partagée n'est jamais supprimée.",
 };
 
 export default fr;

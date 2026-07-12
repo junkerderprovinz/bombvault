@@ -778,6 +778,14 @@ const es: Partial<Translations> = {
   "whatsnew.loadFailed": "No se pudieron cargar las notas de la versión aquí. Ábrelas en GitHub.",
   "whatsnew.viewOnGitHub": "Ver la versión completa en GitHub",
   "whatsnew.close": "Cerrar",
+  "notify.scheduledSummary": "Resumir las ejecuciones programadas",
+  "notify.scheduledSummaryHint": "Envía UN solo resumen por cada copia de seguridad programada (por ejemplo: 42 de 45 correctas) en lugar de un mensaje aparte por cada contenedor o VM. Healthchecks ya se resume. Las copias manuales siguen notificando por elemento.",
+  "notify.notifyOnUpdate": "Notificar al actualizar un contenedor",
+  "notify.notifyOnUpdateHint": "Cuando «actualizar tras la copia» actualiza un contenedor a una imagen más reciente, envía un mensaje para que puedas verificar que sigue funcionando. Se activa por cada contenedor actualizado (las actualizaciones son poco frecuentes).",
+  "settings.imageCleanupTitle": "Limpieza de imágenes",
+  "settings.imageCleanupHint": "Mantenimiento para la función opcional de actualizar el contenedor tras la copia.",
+  "settings.pruneImageAfterUpdate": "Eliminar la imagen antigua tras una actualización",
+  "settings.pruneImageAfterUpdateHint": "Después de actualizar un contenedor a una imagen más reciente, elimina la imagen antigua sustituida. Desactivado por defecto: conservarla hace que revertir sea barato (una instantánea de BombVault restaura los datos, no la imagen antigua). Una imagen base compartida nunca se elimina.",
 };
 
 export default es;

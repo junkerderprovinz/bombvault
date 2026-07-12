@@ -775,6 +775,14 @@ const pl: Partial<Translations> = {
   "whatsnew.loadFailed": "Nie udało się tutaj wczytać informacji o wersji. Otwórz je w GitHub.",
   "whatsnew.viewOnGitHub": "Zobacz pełne wydanie na GitHub",
   "whatsnew.close": "Zamknij",
+  "notify.scheduledSummary": "Podsumowuj zaplanowane przebiegi",
+  "notify.scheduledSummaryHint": "Wysyłaj JEDNO podsumowanie na zaplanowany przebieg kopii zapasowej (na przykład: 42 z 45 zakończyło się powodzeniem) zamiast osobnej wiadomości dla każdego kontenera lub VM. Healthchecks jest już podsumowywany. Ręczne kopie zapasowe nadal powiadamiają o każdym elemencie.",
+  "notify.notifyOnUpdate": "Powiadamiaj o aktualizacji kontenera",
+  "notify.notifyOnUpdateHint": "Gdy aktualizacja po kopii zapasowej podniesie kontener do nowszego obrazu, wyślij wiadomość, dzięki której sprawdzisz, czy nadal działa. Wyzwalane dla każdego zaktualizowanego kontenera (aktualizacje są rzadkie).",
+  "settings.imageCleanupTitle": "Czyszczenie obrazów",
+  "settings.imageCleanupHint": "Porządkowanie dla opcjonalnej funkcji aktualizacji kontenera po kopii zapasowej.",
+  "settings.pruneImageAfterUpdate": "Usuń stary obraz po aktualizacji",
+  "settings.pruneImageAfterUpdateHint": "Po zaktualizowaniu kontenera do nowszego obrazu usuń zastąpiony stary obraz. Domyślnie wyłączone: pozostawienie go sprawia, że wycofanie zmian jest tanie (migawka BombVault przywraca dane, a nie stary obraz). Współdzielony obraz bazowy nigdy nie jest usuwany.",
 };
 
 export default pl;

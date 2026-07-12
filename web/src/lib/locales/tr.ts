@@ -780,6 +780,14 @@ const tr: Partial<Translations> = {
   "whatsnew.loadFailed": "Sürüm notları burada yüklenemedi. GitHub'da açın.",
   "whatsnew.viewOnGitHub": "Sürümün tamamını GitHub'da görüntüle",
   "whatsnew.close": "Kapat",
+  "notify.scheduledSummary": "Zamanlanmış çalıştırmaları özetle",
+  "notify.scheduledSummaryHint": "Her container veya VM için ayrı bir mesaj yerine, zamanlanmış her yedekleme çalıştırması için TEK bir özet gönderin (örneğin: 45'ten 42'si başarılı). Healthchecks zaten özetlenir. Manuel yedeklemeler yine öğe başına bildirim gönderir.",
+  "notify.notifyOnUpdate": "Container güncellemesinde bildir",
+  "notify.notifyOnUpdateHint": "Yedeklemeden sonra güncelleme özelliği bir container'ı daha yeni bir image'e yükselttiğinde, hâlâ çalıştığını doğrulayabilmeniz için bir mesaj gönderir. Güncellenen her container için tetiklenir (güncellemeler nadirdir).",
+  "settings.imageCleanupTitle": "Image temizliği",
+  "settings.imageCleanupHint": "İsteğe bağlı yedeklemeden sonra container güncelleme özelliği için bakım işlemleri.",
+  "settings.pruneImageAfterUpdate": "Güncellemeden sonra eski image'i kaldır",
+  "settings.pruneImageAfterUpdateHint": "Bir container daha yeni bir image'e güncellendikten sonra, yerini alan eski image'i sil. Varsayılan olarak kapalı: image'i tutmak geri almayı kolay ve ucuz kılar (bir BombVault anlık görüntüsü verileri geri yükler, eski image'i değil). Paylaşılan bir temel image asla silinmez.",
 };
 
 export default tr;

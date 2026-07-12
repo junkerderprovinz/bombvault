@@ -122,6 +122,11 @@ type Settings struct {
 	// DRDrillTarget is the container the real-restore DR drill restores. Empty
 	// (the default) = auto: the most recently successfully backed-up container.
 	DRDrillTarget string
+	// PruneImageAfterUpdate removes the superseded (old) image after a post-backup
+	// container update (#52/#56). Opt-in, default off — keeping the old image is what
+	// makes a fresh-snapshot rollback cheap. Best-effort + force=false (a shared base
+	// image is never deleted).
+	PruneImageAfterUpdate bool
 }
 
 // GetSettings returns the current app settings.
@@ -142,13 +147,14 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       recovery_kit_ack,
 		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable,
 		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
-		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep
+		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
+		       prune_image_after_update
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable int
-	var flashZipExportEnabled int
+	var flashZipExportEnabled, pruneImageAfterUpdate int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.RestoreFolder,
@@ -166,6 +172,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable,
 		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
 		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
+		&pruneImageAfterUpdate,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -187,6 +194,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.FlashOffsiteImmutable = flashImmutable != 0
 	s.ConfigOffsiteImmutable = configImmutable != 0
 	s.FlashZipExportEnabled = flashZipExportEnabled != 0
+	s.PruneImageAfterUpdate = pruneImageAfterUpdate != 0
 	return s, nil
 }
 
@@ -247,7 +255,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  dr_drill_target              = ?,
 		  flash_zip_export_enabled     = ?,
 		  flash_zip_export_path        = ?,
-		  flash_zip_export_keep        = ?
+		  flash_zip_export_keep        = ?,
+		  prune_image_after_update     = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -269,6 +278,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable),
 		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,
 		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
+		boolInt(s.PruneImageAfterUpdate),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

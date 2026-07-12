@@ -780,6 +780,14 @@ const no: Partial<Translations> = {
   "whatsnew.loadFailed": "Utgivelsesnotatene kunne ikke lastes inn her. Åpne dem på GitHub.",
   "whatsnew.viewOnGitHub": "Se hele utgivelsen på GitHub",
   "whatsnew.close": "Lukk",
+  "notify.scheduledSummary": "Oppsummer planlagte kjøringer",
+  "notify.scheduledSummaryHint": "Send ÉN oppsummering per planlagt sikkerhetskopiering (for eksempel: 42 av 45 lyktes) i stedet for en egen melding for hver container eller VM. Healthchecks er allerede oppsummert. Manuelle sikkerhetskopier varsler fortsatt per element.",
+  "notify.notifyOnUpdate": "Varsle ved containeroppdatering",
+  "notify.notifyOnUpdateHint": "Når oppdater-etter-sikkerhetskopiering oppgraderer en container til et nyere image, send en melding så du kan bekrefte at den fortsatt fungerer. Utløses per oppdatert container (oppdateringer er sjeldne).",
+  "settings.imageCleanupTitle": "Opprydding av image",
+  "settings.imageCleanupHint": "Vedlikehold for den valgfrie funksjonen oppdater-container-etter-sikkerhetskopiering.",
+  "settings.pruneImageAfterUpdate": "Fjern det gamle imaget etter en oppdatering",
+  "settings.pruneImageAfterUpdateHint": "Etter at en container er oppdatert til et nyere image, slett det utdaterte gamle imaget. Av som standard: å beholde det gjør tilbakerulling billig (et BombVault-øyeblikksbilde gjenoppretter data, ikke det gamle imaget). Et delt base-image slettes aldri.",
 };
 
 export default no;

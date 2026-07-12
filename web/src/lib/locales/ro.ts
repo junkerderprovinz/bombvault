@@ -783,6 +783,14 @@ const ro: Partial<Translations> = {
   "whatsnew.loadFailed": "Notele de lansare nu au putut fi încărcate aici. Deschideți-le pe GitHub.",
   "whatsnew.viewOnGitHub": "Vedeți lansarea completă pe GitHub",
   "whatsnew.close": "Închide",
+  "notify.scheduledSummary": "Rezumă rulările programate",
+  "notify.scheduledSummaryHint": "Trimite UN singur rezumat pentru fiecare rulare de backup programată (de exemplu: 42 din 45 reușite) în loc de un mesaj separat pentru fiecare container sau VM. Healthchecks este deja rezumat. Backupurile manuale notifică în continuare pentru fiecare element.",
+  "notify.notifyOnUpdate": "Notifică la actualizarea containerului",
+  "notify.notifyOnUpdateHint": "Când actualizarea-după-backup trece un container la o imagine mai nouă, trimite un mesaj ca să poți verifica dacă încă funcționează. Se declanșează pentru fiecare container actualizat (actualizările sunt rare).",
+  "settings.imageCleanupTitle": "Curățare imagini",
+  "settings.imageCleanupHint": "Întreținere pentru funcția opțională de actualizare-container-după-backup.",
+  "settings.pruneImageAfterUpdate": "Elimină imaginea veche după o actualizare",
+  "settings.pruneImageAfterUpdateHint": "După ce un container este actualizat la o imagine mai nouă, șterge imaginea veche înlocuită. Dezactivat implicit: păstrarea ei face revenirea ieftină (un snapshot BombVault restaurează datele, nu imaginea veche). O imagine de bază partajată nu este niciodată ștearsă.",
 };
 
 export default ro;

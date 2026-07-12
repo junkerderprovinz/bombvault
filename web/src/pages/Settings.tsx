@@ -496,6 +496,8 @@ const emptyNotify: NotifyConfig = {
   smtpFrom: "",
   smtpTo: "",
   smtpTls: "starttls",
+  scheduledSummary: false,
+  notifyOnUpdate: false,
 };
 
 // NotifyCard configures backup notifications (webhook / Matrix / Healthchecks).
@@ -579,6 +581,36 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <option value="failure">{t("notify.onFailure")}</option>
           <option value="always">{t("notify.onAlways")}</option>
         </select>
+      </label>
+
+      {/* #56: one summary per scheduled run instead of one message per container. */}
+      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={cfg.scheduledSummary}
+          onChange={(e) => set("scheduledSummary", e.target.checked)}
+          className="mt-0.5"
+          style={{ accentColor: "var(--accent)" }}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm text-carbon-text">{t("notify.scheduledSummary")}</span>
+          <span className="text-xs text-carbon-textMuted">{t("notify.scheduledSummaryHint")}</span>
+        </span>
+      </label>
+
+      {/* #56: notify when a container is updated by the post-backup image update. */}
+      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 border border-carbon-border p-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={cfg.notifyOnUpdate}
+          onChange={(e) => set("notifyOnUpdate", e.target.checked)}
+          className="mt-0.5"
+          style={{ accentColor: "var(--accent)" }}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm text-carbon-text">{t("notify.notifyOnUpdate")}</span>
+          <span className="text-xs text-carbon-textMuted">{t("notify.notifyOnUpdateHint")}</span>
+        </span>
       </label>
 
       {/* Unraid native notifications (delivered over the host SSH connection). */}
@@ -1497,6 +1529,9 @@ export function SettingsPage() {
   const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
   const [retSaveError, setRetSaveError] = useState<string | null>(null);
 
+  const [pruneSaveState, setPruneSaveState] = useState<SaveState>("idle");
+  const [pruneSaveError, setPruneSaveError] = useState<string | null>(null);
+
   const [offRetSaveState, setOffRetSaveState] = useState<SaveState>("idle");
   const [offRetSaveError, setOffRetSaveError] = useState<string | null>(null);
 
@@ -2074,6 +2109,36 @@ export function SettingsPage() {
               },
               setRetSaveState,
               setRetSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — Prune the superseded image after a post-backup container   */}
+      {/* update (#56). Opt-in; keeping the old image makes rollback cheap.    */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Card title={t("settings.imageCleanupTitle")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.imageCleanupHint")}</p>
+        <ToggleRow
+          label={t("settings.pruneImageAfterUpdate")}
+          description={t("settings.pruneImageAfterUpdateHint")}
+          checked={settings.pruneImageAfterUpdate}
+          onChange={(v) =>
+            setSettings((prev) => (prev ? { ...prev, pruneImageAfterUpdate: v } : prev))
+          }
+        />
+        <SaveBar
+          state={pruneSaveState}
+          error={pruneSaveError}
+          onSave={() =>
+            void save(
+              { pruneImageAfterUpdate: settings.pruneImageAfterUpdate },
+              setPruneSaveState,
+              setPruneSaveError
             )
           }
           t={t}
