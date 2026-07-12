@@ -3,10 +3,14 @@ package api_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -16,10 +20,36 @@ import (
 // "skipped" run per attempt so the dashboard reflects it and agrees with the green
 // aggregate Healthchecks ping instead of showing nothing (#57).
 func TestBackupSkipsRemovedContainer(t *testing.T) {
+	dir := t.TempDir()
+	// HostMountRoot == the temp dir so resolveRepo("backups/containers") lands under
+	// it (a writable, platform-neutral path); EnsureRepo then opens the seeded repo
+	// instead of trying to mkdir an unwritable host path like /host on Linux CI.
+	cfg := config.Config{
+		AppKey:            strings.Repeat("a", 64),
+		DataDir:           dir,
+		HostMountRoot:     dir,
+		FlashTemplatesDir: filepath.Join(dir, "flash"),
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Seed a real (empty) local repo on disk so EnsureRepo sees an established repo.
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	d := &fakeServiceDocker{
 		inspectErr: errors.New("Error response from daemon: No such container: Nexterm"),
 	}
-	svc, st, _ := stackTestService(t, &fakeResticEngine{}, d)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "Nexterm", IncludeInSchedule: true})
 	if err != nil {
