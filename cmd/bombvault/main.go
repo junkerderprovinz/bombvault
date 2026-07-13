@@ -5,11 +5,14 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -28,10 +31,61 @@ import (
 )
 
 func main() {
+	// Docker HEALTHCHECK entry (#60): `bombvault healthcheck` probes the local API
+	// and exits 0/1 so auto-heal tools can restart a wedged container. Handled
+	// before run() so it never touches the store, scheduler or server.
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		os.Exit(healthcheck())
+	}
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
 		os.Exit(1)
 	}
+}
+
+// healthcheck is the Docker HEALTHCHECK probe (#60, requested by @BaukeZwart). It
+// asks the engine's own /api/health endpoint (open, LAN trust model) whether it is
+// serving and returns 0 on HTTP 200, non-zero otherwise, so an auto-heal tool
+// (e.g. Autoheal / willfarrell) can restart a container whose engine has wedged.
+// It reuses this binary, so the image needs no shell or curl. PORT/HTTPS_PORT come
+// from the environment (the Dockerfile sets both).
+func healthcheck() int {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	httpsPort := os.Getenv("HTTPS_PORT")
+	if httpsPort == "" {
+		httpsPort = "3443"
+	}
+	return healthcheckAt(port, httpsPort)
+}
+
+// healthcheckAt is the testable core: it tries HTTP first, then HTTPS (the local
+// cert is self-signed, so verification is skipped — this is a liveness probe on
+// loopback, not a trust boundary), and returns 0 as soon as /api/health answers 200.
+func healthcheckAt(port, httpsPort string) int {
+	client := &http.Client{
+		Timeout: 4 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: loopback self-signed cert; liveness probe, not a trust boundary
+		},
+	}
+	for _, url := range []string{
+		"http://127.0.0.1:" + port + "/api/health",
+		"https://127.0.0.1:" + httpsPort + "/api/health",
+	} {
+		resp, err := client.Get(url) //nolint:gosec // G107: 127.0.0.1 with an env-configured port, not user input
+		if err != nil {
+			continue
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			return 0
+		}
+	}
+	fmt.Fprintln(os.Stderr, "bombvault: healthcheck failed — /api/health did not answer 200")
+	return 1
 }
 
 // ensureDataDirWritable verifies the data dir exists and is writable before the

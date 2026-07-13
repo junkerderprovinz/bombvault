@@ -103,6 +103,14 @@ ENV DATA_DIR=/config \
 VOLUME /config
 EXPOSE 3000 3443
 
+# Docker healthcheck (#60): the engine answers its own /api/health while serving,
+# so auto-heal tools (Autoheal etc.) can restart a wedged container. It runs the
+# binary itself (`bombvault healthcheck`), so the image needs no shell or curl.
+# start-period covers the cold start (store open + first sweep); a backup never
+# blocks the API from binding, so 40s is plenty.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD ["/usr/local/bin/bombvault", "healthcheck"]
+
 # tini is PID 1 (the container init) so orphaned grandchild processes get reaped.
 # BombVault shells out to restic, which forks its own `rclone` child for off-site
 # repos; when restic is cancelled/killed (a cancelled backup, the off-site check
