@@ -752,6 +752,7 @@ const hu: Partial<Translations> = {
   "drill.checkLocal": "helyi integritásellenőrzés",
   "drill.failReasonPrefix": "ok:",
   "drill.runOffsiteDr": "Telephelyen kívüli DR-ellenőrzés indítása",
+  "drill.rerunOffsiteDr": "Telephelyen kívüli DR-ellenőrzés újraindítása",
   "drill.runningOffsiteDr": "Telephelyen kívüli DR-ellenőrzés fut…",
 
   // Off-site DR opt-out (#37)

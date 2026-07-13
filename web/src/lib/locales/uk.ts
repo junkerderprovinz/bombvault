@@ -744,6 +744,7 @@ const uk: Partial<Translations> = {
   "drill.checkLocal": "локальна перевірка цілісності",
   "drill.failReasonPrefix": "причина:",
   "drill.runOffsiteDr": "Запустити зовнішню DR-перевірку",
+  "drill.rerunOffsiteDr": "Повторно запустити зовнішню DR-перевірку",
   "drill.runningOffsiteDr": "Виконується зовнішня DR-перевірка…",
 
   // Off-site DR opt-out (#37)

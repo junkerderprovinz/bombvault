@@ -454,6 +454,7 @@ const en = {
   "drill.checkLocal": "local integrity check",
   "drill.failReasonPrefix": "reason:",
   "drill.runOffsiteDr": "Run off-site DR check",
+  "drill.rerunOffsiteDr": "Re-run off-site DR check",
   "drill.runningOffsiteDr": "Running off-site DR check…",
 
   // Off-site DR opt-out (#37)
@@ -1245,6 +1246,7 @@ const de: Translations = {
   "drill.checkLocal": "Lokale Integritätsprüfung",
   "drill.failReasonPrefix": "Grund:",
   "drill.runOffsiteDr": "Off-site-DR-Prüfung starten",
+  "drill.rerunOffsiteDr": "Off-site-DR-Prüfung erneut ausführen",
   "drill.runningOffsiteDr": "Off-site-DR-Prüfung läuft…",
 
   // Off-site DR opt-out (#37)

@@ -752,6 +752,7 @@ const ro: Partial<Translations> = {
   "drill.checkLocal": "verificare de integritate locală",
   "drill.failReasonPrefix": "motiv:",
   "drill.runOffsiteDr": "Rulează verificarea DR externă",
+  "drill.rerunOffsiteDr": "Rulează din nou verificarea DR externă",
   "drill.runningOffsiteDr": "Se rulează verificarea DR externă…",
 
   // Off-site DR opt-out (#37)

@@ -499,7 +499,11 @@ function ProtectionCard({
                         disabled={drRunning === d.domain}
                         className="rounded-md border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
-                        {drRunning === d.domain ? t("drill.runningOffsiteDr") : t("drill.runOffsiteDr")}
+                        {drRunning === d.domain
+                          ? t("drill.runningOffsiteDr")
+                          : d.lastDrDrillAt && d.lastDrDrillOK
+                            ? t("drill.rerunOffsiteDr")
+                            : t("drill.runOffsiteDr")}
                       </button>
                     )}
                     {drRunError[d.domain] && (

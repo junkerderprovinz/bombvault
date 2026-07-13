@@ -749,6 +749,7 @@ const no: Partial<Translations> = {
   "drill.checkLocal": "lokal integritetssjekk",
   "drill.failReasonPrefix": "årsak:",
   "drill.runOffsiteDr": "Kjør off-site DR-sjekk",
+  "drill.rerunOffsiteDr": "Kjør off-site DR-sjekk på nytt",
   "drill.runningOffsiteDr": "Kjører off-site DR-sjekk…",
 
   // Off-site DR opt-out (#37)

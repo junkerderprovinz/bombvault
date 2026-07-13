@@ -741,6 +741,7 @@ const vi: Partial<Translations> = {
   "drill.checkLocal": "kiểm tra toàn vẹn cục bộ",
   "drill.failReasonPrefix": "lý do:",
   "drill.runOffsiteDr": "Chạy kiểm tra DR ngoài site",
+  "drill.rerunOffsiteDr": "Chạy lại kiểm tra DR ngoài site",
   "drill.runningOffsiteDr": "Đang chạy kiểm tra DR ngoài site…",
 
   // Off-site DR opt-out (#37)

@@ -749,6 +749,7 @@ const he: Partial<Translations> = {
   "drill.checkLocal": "בדיקת שלמות מקומית",
   "drill.failReasonPrefix": "סיבה:",
   "drill.runOffsiteDr": "הרץ בדיקת DR מחוץ לאתר",
+  "drill.rerunOffsiteDr": "הרץ שוב בדיקת DR מחוץ לאתר",
   "drill.runningOffsiteDr": "מריץ בדיקת DR מחוץ לאתר…",
 
   // Off-site DR opt-out (#37)

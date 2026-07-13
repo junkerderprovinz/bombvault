@@ -752,6 +752,7 @@ const th: Partial<Translations> = {
   "drill.checkLocal": "การตรวจสอบความสมบูรณ์ในเครื่อง",
   "drill.failReasonPrefix": "เหตุผล:",
   "drill.runOffsiteDr": "เรียกใช้การตรวจสอบ DR นอกสถานที่",
+  "drill.rerunOffsiteDr": "เรียกใช้การตรวจสอบ DR นอกสถานที่อีกครั้ง",
   "drill.runningOffsiteDr": "กำลังเรียกใช้การตรวจสอบ DR นอกสถานที่…",
 
   // Off-site DR opt-out (#37)
