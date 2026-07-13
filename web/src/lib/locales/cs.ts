@@ -747,6 +747,7 @@ const cs: Partial<Translations> = {
   "drill.checkLocal": "místní kontrola integrity",
   "drill.failReasonPrefix": "důvod:",
   "drill.runOffsiteDr": "Spustit kontrolu DR mimo lokalitu",
+  "drill.rerunOffsiteDr": "Znovu spustit kontrolu DR mimo lokalitu",
   "drill.runningOffsiteDr": "Probíhá kontrola DR mimo lokalitu…",
 
   // Off-site DR opt-out (#37)

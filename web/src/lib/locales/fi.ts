@@ -749,6 +749,7 @@ const fi: Partial<Translations> = {
   "drill.checkLocal": "paikallinen eheystarkistus",
   "drill.failReasonPrefix": "syy:",
   "drill.runOffsiteDr": "Suorita etä-DR-tarkistus",
+  "drill.rerunOffsiteDr": "Suorita etä-DR-tarkistus uudelleen",
   "drill.runningOffsiteDr": "Suoritetaan etä-DR-tarkistusta…",
 
   // Off-site DR opt-out (#37)

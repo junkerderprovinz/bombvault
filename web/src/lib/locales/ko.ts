@@ -741,6 +741,7 @@ const ko: Partial<Translations> = {
   "drill.checkLocal": "로컬 무결성 검사",
   "drill.failReasonPrefix": "이유:",
   "drill.runOffsiteDr": "오프사이트 DR 검사 실행",
+  "drill.rerunOffsiteDr": "오프사이트 DR 검사 다시 실행",
   "drill.runningOffsiteDr": "오프사이트 DR 검사 실행 중…",
 
   // Off-site DR opt-out (#37)

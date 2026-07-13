@@ -749,6 +749,7 @@ const el: Partial<Translations> = {
   "drill.checkLocal": "τοπικός έλεγχος ακεραιότητας",
   "drill.failReasonPrefix": "αιτία:",
   "drill.runOffsiteDr": "Εκτέλεση ελέγχου DR εκτός τόπου",
+  "drill.rerunOffsiteDr": "Επανεκτέλεση ελέγχου DR εκτός τόπου",
   "drill.runningOffsiteDr": "Εκτέλεση ελέγχου DR εκτός τόπου…",
 
   // Off-site DR opt-out (#37)

@@ -741,6 +741,7 @@ const zh: Partial<Translations> = {
   "drill.checkLocal": "本地完整性检查",
   "drill.failReasonPrefix": "原因：",
   "drill.runOffsiteDr": "运行异地 DR 检查",
+  "drill.rerunOffsiteDr": "重新运行异地 DR 检查",
   "drill.runningOffsiteDr": "正在运行异地 DR 检查…",
 
   // Off-site DR opt-out (#37)

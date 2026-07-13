@@ -741,6 +741,7 @@ const ja: Partial<Translations> = {
   "drill.checkLocal": "ローカル整合性チェック",
   "drill.failReasonPrefix": "理由:",
   "drill.runOffsiteDr": "オフサイト DR チェックを実行",
+  "drill.rerunOffsiteDr": "オフサイト DR チェックを再実行",
   "drill.runningOffsiteDr": "オフサイト DR チェックを実行中…",
 
   // Off-site DR opt-out (#37)

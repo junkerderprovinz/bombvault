@@ -749,6 +749,7 @@ const it: Partial<Translations> = {
   "drill.checkLocal": "controllo di integrità locale",
   "drill.failReasonPrefix": "motivo:",
   "drill.runOffsiteDr": "Avvia controllo DR off-site",
+  "drill.rerunOffsiteDr": "Riavvia controllo DR off-site",
   "drill.runningOffsiteDr": "Controllo DR off-site in corso…",
 
   // Off-site DR opt-out (#37)

@@ -752,6 +752,7 @@ const ar: Partial<Translations> = {
   "drill.checkLocal": "فحص السلامة المحلي",
   "drill.failReasonPrefix": "السبب:",
   "drill.runOffsiteDr": "تشغيل فحص DR خارج الموقع",
+  "drill.rerunOffsiteDr": "إعادة تشغيل فحص DR خارج الموقع",
   "drill.runningOffsiteDr": "جارٍ تشغيل فحص DR خارج الموقع…",
 
   // Off-site DR opt-out (#37)

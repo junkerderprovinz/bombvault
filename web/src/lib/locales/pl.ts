@@ -744,6 +744,7 @@ const pl: Partial<Translations> = {
   "drill.checkLocal": "lokalne sprawdzenie integralności",
   "drill.failReasonPrefix": "powód:",
   "drill.runOffsiteDr": "Uruchom sprawdzenie DR poza siedzibą",
+  "drill.rerunOffsiteDr": "Uruchom ponownie sprawdzenie DR poza siedzibą",
   "drill.runningOffsiteDr": "Sprawdzanie DR poza siedzibą…",
 
   // Off-site DR opt-out (#37)

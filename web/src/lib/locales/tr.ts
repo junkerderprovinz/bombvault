@@ -749,6 +749,7 @@ const tr: Partial<Translations> = {
   "drill.checkLocal": "yerel bütünlük denetimi",
   "drill.failReasonPrefix": "neden:",
   "drill.runOffsiteDr": "Site dışı DR denetimini çalıştır",
+  "drill.rerunOffsiteDr": "Site dışı DR denetimini yeniden çalıştır",
   "drill.runningOffsiteDr": "Site dışı DR denetimi çalışıyor…",
 
   // Off-site DR opt-out (#37)
