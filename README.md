@@ -171,6 +171,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Restore to an alternate folder** — restore a container snapshot (or individual files) to a different path instead of in place, for cloning or inspection.
 - **Snapshot diff & tags** — compare two snapshots to see what changed (files added / changed / removed and the size delta), and tag snapshots to filter them.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
+- **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **26 languages** with a flag picker.
 
 <br>
