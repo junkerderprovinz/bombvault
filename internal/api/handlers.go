@@ -2375,3 +2375,281 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		"dirs": dirs,
 	})
 }
+
+// ---------------------------------------------------------------------------
+// Files handlers (the files domain — named host folders backed up as file sets)
+// ---------------------------------------------------------------------------
+
+// fileSetIDParam extracts and validates the {id} path value. Set ids are
+// store-generated 32-hex strings, so the strict container-name charset fits;
+// validating at the boundary blocks traversal / option-injection ids from ever
+// reaching the service layer (same discipline as nameParam).
+func (h *Handler) fileSetIDParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	id := r.PathValue("id")
+	if !validResourceName(id) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid file set id"})
+		return "", false
+	}
+	return id, true
+}
+
+// handleListFileSets lists all configured file sets with last-backup time and
+// source-path existence. GET /api/files
+func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
+	views, err := h.svc.ListFileSetViews(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if views == nil {
+		views = []FileSetView{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "fileSets": views})
+}
+
+// handleCreateFileSet creates a file set. POST /api/files/sets
+// body {name, path, excludes, enabled} — path is required here (only
+// DiscoverFileSets may store a path-less set) and, like the name, is fully
+// validated before the row is written.
+func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Name     string   `json:"name"`
+		Path     string   `json:"path"`
+		Excludes []string `json:"excludes"`
+		Enabled  *bool    `json:"enabled"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	enabled := true // a freshly created set participates by default
+	if body.Enabled != nil {
+		enabled = *body.Enabled
+	}
+	fs := store.FileSet{
+		Name:     strings.TrimSpace(body.Name),
+		Path:     strings.TrimSpace(body.Path),
+		Excludes: body.Excludes,
+		Enabled:  enabled,
+	}
+	if fs.Path == "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "path is required"})
+		return
+	}
+	if err := h.svc.validateFileSet(fs); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	created, err := h.store.CreateFileSet(fs)
+	if err != nil {
+		// A duplicate name violates the UNIQUE constraint — report it clearly.
+		if strings.Contains(err.Error(), "UNIQUE") {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
+			return
+		}
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"id": created.ID}))
+}
+
+// handlePatchFileSet partially updates a file set. PATCH /api/files/sets/{id}
+// body {name?, path?, excludes?, enabled?} — pointers so an enabled-only PATCH
+// doesn't reset the other fields; the MERGED set is re-validated so a patch
+// can never sneak an invalid name/path past the create-time checks.
+func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Name     *string   `json:"name"`
+		Path     *string   `json:"path"`
+		Excludes *[]string `json:"excludes"`
+		Enabled  *bool     `json:"enabled"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	fs, err := h.store.GetFileSet(id)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "file set not found"})
+		return
+	}
+	if body.Name != nil {
+		fs.Name = strings.TrimSpace(*body.Name)
+	}
+	if body.Path != nil {
+		fs.Path = strings.TrimSpace(*body.Path)
+	}
+	if body.Excludes != nil {
+		fs.Excludes = *body.Excludes
+	}
+	if body.Enabled != nil {
+		fs.Enabled = *body.Enabled
+	}
+	if err := h.svc.validateFileSet(fs); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.store.UpdateFileSet(fs); err != nil {
+		if strings.Contains(err.Error(), "UNIQUE") {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
+			return
+		}
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleDeleteFileSet removes a file set (row + run history) WITHOUT touching
+// any repo — its existing snapshots stay in the repo and can be resurfaced via
+// DiscoverFileSets. Deleting the backups too is handleDeleteBackupsFileSet
+// (the ForgetVM/DeleteBackupsVM split). DELETE /api/files/sets/{id}
+func (h *Handler) handleDeleteFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	if err := h.store.DeleteFileSet(id); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleDeleteBackupsFileSet removes ALL backups of a file set (every
+// fileset:<Name>-tagged snapshot, pruned) and forgets the set from the store.
+// DELETE /api/files/sets/{id}/backups
+func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	if err := h.svc.DeleteBackupsFileSet(r.Context(), id); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleBackupFileSet starts a single file-set backup ON THE SERVER and
+// returns immediately (see handleBackup). The SPA watches "files:<name>" over
+// SSE. POST /api/files/sets/{id}/backup
+func (h *Handler) handleBackupFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	started, err := h.svc.StartBackupFileSet(r.Context(), id)
+	if err != nil { // the files domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// handleBackupFilesAll starts a SERVER-SIDE batch backup of the selected file
+// sets (see handleBackupAll — same detached-batch semantics; the SPA watches
+// "batch:files" + per-set keys). POST /api/files/backup-all  body {ids: [...]}
+func (h *Handler) handleBackupFilesAll(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if !decodeBody(w, r, &body) { // caps the body at 1 MiB
+		return
+	}
+	if len(body.IDs) == 0 {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no file sets selected"})
+		return
+	}
+	if len(body.IDs) > 1000 { // far beyond any real set count — reject abuse
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many file sets"})
+		return
+	}
+	// Validate every id at the boundary (same guard as the per-set route).
+	for _, id := range body.IDs {
+		if !validResourceName(id) {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid file set id"})
+			return
+		}
+	}
+	started, err := h.svc.StartBackupFilesAll(r.Context(), body.IDs)
+	if err != nil { // the files domain is busy with another op → 409 with the reason
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.IDs)}))
+}
+
+// handleSnapshotsFileSet lists one file set's snapshots (tag-filtered).
+// GET /api/files/sets/{id}/snapshots?source=
+func (h *Handler) handleSnapshotsFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	snaps, err := h.svc.SnapshotsFileSet(r.Context(), id, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if snaps == nil {
+		snaps = []restic.Snapshot{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
+}
+
+// handleRestoreFileSet starts a file-set restore ON THE SERVER and returns
+// immediately (see handleRestore). An empty targetPath restores IN PLACE over
+// the set's source folder (confirm-gated, never silent); a non-empty
+// targetPath extracts the snapshot into that folder under the host mount
+// (non-destructive). Validation + target resolution run synchronously (the
+// resolved target is returned in the ack); the restic work runs detached,
+// publishing "files:<name>" progress and recording a run for the outcome.
+// POST /api/files/sets/{id}/restore  body {snapshotId, targetPath, confirm}
+func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		SnapshotID string `json:"snapshotId"`
+		TargetPath string `json:"targetPath"`
+		Confirm    bool   `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
+}
+
+// handleDiscoverFiles rebuilds the file-set list from backup storage (from the
+// fileset: snapshot tags alone — the files domain mirrors no definitions), so
+// sets lost with the database become restorable again. POST /api/files/discover
+func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
+	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
+	n, err := h.svc.DiscoverFileSets(r.Context(), probe)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
+}
