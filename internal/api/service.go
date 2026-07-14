@@ -190,6 +190,15 @@ type Service struct {
 	// regardless of how the Service was constructed.
 	tamperMuGuard sync.Mutex
 	tamperMu      map[string]*sync.Mutex
+
+	// foreignMu guards foreignSessions: short-lived, in-memory READ-ONLY
+	// sessions onto ANOTHER BombVault instance's repository (Recovery →
+	// "restore from another repo", #61). Deliberately NEVER persisted — closing
+	// or expiring a session forgets the foreign location and key entirely, and
+	// Settings stays untouched (see foreign.go). Created lazily so it works
+	// regardless of how the Service was constructed.
+	foreignMu       sync.Mutex
+	foreignSessions map[string]foreignSession
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock

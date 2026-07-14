@@ -2653,3 +2653,40 @@ func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
 }
+
+// handleForeignOpen opens ANOTHER BombVault instance's repository READ-ONLY
+// with that instance's APP_KEY and returns an in-memory session id plus the
+// full snapshot inventory (#61). Nothing is persisted — the session (and the
+// foreign key) lives only in memory with a TTL, and the foreign repo is only
+// probed (never initialised). The key is never logged or echoed; errors go
+// through the scrubber (failEnvelope) like every other handler.
+// POST /api/foreign/open  body {location, key}
+func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Location string `json:"location"`
+		Key      string `json:"key"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	session, inv, err := h.svc.OpenForeign(r.Context(), body.Location, body.Key)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"session": session, "inventory": inv}))
+}
+
+// handleForeignClose drops a foreign-repo session immediately (the UI calls it
+// on leave/unmount). Unknown or already-expired ids are a harmless no-op, so
+// this always succeeds. POST /api/foreign/close  body {session}
+func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session string `json:"session"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	h.svc.CloseForeign(body.Session)
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
