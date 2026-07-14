@@ -16,7 +16,7 @@ import (
 // single-flight guard must be released so a later attempt can still run.
 func TestStartBackupAllRefusesBusyDomain(t *testing.T) {
 	svc := &Service{
-		repoMu:         map[string]*sync.Mutex{"containers": {}, "vms": {}, "flash": {}, "config": {}},
+		repoMu:         map[string]*sync.Mutex{"containers": {}, "vms": {}, "flash": {}, "config": {}, "files": {}},
 		domainActivity: map[string]string{},
 	}
 	// Simulate a scheduler/maintenance op holding the containers domain.
