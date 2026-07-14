@@ -130,6 +130,51 @@ func TestSettingsConfigFieldsRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSettingsFilesFieldsRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Defaults from migration: disabled, canonical path, schedule off.
+	if s.FilesEnabled {
+		t.Fatal("default files_enabled must be false")
+	}
+	if s.FilesPath != "user/bombvault/files" {
+		t.Fatalf("default files_path wrong: %q", s.FilesPath)
+	}
+	if s.FilesSchedule != "off" {
+		t.Fatalf("default files_schedule wrong: %q", s.FilesSchedule)
+	}
+	if s.FilesOffsite != "" || s.FilesOffsiteSchedule != "" || s.FilesOffsiteImmutable {
+		t.Fatalf("default files off-site fields must be empty/false: %+v", s)
+	}
+
+	s.FilesEnabled = true
+	s.FilesPath = "user/bombvault/files"
+	s.FilesSchedule = "daily 02:30"
+	s.FilesOffsite = "rclone:remote:bombvault-files"
+	s.FilesOffsiteSchedule = "weekly Sun 03:00"
+	s.FilesOffsiteImmutable = true
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.FilesEnabled || got.FilesPath != "user/bombvault/files" ||
+		got.FilesSchedule != "daily 02:30" || got.FilesOffsite != "rclone:remote:bombvault-files" ||
+		got.FilesOffsiteSchedule != "weekly Sun 03:00" || !got.FilesOffsiteImmutable {
+		t.Fatalf("files fields not round-tripped: %+v", got)
+	}
+}
+
 func TestSettingsFlashZipExportRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
