@@ -812,6 +812,14 @@ const pl: Partial<Translations> = {
   "files.backupAll": "Utwórz kopię wszystkiego teraz",
   "files.discoverHint": "Utracono listę zestawów? Odbuduj ją z kopii zapasowych w magazynie.",
   "files.cancel": "Anuluj",
+  "settings.filesEnabled": "Pliki",
+  "settings.filesPath": "Ścieżka plików",
+  "jobs.filesSection": "Pliki",
+  "jobs.filesIncludeHint": "Tworzy kopię każdego zestawu plików z włączoną opcją „uwzględnij w harmonogramie” — przełączaj zestawy poniżej lub w zakładce Pliki.",
+  "jobs.noFileSetsIncluded": "Nie ma jeszcze zestawów plików — dodaj je w zakładce Pliki.",
+  "dashboard.domainFiles": "Pliki",
+  "recovery.filesFound": "Znaleziono {f} zestawów plików.",
+  "recovery.filesRestoreHint": "Ponownie odkryte zestawy plików nie znają swojego pierwotnego folderu — każdy jest przywracany do wybranego folderu.",
 };
 
 export default pl;

@@ -817,6 +817,14 @@ const fi: Partial<Translations> = {
   "files.backupAll": "Varmuuskopioi kaikki nyt",
   "files.discoverHint": "Katosiko joukkoluettelo? Rakenna se uudelleen tallennustilan varmuuskopioista.",
   "files.cancel": "Peruuta",
+  "settings.filesEnabled": "Tiedostot",
+  "settings.filesPath": "Tiedostojen polku",
+  "jobs.filesSection": "Tiedostot",
+  "jobs.filesIncludeHint": "Varmuuskopioi jokaisen tiedostojoukon, jolla „sisällytä aikatauluun” on käytössä — kytke joukot alla tai Tiedostot-välilehdellä.",
+  "jobs.noFileSetsIncluded": "Ei vielä tiedostojoukkoja — lisää ne Tiedostot-välilehdellä.",
+  "dashboard.domainFiles": "Tiedostot",
+  "recovery.filesFound": "Löytyi {f} tiedostojoukkoa.",
+  "recovery.filesRestoreHint": "Uudelleen löydetyt tiedostojoukot eivät tunne alkuperäistä kansiotaan — kukin palautetaan valitsemaasi kansioon.",
 };
 
 export default fi;

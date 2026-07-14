@@ -809,6 +809,14 @@ const zh: Partial<Translations> = {
   "files.backupAll": "立即备份全部",
   "files.discoverHint": "丢失了文件集列表？从存储中的备份重建它。",
   "files.cancel": "取消",
+  "settings.filesEnabled": "文件",
+  "settings.filesPath": "文件路径",
+  "jobs.filesSection": "文件",
+  "jobs.filesIncludeHint": "备份每个启用了“加入计划任务”的文件集（在下方或“文件”标签页中逐个切换）。",
+  "jobs.noFileSetsIncluded": "还没有文件集 — 请在“文件”标签页中添加。",
+  "dashboard.domainFiles": "文件",
+  "recovery.filesFound": "找到 {f} 个文件集。",
+  "recovery.filesRestoreHint": "重新发现的文件集不包含原始文件夹信息 — 每个文件集都会恢复到您选择的文件夹。",
 };
 
 export default zh;

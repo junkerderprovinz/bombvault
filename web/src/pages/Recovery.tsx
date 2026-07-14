@@ -10,13 +10,17 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import {
   discover,
   discoverVMs,
+  discoverFiles,
   discoverAll,
   getSettings,
   putSettings,
   listContainers,
   listVMs,
+  listFileSets,
+  fileSetSnapshots,
   restore,
   restoreVM,
+  restoreFileSet,
   restoreConfig,
   waitForAppBack,
   getVMSSH,
@@ -24,6 +28,7 @@ import {
   type Settings,
   type Container,
   type VM,
+  type FileSetView,
 } from "../lib/api";
 
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
@@ -95,6 +100,98 @@ function RestoreRow({
   );
 }
 
+// FileSetRecoveryRow — a discovered file set with a target-folder picker and a
+// per-item Restore button. File sets rebuilt from `fileset:` snapshot tags carry
+// NO source path (tags alone don't store it), so an in-place restore is
+// impossible here — the restore always extracts into a folder the user picks
+// (non-destructive, FolderBrowser convention). The newest snapshot is resolved
+// AT CLICK TIME (the files restore endpoint takes a concrete hex id, no
+// "latest" alias) so rendering N rows never spawns N restic processes.
+function FileSetRecoveryRow({
+  set,
+  hostMountRoot,
+  t,
+  otherActive,
+}: {
+  set: FileSetView;
+  hostMountRoot: string;
+  t: ReturnType<typeof useT>["t"];
+  otherActive: boolean;
+}) {
+  const [target, setTarget] = useState("");
+  const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  const snapLabel = set.lastBackup ? new Date(set.lastBackup * 1000).toLocaleString() : "";
+
+  async function handleRestore() {
+    if (target.trim() === "" || state === "busy") return;
+    setState("busy");
+    setError(null);
+    try {
+      // Resolve the newest snapshot of this set now (tag-filtered server-side).
+      const snaps = await fileSetSnapshots(set.id);
+      const list = snaps.ok ? snaps.snapshots ?? [] : [];
+      if (list.length === 0) {
+        setState("fail");
+        setError(snaps.error ?? t("snapshots.none"));
+        return;
+      }
+      const latest = list.reduce((a, b) => (new Date(a.time) > new Date(b.time) ? a : b));
+      const res = await fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "files" && r.target === set.name,
+        start: () => restoreFileSet(set.id, latest.id, true, target.trim()),
+      });
+      if (res.ok) {
+        setState("ok");
+      } else {
+        setState("fail");
+        setError(res.error ?? null);
+      }
+    } catch (err) {
+      setState("fail");
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0">
+      <div className="flex items-center gap-3 text-sm">
+        <span className="text-carbon-text font-medium flex-1 truncate">{set.name}</span>
+        <span className="text-carbon-textMuted text-xs shrink-0">
+          {snapLabel || t("containers.never")}
+        </span>
+      </div>
+      <FolderBrowser
+        label={t("restore.targetPath")}
+        value={target}
+        hostMountRoot={hostMountRoot}
+        onChange={setTarget}
+      />
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={() => void handleRestore()}
+          disabled={state === "busy" || otherActive || target.trim() === ""}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {state === "busy" && (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+          )}
+          {state === "busy" ? t("common.restoring") : t("snapshots.restore")}
+        </button>
+        {state === "ok" && <span className="text-xs text-[#6fdc8c]">✓ {t("common.done")}</span>}
+        {state === "fail" && error && (
+          <span className="text-xs text-[#ff8389] break-words">✗ {error}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Recovery() {
   const { t } = useT();
 
@@ -146,8 +243,8 @@ export default function Recovery() {
     setChecking(true);
     setLastError(null);
     try {
-      const [c, v] = await Promise.all([discover(true), discoverVMs(true)]);
-      const results: DiscoverResult[] = [c, v];
+      const [c, v, f] = await Promise.all([discover(true), discoverVMs(true), discoverFiles(true)]);
+      const results: DiscoverResult[] = [c, v, f];
       const keyErr = results.find((r) => !r.ok && isKeyMismatch(r.error));
       if (keyErr) {
         setReadableState("bad");
@@ -160,7 +257,7 @@ export default function Recovery() {
         setLastError(otherErr.error ?? null);
         return;
       }
-      const total = (c.discovered ?? 0) + (v.discovered ?? 0);
+      const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0);
       // >0 = repo readable with content; 0 = reachable but empty / not attached yet.
       setReadableState(total > 0 ? "ok" : "warn");
     } catch (err) {
@@ -205,6 +302,7 @@ export default function Recovery() {
         // the OLD repo's data; the user must re-Discover against the new repo.
         setContainers([]);
         setVMs([]);
+        setFileSets([]);
         setDiscovered(null);
         setRestoreAllResult(null);
         await checkReadable();
@@ -291,11 +389,12 @@ export default function Recovery() {
   // Step 3 — discover everything. Runs discoverAll(), then re-fetches the target
   // lists (kept for the later review/restore step).
   const [discovering, setDiscovering] = useState(false);
-  const [discovered, setDiscovered] = useState<{ containers: number; vms: number } | null>(null);
+  const [discovered, setDiscovered] = useState<{ containers: number; vms: number; files: number } | null>(null);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
   // Reconstructed target lists — populated by Discover, read by the review step.
   const [containers, setContainers] = useState<Container[]>([]);
   const [vms, setVMs] = useState<VM[]>([]);
+  const [fileSets, setFileSets] = useState<FileSetView[]>([]);
 
   const runDiscover = useCallback(async () => {
     setDiscovering(true);
@@ -312,9 +411,10 @@ export default function Recovery() {
         return;
       }
       // Re-fetch the reconstructed target lists and store them for the restore step.
-      const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
+      const [cs, vs, fs] = await Promise.all([listContainers(), listVMs(), listFileSets()]);
       setContainers(cs.containers ?? []);
       setVMs(vs.vms ?? []);
+      setFileSets(fs.ok ? fs.fileSets ?? [] : []);
       setDiscovered(counts);
     } catch (err) {
       setDiscoverError(err instanceof Error ? err.message : String(err));
@@ -325,7 +425,7 @@ export default function Recovery() {
   }, [t]);
 
   const discoverStepState: StepState = discovered
-    ? discovered.containers + discovered.vms > 0
+    ? discovered.containers + discovered.vms + discovered.files > 0
       ? "ok"
       : "warn"
     : "idle";
@@ -388,7 +488,7 @@ export default function Recovery() {
     }
   }, [restoreAllBusy, containers, vms, t]);
 
-  const anyDiscovered = containers.length > 0 || vms.length > 0;
+  const anyDiscovered = containers.length > 0 || vms.length > 0 || fileSets.length > 0;
   const restoreStepState: StepState = restoreAllResult
     ? restoreAllResult.fail > 0
       ? "warn"
@@ -678,17 +778,20 @@ export default function Recovery() {
             {discovering ? t("containers.discovering") : t("recovery.discover")}
           </button>
 
-          {discovered && discovered.containers + discovered.vms > 0 && (
+          {discovered && discovered.containers + discovered.vms + discovered.files > 0 && (
             <span className="text-sm text-[#6fdc8c]">
               {t("recovery.foundCounts")
                 .replace("{c}", String(discovered.containers))
                 .replace("{v}", String(discovered.vms))}
+              {discovered.files > 0 && (
+                <> {t("recovery.filesFound").replace("{f}", String(discovered.files))}</>
+              )}
             </span>
           )}
         </div>
 
-        {/* 0/0 — nothing found: point back to Step 1/2. */}
-        {discovered && discovered.containers + discovered.vms === 0 && (
+        {/* 0/0/0 — nothing found: point back to Step 1/2. */}
+        {discovered && discovered.containers + discovered.vms + discovered.files === 0 && (
           <p className="text-sm text-[#f1c21b]">{t("recovery.foundNone")}</p>
         )}
         {discoverError && (
@@ -769,6 +872,28 @@ export default function Recovery() {
                     domain="vm"
                     name={v.name}
                     lastBackup={v.lastBackup}
+                    t={t}
+                    otherActive={rowOtherActive}
+                  />
+                ))}
+              </div>
+            )}
+            {/* File sets — restore into a chosen folder ("Restore all" covers
+                containers + VMs only; a rediscovered set has no original path,
+                so each row needs its own target folder). */}
+            {fileSets.length > 0 && (
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                  {t("nav.files")}
+                </span>
+                <p className="text-xs text-carbon-textMuted pb-1">
+                  {t("recovery.filesRestoreHint")}
+                </p>
+                {fileSets.map((s) => (
+                  <FileSetRecoveryRow
+                    key={`files:${s.id}`}
+                    set={s}
+                    hostMountRoot={hostMountRoot}
                     t={t}
                     otherActive={rowOtherActive}
                   />

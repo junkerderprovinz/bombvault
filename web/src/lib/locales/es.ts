@@ -815,6 +815,14 @@ const es: Partial<Translations> = {
   "files.backupAll": "Copiar todo ahora",
   "files.discoverHint": "¿Perdiste la lista de conjuntos? Reconstrúyela desde las copias del almacenamiento.",
   "files.cancel": "Cancelar",
+  "settings.filesEnabled": "Archivos",
+  "settings.filesPath": "Ruta de archivos",
+  "jobs.filesSection": "Archivos",
+  "jobs.filesIncludeHint": "Hace copia de cada conjunto de archivos con «incluir en el calendario» activado — actívalo por conjunto abajo o en la pestaña Archivos.",
+  "jobs.noFileSetsIncluded": "Aún no hay conjuntos de archivos — añádelos en la pestaña Archivos.",
+  "dashboard.domainFiles": "Archivos",
+  "recovery.filesFound": "Se encontraron {f} conjuntos de archivos.",
+  "recovery.filesRestoreHint": "Los conjuntos de archivos redescubiertos no conservan su carpeta original — cada uno se restaura en una carpeta que elijas.",
 };
 
 export default es;

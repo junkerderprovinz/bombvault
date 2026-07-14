@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, recoveryKitUrl, getHealth } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, recoveryKitUrl, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { CadenceBuilder } from "../components/CadenceBuilder";
-import type { Settings, NotifyConfig, RestoreDrill, Container } from "../lib/api";
+import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -683,6 +683,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             ["VM", t("nav.vms")],
             ["flash", t("nav.flash")],
             ["config", t("nav.config")],
+            ["files", t("nav.files")],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className={labelCls}>
@@ -785,7 +786,7 @@ function ReplicateNowButton({
   domain,
   t,
 }: {
-  domain: "containers" | "vms" | "flash";
+  domain: "containers" | "vms" | "flash" | "files";
   t: ReturnType<typeof useT>["t"];
 }) {
   const [st, setSt] = useState<"idle" | "busy" | "ok" | "fail">("idle");
@@ -830,7 +831,7 @@ function TestConnectionButton({
   domain,
   t,
 }: {
-  domain: "containers" | "vms" | "flash";
+  domain: "containers" | "vms" | "flash" | "files";
   t: ReturnType<typeof useT>["t"];
 }) {
   const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
@@ -914,13 +915,14 @@ function IntegrityCard({
   const [tgtState, setTgtState] = useState<SaveState>("idle");
   const [tgtError, setTgtError] = useState<string | null>(null);
 
-  type Domain = "containers" | "vms" | "flash";
+  type Domain = "containers" | "vms" | "flash" | "files";
   type Action = "verify" | "unlock" | "prune";
 
   const domains: { key: Domain; label: string }[] = [
     { key: "containers", label: t("settings.containersEnabled") },
     { key: "vms", label: t("settings.vmsEnabled") },
     { key: "flash", label: t("settings.flashEnabled") },
+    { key: "files", label: t("settings.filesEnabled") },
   ];
 
   // Load the containers once for the DR-drill target picker (includes orphans
@@ -1412,6 +1414,109 @@ function FlashSection({
   );
 }
 
+// Domain section — Files (editable schedule + per-set include list). Mirrors
+// VMsSection for the cadence and ContainersSection for the member list, except
+// the per-set "include in schedule" toggles PATCH each file set directly (the
+// same {enabled} flag the Files tab edits) — they are not part of the SaveBar.
+function FilesSection({
+  settings,
+  fileSets,
+  onChange,
+  onSetsChanged,
+  t,
+}: {
+  settings: Settings;
+  fileSets: FileSetView[];
+  onChange: (schedule: string) => void;
+  /** A toggle PATCHed a set — reload the list so the rows reflect the server. */
+  onSetsChanged: () => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const schedule = settings.filesSchedule;
+  const status = scheduleStatus(schedule);
+  // Per-set toggle busy/error state, keyed by set id.
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle(set: FileSetView) {
+    setBusy((b) => ({ ...b, [set.id]: true }));
+    setError(null);
+    try {
+      const res = await patchFileSet(set.id, { enabled: !set.enabled });
+      if (res.ok) onSetsChanged();
+      else setError(res.error ?? t("settings.error"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy((b) => ({ ...b, [set.id]: false }));
+    }
+  }
+
+  return (
+    <Card title={t("jobs.filesSection")}>
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
+        <ScheduleBadge
+          status={status}
+          label={
+            status === "off"
+              ? t("jobs.notScheduled")
+              : cadenceLabel(schedule, t)
+          }
+        />
+      </div>
+      <div className="rounded-lg bg-carbon-surface2 border border-carbon-border p-4">
+        <CadenceBuilder
+          label={t("jobs.filesSection")}
+          value={schedule}
+          onChange={onChange}
+        />
+        <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.filesIncludeHint")}</p>
+      </div>
+
+      {/* Member list — every file set with its live include-in-schedule toggle. */}
+      {fileSets.length === 0 ? (
+        <p className="text-sm text-carbon-textMuted">{t("jobs.noFileSetsIncluded")}</p>
+      ) : (
+        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+          {fileSets.map((s) => (
+            <div key={s.id} className="flex items-center gap-3 py-2 text-sm">
+              <div
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  s.enabled ? "bg-[#6fdc8c]" : "bg-carbon-surface3"
+                }`}
+              />
+              <span className="font-medium text-carbon-text flex-1 truncate">{s.name}</span>
+              {s.path && (
+                <span className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs">
+                  {s.path}
+                </span>
+              )}
+              <button
+                role="switch"
+                aria-checked={s.enabled}
+                aria-label={`${t("files.enabled")}: ${s.name}`}
+                disabled={!!busy[s.id]}
+                onClick={() => void toggle(s)}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+                  s.enabled ? "bg-accent" : "bg-carbon-surface3"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
+                    s.enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+                  }`}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {error && <p className="text-xs text-[#ff8389] break-words">{error}</p>}
+    </Card>
+  );
+}
+
 // Domain section — Restore checks (scheduled restore-verification drills).
 // The drill schedule sits beside the backup schedules; always visible.
 function RestoreChecksSection({
@@ -1521,7 +1626,7 @@ export function SettingsPage() {
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
   const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
-  const [offsiteWizard, setOffsiteWizard] = useState<"containers" | "vms" | "flash" | null>(null);
+  const [offsiteWizard, setOffsiteWizard] = useState<"containers" | "vms" | "flash" | "files" | null>(null);
 
   const [domSaveState, setDomSaveState] = useState<SaveState>("idle");
   const [domSaveError, setDomSaveError] = useState<string | null>(null);
@@ -1545,6 +1650,8 @@ export function SettingsPage() {
   // feeds the Containers schedule section's included-members list; syncSchedules
   // applies the Containers cadence to VMs + Flash; schedSave* drives its SaveBar.
   const [containers, setContainers] = useState<Container[]>([]);
+  // File sets feed the Files schedule section's member list (live enabled toggles).
+  const [fileSets, setFileSets] = useState<FileSetView[]>([]);
   const [syncSchedules, setSyncSchedules] = useState(false);
   const [schedSaveState, setSchedSaveState] = useState<SaveState>("idle");
   const [schedSaveError, setSchedSaveError] = useState<string | null>(null);
@@ -1593,7 +1700,22 @@ export function SettingsPage() {
       .catch(() => {
         // Non-fatal: the Containers schedule section shows an empty member list.
       });
+
+    // Load the file sets for the Schedules tab's Files section. Non-fatal too.
+    loadFileSets();
   }, []);
+
+  // loadFileSets (re)fetches the file-set list — on mount and after a Files
+  // section toggle PATCHes a set, so the member rows track the server state.
+  function loadFileSets() {
+    listFileSets()
+      .then((r) => {
+        if (r.ok) setFileSets(r.fileSets ?? []);
+      })
+      .catch(() => {
+        // Non-fatal: the Files schedule section shows an empty member list.
+      });
+  }
 
   // Deep-link support: /settings#offsite (and every other tab hash) selects the
   // matching tab instead of scrolling. Read once on mount, and also listen for
@@ -1697,16 +1819,19 @@ export function SettingsPage() {
       patch.vmsSchedule = settings.vmsSchedule;
       patch.flashSchedule = settings.flashSchedule;
     }
+    // Files cadence — independent of the sync checkbox (it covers VMs + Flash).
+    patch.filesSchedule = settings.filesSchedule;
     // Restore-check (drill) schedule.
     patch.drillsEnabled = settings.drillsEnabled;
     patch.offsiteDrillsEnabled = settings.offsiteDrillsEnabled;
     patch.drillsSchedule = settings.drillsSchedule;
     patch.drillsSubsetPct = settings.drillsSubsetPct;
-    // Off-site replication cadences (+ config) — sole owner is now this tab.
+    // Off-site replication cadences (+ config + files) — sole owner is this tab.
     patch.containersOffsiteSchedule = settings.containersOffsiteSchedule;
     patch.vmsOffsiteSchedule = settings.vmsOffsiteSchedule;
     patch.flashOffsiteSchedule = settings.flashOffsiteSchedule;
     patch.configOffsiteSchedule = settings.configOffsiteSchedule;
+    patch.filesOffsiteSchedule = settings.filesOffsiteSchedule;
     // Self-backup cadence + scheduled off-site tamper test.
     patch.configSchedule = settings.configSchedule;
     patch.tamperTestSchedule = settings.tamperTestSchedule;
@@ -1864,15 +1989,26 @@ export function SettingsPage() {
             }
             t={t}
           />
+          <FilesSection
+            settings={settings}
+            fileSets={fileSets}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, filesSchedule: v } : prev))
+            }
+            onSetsChanged={loadFileSets}
+            t={t}
+          />
 
           {/* Off-site replication schedules (schedulesOffsite): one cadence per
-              domain (+ config). Editors here are the sole owner of these fields. */}
+              domain (+ config + files). Editors here are the sole owner of these
+              fields. */}
           <Card title={t("settings.schedulesOffsite")}>
             {([
               ["containersOffsiteSchedule", "nav.containers"],
               ["vmsOffsiteSchedule", "nav.vms"],
               ["flashOffsiteSchedule", "nav.flash"],
               ["configOffsiteSchedule", "nav.config"],
+              ["filesOffsiteSchedule", "nav.files"],
             ] as const).map(([key, label]) => (
               <div key={key} className="flex flex-col gap-1">
                 <span className="text-xs text-carbon-textSub">{t(label)}</span>
@@ -1973,6 +2109,14 @@ export function SettingsPage() {
           }
         />
         <ToggleRow
+          label={t("settings.filesEnabled")}
+          description="Back up arbitrary folders under your mounts (file sets)"
+          checked={settings.filesEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, filesEnabled: v } : prev)
+          }
+        />
+        <ToggleRow
           label={t("settings.configEnabled")}
           description="BombVault's own settings, targets and credentials (self-backup)"
           checked={settings.configEnabled}
@@ -1989,6 +2133,7 @@ export function SettingsPage() {
                 containersEnabled: settings.containersEnabled,
                 vmsEnabled: settings.vmsEnabled,
                 flashEnabled: settings.flashEnabled,
+                filesEnabled: settings.filesEnabled,
                 configEnabled: settings.configEnabled,
               },
               setDomSaveState,
@@ -2034,6 +2179,14 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, flashPath: v } : prev)
           }
         />
+        <FolderBrowser
+          label={t("settings.filesPath")}
+          value={settings.filesPath}
+          hostMountRoot={hostMountRoot}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, filesPath: v } : prev)
+          }
+        />
         <div className="flex flex-col gap-1">
           <FolderBrowser
             label={t("settings.restoreFolder")}
@@ -2054,6 +2207,7 @@ export function SettingsPage() {
                 containersPath: settings.containersPath,
                 vmsPath: settings.vmsPath,
                 flashPath: settings.flashPath,
+                filesPath: settings.filesPath,
                 restoreFolder: settings.restoreFolder,
               },
               setPathSaveState,
@@ -2251,6 +2405,7 @@ export function SettingsPage() {
           ["containersOffsite", "nav.containers", "containers"],
           ["vmsOffsite", "nav.vms", "vms"],
           ["flashOffsite", "nav.flash", "flash"],
+          ["filesOffsite", "nav.files", "files"],
         ] as const).map(([repoKey, label, domain]) => {
           const wizardOpen = offsiteWizard === domain;
           return (
@@ -2306,6 +2461,7 @@ export function SettingsPage() {
                 containersOffsite: settings.containersOffsite,
                 vmsOffsite: settings.vmsOffsite,
                 flashOffsite: settings.flashOffsite,
+                filesOffsite: settings.filesOffsite,
               },
               setOffsiteSaveState,
               setOffsiteSaveError

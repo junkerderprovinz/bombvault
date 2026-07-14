@@ -820,6 +820,14 @@ const th: Partial<Translations> = {
   "files.backupAll": "สำรองข้อมูลทั้งหมดเดี๋ยวนี้",
   "files.discoverHint": "รายการชุดหายไป? สร้างมันใหม่จากการสำรองข้อมูลในที่จัดเก็บ",
   "files.cancel": "ยกเลิก",
+  "settings.filesEnabled": "ไฟล์",
+  "settings.filesPath": "พาธไฟล์",
+  "jobs.filesSection": "ไฟล์",
+  "jobs.filesIncludeHint": "สำรองข้อมูลทุกชุดไฟล์ที่เปิด «รวมในตารางเวลา» ไว้ — สลับแต่ละชุดด้านล่างหรือในแท็บไฟล์",
+  "jobs.noFileSetsIncluded": "ยังไม่มีชุดไฟล์ — เพิ่มได้ในแท็บไฟล์",
+  "dashboard.domainFiles": "ไฟล์",
+  "recovery.filesFound": "พบ {f} ชุดไฟล์",
+  "recovery.filesRestoreHint": "ชุดไฟล์ที่ค้นพบใหม่ไม่ทราบโฟลเดอร์ต้นทางเดิม — แต่ละชุดจะถูกกู้คืนไปยังโฟลเดอร์ที่คุณเลือก",
 };
 
 export default th;

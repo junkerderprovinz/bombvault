@@ -812,6 +812,14 @@ const ru: Partial<Translations> = {
   "files.backupAll": "Создать резервную копию всего сейчас",
   "files.discoverHint": "Потеряли список наборов? Пересоберите его из резервных копий в хранилище.",
   "files.cancel": "Отмена",
+  "settings.filesEnabled": "Файлы",
+  "settings.filesPath": "Путь к файлам",
+  "jobs.filesSection": "Файлы",
+  "jobs.filesIncludeHint": "Создаёт копию каждого набора файлов с включённым «Включить в расписание» — переключайте наборы ниже или на вкладке «Файлы».",
+  "jobs.noFileSetsIncluded": "Наборов файлов пока нет — добавьте их на вкладке «Файлы».",
+  "dashboard.domainFiles": "Файлы",
+  "recovery.filesFound": "Найдено {f} наборов файлов.",
+  "recovery.filesRestoreHint": "Повторно обнаруженные наборы файлов не знают свою исходную папку — каждый восстанавливается в выбранную вами папку.",
 };
 
 export default ru;

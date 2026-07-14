@@ -817,6 +817,14 @@ const sv: Partial<Translations> = {
   "files.backupAll": "Säkerhetskopiera allt nu",
   "files.discoverHint": "Förlorat listan med uppsättningar? Bygg om den från säkerhetskopiorna i lagringen.",
   "files.cancel": "Avbryt",
+  "settings.filesEnabled": "Filer",
+  "settings.filesPath": "Filer-sökväg",
+  "jobs.filesSection": "Filer",
+  "jobs.filesIncludeHint": "Säkerhetskopierar varje filuppsättning med ”inkludera i schema” aktiverat — växla per uppsättning nedan eller på Filer-fliken.",
+  "jobs.noFileSetsIncluded": "Inga filuppsättningar ännu — lägg till dem på Filer-fliken.",
+  "dashboard.domainFiles": "Filer",
+  "recovery.filesFound": "Hittade {f} filuppsättningar.",
+  "recovery.filesRestoreHint": "Återupptäckta filuppsättningar känner inte till sin ursprungliga mapp — varje uppsättning återställs till en mapp du väljer.",
 };
 
 export default sv;
