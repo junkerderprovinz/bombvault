@@ -89,10 +89,12 @@ export interface Settings {
   vmsEnabled: boolean;
   flashEnabled: boolean;
   configEnabled: boolean;
+  filesEnabled: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
   configPath: string;
+  filesPath: string;
   restoreFolder: string;
   // Flash zip export (#28): after each flash backup, also write the snapshot out
   // as a plain .zip to this folder for off-server sync. Keep=0 → a single
@@ -105,14 +107,17 @@ export interface Settings {
   vmsOffsite: string;
   flashOffsite: string;
   configOffsite: string;
+  filesOffsite: string;
   containersOffsiteSchedule: string;
   vmsOffsiteSchedule: string;
   flashOffsiteSchedule: string;
   configOffsiteSchedule: string;
+  filesOffsiteSchedule: string;
   containersSchedule: string;
   vmsSchedule: string;
   flashSchedule: string;
   configSchedule: string;
+  filesSchedule: string;
   defaultLanguage: string;
   retentionKeepLast: number;
   retentionKeepDaily: number;
@@ -142,6 +147,7 @@ export interface Settings {
   vmsOffsiteImmutable: boolean;
   flashOffsiteImmutable: boolean;
   configOffsiteImmutable: boolean;
+  filesOffsiteImmutable: boolean;
   /** Off-site growth budget in GB (0 = alarm off). */
   offsiteGrowthBudgetGB: number;
   /** Cadence for the scheduled off-site tamper test (default "weekly Sun 04:30"). */
@@ -173,8 +179,8 @@ export interface Run {
   snapshotId: string;
   bytes: number;
   error: string;
-  target: string; // human target name (container/VM name, or "Unraid flash")
-  domain: string; // "container" | "vm" | "flash" | ""
+  target: string; // human target name (container/VM/file-set name, or "Unraid flash")
+  domain: string; // "container" | "vm" | "flash" | "files" | ""
 }
 
 export interface ListRunsResponse {
@@ -256,6 +262,7 @@ export interface HistoryDay {
   vms: DayStat;
   flash: DayStat;
   config: DayStat;
+  files: DayStat;
 }
 
 export interface HistoryResponse {
@@ -1007,7 +1014,7 @@ export function tamperTest(
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
 export function deleteSnapshot(
-  domain: "containers" | "vms" | "flash" | "config",
+  domain: "containers" | "vms" | "flash" | "config" | "files",
   id: string,
   source?: string
 ): Promise<OkEnvelope> {
@@ -1249,6 +1256,129 @@ export function restoreConfig(
     method: "POST",
     body: JSON.stringify({ snapshot, source }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Files API (file-set backup domain, #62) — matches FileSetView in
+// internal/api/service.go exactly
+// ---------------------------------------------------------------------------
+
+/** A file-set row from GET /api/files. */
+export interface FileSetView {
+  id: string;
+  name: string;
+  /** Relative subpath under the host mount root (FolderBrowser convention).
+   *  "" for a set rebuilt by Discover from tags alone (no path known). */
+  path: string;
+  /** restic --exclude patterns for this set's backup, one per line. */
+  excludes: string[];
+  /** Included in scheduled backups + "back up all". */
+  enabled: boolean;
+  /** Unix seconds of the last successful backup; 0 = never. */
+  lastBackup: number;
+  /** Whether the resolved source path currently exists on disk. */
+  pathExists: boolean;
+}
+
+export interface ListFileSetsResponse {
+  ok: boolean;
+  fileSets: FileSetView[];
+  error?: string;
+}
+
+/** GET /api/files — list all configured file sets. */
+export function listFileSets(): Promise<ListFileSetsResponse> {
+  return fetchJSON("/api/files");
+}
+
+/** POST /api/files/sets — create a file set (path required; validated server-side). */
+export function createFileSet(set: {
+  name: string;
+  path: string;
+  excludes: string[];
+  enabled?: boolean;
+}): Promise<OkEnvelope & { id?: string }> {
+  return fetchJSON("/api/files/sets", {
+    method: "POST",
+    body: JSON.stringify(set),
+  });
+}
+
+/** PATCH /api/files/sets/{id} — partial update; omitted fields keep their value. */
+export function patchFileSet(
+  id: string,
+  patch: { name?: string; path?: string; excludes?: string[]; enabled?: boolean }
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** DELETE /api/files/sets/{id} — remove the set entry (+ run history); its
+ *  backups stay in the repo and can be resurfaced via discoverFiles. */
+export function deleteFileSet(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+/** DELETE /api/files/sets/{id}/backups — delete ALL backups of a file set
+ *  (every fileset-tagged snapshot, pruned) and forget the set. */
+export function deleteFileSetBackups(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backups`, {
+    method: "DELETE",
+  });
+}
+
+/** POST /api/files/sets/{id}/backup — start a single file-set backup.
+ *  ASYNC — see backupNow; watch "files:<name>" over SSE + the recorded run. */
+export function backupFileSet(id: string): Promise<BackupResponse> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backup`, {
+    method: "POST",
+  });
+}
+
+/** POST /api/files/backup-all — SERVER-SIDE batch backup of the given file sets
+ *  (see backupAll; watch "batch:files" + per-set keys over SSE). */
+export function backupFilesAll(ids: string[]): Promise<OkEnvelope & { started?: number }> {
+  return fetchJSON("/api/files/backup-all", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  });
+}
+
+/** GET /api/files/sets/{id}/snapshots — list one file set's snapshots (tag-filtered). */
+export function fileSetSnapshots(id: string, source?: string): Promise<ListSnapshotsResponse> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/snapshots${srcParam(source)}`);
+}
+
+/**
+ * POST /api/files/sets/{id}/restore — restore a file-set snapshot. An EMPTY
+ * targetPath restores IN PLACE over the set's source folder (requires confirm;
+ * refused for path-less discovered sets); a non-empty targetPath extracts the
+ * snapshot into that folder under the host mount (non-destructive, FolderBrowser
+ * convention). ASYNC (see restore): the ack carries the resolved target; watch
+ * the "files:<name>" SSE key + the recorded run (kind "restore") for the outcome.
+ */
+export function restoreFileSet(
+  id: string,
+  snapshotId: string,
+  confirm: boolean,
+  targetPath = "",
+  source?: string
+): Promise<OkEnvelope & { started?: boolean; target?: string }> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, targetPath, confirm }),
+  });
+}
+
+/** Rebuild the file-set list from the fileset: tags in backup storage. `probe` =
+ *  read-only readiness check (see discover, #44). Discovered sets arrive DISABLED
+ *  with an empty path (tags alone don't carry it) — set a folder before backing up. */
+export function discoverFiles(probe = false): Promise<OkEnvelope & { discovered?: number }> {
+  return fetchJSON(`/api/files/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
 // ---------------------------------------------------------------------------

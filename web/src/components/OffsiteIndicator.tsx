@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useProgress } from "../lib/progress";
 import { useT } from "../lib/i18n";
 
-type Domain = "containers" | "vms" | "flash";
+type Domain = "containers" | "vms" | "flash" | "files";
 
 // A flash/containers replication can finish in well under a second (small repo,
 // already seeded), and the shared progress store only lingers ~0.8s. Latch the
@@ -36,7 +36,7 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
   }, [active]);
 
   if (!visible) return null;
-  const navKey = { containers: "nav.containers", vms: "nav.vms", flash: "nav.flash" } as const;
+  const navKey = { containers: "nav.containers", vms: "nav.vms", flash: "nav.flash", files: "nav.files" } as const;
   const label = withLabel ? `${t(navKey[domain])} · ` : "";
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-carbon-textSub">

@@ -108,6 +108,17 @@ function IconFlash() {
   );
 }
 
+// Folder glyph for the Files (file-set backup) tab — stroked to match the
+// sibling VM/Config/Recovery icons.
+function IconFiles() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
+      <path d="M2.75 5.5A1.75 1.75 0 0 1 4.5 3.75h3.3c.47 0 .92.19 1.25.52l1.06 1.06c.14.14.33.22.53.22h4.86c.97 0 1.75.78 1.75 1.75v7.2a1.75 1.75 0 0 1-1.75 1.75h-11a1.75 1.75 0 0 1-1.75-1.75V5.5Z" strokeLinejoin="round" />
+      <path d="M2.75 8.25h14.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // Sliders/tuner glyph for the Config self-backup tab — settings-like, but
 // deliberately distinct from the Settings cog below so the two never read alike.
 function IconConfig() {
@@ -317,6 +328,7 @@ export function Sidebar({ settings }: SidebarProps) {
   const vmsEnabled = settings?.vmsEnabled ?? false;
   const flashEnabled = settings?.flashEnabled ?? false;
   const configEnabled = settings?.configEnabled ?? false;
+  const filesEnabled = settings?.filesEnabled ?? false;
 
   // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
   // then reappears. A short click still navigates to the Dashboard; once the
@@ -480,12 +492,15 @@ export function Sidebar({ settings }: SidebarProps) {
           label={t("nav.containers")}
           icon={<IconContainers />}
         />
-        {/* VMs / Flash tabs appear only once their domain is enabled. */}
+        {/* VMs / Flash / Files tabs appear only once their domain is enabled. */}
         {vmsEnabled && (
           <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} />
         )}
         {flashEnabled && (
           <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} />
+        )}
+        {filesEnabled && (
+          <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} />
         )}
         {/* Config self-backup tab appears only once its domain is enabled. */}
         {configEnabled && (
