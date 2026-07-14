@@ -478,6 +478,48 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
 		version: 57, name: "settings_prune_image_after_update",
 		sql: "ALTER TABLE settings ADD COLUMN prune_image_after_update INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// The `files` domain (#62): BombVault backs up arbitrary host folders as
+		// named file sets. Mirrors the config domain's settings columns (v44–v49).
+		// One ALTER per column (SQLite ADD COLUMN is single-column).
+		version: 58, name: "settings_files_enabled",
+		sql: "ALTER TABLE settings ADD COLUMN files_enabled INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		version: 59, name: "settings_files_path",
+		sql: "ALTER TABLE settings ADD COLUMN files_path TEXT NOT NULL DEFAULT 'user/bombvault/files';",
+	},
+	{
+		version: 60, name: "settings_files_schedule",
+		sql: "ALTER TABLE settings ADD COLUMN files_schedule TEXT NOT NULL DEFAULT 'off';",
+	},
+	{
+		version: 61, name: "settings_files_offsite",
+		sql: "ALTER TABLE settings ADD COLUMN files_offsite TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 62, name: "settings_files_offsite_schedule",
+		sql: "ALTER TABLE settings ADD COLUMN files_offsite_schedule TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		version: 63, name: "settings_files_offsite_immutable",
+		sql: "ALTER TABLE settings ADD COLUMN files_offsite_immutable INTEGER NOT NULL DEFAULT 0;",
+	},
+	{
+		// The files domain's item table (#62): one row per named file set (a host
+		// folder + optional restic --exclude patterns). `name` is the user-visible
+		// label and the restic tag key (fileset:<Name>); `id` is stable so renames
+		// never orphan run history (runs.target_id = file_sets.id).
+		version: 64, name: "file_sets",
+		sql: `CREATE TABLE file_sets (
+  id         TEXT    PRIMARY KEY,
+  name       TEXT    NOT NULL UNIQUE,
+  path       TEXT    NOT NULL,
+  excludes   TEXT    NOT NULL DEFAULT '[]',
+  enabled    INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

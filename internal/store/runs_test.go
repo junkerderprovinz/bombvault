@@ -222,6 +222,61 @@ func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 	}
 }
 
+// TestLastSuccessfulFilesBackupAndCounts verifies the files domain helpers: a
+// run recorded against a file_sets.id satisfies the files everyN due-gate, is
+// attributed to the "files" bucket by RunCounts, and does NOT satisfy the
+// containers gate (scoping mirrors TestLastSuccessfulBackupDomainScoped).
+func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	fs, err := r.CreateFileSet(store.FileSet{Name: "docs", Path: "user/documents", Enabled: true})
+	if err != nil {
+		t.Fatalf("CreateFileSet: %v", err)
+	}
+	// Before any run the gate must report zero.
+	ts, err := r.LastSuccessfulFilesBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ts.IsZero() {
+		t.Fatalf("expected zero time before any files backup, got %v", ts)
+	}
+
+	id, err := r.StartRun(fs.ID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if err := r.FinishRun(id, "success", "snap1", 100, ""); err != nil {
+		t.Fatal(err)
+	}
+	ts, err = r.LastSuccessfulFilesBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts.IsZero() {
+		t.Fatal("expected a last-success time for files")
+	}
+	counts, err := r.RunCounts()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts["files"]["success"] != 1 {
+		t.Fatalf("expected 1 files success, got %v", counts["files"])
+	}
+	// A file-set backup must NOT satisfy the containers gate.
+	cLast, err := r.LastSuccessfulContainerBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cLast.IsZero() {
+		t.Fatalf("LastSuccessfulContainerBackup should be zero (a files backup must not satisfy the containers gate), got %v", cLast)
+	}
+}
+
 // TestLastSuccessfulConfigBackupAndCounts verifies the config self-backup domain
 // helpers: a run tagged with the reserved ConfigTargetID satisfies the config
 // everyN due-gate and is attributed to the "config" domain by RunCounts.

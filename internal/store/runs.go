@@ -145,6 +145,20 @@ func (r *Repo) LastSuccessfulVMBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulVMBackup")
 }
 
+// LastSuccessfulFilesBackup is the files-domain counterpart of
+// LastSuccessfulContainerBackup, scoped to file-set targets (target_id in the
+// `file_sets` table). Drives the files domain everyN due-gate.
+func (r *Repo) LastSuccessfulFilesBackup() (time.Time, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
+		  AND target_id IN (SELECT id FROM file_sets)
+		ORDER BY finished_at DESC
+		LIMIT 1`)
+	return scanLastBackupTime(row, "LastSuccessfulFilesBackup")
+}
+
 // FlashTargetID is the reserved runs.target_id for the singleton flash domain
 // (the Unraid USB). Flash has no per-item table, so its runs are tagged with
 // this fixed id — distinct from the hex/UUID ids of container and VM targets,
@@ -245,14 +259,14 @@ func (r *Repo) RunsSince(since int64) ([]Run, error) {
 }
 
 // RunCounts returns the total number of backup runs per domain ("containers" |
-// "vms" | "flash" | "config") and status ("success" | "failed"), keyed
+// "vms" | "flash" | "config" | "files") and status ("success" | "failed"), keyed
 // [domain][status]. Domain is attributed the same way as the last-successful
-// helpers: container targets live in `targets`, VM targets in `vms`, and the
-// singleton flash and config domains use the reserved FlashTargetID and
-// ConfigTargetID. Only finished backup runs (success/failed) are counted;
-// "running" runs are skipped. A domain/status with no runs is absent from the
-// map (the caller defaults it to 0). Drives the Prometheus
-// `bombvault_runs_total` counter.
+// helpers: container targets live in `targets`, VM targets in `vms`, file-set
+// targets in `file_sets`, and the singleton flash and config domains use the
+// reserved FlashTargetID and ConfigTargetID. Only finished backup runs
+// (success/failed) are counted; "running" runs are skipped. A domain/status
+// with no runs is absent from the map (the caller defaults it to 0). Drives
+// the Prometheus `bombvault_runs_total` counter.
 func (r *Repo) RunCounts() (map[string]map[string]int, error) {
 	rows, err := r.db.Query(`
 		SELECT
@@ -260,6 +274,7 @@ func (r *Repo) RunCounts() (map[string]map[string]int, error) {
 		    WHEN target_id = ?                              THEN 'config'
 		    WHEN target_id = ?                              THEN 'flash'
 		    WHEN target_id IN (SELECT id FROM vms)          THEN 'vms'
+		    WHEN target_id IN (SELECT id FROM file_sets)    THEN 'files'
 		    WHEN target_id IN (SELECT id FROM targets)      THEN 'containers'
 		    ELSE ''
 		  END AS domain,

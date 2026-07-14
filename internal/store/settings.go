@@ -13,10 +13,12 @@ type Settings struct {
 	VMsEnabled        bool
 	FlashEnabled      bool
 	ConfigEnabled     bool
+	FilesEnabled      bool
 	ContainersPath    string
 	VMsPath           string
 	FlashPath         string
 	ConfigPath        string
+	FilesPath         string
 	// RestoreFolder is the default folder for "restore to a folder": a relative
 	// subpath under the host mount that pre-fills the restore-to-folder picker
 	// (same style as the backup-path settings).
@@ -28,6 +30,7 @@ type Settings struct {
 	VMsOffsite        string
 	FlashOffsite      string
 	ConfigOffsite     string
+	FilesOffsite      string
 	// Optional off-site replication schedule per domain (same cadence grammar as
 	// the backup schedules). Empty = replicate after every local backup; set =
 	// replicate ONLY on this cadence (decoupled from the backup schedule).
@@ -35,10 +38,12 @@ type Settings struct {
 	VMsOffsiteSchedule        string
 	FlashOffsiteSchedule      string
 	ConfigOffsiteSchedule     string
+	FilesOffsiteSchedule      string
 	ContainersSchedule        string
 	VMsSchedule               string
 	FlashSchedule             string
 	ConfigSchedule            string
+	FilesSchedule             string
 	// Scheduled flash ZIP export: after a successful flash backup, write the
 	// snapshot out as a plain .zip to FlashZipExportPath (a relative subpath under
 	// the host mount root) for off-server sync. Disabled by default. Keep = how
@@ -112,6 +117,7 @@ type Settings struct {
 	VMsOffsiteImmutable        bool
 	FlashOffsiteImmutable      bool
 	ConfigOffsiteImmutable     bool
+	FilesOffsiteImmutable      bool
 	// OffsiteGrowthBudgetGB caps how large an (only-growing) append-only off-site
 	// repo may get before a notification fires — detection, not prevention.
 	// 0 = budget alarm off (the default).
@@ -132,11 +138,11 @@ type Settings struct {
 // GetSettings returns the current app settings.
 func (r *Repo) GetSettings() (Settings, error) {
 	row := r.db.QueryRow(`
-		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled, config_enabled,
-		       containers_path, vms_path, flash_path, config_path, restore_folder,
-		       containers_offsite, vms_offsite, flash_offsite, config_offsite,
-		       containers_offsite_schedule, vms_offsite_schedule, flash_offsite_schedule, config_offsite_schedule,
-		       containers_schedule, vms_schedule, flash_schedule, config_schedule,
+		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled, config_enabled, files_enabled,
+		       containers_path, vms_path, flash_path, config_path, files_path, restore_folder,
+		       containers_offsite, vms_offsite, flash_offsite, config_offsite, files_offsite,
+		       containers_offsite_schedule, vms_offsite_schedule, flash_offsite_schedule, config_offsite_schedule, files_offsite_schedule,
+		       containers_schedule, vms_schedule, flash_schedule, config_schedule, files_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
@@ -145,22 +151,22 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       metrics_enabled, metrics_token,
 		       drills_enabled, drills_schedule, drills_subset_pct, offsite_drills_enabled,
 		       recovery_kit_ack,
-		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable,
+		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable, files_offsite_immutable,
 		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
 		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
 		       prune_image_after_update
 		FROM settings WHERE id = 1`)
 
 	var s Settings
-	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
-	var contImmutable, vmsImmutable, flashImmutable, configImmutable int
+	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
+	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate int
 	err := row.Scan(
-		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled,
-		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.RestoreFolder,
-		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite, &s.ConfigOffsite,
-		&s.ContainersOffsiteSchedule, &s.VMsOffsiteSchedule, &s.FlashOffsiteSchedule, &s.ConfigOffsiteSchedule,
-		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule, &s.ConfigSchedule,
+		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
+		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
+		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite, &s.ConfigOffsite, &s.FilesOffsite,
+		&s.ContainersOffsiteSchedule, &s.VMsOffsiteSchedule, &s.FlashOffsiteSchedule, &s.ConfigOffsiteSchedule, &s.FilesOffsiteSchedule,
+		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule, &s.ConfigSchedule, &s.FilesSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
 		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
@@ -169,7 +175,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&metricsEnabled, &s.MetricsToken,
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct, &offsiteDrillsEnabled,
 		&recoveryKitAck,
-		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable,
+		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable, &filesImmutable,
 		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
 		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
 		&pruneImageAfterUpdate,
@@ -185,6 +191,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.VMsEnabled = vmsEnabled != 0
 	s.FlashEnabled = flashEnabled != 0
 	s.ConfigEnabled = configEnabled != 0
+	s.FilesEnabled = filesEnabled != 0
 	s.MetricsEnabled = metricsEnabled != 0
 	s.DrillsEnabled = drillsEnabled != 0
 	s.OffsiteDrillsEnabled = offsiteDrillsEnabled != 0
@@ -193,6 +200,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.VMsOffsiteImmutable = vmsImmutable != 0
 	s.FlashOffsiteImmutable = flashImmutable != 0
 	s.ConfigOffsiteImmutable = configImmutable != 0
+	s.FilesOffsiteImmutable = filesImmutable != 0
 	s.FlashZipExportEnabled = flashZipExportEnabled != 0
 	s.PruneImageAfterUpdate = pruneImageAfterUpdate != 0
 	return s, nil
@@ -207,23 +215,28 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  vms_enabled         = ?,
 		  flash_enabled       = ?,
 		  config_enabled      = ?,
+		  files_enabled       = ?,
 		  containers_path     = ?,
 		  vms_path            = ?,
 		  flash_path          = ?,
 		  config_path         = ?,
+		  files_path          = ?,
 		  restore_folder      = ?,
 		  containers_offsite  = ?,
 		  vms_offsite         = ?,
 		  flash_offsite       = ?,
 		  config_offsite      = ?,
+		  files_offsite       = ?,
 		  containers_offsite_schedule = ?,
 		  vms_offsite_schedule        = ?,
 		  flash_offsite_schedule      = ?,
 		  config_offsite_schedule     = ?,
+		  files_offsite_schedule      = ?,
 		  containers_schedule = ?,
 		  vms_schedule        = ?,
 		  flash_schedule      = ?,
 		  config_schedule     = ?,
+		  files_schedule      = ?,
 		  default_language    = ?,
 		  auth_password_hash  = ?,
 		  retention_keep_last    = ?,
@@ -250,6 +263,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  vms_offsite_immutable        = ?,
 		  flash_offsite_immutable      = ?,
 		  config_offsite_immutable     = ?,
+		  files_offsite_immutable      = ?,
 		  offsite_growth_budget_gb     = ?,
 		  tamper_test_schedule         = ?,
 		  dr_drill_target              = ?,
@@ -263,10 +277,11 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.VMsEnabled),
 		boolInt(s.FlashEnabled),
 		boolInt(s.ConfigEnabled),
-		s.ContainersPath, s.VMsPath, s.FlashPath, s.ConfigPath, s.RestoreFolder,
-		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite, s.ConfigOffsite,
-		s.ContainersOffsiteSchedule, s.VMsOffsiteSchedule, s.FlashOffsiteSchedule, s.ConfigOffsiteSchedule,
-		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule, s.ConfigSchedule,
+		boolInt(s.FilesEnabled),
+		s.ContainersPath, s.VMsPath, s.FlashPath, s.ConfigPath, s.FilesPath, s.RestoreFolder,
+		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite, s.ConfigOffsite, s.FilesOffsite,
+		s.ContainersOffsiteSchedule, s.VMsOffsiteSchedule, s.FlashOffsiteSchedule, s.ConfigOffsiteSchedule, s.FilesOffsiteSchedule,
+		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule, s.ConfigSchedule, s.FilesSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
 		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
@@ -275,7 +290,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.MetricsEnabled), s.MetricsToken,
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct, boolInt(s.OffsiteDrillsEnabled),
 		boolInt(s.RecoveryKitAck),
-		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable),
+		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable), boolInt(s.FilesOffsiteImmutable),
 		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,
 		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
 		boolInt(s.PruneImageAfterUpdate),
