@@ -246,6 +246,104 @@ func TestBackupFlashReplicatesOffsite(t *testing.T) {
 	})
 }
 
+// TestBackupFileSet pins the files-domain backup path (#62): backing up a file
+// set drives engine.Backup against the files repo with the set's resolved
+// source dir, the fileset:<Name> tag (the ONLY snapshot↔set link — files has
+// no defs dir), and the set's excludes passed through verbatim — and records a
+// successful run against the set's stable id (runs.target_id = file_sets.id).
+func TestBackupFileSet(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	srcDir := root + "/data/docs"
+	if err := os.MkdirAll(srcDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Excludes: []string{"*.tmp", "cache/**"}, Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	sum, err := svc.BackupFileSet(context.Background(), set.ID)
+	if err != nil {
+		t.Fatalf("BackupFileSet: %v", err)
+	}
+	if sum.SnapshotID != "deadbeef12345678" {
+		t.Fatalf("snapshot id: %q", sum.SnapshotID)
+	}
+	if len(eng.backedUp) != 1 || eng.backedUp[0] != root+"/backups/files" {
+		t.Fatalf("expected one backup into the files repo, got %v", eng.backedUp)
+	}
+	if len(eng.lastPaths) != 1 || eng.lastPaths[0] != srcDir {
+		t.Fatalf("expected the set's resolved source dir, got %v", eng.lastPaths)
+	}
+	if len(eng.lastTags) != 1 || eng.lastTags[0] != "fileset:docs" {
+		t.Fatalf("expected tag fileset:docs, got %v", eng.lastTags)
+	}
+	if len(eng.lastExcludes) != 2 || eng.lastExcludes[0] != "*.tmp" || eng.lastExcludes[1] != "cache/**" {
+		t.Fatalf("expected the set's excludes passed through, got %v", eng.lastExcludes)
+	}
+	run, err := st.LastRunForTarget(set.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run == nil || run.Status != "success" {
+		t.Fatalf("expected a successful run recorded against the set id, got %+v", run)
+	}
+}
+
+// TestBackupFileSetMissingSourceRecordsFailedRun pins the pre-flight guard: a
+// file set whose source folder does not exist under the host mount fails with
+// a clear "source path not found" error BEFORE any restic call — and records a
+// failed run against the set's id so a scheduled backup of a vanished folder
+// surfaces in Run History instead of failing invisibly.
+func TestBackupFileSetMissingSourceRecordsFailedRun(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "gone", Path: "data/vanished", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	_, err = svc.BackupFileSet(context.Background(), set.ID)
+	if err == nil {
+		t.Fatal("expected an error for a missing source path")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("error should say the source path was not found, got %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("no restic backup may run for a missing source, got %v", eng.backedUp)
+	}
+	if len(eng.inited) != 0 {
+		t.Fatalf("the files repo must not be initialised for a missing source, got %v", eng.inited)
+	}
+	run, rErr := st.LastRunForTarget(set.ID)
+	if rErr != nil {
+		t.Fatal(rErr)
+	}
+	if run == nil || run.Status != "failed" {
+		t.Fatalf("expected a failed run recorded against the set id, got %+v", run)
+	}
+}
+
 // TestSnapshotsFlashRemoteOffsiteLists pins the fix for the off-site view being
 // wrongly empty: a REMOTE off-site repo must be listed directly (no local
 // config-file stat, which always fails for rest:/s3:/… and returned nil before).
@@ -2865,6 +2963,7 @@ type fakeResticEngine struct {
 	inited          []string
 	backedUp        []string
 	lastPaths       []string
+	lastTags        []string
 	lastExcludes    []string
 	restored        []string
 	restoreErrPath  string // when set, RestoreInclude fails on this include path
@@ -2952,12 +3051,13 @@ func (f *fakeResticEngine) RepoOpens(_ context.Context, repo string, m restic.Mo
 	return err == nil
 }
 
-func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, _ []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.block != nil {
 		<-f.block
 	}
 	f.backedUp = append(f.backedUp, repo)
 	f.lastPaths = paths
+	f.lastTags = tags
 	f.lastExcludes = excludes
 	if f.backupErr != nil {
 		return restic.Summary{}, f.backupErr

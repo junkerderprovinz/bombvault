@@ -219,6 +219,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 			"vms":        {},
 			"flash":      {},
 			"config":     {},
+			"files":      {},
 		},
 		domainActivity:    map[string]string{},
 		runCancels:        map[string]context.CancelFunc{},
@@ -436,6 +437,11 @@ func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
 // configRepoPath resolves the restic repo for the config self-backup domain.
 func (s *Service) configRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.ConfigPath)
+}
+
+// filesRepoPath resolves the restic repo for the files domain.
+func (s *Service) filesRepoPath(settings store.Settings) (string, error) {
+	return s.resolveRepo(settings.FilesPath)
 }
 
 // flashZipExportDir resolves the operator-configured output folder for the
@@ -2548,6 +2554,78 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 		if _, err := s.BackupConfig(bctx); err != nil {
 			log.Printf("api: backup config failed: %v", err)
 		}
+	}()
+	return true, nil
+}
+
+// StartBackupFileSet launches a single file-set backup in a background
+// goroutine and returns immediately, mirroring StartBackupVM for the files
+// domain. id is the set's stable store id; progress is published under
+// "files:<name>". Shares batchActive (no overlap with any other backup);
+// returns (false, nil) if one is already running, or (false, err) if the files
+// domain is already busy with another op.
+func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	if op, busy := s.domainBusy("files"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on files", op)
+	}
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+		if _, err := s.BackupFileSet(bctx, id); err != nil {
+			log.Printf("api: backup file set: %q failed: %v", id, err) //nolint:gosec // G706: id is %q-quoted
+		}
+	}()
+	return true, nil
+}
+
+// StartBackupFilesAll launches sequential backups for the given file-set ids in
+// one background batch and returns immediately, mirroring StartBackupAll for
+// the files domain. Unlike the containers batch there is no self-container to
+// skip — every non-empty id is attempted, failures logged and counted without
+// aborting the rest. Overall progress is published under "batch:files" while
+// each set still publishes its own "files:<name>" bar as it runs. Shares
+// batchActive; returns (false, nil) if a backup/batch is already running, or
+// (false, err) if the files domain is already busy with another op.
+func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	if op, busy := s.domainBusy("files"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on files", op)
+	}
+	// Detach immediately so the batch is independent of the request that started
+	// it (canceled the moment the handler returns). Each per-set BackupFileSet
+	// applies its own hard timeout, so the batch needs no deadline of its own.
+	bctx := context.WithoutCancel(ctx)
+	go func() {
+		defer s.batchActive.Store(false)
+
+		queue := make([]string, 0, len(ids))
+		for _, id := range ids {
+			if id != "" {
+				queue = append(queue, id)
+			}
+		}
+		total := len(queue)
+		const key = "batch:files"
+		s.publishBatch(key, 0, true)
+		ok, fail := 0, 0
+		for i, id := range queue {
+			if _, err := s.BackupFileSet(bctx, id); err != nil {
+				fail++
+				log.Printf("api: backup-files-all: %q failed (continuing): %v", id, err) //nolint:gosec // G706: id is %q-quoted
+			} else {
+				ok++
+			}
+			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
+		}
+		s.publishBatch(key, 100, false)
+		log.Printf("api: backup-files-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(ids))
 	}()
 	return true, nil
 }
@@ -4984,6 +5062,88 @@ func (s *Service) pruneFlashZips(dir string, keep int) {
 			log.Printf("flash zip export: prune: remove %q: %v", name, err)
 		}
 	}
+}
+
+// resticAdapter also satisfies the files domain's backup surface.
+var _ backup.FilesRestic = (*resticAdapter)(nil)
+
+// BackupFileSet backs up one file set (a named host folder under the /mnt
+// mount, resolved like settings.ContainersPath) to the files repo via restic,
+// tagged fileset:<Name>. It mirrors BackupFlash: no lifecycle, no defs — with
+// retention, off-site replication, and stats identical to the other domains.
+// A source folder that does not exist under the host mount fails with a clear
+// error BEFORE any restic call, recording a failed run against the set's id so
+// a scheduled backup of a vanished folder surfaces in Run History.
+func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary, error) {
+	// Survive the client that triggered it disconnecting (see Backup): detach from
+	// the request's cancellation with a generous hard cap.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	defer cancel()
+	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
+	}
+	set, err := s.store.GetFileSet(id)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("files backup: load file set: %w", err)
+	}
+	// A set without a path cannot be backed up (Discover creates path-less,
+	// disabled sets from fileset: tags alone) — say so instead of letting
+	// paths.Resolve report a misleading traversal error for "".
+	if strings.TrimSpace(set.Path) == "" {
+		return backup.Summary{}, fmt.Errorf("files backup: file set %q has no source path configured — set a path before backing up", set.Name)
+	}
+	src, err := paths.Resolve(s.cfg.HostMountRoot, set.Path)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("files backup: resolve source path for %q: %w", set.Name, err)
+	}
+	if _, statErr := os.Stat(src); errors.Is(statErr, fs.ErrNotExist) {
+		// Record the miss as a failed run so a scheduled backup of a renamed or
+		// deleted folder shows up in Run History instead of failing invisibly.
+		err := fmt.Errorf("files backup: source path not found for %q — %s does not exist under the host mount", set.Name, src)
+		if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
+		} else if fErr := s.store.FinishRun(runID, "failed", "", 0, err.Error()); fErr != nil {
+			log.Printf("api: files backup: %q: finish missing-path run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
+		}
+		return backup.Summary{}, err
+	}
+	repo, err := s.filesRepoPath(settings)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	mode := s.ModeFor(settings)
+	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+		return backup.Summary{}, err
+	}
+	// Clear any stale lock left by a previously interrupted run so it can't block
+	// this backup (BombVault is the sole writer; an active lock is never stale).
+	s.unlockStale(ctx, repo, mode)
+	// Healthchecks /start ping: deferred to here, past the source-exists + EnsureRepo
+	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
+	s.notifyBackupStart(ctx, "files")
+	key := "files:" + set.Name
+	fctx := s.progBegin(ctx, key, "backup")
+	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
+		SourceDir: src,
+		Repo:      repo,
+		TargetID:  set.ID,
+		SetName:   set.Name,
+		Excludes:  set.Excludes,
+		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Runs:      runsAdapter{s.store},
+	})
+	s.progEnd(key, "backup", err == nil)
+	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	s.applyRetention(ctx, repo, settings, mode)
+	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
+	s.replicateOffsite(ctx, "files", settings, mode, repo)
+	s.maybeCollectStats(ctx, "files")
+	return sum, nil
 }
 
 // resticAdapter also satisfies the config domain's backup surface.
