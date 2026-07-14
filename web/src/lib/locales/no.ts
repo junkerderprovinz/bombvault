@@ -680,6 +680,7 @@ const no: Partial<Translations> = {
   "drill.runningDR": "Gjenoppretter…",
   "drill.confirmDR": "Dette utfører en EKTE gjenoppretting av det nyeste off-site-snapshotet til en midlertidig sandbox for å bevise at det kan gjenopprettes, og sletter det deretter. Den laster ned ekte data og kan ta en stund. Fortsette?",
   "drill.provenOffsite": "bevist gjenopprettbar fra off-site",
+  "drill.offsiteVerified": "off-site verifisert",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Løsepengevirus-beskyttelse",

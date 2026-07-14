@@ -675,6 +675,7 @@ const ja: Partial<Translations> = {
   "drill.runningDR": "復元中…",
   "drill.confirmDR": "これは最新のオフサイトスナップショットを一時的なサンドボックスに実際に復元して復元可能であることを証明し、その後削除します。実データをダウンロードするため時間がかかる場合があります。続行しますか？",
   "drill.provenOffsite": "オフサイトから復元可能と実証済み",
+  "drill.offsiteVerified": "オフサイト検証済み",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "ランサムウェア保護",

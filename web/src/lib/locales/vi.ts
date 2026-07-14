@@ -700,6 +700,7 @@ const vi: Partial<Translations> = {
   "drill.runningDR": "Đang khôi phục…",
   "drill.confirmDR": "Thao tác này thực hiện khôi phục THẬT snapshot off-site mới nhất vào một sandbox tạm thời để chứng minh nó có thể khôi phục được, rồi xóa nó đi. Nó tải về dữ liệu thật và có thể mất một lúc. Tiếp tục?",
   "drill.provenOffsite": "đã chứng minh khôi phục được từ off-site",
+  "drill.offsiteVerified": "đã xác minh off-site",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Bảo vệ khỏi ransomware",

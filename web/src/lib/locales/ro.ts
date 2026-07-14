@@ -683,6 +683,7 @@ const ro: Partial<Translations> = {
   "drill.runningDR": "Se restaurează…",
   "drill.confirmDR": "Aceasta efectuează o restaurare REALĂ a celui mai nou snapshot off-site într-un sandbox temporar pentru a dovedi că se poate recupera, apoi îl șterge. Descarcă date reale și poate dura. Continui?",
   "drill.provenOffsite": "restaurabil dovedit din off-site",
+  "drill.offsiteVerified": "verificat off-site",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Protecție ransomware",

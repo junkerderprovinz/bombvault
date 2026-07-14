@@ -683,6 +683,7 @@ const he: Partial<Translations> = {
   "drill.runningDR": "משחזר…",
   "drill.confirmDR": "פעולה זו מבצעת שחזור אמיתי של ה-snapshot העדכני ביותר מחוץ לאתר אל sandbox זמני כדי להוכיח שניתן לשחזרו, ואז מוחקת אותו. היא מורידה נתונים אמיתיים ועלולה להימשך זמן מה. להמשיך?",
   "drill.provenOffsite": "הוכח כניתן לשחזור מחוץ לאתר",
+  "drill.offsiteVerified": "אומת מחוץ לאתר",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "הגנה מפני כופרה",

@@ -437,6 +437,25 @@ function ProtectionCard({
                           {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
                         </span>
                       ) : null}
+                      {/* Off-site SUBSET badge (#63) — the off-site integrity check
+                          (`restic check --read-data-subset` against the off-site
+                          repo). Mirrors the local-verify shield above (same pills)
+                          and is the ONLY off-site drill VMs can run (DR restores
+                          are refused for them), so it shows for EVERY domain with
+                          a recorded run — alongside, never instead of, the DR pill
+                          below. */}
+                      {d.lastOffsiteSubsetAt ? (
+                        <span
+                          title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
+                            d.lastOffsiteSubsetOK
+                              ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                              : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                          }`}
+                        >
+                          {d.lastOffsiteSubsetOK ? "✓" : "✗"} {t("drill.offsiteVerified")} {relativeTime(t, d.lastOffsiteSubsetAt)}
+                        </span>
+                      ) : null}
                       {/* Off-site restorability badge — mirrors the local-verify shield
                           above (same pills), but proves the backup is recoverable from
                           the OFF-SITE repo (a real DR sandbox restore). Only containers

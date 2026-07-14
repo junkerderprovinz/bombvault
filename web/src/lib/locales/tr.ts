@@ -708,6 +708,7 @@ const tr: Partial<Translations> = {
   "drill.runningDR": "Geri yükleniyor…",
   "drill.confirmDR": "Bu işlem, geri yüklenebilir olduğunu kanıtlamak için en yeni site dışı anlık görüntünün GERÇEK bir geri yüklemesini geçici bir sandbox'a yapar, ardından siler. Gerçek veri indirir ve biraz zaman alabilir. Devam edilsin mi?",
   "drill.provenOffsite": "site dışından geri yüklenebilir olduğu kanıtlandı",
+  "drill.offsiteVerified": "site dışı doğrulandı",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Fidye yazılımı koruması",

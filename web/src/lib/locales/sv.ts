@@ -708,6 +708,7 @@ const sv: Partial<Translations> = {
   "drill.runningDR": "Återställer…",
   "drill.confirmDR": "Detta utför en RIKTIG återställning av den senaste off-site-ögonblicksbilden i en tillfällig sandbox för att bevisa att den kan återställas, och tar sedan bort den. Den laddar ner riktiga data och kan ta en stund. Fortsätta?",
   "drill.provenOffsite": "bevisat återställbar från off-site",
+  "drill.offsiteVerified": "off-site verifierad",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Skydd mot ransomware",

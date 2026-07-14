@@ -448,6 +448,7 @@ const en = {
   "drill.runningDR": "Restoring…",
   "drill.confirmDR": "This performs a REAL restore of the newest off-site snapshot into a temporary sandbox to prove it is recoverable, then deletes it. It downloads real data and can take a while. Continue?",
   "drill.provenOffsite": "proven restorable from off-site",
+  "drill.offsiteVerified": "off-site verified",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "off-site DR restore",
@@ -1240,6 +1241,7 @@ const de: Translations = {
   "drill.runningDR": "Stelle wieder her…",
   "drill.confirmDR": "Dies führt eine ECHTE Wiederherstellung des neuesten Off-site-Snapshots in eine temporäre Sandbox durch, um die Wiederherstellbarkeit zu beweisen, und löscht sie danach. Dabei werden echte Daten geladen, das kann dauern. Fortfahren?",
   "drill.provenOffsite": "nachweislich aus Off-site wiederherstellbar",
+  "drill.offsiteVerified": "Off-site verifiziert",
 
   // Drill reason + check labels (#30)
   "drill.checkOffsiteDr": "Off-site-DR-Wiederherstellung",

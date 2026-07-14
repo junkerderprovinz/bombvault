@@ -686,6 +686,7 @@ const hu: Partial<Translations> = {
   "drill.runningDR": "Visszaállítás…",
   "drill.confirmDR": "Ez a legfrissebb telephelyen kívüli pillanatkép VALÓDI visszaállítását végzi el egy ideiglenes sandboxba, hogy bizonyítsa a visszaállíthatóságát, majd törli azt. Valódi adatokat tölt le, és eltarthat egy ideig. Folytatod?",
   "drill.provenOffsite": "bizonyítottan visszaállítható telephelyen kívülről",
+  "drill.offsiteVerified": "telephelyen kívül ellenőrizve",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Zsarolóvírus elleni védelem",
