@@ -817,6 +817,14 @@ const el: Partial<Translations> = {
   "files.backupAll": "Αντιγραφή όλων τώρα",
   "files.discoverHint": "Χάθηκε η λίστα συνόλων; Ανακατασκευάστε την από τα αντίγραφα στον αποθηκευτικό χώρο.",
   "files.cancel": "Άκυρο",
+  "settings.filesEnabled": "Αρχεία",
+  "settings.filesPath": "Διαδρομή αρχείων",
+  "jobs.filesSection": "Αρχεία",
+  "jobs.filesIncludeHint": "Δημιουργεί αντίγραφο κάθε συνόλου αρχείων με ενεργό το «Συμπερίληψη στο χρονοδιάγραμμα» — εναλλάξτε κάθε σύνολο παρακάτω ή στην καρτέλα Αρχεία.",
+  "jobs.noFileSetsIncluded": "Δεν υπάρχουν ακόμη σύνολα αρχείων — προσθέστε τα στην καρτέλα Αρχεία.",
+  "dashboard.domainFiles": "Αρχεία",
+  "recovery.filesFound": "Βρέθηκαν {f} σύνολα αρχείων.",
+  "recovery.filesRestoreHint": "Τα σύνολα αρχείων που επανεντοπίστηκαν δεν γνωρίζουν τον αρχικό τους φάκελο — καθένα επαναφέρεται σε φάκελο της επιλογής σας.",
 };
 
 export default el;

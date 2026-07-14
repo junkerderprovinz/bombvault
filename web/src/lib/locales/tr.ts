@@ -817,6 +817,14 @@ const tr: Partial<Translations> = {
   "files.backupAll": "Şimdi tümünü yedekle",
   "files.discoverHint": "Set listesi mi kayboldu? Depolamadaki yedeklerden yeniden oluşturun.",
   "files.cancel": "İptal",
+  "settings.filesEnabled": "Dosyalar",
+  "settings.filesPath": "Dosyalar yolu",
+  "jobs.filesSection": "Dosyalar",
+  "jobs.filesIncludeHint": "“Zamanlamaya ekle” etkin olan her dosya setini yedekler — her seti aşağıdan veya Dosyalar sekmesinden değiştirin.",
+  "jobs.noFileSetsIncluded": "Henüz dosya seti yok — Dosyalar sekmesinden ekleyin.",
+  "dashboard.domainFiles": "Dosyalar",
+  "recovery.filesFound": "{f} dosya seti bulundu.",
+  "recovery.filesRestoreHint": "Yeniden keşfedilen dosya setleri özgün klasörünü bilmez — her biri seçtiğiniz bir klasöre geri yüklenir.",
 };
 
 export default tr;

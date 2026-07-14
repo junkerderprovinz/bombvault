@@ -815,6 +815,14 @@ const cs: Partial<Translations> = {
   "files.backupAll": "Zálohovat vše nyní",
   "files.discoverHint": "Ztratili jste seznam sad? Znovu jej sestavte ze záloh v úložišti.",
   "files.cancel": "Zrušit",
+  "settings.filesEnabled": "Soubory",
+  "settings.filesPath": "Cesta k souborům",
+  "jobs.filesSection": "Soubory",
+  "jobs.filesIncludeHint": "Zálohuje každou sadu souborů se zapnutým „Zahrnout do plánu“ — přepněte u jednotlivých sad níže nebo na kartě Soubory.",
+  "jobs.noFileSetsIncluded": "Zatím žádné sady souborů — přidejte je na kartě Soubory.",
+  "dashboard.domainFiles": "Soubory",
+  "recovery.filesFound": "Nalezeno {f} sad souborů.",
+  "recovery.filesRestoreHint": "Znovu objevené sady souborů neznají svou původní složku — každá se obnoví do složky, kterou zvolíte.",
 };
 
 export default cs;

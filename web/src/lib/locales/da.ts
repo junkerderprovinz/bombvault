@@ -817,6 +817,14 @@ const da: Partial<Translations> = {
   "files.backupAll": "Sikkerhedskopiér alt nu",
   "files.discoverHint": "Mistet sætlisten? Genopbyg den fra sikkerhedskopierne i lageret.",
   "files.cancel": "Annuller",
+  "settings.filesEnabled": "Filer",
+  "settings.filesPath": "Filer-sti",
+  "jobs.filesSection": "Filer",
+  "jobs.filesIncludeHint": "Sikkerhedskopierer hvert filsæt med »inkluder i tidsplan« slået til — slå hvert sæt til/fra nedenfor eller på Filer-fanen.",
+  "jobs.noFileSetsIncluded": "Ingen filsæt endnu — tilføj dem på Filer-fanen.",
+  "dashboard.domainFiles": "Filer",
+  "recovery.filesFound": "Fandt {f} filsæt.",
+  "recovery.filesRestoreHint": "Genopdagede filsæt kender ikke deres oprindelige mappe — hvert sæt gendannes til en mappe, du vælger.",
 };
 
 export default da;

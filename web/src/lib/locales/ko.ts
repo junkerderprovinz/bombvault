@@ -809,6 +809,14 @@ const ko: Partial<Translations> = {
   "files.backupAll": "지금 모두 백업",
   "files.discoverHint": "세트 목록을 잃어버렸나요? 스토리지의 백업에서 다시 구성하세요.",
   "files.cancel": "취소",
+  "settings.filesEnabled": "파일",
+  "settings.filesPath": "파일 경로",
+  "jobs.filesSection": "파일",
+  "jobs.filesIncludeHint": "「일정에 포함」이 활성화된 모든 파일 세트를 백업합니다(아래 목록이나 파일 탭에서 세트별로 전환).",
+  "jobs.noFileSetsIncluded": "아직 파일 세트가 없습니다 — 파일 탭에서 추가하세요.",
+  "dashboard.domainFiles": "파일",
+  "recovery.filesFound": "파일 세트 {f}개를 찾았습니다.",
+  "recovery.filesRestoreHint": "다시 발견된 파일 세트는 원본 폴더 정보가 없습니다 — 각 세트는 선택한 폴더로 복원됩니다.",
 };
 
 export default ko;

@@ -859,6 +859,15 @@ const en = {
   "files.backupAll": "Back up all now",
   "files.discoverHint": "Lost the set list? Rebuild it from the backups in storage.",
   "files.cancel": "Cancel",
+  // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
+  "settings.filesEnabled": "Files",
+  "settings.filesPath": "Files path",
+  "jobs.filesSection": "Files",
+  "jobs.filesIncludeHint": "Backs up every file set with “include in schedule” enabled — toggle each set below or on the Files tab.",
+  "jobs.noFileSetsIncluded": "No file sets yet — add them on the Files tab.",
+  "dashboard.domainFiles": "Files",
+  "recovery.filesFound": "Found {f} file sets.",
+  "recovery.filesRestoreHint": "Rediscovered file sets carry no original folder — each one restores into a folder you choose.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1678,6 +1687,15 @@ const de: Translations = {
   "files.backupAll": "Alle jetzt sichern",
   "files.discoverHint": "Set-Liste verloren? Baue sie aus den Backups im Speicher neu auf.",
   "files.cancel": "Abbrechen",
+  // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
+  "settings.filesEnabled": "Dateien",
+  "settings.filesPath": "Dateien-Pfad",
+  "jobs.filesSection": "Dateien",
+  "jobs.filesIncludeHint": "Sichert jedes Datei-Set mit aktiviertem „Im Zeitplan einschließen“ — pro Set unten oder im Dateien-Tab umschaltbar.",
+  "jobs.noFileSetsIncluded": "Noch keine Datei-Sets — füge sie im Dateien-Tab hinzu.",
+  "dashboard.domainFiles": "Dateien",
+  "recovery.filesFound": "{f} Datei-Sets gefunden.",
+  "recovery.filesRestoreHint": "Wiederentdeckte Datei-Sets kennen ihren Ursprungsordner nicht — jedes wird in einen Ordner deiner Wahl wiederhergestellt.",
 };
 
 // ---------------------------------------------------------------------------

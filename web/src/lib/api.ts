@@ -787,22 +787,24 @@ export function discoverVMs(probe = false): Promise<OkEnvelope & { discovered?: 
 }
 
 /**
- * Runs both domain discovers (rebuild containers + VMs from the encrypted backup
- * defs in storage) and returns the counts. The caller then re-fetches
- * listContainers()/listVMs() to show the reconstructed targets.
+ * Runs all three domain discovers (rebuild containers + VMs from the encrypted
+ * backup defs, plus file sets from their fileset: snapshot tags) and returns the
+ * counts. The caller then re-fetches listContainers()/listVMs()/listFileSets()
+ * to show the reconstructed targets.
  *
  * handleDiscover answers HTTP 200 with an {ok:false, error} envelope on a real
  * failure (e.g. a wrong APP_KEY), so a naive `discovered ?? 0` would silently
- * report "0 found" and hide the actual error. To avoid that, if EITHER discover
+ * report "0 found" and hide the actual error. To avoid that, if ANY discover
  * fails, its (scrubbed) message is surfaced as `error` — the caller shows the
  * real failure instead of a misleading "nothing to recover".
  */
-export async function discoverAll(): Promise<{ containers: number; vms: number; error?: string }> {
-  const [c, v] = await Promise.all([discover(), discoverVMs()]);
-  const failed = [c, v].find((r) => !r.ok);
+export async function discoverAll(): Promise<{ containers: number; vms: number; files: number; error?: string }> {
+  const [c, v, f] = await Promise.all([discover(), discoverVMs(), discoverFiles()]);
+  const failed = [c, v, f].find((r) => !r.ok);
   return {
     containers: c.discovered ?? 0,
     vms: v.discovered ?? 0,
+    files: f.discovered ?? 0,
     ...(failed ? { error: failed.error ?? "discover failed" } : {}),
   };
 }
@@ -893,7 +895,7 @@ export function ackRecoveryKit(): Promise<OkEnvelope> {
 
 /** POST /api/check/{domain} — verify a domain's restic repo integrity. */
 export function checkDomain(
-  domain: "containers" | "vms" | "flash",
+  domain: "containers" | "vms" | "flash" | "files",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/check/${domain}${srcParam(source)}`, { method: "POST" });
@@ -942,7 +944,7 @@ export function getDrills(
 
 /** POST /api/unlock/{domain} — clear stale repository locks (restic unlock). */
 export function unlockDomain(
-  domain: "containers" | "vms" | "flash",
+  domain: "containers" | "vms" | "flash" | "files",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/unlock/${domain}${srcParam(source)}`, { method: "POST" });
@@ -950,7 +952,7 @@ export function unlockDomain(
 
 /** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
 export function pruneDomain(
-  domain: "containers" | "vms" | "flash" | "config",
+  domain: "containers" | "vms" | "flash" | "config" | "files",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
@@ -958,7 +960,7 @@ export function pruneDomain(
 
 /** POST /api/offsite/{domain} — replicate a domain's local repo to its off-site repo now. */
 export function replicateOffsite(
-  domain: "containers" | "vms" | "flash"
+  domain: "containers" | "vms" | "flash" | "files"
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/${domain}`, { method: "POST" });
 }
@@ -968,7 +970,7 @@ export function replicateOffsite(
  * whether it is reachable and whether it is an initialised restic repository.
  */
 export function testOffsite(
-  domain: "containers" | "vms" | "flash"
+  domain: "containers" | "vms" | "flash" | "files"
 ): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
   return fetchJSON(`/api/offsite/${domain}/test`, { method: "POST" });
 }
@@ -994,7 +996,7 @@ export interface DeploySnippetData {
  * response, so it must be saved by the user right away.
  */
 export function deploySnippet(
-  domain: "containers" | "vms" | "flash"
+  domain: "containers" | "vms" | "flash" | "files"
 ): Promise<OkEnvelope & { snippet?: DeploySnippetData }> {
   return fetchJSON(`/api/offsite/${domain}/deploy-snippet`);
 }
@@ -1007,7 +1009,7 @@ export function deploySnippet(
  * `detail` carries the scrubbed reason when not protected.
  */
 export function tamperTest(
-  domain: "containers" | "vms" | "flash"
+  domain: "containers" | "vms" | "flash" | "files"
 ): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }

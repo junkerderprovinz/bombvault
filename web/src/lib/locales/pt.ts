@@ -817,6 +817,14 @@ const pt: Partial<Translations> = {
   "files.backupAll": "Fazer backup de tudo agora",
   "files.discoverHint": "Perdeu a lista de conjuntos? Reconstrua-a a partir dos backups no armazenamento.",
   "files.cancel": "Cancelar",
+  "settings.filesEnabled": "Ficheiros",
+  "settings.filesPath": "Caminho dos ficheiros",
+  "jobs.filesSection": "Ficheiros",
+  "jobs.filesIncludeHint": "Faz backup de cada conjunto de ficheiros com «incluir no agendamento» ativado — alterne por conjunto abaixo ou no separador Ficheiros.",
+  "jobs.noFileSetsIncluded": "Ainda não há conjuntos de ficheiros — adicione-os no separador Ficheiros.",
+  "dashboard.domainFiles": "Ficheiros",
+  "recovery.filesFound": "Encontrados {f} conjuntos de ficheiros.",
+  "recovery.filesRestoreHint": "Conjuntos de ficheiros redescobertos não conhecem a sua pasta original — cada um é restaurado para uma pasta à sua escolha.",
 };
 
 export default pt;

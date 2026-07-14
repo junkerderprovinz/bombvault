@@ -809,6 +809,14 @@ const ja: Partial<Translations> = {
   "files.backupAll": "今すぐすべてバックアップ",
   "files.discoverHint": "セット一覧を失いましたか？ストレージ内のバックアップから再構築できます。",
   "files.cancel": "キャンセル",
+  "settings.filesEnabled": "ファイル",
+  "settings.filesPath": "ファイルパス",
+  "jobs.filesSection": "ファイル",
+  "jobs.filesIncludeHint": "「スケジュールに含める」が有効なすべてのファイルセットをバックアップします（下の一覧またはファイルタブでセットごとに切り替え）。",
+  "jobs.noFileSetsIncluded": "ファイルセットはまだありません — ファイルタブで追加してください。",
+  "dashboard.domainFiles": "ファイル",
+  "recovery.filesFound": "ファイルセット {f} 個が見つかりました。",
+  "recovery.filesRestoreHint": "再発見されたファイルセットは元のフォルダー情報を持ちません — それぞれ選択したフォルダーに復元されます。",
 };
 
 export default ja;

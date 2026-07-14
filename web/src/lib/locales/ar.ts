@@ -820,6 +820,14 @@ const ar: Partial<Translations> = {
   "files.backupAll": "نسخ الكل احتياطياً الآن",
   "files.discoverHint": "فقدت قائمة المجموعات؟ أعد بناءها من النسخ الاحتياطية في التخزين.",
   "files.cancel": "إلغاء",
+  "settings.filesEnabled": "الملفات",
+  "settings.filesPath": "مسار الملفات",
+  "jobs.filesSection": "الملفات",
+  "jobs.filesIncludeHint": "ينسخ احتياطياً كل مجموعة ملفات مفعَّل فيها «التضمين في الجدول الزمني» — بدِّل كل مجموعة أدناه أو في تبويب الملفات.",
+  "jobs.noFileSetsIncluded": "لا توجد مجموعات ملفات بعد — أضِفها في تبويب الملفات.",
+  "dashboard.domainFiles": "الملفات",
+  "recovery.filesFound": "تم العثور على {f} مجموعات ملفات.",
+  "recovery.filesRestoreHint": "مجموعات الملفات المعاد اكتشافها لا تحمل مجلدها الأصلي — تُستعاد كل منها إلى مجلد تختاره.",
 };
 
 export default ar;

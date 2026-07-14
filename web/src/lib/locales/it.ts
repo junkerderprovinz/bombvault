@@ -817,6 +817,14 @@ const it: Partial<Translations> = {
   "files.backupAll": "Esegui il backup di tutto ora",
   "files.discoverHint": "Elenco dei set perso? Ricostruiscilo dai backup nello storage.",
   "files.cancel": "Annulla",
+  "settings.filesEnabled": "File",
+  "settings.filesPath": "Percorso dei file",
+  "jobs.filesSection": "File",
+  "jobs.filesIncludeHint": "Esegue il backup di ogni set di file con «includi nel calendario» attivo — attivabile per set qui sotto o nella scheda File.",
+  "jobs.noFileSetsIncluded": "Ancora nessun set di file — aggiungili nella scheda File.",
+  "dashboard.domainFiles": "File",
+  "recovery.filesFound": "Trovati {f} set di file.",
+  "recovery.filesRestoreHint": "I set di file riscoperti non conoscono la cartella d'origine — ognuno viene ripristinato in una cartella a tua scelta.",
 };
 
 export default it;

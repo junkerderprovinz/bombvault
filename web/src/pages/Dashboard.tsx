@@ -308,7 +308,7 @@ function ProtectionCard({
     setDrRunError((prev) => {
       const next: Record<string, string> = {};
       for (const d of domains) {
-        const drCapable = d.domain === "containers" || d.domain === "flash";
+        const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
         const reachable = drCapable && d.status !== "off" && d.offsiteConfigured;
         if (reachable && prev[d.domain] !== undefined) next[d.domain] = prev[d.domain];
       }
@@ -355,6 +355,8 @@ function ProtectionCard({
         return t("dashboard.domainVMs");
       case "flash":
         return t("dashboard.domainFlash");
+      case "files":
+        return t("dashboard.domainFiles");
       default:
         return domain;
     }
@@ -384,10 +386,11 @@ function ProtectionCard({
         <div className="divide-y divide-carbon-border">
           {domains.map((d) => {
             const off = d.status === "off";
-            // Only containers + flash ever run an off-site DR drill (schedule.go
-            // drillTasks / runDRDrill). VMs + config can have an off-site repo but
-            // cannot be DR-drilled, so they must show NO DR pill or Run-DR button.
-            const drCapable = d.domain === "containers" || d.domain === "flash";
+            // Only containers, flash + files ever run an off-site DR drill
+            // (schedule.go drillTasks / runDRDrill). VMs + config can have an
+            // off-site repo but cannot be DR-drilled, so they must show NO DR
+            // pill or Run-DR button.
+            const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
             // DR-capable domain that HAS an off-site repo. The pill then reads NEUTRAL
             // ("manual only") — but only when there is no failing result to show.
@@ -583,6 +586,8 @@ function RansomwareCard({
         return t("dashboard.domainVMs");
       case "flash":
         return t("dashboard.domainFlash");
+      case "files":
+        return t("dashboard.domainFiles");
       default:
         return domain;
     }
@@ -937,7 +942,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // Backup health heatmap (GitHub-contributions style)
 // ---------------------------------------------------------------------------
 
-type HeatDomain = "containers" | "vms" | "flash" | "config";
+type HeatDomain = "containers" | "vms" | "flash" | "config" | "files";
 
 // cellColor maps a day's outcome (for the selected domain) to a fill color:
 // any failure → red; all-ok → green shades that deepen with more successful
@@ -1017,12 +1022,14 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         return t("dashboard.domainFlash");
       case "config":
         return t("dashboard.domainConfig");
+      case "files":
+        return t("dashboard.domainFiles");
     }
   };
 
   const toggle = (
     <div className="flex items-center gap-1">
-      {(["containers", "vms", "flash", "config"] as HeatDomain[]).map((d) => (
+      {(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => (
         <button
           key={d}
           type="button"
@@ -1711,6 +1718,7 @@ export function Dashboard() {
             <OffsiteIndicator domain="containers" withLabel />
             <OffsiteIndicator domain="vms" withLabel />
             <OffsiteIndicator domain="flash" withLabel />
+            <OffsiteIndicator domain="files" withLabel />
           </div>
         </div>
         <button

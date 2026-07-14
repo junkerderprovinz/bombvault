@@ -814,6 +814,14 @@ const nl: Partial<Translations> = {
   "files.backupAll": "Nu alles back-uppen",
   "files.discoverHint": "Setlijst kwijt? Bouw hem opnieuw op vanuit de back-ups in de opslag.",
   "files.cancel": "Annuleren",
+  "settings.filesEnabled": "Bestanden",
+  "settings.filesPath": "Bestanden-pad",
+  "jobs.filesSection": "Bestanden",
+  "jobs.filesIncludeHint": "Maakt een back-up van elke bestandsset waarbij „opnemen in planning” is ingeschakeld — schakel per set hieronder of op het tabblad Bestanden.",
+  "jobs.noFileSetsIncluded": "Nog geen bestandssets — voeg ze toe op het tabblad Bestanden.",
+  "dashboard.domainFiles": "Bestanden",
+  "recovery.filesFound": "{f} bestandssets gevonden.",
+  "recovery.filesRestoreHint": "Herontdekte bestandssets kennen hun oorspronkelijke map niet — elke set wordt hersteld naar een map die u kiest.",
 };
 
 export default nl;

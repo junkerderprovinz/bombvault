@@ -817,6 +817,14 @@ const no: Partial<Translations> = {
   "files.backupAll": "Sikkerhetskopier alt nå",
   "files.discoverHint": "Mistet settlisten? Bygg den opp igjen fra sikkerhetskopiene i lageret.",
   "files.cancel": "Avbryt",
+  "settings.filesEnabled": "Filer",
+  "settings.filesPath": "Filer-sti",
+  "jobs.filesSection": "Filer",
+  "jobs.filesIncludeHint": "Sikkerhetskopierer hvert filsett med «Inkluder i tidsplan» aktivert — slå av/på per sett nedenfor eller i Filer-fanen.",
+  "jobs.noFileSetsIncluded": "Ingen filsett ennå — legg dem til i Filer-fanen.",
+  "dashboard.domainFiles": "Filer",
+  "recovery.filesFound": "Fant {f} filsett.",
+  "recovery.filesRestoreHint": "Gjenoppdagede filsett kjenner ikke sin opprinnelige mappe — hvert sett gjenopprettes til en mappe du velger.",
 };
 
 export default no;

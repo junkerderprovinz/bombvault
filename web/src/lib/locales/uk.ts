@@ -812,6 +812,14 @@ const uk: Partial<Translations> = {
   "files.backupAll": "Створити резервну копію всього зараз",
   "files.discoverHint": "Втратили список наборів? Відновіть його з резервних копій у сховищі.",
   "files.cancel": "Скасувати",
+  "settings.filesEnabled": "Файли",
+  "settings.filesPath": "Шлях до файлів",
+  "jobs.filesSection": "Файли",
+  "jobs.filesIncludeHint": "Створює копію кожного набору файлів з увімкненим «Включити до розкладу» — перемикайте набори нижче або на вкладці «Файли».",
+  "jobs.noFileSetsIncluded": "Наборів файлів поки немає — додайте їх на вкладці «Файли».",
+  "dashboard.domainFiles": "Файли",
+  "recovery.filesFound": "Знайдено {f} наборів файлів.",
+  "recovery.filesRestoreHint": "Повторно виявлені набори файлів не знають своєї початкової папки — кожен відновлюється до вибраної вами папки.",
 };
 
 export default uk;

@@ -817,6 +817,14 @@ const fr: Partial<Translations> = {
   "files.backupAll": "Tout sauvegarder maintenant",
   "files.discoverHint": "Liste des jeux perdue ? Reconstruisez-la depuis les sauvegardes du stockage.",
   "files.cancel": "Annuler",
+  "settings.filesEnabled": "Fichiers",
+  "settings.filesPath": "Chemin des fichiers",
+  "jobs.filesSection": "Fichiers",
+  "jobs.filesIncludeHint": "Sauvegarde chaque jeu de fichiers dont l'option « inclure dans le planning » est activée — à basculer par jeu ci-dessous ou dans l'onglet Fichiers.",
+  "jobs.noFileSetsIncluded": "Aucun jeu de fichiers pour l'instant — ajoutez-les dans l'onglet Fichiers.",
+  "dashboard.domainFiles": "Fichiers",
+  "recovery.filesFound": "{f} jeux de fichiers trouvés.",
+  "recovery.filesRestoreHint": "Les jeux de fichiers redécouverts ne connaissent pas leur dossier d'origine — chacun est restauré dans un dossier de votre choix.",
 };
 
 export default fr;

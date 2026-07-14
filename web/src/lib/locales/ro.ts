@@ -820,6 +820,14 @@ const ro: Partial<Translations> = {
   "files.backupAll": "Copiază tot acum",
   "files.discoverHint": "Ați pierdut lista de seturi? Reconstruiți-o din copiile de rezervă din stocare.",
   "files.cancel": "Anulare",
+  "settings.filesEnabled": "Fișiere",
+  "settings.filesPath": "Cale fișiere",
+  "jobs.filesSection": "Fișiere",
+  "jobs.filesIncludeHint": "Face backup fiecărui set de fișiere cu „Includeți în programare” activat — comutați per set mai jos sau în fila Fișiere.",
+  "jobs.noFileSetsIncluded": "Încă nu există seturi de fișiere — adăugați-le în fila Fișiere.",
+  "dashboard.domainFiles": "Fișiere",
+  "recovery.filesFound": "Găsite {f} seturi de fișiere.",
+  "recovery.filesRestoreHint": "Seturile de fișiere redescoperite nu își cunosc folderul original — fiecare este restaurat într-un folder ales de dvs.",
 };
 
 export default ro;

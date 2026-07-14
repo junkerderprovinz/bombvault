@@ -15,7 +15,7 @@ import { useT } from "../lib/i18n";
 // append-only tamper verdict, and a retention-strategy chooser.
 // ---------------------------------------------------------------------------
 
-type Domain = "containers" | "vms" | "flash";
+type Domain = "containers" | "vms" | "flash" | "files";
 type T = ReturnType<typeof useT>["t"];
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -25,6 +25,7 @@ const REPO_KEY = {
   containers: "containersOffsite",
   vms: "vmsOffsite",
   flash: "flashOffsite",
+  files: "filesOffsite",
 } as const;
 // The off-site schedule is owned by Settings › Schedules — the wizard no longer
 // edits it, so there is no SCHED_KEY map here.
@@ -32,6 +33,7 @@ const IMM_KEY = {
   containers: "containersOffsiteImmutable",
   vms: "vmsOffsiteImmutable",
   flash: "flashOffsiteImmutable",
+  files: "filesOffsiteImmutable",
 } as const;
 
 // "none" = empty URL (neutral prompt — no REST snippet, no caveat); "other" =

@@ -809,6 +809,14 @@ const vi: Partial<Translations> = {
   "files.backupAll": "Sao lưu tất cả ngay",
   "files.discoverHint": "Mất danh sách bộ? Dựng lại nó từ các bản sao lưu trong bộ lưu trữ.",
   "files.cancel": "Hủy",
+  "settings.filesEnabled": "Tập tin",
+  "settings.filesPath": "Đường dẫn tập tin",
+  "jobs.filesSection": "Tập tin",
+  "jobs.filesIncludeHint": "Sao lưu mọi bộ tập tin có bật \"đưa vào lịch trình\" — bật/tắt từng bộ bên dưới hoặc trong tab Tập tin.",
+  "jobs.noFileSetsIncluded": "Chưa có bộ tập tin nào — thêm trong tab Tập tin.",
+  "dashboard.domainFiles": "Tập tin",
+  "recovery.filesFound": "Tìm thấy {f} bộ tập tin.",
+  "recovery.filesRestoreHint": "Các bộ tập tin được phát hiện lại không biết thư mục gốc của chúng — mỗi bộ được khôi phục vào thư mục bạn chọn.",
 };
 
 export default vi;

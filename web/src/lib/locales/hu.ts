@@ -820,6 +820,14 @@ const hu: Partial<Translations> = {
   "files.backupAll": "Összes mentése most",
   "files.discoverHint": "Elveszett a készletlista? Építsd újra a tárhely mentéseiből.",
   "files.cancel": "Mégse",
+  "settings.filesEnabled": "Fájlok",
+  "settings.filesPath": "Fájlok útvonala",
+  "jobs.filesSection": "Fájlok",
+  "jobs.filesIncludeHint": "Minden fájlkészletet ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van — készletenként alább vagy a Fájlok lapon kapcsolható.",
+  "jobs.noFileSetsIncluded": "Még nincsenek fájlkészletek — adja hozzá őket a Fájlok lapon.",
+  "dashboard.domainFiles": "Fájlok",
+  "recovery.filesFound": "{f} fájlkészlet található.",
+  "recovery.filesRestoreHint": "Az újra felfedezett fájlkészletek nem ismerik az eredeti mappájukat — mindegyik egy Ön által választott mappába áll vissza.",
 };
 
 export default hu;

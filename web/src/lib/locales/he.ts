@@ -817,6 +817,14 @@ const he: Partial<Translations> = {
   "files.backupAll": "גבה הכול עכשיו",
   "files.discoverHint": "אבדה רשימת הערכות? בנה אותה מחדש מהגיבויים באחסון.",
   "files.cancel": "ביטול",
+  "settings.filesEnabled": "קבצים",
+  "settings.filesPath": "נתיב קבצים",
+  "jobs.filesSection": "קבצים",
+  "jobs.filesIncludeHint": "מגבה כל ערכת קבצים שבה מופעל „כלול בלוח הזמנים‟ — החליפו כל ערכה למטה או בלשונית קבצים.",
+  "jobs.noFileSetsIncluded": "אין עדיין ערכות קבצים — הוסיפו אותן בלשונית קבצים.",
+  "dashboard.domainFiles": "קבצים",
+  "recovery.filesFound": "נמצאו {f} ערכות קבצים.",
+  "recovery.filesRestoreHint": "ערכות קבצים שהתגלו מחדש אינן יודעות את תיקיית המקור שלהן — כל אחת משוחזרת לתיקייה שתבחרו.",
 };
 
 export default he;
