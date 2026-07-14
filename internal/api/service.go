@@ -3098,14 +3098,52 @@ func (s *Service) Restore(ctx context.Context, name, snapshotID string, confirm 
 	return s.executeRestore(ctx, name, plan, leaveStopped)
 }
 
-// prepareRestore performs ALL of a container restore's validation and
-// resolution synchronously — confirmation, name/snapshot-id guards, snapshot
-// ownership, path containment and the recreate-recipe lookup — so a bad request
-// fails immediately with a clear error, BEFORE anything long-running (or
-// destructive) starts. The returned plan is everything executeRestore needs.
+// repoRef identifies an already-resolved restic repository together with the
+// mode (encryption + backend credentials) needed to open it. The
+// settings-driven paths build one via repoFor/ModeFor; a caller restoring from
+// a repo that is NOT in Settings (e.g. another BombVault instance's repo) can
+// build its own ref and reuse the same preparation logic.
+type repoRef struct {
+	repo string
+	mode restic.Mode
+}
+
+// prepareRestore resolves the settings-configured containers repo (local or
+// off-site) and delegates to prepareRestoreIn. The request guards run here
+// FIRST — before the settings/repo resolution — so an unconfirmed or malformed
+// request keeps failing with its own error (the sentinel, the name error, the
+// snapshot-id error) rather than a resolution error; prepareRestoreIn
+// re-validates them (defense-in-depth for non-settings callers).
 func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, confirm bool, source string) (containerRestorePlan, error) {
 	// Guard confirmation before touching the store/docker so an unconfirmed
 	// restore surfaces the sentinel (and never errors on a missing target first).
+	if !confirm {
+		return containerRestorePlan{}, backup.ErrNotConfirmed
+	}
+	if !validResourceName(name) {
+		return containerRestorePlan{}, errors.New("invalid container name")
+	}
+	if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
+		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return containerRestorePlan{}, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "containers", source)
+	if err != nil {
+		return containerRestorePlan{}, err
+	}
+	return s.prepareRestoreIn(ctx, repoRef{repo: repo, mode: s.ModeFor(settings)}, name, snapshotID, confirm)
+}
+
+// prepareRestoreIn performs ALL of a container restore's validation and
+// resolution synchronously against an explicit repository — confirmation,
+// name/snapshot-id guards, snapshot ownership, path containment and the
+// recreate-recipe lookup — so a bad request fails immediately with a clear
+// error, BEFORE anything long-running (or destructive) starts. The returned
+// plan is everything executeRestore needs.
+func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snapshotID string, confirm bool) (containerRestorePlan, error) {
 	if !confirm {
 		return containerRestorePlan{}, backup.ErrNotConfirmed
 	}
@@ -3123,15 +3161,6 @@ func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, c
 	if explicitID && !backup.ValidSnapshotID(snapshotID) {
 		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return containerRestorePlan{}, fmt.Errorf("read settings: %w", err)
-	}
-	repo, err := s.repoFor(settings, "containers", source)
-	if err != nil {
-		return containerRestorePlan{}, err
-	}
-	mode := s.ModeFor(settings)
 
 	tg, err := s.store.GetTargetByContainer(name)
 	if err != nil {
@@ -3144,10 +3173,11 @@ func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, c
 	// so the last tag-matching one is the newest.
 	// A definition-only backup (stateless container with no restic snapshot) has
 	// no snapshot to resolve — recreate it from the stored definition instead.
-	// An explicit id must belong to THIS container (tag-scoped via Snapshots, the
-	// same access-control check the file/to-path restores use).
+	// An explicit id must belong to THIS container (tag-scoped, the same
+	// access-control check the file/to-path restores use) — listed against the
+	// caller's repo ref, NOT the settings repo.
 	recreateOnly := false
-	snaps, snapErr := s.Snapshots(ctx, name, source)
+	snaps, snapErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, "container:"+name)
 	if snapErr != nil {
 		return containerRestorePlan{}, snapErr
 	}
@@ -3207,8 +3237,8 @@ func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, c
 	}
 
 	return containerRestorePlan{
-		repo:         repo,
-		mode:         mode,
+		repo:         ref.repo,
+		mode:         ref.mode,
 		targetID:     tg.ID,
 		snapshotID:   snapshotID,
 		recreateOnly: recreateOnly,
@@ -3385,11 +3415,17 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	if err != nil {
 		return nil, err
 	}
-	mode := s.ModeFor(settings)
-	// A listing before any local backup has run (repo not yet initialised) is "no
-	// snapshots yet", not an error — the SPA shows an empty list, not a failure.
-	// Remote repos skip this local check and are listed directly (see
-	// localRepoMissing), so an off-site view is never wrongly shown as empty.
+	return s.snapshotsForTag(ctx, repo, s.ModeFor(settings), "container:"+name)
+}
+
+// snapshotsForTag lists an EXPLICIT repo (no settings resolution) and returns
+// only the snapshots carrying the given tag, oldest-first as restic reports
+// them. A missing local repo is "no snapshots yet", not an error — the SPA
+// shows an empty list, not a failure — unless the repo was established before
+// (share not mounted, #55). Remote repos skip that local check (see
+// localRepoMissing). The settings-driven Snapshots* wrappers delegate here;
+// non-settings callers (the foreign-repo session) pass their own repoRef parts.
+func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.Mode, tag string) ([]restic.Snapshot, error) {
 	if localRepoMissing(repo) {
 		if s.repoEstablished(repo) {
 			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
@@ -3400,7 +3436,6 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	if err != nil {
 		return nil, err
 	}
-	tag := "container:" + name
 	out := make([]restic.Snapshot, 0, len(all))
 	for _, snap := range all {
 		for _, t := range snap.Tags {
@@ -4695,15 +4730,16 @@ type vmRestorePlan struct {
 // synchronously — confirmation, snapshot-id guard + ownership, definition
 // lookup, disk-path containment and the SSH host-key pin — so a bad request
 // fails immediately with a clear error, BEFORE anything long-running starts.
+// prepareRestoreVM resolves the settings-configured vms repo (local or
+// off-site) and delegates to prepareRestoreVMIn. Request guards run here first
+// so a bad request keeps failing with its own error before any resolution;
+// prepareRestoreVMIn re-validates them (defense-in-depth for non-settings
+// callers such as the foreign-repo session).
 func (s *Service) prepareRestoreVM(ctx context.Context, name, snapshotID string, confirm bool, source string) (vmRestorePlan, error) {
 	if !confirm {
 		return vmRestorePlan{}, backup.ErrNotConfirmed
 	}
-	// An explicit snapshot id must be well-formed hex. The orchestrator re-checks
-	// this, but guarding here makes a bad id fail synchronously (fail-fast for the
-	// async StartRestoreVM path). "latest"/"" resolve below.
-	explicitID := snapshotID != "latest" && snapshotID != ""
-	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+	if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
 		return vmRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 	settings, err := s.store.GetSettings()
@@ -4714,7 +4750,22 @@ func (s *Service) prepareRestoreVM(ctx context.Context, name, snapshotID string,
 	if err != nil {
 		return vmRestorePlan{}, err
 	}
-	mode := s.ModeFor(settings)
+	return s.prepareRestoreVMIn(ctx, repoRef{repo: repo, mode: s.ModeFor(settings)}, name, snapshotID, confirm)
+}
+
+// prepareRestoreVMIn performs ALL of a VM restore's validation and resolution
+// synchronously against an explicit repository, mirroring prepareRestoreIn.
+func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, snapshotID string, confirm bool) (vmRestorePlan, error) {
+	if !confirm {
+		return vmRestorePlan{}, backup.ErrNotConfirmed
+	}
+	// An explicit snapshot id must be well-formed hex. The orchestrator re-checks
+	// this, but guarding here makes a bad id fail synchronously (fail-fast for the
+	// async StartRestoreVM path). "latest"/"" resolve below.
+	explicitID := snapshotID != "latest" && snapshotID != ""
+	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+		return vmRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
 
 	tg, err := s.store.GetVMTargetByName(name)
 	if err != nil {
@@ -4722,9 +4773,9 @@ func (s *Service) prepareRestoreVM(ctx context.Context, name, snapshotID string,
 	}
 
 	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
-	// must belong to THIS VM (tag-scoped via SnapshotsVM), mirroring the container
-	// restores' access-control check.
-	snaps, snapErr := s.SnapshotsVM(ctx, name, source)
+	// must belong to THIS VM (tag-scoped, mirroring the container restores'
+	// access-control check) — listed against the caller's repo ref.
+	snaps, snapErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, "vm:"+name)
 	if snapErr != nil {
 		return vmRestorePlan{}, snapErr
 	}
@@ -4789,8 +4840,8 @@ func (s *Service) prepareRestoreVM(ctx context.Context, name, snapshotID string,
 	}
 
 	return vmRestorePlan{
-		repo:         repo,
-		mode:         mode,
+		repo:         ref.repo,
+		mode:         ref.mode,
 		targetID:     tg.ID,
 		snapshotID:   snapshotID,
 		diskPaths:    diskPaths,
@@ -4931,29 +4982,7 @@ func (s *Service) SnapshotsVM(ctx context.Context, name, source string) ([]resti
 	if err != nil {
 		return nil, err
 	}
-	mode := s.ModeFor(settings)
-	// A listing before any backup has run is "no snapshots yet", not an error.
-	if localRepoMissing(repo) {
-		if s.repoEstablished(repo) {
-			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
-		}
-		return nil, nil
-	}
-	all, err := s.listSnapshots(ctx, repo, mode)
-	if err != nil {
-		return nil, err
-	}
-	tag := "vm:" + name
-	out := make([]restic.Snapshot, 0, len(all))
-	for _, snap := range all {
-		for _, t := range snap.Tags {
-			if t == tag {
-				out = append(out, snap)
-				break
-			}
-		}
-	}
-	return out, nil
+	return s.snapshotsForTag(ctx, repo, s.ModeFor(settings), "vm:"+name)
 }
 
 // resticAdapter also satisfies the flash domain's backup surface.
