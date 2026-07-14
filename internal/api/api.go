@@ -187,6 +187,7 @@ func (h *Handler) Router() http.Handler {
 	// allowlist stays exactly as is).
 	mux.HandleFunc("POST /api/foreign/open", h.handleForeignOpen)
 	mux.HandleFunc("POST /api/foreign/close", h.handleForeignClose)
+	mux.HandleFunc("POST /api/foreign/restore", h.handleForeignRestore)
 
 	return h.authGate(mux)
 }

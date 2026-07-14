@@ -2690,3 +2690,37 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 	h.svc.CloseForeign(body.Session)
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
+
+// handleForeignRestore restores ONE item (container, VM or file set) from an
+// open foreign-repo session ON THE SERVER and returns immediately (see
+// handleRestore — the restic work runs detached; the SPA watches the item's
+// "container:/vm:/files:<item>" progress key over SSE and reads the recorded
+// run for the outcome). Validation runs synchronously: a bad request — an
+// unknown/expired session, an unconfirmed restore, a missing file-set target —
+// fails right away with a 4xx and nothing starts; the shared single-flight
+// guard answers 409 like the other backup/restore starters. The session key
+// stays server-side (never in this request), and errors are scrubbed.
+// POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target}
+func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session  string `json:"session"`
+		Domain   string `json:"domain"`
+		Item     string `json:"item"`
+		Snapshot string `json:"snapshot"`
+		Confirm  bool   `json:"confirm"`
+		Target   string `json:"target"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target)
+	if err != nil { // synchronous validation failed — nothing was started
+		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
+		return
+	}
+	if !started { // another backup/restore holds the single-flight guard
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}

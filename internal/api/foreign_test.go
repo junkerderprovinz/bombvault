@@ -65,3 +65,70 @@ func TestForeignOpenCloseRoutes(t *testing.T) {
 		t.Fatalf("close unknown: status=%d body=%v", w.Code, m)
 	}
 }
+
+// TestForeignRestoreRoute pins the Task 10 route wiring end-to-end (the exact
+// contract the Recovery card consumes in Task 11): POST /api/foreign/restore
+// with {session, domain, item, snapshot, confirm, target} answers 200
+// {ok:true, started:true} and the detached restic work reads the SESSION repo;
+// an unconfirmed restore and an unknown session answer 400 (nothing started);
+// a second restore while one is running answers 409.
+func TestForeignRestoreRoute(t *testing.T) {
+	enc := true
+	location := "rest:http://127.0.0.1:9999/other" // remote → used verbatim as the session repo
+	eng := &fakeResticEngine{
+		existingMode: &enc,
+		snaps: []restic.Snapshot{
+			{ID: "eeeeeeee55555555", Time: "2026-07-05T10:00:00Z", Tags: []string{"fileset:docs"}},
+		},
+	}
+	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, eng)
+
+	key := strings.Repeat("ab", 32)
+	w, m := doJSON(t, h, http.MethodPost, "/api/foreign/open", `{"location":"`+location+`","key":"`+key+`"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("open: status=%d body=%v", w.Code, m)
+	}
+	session, _ := m["session"].(string)
+	if session == "" {
+		t.Fatalf("open must return a session id, got %v", m)
+	}
+
+	// Unconfirmed → 400 with the familiar sentinel text; nothing starts.
+	w, m = doJSON(t, h, http.MethodPost, "/api/foreign/restore",
+		`{"session":"`+session+`","domain":"files","item":"docs","snapshot":"latest","confirm":false,"target":"restore-here/docs"}`)
+	if w.Code != http.StatusBadRequest || m["ok"] != false {
+		t.Fatalf("unconfirmed: status=%d body=%v, want 400 ok:false", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "not confirmed") {
+		t.Fatalf("unconfirmed: want the not-confirmed sentinel, got %q", msg)
+	}
+
+	// Unknown session → 4xx; nothing starts.
+	w, m = doJSON(t, h, http.MethodPost, "/api/foreign/restore",
+		`{"session":"unknown","domain":"files","item":"docs","snapshot":"latest","confirm":true,"target":"restore-here/docs"}`)
+	if w.Code != http.StatusBadRequest || m["ok"] != false {
+		t.Fatalf("unknown session: status=%d body=%v, want 400 ok:false", w.Code, m)
+	}
+
+	// Busy → 409: hold the first restore inside the engine, then fire a second.
+	eng.blockRestore = make(chan struct{})
+	eng.restoreEntered = make(chan struct{}, 1)
+	w, m = doJSON(t, h, http.MethodPost, "/api/foreign/restore",
+		`{"session":"`+session+`","domain":"files","item":"docs","snapshot":"latest","confirm":true,"target":"restore-here/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+		t.Fatalf("restore: status=%d body=%v, want 200 {ok:true, started:true}", w.Code, m)
+	}
+	<-eng.restoreEntered // the detached restore holds the single-flight guard now
+	w, m = doJSON(t, h, http.MethodPost, "/api/foreign/restore",
+		`{"session":"`+session+`","domain":"files","item":"docs","snapshot":"latest","confirm":true,"target":"restore-here/docs"}`)
+	if w.Code != http.StatusConflict || m["ok"] != false {
+		t.Fatalf("busy: status=%d body=%v, want 409 ok:false", w.Code, m)
+	}
+	close(eng.blockRestore)
+	waitForBackupDone(t, svc)
+
+	// The detached work restored from the SESSION repo (never a settings repo).
+	if len(eng.restored) != 1 || !strings.HasPrefix(eng.restored[0], location+":eeeeeeee55555555:/->") {
+		t.Fatalf("restored = %v, want one whole-tree restore from the session repo", eng.restored)
+	}
+}
