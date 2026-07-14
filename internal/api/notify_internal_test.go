@@ -205,6 +205,35 @@ func TestNotifyBackupStartPerDomainURL(t *testing.T) {
 	}
 }
 
+// TestNotifyBackupStartFilesPerDomainURL pins the files domain's Healthchecks
+// routing: "files" is a canonical HealthchecksByDomain key, so a files backup's
+// /start ping goes to the files check URL, never the global one.
+func TestNotifyBackupStartFilesPerDomainURL(t *testing.T) {
+	var filesPath string
+	var globalHits int
+	files := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { filesPath = r.URL.Path }))
+	defer files.Close()
+	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
+	defer global.Close()
+
+	s := unraidNotifyService(t, nil) // SendStart is HTTP-only; no SSH needed
+	if err := s.SetNotifyConfig(notify.Config{
+		On:                   "failure",
+		HealthchecksURL:      global.URL,
+		HealthchecksByDomain: map[string]string{"files": files.URL},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	s.notifyBackupStart(context.Background(), "files")
+	if filesPath != "/start" {
+		t.Fatalf("notifyBackupStart(files) should ping the files /start, got %q", filesPath)
+	}
+	if globalHits != 0 {
+		t.Fatalf("global URL must not be pinged for the files domain, hits=%d", globalHits)
+	}
+}
+
 // runScheduledContainers simulates one SCHEDULED containers-domain run the way
 // cmd/bombvault/main.go + the scheduler wire it: ONE aggregate /start, then every item
 // backed up under a Healthchecks-suppressed context (its per-item ping folded into the

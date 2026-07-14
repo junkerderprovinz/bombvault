@@ -51,7 +51,7 @@ func randomDeployPassword() (string, error) {
 // in that response. domain is one of the fixed backup domains.
 func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	switch domain {
-	case "containers", "vms", "flash", "config":
+	case "containers", "vms", "flash", "config", "files":
 	default:
 		return DeploySnippet{}, fmt.Errorf("unknown domain %q", domain)
 	}

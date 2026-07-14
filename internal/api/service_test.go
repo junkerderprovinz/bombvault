@@ -1238,6 +1238,55 @@ func TestDomainStatusIncludesConfig(t *testing.T) {
 	}
 }
 
+// TestDomainStatusIncludesFiles pins that the files domain surfaces in
+// DomainStatus (and therefore in the dashboard scorecard + Prometheus metrics,
+// which iterate DomainStatus generically): disabled it reports status "off";
+// enabled with a schedule but no backup yet it reports "never".
+func TestDomainStatusIncludesFiles(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir()}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+	// Default settings: files disabled → the entry exists and reads "off".
+	entries, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	var files *api.DomainStatusEntry
+	for i := range entries {
+		if entries[i].Domain == "files" {
+			files = &entries[i]
+		}
+	}
+	if files == nil {
+		t.Fatalf("DomainStatus missing files entry: %+v", entries)
+	}
+	if files.Enabled || files.Status != "off" {
+		t.Fatalf("disabled files domain should read off, got %+v", *files)
+	}
+
+	// Enabled with a schedule but no successful backup yet → "never".
+	s := mustSettings(t, st)
+	s.FilesEnabled = true
+	s.FilesSchedule = "daily 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	entries, err = svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	files = nil
+	for i := range entries {
+		if entries[i].Domain == "files" {
+			files = &entries[i]
+		}
+	}
+	if files == nil || !files.Enabled || files.Status != "never" {
+		t.Fatalf("enabled+scheduled files domain with no backup should read never, got %+v", files)
+	}
+}
+
 func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	dir := t.TempDir()
 	// HostMountRoot must be writable so EnsureRepo can create the repo dir, and

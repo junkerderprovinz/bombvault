@@ -24,6 +24,7 @@ func TestBucketRunsByDay(t *testing.T) {
 	domain := map[string]string{
 		"c1":                 "container",
 		"v1":                 "vm",
+		"f1":                 "files",
 		store.FlashTargetID:  "flash",
 		store.ConfigTargetID: "config",
 	}
@@ -32,6 +33,7 @@ func TestBucketRunsByDay(t *testing.T) {
 		{TargetID: "c1", Kind: "backup", Status: "success", StartedAt: day0.Unix()},
 		{TargetID: "c1", Kind: "backup", Status: "failed", StartedAt: day0.Unix()},
 		{TargetID: "v1", Kind: "backup", Status: "success", StartedAt: day1.Unix()},
+		{TargetID: "f1", Kind: "backup", Status: "success", StartedAt: day2.Unix()},
 		{TargetID: store.FlashTargetID, Kind: "backup", Status: "success", StartedAt: day2.Unix()},
 		{TargetID: store.ConfigTargetID, Kind: "backup", Status: "success", StartedAt: day1.Unix()},
 		// Ignored: running status, non-backup kind, unknown target.
@@ -67,9 +69,14 @@ func TestBucketRunsByDay(t *testing.T) {
 		t.Fatalf("day1 config = %+v, want {1 0}", got[1].Config)
 	}
 
-	// Day 2: one flash ok; running/restore/unknown all ignored.
+	// Day 2: one flash ok and one files ok (a file-set run must land in its own
+	// bucket, not be dropped by the switch default); running/restore/unknown all
+	// ignored.
 	if got[2].Flash != (DayStat{OK: 1}) {
 		t.Fatalf("day2 flash = %+v, want {1 0}", got[2].Flash)
+	}
+	if got[2].Files != (DayStat{OK: 1}) {
+		t.Fatalf("day2 files = %+v, want {1 0}", got[2].Files)
 	}
 	if got[2].Containers != (DayStat{}) {
 		t.Fatalf("day2 containers must ignore running/restore/unknown: %+v", got[2].Containers)
