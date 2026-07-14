@@ -3642,9 +3642,19 @@ func (s *Service) beginRestoreRun(name string) string {
 		log.Printf("api: restore: no target row for %q — outcome won't appear in the run history: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return ""
 	}
-	runID, err := runsAdapter{s.store}.Start(tg.ID, "restore")
+	return s.beginRestoreRunForTarget(tg.ID)
+}
+
+// beginRestoreRunForTarget is beginRestoreRun for an already-resolved
+// runs.target_id (a container target's ID, or a file set's stable id — the
+// files domain records its restores against file_sets.id directly), so every
+// per-item domain shares one restore-bookkeeping path. Returns "" when
+// recording fails (store error) — the restore itself must never be blocked by
+// bookkeeping.
+func (s *Service) beginRestoreRunForTarget(targetID string) string {
+	runID, err := runsAdapter{s.store}.Start(targetID, "restore")
 	if err != nil {
-		log.Printf("api: restore: record run start for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: restore: record run start for target %q failed: %v", targetID, err) //nolint:gosec // G706: targetID is %q-quoted
 		return ""
 	}
 	return runID
@@ -5160,6 +5170,387 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
 	s.maybeCollectStats(ctx, "files")
 	return sum, nil
+}
+
+// errFileSetNotFound is the user-safe error for an unknown file-set id (the
+// raw store error would leak SQL wording through the API surface).
+var errFileSetNotFound = errors.New("file set not found")
+
+// FileSetView is the per-set row returned by ListFileSetViews — the files
+// domain's counterpart of VMView. LastBackup is the unix time of the last
+// successful backup run (0 = never; runs-based, so listing never spawns a
+// restic process per row). PathExists reports whether the set's resolved
+// source folder currently exists under the host mount — false for a vanished
+// folder AND for the path-less sets DiscoverFileSets creates, so the UI can
+// flag "set path before backup".
+type FileSetView struct {
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	Path       string   `json:"path"`
+	Excludes   []string `json:"excludes"`
+	Enabled    bool     `json:"enabled"`
+	LastBackup int64    `json:"lastBackup"`
+	PathExists bool     `json:"pathExists"`
+}
+
+// ListFileSetViews returns all configured file sets with their last-backup
+// time and source-path existence.
+func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
+	sets, err := s.store.ListFileSets()
+	if err != nil {
+		return nil, fmt.Errorf("list file sets: %w", err)
+	}
+	views := make([]FileSetView, 0, len(sets))
+	for _, set := range sets {
+		v := FileSetView{ID: set.ID, Name: set.Name, Path: set.Path, Excludes: set.Excludes, Enabled: set.Enabled}
+		if v.Excludes == nil {
+			v.Excludes = []string{}
+		}
+		if run, _ := s.store.LastSuccessfulBackup(set.ID); run != nil && run.FinishedAt != nil {
+			v.LastBackup = *run.FinishedAt
+		}
+		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
+			if _, statErr := os.Stat(resolved); statErr == nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
+				v.PathExists = true
+			}
+		}
+		views = append(views, v)
+	}
+	return views, nil
+}
+
+// validateFileSet guards everything a file set feeds into: the name becomes a
+// restic tag ("fileset:<Name>") and a progress key, so it passes the same
+// strict charset as container names (validResourceName); the path must be a
+// relative subpath under the host mount (paths.Resolve containment) AND exist
+// on disk at save time, so a typo fails at configuration instead of on the
+// next scheduled backup. The one exception: a PATH-LESS set is valid while it
+// stays DISABLED — DiscoverFileSets rebuilds sets from fileset: tags alone
+// (the files domain has no mirrored definitions), where the original path is
+// unknowable; such a set must remain storable/patchable, but can never be
+// enabled until a real path is set.
+func (s *Service) validateFileSet(fs store.FileSet) error {
+	if !validResourceName(fs.Name) {
+		return errors.New("invalid file set name (letters, digits, . _ - only; must start with a letter or digit)")
+	}
+	if strings.TrimSpace(fs.Path) == "" {
+		if fs.Enabled {
+			return errors.New("file set has no source path — set a path before enabling it")
+		}
+		return nil
+	}
+	resolved, err := paths.Resolve(s.cfg.HostMountRoot, fs.Path)
+	if err != nil {
+		return errors.New("invalid path: must be a relative subpath under the host mount")
+	}
+	if _, statErr := os.Stat(resolved); statErr != nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
+		return errors.New("source path not found under the host mount")
+	}
+	return nil
+}
+
+// SnapshotsFileSet lists restic snapshots for a single file set, filtered by
+// the "fileset:<Name>" tag its backups write — the files counterpart of
+// SnapshotsVM. id is the set's stable store id; source selects the local or
+// off-site repo.
+func (s *Service) SnapshotsFileSet(ctx context.Context, id, source string) ([]restic.Snapshot, error) {
+	set, err := s.store.GetFileSet(id)
+	if err != nil {
+		return nil, errFileSetNotFound
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "files", source)
+	if err != nil {
+		return nil, err
+	}
+	mode := s.ModeFor(settings)
+	// A listing before any backup has run is "no snapshots yet", not an error.
+	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) {
+			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		}
+		return nil, nil
+	}
+	all, err := s.listSnapshots(ctx, repo, mode)
+	if err != nil {
+		return nil, err
+	}
+	tag := "fileset:" + set.Name
+	out := make([]restic.Snapshot, 0, len(all))
+	for _, snap := range all {
+		for _, t := range snap.Tags {
+			if t == tag {
+				out = append(out, snap)
+				break
+			}
+		}
+	}
+	return out, nil
+}
+
+// fileSetRestorePlan carries everything prepareRestoreFileSet validated and
+// resolved so the restic work can run detached from the request that asked for
+// it (StartRestoreFileSet), mirroring toPathRestorePlan.
+type fileSetRestorePlan struct {
+	repo       string
+	mode       restic.Mode
+	snapshotID string
+	setID      string // runs.target_id the detached run is recorded against
+	setName    string // progress key suffix ("files:<name>")
+	inPlace    string // in-place: the set's resolved source path (engine.RestorePath); "" = to-folder
+	target     string // to-folder: the resolved alternate folder under the host mount ("" = in-place)
+}
+
+// prepareRestoreFileSet performs ALL of a file-set restore's validation and
+// resolution synchronously — so a bad request fails immediately with a clear
+// error — and creates the alternate target folder once containment passes.
+//
+// SEC: the snapshot id passes the strict hex guard (backup.ValidSnapshotID)
+// and must belong to THIS set (tag-scoped via SnapshotsFileSet +
+// snapshotBelongs, like prepareRestoreToPath), so one set's data can't be
+// extracted through another's route. An empty targetSubPath restores IN PLACE
+// over the set's source folder — destructive, therefore confirm-gated (never
+// silent); a non-empty targetSubPath is resolved with paths.Resolve under the
+// host mount (rejects absolute/`..` escapes) and created only AFTER
+// containment passes — non-destructive, so no confirm needed (same as
+// RestoreContainerToPath).
+func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, source, targetSubPath string, confirm bool) (fileSetRestorePlan, error) {
+	set, err := s.store.GetFileSet(id)
+	if err != nil {
+		return fileSetRestorePlan{}, errFileSetNotFound
+	}
+	if source != "local" && source != "offsite" {
+		return fileSetRestorePlan{}, errors.New("invalid source (must be local or offsite)")
+	}
+	if !backup.ValidSnapshotID(snapshotID) {
+		return fileSetRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
+
+	plan := fileSetRestorePlan{snapshotID: snapshotID, setID: set.ID, setName: set.Name}
+	if sub := strings.TrimSpace(targetSubPath); sub != "" {
+		// Alternate folder: shared containment helper (path.Cleans the input and
+		// rejects an absolute path or any "../" that would escape the mount).
+		t, rErr := paths.Resolve(s.cfg.HostMountRoot, sub)
+		if rErr != nil {
+			return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+		}
+		plan.target = t
+	} else {
+		// In-place: writes over the set's source folder — require the explicit
+		// confirmation (same sentinel discipline as prepareRestore).
+		if !confirm {
+			return fileSetRestorePlan{}, backup.ErrNotConfirmed
+		}
+		// A discovered, path-less set has no original location to restore to —
+		// say so instead of letting paths.Resolve report a misleading traversal
+		// error for "" (restore-to-folder works without a path).
+		if strings.TrimSpace(set.Path) == "" {
+			return fileSetRestorePlan{}, fmt.Errorf("file set %q has no source path configured — restore to a folder instead, or set a path first", set.Name)
+		}
+		src, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path)
+		if rErr != nil {
+			return fileSetRestorePlan{}, errors.New("invalid file set path: must be a relative subpath under the host mount")
+		}
+		plan.inPlace = src
+	}
+
+	// Scope to THIS set: the snapshot must be one of ITS snapshots.
+	snaps, err := s.SnapshotsFileSet(ctx, id, source)
+	if err != nil {
+		return fileSetRestorePlan{}, err
+	}
+	if !snapshotBelongs(snaps, snapshotID) {
+		return fileSetRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+	}
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fileSetRestorePlan{}, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "files", source)
+	if err != nil {
+		return fileSetRestorePlan{}, err
+	}
+	plan.repo = repo
+	plan.mode = s.ModeFor(settings)
+
+	// Create the alternate target dir ONLY after every validation passed.
+	if plan.target != "" {
+		if err := paths.EnsureDir(plan.target); err != nil {
+			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+		}
+	}
+	return plan, nil
+}
+
+// runRestoreFileSet restores an already-validated file-set plan: in place
+// (restic restores the set's source path back to its own location) or the
+// whole snapshot tree into the alternate target folder.
+func (s *Service) runRestoreFileSet(ctx context.Context, plan fileSetRestorePlan) error {
+	// Hold the domain repo lock for the restic work: scheduled backups bypass
+	// batchActive by design and the domain lock is the layer they DO respect
+	// (see executeRestore).
+	unlock := s.lockDomainFor("files", "restore")
+	defer unlock()
+	if plan.inPlace != "" {
+		return s.engine.RestorePath(ctx, plan.repo, plan.snapshotID, plan.inPlace, plan.mode)
+	}
+	return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, "/", plan.target, plan.mode)
+}
+
+// StartRestoreFileSet launches a file-set restore in a background goroutine
+// and returns immediately (see StartRestoreToPath for why). ALL validation
+// runs synchronously (a bad request fails right away, no goroutine); the
+// resolved alternate target folder ("" for an in-place restore) is returned in
+// the ack so the UI can show it. The detached run publishes "files:<name>"
+// progress (phase "restore"), registers a cancel key, and records a run (kind
+// "restore") against the set's stable id so the outcome — including the real
+// restic error text — lands in the run history.
+//
+// Shares batchActive with backups and the other restores; returns
+// ("", false, nil) when one is already running.
+func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, source, targetSubPath string, confirm bool) (string, bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return "", false, nil
+	}
+	plan, err := s.prepareRestoreFileSet(ctx, id, snapshotID, source, targetSubPath, confirm)
+	if err != nil {
+		s.batchActive.Store(false)
+		return "", false, err
+	}
+	bctx := context.WithoutCancel(ctx)
+	rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
+	go func() {
+		defer s.batchActive.Store(false)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
+		defer cancel()
+		s.registerCancel(rkey, cancel)
+		defer s.unregisterCancel(rkey)
+		runID := s.beginRestoreRunForTarget(plan.setID)
+		pctx := s.progBegin(rctx, rkey, "restore")
+		rerr := s.runRestoreFileSet(pctx, plan)
+		s.progEnd(rkey, "restore", rerr == nil)
+		s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		if rerr != nil {
+			log.Printf("api: restore file set: %q failed: %v", plan.setName, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return plan.target, true, nil
+}
+
+// DeleteBackupsFileSet removes ALL backups of a file set in one go — every
+// restic snapshot tagged fileset:<Name>, pruning the freed data — and forgets
+// the set from the store (row + run history), mirroring DeleteBackupsVM's
+// local-source behaviour. The repo is shared by all sets, so only this set's
+// tagged snapshots are forgotten; prune never touches data still referenced by
+// other sets' snapshots. Serialised against files backups via the domain lock,
+// and stale locks are cleared first (so it can't fail on a leftover lock).
+func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
+	settings, repo, err := s.domainRepo("files")
+	if err != nil {
+		return err
+	}
+	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
+		return err
+	}
+	unlock, ok := s.tryLockDomainFor("files", "delete")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	mode := s.ModeFor(settings)
+	s.unlockStale(ctx, repo, mode)
+
+	// Collect this set's snapshot IDs (tag-filtered fileset:<Name>) and
+	// forget+prune them in one restic call (Forget with prune=true).
+	snaps, err := s.SnapshotsFileSet(ctx, id, "local")
+	if err != nil {
+		return err
+	}
+	ids := make([]string, 0, len(snaps))
+	for _, snap := range snaps {
+		ids = append(ids, snap.ID)
+	}
+	if len(ids) > 0 {
+		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+			return fmt.Errorf("forget snapshots: %w", err)
+		}
+	}
+
+	// Drop the set row + its run history so the set disappears from the list
+	// once its backups are gone.
+	if err := s.store.DeleteFileSet(id); err != nil {
+		return fmt.Errorf("delete file set: %w", err)
+	}
+	return nil
+}
+
+// DiscoverFileSets rebuilds the file-set list from backup storage — the files
+// counterpart of Discover/DiscoverVMs, used after a fresh install / database
+// loss. Unlike containers/VMs the files domain mirrors NO definitions to the
+// repo (there is nothing to recreate beyond the folder's content), so
+// discovery works from the fileset:<Name> snapshot tags alone: every unknown
+// name is stored as a DISABLED, PATH-LESS set — the original source path is
+// unknowable from tags, so the UI flags "set path before backup" while
+// restore-to-folder already works. Existing sets are never touched (their
+// path/excludes/enabled state is user configuration). Returns the number of
+// file sets found in the repo. dryRun makes it READ-ONLY (list + count, write
+// nothing) — used by the Recovery readability probe so it never resurrects
+// orphan entries (#44).
+func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (int, error) {
+	settings, repo, err := s.domainRepo("files")
+	if err != nil {
+		return 0, err
+	}
+	// Discover targets the primary (local) repo; the local config check is correct
+	// here and preserves the quiet "0 discovered" for a not-yet-created repo.
+	if _, statErr := os.Stat(filepath.Join(repo, "config")); errors.Is(statErr, fs.ErrNotExist) { //nolint:gosec // G703: repo is the operator-configured local domain path, validated under the mount root on save
+		return 0, nil // no repo yet → nothing to discover
+	}
+	mode := s.ModeFor(settings)
+	snaps, err := s.listSnapshots(ctx, repo, mode)
+	if err != nil {
+		return 0, err
+	}
+
+	names := map[string]bool{}
+	for _, snap := range snaps {
+		for _, tag := range snap.Tags {
+			if rest, ok := strings.CutPrefix(tag, "fileset:"); ok && rest != "" {
+				names[rest] = true
+			}
+		}
+	}
+
+	discovered := 0
+	for name := range names {
+		// Defense-in-depth: only our own backups write fileset: tags, but a name
+		// that fails the boundary charset (it feeds tags + progress keys) is
+		// skipped rather than stored.
+		if !validResourceName(name) {
+			log.Printf("api: discover files: skipping unsafe file set name %q", name) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		if dryRun {
+			discovered++ // probe: count what a real discover would surface, write nothing
+			continue
+		}
+		if _, gErr := s.store.GetFileSetByName(name); gErr == nil {
+			discovered++ // already configured — never clobber user configuration
+			continue
+		}
+		if _, cErr := s.store.CreateFileSet(store.FileSet{Name: name, Path: "", Enabled: false}); cErr != nil {
+			log.Printf("api: discover files: could not create set %q: %v", name, cErr) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		discovered++
+	}
+	return discovered, nil
 }
 
 // resticAdapter also satisfies the config domain's backup surface.

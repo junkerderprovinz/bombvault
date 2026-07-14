@@ -1091,3 +1091,363 @@ func TestBrowseRejectsAbsolutePath(t *testing.T) {
 
 // ensure context import is used (Router handlers run under request context).
 var _ = context.Background
+
+// ---------------------------------------------------------------------------
+// Files endpoints (the files domain — named host folders backed up as file sets)
+// ---------------------------------------------------------------------------
+
+// newFilesTestRouter builds a router over a temp HostMountRoot with the files
+// repo marker initialised (so snapshot listings reach the engine), a
+// "data/docs" source folder to point sets at, and the given fake engine.
+// Returns the router, the store, the service (for waitForBackupDone), and the
+// mount root dir.
+func newFilesTestRouter(t *testing.T, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service, string) {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.FilesPath = "backups/files"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "files")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "data", "docs"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes())
+	return h.Router(), st, svc, dir
+}
+
+// fileSetRow mirrors the FileSetView JSON shape for list assertions.
+type fileSetRow struct {
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	Path       string   `json:"path"`
+	Excludes   []string `json:"excludes"`
+	Enabled    bool     `json:"enabled"`
+	LastBackup int64    `json:"lastBackup"`
+	PathExists bool     `json:"pathExists"`
+}
+
+// fileSetsOf decodes the GET /api/files list response.
+func fileSetsOf(t *testing.T, h http.Handler) []fileSetRow {
+	t.Helper()
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/files", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /api/files status = %d body=%s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		OK       bool         `json:"ok"`
+		FileSets []fileSetRow `json:"fileSets"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode list: %v (%s)", err, w.Body.String())
+	}
+	if !resp.OK {
+		t.Fatalf("GET /api/files not ok: %s", w.Body.String())
+	}
+	return resp.FileSets
+}
+
+// TestFileSetCRUDRoundTrip pins the manage surface: create returns the new id;
+// the list carries the full FileSetView shape (enabled-by-default, excludes
+// round-trip, pathExists for a real folder); PATCH merges partial fields; and
+// DELETE removes the set.
+func TestFileSetCRUDRoundTrip(t *testing.T) {
+	h, _, _, _ := newFilesTestRouter(t, &fakeResticEngine{})
+
+	// Create.
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs","excludes":["*.tmp"]}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create failed: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+	if id == "" {
+		t.Fatalf("create must return the new set id, got %v", m)
+	}
+
+	// List: the full view row.
+	sets := fileSetsOf(t, h)
+	if len(sets) != 1 {
+		t.Fatalf("expected 1 set, got %+v", sets)
+	}
+	got := sets[0]
+	if got.ID != id || got.Name != "docs" || got.Path != "data/docs" {
+		t.Fatalf("row = %+v", got)
+	}
+	if !got.Enabled {
+		t.Fatal("a created set must be enabled by default")
+	}
+	if len(got.Excludes) != 1 || got.Excludes[0] != "*.tmp" {
+		t.Fatalf("excludes did not round-trip: %+v", got.Excludes)
+	}
+	if !got.PathExists {
+		t.Fatal("pathExists must be true for an existing source folder")
+	}
+	if got.LastBackup != 0 {
+		t.Fatalf("lastBackup must be 0 before any backup, got %d", got.LastBackup)
+	}
+
+	// Patch: partial update must not reset the untouched fields.
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"enabled":false,"excludes":["*.log","cache"]}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("patch failed: %d %v", w.Code, m)
+	}
+	got = fileSetsOf(t, h)[0]
+	if got.Enabled {
+		t.Fatal("patch must disable the set")
+	}
+	if len(got.Excludes) != 2 || got.Excludes[0] != "*.log" {
+		t.Fatalf("patched excludes = %+v", got.Excludes)
+	}
+	if got.Name != "docs" || got.Path != "data/docs" {
+		t.Fatalf("patch must not clobber name/path: %+v", got)
+	}
+
+	// Delete.
+	w, m = doJSON(t, h, http.MethodDelete, "/api/files/sets/"+id, "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("delete failed: %d %v", w.Code, m)
+	}
+	if left := fileSetsOf(t, h); len(left) != 0 {
+		t.Fatalf("expected no sets after delete, got %+v", left)
+	}
+}
+
+// TestCreateFileSetRejectsBadPaths pins the save-time path guard: a traversal
+// path and a non-existent path are both refused gracefully and nothing is
+// stored (the path is validated BEFORE the row is written).
+func TestCreateFileSetRejectsBadPaths(t *testing.T) {
+	h, _, _, _ := newFilesTestRouter(t, &fakeResticEngine{})
+
+	for _, c := range []struct{ name, body string }{
+		{"traversal", `{"name":"evil","path":"../etc"}`},
+		{"absolute", `{"name":"evil","path":"/etc"}`},
+		{"non-existent", `{"name":"ghost","path":"data/missing"}`},
+		{"empty path", `{"name":"empty","path":""}`},
+	} {
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", c.body)
+		if w.Code != http.StatusOK {
+			t.Fatalf("%s: expected graceful 200, got %d", c.name, w.Code)
+		}
+		if m["ok"] != false {
+			t.Fatalf("%s: expected ok:false, got %v", c.name, m)
+		}
+	}
+	if sets := fileSetsOf(t, h); len(sets) != 0 {
+		t.Fatalf("no set may be stored from a rejected create, got %+v", sets)
+	}
+}
+
+// TestRestoreFileSetUnconfirmedInPlace pins the never-silent rule: an in-place
+// restore (no targetPath) without confirm:true fails synchronously with the
+// familiar not-confirmed sentinel and starts no restic work.
+func TestRestoreFileSetUnconfirmedInPlace(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}}
+	h, _, _, _ := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":false}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false || !strings.Contains(m["error"].(string), "not confirmed") {
+		t.Fatalf("expected the not-confirmed error, got %v", m)
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("an unconfirmed restore must start no restic work, got %v", eng.restored)
+	}
+}
+
+// TestRestoreFileSetInPlaceConfirmed pins the destructive path: with
+// confirm:true and no targetPath the snapshot is restored back over the set's
+// resolved source folder via RestorePath, and the outcome is recorded as a
+// kind "restore" run against the set's stable id.
+func TestRestoreFileSetInPlaceConfirmed(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}}
+	h, st, svc, dir := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+		t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+	}
+	if m["target"] != "" {
+		t.Fatalf("an in-place restore acks no alternate target, got %v", m["target"])
+	}
+	waitForBackupDone(t, svc)
+
+	// The service resolves both the repo and the source with slash joins
+	// (paths.Resolve), so the expectation is built the same way.
+	repo := dir + "/backups/files"
+	wantSuffix := repo + ":deadbeef12345678:" + dir + "/data/docs"
+	if len(eng.restored) != 1 || eng.restored[0] != wantSuffix {
+		t.Fatalf("restored = %v, want [%s]", eng.restored, wantSuffix)
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, r := range runs {
+		if r.Kind == "restore" && r.Status == "success" && r.TargetID == id {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected a successful restore run against the set id, got %+v", runs)
+	}
+}
+
+// TestRestoreFileSetToFolder pins the non-destructive path: a relative
+// targetPath is resolved + created under the mount root, the ack returns the
+// resolved folder, and the whole snapshot tree is extracted into it via
+// RestoreInclude("/").
+func TestRestoreFileSetToFolder(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}}
+	h, _, svc, dir := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+		t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+	}
+	wantTarget := dir + "/restore-here/docs"
+	if m["target"] != wantTarget {
+		t.Fatalf("target = %v, want %s", m["target"], wantTarget)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "restore-here", "docs")); err != nil {
+		t.Fatalf("the target folder must be created under the mount root: %v", err)
+	}
+	waitForBackupDone(t, svc)
+
+	// Slash-joined like the service's paths.Resolve output (see the in-place test).
+	repo := dir + "/backups/files"
+	want := repo + ":deadbeef12345678:/->" + wantTarget
+	if len(eng.restored) != 1 || eng.restored[0] != want {
+		t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+	}
+}
+
+// TestRestoreFileSetRefusesTraversalTarget pins the containment guard on the
+// alternate folder: a "../" target is refused synchronously and no restic work
+// starts.
+func TestRestoreFileSetRefusesTraversalTarget(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}}
+	h, _, _, _ := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"../escape"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false || !strings.Contains(m["error"].(string), "invalid target folder") {
+		t.Fatalf("expected the invalid-target-folder error, got %v", m)
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("a refused restore must start no restic work, got %v", eng.restored)
+	}
+}
+
+// TestSnapshotsFileSetFilteredByTag pins the tag scoping: only THIS set's
+// fileset:<Name> snapshots come back — another set's and other domains'
+// snapshots in the shared repo never leak through this route.
+func TestSnapshotsFileSetFilteredByTag(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+		{ID: "cafebabe87654321", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:other"}},
+		{ID: "abcdef0123456789", Time: "2026-07-14T00:00:00Z", Tags: []string{"container:plex"}},
+	}}
+	h, _, _, _ := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/files/sets/"+id+"/snapshots", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	var resp struct {
+		OK        bool              `json:"ok"`
+		Snapshots []restic.Snapshot `json:"snapshots"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if !resp.OK || len(resp.Snapshots) != 1 || resp.Snapshots[0].ID != "deadbeef12345678" {
+		t.Fatalf("expected exactly the docs-tagged snapshot, got %s", w.Body.String())
+	}
+}
+
+// TestDiscoverFileSets pins the defs-less rebuild: names come from fileset:
+// tags alone; ?probe=true counts without writing (the Recovery readability
+// check must never resurrect entries); the real run creates a DISABLED,
+// PATH-LESS set per unknown name and never clobbers an existing set.
+func TestDiscoverFileSets(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+		{ID: "abcdef0123456789", Time: "2026-07-14T00:00:00Z", Tags: []string{"container:plex"}},
+	}}
+	h, _, _, _ := newFilesTestRouter(t, eng)
+
+	// Probe: count only, write nothing.
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/discover?probe=true", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("probe failed: %d %v", w.Code, m)
+	}
+	if m["discovered"] != float64(1) {
+		t.Fatalf("probe discovered = %v, want 1", m["discovered"])
+	}
+	if sets := fileSetsOf(t, h); len(sets) != 0 {
+		t.Fatalf("a probe must create no sets, got %+v", sets)
+	}
+
+	// Real run: one disabled, path-less set.
+	w, m = doJSON(t, h, http.MethodPost, "/api/files/discover", "")
+	if w.Code != http.StatusOK || m["ok"] != true || m["discovered"] != float64(1) {
+		t.Fatalf("discover failed: %d %v", w.Code, m)
+	}
+	sets := fileSetsOf(t, h)
+	if len(sets) != 1 {
+		t.Fatalf("expected 1 discovered set, got %+v", sets)
+	}
+	if sets[0].Name != "docs" || sets[0].Path != "" || sets[0].Enabled || sets[0].PathExists {
+		t.Fatalf("discovered set must be disabled and path-less: %+v", sets[0])
+	}
+
+	// Idempotent: a second run counts the (now known) set but never duplicates
+	// or re-enables it.
+	_, m = doJSON(t, h, http.MethodPost, "/api/files/discover", "")
+	if m["discovered"] != float64(1) {
+		t.Fatalf("re-discover = %v, want 1", m["discovered"])
+	}
+	sets = fileSetsOf(t, h)
+	if len(sets) != 1 || sets[0].Enabled {
+		t.Fatalf("re-discover must not duplicate or enable: %+v", sets)
+	}
+}

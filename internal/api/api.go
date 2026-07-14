@@ -168,5 +168,18 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/config/snapshots", h.handleSnapshotsConfig)
 	mux.HandleFunc("POST /api/config/restore", h.handleRestoreConfig)
 
+	// Files endpoints (the files domain — named host folders backed up as file
+	// sets, #62).
+	mux.HandleFunc("GET /api/files", h.handleListFileSets)
+	mux.HandleFunc("POST /api/files/sets", h.handleCreateFileSet)
+	mux.HandleFunc("PATCH /api/files/sets/{id}", h.handlePatchFileSet)
+	mux.HandleFunc("DELETE /api/files/sets/{id}", h.handleDeleteFileSet)
+	mux.HandleFunc("DELETE /api/files/sets/{id}/backups", h.handleDeleteBackupsFileSet)
+	mux.HandleFunc("POST /api/files/sets/{id}/backup", h.handleBackupFileSet)
+	mux.HandleFunc("POST /api/files/backup-all", h.handleBackupFilesAll)
+	mux.HandleFunc("GET /api/files/sets/{id}/snapshots", h.handleSnapshotsFileSet)
+	mux.HandleFunc("POST /api/files/sets/{id}/restore", h.handleRestoreFileSet)
+	mux.HandleFunc("POST /api/files/discover", h.handleDiscoverFiles)
+
 	return h.authGate(mux)
 }
