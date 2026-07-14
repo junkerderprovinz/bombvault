@@ -838,6 +838,61 @@ func TestDomainStatusCarriesDrillDetail(t *testing.T) {
 	}
 }
 
+// TestDomainStatusCarriesOffsiteSubsetDrill pins #63: DomainStatus must carry the
+// latest OFF-SITE SUBSET drill (LastOffsiteSubsetAt/OK) for every domain — it is
+// the only off-site drill VMs can run — and it must be independent of both the
+// LOCAL subset fields (LastVerified*) and the off-site DR fields (LastDRDrill*).
+func TestDomainStatusCarriesOffsiteSubsetDrill(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.VMsEnabled = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Unix()
+	// vms: a PASSED off-site subset drill — the VM-only off-site proof.
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "vms", Source: "offsite", At: now - 600, OK: true, Kind: "subset"}); err != nil {
+		t.Fatal(err)
+	}
+	// containers: a FAILED off-site subset drill AND a PASSED off-site DR drill —
+	// the subset fields must not leak into (or read from) the DR fields.
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", At: now - 1200, OK: false, Kind: "subset", Detail: "subset boom"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", At: now - 300, OK: true, Kind: "dr"}); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	byDomain := map[string]api.DomainStatusEntry{}
+	for _, d := range statuses {
+		byDomain[d.Domain] = d
+	}
+
+	v := byDomain["vms"]
+	if v.LastOffsiteSubsetAt != now-600 || !v.LastOffsiteSubsetOK {
+		t.Fatalf("vms off-site subset drill should be stamped + OK, got %+v", v)
+	}
+	if v.LastVerified != 0 || v.LastDRDrillAt != 0 {
+		t.Fatalf("vms local/DR fields must stay untouched, got %+v", v)
+	}
+
+	c := byDomain["containers"]
+	if c.LastOffsiteSubsetAt != now-1200 || c.LastOffsiteSubsetOK {
+		t.Fatalf("containers off-site subset drill should be stamped + failed, got %+v", c)
+	}
+	if c.LastDRDrillAt != now-300 || !c.LastDRDrillOK {
+		t.Fatalf("containers DR drill must stay independent of the subset fields, got %+v", c)
+	}
+}
+
 // newImmutableOffsiteSvc builds a service whose containers repo is initialised
 // locally and whose off-site repo is a remote flagged immutable — the setup for
 // the delete/prune-refusal and unlock-allowed tests.

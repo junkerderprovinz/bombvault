@@ -711,6 +711,7 @@ const th: Partial<Translations> = {
   "drill.runningDR": "กำลังกู้คืน…",
   "drill.confirmDR": "การดำเนินการนี้จะกู้คืนสแนปช็อตนอกสถานที่ล่าสุดแบบจริงลงใน sandbox ชั่วคราว เพื่อพิสูจน์ว่ากู้คืนได้ แล้วลบทิ้ง มันจะดาวน์โหลดข้อมูลจริงและอาจใช้เวลาสักครู่ ดำเนินการต่อ?",
   "drill.provenOffsite": "พิสูจน์แล้วว่ากู้คืนได้จากนอกสถานที่",
+  "drill.offsiteVerified": "ตรวจสอบนอกสถานที่แล้ว",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "การป้องกันแรนซัมแวร์",

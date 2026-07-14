@@ -708,6 +708,7 @@ const el: Partial<Translations> = {
   "drill.runningDR": "Επαναφορά…",
   "drill.confirmDR": "Αυτό εκτελεί μια ΠΡΑΓΜΑΤΙΚΗ επαναφορά του νεότερου στιγμιότυπου εκτός τόπου σε ένα προσωρινό sandbox για να αποδείξει ότι είναι επαναφερόμενο και έπειτα το διαγράφει. Κατεβάζει πραγματικά δεδομένα και μπορεί να πάρει λίγη ώρα. Συνέχεια;",
   "drill.provenOffsite": "αποδεδειγμένα επαναφερόμενο εκτός τόπου",
+  "drill.offsiteVerified": "επαληθευμένο εκτός τόπου",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Προστασία από ransomware",

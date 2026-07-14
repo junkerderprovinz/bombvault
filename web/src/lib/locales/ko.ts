@@ -675,6 +675,7 @@ const ko: Partial<Translations> = {
   "drill.runningDR": "복원 중…",
   "drill.confirmDR": "이 작업은 복원 가능함을 입증하기 위해 최신 오프사이트 스냅샷을 임시 샌드박스로 실제 복원한 뒤 삭제합니다. 실제 데이터를 다운로드하므로 시간이 걸릴 수 있습니다. 계속하시겠습니까?",
   "drill.provenOffsite": "오프사이트에서 복원 가능함이 입증됨",
+  "drill.offsiteVerified": "오프사이트 검증됨",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "랜섬웨어 보호",

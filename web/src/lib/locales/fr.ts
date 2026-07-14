@@ -683,6 +683,7 @@ const fr: Partial<Translations> = {
   "drill.runningDR": "Restauration…",
   "drill.confirmDR": "Ceci effectue une restauration RÉELLE de l'instantané hors site le plus récent dans une sandbox temporaire pour prouver qu'il est récupérable, puis le supprime. Elle télécharge de vraies données et peut prendre un certain temps. Continuer ?",
   "drill.provenOffsite": "restaurabilité hors site prouvée",
+  "drill.offsiteVerified": "vérifié hors site",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Protection contre les ransomwares",

@@ -706,6 +706,7 @@ const cs: Partial<Translations> = {
   "drill.runningDR": "Obnovuji…",
   "drill.confirmDR": "Provede se SKUTEČNÁ obnova nejnovějšího snímku mimo lokalitu do dočasného sandboxu, aby se prokázala jeho obnovitelnost, a poté se smaže. Stahují se přitom skutečná data, což může chvíli trvat. Pokračovat?",
   "drill.provenOffsite": "prokazatelně obnovitelné mimo lokalitu",
+  "drill.offsiteVerified": "ověřeno mimo lokalitu",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Ochrana proti ransomwaru",

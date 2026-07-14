@@ -204,6 +204,10 @@ export interface DomainStatus {
   lastReplicationOK: boolean; // whether that replication succeeded
   lastDrDrillAt: number; // unix seconds of the last off-site DR drill; 0 = never
   lastDrDrillOK: boolean; // whether that DR drill passed
+  // Latest OFF-SITE SUBSET drill (integrity check against the off-site repo) —
+  // the only off-site drill VMs can run. Drives the "off-site verified" badge (#63).
+  lastOffsiteSubsetAt: number; // unix seconds; 0 = never
+  lastOffsiteSubsetOK: boolean; // whether that check passed
   // Whether the scheduled off-site DR drill is active (DrillsEnabled &&
   // OffsiteDrillsEnabled && offsiteConfigured). When false but offsiteConfigured,
   // the dashboard shows a neutral "manual only" pill instead of a red failure.

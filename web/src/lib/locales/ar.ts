@@ -711,6 +711,7 @@ const ar: Partial<Translations> = {
   "drill.runningDR": "جارٍ الاستعادة…",
   "drill.confirmDR": "يُجري هذا استعادة حقيقية لأحدث لقطة خارج الموقع إلى sandbox مؤقتة لإثبات قابليتها للاستعادة، ثم يحذفها. يُنزّل بيانات حقيقية وقد يستغرق بعض الوقت. هل تريد المتابعة؟",
   "drill.provenOffsite": "مُثبَت أنه قابل للاستعادة من خارج الموقع",
+  "drill.offsiteVerified": "مُتحقَّق منه خارج الموقع",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "الحماية من برامج الفدية",

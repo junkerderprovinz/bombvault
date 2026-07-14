@@ -675,6 +675,7 @@ const pl: Partial<Translations> = {
   "drill.runningDR": "Przywracanie…",
   "drill.confirmDR": "To wykonuje RZECZYWISTE przywracanie najnowszej migawki poza siedzibą do tymczasowego sandboxa, aby udowodnić, że da się ją odzyskać, a następnie ją usuwa. Pobiera prawdziwe dane i może chwilę potrwać. Kontynuować?",
   "drill.provenOffsite": "potwierdzona możliwość przywrócenia z kopii poza siedzibą",
+  "drill.offsiteVerified": "zweryfikowano poza siedzibą",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Ochrona przed ransomware",

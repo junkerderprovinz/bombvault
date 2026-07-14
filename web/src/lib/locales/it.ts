@@ -683,6 +683,7 @@ const it: Partial<Translations> = {
   "drill.runningDR": "Ripristino…",
   "drill.confirmDR": "Questo esegue un ripristino REALE dello snapshot off-site più recente in una sandbox temporanea per dimostrare che è recuperabile, poi lo elimina. Scarica dati reali e può richiedere tempo. Continuare?",
   "drill.provenOffsite": "ripristinabilità comprovata dall'off-site",
+  "drill.offsiteVerified": "verificato off-site",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Protezione ransomware",

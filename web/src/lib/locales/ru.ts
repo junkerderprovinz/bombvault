@@ -675,6 +675,7 @@ const ru: Partial<Translations> = {
   "drill.runningDR": "Восстановление…",
   "drill.confirmDR": "Это выполняет РЕАЛЬНОЕ восстановление новейшего внешнего снимка во временный sandbox, чтобы доказать его восстановимость, затем удаляет его. Оно загружает реальные данные и может занять время. Продолжить?",
   "drill.provenOffsite": "восстановимость из внешней копии подтверждена",
+  "drill.offsiteVerified": "внешняя копия проверена",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Защита от программ-вымогателей",

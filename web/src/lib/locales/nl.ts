@@ -677,6 +677,7 @@ const nl: Partial<Translations> = {
   "drill.runningDR": "Herstellen…",
   "drill.confirmDR": "Dit voert een ECHT herstel uit van de nieuwste off-site snapshot naar een tijdelijke sandbox om te bewijzen dat die herstelbaar is, en verwijdert het daarna. Het downloadt echte data en kan even duren. Doorgaan?",
   "drill.provenOffsite": "bewezen herstelbaar vanaf off-site",
+  "drill.offsiteVerified": "off-site geverifieerd",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Ransomware-bescherming",

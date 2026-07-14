@@ -708,6 +708,7 @@ const da: Partial<Translations> = {
   "drill.runningDR": "Gendanner…",
   "drill.confirmDR": "Dette udfører en ÆGTE gendannelse af det nyeste off-site-snapshot til en midlertidig sandbox for at bevise, at det kan gendannes, og sletter det derefter. Den henter rigtige data og kan tage et stykke tid. Fortsæt?",
   "drill.provenOffsite": "bevist gendannelig fra off-site",
+  "drill.offsiteVerified": "off-site verificeret",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Ransomware-beskyttelse",

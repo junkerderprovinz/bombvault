@@ -700,6 +700,7 @@ const zh: Partial<Translations> = {
   "drill.runningDR": "还原中…",
   "drill.confirmDR": "此操作会将最新的异地快照真实还原到临时沙盒中，以证明其可恢复，然后将其删除。它会下载真实数据，可能需要一些时间。是否继续？",
   "drill.provenOffsite": "已证实可从异地还原",
+  "drill.offsiteVerified": "异地已验证",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "勒索软件防护",

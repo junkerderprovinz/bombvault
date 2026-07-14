@@ -708,6 +708,7 @@ const fi: Partial<Translations> = {
   "drill.runningDR": "Palautetaan…",
   "drill.confirmDR": "Tämä suorittaa uusimman etätilannevedoksen TODELLISEN palautuksen tilapäiseen sandboxiin todistaakseen sen palautettavuuden ja poistaa sen sitten. Se lataa oikeaa dataa ja voi kestää hetken. Jatketaanko?",
   "drill.provenOffsite": "todistetusti palautettavissa etäkopiosta",
+  "drill.offsiteVerified": "etäkopio vahvistettu",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.title": "Kiristysohjelmasuojaus",

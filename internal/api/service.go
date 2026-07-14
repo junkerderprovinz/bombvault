@@ -830,6 +830,13 @@ type DomainStatusEntry struct {
 	LastReplicationOK bool  `json:"lastReplicationOK"`
 	LastDRDrillAt     int64 `json:"lastDrDrillAt"`
 	LastDRDrillOK     bool  `json:"lastDrDrillOK"`
+	// LastOffsiteSubsetAt / LastOffsiteSubsetOK stamp the latest OFF-SITE SUBSET
+	// drill (`restic check --read-data-subset` against the off-site repo) — the
+	// recommended integrity check and the ONLY off-site drill VMs can run (DR
+	// restores are refused for them). They drive the dashboard's "off-site
+	// verified" badge (#63), independent of the DR fields above.
+	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
+	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
 	// OffsiteDrillScheduled is true only when the scheduler actually runs an
 	// off-site DR drill for this domain (DrillsEnabled AND OffsiteDrillsEnabled AND
 	// an off-site repo configured). When false but the domain has an off-site repo,
@@ -1170,6 +1177,16 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			lastDRDrillOK = dr.OK
 			drDetail = dr.Detail
 		}
+		// The latest OFF-SITE SUBSET drill (integrity check against the off-site
+		// repo) drives the dashboard's "off-site verified" badge (#63). It is the
+		// only off-site drill available for VMs (DR restores are refused for them),
+		// so it is read for every domain. Best-effort like the reads above.
+		var lastOffsiteSubsetAt int64
+		var lastOffsiteSubsetOK bool
+		if sub, found, subErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "subset"); subErr == nil && found {
+			lastOffsiteSubsetAt = sub.At
+			lastOffsiteSubsetOK = sub.OK
+		}
 
 		// The DR-drill currency only has a claim when the scheduler actually runs
 		// off-site DR drills (DrillsEnabled AND OffsiteDrillsEnabled); otherwise a
@@ -1234,6 +1251,8 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			LastReplicationOK:     lastReplicationOK,
 			LastDRDrillAt:         lastDRDrillAt,
 			LastDRDrillOK:         lastDRDrillOK,
+			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
+			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
 			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
 			DrillDetail:           drDetail,
 			Protection:            protection,
