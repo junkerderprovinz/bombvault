@@ -232,6 +232,15 @@ func run() error {
 		_, bErr := svc.BackupConfig(context.Background())
 		return bErr
 	})
+	// Files is a multi-item domain like containers/VMs: each scheduled file set
+	// runs with its per-item Healthchecks/summary pings suppressed so the ONE
+	// aggregate ping (SetHealthchecksAggregator above) represents the whole run.
+	// The scheduler hands over the set's stable ID, not its name.
+	scheduler.SetFilesJob(func(id string) error {
+		ctx := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
+		_, bErr := svc.BackupFileSet(ctx, id)
+		return bErr
+	}, st.ListFileSets)
 	scheduler.SetOffsiteJob(func(domain string) error {
 		return svc.ScheduledReplicateOffsite(context.Background(), domain)
 	})
@@ -251,9 +260,10 @@ func run() error {
 	vmsLastRun := schedule.LastRunFunc(st.LastSuccessfulVMBackup)
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
+	filesLastRun := schedule.LastRunFunc(st.LastSuccessfulFilesBackup)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun); rErr != nil {
+		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {
