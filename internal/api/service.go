@@ -752,6 +752,8 @@ func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string 
 		return settings.FlashOffsite
 	case "config":
 		return settings.ConfigOffsite
+	case "files":
+		return settings.FilesOffsite
 	}
 	return ""
 }
@@ -769,6 +771,8 @@ func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) str
 		return settings.FlashOffsiteSchedule
 	case "config":
 		return settings.ConfigOffsiteSchedule
+	case "files":
+		return settings.FilesOffsiteSchedule
 	}
 	return ""
 }
@@ -789,6 +793,8 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 		return s.FlashOffsiteImmutable
 	case "config":
 		return s.ConfigOffsiteImmutable
+	case "files":
+		return s.FilesOffsiteImmutable
 	}
 	return false
 }
@@ -802,7 +808,7 @@ var errOffsiteAppendOnly = errors.New("repo is append-only; prune far-side or us
 // domain's backups are current relative to its schedule. It drives the
 // dashboard's green/amber/red "are my backups current?" indicator.
 type DomainStatusEntry struct {
-	Domain        string `json:"domain"`        // "containers" | "vms" | "flash" | "config"
+	Domain        string `json:"domain"`        // "containers" | "vms" | "flash" | "config" | "files"
 	Enabled       bool   `json:"enabled"`       // domain switched on in Settings
 	Schedule      string `json:"schedule"`      // the cadence string (e.g. "daily 02:30")
 	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
@@ -1098,9 +1104,9 @@ func protectionChecks(now int64, in protInputs) protChecks {
 }
 
 // DomainStatus returns the RPO (protection) status of each domain (containers,
-// vms, flash): whether its backups are current relative to its schedule. The
-// enabled flag + cadence come from Settings; the last successful backup time
-// comes from the store's per-domain helpers.
+// vms, flash, config, files): whether its backups are current relative to its
+// schedule. The enabled flag + cadence come from Settings; the last successful
+// backup time comes from the store's per-domain helpers.
 func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -1118,6 +1124,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		{"vms", settings.VMsEnabled, settings.VMsSchedule, s.store.LastSuccessfulVMBackup},
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
 		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
+		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
 	}
 
 	out := make([]DomainStatusEntry, 0, len(domains))
@@ -1286,13 +1293,14 @@ type HistoryDay struct {
 	VMs        DayStat `json:"vms"`
 	Flash      DayStat `json:"flash"`
 	Config     DayStat `json:"config"`
+	Files      DayStat `json:"files"`
 }
 
 // runDomains is the target_id → domain map ("container" | "vm" | "flash" |
-// "config") used to attribute each run to its domain. It mirrors the same mapping
-// handleRuns uses: container targets, VM targets, and the singleton flash/config
-// ids. Best-effort — an unknown id (e.g. a deleted target) maps to "" and is
-// ignored by the bucketer.
+// "config" | "files") used to attribute each run to its domain. It mirrors the
+// same mapping handleRuns uses: container targets, VM targets, file sets, and
+// the singleton flash/config ids. Best-effort — an unknown id (e.g. a deleted
+// target) maps to "" and is ignored by the bucketer.
 func (s *Service) runDomains() map[string]string {
 	domain := map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
 	if cts, err := s.store.ListTargets(); err == nil {
@@ -1303,6 +1311,11 @@ func (s *Service) runDomains() map[string]string {
 	if vts, err := s.store.ListVMTargets(); err == nil {
 		for _, t := range vts {
 			domain[t.ID] = "vm"
+		}
+	}
+	if fss, err := s.store.ListFileSets(); err == nil {
+		for _, fs := range fss {
+			domain[fs.ID] = "files"
 		}
 	}
 	return domain
@@ -1354,6 +1367,8 @@ func bucketRunsByDay(runs []store.Run, domain map[string]string, startUnix, endU
 			stat = &out[i].Flash
 		case "config":
 			stat = &out[i].Config
+		case "files":
+			stat = &out[i].Files
 		default:
 			continue
 		}
@@ -1503,6 +1518,7 @@ func (s *Service) CollectStatsOnStartup() {
 		{"vms", settings.VMsEnabled},
 		{"flash", settings.FlashEnabled},
 		{"config", settings.ConfigEnabled},
+		{"files", settings.FilesEnabled},
 	} {
 		if d.enabled {
 			s.CollectStatsAsync(d.name, "local")
@@ -5560,9 +5576,9 @@ func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).
-// domain is "containers" | "vms" | "flash". Returns a friendly error when the
-// repo has not been created yet. Bounded by a timeout so a huge repo can't hang
-// the request forever.
+// domain is "containers" | "vms" | "flash" | "files". Returns a friendly error
+// when the repo has not been created yet. Bounded by a timeout so a huge repo
+// can't hang the request forever.
 func (s *Service) CheckDomain(ctx context.Context, domain, source string) error {
 	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
@@ -5597,8 +5613,9 @@ func drillSubsetPct(pct int) int {
 // RunRestoreDrill runs a restore-verification drill of the requested kind and
 // records the result so the UI can show a "last verified restorable" badge.
 // kind "subset" (or "") is the classic in-place integrity check; kind "dr" is a
-// real off-site sandbox restore (see runDRDrill). domain is {containers,vms,flash};
-// source is {local,offsite} (ignored for kind "dr", which is always off-site).
+// real off-site sandbox restore (see runDRDrill). domain is
+// {containers,vms,flash,config,files}; source is {local,offsite} (ignored for
+// kind "dr", which is always off-site).
 // wait selects the lock discipline for the underlying drill: a SCHEDULED drill
 // passes wait=true so it BLOCKS for the per-domain lock and always records a
 // result (a nightly backup/replication co-fire must not make it silently vanish
@@ -5618,7 +5635,8 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // runSubsetDrill proves a domain's backup is actually restorable by running
 // `restic check --read-data-subset` (it reads back + re-verifies a random subset
 // of the real pack data, not just metadata — no scratch disk needed) and records
-// the result. domain is {containers,vms,flash}; source is {local,offsite}.
+// the result. domain is {containers,vms,flash,config,files}; source is
+// {local,offsite}.
 //
 // It takes the per-domain busy-guard like Prune/Unlock: if a backup is running it
 // returns errDomainBusy and records nothing. A missing/empty repo returns a clear
@@ -5626,7 +5644,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // a passing and a failing drill ARE recorded; a failure also fires a notification.
 func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (store.RestoreDrill, error) {
 	switch domain {
-	case "containers", "vms", "flash", "config":
+	case "containers", "vms", "flash", "config", "files":
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -5767,7 +5785,7 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // kind='dr' ok=false AND fires the drill-failure notification.
 func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (store.RestoreDrill, error) {
 	switch domain {
-	case "containers", "flash":
+	case "containers", "flash", "files":
 	case "vms":
 		return store.RestoreDrill{}, errors.New("DR drills are not supported for VMs: their disk images are too large to sandbox-restore — use an integrity check instead")
 	default:
@@ -5878,7 +5896,9 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 // pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
 // containers: the DRDrillTarget container (or, when unset, the most recently
 // backed-up container), scoped to its container:<name> tag. flash: the newest
-// snapshot outright (flash is a single whole-USB image, no per-item scoping). An
+// snapshot outright (flash is a single whole-USB image, no per-item scoping).
+// files follows the flash path: the newest snapshot in the files repo outright —
+// a file-set restore is sandbox-cheap and any set proves the repo restorable. An
 // empty repo or a target with no off-site snapshot yields a clear error.
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
@@ -5889,7 +5909,7 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 		return "", errors.New("no off-site backups to drill yet")
 	}
 	switch domain {
-	case "flash":
+	case "flash", "files":
 		return newestSnapshot(all).ID, nil
 	case "containers":
 		target := settings.DRDrillTarget
@@ -6140,10 +6160,11 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	}
 }
 
-// repoFor resolves the restic repo path for a domain ("containers"|"vms"|"flash")
-// and source. source "offsite" selects the configured off-site repo (erroring if
-// none is set); anything else ("" / "local") selects the primary local repo. This
-// lets browse/restore/maintenance operate on either copy.
+// repoFor resolves the restic repo path for a domain ("containers"|"vms"|
+// "flash"|"config"|"files") and source. source "offsite" selects the configured
+// off-site repo (erroring if none is set); anything else ("" / "local") selects
+// the primary local repo. This lets browse/restore/maintenance operate on
+// either copy.
 func (s *Service) repoFor(settings store.Settings, domain, source string) (string, error) {
 	if source == "offsite" {
 		loc := s.offsiteRepoFor(domain, settings)
@@ -6161,6 +6182,8 @@ func (s *Service) repoFor(settings store.Settings, domain, source string) (strin
 		return s.flashRepoPath(settings)
 	case "config":
 		return s.configRepoPath(settings)
+	case "files":
+		return s.filesRepoPath(settings)
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
@@ -6644,8 +6667,8 @@ func (s *Service) RecoveryKit() (string, error) {
 	// settings (the same resolution the engine uses), so the kit names the real
 	// places the data lives. A resolution failure for one domain leaves that line
 	// blank rather than failing the whole kit.
-	repos := make([]recoveryRepo, 0, 3)
-	for _, d := range []string{"containers", "vms", "flash"} {
+	repos := make([]recoveryRepo, 0, 4)
+	for _, d := range []string{"containers", "vms", "flash", "files"} {
 		rr := recoveryRepo{Domain: d}
 		if loc, rErr := s.repoFor(settings, d, "local"); rErr == nil {
 			rr.Local = loc

@@ -573,6 +573,140 @@ func TestSettingsConfigFieldsRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsFilesFieldsRoundTrip pins the settings DTO's files-domain fields:
+// a PUT carrying every files* field is persisted and comes back verbatim on the
+// following GET (the JSON DTO round-trips them both directions, like config).
+func TestSettingsFilesFieldsRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"filesEnabled": true,
+		"filesPath": "backups/files",
+		"filesSchedule": "daily 03:00",
+		"filesOffsite": "rest:http://192.168.1.2:8000/files",
+		"filesOffsiteSchedule": "weekly Sun 05:00",
+		"filesOffsiteImmutable": true
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	for k, want := range map[string]any{
+		"filesEnabled":          true,
+		"filesPath":             "backups/files",
+		"filesSchedule":         "daily 03:00",
+		"filesOffsite":          "rest:http://192.168.1.2:8000/files",
+		"filesOffsiteSchedule":  "weekly Sun 05:00",
+		"filesOffsiteImmutable": true,
+	} {
+		if settings[k] != want {
+			t.Fatalf("%s not round-tripped: got %v, want %v", k, settings[k], want)
+		}
+	}
+}
+
+// TestSettingsFilesImmutableRetentionWarning pins that the immutable-vs-offsite-
+// retention warning also fires when ONLY the files domain is flagged append-only
+// (the warning condition must include FilesOffsiteImmutable).
+func TestSettingsFilesImmutableRetentionWarning(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"filesOffsite": "rest:http://192.168.1.2:8000/files",
+		"filesOffsiteImmutable": true,
+		"offsiteRetentionKeepDaily": 14
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+	warnings, ok := m["warnings"].([]any)
+	if !ok || len(warnings) == 0 {
+		t.Fatalf("expected the append-only warning for a files-only immutable flag, got %v", m)
+	}
+}
+
+// TestCheckFilesDomainAccepted pins that POST /api/check/files reaches the
+// service (the domain switch no longer 400s "unknown domain"): with no files
+// repo initialised yet it reports the friendly not-yet error instead.
+func TestCheckFilesDomainAccepted(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/check/files", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("POST /api/check/files must not 400 anymore, got %d body=%s", w.Code, w.Body.String())
+	}
+	errMsg, _ := m["error"].(string)
+	if strings.Contains(errMsg, "unknown domain") {
+		t.Fatalf("files must be an accepted check domain, got error %q", errMsg)
+	}
+	if m["ok"] != false || !strings.Contains(errMsg, "no backups to verify yet") {
+		t.Fatalf("expected the friendly no-repo-yet error, got %v", m)
+	}
+}
+
+// TestRunsAttributesFileSetRuns pins /api/runs' target_id resolution for the
+// files domain: a run recorded against a file set's id comes back with the
+// set's name and domain "files" (the dashboard run history shows WHICH set).
+func TestRunsAttributesFileSetRuns(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	fs, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRun(fs.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "success", "deadbeef12345678", 1024, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/runs", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Runs []struct {
+			Target string `json:"target"`
+			Domain string `json:"domain"`
+		} `json:"runs"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if len(resp.Runs) != 1 {
+		t.Fatalf("expected 1 run, got %d", len(resp.Runs))
+	}
+	if resp.Runs[0].Target != "docs" || resp.Runs[0].Domain != "files" {
+		t.Fatalf("file-set run not attributed: target=%q domain=%q, want docs/files",
+			resp.Runs[0].Target, resp.Runs[0].Domain)
+	}
+}
+
 // TestSettingsPruneImageAfterUpdateRoundTrip guards the /api/settings wire boundary
 // for the #56 image-prune toggle: the strict decoder rejects unknown fields, so the
 // field must be in settingsView (PUT) and mapped by toView (GET). Regression test for

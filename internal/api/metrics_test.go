@@ -79,6 +79,7 @@ func TestMetricsExposition(t *testing.T) {
 		"# TYPE bombvault_domain_enabled gauge",
 		`bombvault_domain_enabled{domain="containers"} 1`,
 		`bombvault_domain_enabled{domain="vms"} 0`,
+		`bombvault_domain_enabled{domain="files"} 0`,
 		"# HELP bombvault_repo_size_bytes",
 		"# TYPE bombvault_repo_size_bytes gauge",
 		`bombvault_repo_size_bytes{domain="containers",source="local"} 4096`,
@@ -88,6 +89,7 @@ func TestMetricsExposition(t *testing.T) {
 		`bombvault_runs_total{domain="containers",status="success"} 1`,
 		`bombvault_runs_total{domain="containers",status="failed"} 1`,
 		`bombvault_runs_total{domain="vms",status="success"} 0`,
+		`bombvault_runs_total{domain="files",status="success"} 0`,
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(out, want) {
