@@ -463,6 +463,74 @@ func TestRunVMsJobContinuesOnError(t *testing.T) {
 	}
 }
 
+// TestRunFilesJobBacksUpOnlyEnabledByID verifies the files job skips disabled
+// sets and hands backupFn the set's stable ID (never the name — run attribution
+// keys on file_sets.id so renames don't orphan history).
+func TestRunFilesJobBacksUpOnlyEnabledByID(t *testing.T) {
+	var mu sync.Mutex
+	var called []string
+
+	backupFn := func(id string) error {
+		mu.Lock()
+		called = append(called, id)
+		mu.Unlock()
+		return nil
+	}
+
+	sets := []store.FileSet{
+		{ID: "id-docs", Name: "docs", Enabled: true},
+		{ID: "id-media", Name: "media", Enabled: false},
+		{ID: "id-photos", Name: "photos", Enabled: true},
+	}
+
+	attempted, failed := schedule.RunFilesJob(sets, backupFn)
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if attempted != 2 || failed != 0 {
+		t.Fatalf("expected attempted=2 failed=0, got attempted=%d failed=%d", attempted, failed)
+	}
+	if len(called) != 2 || called[0] != "id-docs" || called[1] != "id-photos" {
+		t.Fatalf("expected backupFn to receive the enabled sets' IDs [id-docs id-photos], got %v", called)
+	}
+}
+
+// TestRunFilesJobContinuesOnError verifies a single file-set failure does not
+// abort the remaining sets and is reported in the failed count (the input to the
+// aggregated Healthchecks ping).
+func TestRunFilesJobContinuesOnError(t *testing.T) {
+	var mu sync.Mutex
+	var called []string
+
+	backupFn := func(id string) error {
+		mu.Lock()
+		called = append(called, id)
+		mu.Unlock()
+		if id == "id-docs" {
+			return errors.New("backup failed")
+		}
+		return nil
+	}
+
+	sets := []store.FileSet{
+		{ID: "id-docs", Name: "docs", Enabled: true},
+		{ID: "id-photos", Name: "photos", Enabled: true},
+	}
+
+	attempted, failed := schedule.RunFilesJob(sets, backupFn)
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(called) != 2 {
+		t.Fatalf("expected 2 attempts, got %d: %v", len(called), called)
+	}
+	if attempted != 2 || failed != 1 {
+		t.Fatalf("expected attempted=2 failed=1, got attempted=%d failed=%d", attempted, failed)
+	}
+}
+
 func TestSchedulerReloadRegistersEnabledDomains(t *testing.T) {
 	backupFn := func(_ string) error { return nil }
 	listFn := func() ([]store.Target, error) { return nil, nil }
@@ -525,7 +593,7 @@ func TestSchedulerReloadWithDueChecksEveryNFires(t *testing.T) {
 		VMsSchedule:        "off",
 		FlashSchedule:      "off",
 	}
-	if err := sched.ReloadWithDueChecks(settings, lastRun, nil, nil, nil); err != nil {
+	if err := sched.ReloadWithDueChecks(settings, lastRun, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks returned error: %v", err)
 	}
 	sched.Stop()

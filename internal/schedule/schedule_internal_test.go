@@ -101,7 +101,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	sc.SetConfigJob(func() error { return nil })
 
 	s := store.Settings{ConfigEnabled: true, ConfigSchedule: "daily 03:30"}
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	if got := len(sc.entryIDs); got != 1 {
@@ -111,7 +111,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	// Turning the config cadence off must deregister it — proving the single
 	// entry above was driven by ConfigSchedule (i.e. it is the config job).
 	s.ConfigSchedule = "off"
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (config off): %v", err)
 	}
 	if got := len(sc.entryIDs); got != 0 {
@@ -152,6 +152,101 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	}
 }
 
+// TestFilesJobScheduledWithOffsiteEntry verifies the files domain is wired into
+// the scheduler like the other domains: (a) a files backup job registers when
+// FilesSchedule has a real cadence, (b) FilesOffsiteSchedule registers a separate
+// files-offsite replication entry, and (c) turning both off deregisters them.
+//
+// White-box (package schedule) because the observable is the unexported entry
+// list — same rationale as the config-domain test above.
+func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
+	noopBackup := func(string) error { return nil }
+	noTargets := func() ([]store.Target, error) { return nil, nil }
+
+	sc := New(noopBackup, noTargets)
+	sc.SetFilesJob(
+		func(string) error { return nil },
+		func() ([]store.FileSet, error) { return nil, nil },
+	)
+
+	// (a) With every other domain off (zero-value schedules parse to "off"),
+	// drills off, and no immutable off-site, exactly one entry must register —
+	// the files backup job.
+	s := store.Settings{FilesEnabled: true, FilesSchedule: "daily 03:00"}
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks: %v", err)
+	}
+	if got := len(sc.entryIDs); got != 1 {
+		t.Fatalf("expected exactly 1 registered job (files backup), got %d", got)
+	}
+
+	// (b) An off-site cadence adds the files-offsite replication entry.
+	s.FilesOffsiteSchedule = "daily 04:00"
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks (files offsite): %v", err)
+	}
+	if got := len(sc.entryIDs); got != 2 {
+		t.Fatalf("expected 2 registered jobs (files backup + files-offsite), got %d", got)
+	}
+
+	// (c) Turning both cadences off must deregister them — proving the entries
+	// above were driven by FilesSchedule/FilesOffsiteSchedule.
+	s.FilesSchedule = "off"
+	s.FilesOffsiteSchedule = ""
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks (files off): %v", err)
+	}
+	if got := len(sc.entryIDs); got != 0 {
+		t.Fatalf("expected 0 registered jobs when files schedules are off, got %d", got)
+	}
+}
+
+// TestFilesDrillTasksLocalSubsetAndOffsiteDR verifies files participates in
+// scheduled drills like flash: an enabled files domain always gets the local
+// "subset" integrity check, and — unlike VMs/config — it is DR-capable, so an
+// off-site repo (with off-site drills enabled) adds a real {files, offsite, dr}
+// task.
+func TestFilesDrillTasksLocalSubsetAndOffsiteDR(t *testing.T) {
+	has := func(tasks []drillTask, want drillTask) bool {
+		for _, tk := range tasks {
+			if tk == want {
+				return true
+			}
+		}
+		return false
+	}
+
+	base := store.Settings{
+		FilesEnabled:   true,
+		FilesSchedule:  "daily 03:00",
+		DrillsEnabled:  true,
+		DrillsSchedule: "weekly Sun 05:00",
+	}
+
+	// No off-site repo: local subset check only, never a DR task.
+	tasks := drillTasks(base)
+	if !has(tasks, drillTask{domain: "files", source: "local", kind: "subset"}) {
+		t.Fatalf("expected {files, local, subset} drill task, got %v", tasks)
+	}
+	for _, tk := range tasks {
+		if tk.domain == "files" && tk.kind == "dr" {
+			t.Fatalf("files must not get a DR task without an off-site repo: %v", tasks)
+		}
+	}
+
+	// Off-site configured + off-site drills enabled: the DR task appears.
+	withOff := base
+	withOff.FilesOffsite = "rclone:remote:bombvault-files"
+	withOff.OffsiteDrillsEnabled = true
+	tasks = drillTasks(withOff)
+	if !has(tasks, drillTask{domain: "files", source: "local", kind: "subset"}) {
+		t.Fatalf("expected {files, local, subset} drill task, got %v", tasks)
+	}
+	if !has(tasks, drillTask{domain: "files", source: "offsite", kind: "dr"}) {
+		t.Fatalf("expected {files, offsite, dr} drill task with FilesOffsite set, got %v", tasks)
+	}
+}
+
 // TestImmutableOffsiteDomainsIncludesConfig verifies the scheduled off-site tamper
 // test covers the config domain when its off-site repo is flagged immutable — the
 // same way containers/vms/flash are. Without this, a config repo advertised as
@@ -181,6 +276,37 @@ func TestImmutableOffsiteDomainsIncludesConfig(t *testing.T) {
 		t.Fatalf("config must be a tamper-test domain when ConfigOffsiteImmutable is set: %v", got)
 	}
 	if !has(got, "containers") || !has(got, "flash") {
+		t.Fatalf("flagged domains missing: %v", got)
+	}
+}
+
+// TestImmutableOffsiteDomainsIncludesFiles verifies the scheduled off-site tamper
+// test covers the files domain when its off-site repo is flagged immutable — the
+// same coverage the other domains get.
+func TestImmutableOffsiteDomainsIncludesFiles(t *testing.T) {
+	has := func(list []string, want string) bool {
+		for _, d := range list {
+			if d == want {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Not flagged → files must be absent.
+	if got := immutableOffsiteDomains(store.Settings{}); has(got, "files") {
+		t.Fatalf("files must not be a tamper-test domain when FilesOffsiteImmutable is unset: %v", got)
+	}
+
+	// Flagged → files must be present, alongside the other flagged domains.
+	got := immutableOffsiteDomains(store.Settings{
+		FlashOffsiteImmutable: true,
+		FilesOffsiteImmutable: true,
+	})
+	if !has(got, "files") {
+		t.Fatalf("files must be a tamper-test domain when FilesOffsiteImmutable is set: %v", got)
+	}
+	if !has(got, "flash") {
 		t.Fatalf("flagged domains missing: %v", got)
 	}
 }

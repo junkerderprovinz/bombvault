@@ -25,6 +25,9 @@ type ListTargetsFunc func() ([]store.Target, error)
 // ListVMTargetsFunc returns the current list of VM targets.
 type ListVMTargetsFunc func() ([]store.VMTarget, error)
 
+// ListFileSetsFunc returns the current list of file sets.
+type ListFileSetsFunc func() ([]store.FileSet, error)
+
 // LastRunFunc returns the time of the last successful backup for a domain, or
 // a zero time when there has been none. It is injected so the schedule package
 // stays store-free (DI seam).
@@ -245,6 +248,8 @@ type Scheduler struct {
 	listFn         ListTargetsFunc
 	backupVM       BackupFunc                              // nil until SetVMJob wires VM backup
 	listVMsFn      ListVMTargetsFunc                       // nil until SetVMJob wires VM backup
+	backupFiles    BackupFunc                              // nil until SetFilesJob wires file-set backup
+	listFileSetsFn ListFileSetsFunc                        // nil until SetFilesJob wires file-set backup
 	backupFlash    func() error                            // nil until SetFlashJob wires flash backup
 	configJob      func() error                            // nil until SetConfigJob wires config self-backup
 	replicateOffFn func(domain string) error               // nil until SetOffsiteJob wires off-site replication
@@ -282,6 +287,16 @@ func (s *Scheduler) SetVMJob(backupVMFn BackupFunc, listVMsFn ListVMTargetsFunc)
 	s.listVMsFn = listVMsFn
 }
 
+// SetFilesJob wires the files domain so scheduled file-set backups actually run.
+// backupFilesFn is called with each due file set's stable ID (not its name — the
+// ID survives renames, keeping run attribution intact); listFn retrieves the
+// current file-set list when the job fires. Until this is called the files
+// domain is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetFilesJob(backupFilesFn BackupFunc, listFn ListFileSetsFunc) {
+	s.backupFiles = backupFilesFn
+	s.listFileSetsFn = listFn
+}
+
 // SetFlashJob wires the flash domain so a scheduled flash backup actually runs.
 // Flash is a singleton (the Unraid USB), so the job takes no arguments. Until
 // this is called the flash domain is a no-op (logged). Call before Reload.
@@ -308,9 +323,9 @@ func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
 // SetDrillJob wires scheduled restore-verification drills so the single drill
 // schedule actually runs. drillFn is called with (domain, source, kind) for each
 // scheduled drill task when the drill schedule fires — a local "subset" integrity
-// check per enabled domain, plus a real off-site "dr" drill for containers + flash
-// when off-site is configured (see drillTasks). Until this is called the drill
-// schedule is a no-op (logged). Call before Reload.
+// check per enabled domain, plus a real off-site "dr" drill for containers, flash
+// and files when off-site is configured (see drillTasks). Until this is called the
+// drill schedule is a no-op (logged). Call before Reload.
 func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error) {
 	s.drillFn = drillFn
 }
@@ -370,7 +385,7 @@ type domainSpec struct {
 // to disable the due-gate (used when a domain does not yet have a backing store
 // query, e.g. VMs / flash in Phase 1).
 func (s *Scheduler) Reload(settings store.Settings) error {
-	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil)
+	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil)
 }
 
 // ReloadWithDueChecks is the full-fidelity Reload that accepts per-domain
@@ -378,7 +393,7 @@ func (s *Scheduler) Reload(settings store.Settings) error {
 // that does not need the gate (it is then equivalent to a plain daily trigger).
 func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
-	containersLastRun, vmsLastRun, flashLastRun, configLastRun LastRunFunc,
+	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun LastRunFunc,
 ) error {
 	// Remove all existing entries.
 	for _, id := range s.entryIDs {
@@ -450,6 +465,25 @@ func (s *Scheduler) ReloadWithDueChecks(
 			},
 			lastRun: configLastRun,
 		},
+		{
+			cadence: settings.FilesSchedule,
+			name:    "files",
+			fn: func() {
+				if s.backupFiles == nil || s.listFileSetsFn == nil {
+					log.Print("schedule: files job skipped — file-set backup not wired (SetFilesJob)")
+					return
+				}
+				sets, err := s.listFileSetsFn()
+				if err != nil {
+					log.Printf("schedule: files job: list file sets: %v", err)
+					return
+				}
+				s.runAggregatedHC("files", func() (int, int) {
+					return RunFilesJob(sets, s.backupFiles)
+				})
+			},
+			lastRun: filesLastRun,
+		},
 	}
 
 	// Off-site replication on its own per-domain schedule (decoupled from the
@@ -475,12 +509,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 		offsite("vms", settings.VMsOffsiteSchedule),
 		offsite("flash", settings.FlashOffsiteSchedule),
 		offsite("config", settings.ConfigOffsiteSchedule),
+		offsite("files", settings.FilesOffsiteSchedule),
 	)
 
 	// Restore-verification drills run on a single schedule across a set of
 	// (domain, source, kind) tasks: a local "subset" integrity check per enabled
-	// domain plus a real off-site "dr" drill for containers + flash when off-site is
-	// configured (see drillTasks). A drill error just records ok=false (see drillFn);
+	// domain plus a real off-site "dr" drill for containers, flash and files when
+	// off-site is configured (see drillTasks). A drill error just records ok=false (see drillFn);
 	// it never aborts the others. The schedule is inert unless explicitly enabled.
 	if settings.DrillsEnabled {
 		tasks := drillTasks(settings)
@@ -579,7 +614,8 @@ type drillTask struct {
 
 // drillTasks returns the scheduled drill tasks for the current settings: a local
 // "subset" integrity check for every enabled domain, plus a real off-site "dr"
-// drill for containers + flash when their off-site repo is configured. VMs and
+// drill for containers, flash and files when their off-site repo is configured
+// (a file-set snapshot is as cheap to sandbox-restore as a flash one). VMs and
 // config are intentionally excluded from DR drills — VM disk images are too large
 // to sandbox-restore, and a sandbox restore of BombVault's own settings DB is
 // meaningless (its real recovery path is the in-place staged restart). Both still
@@ -599,6 +635,9 @@ func drillTasks(settings store.Settings) []drillTask {
 		}
 		if settings.FlashEnabled && settings.FlashOffsite != "" {
 			out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
+		}
+		if settings.FilesEnabled && settings.FilesOffsite != "" {
+			out = append(out, drillTask{domain: "files", source: "offsite", kind: "dr"})
 		}
 	}
 	return out
@@ -621,6 +660,9 @@ func enabledDrillDomains(settings store.Settings) []string {
 	if settings.ConfigEnabled {
 		out = append(out, "config")
 	}
+	if settings.FilesEnabled {
+		out = append(out, "files")
+	}
 	return out
 }
 
@@ -641,6 +683,9 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 	}
 	if settings.ConfigOffsiteImmutable {
 		out = append(out, "config")
+	}
+	if settings.FilesOffsiteImmutable {
+		out = append(out, "files")
 	}
 	return out
 }
@@ -696,6 +741,26 @@ func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int
 		if err := backupFn(v.Name); err != nil {
 			failed++
 			log.Printf("schedule: vms job: backup %q failed: %v", v.Name, err)
+		}
+	}
+	return attempted, failed
+}
+
+// RunFilesJob backs up each file set that is Enabled, calling backupFn
+// sequentially with the set's stable ID (not its name — run attribution keys on
+// file_sets.id, which survives renames). As with RunVMsJob, an individual set
+// failure is logged but does not abort the remaining sets, and it returns the
+// attempted/failed counts for Healthchecks aggregation. Exported so tests can
+// invoke the job synchronously without waiting for real wall-clock time.
+func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed int) {
+	for _, fs := range sets {
+		if !fs.Enabled {
+			continue
+		}
+		attempted++
+		if err := backupFn(fs.ID); err != nil {
+			failed++
+			log.Printf("schedule: files job: backup %q failed: %v", fs.Name, err)
 		}
 	}
 	return attempted, failed

@@ -90,10 +90,10 @@ type Config struct {
 	MatrixToken      string `json:"matrixToken"`
 	MatrixRoom       string `json:"matrixRoom"`
 	HealthchecksURL  string `json:"healthchecksUrl"`
-	// HealthchecksByDomain maps a backup domain ("container"|"VM"|"flash"|"config")
-	// to its own Healthchecks check URL. A per-domain URL replaces (does not add to)
-	// the global HealthchecksURL for that domain; a blank/absent entry falls back to
-	// the global URL.
+	// HealthchecksByDomain maps a backup domain
+	// ("container"|"VM"|"flash"|"config"|"files") to its own Healthchecks check
+	// URL. A per-domain URL replaces (does not add to) the global HealthchecksURL
+	// for that domain; a blank/absent entry falls back to the global URL.
 	HealthchecksByDomain map[string]string `json:"healthchecksByDomain"`
 	// Unraid sends each event to Unraid's native notification system (which can
 	// itself forward to Pushover/email/Discord/…). It is delivered over SSH by the
@@ -156,10 +156,12 @@ func (c Config) healthchecksURLFor(domain string) string {
 }
 
 // normalizeHCDomain maps the domain spellings used across the codebase to the
-// canonical HealthchecksByDomain keys ("container"|"VM"|"flash"|"config"). Backups
-// use "container"/"VM"; the off-site and tamper failure notifiers use the plural
-// "containers"/"vms". Normalizing here means a per-domain check catches ALL of a
-// domain's events (backup + replication/drill/tamper failures), not just backups.
+// canonical HealthchecksByDomain keys ("container"|"VM"|"flash"|"config"|"files").
+// Backups use "container"/"VM"; the off-site and tamper failure notifiers use the
+// plural "containers"/"vms". "flash", "config" and "files" have a single spelling
+// everywhere and pass through the default case unchanged. Normalizing here means
+// a per-domain check catches ALL of a domain's events (backup + replication/
+// drill/tamper failures), not just backups.
 func normalizeHCDomain(domain string) string {
 	switch domain {
 	case "containers":
