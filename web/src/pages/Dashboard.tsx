@@ -406,11 +406,15 @@ function ProtectionCard({
                     down the whole card, regardless of which cells a row populates:
                     [domain] [status] [schedule] [last run] [verified] [off-site
                     verified] [off-site DR]. Fixed tracks for the fixed-width columns,
-                    fr tracks (min 0) for the text/badges so a long badge (e.g.
-                    "proven restorable from off-site") wraps inside its column instead
-                    of overflowing the card, and absent badges just leave their column
-                    blank without re-flowing the others. */}
-                <div className="grid items-center gap-3 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.6fr)]">
+                    fr tracks for the text/badges so a long badge (e.g. "proven
+                    restorable from off-site") wraps inside its column instead of
+                    overflowing the card, and absent badges just leave their column
+                    blank without re-flowing the others. The three badge columns get a
+                    readable floor width (not minmax(0,…)) so they wrap at word
+                    boundaries instead of being squeezed thin enough to hyphenate
+                    mid-word; overflow-x-auto on the row is the fallback once the
+                    floors no longer fit a narrow viewport. */}
+                <div className="grid items-center gap-3 overflow-x-auto grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_minmax(6.5rem,1fr)_minmax(7.5rem,1.2fr)_minmax(7.5rem,1.6fr)]">
                   <span
                     className={`col-start-1 min-w-0 truncate font-medium ${
                       off ? "text-carbon-textMuted" : "text-carbon-text"
@@ -448,7 +452,7 @@ function ProtectionCard({
                         <div className="col-start-5 min-w-0">
                           <span
                             title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
-                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words ${
+                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
                               d.lastVerifiedOK
                                 ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
                                 : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
@@ -469,7 +473,7 @@ function ProtectionCard({
                         <div className="col-start-6 min-w-0">
                           <span
                             title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
-                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words ${
+                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
                               d.lastOffsiteSubsetOK
                                 ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
                                 : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
@@ -492,7 +496,7 @@ function ProtectionCard({
                           // scheduled DR drill is opted out.
                           <span
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -506,7 +510,7 @@ function ProtectionCard({
                                 ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                                 : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                             }
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -515,7 +519,7 @@ function ProtectionCard({
                           // failing to show: muted, never red. File's no-claim styling.
                           <span
                             title={t("drill.manualOnlyTitle")}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
                           >
                             {t("drill.manualOnly")}
                           </span>
