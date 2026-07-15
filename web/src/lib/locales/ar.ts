@@ -816,6 +816,7 @@ const ar: Partial<Translations> = {
   "files.restoreOriginal": "الاستعادة إلى الموقع الأصلي",
   "files.restoreOriginalConfirm": "استعادة هذه النسخة الاحتياطية فوق مجلد المجموعة؟ سيتم استبدال الملفات الموجودة.",
   "files.restoreToFolder": "الاستعادة إلى مجلد",
+  "files.restoreSelectFiles": "تحديد الملفات",
   "files.restoreComplete": "اكتملت الاستعادة — كُتبت الملفات.",
   "files.backupAll": "نسخ الكل احتياطياً الآن",
   "files.discoverHint": "فقدت قائمة المجموعات؟ أعد بناءها من النسخ الاحتياطية في التخزين.",

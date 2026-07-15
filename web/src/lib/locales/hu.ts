@@ -816,6 +816,7 @@ const hu: Partial<Translations> = {
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",
   "files.restoreOriginalConfirm": "Visszaállítod ezt a mentést a készlet mappájára? A meglévő fájlok felülíródnak.",
   "files.restoreToFolder": "Visszaállítás mappába",
+  "files.restoreSelectFiles": "Fájlok kiválasztása",
   "files.restoreComplete": "Visszaállítás kész — a fájlok kiírásra kerültek.",
   "files.backupAll": "Összes mentése most",
   "files.discoverHint": "Elveszett a készletlista? Építsd újra a tárhely mentéseiből.",

@@ -813,6 +813,7 @@ const el: Partial<Translations> = {
   "files.restoreOriginal": "Επαναφορά στην αρχική θέση",
   "files.restoreOriginalConfirm": "Επαναφορά αυτού του αντιγράφου πάνω από τον φάκελο του συνόλου; Τα υπάρχοντα αρχεία θα αντικατασταθούν.",
   "files.restoreToFolder": "Επαναφορά σε φάκελο",
+  "files.restoreSelectFiles": "Επιλογή αρχείων",
   "files.restoreComplete": "Η επαναφορά ολοκληρώθηκε — τα αρχεία γράφτηκαν.",
   "files.backupAll": "Αντιγραφή όλων τώρα",
   "files.discoverHint": "Χάθηκε η λίστα συνόλων; Ανακατασκευάστε την από τα αντίγραφα στον αποθηκευτικό χώρο.",

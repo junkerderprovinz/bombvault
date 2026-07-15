@@ -317,6 +317,28 @@ func TestRestoreSubtreeToArgs(t *testing.T) {
 	})
 }
 
+// TestRestoreSubtreeIncludeArgs pins the selective files-domain restore: it roots
+// at the snapshot's OWN subtree (<id>:<subtreePath>), points --target at the chosen
+// folder, and passes the selected path as an --include RELATIVE to that subtree —
+// so the selection lands directly under the folder instead of being nested under
+// the absolute /host/user/… path (issue #62).
+func TestRestoreSubtreeIncludeArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := restic.RestoreSubtreeIncludeArgs("/repo", "abc123", "/host/user/appdata/documents", "/reports/2024.pdf", "/host/user/restore/docs", restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/host/user/restore/docs", "--include", "/reports/2024.pdf", "--", "abc123:/host/user/appdata/documents"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted + no-lock", func(t *testing.T) {
+		got := restic.RestoreSubtreeIncludeArgs("/repo", "abc123", "/p", "/f", "/t", restic.Mode{Encrypted: false, NoLock: true})
+		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--no-lock", "--json", "--target", "/t", "--include", "/f", "--", "abc123:/p"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestSnapshotsArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: true})

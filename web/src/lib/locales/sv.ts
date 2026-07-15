@@ -813,6 +813,7 @@ const sv: Partial<Translations> = {
   "files.restoreOriginal": "Återställ till ursprunglig plats",
   "files.restoreOriginalConfirm": "Återställa denna säkerhetskopia över uppsättningens mapp? Befintliga filer skrivs över.",
   "files.restoreToFolder": "Återställ till en mapp",
+  "files.restoreSelectFiles": "Välj filer",
   "files.restoreComplete": "Återställning klar — filerna har skrivits.",
   "files.backupAll": "Säkerhetskopiera allt nu",
   "files.discoverHint": "Förlorat listan med uppsättningar? Bygg om den från säkerhetskopiorna i lagringen.",

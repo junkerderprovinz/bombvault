@@ -808,6 +808,7 @@ const pl: Partial<Translations> = {
   "files.restoreOriginal": "Przywróć do oryginalnej lokalizacji",
   "files.restoreOriginalConfirm": "Przywrócić tę kopię na folder zestawu? Istniejące pliki zostaną nadpisane.",
   "files.restoreToFolder": "Przywróć do folderu",
+  "files.restoreSelectFiles": "Wybierz pliki",
   "files.restoreComplete": "Przywracanie zakończone — pliki zostały zapisane.",
   "files.backupAll": "Utwórz kopię wszystkiego teraz",
   "files.discoverHint": "Utracono listę zestawów? Odbuduj ją z kopii zapasowych w magazynie.",

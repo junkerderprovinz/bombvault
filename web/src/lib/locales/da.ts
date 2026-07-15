@@ -813,6 +813,7 @@ const da: Partial<Translations> = {
   "files.restoreOriginal": "Gendan på oprindelig placering",
   "files.restoreOriginalConfirm": "Gendanne denne sikkerhedskopi oven i sættets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gendan til en mappe",
+  "files.restoreSelectFiles": "Vælg filer",
   "files.restoreComplete": "Gendannelse fuldført — filerne er skrevet.",
   "files.backupAll": "Sikkerhedskopiér alt nu",
   "files.discoverHint": "Mistet sætlisten? Genopbyg den fra sikkerhedskopierne i lageret.",

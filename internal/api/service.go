@@ -84,6 +84,12 @@ type ResticEngine interface {
 	// absolute-path nesting (issue #62). Used by the files to-folder restore;
 	// subtreePath is the snapshot's own backed-up path.
 	RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string, mode restic.Mode) error
+	// RestoreSubtreeInclude restores ONLY includePath (relative to subtreePath)
+	// from a snapshot's subtree INTO target — same subtree-rooting as
+	// RestoreSubtreeTo (no /host/user/… nesting, issue #62) but with an --include
+	// filter, so only the selected path is written under target. Powers the
+	// files-domain selective ("restore these files into a folder") restore.
+	RestoreSubtreeInclude(ctx context.Context, repo, snapshotID, subtreePath, includePath, target string, mode restic.Mode) error
 	// Check verifies repository structure + metadata integrity (restic check).
 	Check(ctx context.Context, repo string, mode restic.Mode) error
 	// CheckData runs a restore-readiness drill: `restic check
@@ -5476,6 +5482,33 @@ func (s *Service) SnapshotsFileSet(ctx context.Context, id, source string) ([]re
 	return out, nil
 }
 
+// ListSnapshotFilesFileSet lists the files in a file-set snapshot, for the
+// selective (pick-some-files) restore — the files counterpart of
+// ListSnapshotFiles. snapshotID must be valid hex and must belong to THIS set
+// (tag-scoped via SnapshotsFileSet + snapshotBelongs), so one set's file tree
+// can't be listed through another's route.
+func (s *Service) ListSnapshotFilesFileSet(ctx context.Context, id, snapshotID, source string) ([]restic.FileEntry, error) {
+	if !backup.ValidSnapshotID(snapshotID) {
+		return nil, backup.ErrInvalidSnapshotID
+	}
+	snaps, err := s.SnapshotsFileSet(ctx, id, source)
+	if err != nil {
+		return nil, err
+	}
+	if !snapshotBelongs(snaps, snapshotID) {
+		return nil, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "files", source)
+	if err != nil {
+		return nil, err
+	}
+	return s.engine.Ls(ctx, repo, snapshotID, s.ModeFor(settings))
+}
+
 // fileSetRestorePlan carries everything prepareRestoreFileSet validated and
 // resolved so the restic work can run detached from the request that asked for
 // it (StartRestoreFileSet), mirroring toPathRestorePlan.
@@ -5639,6 +5672,216 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		rerr := s.runRestoreFileSet(pctx, plan)
 		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
 			log.Printf("api: restore file set: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return plan.target, true, nil
+}
+
+// fileSetFilesRestorePlan carries everything prepareRestoreFileSetFiles validated
+// and resolved so the restic work can run detached from the request that asked
+// for it (StartRestoreFileSetFiles) — the selective (pick-some-files) counterpart
+// of fileSetRestorePlan.
+type fileSetFilesRestorePlan struct {
+	repo       string
+	mode       restic.Mode
+	snapshotID string
+	setID      string   // runs.target_id the detached run is recorded against
+	setName    string   // progress key suffix ("files:<name>")
+	paths      []string // cleaned selection, containment-validated
+	subtree    string   // the SNAPSHOT's own backed-up root (Paths[0]); "" = path-less snapshot
+	target     string   // to-folder: the resolved alternate folder under the host mount ("" = in-place)
+}
+
+// prepareRestoreFileSetFiles performs ALL of a selective file-set restore's
+// validation and resolution synchronously — so a bad request fails immediately
+// with a clear error — and creates the alternate target folder once containment
+// passes. It is the files-domain counterpart of prepareRestoreFiles (containers).
+//
+// SEC: confirm-gated (like the container file-level restore); the snapshot id
+// passes the strict hex guard (backup.ValidSnapshotID) and must belong to THIS
+// set (tag-scoped via SnapshotsFileSet + snapshotBelongs), so one set's data
+// can't be extracted through another's route. Empty targetSubPath restores IN
+// PLACE (each selected path back to its absolute location, restic target "/"),
+// so every path is re-validated inside the host mount (paths.Within,
+// defense-in-depth). A non-empty targetSubPath is resolved with paths.Resolve
+// under the host mount (rejects absolute/`..` escapes) and, when the snapshot has
+// a backed-up root, every selected path must sit within that subtree (a traversal
+// guard: the selection feeds --include patterns). The target dir is created
+// (EnsureDirReadable, 0o755) only AFTER all containment passes.
+func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (fileSetFilesRestorePlan, error) {
+	if !confirm {
+		return fileSetFilesRestorePlan{}, backup.ErrNotConfirmed
+	}
+	set, err := s.store.GetFileSet(id)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, errFileSetNotFound
+	}
+	if source != "local" && source != "offsite" {
+		return fileSetFilesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
+	}
+	if !backup.ValidSnapshotID(snapshotID) {
+		return fileSetFilesRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
+	if len(filePaths) == 0 {
+		return fileSetFilesRestorePlan{}, errors.New("no files selected")
+	}
+
+	// Clean each selected path once, so the path we validate is the path we run.
+	cleaned := make([]string, 0, len(filePaths))
+	for _, p := range filePaths {
+		cleaned = append(cleaned, path.Clean(p))
+	}
+
+	// Scope to THIS set: the snapshot must be one of ITS snapshots.
+	snaps, err := s.SnapshotsFileSet(ctx, id, source)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, err
+	}
+	if !snapshotBelongs(snaps, snapshotID) {
+		return fileSetFilesRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+	}
+	// The subtree comes from the SNAPSHOT itself (its first backed-up path), NOT a
+	// recompute of set.Path — HostMountRoot may have changed since the backup. A
+	// "." or "/" clean means a path-less snapshot (degenerate discovered set).
+	subtree := path.Clean(snapshotSubtree(snaps, snapshotID))
+	if subtree == "." || subtree == "/" {
+		subtree = ""
+	}
+
+	plan := fileSetFilesRestorePlan{
+		snapshotID: snapshotID,
+		setID:      set.ID,
+		setName:    set.Name,
+		paths:      cleaned,
+		subtree:    subtree,
+	}
+
+	if sub := strings.TrimSpace(targetSubPath); sub != "" {
+		t, rErr := paths.Resolve(s.cfg.HostMountRoot, sub)
+		if rErr != nil {
+			return fileSetFilesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+		}
+		// When the snapshot has a backed-up root, every selection must sit within it
+		// — the selection becomes an --include relative to that subtree, so a path
+		// outside it would be a client trying to reach beyond the set (traversal
+		// guard). A path-less snapshot has no root to scope against; the whole-path
+		// include fallback in runRestoreFileSetFiles is contained by --target alone.
+		if subtree != "" {
+			for _, c := range cleaned {
+				if c != subtree && !strings.HasPrefix(c, subtree+"/") {
+					return fileSetFilesRestorePlan{}, errors.New("restore file: selected path is outside the file set snapshot")
+				}
+			}
+		}
+		plan.target = t
+	} else {
+		// In place writes each path back to its absolute location, so every path must
+		// sit within the host mount (defense-in-depth), exactly like the container
+		// in-place file restore.
+		for _, c := range cleaned {
+			if !paths.Within(s.cfg.HostMountRoot, c) {
+				return fileSetFilesRestorePlan{}, errors.New("restore file: path is outside the backup mount")
+			}
+		}
+	}
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fileSetFilesRestorePlan{}, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "files", source)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, err
+	}
+	plan.repo = repo
+	plan.mode = s.ModeFor(settings)
+
+	// Create the alternate target dir ONLY after every validation passed — readable
+	// (0o755) variant, so the operator's non-root SMB user can read what root
+	// restored to the synced share (see EnsureDirReadable / the v6.0.0 files fix).
+	if plan.target != "" {
+		if err := paths.EnsureDirReadable(plan.target); err != nil {
+			return fileSetFilesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+		}
+	}
+	return plan, nil
+}
+
+// runRestoreFileSetFiles restores each selected path of an already-validated
+// selective plan. Like runRestoreFiles (containers) it is intentionally not
+// atomic — restic writes per path — so a mid-batch failure names how many
+// already went through and which path stopped it.
+func (s *Service) runRestoreFileSetFiles(ctx context.Context, plan fileSetFilesRestorePlan) error {
+	// Hold the domain repo lock for the restic work (see runRestoreFileSet).
+	unlock := s.lockDomainFor("files", "restore")
+	defer unlock()
+	for i, c := range plan.paths {
+		if err := s.restoreOneFileSetFile(ctx, plan, c); err != nil {
+			if len(plan.paths) > 1 {
+				return fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(plan.paths), c, err)
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+// restoreOneFileSetFile restores a single selected path of an already-validated
+// plan. In place (empty target) writes it back to its absolute location
+// (RestoreInclude to "/"). To a folder roots at the snapshot's subtree and
+// includes the path RELATIVE to that subtree, so its contents land at
+// <target>/<rel> — NOT <target>/host/user/… (issue #62's nesting). A path-less
+// snapshot (no backed-up root) falls back to a plain absolute include into the
+// target (the degenerate discovered-set case).
+func (s *Service) restoreOneFileSetFile(ctx context.Context, plan fileSetFilesRestorePlan, sel string) error {
+	if plan.target == "" {
+		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, sel, "/", plan.mode)
+	}
+	if plan.subtree == "" {
+		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, sel, plan.target, plan.mode)
+	}
+	rel := strings.TrimPrefix(sel, plan.subtree)
+	if rel == "" {
+		rel = "/" // the whole subtree was selected
+	}
+	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, plan.snapshotID, plan.subtree, rel, plan.target, plan.mode)
+}
+
+// StartRestoreFileSetFiles launches a selective file-set restore in a background
+// goroutine and returns immediately (see StartRestoreFileSet). ALL validation
+// runs synchronously (a bad request fails right away, no goroutine); the resolved
+// alternate target folder ("" for an in-place restore) is returned in the ack so
+// the UI can show it. The detached run publishes "files:<name>" progress (phase
+// "restore"), registers a cancel key, and records a run (kind "restore") against
+// the set's stable id — with the same metadata-error tolerance as the whole-set
+// restore (concludeFileSetRestore).
+//
+// Shares batchActive with backups and the other restores; returns
+// ("", false, nil) when one is already running.
+func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (string, bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return "", false, nil
+	}
+	plan, err := s.prepareRestoreFileSetFiles(ctx, id, source, snapshotID, filePaths, targetSubPath, confirm)
+	if err != nil {
+		s.batchActive.Store(false)
+		return "", false, err
+	}
+	bctx := context.WithoutCancel(ctx)
+	rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
+	go func() {
+		defer s.batchActive.Store(false)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
+		defer cancel()
+		s.registerCancel(rkey, cancel)
+		defer s.unregisterCancel(rkey)
+		runID := s.beginRestoreRunForTarget(plan.setID)
+		pctx := s.progBegin(rctx, rkey, "restore")
+		rerr := s.runRestoreFileSetFiles(pctx, plan)
+		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
+			log.Printf("api: restore file set files: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return plan.target, true, nil

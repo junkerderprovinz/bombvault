@@ -811,6 +811,7 @@ const es: Partial<Translations> = {
   "files.restoreOriginal": "Restaurar en la ubicación original",
   "files.restoreOriginalConfirm": "¿Restaurar esta copia sobre la carpeta del conjunto? Los archivos existentes se sobrescribirán.",
   "files.restoreToFolder": "Restaurar en una carpeta",
+  "files.restoreSelectFiles": "Seleccionar archivos",
   "files.restoreComplete": "Restauración completada — los archivos se han escrito.",
   "files.backupAll": "Copiar todo ahora",
   "files.discoverHint": "¿Perdiste la lista de conjuntos? Reconstrúyela desde las copias del almacenamiento.",

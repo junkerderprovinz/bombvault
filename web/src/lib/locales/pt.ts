@@ -813,6 +813,7 @@ const pt: Partial<Translations> = {
   "files.restoreOriginal": "Restaurar no local original",
   "files.restoreOriginalConfirm": "Restaurar este backup sobre a pasta do conjunto? Os ficheiros existentes serão sobrescritos.",
   "files.restoreToFolder": "Restaurar para uma pasta",
+  "files.restoreSelectFiles": "Selecionar ficheiros",
   "files.restoreComplete": "Restauro concluído — os ficheiros foram escritos.",
   "files.backupAll": "Fazer backup de tudo agora",
   "files.discoverHint": "Perdeu a lista de conjuntos? Reconstrua-a a partir dos backups no armazenamento.",

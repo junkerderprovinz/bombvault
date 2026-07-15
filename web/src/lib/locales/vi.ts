@@ -805,6 +805,7 @@ const vi: Partial<Translations> = {
   "files.restoreOriginal": "Khôi phục về vị trí gốc",
   "files.restoreOriginalConfirm": "Khôi phục bản sao lưu này đè lên thư mục của bộ? Các tập tin hiện có sẽ bị ghi đè.",
   "files.restoreToFolder": "Khôi phục vào một thư mục",
+  "files.restoreSelectFiles": "Chọn tệp",
   "files.restoreComplete": "Khôi phục hoàn tất — các tập tin đã được ghi.",
   "files.backupAll": "Sao lưu tất cả ngay",
   "files.discoverHint": "Mất danh sách bộ? Dựng lại nó từ các bản sao lưu trong bộ lưu trữ.",

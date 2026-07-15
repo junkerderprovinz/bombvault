@@ -805,6 +805,7 @@ const ko: Partial<Translations> = {
   "files.restoreOriginal": "원래 위치로 복원",
   "files.restoreOriginalConfirm": "이 백업을 세트의 폴더 위에 복원할까요? 기존 파일을 덮어씁니다.",
   "files.restoreToFolder": "폴더로 복원",
+  "files.restoreSelectFiles": "파일 선택",
   "files.restoreComplete": "복원 완료 — 파일이 기록되었습니다.",
   "files.backupAll": "지금 모두 백업",
   "files.discoverHint": "세트 목록을 잃어버렸나요? 스토리지의 백업에서 다시 구성하세요.",

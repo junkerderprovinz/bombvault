@@ -810,6 +810,7 @@ const nl: Partial<Translations> = {
   "files.restoreOriginal": "Herstellen op oorspronkelijke locatie",
   "files.restoreOriginalConfirm": "Deze back-up over de map van de set herstellen? Bestaande bestanden worden overschreven.",
   "files.restoreToFolder": "Herstellen naar een map",
+  "files.restoreSelectFiles": "Bestanden selecteren",
   "files.restoreComplete": "Herstel voltooid — de bestanden zijn weggeschreven.",
   "files.backupAll": "Nu alles back-uppen",
   "files.discoverHint": "Setlijst kwijt? Bouw hem opnieuw op vanuit de back-ups in de opslag.",

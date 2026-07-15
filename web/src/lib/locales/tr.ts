@@ -813,6 +813,7 @@ const tr: Partial<Translations> = {
   "files.restoreOriginal": "Orijinal konuma geri yükle",
   "files.restoreOriginalConfirm": "Bu yedek, setin klasörünün üzerine geri yüklensin mi? Mevcut dosyaların üzerine yazılır.",
   "files.restoreToFolder": "Bir klasöre geri yükle",
+  "files.restoreSelectFiles": "Dosyaları seç",
   "files.restoreComplete": "Geri yükleme tamamlandı — dosyalar yazıldı.",
   "files.backupAll": "Şimdi tümünü yedekle",
   "files.discoverHint": "Set listesi mi kayboldu? Depolamadaki yedeklerden yeniden oluşturun.",

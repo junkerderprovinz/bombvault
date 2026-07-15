@@ -813,6 +813,7 @@ const it: Partial<Translations> = {
   "files.restoreOriginal": "Ripristina nella posizione originale",
   "files.restoreOriginalConfirm": "Ripristinare questo backup sopra la cartella del set? I file esistenti verranno sovrascritti.",
   "files.restoreToFolder": "Ripristina in una cartella",
+  "files.restoreSelectFiles": "Seleziona file",
   "files.restoreComplete": "Ripristino completato — i file sono stati scritti.",
   "files.backupAll": "Esegui il backup di tutto ora",
   "files.discoverHint": "Elenco dei set perso? Ricostruiscilo dai backup nello storage.",

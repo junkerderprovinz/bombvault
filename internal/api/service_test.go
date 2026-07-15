@@ -344,6 +344,157 @@ func TestBackupFileSetMissingSourceRecordsFailedRun(t *testing.T) {
 	}
 }
 
+// fileSetFilesRestoreService builds a service with an initialised files repo, a
+// "docs" file set (source data/docs) whose fileset:docs snapshot ("aaaa1111",
+// backed-up root <root>/data/docs) sits in the fake engine, plus a FOREIGN
+// snapshot ("bbbb2222", fileset:other) — the shared setup for the selective
+// file-set restore tests (#65). Returns the service, store, the set id and the
+// resolved host mount root.
+func fileSetFilesRestoreService(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo, string, string) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Mark the files repo initialised so SnapshotsFileSet reaches the engine.
+	repo := filepath.Join(dir, "backups", "files")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"fileset:docs"}, Paths: []string{root + "/data/docs"}},
+		{ID: "bbbb2222", Tags: []string{"fileset:other"}}, // foreign set — must be refused
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	return svc, st, set.ID, root
+}
+
+// TestListSnapshotFilesFileSet pins the selective-restore file listing (#65): a
+// set can list the files of ITS OWN snapshot, a bad snapshot id is rejected
+// before any restic call, and another set's snapshot cannot be listed through
+// this set's route (tag-scoped ownership check).
+func TestListSnapshotFilesFileSet(t *testing.T) {
+	eng := &fakeResticEngine{lsEntries: []restic.FileEntry{{Path: "/data/docs/a.txt", Type: "file"}}}
+	svc, _, setID, _ := fileSetFilesRestoreService(t, eng)
+	ctx := context.Background()
+
+	if files, err := svc.ListSnapshotFilesFileSet(ctx, setID, "aaaa1111", "local"); err != nil || len(files) != 1 {
+		t.Fatalf("own snapshot must list files: files=%v err=%v", files, err)
+	}
+	if _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "not-hex!", "local"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
+	}
+	if _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "bbbb2222", "local"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("foreign snapshot must be refused, got %v", err)
+	}
+}
+
+// TestRestoreFileSetFilesGuards pins the selective-restore validation (#65): it
+// is confirm-gated, rejects a bad snapshot id and an empty selection, refuses a
+// foreign snapshot, refuses a to-folder selection that escapes the snapshot
+// subtree AND an in-place selection that escapes the host mount, and refuses a
+// target folder that escapes the mount — all synchronously (no goroutine, no
+// restic) so a bad request fails right away.
+func TestRestoreFileSetFilesGuards(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, _, setID, root := fileSetFilesRestoreService(t, eng)
+	ctx := context.Background()
+	fileA := root + "/data/docs/reports/2024.pdf"
+
+	// Not confirmed → refused (ErrNotConfirmed, no goroutine).
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{fileA}, "user/restore/docs", false); !errors.Is(err, backup.ErrNotConfirmed) || started {
+		t.Fatalf("expected ErrNotConfirmed, got err=%v started=%v", err, started)
+	}
+	// Bad snapshot id.
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "not-hex!", []string{fileA}, "user/restore/docs", true); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+		t.Fatalf("expected ErrInvalidSnapshotID, got err=%v started=%v", err, started)
+	}
+	// Empty selection.
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", nil, "user/restore/docs", true); err == nil || started {
+		t.Fatalf("expected an error for an empty selection, got err=%v started=%v", err, started)
+	}
+	// A foreign set's snapshot must not be restorable through this set's route.
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "bbbb2222", []string{fileA}, "user/restore/docs", true); err == nil || !strings.Contains(err.Error(), "does not belong") || started {
+		t.Fatalf("foreign snapshot must be refused, got %v", err)
+	}
+	// A to-folder selection outside the snapshot's subtree is a traversal attempt.
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{root + "/etc/passwd"}, "user/restore/docs", true); err == nil || !strings.Contains(err.Error(), "outside the file set snapshot") || started {
+		t.Fatalf("expected a subtree-containment error, got err=%v started=%v", err, started)
+	}
+	// An in-place selection escaping the host mount is refused (empty target = in place).
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{"/etc/passwd"}, "", true); err == nil || !strings.Contains(err.Error(), "outside the backup mount") || started {
+		t.Fatalf("expected an in-place containment error, got err=%v started=%v", err, started)
+	}
+	// A target folder escaping the host mount (../) is refused by the guard.
+	if _, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{fileA}, "../escape", true); err == nil || started {
+		t.Fatalf("expected a containment error for a target escaping the mount, got err=%v started=%v", err, started)
+	}
+	if len(eng.restored) != 0 {
+		t.Fatalf("no restore must have run on a rejected request, got %v", eng.restored)
+	}
+}
+
+// TestRestoreFileSetFilesRestores pins the happy paths of the selective restore
+// (#65). To a folder: each selected path is restored ROOTED AT the snapshot's
+// backed-up subtree with the include RELATIVE to it (proving the selection lands
+// at <target>/<rel>, NOT nested under /host/user/… — the v6.0.0/#62 correctness),
+// the target dir is created, and a successful run is recorded against the set id.
+// In place: each path is written back to its absolute location (RestoreInclude to
+// "/"). Confirm is required throughout.
+func TestRestoreFileSetFilesRestores(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st, setID, root := fileSetFilesRestoreService(t, eng)
+	ctx := context.Background()
+	fileA := root + "/data/docs/reports/2024.pdf"
+	dirB := root + "/data/docs/photos"
+	subtree := root + "/data/docs"
+
+	// To a folder: both selections extracted, subtree-rooted, no nesting.
+	target, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{fileA, dirB}, "user/restore/docs", true)
+	if err != nil || !started {
+		t.Fatalf("to-folder selective restore: err=%v started=%v", err, started)
+	}
+	wantTarget := root + "/user/restore/docs"
+	if target != wantTarget {
+		t.Fatalf("resolved target = %q, want %q", target, wantTarget)
+	}
+	if _, statErr := os.Stat(wantTarget); statErr != nil {
+		t.Fatalf("target dir must be created after containment passes: %v", statErr)
+	}
+	waitForBackupDone(t, svc)
+	if len(eng.restored) != 2 ||
+		!strings.Contains(eng.restored[0], "aaaa1111:"+subtree+"|/reports/2024.pdf->"+wantTarget) ||
+		!strings.Contains(eng.restored[1], "aaaa1111:"+subtree+"|/photos->"+wantTarget) {
+		t.Fatalf("expected both selections restored subtree-rooted into the folder, got %v", eng.restored)
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restoreRun *store.Run
+	for i := range runs {
+		if runs[i].TargetID == setID && runs[i].Kind == "restore" {
+			restoreRun = &runs[i]
+			break
+		}
+	}
+	if restoreRun == nil || restoreRun.Status != "success" {
+		t.Fatalf("expected a successful restore run recorded against the set id, got %+v", restoreRun)
+	}
+}
+
 // TestSnapshotsFlashRemoteOffsiteLists pins the fix for the off-site view being
 // wrongly empty: a REMOTE off-site repo must be listed directly (no local
 // config-file stat, which always fails for rest:/s3:/… and returned nil before).
@@ -3214,6 +3365,21 @@ func (f *fakeResticEngine) RestoreSubtreeTo(_ context.Context, repo, snapshotID,
 		return f.restoreErr
 	}
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+subtreePath+"->"+target)
+	return nil
+}
+
+func (f *fakeResticEngine) RestoreSubtreeInclude(_ context.Context, repo, snapshotID, subtreePath, includePath, target string, _ restic.Mode) error {
+	f.callLog = append(f.callLog, "RestoreSubtreeInclude")
+	f.blockIfArmed()
+	if f.restoreErr != nil {
+		return f.restoreErr
+	}
+	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
+		return errors.New("restore boom")
+	}
+	// Record subtree|include->target so a test can assert the subtree rooting AND
+	// the subtree-relative include (proving no /host/user/… nesting).
+	f.restored = append(f.restored, repo+":"+snapshotID+":"+subtreePath+"|"+includePath+"->"+target)
 	return nil
 }
 
