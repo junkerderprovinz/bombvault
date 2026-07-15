@@ -197,8 +197,16 @@ type Service struct {
 	// or expiring a session forgets the foreign location and key entirely, and
 	// Settings stays untouched (see foreign.go). Created lazily so it works
 	// regardless of how the Service was constructed.
-	foreignMu       sync.Mutex
-	foreignSessions map[string]foreignSession
+	//
+	// foreignJanitor is the stop channel of the background sweeper started on the
+	// first OpenForeign (nil = not running). Closing it stops the goroutine; it is
+	// re-created on the next open. The sweeper drops expired sessions — and their
+	// foreign APP_KEY — WITHOUT waiting for another API call (#61). foreignSweepEvery
+	// overrides the sweep interval in tests (0 = the production default).
+	foreignMu         sync.Mutex
+	foreignSessions   map[string]foreignSession
+	foreignJanitor    chan struct{}
+	foreignSweepEvery time.Duration
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -3176,6 +3184,19 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 		log.Printf("api: restore: unknown target %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 		return containerRestorePlan{}, errors.New("container has not been backed up yet")
 	}
+	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg)
+}
+
+// prepareRestoreForTarget builds a container restore plan for an ALREADY-RESOLVED
+// target tg against an explicit repo ref, WITHOUT reading or writing the store.
+// prepareRestoreIn passes the stored target; the foreign restore passes a target
+// built from the decrypted foreign definition, so snapshot ownership and appdata
+// containment are validated BEFORE that foreign recipe is ever persisted locally
+// (prepareForeignRestore adopts it only once this returns a plan — never on a
+// validation failure, which would otherwise clobber a same-named local target).
+// The caller runs the confirm / name / explicit-snapshot-id-shape guards first.
+func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target) (containerRestorePlan, error) {
+	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the container's newest snapshot — used by
 	// the bulk "restore selected" action. restic returns snapshots oldest-first,
@@ -4780,6 +4801,18 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 	if err != nil {
 		return vmRestorePlan{}, errors.New("vm has not been backed up yet")
 	}
+	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg)
+}
+
+// prepareRestoreVMForTarget builds a VM restore plan for an ALREADY-RESOLVED VM
+// target tg against an explicit repo ref, WITHOUT reading or writing the store —
+// the VM counterpart of prepareRestoreForTarget. The foreign restore passes a
+// target built from the decrypted foreign definition so its disk-path containment
+// is validated BEFORE that recipe is persisted locally (prepareForeignRestore
+// adopts it only once this returns a plan, never on a validation failure). The
+// caller runs the confirm / explicit-snapshot-id-shape guards first.
+func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget) (vmRestorePlan, error) {
+	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
 	// must belong to THIS VM (tag-scoped, mirroring the container restores'
@@ -5285,6 +5318,20 @@ func (s *Service) validateFileSet(fs store.FileSet) error {
 		return errors.New("source path not found under the host mount")
 	}
 	return nil
+}
+
+// fileSetHasBackups reports whether the file set id already has at least one
+// recorded successful backup run — i.e. fileset:<Name>-tagged snapshots exist in
+// the repo. Cheap: a single indexed runs lookup, no restic call. Renaming such a
+// set would silently orphan those snapshots (they stay tagged with the OLD name
+// and are never re-tagged), so handlePatchFileSet refuses a name change when this
+// is true (change path/excludes/enabled freely; create a new set to rename).
+func (s *Service) fileSetHasBackups(id string) (bool, error) {
+	run, err := s.store.LastSuccessfulBackup(id)
+	if err != nil {
+		return false, err
+	}
+	return run != nil, nil
 }
 
 // SnapshotsFileSet lists restic snapshots for a single file set, filtered by

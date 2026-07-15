@@ -834,7 +834,7 @@ const hu: Partial<Translations> = {
   "recovery.foreignStepConnect": "Csatlakozás a másik repóhoz",
   "recovery.foreignStepBrowse": "Böngészés és visszaállítás",
   "recovery.foreignLocation": "A repó helye",
-  "recovery.foreignLocationHint": "Egy mappa a gazdagép csatolási pontja alatt (pl. egy felcsatolt megosztás a másik szerver mentéseivel) vagy egy távoli repó URL-je (rest / S3 / B2 / sftp / rclone — az elmentett felhő-hitelesítő adatait használjuk).",
+  "recovery.foreignLocationHint": "Egy mappa a gazdagép csatolási pontja alatt. Csatold ezen a gazdagépen a másik szerver mentéseit tartalmazó megosztást, és erre mutass rá — a tárolónak helyben csatoltnak kell lennie (távoli tároló URL-ek itt nem elfogadottak).",
   "recovery.foreignKey": "A másik példány APP_KEY-e",
   "recovery.foreignKeyHint": "A 64 karakteres kulcs a MÁSIK példány helyreállítási készletéből — az Ön saját kulcsa érintetlen marad.",
   "recovery.foreignConnect": "Csatlakozás",

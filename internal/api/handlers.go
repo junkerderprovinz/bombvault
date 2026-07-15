@@ -1764,13 +1764,15 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 
 // handleStats returns a domain's recorded repository-size samples for the
 // size/dedup trend. GET /api/stats?domain=&source=&limit= — domain ∈ {containers,
-// vms, flash}; source ∈ {local, offsite} (default local); limit defaults to 90,
-// clamped to 1..365. The response carries the ascending sample list plus the
-// latest sample (or null when there is none) for the headline figure.
+// vms, flash, files}; source ∈ {local, offsite} (default local); limit defaults to
+// 90, clamped to 1..365. The response carries the ascending sample list plus the
+// latest sample (or null when there is none) for the headline figure. "files" is
+// accepted because CollectStatsOnStartup / maybeCollectStats already sample the
+// files repo, so the Storage card can show it (#61 Task 2).
 func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
-	case "containers", "vms", "flash":
+	case "containers", "vms", "flash", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2475,6 +2477,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "file set not found"})
 		return
 	}
+	oldName := fs.Name
 	if body.Name != nil {
 		fs.Name = strings.TrimSpace(*body.Name)
 	}
@@ -2490,6 +2493,21 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	if err := h.svc.validateFileSet(fs); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	// Refuse a rename once the set has backups: its snapshots are tagged
+	// fileset:<oldName> and are never re-tagged, so a rename would strand them
+	// (DeleteBackupsFileSet then can't find them). Path/excludes/enabled edits stay
+	// allowed — only the name is load-bearing for the snapshot tags.
+	if fs.Name != oldName {
+		hasBackups, bErr := h.svc.fileSetHasBackups(id)
+		if bErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(bErr))
+			return
+		}
+		if hasBackups {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot rename a file set that already has backups; create a new set instead"})
+			return
+		}
 	}
 	if err := h.store.UpdateFileSet(fs); err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {

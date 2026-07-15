@@ -41,6 +41,47 @@ func TestCatConfigArgs(t *testing.T) {
 	})
 }
 
+// TestNoLockArgs pins the #61 read-only threading: a foreign session sets
+// Mode.NoLock so restic never writes a lock file into someone else's repository.
+// It threads into cat config (the open probe) and both restore builders; a
+// default (locking) mode omits it.
+func TestNoLockArgs(t *testing.T) {
+	t.Run("cat config", func(t *testing.T) {
+		got := restic.CatConfigArgs("/repo", restic.Mode{Encrypted: true, Password: "pw", NoLock: true})
+		want := []string{"-r", "/repo", "cat", "config", "--no-lock"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("restore path", func(t *testing.T) {
+		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: true, NoLock: true})
+		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/p", "--", "abc123:/p"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("restore include", func(t *testing.T) {
+		got := restic.RestoreIncludeArgs("/repo", "abc123", "/p", "/", restic.Mode{Encrypted: true, NoLock: true})
+		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/", "--include", "/p", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("default mode does not add --no-lock", func(t *testing.T) {
+		for _, got := range [][]string{
+			restic.CatConfigArgs("/repo", restic.Mode{Encrypted: true}),
+			restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: true}),
+			restic.RestoreIncludeArgs("/repo", "abc123", "/p", "/", restic.Mode{Encrypted: true}),
+		} {
+			for _, a := range got {
+				if a == "--no-lock" {
+					t.Fatalf("a default (locking) mode must not add --no-lock, got %v", got)
+				}
+			}
+		}
+	})
+}
+
 func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("emits only set dimensions + prune", func(t *testing.T) {
 		got := restic.ForgetPolicyArgs("/repo",

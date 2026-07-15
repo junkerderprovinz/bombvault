@@ -356,12 +356,10 @@ function ForeignRestoreCard({
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
 }) {
-  // Connect inputs. Location is EITHER a folder under the host mount (mounted
-  // share) or a remote repo URL — the toggle mirrors the config step's
-  // local/off-site choice; whichever side is active is sent verbatim.
-  const [locSource, setLocSource] = useState<RepoSource>("local");
+  // Connect input. The backend only opens a LOCALLY MOUNTED repository, so the
+  // location is always a folder under the host mount (e.g. a mounted share
+  // holding the other server's backups) — no remote-URL / off-site option here.
   const [localPath, setLocalPath] = useState("");
-  const [remoteUrl, setRemoteUrl] = useState("");
   const [key, setKey] = useState("");
 
   const [phase, setPhase] = useState<"idle" | "connecting" | "connected" | "error">("idle");
@@ -374,6 +372,11 @@ function ForeignRestoreCard({
   // Local container/VM names ("container:x" / "vm:y"), fetched at connect time
   // so each row knows whether a restore would overwrite something local.
   const [localNames, setLocalNames] = useState<Set<string>>(new Set());
+  // Was the local container/VM inventory successfully read at connect time? When
+  // FALSE (the fetch failed), the collision state is UNKNOWN — every foreign
+  // container/VM then still prompts the overwrite confirm rather than silently
+  // skipping it (fail safe: confirm when unknown, never overwrite silently).
+  const [localKnown, setLocalKnown] = useState(true);
   const [busyRows, setBusyRows] = useState(0);
 
   // Ref-mirror of the session id so the unmount cleanup closes the CURRENT
@@ -392,7 +395,7 @@ function ForeignRestoreCard({
     []
   );
 
-  const location = (locSource === "local" ? localPath : remoteUrl).trim();
+  const location = localPath.trim();
   const canConnect = location !== "" && key.trim() !== "" && phase !== "connecting";
 
   const connect = useCallback(async () => {
@@ -413,19 +416,26 @@ function ForeignRestoreCard({
         setPhase("error");
         return;
       }
+      // Read the LOCAL inventory BEFORE enabling the restore rows: which foreign
+      // names already exist locally decides whether a restore shows the overwrite
+      // confirm. Awaiting it here (rather than after phase "connected") means the
+      // rows never render enabled with a stale/empty collision set. If the fetch
+      // FAILS the collision state is UNKNOWN (localKnown=false) — every foreign
+      // container/VM then still prompts the confirm (fail safe).
+      const names = new Set<string>();
+      let known = true;
+      try {
+        const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
+        for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
+        for (const v of vs.vms ?? []) names.add(`vm:${v.name}`);
+      } catch {
+        known = false;
+      }
+      setLocalNames(names);
+      setLocalKnown(known);
       setSession(res.session);
       setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [] });
       setPhase("connected");
-      // Overwrite-warning data: which foreign names already exist locally.
-      try {
-        const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
-        const names = new Set<string>();
-        for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
-        for (const v of vs.vms ?? []) names.add(`vm:${v.name}`);
-        setLocalNames(names);
-      } catch {
-        setLocalNames(new Set());
-      }
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : String(err));
       setPhase("error");
@@ -472,29 +482,15 @@ function ForeignRestoreCard({
 
       {/* Foreign step 1 — connect (read-only; nothing is saved). */}
       <StepCard n={1} title={t("recovery.foreignStepConnect")} state={connectState}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-carbon-textMuted">{t("recovery.foreignLocation")}</span>
-          <SourceToggle source={locSource} onChange={setLocSource} disabled={phase === "connecting"} />
-        </div>
-        {locSource === "local" ? (
-          <FolderBrowser
-            label={t("recovery.foreignLocation")}
-            value={localPath}
-            hostMountRoot={hostMountRoot}
-            onChange={setLocalPath}
-          />
-        ) : (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-carbon-textSub">{t("recovery.foreignLocation")}</label>
-            <input
-              value={remoteUrl}
-              spellCheck={false}
-              onChange={(e) => setRemoteUrl(e.target.value)}
-              placeholder="rest:http://host:8000/repo"
-              className={offsiteInput}
-            />
-          </div>
-        )}
+        {/* Local mounted path only — the backend never opens a remote/off-site
+            repo here, so the other server's backup share must be mounted on this
+            host and pointed at below. */}
+        <FolderBrowser
+          label={t("recovery.foreignLocation")}
+          value={localPath}
+          hostMountRoot={hostMountRoot}
+          onChange={setLocalPath}
+        />
         <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.foreignLocationHint")}</p>
 
         <div className="flex flex-col gap-1">
@@ -576,10 +572,17 @@ function ForeignRestoreCard({
                       item={item}
                       session={session}
                       hostMountRoot={hostMountRoot}
-                      existsLocally={localNames.has(
-                        (g.domain === "containers" ? "container:" : g.domain === "vms" ? "vm:" : "files:") +
-                          item.name
-                      )}
+                      existsLocally={
+                        // File sets restore into a chosen folder — they never
+                        // overwrite a same-named local item, so no confirm. For
+                        // containers/VMs, an UNKNOWN local inventory (fetch
+                        // failed) counts as a possible collision → confirm.
+                        g.domain !== "files" &&
+                        (!localKnown ||
+                          localNames.has(
+                            (g.domain === "containers" ? "container:" : "vm:") + item.name
+                          ))
+                      }
                       t={t}
                       blocked={rowBlocked}
                       onBusyChange={onBusyChange}
@@ -685,9 +688,11 @@ export default function Recovery() {
       containersPath: settings.containersPath,
       vmsPath: settings.vmsPath,
       flashPath: settings.flashPath,
+      filesPath: settings.filesPath,
       containersOffsite: settings.containersOffsite,
       vmsOffsite: settings.vmsOffsite,
       flashOffsite: settings.flashOffsite,
+      filesOffsite: settings.filesOffsite,
       encryptionEnabled: settings.encryptionEnabled,
     };
     const updated: Settings = { ...base, ...patch };
@@ -1092,6 +1097,12 @@ export default function Recovery() {
               hostMountRoot={hostMountRoot}
               onChange={(v) => setSettings((prev) => (prev ? { ...prev, flashPath: v } : prev))}
             />
+            <FolderBrowser
+              label={t("settings.filesPath")}
+              value={settings.filesPath}
+              hostMountRoot={hostMountRoot}
+              onChange={(v) => setSettings((prev) => (prev ? { ...prev, filesPath: v } : prev))}
+            />
 
             {/* Off-site repo URLs (rest / S3 / B2 / sftp / rclone). */}
             <span className="text-xs font-medium text-carbon-textSub pt-1">{t("settings.offsiteTitle")}</span>
@@ -1099,6 +1110,7 @@ export default function Recovery() {
               ["containersOffsite", "nav.containers"],
               ["vmsOffsite", "nav.vms"],
               ["flashOffsite", "nav.flash"],
+              ["filesOffsite", "nav.files"],
             ] as const).map(([key, label]) => (
               <div key={key} className="flex flex-col gap-1">
                 <label className="text-xs text-carbon-textSub">{t(label)}</label>
@@ -1208,7 +1220,11 @@ export default function Recovery() {
           <p className="text-sm text-carbon-textMuted">{t("recovery.noneDiscovered")}</p>
         ) : (
           <>
-            {/* Restore all — every container then VM, sequential + left stopped. */}
+            {/* Restore all — every container then VM, sequential + left stopped.
+                Shown ONLY when there are containers/VMs to bulk-restore: file
+                sets carry no original path, so they're restored per-row (below)
+                into a chosen folder and restoreAll() deliberately skips them. */}
+            {(containers.length > 0 || vms.length > 0) && (
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => void restoreAll()}
@@ -1236,6 +1252,7 @@ export default function Recovery() {
                 </span>
               )}
             </div>
+            )}
 
             {/* VM restore needs the libvirt SSH link — advisory note, not a block. */}
             {vms.length > 0 && vmSshConfigured === false && (

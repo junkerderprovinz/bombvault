@@ -39,14 +39,51 @@ type foreignRecordingEngine struct {
 
 	mu            sync.Mutex
 	calls         []string
-	snapshotRepos []string // repo argument of every Snapshots call (which repo was listed)
-	restores      []string // "Method|repo|snapshot|path" of every RestorePath/RestoreInclude call
+	snapshotRepos []string      // repo argument of every Snapshots call (which repo was listed)
+	restores      []string      // "Method|repo|snapshot|path" of every RestorePath/RestoreInclude call
+	modes         []restic.Mode // mode of every read/restore call, for NoLock + cloudEnv assertions
 }
 
 func (f *foreignRecordingEngine) record(name string) {
 	f.mu.Lock()
 	f.calls = append(f.calls, name)
 	f.mu.Unlock()
+}
+
+func (f *foreignRecordingEngine) recordMode(m restic.Mode) {
+	f.mu.Lock()
+	f.modes = append(f.modes, m)
+	f.mu.Unlock()
+}
+
+// everyModeNoLock reports whether every recorded read/restore mode carried
+// NoLock (so the foreign session never took a repository lock), and false when no
+// call was recorded at all.
+func (f *foreignRecordingEngine) everyModeNoLock() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.modes) == 0 {
+		return false
+	}
+	for _, m := range f.modes {
+		if !m.NoLock {
+			return false
+		}
+	}
+	return true
+}
+
+// anyModeHasEnv reports whether any recorded mode carried backend credentials
+// (cloudEnv) — which a local-only foreign session must never attach.
+func (f *foreignRecordingEngine) anyModeHasEnv() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, m := range f.modes {
+		if len(m.Env) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // calledForbidden returns the recorded calls that are in the forbidden set.
@@ -81,11 +118,13 @@ func (f *foreignRecordingEngine) count(name string) int {
 // Reads the foreign path may legitimately perform.
 func (f *foreignRecordingEngine) RepoOpens(_ context.Context, _ string, m restic.Mode) bool {
 	f.record("RepoOpens")
+	f.recordMode(m)
 	return f.opens != nil && f.opens(m)
 }
 
-func (f *foreignRecordingEngine) Snapshots(_ context.Context, repo string, _ restic.Mode) ([]restic.Snapshot, error) {
+func (f *foreignRecordingEngine) Snapshots(_ context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
 	f.record("Snapshots")
+	f.recordMode(m)
 	f.mu.Lock()
 	f.snapshotRepos = append(f.snapshotRepos, repo)
 	f.mu.Unlock()
@@ -100,16 +139,18 @@ func (f *foreignRecordingEngine) Unlock(_ context.Context, _ string, _ bool, _ r
 // The restore operations a foreign restore may legitimately run: they READ
 // the foreign repo and write only to LOCAL paths, so they are allowed —
 // recorded with their arguments so tests can pin WHICH repo was restored from.
-func (f *foreignRecordingEngine) RestorePath(_ context.Context, repo, snapshotID, path string, _ restic.Mode) error {
+func (f *foreignRecordingEngine) RestorePath(_ context.Context, repo, snapshotID, path string, m restic.Mode) error {
 	f.record("RestorePath")
+	f.recordMode(m)
 	f.mu.Lock()
 	f.restores = append(f.restores, "RestorePath|"+repo+"|"+snapshotID+"|"+path)
 	f.mu.Unlock()
 	return nil
 }
 
-func (f *foreignRecordingEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+func (f *foreignRecordingEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, m restic.Mode) error {
 	f.record("RestoreInclude")
+	f.recordMode(m)
 	f.mu.Lock()
 	f.restores = append(f.restores, "RestoreInclude|"+repo+"|"+snapshotID+"|"+includePath+"->"+target)
 	f.mu.Unlock()
@@ -170,11 +211,35 @@ func newForeignTestService(t *testing.T, eng ResticEngine) *Service {
 		t.Fatalf("migrate: %v", err)
 	}
 	st := store.New(db)
-	return &Service{
+	s := &Service{
 		store:  st,
 		engine: eng,
 		cfg:    config.Config{HostMountRoot: t.TempDir(), AppKey: strings.Repeat("a", 64)},
 	}
+	// Stop the background session janitor OpenForeign starts, so its goroutine
+	// never outlives the test (no-op when a test never opens a session).
+	t.Cleanup(s.stopForeignJanitor)
+	return s
+}
+
+// seedForeignRepoMarker writes restic's config marker under a LOCAL mounted
+// subpath of the test's host mount, so a foreign session pointed at that path
+// counts the repo as present (a local repo with no config marker reads as
+// "missing", short-circuiting the snapshot listing). Returns the resolved repo
+// path — exactly the repo string the engine records.
+func seedForeignRepoMarker(t *testing.T, s *Service, sub string) string {
+	t.Helper()
+	repo, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+	if err != nil {
+		t.Fatalf("resolve foreign repo %q: %v", sub, err)
+	}
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("cfg"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return repo
 }
 
 // TestOpenForeignLeavesSettingsUntouched pins guarantee #1 of the foreign
@@ -224,6 +289,14 @@ func TestOpenForeignIsReadOnly(t *testing.T) {
 	// Sanity: the recorder actually saw the expected reads.
 	if eng.count("RepoOpens") == 0 || eng.count("Snapshots") == 0 {
 		t.Fatalf("expected RepoOpens + Snapshots reads, got calls %v", eng.calls)
+	}
+	// Every probe/listing was lock-free (never writes a lock into the foreign
+	// repo) and carried no cloud credentials (local-only session).
+	if !eng.everyModeNoLock() {
+		t.Fatalf("every foreign probe/listing must be lock-free (NoLock), got modes %+v", eng.modes)
+	}
+	if eng.anyModeHasEnv() {
+		t.Fatalf("a foreign session must not attach cloud credentials, got modes %+v", eng.modes)
 	}
 }
 
@@ -611,7 +684,7 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 // disabled path-less set (like DiscoverFileSets) and records a "restore" run
 // against it — performing ONLY reads plus the one RestoreInclude.
 func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
-	location := "rest:http://127.0.0.1:9999/other" // remote → used verbatim as the repo
+	location := "backups/other" // a LOCAL mounted share — remote backends are rejected
 	eng := &foreignRecordingEngine{
 		opens: opensEncrypted,
 		snaps: []restic.Snapshot{
@@ -620,6 +693,7 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 		},
 	}
 	s := newForeignTestService(t, eng)
+	sessionRepo := seedForeignRepoMarker(t, s, location)
 
 	id, inv, err := s.OpenForeign(context.Background(), location, foreignTestKey)
 	if err != nil {
@@ -644,12 +718,19 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 	eng.mu.Lock()
 	restores := append([]string(nil), eng.restores...)
 	eng.mu.Unlock()
-	want := "RestoreInclude|" + location + "|ffffffff66666666|/->" + wantTarget
+	want := "RestoreInclude|" + sessionRepo + "|ffffffff66666666|/->" + wantTarget
 	if len(restores) != 1 || restores[0] != want {
 		t.Fatalf("restore calls = %v, want exactly [%s]", restores, want)
 	}
 	if _, err := os.Stat(wantTarget); err != nil {
 		t.Fatalf("target folder must be created under the host mount: %v", err)
+	}
+	// Read-only guarantee (#61): the foreign session took no repository lock.
+	if !eng.everyModeNoLock() {
+		t.Fatalf("every foreign read/restore must be lock-free (NoLock), got modes %+v", eng.modes)
+	}
+	if eng.anyModeHasEnv() {
+		t.Fatalf("a local-only foreign session must not attach cloud credentials, got modes %+v", eng.modes)
 	}
 
 	// The name was adopted as a LOCAL disabled, path-less set and the run is
@@ -694,9 +775,10 @@ func TestForeignRestoreLeavesSettingsUntouched(t *testing.T) {
 		snaps: []restic.Snapshot{{ID: "eeeeeeee55555555", Time: "2026-07-05T10:00:00Z", Tags: []string{"fileset:docs"}}},
 	}
 	s := newForeignTestService(t, eng)
+	seedForeignRepoMarker(t, s, "backups/other")
 
 	before, beforeRaw := settingsSnapshot(t, s)
-	id, _, err := s.OpenForeign(context.Background(), "rest:http://127.0.0.1:9999/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -724,6 +806,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 		snaps: []restic.Snapshot{{ID: "eeeeeeee55555555", Time: "2026-07-05T10:00:00Z", Tags: []string{"fileset:docs"}}},
 	}
 	s := newForeignTestService(t, eng)
+	seedForeignRepoMarker(t, s, "backups/other")
 	ctx := context.Background()
 
 	// Unconfirmed: the sentinel, before ANY engine call or session lookup.
@@ -741,7 +824,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 		t.Fatalf("unknown session: want errForeignSession, got started=%v err=%v", started, err)
 	}
 
-	id, _, err := s.OpenForeign(ctx, "rest:http://127.0.0.1:9999/other", foreignTestKey)
+	id, _, err := s.OpenForeign(ctx, "backups/other", foreignTestKey)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -758,8 +841,8 @@ func TestForeignRestoreValidation(t *testing.T) {
 	if started, err = s.StartForeignRestore(ctx, id, "files", "../evil", "latest", true, "restore-here"); started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 		t.Fatalf("unsafe item: want the name error, got started=%v err=%v", started, err)
 	}
-	// Container whose def the foreign repo does not mirror (remote location —
-	// there is no local def dir to read).
+	// Container whose def the foreign repo does not mirror (the seeded repo has a
+	// config marker but no def/ghost.def to read).
 	if started, err = s.StartForeignRestore(ctx, id, "containers", "ghost", "latest", true, ""); started || err == nil || !strings.Contains(err.Error(), "definition") {
 		t.Fatalf("missing def: want the definition error, got started=%v err=%v", started, err)
 	}
@@ -774,4 +857,147 @@ func TestForeignRestoreValidation(t *testing.T) {
 		t.Fatalf("valid restore after failures: started=%v err=%v", started, err)
 	}
 	waitForeignIdle(t, s)
+}
+
+// TestOpenForeignRejectsRemoteLocation pins the confused-deputy fix (#61): a
+// remote-backend location (or an unprefixed rclone remote name) is rejected
+// BEFORE any engine call, so restic never contacts a third-party server carrying
+// THIS instance's off-site credentials. Only a locally mounted path is allowed.
+func TestOpenForeignRejectsRemoteLocation(t *testing.T) {
+	remote := []string{
+		"rest:http://10.0.0.9:8000/repo",
+		"s3:s3.amazonaws.com/bucket",
+		"sftp:user@host:/srv/repo",
+		"rclone:remote:path",
+		"b2:bucket/path",
+		"gs:bucket/path",
+		"azure:container/path",
+		"BackBlaze:bucket", // unprefixed rclone remote name (the common typo)
+	}
+	for _, loc := range remote {
+		eng := &foreignRecordingEngine{opens: opensEncrypted}
+		s := newForeignTestService(t, eng)
+		_, _, err := s.OpenForeign(context.Background(), loc, foreignTestKey)
+		if err == nil || !strings.Contains(err.Error(), "locally mounted") {
+			t.Fatalf("location %q: want the locally-mounted rejection, got %v", loc, err)
+		}
+		if len(eng.calls) != 0 {
+			t.Fatalf("location %q: rejection must precede any engine call (cloudEnv never used), got %v", loc, eng.calls)
+		}
+	}
+}
+
+// TestForeignJanitorSweepsExpiredSessions pins #61's background janitor: an
+// abandoned (expired) session — and the foreign APP_KEY it holds — is swept
+// WITHOUT any intervening foreign API call. The sweep interval is injected fast;
+// a direct guarded map read observes ONLY the janitor's effect (foreignSession()
+// would itself sweep on access and mask it).
+func TestForeignJanitorSweepsExpiredSessions(t *testing.T) {
+	eng := &foreignRecordingEngine{opens: opensEncrypted}
+	s := newForeignTestService(t, eng)
+	s.foreignSweepEvery = 5 * time.Millisecond // fast tick for the test
+
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	s.foreignMu.Lock()
+	sess := s.foreignSessions[id]
+	sess.expires = time.Now().Add(-time.Second)
+	s.foreignSessions[id] = sess
+	s.foreignMu.Unlock()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		s.foreignMu.Lock()
+		_, still := s.foreignSessions[id]
+		s.foreignMu.Unlock()
+		if !still {
+			return // the janitor swept it with no API call in between
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+	t.Fatal("the background janitor did not sweep the expired session")
+}
+
+// TestForeignRestoreValidationFailureLeavesLocalTargetIntact pins #61's
+// validate-before-adopt fix: a foreign container restore that fails validation
+// (here: an explicit snapshot id that does not belong to the item) must NOT have
+// adopted the foreign recipe — an existing same-named local target keeps its own
+// definition + appdata_paths BYTE-IDENTICAL.
+func TestForeignRestoreValidationFailureLeavesLocalTargetIntact(t *testing.T) {
+	// The foreign repo lists NO container:web snapshots, so any explicit id is
+	// "not owned" and the restore fails during validation.
+	eng := &foreignRecordingEngine{opens: opensEncrypted}
+	s := newForeignTestService(t, eng)
+	repoDir := seedForeignRepoMarker(t, s, "backups/other")
+
+	// A pre-existing LOCAL target "web" with its own recipe.
+	localDef, err := json.Marshal(containerDefinition{
+		Inspect:      model.Inspect{Name: "web", Config: model.Config{Image: "local-image:1"}},
+		AppdataPaths: []string{"/host/user/appdata/web-LOCAL"},
+	})
+	if err != nil {
+		t.Fatalf("marshal local def: %v", err)
+	}
+	if _, err := s.store.UpsertTarget(store.Target{
+		ContainerName: "web",
+		AppdataPaths:  []string{"/host/user/appdata/web-LOCAL"},
+		Definition:    string(localDef),
+	}); err != nil {
+		t.Fatalf("seed local target: %v", err)
+	}
+	before, err := s.store.GetTargetByContainer("web")
+	if err != nil {
+		t.Fatalf("read local target: %v", err)
+	}
+
+	// The FOREIGN repo's def mirror for "web" carries a DIFFERENT recipe — the one
+	// that would clobber the local row if adoption happened before validation.
+	foreignDef, err := json.Marshal(containerDefinition{
+		Inspect:      model.Inspect{Name: "web", Config: model.Config{Image: "foreign-image:9"}},
+		AppdataPaths: []string{"/host/user/appdata/web-FOREIGN"},
+	})
+	if err != nil {
+		t.Fatalf("marshal foreign def: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(repoDir, "def"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(foreignTestKey, foreignDef)
+	if err != nil {
+		t.Fatalf("encrypt foreign def: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(repoDir, "def", "web.def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	// A valid-shaped but not-owned snapshot id → validation fails synchronously,
+	// before any adoption.
+	notOwned := strings.Repeat("ab", 8) // 16 lowercase hex = a well-formed short id
+	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", notOwned, true, "")
+	if started || err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("want a not-owned-snapshot failure that starts nothing, got started=%v err=%v", started, err)
+	}
+
+	// The local target is byte-identical: the foreign recipe was never adopted.
+	after, err := s.store.GetTargetByContainer("web")
+	if err != nil {
+		t.Fatalf("read local target after: %v", err)
+	}
+	if after.Definition != before.Definition {
+		t.Fatalf("definition must be byte-identical:\nbefore: %s\nafter:  %s", before.Definition, after.Definition)
+	}
+	if !reflect.DeepEqual(after.AppdataPaths, before.AppdataPaths) {
+		t.Fatalf("appdata paths must be byte-identical: before=%v after=%v", before.AppdataPaths, after.AppdataPaths)
+	}
+	if strings.Contains(after.Definition, "foreign-image") {
+		t.Fatalf("local target must NOT hold the foreign recipe, got %s", after.Definition)
+	}
 }

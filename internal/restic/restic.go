@@ -55,6 +55,13 @@ type Mode struct {
 	// Env is extra environment passed to the restic process ("KEY=VALUE"), used
 	// for backend credentials (S3 AWS_*, REST RESTIC_REST_*). Never in argv.
 	Env []string
+	// NoLock, when true, adds --no-lock to every lock-taking operation built for
+	// this mode (cat config, restore), so the operation NEVER writes a lock file
+	// into the repository. It is set only for a foreign read-only session (open
+	// another instance's repo without mutating it, #61); the settings-driven
+	// backup/restore paths leave it false and lock normally. Snapshot listings are
+	// always lock-free regardless (SnapshotsArgs hard-codes --no-lock).
+	NoLock bool
 }
 
 // Summary holds the fields we extract from restic's --json backup summary line.
@@ -177,6 +184,9 @@ func CatConfigArgs(repo string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	if m.NoLock {
+		args = append(args, "--no-lock") // read-only foreign probe must not lock the repo
+	}
 	return args
 }
 
@@ -254,6 +264,9 @@ func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	if m.NoLock {
+		args = append(args, "--no-lock") // a foreign restore only READS the source repo
+	}
 	args = append(args, "--json")
 	args = append(args, "--target", p)
 	args = append(args, "--", snapshotID+":"+p)
@@ -288,6 +301,9 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	args = append(args, "restore")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
+	}
+	if m.NoLock {
+		args = append(args, "--no-lock") // a foreign restore only READS the source repo
 	}
 	args = append(args, "--json", "--target", target, "--include", includePath, "--", snapshotID)
 	return args

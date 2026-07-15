@@ -829,7 +829,7 @@ const cs: Partial<Translations> = {
   "recovery.foreignStepConnect": "Připojit se k jinému repozitáři",
   "recovery.foreignStepBrowse": "Procházet a obnovit",
   "recovery.foreignLocation": "Umístění repozitáře",
-  "recovery.foreignLocationHint": "Složka pod připojením hosta (např. připojené sdílení se zálohami druhého serveru) nebo URL vzdáleného repozitáře (rest / S3 / B2 / sftp / rclone — použijí se vaše uložené cloudové přihlašovací údaje).",
+  "recovery.foreignLocationHint": "Složka pod připojením hosta. Připojte na tomto hostiteli sdílení se zálohami druhého serveru a odkažte sem na něj — repozitář musí být připojen lokálně (URL vzdálených repozitářů se zde nepřijímají).",
   "recovery.foreignKey": "APP_KEY druhé instance",
   "recovery.foreignKeyHint": "64znakový klíč ze záchranné sady DRUHÉ instance — váš vlastní klíč zůstane nedotčen.",
   "recovery.foreignConnect": "Připojit",

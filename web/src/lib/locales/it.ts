@@ -831,7 +831,7 @@ const it: Partial<Translations> = {
   "recovery.foreignStepConnect": "Connettiti all'altro repository",
   "recovery.foreignStepBrowse": "Sfoglia e ripristina",
   "recovery.foreignLocation": "Posizione del repository",
-  "recovery.foreignLocationHint": "Una cartella sotto il mount dell'host (ad es. una condivisione montata con i backup dell'altro server) o l'URL di un repo remoto (rest / S3 / B2 / sftp / rclone — vengono usate le tue credenziali cloud salvate).",
+  "recovery.foreignLocationHint": "Una cartella sotto il mount dell'host. Monta su questo host la condivisione con i backup dell'altro server e puntala qui — il repository deve essere montato localmente (qui non si accettano URL di repo remoti).",
   "recovery.foreignKey": "APP_KEY dell'altra istanza",
   "recovery.foreignKeyHint": "La chiave di 64 caratteri dal recovery kit dell'ALTRA istanza — la tua chiave resta intatta.",
   "recovery.foreignConnect": "Connetti",

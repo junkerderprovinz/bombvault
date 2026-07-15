@@ -1147,7 +1147,7 @@ function Sparkline({
 // Storage card — repo size + dedup trend per domain
 // ---------------------------------------------------------------------------
 
-type StorageDomain = "containers" | "vms" | "flash";
+type StorageDomain = "containers" | "vms" | "flash" | "files";
 
 interface DomainStats {
   domain: StorageDomain;
@@ -1161,7 +1161,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   useEffect(() => {
     let active = true;
-    const domains: StorageDomain[] = ["containers", "vms", "flash"];
+    const domains: StorageDomain[] = ["containers", "vms", "flash", "files"];
     Promise.all(domains.map((d) => getStats(d, "local", 90)))
       .then((results) => {
         if (!active) return;
@@ -1190,6 +1190,8 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         return t("dashboard.domainVMs");
       case "flash":
         return t("dashboard.domainFlash");
+      case "files":
+        return t("dashboard.domainFiles");
     }
   };
 

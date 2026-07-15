@@ -828,7 +828,7 @@ const nl: Partial<Translations> = {
   "recovery.foreignStepConnect": "Verbinden met de andere repository",
   "recovery.foreignStepBrowse": "Bladeren & herstellen",
   "recovery.foreignLocation": "Locatie van de repository",
-  "recovery.foreignLocationHint": "Een map onder de host-mount (bijv. een gekoppelde share met de back-ups van de andere server) of een URL van een externe repo (rest / S3 / B2 / sftp / rclone — uw opgeslagen cloudreferenties worden gebruikt).",
+  "recovery.foreignLocationHint": "Een map onder de host-mount. Koppel op deze host de share met de back-ups van de andere server en verwijs hier ernaar — de repository moet lokaal gekoppeld zijn (externe repo-URL's worden hier niet geaccepteerd).",
   "recovery.foreignKey": "APP_KEY van de andere instantie",
   "recovery.foreignKeyHint": "De sleutel van 64 tekens uit het recovery-kit van de ANDERE instantie — uw eigen sleutel blijft onaangeroerd.",
   "recovery.foreignConnect": "Verbinden",

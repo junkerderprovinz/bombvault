@@ -2,9 +2,12 @@ package api_test
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
@@ -74,14 +77,27 @@ func TestForeignOpenCloseRoutes(t *testing.T) {
 // a second restore while one is running answers 409.
 func TestForeignRestoreRoute(t *testing.T) {
 	enc := true
-	location := "rest:http://127.0.0.1:9999/other" // remote → used verbatim as the session repo
+	location := "backups/other" // a LOCAL mounted share (the only kind OpenForeign accepts)
 	eng := &fakeResticEngine{
 		existingMode: &enc,
 		snaps: []restic.Snapshot{
 			{ID: "eeeeeeee55555555", Time: "2026-07-05T10:00:00Z", Tags: []string{"fileset:docs"}},
 		},
 	}
-	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, eng)
+	h, _, svc, dir := newTestRouterSvcDir(t, &fakeServiceDocker{}, eng)
+
+	// Seed the foreign repo's config marker so the session's snapshot listing
+	// reaches the engine (a local repo with no config marker reads as "missing").
+	sessionRepo, err := paths.Resolve(dir, location)
+	if err != nil {
+		t.Fatalf("resolve session repo: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "backups", "other"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "backups", "other", "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	key := strings.Repeat("ab", 32)
 	w, m := doJSON(t, h, http.MethodPost, "/api/foreign/open", `{"location":"`+location+`","key":"`+key+`"}`)
@@ -128,7 +144,7 @@ func TestForeignRestoreRoute(t *testing.T) {
 	waitForBackupDone(t, svc)
 
 	// The detached work restored from the SESSION repo (never a settings repo).
-	if len(eng.restored) != 1 || !strings.HasPrefix(eng.restored[0], location+":eeeeeeee55555555:/->") {
-		t.Fatalf("restored = %v, want one whole-tree restore from the session repo", eng.restored)
+	if len(eng.restored) != 1 || !strings.HasPrefix(eng.restored[0], sessionRepo+":eeeeeeee55555555:/->") {
+		t.Fatalf("restored = %v, want one whole-tree restore from the session repo %q", eng.restored, sessionRepo)
 	}
 }

@@ -829,7 +829,7 @@ const es: Partial<Translations> = {
   "recovery.foreignStepConnect": "Conectar con el otro repositorio",
   "recovery.foreignStepBrowse": "Explorar y restaurar",
   "recovery.foreignLocation": "Ubicación del repositorio",
-  "recovery.foreignLocationHint": "Una carpeta bajo el montaje del host (p. ej. un recurso compartido montado con las copias del otro servidor) o la URL de un repo remoto (rest / S3 / B2 / sftp / rclone — se usan tus credenciales de nube guardadas).",
+  "recovery.foreignLocationHint": "Una carpeta bajo el montaje del host. Monta en este host el recurso compartido con las copias del otro servidor y apunta aquí a él — el repositorio debe estar montado localmente (aquí no se aceptan URL de repos remotos).",
   "recovery.foreignKey": "APP_KEY de la otra instancia",
   "recovery.foreignKeyHint": "La clave de 64 caracteres del kit de recuperación de la OTRA instancia — tu propia clave queda intacta.",
   "recovery.foreignConnect": "Conectar",

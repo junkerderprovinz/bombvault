@@ -35,6 +35,16 @@ func newTestRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (h
 // detached, so without waiting it can outlive the test and touch a closed store).
 func newTestRouterSvc(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service) {
 	t.Helper()
+	h, st, svc, _ := newTestRouterSvcDir(t, d, eng)
+	return h, st, svc
+}
+
+// newTestRouterSvcDir is newTestRouterSvc that also returns the host mount root
+// dir, so a test can seed a foreign repo (a config marker under the mount) and
+// point a foreign session at a LOCAL mounted path — the only kind OpenForeign
+// accepts (a remote backend is rejected).
+func newTestRouterSvcDir(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service, string) {
+	t.Helper()
 	dir := t.TempDir()
 	// The conventional appdata dir for the "plex" container the backup tests use,
 	// so the (now existence-filtered) backup actually has a source to snapshot.
@@ -49,7 +59,7 @@ func newTestRouterSvc(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine)
 		st.ListTargets,
 	)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes())
-	return h.Router(), st, svc
+	return h.Router(), st, svc, dir
 }
 
 // waitForBackupDone blocks until the detached single-backup/batch goroutine has
@@ -1224,6 +1234,73 @@ func TestFileSetCRUDRoundTrip(t *testing.T) {
 	}
 	if left := fileSetsOf(t, h); len(left) != 0 {
 		t.Fatalf("expected no sets after delete, got %+v", left)
+	}
+}
+
+// TestFileSetRenameRefusedWhenBackedUp pins the data-integrity fix: renaming a
+// file set that already has a recorded backup is refused (its snapshots are
+// tagged fileset:<oldName> and would be stranded), while path/excludes/enabled
+// edits on that same set stay allowed.
+func TestFileSetRenameRefusedWhenBackedUp(t *testing.T) {
+	h, st, _, _ := newFilesTestRouter(t, &fakeResticEngine{})
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	// Record one successful backup run against the set id (runs.target_id).
+	runID, err := st.StartRun(id, "backup")
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	if err := st.FinishRun(runID, "success", "eeeeeeee55555555", 1024, ""); err != nil {
+		t.Fatalf("finish run: %v", err)
+	}
+
+	// A name change is refused with the clear message; the name does not change.
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"docs-renamed"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("rename must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "already has backups") {
+		t.Fatalf("want the has-backups message, got %q", msg)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "docs" {
+		t.Fatalf("name must be unchanged after a refused rename, got %q", got.Name)
+	}
+
+	// Non-name edits (path/excludes/enabled) are still allowed on a backed-up set.
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"enabled":false,"excludes":["*.tmp"]}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("non-name edit must be allowed: %d %v", w.Code, m)
+	}
+	got := fileSetsOf(t, h)[0]
+	if got.Enabled || len(got.Excludes) != 1 || got.Excludes[0] != "*.tmp" || got.Name != "docs" {
+		t.Fatalf("non-name edit did not apply cleanly: %+v", got)
+	}
+}
+
+// TestStatsFilesDomainAccepted pins the completeness fix (#61 Task 2): GET
+// /api/stats?domain=files is accepted (no longer 400), so the Storage card can
+// show the files repo's samples; an unknown domain is still rejected.
+func TestStatsFilesDomainAccepted(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	// Seed one files sample so the handler returns it directly (no async collect).
+	if err := st.AddRepoStat(store.RepoStat{Domain: "files", Source: "local", At: 1700000000, RawSize: 4096, RestoreSize: 8192, Snapshots: 3}); err != nil {
+		t.Fatalf("seed files stat: %v", err)
+	}
+	w, m := doJSON(t, h, http.MethodGet, "/api/stats?domain=files", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("GET /api/stats?domain=files: status=%d body=%v (want 200 ok:true)", w.Code, m)
+	}
+	if stats, _ := m["stats"].([]any); len(stats) != 1 {
+		t.Fatalf("want the one seeded files sample, got %v", m["stats"])
+	}
+	w, _ = doJSON(t, h, http.MethodGet, "/api/stats?domain=bogus", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("unknown domain must still 400, got %d", w.Code)
 	}
 }
 

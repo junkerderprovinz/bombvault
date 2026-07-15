@@ -826,7 +826,7 @@ const pl: Partial<Translations> = {
   "recovery.foreignStepConnect": "Połącz z innym repozytorium",
   "recovery.foreignStepBrowse": "Przeglądaj i przywracaj",
   "recovery.foreignLocation": "Lokalizacja repozytorium",
-  "recovery.foreignLocationHint": "Folder pod punktem montowania hosta (np. zamontowany udział z kopiami drugiego serwera) albo adres URL zdalnego repo (rest / S3 / B2 / sftp / rclone — używane są Twoje zapisane dane dostępowe do chmury).",
+  "recovery.foreignLocationHint": "Folder pod punktem montowania hosta. Zamontuj na tym hoście udział z kopiami drugiego serwera i wskaż go tutaj — repozytorium musi być zamontowane lokalnie (zdalne adresy URL repo nie są tu akceptowane).",
   "recovery.foreignKey": "APP_KEY drugiej instancji",
   "recovery.foreignKeyHint": "64-znakowy klucz z zestawu ratunkowego DRUGIEJ instancji — Twój własny klucz pozostaje nietknięty.",
   "recovery.foreignConnect": "Połącz",
