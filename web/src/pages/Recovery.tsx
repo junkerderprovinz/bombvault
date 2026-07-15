@@ -426,8 +426,16 @@ function ForeignRestoreCard({
       let known = true;
       try {
         const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
-        for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
-        for (const v of vs.vms ?? []) names.add(`vm:${v.name}`);
+        // These endpoints answer HTTP 200 {ok:false} when docker/libvirt is
+        // briefly unavailable (fetchJSON does not throw on that), so the ok flag
+        // — not just a thrown error — decides whether the collision set is
+        // trustworthy. An untrusted set forces the overwrite confirm (fail safe).
+        if (!cs.ok || !vs.ok) {
+          known = false;
+        } else {
+          for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
+          for (const v of vs.vms ?? []) names.add(`vm:${v.name}`);
+        }
       } catch {
         known = false;
       }

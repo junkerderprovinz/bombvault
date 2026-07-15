@@ -1282,6 +1282,35 @@ func TestFileSetRenameRefusedWhenBackedUp(t *testing.T) {
 	}
 }
 
+// TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns pins the completeness
+// of the rename guard: a Discover-rebuilt set has real fileset:<Name> snapshots
+// in the repo but NO run rows, so a runs-only check would wrongly allow the
+// rename and strand the snapshots. fileSetHasBackups must also see the tags.
+func TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:orphan"}},
+	}}
+	h, _, _, _ := newFilesTestRouter(t, eng)
+
+	// A set named exactly like the tag, with NO recorded run (mirrors Discover).
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"orphan","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"orphan-renamed"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("rename must be refused when tagged snapshots exist: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "already has backups") {
+		t.Fatalf("want the has-backups message, got %q", msg)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "orphan" {
+		t.Fatalf("name must be unchanged after a refused rename, got %q", got.Name)
+	}
+}
+
 // TestStatsFilesDomainAccepted pins the completeness fix (#61 Task 2): GET
 // /api/stats?domain=files is accepted (no longer 400), so the Storage card can
 // show the files repo's samples; an unknown domain is still rejected.
