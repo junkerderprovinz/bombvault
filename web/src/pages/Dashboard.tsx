@@ -401,103 +401,126 @@ function ProtectionCard({
             const drFailed = !off && drCapable && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
             return (
               <div key={d.domain} className="flex flex-col gap-1 py-2.5 text-sm">
-                <div className="flex items-center gap-3">
+                {/* Shared column grid (#66) — every row lays its cells on the SAME
+                    track template so the same kind of info sits in the same column
+                    down the whole card, regardless of which cells a row populates:
+                    [domain] [status] [schedule] [last run] [verified] [off-site
+                    verified] [off-site DR]. Fixed tracks for the fixed-width columns,
+                    fr tracks (min 0) for the text/badges so a long badge (e.g.
+                    "proven restorable from off-site") wraps inside its column instead
+                    of overflowing the card, and absent badges just leave their column
+                    blank without re-flowing the others. */}
+                <div className="grid items-center gap-3 grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.6fr)]">
                   <span
-                    className={`font-medium w-28 shrink-0 truncate ${
+                    className={`col-start-1 min-w-0 truncate font-medium ${
                       off ? "text-carbon-textMuted" : "text-carbon-text"
                     }`}
                   >
                     {domainLabel(d.domain)}
                   </span>
                   {off ? (
-                    <span className="text-xs text-carbon-textMuted flex-1">
+                    <span className="col-start-2 col-span-6 min-w-0 truncate text-xs text-carbon-textMuted">
                       {t("dashboard.rpoOff")}
                     </span>
                   ) : (
                     <>
-                      <StatusChip status={chipForRpo(d.status)} />
-                      <span className="text-carbon-text flex-1 truncate">
-                        {rpoLabel(d.status)}
-                      </span>
-                      <span className="text-carbon-textMuted text-xs shrink-0">
+                      {/* Col 2 — status: the RPO chip + its label kept together so the
+                          pill never drifts from the words it qualifies. */}
+                      <div className="col-start-2 flex min-w-0 items-center gap-2">
+                        <StatusChip status={chipForRpo(d.status)} />
+                        <span className="min-w-0 truncate text-carbon-text">
+                          {rpoLabel(d.status)}
+                        </span>
+                      </div>
+                      {/* Col 3 — schedule cadence. */}
+                      <span className="col-start-3 min-w-0 truncate text-carbon-textMuted text-xs">
                         {formatCadence(d.schedule, t, lang)}
                       </span>
+                      {/* Col 4 — last successful run. */}
                       <span
-                        className="text-carbon-textMuted text-xs shrink-0 w-20 text-right"
+                        className="col-start-4 text-right text-carbon-textMuted text-xs"
                         title={formatTs(d.lastSuccess)}
                       >
                         {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
                       </span>
+                      {/* Col 5 — local-verify shield badge. */}
                       {d.lastVerified ? (
-                        <span
-                          title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
-                            d.lastVerifiedOK
-                              ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                              : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
-                          }`}
-                        >
-                          {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
-                        </span>
+                        <div className="col-start-5 min-w-0">
+                          <span
+                            title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
+                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words ${
+                              d.lastVerifiedOK
+                                ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                                : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                            }`}
+                          >
+                            {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
+                          </span>
+                        </div>
                       ) : null}
-                      {/* Off-site SUBSET badge (#63) — the off-site integrity check
-                          (`restic check --read-data-subset` against the off-site
+                      {/* Col 6 — Off-site SUBSET badge (#63) — the off-site integrity
+                          check (`restic check --read-data-subset` against the off-site
                           repo). Mirrors the local-verify shield above (same pills)
                           and is the ONLY off-site drill VMs can run (DR restores
                           are refused for them), so it shows for EVERY domain with
                           a recorded run — alongside, never instead of, the DR pill
                           below. */}
                       {d.lastOffsiteSubsetAt ? (
-                        <span
-                          title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
-                            d.lastOffsiteSubsetOK
-                              ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                              : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
-                          }`}
-                        >
-                          {d.lastOffsiteSubsetOK ? "✓" : "✗"} {t("drill.offsiteVerified")} {relativeTime(t, d.lastOffsiteSubsetAt)}
-                        </span>
+                        <div className="col-start-6 min-w-0">
+                          <span
+                            title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
+                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words ${
+                              d.lastOffsiteSubsetOK
+                                ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                                : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                            }`}
+                          >
+                            {d.lastOffsiteSubsetOK ? "✓" : "✗"} {t("drill.offsiteVerified")} {relativeTime(t, d.lastOffsiteSubsetAt)}
+                          </span>
+                        </div>
                       ) : null}
-                      {/* Off-site restorability badge — mirrors the local-verify shield
-                          above (same pills), but proves the backup is recoverable from
-                          the OFF-SITE repo (a real DR sandbox restore). Only containers
-                          + flash ever run a DR drill, so VMs never show this pill. On a
+                      {/* Col 7 — Off-site restorability (DR) badge — mirrors the
+                          local-verify shield above (same pills), but proves the backup
+                          is recoverable from the OFF-SITE repo (a real DR sandbox
+                          restore). Only containers + flash + files ever run a DR drill,
+                          so VMs/config never show this pill (empty column). On a
                           failure the tooltip names WHICH check + the reason. */}
-                      {drCapable && d.lastDrDrillAt && d.lastDrDrillOK ? (
-                        // GREEN — proven restorable off-site. A real passed run (even
-                        // a MANUAL one) is honest proof, so it's kept even when the
-                        // scheduled DR drill is opted out.
-                        <span
-                          title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                        >
-                          ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
-                        </span>
-                      ) : drFailed ? (
-                        // RED — a recorded off-site DR drill FAILED (scheduled or a
-                        // manual run). Always shown; the opt-out never masks a real
-                        // failure — only "never drilled" goes neutral below.
-                        <span
-                          title={
-                            d.drillDetail
-                              ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
-                              : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
-                          }
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
-                        >
-                          ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
-                        </span>
-                      ) : drUnscheduled ? (
-                        // NEUTRAL — off-site DR not scheduled (manual only) and nothing
-                        // failing to show: muted, never red. File's no-claim styling.
-                        <span
-                          title={t("drill.manualOnlyTitle")}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
-                        >
-                          {t("drill.manualOnly")}
-                        </span>
-                      ) : null}
+                      <div className="col-start-7 min-w-0">
+                        {drCapable && d.lastDrDrillAt && d.lastDrDrillOK ? (
+                          // GREEN — proven restorable off-site. A real passed run (even
+                          // a MANUAL one) is honest proof, so it's kept even when the
+                          // scheduled DR drill is opted out.
+                          <span
+                            title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                          >
+                            ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                          </span>
+                        ) : drFailed ? (
+                          // RED — a recorded off-site DR drill FAILED (scheduled or a
+                          // manual run). Always shown; the opt-out never masks a real
+                          // failure — only "never drilled" goes neutral below.
+                          <span
+                            title={
+                              d.drillDetail
+                                ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
+                                : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
+                            }
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                          >
+                            ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                          </span>
+                        ) : drUnscheduled ? (
+                          // NEUTRAL — off-site DR not scheduled (manual only) and nothing
+                          // failing to show: muted, never red. File's no-claim styling.
+                          <span
+                            title={t("drill.manualOnlyTitle")}
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-words bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
+                          >
+                            {t("drill.manualOnly")}
+                          </span>
+                        ) : null}
+                      </div>
                     </>
                   )}
                 </div>
