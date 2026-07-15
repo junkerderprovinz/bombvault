@@ -79,6 +79,11 @@ type ResticEngine interface {
 	// RestoreInclude restores a single path from a snapshot to target (file-level
 	// restore; target "/" = in-place to its original location).
 	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
+	// RestoreSubtreeTo restores the subtree at subtreePath from a snapshot INTO
+	// target — target receives that subtree's contents directly, with NO
+	// absolute-path nesting (issue #62). Used by the files to-folder restore;
+	// subtreePath is the snapshot's own backed-up path.
+	RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string, mode restic.Mode) error
 	// Check verifies repository structure + metadata integrity (restic check).
 	Check(ctx context.Context, repo string, mode restic.Mode) error
 	// CheckData runs a restore-readiness drill: `restic check
@@ -3749,6 +3754,40 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 	}
 }
 
+// finishRestoreRunWarn closes a restore run as SUCCESS but records warn in the
+// run's error column — used when restic extracted all data yet could not set
+// ownership/metadata on the target (see restic.ErrRestoreMetadataOnly). The run
+// counts as a success everywhere (health, retention gates); the message just tells
+// the operator the original ownership could not be reproduced on the share.
+func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
+	if runID == "" {
+		return
+	}
+	err := runsAdapter{s.store}.Finish(runID, "success", snapshotID, 0, warn)
+	if err != nil {
+		log.Printf("api: restore: record run finish (warning) failed: %v", err)
+	}
+}
+
+// concludeFileSetRestore ends a file-set restore (settings-driven or foreign): it
+// drives the terminal progress event AND the run record, DOWNGRADING a
+// metadata-only restic failure (all data present, only ownership/metadata could
+// not be set on a /mnt/user FUSE share — restic.ErrRestoreMetadataOnly) to a
+// success-with-warning instead of a hard failure. Genuine failures (missing
+// snapshot, no space, unreachable repo) and user cancels are recorded as-is. It
+// returns the EFFECTIVE error (nil for the metadata-only case) so the caller can
+// log/propagate only a real failure.
+func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr error) error {
+	if errors.Is(rerr, restic.ErrRestoreMetadataOnly) {
+		s.progEnd(rkey, "restore", true)
+		s.finishRestoreRunWarn(runID, snapshotID, restic.RestoreMetadataWarning)
+		return nil
+	}
+	s.progEnd(rkey, "restore", rerr == nil)
+	s.finishRestoreRun(runID, snapshotID, rerr)
+	return rerr
+}
+
 // truncateRunErr bounds an error message so it fits the runs.error_message
 // column (mirrors the orchestrator's truncateErr; the restic adapter already
 // scrubs secrets/paths from its own errors).
@@ -4018,6 +4057,24 @@ func snapshotBelongs(snaps []restic.Snapshot, id string) bool {
 		}
 	}
 	return false
+}
+
+// snapshotSubtree returns the first backed-up path (Paths[0]) of the snapshot in
+// snaps matching id (exact or unambiguous prefix, like snapshotBelongs), or "" if
+// there is no match or the snapshot recorded no path. It is the subtree a to-folder
+// restore extracts (<id>:<subtree>) — read from the SNAPSHOT so it stays valid even
+// when HostMountRoot changed since the backup (a recompute from the set's path
+// would then miss).
+func snapshotSubtree(snaps []restic.Snapshot, id string) string {
+	for _, sn := range snaps {
+		if sn.ID == id || strings.HasPrefix(sn.ID, id) {
+			if len(sn.Paths) > 0 {
+				return sn.Paths[0]
+			}
+			return ""
+		}
+	}
+	return ""
 }
 
 // sanitizeTags trims each tag, drops empties, and rejects any tag containing a
@@ -5404,6 +5461,7 @@ type fileSetRestorePlan struct {
 	setName    string // progress key suffix ("files:<name>")
 	inPlace    string // in-place: the set's resolved source path (engine.RestorePath); "" = to-folder
 	target     string // to-folder: the resolved alternate folder under the host mount ("" = in-place)
+	subtree    string // to-folder: the SNAPSHOT's own backed-up path (Paths[0]) — the <id>:<subtree> restore root ("" = path-less snapshot → whole-tree fallback)
 }
 
 // prepareRestoreFileSet performs ALL of a file-set restore's validation and
@@ -5467,6 +5525,12 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	if !snapshotBelongs(snaps, snapshotID) {
 		return fileSetRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
 	}
+	// Take the to-folder restore subtree from the SNAPSHOT itself (its first
+	// backed-up path), NOT a recompute of set.Path: HostMountRoot may have changed
+	// since the backup, and a recomputed <id>:<path> selector would then miss and
+	// fail. Empty (a path-less snapshot) falls back to a whole-tree restore in
+	// runRestoreFileSet; it is unused for an in-place restore.
+	plan.subtree = snapshotSubtree(snaps, snapshotID)
 
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -5479,9 +5543,12 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	plan.repo = repo
 	plan.mode = s.ModeFor(settings)
 
-	// Create the alternate target dir ONLY after every validation passed.
+	// Create the alternate target dir ONLY after every validation passed. Use the
+	// readable (0o755) variant: the restore target lives on a user-visible / synced
+	// share, so the operator's non-root SMB user must be able to read what root
+	// restored there (see EnsureDirReadable).
 	if plan.target != "" {
-		if err := paths.EnsureDir(plan.target); err != nil {
+		if err := paths.EnsureDirReadable(plan.target); err != nil {
 			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}
@@ -5500,6 +5567,14 @@ func (s *Service) runRestoreFileSet(ctx context.Context, plan fileSetRestorePlan
 	if plan.inPlace != "" {
 		return s.engine.RestorePath(ctx, plan.repo, plan.snapshotID, plan.inPlace, plan.mode)
 	}
+	if plan.subtree != "" {
+		// Restore the snapshot's OWN subtree directly INTO the chosen folder, so its
+		// contents land at <target>/… — not <target>/host/user/… (issue #62's nested
+		// restore, which a bare RestoreInclude("/") produces).
+		return s.engine.RestoreSubtreeTo(ctx, plan.repo, plan.snapshotID, plan.subtree, plan.target, plan.mode)
+	}
+	// Degenerate fallback: a snapshot with no recorded path — restore the whole tree
+	// rather than emit an invalid "<id>:" selector.
 	return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, "/", plan.target, plan.mode)
 }
 
@@ -5536,10 +5611,8 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		runID := s.beginRestoreRunForTarget(plan.setID)
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSet(pctx, plan)
-		s.progEnd(rkey, "restore", rerr == nil)
-		s.finishRestoreRun(runID, plan.snapshotID, rerr)
-		if rerr != nil {
-			log.Printf("api: restore file set: %q failed: %v", plan.setName, rerr) //nolint:gosec // G706: name is %q-quoted
+		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
+			log.Printf("api: restore file set: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return plan.target, true, nil

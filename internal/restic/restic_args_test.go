@@ -288,6 +288,35 @@ func TestRestorePathArgs(t *testing.T) {
 	})
 }
 
+// TestRestoreSubtreeToArgs pins issue #62's fix: a to-folder restore roots at the
+// snapshot's OWN subtree (<id>:<subtreePath>) and points --target at the chosen
+// folder, so the subtree's contents land directly in the folder instead of being
+// nested under the absolute /host/user/… path. It also pins that RestorePathArgs
+// is exactly the target==subtree special case.
+func TestRestoreSubtreeToArgs(t *testing.T) {
+	t.Run("subtree rooted, target is a different folder", func(t *testing.T) {
+		got := restic.RestoreSubtreeToArgs("/repo", "abc123", "/host/user/user/appdata/plex", "/host/user/restore/plex", restic.Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/host/user/restore/plex", "--", "abc123:/host/user/user/appdata/plex"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted + no-lock", func(t *testing.T) {
+		got := restic.RestoreSubtreeToArgs("/repo", "abc123", "/p", "/t", restic.Mode{Encrypted: false, NoLock: true})
+		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--no-lock", "--json", "--target", "/t", "--", "abc123:/p"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("RestorePathArgs is the target==subtree special case", func(t *testing.T) {
+		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: true})
+		want := restic.RestoreSubtreeToArgs("/repo", "abc123", "/p", "/p", restic.Mode{Encrypted: true})
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("RestorePathArgs must equal RestoreSubtreeToArgs with target==subtree; got %v want %v", got, want)
+		}
+	})
+}
+
 func TestSnapshotsArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: true})

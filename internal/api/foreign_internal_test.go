@@ -157,6 +157,15 @@ func (f *foreignRecordingEngine) RestoreInclude(_ context.Context, repo, snapsho
 	return nil
 }
 
+func (f *foreignRecordingEngine) RestoreSubtreeTo(_ context.Context, repo, snapshotID, subtreePath, target string, m restic.Mode) error {
+	f.record("RestoreSubtreeTo")
+	f.recordMode(m)
+	f.mu.Lock()
+	f.restores = append(f.restores, "RestoreSubtreeTo|"+repo+"|"+snapshotID+"|"+subtreePath+"->"+target)
+	f.mu.Unlock()
+	return nil
+}
+
 // The forbidden writes — implemented (recording) rather than left to panic, so
 // a regression yields a precise assertion failure naming the violating call.
 func (f *foreignRecordingEngine) Init(_ context.Context, _ string, _ restic.Mode) error {

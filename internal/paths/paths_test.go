@@ -1,10 +1,52 @@
 package paths_test
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 )
+
+// TestEnsureDirReadable pins Part 2: a restore TARGET on a user-visible share must
+// be created 0o755 (readable by the operator's non-root SMB user), and an existing
+// locked-down 0o700 target must be healed to 0o755 — mirroring how ensureDefsDir/
+// makeRepoReadable relax perms on the backup share.
+func TestEnsureDirReadable(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix permission bits are not modelled on windows")
+	}
+	root := t.TempDir()
+	target := filepath.Join(root, "restore", "docs")
+
+	if err := paths.EnsureDirReadable(target); err != nil {
+		t.Fatalf("EnsureDirReadable (fresh): %v", err)
+	}
+	if perm := statPerm(t, target); perm != 0o755 {
+		t.Fatalf("fresh restore target must be 0o755, got %o", perm)
+	}
+
+	// Heal an existing 0o700 target (an older version's mode) up to 0o755.
+	if err := os.Chmod(target, 0o700); err != nil { //nolint:gosec // G302: deliberately simulating the old locked-down dir this fix heals
+		t.Fatalf("chmod setup: %v", err)
+	}
+	if err := paths.EnsureDirReadable(target); err != nil {
+		t.Fatalf("EnsureDirReadable (heal): %v", err)
+	}
+	if perm := statPerm(t, target); perm != 0o755 {
+		t.Fatalf("EnsureDirReadable must heal 0o700 → 0o755, got %o", perm)
+	}
+}
+
+func statPerm(t *testing.T, p string) os.FileMode {
+	t.Helper()
+	fi, err := os.Stat(p)
+	if err != nil {
+		t.Fatalf("stat %s: %v", p, err)
+	}
+	return fi.Mode().Perm()
+}
 
 func TestResolveHappyPath(t *testing.T) {
 	got, err := paths.Resolve("/host/user", "backups/x")
