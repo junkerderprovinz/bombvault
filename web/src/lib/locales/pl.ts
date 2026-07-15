@@ -820,6 +820,27 @@ const pl: Partial<Translations> = {
   "dashboard.domainFiles": "Pliki",
   "recovery.filesFound": "Znaleziono {f} zestawów plików.",
   "recovery.filesRestoreHint": "Ponownie odkryte zestawy plików nie znają swojego pierwotnego folderu — każdy jest przywracany do wybranego folderu.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Przywracanie z innego repo BombVault",
+  "recovery.foreignIntro": "Wyciągnij pojedyncze kontenery, maszyny wirtualne lub zestawy plików z kopii INNEJ instancji BombVault: połącz się w trybie tylko do odczytu, przejrzyj zawartość i przywróć, co wybierzesz. Drugie repozytorium jest tylko odczytywane, nic się tam nie zmienia — a Twoje własne ustawienia kopii zapasowych pozostają nietknięte.",
+  "recovery.foreignStepConnect": "Połącz z innym repozytorium",
+  "recovery.foreignStepBrowse": "Przeglądaj i przywracaj",
+  "recovery.foreignLocation": "Lokalizacja repozytorium",
+  "recovery.foreignLocationHint": "Folder pod punktem montowania hosta (np. zamontowany udział z kopiami drugiego serwera) albo adres URL zdalnego repo (rest / S3 / B2 / sftp / rclone — używane są Twoje zapisane dane dostępowe do chmury).",
+  "recovery.foreignKey": "APP_KEY drugiej instancji",
+  "recovery.foreignKeyHint": "64-znakowy klucz z zestawu ratunkowego DRUGIEJ instancji — Twój własny klucz pozostaje nietknięty.",
+  "recovery.foreignConnect": "Połącz",
+  "recovery.foreignConnecting": "Łączenie…",
+  "recovery.foreignConnected": "Połączono — repozytorium jest czytelne.",
+  "recovery.foreignClose": "Rozłącz",
+  "recovery.foreignNotConnected": "Najpierw połącz się z repozytorium powyżej.",
+  "recovery.foreignEmpty": "Repozytorium jest czytelne, ale nie zawiera kopii BombVault.",
+  "recovery.foreignLatest": "Najnowsza kopia",
+  "recovery.foreignTargetFolder": "Folder docelowy",
+  "recovery.foreignRestore": "Przywróć tutaj",
+  "recovery.foreignExistsConfirm": "„{name}” już istnieje w tym systemie — przywracanie NADPISZE go obcą kopią. Kontynuować?",
+  "recovery.foreignExpired": "Sesja wygasła (sesje trwają 30 minut) — połącz się ponownie, aby dalej przeglądać.",
+  "recovery.foreignReconnect": "Połącz ponownie",
 };
 
 export default pl;

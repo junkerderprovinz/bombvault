@@ -817,6 +817,27 @@ const ja: Partial<Translations> = {
   "dashboard.domainFiles": "ファイル",
   "recovery.filesFound": "ファイルセット {f} 個が見つかりました。",
   "recovery.filesRestoreHint": "再発見されたファイルセットは元のフォルダー情報を持ちません — それぞれ選択したフォルダーに復元されます。",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "別の BombVault リポジトリから復元",
+  "recovery.foreignIntro": "別の BombVault インスタンスのバックアップから、個々のコンテナ・VM・ファイルセットを取り出せます。読み取り専用で接続し、中身を閲覧して、選んだものを復元します。相手のリポジトリは読み取りのみで、そちらでは何も変わりません — 自分のバックアップ設定にも一切触れません。",
+  "recovery.foreignStepConnect": "相手のリポジトリに接続",
+  "recovery.foreignStepBrowse": "閲覧と復元",
+  "recovery.foreignLocation": "リポジトリの場所",
+  "recovery.foreignLocationHint": "ホストマウント配下のフォルダー（例: 相手サーバーのバックアップを含むマウント済み共有）またはリモートリポジトリの URL（rest / S3 / B2 / sftp / rclone — 保存済みのクラウド資格情報を使用します）。",
+  "recovery.foreignKey": "相手インスタンスの APP_KEY",
+  "recovery.foreignKeyHint": "相手インスタンスのリカバリキットに記載された 64 文字のキー — 自分のキーはそのまま変わりません。",
+  "recovery.foreignConnect": "接続",
+  "recovery.foreignConnecting": "接続中…",
+  "recovery.foreignConnected": "接続しました — リポジトリを読み取れます。",
+  "recovery.foreignClose": "切断",
+  "recovery.foreignNotConnected": "まず上でリポジトリに接続してください。",
+  "recovery.foreignEmpty": "リポジトリは読み取れますが、BombVault のバックアップは含まれていません。",
+  "recovery.foreignLatest": "最新のバックアップ",
+  "recovery.foreignTargetFolder": "対象フォルダー",
+  "recovery.foreignRestore": "ここに復元",
+  "recovery.foreignExistsConfirm": "「{name}」はこのシステムに既に存在します — 復元すると外部のバックアップで上書きされます。続行しますか？",
+  "recovery.foreignExpired": "セッションの有効期限が切れました（セッションは 30 分間有効）— 閲覧を続けるには再接続してください。",
+  "recovery.foreignReconnect": "再接続",
 };
 
 export default ja;

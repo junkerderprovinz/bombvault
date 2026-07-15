@@ -825,6 +825,27 @@ const el: Partial<Translations> = {
   "dashboard.domainFiles": "Αρχεία",
   "recovery.filesFound": "Βρέθηκαν {f} σύνολα αρχείων.",
   "recovery.filesRestoreHint": "Τα σύνολα αρχείων που επανεντοπίστηκαν δεν γνωρίζουν τον αρχικό τους φάκελο — καθένα επαναφέρεται σε φάκελο της επιλογής σας.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Επαναφορά από άλλο αποθετήριο BombVault",
+  "recovery.foreignIntro": "Ανακτήστε μεμονωμένα containers, VMs ή σύνολα αρχείων από τα αντίγραφα ΜΙΑΣ ΑΛΛΗΣ εγκατάστασης BombVault: συνδεθείτε μόνο για ανάγνωση, περιηγηθείτε στο περιεχόμενο και επαναφέρετε ό,τι επιλέξετε. Το άλλο αποθετήριο μόνο διαβάζεται, τίποτα δεν αλλάζει εκεί — και οι δικές σας ρυθμίσεις αντιγράφων παραμένουν ανέγγιχτες.",
+  "recovery.foreignStepConnect": "Σύνδεση με το άλλο αποθετήριο",
+  "recovery.foreignStepBrowse": "Περιήγηση & επαναφορά",
+  "recovery.foreignLocation": "Θέση αποθετηρίου",
+  "recovery.foreignLocationHint": "Ένας φάκελος κάτω από την προσάρτηση του host (π.χ. ένας προσαρτημένος κοινόχρηστος φάκελος με τα αντίγραφα του άλλου διακομιστή) ή ένα URL απομακρυσμένου αποθετηρίου (rest / S3 / B2 / sftp / rclone — χρησιμοποιούνται τα αποθηκευμένα διαπιστευτήρια cloud).",
+  "recovery.foreignKey": "APP_KEY της άλλης εγκατάστασης",
+  "recovery.foreignKeyHint": "Το κλειδί 64 χαρακτήρων από το κιτ ανάκτησης της ΑΛΛΗΣ εγκατάστασης — το δικό σας κλειδί παραμένει ανέγγιχτο.",
+  "recovery.foreignConnect": "Σύνδεση",
+  "recovery.foreignConnecting": "Σύνδεση…",
+  "recovery.foreignConnected": "Συνδέθηκε — το αποθετήριο είναι αναγνώσιμο.",
+  "recovery.foreignClose": "Αποσύνδεση",
+  "recovery.foreignNotConnected": "Συνδεθείτε πρώτα σε ένα αποθετήριο παραπάνω.",
+  "recovery.foreignEmpty": "Το αποθετήριο είναι αναγνώσιμο αλλά δεν περιέχει αντίγραφα BombVault.",
+  "recovery.foreignLatest": "Νεότερο αντίγραφο",
+  "recovery.foreignTargetFolder": "Φάκελος προορισμού",
+  "recovery.foreignRestore": "Επαναφορά εδώ",
+  "recovery.foreignExistsConfirm": "Το «{name}» υπάρχει ήδη σε αυτό το σύστημα — η επαναφορά θα το ΑΝΤΙΚΑΤΑΣΤΗΣΕΙ με το ξένο αντίγραφο. Συνέχεια;",
+  "recovery.foreignExpired": "Η συνεδρία έληξε (οι συνεδρίες διαρκούν 30 λεπτά) — συνδεθείτε ξανά για να συνεχίσετε την περιήγηση.",
+  "recovery.foreignReconnect": "Επανασύνδεση",
 };
 
 export default el;

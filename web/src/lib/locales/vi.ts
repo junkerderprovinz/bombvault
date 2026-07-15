@@ -817,6 +817,27 @@ const vi: Partial<Translations> = {
   "dashboard.domainFiles": "Tập tin",
   "recovery.filesFound": "Tìm thấy {f} bộ tập tin.",
   "recovery.filesRestoreHint": "Các bộ tập tin được phát hiện lại không biết thư mục gốc của chúng — mỗi bộ được khôi phục vào thư mục bạn chọn.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Khôi phục từ một kho BombVault khác",
+  "recovery.foreignIntro": "Lấy từng container, máy ảo hoặc bộ tập tin từ bản sao lưu của một phiên bản BombVault KHÁC: kết nối chỉ đọc, duyệt nội dung và khôi phục những gì bạn chọn. Kho bên kia chỉ được đọc, không có gì thay đổi ở đó — và cài đặt sao lưu của riêng bạn vẫn nguyên vẹn.",
+  "recovery.foreignStepConnect": "Kết nối với kho bên kia",
+  "recovery.foreignStepBrowse": "Duyệt & khôi phục",
+  "recovery.foreignLocation": "Vị trí kho",
+  "recovery.foreignLocationHint": "Một thư mục dưới điểm gắn kết của host (ví dụ: một chia sẻ đã gắn kết chứa bản sao lưu của máy chủ kia) hoặc URL kho từ xa (rest / S3 / B2 / sftp / rclone — dùng thông tin đăng nhập đám mây đã lưu của bạn).",
+  "recovery.foreignKey": "APP_KEY của phiên bản kia",
+  "recovery.foreignKeyHint": "Khóa 64 ký tự trong bộ khôi phục của phiên bản KIA — khóa của riêng bạn vẫn nguyên vẹn.",
+  "recovery.foreignConnect": "Kết nối",
+  "recovery.foreignConnecting": "Đang kết nối…",
+  "recovery.foreignConnected": "Đã kết nối — kho có thể đọc được.",
+  "recovery.foreignClose": "Ngắt kết nối",
+  "recovery.foreignNotConnected": "Hãy kết nối với một kho ở trên trước.",
+  "recovery.foreignEmpty": "Kho đọc được nhưng không chứa bản sao lưu BombVault nào.",
+  "recovery.foreignLatest": "Bản sao lưu mới nhất",
+  "recovery.foreignTargetFolder": "Thư mục đích",
+  "recovery.foreignRestore": "Khôi phục vào đây",
+  "recovery.foreignExistsConfirm": "\"{name}\" đã tồn tại trên hệ thống này — việc khôi phục sẽ GHI ĐÈ nó bằng bản sao lưu bên ngoài. Tiếp tục?",
+  "recovery.foreignExpired": "Phiên đã hết hạn (mỗi phiên kéo dài 30 phút) — hãy kết nối lại để tiếp tục duyệt.",
+  "recovery.foreignReconnect": "Kết nối lại",
 };
 
 export default vi;

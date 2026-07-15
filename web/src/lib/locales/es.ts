@@ -823,6 +823,27 @@ const es: Partial<Translations> = {
   "dashboard.domainFiles": "Archivos",
   "recovery.filesFound": "Se encontraron {f} conjuntos de archivos.",
   "recovery.filesRestoreHint": "Los conjuntos de archivos redescubiertos no conservan su carpeta original — cada uno se restaura en una carpeta que elijas.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Restaurar desde otro repo de BombVault",
+  "recovery.foreignIntro": "Extrae contenedores, VMs o conjuntos de archivos individuales de las copias de OTRA instancia de BombVault: conéctate en solo lectura, explora el contenido y restaura lo que elijas. El otro repositorio solo se lee, allí no cambia nada — y tus propios ajustes de copia de seguridad quedan intactos.",
+  "recovery.foreignStepConnect": "Conectar con el otro repositorio",
+  "recovery.foreignStepBrowse": "Explorar y restaurar",
+  "recovery.foreignLocation": "Ubicación del repositorio",
+  "recovery.foreignLocationHint": "Una carpeta bajo el montaje del host (p. ej. un recurso compartido montado con las copias del otro servidor) o la URL de un repo remoto (rest / S3 / B2 / sftp / rclone — se usan tus credenciales de nube guardadas).",
+  "recovery.foreignKey": "APP_KEY de la otra instancia",
+  "recovery.foreignKeyHint": "La clave de 64 caracteres del kit de recuperación de la OTRA instancia — tu propia clave queda intacta.",
+  "recovery.foreignConnect": "Conectar",
+  "recovery.foreignConnecting": "Conectando…",
+  "recovery.foreignConnected": "Conectado — el repositorio es legible.",
+  "recovery.foreignClose": "Desconectar",
+  "recovery.foreignNotConnected": "Conéctate primero a un repositorio arriba.",
+  "recovery.foreignEmpty": "El repositorio es legible pero no contiene copias de BombVault.",
+  "recovery.foreignLatest": "Última copia",
+  "recovery.foreignTargetFolder": "Carpeta de destino",
+  "recovery.foreignRestore": "Restaurar aquí",
+  "recovery.foreignExistsConfirm": "«{name}» ya existe en este sistema — la restauración lo SOBRESCRIBIRÁ con la copia ajena. ¿Continuar?",
+  "recovery.foreignExpired": "La sesión ha caducado (las sesiones duran 30 minutos) — reconéctate para seguir explorando.",
+  "recovery.foreignReconnect": "Reconectar",
 };
 
 export default es;

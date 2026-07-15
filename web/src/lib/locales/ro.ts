@@ -828,6 +828,27 @@ const ro: Partial<Translations> = {
   "dashboard.domainFiles": "Fișiere",
   "recovery.filesFound": "Găsite {f} seturi de fișiere.",
   "recovery.filesRestoreHint": "Seturile de fișiere redescoperite nu își cunosc folderul original — fiecare este restaurat într-un folder ales de dvs.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Restaurare dintr-un alt repo BombVault",
+  "recovery.foreignIntro": "Extrageți containere, VM-uri sau seturi de fișiere individuale din copiile de rezervă ale UNEI ALTE instanțe BombVault: conectați-vă doar în citire, răsfoiți conținutul și restaurați ce alegeți. Celălalt repo este doar citit, nimic nu se schimbă acolo — iar propriile dvs. setări de backup rămân neatinse.",
+  "recovery.foreignStepConnect": "Conectare la celălalt repo",
+  "recovery.foreignStepBrowse": "Răsfoire și restaurare",
+  "recovery.foreignLocation": "Locația repo-ului",
+  "recovery.foreignLocationHint": "Un folder sub punctul de montare al gazdei (de ex. o partajare montată cu copiile celuilalt server) sau un URL de repo la distanță (rest / S3 / B2 / sftp / rclone — se folosesc credențialele cloud salvate).",
+  "recovery.foreignKey": "APP_KEY al celeilalte instanțe",
+  "recovery.foreignKeyHint": "Cheia de 64 de caractere din kitul de recuperare al CELEILALTE instanțe — propria dvs. cheie rămâne neatinsă.",
+  "recovery.foreignConnect": "Conectare",
+  "recovery.foreignConnecting": "Se conectează…",
+  "recovery.foreignConnected": "Conectat — repo-ul poate fi citit.",
+  "recovery.foreignClose": "Deconectare",
+  "recovery.foreignNotConnected": "Conectați-vă mai întâi la un repo mai sus.",
+  "recovery.foreignEmpty": "Repo-ul poate fi citit, dar nu conține copii de rezervă BombVault.",
+  "recovery.foreignLatest": "Cea mai recentă copie",
+  "recovery.foreignTargetFolder": "Folder țintă",
+  "recovery.foreignRestore": "Restaurează aici",
+  "recovery.foreignExistsConfirm": "„{name}” există deja pe acest sistem — restaurarea îl va SUPRASCRIE cu copia străină. Continuați?",
+  "recovery.foreignExpired": "Sesiunea a expirat (sesiunile durează 30 de minute) — reconectați-vă pentru a continua răsfoirea.",
+  "recovery.foreignReconnect": "Reconectare",
 };
 
 export default ro;

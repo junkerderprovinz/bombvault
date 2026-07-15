@@ -828,6 +828,27 @@ const th: Partial<Translations> = {
   "dashboard.domainFiles": "ไฟล์",
   "recovery.filesFound": "พบ {f} ชุดไฟล์",
   "recovery.filesRestoreHint": "ชุดไฟล์ที่ค้นพบใหม่ไม่ทราบโฟลเดอร์ต้นทางเดิม — แต่ละชุดจะถูกกู้คืนไปยังโฟลเดอร์ที่คุณเลือก",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "กู้คืนจากรีพอสิทอรี BombVault อื่น",
+  "recovery.foreignIntro": "ดึงคอนเทนเนอร์ VM หรือชุดไฟล์ทีละรายการจากข้อมูลสำรองของ BombVault อีกอินสแตนซ์หนึ่ง: เชื่อมต่อแบบอ่านอย่างเดียว เรียกดูเนื้อหา แล้วกู้คืนสิ่งที่คุณเลือก รีพอสิทอรีอีกฝั่งถูกอ่านเท่านั้น ไม่มีอะไรเปลี่ยนแปลงที่นั่น — และการตั้งค่าสำรองข้อมูลของคุณเองไม่ถูกแตะต้อง",
+  "recovery.foreignStepConnect": "เชื่อมต่อกับรีพอสิทอรีอีกฝั่ง",
+  "recovery.foreignStepBrowse": "เรียกดูและกู้คืน",
+  "recovery.foreignLocation": "ตำแหน่งของรีพอสิทอรี",
+  "recovery.foreignLocationHint": "โฟลเดอร์ใต้จุดเมานต์ของโฮสต์ (เช่น แชร์ที่เมานต์ไว้ซึ่งมีข้อมูลสำรองของเซิร์ฟเวอร์อีกเครื่อง) หรือ URL รีพอสิทอรีระยะไกล (rest / S3 / B2 / sftp / rclone — ใช้ข้อมูลรับรองคลาวด์ที่บันทึกไว้ของคุณ)",
+  "recovery.foreignKey": "APP_KEY ของอินสแตนซ์อีกตัว",
+  "recovery.foreignKeyHint": "คีย์ 64 ตัวอักษรจากชุดกู้คืนของอินสแตนซ์อีกตัว — คีย์ของคุณเองไม่ถูกแตะต้อง",
+  "recovery.foreignConnect": "เชื่อมต่อ",
+  "recovery.foreignConnecting": "กำลังเชื่อมต่อ…",
+  "recovery.foreignConnected": "เชื่อมต่อแล้ว — อ่านรีพอสิทอรีได้",
+  "recovery.foreignClose": "ตัดการเชื่อมต่อ",
+  "recovery.foreignNotConnected": "เชื่อมต่อกับรีพอสิทอรีด้านบนก่อน",
+  "recovery.foreignEmpty": "อ่านรีพอสิทอรีได้ แต่ไม่มีข้อมูลสำรองของ BombVault",
+  "recovery.foreignLatest": "ข้อมูลสำรองล่าสุด",
+  "recovery.foreignTargetFolder": "โฟลเดอร์ปลายทาง",
+  "recovery.foreignRestore": "กู้คืนมาที่นี่",
+  "recovery.foreignExistsConfirm": "\"{name}\" มีอยู่แล้วในระบบนี้ — การกู้คืนจะเขียนทับด้วยข้อมูลสำรองภายนอก ดำเนินการต่อหรือไม่?",
+  "recovery.foreignExpired": "เซสชันหมดอายุแล้ว (เซสชันมีอายุ 30 นาที) — เชื่อมต่อใหม่เพื่อเรียกดูต่อ",
+  "recovery.foreignReconnect": "เชื่อมต่อใหม่",
 };
 
 export default th;

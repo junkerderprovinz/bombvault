@@ -825,6 +825,27 @@ const he: Partial<Translations> = {
   "dashboard.domainFiles": "קבצים",
   "recovery.filesFound": "נמצאו {f} ערכות קבצים.",
   "recovery.filesRestoreHint": "ערכות קבצים שהתגלו מחדש אינן יודעות את תיקיית המקור שלהן — כל אחת משוחזרת לתיקייה שתבחרו.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "שחזור ממאגר BombVault אחר",
+  "recovery.foreignIntro": "משכו קונטיינרים, מכונות וירטואליות או ערכות קבצים בודדים מהגיבויים של מופע BombVault אחר: התחברו לקריאה בלבד, עיינו בתוכן ושחזרו את מה שתבחרו. המאגר האחר רק נקרא, שם דבר לא משתנה — והגדרות הגיבוי שלכם נשארות ללא שינוי.",
+  "recovery.foreignStepConnect": "התחברות למאגר האחר",
+  "recovery.foreignStepBrowse": "עיון ושחזור",
+  "recovery.foreignLocation": "מיקום המאגר",
+  "recovery.foreignLocationHint": "תיקייה תחת נקודת העיגון של המארח (למשל שיתוף מעוגן עם הגיבויים של השרת האחר) או כתובת URL של מאגר מרוחק (rest / S3 / B2 / sftp / rclone — נעשה שימוש בפרטי הענן השמורים שלכם).",
+  "recovery.foreignKey": "ה-APP_KEY של המופע האחר",
+  "recovery.foreignKeyHint": "המפתח בן 64 התווים מערכת השחזור של המופע האחר — המפתח שלכם נשאר ללא שינוי.",
+  "recovery.foreignConnect": "התחבר",
+  "recovery.foreignConnecting": "מתחבר…",
+  "recovery.foreignConnected": "מחובר — ניתן לקרוא את המאגר.",
+  "recovery.foreignClose": "ניתוק",
+  "recovery.foreignNotConnected": "התחברו קודם למאגר למעלה.",
+  "recovery.foreignEmpty": "ניתן לקרוא את המאגר, אך אין בו גיבויי BombVault.",
+  "recovery.foreignLatest": "הגיבוי האחרון",
+  "recovery.foreignTargetFolder": "תיקיית יעד",
+  "recovery.foreignRestore": "שחזר לכאן",
+  "recovery.foreignExistsConfirm": "\"{name}\" כבר קיים במערכת הזו — השחזור ידרוס אותו עם הגיבוי הזר. להמשיך?",
+  "recovery.foreignExpired": "תוקף ההפעלה פג (הפעלות נמשכות 30 דקות) — התחברו שוב כדי להמשיך לעיין.",
+  "recovery.foreignReconnect": "התחבר מחדש",
 };
 
 export default he;

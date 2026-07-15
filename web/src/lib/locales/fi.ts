@@ -825,6 +825,27 @@ const fi: Partial<Translations> = {
   "dashboard.domainFiles": "Tiedostot",
   "recovery.filesFound": "Löytyi {f} tiedostojoukkoa.",
   "recovery.filesRestoreHint": "Uudelleen löydetyt tiedostojoukot eivät tunne alkuperäistä kansiotaan — kukin palautetaan valitsemaasi kansioon.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Palauta toisesta BombVault-reposta",
+  "recovery.foreignIntro": "Poimi yksittäisiä kontteja, virtuaalikoneita tai tiedostojoukkoja TOISEN BombVault-instanssin varmuuskopioista: yhdistä vain luku -tilassa, selaa sisältöä ja palauta valitsemasi. Toista repoa vain luetaan, siellä ei muutu mikään — ja omat varmuuskopiointiasetuksesi pysyvät koskemattomina.",
+  "recovery.foreignStepConnect": "Yhdistä toiseen repoon",
+  "recovery.foreignStepBrowse": "Selaa ja palauta",
+  "recovery.foreignLocation": "Repon sijainti",
+  "recovery.foreignLocationHint": "Kansio isännän liitospisteen alla (esim. liitetty jako, jossa toisen palvelimen varmuuskopiot ovat) tai etärepon URL (rest / S3 / B2 / sftp / rclone — tallennettuja pilvitunnuksiasi käytetään).",
+  "recovery.foreignKey": "Toisen instanssin APP_KEY",
+  "recovery.foreignKeyHint": "64 merkin avain TOISEN instanssin palautuspaketista — oma avaimesi pysyy koskemattomana.",
+  "recovery.foreignConnect": "Yhdistä",
+  "recovery.foreignConnecting": "Yhdistetään…",
+  "recovery.foreignConnected": "Yhdistetty — repo on luettavissa.",
+  "recovery.foreignClose": "Katkaise yhteys",
+  "recovery.foreignNotConnected": "Yhdistä ensin repoon yllä.",
+  "recovery.foreignEmpty": "Repo on luettavissa, mutta se ei sisällä BombVault-varmuuskopioita.",
+  "recovery.foreignLatest": "Uusin varmuuskopio",
+  "recovery.foreignTargetFolder": "Kohdekansio",
+  "recovery.foreignRestore": "Palauta tänne",
+  "recovery.foreignExistsConfirm": "”{name}” on jo tässä järjestelmässä — palautus KORVAA sen vieraalla varmuuskopiolla. Jatketaanko?",
+  "recovery.foreignExpired": "Istunto on vanhentunut (istunnot kestävät 30 minuuttia) — yhdistä uudelleen jatkaaksesi selaamista.",
+  "recovery.foreignReconnect": "Yhdistä uudelleen",
 };
 
 export default fi;

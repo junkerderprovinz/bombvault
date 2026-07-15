@@ -823,6 +823,27 @@ const cs: Partial<Translations> = {
   "dashboard.domainFiles": "Soubory",
   "recovery.filesFound": "Nalezeno {f} sad souborů.",
   "recovery.filesRestoreHint": "Znovu objevené sady souborů neznají svou původní složku — každá se obnoví do složky, kterou zvolíte.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Obnovit z jiného repozitáře BombVault",
+  "recovery.foreignIntro": "Vytáhněte jednotlivé kontejnery, VM nebo sady souborů ze záloh JINÉ instance BombVault: připojte se jen pro čtení, projděte obsah a obnovte, co si vyberete. Druhý repozitář se pouze čte, nic se tam nemění — a vaše vlastní nastavení zálohování zůstává nedotčeno.",
+  "recovery.foreignStepConnect": "Připojit se k jinému repozitáři",
+  "recovery.foreignStepBrowse": "Procházet a obnovit",
+  "recovery.foreignLocation": "Umístění repozitáře",
+  "recovery.foreignLocationHint": "Složka pod připojením hosta (např. připojené sdílení se zálohami druhého serveru) nebo URL vzdáleného repozitáře (rest / S3 / B2 / sftp / rclone — použijí se vaše uložené cloudové přihlašovací údaje).",
+  "recovery.foreignKey": "APP_KEY druhé instance",
+  "recovery.foreignKeyHint": "64znakový klíč ze záchranné sady DRUHÉ instance — váš vlastní klíč zůstane nedotčen.",
+  "recovery.foreignConnect": "Připojit",
+  "recovery.foreignConnecting": "Připojování…",
+  "recovery.foreignConnected": "Připojeno — repozitář je čitelný.",
+  "recovery.foreignClose": "Odpojit",
+  "recovery.foreignNotConnected": "Nejprve se výše připojte k repozitáři.",
+  "recovery.foreignEmpty": "Repozitář je čitelný, ale neobsahuje žádné zálohy BombVault.",
+  "recovery.foreignLatest": "Nejnovější záloha",
+  "recovery.foreignTargetFolder": "Cílová složka",
+  "recovery.foreignRestore": "Obnovit sem",
+  "recovery.foreignExistsConfirm": "„{name}“ v tomto systému už existuje — obnova ho PŘEPÍŠE cizí zálohou. Pokračovat?",
+  "recovery.foreignExpired": "Relace vypršela (relace trvají 30 minut) — připojte se znovu a pokračujte v procházení.",
+  "recovery.foreignReconnect": "Připojit znovu",
 };
 
 export default cs;

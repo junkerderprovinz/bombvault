@@ -825,6 +825,27 @@ const sv: Partial<Translations> = {
   "dashboard.domainFiles": "Filer",
   "recovery.filesFound": "Hittade {f} filuppsättningar.",
   "recovery.filesRestoreHint": "Återupptäckta filuppsättningar känner inte till sin ursprungliga mapp — varje uppsättning återställs till en mapp du väljer.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Återställ från ett annat BombVault-repo",
+  "recovery.foreignIntro": "Hämta enskilda containrar, VM:ar eller filuppsättningar ur säkerhetskopiorna från en ANNAN BombVault-instans: anslut skrivskyddat, bläddra i innehållet och återställ det du väljer. Det andra repot läses bara, inget ändras där — och dina egna säkerhetskopieringsinställningar förblir orörda.",
+  "recovery.foreignStepConnect": "Anslut till det andra repot",
+  "recovery.foreignStepBrowse": "Bläddra & återställ",
+  "recovery.foreignLocation": "Repots plats",
+  "recovery.foreignLocationHint": "En mapp under värdmonteringen (t.ex. en monterad delning med den andra serverns säkerhetskopior) eller en fjärrepo-URL (rest / S3 / B2 / sftp / rclone — dina sparade molnuppgifter används).",
+  "recovery.foreignKey": "Den andra instansens APP_KEY",
+  "recovery.foreignKeyHint": "Nyckeln på 64 tecken från den ANDRA instansens räddningspaket — din egen nyckel förblir orörd.",
+  "recovery.foreignConnect": "Anslut",
+  "recovery.foreignConnecting": "Ansluter…",
+  "recovery.foreignConnected": "Ansluten — repot är läsbart.",
+  "recovery.foreignClose": "Koppla från",
+  "recovery.foreignNotConnected": "Anslut först till ett repo ovan.",
+  "recovery.foreignEmpty": "Repot är läsbart men innehåller inga BombVault-säkerhetskopior.",
+  "recovery.foreignLatest": "Senaste säkerhetskopian",
+  "recovery.foreignTargetFolder": "Målmapp",
+  "recovery.foreignRestore": "Återställ hit",
+  "recovery.foreignExistsConfirm": "”{name}” finns redan på det här systemet — återställningen SKRIVER ÖVER den med den främmande säkerhetskopian. Fortsätta?",
+  "recovery.foreignExpired": "Sessionen har gått ut (sessioner varar 30 minuter) — anslut igen för att fortsätta bläddra.",
+  "recovery.foreignReconnect": "Anslut igen",
 };
 
 export default sv;
