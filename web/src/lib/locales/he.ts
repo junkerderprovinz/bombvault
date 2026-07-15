@@ -813,6 +813,7 @@ const he: Partial<Translations> = {
   "files.restoreOriginal": "שחזור למיקום המקורי",
   "files.restoreOriginalConfirm": "לשחזר גיבוי זה על גבי תיקיית הערכה? קבצים קיימים יידרסו.",
   "files.restoreToFolder": "שחזור לתיקייה",
+  "files.restoreSelectFiles": "בחירת קבצים",
   "files.restoreComplete": "השחזור הושלם — הקבצים נכתבו.",
   "files.backupAll": "גבה הכול עכשיו",
   "files.discoverHint": "אבדה רשימת הערכות? בנה אותה מחדש מהגיבויים באחסון.",

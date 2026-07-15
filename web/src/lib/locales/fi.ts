@@ -813,6 +813,7 @@ const fi: Partial<Translations> = {
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",
   "files.restoreOriginalConfirm": "Palautetaanko tämä varmuuskopio joukon kansion päälle? Olemassa olevat tiedostot korvataan.",
   "files.restoreToFolder": "Palauta kansioon",
+  "files.restoreSelectFiles": "Valitse tiedostot",
   "files.restoreComplete": "Palautus valmis — tiedostot on kirjoitettu.",
   "files.backupAll": "Varmuuskopioi kaikki nyt",
   "files.discoverHint": "Katosiko joukkoluettelo? Rakenna se uudelleen tallennustilan varmuuskopioista.",

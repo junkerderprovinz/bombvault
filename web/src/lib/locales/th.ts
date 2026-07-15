@@ -816,6 +816,7 @@ const th: Partial<Translations> = {
   "files.restoreOriginal": "กู้คืนไปยังตำแหน่งเดิม",
   "files.restoreOriginalConfirm": "กู้คืนการสำรองข้อมูลนี้ทับโฟลเดอร์ของชุด? ไฟล์ที่มีอยู่จะถูกเขียนทับ",
   "files.restoreToFolder": "กู้คืนไปยังโฟลเดอร์",
+  "files.restoreSelectFiles": "เลือกไฟล์",
   "files.restoreComplete": "การกู้คืนเสร็จสมบูรณ์ — เขียนไฟล์แล้ว",
   "files.backupAll": "สำรองข้อมูลทั้งหมดเดี๋ยวนี้",
   "files.discoverHint": "รายการชุดหายไป? สร้างมันใหม่จากการสำรองข้อมูลในที่จัดเก็บ",

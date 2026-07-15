@@ -20,14 +20,17 @@ import {
   backupFilesAll,
   fileSetSnapshots,
   restoreFileSet,
+  listSnapshotFilesFileSet,
+  restoreFileSetFiles,
   discoverFiles,
   deleteSnapshot,
   getSettings,
 } from "../lib/api";
-import type { FileSetView, Snapshot } from "../lib/api";
+import type { FileSetView, Snapshot, FileEntry } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { FolderBrowser } from "../components/FolderBrowser";
+import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
@@ -176,10 +179,149 @@ function FileSetBackupButton({
 }
 
 // ---------------------------------------------------------------------------
-// Restore control — "original location" (confirm, in place) vs "to a folder"
+// Selective restore — tick individual files/folders from a snapshot and restore
+// just those into a chosen folder (#65). Mirrors the container SnapshotFileBrowser,
+// reusing the shared SnapshotFileTree; scoped to the file-set routes and always
+// non-destructive (into a folder), so no in-place confirm is needed here.
 // ---------------------------------------------------------------------------
 
-type RestoreDest = "original" | "folder";
+function FileSetFileBrowser({
+  set,
+  snapshotId,
+  source,
+  hostMountRoot,
+  otherActive,
+  t,
+}: {
+  set: FileSetView;
+  snapshotId: string;
+  source: RepoSource;
+  hostMountRoot: string;
+  otherActive: { active: boolean; phase?: string };
+  t: T;
+}) {
+  const [files, setFiles] = useState<FileEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [folder, setFolder] = useState("");
+  const [restoredTarget, setRestoredTarget] = useState("");
+
+  const progressKey = `files:${set.name}`;
+  // The SAME ref instance flows to useBackupWatch AND (via RestoreProgress) to the
+  // cancel button — see FileSetRestoreControl / RestoreAction. Never split it.
+  const cancelledRef = useRef(false);
+  const { state, fire, reset, isPending } = useBackupWatch({
+    progressKey,
+    kind: "restore",
+    matchRun: (r) => r.domain === "files" && r.target === set.name,
+    cancelledRef,
+    start: async () => {
+      const res = await restoreFileSetFiles(set.id, snapshotId, [...selected], folder.trim(), true, source);
+      if (res.ok) setRestoredTarget(res.target ?? "");
+      return res;
+    },
+  });
+  const prog = useProgress()[progressKey];
+  const blockedByOther = otherActive.active && !isPending;
+
+  useEffect(() => {
+    setLoading(true);
+    listSnapshotFilesFileSet(set.id, snapshotId, source)
+      .then((res) => {
+        if (res.ok) setFiles(res.files ?? []);
+        else setError(t("files.loadFailed"));
+      })
+      .catch(() => setError(t("files.loadFailed")))
+      .finally(() => setLoading(false));
+  }, [set.id, snapshotId, source, t]);
+
+  // A new selection / target clears any prior result banner so it can't linger
+  // over a fresh, unrun choice.
+  function toggle(p: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) next.delete(p);
+      else next.add(p);
+      return next;
+    });
+    reset();
+  }
+  function pickFolder(v: string) {
+    setFolder(v);
+    reset();
+  }
+
+  function handleRestoreSelected() {
+    if (selected.size === 0 || !folder.trim()) return;
+    void fire();
+  }
+
+  const count = selected.size;
+
+  return (
+    <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
+      <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
+      <SnapshotFileTree
+        files={files}
+        loading={loading}
+        error={error}
+        filter={filter}
+        onFilterChange={setFilter}
+        selected={selected}
+        onToggle={toggle}
+        t={t}
+      />
+
+      {/* Target folder + restore-selected action — shown once something is ticked. */}
+      {count > 0 && (
+        <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
+          <FolderBrowser
+            label={t("restore.targetPath")}
+            value={folder}
+            hostMountRoot={hostMountRoot}
+            onChange={pickFolder}
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRestoreSelected}
+              disabled={isPending || blockedByOther || !folder.trim()}
+              className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
+            </button>
+            {blockedByOther && (
+              <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
+            )}
+          </div>
+          <RestoreProgress
+            state={state}
+            isPending={isPending}
+            prog={prog}
+            cancelKey={progressKey}
+            inPlace={false}
+            name={set.name}
+            cancelledRef={cancelledRef}
+            successMessage={
+              restoredTarget
+                ? t("restore.restoredTo").replace("{path}", restoredTarget)
+                : t("files.restoreComplete")
+            }
+            t={t}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Restore control — "original location" (confirm, in place) vs "to a folder" vs
+// "select files" (selective, #65)
+// ---------------------------------------------------------------------------
+
+type RestoreDest = "original" | "folder" | "select";
 
 function FileSetRestoreControl({
   set,
@@ -244,34 +386,40 @@ function FileSetRestoreControl({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Destination choice */}
+      {/* Destination choice. "Select files" (the #65 selective restore) is an
+          advanced option; basic mode keeps the whole-set original / to-folder pair. */}
       <div className="flex items-center gap-2 flex-wrap">
         {destChip("original", t("files.restoreOriginal"), noPath)}
         {destChip("folder", t("files.restoreToFolder"))}
-        <button
-          onClick={handleRestore}
-          disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-        >
-          {isPending ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.restoring")}
-            </>
-          ) : (
-            t("snapshots.restore")
-          )}
-        </button>
-        {blockedByOther && (
+        <Advanced>{destChip("select", t("files.restoreSelectFiles"))}</Advanced>
+        {/* The whole-set restore button + its own picker/progress; the selective
+            mode renders its own controls below (FileSetFileBrowser). */}
+        {dest !== "select" && (
+          <button
+            onClick={handleRestore}
+            disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          >
+            {isPending ? (
+              <>
+                <span
+                  className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                  style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+                />
+                {t("common.restoring")}
+              </>
+            ) : (
+              t("snapshots.restore")
+            )}
+          </button>
+        )}
+        {blockedByOther && dest !== "select" && (
           <span className="text-[11px] text-carbon-textMuted shrink-0">
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
       </div>
-      {/* Target folder picker for the non-destructive extract */}
+      {/* Target folder picker for the non-destructive whole-set extract */}
       {dest === "folder" && (
         <FolderBrowser
           label={t("restore.targetPath")}
@@ -280,17 +428,30 @@ function FileSetRestoreControl({
           onChange={setTargetPath}
         />
       )}
-      <RestoreProgress
-        state={state}
-        isPending={isPending}
-        prog={prog}
-        cancelKey={progressKey}
-        inPlace={dest === "original"}
-        name={set.name}
-        cancelledRef={cancelledRef}
-        successMessage={t("files.restoreComplete")}
-        t={t}
-      />
+      {dest !== "select" && (
+        <RestoreProgress
+          state={state}
+          isPending={isPending}
+          prog={prog}
+          cancelKey={progressKey}
+          inPlace={dest === "original"}
+          name={set.name}
+          cancelledRef={cancelledRef}
+          successMessage={t("files.restoreComplete")}
+          t={t}
+        />
+      )}
+      {/* Selective restore: tick files/folders and restore just those to a folder. */}
+      {dest === "select" && (
+        <FileSetFileBrowser
+          set={set}
+          snapshotId={snapshotId}
+          source={source}
+          hostMountRoot={hostMountRoot}
+          otherActive={otherActive}
+          t={t}
+        />
+      )}
     </div>
   );
 }

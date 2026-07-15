@@ -805,6 +805,7 @@ const zh: Partial<Translations> = {
   "files.restoreOriginal": "恢复到原始位置",
   "files.restoreOriginalConfirm": "将此备份恢复到文件集的文件夹上？现有文件将被覆盖。",
   "files.restoreToFolder": "恢复到文件夹",
+  "files.restoreSelectFiles": "选择文件",
   "files.restoreComplete": "恢复完成 — 文件已写入。",
   "files.backupAll": "立即备份全部",
   "files.discoverHint": "丢失了文件集列表？从存储中的备份重建它。",

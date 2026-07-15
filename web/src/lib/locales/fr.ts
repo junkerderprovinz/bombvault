@@ -813,6 +813,7 @@ const fr: Partial<Translations> = {
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",
   "files.restoreOriginalConfirm": "Restaurer cette sauvegarde par-dessus le dossier du jeu ? Les fichiers existants seront écrasés.",
   "files.restoreToFolder": "Restaurer dans un dossier",
+  "files.restoreSelectFiles": "Sélectionner des fichiers",
   "files.restoreComplete": "Restauration terminée — les fichiers ont été écrits.",
   "files.backupAll": "Tout sauvegarder maintenant",
   "files.discoverHint": "Liste des jeux perdue ? Reconstruisez-la depuis les sauvegardes du stockage.",

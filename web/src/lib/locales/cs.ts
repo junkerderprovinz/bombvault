@@ -811,6 +811,7 @@ const cs: Partial<Translations> = {
   "files.restoreOriginal": "Obnovit na původní místo",
   "files.restoreOriginalConfirm": "Obnovit tuto zálohu přes složku sady? Stávající soubory budou přepsány.",
   "files.restoreToFolder": "Obnovit do složky",
+  "files.restoreSelectFiles": "Vybrat soubory",
   "files.restoreComplete": "Obnova dokončena — soubory byly zapsány.",
   "files.backupAll": "Zálohovat vše nyní",
   "files.discoverHint": "Ztratili jste seznam sad? Znovu jej sestavte ze záloh v úložišti.",

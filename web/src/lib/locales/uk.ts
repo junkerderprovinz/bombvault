@@ -808,6 +808,7 @@ const uk: Partial<Translations> = {
   "files.restoreOriginal": "Відновити до початкового розташування",
   "files.restoreOriginalConfirm": "Відновити цю резервну копію поверх папки набору? Наявні файли буде перезаписано.",
   "files.restoreToFolder": "Відновити до папки",
+  "files.restoreSelectFiles": "Вибрати файли",
   "files.restoreComplete": "Відновлення завершено — файли записано.",
   "files.backupAll": "Створити резервну копію всього зараз",
   "files.discoverHint": "Втратили список наборів? Відновіть його з резервних копій у сховищі.",

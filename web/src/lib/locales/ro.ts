@@ -816,6 +816,7 @@ const ro: Partial<Translations> = {
   "files.restoreOriginal": "Restaurare în locația originală",
   "files.restoreOriginalConfirm": "Restaurați această copie peste folderul setului? Fișierele existente vor fi suprascrise.",
   "files.restoreToFolder": "Restaurare într-un folder",
+  "files.restoreSelectFiles": "Selectează fișiere",
   "files.restoreComplete": "Restaurare finalizată — fișierele au fost scrise.",
   "files.backupAll": "Copiază tot acum",
   "files.discoverHint": "Ați pierdut lista de seturi? Reconstruiți-o din copiile de rezervă din stocare.",

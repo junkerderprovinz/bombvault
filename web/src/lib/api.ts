@@ -1376,6 +1376,40 @@ export function restoreFileSet(
   });
 }
 
+/** GET /api/files/sets/{id}/files?snapshot=<id> — list files in a file-set
+ *  snapshot for the selective ("restore these files") flow (#65). */
+export function listSnapshotFilesFileSet(
+  id: string,
+  snapshot: string,
+  source?: string
+): Promise<ListFilesResponse> {
+  return fetchJSON(
+    `/api/files/sets/${encodeURIComponent(id)}/files?snapshot=${encodeURIComponent(snapshot)}${srcParam(source, "&")}`
+  );
+}
+
+/**
+ * POST /api/files/sets/{id}/restore-files — restore SELECTED files/dirs from a
+ * file-set snapshot (#65). An empty targetPath restores them in place (original
+ * locations, confirm-gated); a relative subpath extracts the selection into that
+ * folder under the host mount (non-destructive). ASYNC (see restoreFileSet): the
+ * ack carries the resolved target; watch the "files:<name>" SSE key + the
+ * recorded run (kind "restore") for the outcome.
+ */
+export function restoreFileSetFiles(
+  id: string,
+  snapshotId: string,
+  paths: string[],
+  targetPath: string,
+  confirm: boolean,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean; target?: string }> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/restore-files${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, paths, targetPath, confirm }),
+  });
+}
+
 /** Rebuild the file-set list from the fileset: tags in backup storage. `probe` =
  *  read-only readiness check (see discover, #44). Discovered sets arrive DISABLED
  *  with an empty path (tags alone don't carry it) — set a folder before backing up. */

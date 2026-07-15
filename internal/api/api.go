@@ -178,7 +178,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/files/sets/{id}/backup", h.handleBackupFileSet)
 	mux.HandleFunc("POST /api/files/backup-all", h.handleBackupFilesAll)
 	mux.HandleFunc("GET /api/files/sets/{id}/snapshots", h.handleSnapshotsFileSet)
+	mux.HandleFunc("GET /api/files/sets/{id}/files", h.handleListSnapshotFilesFileSet)
 	mux.HandleFunc("POST /api/files/sets/{id}/restore", h.handleRestoreFileSet)
+	mux.HandleFunc("POST /api/files/sets/{id}/restore-files", h.handleRestoreFileSetFiles)
 	mux.HandleFunc("POST /api/files/discover", h.handleDiscoverFiles)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault

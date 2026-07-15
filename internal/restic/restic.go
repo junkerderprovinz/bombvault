@@ -325,6 +325,30 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	return args
 }
 
+// RestoreSubtreeIncludeArgs returns the argv for restoring ONLY includePath out
+// of a snapshot's subtree INTO target:
+// `restic restore <id>:<subtreePath> --target <target> --include <includePath>`.
+// The `<id>:<subtreePath>` selector roots the restore at subtreePath, so
+// includePath is matched RELATIVE to that subtree and the matched contents land
+// directly under target — NOT nested under the absolute /host/user/… path (issue
+// #62). This is the selective (pick-some-files) counterpart of RestoreSubtreeToArgs:
+// it powers the files-domain "restore selected files into a folder" flow, where
+// subtreePath is the SNAPSHOT's own backed-up root (Paths[0]) and includePath is a
+// selected path made relative to it (so it always starts with "/"). subtreePath is
+// the arg-injection-guarded positional (after --); includePath is a flag value.
+func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, target string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	if m.NoLock {
+		args = append(args, "--no-lock") // a foreign restore only READS the source repo
+	}
+	args = append(args, "--json", "--target", target, "--include", includePath, "--", snapshotID+":"+subtreePath)
+	return args
+}
+
 // CheckArgs returns the argv slice for `restic check` (verifies repository
 // structure + metadata integrity).
 func CheckArgs(repo string, m Mode) []string {
@@ -954,6 +978,16 @@ func (r Restic) RestorePath(ctx context.Context, repo, snapshotID, p string, m M
 // own backed-up paths (Paths[0]).
 func (r Restic) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string, m Mode) error {
 	_, err := r.run(ctx, RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target, m), m)
+	return err
+}
+
+// RestoreSubtreeInclude restores ONLY includePath (relative to subtreePath) from a
+// snapshot INTO target, rooting the restore at the snapshot's subtree so the
+// matched contents land directly under target with no absolute-path nesting (see
+// RestoreSubtreeIncludeArgs). Used by the files-domain selective restore: each
+// selected path becomes an includePath relative to the set's backed-up root.
+func (r Restic) RestoreSubtreeInclude(ctx context.Context, repo, snapshotID, subtreePath, includePath, target string, m Mode) error {
+	_, err := r.run(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, target, m), m)
 	return err
 }
 

@@ -813,6 +813,7 @@ const no: Partial<Translations> = {
   "files.restoreOriginal": "Gjenopprett til opprinnelig plassering",
   "files.restoreOriginalConfirm": "Gjenopprette denne sikkerhetskopien over settets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gjenopprett til en mappe",
+  "files.restoreSelectFiles": "Velg filer",
   "files.restoreComplete": "Gjenoppretting fullført — filene er skrevet.",
   "files.backupAll": "Sikkerhetskopier alt nå",
   "files.discoverHint": "Mistet settlisten? Bygg den opp igjen fra sikkerhetskopiene i lageret.",

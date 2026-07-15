@@ -2659,6 +2659,59 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
+// handleListSnapshotFilesFileSet lists the files in a file-set snapshot for the
+// selective restore. GET /api/files/sets/{id}/files?snapshot=<id>&source=
+func (h *Handler) handleListSnapshotFilesFileSet(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	snapshot := r.URL.Query().Get("snapshot")
+	files, err := h.svc.ListSnapshotFilesFileSet(r.Context(), id, snapshot, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if files == nil {
+		files = []restic.FileEntry{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
+}
+
+// handleRestoreFileSetFiles starts a SELECTIVE file-set restore ON THE SERVER and
+// returns immediately (see handleRestoreFileSet). An empty targetPath restores the
+// selected paths IN PLACE (original locations, confirm-gated); a non-empty
+// targetPath extracts the selection into that folder under the host mount
+// (non-destructive). Validation + target resolution run synchronously (the
+// resolved target is returned in the ack); the restic work runs detached,
+// publishing "files:<name>" progress and recording a run for the outcome.
+// POST /api/files/sets/{id}/restore-files  body {snapshotId, paths, targetPath, confirm}
+func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.fileSetIDParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		SnapshotID string   `json:"snapshotId"`
+		Paths      []string `json:"paths"`
+		TargetPath string   `json:"targetPath"`
+		Confirm    bool     `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, started, err := h.svc.StartRestoreFileSetFiles(r.Context(), id, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
+}
+
 // handleDiscoverFiles rebuilds the file-set list from backup storage (from the
 // fileset: snapshot tags alone — the files domain mirrors no definitions), so
 // sets lost with the database become restorable again. POST /api/files/discover

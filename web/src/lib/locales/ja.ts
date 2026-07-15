@@ -805,6 +805,7 @@ const ja: Partial<Translations> = {
   "files.restoreOriginal": "元の場所に復元",
   "files.restoreOriginalConfirm": "このバックアップをセットのフォルダーに上書き復元しますか？既存のファイルは上書きされます。",
   "files.restoreToFolder": "フォルダーに復元",
+  "files.restoreSelectFiles": "ファイルを選択",
   "files.restoreComplete": "復元が完了しました — ファイルが書き込まれました。",
   "files.backupAll": "今すぐすべてバックアップ",
   "files.discoverHint": "セット一覧を失いましたか？ストレージ内のバックアップから再構築できます。",
