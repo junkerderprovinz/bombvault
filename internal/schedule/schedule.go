@@ -33,6 +33,17 @@ type ListFileSetsFunc func() ([]store.FileSet, error)
 // stays store-free (DI seam).
 type LastRunFunc func() (time.Time, error)
 
+// ItemFailure names one scheduled item (container / VM / file set) that failed
+// during a per-domain run, with a short reason (the backupFn error's message).
+// A scheduled run continues past a failing item, so the aggregated outcome
+// carries these so the scheduled-summary notification can enumerate WHICH items
+// failed and WHY instead of only a count — the core of #64, where a domain-wide
+// fault made 35 of 45 containers fail invisibly.
+type ItemFailure struct {
+	Name   string
+	Reason string
+}
+
 // Cadence is the parsed result of a cadence string.
 //
 //   - Enabled=false: the domain is off (Spec is empty, IntervalDays is 0).
@@ -261,7 +272,7 @@ type Scheduler struct {
 	// SetHealthchecksAggregator wires them; then per-item pings are suppressed by the
 	// injected backup closures (see cmd/bombvault/main.go).
 	hcRunStart  func(domain string)
-	hcRunFinish func(domain string, attempted, failed int)
+	hcRunFinish func(domain string, attempted, failed int, failures []ItemFailure)
 	entryIDs    []cron.EntryID
 }
 
@@ -343,13 +354,14 @@ func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
 // /start ONCE via startFn before the first item and success/fail ONCE via finishFn
 // after the last — instead of once per item — so the check reflects the whole domain
 // job rather than each container/VM (#49). finishFn receives the run's attempted and
-// failed counts (success when failed == 0). The per-item Healthchecks ping is
+// failed counts (success when failed == 0) plus the per-item failures so the summary
+// notification can name which items failed and why (#64). The per-item Healthchecks ping is
 // suppressed separately: the backup closures injected into New/SetVMJob run each item
 // with a suppress-flagged context (see cmd/bombvault/main.go). Passing nil funcs
 // leaves scheduled runs un-aggregated (each item pings as before). Call before Reload.
 func (s *Scheduler) SetHealthchecksAggregator(
 	startFn func(domain string),
-	finishFn func(domain string, attempted, failed int),
+	finishFn func(domain string, attempted, failed int, failures []ItemFailure),
 ) {
 	s.hcRunStart = startFn
 	s.hcRunFinish = finishFn
@@ -412,7 +424,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
-				s.runAggregatedHC("containers", func() (int, int) {
+				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
 			},
@@ -431,7 +443,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: vms job: list VM targets: %v", err)
 					return
 				}
-				s.runAggregatedHC("vms", func() (int, int) {
+				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
 			},
@@ -478,7 +490,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: files job: list file sets: %v", err)
 					return
 				}
-				s.runAggregatedHC("files", func() (int, int) {
+				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
 			},
@@ -693,27 +705,31 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 // runAggregatedHC runs a scheduled per-domain item loop bracketed by a single
 // Healthchecks /start (before the first item) and success/fail (after the last) ping
 // when the aggregator is wired (SetHealthchecksAggregator). run performs the loop and
-// returns (attempted, failed). When the aggregator is not wired it just runs the loop —
-// no pings — so container-only callers and the schedule package's tests are unchanged.
-func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed int)) {
+// returns (attempted, failed, failures). When the aggregator is not wired it just runs
+// the loop — no pings — so container-only callers and the schedule package's tests are
+// unchanged. The failures list is threaded to hcRunFinish so the summary notification
+// can name which items failed and why (#64).
+func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed int, failures []ItemFailure)) {
 	if s.hcRunStart != nil {
 		s.hcRunStart(domain)
 	}
-	attempted, failed := run()
+	attempted, failed, failures := run()
 	if s.hcRunFinish != nil {
-		s.hcRunFinish(domain, attempted, failed)
+		s.hcRunFinish(domain, attempted, failed, failures)
 	}
 }
 
 // RunContainersJob backs up each target that has IncludeInSchedule=true,
 // calling backupFn sequentially. Errors from individual containers are logged
 // but do not abort the remaining containers. It returns how many targets were
-// attempted (IncludeInSchedule=true) and how many of those failed, so a scheduled
-// run can aggregate the outcome into a single Healthchecks ping (see runAggregatedHC).
+// attempted (IncludeInSchedule=true), how many of those failed, and the per-item
+// failures (name + reason) — so a scheduled run can aggregate the outcome into a
+// single Healthchecks ping (see runAggregatedHC) and name the failed containers
+// in the summary notification (#64).
 //
 // This function is exported so tests can invoke the job synchronously without
 // waiting for real wall-clock time.
-func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, failed int) {
+func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
 	for _, t := range targets {
 		if !t.IncludeInSchedule {
 			continue
@@ -721,18 +737,20 @@ func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, f
 		attempted++
 		if err := backupFn(t.ContainerName); err != nil {
 			failed++
+			failures = append(failures, ItemFailure{Name: t.ContainerName, Reason: err.Error()})
 			log.Printf("schedule: containers job: backup %q failed: %v", t.ContainerName, err)
 		}
 	}
-	return attempted, failed
+	return attempted, failed, failures
 }
 
 // RunVMsJob backs up each VM target that has IncludeInSchedule=true, calling
 // backupFn sequentially. As with RunContainersJob, an individual VM failure is
 // logged but does not abort the remaining VMs, and it returns the attempted/failed
-// counts for Healthchecks aggregation. Exported so tests can invoke the job
-// synchronously without waiting for real wall-clock time.
-func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int) {
+// counts plus the per-item failures for Healthchecks and summary aggregation.
+// Exported so tests can invoke the job synchronously without waiting for real
+// wall-clock time.
+func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
 	for _, v := range vms {
 		if !v.IncludeInSchedule {
 			continue
@@ -740,19 +758,22 @@ func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int
 		attempted++
 		if err := backupFn(v.Name); err != nil {
 			failed++
+			failures = append(failures, ItemFailure{Name: v.Name, Reason: err.Error()})
 			log.Printf("schedule: vms job: backup %q failed: %v", v.Name, err)
 		}
 	}
-	return attempted, failed
+	return attempted, failed, failures
 }
 
 // RunFilesJob backs up each file set that is Enabled, calling backupFn
 // sequentially with the set's stable ID (not its name — run attribution keys on
 // file_sets.id, which survives renames). As with RunVMsJob, an individual set
 // failure is logged but does not abort the remaining sets, and it returns the
-// attempted/failed counts for Healthchecks aggregation. Exported so tests can
-// invoke the job synchronously without waiting for real wall-clock time.
-func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed int) {
+// attempted/failed counts plus the per-item failures for Healthchecks and summary
+// aggregation. The failure is named by the set's human Name (not its ID) so the
+// summary reads naturally. Exported so tests can invoke the job synchronously
+// without waiting for real wall-clock time.
+func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
 	for _, fs := range sets {
 		if !fs.Enabled {
 			continue
@@ -760,8 +781,9 @@ func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed i
 		attempted++
 		if err := backupFn(fs.ID); err != nil {
 			failed++
+			failures = append(failures, ItemFailure{Name: fs.Name, Reason: err.Error()})
 			log.Printf("schedule: files job: backup %q failed: %v", fs.Name, err)
 		}
 	}
-	return attempted, failed
+	return attempted, failed, failures
 }

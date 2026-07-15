@@ -2207,7 +2207,7 @@ func (s *Service) ScheduleSelfRestart() bool {
 
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
-func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, error) {
+func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, retErr error) {
 	// A backup must survive the client that triggered it disconnecting — closing
 	// the browser tab, or stopping the very container the BombVault UI runs in.
 	// Detach from the request's cancellation (keeping its values) with a generous
@@ -2219,6 +2219,29 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 		return backup.Summary{}, ErrSelfBackup
 	}
 	defer s.lockDomain("containers")() // serialise per repo; blocks maintenance ops meanwhile
+
+	// #64: a domain-wide fault (repo mount lost, disk full, restic repo error) that
+	// begins mid-batch trips one of the pre-flight early-returns below — settings,
+	// repo path, EnsureRepo, inspect, empty-paths guard, upsert — for EVERY remaining
+	// container. None of those reach backup.BackupContainer, which is the ONLY place a
+	// failed RUN was recorded, so those failures were INVISIBLE: nothing on the
+	// dashboard heatmap/history and only a bare "N failed" count in the notification
+	// (the exact #64 report — 10 recorded, 35 missing). Resolve the target up front and,
+	// via the named-return finisher below, record a FAILED run carrying the real reason
+	// for any such early-return. Once BackupContainer takes over run bookkeeping we set
+	// orchestrated=true so this never double-records; a NotFound target is likewise
+	// excluded — it records its own "skipped" run (recordAndNotifyContainerSkip).
+	var targetID string
+	if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+		targetID = tg.ID
+	}
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) {
+			s.recordContainerFailure(name, targetID, retErr)
+		}
+	}()
+
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -2298,6 +2321,9 @@ func (s *Service) Backup(ctx context.Context, name string) (backup.Summary, erro
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "container")
 	bctx := s.progBegin(ctx, pkey, "backup")
+	// BackupContainer now owns run bookkeeping (it records its own failed/success run),
+	// so the pre-flight failure finisher above must stand down to avoid a double record.
+	orchestrated = true
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:         name,
 		ContainerName:        name,
@@ -7499,6 +7525,32 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 }
 
+// recordContainerFailure records a FAILED backup run for a container that failed
+// BEFORE backup.BackupContainer could take over run bookkeeping — i.e. at one of
+// Backup's pre-flight early-returns (settings / repo path / EnsureRepo / inspect /
+// empty-paths / upsert). It mirrors recordAndNotifyContainerSkip: given the resolved
+// target, StartRun then FinishRun with the (truncated) reason, so a domain-wide fault
+// that trips these for every remaining container shows up as reds — each carrying its
+// cause — on the dashboard heatmap/history instead of vanishing (#64). Best-effort: a
+// bookkeeping error is logged, never returned (the caller is already returning the real
+// error). targetID is the caller's pre-resolved id; when empty (a brand-new container
+// with no target row yet) the failure can't be keyed to a run, so it is only logged
+// here — the scheduled-summary notification still names it from the returned error.
+func (s *Service) recordContainerFailure(name, targetID string, cause error) {
+	if targetID == "" {
+		log.Printf("api: Backup: %q failed before a run could be recorded (no target row yet): %v", name, cause) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	runID, err := s.store.StartRun(targetID, "backup")
+	if err != nil {
+		log.Printf("api: Backup: %q: start failed run: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	if err := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(cause)); err != nil {
+		log.Printf("api: Backup: %q: finish failed run: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+	}
+}
+
 // notifyBackupStart pings the Healthchecks /start endpoint at the beginning of a
 // backup (best-effort; never affects the backup). The message channels have no
 // "start" concept, so this is Healthchecks-only.
@@ -7550,8 +7602,10 @@ func (s *Service) ScheduledHealthchecksResult(ctx context.Context, domain string
 // message-channel counterpart to ScheduledHealthchecksResult (#56). No-op unless
 // Config.ScheduledSummary is on (in which case the per-item messages were suppressed);
 // the On policy still governs whether an all-success run notifies at all. domain is the
-// scheduler spelling ("containers"|"vms").
-func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, attempted, failed int) {
+// scheduler spelling ("containers"|"vms"). failures names the items that failed (name +
+// reason) so a run that fails enumerates WHICH items broke and WHY, instead of a bare
+// count that leaves the user with no idea what to fix (#64).
+func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, attempted, failed int, failures []schedule.ItemFailure) {
 	c, err := s.NotifyConfig()
 	// Honour the notify policy on ALL channels (message + Unraid): muted ("never"/
 	// unset) sends nothing, so the Unraid push below can't leak past a muted policy.
@@ -7568,7 +7622,8 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	if ok {
 		summary = fmt.Sprintf("Scheduled %s backup: %d items, no failures.", domain, attempted)
 	} else {
-		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.", domain, failed, attempted)
+		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.\n%s",
+			domain, failed, attempted, formatItemFailures(failures))
 	}
 	// Reuse Send for the message channels with the Healthchecks ping suppressed
 	// (ScheduledHealthchecksResult already sent the one aggregate HC ping). The summary
@@ -7585,6 +7640,28 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 			log.Printf("notify: unraid: %v", e)
 		}
 	}
+}
+
+// maxListedFailures caps how many failed items the scheduled summary enumerates
+// individually before collapsing the rest into a "+N more" tail, so a night where
+// 35 of 45 containers failed (the #64 report) stays readable in a chat/email.
+const maxListedFailures = 10
+
+// formatItemFailures renders a scheduled run's per-item failures as "- name: reason"
+// lines for the summary notification, capping the list at maxListedFailures with a
+// "+N more" tail (#64). Each reason is scrubbed of absolute host paths — the same
+// treatment the per-item notifyBackup gives its error text — so the aggregated
+// summary leaks nothing the suppressed per-item messages would not have.
+func formatItemFailures(failures []schedule.ItemFailure) string {
+	lines := make([]string, 0, len(failures))
+	for i, f := range failures {
+		if i == maxListedFailures {
+			lines = append(lines, fmt.Sprintf("+%d more", len(failures)-maxListedFailures))
+			break
+		}
+		lines = append(lines, fmt.Sprintf("- %s: %s", f.Name, scrubError(errors.New(f.Reason))))
+	}
+	return strings.Join(lines, "\n")
 }
 
 // sendUnraidNotify triggers Unraid's native notification system by running the
