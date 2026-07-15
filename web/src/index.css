@@ -158,7 +158,12 @@ body {
 /* Route/page enter (Item 7c) */
 @keyframes bv-page-in {
   from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  /* End at `none`, not translateY(0): animation-fill-mode:both keeps the final
+     keyframe, and any transform other than none makes .bv-page-enter a
+     containing block for position:fixed descendants — which anchored in-page
+     dialogs (the Files add/edit dialog, #62) to the page box instead of the
+     viewport and cut them off at the top. `none` interpolates identically. */
+  to   { opacity: 1; transform: none; }
 }
 @keyframes bv-fade-in {
   from { opacity: 0; }
