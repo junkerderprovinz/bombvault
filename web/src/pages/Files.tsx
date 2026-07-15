@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   listFileSets,
   createFileSet,
@@ -555,9 +556,11 @@ function FileSetDialog({
     }
   }
 
-  return (
+  // Portal to <body> so the fixed overlay can never be trapped by an ancestor's
+  // CSS transform (belt-and-braces with the bv-page-in keyframe fix, #62).
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
       <div
@@ -641,7 +644,8 @@ function FileSetDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
