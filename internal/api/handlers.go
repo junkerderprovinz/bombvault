@@ -2499,7 +2499,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	// (DeleteBackupsFileSet then can't find them). Path/excludes/enabled edits stay
 	// allowed — only the name is load-bearing for the snapshot tags.
 	if fs.Name != oldName {
-		hasBackups, bErr := h.svc.fileSetHasBackups(id)
+		hasBackups, bErr := h.svc.fileSetHasBackups(r.Context(), id)
 		if bErr != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(bErr))
 			return

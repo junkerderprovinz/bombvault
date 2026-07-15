@@ -5326,12 +5326,29 @@ func (s *Service) validateFileSet(fs store.FileSet) error {
 // set would silently orphan those snapshots (they stay tagged with the OLD name
 // and are never re-tagged), so handlePatchFileSet refuses a name change when this
 // is true (change path/excludes/enabled freely; create a new set to rename).
-func (s *Service) fileSetHasBackups(id string) (bool, error) {
+func (s *Service) fileSetHasBackups(ctx context.Context, id string) (bool, error) {
 	run, err := s.store.LastSuccessfulBackup(id)
 	if err != nil {
 		return false, err
 	}
-	return run != nil, nil
+	if run != nil {
+		return true, nil
+	}
+	// The runs table alone misses a Discover-rebuilt set: it has real
+	// fileset:<Name> snapshots in the repo but a fresh id with NO run rows.
+	// Confirm against the repo tags so such a set can't be renamed (which would
+	// strand those snapshots). A brand-new set with no repo yet lists empty
+	// (localRepoMissing -> nil); a set whose share is established but unmounted
+	// errors, and we then refuse the rename conservatively rather than risk
+	// stranding snapshots we cannot see.
+	snaps, err := s.SnapshotsFileSet(ctx, id, "local")
+	if err != nil {
+		if errors.Is(err, errFileSetNotFound) {
+			return false, err
+		}
+		return true, nil
+	}
+	return len(snaps) > 0, nil
 }
 
 // SnapshotsFileSet lists restic snapshots for a single file set, filtered by
