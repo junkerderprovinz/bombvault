@@ -823,7 +823,7 @@ const zh: Partial<Translations> = {
   "recovery.foreignStepConnect": "连接到对方仓库",
   "recovery.foreignStepBrowse": "浏览并恢复",
   "recovery.foreignLocation": "仓库位置",
-  "recovery.foreignLocationHint": "主机挂载点下的文件夹（例如挂载的共享目录，内含对方服务器的备份），或远程仓库 URL（rest / S3 / B2 / sftp / rclone — 使用您已保存的云凭据）。",
+  "recovery.foreignLocationHint": "主机挂载点下的文件夹。请将对方服务器的备份共享挂载到本主机，然后在此指向它——仓库必须为本地挂载（此处不接受远程仓库 URL）。",
   "recovery.foreignKey": "对方实例的 APP_KEY",
   "recovery.foreignKeyHint": "对方实例恢复工具包中的 64 位密钥 — 您自己的密钥保持不变。",
   "recovery.foreignConnect": "连接",

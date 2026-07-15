@@ -805,8 +805,12 @@ export function Files() {
   function loadSets() {
     return listFileSets()
       .then((res) => {
-        if (res.ok) setSets(res.fileSets ?? []);
-        else setError(res.error ?? "Failed to load file sets");
+        if (res.ok) {
+          setSets(res.fileSets ?? []);
+          // Clear any stale banner from a previous failed load — a later success
+          // must not leave "Failed to load file sets" up while the UI works.
+          setError(null);
+        } else setError(res.error ?? "Failed to load file sets");
       })
       .catch(() => setError("Failed to load file sets"));
   }

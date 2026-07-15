@@ -831,7 +831,7 @@ const no: Partial<Translations> = {
   "recovery.foreignStepConnect": "Koble til det andre repoet",
   "recovery.foreignStepBrowse": "Bla gjennom & gjenopprett",
   "recovery.foreignLocation": "Repoets plassering",
-  "recovery.foreignLocationHint": "En mappe under vertsmonteringen (f.eks. en montert delt ressurs med den andre serverens sikkerhetskopier) eller en ekstern repo-URL (rest / S3 / B2 / sftp / rclone — dine lagrede skylegitimasjoner brukes).",
+  "recovery.foreignLocationHint": "En mappe under vertsmonteringen. Monter den andre serverens delte ressurs med sikkerhetskopier på denne verten og pek hit mot den — repositoriet må være lokalt montert (eksterne repo-URL-er godtas ikke her).",
   "recovery.foreignKey": "Den andre instansens APP_KEY",
   "recovery.foreignKeyHint": "Nøkkelen på 64 tegn fra den ANDRE instansens redningssett — din egen nøkkel forblir urørt.",
   "recovery.foreignConnect": "Koble til",

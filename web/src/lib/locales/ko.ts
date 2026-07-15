@@ -823,7 +823,7 @@ const ko: Partial<Translations> = {
   "recovery.foreignStepConnect": "다른 저장소에 연결",
   "recovery.foreignStepBrowse": "살펴보기 및 복원",
   "recovery.foreignLocation": "저장소 위치",
-  "recovery.foreignLocationHint": "호스트 마운트 아래의 폴더(예: 상대 서버의 백업이 담긴 마운트된 공유) 또는 원격 저장소 URL(rest / S3 / B2 / sftp / rclone — 저장된 클라우드 자격 증명이 사용됩니다).",
+  "recovery.foreignLocationHint": "호스트 마운트 아래의 폴더. 상대 서버의 백업이 담긴 공유를 이 호스트에 마운트한 뒤 여기서 지정하세요 — 저장소는 로컬에 마운트되어 있어야 합니다(원격 저장소 URL은 여기서 허용되지 않습니다).",
   "recovery.foreignKey": "상대 인스턴스의 APP_KEY",
   "recovery.foreignKeyHint": "상대 인스턴스의 복구 키트에 있는 64자 키 — 내 키는 그대로 유지됩니다.",
   "recovery.foreignConnect": "연결",

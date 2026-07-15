@@ -834,7 +834,7 @@ const ar: Partial<Translations> = {
   "recovery.foreignStepConnect": "الاتصال بالمستودع الآخر",
   "recovery.foreignStepBrowse": "التصفح والاستعادة",
   "recovery.foreignLocation": "موقع المستودع",
-  "recovery.foreignLocationHint": "مجلد تحت نقطة تحميل المضيف (مثل مشاركة محمّلة تحتوي نسخ الخادم الآخر) أو رابط مستودع بعيد (rest / S3 / B2 / sftp / rclone — تُستخدم بيانات اعتماد السحابة المحفوظة لديك).",
+  "recovery.foreignLocationHint": "مجلد تحت نقطة تحميل المضيف. حمّل على هذا المضيف المشاركة التي تحتوي نسخ الخادم الآخر ثم وجّه هذا إليها — يجب أن يكون المستودع محمّلاً محلياً (روابط المستودعات البعيدة غير مقبولة هنا).",
   "recovery.foreignKey": "APP_KEY الخاص بالنسخة الأخرى",
   "recovery.foreignKeyHint": "المفتاح المكوّن من 64 حرفًا من حزمة استرداد النسخة الأخرى — يبقى مفتاحك الخاص دون مساس.",
   "recovery.foreignConnect": "اتصال",

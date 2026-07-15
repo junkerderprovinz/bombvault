@@ -823,7 +823,7 @@ const ja: Partial<Translations> = {
   "recovery.foreignStepConnect": "相手のリポジトリに接続",
   "recovery.foreignStepBrowse": "閲覧と復元",
   "recovery.foreignLocation": "リポジトリの場所",
-  "recovery.foreignLocationHint": "ホストマウント配下のフォルダー（例: 相手サーバーのバックアップを含むマウント済み共有）またはリモートリポジトリの URL（rest / S3 / B2 / sftp / rclone — 保存済みのクラウド資格情報を使用します）。",
+  "recovery.foreignLocationHint": "ホストマウント配下のフォルダー。相手サーバーのバックアップを含む共有をこのホストにマウントし、ここでそれを指定してください — リポジトリはローカルにマウントされている必要があります（リモートリポジトリの URL はここでは受け付けません）。",
   "recovery.foreignKey": "相手インスタンスの APP_KEY",
   "recovery.foreignKeyHint": "相手インスタンスのリカバリキットに記載された 64 文字のキー — 自分のキーはそのまま変わりません。",
   "recovery.foreignConnect": "接続",

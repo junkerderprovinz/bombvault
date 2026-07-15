@@ -831,7 +831,7 @@ const sv: Partial<Translations> = {
   "recovery.foreignStepConnect": "Anslut till det andra repot",
   "recovery.foreignStepBrowse": "Bläddra & återställ",
   "recovery.foreignLocation": "Repots plats",
-  "recovery.foreignLocationHint": "En mapp under värdmonteringen (t.ex. en monterad delning med den andra serverns säkerhetskopior) eller en fjärrepo-URL (rest / S3 / B2 / sftp / rclone — dina sparade molnuppgifter används).",
+  "recovery.foreignLocationHint": "En mapp under värdmonteringen. Montera den andra serverns säkerhetskopieringsdelning på den här värden och peka hit mot den — förvaret måste vara lokalt monterat (fjärrförvars-URL:er accepteras inte här).",
   "recovery.foreignKey": "Den andra instansens APP_KEY",
   "recovery.foreignKeyHint": "Nyckeln på 64 tecken från den ANDRA instansens räddningspaket — din egen nyckel förblir orörd.",
   "recovery.foreignConnect": "Anslut",

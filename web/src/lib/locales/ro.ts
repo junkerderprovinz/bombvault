@@ -834,7 +834,7 @@ const ro: Partial<Translations> = {
   "recovery.foreignStepConnect": "Conectare la celălalt repo",
   "recovery.foreignStepBrowse": "Răsfoire și restaurare",
   "recovery.foreignLocation": "Locația repo-ului",
-  "recovery.foreignLocationHint": "Un folder sub punctul de montare al gazdei (de ex. o partajare montată cu copiile celuilalt server) sau un URL de repo la distanță (rest / S3 / B2 / sftp / rclone — se folosesc credențialele cloud salvate).",
+  "recovery.foreignLocationHint": "Un folder sub punctul de montare al gazdei. Montează pe această gazdă partajarea cu copiile celuilalt server și indică aici către ea — depozitul trebuie să fie montat local (URL-urile de repo la distanță nu sunt acceptate aici).",
   "recovery.foreignKey": "APP_KEY al celeilalte instanțe",
   "recovery.foreignKeyHint": "Cheia de 64 de caractere din kitul de recuperare al CELEILALTE instanțe — propria dvs. cheie rămâne neatinsă.",
   "recovery.foreignConnect": "Conectare",

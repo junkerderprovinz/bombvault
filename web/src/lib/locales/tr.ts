@@ -831,7 +831,7 @@ const tr: Partial<Translations> = {
   "recovery.foreignStepConnect": "Diğer depoya bağlan",
   "recovery.foreignStepBrowse": "Göz at ve geri yükle",
   "recovery.foreignLocation": "Depo konumu",
-  "recovery.foreignLocationHint": "Ana makine bağlama noktası altındaki bir klasör (örn. diğer sunucunun yedeklerini içeren bağlanmış bir paylaşım) veya uzak bir depo URL'si (rest / S3 / B2 / sftp / rclone — kayıtlı bulut kimlik bilgileriniz kullanılır).",
+  "recovery.foreignLocationHint": "Ana makine bağlama noktası altındaki bir klasör. Diğer sunucunun yedeklerini içeren paylaşımı bu ana makineye bağlayın ve burayı ona yönlendirin — depo yerel olarak bağlanmış olmalıdır (uzak depo URL'leri burada kabul edilmez).",
   "recovery.foreignKey": "Diğer örneğin APP_KEY'i",
   "recovery.foreignKeyHint": "DİĞER örneğin kurtarma kitindeki 64 karakterlik anahtar — kendi anahtarınız olduğu gibi kalır.",
   "recovery.foreignConnect": "Bağlan",

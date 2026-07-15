@@ -831,7 +831,7 @@ const pt: Partial<Translations> = {
   "recovery.foreignStepConnect": "Ligar ao outro repositório",
   "recovery.foreignStepBrowse": "Explorar e restaurar",
   "recovery.foreignLocation": "Localização do repositório",
-  "recovery.foreignLocationHint": "Uma pasta sob a montagem do host (p. ex. uma partilha montada com os backups do outro servidor) ou o URL de um repo remoto (rest / S3 / B2 / sftp / rclone — são usadas as suas credenciais de nuvem guardadas).",
+  "recovery.foreignLocationHint": "Uma pasta sob a montagem do host. Monte neste host a partilha com os backups do outro servidor e aponte isto para ela — o repositório tem de estar montado localmente (aqui não são aceites URLs de repositórios remotos).",
   "recovery.foreignKey": "APP_KEY da outra instância",
   "recovery.foreignKeyHint": "A chave de 64 caracteres do kit de recuperação da OUTRA instância — a sua própria chave fica intacta.",
   "recovery.foreignConnect": "Ligar",

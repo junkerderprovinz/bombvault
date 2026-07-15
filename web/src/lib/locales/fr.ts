@@ -831,7 +831,7 @@ const fr: Partial<Translations> = {
   "recovery.foreignStepConnect": "Se connecter à l'autre dépôt",
   "recovery.foreignStepBrowse": "Parcourir & restaurer",
   "recovery.foreignLocation": "Emplacement du dépôt",
-  "recovery.foreignLocationHint": "Un dossier sous le montage hôte (p. ex. un partage monté contenant les sauvegardes de l'autre serveur) ou l'URL d'un dépôt distant (rest / S3 / B2 / sftp / rclone — vos identifiants cloud enregistrés sont utilisés).",
+  "recovery.foreignLocationHint": "Un dossier sous le montage hôte. Montez sur cet hôte le partage contenant les sauvegardes de l'autre serveur et pointez ceci dessus — le dépôt doit être monté localement (les URL de dépôt distant ne sont pas acceptées ici).",
   "recovery.foreignKey": "APP_KEY de l'autre instance",
   "recovery.foreignKeyHint": "La clé de 64 caractères du kit de récupération de l'AUTRE instance — votre propre clé reste intacte.",
   "recovery.foreignConnect": "Se connecter",

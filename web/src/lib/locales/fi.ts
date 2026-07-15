@@ -831,7 +831,7 @@ const fi: Partial<Translations> = {
   "recovery.foreignStepConnect": "Yhdistä toiseen repoon",
   "recovery.foreignStepBrowse": "Selaa ja palauta",
   "recovery.foreignLocation": "Repon sijainti",
-  "recovery.foreignLocationHint": "Kansio isännän liitospisteen alla (esim. liitetty jako, jossa toisen palvelimen varmuuskopiot ovat) tai etärepon URL (rest / S3 / B2 / sftp / rclone — tallennettuja pilvitunnuksiasi käytetään).",
+  "recovery.foreignLocationHint": "Kansio isännän liitospisteen alla. Liitä tähän isäntään jako, jossa toisen palvelimen varmuuskopiot ovat, ja osoita tämä siihen — repon on oltava paikallisesti liitetty (etärepojen URL-osoitteita ei hyväksytä tässä).",
   "recovery.foreignKey": "Toisen instanssin APP_KEY",
   "recovery.foreignKeyHint": "64 merkin avain TOISEN instanssin palautuspaketista — oma avaimesi pysyy koskemattomana.",
   "recovery.foreignConnect": "Yhdistä",

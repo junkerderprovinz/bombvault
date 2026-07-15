@@ -831,7 +831,7 @@ const da: Partial<Translations> = {
   "recovery.foreignStepConnect": "Forbind til det andet repo",
   "recovery.foreignStepBrowse": "Gennemse & gendan",
   "recovery.foreignLocation": "Repoets placering",
-  "recovery.foreignLocationHint": "En mappe under host-mountet (f.eks. en monteret share med den anden servers sikkerhedskopier) eller en fjern-repo-URL (rest / S3 / B2 / sftp / rclone — dine gemte cloud-legitimationsoplysninger bruges).",
+  "recovery.foreignLocationHint": "En mappe under host-mountet. Montér den anden servers share med sikkerhedskopier på denne host, og peg her hen mod den — repositoryet skal være lokalt monteret (fjern-repo-URL'er accepteres ikke her).",
   "recovery.foreignKey": "Den anden instans' APP_KEY",
   "recovery.foreignKeyHint": "Nøglen på 64 tegn fra den ANDEN instans' redningskit — din egen nøgle forbliver urørt.",
   "recovery.foreignConnect": "Forbind",

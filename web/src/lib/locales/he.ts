@@ -831,7 +831,7 @@ const he: Partial<Translations> = {
   "recovery.foreignStepConnect": "התחברות למאגר האחר",
   "recovery.foreignStepBrowse": "עיון ושחזור",
   "recovery.foreignLocation": "מיקום המאגר",
-  "recovery.foreignLocationHint": "תיקייה תחת נקודת העיגון של המארח (למשל שיתוף מעוגן עם הגיבויים של השרת האחר) או כתובת URL של מאגר מרוחק (rest / S3 / B2 / sftp / rclone — נעשה שימוש בפרטי הענן השמורים שלכם).",
+  "recovery.foreignLocationHint": "תיקייה תחת נקודת העיגון של המארח. עגנו במארח זה את השיתוף עם הגיבויים של השרת האחר והפנו לכאן אליו — המאגר חייב להיות מעוגן מקומית (כתובות URL של מאגרים מרוחקים אינן נתמכות כאן).",
   "recovery.foreignKey": "ה-APP_KEY של המופע האחר",
   "recovery.foreignKeyHint": "המפתח בן 64 התווים מערכת השחזור של המופע האחר — המפתח שלכם נשאר ללא שינוי.",
   "recovery.foreignConnect": "התחבר",

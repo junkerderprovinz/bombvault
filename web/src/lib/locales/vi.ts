@@ -823,7 +823,7 @@ const vi: Partial<Translations> = {
   "recovery.foreignStepConnect": "Kết nối với kho bên kia",
   "recovery.foreignStepBrowse": "Duyệt & khôi phục",
   "recovery.foreignLocation": "Vị trí kho",
-  "recovery.foreignLocationHint": "Một thư mục dưới điểm gắn kết của host (ví dụ: một chia sẻ đã gắn kết chứa bản sao lưu của máy chủ kia) hoặc URL kho từ xa (rest / S3 / B2 / sftp / rclone — dùng thông tin đăng nhập đám mây đã lưu của bạn).",
+  "recovery.foreignLocationHint": "Một thư mục dưới điểm gắn kết của host. Hãy gắn kết chia sẻ chứa bản sao lưu của máy chủ kia vào host này rồi trỏ vào đó — kho phải được gắn kết cục bộ (không chấp nhận URL kho từ xa ở đây).",
   "recovery.foreignKey": "APP_KEY của phiên bản kia",
   "recovery.foreignKeyHint": "Khóa 64 ký tự trong bộ khôi phục của phiên bản KIA — khóa của riêng bạn vẫn nguyên vẹn.",
   "recovery.foreignConnect": "Kết nối",
