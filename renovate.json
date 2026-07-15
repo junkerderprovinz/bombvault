@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard",
+    ":enableVulnerabilityAlertsWithLabel(security)"
+  ],
+  "timezone": "Europe/Vienna",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 6,
+  "packageRules": [
+    {
+      "description": "GitHub Actions: auto-merge all updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "commitMessagePrefix": "ci:",
+      "labels": ["github-actions"]
+    },
+    {
+      "description": "Go: group minor+patch module updates into one weekly PR; majors stay separate for review",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Go modules (non-major)",
+      "commitMessagePrefix": "chore(deps):"
+    }
+  ]
+}
