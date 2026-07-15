@@ -392,14 +392,22 @@ func TestSchedulerContainersJobContinuesOnError(t *testing.T) {
 		{ContainerName: "radarr", IncludeInSchedule: true},
 	}
 
-	// A single job failure must not abort subsequent containers.
-	schedule.RunContainersJob(targets, backupFn)
+	// A single job failure must not abort subsequent containers, and the job must
+	// return the per-container failure list (name + reason) so a scheduled run can
+	// name WHICH containers failed and WHY in its summary notification (#64).
+	attempted, failed, failures := schedule.RunContainersJob(targets, backupFn)
 
 	mu.Lock()
 	defer mu.Unlock()
 
 	if len(called) != 2 {
 		t.Fatalf("expected 2 attempts, got %d: %v", len(called), called)
+	}
+	if attempted != 2 || failed != 1 {
+		t.Fatalf("expected attempted=2 failed=1, got attempted=%d failed=%d", attempted, failed)
+	}
+	if len(failures) != 1 || failures[0].Name != "plex" || failures[0].Reason != "backup failed" {
+		t.Fatalf("expected failures=[{plex backup failed}], got %+v", failures)
 	}
 }
 
@@ -483,13 +491,13 @@ func TestRunFilesJobBacksUpOnlyEnabledByID(t *testing.T) {
 		{ID: "id-photos", Name: "photos", Enabled: true},
 	}
 
-	attempted, failed := schedule.RunFilesJob(sets, backupFn)
+	attempted, failed, failures := schedule.RunFilesJob(sets, backupFn)
 
 	mu.Lock()
 	defer mu.Unlock()
 
-	if attempted != 2 || failed != 0 {
-		t.Fatalf("expected attempted=2 failed=0, got attempted=%d failed=%d", attempted, failed)
+	if attempted != 2 || failed != 0 || len(failures) != 0 {
+		t.Fatalf("expected attempted=2 failed=0 failures=0, got attempted=%d failed=%d failures=%v", attempted, failed, failures)
 	}
 	if len(called) != 2 || called[0] != "id-docs" || called[1] != "id-photos" {
 		t.Fatalf("expected backupFn to receive the enabled sets' IDs [id-docs id-photos], got %v", called)
@@ -518,7 +526,7 @@ func TestRunFilesJobContinuesOnError(t *testing.T) {
 		{ID: "id-photos", Name: "photos", Enabled: true},
 	}
 
-	attempted, failed := schedule.RunFilesJob(sets, backupFn)
+	attempted, failed, failures := schedule.RunFilesJob(sets, backupFn)
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -528,6 +536,10 @@ func TestRunFilesJobContinuesOnError(t *testing.T) {
 	}
 	if attempted != 2 || failed != 1 {
 		t.Fatalf("expected attempted=2 failed=1, got attempted=%d failed=%d", attempted, failed)
+	}
+	// The failure is named by the set's human Name (not its ID) and carries the reason.
+	if len(failures) != 1 || failures[0].Name != "docs" || failures[0].Reason != "backup failed" {
+		t.Fatalf("expected failures=[{docs backup failed}], got %+v", failures)
 	}
 }
 

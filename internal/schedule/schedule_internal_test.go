@@ -8,9 +8,10 @@ import (
 )
 
 // TestScheduledRunAggregatesHealthchecksPings verifies the scheduled per-domain run
-// wraps its item loop in exactly ONE Healthchecks start + ONE finish, and that the
-// finish carries the run's attempted/failed counts (success when nothing failed, a
-// failure count when any item did) — the core of #49.
+// wraps its item loop in exactly ONE Healthchecks start + ONE finish, that the finish
+// carries the run's attempted/failed counts (success when nothing failed, a failure
+// count when any item did) — the core of #49 — and that the finish also carries the
+// per-item failures (name + reason) so the summary notification can enumerate them (#64).
 func TestScheduledRunAggregatesHealthchecksPings(t *testing.T) {
 	sc := New(func(string) error { return nil }, func() ([]store.Target, error) { return nil, nil })
 
@@ -18,12 +19,13 @@ func TestScheduledRunAggregatesHealthchecksPings(t *testing.T) {
 	type finish struct {
 		domain            string
 		attempted, failed int
+		failures          []ItemFailure
 	}
 	var finishes []finish
 	sc.SetHealthchecksAggregator(
 		func(domain string) { starts = append(starts, domain) },
-		func(domain string, attempted, failed int) {
-			finishes = append(finishes, finish{domain, attempted, failed})
+		func(domain string, attempted, failed int, failures []ItemFailure) {
+			finishes = append(finishes, finish{domain, attempted, failed, failures})
 		},
 	)
 
@@ -33,19 +35,20 @@ func TestScheduledRunAggregatesHealthchecksPings(t *testing.T) {
 		{ContainerName: "c", IncludeInSchedule: true},
 	}
 
-	// All three succeed → one aggregate start, one success finish for the whole run.
-	sc.runAggregatedHC("containers", func() (int, int) {
+	// All three succeed → one aggregate start, one success finish, no failures listed.
+	sc.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob(targets, func(string) error { return nil })
 	})
 	if len(starts) != 1 || starts[0] != "containers" {
 		t.Fatalf("expected exactly one aggregate start for the run, got %v", starts)
 	}
-	if len(finishes) != 1 || finishes[0] != (finish{"containers", 3, 0}) {
-		t.Fatalf("expected one success finish (attempted 3, failed 0), got %v", finishes)
+	if len(finishes) != 1 || finishes[0].attempted != 3 || finishes[0].failed != 0 || len(finishes[0].failures) != 0 {
+		t.Fatalf("expected one success finish (attempted 3, failed 0, no failures), got %+v", finishes)
 	}
 
-	// One item fails → still exactly one finish, now reporting the failure count.
-	sc.runAggregatedHC("containers", func() (int, int) {
+	// One item fails → still exactly one finish, now reporting the failure count AND
+	// the failing container's name and reason.
+	sc.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob(targets, func(name string) error {
 			if name == "b" {
 				return errors.New("boom")
@@ -56,8 +59,11 @@ func TestScheduledRunAggregatesHealthchecksPings(t *testing.T) {
 	if len(starts) != 2 {
 		t.Fatalf("expected a second aggregate start, got %v", starts)
 	}
-	if len(finishes) != 2 || finishes[1] != (finish{"containers", 3, 1}) {
-		t.Fatalf("expected one fail finish (attempted 3, failed 1), got %v", finishes)
+	if len(finishes) != 2 || finishes[1].attempted != 3 || finishes[1].failed != 1 {
+		t.Fatalf("expected one fail finish (attempted 3, failed 1), got %+v", finishes)
+	}
+	if fs := finishes[1].failures; len(fs) != 1 || fs[0].Name != "b" || fs[0].Reason != "boom" {
+		t.Fatalf("expected the finish to carry the failed container b: boom, got %+v", finishes[1].failures)
 	}
 }
 
@@ -67,7 +73,7 @@ func TestScheduledRunAggregatesHealthchecksPings(t *testing.T) {
 func TestScheduledRunNoAggregatorStillRunsEveryItem(t *testing.T) {
 	sc := New(nil, nil)
 	var called int
-	sc.runAggregatedHC("containers", func() (int, int) {
+	sc.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob(
 			[]store.Target{
 				{ContainerName: "a", IncludeInSchedule: true},

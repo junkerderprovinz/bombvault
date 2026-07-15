@@ -219,9 +219,9 @@ func run() error {
 	// one /start before the first item, one success/fail after the last (#49).
 	scheduler.SetHealthchecksAggregator(
 		func(domain string) { svc.ScheduledHealthchecksStart(context.Background(), domain) },
-		func(domain string, attempted, failed int) {
+		func(domain string, attempted, failed int, failures []schedule.ItemFailure) {
 			svc.ScheduledHealthchecksResult(context.Background(), domain, attempted, failed)
-			svc.ScheduledNotifyResult(context.Background(), domain, attempted, failed)
+			svc.ScheduledNotifyResult(context.Background(), domain, attempted, failed, failures)
 		},
 	)
 	scheduler.SetFlashJob(func() error {
