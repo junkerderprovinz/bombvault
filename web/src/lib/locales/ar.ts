@@ -828,6 +828,27 @@ const ar: Partial<Translations> = {
   "dashboard.domainFiles": "الملفات",
   "recovery.filesFound": "تم العثور على {f} مجموعات ملفات.",
   "recovery.filesRestoreHint": "مجموعات الملفات المعاد اكتشافها لا تحمل مجلدها الأصلي — تُستعاد كل منها إلى مجلد تختاره.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "الاستعادة من مستودع BombVault آخر",
+  "recovery.foreignIntro": "استخرج حاويات أو أجهزة افتراضية أو مجموعات ملفات مفردة من نسخ نسخة BombVault أخرى: اتصل للقراءة فقط، وتصفح المحتوى، واستعد ما تختاره. المستودع الآخر يُقرأ فقط ولا يتغير فيه شيء — وتبقى إعدادات النسخ الاحتياطي الخاصة بك دون مساس.",
+  "recovery.foreignStepConnect": "الاتصال بالمستودع الآخر",
+  "recovery.foreignStepBrowse": "التصفح والاستعادة",
+  "recovery.foreignLocation": "موقع المستودع",
+  "recovery.foreignLocationHint": "مجلد تحت نقطة تحميل المضيف (مثل مشاركة محمّلة تحتوي نسخ الخادم الآخر) أو رابط مستودع بعيد (rest / S3 / B2 / sftp / rclone — تُستخدم بيانات اعتماد السحابة المحفوظة لديك).",
+  "recovery.foreignKey": "APP_KEY الخاص بالنسخة الأخرى",
+  "recovery.foreignKeyHint": "المفتاح المكوّن من 64 حرفًا من حزمة استرداد النسخة الأخرى — يبقى مفتاحك الخاص دون مساس.",
+  "recovery.foreignConnect": "اتصال",
+  "recovery.foreignConnecting": "جارٍ الاتصال…",
+  "recovery.foreignConnected": "تم الاتصال — يمكن قراءة المستودع.",
+  "recovery.foreignClose": "قطع الاتصال",
+  "recovery.foreignNotConnected": "اتصل أولًا بمستودع في الأعلى.",
+  "recovery.foreignEmpty": "يمكن قراءة المستودع لكنه لا يحتوي على نسخ BombVault احتياطية.",
+  "recovery.foreignLatest": "أحدث نسخة احتياطية",
+  "recovery.foreignTargetFolder": "المجلد الهدف",
+  "recovery.foreignRestore": "الاستعادة إلى هنا",
+  "recovery.foreignExistsConfirm": "«{name}» موجود بالفعل على هذا النظام — ستؤدي الاستعادة إلى الكتابة فوقه بالنسخة الخارجية. هل تريد المتابعة؟",
+  "recovery.foreignExpired": "انتهت صلاحية الجلسة (تستمر الجلسات 30 دقيقة) — أعد الاتصال لمواصلة التصفح.",
+  "recovery.foreignReconnect": "إعادة الاتصال",
 };
 
 export default ar;

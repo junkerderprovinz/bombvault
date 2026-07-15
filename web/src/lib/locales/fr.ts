@@ -825,6 +825,27 @@ const fr: Partial<Translations> = {
   "dashboard.domainFiles": "Fichiers",
   "recovery.filesFound": "{f} jeux de fichiers trouvés.",
   "recovery.filesRestoreHint": "Les jeux de fichiers redécouverts ne connaissent pas leur dossier d'origine — chacun est restauré dans un dossier de votre choix.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Restaurer depuis un autre dépôt BombVault",
+  "recovery.foreignIntro": "Récupérez des conteneurs, VMs ou jeux de fichiers individuels depuis les sauvegardes d'une AUTRE instance BombVault : connexion en lecture seule, parcours du contenu, restauration de votre sélection. L'autre dépôt est seulement lu, rien n'y change — et vos propres réglages de sauvegarde restent intacts.",
+  "recovery.foreignStepConnect": "Se connecter à l'autre dépôt",
+  "recovery.foreignStepBrowse": "Parcourir & restaurer",
+  "recovery.foreignLocation": "Emplacement du dépôt",
+  "recovery.foreignLocationHint": "Un dossier sous le montage hôte (p. ex. un partage monté contenant les sauvegardes de l'autre serveur) ou l'URL d'un dépôt distant (rest / S3 / B2 / sftp / rclone — vos identifiants cloud enregistrés sont utilisés).",
+  "recovery.foreignKey": "APP_KEY de l'autre instance",
+  "recovery.foreignKeyHint": "La clé de 64 caractères du kit de récupération de l'AUTRE instance — votre propre clé reste intacte.",
+  "recovery.foreignConnect": "Se connecter",
+  "recovery.foreignConnecting": "Connexion…",
+  "recovery.foreignConnected": "Connecté — le dépôt est lisible.",
+  "recovery.foreignClose": "Se déconnecter",
+  "recovery.foreignNotConnected": "Connectez-vous d'abord à un dépôt ci-dessus.",
+  "recovery.foreignEmpty": "Le dépôt est lisible mais ne contient aucune sauvegarde BombVault.",
+  "recovery.foreignLatest": "Dernière sauvegarde",
+  "recovery.foreignTargetFolder": "Dossier cible",
+  "recovery.foreignRestore": "Restaurer ici",
+  "recovery.foreignExistsConfirm": "« {name} » existe déjà sur ce système — la restauration l'ÉCRASERA avec la sauvegarde étrangère. Continuer ?",
+  "recovery.foreignExpired": "La session a expiré (les sessions durent 30 minutes) — reconnectez-vous pour continuer à parcourir.",
+  "recovery.foreignReconnect": "Se reconnecter",
 };
 
 export default fr;

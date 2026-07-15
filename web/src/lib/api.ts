@@ -1384,6 +1384,90 @@ export function discoverFiles(probe = false): Promise<OkEnvelope & { discovered?
 }
 
 // ---------------------------------------------------------------------------
+// Foreign-repo restore API (#61) — a READ-ONLY session onto ANOTHER BombVault
+// instance's repository. Deliberately unlike the Recovery attach flow: nothing
+// is persisted (no putSettings) — the session lives server-side in memory with
+// a 30-minute TTL, and the foreign key/location never touch Settings. The UI
+// must call foreignClose on leave/unmount.
+// ---------------------------------------------------------------------------
+
+/** One restorable item (container, VM or file set) in a foreign repository,
+ *  with all of its snapshots (oldest-first, as restic reports them). */
+export interface ForeignItem {
+  name: string;
+  snapshots: Snapshot[];
+}
+
+/** The foreign repository's contents grouped by domain (matches
+ *  ForeignInventory in internal/api/foreign.go — arrays are never null). */
+export interface ForeignInventory {
+  containers: ForeignItem[];
+  vms: ForeignItem[];
+  fileSets: ForeignItem[];
+}
+
+export interface ForeignOpenResponse extends OkEnvelope {
+  /** Opaque in-memory session id, needed by foreignRestore/foreignClose. */
+  session?: string;
+  inventory?: ForeignInventory;
+}
+
+/** POST /api/foreign/open — open a foreign repo read-only with the OTHER
+ *  instance's APP_KEY (64 hex). `location` is a relative subpath under the host
+ *  mount root (a mounted share) or a restic remote URL (rest:/s3:/…; the LOCAL
+ *  instance's stored cloud credentials are reused). Errors (wrong key, not a
+ *  repo) arrive as {ok:false, error} at HTTP 200. */
+export function foreignOpen(location: string, key: string): Promise<ForeignOpenResponse> {
+  return fetchJSON("/api/foreign/open", {
+    method: "POST",
+    body: JSON.stringify({ location, key }),
+  });
+}
+
+/** POST /api/foreign/close — drop the session immediately (call on
+ *  leave/unmount). Closing an unknown/expired session is a harmless no-op. */
+export function foreignClose(session: string): Promise<OkEnvelope> {
+  return fetchJSON("/api/foreign/close", {
+    method: "POST",
+    body: JSON.stringify({ session }),
+  });
+}
+
+/**
+ * POST /api/foreign/restore — restore ONE item from an open foreign session.
+ * ASYNC (see restore): the ack only confirms the detached job started; watch
+ * the "container:/vm:/files:<item>" SSE key + the recorded run (kind
+ * "restore") for the outcome. `snapshot` accepts "latest"; `target` (relative
+ * subpath under the host mount) is REQUIRED for the files domain.
+ *
+ * Unlike most endpoints this one answers validation failures with HTTP 400
+ * and a held single-flight guard with HTTP 409 — both still carry the
+ * {ok:false, error} envelope, so this parses the body on EVERY status instead
+ * of using fetchJSON (which throws away the body text for non-2xx). An
+ * expired session surfaces here as its clear backend message.
+ */
+export async function foreignRestore(req: {
+  session: string;
+  domain: "containers" | "vms" | "files";
+  item: string;
+  snapshot: string;
+  confirm: boolean;
+  target?: string;
+}): Promise<OkEnvelope & { started?: boolean }> {
+  const res = await fetch("/api/foreign/restore", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  try {
+    return (await res.json()) as OkEnvelope & { started?: boolean };
+  } catch {
+    // Non-JSON body (proxy error page etc.) — fall back to the HTTP status.
+    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Auth API
 // ---------------------------------------------------------------------------
 

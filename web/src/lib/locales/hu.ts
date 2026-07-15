@@ -828,6 +828,27 @@ const hu: Partial<Translations> = {
   "dashboard.domainFiles": "Fájlok",
   "recovery.filesFound": "{f} fájlkészlet található.",
   "recovery.filesRestoreHint": "Az újra felfedezett fájlkészletek nem ismerik az eredeti mappájukat — mindegyik egy Ön által választott mappába áll vissza.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Visszaállítás másik BombVault repóból",
+  "recovery.foreignIntro": "Emeljen ki egyes konténereket, VM-eket vagy fájlkészleteket egy MÁSIK BombVault-példány mentéseiből: csatlakozzon csak olvasásra, böngéssze a tartalmat, és állítsa vissza, amit kiválaszt. A másik repót csak olvassuk, ott semmi sem változik — és az Ön saját mentési beállításai érintetlenek maradnak.",
+  "recovery.foreignStepConnect": "Csatlakozás a másik repóhoz",
+  "recovery.foreignStepBrowse": "Böngészés és visszaállítás",
+  "recovery.foreignLocation": "A repó helye",
+  "recovery.foreignLocationHint": "Egy mappa a gazdagép csatolási pontja alatt (pl. egy felcsatolt megosztás a másik szerver mentéseivel) vagy egy távoli repó URL-je (rest / S3 / B2 / sftp / rclone — az elmentett felhő-hitelesítő adatait használjuk).",
+  "recovery.foreignKey": "A másik példány APP_KEY-e",
+  "recovery.foreignKeyHint": "A 64 karakteres kulcs a MÁSIK példány helyreállítási készletéből — az Ön saját kulcsa érintetlen marad.",
+  "recovery.foreignConnect": "Csatlakozás",
+  "recovery.foreignConnecting": "Csatlakozás…",
+  "recovery.foreignConnected": "Csatlakozva — a repó olvasható.",
+  "recovery.foreignClose": "Leválasztás",
+  "recovery.foreignNotConnected": "Először csatlakozzon egy repóhoz fentebb.",
+  "recovery.foreignEmpty": "A repó olvasható, de nem tartalmaz BombVault-mentéseket.",
+  "recovery.foreignLatest": "Legújabb mentés",
+  "recovery.foreignTargetFolder": "Célmappa",
+  "recovery.foreignRestore": "Visszaállítás ide",
+  "recovery.foreignExistsConfirm": "„{name}” már létezik ezen a rendszeren — a visszaállítás FELÜLÍRJA az idegen mentéssel. Folytatja?",
+  "recovery.foreignExpired": "A munkamenet lejárt (a munkamenetek 30 percig tartanak) — csatlakozzon újra a böngészés folytatásához.",
+  "recovery.foreignReconnect": "Újracsatlakozás",
 };
 
 export default hu;

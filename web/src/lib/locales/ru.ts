@@ -820,6 +820,27 @@ const ru: Partial<Translations> = {
   "dashboard.domainFiles": "Файлы",
   "recovery.filesFound": "Найдено {f} наборов файлов.",
   "recovery.filesRestoreHint": "Повторно обнаруженные наборы файлов не знают свою исходную папку — каждый восстанавливается в выбранную вами папку.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Восстановление из другого репозитория BombVault",
+  "recovery.foreignIntro": "Извлекайте отдельные контейнеры, ВМ или наборы файлов из резервных копий ДРУГОГО экземпляра BombVault: подключитесь только для чтения, просмотрите содержимое и восстановите выбранное. Другой репозиторий только читается, там ничего не меняется — а ваши собственные настройки резервного копирования остаются нетронутыми.",
+  "recovery.foreignStepConnect": "Подключиться к другому репозиторию",
+  "recovery.foreignStepBrowse": "Просмотр и восстановление",
+  "recovery.foreignLocation": "Расположение репозитория",
+  "recovery.foreignLocationHint": "Папка под точкой монтирования хоста (например, смонтированный общий ресурс с копиями другого сервера) или URL удалённого репозитория (rest / S3 / B2 / sftp / rclone — используются ваши сохранённые облачные учётные данные).",
+  "recovery.foreignKey": "APP_KEY другого экземпляра",
+  "recovery.foreignKeyHint": "Ключ из 64 символов из аварийного комплекта ДРУГОГО экземпляра — ваш собственный ключ остаётся нетронутым.",
+  "recovery.foreignConnect": "Подключиться",
+  "recovery.foreignConnecting": "Подключение…",
+  "recovery.foreignConnected": "Подключено — репозиторий читается.",
+  "recovery.foreignClose": "Отключиться",
+  "recovery.foreignNotConnected": "Сначала подключитесь к репозиторию выше.",
+  "recovery.foreignEmpty": "Репозиторий читается, но не содержит резервных копий BombVault.",
+  "recovery.foreignLatest": "Последняя копия",
+  "recovery.foreignTargetFolder": "Целевая папка",
+  "recovery.foreignRestore": "Восстановить сюда",
+  "recovery.foreignExistsConfirm": "«{name}» уже существует в этой системе — восстановление ПЕРЕЗАПИШЕТ его чужой копией. Продолжить?",
+  "recovery.foreignExpired": "Сеанс истёк (сеансы длятся 30 минут) — подключитесь снова, чтобы продолжить просмотр.",
+  "recovery.foreignReconnect": "Подключиться снова",
 };
 
 export default ru;

@@ -825,6 +825,27 @@ const da: Partial<Translations> = {
   "dashboard.domainFiles": "Filer",
   "recovery.filesFound": "Fandt {f} filsæt.",
   "recovery.filesRestoreHint": "Genopdagede filsæt kender ikke deres oprindelige mappe — hvert sæt gendannes til en mappe, du vælger.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Gendan fra et andet BombVault-repo",
+  "recovery.foreignIntro": "Hent enkelte containere, VM'er eller filsæt ud af sikkerhedskopierne fra en ANDEN BombVault-instans: forbind skrivebeskyttet, gennemse indholdet og gendan det, du vælger. Det andet repo læses kun, intet ændres der — og dine egne backup-indstillinger forbliver urørte.",
+  "recovery.foreignStepConnect": "Forbind til det andet repo",
+  "recovery.foreignStepBrowse": "Gennemse & gendan",
+  "recovery.foreignLocation": "Repoets placering",
+  "recovery.foreignLocationHint": "En mappe under host-mountet (f.eks. en monteret share med den anden servers sikkerhedskopier) eller en fjern-repo-URL (rest / S3 / B2 / sftp / rclone — dine gemte cloud-legitimationsoplysninger bruges).",
+  "recovery.foreignKey": "Den anden instans' APP_KEY",
+  "recovery.foreignKeyHint": "Nøglen på 64 tegn fra den ANDEN instans' redningskit — din egen nøgle forbliver urørt.",
+  "recovery.foreignConnect": "Forbind",
+  "recovery.foreignConnecting": "Forbinder…",
+  "recovery.foreignConnected": "Forbundet — repoet er læsbart.",
+  "recovery.foreignClose": "Afbryd",
+  "recovery.foreignNotConnected": "Forbind først til et repo ovenfor.",
+  "recovery.foreignEmpty": "Repoet er læsbart, men indeholder ingen BombVault-sikkerhedskopier.",
+  "recovery.foreignLatest": "Nyeste sikkerhedskopi",
+  "recovery.foreignTargetFolder": "Målmappe",
+  "recovery.foreignRestore": "Gendan hertil",
+  "recovery.foreignExistsConfirm": "”{name}” findes allerede på dette system — gendannelsen OVERSKRIVER det med den fremmede sikkerhedskopi. Fortsæt?",
+  "recovery.foreignExpired": "Sessionen er udløbet (sessioner varer 30 minutter) — forbind igen for at fortsætte med at gennemse.",
+  "recovery.foreignReconnect": "Forbind igen",
 };
 
 export default da;

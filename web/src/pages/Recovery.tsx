@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -25,10 +25,15 @@ import {
   waitForAppBack,
   getVMSSH,
   recoveryKitUrl,
+  foreignOpen,
+  foreignClose,
+  foreignRestore,
   type Settings,
   type Container,
   type VM,
   type FileSetView,
+  type ForeignInventory,
+  type ForeignItem,
 } from "../lib/api";
 
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
@@ -45,6 +50,10 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 function isKeyMismatch(err: string | undefined): boolean {
   return !!err && /APP_KEY/i.test(err);
 }
+
+// Shared mono text-input styling (off-site URLs, foreign location/key fields).
+const offsiteInput =
+  "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent";
 
 // RestoreRow — a single discovered target (container or VM) with its latest
 // snapshot and a per-item Restore button. The restore mechanics are the shared
@@ -188,6 +197,401 @@ function FileSetRecoveryRow({
           <span className="text-xs text-[#ff8389] break-words">✗ {error}</span>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Foreign-repo restore (#61) — "Restore from another BombVault repo".
+//
+// A clearly separated section: connect READ-ONLY to a DIFFERENT BombVault
+// instance's repository (its own APP_KEY), browse the inventory, restore
+// single items. Two hard rules distinguish it from the attach steps above:
+//   1. NOTHING persists. The session lives server-side in memory (30-min TTL);
+//      this card must NEVER call putSettings (the neighbouring connectPreview
+//      deliberately does — that is the anti-pattern here).
+//   2. foreignClose runs on unmount/leave and on disconnect, so the foreign
+//      key does not linger server-side for the full TTL.
+// ---------------------------------------------------------------------------
+
+/** True when a foreign-restore error means the 30-min session lapsed — the
+ *  remedy is always the same: reconnect (the card offers exactly that). */
+function isForeignSessionGone(err: string | undefined): boolean {
+  return !!err && /session/i.test(err) && /(expired|unknown)/i.test(err);
+}
+
+// One restorable foreign item: snapshot picker (default latest), a target
+// folder for file sets (required — a foreign file set has no trusted local
+// path), and a Restore button driven by fireAndWaitRun on the recorded run —
+// runs land with domain "container" | "vm" | "files" exactly like local ones.
+function ForeignItemRow({
+  domain,
+  item,
+  session,
+  hostMountRoot,
+  existsLocally,
+  t,
+  blocked,
+  onBusyChange,
+  onSessionGone,
+}: {
+  domain: "containers" | "vms" | "files";
+  item: ForeignItem;
+  session: string;
+  hostMountRoot: string;
+  /** A same-named local container/VM exists — restore would overwrite it. */
+  existsLocally: boolean;
+  t: ReturnType<typeof useT>["t"];
+  blocked: boolean;
+  onBusyChange: (busy: boolean) => void;
+  onSessionGone: () => void;
+}) {
+  const [snapshot, setSnapshot] = useState("latest");
+  const [target, setTarget] = useState("");
+  const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  // The recorded run's domain strings (see handleRuns): singular for
+  // containers/VMs, "files" for file sets.
+  const runDomain = domain === "containers" ? "container" : domain === "vms" ? "vm" : "files";
+  // Newest-first for the picker; restic lists snapshots oldest-first.
+  const snaps = [...item.snapshots].reverse();
+
+  async function handleRestore() {
+    if (state === "busy" || blocked) return;
+    if (domain === "files" && target.trim() === "") return;
+    // Same-named local item: explicit overwrite confirm BEFORE anything fires.
+    if (existsLocally && !window.confirm(t("recovery.foreignExistsConfirm").replace("{name}", item.name))) {
+      return;
+    }
+    setState("busy");
+    setError(null);
+    onBusyChange(true);
+    try {
+      const res = await fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === runDomain && r.target === item.name,
+        start: () =>
+          foreignRestore({
+            session,
+            domain,
+            item: item.name,
+            snapshot,
+            confirm: true,
+            target: domain === "files" ? target.trim() : undefined,
+          }),
+      });
+      if (res.ok) {
+        setState("ok");
+      } else {
+        setState("fail");
+        setError(res.error ?? null);
+        if (isForeignSessionGone(res.error)) onSessionGone();
+      }
+    } catch (err) {
+      setState("fail");
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      onBusyChange(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0">
+      <div className="flex items-center gap-3 text-sm flex-wrap">
+        <span className="text-carbon-text font-medium flex-1 truncate">{item.name}</span>
+        <select
+          value={snapshot}
+          onChange={(e) => setSnapshot(e.target.value)}
+          disabled={state === "busy"}
+          className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-none focus:ring-1 focus:ring-accent"
+        >
+          <option value="latest">{t("recovery.foreignLatest")}</option>
+          {snaps.map((s) => (
+            <option key={s.id} value={s.id}>
+              {new Date(s.time).toLocaleString()} — {s.id.slice(0, 8)}
+            </option>
+          ))}
+        </select>
+      </div>
+      {domain === "files" && (
+        <FolderBrowser
+          label={t("recovery.foreignTargetFolder")}
+          value={target}
+          hostMountRoot={hostMountRoot}
+          onChange={setTarget}
+        />
+      )}
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={() => void handleRestore()}
+          disabled={state === "busy" || blocked || (domain === "files" && target.trim() === "")}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {state === "busy" && (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+          )}
+          {state === "busy" ? t("common.restoring") : t("recovery.foreignRestore")}
+        </button>
+        {state === "ok" && <span className="text-xs text-[#6fdc8c]">✓ {t("common.done")}</span>}
+        {state === "fail" && error && (
+          <span className="text-xs text-[#ff8389] break-words">✗ {error}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The whole foreign section: heading + two StepCards (connect, browse &
+// restore). All session state is COMPONENT state — never Settings.
+function ForeignRestoreCard({
+  hostMountRoot,
+  t,
+  otherActive,
+}: {
+  hostMountRoot: string;
+  t: ReturnType<typeof useT>["t"];
+  otherActive: boolean;
+}) {
+  // Connect inputs. Location is EITHER a folder under the host mount (mounted
+  // share) or a remote repo URL — the toggle mirrors the config step's
+  // local/off-site choice; whichever side is active is sent verbatim.
+  const [locSource, setLocSource] = useState<RepoSource>("local");
+  const [localPath, setLocalPath] = useState("");
+  const [remoteUrl, setRemoteUrl] = useState("");
+  const [key, setKey] = useState("");
+
+  const [phase, setPhase] = useState<"idle" | "connecting" | "connected" | "error">("idle");
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [session, setSession] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<ForeignInventory | null>(null);
+  // The 30-min server-side TTL lapsed mid-browse (a restore reported it):
+  // surface it and offer a one-click reconnect with the kept inputs.
+  const [sessionGone, setSessionGone] = useState(false);
+  // Local container/VM names ("container:x" / "vm:y"), fetched at connect time
+  // so each row knows whether a restore would overwrite something local.
+  const [localNames, setLocalNames] = useState<Set<string>>(new Set());
+  const [busyRows, setBusyRows] = useState(0);
+
+  // Ref-mirror of the session id so the unmount cleanup closes the CURRENT
+  // session (an effect capturing `session` directly would close stale ids on
+  // every change instead).
+  const sessionRef = useRef<string | null>(null);
+  sessionRef.current = session;
+  useEffect(
+    () => () => {
+      // Leave/unmount: drop the session server-side (harmless if expired).
+      // NOTE: nothing is persisted here — this card never calls putSettings.
+      if (sessionRef.current) {
+        foreignClose(sessionRef.current).catch(() => undefined);
+      }
+    },
+    []
+  );
+
+  const location = (locSource === "local" ? localPath : remoteUrl).trim();
+  const canConnect = location !== "" && key.trim() !== "" && phase !== "connecting";
+
+  const connect = useCallback(async () => {
+    if (location === "" || key.trim() === "") return;
+    setPhase("connecting");
+    setConnectError(null);
+    setSessionGone(false);
+    // Replacing an open session: close the old one first (no dangling TTLs).
+    if (sessionRef.current) {
+      foreignClose(sessionRef.current).catch(() => undefined);
+      setSession(null);
+      setInventory(null);
+    }
+    try {
+      const res = await foreignOpen(location, key.trim());
+      if (!res.ok || !res.session) {
+        setConnectError(res.error ?? t("settings.error"));
+        setPhase("error");
+        return;
+      }
+      setSession(res.session);
+      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [] });
+      setPhase("connected");
+      // Overwrite-warning data: which foreign names already exist locally.
+      try {
+        const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
+        const names = new Set<string>();
+        for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
+        for (const v of vs.vms ?? []) names.add(`vm:${v.name}`);
+        setLocalNames(names);
+      } catch {
+        setLocalNames(new Set());
+      }
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : String(err));
+      setPhase("error");
+    }
+  }, [location, key, t]);
+
+  const disconnect = useCallback(() => {
+    if (sessionRef.current) {
+      foreignClose(sessionRef.current).catch(() => undefined);
+    }
+    setSession(null);
+    setInventory(null);
+    setPhase("idle");
+    setSessionGone(false);
+  }, []);
+
+  const onBusyChange = useCallback((busy: boolean) => {
+    setBusyRows((n) => (busy ? n + 1 : Math.max(0, n - 1)));
+  }, []);
+  const rowBlocked = otherActive || busyRows > 0;
+
+  const connectState: StepState =
+    phase === "connected" ? "ok" : phase === "error" ? "bad" : "idle";
+  const total = inventory
+    ? inventory.containers.length + inventory.vms.length + inventory.fileSets.length
+    : 0;
+  const browseState: StepState = !session ? "idle" : sessionGone ? "warn" : total > 0 ? "ok" : "warn";
+
+  const groups: { domain: "containers" | "vms" | "files"; label: string; items: ForeignItem[] }[] =
+    inventory
+      ? [
+          { domain: "containers" as const, label: t("nav.containers"), items: inventory.containers },
+          { domain: "vms" as const, label: t("nav.vms"), items: inventory.vms },
+          { domain: "files" as const, label: t("nav.files"), items: inventory.fileSets },
+        ].filter((g) => g.items.length > 0)
+      : [];
+
+  return (
+    <div className="flex flex-col gap-5 border-t border-carbon-border pt-5 mt-2">
+      <div>
+        <h2 className="text-lg font-semibold text-carbon-text">{t("recovery.foreignTitle")}</h2>
+        <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.foreignIntro")}</p>
+      </div>
+
+      {/* Foreign step 1 — connect (read-only; nothing is saved). */}
+      <StepCard n={1} title={t("recovery.foreignStepConnect")} state={connectState}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-carbon-textMuted">{t("recovery.foreignLocation")}</span>
+          <SourceToggle source={locSource} onChange={setLocSource} disabled={phase === "connecting"} />
+        </div>
+        {locSource === "local" ? (
+          <FolderBrowser
+            label={t("recovery.foreignLocation")}
+            value={localPath}
+            hostMountRoot={hostMountRoot}
+            onChange={setLocalPath}
+          />
+        ) : (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-carbon-textSub">{t("recovery.foreignLocation")}</label>
+            <input
+              value={remoteUrl}
+              spellCheck={false}
+              onChange={(e) => setRemoteUrl(e.target.value)}
+              placeholder="rest:http://host:8000/repo"
+              className={offsiteInput}
+            />
+          </div>
+        )}
+        <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.foreignLocationHint")}</p>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-carbon-textSub">{t("recovery.foreignKey")}</label>
+          <input
+            type="password"
+            value={key}
+            spellCheck={false}
+            autoComplete="off"
+            onChange={(e) => setKey(e.target.value)}
+            className={offsiteInput}
+          />
+          <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.foreignKeyHint")}</p>
+        </div>
+
+        <div className="flex items-center gap-3 pt-1 flex-wrap">
+          <button
+            onClick={() => void connect()}
+            disabled={!canConnect}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {phase === "connecting" && (
+              <span
+                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              />
+            )}
+            {phase === "connecting" ? t("recovery.foreignConnecting") : t("recovery.foreignConnect")}
+          </button>
+          {phase === "connected" && (
+            <>
+              <span className="text-sm text-[#6fdc8c]">{t("recovery.foreignConnected")}</span>
+              <button
+                type="button"
+                onClick={disconnect}
+                className="text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
+              >
+                {t("recovery.foreignClose")}
+              </button>
+            </>
+          )}
+        </div>
+        {phase === "error" && connectError && (
+          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed break-words">
+            {connectError}
+          </div>
+        )}
+      </StepCard>
+
+      {/* Foreign step 2 — browse the inventory & restore single items. */}
+      <StepCard n={2} title={t("recovery.foreignStepBrowse")} state={browseState}>
+        {!session || !inventory ? (
+          <p className="text-sm text-carbon-textMuted">{t("recovery.foreignNotConnected")}</p>
+        ) : (
+          <>
+            {/* Session lapsed mid-browse (30-min TTL) — offer the reconnect. */}
+            {sessionGone && (
+              <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed flex items-center gap-3 flex-wrap">
+                <span className="flex-1">{t("recovery.foreignExpired")}</span>
+                <button
+                  type="button"
+                  onClick={() => void connect()}
+                  className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-xs text-carbon-text transition-colors"
+                >
+                  {t("recovery.foreignReconnect")}
+                </button>
+              </div>
+            )}
+            {total === 0 ? (
+              <p className="text-sm text-[#f1c21b]">{t("recovery.foreignEmpty")}</p>
+            ) : (
+              groups.map((g) => (
+                <div key={g.domain} className="flex flex-col">
+                  <span className="text-xs font-medium text-carbon-textSub pt-1 pb-1">{g.label}</span>
+                  {g.items.map((item) => (
+                    <ForeignItemRow
+                      key={`${g.domain}:${item.name}`}
+                      domain={g.domain}
+                      item={item}
+                      session={session}
+                      hostMountRoot={hostMountRoot}
+                      existsLocally={localNames.has(
+                        (g.domain === "containers" ? "container:" : g.domain === "vms" ? "vm:" : "files:") +
+                          item.name
+                      )}
+                      t={t}
+                      blocked={rowBlocked}
+                      onBusyChange={onBusyChange}
+                      onSessionGone={() => setSessionGone(true)}
+                    />
+                  ))}
+                </div>
+              ))
+            )}
+          </>
+        )}
+      </StepCard>
     </div>
   );
 }
@@ -497,9 +901,6 @@ export default function Recovery() {
   // Rows are blocked while ANY op runs OR while the bulk loop is mid-flight
   // (between two items the SSE store can briefly show nothing active).
   const rowOtherActive = running.active || restoreAllBusy;
-
-  const offsiteInput =
-    "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent";
 
   return (
     <div className="flex flex-col gap-5 p-1">
@@ -915,6 +1316,10 @@ export default function Recovery() {
           {t("recovery.kitDownload")}
         </a>
       </StepCard>
+
+      {/* Restore from ANOTHER BombVault repo (#61) — visually separate from the
+          attach steps above; read-only session, nothing persisted. */}
+      <ForeignRestoreCard hostMountRoot={hostMountRoot} t={t} otherActive={rowOtherActive} />
     </div>
   );
 }

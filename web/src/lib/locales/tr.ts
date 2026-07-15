@@ -825,6 +825,27 @@ const tr: Partial<Translations> = {
   "dashboard.domainFiles": "Dosyalar",
   "recovery.filesFound": "{f} dosya seti bulundu.",
   "recovery.filesRestoreHint": "Yeniden keşfedilen dosya setleri özgün klasörünü bilmez — her biri seçtiğiniz bir klasöre geri yüklenir.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Başka bir BombVault deposundan geri yükle",
+  "recovery.foreignIntro": "BAŞKA bir BombVault örneğinin yedeklerinden tek tek kapsayıcıları, sanal makineleri veya dosya setlerini alın: salt okunur bağlanın, içeriğe göz atın ve seçtiklerinizi geri yükleyin. Diğer depo yalnızca okunur, orada hiçbir şey değişmez — ve kendi yedekleme ayarlarınız olduğu gibi kalır.",
+  "recovery.foreignStepConnect": "Diğer depoya bağlan",
+  "recovery.foreignStepBrowse": "Göz at ve geri yükle",
+  "recovery.foreignLocation": "Depo konumu",
+  "recovery.foreignLocationHint": "Ana makine bağlama noktası altındaki bir klasör (örn. diğer sunucunun yedeklerini içeren bağlanmış bir paylaşım) veya uzak bir depo URL'si (rest / S3 / B2 / sftp / rclone — kayıtlı bulut kimlik bilgileriniz kullanılır).",
+  "recovery.foreignKey": "Diğer örneğin APP_KEY'i",
+  "recovery.foreignKeyHint": "DİĞER örneğin kurtarma kitindeki 64 karakterlik anahtar — kendi anahtarınız olduğu gibi kalır.",
+  "recovery.foreignConnect": "Bağlan",
+  "recovery.foreignConnecting": "Bağlanıyor…",
+  "recovery.foreignConnected": "Bağlandı — depo okunabilir.",
+  "recovery.foreignClose": "Bağlantıyı kes",
+  "recovery.foreignNotConnected": "Önce yukarıda bir depoya bağlanın.",
+  "recovery.foreignEmpty": "Depo okunabilir ancak BombVault yedeği içermiyor.",
+  "recovery.foreignLatest": "En yeni yedek",
+  "recovery.foreignTargetFolder": "Hedef klasör",
+  "recovery.foreignRestore": "Buraya geri yükle",
+  "recovery.foreignExistsConfirm": "\"{name}\" bu sistemde zaten var — geri yükleme onu yabancı yedekle ÜZERİNE YAZACAK. Devam edilsin mi?",
+  "recovery.foreignExpired": "Oturum süresi doldu (oturumlar 30 dakika sürer) — göz atmaya devam etmek için yeniden bağlanın.",
+  "recovery.foreignReconnect": "Yeniden bağlan",
 };
 
 export default tr;

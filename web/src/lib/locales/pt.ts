@@ -825,6 +825,27 @@ const pt: Partial<Translations> = {
   "dashboard.domainFiles": "Ficheiros",
   "recovery.filesFound": "Encontrados {f} conjuntos de ficheiros.",
   "recovery.filesRestoreHint": "Conjuntos de ficheiros redescobertos não conhecem a sua pasta original — cada um é restaurado para uma pasta à sua escolha.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Restaurar de outro repo BombVault",
+  "recovery.foreignIntro": "Recupere contentores, VMs ou conjuntos de ficheiros individuais dos backups de OUTRA instância BombVault: ligue-se em modo só de leitura, explore o conteúdo e restaure o que escolher. O outro repositório é apenas lido, nada muda lá — e as suas próprias definições de backup ficam intactas.",
+  "recovery.foreignStepConnect": "Ligar ao outro repositório",
+  "recovery.foreignStepBrowse": "Explorar e restaurar",
+  "recovery.foreignLocation": "Localização do repositório",
+  "recovery.foreignLocationHint": "Uma pasta sob a montagem do host (p. ex. uma partilha montada com os backups do outro servidor) ou o URL de um repo remoto (rest / S3 / B2 / sftp / rclone — são usadas as suas credenciais de nuvem guardadas).",
+  "recovery.foreignKey": "APP_KEY da outra instância",
+  "recovery.foreignKeyHint": "A chave de 64 caracteres do kit de recuperação da OUTRA instância — a sua própria chave fica intacta.",
+  "recovery.foreignConnect": "Ligar",
+  "recovery.foreignConnecting": "A ligar…",
+  "recovery.foreignConnected": "Ligado — o repositório é legível.",
+  "recovery.foreignClose": "Desligar",
+  "recovery.foreignNotConnected": "Ligue-se primeiro a um repositório acima.",
+  "recovery.foreignEmpty": "O repositório é legível mas não contém backups do BombVault.",
+  "recovery.foreignLatest": "Backup mais recente",
+  "recovery.foreignTargetFolder": "Pasta de destino",
+  "recovery.foreignRestore": "Restaurar aqui",
+  "recovery.foreignExistsConfirm": "«{name}» já existe neste sistema — o restauro irá SOBRESCREVÊ-LO com o backup externo. Continuar?",
+  "recovery.foreignExpired": "A sessão expirou (as sessões duram 30 minutos) — volte a ligar-se para continuar a explorar.",
+  "recovery.foreignReconnect": "Voltar a ligar",
 };
 
 export default pt;

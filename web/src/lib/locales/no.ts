@@ -825,6 +825,27 @@ const no: Partial<Translations> = {
   "dashboard.domainFiles": "Filer",
   "recovery.filesFound": "Fant {f} filsett.",
   "recovery.filesRestoreHint": "Gjenoppdagede filsett kjenner ikke sin opprinnelige mappe — hvert sett gjenopprettes til en mappe du velger.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Gjenopprett fra et annet BombVault-repo",
+  "recovery.foreignIntro": "Hent enkeltcontainere, VM-er eller filsett ut av sikkerhetskopiene til en ANNEN BombVault-instans: koble til skrivebeskyttet, bla i innholdet og gjenopprett det du velger. Det andre repoet blir bare lest, ingenting endres der — og dine egne sikkerhetskopiinnstillinger forblir urørte.",
+  "recovery.foreignStepConnect": "Koble til det andre repoet",
+  "recovery.foreignStepBrowse": "Bla gjennom & gjenopprett",
+  "recovery.foreignLocation": "Repoets plassering",
+  "recovery.foreignLocationHint": "En mappe under vertsmonteringen (f.eks. en montert delt ressurs med den andre serverens sikkerhetskopier) eller en ekstern repo-URL (rest / S3 / B2 / sftp / rclone — dine lagrede skylegitimasjoner brukes).",
+  "recovery.foreignKey": "Den andre instansens APP_KEY",
+  "recovery.foreignKeyHint": "Nøkkelen på 64 tegn fra den ANDRE instansens redningssett — din egen nøkkel forblir urørt.",
+  "recovery.foreignConnect": "Koble til",
+  "recovery.foreignConnecting": "Kobler til…",
+  "recovery.foreignConnected": "Tilkoblet — repoet er lesbart.",
+  "recovery.foreignClose": "Koble fra",
+  "recovery.foreignNotConnected": "Koble først til et repo ovenfor.",
+  "recovery.foreignEmpty": "Repoet er lesbart, men inneholder ingen BombVault-sikkerhetskopier.",
+  "recovery.foreignLatest": "Nyeste sikkerhetskopi",
+  "recovery.foreignTargetFolder": "Målmappe",
+  "recovery.foreignRestore": "Gjenopprett hit",
+  "recovery.foreignExistsConfirm": "«{name}» finnes allerede på dette systemet — gjenopprettingen OVERSKRIVER den med den fremmede sikkerhetskopien. Fortsette?",
+  "recovery.foreignExpired": "Økten er utløpt (økter varer i 30 minutter) — koble til på nytt for å fortsette å bla.",
+  "recovery.foreignReconnect": "Koble til på nytt",
 };
 
 export default no;

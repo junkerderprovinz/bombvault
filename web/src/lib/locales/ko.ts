@@ -817,6 +817,27 @@ const ko: Partial<Translations> = {
   "dashboard.domainFiles": "파일",
   "recovery.filesFound": "파일 세트 {f}개를 찾았습니다.",
   "recovery.filesRestoreHint": "다시 발견된 파일 세트는 원본 폴더 정보가 없습니다 — 각 세트는 선택한 폴더로 복원됩니다.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "다른 BombVault 저장소에서 복원",
+  "recovery.foreignIntro": "다른 BombVault 인스턴스의 백업에서 개별 컨테이너, VM 또는 파일 세트를 가져옵니다. 읽기 전용으로 연결하고, 내용을 살펴본 뒤, 선택한 항목을 복원하세요. 상대 저장소는 읽기만 하며 그쪽에서는 아무것도 바뀌지 않습니다 — 내 백업 설정도 그대로 유지됩니다.",
+  "recovery.foreignStepConnect": "다른 저장소에 연결",
+  "recovery.foreignStepBrowse": "살펴보기 및 복원",
+  "recovery.foreignLocation": "저장소 위치",
+  "recovery.foreignLocationHint": "호스트 마운트 아래의 폴더(예: 상대 서버의 백업이 담긴 마운트된 공유) 또는 원격 저장소 URL(rest / S3 / B2 / sftp / rclone — 저장된 클라우드 자격 증명이 사용됩니다).",
+  "recovery.foreignKey": "상대 인스턴스의 APP_KEY",
+  "recovery.foreignKeyHint": "상대 인스턴스의 복구 키트에 있는 64자 키 — 내 키는 그대로 유지됩니다.",
+  "recovery.foreignConnect": "연결",
+  "recovery.foreignConnecting": "연결 중…",
+  "recovery.foreignConnected": "연결됨 — 저장소를 읽을 수 있습니다.",
+  "recovery.foreignClose": "연결 해제",
+  "recovery.foreignNotConnected": "먼저 위에서 저장소에 연결하세요.",
+  "recovery.foreignEmpty": "저장소를 읽을 수 있지만 BombVault 백업이 없습니다.",
+  "recovery.foreignLatest": "최신 백업",
+  "recovery.foreignTargetFolder": "대상 폴더",
+  "recovery.foreignRestore": "여기로 복원",
+  "recovery.foreignExistsConfirm": "\"{name}\"이(가) 이 시스템에 이미 있습니다 — 복원하면 외부 백업으로 덮어쓰게 됩니다. 계속할까요?",
+  "recovery.foreignExpired": "세션이 만료되었습니다(세션은 30분간 유지됩니다) — 계속 살펴보려면 다시 연결하세요.",
+  "recovery.foreignReconnect": "다시 연결",
 };
 
 export default ko;

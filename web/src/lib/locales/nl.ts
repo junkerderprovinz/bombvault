@@ -822,6 +822,27 @@ const nl: Partial<Translations> = {
   "dashboard.domainFiles": "Bestanden",
   "recovery.filesFound": "{f} bestandssets gevonden.",
   "recovery.filesRestoreHint": "Herontdekte bestandssets kennen hun oorspronkelijke map niet — elke set wordt hersteld naar een map die u kiest.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Herstellen vanuit een andere BombVault-repo",
+  "recovery.foreignIntro": "Haal losse containers, VM's of bestandssets uit de back-ups van een ANDERE BombVault-instantie: verbind alleen-lezen, blader door de inhoud en herstel wat u kiest. De andere repository wordt alleen gelezen, daar verandert niets — en uw eigen back-upinstellingen blijven onaangetast.",
+  "recovery.foreignStepConnect": "Verbinden met de andere repository",
+  "recovery.foreignStepBrowse": "Bladeren & herstellen",
+  "recovery.foreignLocation": "Locatie van de repository",
+  "recovery.foreignLocationHint": "Een map onder de host-mount (bijv. een gekoppelde share met de back-ups van de andere server) of een URL van een externe repo (rest / S3 / B2 / sftp / rclone — uw opgeslagen cloudreferenties worden gebruikt).",
+  "recovery.foreignKey": "APP_KEY van de andere instantie",
+  "recovery.foreignKeyHint": "De sleutel van 64 tekens uit het recovery-kit van de ANDERE instantie — uw eigen sleutel blijft onaangeroerd.",
+  "recovery.foreignConnect": "Verbinden",
+  "recovery.foreignConnecting": "Verbinden…",
+  "recovery.foreignConnected": "Verbonden — de repository is leesbaar.",
+  "recovery.foreignClose": "Verbinding verbreken",
+  "recovery.foreignNotConnected": "Maak hierboven eerst verbinding met een repository.",
+  "recovery.foreignEmpty": "De repository is leesbaar maar bevat geen BombVault-back-ups.",
+  "recovery.foreignLatest": "Nieuwste back-up",
+  "recovery.foreignTargetFolder": "Doelmap",
+  "recovery.foreignRestore": "Hierheen herstellen",
+  "recovery.foreignExistsConfirm": "“{name}” bestaat al op dit systeem — herstellen zal het OVERSCHRIJVEN met de vreemde back-up. Doorgaan?",
+  "recovery.foreignExpired": "De sessie is verlopen (sessies duren 30 minuten) — maak opnieuw verbinding om verder te bladeren.",
+  "recovery.foreignReconnect": "Opnieuw verbinden",
 };
 
 export default nl;

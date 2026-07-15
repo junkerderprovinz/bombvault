@@ -825,6 +825,27 @@ const it: Partial<Translations> = {
   "dashboard.domainFiles": "File",
   "recovery.filesFound": "Trovati {f} set di file.",
   "recovery.filesRestoreHint": "I set di file riscoperti non conoscono la cartella d'origine — ognuno viene ripristinato in una cartella a tua scelta.",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "Ripristina da un altro repo BombVault",
+  "recovery.foreignIntro": "Recupera singoli container, VM o set di file dai backup di UN'ALTRA istanza BombVault: connettiti in sola lettura, sfoglia il contenuto, ripristina ciò che scegli. L'altro repository viene solo letto, lì non cambia nulla — e le tue impostazioni di backup restano intatte.",
+  "recovery.foreignStepConnect": "Connettiti all'altro repository",
+  "recovery.foreignStepBrowse": "Sfoglia e ripristina",
+  "recovery.foreignLocation": "Posizione del repository",
+  "recovery.foreignLocationHint": "Una cartella sotto il mount dell'host (ad es. una condivisione montata con i backup dell'altro server) o l'URL di un repo remoto (rest / S3 / B2 / sftp / rclone — vengono usate le tue credenziali cloud salvate).",
+  "recovery.foreignKey": "APP_KEY dell'altra istanza",
+  "recovery.foreignKeyHint": "La chiave di 64 caratteri dal recovery kit dell'ALTRA istanza — la tua chiave resta intatta.",
+  "recovery.foreignConnect": "Connetti",
+  "recovery.foreignConnecting": "Connessione…",
+  "recovery.foreignConnected": "Connesso — il repository è leggibile.",
+  "recovery.foreignClose": "Disconnetti",
+  "recovery.foreignNotConnected": "Connettiti prima a un repository qui sopra.",
+  "recovery.foreignEmpty": "Il repository è leggibile ma non contiene backup BombVault.",
+  "recovery.foreignLatest": "Backup più recente",
+  "recovery.foreignTargetFolder": "Cartella di destinazione",
+  "recovery.foreignRestore": "Ripristina qui",
+  "recovery.foreignExistsConfirm": "“{name}” esiste già su questo sistema — il ripristino lo SOVRASCRIVERÀ con il backup esterno. Continuare?",
+  "recovery.foreignExpired": "La sessione è scaduta (le sessioni durano 30 minuti) — riconnettiti per continuare a sfogliare.",
+  "recovery.foreignReconnect": "Riconnetti",
 };
 
 export default it;

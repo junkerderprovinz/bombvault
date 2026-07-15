@@ -817,6 +817,27 @@ const zh: Partial<Translations> = {
   "dashboard.domainFiles": "文件",
   "recovery.filesFound": "找到 {f} 个文件集。",
   "recovery.filesRestoreHint": "重新发现的文件集不包含原始文件夹信息 — 每个文件集都会恢复到您选择的文件夹。",
+  // Restore from another BombVault repo — Recovery page (#61 task 11)
+  "recovery.foreignTitle": "从另一个 BombVault 仓库恢复",
+  "recovery.foreignIntro": "从另一个 BombVault 实例的备份中提取单个容器、虚拟机或文件集：以只读方式连接，浏览内容，恢复您选择的项目。对方仓库只会被读取，那边不会有任何改动 — 您自己的备份设置也保持不变。",
+  "recovery.foreignStepConnect": "连接到对方仓库",
+  "recovery.foreignStepBrowse": "浏览并恢复",
+  "recovery.foreignLocation": "仓库位置",
+  "recovery.foreignLocationHint": "主机挂载点下的文件夹（例如挂载的共享目录，内含对方服务器的备份），或远程仓库 URL（rest / S3 / B2 / sftp / rclone — 使用您已保存的云凭据）。",
+  "recovery.foreignKey": "对方实例的 APP_KEY",
+  "recovery.foreignKeyHint": "对方实例恢复工具包中的 64 位密钥 — 您自己的密钥保持不变。",
+  "recovery.foreignConnect": "连接",
+  "recovery.foreignConnecting": "连接中…",
+  "recovery.foreignConnected": "已连接 — 仓库可读取。",
+  "recovery.foreignClose": "断开连接",
+  "recovery.foreignNotConnected": "请先在上方连接一个仓库。",
+  "recovery.foreignEmpty": "仓库可读取，但不包含 BombVault 备份。",
+  "recovery.foreignLatest": "最新备份",
+  "recovery.foreignTargetFolder": "目标文件夹",
+  "recovery.foreignRestore": "恢复到此处",
+  "recovery.foreignExistsConfirm": "“{name}”已存在于本系统 — 恢复会用外部备份将其覆盖。是否继续？",
+  "recovery.foreignExpired": "会话已过期（会话有效期为 30 分钟）— 请重新连接以继续浏览。",
+  "recovery.foreignReconnect": "重新连接",
 };
 
 export default zh;
