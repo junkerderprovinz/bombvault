@@ -429,9 +429,7 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 			runID := s.beginRestoreRunForTarget(plan.setID)
 			pctx := s.progBegin(rctx, rkey, "restore")
 			rerr := s.runRestoreFileSet(pctx, plan)
-			s.progEnd(rkey, "restore", rerr == nil)
-			s.finishRestoreRun(runID, plan.snapshotID, rerr)
-			return rerr
+			return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr)
 		}, nil
 	default:
 		return "", nil, errors.New("unknown domain (must be containers, vms or files)")
@@ -557,8 +555,10 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 		setID = created.ID
 	}
 
-	// Create the target dir ONLY after every validation passed.
-	if err := paths.EnsureDir(target); err != nil {
+	// Create the target dir ONLY after every validation passed. Readable (0o755)
+	// so the operator's non-root SMB user can read what root restored onto the
+	// user-visible share (see EnsureDirReadable).
+	if err := paths.EnsureDirReadable(target); err != nil {
 		return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 	}
 	return fileSetRestorePlan{
@@ -568,5 +568,9 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 		setID:      setID,
 		setName:    item,
 		target:     target,
+		// Subtree from the SNAPSHOT itself (Paths[0]) so the to-folder restore drops
+		// the set's contents directly into target instead of nesting the absolute
+		// path (issue #62); "" (path-less snapshot) → whole-tree fallback.
+		subtree: snapshotSubtree(snaps, snapshotID),
 	}, nil
 }

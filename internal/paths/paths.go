@@ -57,3 +57,17 @@ func Within(root, absPath string) bool {
 func EnsureDir(path string) error {
 	return os.MkdirAll(path, 0o700)
 }
+
+// EnsureDirReadable creates path and all parents, then forces path itself to
+// 0o755 so a restore TARGET on a user-visible / synced share (Unraid /mnt/user)
+// is readable by the operator's non-root SMB user — root created it, and a 0o700
+// dir (EnsureDir's mode) or a strict process umask would otherwise lock them out.
+// The explicit Chmod (not just MkdirAll's mode, which a umask can strip) also
+// heals a target an earlier version created at 0o700, mirroring how
+// ensureDefsDir/makeRepoReadable heal perms on the backup share.
+func EnsureDirReadable(path string) error {
+	if err := os.MkdirAll(path, 0o755); err != nil { //nolint:gosec // G301: restore target on a user-visible share must be operator-readable
+		return err
+	}
+	return os.Chmod(path, 0o755) //nolint:gosec // G302: see above — must be readable by the non-root share user
+}

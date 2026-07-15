@@ -1424,13 +1424,16 @@ func TestRestoreFileSetInPlaceConfirmed(t *testing.T) {
 	}
 }
 
-// TestRestoreFileSetToFolder pins the non-destructive path: a relative
-// targetPath is resolved + created under the mount root, the ack returns the
-// resolved folder, and the whole snapshot tree is extracted into it via
-// RestoreInclude("/").
+// TestRestoreFileSetToFolder pins issue #62's fix on the non-destructive path: a
+// relative targetPath is resolved + created under the mount root, the ack returns
+// the resolved folder, and the snapshot's OWN subtree is extracted directly INTO
+// it via RestoreSubtreeTo(<id>:<snapshot path> -> target) — NOT the nested
+// RestoreInclude("/"). The snapshot's recorded path is under a DIFFERENT root than
+// set.Path resolves to (HostMountRoot changed since the backup), proving the
+// subtree comes from the snapshot, not a recompute of set.Path.
 func TestRestoreFileSetToFolder(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
 	}}
 	h, _, svc, dir := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
@@ -1449,12 +1452,88 @@ func TestRestoreFileSetToFolder(t *testing.T) {
 	}
 	waitForBackupDone(t, svc)
 
-	// Slash-joined like the service's paths.Resolve output (see the in-place test).
+	// <id>:<snapshot's own path> -> target: contents land IN the folder (not nested),
+	// and the subtree is the snapshot's Paths[0], not a recompute (dir+"/data/docs").
 	repo := dir + "/backups/files"
-	want := repo + ":deadbeef12345678:/->" + wantTarget
+	want := repo + ":deadbeef12345678:/host/olduser/data/docs->" + wantTarget
 	if len(eng.restored) != 1 || eng.restored[0] != want {
 		t.Fatalf("restored = %v, want [%s]", eng.restored, want)
 	}
+}
+
+// TestRestoreFileSetMetadataOnlyIsSuccessWithWarning pins issue #62's "restore
+// failed" half: when restic extracted all data but could not set ownership/
+// metadata on the /mnt/user (FUSE) target (restic.ErrRestoreMetadataOnly), the run
+// is recorded SUCCESS with a warning message — not a hard failure.
+func TestRestoreFileSetMetadataOnlyIsSuccessWithWarning(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/user/data/docs"}},
+		},
+		restoreErr: restic.ErrRestoreMetadataOnly,
+	}
+	h, st, svc, _ := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+		t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+	}
+	waitForBackupDone(t, svc)
+
+	run := latestRestoreRun(t, st, id)
+	if run.Status != "success" {
+		t.Fatalf("a metadata-only restore must record success, got status %q (err %q)", run.Status, run.Error)
+	}
+	if run.SnapshotID != "deadbeef12345678" {
+		t.Fatalf("the run must record the restored snapshot id, got %q", run.SnapshotID)
+	}
+	if run.Error != restic.RestoreMetadataWarning {
+		t.Fatalf("the run must carry the metadata warning, got %q", run.Error)
+	}
+}
+
+// TestRestoreFileSetGenuineErrorStaysFailed is the guardrail for the above: a real
+// restore failure (not metadata-only) is still recorded as failed.
+func TestRestoreFileSetGenuineErrorStaysFailed(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/user/data/docs"}},
+		},
+		restoreErr: errors.New("restic restore failed: no space left on device"),
+	}
+	h, st, svc, _ := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+
+	w, _ := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	waitForBackupDone(t, svc)
+
+	run := latestRestoreRun(t, st, id)
+	if run.Status != "failed" {
+		t.Fatalf("a genuine restore error must record failed, got status %q", run.Status)
+	}
+}
+
+// latestRestoreRun returns the most recent kind "restore" run for targetID
+// (ListRuns is newest-first).
+func latestRestoreRun(t *testing.T, st *store.Repo, targetID string) store.Run {
+	t.Helper()
+	runs, err := st.ListRuns(50)
+	if err != nil {
+		t.Fatalf("ListRuns: %v", err)
+	}
+	for _, r := range runs {
+		if r.Kind == "restore" && r.TargetID == targetID {
+			return r
+		}
+	}
+	t.Fatalf("no restore run recorded for target %s, got %+v", targetID, runs)
+	return store.Run{}
 }
 
 // TestRestoreFileSetRefusesTraversalTarget pins the containment guard on the

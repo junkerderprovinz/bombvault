@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -253,12 +254,18 @@ func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode
 	return args
 }
 
-// RestorePathArgs returns the argv slice for restoring a single path back to its
-// own location as a subtree: `restic restore <id>:<path> --target <path>`. This
-// restores the path's contents to origin WITHOUT restic walking/reconciling the
-// shared parent directories (which fails on a populated appdata share). The
-// snapshot selector goes after -- (arg-injection guard).
-func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
+// RestoreSubtreeToArgs returns the argv slice for restoring the subtree at
+// subtreePath out of a snapshot INTO target:
+// `restic restore <id>:<subtreePath> --target <target>`. The `<id>:<subtreePath>`
+// selector roots the restore at subtreePath, so that subtree's CONTENTS land
+// directly in target — restic does NOT recreate subtreePath's absolute path
+// components under target. (A bare `restore <id> --target X --include /` DOES nest
+// the whole absolute /host/user/… path under X, which is issue #62.) subtreePath
+// must be one of the snapshot's own backed-up paths; callers take it from the
+// SNAPSHOT's Paths (not a recomputed value), so the selector can't miss after a
+// HostMountRoot change. The selector goes after -- (arg-injection guard); callers
+// also validate the id.
+func RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, "restore")
 	if !m.Encrypted {
@@ -268,9 +275,18 @@ func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
 		args = append(args, "--no-lock") // a foreign restore only READS the source repo
 	}
 	args = append(args, "--json")
-	args = append(args, "--target", p)
-	args = append(args, "--", snapshotID+":"+p)
+	args = append(args, "--target", target)
+	args = append(args, "--", snapshotID+":"+subtreePath)
 	return args
+}
+
+// RestorePathArgs returns the argv slice for restoring a single path back to its
+// own location as a subtree: `restic restore <id>:<path> --target <path>`. This
+// restores the path's contents to origin WITHOUT restic walking/reconciling the
+// shared parent directories (which fails on a populated appdata share). It is the
+// RestoreSubtreeToArgs special case where the target IS the subtree path.
+func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
+	return RestoreSubtreeToArgs(repo, snapshotID, p, p, m)
 }
 
 // FileEntry is one node from `restic ls` (a file or directory in a snapshot).
@@ -637,16 +653,95 @@ func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, err
 	return out.Bytes(), nil
 }
 
+// ErrRestoreMetadataOnly tags a restore failure whose ONLY errors were per-file
+// ownership/permission/metadata errors on the RESTORE TARGET: every file's data
+// was extracted, but restic could not set its ownership/permissions/timestamps/
+// xattrs. That is the norm on an Unraid /mnt/user (FUSE shfs) share, which refuses
+// chown/xattr even for root — the same reason the flash domain streams a zip
+// instead of restoring to disk (see DumpZip). The files restore treats it as
+// success-with-warning (RestoreMetadataWarning) rather than a hard failure;
+// genuine failures (missing snapshot, no space, unreachable repo, corruption)
+// never carry it. Detect it with errors.Is(err, ErrRestoreMetadataOnly).
+var ErrRestoreMetadataOnly = errors.New("restore completed but file ownership/metadata could not be set on the target")
+
+// RestoreMetadataWarning is the user-facing reason recorded on a restore that
+// finished success-with-warning because the target (an Unraid /mnt/user FUSE
+// share) refused the ownership/metadata restore. All file data is present.
+const RestoreMetadataWarning = "restored; could not set original ownership on the share, which is normal on /mnt/user"
+
+// metadataOnlyRestoreErr wraps a restore failure as metadata-only. It keeps the
+// ordinary scrubbed failure message (so callers that merely DISPLAY the error —
+// e.g. the container to-path restore — behave exactly as before) while satisfying
+// errors.Is(err, ErrRestoreMetadataOnly) for the files restore.
+type metadataOnlyRestoreErr struct{ msg string }
+
+func (e *metadataOnlyRestoreErr) Error() string { return e.msg }
+
+func (e *metadataOnlyRestoreErr) Is(target error) bool { return target == ErrRestoreMetadataOnly }
+
 // runError logs the full stderr server-side and returns a concise, path-scrubbed
 // reason to the caller so the UI shows WHY restic failed (e.g. "repository is
 // already locked") instead of a generic message.
 func runError(args []string, stderr string) error {
 	sub := subcommand(args)
 	log.Printf("restic %s stderr: %s", sub, stderr)
+	msg := fmt.Sprintf("restic %s failed", sub)
 	if reason := lastReason(stderr); reason != "" {
-		return fmt.Errorf("restic %s failed: %s", sub, reason)
+		msg = fmt.Sprintf("restic %s failed: %s", sub, reason)
 	}
-	return fmt.Errorf("restic %s failed", sub)
+	// A restore whose ONLY errors were per-file ownership/metadata permission
+	// errors on the target (all data extracted — normal on an Unraid /mnt/user FUSE
+	// share) is tagged ErrRestoreMetadataOnly so the files restore can finish
+	// success-with-warning. The message text is unchanged, so every other restore
+	// caller (container to-path, DR drill, config self-restore) still records a
+	// plain failure.
+	if sub == "restore" && isMetadataOnlyRestoreFailure(stderr) {
+		return &metadataOnlyRestoreErr{msg: msg}
+	}
+	return errors.New(msg)
+}
+
+// isMetadataOnlyRestoreFailure reports whether a failed restore's stderr shows
+// ONLY per-file ownership/permission/metadata errors on the target — i.e. restic
+// extracted every file's data but could not set its ownership/permissions on the
+// share (the norm on an Unraid /mnt/user FUSE mount). It is deliberately
+// conservative: it requires at least one such per-file permission error and treats
+// ANY other content — a Fatal that is not restic's error-count tally, a data/
+// space/I-O/read-only/connection/repo error, restic's corruption trailer, or a
+// per-file error that is NOT a permission error — as a genuine failure (returns
+// false), so a real problem is never masked as success.
+func isMetadataOnlyRestoreFailure(stderr string) bool {
+	sawPermErr := false
+	for _, raw := range strings.Split(stderr, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		low := strings.ToLower(line)
+		switch {
+		case isPerFilePermError(low):
+			sawPermErr = true
+		case errorCountRe.MatchString(low):
+			// restic's "There were N errors" tally (often prefixed "Fatal:") — the
+			// expected companion to the per-file errors; it names no cause of its own.
+		default:
+			return false // anything else means we cannot prove it was metadata-only
+		}
+	}
+	return sawPermErr
+}
+
+// isPerFilePermError reports whether a lower-cased stderr line is one of restic's
+// per-file "ignoring error for <path>: … operation not permitted / permission
+// denied" lines — the shape restic emits when it cannot set a restored file's
+// ownership/permissions/metadata on the target (observed as thousands of "Lchown:
+// operation not permitted" lines restoring onto /mnt/user).
+func isPerFilePermError(low string) bool {
+	if !strings.Contains(low, "ignoring error") {
+		return false
+	}
+	return strings.Contains(low, "operation not permitted") ||
+		strings.Contains(low, "permission denied")
 }
 
 // statusPercent extracts the 0..100 completion percentage from a restic --json
@@ -850,6 +945,15 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 // subtree, so restic never reconciles the shared parent directory.
 func (r Restic) RestorePath(ctx context.Context, repo, snapshotID, p string, m Mode) error {
 	_, err := r.run(ctx, RestorePathArgs(repo, snapshotID, p, m), m)
+	return err
+}
+
+// RestoreSubtreeTo restores the subtree at subtreePath from a snapshot INTO
+// target, so target receives that subtree's contents directly (no absolute-path
+// nesting — see RestoreSubtreeToArgs). subtreePath must be one of the snapshot's
+// own backed-up paths (Paths[0]).
+func (r Restic) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string, m Mode) error {
+	_, err := r.run(ctx, RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target, m), m)
 	return err
 }
 
