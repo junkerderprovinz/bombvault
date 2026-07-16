@@ -1636,3 +1636,43 @@ func TestDiscoverFileSets(t *testing.T) {
 		t.Fatalf("re-discover must not duplicate or enable: %+v", sets)
 	}
 }
+
+// TestReleaseNotesHandler covers the "What's new" dialog's backend (#54, #68):
+// there was no existing coverage of this handler at all. It confirms the
+// embedded-notes lookup, the ok=false degrade path for a version with no
+// bundled notes, and the version-defaults-to-the-running-build behavior — the
+// end-to-end mechanism a browser report ("Couldn't load the release notes
+// here") can't otherwise be distinguished from a client-side/network issue.
+func TestReleaseNotesHandler(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/release-notes?version=v6.1.0", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok=true for an embedded version, got %v", m)
+	}
+	if body, _ := m["body"].(string); body == "" {
+		t.Fatalf("expected a non-empty body, got %v", m)
+	}
+	if m["version"] != "v6.1.0" {
+		t.Fatalf("version = %v, want v6.1.0", m["version"])
+	}
+
+	// A version with no embedded notes degrades to ok=false (the dialog then
+	// shows its GitHub-link fallback) instead of erroring.
+	_, m = doJSON(t, h, http.MethodGet, "/api/release-notes?version=v0.0.1", "")
+	if m["ok"] != false {
+		t.Fatalf("expected ok=false for a version with no bundled notes, got %v", m)
+	}
+
+	// version defaults to the running build when the query param is omitted.
+	prev := api.Version
+	api.Version = "v6.1.0"
+	defer func() { api.Version = prev }()
+	_, m = doJSON(t, h, http.MethodGet, "/api/release-notes", "")
+	if m["ok"] != true || m["version"] != "v6.1.0" {
+		t.Fatalf("default-to-running-version result = %v", m)
+	}
+}

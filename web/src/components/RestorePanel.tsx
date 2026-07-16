@@ -757,7 +757,9 @@ function SnapshotRow({
 
 // DEFAULT_RESTORE_FOLDER is the fallback pre-fill for the restore-to-folder
 // picker when the settings value is empty (matches the backend column default).
-const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
+// Exported so every restore-to-folder picker in the app (containers here, file
+// sets in Files.tsx) shares the exact same fallback instead of drifting apart.
+export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
 export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
   const [open, setOpen] = useState(false);
