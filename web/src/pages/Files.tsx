@@ -30,6 +30,7 @@ import type { FileSetView, Snapshot, FileEntry } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { FolderBrowser } from "../components/FolderBrowser";
+import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
@@ -190,6 +191,7 @@ function FileSetFileBrowser({
   snapshotId,
   source,
   hostMountRoot,
+  restoreFolder,
   otherActive,
   t,
 }: {
@@ -197,6 +199,7 @@ function FileSetFileBrowser({
   snapshotId: string;
   source: RepoSource;
   hostMountRoot: string;
+  restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
   t: T;
 }) {
@@ -205,7 +208,9 @@ function FileSetFileBrowser({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [folder, setFolder] = useState("");
+  // Same #69 fix as FileSetRestoreControl: seed from the global default instead
+  // of an empty string that only ever showed the FolderBrowser's placeholder.
+  const [folder, setFolder] = useState(restoreFolder);
   const [restoredTarget, setRestoredTarget] = useState("");
 
   const progressKey = `files:${set.name}`;
@@ -328,6 +333,7 @@ function FileSetRestoreControl({
   snapshotId,
   source,
   hostMountRoot,
+  restoreFolder,
   otherActive,
   t,
 }: {
@@ -335,6 +341,7 @@ function FileSetRestoreControl({
   snapshotId: string;
   source: RepoSource;
   hostMountRoot: string;
+  restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
   t: T;
 }) {
@@ -342,7 +349,11 @@ function FileSetRestoreControl({
   // server refuses an in-place restore when it doesn't know the original path.
   const noPath = set.path === "";
   const [dest, setDest] = useState<RestoreDest>(noPath ? "folder" : "original");
-  const [targetPath, setTargetPath] = useState("");
+  // Seeded from the operator's global "Default restore folder" setting, exactly
+  // like the container restore panel — was hardcoded to "" (#69), which left the
+  // FolderBrowser showing only its generic placeholder example text instead of
+  // a real usable default.
+  const [targetPath, setTargetPath] = useState(restoreFolder);
 
   const progressKey = `files:${set.name}`;
   // The SAME ref instance flows to useBackupWatch AND (via RestoreProgress) to
@@ -448,6 +459,7 @@ function FileSetRestoreControl({
           snapshotId={snapshotId}
           source={source}
           hostMountRoot={hostMountRoot}
+          restoreFolder={restoreFolder}
           otherActive={otherActive}
           t={t}
         />
@@ -465,6 +477,7 @@ function FileSetSnapshotRow({
   set,
   source,
   hostMountRoot,
+  restoreFolder,
   onDeleted,
   t,
 }: {
@@ -472,6 +485,7 @@ function FileSetSnapshotRow({
   set: FileSetView;
   source: RepoSource;
   hostMountRoot: string;
+  restoreFolder: string;
   onDeleted: () => void;
   t: T;
 }) {
@@ -528,6 +542,7 @@ function FileSetSnapshotRow({
           snapshotId={snap.id}
           source={source}
           hostMountRoot={hostMountRoot}
+          restoreFolder={restoreFolder}
           otherActive={running}
           t={t}
         />
@@ -540,11 +555,13 @@ function FileSetSnapshotRow({
 function FileSetRestorePanel({
   set,
   hostMountRoot,
+  restoreFolder,
   t,
   onSetsChanged,
 }: {
   set: FileSetView;
   hostMountRoot: string;
+  restoreFolder: string;
   t: T;
   /** Delete-all forgets the whole set — the parent must reload the list. */
   onSetsChanged: () => void;
@@ -656,6 +673,7 @@ function FileSetRestorePanel({
                 set={set}
                 source={source}
                 hostMountRoot={hostMountRoot}
+                restoreFolder={restoreFolder}
                 onDeleted={() => setReloadTick((n) => n + 1)}
                 t={t}
               />
@@ -817,12 +835,14 @@ function FileSetDialog({
 function FileSetRow({
   set,
   hostMountRoot,
+  restoreFolder,
   t,
   onRefresh,
   onEdit,
 }: {
   set: FileSetView;
   hostMountRoot: string;
+  restoreFolder: string;
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
@@ -931,6 +951,7 @@ function FileSetRow({
       <FileSetRestorePanel
         set={set}
         hostMountRoot={hostMountRoot}
+        restoreFolder={restoreFolder}
         t={t}
         onSetsChanged={onRefresh}
       />
@@ -958,6 +979,7 @@ export function Files() {
   const running = anyActive(useProgress());
   const [sets, setSets] = useState<FileSetView[]>([]);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+  const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // null = closed; "new" = create dialog; a view = edit dialog for that set.
@@ -981,12 +1003,20 @@ export function Files() {
   }
 
   useEffect(() => {
-    void loadSets().finally(() => setLoading(false));
-    getSettings()
+    // Gate the loading flag on BOTH fetches (Promise.all, not two independent
+    // .finally()s): the file-set restore controls below seed their target-folder
+    // state from restoreFolder ONCE at mount (React only reads a useState
+    // initialiser the first render), so if they mounted before this settings
+    // fetch resolved they'd permanently miss the real default and fall back to
+    // the generic placeholder example instead — same class of bug as #69.
+    const sets = loadSets();
+    const settings = getSettings()
       .then((res) => {
         if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+        if (res.settings?.restoreFolder) setRestoreFolder(res.settings.restoreFolder);
       })
       .catch(() => undefined);
+    void Promise.all([sets, settings]).finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleDiscover() {
@@ -1101,6 +1131,7 @@ export function Files() {
               key={s.id}
               set={s}
               hostMountRoot={hostMountRoot}
+              restoreFolder={restoreFolder}
               t={t}
               onRefresh={() => void loadSets()}
               onEdit={() => setDialog(s)}
