@@ -83,9 +83,9 @@ func TestNoLockArgs(t *testing.T) {
 }
 
 func TestForgetPolicyArgs(t *testing.T) {
-	t.Run("emits only set dimensions + prune", func(t *testing.T) {
+	t.Run("legacy repo-wide pass: paths grouping, emits only set dimensions + prune", func(t *testing.T) {
 		got := restic.ForgetPolicyArgs("/repo",
-			restic.RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, restic.Mode{Encrypted: true})
+			restic.RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, restic.Mode{Encrypted: true}, "", true)
 		want := []string{"-r", "/repo", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -94,9 +94,31 @@ func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("unencrypted adds insecure flag, full policy", func(t *testing.T) {
 		got := restic.ForgetPolicyArgs("/repo",
 			restic.RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
-			restic.Mode{Encrypted: false})
+			restic.Mode{Encrypted: false}, "", true)
 		want := []string{"-r", "/repo", "forget", "--insecure-no-password", "--group-by", "paths",
 			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--prune"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	// Identity-stable retention (issue #91): a tag scopes the policy to one
+	// item's snapshots and disables grouping, so the item's WHOLE history is one
+	// group — old snapshots whose path set changed can no longer freeze in a
+	// stale paths-group that never receives new snapshots.
+	t.Run("tag-scoped: --tag + ungrouped, with prune", func(t *testing.T) {
+		got := restic.ForgetPolicyArgs("/repo",
+			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{Encrypted: true}, "container:plex", true)
+		want := []string{"-r", "/repo", "forget", "--tag", "container:plex", "--group-by", "",
+			"--keep-last", "5", "--prune"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("tag-scoped batch pass: no prune flag", func(t *testing.T) {
+		got := restic.ForgetPolicyArgs("/repo",
+			restic.RetentionPolicy{KeepDaily: 7}, restic.Mode{Encrypted: true}, "vm:win11", false)
+		want := []string{"-r", "/repo", "forget", "--tag", "vm:win11", "--group-by", "",
+			"--keep-daily", "7"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
