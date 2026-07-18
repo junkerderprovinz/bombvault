@@ -6498,15 +6498,36 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	if err := s.requireExistingRepo(repo, "no backups to verify yet"); err != nil {
 		return err
 	}
+	// Hold the in-process domain lock for the whole verify so no other BombVault op
+	// (backup / prune / replicate) runs against this repo while we check it. If one
+	// already holds it, report a clean "busy" instead of colliding on restic's repo
+	// lock. Holding it also makes the auto-heal below provably safe: with no
+	// concurrent BombVault op, ANY restic lock on the repo is an orphan.
+	unlock, ok := s.tryLockDomainFor(domain, "verify")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 	mode := s.ModeFor(settings)
-	// Clear any stale lock a previously interrupted off-site op (replication copy /
-	// integrity check) left behind before `restic check` takes its lock, so a verify
-	// can't fail with "repository is already locked". BombVault is the sole writer,
-	// so an existing lock is always stale (defence-in-depth for bug #29).
+	// Clear stale locks a previously interrupted run left behind before `restic check`
+	// takes its lock. If check STILL fails on a lock, that lock is an orphan (we hold
+	// the domain lock and BombVault is the sole writer, so nothing legitimate holds
+	// it): force-remove ALL locks and retry once. This auto-heals the "already
+	// locked" verify failure that used to need a manual unlock — restic's own
+	// stale-detection misses a lock left by a crashed containerised run whose PID it
+	// can no longer verify and that is under 30 min old (#92; extends the #29 heal).
 	s.unlockStale(ctx, repo, mode)
-	return s.engine.Check(ctx, repo, mode)
+	err = s.engine.Check(ctx, repo, mode)
+	if isLockErr(err) {
+		log.Printf("api: verify hit a repo lock on %q; force-unlocking and retrying once (#92)", domain)
+		if uerr := s.engine.Unlock(ctx, repo, true, mode); uerr != nil {
+			log.Printf("api: force-unlock before verify retry failed: %v", uerr)
+		}
+		err = s.engine.Check(ctx, repo, mode)
+	}
+	return err
 }
 
 // drillSubsetPct clamps the configured drill subset percentage into restic's
