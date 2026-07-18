@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with: { go-version: '1.26' }
       - run: go build ./...
       - run: go vet ./...
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with: { go-version: '1.26' }
       - name: install restic >= 0.17 (apt's restic is too old for --insecure-no-password)
         run: |
