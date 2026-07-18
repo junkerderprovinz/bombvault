@@ -6521,7 +6521,7 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	s.unlockStale(ctx, repo, mode)
 	err = s.engine.Check(ctx, repo, mode)
 	if isLockErr(err) {
-		log.Printf("api: verify hit a repo lock on %q; force-unlocking and retrying once (#92)", domain)
+		log.Printf("api: verify hit a repo lock on %q; force-unlocking and retrying once (#92)", domain) //nolint:gosec // G706: domain is a fixed literal
 		if uerr := s.engine.Unlock(ctx, repo, true, mode); uerr != nil {
 			log.Printf("api: force-unlock before verify retry failed: %v", uerr)
 		}
