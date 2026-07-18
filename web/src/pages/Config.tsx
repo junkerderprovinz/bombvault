@@ -75,7 +75,7 @@ function ConfigBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[28rem] break-words">{state.message}</span>
+        <span className="text-xs text-[#ff8389] max-w-md wrap-break-word">{state.message}</span>
       )}
     </div>
   );
@@ -105,7 +105,7 @@ function labelledInput(
         spellCheck={false}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+        className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
       />
       {hint && <p className="text-xs text-carbon-textMuted">{hint}</p>}
     </div>
@@ -285,7 +285,7 @@ function ConfigSnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }

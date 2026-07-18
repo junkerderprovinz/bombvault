@@ -66,13 +66,13 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
           // No snapshot id ⇒ a stateless container with no data folders. The
           // definition/template is still captured for recreate, but no restic
           // snapshot was made — say so instead of an opaque "Done".
-          <span className="text-xs text-carbon-textSub max-w-[18rem] break-words">
+          <span className="text-xs text-carbon-textSub max-w-[18rem] wrap-break-word">
             ✓ {t("backup.configOnly")}
           </span>
         ))}
 
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[18rem] break-words">
+        <span className="text-xs text-[#ff8389] max-w-[18rem] wrap-break-word">
           {state.message}
         </span>
       )}
@@ -80,7 +80,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
       {/* Neutral terminal: the container is gone, so the backup was skipped (not
           failed). Reuses the existing "Not installed (backups only)" wording. */}
       {state.phase === "skipped" && (
-        <span className="text-xs text-carbon-textMuted max-w-[18rem] break-words">
+        <span className="text-xs text-carbon-textMuted max-w-[18rem] wrap-break-word">
           ↷ {t("containers.notInstalledTitle")}
         </span>
       )}

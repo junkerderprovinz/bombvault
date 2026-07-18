@@ -91,13 +91,13 @@ export function RestoreProgress({
         </div>
       )}
       {state.phase === "success" && (
-        <p className="text-xs text-[#6fdc8c] break-words">{successMessage}</p>
+        <p className="text-xs text-[#6fdc8c] wrap-break-word">{successMessage}</p>
       )}
       {state.phase === "cancelled" && (
-        <p className="text-xs text-carbon-textSub break-words">{t("restore.cancelled")}</p>
+        <p className="text-xs text-carbon-textSub wrap-break-word">{t("restore.cancelled")}</p>
       )}
       {state.phase === "error" && (
-        <p className="text-xs text-[#ff8389] break-words">{state.message}</p>
+        <p className="text-xs text-[#ff8389] wrap-break-word">{state.message}</p>
       )}
     </>
   );

@@ -156,7 +156,7 @@ export function CadenceBuilder({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff] disabled:opacity-50";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-[#78a9ff] disabled:opacity-50";
 
   return (
     <div className={`flex flex-col gap-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>

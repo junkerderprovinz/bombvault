@@ -103,7 +103,7 @@ function TreeRow({
   return (
     <div>
       <div
-        className="flex items-center gap-1 py-0.5 text-xs rounded hover:bg-carbon-hover"
+        className="flex items-center gap-1 py-0.5 text-xs rounded-sm hover:bg-carbon-hover"
         style={{ paddingLeft: depth * 14 }}
       >
         {isDir ? (
@@ -175,7 +175,7 @@ export function SnapshotFileTree({
         onChange={(e) => onFilterChange(e.target.value)}
         placeholder={t("files.filterPlaceholder")}
         spellCheck={false}
-        className="rounded bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-none focus:border-[#78a9ff]"
+        className="rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-[#78a9ff]"
       />
       {loading && <p className="text-xs text-carbon-textMuted">…</p>}
       {error && <p className="text-xs text-[#ff8389]">{error}</p>}

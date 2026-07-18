@@ -68,13 +68,13 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-sm border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
         type="button"
         onClick={() => void copy()}
-        className="shrink-0 rounded bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+        className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
       >
         {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
       </button>
@@ -279,7 +279,7 @@ export function OffsiteWizard({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
   // Far-side prune cron hint (includes --keep-within 14d + a snapshot-count note).
@@ -466,7 +466,7 @@ export function OffsiteWizard({
           {testState === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.testOk")}</span>}
           {testState === "uninit" && <span className="text-xs text-[#f1c21b]">{t("offsite.testUninitialized")}</span>}
           {testState === "fail" && (
-            <span className="text-xs text-[#ff8389] break-words">{testErr ?? t("offsite.testFailed")}</span>
+            <span className="text-xs text-[#ff8389] wrap-break-word">{testErr ?? t("offsite.testFailed")}</span>
           )}
         </div>
       </div>
@@ -486,7 +486,7 @@ export function OffsiteWizard({
             aria-labelledby={`imm-label-${domain}`}
             disabled={immState === "saving"}
             onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
               immutable ? "bg-accent" : "bg-carbon-surface3"
             }`}
           >
@@ -522,10 +522,10 @@ export function OffsiteWizard({
             {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
           </button>
           {tamperState === "done" && verdict && (
-            <span className={`text-sm break-words ${verdictColor}`}>{verdictText}</span>
+            <span className={`text-sm wrap-break-word ${verdictColor}`}>{verdictText}</span>
           )}
           {tamperState === "error" && tamperErr && (
-            <span className="text-sm text-[#ff8389] break-words">{tamperErr}</span>
+            <span className="text-sm text-[#ff8389] wrap-break-word">{tamperErr}</span>
           )}
         </div>
       </div>
@@ -564,7 +564,7 @@ export function OffsiteWizard({
         {retention === "grow" && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.growHint")}</p>
-            <label className="flex flex-col gap-1 max-w-[12rem]">
+            <label className="flex flex-col gap-1 max-w-48">
               <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
               <input
                 type="number"
@@ -574,7 +574,7 @@ export function OffsiteWizard({
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
               />
             </label>
             <div className="flex items-center gap-3">

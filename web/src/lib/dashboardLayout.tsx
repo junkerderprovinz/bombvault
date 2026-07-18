@@ -264,7 +264,7 @@ function EyeOffIcon() {
 }
 
 const iconBtn =
-  "rounded p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
+  "rounded-sm p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
 
 // ---------------------------------------------------------------------------
@@ -358,7 +358,7 @@ export function CustomizableBlock({
       {/* Drop-target indicator — absolute so it never shifts layout. */}
       {over && (
         <div
-          className="pointer-events-none absolute -top-3 left-0 right-0 h-0.5 rounded bg-carbon-text"
+          className="pointer-events-none absolute -top-3 left-0 right-0 h-0.5 rounded-sm bg-carbon-text"
           aria-hidden="true"
         />
       )}

@@ -238,7 +238,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             type="button"
             onClick={onClose}
             aria-label={t("whatsnew.close")}
-            className="shrink-0 rounded p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
+            className="shrink-0 rounded-sm p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

@@ -122,7 +122,7 @@ export function RestoreAction({
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
               disabled={isPending || done}
-              className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+              className="rounded-sm border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
               style={{ accentColor: "var(--accent)" }}
             />
             {t("restore.confirm")}
@@ -157,7 +157,7 @@ export function RestoreAction({
             checked={leaveStopped}
             onChange={(e) => setLeaveStopped(e.target.checked)}
             disabled={isPending || done}
-            className="rounded border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+            className="rounded-sm border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
             style={{ accentColor: "var(--accent)" }}
           />
           {t("restore.leaveStopped")}

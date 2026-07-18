@@ -8,20 +8,20 @@ type T = ReturnType<typeof useT>["t"];
 function StatusChip({ ok, bestEffort }: { ok: boolean; bestEffort?: boolean }) {
   if (bestEffort && !ok) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]">
         INFO
       </span>
     );
   }
   if (ok) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]">
         OK
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]">
       FAIL
     </span>
   );
@@ -120,7 +120,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
             >
               <span className="font-mono text-carbon-text text-xs">{c.Name}</span>
               <StatusChip ok={c.OK} bestEffort={c.BestEffort} />
-              <span className="text-carbon-textMuted text-xs break-words">
+              <span className="text-carbon-textMuted text-xs wrap-break-word">
                 {c.Detail || "—"}
               </span>
               <span className="text-right text-xs text-carbon-textMuted">

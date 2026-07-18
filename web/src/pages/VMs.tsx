@@ -37,7 +37,7 @@ function StateChip({ state }: { state: string }) {
       ? "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
       : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
       {stateLabel(t, state)}
     </span>
   );
@@ -213,13 +213,13 @@ function VMMethodSelect({
         disabled={busy}
         onChange={(e) => void handleChange(e.target.value)}
         title={t("vm.method.hint")}
-        className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
+        className="rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
       >
         <option value="graceful">{t("vm.method.graceful")}</option>
         <option value="live">{t("vm.method.live")}</option>
       </select>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-[12rem] text-right leading-tight">
+        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
@@ -269,7 +269,7 @@ function VMIncludeToggle({
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title="Include in schedule"
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -280,7 +280,7 @@ function VMIncludeToggle({
         />
       </button>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-[12rem] text-right leading-tight">
+        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
@@ -389,7 +389,7 @@ function VMBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[18rem] break-words">
+        <span className="text-xs text-[#ff8389] max-w-[18rem] wrap-break-word">
           {state.message}
         </span>
       )}
@@ -477,7 +477,7 @@ function VMSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }
@@ -639,7 +639,7 @@ function VMRow({
             {installed ? (
               <StateChip state={vm.state} />
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
                 {t("containers.notInstalled")}
               </span>
             )}
@@ -1017,7 +1017,7 @@ export function VMs() {
               placeholder={t("vms.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+              className="w-full rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
             />
             <ChipFilter<ScheduleFilterKey>
               label={t("filter.schedule")}

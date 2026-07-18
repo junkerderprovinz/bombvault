@@ -39,7 +39,7 @@ function StateChip({ state }: { state: string }) {
       ? "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
       : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
       {stateLabel(t, state)}
     </span>
   );
@@ -328,7 +328,7 @@ function ExportButton({ name, t }: { name: string; t: T }) {
         <span className="text-xs text-[#6fdc8c] break-all text-right">{t("export.exportedTo")} {msg}</span>
       )}
       {state === "error" && msg && (
-        <span className="text-xs text-[#ff8389] break-words text-right">{msg}</span>
+        <span className="text-xs text-[#ff8389] wrap-break-word text-right">{msg}</span>
       )}
     </div>
   );
@@ -371,7 +371,7 @@ function HooksEditor({
   }
 
   const inputCls =
-    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-[#78a9ff]";
 
   return (
     <div className="mt-1">
@@ -404,7 +404,7 @@ function HooksEditor({
               {state === "saving" ? "…" : t("settings.save")}
             </button>
             {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -452,7 +452,7 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
         aria-checked={enabled}
         disabled={busy}
         onClick={() => void handle(!enabled)}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -535,7 +535,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   }
 
   const inputCls =
-    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-[#78a9ff]";
 
   return (
     <div className="mt-1">
@@ -565,7 +565,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
                 disabled={!m.reachable}
                 checked={m.reachable && checked.has(m.source)}
                 onChange={() => toggle(m.source)}
-                className="mt-0.5 accent-[var(--accent)]"
+                className="mt-0.5 accent-(--accent)"
               />
               <span className="flex flex-col">
                 <span className="font-mono break-all">{m.dest} ← {m.source}</span>
@@ -576,7 +576,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
           ))}
           {custom.map((p) => (
             <div key={p} className="flex items-center gap-2 text-xs text-carbon-text">
-              <input type="checkbox" checked readOnly className="accent-[var(--accent)]" />
+              <input type="checkbox" checked readOnly className="accent-(--accent)" />
               <span className="font-mono break-all flex-1">{p}</span>
               <button
                 onClick={() => setCustom((c) => c.filter((x) => x !== p))}
@@ -617,7 +617,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
               {state === "saving" ? "…" : t("folders.save")}
             </button>
             {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("folders.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -656,7 +656,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
   }
 
   const inputCls =
-    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-[#78a9ff]";
 
   return (
     <div className="mt-1">
@@ -690,7 +690,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
               {state === "saving" ? "…" : t("settings.save")}
             </button>
             {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -762,7 +762,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   }
 
   const inputCls =
-    "rounded bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-[#78a9ff]";
 
   return (
     <div className="mt-1">
@@ -806,7 +806,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                 return (
                   <div
                     key={i}
-                    className="text-xs break-words leading-snug flex items-baseline gap-1.5"
+                    className="text-xs wrap-break-word leading-snug flex items-baseline gap-1.5"
                     title={row.status === "translated" ? row.resolved : undefined}
                   >
                     <span className="font-mono text-carbon-textSub">{row.raw}</span>
@@ -827,7 +827,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
               {state === "saving" ? "…" : t("excludes.save")}
             </button>
             {state === "saved" && <span className="text-xs text-[#6fdc8c]">{t("excludes.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-[#ff8389] break-words">{msg}</span>}
+            {state === "error" && msg && <span className="text-xs text-[#ff8389] wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -878,7 +878,7 @@ function ContainerRow({
             {installed ? (
               <StateChip state={container.state} />
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
                 {t("containers.notInstalled")}
               </span>
             )}
@@ -1175,7 +1175,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
             >
               {busy ? t("stack.restoring") : t("stack.restore")}
             </button>
-            {error && <span className="text-xs text-[#ff8389] break-words">{error}</span>}
+            {error && <span className="text-xs text-[#ff8389] wrap-break-word">{error}</span>}
           </div>
 
           {/* Async ack: the server runs the stack restore detached and the ack
@@ -1494,7 +1494,7 @@ export function Containers() {
               placeholder={t("containers.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
             />
             <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
             <ChipFilter<ScheduleFilterKey>

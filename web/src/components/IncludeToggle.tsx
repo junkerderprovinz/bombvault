@@ -44,7 +44,7 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title="Include in schedule"
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -55,7 +55,7 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
         />
       </button>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-[12rem] text-right leading-tight">
+        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
