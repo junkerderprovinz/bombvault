@@ -17,6 +17,7 @@ on:
 permissions:
   contents: read
   packages: write
+  security-events: write # Trivy uploads its CVE report (SARIF) to the Security tab
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
@@ -73,6 +74,25 @@ jobs:
             exit 1
           fi
           echo "✓ tini is PID 1 — orphaned rclone/ssh grandchildren get reaped"
+      # Non-blocking CVE scan of the just-built image. Reports HIGH/CRITICAL
+      # findings to the Security tab (SARIF). Deliberately does NOT fail the
+      # build (exit-code 0): most findings live in the upstream base image and
+      # can't be fixed here, so this is visibility, not a release gate.
+      - name: Scan image for CVEs (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: bombvault:smoke
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
+      - name: Upload Trivy results to the Security tab
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
       - name: Cleanup
         if: always()
         run: docker rm -f bv-smoke || true
@@ -148,6 +168,11 @@ jobs:
             VERSION=${{ steps.ver.outputs.v }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Supply-chain attestations: SLSA build provenance + an SBOM, attached
+          # to the image in the registry so consumers can verify how it was built
+          # and what it contains.
+          provenance: true
+          sbom: true
 
       # Mirror the GitHub README to the Docker Hub repo's full description (same
       # text as on GitHub; relative image/link paths completed to absolute so they
