@@ -71,9 +71,14 @@ type ResticEngine interface {
 	DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
-	// ForgetPolicy applies a keep-policy + prune (retention). Inert when the
-	// policy has no dimension set.
-	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error
+	// ForgetPolicy applies a keep-policy (retention). Inert when the policy has
+	// no dimension set. tag scopes the policy to one item's snapshots as a
+	// single group (identity-stable retention, issue #91: path-grouped retention
+	// froze an item's old snapshots forever once its backed-up path set
+	// changed); tag=="" falls back to the repo-wide paths-grouped pass. prune
+	// reclaims freed space in the same run — batch callers pass false and Prune
+	// once at the end.
+	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// RestoreInclude restores a single path from a snapshot to target (file-level
@@ -755,16 +760,85 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 	return s.retentionPolicy(settings)
 }
 
-// applyRetention prunes repo to the configured keep-policy after a successful
-// backup. Best-effort: a prune failure is logged but never fails the backup that
-// just succeeded — the new snapshot is safe and pruning retries on the next run.
-func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode) {
+// applyRetention prunes the just-backed-up item to the configured keep-policy.
+// tag is the item's identity tag (container:<name>, vm:<name>, fileset:<name>,
+// flash, config): the policy is applied to that item's WHOLE history as one
+// group, immune to path/host changes (issue #91 — the previous paths-grouped
+// pass froze an item's old snapshots forever once its path set changed).
+// Best-effort: a failure never fails the backup that just succeeded — but it is
+// now NOTIFIED (not just logged), because silently skipped retention lets the
+// repo grow unseen for weeks.
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tag string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() {
 		return
 	}
-	if err := s.engine.ForgetPolicy(ctx, repo, p, mode); err != nil {
+	if err := s.engine.ForgetPolicy(ctx, repo, p, mode, tag, true); err != nil {
 		log.Printf("api: retention prune failed (backup is safe): %v", err)
+		s.notifyRetentionFailed(ctx, tag, truncateRunErr(err))
+	}
+}
+
+// identityTags returns the distinct item-identity tags present in snaps:
+// container:<name>, vm:<name>, fileset:<name>, and the fixed flash/config tags.
+// Profile/marker tags (p1, p2, live) are not identities.
+func identityTags(snaps []restic.Snapshot) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, sn := range snaps {
+		for _, t := range sn.Tags {
+			isIdentity := t == "flash" || t == "config" ||
+				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") || strings.HasPrefix(t, "fileset:")
+			if isIdentity && !seen[t] {
+				seen[t] = true
+				out = append(out, t)
+			}
+		}
+	}
+	return out
+}
+
+// applyRetentionPerIdentity applies policy per identity tag — one ungrouped,
+// tag-scoped forget per item — then prunes once. Used where no single item is
+// in scope (manual prune, off-site retention). Falls back to the legacy
+// repo-wide paths-grouped pass when the snapshot listing fails or yields no
+// identity tags, so retention never silently does nothing.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error {
+	if !p.Any() {
+		return nil
+	}
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	tags := identityTags(snaps)
+	if err != nil || len(tags) == 0 {
+		return s.engine.ForgetPolicy(ctx, repo, p, mode, "", true)
+	}
+	var errs []error
+	for _, tag := range tags {
+		if fErr := s.engine.ForgetPolicy(ctx, repo, p, mode, tag, false); fErr != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", tag, fErr))
+		}
+	}
+	if pErr := s.engine.Prune(ctx, repo, mode); pErr != nil {
+		errs = append(errs, pErr)
+	}
+	return errors.Join(errs...)
+}
+
+// notifyRetentionFailed sends a best-effort alert when the post-backup
+// retention prune fails. Mirrors notifyReplicationFailed's policy gate; a no-op
+// when notifications are off.
+func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	subject := "Retention prune FAILED for " + tag
+	msg := fmt.Sprintf("Applying the retention policy for %s failed — old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
+	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	if c.Unraid && s.ssh != nil {
+		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
 	}
 }
 
@@ -1619,7 +1693,9 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	if offsiteImmutableFor(domain, settings) {
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
 	} else if op := s.offsiteRetentionPolicy(settings); op.Any() {
-		if perr := s.engine.ForgetPolicy(ctx, dest, op, mode); perr != nil {
+		// Per-identity: one tag-scoped, ungrouped forget per item, one prune —
+		// identity-stable like the local retention (issue #91).
+		if perr := s.applyRetentionPerIdentity(ctx, dest, op, mode); perr != nil {
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}
@@ -2361,7 +2437,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if wErr := s.writeDefToStorage(settings, name, defBytes); wErr != nil {
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
-	s.applyRetention(ctx, repo, settings, mode)
+	s.applyRetention(ctx, repo, settings, mode, "container:"+name)
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	s.maybeCollectStats(ctx, "containers")
@@ -4812,7 +4888,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if wErr := s.writeVMDefToStorage(settings, name, defBytes); wErr != nil {
 		log.Printf("api: backup vm: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
-	s.applyRetention(ctx, repo, settings, mode)
+	s.applyRetention(ctx, repo, settings, mode, "vm:"+name)
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
 	s.maybeCollectStats(ctx, "vms")
@@ -5162,7 +5238,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode)
+	s.applyRetention(ctx, repo, settings, mode, "flash")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
 	s.maybeCollectStats(ctx, "flash")
@@ -5325,7 +5401,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode)
+	s.applyRetention(ctx, repo, settings, mode, "fileset:"+set.Name)
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
 	s.maybeCollectStats(ctx, "files")
@@ -6050,7 +6126,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode)
+	s.applyRetention(ctx, repo, settings, mode, "config")
 	s.replicateOffsite(ctx, "config", settings, mode, repo)
 	s.maybeCollectStats(ctx, "config")
 	return sum, nil
@@ -7159,7 +7235,9 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	// The policy is per-source: pruning the off-site repo uses the off-site policy
 	// (not the local one), so an archive off-site isn't trimmed to the local rules.
 	if p := s.retentionPolicyForSource(settings, source); p.Any() {
-		return s.engine.ForgetPolicy(ctx, repo, p, mode)
+		// Per-identity: tag-scoped, ungrouped forget per item + one prune —
+		// also drains frozen path-groups left by the old grouping (issue #91).
+		return s.applyRetentionPerIdentity(ctx, repo, p, mode)
 	}
 	return s.engine.Prune(ctx, repo, mode)
 }

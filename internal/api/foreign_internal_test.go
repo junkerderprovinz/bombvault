@@ -183,7 +183,7 @@ func (f *foreignRecordingEngine) Forget(_ context.Context, _ string, _ []string,
 	return nil
 }
 
-func (f *foreignRecordingEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode) error {
+func (f *foreignRecordingEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, _ string, _ bool) error {
 	f.record("ForgetPolicy")
 	return nil
 }

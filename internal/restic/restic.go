@@ -487,23 +487,37 @@ func (p RetentionPolicy) Any() bool {
 	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
 }
 
-// ForgetPolicyArgs returns the argv for `restic forget --keep-* --prune`. Only
-// the set dimensions are emitted. restic's default grouping (host+paths) applies
-// the policy per group, so each container/VM/flash target keeps its own history.
-func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode) []string {
+// ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
+// Only the set dimensions are emitted.
+//
+// tag selects IDENTITY-STABLE retention (issue #91): with a tag (e.g.
+// "container:plex") the policy is restricted to that item's snapshots via
+// --tag and applied to them as ONE group (--group-by "", officially documented
+// as "disable grouping"). Grouping by paths — the previous behaviour, kept for
+// tag=="" — froze an item's OLD snapshots forever once its backed-up path set
+// changed (added/removed appdata mount, temporarily missing path): the old
+// paths-group stopped receiving snapshots, and restic's keep-* never empties a
+// group, so its keep-set survived indefinitely while the UI (which lists
+// per-item snapshots BY TAG) showed them as "pruning stopped". Tag-scoped,
+// ungrouped retention treats an item's whole history as one set regardless of
+// path or host changes — and on its first run it automatically drains any
+// frozen groups left behind by the old behaviour.
+//
+// prune controls --prune: per-item passes over the same repo forget WITHOUT
+// prune and reclaim space once at the end (prune is the expensive part).
+func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tag string, prune bool) []string {
 	args := repoFlag(repo)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	// Group by paths only, NOT restic's default host+paths. A target's snapshots
-	// share their paths but may carry different hosts (older snapshots predate the
-	// stable --host, or were taken under a now-gone container hostname). Grouping
-	// by host would apply the keep-policy separately per container incarnation, so
-	// snapshots from before an update would never be pruned — which is why manual
-	// and automatic prune appeared to "do nothing". Grouping by paths collapses a
-	// target's whole history into one group regardless of host.
-	args = append(args, "--group-by", "paths")
+	if tag != "" {
+		args = append(args, "--tag", tag, "--group-by", "")
+	} else {
+		// Legacy repo-wide pass: group by paths only, NOT restic's default
+		// host+paths — hosts vary across container incarnations (issue #17).
+		args = append(args, "--group-by", "paths")
+	}
 	if p.KeepLast > 0 {
 		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
 	}
@@ -516,7 +530,9 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode) []string {
 	if p.KeepMonthly > 0 {
 		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
 	}
-	args = append(args, "--prune")
+	if prune {
+		args = append(args, "--prune")
+	}
 	return args
 }
 
@@ -1119,14 +1135,16 @@ func (r Restic) CheckData(ctx context.Context, repo string, subsetPercent int, m
 	return err
 }
 
-// ForgetPolicy applies a keep-policy to the repo and prunes the freed data. An
-// inert policy (no keep dimension set) is a no-op, so retention stays off until
-// the user configures it.
-func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy, m Mode) error {
+// ForgetPolicy applies a keep-policy to the repo. An inert policy (no keep
+// dimension set) is a no-op, so retention stays off until the user configures
+// it. tag scopes the policy to one item's snapshots as a single group
+// (identity-stable retention, issue #91); prune reclaims the freed space in the
+// same run — per-item batch passes skip it and prune once afterwards.
+func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy, m Mode, tag string, prune bool) error {
 	if !p.Any() {
 		return nil
 	}
-	_, err := r.run(ctx, ForgetPolicyArgs(repo, p, m), m)
+	_, err := r.run(ctx, ForgetPolicyArgs(repo, p, m, tag, prune), m)
 	return err
 }
 

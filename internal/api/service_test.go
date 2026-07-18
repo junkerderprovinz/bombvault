@@ -3170,6 +3170,7 @@ type fakeResticEngine struct {
 	restoreErr      error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
 	forgotten       []string
 	prunedRepos     []string
+	forgetTags      []string // identity tags passed to ForgetPolicy (issue #91)
 	checked         []string
 	copied          []string
 	copyErr         error
@@ -3316,9 +3317,10 @@ func (f *fakeResticEngine) Forget(_ context.Context, _ string, snapshotIDs []str
 	return nil
 }
 
-func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode) error {
+func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tag string, _ bool) error {
 	if p.Any() {
 		f.prunedRepos = append(f.prunedRepos, repo)
+		f.forgetTags = append(f.forgetTags, tag)
 	}
 	return f.forgetPolicyErr
 }
