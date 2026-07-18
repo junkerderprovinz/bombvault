@@ -171,4 +171,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           short-description: "Backup and full disaster recovery for Unraid: Docker containers, KVM VMs and the USB flash."
+          # The full README exceeds Docker Hub's 25000-byte description limit (it
+          # gets truncated mid-page), so Docker Hub gets a condensed edition that
+          # links back to GitHub for the full docs.
+          readme-filepath: .github/DOCKERHUB.md
           enable-url-completion: true
