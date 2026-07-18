@@ -829,6 +829,7 @@ const en = {
   "whatsnew.title": "What's new in {version}",
   "whatsnew.loading": "Loading release notes…",
   "whatsnew.loadFailed": "Couldn't load the release notes here. Open them on GitHub.",
+  "whatsnew.retry": "Try again",
   "whatsnew.viewOnGitHub": "View full release on GitHub",
   "whatsnew.close": "Close",
 
@@ -1679,6 +1680,7 @@ const de: Translations = {
   "whatsnew.title": "Neu in {version}",
   "whatsnew.loading": "Lade Release-Notes…",
   "whatsnew.loadFailed": "Release-Notes konnten hier nicht geladen werden. Auf GitHub öffnen.",
+  "whatsnew.retry": "Erneut versuchen",
   "whatsnew.viewOnGitHub": "Vollständige Release-Notes auf GitHub",
   "whatsnew.close": "Schließen",
 

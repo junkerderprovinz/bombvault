@@ -144,7 +144,14 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
   const { t } = useT();
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [info, setInfo] = useState<ReleaseInfo | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const autoTriesRef = useRef(0);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Reset the auto-retry budget whenever the version changes.
+  useEffect(() => {
+    autoTriesRef.current = 0;
+  }, [version]);
 
   const tagUrl = `${RELEASES_PAGE}/tag/${encodeURIComponent(version)}`;
 
@@ -154,7 +161,26 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
   // same-origin; the GitHub releases page stays only as the "view full" link.
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setState("loading");
+
+    // The request can land in the brief gap while the container restarts to apply
+    // an update, failing once with the old tab still open (#68). Auto-retry a few
+    // times with backoff before surfacing the error + a manual Retry button.
+    function fail() {
+      if (!active) return;
+      const MAX_AUTO = 3;
+      if (autoTriesRef.current < MAX_AUTO) {
+        const delay = 600 * 2 ** autoTriesRef.current; // 0.6s → 1.2s → 2.4s
+        autoTriesRef.current += 1;
+        timer = setTimeout(() => {
+          if (active) setReloadKey((k) => k + 1);
+        }, delay);
+      } else {
+        setState("error");
+      }
+    }
+
     fetch(`/api/release-notes?version=${encodeURIComponent(version)}`, {
       headers: { Accept: "application/json" },
     })
@@ -162,19 +188,20 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
       .then((data: { ok?: boolean; body?: string; htmlUrl?: string }) => {
         if (!active) return;
         if (!data.ok || !data.body) {
-          setState("error");
+          fail();
           return;
         }
         setInfo({ body: data.body.trim(), htmlUrl: data.htmlUrl ?? tagUrl });
         setState("ok");
       })
       .catch(() => {
-        if (active) setState("error");
+        fail();
       });
     return () => {
       active = false;
+      if (timer) clearTimeout(timer);
     };
-  }, [version, tagUrl]);
+  }, [version, tagUrl, reloadKey]);
 
   // Focus the close button on open + dismiss on Escape.
   useEffect(() => {
@@ -228,7 +255,19 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             </div>
           )}
           {state === "error" && (
-            <p className="py-4 text-sm text-carbon-textSub">{t("whatsnew.loadFailed")}</p>
+            <div className="py-4">
+              <p className="text-sm text-carbon-textSub">{t("whatsnew.loadFailed")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  autoTriesRef.current = 0;
+                  setReloadKey((k) => k + 1);
+                }}
+                className="mt-3 rounded-lg bg-carbon-surface3 px-3 py-1.5 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
+              >
+                {t("whatsnew.retry")}
+              </button>
+            </div>
           )}
           {state === "ok" &&
             (info && info.body ? (
