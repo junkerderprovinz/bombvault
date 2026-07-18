@@ -153,7 +153,7 @@ function StatusChip({
   };
   const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
       {status}
     </span>
   );
@@ -496,7 +496,7 @@ function ProtectionCard({
                           // scheduled DR drill is opted out.
                           <span
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -510,7 +510,7 @@ function ProtectionCard({
                                 ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                                 : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                             }
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -519,7 +519,7 @@ function ProtectionCard({
                           // failing to show: muted, never red. File's no-claim styling.
                           <span
                             title={t("drill.manualOnlyTitle")}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
                           >
                             {t("drill.manualOnly")}
                           </span>
@@ -537,7 +537,7 @@ function ProtectionCard({
                 {!off && drCapable && (drFailed || d.offsiteConfigured) && (
                   <div className="flex flex-wrap items-center gap-2 pl-1">
                     {drFailed && d.drillDetail && (
-                      <span className="text-xs text-[#ff8389] break-words" title={d.drillDetail}>
+                      <span className="text-xs text-[#ff8389] wrap-break-word" title={d.drillDetail}>
                         {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
                       </span>
                     )}
@@ -556,7 +556,7 @@ function ProtectionCard({
                       </button>
                     )}
                     {drRunError[d.domain] && (
-                      <span className="text-xs text-[#ff8389] break-words">✗ {drRunError[d.domain]}</span>
+                      <span className="text-xs text-[#ff8389] wrap-break-word">✗ {drRunError[d.domain]}</span>
                     )}
                   </div>
                 )}
@@ -763,7 +763,7 @@ function RansomwareCard({
                       </div>
                       {/* WHICH check + WHY it failed (off-site DR reason from /api/status). */}
                       {row.detail && (
-                        <span className="text-xs text-[#ff8389] break-words pl-6" title={row.detail}>
+                        <span className="text-xs text-[#ff8389] wrap-break-word pl-6" title={row.detail}>
                           {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {row.detail}
                         </span>
                       )}
@@ -825,7 +825,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="rounded border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text"
+              className="rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text"
             >
               <option value="all">{t("run.allDays")}</option>
               {days.map((d) => (
@@ -834,7 +834,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </select>
           </div>
           {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-[32rem] overflow-y-auto pr-2">
+          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pr-2">
             {shown.map((run) => {
               const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
               return (
@@ -864,10 +864,10 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
-                  <p className="pl-16 text-xs text-[#ff8389] break-words">{run.error}</p>
+                  <p className="pl-16 text-xs text-[#ff8389] wrap-break-word">{run.error}</p>
                 )}
                 {run.status === "skipped" && run.error && (
-                  <p className="pl-16 text-xs text-carbon-textMuted break-words">{run.error}</p>
+                  <p className="pl-16 text-xs text-carbon-textMuted wrap-break-word">{run.error}</p>
                 )}
               </div>
               );
@@ -1091,7 +1091,7 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   return (
                     <div
                       key={cell.key}
-                      className="w-[11px] h-[11px] rounded-sm"
+                      className="w-[11px] h-[11px] rounded-xs"
                       style={{ backgroundColor: cellColor(cell.stat) }}
                       title={`${cell.date}: ${stat.ok} ok, ${stat.failed} failed`}
                     />
@@ -1103,10 +1103,10 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           {/* Legend */}
           <div className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
             <span>{t("dashboard.heatLess")}</span>
-            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "var(--carbon-surface2, #262626)" }} />
-            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "#a7f0ba" }} />
-            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "#6fdc8c" }} />
-            <span className="w-[11px] h-[11px] rounded-sm" style={{ backgroundColor: "#42be65" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "var(--carbon-surface2, #262626)" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "#a7f0ba" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "#6fdc8c" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "#42be65" }} />
             <span>{t("dashboard.heatMore")}</span>
           </div>
         </div>
@@ -1431,7 +1431,7 @@ function SummaryCell({ label, children }: { label: string; children: React.React
   return (
     <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-2">
       <span className="text-xs text-carbon-textMuted uppercase tracking-widest">{label}</span>
-      <div className="flex items-center gap-2 min-h-[1.75rem]">{children}</div>
+      <div className="flex items-center gap-2 min-h-7">{children}</div>
     </div>
   );
 }
@@ -1853,14 +1853,14 @@ export function Dashboard() {
                 key={b.id}
                 className="flex items-center gap-2 rounded-md border border-carbon-border bg-carbon-surface2 px-2.5 py-1.5"
               >
-                <span className="max-w-[12rem] truncate text-xs text-carbon-textSub">
+                <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}
                 </span>
                 <button
                   type="button"
                   onClick={() => toggleHidden(b.id)}
                   aria-label={`${t("dashboard.showCard")} ${b.label}`}
-                  className="rounded px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
+                  className="rounded-sm px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
                 >
                   {t("dashboard.showCard")}
                 </button>

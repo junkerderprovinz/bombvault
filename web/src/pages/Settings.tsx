@@ -99,7 +99,7 @@ export function ToggleRow({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -254,13 +254,13 @@ chmod 600 /root/.ssh/authorized_keys`
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded border border-carbon-border bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-sm border border-carbon-border bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {pub || "—"}
             </code>
             <button
               onClick={handleCopy}
               disabled={!pub}
-              className="shrink-0 rounded bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
+              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
             >
               {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
@@ -278,11 +278,11 @@ chmod 600 /root/.ssh/authorized_keys`
             <li>{t("vm.ssh.step3")}</li>
           </ol>
           <div className="flex items-start gap-2">
-            <pre className="flex-1 overflow-x-auto rounded border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <pre className="flex-1 overflow-x-auto rounded-sm border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
             <button
               onClick={handleCopyCmd}
               disabled={!pub}
-              className="shrink-0 rounded bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {cmdCopied ? t("vm.ssh.copied") : t("vm.ssh.copyCmd")}
             </button>
@@ -301,7 +301,7 @@ chmod 600 /root/.ssh/authorized_keys`
           <button
             onClick={handleTest}
             disabled={testState === "testing"}
-            className="rounded border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="rounded-sm border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
           </button>
@@ -370,7 +370,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-3 py-2 focus:outline-none focus:border-[#78a9ff]"
+        className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-3 py-2 focus:outline-hidden focus:border-[#78a9ff]"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
@@ -436,7 +436,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -565,9 +565,9 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
   const selectCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
@@ -774,7 +774,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         </button>
         {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
         {tested && <span className="text-sm text-[#6fdc8c]">{t("notify.tested")}</span>}
-        {state === "error" && msg && <span className="text-sm text-[#ff8389] break-words">{msg}</span>}
+        {state === "error" && msg && <span className="text-sm text-[#ff8389] wrap-break-word">{msg}</span>}
       </div>
     </Card>
   );
@@ -819,7 +819,7 @@ function ReplicateNowButton({
         {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
       </button>
       {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("integrity.ok")}</span>}
-      {st === "fail" && <span className="text-xs text-[#ff8389] break-words">{err}</span>}
+      {st === "fail" && <span className="text-xs text-[#ff8389] wrap-break-word">{err}</span>}
     </span>
   );
 }
@@ -867,7 +867,7 @@ function TestConnectionButton({
       {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.testOk")}</span>}
       {st === "uninit" && <span className="text-xs text-[#f1c21b]">{t("offsite.testUninitialized")}</span>}
       {st === "fail" && (
-        <span className="text-xs text-[#ff8389] break-words">{err ?? t("offsite.testFailed")}</span>
+        <span className="text-xs text-[#ff8389] wrap-break-word">{err ?? t("offsite.testFailed")}</span>
       )}
     </span>
   );
@@ -1019,7 +1019,7 @@ function IntegrityCard({
   ];
 
   const selectCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-none focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
 
   return (
     <Card title={t("integrity.title")}>
@@ -1152,7 +1152,7 @@ function IntegrityCard({
                     </button>
                     {state[dKey] === "ok" && <span className="text-sm text-[#6fdc8c]">✓ {t("verify.ok")}</span>}
                     {state[dKey] === "fail" && (
-                      <span className="text-sm text-[#ff8389] break-words">✗ {msg[dKey] || t("verify.failed")}</span>
+                      <span className="text-sm text-[#ff8389] wrap-break-word">✗ {msg[dKey] || t("verify.failed")}</span>
                     )}
                     {/* Last recorded drill for this domain/source (idle state only).
                         Names WHICH check ran (off-site DR vs local integrity) and,
@@ -1168,7 +1168,7 @@ function IntegrityCard({
                             {t("verify.last").replace("{time}", relativeTime(t, drill.at))} {drill.ok ? "✓" : "✗"}
                           </span>
                           {!drill.ok && drill.detail && (
-                            <span className="text-xs text-[#ff8389] break-words" title={drill.detail}>
+                            <span className="text-xs text-[#ff8389] wrap-break-word" title={drill.detail}>
                               {t("drill.failReasonPrefix")} {drill.detail}
                             </span>
                           )}
@@ -1183,7 +1183,7 @@ function IntegrityCard({
 
               {actions.map((a) =>
                 state[`${domain}:${a.key}`] === "fail" ? (
-                  <span key={a.key} className="text-xs text-[#ff8389] break-words">
+                  <span key={a.key} className="text-xs text-[#ff8389] wrap-break-word">
                     {a.label}: {msg[`${domain}:${a.key}`] || t("integrity.failed")}
                   </span>
                 ) : null
@@ -1241,7 +1241,7 @@ function ScheduleBadge({
   };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls[status]}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls[status]}`}
     >
       {label}
     </span>
@@ -1498,7 +1498,7 @@ function FilesSection({
                 aria-label={`${t("files.enabled")}: ${s.name}`}
                 disabled={!!busy[s.id]}
                 onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
                   s.enabled ? "bg-accent" : "bg-carbon-surface3"
                 }`}
               >
@@ -1512,7 +1512,7 @@ function FilesSection({
           ))}
         </div>
       )}
-      {error && <p className="text-xs text-[#ff8389] break-words">{error}</p>}
+      {error && <p className="text-xs text-[#ff8389] wrap-break-word">{error}</p>}
     </Card>
   );
 }
@@ -1554,7 +1554,7 @@ function RestoreChecksSection({
           onChange={(v) => update({ drillsSchedule: v })}
         />
       </div>
-      <label className="flex flex-col gap-1 max-w-[10rem]">
+      <label className="flex flex-col gap-1 max-w-40">
         <span className="text-xs text-carbon-textSub">{t("verify.subsetPct")}</span>
         <input
           type="number"
@@ -1566,7 +1566,7 @@ function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
         />
       </label>
     </Card>
@@ -1969,7 +1969,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={syncSchedules}
               onChange={(e) => setSyncSchedules(e.target.checked)}
-              className="h-4 w-4 rounded border-carbon-border bg-carbon-surface2 accent-[var(--accent)]"
+              className="h-4 w-4 rounded-sm border-carbon-border bg-carbon-surface2 accent-(--accent)"
             />
             <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
           </label>
@@ -2019,7 +2019,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
                 />
               </div>
             ))}
@@ -2036,7 +2036,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -2245,7 +2245,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
               />
             </label>
           ))}
@@ -2348,7 +2348,7 @@ export function SettingsPage() {
               }
             />
             {settings.flashZipExportKeep > 0 ? (
-              <label className="flex flex-col gap-1 max-w-[10rem]">
+              <label className="flex flex-col gap-1 max-w-40">
                 <span className="text-xs text-carbon-textSub">{t("flash.zipExport.keepN")}</span>
                 <input
                   type="number"
@@ -2359,7 +2359,7 @@ export function SettingsPage() {
                     setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
-                  className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+                  className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
                 />
                 <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
@@ -2444,7 +2444,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                 }
                 placeholder="rest:http://host:8000/repo"
-                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
               />
             )}
           </div>
@@ -2497,7 +2497,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
               />
             </label>
           ))}
@@ -2546,7 +2546,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-none focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
               />
             </label>
           ))}
@@ -2596,7 +2596,7 @@ export function SettingsPage() {
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
             placeholder=""
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
           />
         </label>
         <SaveBar
@@ -2741,7 +2741,7 @@ export function SettingsPage() {
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -2754,7 +2754,7 @@ export function SettingsPage() {
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
             />
           </div>
 
@@ -2817,7 +2817,7 @@ export function SettingsPage() {
                   setAccentHex(e.target.value);
                   setAccent(e.target.value);
                 }}
-                className="h-8 w-14 cursor-pointer rounded border border-carbon-border bg-carbon-surface2 p-0.5"
+                className="h-8 w-14 cursor-pointer rounded-sm border border-carbon-border bg-carbon-surface2 p-0.5"
                 title={t("settings.accentColor")}
               />
               {/* Preset swatches */}

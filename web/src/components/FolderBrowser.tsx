@@ -85,7 +85,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
           placeholder="user/bombvault/container"
-          className="flex-1 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+          className="flex-1 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
         />
         <button
           onClick={handleOpen}
@@ -142,7 +142,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
               {browsePath !== "" && (
                 <button
                   onClick={handleUp}
-                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-sm hover:bg-carbon-hover hover:text-carbon-text transition-colors"
                 >
                   ..
                 </button>
@@ -154,7 +154,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
                 <button
                   key={d.path}
                   onClick={() => doFetch(d.path)}
-                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-sm hover:bg-carbon-hover hover:text-carbon-text transition-colors"
                 >
                   {d.name}/
                 </button>

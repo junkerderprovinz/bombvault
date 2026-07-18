@@ -70,7 +70,7 @@ function FlashBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[28rem] break-words">{state.message}</span>
+        <span className="text-xs text-[#ff8389] max-w-md wrap-break-word">{state.message}</span>
       )}
     </div>
   );
@@ -187,8 +187,8 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {dl.phase === "error" && <p className="text-xs text-[#ff8389] pl-24 break-words">{dl.message}</p>}
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
+      {dl.phase === "error" && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{dl.message}</p>}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }

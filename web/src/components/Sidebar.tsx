@@ -176,7 +176,7 @@ const navBase =
 const navActive =
   "bg-accent text-accentContrast";
 const navInactive =
-  "text-[var(--sidebar-text)] hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5";
+  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5";
 
 function NavItem({ to, label, icon }: NavItem) {
   return (

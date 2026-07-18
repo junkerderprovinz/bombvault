@@ -90,7 +90,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title="Include in schedule"
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -101,7 +101,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         />
       </button>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-[12rem] text-right leading-tight">
+        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
@@ -171,7 +171,7 @@ function FileSetBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[18rem] break-words">
+        <span className="text-xs text-[#ff8389] max-w-[18rem] wrap-break-word">
           {state.message}
         </span>
       )}
@@ -547,7 +547,7 @@ function FileSetSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }
@@ -763,7 +763,7 @@ function FileSetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
           />
         </div>
 
@@ -787,7 +787,7 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-none focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
           />
           <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
@@ -804,7 +804,7 @@ function FileSetDialog({
           {t("files.enabled")}
         </label>
 
-        {error && <p className="text-xs text-[#ff8389] break-words">{error}</p>}
+        {error && <p className="text-xs text-[#ff8389] wrap-break-word">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
@@ -881,7 +881,7 @@ function FileSetRow({
               {set.name}
             </span>
             {set.excludes.length > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
               </span>
             )}
@@ -890,13 +890,13 @@ function FileSetRow({
             {noPath && (
               <span
                 title={t("files.noPathHint")}
-                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#3a2f1c] text-[#f1c21b] border border-[#5a4a2a]"
+                className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#3a2f1c] text-[#f1c21b] border border-[#5a4a2a]"
               >
                 {t("files.noPath")}
               </span>
             )}
             {pathMissing && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]">
                 {t("files.pathMissing")}
               </span>
             )}

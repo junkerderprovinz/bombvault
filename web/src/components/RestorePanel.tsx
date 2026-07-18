@@ -427,7 +427,7 @@ function CompareSnapshots({
     : "";
 
   const selectCls =
-    "rounded bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-none focus:border-[#78a9ff] max-w-[16rem] truncate";
+    "rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-[#78a9ff] max-w-[16rem] truncate";
 
   return (
     <div className="py-2 border-b border-carbon-border">
@@ -463,9 +463,9 @@ function CompareSnapshots({
               {loading ? "…" : t("snapshot.compare")}
             </button>
           </div>
-          {error && <p className="text-xs text-[#ff8389] break-words">{error}</p>}
+          {error && <p className="text-xs text-[#ff8389] wrap-break-word">{error}</p>}
           {diff && (
-            <p className="text-xs text-carbon-text font-mono break-words" title={summary}>
+            <p className="text-xs text-carbon-text font-mono wrap-break-word" title={summary}>
               <span className="text-[#6fdc8c]">+{diff.addedFiles}</span> {t("snapshot.added")} ({humanBytes(diff.addedBytes)}),{" "}
               <span className="text-carbon-textSub">~{diff.changedFiles}</span> {t("snapshot.changed")},{" "}
               <span className="text-[#ff8389]">-{diff.removedFiles}</span> {t("snapshot.removed")} ({humanBytes(diff.removedBytes)})
@@ -528,7 +528,7 @@ function SnapshotTags({
       {tags.map((tg) => (
         <span
           key={tg}
-          className="inline-flex items-center rounded bg-carbon-surface3 px-1.5 py-0.5 text-[10px] text-carbon-textSub"
+          className="inline-flex items-center rounded-sm bg-carbon-surface3 px-1.5 py-0.5 text-[10px] text-carbon-textSub"
         >
           {tg}
         </span>
@@ -550,13 +550,13 @@ function SnapshotTags({
           onBlur={() => void submit()}
           placeholder={t("snapshot.addTag")}
           spellCheck={false}
-          className="w-24 rounded bg-carbon-background border border-carbon-border text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-none focus:border-[#78a9ff]"
+          className="w-24 rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-hidden focus:border-[#78a9ff]"
         />
       ) : (
         <button
           onClick={() => setAdding(true)}
           title={t("snapshot.addTag")}
-          className="inline-flex items-center rounded border border-carbon-border px-1.5 py-0.5 text-[10px] text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="inline-flex items-center rounded-sm border border-carbon-border px-1.5 py-0.5 text-[10px] text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           + {t("snapshot.tags")}
         </button>
@@ -664,7 +664,7 @@ function SnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 break-words">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
       {showRestore && (

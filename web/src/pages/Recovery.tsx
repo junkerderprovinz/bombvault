@@ -53,7 +53,7 @@ function isKeyMismatch(err: string | undefined): boolean {
 
 // Shared mono text-input styling (off-site URLs, foreign location/key fields).
 const offsiteInput =
-  "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-none focus:ring-1 focus:ring-accent";
+  "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent";
 
 // RestoreRow — a single discovered target (container or VM) with its latest
 // snapshot and a per-item Restore button. The restore mechanics are the shared
@@ -194,7 +194,7 @@ function FileSetRecoveryRow({
         </button>
         {state === "ok" && <span className="text-xs text-[#6fdc8c]">✓ {t("common.done")}</span>}
         {state === "fail" && error && (
-          <span className="text-xs text-[#ff8389] break-words">✗ {error}</span>
+          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {error}</span>
         )}
       </div>
     </div>
@@ -304,7 +304,7 @@ function ForeignItemRow({
           value={snapshot}
           onChange={(e) => setSnapshot(e.target.value)}
           disabled={state === "busy"}
-          className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-none focus:ring-1 focus:ring-accent"
+          className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-hidden focus:ring-1 focus:ring-accent"
         >
           <option value="latest">{t("recovery.foreignLatest")}</option>
           {snaps.map((s) => (
@@ -338,7 +338,7 @@ function ForeignItemRow({
         </button>
         {state === "ok" && <span className="text-xs text-[#6fdc8c]">✓ {t("common.done")}</span>}
         {state === "fail" && error && (
-          <span className="text-xs text-[#ff8389] break-words">✗ {error}</span>
+          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {error}</span>
         )}
       </div>
     </div>
@@ -542,7 +542,7 @@ function ForeignRestoreCard({
           )}
         </div>
         {phase === "error" && connectError && (
-          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed break-words">
+          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed wrap-break-word">
             {connectError}
           </div>
         )}
@@ -1068,7 +1068,7 @@ export default function Recovery() {
                   </div>
                 )}
                 {configPhase === "error" && configError && (
-                  <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed break-words">
+                  <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed wrap-break-word">
                     {configError}
                   </div>
                 )}
@@ -1216,7 +1216,7 @@ export default function Recovery() {
           <p className="text-sm text-[#f1c21b]">{t("recovery.foundNone")}</p>
         )}
         {discoverError && (
-          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed break-words">
+          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed wrap-break-word">
             {discoverError}
           </div>
         )}
