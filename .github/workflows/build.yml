@@ -31,10 +31,10 @@ jobs:
     name: Boot smoke test (amd64)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - name: Build amd64 image (load locally)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64
@@ -82,14 +82,14 @@ jobs:
     needs: smoke
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
 
       # Push only on main / manual runs, never from pull requests.
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -99,14 +99,14 @@ jobs:
       # DOCKERHUB_TOKEN (secret) are set together; otherwise skipped (GHCR-only).
       - name: Log in to Docker Hub
         if: ${{ github.event_name != 'pull_request' && vars.DOCKERHUB_USERNAME != '' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker metadata (tags + labels)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.IMAGE }}
@@ -137,7 +137,7 @@ jobs:
           echo "v=$v" >> "$GITHUB_OUTPUT"
           echo "computed version: $v"
       - name: Build multi-arch image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -165,7 +165,7 @@ jobs:
           if [ -n "$PW" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "DOCKERHUB_PASSWORD not set — skipping Docker Hub description sync"; echo "go=false" >> "$GITHUB_OUTPUT"; fi
       - name: Sync README to Docker Hub
         if: ${{ steps.dhdesc.outputs.go == 'true' }}
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
