@@ -818,7 +818,7 @@ function ReplicateNowButton({
       >
         {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
       </button>
-      {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("integrity.ok")}</span>}
+      {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.replicateStarted")}</span>}
       {st === "fail" && <span className="text-xs text-[#ff8389] wrap-break-word">{err}</span>}
     </span>
   );
