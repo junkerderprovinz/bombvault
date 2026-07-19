@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-Your Unraid data, <b>sealed in a vault</b>. Armed with a fuse.<br>
+Your Unraid data, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
 BombVault backs up Docker containers, KVM VMs, appdata, the Unraid flash config — and even itself —
 and restores everything with a single click. Containers <b>automatically reappear in the
 Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
@@ -29,7 +29,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), and its own `/config`.
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before; VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups per domain from one place, with one-click *"include all in schedule"*.
-- **Optionally updates a container right after its backup** (advanced, off by default) — a fresh restore point always exists first, so a bad update is one restore away.
+- **Optionally updates a container right after its backup** (advanced, off by default) — a fresh restore point always exists first, so a bad update is one restore away; it can notify per updated container and clean up the superseded image.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
@@ -45,9 +45,9 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Flash restore as a `.zip` download** (the live `/boot` is never touched) and a **scheduled flash zip export** so a bootable-USB copy leaves the server automatically.
 - **File-level restore** — tick any files/folders inside a snapshot and restore them in place or into a folder; **stack restore** rebuilds a Docker Compose project, then starts its members in `depends_on` order.
 - **Storage anywhere** — local path, SMB/NFS, native restic backends (`s3:` / `rest:` / `b2:` / `sftp:`) or any **rclone** remote; **off-site replication** (`restic copy`) with its own schedule and bandwidth caps; **per-source retention** pruned automatically.
-- **Proof, not hope** — protection-status (RPO) dashboard, backup-health heatmap, **restore-verification drills** with a "last verified restorable" badge, repository integrity checks, and an **encryption-key recovery kit** for restoring without a running BombVault.
+- **Proof, not hope** — a customizable protection-status (RPO) dashboard, backup-health heatmap, run history with `start → end (duration)` timing, **restore-verification drills** with a "last verified restorable" badge, repository integrity checks, and an **encryption-key recovery kit** for restoring without a running BombVault.
 - **Ransomware protection** — append-only (immutable) off-site repos with a periodic **tamper test** that *proves* deletes are refused, off-site DR drills into a throwaway sandbox, a posture scorecard and a growth-budget alarm.
-- **Notifications** — webhook (Discord/Slack/Gotify/ntfy), Matrix, Healthchecks.io (full start/success/fail lifecycle), email (SMTP) and Unraid-native alerts; opt-in **Prometheus `/metrics`**.
+- **Notifications** — webhook (Discord/Slack/Gotify/ntfy), Matrix, Healthchecks.io (full start/success/fail lifecycle), email (SMTP) and Unraid-native alerts, with an optional one-summary-per-scheduled-run mode; opt-in **Prometheus `/metrics`**.
 - **Ops niceties** — pre/post-backup hooks, stop-dependent-containers during backup, per-container exclude patterns with live preview, plain `tar.gz` exports (containers *and* VMs), snapshot diff & tags, server-side batch backups, Docker healthcheck, HTTPS out of the box, dark/light UI in **26 languages**.
 
 ## Install on Unraid
@@ -63,15 +63,17 @@ https://github.com/junkerderprovinz/unraid-apps
 | Variable | Required | Description |
 |---|---|---|
 | `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. **Keep this safe** — losing it makes encrypted backups unrecoverable. |
-| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; set to the host LAN IP on a custom `br0.x` network). |
+| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; the template pre-fills a LAN-IP placeholder — use your Unraid LAN IP, required on a custom `br0.x` network). |
 | `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
 | `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
-| `PORT` | No | HTTP port (default `3000`). |
-| `HTTPS_PORT` | No | HTTPS port (default `3443`; the template maps it to `3001`). |
-| `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only. |
+| `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
+| `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
+| `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
+| `HOST_SOURCE_ROOT` | No | The host path mounted as **Host Data** (default `/mnt`); change only if you mounted a different host root. |
+| `BOMBVAULT_SELF_CONTAINER` | No | The name of the BombVault container itself, so it never backs up (and thus stops) itself (default `BombVault`). |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths), not via env. **VM backup needs no libvirt mount** — it runs `virsh` on the host over SSH (`qemu+ssh://`): copy the key shown under *Settings → VM Backup over SSH* into the host's `authorized_keys` and click *Test connection*. After the first start, open `/spike` in the web UI — it probes every mount and CLI and reports any missing pieces.
+Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`, mounted rslave so late-mounting remote shares appear without a restart) as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths), not via env. **VM backup needs no libvirt mount** — it runs `virsh` on the host over SSH (`qemu+ssh://`): copy the key shown under *Settings → System → VM Backup over SSH* into the host's `authorized_keys` and click *Test connection*. After the first start, open `/spike` in the web UI — it probes every mount and CLI and reports any missing pieces.
 
 ## Security
 
