@@ -773,10 +773,33 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 	if !p.Any() {
 		return
 	}
-	if err := s.engine.ForgetPolicy(ctx, repo, p, mode, tag, true); err != nil {
+	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tag, true); err != nil {
 		log.Printf("api: retention prune failed (backup is safe): %v", err)
 		s.notifyRetentionFailed(ctx, tag, truncateRunErr(err))
 	}
+}
+
+// forgetWithLockHeal runs a ForgetPolicy pass and self-heals an orphaned restic
+// lock (#94). Every caller holds the domain lock, so BombVault — the repo's sole
+// writer — provably has no live operation on this repo; any existing restic lock
+// is an orphan from an interrupted run (container update or crash mid-operation)
+// that restic's own stale detection misses when the lock is under 30 min old or
+// its PID can't be verified across container restarts (same reasoning as the
+// #92 verify heal). forget needs an EXCLUSIVE lock, so even a stale
+// NON-exclusive lock — which lets backups keep succeeding — blocks every
+// retention pass: one orphan used to fail a whole night's retentions across all
+// items. Heal: force-unlock and retry once; the caller notifies only if the
+// retry still fails.
+func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error {
+	err := s.engine.ForgetPolicy(ctx, repo, p, mode, tag, prune)
+	if err == nil || !isLockErr(err) {
+		return err
+	}
+	log.Printf("api: retention forget hit a repo lock; force-unlocking and retrying once (#94)")
+	if uerr := s.engine.Unlock(ctx, repo, true, mode); uerr != nil {
+		log.Printf("api: force-unlock before retention retry failed: %v", uerr)
+	}
+	return s.engine.ForgetPolicy(ctx, repo, p, mode, tag, prune)
 }
 
 // identityTags returns the distinct item-identity tags present in snaps:
@@ -810,11 +833,11 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p 
 	snaps, err := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
 	if err != nil || len(tags) == 0 {
-		return s.engine.ForgetPolicy(ctx, repo, p, mode, "", true)
+		return s.forgetWithLockHeal(ctx, repo, p, mode, "", true)
 	}
 	var errs []error
 	for _, tag := range tags {
-		if fErr := s.engine.ForgetPolicy(ctx, repo, p, mode, tag, false); fErr != nil {
+		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, tag, false); fErr != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", tag, fErr))
 		}
 	}
