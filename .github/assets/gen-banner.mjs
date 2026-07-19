@@ -32,7 +32,13 @@ const NAME_FILL = "#242626"; // logo dark charcoal
 const CLAIM_FILL = "#5a5d5e"; // logo mid grey
 const W = 1600, H = 500;
 const LH = 410;                    // logo height
-const LW = LH * (956.33 / 931.39); // keep logo aspect
+// Logo 2.0 geometry (viewBox 898.34 x 865.1). The logo's OPTICAL centre —
+// marked by the designer with a helper dot in the source file — is NOT the
+// geometric centre: the sparks at the top right add visual weight the eye
+// ignores. All placements centre on this point, not the bounding box.
+const LOGO_W = 898.34, LOGO_H = 865.1;
+const OPT_CX = 441.6, OPT_CY = 461.2; // designer-marked optical centre
+const LW = LH * (LOGO_W / LOGO_H); // keep logo aspect
 const nameSize = 148, claimSize = 42, gap = 64, lineGap = 22;
 // ---------------------------------------------------------------------------
 
@@ -60,7 +66,8 @@ const nameW = font.getAdvanceWidth(NAME, nameSize);
 const claimW = claimFont.getAdvanceWidth(CLAIM, claimSize);
 const groupW = LW + gap + Math.max(nameW, claimW);
 const startX = (W - groupW) / 2;
-const LX = startX, LY = (H - LH) / 2;
+// Vertically centre on the OPTICAL centre, not the bounding box.
+const LX = startX, LY = H / 2 - OPT_CY * (LH / LOGO_H);
 const textX = startX + LW + gap;
 
 const sc = (s) => s / font.unitsPerEm;
@@ -77,8 +84,8 @@ const claimPath = claimFont.getPath(CLAIM, textX, claimBaseline, claimSize).toPa
 // Embed the logo verbatim: drop the XML decl, position its root <svg>.
 let logo = readFileSync(join(__dir, "icon.svg"), "utf8").replace(/<\?xml[^>]*\?>\s*/, "");
 logo = logo.replace(
-  /<svg\b[^>]*viewBox="0 0 956\.33 931\.39"[^>]*>/,
-  `<svg x="${LX.toFixed(1)}" y="${LY.toFixed(1)}" width="${LW.toFixed(1)}" height="${LH}" viewBox="0 0 956.33 931.39" xmlns="http://www.w3.org/2000/svg">`,
+  /<svg\b[^>]*viewBox="0 0 898\.34 865\.1"[^>]*>/,
+  `<svg x="${LX.toFixed(1)}" y="${LY.toFixed(1)}" width="${LW.toFixed(1)}" height="${LH}" viewBox="0 0 ${LOGO_W} ${LOGO_H}" xmlns="http://www.w3.org/2000/svg">`,
 );
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
