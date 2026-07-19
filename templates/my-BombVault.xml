@@ -88,7 +88,7 @@ The restore is the star: a backed-up container or VM reappears in the Docker or 
     Target="/host/boot"
     Default="/boot"
     Mode="rw"
-    Description="The Unraid USB flash, mounted whole. Powers two things: (1) Flash backup (Settings - Domains - Flash) of the entire /boot - Unraid OS, license, array config, shares, network and plugin config; and (2) capturing/restoring a container's Unraid template (under /boot/config/plugins/dockerMan/templates-user) so a restored container reappears as a NORMAL, editable Unraid app instead of a 'third-party' container. Leave at the default. Flash RESTORE never overwrites the live flash - it extracts to a folder you then copy onto a fresh USB."
+    Description="The Unraid USB flash, mounted whole. Powers two things: (1) Flash backup (Settings - Domains - Flash) of the entire /boot - Unraid OS, license, array config, shares, network and plugin config; and (2) capturing/restoring a container's Unraid template (under /boot/config/plugins/dockerMan/templates-user) so a restored container reappears as a NORMAL, editable Unraid app instead of a 'third-party' container. Leave at the default. Flash RESTORE never overwrites the live flash - it streams the snapshot to your browser as a ready-to-use .zip for the Unraid USB creator (or any fresh USB)."
     Type="Path"
     Display="always"
     Required="true"
