@@ -26,12 +26,16 @@ const require = createRequire(import.meta.url);
 const { Resvg } = require(`${execSync("npm root -g").toString().trim()}/@resvg/resvg-js`);
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const svg = readFileSync(join(__dir, "bombvault-banner.svg"), "utf8");
 
-// Banner SVG is self-contained (text-as-paths); rasterize at 1600 wide on white.
-const png = new Resvg(svg, { fitTo: { mode: "width", value: 1600 }, background: "white" });
-writeFileSync(join(__dir, "bombvault-banner.png"), png.render().asPng());
-console.log("bombvault-banner.png written (1600x500 from bombvault-banner.svg)");
+// Theme-adaptive banner pair (house rule, ShipLog reference): light + dark,
+// served by the README via <picture> prefers-color-scheme. The SVGs are
+// self-contained (text-as-paths), so no font is needed here.
+for (const [suffix, bg] of [["", "#ffffff"], ["-dark", "#0d1117"]]) {
+  const svg = readFileSync(join(__dir, `bombvault-banner${suffix}.svg`), "utf8");
+  const png = new Resvg(svg, { fitTo: { mode: "width", value: 1600 }, background: bg });
+  writeFileSync(join(__dir, `bombvault-banner${suffix}.png`), png.render().asPng());
+  console.log(`bombvault-banner${suffix}.png written (1600x500)`);
+}
 
 // ---------------------------------------------------------------------------
 // Logo 2.0 geometry. The OPTICAL centre was marked by the designer with a

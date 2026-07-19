@@ -28,8 +28,13 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 // ---- content + styling -----------------------------------------------------
 const NAME = "BombVault";
 const CLAIM = "Drop a backup. Detonate a restore.";
-const NAME_FILL = "#242626"; // logo dark charcoal
-const CLAIM_FILL = "#5a5d5e"; // logo mid grey
+// Theme-adaptive banner pair (house rule, ShipLog reference): GitHub serves the
+// dark variant via <picture> prefers-color-scheme. Logo 2.0 reads on both
+// backgrounds by itself, so both themes embed the SAME logo.
+const THEMES = [
+  { suffix: "",      bg: "#ffffff", name: "#242626", claim: "#5a5d5e" },
+  { suffix: "-dark", bg: "#0d1117", name: "#e6edf3", claim: "#9aa4ad" },
+];
 const W = 1600, H = 500;
 const LH = 410;                    // logo height
 // Logo 2.0 geometry (viewBox 898.34 x 865.1). The logo's OPTICAL centre —
@@ -88,12 +93,15 @@ logo = logo.replace(
   `<svg x="${LX.toFixed(1)}" y="${LY.toFixed(1)}" width="${LW.toFixed(1)}" height="${LH}" viewBox="0 0 ${LOGO_W} ${LOGO_H}" xmlns="http://www.w3.org/2000/svg">`,
 );
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <rect width="${W}" height="${H}" fill="#ffffff"/>
+for (const t of THEMES) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect width="${W}" height="${H}" fill="${t.bg}"/>
   ${logo}
-  <path d="${namePath}" fill="${NAME_FILL}"/>
-  <path d="${claimPath}" fill="${CLAIM_FILL}"/>
+  <path d="${namePath}" fill="${t.name}"/>
+  <path d="${claimPath}" fill="${t.claim}"/>
 </svg>
 `;
-writeFileSync(join(__dir, "bombvault-banner.svg"), svg);
-console.log("bombvault-banner.svg written — now run gen-assets.mjs for the PNG");
+  writeFileSync(join(__dir, `bombvault-banner${t.suffix}.svg`), svg);
+  console.log(`bombvault-banner${t.suffix}.svg written`);
+}
+console.log("now run gen-assets.mjs for the PNGs");
