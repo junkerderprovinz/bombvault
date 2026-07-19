@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner.png" alt="BombVault" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner-dark.png">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/bombvault-banner.png" alt="BombVault" width="100%">
+  </picture>
 </p>
 
 <p align="center">
@@ -37,7 +40,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b>, <b>Unraid flash</b>, <b>app configuration</b> and <b>files/folders</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone/SSH-sftp), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, <b>restore from another BombVault repo</b> (one-time, read-only), and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b>, <b>Unraid flash</b>, <b>app configuration</b> and <b>files/folders</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone/SSH-sftp), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, <b>restore from another BombVault repo</b> (one-time, read-only), <b>self-healing maintenance</b> (orphaned-lock auto-recovery), and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -126,7 +129,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Scheduled flash zip export** — turn it on and, after every flash backup, BombVault also writes the snapshot out as a plain `.zip` to a folder you pick — either a single `flash-latest.zip` that's overwritten each time or a rolling history of timestamped zips. Point it at a Syncthing or rclone folder and your bootable-USB backup leaves the server automatically, so it's reachable even when the server itself won't boot.
 - **Pre-flight conflict check** — before anything is stopped or removed, restore verifies the container's static IP and published host ports are free; if another container already holds one, it aborts with a clear, actionable message instead of leaving you with a half-finished restore.
 - **File-level restore** — expand a container snapshot's **Files**, filter, **tick any number of files and folders**, then restore the whole selection **in place** (original locations) or **into a folder** you pick.
-- **File-set restore** — restore a file-set snapshot **in place** (back to its original folder, after an explicit confirmation) or **into a folder** you pick — never silently.
+- **File-set restore** — restore a file-set snapshot **in place** (back to its original folder, after an explicit confirmation) or **into a folder** you pick — never silently. **Selective restore** works here too: list the snapshot's contents, tick only the files and folders you want, and restore just those — same file-tree picker as the container file-level restore.
 - **Restore keeps the run-state** — a container (or VM) that was running when backed up comes back running; one that was stopped stays stopped. Tick **Leave stopped after restore** to recreate it without starting it, so you can rebuild a group of dependent containers one by one and start them yourself afterwards.
 - **Restore a whole stack** — containers from the same Docker Compose project (via the `com.docker.compose.project` label) are grouped into a **Stacks** panel. **Restore stack** rebuilds every member from its latest backup **left stopped**, then optionally **starts them in `depends_on` order** — so a compose stack (e.g. managed with Dockhand) comes back without members racing ahead of their dependencies.
 - **Live progress, cancel & busy feedback** — a long restore shows a live percentage bar ("Restoring… NN%") instead of a bare spinner, and can be **cancelled** with a type-aware confirmation (a restore-to-a-folder cancels cleanly; an in-place restore warns it leaves the target partial). A cancelled restore is recorded as *cancelled*, not failed. And starting a backup while a restore (or a scheduled/maintenance op) holds a repository now shows a clear "a restore is running" hint instead of silently doing nothing.
@@ -149,6 +152,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Backup-health heatmap** — a GitHub-contributions-style calendar of per-day backup outcomes per domain (green = all OK, red = a failure), with a Containers / VMs / Flash / Config / Files toggle.
 - **Repository size & dedup trend** — current repo size, deduplication ratio and snapshot count per domain, with a sparkline of how storage grows over time.
 - **Restore-verification drills** — BombVault periodically *proves* your backups are restorable (`restic check --read-data-subset`, bounded — never a disk-filling full restore) and shows a **"last verified restorable"** badge per domain (Settings → Verify).
+- **Self-healing operations** — an orphaned restic lock (left behind when the container is updated or restarted mid-operation) used to fail the next verify or retention prune with "repository is already locked". Both now detect the provably orphaned lock, force-clear it and retry once, automatically; a real problem still surfaces. Retention itself is **identity-stable** — snapshots are pruned per item, immune to path or host changes — and a retention failure sends a **notification** instead of hiding in the container log.
 - **Encryption-key recovery kit** — one-click download of the master key, the derived restic password and the exact repo locations + commands, so you can restore **without a running BombVault**. A Dashboard reminder nags until you've stored it.
 - **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)** and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always. **Healthchecks** gets the full lifecycle — a `/start` ping when a backup begins, then success / `/fail` on done — whenever a URL is set, independent of that policy, so it measures duration, catches a run that started but never finished, and stays green on success even with failure-only notifications. You can also give each domain (containers / VMs / flash / config / files) its own Healthchecks check for per-domain runtime and history, or leave them blank to share one global check.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
@@ -192,7 +196,7 @@ Browser ──HTTPS──> BombVault container
                    ├─ /mnt/user/            ─> appdata, VM disks + restic repos (read/write)
                    ├─ /boot/ ─> /host/boot  ─> Unraid flash backup (whole USB)
                    ├─ /config               ─> BombVault's own settings + credentials (self-backup)
-                   └─ <repo path>           ─> restic repository (local; remote planned)
+                   └─ <repo path>           ─> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
 BombVault talks to the Docker socket to stop containers before backup and recreate them after restore. For VMs it runs `virsh` **on the host over SSH** (`qemu+ssh://`) to gracefully shut down or live-snapshot a domain — it never bind-mounts any libvirt path, so it can never interfere with the host VM Manager. All actual data movement goes through **restic** — BombVault is the orchestration and UI layer, not the storage engine.
