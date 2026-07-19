@@ -1830,6 +1830,47 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo)
 }
 
+// StartReplicateOffsite kicks off an on-demand off-site replication in the
+// BACKGROUND and returns immediately (#93 follow-up). The "Replicate now"
+// handler used to run the copy synchronously on the HTTP request context: a
+// first replication of real data easily outlives browser/proxy timeouts, and
+// when the client gave up (504) the request context was cancelled — killing the
+// running restic copy after a gigabyte or two. The copy now runs detached with
+// its own generous ceiling; the existing off-site indicator shows it running,
+// the run is recorded like any other, and a failure notifies exactly like a
+// scheduled replication. Configuration errors and a busy domain still surface
+// synchronously so the UI can show them.
+func (s *Service) StartReplicateOffsite(domain string) error {
+	settings, _, err := s.domainRepoSource(domain, "local")
+	if err != nil {
+		return err
+	}
+	if s.offsiteRepoFor(domain, settings) == "" {
+		return errors.New("no off-site repo configured for this domain")
+	}
+	unlock, ok := s.tryLockDomainFor(domain, "replicate")
+	if !ok {
+		return errDomainBusy
+	}
+	go func() {
+		defer unlock()
+		// Detached from the HTTP request on purpose; the ceiling only guards
+		// against a copy that hangs forever on a dead link.
+		ctx, cancel := context.WithTimeout(context.Background(), 24*time.Hour)
+		defer cancel()
+		settings, localRepo, err := s.domainRepoSource(domain, "local")
+		if err != nil {
+			log.Printf("api: offsite %s: replicate start: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+			return
+		}
+		if err := s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), localRepo); err != nil {
+			log.Printf("api: offsite %s: manual replication failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
+		}
+	}()
+	return nil
+}
+
 // ScheduledReplicateOffsite runs a scheduled off-site replication and, unlike the
 // interactive ReplicateOffsite (whose error the UI surfaces directly), NOTIFIES on
 // failure. A scheduled replication that silently failed would let the off-site
@@ -1888,18 +1929,25 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	if err != nil {
 		return false, false, err
 	}
-	// Bound the probe so a dead backend fails fast instead of hanging the request
-	// (cat config over an unreachable REST server can otherwise stall).
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+	// Bound each probe so a dead backend fails fast instead of hanging the
+	// request (cat config over an unreachable REST server can otherwise stall).
+	// PER attempt, not shared: a cold sftp connection over a VPN (Tailscale
+	// tunnel + host-key pinning) can eat a shared budget on the first try and
+	// leave the second probe zero time — reporting a reachable repo as
+	// unreachable (#93).
+	probe := func(m restic.Mode) bool {
+		pctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		return s.engine.RepoOpens(pctx, repo, m)
+	}
 	mode := s.ModeFor(settings)
-	if s.engine.RepoOpens(ctx, repo, mode) {
+	if probe(mode) {
 		return true, true, nil
 	}
 	// Opens under the opposite encryption mode → the repo exists and is reachable,
 	// just created under the other Encryption setting; still reachable + initialised
 	// for this probe (EnsureRepo surfaces the mismatch on the next backup).
-	if s.engine.RepoOpens(ctx, repo, s.oppositeMode(mode)) {
+	if probe(s.oppositeMode(mode)) {
 		return true, true, nil
 	}
 	return false, false, nil

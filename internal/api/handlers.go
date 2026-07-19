@@ -1390,8 +1390,12 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleReplicateOffsite replicates a domain's local repo to its off-site repo on
-// demand (restic copy). POST /api/offsite/{domain}
+// handleReplicateOffsite STARTS an on-demand replication of a domain's local
+// repo to its off-site repo (restic copy) and returns immediately — the copy
+// runs in the background (a long first replication used to die when the
+// browser/proxy timed the synchronous request out and cancelled its context,
+// #93). Config errors and a busy domain still report synchronously.
+// POST /api/offsite/{domain}
 func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
@@ -1400,11 +1404,11 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.ReplicateOffsite(r.Context(), domain); err != nil {
+	if err := h.svc.StartReplicateOffsite(domain); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
 // handleTestOffsite probes a domain's off-site repo (reachable / initialised)
