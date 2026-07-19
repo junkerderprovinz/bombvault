@@ -19,7 +19,7 @@
 <br>
 
 <p align="center">
-Your Unraid data, <b>sealed in a vault</b>. Armed with a fuse.<br>
+Your Unraid data, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
 BombVault backs up Docker containers, KVM VMs, appdata, the Unraid flash config — and even itself —
 and restores everything with a single click. Containers <b>automatically reappear in the
 Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
@@ -40,7 +40,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b>, <b>Unraid flash</b>, <b>app configuration</b> and <b>files/folders</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone/SSH-sftp), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, <b>restore from another BombVault repo</b> (one-time, read-only), <b>self-healing maintenance</b> (orphaned-lock auto-recovery), and <b>notifications</b> (webhook / Matrix / email / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
+  <b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b>, <b>Unraid flash</b>, <b>app configuration</b> and <b>files/folders</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone/SSH-sftp), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, <b>restore from another BombVault repo</b> (one-time, read-only), <b>self-healing maintenance</b> (orphaned-lock auto-recovery), and <b>notifications</b> (webhook / Matrix / email / Healthchecks / Unraid-native / Prometheus). A few niceties remain on the <b>roadmap</b> — marked <i>(planned)</i> below.
 </p>
 
 <br>
@@ -68,7 +68,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), and its own `/config` (settings database + off-site credentials).
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups in the background (per domain) from one place — the **Schedules** tab under Settings — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
-- **Optionally updates a container right after its backup** — flip on *Update after successful backup* on a container (advanced, off by default) and BombVault pulls the newest image and recreates it, but only when there's actually a newer image. A fresh restore point always exists first, so a bad update is one restore away.
+- **Optionally updates a container right after its backup** — flip on *Update after successful backup* on a container (advanced, off by default) and BombVault pulls the newest image and recreates it, but only when there's actually a newer image. A fresh restore point always exists first, so a bad update is one restore away. Optional extras: a **notification per updated container** so you know to check it, and **image cleanup** (Settings → Paths & Storage) that removes the superseded image afterwards — a base image shared by other containers is never deleted.
 
 The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#11-credits).
 
@@ -139,22 +139,25 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 ### Storage & scheduling
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
-- Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
-- **SSH targets need nothing installed on the far side** — `sftp:` only requires an SSH server, so a bare Raspberry Pi (no Docker, no restic) works as an off-site destination. BombVault connects with its own persistent SSH keypair: add the public key shown under **Settings → VMs** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`, then use `sftp:user@host:/path/to/repo`. Host keys are pinned automatically on first contact.
+- Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Off-site → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
+- **SSH targets need nothing installed on the far side** — `sftp:` only requires an SSH server, so a bare Raspberry Pi (no Docker, no restic) works as an off-site destination. BombVault connects with its own persistent SSH keypair: add the public key shown under **Settings → System → VM Backup over SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`, then use `sftp:user@host:/path/to/repo`. Host keys are pinned automatically on first contact.
 - **Off-site copy (local + remote):** keep the fast local backup *and* add an off-site replica. Set a second repo per domain on the **Settings → Off-site** tab; BombVault replicates new snapshots there with `restic copy` (best-effort — an off-site hiccup never fails the local backup). The local repo stays primary. Each domain has its own **off-site schedule** (edited alongside every other schedule on the **Settings → Schedules** tab): leave it blank to replicate after every local backup, or set a cadence (e.g. `weekly Sun 03:00`) to ship off-site less often than you back up locally — plus a **Replicate now** button for on-demand runs. While a replication is in flight, an **off-site replication indicator** shows which domain is running (on its page and the Dashboard); it is an active indicator, not a percentage bar, since `restic copy` exposes no machine-readable progress.
-- Configurable **retention** (Settings → Retention): keep-last / daily / weekly / monthly, pruned automatically after each backup. Set it **per source** — a separate policy for the **local** repo and the **off-site** repo, so you can keep off-site copies longer as an archive. Leave the off-site policy all-zero to never auto-trim off-site snapshots.
-- Per-domain scheduling (daily / weekly / cron); per-backup-group scheduling is *(planned)*.
-- **Off-site bandwidth limits** (Settings → Off-site copy) — cap the `restic` upload/download rate so replication doesn't saturate your WAN.
+- Configurable **retention**: keep-last / daily / weekly / monthly, pruned automatically after each backup. Set it **per source** — the **local** policy sits on Settings → Paths & Storage next to the backup paths it prunes, the **off-site** policy on Settings → Off-site, so you can keep off-site copies longer as an archive. Leave the off-site policy all-zero to never auto-trim off-site snapshots.
+- Per-domain scheduling (daily / weekly incl. multi-day sets / every-N-days / raw cron), all edited in one place on Settings → Schedules; per-backup-group scheduling is *(planned)*.
+- **Off-site bandwidth limits** (Settings → Off-site) — cap the `restic` upload/download rate so replication doesn't saturate your WAN.
+- **Backup folders stay copyable off-box** — restic writes local repos owner-only (`0700`/`0600`), which over an SMB share can lock a non-root sync user out of the whole folder. After every backup BombVault relaxes the local repo tree to dirs `0755` / files `0644` (repos are encrypted, so nothing is exposed) and heals folders an older version locked down. Recovery definitions live **inside** each repo (`<repo>/def`, `<repo>/vm-def`), so a copied repo folder is fully self-contained.
 
 ### Insight, verification & monitoring
 
 - **Protection status (RPO)** — the Dashboard shows a green / amber / red indicator per domain comparing the last successful backup against its schedule, so an overdue backup turns red instead of hiding in a log.
 - **Backup-health heatmap** — a GitHub-contributions-style calendar of per-day backup outcomes per domain (green = all OK, red = a failure), with a Containers / VMs / Flash / Config / Files toggle.
+- **Run timing everywhere** — every run-history entry reads `start → end (duration)`, and each container and VM carries its own **Recent runs** list right on its page, so per-item timing never hides in a log.
+- **A dashboard you can rearrange** — the pencil icon in the top-right toggles customize mode: drag the cards into your order (or nudge them up/down) and hide the ones you don't need; the layout is saved per browser.
 - **Repository size & dedup trend** — current repo size, deduplication ratio and snapshot count per domain, with a sparkline of how storage grows over time.
-- **Restore-verification drills** — BombVault periodically *proves* your backups are restorable (`restic check --read-data-subset`, bounded — never a disk-filling full restore) and shows a **"last verified restorable"** badge per domain (Settings → Verify).
+- **Restore-verification drills** — BombVault periodically *proves* your backups are restorable (`restic check --read-data-subset`, bounded — never a disk-filling full restore) and shows a **"last verified restorable"** badge per domain (Settings → Integrity; the drill cadence lives with every other schedule on Settings → Schedules).
 - **Self-healing operations** — an orphaned restic lock (left behind when the container is updated or restarted mid-operation) used to fail the next verify or retention prune with "repository is already locked". Both now detect the provably orphaned lock, force-clear it and retry once, automatically; a real problem still surfaces. Retention itself is **identity-stable** — snapshots are pruned per item, immune to path or host changes — and a retention failure sends a **notification** instead of hiding in the container log.
 - **Encryption-key recovery kit** — one-click download of the master key, the derived restic password and the exact repo locations + commands, so you can restore **without a running BombVault**. A Dashboard reminder nags until you've stored it.
-- **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)** and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always. **Healthchecks** gets the full lifecycle — a `/start` ping when a backup begins, then success / `/fail` on done — whenever a URL is set, independent of that policy, so it measures duration, catches a run that started but never finished, and stays green on success even with failure-only notifications. You can also give each domain (containers / VMs / flash / config / files) its own Healthchecks check for per-domain runtime and history, or leave them blank to share one global check.
+- **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)** and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always. A scheduled run of many containers/VMs can send **one "N of M succeeded" summary** per run instead of a message per item (off by default — 45 containers no longer means 45 emails); manual backups still notify per item. **Healthchecks** gets the full lifecycle — a `/start` ping when a backup begins, then success / `/fail` on done — whenever a URL is set, independent of that policy, so it measures duration, catches a run that started but never finished, and stays green on success even with failure-only notifications. You can also give each domain (containers / VMs / flash / config / files) its own Healthchecks check for per-domain runtime and history, or leave them blank to share one global check.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 
 ### Ransomware protection
@@ -178,6 +181,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **VM plain export** — VMs have the same **Export (plain tar)**: `<name>.tar.gz` of the disk image(s) plus `<name>.xml` (the persistent domain definition), restorable with `virsh define` + the disk, no BombVault or restic needed.
 - **Restore to an alternate folder** — restore a container snapshot (or individual files) to a different path instead of in place, for cloning or inspection.
 - **Snapshot diff & tags** — compare two snapshots to see what changed (files added / changed / removed and the size delta), and tag snapshots to filter them.
+- **What's new after an update** — the release notes pop up once per new version, served from notes embedded in the binary, so the dialog works offline and without GitHub rate limits.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **26 languages** with a flag picker.
@@ -193,7 +197,7 @@ Browser ──HTTPS──> BombVault container
                    │
                    ├─ /var/run/docker.sock  ─> Docker API (container stop/inspect/recreate)
                    ├─ qemu+ssh://host       ─> libvirt / KVM on the HOST over SSH (no mount)
-                   ├─ /mnt/user/            ─> appdata, VM disks + restic repos (read/write)
+                   ├─ /mnt/ ─> /host/user   ─> appdata, VM disks + restic repos (read/write)
                    ├─ /boot/ ─> /host/boot  ─> Unraid flash backup (whole USB)
                    ├─ /config               ─> BombVault's own settings + credentials (self-backup)
                    └─ <repo path>           ─> restic repository (local or remote: rclone/s3/rest/sftp)
@@ -255,7 +259,7 @@ key derived from `APP_KEY`.
 > the VM Manager owns those paths and toggling "Enable VMs" can leave libvirt
 > unable to start). Instead it runs `virsh` **on the host over SSH**
 > (`qemu+ssh://`), so it can never affect your host VM Manager. Setup:
-> **Settings → VM Backup over SSH** → copy the shown public key → append it to
+> **Settings → System → VM Backup over SSH** → copy the shown public key → append it to
 > Unraid's `/root/.ssh/authorized_keys` → click **Test connection**. The template
 > adds `--add-host=host.docker.internal:host-gateway` so the container reaches the
 > host; set `LIBVIRT_HOST` to your Unraid LAN IP if that name doesn't resolve (e.g.
@@ -289,15 +293,17 @@ Or add the template manually:
 | Variable | Required | Description |
 |---|---|---|
 | `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. **Keep this safe** — losing it makes encrypted backups unrecoverable. |
-| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; set to the host LAN IP on a custom `br0.x` network). |
+| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; the template pre-fills a LAN-IP placeholder — use your Unraid LAN IP, required on a custom `br0.x` network). |
 | `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
 | `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
-| `PORT` | No | HTTP port (default `3000`). |
-| `HTTPS_PORT` | No | HTTPS port (default `3443`; the template maps it to `3001`). |
-| `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only. |
+| `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
+| `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
+| `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
+| `HOST_SOURCE_ROOT` | No | The host path mounted as **Host Data** (default `/mnt`). BombVault translates the bind-mount sources Docker reports (e.g. `/mnt/user/appdata/x`) into paths under this mount — change only if you mounted a different host root. |
+| `BOMBVAULT_SELF_CONTAINER` | No | The name of the BombVault container itself, so it never backs up (and thus stops) itself (default `BombVault`; auto-detected via the hostname on bridge networking). |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket, your appdata and a backup directory as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash,config,files}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§6](#6-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
+Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) as shown in the CA template — backup *sources* and *destinations* both live under Host Data, and it is mounted **rslave** so a remote share that mounts after the container starts (e.g. under `/mnt/remotes`) becomes visible without a restart. **Backup repository paths are configured in the app** (Settings → Backup paths) — not via env — and default to `/mnt/user/bombvault/{container,vms,flash,config,files}`, created on the first backup (change the location any time in Settings). VM backup needs no mount: see [§6](#6-requirements) and [docs/vm-backup-ssh-setup.md](docs/vm-backup-ssh-setup.md).
 
 > [!NOTE]
 > **Host integration check:** open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
