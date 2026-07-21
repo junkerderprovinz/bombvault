@@ -19,7 +19,7 @@ The restore is the star: a backed-up container or VM reappears in the Docker or 
   <WebUI>https://[IP]:[PORT:3443]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-apps/main/bombvault/my-BombVault.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png?v=4</Icon>
-  <ExtraParams>--restart unless-stopped --add-host=host.docker.internal:host-gateway</ExtraParams>
+  <ExtraParams>--restart unless-stopped --hostname=bombvault --add-host=host.docker.internal:host-gateway</ExtraParams>
   <DateInstalled/>
   <DonateText>If this template helps you, consider buying me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/junkerderprovinz</DonateLink>
@@ -118,7 +118,7 @@ The restore is the star: a backed-up container or VM reappears in the Docker or 
     Target="BOMBVAULT_SELF_CONTAINER"
     Default="BombVault"
     Mode=""
-    Description="The name of THIS container, so BombVault never backs up (and thus stops) itself. Defaults to BombVault and normally needs no change — auto-detected via the hostname on bridge networking. Set it to match the container name if you renamed the container or run it with host networking."
+    Description="The name of THIS container, so BombVault never backs up (and thus stops) itself. Defaults to BombVault and normally needs no change — this value is used directly. The container hostname is pinned to 'bombvault' (for stable restic repo locks), so if you CLEAR this variable or run with host networking, set it to the exact container name (hostname-based auto-detection no longer applies)."
     Type="Variable"
     Display="advanced"
     Required="false"
