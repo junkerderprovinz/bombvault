@@ -930,8 +930,23 @@ func isBoilerplateReason(line string) bool {
 		strings.Contains(l, "for further troubleshooting")
 }
 
+// subcommandValueFlags are restic's GLOBAL flags that take a value and are
+// placed before the subcommand word (see repoFlag, retryLockFlags, limitFlags):
+// -r <repo>, --retry-lock <duration> (every lock-taking op), and
+// --limit-upload/--limit-download <KiB/s> (CopyArgs). Without skipping their
+// values, subcommand() below would misidentify the flag's VALUE (e.g. "5m",
+// a limit number) as the subcommand name, since it is otherwise just "the
+// first arg not starting with -".
+var subcommandValueFlags = map[string]bool{
+	"-r":               true,
+	"--retry-lock":     true,
+	"--limit-upload":   true,
+	"--limit-download": true,
+}
+
 // subcommand extracts the subcommand name from an args slice for use in error
-// messages (first arg that is not a flag or -r value).
+// messages (first arg that is not a flag or the value of a preceding
+// value-taking global flag — see subcommandValueFlags).
 func subcommand(args []string) string {
 	skip := false
 	for _, a := range args {
@@ -939,7 +954,7 @@ func subcommand(args []string) string {
 			skip = false
 			continue
 		}
-		if a == "-r" {
+		if subcommandValueFlags[a] {
 			skip = true
 			continue
 		}

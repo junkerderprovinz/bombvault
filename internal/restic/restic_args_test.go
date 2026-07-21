@@ -1,22 +1,20 @@
-package restic_test
+package restic
 
 import (
 	"reflect"
 	"testing"
-
-	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 func TestInitArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.InitArgs("/repo", restic.Mode{Encrypted: true, Password: "pw"})
+		got := InitArgs("/repo", Mode{Encrypted: true, Password: "pw"})
 		want := []string{"-r", "/repo", "init"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted", func(t *testing.T) {
-		got := restic.InitArgs("/repo", restic.Mode{Encrypted: false})
+		got := InitArgs("/repo", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "init", "--insecure-no-password"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -26,14 +24,14 @@ func TestInitArgs(t *testing.T) {
 
 func TestCatConfigArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.CatConfigArgs("/repo", restic.Mode{Encrypted: true, Password: "pw"})
+		got := CatConfigArgs("/repo", Mode{Encrypted: true, Password: "pw"})
 		want := []string{"-r", "/repo", "cat", "config"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
-		got := restic.CatConfigArgs("/repo", restic.Mode{Encrypted: false})
+		got := CatConfigArgs("/repo", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "cat", "config", "--insecure-no-password"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -47,21 +45,21 @@ func TestCatConfigArgs(t *testing.T) {
 // default (locking) mode omits it.
 func TestNoLockArgs(t *testing.T) {
 	t.Run("cat config", func(t *testing.T) {
-		got := restic.CatConfigArgs("/repo", restic.Mode{Encrypted: true, Password: "pw", NoLock: true})
+		got := CatConfigArgs("/repo", Mode{Encrypted: true, Password: "pw", NoLock: true})
 		want := []string{"-r", "/repo", "cat", "config", "--no-lock"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("restore path", func(t *testing.T) {
-		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: true, NoLock: true})
+		got := RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: true, NoLock: true})
 		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/p", "--", "abc123:/p"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("restore include", func(t *testing.T) {
-		got := restic.RestoreIncludeArgs("/repo", "abc123", "/p", "/", restic.Mode{Encrypted: true, NoLock: true})
+		got := RestoreIncludeArgs("/repo", "abc123", "/p", "/", Mode{Encrypted: true, NoLock: true})
 		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/", "--include", "/p", "--", "abc123"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -69,9 +67,9 @@ func TestNoLockArgs(t *testing.T) {
 	})
 	t.Run("default mode does not add --no-lock", func(t *testing.T) {
 		for _, got := range [][]string{
-			restic.CatConfigArgs("/repo", restic.Mode{Encrypted: true}),
-			restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: true}),
-			restic.RestoreIncludeArgs("/repo", "abc123", "/p", "/", restic.Mode{Encrypted: true}),
+			CatConfigArgs("/repo", Mode{Encrypted: true}),
+			RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: true}),
+			RestoreIncludeArgs("/repo", "abc123", "/p", "/", Mode{Encrypted: true}),
 		} {
 			for _, a := range got {
 				if a == "--no-lock" {
@@ -84,17 +82,17 @@ func TestNoLockArgs(t *testing.T) {
 
 func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("legacy repo-wide pass: paths grouping, emits only set dimensions + prune", func(t *testing.T) {
-		got := restic.ForgetPolicyArgs("/repo",
-			restic.RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, restic.Mode{Encrypted: true}, "", true)
+		got := ForgetPolicyArgs("/repo",
+			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, "", true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag, full policy", func(t *testing.T) {
-		got := restic.ForgetPolicyArgs("/repo",
-			restic.RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
-			restic.Mode{Encrypted: false}, "", true)
+		got := ForgetPolicyArgs("/repo",
+			RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
+			Mode{Encrypted: false}, "", true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--insecure-no-password", "--group-by", "paths",
 			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--prune"}
 		if !reflect.DeepEqual(got, want) {
@@ -106,8 +104,8 @@ func TestForgetPolicyArgs(t *testing.T) {
 	// group — old snapshots whose path set changed can no longer freeze in a
 	// stale paths-group that never receives new snapshots.
 	t.Run("tag-scoped: --tag + ungrouped, with prune", func(t *testing.T) {
-		got := restic.ForgetPolicyArgs("/repo",
-			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{Encrypted: true}, "container:plex", true)
+		got := ForgetPolicyArgs("/repo",
+			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, "container:plex", true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "container:plex", "--group-by", "",
 			"--keep-last", "5", "--prune"}
 		if !reflect.DeepEqual(got, want) {
@@ -115,8 +113,8 @@ func TestForgetPolicyArgs(t *testing.T) {
 		}
 	})
 	t.Run("tag-scoped batch pass: no prune flag", func(t *testing.T) {
-		got := restic.ForgetPolicyArgs("/repo",
-			restic.RetentionPolicy{KeepDaily: 7}, restic.Mode{Encrypted: true}, "vm:win11", false)
+		got := ForgetPolicyArgs("/repo",
+			RetentionPolicy{KeepDaily: 7}, Mode{Encrypted: true}, "vm:win11", false)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
 			"--keep-daily", "7"}
 		if !reflect.DeepEqual(got, want) {
@@ -131,14 +129,14 @@ func TestForgetPolicyArgs(t *testing.T) {
 // waited out instead of failing immediately (#94/#96).
 func TestForgetArgs(t *testing.T) {
 	t.Run("encrypted, no prune", func(t *testing.T) {
-		got := restic.ForgetArgs("/repo", []string{"abc123", "def456"}, false, restic.Mode{Encrypted: true})
+		got := ForgetArgs("/repo", []string{"abc123", "def456"}, false, Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--", "abc123", "def456"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted with prune", func(t *testing.T) {
-		got := restic.ForgetArgs("/repo", []string{"abc123"}, true, restic.Mode{Encrypted: false})
+		got := ForgetArgs("/repo", []string{"abc123"}, true, Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--insecure-no-password", "--prune", "--", "abc123"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -151,14 +149,14 @@ func TestForgetArgs(t *testing.T) {
 // failing immediately (#94/#96).
 func TestPruneArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.PruneArgs("/repo", restic.Mode{Encrypted: true})
+		got := PruneArgs("/repo", Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted", func(t *testing.T) {
-		got := restic.PruneArgs("/repo", restic.Mode{Encrypted: false})
+		got := PruneArgs("/repo", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "prune", "--insecure-no-password"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -167,38 +165,38 @@ func TestPruneArgs(t *testing.T) {
 }
 
 func TestCheckArgs(t *testing.T) {
-	if got, want := restic.CheckArgs("/repo", restic.Mode{Encrypted: true}), []string{"-r", "/repo", "--retry-lock", "5m", "check"}; !reflect.DeepEqual(got, want) {
+	if got, want := CheckArgs("/repo", Mode{Encrypted: true}), []string{"-r", "/repo", "--retry-lock", "5m", "check"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
-	if got, want := restic.CheckArgs("/repo", restic.Mode{Encrypted: false}), []string{"-r", "/repo", "--retry-lock", "5m", "check", "--insecure-no-password"}; !reflect.DeepEqual(got, want) {
+	if got, want := CheckArgs("/repo", Mode{Encrypted: false}), []string{"-r", "/repo", "--retry-lock", "5m", "check", "--insecure-no-password"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
 }
 
 func TestCheckDataArgs(t *testing.T) {
 	t.Run("encrypted builds read-data-subset", func(t *testing.T) {
-		got := restic.CheckDataArgs("/repo", 5, restic.Mode{Encrypted: true})
+		got := CheckDataArgs("/repo", 5, Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "check", "--read-data-subset=5%"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
-		got := restic.CheckDataArgs("/repo", 10, restic.Mode{Encrypted: false})
+		got := CheckDataArgs("/repo", 10, Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "check", "--read-data-subset=10%", "--insecure-no-password"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("percent clamps below 1 up to 1", func(t *testing.T) {
-		got := restic.CheckDataArgs("/repo", 0, restic.Mode{Encrypted: true})
+		got := CheckDataArgs("/repo", 0, Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "check", "--read-data-subset=1%"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("percent clamps above 100 down to 100", func(t *testing.T) {
-		got := restic.CheckDataArgs("/repo", 250, restic.Mode{Encrypted: true})
+		got := CheckDataArgs("/repo", 250, Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "check", "--read-data-subset=100%"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -209,13 +207,13 @@ func TestCheckDataArgs(t *testing.T) {
 func TestIsRemoteRepo(t *testing.T) {
 	remote := []string{"rclone:b2:my-bucket/path", "s3:s3.amazonaws.com/bucket", "sftp:user@host:/srv", "b2:bucket", "rest:https://host/"}
 	for _, r := range remote {
-		if !restic.IsRemoteRepo(r) {
+		if !IsRemoteRepo(r) {
 			t.Errorf("expected %q to be remote", r)
 		}
 	}
 	local := []string{"user/bombvault/container", "/host/user/x", "backups/flash", ""}
 	for _, l := range local {
-		if restic.IsRemoteRepo(l) {
+		if IsRemoteRepo(l) {
 			t.Errorf("expected %q to be local", l)
 		}
 	}
@@ -226,7 +224,7 @@ func TestLooksLikeUnprefixedRemote(t *testing.T) {
 	// mistake of omitting the rclone: prefix.
 	unprefixed := []string{"BackBlaze:BombVault-test", "MyRemote:bucket", "gdrive:folder/sub"}
 	for _, u := range unprefixed {
-		if !restic.LooksLikeUnprefixedRemote(u) {
+		if !LooksLikeUnprefixedRemote(u) {
 			t.Errorf("expected %q to look like an unprefixed remote", u)
 		}
 	}
@@ -237,23 +235,23 @@ func TestLooksLikeUnprefixedRemote(t *testing.T) {
 		"user/bombvault/container", "/host/user/x", "backups/flash", "",
 	}
 	for _, o := range ok {
-		if restic.LooksLikeUnprefixedRemote(o) {
+		if LooksLikeUnprefixedRemote(o) {
 			t.Errorf("expected %q NOT to be flagged as an unprefixed remote", o)
 		}
 	}
 }
 
 func TestRetentionPolicyAny(t *testing.T) {
-	if (restic.RetentionPolicy{}).Any() {
+	if (RetentionPolicy{}).Any() {
 		t.Fatal("empty policy must be inert")
 	}
-	if !(restic.RetentionPolicy{KeepWeekly: 1}).Any() {
+	if !(RetentionPolicy{KeepWeekly: 1}).Any() {
 		t.Fatal("a set dimension must make the policy active")
 	}
 }
 
 func TestBackupArgs(t *testing.T) {
-	got := restic.BackupArgs("/repo", []string{"-weird", "/p"}, []string{"container:plex"}, restic.Mode{Encrypted: true})
+	got := BackupArgs("/repo", []string{"-weird", "/p"}, []string{"container:plex"}, Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex", "--", "-weird", "/p"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -261,7 +259,7 @@ func TestBackupArgs(t *testing.T) {
 }
 
 func TestBackupArgsUnencrypted(t *testing.T) {
-	got := restic.BackupArgs("/repo", []string{"/src"}, []string{"t"}, restic.Mode{Encrypted: false})
+	got := BackupArgs("/repo", []string{"/src"}, []string{"t"}, Mode{Encrypted: false})
 	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json", "--host", "bombvault", "--tag", "t", "--", "/src"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -271,7 +269,7 @@ func TestBackupArgsUnencrypted(t *testing.T) {
 func TestBackupArgsExcludes(t *testing.T) {
 	// The flash backup passes ".git" so it is dropped by restic --exclude, placed
 	// after the --tag flags and before the -- path separator (#31).
-	got := restic.BackupArgs("/repo", []string{"/host/boot"}, []string{"flash"}, restic.Mode{Encrypted: true}, ".git")
+	got := BackupArgs("/repo", []string{"/host/boot"}, []string{"flash"}, Mode{Encrypted: true}, ".git")
 	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "flash", "--exclude", ".git", "--", "/host/boot"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -279,7 +277,7 @@ func TestBackupArgsExcludes(t *testing.T) {
 }
 
 func TestDumpZipArgsEncrypted(t *testing.T) {
-	got := restic.DumpZipArgs("/repo", "abc123", "/host/boot", restic.Mode{Encrypted: true})
+	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -287,7 +285,7 @@ func TestDumpZipArgsEncrypted(t *testing.T) {
 }
 
 func TestDumpZipArgsNoPassword(t *testing.T) {
-	got := restic.DumpZipArgs("/repo", "abc123", "/host/boot", restic.Mode{Encrypted: false})
+	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: false})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--insecure-no-password", "--", "abc123:/host/boot", "/"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -295,7 +293,7 @@ func TestDumpZipArgsNoPassword(t *testing.T) {
 }
 
 func TestCopyArgsEncrypted(t *testing.T) {
-	got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{}, restic.Mode{Encrypted: true})
+	got := CopyArgs("/dest", "/src", nil, Limits{}, Mode{Encrypted: true})
 	want := []string{"-r", "/dest", "--retry-lock", "5m", "copy", "--from-repo", "/src"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -303,7 +301,7 @@ func TestCopyArgsEncrypted(t *testing.T) {
 }
 
 func TestCopyArgsNoPasswordWithIDs(t *testing.T) {
-	got := restic.CopyArgs("/dest", "/src", []string{"abc123"}, restic.Limits{}, restic.Mode{Encrypted: false})
+	got := CopyArgs("/dest", "/src", []string{"abc123"}, Limits{}, Mode{Encrypted: false})
 	want := []string{"-r", "/dest", "--retry-lock", "5m", "copy", "--from-repo", "/src", "--insecure-no-password", "--from-insecure-no-password", "--", "abc123"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
@@ -312,21 +310,21 @@ func TestCopyArgsNoPasswordWithIDs(t *testing.T) {
 
 func TestCopyArgsLimits(t *testing.T) {
 	t.Run("both limits set prepend global flags before the subcommand", func(t *testing.T) {
-		got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{UploadKBps: 1024, DownloadKBps: 512}, restic.Mode{Encrypted: true})
+		got := CopyArgs("/dest", "/src", nil, Limits{UploadKBps: 1024, DownloadKBps: 512}, Mode{Encrypted: true})
 		want := []string{"-r", "/dest", "--retry-lock", "5m", "--limit-upload", "1024", "--limit-download", "512", "copy", "--from-repo", "/src"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("upload only", func(t *testing.T) {
-		got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{UploadKBps: 2048}, restic.Mode{Encrypted: true})
+		got := CopyArgs("/dest", "/src", nil, Limits{UploadKBps: 2048}, Mode{Encrypted: true})
 		want := []string{"-r", "/dest", "--retry-lock", "5m", "--limit-upload", "2048", "copy", "--from-repo", "/src"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("zero limits omit the flags", func(t *testing.T) {
-		got := restic.CopyArgs("/dest", "/src", nil, restic.Limits{}, restic.Mode{Encrypted: true})
+		got := CopyArgs("/dest", "/src", nil, Limits{}, Mode{Encrypted: true})
 		want := []string{"-r", "/dest", "--retry-lock", "5m", "copy", "--from-repo", "/src"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -336,14 +334,14 @@ func TestCopyArgsLimits(t *testing.T) {
 
 func TestRestorePathArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.RestorePathArgs("/repo", "abc123", "/host/user/user/appdata/plex", restic.Mode{Encrypted: true})
+		got := RestorePathArgs("/repo", "abc123", "/host/user/user/appdata/plex", Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "restore", "--json", "--target", "/host/user/user/appdata/plex", "--", "abc123:/host/user/user/appdata/plex"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted", func(t *testing.T) {
-		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: false})
+		got := RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--target", "/p", "--", "abc123:/p"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -358,22 +356,22 @@ func TestRestorePathArgs(t *testing.T) {
 // is exactly the target==subtree special case.
 func TestRestoreSubtreeToArgs(t *testing.T) {
 	t.Run("subtree rooted, target is a different folder", func(t *testing.T) {
-		got := restic.RestoreSubtreeToArgs("/repo", "abc123", "/host/user/user/appdata/plex", "/host/user/restore/plex", restic.Mode{Encrypted: true})
+		got := RestoreSubtreeToArgs("/repo", "abc123", "/host/user/user/appdata/plex", "/host/user/restore/plex", Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "restore", "--json", "--target", "/host/user/restore/plex", "--", "abc123:/host/user/user/appdata/plex"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted + no-lock", func(t *testing.T) {
-		got := restic.RestoreSubtreeToArgs("/repo", "abc123", "/p", "/t", restic.Mode{Encrypted: false, NoLock: true})
+		got := RestoreSubtreeToArgs("/repo", "abc123", "/p", "/t", Mode{Encrypted: false, NoLock: true})
 		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--no-lock", "--json", "--target", "/t", "--", "abc123:/p"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("RestorePathArgs is the target==subtree special case", func(t *testing.T) {
-		got := restic.RestorePathArgs("/repo", "abc123", "/p", restic.Mode{Encrypted: true})
-		want := restic.RestoreSubtreeToArgs("/repo", "abc123", "/p", "/p", restic.Mode{Encrypted: true})
+		got := RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: true})
+		want := RestoreSubtreeToArgs("/repo", "abc123", "/p", "/p", Mode{Encrypted: true})
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("RestorePathArgs must equal RestoreSubtreeToArgs with target==subtree; got %v want %v", got, want)
 		}
@@ -387,14 +385,14 @@ func TestRestoreSubtreeToArgs(t *testing.T) {
 // the absolute /host/user/… path (issue #62).
 func TestRestoreSubtreeIncludeArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.RestoreSubtreeIncludeArgs("/repo", "abc123", "/host/user/appdata/documents", "/reports/2024.pdf", "/host/user/restore/docs", restic.Mode{Encrypted: true})
+		got := RestoreSubtreeIncludeArgs("/repo", "abc123", "/host/user/appdata/documents", "/reports/2024.pdf", "/host/user/restore/docs", Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "restore", "--json", "--target", "/host/user/restore/docs", "--include", "/reports/2024.pdf", "--", "abc123:/host/user/appdata/documents"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted + no-lock", func(t *testing.T) {
-		got := restic.RestoreSubtreeIncludeArgs("/repo", "abc123", "/p", "/f", "/t", restic.Mode{Encrypted: false, NoLock: true})
+		got := RestoreSubtreeIncludeArgs("/repo", "abc123", "/p", "/f", "/t", Mode{Encrypted: false, NoLock: true})
 		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--no-lock", "--json", "--target", "/t", "--include", "/f", "--", "abc123:/p"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -404,14 +402,14 @@ func TestRestoreSubtreeIncludeArgs(t *testing.T) {
 
 func TestSnapshotsArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: true})
+		got := SnapshotsArgs("/repo", Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "snapshots", "--no-lock", "--json"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted", func(t *testing.T) {
-		got := restic.SnapshotsArgs("/repo", restic.Mode{Encrypted: false})
+		got := SnapshotsArgs("/repo", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "snapshots", "--insecure-no-password", "--no-lock", "--json"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -421,7 +419,7 @@ func TestSnapshotsArgs(t *testing.T) {
 
 func TestDiffArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.DiffArgs("/repo", "aaaa1111", "bbbb2222", restic.Mode{Encrypted: true})
+		got := DiffArgs("/repo", "aaaa1111", "bbbb2222", Mode{Encrypted: true})
 		// Read-only, like SnapshotsArgs: --no-lock sits with --json so this never
 		// blocks a concurrent backup/forget --prune (#94/#96).
 		want := []string{"-r", "/repo", "diff", "--no-lock", "--json", "--", "aaaa1111", "bbbb2222"}
@@ -430,7 +428,7 @@ func TestDiffArgs(t *testing.T) {
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
-		got := restic.DiffArgs("/repo", "aaaa1111", "bbbb2222", restic.Mode{Encrypted: false})
+		got := DiffArgs("/repo", "aaaa1111", "bbbb2222", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "diff", "--no-lock", "--json", "--insecure-no-password", "--", "aaaa1111", "bbbb2222"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -440,14 +438,14 @@ func TestDiffArgs(t *testing.T) {
 
 func TestTagAddArgs(t *testing.T) {
 	t.Run("encrypted, one tag per --add, id after --", func(t *testing.T) {
-		got := restic.TagAddArgs("/repo", "aaaa1111", []string{"keep", "milestone"}, restic.Mode{Encrypted: true})
+		got := TagAddArgs("/repo", "aaaa1111", []string{"keep", "milestone"}, Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "tag", "--add", "keep", "--add", "milestone", "--", "aaaa1111"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
-		got := restic.TagAddArgs("/repo", "aaaa1111", []string{"keep"}, restic.Mode{Encrypted: false})
+		got := TagAddArgs("/repo", "aaaa1111", []string{"keep"}, Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "tag", "--insecure-no-password", "--add", "keep", "--", "aaaa1111"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -457,7 +455,7 @@ func TestTagAddArgs(t *testing.T) {
 
 func TestStatsArgs(t *testing.T) {
 	t.Run("encrypted raw-data", func(t *testing.T) {
-		got := restic.StatsArgs("/repo", "raw-data", restic.Mode{Encrypted: true})
+		got := StatsArgs("/repo", "raw-data", Mode{Encrypted: true})
 		// Read-only, like SnapshotsArgs: --no-lock sits with --json so this never
 		// blocks a concurrent backup/forget --prune (#94/#96).
 		want := []string{"-r", "/repo", "stats", "--no-lock", "--json", "--mode", "raw-data"}
@@ -466,7 +464,7 @@ func TestStatsArgs(t *testing.T) {
 		}
 	})
 	t.Run("unencrypted restore-size adds insecure flag", func(t *testing.T) {
-		got := restic.StatsArgs("/repo", "restore-size", restic.Mode{Encrypted: false})
+		got := StatsArgs("/repo", "restore-size", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "stats", "--no-lock", "--json", "--mode", "restore-size", "--insecure-no-password"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
@@ -476,7 +474,7 @@ func TestStatsArgs(t *testing.T) {
 
 func TestStatsRestoreSizeArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
-		got := restic.StatsRestoreSizeArgs("/repo", "deadbeef", restic.Mode{Encrypted: true})
+		got := StatsRestoreSizeArgs("/repo", "deadbeef", Mode{Encrypted: true})
 		// Per-snapshot restore-size stats: `stats --mode restore-size --no-lock
 		// --json <snap>`. Read-only like SnapshotsArgs, so it takes --no-lock
 		// (#94/#96). The snapshot id goes after -- (arg-injection guard, house
@@ -487,10 +485,41 @@ func TestStatsRestoreSizeArgs(t *testing.T) {
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
-		got := restic.StatsRestoreSizeArgs("/repo", "deadbeef", restic.Mode{Encrypted: false})
+		got := StatsRestoreSizeArgs("/repo", "deadbeef", Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--no-lock", "--json", "--insecure-no-password", "--", "deadbeef"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
+}
+
+// TestSubcommandSkipsGlobalFlagValues pins that subcommand() (used to name the
+// restic subcommand in user-facing error/log messages) correctly walks past
+// EVERY value-taking global flag that a real builder places before the
+// subcommand, not just -r. retryLockFlags (added to backup/forget/check/prune/
+// copy) and limitFlags (added to copy) both sit before the subcommand word, so
+// a subcommand() that only knew about -r would return a flag's value ("5m" or
+// a limit number) instead of "backup"/"forget"/"check"/"prune"/"copy" — see the
+// --retry-lock/--limit-* regression this pins against. Built from the actual
+// argv builders (not hand-written argv) so it breaks if a future global flag is
+// added to a builder without also being taught to subcommand().
+func TestSubcommandSkipsGlobalFlagValues(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"backup", BackupArgs("repo", []string{"/x"}, nil, Mode{}), "backup"},
+		{"forget", ForgetPolicyArgs("repo", RetentionPolicy{KeepLast: 1}, Mode{}, "container:x", true), "forget"},
+		{"check", CheckArgs("repo", Mode{}), "check"},
+		{"prune", PruneArgs("repo", Mode{}), "prune"},
+		{"copy", CopyArgs("dest", "src", nil, Limits{UploadKBps: 100, DownloadKBps: 50}, Mode{}), "copy"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := subcommand(c.args); got != c.want {
+				t.Fatalf("subcommand(%v) = %q, want %q", c.args, got, c.want)
+			}
+		})
+	}
 }
