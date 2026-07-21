@@ -1741,10 +1741,11 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 
 // handleScheduleNext returns the next fire time for every currently registered
 // schedule entry, soonest first — the dashboard activity log's "up next" line.
-// GET /api/schedule/next. Unlike most GET endpoints this returns a bare JSON
-// array (not the {"ok":...} envelope): the frontend consumes it directly as
-// ScheduleNext[]. A nil scheduler (should not happen outside tests that build a
-// Handler without one) yields an empty array rather than panicking.
+// GET /api/schedule/next. Like every other GET endpoint this wraps the payload
+// in the {"ok":...} envelope (here under "runs"); the frontend's getScheduleNext
+// unwraps it via the shared fetchJSON + envelope shape. A nil scheduler (should
+// not happen outside tests that build a Handler without one) yields an empty
+// array rather than panicking.
 func (h *Handler) handleScheduleNext(w http.ResponseWriter, _ *http.Request) {
 	var runs []schedule.NextRun
 	if h.scheduler != nil {
@@ -1753,7 +1754,7 @@ func (h *Handler) handleScheduleNext(w http.ResponseWriter, _ *http.Request) {
 	if runs == nil {
 		runs = []schedule.NextRun{}
 	}
-	writeJSON(w, http.StatusOK, runs)
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"runs": runs}))
 }
 
 // handleHistory returns per-day backup outcomes for the dashboard's
