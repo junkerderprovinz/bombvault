@@ -1739,6 +1739,23 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
 }
 
+// handleScheduleNext returns the next fire time for every currently registered
+// schedule entry, soonest first — the dashboard activity log's "up next" line.
+// GET /api/schedule/next. Unlike most GET endpoints this returns a bare JSON
+// array (not the {"ok":...} envelope): the frontend consumes it directly as
+// ScheduleNext[]. A nil scheduler (should not happen outside tests that build a
+// Handler without one) yields an empty array rather than panicking.
+func (h *Handler) handleScheduleNext(w http.ResponseWriter, _ *http.Request) {
+	var runs []schedule.NextRun
+	if h.scheduler != nil {
+		runs = h.scheduler.NextRuns()
+	}
+	if runs == nil {
+		runs = []schedule.NextRun{}
+	}
+	writeJSON(w, http.StatusOK, runs)
+}
+
 // handleHistory returns per-day backup outcomes for the dashboard's
 // backup-health heatmap. GET /api/history?days=90 — days defaults to 90 and is
 // clamped to 1..366.
