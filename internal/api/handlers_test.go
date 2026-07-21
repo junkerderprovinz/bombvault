@@ -986,6 +986,50 @@ func TestRuns(t *testing.T) {
 	}
 }
 
+// TestScheduleNext verifies GET /api/schedule/next reaches the wired
+// *schedule.Scheduler and returns its upcoming fire times as a bare JSON array
+// (not the {"ok":...} envelope) — the dashboard activity log's api.ts client
+// decodes the body directly as ScheduleNext[].
+func TestScheduleNext(t *testing.T) {
+	d := &fakeServiceDocker{}
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	if err := sched.Reload(store.Settings{ContainersSchedule: "daily 03:00"}); err != nil {
+		t.Fatalf("Reload: %v", err)
+	}
+	sched.Start()
+	defer sched.Stop()
+
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/schedule/next", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+
+	var got []struct {
+		Job    string    `json:"job"`
+		Domain string    `json:"domain"`
+		Next   time.Time `json:"next"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected exactly 1 entry, got %d: %+v", len(got), got)
+	}
+	if got[0].Job != "backup" || got[0].Domain != "containers" {
+		t.Fatalf("expected job=backup domain=containers, got %+v", got[0])
+	}
+	if !got[0].Next.After(time.Now()) {
+		t.Fatalf("expected Next in the future, got %v", got[0].Next)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Browse handler tests
 // ---------------------------------------------------------------------------
