@@ -395,14 +395,19 @@ func SnapshotsArgs(repo string, m Mode) []string {
 	return args
 }
 
-// StatsArgs returns the argv slice for `restic stats --json --mode <mode>`.
-// mode is restic's --mode value: "raw-data" reports the physical
-// (deduplicated + compressed) repository size and blob count; "restore-size"
-// reports the logical size and file count of the restored data. The mode is a
-// fixed caller-chosen literal, never user input.
+// StatsArgs returns the argv slice for `restic stats --no-lock --json --mode
+// <mode>`. Like SnapshotsArgs, this is strictly read-only, so it takes
+// --no-lock: it must never collide with the exclusive lock a concurrent
+// backup/forget --prune holds (which surfaced as "repository is already
+// locked by PID N" blocking retention, #94/#96). Worst case is a marginally
+// stale number, never corruption, and the writer is never blocked. mode is
+// restic's --mode value: "raw-data" reports the physical (deduplicated +
+// compressed) repository size and blob count; "restore-size" reports the
+// logical size and file count of the restored data. The mode is a fixed
+// caller-chosen literal, never user input.
 func StatsArgs(repo, mode string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "stats", "--json", "--mode", mode)
+	args = append(args, "stats", "--no-lock", "--json", "--mode", mode)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -410,14 +415,17 @@ func StatsArgs(repo, mode string, m Mode) []string {
 }
 
 // StatsRestoreSizeArgs returns the argv for `restic stats --mode restore-size
-// --json <snapshotID>` — the logical restore size + file count of ONE snapshot
-// (vs. StatsArgs, which is repo-wide). The snapshot id goes after -- (arg-injection
-// guard); callers validate it as hex + scope it to the target first. Used by the
-// DR drill to compare restic's own accounting against an on-disk walk of the
-// restored sandbox.
+// --no-lock --json <snapshotID>` — the logical restore size + file count of ONE
+// snapshot (vs. StatsArgs, which is repo-wide). Like SnapshotsArgs, this is
+// strictly read-only, so it takes --no-lock: it must never collide with the
+// exclusive lock a concurrent backup/forget --prune holds (#94/#96) — worst
+// case a marginally stale number, never corruption, never a blocked writer.
+// The snapshot id goes after -- (arg-injection guard); callers validate it as
+// hex + scope it to the target first. Used by the DR drill to compare restic's
+// own accounting against an on-disk walk of the restored sandbox.
 func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "stats", "--mode", "restore-size", "--json")
+	args = append(args, "stats", "--mode", "restore-size", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -425,14 +433,18 @@ func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
 	return args
 }
 
-// DiffArgs returns the argv slice for `restic diff --json <snap1> <snap2>`. The
-// two snapshot ids go after -- (arg-injection guard); callers also validate them
-// as hex AND confirm both belong to the target before invoking. restic diff
-// streams one JSON object per line (many "change" lines then a final
-// "statistics" object), parsed by Diff.
+// DiffArgs returns the argv slice for `restic diff --no-lock --json <snap1>
+// <snap2>`. Like SnapshotsArgs, this is strictly read-only, so it takes
+// --no-lock: it must never collide with the exclusive lock a concurrent
+// backup/forget --prune holds (#94/#96) — worst case a marginally stale diff,
+// never corruption, never a blocked writer. The two snapshot ids go after --
+// (arg-injection guard); callers also validate them as hex AND confirm both
+// belong to the target before invoking. restic diff streams one JSON object
+// per line (many "change" lines then a final "statistics" object), parsed by
+// Diff.
 func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "diff", "--json")
+	args = append(args, "diff", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}

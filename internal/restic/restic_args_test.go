@@ -381,14 +381,16 @@ func TestSnapshotsArgs(t *testing.T) {
 func TestDiffArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.DiffArgs("/repo", "aaaa1111", "bbbb2222", restic.Mode{Encrypted: true})
-		want := []string{"-r", "/repo", "diff", "--json", "--", "aaaa1111", "bbbb2222"}
+		// Read-only, like SnapshotsArgs: --no-lock sits with --json so this never
+		// blocks a concurrent backup/forget --prune (#94/#96).
+		want := []string{"-r", "/repo", "diff", "--no-lock", "--json", "--", "aaaa1111", "bbbb2222"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
 		got := restic.DiffArgs("/repo", "aaaa1111", "bbbb2222", restic.Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "diff", "--json", "--insecure-no-password", "--", "aaaa1111", "bbbb2222"}
+		want := []string{"-r", "/repo", "diff", "--no-lock", "--json", "--insecure-no-password", "--", "aaaa1111", "bbbb2222"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -415,14 +417,16 @@ func TestTagAddArgs(t *testing.T) {
 func TestStatsArgs(t *testing.T) {
 	t.Run("encrypted raw-data", func(t *testing.T) {
 		got := restic.StatsArgs("/repo", "raw-data", restic.Mode{Encrypted: true})
-		want := []string{"-r", "/repo", "stats", "--json", "--mode", "raw-data"}
+		// Read-only, like SnapshotsArgs: --no-lock sits with --json so this never
+		// blocks a concurrent backup/forget --prune (#94/#96).
+		want := []string{"-r", "/repo", "stats", "--no-lock", "--json", "--mode", "raw-data"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted restore-size adds insecure flag", func(t *testing.T) {
 		got := restic.StatsArgs("/repo", "restore-size", restic.Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "stats", "--json", "--mode", "restore-size", "--insecure-no-password"}
+		want := []string{"-r", "/repo", "stats", "--no-lock", "--json", "--mode", "restore-size", "--insecure-no-password"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -432,16 +436,18 @@ func TestStatsArgs(t *testing.T) {
 func TestStatsRestoreSizeArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := restic.StatsRestoreSizeArgs("/repo", "deadbeef", restic.Mode{Encrypted: true})
-		// Per-snapshot restore-size stats: `stats --mode restore-size --json <snap>`.
-		// The snapshot id goes after -- (arg-injection guard, house pattern).
-		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--json", "--", "deadbeef"}
+		// Per-snapshot restore-size stats: `stats --mode restore-size --no-lock
+		// --json <snap>`. Read-only like SnapshotsArgs, so it takes --no-lock
+		// (#94/#96). The snapshot id goes after -- (arg-injection guard, house
+		// pattern).
+		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--no-lock", "--json", "--", "deadbeef"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
 		got := restic.StatsRestoreSizeArgs("/repo", "deadbeef", restic.Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--json", "--insecure-no-password", "--", "deadbeef"}
+		want := []string{"-r", "/repo", "stats", "--mode", "restore-size", "--no-lock", "--json", "--insecure-no-password", "--", "deadbeef"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
