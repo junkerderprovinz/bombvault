@@ -780,12 +780,13 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 }
 
 // forgetWithLockHeal runs a ForgetPolicy pass, clearing a genuine stale orphan
-// lock first. Every caller holds the domain lock, so BombVault — the repo's
-// sole writer — has no live operation of its own on this repo; a lock left by a
-// crashed run on THIS host (dead PID) is a stale orphan and is force-cleared.
-// forget needs an EXCLUSIVE lock, so even a stale NON-exclusive lock — which
-// lets backups keep succeeding — blocks every retention pass: one orphan used
-// to fail a whole night's retentions across all items.
+// lock first with plain `restic unlock` (removeAll=false) — restic's own stale
+// detection: a dead PID on THIS host, or any lock past restic's ~30-min age
+// threshold. forget needs an EXCLUSIVE lock, so even a stale NON-exclusive lock —
+// which lets backups keep succeeding — blocks every retention pass: one orphan
+// used to fail a whole night's retentions across all items. A live lock is NOT
+// force-removed (see the body); it carries the same bounded prior-incarnation
+// hostname gap noted on CheckDomain.
 func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error {
 	// Clear a genuine stale orphan (a dead-PID lock from a crashed run on this
 	// host) before forget, which needs an exclusive lock. A live/concurrent lock
@@ -6588,15 +6589,17 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 	mode := s.ModeFor(settings)
-	// Clear stale locks a previously interrupted run left behind before `restic check`
-	// takes its lock. This auto-heals a lock left by a crashed containerised run
-	// whose PID restic's own stale-detection can no longer verify and that is
-	// under 30 min old (#92; extends the #29 heal) — but only a GENUINE stale
-	// orphan (a dead PID on this host). A live/concurrent lock is never
-	// force-removed: we hold the domain lock for the whole verify, so no other
-	// BombVault op can collide, and `restic check` itself passes --retry-lock to
-	// wait out a transient lock from a live cross-process holder instead of
-	// force-unlocking and racing it (see the repo-lock-serialization plan).
+	// Clear a GENUINE stale orphan before `restic check` takes its lock: unlockStale
+	// runs plain `restic unlock`, which removes only locks restic itself deems stale
+	// (a dead PID on THIS host, or any lock past restic's ~30-min age threshold). A
+	// live/concurrent lock is never force-removed: we hold the domain lock for the
+	// whole verify, so no other BombVault op can collide, and `restic check` passes
+	// --retry-lock to wait out a transient cross-process lock instead of racing it.
+	// KNOWN BOUNDED GAP: an orphan from a PRIOR container incarnation carries that
+	// container's random hostname, so restic can't PID-probe it and won't call it
+	// stale until it is ~30 min old; until then check fails "already locked" (it
+	// self-heals, or a manual Unlock clears it). A stable container hostname closes
+	// this — see the repo-lock-serialization plan.
 	s.unlockStale(ctx, repo, mode)
 	return s.engine.Check(ctx, repo, mode)
 }
