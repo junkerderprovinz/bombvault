@@ -2829,6 +2829,41 @@ func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
 	}
 }
 
+// TestTagSnapshotBusyWhileDomainLocked pins issue #96: `restic tag` is an
+// exclusive-lock write, so TagSnapshot must serialize under the "containers"
+// domain lock like the other maintenance ops (verify/prune/delete) instead of
+// racing a live backup/restore straight into restic's own lock. With the domain
+// lock held by an in-flight (blocked) restore, TagSnapshot must fail fast with
+// the busy error and must never reach the engine's TagAdd.
+func TestTagSnapshotBusyWhileDomainLocked(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Hold the "containers" domain lock with an in-flight (blocked) restore.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"keep"}); err == nil || !strings.Contains(err.Error(), "currently running") {
+		t.Fatalf("TagSnapshot on a busy domain must return the busy error, got %v", err)
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("a busy TagSnapshot must never reach TagAdd, got %v", eng.taggedSnaps)
+	}
+
+	close(eng.blockRestore)   // let the restore finish
+	waitForBackupDone(t, svc) // terminal → temp-dir cleanup race-free
+}
+
 // TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
 // backups forgets only that container's snapshots (tag-filtered) and removes its
 // target from the store — the path used to clean up no-longer-installed containers.
@@ -3186,7 +3221,6 @@ type fakeResticEngine struct {
 	dumpErr         error
 	forgetPolicyErr error
 	checkErr        error
-	checkErrOnce    error    // when set, returned by the FIRST Check call only, then cleared (drives the #92 lock-then-retry heal)
 	checkDataRepos  []string // repo of each CheckData (drill) call
 	checkDataPct    []int    // subset percent of each CheckData call
 	checkDataErr    error    // returned by CheckData (drill outcome)
@@ -3388,11 +3422,6 @@ func (f *fakeResticEngine) RestoreSubtreeInclude(_ context.Context, repo, snapsh
 
 func (f *fakeResticEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
 	f.checked = append(f.checked, repo)
-	if f.checkErrOnce != nil {
-		err := f.checkErrOnce
-		f.checkErrOnce = nil
-		return err
-	}
 	return f.checkErr
 }
 
@@ -4124,39 +4153,40 @@ func TestRunDRDrillClearsStaleLockBeforeRestore(t *testing.T) {
 	}
 }
 
-// TestCheckDomainForceUnlocksAndRetriesOnLock pins #92: when `restic check` fails
-// with a repository-lock error left by a crashed/interrupted run, CheckDomain
-// force-removes ALL locks (removeAll=true) and retries the check once, so a manual
-// verify auto-heals instead of failing "repository is already locked". This is safe
-// because CheckDomain holds the in-process domain lock first, so no BombVault op can
-// legitimately hold the restic lock.
-func TestCheckDomainForceUnlocksAndRetriesOnLock(t *testing.T) {
-	eng := &fakeResticEngine{checkErrOnce: errors.New("repository is already locked exclusively")}
+// TestCheckDomainDoesNotForceUnlockOrRetryOnLock pins the reversal of #92/#94: a
+// repo-lock error from `restic check` is no longer force-unlocked (removeAll=true)
+// and retried — force-removing a lock cannot fix a live holder and would strip
+// protection off a running restic op. CheckDomain still clears a genuine stale
+// orphan (a plain, removeAll=false unlock) before the single check call, and
+// `restic check` itself now carries --retry-lock to wait out a transient
+// cross-process lock, so a lock error that still surfaces is a real, unresolved
+// failure and must be returned as-is.
+func TestCheckDomainDoesNotForceUnlockOrRetryOnLock(t *testing.T) {
+	lockErr := errors.New("repository is already locked exclusively")
+	eng := &fakeResticEngine{checkErr: lockErr}
 	svc := initRepoSvc(t, eng)
 
-	if err := svc.CheckDomain(context.Background(), "containers", ""); err != nil {
-		t.Fatalf("CheckDomain should auto-heal the stale lock and pass, got: %v", err)
+	err := svc.CheckDomain(context.Background(), "containers", "")
+	if !errors.Is(err, lockErr) {
+		t.Fatalf("a lock error must surface unchanged (no more force-unlock+retry), got %v", err)
 	}
-	// Check ran twice: the initial lock failure + the post-unlock retry.
-	if len(eng.checked) != 2 {
-		t.Fatalf("expected check to run twice (fail on lock, retry after force-unlock), got %d: %v", len(eng.checked), eng.checked)
+	if len(eng.checked) != 1 {
+		t.Fatalf("expected check to run exactly once (no retry), got %d: %v", len(eng.checked), eng.checked)
 	}
-	// A force unlock (removeAll=true) must have happened — the routine stale-clear is
-	// removeAll=false; the heal is removeAll=true.
-	sawForce := false
+	if len(eng.unlockedRepos) != 1 {
+		t.Fatalf("expected exactly one routine stale-clear unlock before check, got %v", eng.unlockedRepos)
+	}
 	for _, all := range eng.unlockRemoveAll {
 		if all {
-			sawForce = true
+			t.Fatalf("a lock error must not trigger a force unlock (removeAll=true), got %v", eng.unlockRemoveAll)
 		}
-	}
-	if !sawForce {
-		t.Fatalf("expected a force unlock (removeAll=true) before the retry, got %v", eng.unlockRemoveAll)
 	}
 }
 
 // TestCheckDomainDoesNotRetryNonLockError pins that a genuine check failure (repo
-// corruption, not a lock) is returned as-is with NO force-unlock and NO retry — the
-// auto-heal is scoped to lock conflicts only, so real integrity failures still surface.
+// corruption, not a lock) is returned as-is with NO force-unlock and NO retry —
+// CheckDomain never retries `restic check` for any error now, so real integrity
+// failures still surface just like a lock error does.
 func TestCheckDomainDoesNotRetryNonLockError(t *testing.T) {
 	eng := &fakeResticEngine{checkErr: errors.New("pack 1234abcd is damaged, run rebuild-index")}
 	svc := initRepoSvc(t, eng)
