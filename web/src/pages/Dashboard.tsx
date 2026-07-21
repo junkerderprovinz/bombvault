@@ -10,6 +10,7 @@ import type { CadenceState } from "../components/CadenceBuilder";
 import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
+import { ActivityLog } from "../components/ActivityLog";
 
 // humanBytes formats a byte count with a binary (1024) unit and one decimal.
 function humanBytes(n: number): string {
@@ -1633,6 +1634,11 @@ export function Dashboard() {
           newestRun={runs[0] ?? null}
         />
       ),
+    },
+    {
+      id: "activityLog",
+      label: t("activityLog.title"),
+      node: <ActivityLog />,
     },
     {
       id: "stats",
