@@ -1288,6 +1288,7 @@ function ContainersSection({
           value={schedule}
           onChange={onChange}
         />
+        <p className="text-xs text-carbon-textMuted mt-2">{t("containers.scheduleHint")}</p>
       </div>
 
       {/* Member list */}
