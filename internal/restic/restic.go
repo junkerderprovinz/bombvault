@@ -620,6 +620,7 @@ func (r Restic) authEnv(m Mode) []string {
 // error is returned to the caller.
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
+	configureProcGroup(cmd)
 	env := r.authEnv(m)
 	var out []byte
 	var err error
@@ -1002,6 +1003,7 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
 	args := DumpZipArgs(repo, snapshotID, subfolder, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
+	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
 	// A client disconnect / user cancel of the download cancels ctx and kills the
 	// child; re-wrap so DownloadFlashZip's errors.Is(err, context.Canceled) holds
@@ -1017,6 +1019,7 @@ func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string,
 func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) error {
 	args := CopyArgs(destRepo, srcRepo, snapshotIDs, lim, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
+	configureProcGroup(cmd)
 	env := r.authEnv(m)
 	if m.Encrypted {
 		env = append(env, "RESTIC_FROM_PASSWORD="+m.Password)
