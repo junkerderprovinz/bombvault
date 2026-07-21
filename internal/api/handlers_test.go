@@ -987,9 +987,10 @@ func TestRuns(t *testing.T) {
 }
 
 // TestScheduleNext verifies GET /api/schedule/next reaches the wired
-// *schedule.Scheduler and returns its upcoming fire times as a bare JSON array
-// (not the {"ok":...} envelope) — the dashboard activity log's api.ts client
-// decodes the body directly as ScheduleNext[].
+// *schedule.Scheduler and returns its upcoming fire times wrapped in the same
+// {"ok":...} envelope every other GET endpoint uses (under "runs") — the
+// dashboard activity log's api.ts client (getScheduleNext) unwraps it the same
+// way as every other list endpoint.
 func TestScheduleNext(t *testing.T) {
 	d := &fakeServiceDocker{}
 	dir := t.TempDir()
@@ -1011,22 +1012,28 @@ func TestScheduleNext(t *testing.T) {
 		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
 	}
 
-	var got []struct {
-		Job    string    `json:"job"`
-		Domain string    `json:"domain"`
-		Next   time.Time `json:"next"`
+	var got struct {
+		OK   bool `json:"ok"`
+		Runs []struct {
+			Job    string    `json:"job"`
+			Domain string    `json:"domain"`
+			Next   time.Time `json:"next"`
+		} `json:"runs"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
 		t.Fatalf("decode: %v (%s)", err, w.Body.String())
 	}
-	if len(got) != 1 {
-		t.Fatalf("expected exactly 1 entry, got %d: %+v", len(got), got)
+	if !got.OK {
+		t.Fatalf("expected ok=true, got %+v", got)
 	}
-	if got[0].Job != "backup" || got[0].Domain != "containers" {
-		t.Fatalf("expected job=backup domain=containers, got %+v", got[0])
+	if len(got.Runs) != 1 {
+		t.Fatalf("expected exactly 1 entry, got %d: %+v", len(got.Runs), got.Runs)
 	}
-	if !got[0].Next.After(time.Now()) {
-		t.Fatalf("expected Next in the future, got %v", got[0].Next)
+	if got.Runs[0].Job != "backup" || got.Runs[0].Domain != "containers" {
+		t.Fatalf("expected job=backup domain=containers, got %+v", got.Runs[0])
+	}
+	if !got.Runs[0].Next.After(time.Now()) {
+		t.Fatalf("expected Next in the future, got %v", got.Runs[0].Next)
 	}
 }
 
