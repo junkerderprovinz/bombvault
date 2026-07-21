@@ -166,6 +166,17 @@ func limitFlags(l Limits) []string {
 	return args
 }
 
+// resticRetryLock bounds how long a lock-taking restic op waits for a transient
+// repo lock (held by another process/instance) before failing, instead of restic
+// 0.17's fail-fast default of 0. The in-process domain mutex already prevents
+// same-process overlap; this covers cross-process/cross-domain-same-repo locks.
+const resticRetryLock = "5m"
+
+// retryLockFlags returns restic's global --retry-lock flag (see resticRetryLock).
+// This is a GLOBAL flag, so it must be placed before the subcommand, right after
+// the repo flag — same placement rule as limitFlags.
+func retryLockFlags() []string { return []string{"--retry-lock", resticRetryLock} }
+
 // InitArgs returns the argv slice (without the binary name) for `restic init`.
 func InitArgs(repo string, m Mode) []string {
 	args := append(repoFlag(repo), "init")
@@ -197,6 +208,7 @@ func CatConfigArgs(repo string, m Mode) []string {
 // (arg-injection guard).
 func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...string) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -242,6 +254,7 @@ func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
 // before the subcommand as restic requires for global flags.
 func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) []string {
 	args := repoFlag(destRepo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(lim)...)
 	args = append(args, "copy", "--from-repo", srcRepo)
 	if !m.Encrypted {
@@ -353,6 +366,7 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 // structure + metadata integrity).
 func CheckArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "check")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -372,6 +386,7 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 		subsetPercent = 100
 	}
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "check", fmt.Sprintf("--read-data-subset=%d%%", subsetPercent))
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -395,14 +410,19 @@ func SnapshotsArgs(repo string, m Mode) []string {
 	return args
 }
 
-// StatsArgs returns the argv slice for `restic stats --json --mode <mode>`.
-// mode is restic's --mode value: "raw-data" reports the physical
-// (deduplicated + compressed) repository size and blob count; "restore-size"
-// reports the logical size and file count of the restored data. The mode is a
-// fixed caller-chosen literal, never user input.
+// StatsArgs returns the argv slice for `restic stats --no-lock --json --mode
+// <mode>`. Like SnapshotsArgs, this is strictly read-only, so it takes
+// --no-lock: it must never collide with the exclusive lock a concurrent
+// backup/forget --prune holds (which surfaced as "repository is already
+// locked by PID N" blocking retention, #94/#96). Worst case is a marginally
+// stale number, never corruption, and the writer is never blocked. mode is
+// restic's --mode value: "raw-data" reports the physical (deduplicated +
+// compressed) repository size and blob count; "restore-size" reports the
+// logical size and file count of the restored data. The mode is a fixed
+// caller-chosen literal, never user input.
 func StatsArgs(repo, mode string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "stats", "--json", "--mode", mode)
+	args = append(args, "stats", "--no-lock", "--json", "--mode", mode)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -410,14 +430,17 @@ func StatsArgs(repo, mode string, m Mode) []string {
 }
 
 // StatsRestoreSizeArgs returns the argv for `restic stats --mode restore-size
-// --json <snapshotID>` — the logical restore size + file count of ONE snapshot
-// (vs. StatsArgs, which is repo-wide). The snapshot id goes after -- (arg-injection
-// guard); callers validate it as hex + scope it to the target first. Used by the
-// DR drill to compare restic's own accounting against an on-disk walk of the
-// restored sandbox.
+// --no-lock --json <snapshotID>` — the logical restore size + file count of ONE
+// snapshot (vs. StatsArgs, which is repo-wide). Like SnapshotsArgs, this is
+// strictly read-only, so it takes --no-lock: it must never collide with the
+// exclusive lock a concurrent backup/forget --prune holds (#94/#96) — worst
+// case a marginally stale number, never corruption, never a blocked writer.
+// The snapshot id goes after -- (arg-injection guard); callers validate it as
+// hex + scope it to the target first. Used by the DR drill to compare restic's
+// own accounting against an on-disk walk of the restored sandbox.
 func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "stats", "--mode", "restore-size", "--json")
+	args = append(args, "stats", "--mode", "restore-size", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -425,14 +448,18 @@ func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
 	return args
 }
 
-// DiffArgs returns the argv slice for `restic diff --json <snap1> <snap2>`. The
-// two snapshot ids go after -- (arg-injection guard); callers also validate them
-// as hex AND confirm both belong to the target before invoking. restic diff
-// streams one JSON object per line (many "change" lines then a final
-// "statistics" object), parsed by Diff.
+// DiffArgs returns the argv slice for `restic diff --no-lock --json <snap1>
+// <snap2>`. Like SnapshotsArgs, this is strictly read-only, so it takes
+// --no-lock: it must never collide with the exclusive lock a concurrent
+// backup/forget --prune holds (#94/#96) — worst case a marginally stale diff,
+// never corruption, never a blocked writer. The two snapshot ids go after --
+// (arg-injection guard); callers also validate them as hex AND confirm both
+// belong to the target before invoking. restic diff streams one JSON object
+// per line (many "change" lines then a final "statistics" object), parsed by
+// Diff.
 func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "diff", "--json")
+	args = append(args, "diff", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -461,6 +488,7 @@ func TagAddArgs(repo, snapID string, tags []string, m Mode) []string {
 // optionally pruning the freed data. IDs are placed after -- (arg-injection guard).
 func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -507,6 +535,7 @@ func (p RetentionPolicy) Any() bool {
 // prune and reclaim space once at the end (prune is the expensive part).
 func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tag string, prune bool) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -555,6 +584,7 @@ func UnlockArgs(repo string, removeAll bool, m Mode) []string {
 // forgotten snapshots).
 func PruneArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "prune")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -590,6 +620,7 @@ func (r Restic) authEnv(m Mode) []string {
 // error is returned to the caller.
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
+	configureProcGroup(cmd)
 	env := r.authEnv(m)
 	var out []byte
 	var err error
@@ -900,8 +931,23 @@ func isBoilerplateReason(line string) bool {
 		strings.Contains(l, "for further troubleshooting")
 }
 
+// subcommandValueFlags are restic's GLOBAL flags that take a value and are
+// placed before the subcommand word (see repoFlag, retryLockFlags, limitFlags):
+// -r <repo>, --retry-lock <duration> (every lock-taking op), and
+// --limit-upload/--limit-download <KiB/s> (CopyArgs). Without skipping their
+// values, subcommand() below would misidentify the flag's VALUE (e.g. "5m",
+// a limit number) as the subcommand name, since it is otherwise just "the
+// first arg not starting with -".
+var subcommandValueFlags = map[string]bool{
+	"-r":               true,
+	"--retry-lock":     true,
+	"--limit-upload":   true,
+	"--limit-download": true,
+}
+
 // subcommand extracts the subcommand name from an args slice for use in error
-// messages (first arg that is not a flag or -r value).
+// messages (first arg that is not a flag or the value of a preceding
+// value-taking global flag — see subcommandValueFlags).
 func subcommand(args []string) string {
 	skip := false
 	for _, a := range args {
@@ -909,7 +955,7 @@ func subcommand(args []string) string {
 			skip = false
 			continue
 		}
-		if a == "-r" {
+		if subcommandValueFlags[a] {
 			skip = true
 			continue
 		}
@@ -957,6 +1003,7 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
 	args := DumpZipArgs(repo, snapshotID, subfolder, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
+	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
 	// A client disconnect / user cancel of the download cancels ctx and kills the
 	// child; re-wrap so DownloadFlashZip's errors.Is(err, context.Canceled) holds
@@ -972,6 +1019,7 @@ func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string,
 func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) error {
 	args := CopyArgs(destRepo, srcRepo, snapshotIDs, lim, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
+	configureProcGroup(cmd)
 	env := r.authEnv(m)
 	if m.Encrypted {
 		env = append(env, "RESTIC_FROM_PASSWORD="+m.Password)

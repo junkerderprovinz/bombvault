@@ -128,7 +128,11 @@ must be persisted:
   ( for i in $(seq 1 30); do [ -f /etc/ssh/sshd_config ] && break; sleep 2; done
     grep -q '^StrictModes no' /etc/ssh/sshd_config || \
       sed -i '0,/^Match /s/^Match /StrictModes no\n&/' /etc/ssh/sshd_config
-    /etc/rc.d/rc.sshd restart ) &
+    # SIGHUP reloads sshd's config in place: it keeps the listener + open sessions
+    # and avoids the "killing listener process / Restarting SSH server daemon"
+    # warning that `rc.sshd restart` prints at boot. Only reload if sshd is already
+    # up; if it starts after this runs, it reads the edited config on its own.
+    pidof sshd >/dev/null && killall -HUP sshd ) &
   ```
 - BombVault's own SSH key + `~/.ssh/config` are written to `/config` (appdata) and
   re-created at startup, so they survive container/host restarts automatically.
