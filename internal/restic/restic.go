@@ -166,6 +166,17 @@ func limitFlags(l Limits) []string {
 	return args
 }
 
+// resticRetryLock bounds how long a lock-taking restic op waits for a transient
+// repo lock (held by another process/instance) before failing, instead of restic
+// 0.17's fail-fast default of 0. The in-process domain mutex already prevents
+// same-process overlap; this covers cross-process/cross-domain-same-repo locks.
+const resticRetryLock = "5m"
+
+// retryLockFlags returns restic's global --retry-lock flag (see resticRetryLock).
+// This is a GLOBAL flag, so it must be placed before the subcommand, right after
+// the repo flag — same placement rule as limitFlags.
+func retryLockFlags() []string { return []string{"--retry-lock", resticRetryLock} }
+
 // InitArgs returns the argv slice (without the binary name) for `restic init`.
 func InitArgs(repo string, m Mode) []string {
 	args := append(repoFlag(repo), "init")
@@ -197,6 +208,7 @@ func CatConfigArgs(repo string, m Mode) []string {
 // (arg-injection guard).
 func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...string) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -242,6 +254,7 @@ func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
 // before the subcommand as restic requires for global flags.
 func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) []string {
 	args := repoFlag(destRepo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(lim)...)
 	args = append(args, "copy", "--from-repo", srcRepo)
 	if !m.Encrypted {
@@ -353,6 +366,7 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 // structure + metadata integrity).
 func CheckArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "check")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -372,6 +386,7 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 		subsetPercent = 100
 	}
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "check", fmt.Sprintf("--read-data-subset=%d%%", subsetPercent))
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -473,6 +488,7 @@ func TagAddArgs(repo, snapID string, tags []string, m Mode) []string {
 // optionally pruning the freed data. IDs are placed after -- (arg-injection guard).
 func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -519,6 +535,7 @@ func (p RetentionPolicy) Any() bool {
 // prune and reclaim space once at the end (prune is the expensive part).
 func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tag string, prune bool) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -567,6 +584,7 @@ func UnlockArgs(repo string, removeAll bool, m Mode) []string {
 // forgotten snapshots).
 func PruneArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, retryLockFlags()...)
 	args = append(args, "prune")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
