@@ -21,7 +21,7 @@ func TestConfigureProcGroup_KillsOnCancel(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	cmd := exec.CommandContext(ctx, sleepBin, "30")
+	cmd := exec.CommandContext(ctx, sleepBin, "30") //nolint:gosec // G204: sleepBin is the fixed "sleep" binary resolved via exec.LookPath, no user input
 	configureProcGroup(cmd)
 
 	if err := cmd.Start(); err != nil {
