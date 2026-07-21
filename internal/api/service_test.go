@@ -2829,6 +2829,41 @@ func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
 	}
 }
 
+// TestTagSnapshotBusyWhileDomainLocked pins issue #96: `restic tag` is an
+// exclusive-lock write, so TagSnapshot must serialize under the "containers"
+// domain lock like the other maintenance ops (verify/prune/delete) instead of
+// racing a live backup/restore straight into restic's own lock. With the domain
+// lock held by an in-flight (blocked) restore, TagSnapshot must fail fast with
+// the busy error and must never reach the engine's TagAdd.
+func TestTagSnapshotBusyWhileDomainLocked(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Hold the "containers" domain lock with an in-flight (blocked) restore.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"keep"}); err == nil || !strings.Contains(err.Error(), "currently running") {
+		t.Fatalf("TagSnapshot on a busy domain must return the busy error, got %v", err)
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("a busy TagSnapshot must never reach TagAdd, got %v", eng.taggedSnaps)
+	}
+
+	close(eng.blockRestore)   // let the restore finish
+	waitForBackupDone(t, svc) // terminal → temp-dir cleanup race-free
+}
+
 // TestDeleteBackupsForgetsSnapshotsAndTarget verifies that deleting a container's
 // backups forgets only that container's snapshots (tag-filtered) and removes its
 // target from the store — the path used to clean up no-longer-installed containers.

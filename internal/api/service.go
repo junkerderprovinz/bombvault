@@ -4215,13 +4215,21 @@ func (s *Service) TagSnapshot(ctx context.Context, name, source, snapID string, 
 		return err
 	}
 	mode := s.ModeFor(settings)
-	// Clear any stale lock left by a previously interrupted run before taking
-	// restic's exclusive tag lock — the off-site repo can carry a lock left by an
-	// interrupted off-site op (replication copy / integrity check), and `restic tag`
-	// would otherwise fail with "repository is already locked". BombVault is the sole
-	// writer, so an existing lock is always stale. Every other repo-mutating path
-	// (backups, PruneDomain, DeleteSnapshot) does this; TagSnapshot was missing it,
-	// which made adding a tag on the off-site repo fail (bug #29).
+	// Serialize against a live backup/prune on this repo: restic tag takes an
+	// exclusive lock, so run it under the domain lock like the other maintenance
+	// ops, and report a clean busy instead of colliding on restic's repo lock.
+	unlock, ok := s.tryLockDomainFor("containers", "tag")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	// unlockStale clears a genuine stale orphan (dead PID on this host) left by a
+	// crashed run before taking restic's exclusive tag lock — the off-site repo can
+	// carry a lock left by an interrupted off-site op (replication copy / integrity
+	// check), and `restic tag` would otherwise fail with "repository is already
+	// locked". Every other repo-mutating path (backups, PruneDomain, DeleteSnapshot)
+	// does this; TagSnapshot was missing it, which made adding a tag on the off-site
+	// repo fail (bug #29).
 	s.unlockStale(ctx, repo, mode)
 	return s.engine.TagAdd(ctx, repo, snapID, tags, mode)
 }
