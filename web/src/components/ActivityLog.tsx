@@ -5,9 +5,9 @@
 // web/src/lib/activityLog.ts for the pure merge/dedupe/order logic this
 // component just fetches data for and renders).
 //
-// Not yet wired into Dashboard.tsx — this file is self-contained (its own
-// card chrome + heading) so it can be dropped in as `<ActivityLog />` later
-// without further changes.
+// Mounted on Dashboard.tsx as its own customizable block, directly below the
+// summary tier — self-contained (its own card chrome + heading), so it drops
+// in as `<ActivityLog />` with no further changes.
 // ---------------------------------------------------------------------------
 
 import { useEffect, useMemo, useRef, useState } from "react";
