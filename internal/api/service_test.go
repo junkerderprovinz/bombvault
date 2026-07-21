@@ -3221,7 +3221,6 @@ type fakeResticEngine struct {
 	dumpErr         error
 	forgetPolicyErr error
 	checkErr        error
-	checkErrOnce    error    // when set, returned by the FIRST Check call only, then cleared (drives the #92 lock-then-retry heal)
 	checkDataRepos  []string // repo of each CheckData (drill) call
 	checkDataPct    []int    // subset percent of each CheckData call
 	checkDataErr    error    // returned by CheckData (drill outcome)
@@ -3423,11 +3422,6 @@ func (f *fakeResticEngine) RestoreSubtreeInclude(_ context.Context, repo, snapsh
 
 func (f *fakeResticEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
 	f.checked = append(f.checked, repo)
-	if f.checkErrOnce != nil {
-		err := f.checkErrOnce
-		f.checkErrOnce = nil
-		return err
-	}
 	return f.checkErr
 }
 
@@ -4159,39 +4153,40 @@ func TestRunDRDrillClearsStaleLockBeforeRestore(t *testing.T) {
 	}
 }
 
-// TestCheckDomainForceUnlocksAndRetriesOnLock pins #92: when `restic check` fails
-// with a repository-lock error left by a crashed/interrupted run, CheckDomain
-// force-removes ALL locks (removeAll=true) and retries the check once, so a manual
-// verify auto-heals instead of failing "repository is already locked". This is safe
-// because CheckDomain holds the in-process domain lock first, so no BombVault op can
-// legitimately hold the restic lock.
-func TestCheckDomainForceUnlocksAndRetriesOnLock(t *testing.T) {
-	eng := &fakeResticEngine{checkErrOnce: errors.New("repository is already locked exclusively")}
+// TestCheckDomainDoesNotForceUnlockOrRetryOnLock pins the reversal of #92/#94: a
+// repo-lock error from `restic check` is no longer force-unlocked (removeAll=true)
+// and retried — force-removing a lock cannot fix a live holder and would strip
+// protection off a running restic op. CheckDomain still clears a genuine stale
+// orphan (a plain, removeAll=false unlock) before the single check call, and
+// `restic check` itself now carries --retry-lock to wait out a transient
+// cross-process lock, so a lock error that still surfaces is a real, unresolved
+// failure and must be returned as-is.
+func TestCheckDomainDoesNotForceUnlockOrRetryOnLock(t *testing.T) {
+	lockErr := errors.New("repository is already locked exclusively")
+	eng := &fakeResticEngine{checkErr: lockErr}
 	svc := initRepoSvc(t, eng)
 
-	if err := svc.CheckDomain(context.Background(), "containers", ""); err != nil {
-		t.Fatalf("CheckDomain should auto-heal the stale lock and pass, got: %v", err)
+	err := svc.CheckDomain(context.Background(), "containers", "")
+	if !errors.Is(err, lockErr) {
+		t.Fatalf("a lock error must surface unchanged (no more force-unlock+retry), got %v", err)
 	}
-	// Check ran twice: the initial lock failure + the post-unlock retry.
-	if len(eng.checked) != 2 {
-		t.Fatalf("expected check to run twice (fail on lock, retry after force-unlock), got %d: %v", len(eng.checked), eng.checked)
+	if len(eng.checked) != 1 {
+		t.Fatalf("expected check to run exactly once (no retry), got %d: %v", len(eng.checked), eng.checked)
 	}
-	// A force unlock (removeAll=true) must have happened — the routine stale-clear is
-	// removeAll=false; the heal is removeAll=true.
-	sawForce := false
+	if len(eng.unlockedRepos) != 1 {
+		t.Fatalf("expected exactly one routine stale-clear unlock before check, got %v", eng.unlockedRepos)
+	}
 	for _, all := range eng.unlockRemoveAll {
 		if all {
-			sawForce = true
+			t.Fatalf("a lock error must not trigger a force unlock (removeAll=true), got %v", eng.unlockRemoveAll)
 		}
-	}
-	if !sawForce {
-		t.Fatalf("expected a force unlock (removeAll=true) before the retry, got %v", eng.unlockRemoveAll)
 	}
 }
 
 // TestCheckDomainDoesNotRetryNonLockError pins that a genuine check failure (repo
-// corruption, not a lock) is returned as-is with NO force-unlock and NO retry — the
-// auto-heal is scoped to lock conflicts only, so real integrity failures still surface.
+// corruption, not a lock) is returned as-is with NO force-unlock and NO retry —
+// CheckDomain never retries `restic check` for any error now, so real integrity
+// failures still surface just like a lock error does.
 func TestCheckDomainDoesNotRetryNonLockError(t *testing.T) {
 	eng := &fakeResticEngine{checkErr: errors.New("pack 1234abcd is damaged, run rebuild-index")}
 	svc := initRepoSvc(t, eng)

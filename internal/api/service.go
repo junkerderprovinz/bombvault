@@ -779,26 +779,22 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 	}
 }
 
-// forgetWithLockHeal runs a ForgetPolicy pass and self-heals an orphaned restic
-// lock (#94). Every caller holds the domain lock, so BombVault — the repo's sole
-// writer — provably has no live operation on this repo; any existing restic lock
-// is an orphan from an interrupted run (container update or crash mid-operation)
-// that restic's own stale detection misses when the lock is under 30 min old or
-// its PID can't be verified across container restarts (same reasoning as the
-// #92 verify heal). forget needs an EXCLUSIVE lock, so even a stale
-// NON-exclusive lock — which lets backups keep succeeding — blocks every
-// retention pass: one orphan used to fail a whole night's retentions across all
-// items. Heal: force-unlock and retry once; the caller notifies only if the
-// retry still fails.
+// forgetWithLockHeal runs a ForgetPolicy pass, clearing a genuine stale orphan
+// lock first. Every caller holds the domain lock, so BombVault — the repo's
+// sole writer — has no live operation of its own on this repo; a lock left by a
+// crashed run on THIS host (dead PID) is a stale orphan and is force-cleared.
+// forget needs an EXCLUSIVE lock, so even a stale NON-exclusive lock — which
+// lets backups keep succeeding — blocks every retention pass: one orphan used
+// to fail a whole night's retentions across all items.
 func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error {
-	err := s.engine.ForgetPolicy(ctx, repo, p, mode, tag, prune)
-	if err == nil || !isLockErr(err) {
-		return err
-	}
-	log.Printf("api: retention forget hit a repo lock; force-unlocking and retrying once (#94)")
-	if uerr := s.engine.Unlock(ctx, repo, true, mode); uerr != nil {
-		log.Printf("api: force-unlock before retention retry failed: %v", uerr)
-	}
+	// Clear a genuine stale orphan (a dead-PID lock from a crashed run on this
+	// host) before forget, which needs an exclusive lock. A live/concurrent lock
+	// is NOT force-removed: reads run --no-lock, writes are serialized under the
+	// domain lock, and forget itself passes --retry-lock to wait out a transient
+	// cross-process lock (see the repo-lock-serialization plan). Force-removing a
+	// live lock (the old #94 heal) could not fix a live holder and endangered a
+	// running op, so it was removed.
+	s.unlockStale(ctx, repo, mode)
 	return s.engine.ForgetPolicy(ctx, repo, p, mode, tag, prune)
 }
 
@@ -6580,8 +6576,10 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	// Hold the in-process domain lock for the whole verify so no other BombVault op
 	// (backup / prune / replicate) runs against this repo while we check it. If one
 	// already holds it, report a clean "busy" instead of colliding on restic's repo
-	// lock. Holding it also makes the auto-heal below provably safe: with no
-	// concurrent BombVault op, ANY restic lock on the repo is an orphan.
+	// lock. This rules out BombVault itself as the source of a lock check hits, but
+	// NOT a genuinely live restic process (e.g. a manual/external invocation) — that
+	// case is a real, live lock, not an orphan, and is deliberately left alone below
+	// (waited out by --retry-lock in the engine, never force-removed).
 	unlock, ok := s.tryLockDomainFor(domain, "verify")
 	if !ok {
 		return errDomainBusy
@@ -6591,22 +6589,16 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	defer cancel()
 	mode := s.ModeFor(settings)
 	// Clear stale locks a previously interrupted run left behind before `restic check`
-	// takes its lock. If check STILL fails on a lock, that lock is an orphan (we hold
-	// the domain lock and BombVault is the sole writer, so nothing legitimate holds
-	// it): force-remove ALL locks and retry once. This auto-heals the "already
-	// locked" verify failure that used to need a manual unlock — restic's own
-	// stale-detection misses a lock left by a crashed containerised run whose PID it
-	// can no longer verify and that is under 30 min old (#92; extends the #29 heal).
+	// takes its lock. This auto-heals a lock left by a crashed containerised run
+	// whose PID restic's own stale-detection can no longer verify and that is
+	// under 30 min old (#92; extends the #29 heal) — but only a GENUINE stale
+	// orphan (a dead PID on this host). A live/concurrent lock is never
+	// force-removed: we hold the domain lock for the whole verify, so no other
+	// BombVault op can collide, and `restic check` itself passes --retry-lock to
+	// wait out a transient lock from a live cross-process holder instead of
+	// force-unlocking and racing it (see the repo-lock-serialization plan).
 	s.unlockStale(ctx, repo, mode)
-	err = s.engine.Check(ctx, repo, mode)
-	if isLockErr(err) {
-		log.Printf("api: verify hit a repo lock on %q; force-unlocking and retrying once (#92)", domain) //nolint:gosec // G706: domain is a fixed literal
-		if uerr := s.engine.Unlock(ctx, repo, true, mode); uerr != nil {
-			log.Printf("api: force-unlock before verify retry failed: %v", uerr)
-		}
-		err = s.engine.Check(ctx, repo, mode)
-	}
-	return err
+	return s.engine.Check(ctx, repo, mode)
 }
 
 // drillSubsetPct clamps the configured drill subset percentage into restic's
