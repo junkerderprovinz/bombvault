@@ -51,6 +51,11 @@ export interface LogLine {
   kind: LogKind;
   /** True for a currently-active tail line (updates in place). */
   live: boolean;
+  /** True only for the trailing idle "next up"/"nothing yet" line, which
+   *  carries no domain/kind of its own (nothing has run/is scheduled to a
+   *  specific item yet) — exempts it from the domain/type quick-filters in
+   *  filterLogLines so an active filter chip can't hide it. */
+  idle?: boolean;
 }
 
 /**
@@ -191,7 +196,21 @@ interface LiveResult {
   signatures: Set<string>;
 }
 
+// itemSignature builds the dedupe key for an item-scope operation (backup/
+// restore of one container/VM/file-set/flash/config), so a finished run's
+// history line can be suppressed while its live tail line is still showing.
+//
+// Flash and config are domain-wide singletons, and their two callers disagree
+// on a display name: the live tail resolves the TRANSLATED domain label (see
+// itemDisplayName — e.g. "Flash"), while the finished run's `target` is the
+// backend's hard-coded English name (handlers.go: "Unraid flash"/"App
+// configuration" — see internal/api/handlers.go handleRuns). Keying on that
+// name would never match, so the two signatures agree by domain alone for
+// singleton domains — that's already unambiguous since there is exactly one
+// flash item and one config item. Containers/vms/files still key on their
+// real (untranslated, stable) item name, since a domain can have many.
 function itemSignature(kind: string, domain: LogDomain, name: string): string {
+  if (domain === "flash" || domain === "config") return `item|${kind}|${domain}`;
   return `item|${kind}|${domain}|${name}`;
 }
 
@@ -354,7 +373,7 @@ function buildIdleLine(scheduleNext: ScheduleNext[], resolveName: ResolveName, n
   if (!next) {
     // No live lines AND no history AND nothing scheduled — truly empty.
     if (hasHistory) return null;
-    return { id: "idle-empty", atMs: now, status: "info", text: resolveName("activityLog.lineEmpty"), domain: "", kind: "", live: false };
+    return { id: "idle-empty", atMs: now, status: "info", text: resolveName("activityLog.lineEmpty"), domain: "", kind: "", live: false, idle: true };
   }
 
   const nextMs = new Date(next.next).getTime();
@@ -371,7 +390,7 @@ function buildIdleLine(scheduleNext: ScheduleNext[], resolveName: ResolveName, n
       })
     : resolveName("activityLog.lineNextNoDomain", { job, time, countdown });
 
-  return { id: "idle-next", atMs: now, status: "info", text, domain: "", kind: "", live: false };
+  return { id: "idle-next", atMs: now, status: "info", text, domain: "", kind: "", live: false, idle: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -433,8 +452,13 @@ export interface LogFilter {
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
   return lines.filter((l) => {
-    if (filter.domain !== "all" && l.domain !== filter.domain) return false;
-    if (filter.kind !== "all" && l.kind !== filter.kind) return false;
+    // The idle line (`idle: true`) carries no domain/kind of its own — it is
+    // exempt from the domain/type quick-filters so an active filter chip
+    // never hides the only line telling the user what's coming next.
+    if (!l.idle) {
+      if (filter.domain !== "all" && l.domain !== filter.domain) return false;
+      if (filter.kind !== "all" && l.kind !== filter.kind) return false;
+    }
     if (q && !l.text.toLowerCase().includes(q)) return false;
     return true;
   });

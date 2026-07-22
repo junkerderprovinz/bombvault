@@ -26,6 +26,62 @@ function humanBytes(n: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// Run kind/target label helpers — shared by every dashboard card that renders
+// a Run's kind and target (RunsCard, SummaryTier's "Last result" cell). A
+// prune/verify run's targetId IS the domain literal it ran against
+// ("containers"/"vms"/"files", or store.FlashTargetID/ConfigTargetID —
+// "flash"/"config" — see internal/api/service.go domainRunTargetID), never a
+// resolvable item id, so it needs its own kind label + domain-name
+// resolution instead of falling through to the generic backup/restore/update
+// display (which would otherwise show it mislabeled as "Restore" with a
+// blank/truncated target — #run-activity-log finding 1).
+// ---------------------------------------------------------------------------
+
+function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string {
+  switch (domain) {
+    case "containers":
+      return t("activityLog.domainContainers");
+    case "vms":
+      return t("activityLog.domainVMs");
+    case "flash":
+      return t("activityLog.domainFlash");
+    case "config":
+      return t("activityLog.domainConfig");
+    case "files":
+      return t("activityLog.domainFiles");
+    default:
+      return domain;
+  }
+}
+
+function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
+  switch (kind) {
+    case "backup":
+      return t("run.kindBackup");
+    case "update":
+      return t("run.kindUpdate");
+    case "prune":
+      return t("activityLog.typePrune");
+    case "verify":
+      return t("activityLog.typeVerify");
+    default:
+      return t("run.kindRestore");
+  }
+}
+
+// runTargetText resolves what to show in a run's "target" column. Prune/verify
+// runs carry the domain literal in targetId (see above) — reuse the same
+// domain-name keys the activity log uses instead of the generic
+// target/targetId fallback, which would show the raw literal (e.g.
+// "containers…") since it is never in the backend's target-name map.
+function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string {
+  if (run.kind === "prune" || run.kind === "verify") {
+    return runDomainLabel(t, run.targetId);
+  }
+  return run.target || `${run.targetId.slice(0, 12)}…`;
+}
+
+// ---------------------------------------------------------------------------
 // Stat cards row
 // ---------------------------------------------------------------------------
 
@@ -87,7 +143,12 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
         const pausedJobs = !schedEnabled
           ? installed.filter((c) => c.includeInSchedule).length
           : 0;
-        const errors = runs.filter((r) => r.status === "failed").length;
+        // Scoped to backup/restore/update kinds — a failed prune/verify
+        // (maintenance) run is surfaced in the Activity Log, not here, so this
+        // badge keeps its original "backup/restore failures" meaning (#3).
+        const errors = runs.filter(
+          (r) => r.status === "failed" && (r.kind === "backup" || r.kind === "restore" || r.kind === "update")
+        ).length;
 
         setData({
           containers: installed.length,
@@ -843,14 +904,10 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 <div className="flex items-center gap-3">
                   <StatusChip status={run.status} />
                   <span className="text-carbon-text font-medium w-16 shrink-0">
-                    {run.kind === "backup"
-                      ? t("run.kindBackup")
-                      : run.kind === "update"
-                        ? t("run.kindUpdate")
-                        : t("run.kindRestore")}
+                    {runKindLabel(t, run.kind)}
                   </span>
                   <span className="text-carbon-text flex-1 truncate">
-                    {run.target || `${run.targetId.slice(0, 12)}…`}
+                    {runTargetText(t, run)}
                   </span>
                   {/* Start → end + duration, with the relative age underneath (#45/#50). */}
                   <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
@@ -1519,7 +1576,7 @@ function SummaryTier({
           <>
             <StatusChip status={newestRun.status} />
             <span className="text-sm text-carbon-text flex-1 truncate">
-              {newestRun.target || `${newestRun.targetId.slice(0, 12)}…`}
+              {runTargetText(t, newestRun)}
             </span>
             <span
               className="text-xs text-carbon-textMuted shrink-0"

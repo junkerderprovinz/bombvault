@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -274,7 +275,14 @@ type Scheduler struct {
 	// injected backup closures (see cmd/bombvault/main.go).
 	hcRunStart  func(domain string)
 	hcRunFinish func(domain string, attempted, failed int, failures []ItemFailure)
-	entries     []scheduledEntry
+
+	// mu guards entries: ReloadWithDueChecks (settings POST goroutine) mutates
+	// it while NextRuns (the /api/schedule/next GET handler goroutine) reads
+	// it concurrently. It guards ONLY the slice access — never held while
+	// calling into cron.Cron (AddFunc/Remove/Entry), which has its own
+	// internal locking, so the two locks never nest and cannot deadlock.
+	mu      sync.Mutex
+	entries []scheduledEntry
 }
 
 // scheduledEntry pairs a registered cron.EntryID with the job+domain label
@@ -322,8 +330,15 @@ func (s *Scheduler) NextRuns() []NextRun {
 	if s.c == nil {
 		return nil
 	}
-	out := make([]NextRun, 0, len(s.entries))
-	for _, e := range s.entries {
+	// Take a locked snapshot of the entry list, then call into cron (s.c.Entry)
+	// OUTSIDE the lock — s.mu only ever guards the entries slice itself.
+	s.mu.Lock()
+	entries := make([]scheduledEntry, len(s.entries))
+	copy(entries, s.entries)
+	s.mu.Unlock()
+
+	out := make([]NextRun, 0, len(entries))
+	for _, e := range entries {
 		next := s.c.Entry(e.id).Next
 		if next.IsZero() {
 			continue
@@ -465,11 +480,17 @@ func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
 	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun LastRunFunc,
 ) error {
-	// Remove all existing entries.
-	for _, e := range s.entries {
+	// Snapshot + clear the existing entries under the lock, then remove them
+	// from cron OUTSIDE the lock — never call into cron while holding s.mu.
+	s.mu.Lock()
+	oldEntries := make([]scheduledEntry, len(s.entries))
+	copy(oldEntries, s.entries)
+	s.entries = s.entries[:0]
+	s.mu.Unlock()
+
+	for _, e := range oldEntries {
 		s.c.Remove(e.id)
 	}
-	s.entries = s.entries[:0]
 
 	// Register enabled domains.
 	domains := []domainSpec{
@@ -669,7 +690,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 			return fmt.Errorf("schedule: domain %s: add cron entry: %w", d.name, err)
 		}
 		job, domain := jobDomainFromName(d.name)
+		s.mu.Lock()
 		s.entries = append(s.entries, scheduledEntry{id: id, job: job, domain: domain})
+		s.mu.Unlock()
 	}
 
 	return nil
