@@ -1744,7 +1744,7 @@ export function Dashboard() {
   ];
 
   const defaultOrder = blocks.map((b) => b.id);
-  const { order, hidden, reorder, toggleHidden, reset } =
+  const { order, hidden, reorder, toggleHidden, toggleWidth, getWidth, reset } =
     useDashboardLayout(defaultOrder);
 
   // Persisted order → concrete blocks. Unknown/stale ids are guarded out, and
@@ -1795,7 +1795,7 @@ export function Dashboard() {
   });
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    <div className="flex flex-col gap-6 max-w-6xl">
       {/* Page heading — fixed (contextual, not customizable). The pencil in the
           top-right corner toggles the customize/edit mode. */}
       <div className="flex items-start justify-between gap-4">
@@ -1822,7 +1822,7 @@ export function Dashboard() {
           className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
-              : "border border-carbon-border text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              : "border border-carbon-border text-carbon-textSub hover:border-accent hover:text-accent"
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1873,34 +1873,48 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Ordered, visible blocks. In edit mode each carries a control bar +
-          native drag-and-drop; otherwise the card renders plainly. */}
-      <div className="flex flex-col gap-6">
+      {/* Ordered, visible blocks in a responsive grid: full-width cards span
+          both columns, half-width cards flow two-per-row (request B). Below
+          the md breakpoint everything stacks in a single column regardless of
+          width. The col-span lives on this wrapper div (not on
+          CustomizableBlock's own root) so it applies in BOTH edit mode (where
+          CustomizableBlock renders its control-bar div) and view mode (where
+          it renders only `<>{children}</>`). In edit mode each block carries a
+          control bar + native drag-and-drop; otherwise the card renders
+          plainly. Dragging still reorders the flat `order` array — the grid
+          simply derives each cell's span from order + width. */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {visibleBlocks.map((b, i) => (
-          <CustomizableBlock
+          <div
             key={b.id}
-            id={b.id}
-            label={b.label}
-            index={i}
-            total={visibleBlocks.length}
-            isFirst={i === 0}
-            isLast={i === visibleBlocks.length - 1}
-            editing={editing}
-            dragHandlers={dragHandlersFor(b.id)}
-            /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
-               blocks in the stored order) so a single press always reorders. */
-            onMoveUp={() => {
-              if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
-            }}
-            onMoveDown={() => {
-              if (i < visibleBlocks.length - 1)
-                reorder(b.id, visibleBlocks[i + 1].id);
-            }}
-            onHide={() => toggleHidden(b.id)}
-            t={t}
+            className={getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"}
           >
-            {b.node}
-          </CustomizableBlock>
+            <CustomizableBlock
+              id={b.id}
+              label={b.label}
+              index={i}
+              total={visibleBlocks.length}
+              isFirst={i === 0}
+              isLast={i === visibleBlocks.length - 1}
+              editing={editing}
+              dragHandlers={dragHandlersFor(b.id)}
+              /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
+                 blocks in the stored order) so a single press always reorders. */
+              onMoveUp={() => {
+                if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
+              }}
+              onMoveDown={() => {
+                if (i < visibleBlocks.length - 1)
+                  reorder(b.id, visibleBlocks[i + 1].id);
+              }}
+              onHide={() => toggleHidden(b.id)}
+              width={getWidth(b.id)}
+              onToggleWidth={() => toggleWidth(b.id)}
+              t={t}
+            >
+              {b.node}
+            </CustomizableBlock>
+          </div>
         ))}
       </div>
 

@@ -42,6 +42,8 @@ const he: Partial<Translations> = {
   "dashboard.moveDown": "הזז למטה",
   "dashboard.hideCard": "הסתר",
   "dashboard.showCard": "הצג",
+  "dashboard.makeHalfWidth": "קבע לרוחב חצי",
+  "dashboard.makeFullWidth": "קבע לרוחב מלא",
   "dashboard.hiddenCards": "כרטיסים מוסתרים",
   "dashboard.resetLayout": "אפס לברירת המחדל",
   "dashboard.blockSummary": "סקירה",

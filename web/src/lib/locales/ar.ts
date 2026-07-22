@@ -42,6 +42,8 @@ const ar: Partial<Translations> = {
   "dashboard.moveDown": "تحريك لأسفل",
   "dashboard.hideCard": "إخفاء",
   "dashboard.showCard": "إظهار",
+  "dashboard.makeHalfWidth": "تعيين إلى نصف العرض",
+  "dashboard.makeFullWidth": "تعيين إلى العرض الكامل",
   "dashboard.hiddenCards": "البطاقات المخفية",
   "dashboard.resetLayout": "إعادة التعيين إلى الافتراضي",
   "dashboard.blockSummary": "نظرة عامة",

@@ -41,6 +41,8 @@ const pl: Partial<Translations> = {
   "dashboard.moveDown": "Przenieś w dół",
   "dashboard.hideCard": "Ukryj",
   "dashboard.showCard": "Pokaż",
+  "dashboard.makeHalfWidth": "Przełącz na połowę szerokości",
+  "dashboard.makeFullWidth": "Przełącz na pełną szerokość",
   "dashboard.hiddenCards": "Ukryte karty",
   "dashboard.resetLayout": "Przywróć domyślne",
   "dashboard.blockSummary": "Przegląd",

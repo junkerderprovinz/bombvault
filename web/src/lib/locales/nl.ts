@@ -41,6 +41,8 @@ const nl: Partial<Translations> = {
   "dashboard.moveDown": "Omlaag verplaatsen",
   "dashboard.hideCard": "Verbergen",
   "dashboard.showCard": "Weergeven",
+  "dashboard.makeHalfWidth": "Naar halve breedte",
+  "dashboard.makeFullWidth": "Naar volledige breedte",
   "dashboard.hiddenCards": "Verborgen kaarten",
   "dashboard.resetLayout": "Standaard herstellen",
   "dashboard.blockSummary": "Overzicht",

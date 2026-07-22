@@ -41,6 +41,8 @@ const no: Partial<Translations> = {
   "dashboard.moveDown": "Flytt ned",
   "dashboard.hideCard": "Skjul",
   "dashboard.showCard": "Vis",
+  "dashboard.makeHalfWidth": "Halv bredde",
+  "dashboard.makeFullWidth": "Full bredde",
   "dashboard.hiddenCards": "Skjulte kort",
   "dashboard.resetLayout": "Tilbakestill til standard",
   "dashboard.blockSummary": "Oversikt",
