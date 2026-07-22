@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 
-export type ProgressPhase = "backup" | "restore" | "replicate";
+export type ProgressPhase = "backup" | "restore" | "replicate" | "maintenance";
 
 export interface ProgressState {
   phase: ProgressPhase;
@@ -105,9 +105,18 @@ function handleMessage(e: MessageEvent<string>): void {
       key: ev.key,
       // Preserve the real domain: a "replicate" (off-site) phase must stay
       // distinct so anyActive can word the busy hint correctly (the activity
-      // tracker refuses a backup while a replication runs). Anything unknown
-      // collapses to "backup".
-      phase: ev.phase === "restore" ? "restore" : ev.phase === "replicate" ? "replicate" : "backup",
+      // tracker refuses a backup while a replication runs). "maintenance"
+      // (prune/verify) must ALSO stay distinct — it must not masquerade as a
+      // backup, but it is deliberately excluded from anyActive() below (see
+      // there). Anything else unknown collapses to "backup".
+      phase:
+        ev.phase === "restore"
+          ? "restore"
+          : ev.phase === "replicate"
+            ? "replicate"
+            : ev.phase === "maintenance"
+              ? "maintenance"
+              : "backup",
       percent: typeof ev.percent === "number" ? ev.percent : 0,
       active: !!ev.active,
     });
@@ -152,6 +161,12 @@ function closeSource(): void {
  * restore, or replication — a broad "something is in flight" signal used to
  * disable start buttons and show a busy hint. Returns the first matching phase so
  * the caller can word the hint ("a restore is running" vs "a backup is running").
+ *
+ * Deliberately excludes "maintenance" (prune/verify): every caller (BackupButton,
+ * Containers/VMs/Flash/Files pages, RestorePanel, RestoreAction) uses this to
+ * busy-guard repo-writing backup/restore/replicate starts. A running prune or
+ * verify is not that kind of conflict, so it must not disable the bulk start
+ * buttons app-wide.
  */
 export function anyActive(
   map: Record<string, { phase: string; active: boolean; lastSeen?: number }>

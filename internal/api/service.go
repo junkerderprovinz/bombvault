@@ -6566,7 +6566,7 @@ func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []
 // domain is "containers" | "vms" | "flash" | "files". Returns a friendly error
 // when the repo has not been created yet. Bounded by a timeout so a huge repo
 // can't hang the request forever.
-func (s *Service) CheckDomain(ctx context.Context, domain, source string) error {
+func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err error) {
 	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
@@ -6589,6 +6589,32 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 	mode := s.ModeFor(settings)
+
+	// Publish a "maintenance" progress pair (begin/terminal, indeterminate — restic
+	// check streams no percentage) and record a "verify" run, so a manual/scheduled
+	// verify shows up on the dashboard activity log/run history instead of running
+	// invisibly.
+	vkey := "verify:" + domain
+	s.progBegin(ctx, vkey, "maintenance")
+	defer func() { s.progEnd(vkey, "maintenance", err == nil) }()
+	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "verify")
+	if rErr != nil {
+		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
+		runID = ""
+	}
+	defer func() {
+		if runID == "" {
+			return
+		}
+		status := "success"
+		if err != nil {
+			status = "failed"
+		}
+		if fErr := s.store.FinishRun(runID, status, "", 0, truncateRunErr(err)); fErr != nil {
+			log.Printf("api: verify %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
+
 	// Clear a GENUINE stale orphan before `restic check` takes its lock: unlockStale
 	// runs plain `restic unlock`, which removes only locks restic itself deems stale
 	// (a dead PID on THIS host, or any lock past restic's ~30-min age threshold). A
@@ -6601,7 +6627,8 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) error 
 	// self-heals, or a manual Unlock clears it). A stable container hostname closes
 	// this — see the repo-lock-serialization plan.
 	s.unlockStale(ctx, repo, mode)
-	return s.engine.Check(ctx, repo, mode)
+	err = s.engine.Check(ctx, repo, mode)
+	return err
 }
 
 // drillSubsetPct clamps the configured drill subset percentage into restic's
@@ -7211,6 +7238,27 @@ func (s *Service) domainRepoSource(domain, source string) (store.Settings, strin
 	return settings, repo, err
 }
 
+// domainRunTargetID maps a domain to the runs.target_id used for PruneDomain
+// and CheckDomain's run records. Flash and config are singleton domains with
+// no per-item table, so their maintenance runs reuse the same reserved ids
+// their backup rows already use (store.FlashTargetID / store.ConfigTargetID).
+// Containers/vms/files have no single target to attribute a whole-repo
+// prune/verify to, so the domain name itself is used as a literal target_id.
+// This is safe even though it is never a real hex/UUID target id: every query
+// that derives a domain FROM target_id (LastSuccessful*, RunCounts, the everyN
+// due-gate) filters `kind = 'backup'` first, so a 'prune'/'verify' row can
+// never be picked up there and pollute another domain's numbers.
+func domainRunTargetID(domain string) string {
+	switch domain {
+	case "flash":
+		return store.FlashTargetID
+	case "config":
+		return store.ConfigTargetID
+	default:
+		return domain
+	}
+}
+
 // localRepoMissing reports whether a LOCAL repo has not been initialised yet (no
 // `config` marker). It is ALWAYS false for a remote repo (rest:/s3:/b2:/…),
 // which has no local marker to stat — its emptiness is decided by actually
@@ -7293,7 +7341,11 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) error
 
 // PruneDomain reclaims repository space freed by forgotten snapshots
 // (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
-func (s *Service) PruneDomain(ctx context.Context, domain, source string) error {
+// Once the domain lock is held it publishes a "maintenance" progress pair
+// (begin/terminal, indeterminate — restic prune/forget streams no percentage)
+// and records a "prune" run, so a manual/scheduled prune shows up on the
+// dashboard activity log/run history instead of running invisibly.
+func (s *Service) PruneDomain(ctx context.Context, domain, source string) (err error) {
 	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
@@ -7315,6 +7367,28 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 	mode := s.ModeFor(settings)
+
+	pkey := "prune:" + domain
+	s.progBegin(ctx, pkey, "maintenance")
+	defer func() { s.progEnd(pkey, "maintenance", err == nil) }()
+	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "prune")
+	if rErr != nil {
+		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
+		runID = ""
+	}
+	defer func() {
+		if runID == "" {
+			return
+		}
+		status := "success"
+		if err != nil {
+			status = "failed"
+		}
+		if fErr := s.store.FinishRun(runID, status, "", 0, truncateRunErr(err)); fErr != nil {
+			log.Printf("api: prune %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
+
 	// Clear any stale lock left by a previously interrupted run so it can't block
 	// this prune — a manual prune (and forget --prune) takes restic's exclusive
 	// lock, and an interrupted backup/prune leaves one behind. BombVault is the
@@ -7332,9 +7406,11 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 	if p := s.retentionPolicyForSource(settings, source); p.Any() {
 		// Per-identity: tag-scoped, ungrouped forget per item + one prune —
 		// also drains frozen path-groups left by the old grouping (issue #91).
-		return s.applyRetentionPerIdentity(ctx, repo, p, mode)
+		err = s.applyRetentionPerIdentity(ctx, repo, p, mode)
+		return err
 	}
-	return s.engine.Prune(ctx, repo, mode)
+	err = s.engine.Prune(ctx, repo, mode)
+	return err
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic

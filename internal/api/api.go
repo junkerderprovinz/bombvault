@@ -124,6 +124,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/notify", h.handleSetNotify)
 	mux.HandleFunc("POST /api/notify/test", h.handleTestNotify)
 	mux.HandleFunc("GET /api/release-notes", h.handleReleaseNotes)
+	mux.HandleFunc("GET /api/schedule/next", h.handleScheduleNext)
 	mux.HandleFunc("POST /api/check/{domain}", h.handleCheck)
 	mux.HandleFunc("POST /api/verify/{domain}", h.handleRunDrill)
 	mux.HandleFunc("GET /api/verify", h.handleDrills)

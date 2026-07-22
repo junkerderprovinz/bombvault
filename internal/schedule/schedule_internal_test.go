@@ -110,7 +110,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
-	if got := len(sc.entryIDs); got != 1 {
+	if got := len(sc.entries); got != 1 {
 		t.Fatalf("expected exactly 1 registered job (config backup), got %d", got)
 	}
 
@@ -120,7 +120,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (config off): %v", err)
 	}
-	if got := len(sc.entryIDs); got != 0 {
+	if got := len(sc.entries); got != 0 {
 		t.Fatalf("expected 0 registered jobs when config schedule is off, got %d", got)
 	}
 
@@ -182,7 +182,7 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
-	if got := len(sc.entryIDs); got != 1 {
+	if got := len(sc.entries); got != 1 {
 		t.Fatalf("expected exactly 1 registered job (files backup), got %d", got)
 	}
 
@@ -191,7 +191,7 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (files offsite): %v", err)
 	}
-	if got := len(sc.entryIDs); got != 2 {
+	if got := len(sc.entries); got != 2 {
 		t.Fatalf("expected 2 registered jobs (files backup + files-offsite), got %d", got)
 	}
 
@@ -202,7 +202,7 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (files off): %v", err)
 	}
-	if got := len(sc.entryIDs); got != 0 {
+	if got := len(sc.entries); got != 0 {
 		t.Fatalf("expected 0 registered jobs when files schedules are off, got %d", got)
 	}
 }

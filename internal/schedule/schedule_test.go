@@ -611,6 +611,80 @@ func TestSchedulerReloadWithDueChecksEveryNFires(t *testing.T) {
 	sched.Stop()
 }
 
+// ---------------------------------------------------------------------------
+// NextRuns tests
+// ---------------------------------------------------------------------------
+
+// TestNextRunsReturnsEnabledEntries verifies NextRuns() surfaces a scheduled,
+// started entry labeled job=backup/domain=containers with a future Next time,
+// and that a domain left "off" does not appear at all.
+func TestNextRunsReturnsEnabledEntries(t *testing.T) {
+	backupFn := func(_ string) error { return nil }
+	listFn := func() ([]store.Target, error) { return nil, nil }
+
+	sched := schedule.New(backupFn, listFn)
+
+	settings := store.Settings{
+		ContainersSchedule: "daily 03:00",
+		VMsSchedule:        "off",
+		FlashSchedule:      "off",
+	}
+	if err := sched.Reload(settings); err != nil {
+		t.Fatalf("Reload returned error: %v", err)
+	}
+	sched.Start()
+	defer sched.Stop()
+
+	runs := sched.NextRuns()
+
+	var found *schedule.NextRun
+	for i := range runs {
+		if runs[i].Job == "backup" && runs[i].Domain == "containers" {
+			found = &runs[i]
+		}
+		if runs[i].Domain == "vms" || runs[i].Domain == "flash" {
+			t.Fatalf("disabled domain %q must not appear in NextRuns, got %+v", runs[i].Domain, runs[i])
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected a job=backup domain=containers entry in NextRuns, got %+v", runs)
+	}
+	if !found.Next.After(time.Now()) {
+		t.Fatalf("expected Next to be in the future, got %v", found.Next)
+	}
+}
+
+// TestNextRunsSortedSoonestFirst verifies that with multiple enabled domains
+// NextRuns() returns them ordered ascending by Next, regardless of the order
+// they were registered in.
+func TestNextRunsSortedSoonestFirst(t *testing.T) {
+	backupFn := func(_ string) error { return nil }
+	listFn := func() ([]store.Target, error) { return nil, nil }
+
+	sched := schedule.New(backupFn, listFn)
+
+	settings := store.Settings{
+		ContainersSchedule: "daily 23:59",
+		VMsSchedule:        "daily 00:01",
+		FlashSchedule:      "off",
+	}
+	if err := sched.Reload(settings); err != nil {
+		t.Fatalf("Reload returned error: %v", err)
+	}
+	sched.Start()
+	defer sched.Stop()
+
+	runs := sched.NextRuns()
+	if len(runs) < 2 {
+		t.Fatalf("expected at least 2 entries, got %d: %+v", len(runs), runs)
+	}
+	for i := 1; i < len(runs); i++ {
+		if runs[i].Next.Before(runs[i-1].Next) {
+			t.Fatalf("NextRuns not sorted ascending by Next: %+v", runs)
+		}
+	}
+}
+
 // TestSchedulerStopDrainsRunningJobs verifies that Stop blocks until any
 // in-flight job has finished, rather than returning immediately.
 func TestSchedulerStopDrainsRunningJobs(t *testing.T) {
