@@ -46,3 +46,19 @@ export function formatDuration(seconds: number): string {
   if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
   return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
+
+/**
+ * formatClockTime renders a unix timestamp as a fixed 24-hour local clock face
+ * ("HH:MM" or "HH:MM:SS"), independent of the browser's locale. The dashboard
+ * activity log (a flat, docker-logs-style line list) wants a stable, always
+ * 24-hour timestamp per line — not a locale-dependent 12/24-hour format that
+ * `toLocaleTimeString` would silently vary by browser language.
+ */
+export function formatClockTime(unix: number, withSeconds = true): string {
+  const d = new Date(unix * 1000);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  if (!withSeconds) return `${hh}:${mm}`;
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}

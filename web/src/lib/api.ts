@@ -1061,6 +1061,29 @@ export function getHistory(days?: number): Promise<HistoryResponse> {
   return fetchJSON(`/api/history${qs}`);
 }
 
+/** One upcoming scheduled fire, from GET /api/schedule/next. */
+export interface ScheduleNext {
+  job: string;
+  domain: string;
+  next: string; // RFC3339
+}
+
+/**
+ * GET /api/schedule/next — the next fire time for every currently registered
+ * schedule entry, soonest first — the dashboard activity log's "up next" line.
+ * Like every other GET endpoint the response is wrapped in the standard
+ * `{ok,...}` envelope (here under `runs`); this unwraps it and hands back a
+ * plain array, since callers here just want the list. A graceful `ok:false`
+ * (not expected for this read-only endpoint) resolves to an empty array
+ * rather than throwing.
+ */
+export async function getScheduleNext(): Promise<ScheduleNext[]> {
+  const res = await fetchJSON<{ ok: boolean; runs?: ScheduleNext[]; error?: string }>(
+    "/api/schedule/next"
+  );
+  return res.ok ? (res.runs ?? []) : [];
+}
+
 /**
  * One repository-size sample for a domain at a point in time.
  * `rawSize` is the physical (deduplicated + compressed) repo size, `restoreSize`

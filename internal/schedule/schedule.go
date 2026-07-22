@@ -6,8 +6,10 @@ package schedule
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -273,7 +275,78 @@ type Scheduler struct {
 	// injected backup closures (see cmd/bombvault/main.go).
 	hcRunStart  func(domain string)
 	hcRunFinish func(domain string, attempted, failed int, failures []ItemFailure)
-	entryIDs    []cron.EntryID
+
+	// mu guards entries: ReloadWithDueChecks (settings POST goroutine) mutates
+	// it while NextRuns (the /api/schedule/next GET handler goroutine) reads
+	// it concurrently. It guards ONLY the slice access — never held while
+	// calling into cron.Cron (AddFunc/Remove/Entry), which has its own
+	// internal locking, so the two locks never nest and cannot deadlock.
+	mu      sync.Mutex
+	entries []scheduledEntry
+}
+
+// scheduledEntry pairs a registered cron.EntryID with the job+domain label
+// derived from the domainSpec that registered it, so NextRuns() can report
+// WHAT each upcoming fire time belongs to (not just when).
+type scheduledEntry struct {
+	id     cron.EntryID
+	job    string
+	domain string
+}
+
+// NextRun is one upcoming scheduled fire time for the dashboard activity log's
+// "what's next" line. Domain is "" for schedules that are not domain-specific
+// (drills and tamper tests each iterate their own set of domains internally).
+type NextRun struct {
+	Job    string    `json:"job"`
+	Domain string    `json:"domain"`
+	Next   time.Time `json:"next"`
+}
+
+// jobDomainFromName derives the (job, domain) label from a domainSpec.name, so
+// the label logic lives in one place next to the names it interprets. Names in
+// use: "containers"|"vms"|"flash"|"config"|"files" (job=backup, domain=name),
+// "<domain>-offsite" (job=offsite, domain=<domain>), "drills" and "tamper"
+// (job=drill/tamper, domain="" — each iterates multiple domains per fire).
+func jobDomainFromName(name string) (job, domain string) {
+	switch name {
+	case "drills":
+		return "drill", ""
+	case "tamper":
+		return "tamper", ""
+	}
+	if d, ok := strings.CutSuffix(name, "-offsite"); ok {
+		return "offsite", d
+	}
+	return "backup", name
+}
+
+// NextRuns returns the next fire time for every currently registered schedule
+// entry that has one (a registered-but-not-yet-computed entry — the cron
+// runner has not been started — has a zero Next and is omitted), sorted
+// soonest-first. It is the data source for the dashboard activity log's "up
+// next" line.
+func (s *Scheduler) NextRuns() []NextRun {
+	if s.c == nil {
+		return nil
+	}
+	// Take a locked snapshot of the entry list, then call into cron (s.c.Entry)
+	// OUTSIDE the lock — s.mu only ever guards the entries slice itself.
+	s.mu.Lock()
+	entries := make([]scheduledEntry, len(s.entries))
+	copy(entries, s.entries)
+	s.mu.Unlock()
+
+	out := make([]NextRun, 0, len(entries))
+	for _, e := range entries {
+		next := s.c.Entry(e.id).Next
+		if next.IsZero() {
+			continue
+		}
+		out = append(out, NextRun{Job: e.job, Domain: e.domain, Next: next})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Next.Before(out[j].Next) })
+	return out
 }
 
 // New creates a Scheduler. backupFn is called for each due container;
@@ -407,11 +480,17 @@ func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
 	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun LastRunFunc,
 ) error {
-	// Remove all existing entries.
-	for _, id := range s.entryIDs {
-		s.c.Remove(id)
+	// Snapshot + clear the existing entries under the lock, then remove them
+	// from cron OUTSIDE the lock — never call into cron while holding s.mu.
+	s.mu.Lock()
+	oldEntries := make([]scheduledEntry, len(s.entries))
+	copy(oldEntries, s.entries)
+	s.entries = s.entries[:0]
+	s.mu.Unlock()
+
+	for _, e := range oldEntries {
+		s.c.Remove(e.id)
 	}
-	s.entryIDs = s.entryIDs[:0]
 
 	// Register enabled domains.
 	domains := []domainSpec{
@@ -610,7 +689,10 @@ func (s *Scheduler) ReloadWithDueChecks(
 		if err != nil {
 			return fmt.Errorf("schedule: domain %s: add cron entry: %w", d.name, err)
 		}
-		s.entryIDs = append(s.entryIDs, id)
+		job, domain := jobDomainFromName(d.name)
+		s.mu.Lock()
+		s.entries = append(s.entries, scheduledEntry{id: id, job: job, domain: domain})
+		s.mu.Unlock()
 	}
 
 	return nil

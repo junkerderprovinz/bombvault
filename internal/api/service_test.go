@@ -1600,6 +1600,27 @@ func waitBatchDone(t *testing.T, ch <-chan progress.Event) {
 	}
 }
 
+// drainTwoEvents reads exactly the first two events off ch (the begin and
+// terminal pair a maintenance op — prune/verify — publishes) or fails the test
+// after a timeout. Used by the prune/verify progress tests, which run
+// synchronously against a fake engine, so the two events are always the whole
+// story (no percentage stream in between, unlike a real backup/restore).
+func drainTwoEvents(t *testing.T, ch <-chan progress.Event) (begin, term progress.Event) {
+	t.Helper()
+	deadline := time.After(5 * time.Second)
+	select {
+	case begin = <-ch:
+	case <-deadline:
+		t.Fatal("timed out waiting for the begin progress event")
+	}
+	select {
+	case term = <-ch:
+	case <-deadline:
+		t.Fatal("timed out waiting for the terminal progress event")
+	}
+	return begin, term
+}
+
 // TestBackupRefusesSelf pins the forum fix: BombVault must never back up its own
 // container (stopping it mid-backup is suicide). With the self-container known,
 // Backup returns ErrSelfBackup and never touches Docker's lifecycle.
@@ -3220,6 +3241,7 @@ type fakeResticEngine struct {
 	backupErr       error
 	dumpErr         error
 	forgetPolicyErr error
+	pruneErr        error // when set, the manual (no-policy) Prune call fails
 	checkErr        error
 	checkDataRepos  []string // repo of each CheckData (drill) call
 	checkDataPct    []int    // subset percent of each CheckData call
@@ -3441,7 +3463,7 @@ func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool
 
 func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) error {
 	f.manualPruned = append(f.manualPruned, repo)
-	return nil
+	return f.pruneErr
 }
 
 func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Limits, _ restic.Mode) error {
@@ -3499,6 +3521,15 @@ func (f *fakeResticEngine) TagAdd(_ context.Context, _, snapID string, tags []st
 // repo-management methods reach the engine instead of the "not created yet" guard.
 func initRepoSvc(t *testing.T, eng *fakeResticEngine) *api.Service {
 	t.Helper()
+	svc, _ := initRepoSvcWithStore(t, eng)
+	return svc
+}
+
+// initRepoSvcWithStore is initRepoSvc but also returns the backing store, for
+// tests that need to inspect recorded runs (e.g. the prune/verify activity-log
+// tests) directly instead of just calling the service.
+func initRepoSvcWithStore(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo) {
+	t.Helper()
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
@@ -3514,7 +3545,7 @@ func initRepoSvc(t *testing.T, eng *fakeResticEngine) *api.Service {
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
 }
 
 func TestUnlockDomainRemovesAllLocks(t *testing.T) {
@@ -4204,6 +4235,84 @@ func TestCheckDomainDoesNotRetryNonLockError(t *testing.T) {
 	}
 }
 
+// TestCheckDomainEmitsMaintenanceProgressAndRunRecord pins that a manual verify —
+// previously invisible on the dashboard (no progress event, no run row) — now
+// publishes a begin/terminal "maintenance" progress pair keyed "verify:<domain>"
+// and records a run of kind "verify" against the reserved domain-literal target
+// id, so it shows up in the activity log/run history like a backup does.
+func TestCheckDomainEmitsMaintenanceProgressAndRunRecord(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st := initRepoSvcWithStore(t, eng)
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if err := svc.CheckDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("CheckDomain: %v", err)
+	}
+	if len(eng.checked) != 1 {
+		t.Fatalf("expected the check to still run, got %v", eng.checked)
+	}
+
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "verify:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=verify:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "verify:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=verify:containers Phase=maintenance Active=false Percent=100", term)
+	}
+
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 {
+		t.Fatalf("expected exactly one recorded run, got %d: %+v", len(runs), runs)
+	}
+	if runs[0].Kind != "verify" || runs[0].TargetID != "containers" || runs[0].Status != "success" {
+		t.Fatalf("run = %+v, want Kind=verify TargetID=containers Status=success", runs[0])
+	}
+}
+
+// TestCheckDomainFailureRecordsFailedRunAndProgress pins the failure side of the
+// same seam: a failing restic check still ends the progress bar (Active=false,
+// Percent=0) and records a "failed" run carrying the (scrubbed) error.
+func TestCheckDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
+	eng := &fakeResticEngine{checkErr: errors.New("pack 1234abcd is damaged, run rebuild-index")}
+	svc, st := initRepoSvcWithStore(t, eng)
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if err := svc.CheckDomain(context.Background(), "containers", ""); err == nil {
+		t.Fatal("expected CheckDomain to surface the engine's check error")
+	}
+
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "verify:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=verify:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "verify:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 0 {
+		t.Fatalf("terminal event on failure = %+v, want Key=verify:containers Phase=maintenance Active=false Percent=0", term)
+	}
+
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 {
+		t.Fatalf("expected exactly one recorded run, got %d: %+v", len(runs), runs)
+	}
+	if runs[0].Kind != "verify" || runs[0].TargetID != "containers" || runs[0].Status != "failed" {
+		t.Fatalf("run = %+v, want Kind=verify TargetID=containers Status=failed", runs[0])
+	}
+	if !strings.Contains(runs[0].Error, "pack 1234abcd is damaged") {
+		t.Fatalf("run.Error = %q, want it to contain the underlying check error", runs[0].Error)
+	}
+}
+
 // TestPruneDomainCallsPrune: with NO retention policy set, Prune is a plain
 // space-reclaim (restic prune) and must NOT forget anything.
 func TestPruneDomainCallsPrune(t *testing.T) {
@@ -4318,6 +4427,85 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	}
 	if len(eng.manualPruned) != 1 {
 		t.Fatalf("local prune with no policy must plain-prune, got manualPruned=%v", eng.manualPruned)
+	}
+}
+
+// TestPruneDomainEmitsMaintenanceProgressAndRunRecord pins that a manual prune —
+// previously invisible on the dashboard (no progress event, no run row) — now
+// publishes a begin/terminal "maintenance" progress pair keyed "prune:<domain>"
+// and records a run of kind "prune" against the reserved domain-literal target
+// id, so it shows up in the activity log/run history like a backup does.
+func TestPruneDomainEmitsMaintenanceProgressAndRunRecord(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st := initRepoSvcWithStore(t, eng)
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	if len(eng.manualPruned) != 1 {
+		t.Fatalf("expected the prune to still run, got %v", eng.manualPruned)
+	}
+
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "prune:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=prune:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "prune:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=prune:containers Phase=maintenance Active=false Percent=100", term)
+	}
+
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 {
+		t.Fatalf("expected exactly one recorded run, got %d: %+v", len(runs), runs)
+	}
+	if runs[0].Kind != "prune" || runs[0].TargetID != "containers" || runs[0].Status != "success" {
+		t.Fatalf("run = %+v, want Kind=prune TargetID=containers Status=success", runs[0])
+	}
+}
+
+// TestPruneDomainFailureRecordsFailedRunAndProgress pins the failure side of the
+// same seam: a failing restic prune still ends the progress bar (Active=false,
+// Percent=0) and records a "failed" run carrying the (scrubbed) error, instead of
+// leaving a phantom "running" row or a stuck progress bar.
+func TestPruneDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
+	eng := &fakeResticEngine{pruneErr: errors.New("prune boom")}
+	svc, st := initRepoSvcWithStore(t, eng)
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
+		t.Fatal("expected PruneDomain to surface the engine's prune error")
+	}
+
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "prune:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=prune:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "prune:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 0 {
+		t.Fatalf("terminal event on failure = %+v, want Key=prune:containers Phase=maintenance Active=false Percent=0", term)
+	}
+
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 {
+		t.Fatalf("expected exactly one recorded run, got %d: %+v", len(runs), runs)
+	}
+	if runs[0].Kind != "prune" || runs[0].TargetID != "containers" || runs[0].Status != "failed" {
+		t.Fatalf("run = %+v, want Kind=prune TargetID=containers Status=failed", runs[0])
+	}
+	if !strings.Contains(runs[0].Error, "prune boom") {
+		t.Fatalf("run.Error = %q, want it to contain the underlying prune error", runs[0].Error)
 	}
 }
 
