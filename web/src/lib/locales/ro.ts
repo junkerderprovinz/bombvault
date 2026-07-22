@@ -41,6 +41,8 @@ const ro: Partial<Translations> = {
   "dashboard.moveDown": "Mută în jos",
   "dashboard.hideCard": "Ascunde",
   "dashboard.showCard": "Afișează",
+  "dashboard.makeHalfWidth": "Jumătate de lățime",
+  "dashboard.makeFullWidth": "Lățime completă",
   "dashboard.hiddenCards": "Carduri ascunse",
   "dashboard.resetLayout": "Resetează la implicit",
   "dashboard.blockSummary": "Prezentare generală",

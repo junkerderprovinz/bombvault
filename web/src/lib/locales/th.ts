@@ -42,6 +42,8 @@ const th: Partial<Translations> = {
   "dashboard.moveDown": "เลื่อนลง",
   "dashboard.hideCard": "ซ่อน",
   "dashboard.showCard": "แสดง",
+  "dashboard.makeHalfWidth": "ตั้งเป็นครึ่งความกว้าง",
+  "dashboard.makeFullWidth": "ตั้งเป็นความกว้างเต็ม",
   "dashboard.hiddenCards": "การ์ดที่ซ่อนไว้",
   "dashboard.resetLayout": "รีเซ็ตเป็นค่าเริ่มต้น",
   "dashboard.blockSummary": "ภาพรวม",

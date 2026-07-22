@@ -42,6 +42,8 @@ const vi: Partial<Translations> = {
   "dashboard.moveDown": "Di chuyển xuống",
   "dashboard.hideCard": "Ẩn",
   "dashboard.showCard": "Hiện",
+  "dashboard.makeHalfWidth": "Đặt thành nửa chiều rộng",
+  "dashboard.makeFullWidth": "Đặt thành chiều rộng đầy đủ",
   "dashboard.hiddenCards": "Thẻ đã ẩn",
   "dashboard.resetLayout": "Đặt lại mặc định",
   "dashboard.blockSummary": "Tổng quan",

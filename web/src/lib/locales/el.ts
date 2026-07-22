@@ -42,6 +42,8 @@ const el: Partial<Translations> = {
   "dashboard.moveDown": "Μετακίνηση κάτω",
   "dashboard.hideCard": "Απόκρυψη",
   "dashboard.showCard": "Εμφάνιση",
+  "dashboard.makeHalfWidth": "Μισό πλάτος",
+  "dashboard.makeFullWidth": "Πλήρες πλάτος",
   "dashboard.hiddenCards": "Κρυμμένες κάρτες",
   "dashboard.resetLayout": "Επαναφορά στις προεπιλογές",
   "dashboard.blockSummary": "Επισκόπηση",
