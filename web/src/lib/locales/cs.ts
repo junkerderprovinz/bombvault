@@ -42,6 +42,8 @@ const cs: Partial<Translations> = {
   "dashboard.moveDown": "Přesunout dolů",
   "dashboard.hideCard": "Skrýt",
   "dashboard.showCard": "Zobrazit",
+  "dashboard.makeHalfWidth": "Poloviční šířka",
+  "dashboard.makeFullWidth": "Plná šířka",
   "dashboard.hiddenCards": "Skryté karty",
   "dashboard.resetLayout": "Obnovit výchozí",
   "dashboard.blockSummary": "Přehled",

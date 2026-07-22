@@ -42,6 +42,8 @@ const uk: Partial<Translations> = {
   "dashboard.moveDown": "Вниз",
   "dashboard.hideCard": "Приховати",
   "dashboard.showCard": "Показати",
+  "dashboard.makeHalfWidth": "Половина ширини",
+  "dashboard.makeFullWidth": "Повна ширина",
   "dashboard.hiddenCards": "Приховані картки",
   "dashboard.resetLayout": "Скинути до типових",
   "dashboard.blockSummary": "Огляд",

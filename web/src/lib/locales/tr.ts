@@ -42,6 +42,8 @@ const tr: Partial<Translations> = {
   "dashboard.moveDown": "Aşağı taşı",
   "dashboard.hideCard": "Gizle",
   "dashboard.showCard": "Göster",
+  "dashboard.makeHalfWidth": "Yarım genişlik yap",
+  "dashboard.makeFullWidth": "Tam genişlik yap",
   "dashboard.hiddenCards": "Gizli kartlar",
   "dashboard.resetLayout": "Varsayılana sıfırla",
   "dashboard.blockSummary": "Genel bakış",

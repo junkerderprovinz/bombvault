@@ -42,6 +42,8 @@ const fr: Partial<Translations> = {
   "dashboard.moveDown": "Descendre",
   "dashboard.hideCard": "Masquer",
   "dashboard.showCard": "Afficher",
+  "dashboard.makeHalfWidth": "Passer en demi-largeur",
+  "dashboard.makeFullWidth": "Passer en pleine largeur",
   "dashboard.hiddenCards": "Cartes masquées",
   "dashboard.resetLayout": "Réinitialiser par défaut",
   "dashboard.blockSummary": "Aperçu",

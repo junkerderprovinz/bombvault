@@ -42,6 +42,8 @@ const sv: Partial<Translations> = {
   "dashboard.moveDown": "Flytta ner",
   "dashboard.hideCard": "Dölj",
   "dashboard.showCard": "Visa",
+  "dashboard.makeHalfWidth": "Halv bredd",
+  "dashboard.makeFullWidth": "Full bredd",
   "dashboard.hiddenCards": "Dolda kort",
   "dashboard.resetLayout": "Återställ till standard",
   "dashboard.blockSummary": "Översikt",

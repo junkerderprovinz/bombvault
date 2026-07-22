@@ -42,6 +42,8 @@ const ja: Partial<Translations> = {
   "dashboard.moveDown": "下へ移動",
   "dashboard.hideCard": "非表示",
   "dashboard.showCard": "表示",
+  "dashboard.makeHalfWidth": "半分の幅にする",
+  "dashboard.makeFullWidth": "全幅にする",
   "dashboard.hiddenCards": "非表示のカード",
   "dashboard.resetLayout": "デフォルトに戻す",
   "dashboard.blockSummary": "概要",
