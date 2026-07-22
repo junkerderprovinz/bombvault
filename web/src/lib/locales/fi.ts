@@ -42,6 +42,8 @@ const fi: Partial<Translations> = {
   "dashboard.moveDown": "Siirrä alas",
   "dashboard.hideCard": "Piilota",
   "dashboard.showCard": "Näytä",
+  "dashboard.makeHalfWidth": "Aseta puoleen leveyteen",
+  "dashboard.makeFullWidth": "Aseta täyteen leveyteen",
   "dashboard.hiddenCards": "Piilotetut kortit",
   "dashboard.resetLayout": "Palauta oletukset",
   "dashboard.blockSummary": "Yleiskatsaus",

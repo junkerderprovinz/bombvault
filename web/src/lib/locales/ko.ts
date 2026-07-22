@@ -42,6 +42,8 @@ const ko: Partial<Translations> = {
   "dashboard.moveDown": "아래로 이동",
   "dashboard.hideCard": "숨기기",
   "dashboard.showCard": "표시",
+  "dashboard.makeHalfWidth": "절반 너비로 설정",
+  "dashboard.makeFullWidth": "전체 너비로 설정",
   "dashboard.hiddenCards": "숨긴 카드",
   "dashboard.resetLayout": "기본값으로 재설정",
   "dashboard.blockSummary": "개요",

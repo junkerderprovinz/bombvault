@@ -42,6 +42,8 @@ const zh: Partial<Translations> = {
   "dashboard.moveDown": "下移",
   "dashboard.hideCard": "隐藏",
   "dashboard.showCard": "显示",
+  "dashboard.makeHalfWidth": "设为半宽",
+  "dashboard.makeFullWidth": "设为全宽",
   "dashboard.hiddenCards": "隐藏的卡片",
   "dashboard.resetLayout": "重置为默认",
   "dashboard.blockSummary": "概览",

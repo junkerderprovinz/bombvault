@@ -42,6 +42,8 @@ const hu: Partial<Translations> = {
   "dashboard.moveDown": "Mozgatás lefelé",
   "dashboard.hideCard": "Elrejtés",
   "dashboard.showCard": "Megjelenítés",
+  "dashboard.makeHalfWidth": "Fél szélesség",
+  "dashboard.makeFullWidth": "Teljes szélesség",
   "dashboard.hiddenCards": "Rejtett kártyák",
   "dashboard.resetLayout": "Visszaállítás alapértelmezettre",
   "dashboard.blockSummary": "Áttekintés",

@@ -1,13 +1,16 @@
 // ---------------------------------------------------------------------------
 // Customizable dashboard layout (#46) — per-browser card order + visibility.
 //
-// The user can reorder the dashboard cards and hide the ones they don't want.
-// The preference is persisted in localStorage (like the Simple/Advanced toggle
-// in advanced.tsx). This module owns:
-//   • useDashboardLayout() — the persisted { order, hidden } state + mutators.
+// The user can reorder the dashboard cards, hide the ones they don't want, and
+// (per-card width toggle) size a card full or half width so two half cards sit
+// side by side. The preference is persisted in localStorage (like the
+// Simple/Advanced toggle in advanced.tsx). This module owns:
+//   • useDashboardLayout() — the persisted { order, hidden, widths } state +
+//                            mutators.
 //   • CustomizableBlock    — the per-card wrapper that, in edit mode, adds a
 //                            Carbon-styled control bar (drag handle, move
-//                            up/down, hide) and wires native HTML5 drag-and-drop.
+//                            up/down, width toggle, hide) and wires native
+//                            HTML5 drag-and-drop.
 //
 // No new npm dependency: reordering uses native HTML5 drag-and-drop, with the
 // move up/down buttons as the accessible + touch fallback.
@@ -35,32 +38,46 @@ export interface BlockDragHandlers {
   onDragEnd: (e: ReactDragEvent<HTMLElement>) => void;
 }
 
+// CardWidth — per-card width toggle (feature request B): "half" cards flow
+// side-by-side (two per row) in the Dashboard's responsive grid; "full" (the
+// default for every card, incl. ones never toggled) spans the full row.
+export type CardWidth = "full" | "half";
+
 interface LayoutState {
   order: string[];
   hidden: Set<string>;
+  widths: Record<string, CardWidth>;
 }
 
 interface StoredLayout {
   order: string[];
   hidden: string[];
+  widths: Record<string, CardWidth>;
 }
 
 // readStored parses the persisted value defensively: a missing, corrupt or
-// wrong-shaped value yields null (→ defaults). Only string entries survive.
+// wrong-shaped value yields null (→ defaults). Only string entries survive;
+// widths entries that aren't exactly "full"/"half" are dropped (→ default full).
 function readStored(): StoredLayout | null {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
-    const obj = parsed as { order?: unknown; hidden?: unknown };
+    const obj = parsed as { order?: unknown; hidden?: unknown; widths?: unknown };
     const order = Array.isArray(obj.order)
       ? obj.order.filter((x): x is string => typeof x === "string")
       : [];
     const hidden = Array.isArray(obj.hidden)
       ? obj.hidden.filter((x): x is string => typeof x === "string")
       : [];
-    return { order, hidden };
+    const widths: Record<string, CardWidth> = {};
+    if (obj.widths && typeof obj.widths === "object" && !Array.isArray(obj.widths)) {
+      for (const [id, w] of Object.entries(obj.widths as Record<string, unknown>)) {
+        if (w === "full" || w === "half") widths[id] = w;
+      }
+    }
+    return { order, hidden, widths };
   } catch {
     return null;
   }
@@ -102,7 +119,11 @@ export function useDashboardLayout(defaultOrder: string[]) {
     const known = new Set(defaultOrder);
     const order = mergeOrder(stored?.order ?? [], defaultOrder);
     const hidden = new Set((stored?.hidden ?? []).filter((id) => known.has(id)));
-    return { order, hidden };
+    const widths: Record<string, CardWidth> = {};
+    for (const [id, w] of Object.entries(stored?.widths ?? {})) {
+      if (known.has(id)) widths[id] = w;
+    }
+    return { order, hidden, widths };
   });
 
   // Persist on change. Skip the very first run so users who never customise
@@ -117,6 +138,7 @@ export function useDashboardLayout(defaultOrder: string[]) {
       const payload: StoredLayout = {
         order: state.order,
         hidden: Array.from(state.hidden),
+        widths: state.widths,
       };
       localStorage.setItem(KEY, JSON.stringify(payload));
     } catch {
@@ -135,7 +157,7 @@ export function useDashboardLayout(defaultOrder: string[]) {
       if (swapIdx < 0 || swapIdx >= prev.order.length) return prev;
       const order = prev.order.slice();
       [order[idx], order[swapIdx]] = [order[swapIdx], order[idx]];
-      return { order, hidden: prev.hidden };
+      return { order, hidden: prev.hidden, widths: prev.widths };
     });
   }, []);
 
@@ -152,7 +174,7 @@ export function useDashboardLayout(defaultOrder: string[]) {
       const targetAt = order.indexOf(targetId);
       const insertAt = from < to ? targetAt + 1 : targetAt;
       order.splice(insertAt, 0, draggedId);
-      return { order, hidden: prev.hidden };
+      return { order, hidden: prev.hidden, widths: prev.widths };
     });
   }, []);
 
@@ -161,18 +183,37 @@ export function useDashboardLayout(defaultOrder: string[]) {
       const hidden = new Set(prev.hidden);
       if (hidden.has(id)) hidden.delete(id);
       else hidden.add(id);
-      return { order: prev.order, hidden };
+      return { order: prev.order, hidden, widths: prev.widths };
+    });
+  }, []);
+
+  // toggleWidth — flips a single card between full (default) and half width.
+  const toggleWidth = useCallback((id: string) => {
+    setState((prev) => {
+      const current = prev.widths[id] ?? "full";
+      const widths = { ...prev.widths, [id]: current === "full" ? "half" : "full" } as Record<
+        string,
+        CardWidth
+      >;
+      return { order: prev.order, hidden: prev.hidden, widths };
     });
   }, []);
 
   const reset = useCallback(() => {
-    setState({ order: defaultOrder.slice(), hidden: new Set<string>() });
+    setState({ order: defaultOrder.slice(), hidden: new Set<string>(), widths: {} });
   }, [defaultOrder]);
 
   // getVisibleIds — the layout-visible (not hidden) ids, in order. Callers that
   // also gate on Advanced mode filter this further against their block list.
   const getVisibleIds = useCallback(
     () => state.order.filter((id) => !state.hidden.has(id)),
+    [state]
+  );
+
+  // getWidth — the persisted width for a card id, defaulting to "full" for
+  // ids never toggled (matches the pre-existing single full-width column).
+  const getWidth = useCallback(
+    (id: string): CardWidth => state.widths[id] ?? "full",
     [state]
   );
 
@@ -183,6 +224,8 @@ export function useDashboardLayout(defaultOrder: string[]) {
     move,
     reorder,
     toggleHidden,
+    toggleWidth,
+    getWidth,
     reset,
   };
 }
@@ -263,6 +306,26 @@ function EyeOffIcon() {
   );
 }
 
+function ColumnsIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="block"
+    >
+      <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
+      <line x1="8" y1="2.5" x2="8" y2="13.5" />
+    </svg>
+  );
+}
+
 const iconBtn =
   "rounded-sm p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
@@ -270,8 +333,11 @@ const iconBtn =
 // ---------------------------------------------------------------------------
 // CustomizableBlock — wraps a single dashboard block.
 //   editing=false → renders children plainly, no wrapper chrome (view parity).
-//   editing=true  → adds a control bar (drag handle, label, move up/down, hide)
-//                   and makes the block a native drag source + drop target.
+//   editing=true  → adds a control bar (drag handle, label, move up/down,
+//                   width toggle, hide) and makes the block a native drag
+//                   source + drop target. The width toggle itself doesn't
+//                   affect layout here — Dashboard.tsx reads `width` back via
+//                   getWidth() to size the grid wrapper around this block.
 // ---------------------------------------------------------------------------
 
 export interface CustomizableBlockProps {
@@ -286,6 +352,8 @@ export interface CustomizableBlockProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onHide: () => void;
+  width: CardWidth;
+  onToggleWidth: () => void;
   t: T;
   children: ReactNode;
 }
@@ -302,6 +370,8 @@ export function CustomizableBlock({
   onMoveUp,
   onMoveDown,
   onHide,
+  width,
+  onToggleWidth,
   t,
   children,
 }: CustomizableBlockProps) {
@@ -391,6 +461,15 @@ export function CustomizableBlock({
             className={iconBtn}
           >
             <ChevronDownIcon />
+          </button>
+          <button
+            type="button"
+            onClick={onToggleWidth}
+            aria-label={width === "full" ? t("dashboard.makeHalfWidth") : t("dashboard.makeFullWidth")}
+            title={width === "full" ? t("dashboard.makeHalfWidth") : t("dashboard.makeFullWidth")}
+            className={iconBtn}
+          >
+            <ColumnsIcon />
           </button>
           <button
             type="button"
