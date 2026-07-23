@@ -1487,7 +1487,7 @@ function FilesSection({
                   s.enabled ? "bg-[#6fdc8c]" : "bg-carbon-surface3"
                 }`}
               />
-              <span className="font-medium text-carbon-text flex-1 truncate">{s.name}</span>
+              <span className="font-medium text-carbon-text flex-1 min-w-0 truncate">{s.name}</span>
               {s.path && (
                 <span className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs">
                   {s.path}
