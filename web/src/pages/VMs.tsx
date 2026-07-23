@@ -425,6 +425,10 @@ function VMSnapshotRow({
   const busy = progressMap[`vm:${vmName}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  // Collapsed by default so the list stays compact (mirrors Containers'
+  // SnapshotRow) — the restore controls (confirm + leave-stopped + progress
+  // banner) only render once the user opts in.
+  const [showRestore, setShowRestore] = useState(false);
 
   async function handleDelete() {
     if (!window.confirm(t("snapshots.deleteConfirm"))) return;
@@ -455,6 +459,16 @@ function VMSnapshotRow({
             {snap.tags.join(", ")}
           </span>
         )}
+        {/* Compact restore toggle: opens the inline RestoreAction panel below
+            (mirrors Containers' SnapshotRow) instead of always rendering it. */}
+        <button
+          onClick={() => setShowRestore((p) => !p)}
+          className={`shrink-0 rounded-lg border border-carbon-border px-2.5 py-1 text-xs transition-colors ${
+            showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+          }`}
+        >
+          {t("restore.open")}
+        </button>
         <button
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
@@ -465,18 +479,21 @@ function VMSnapshotRow({
         </button>
       </div>
       {/* Restore control (confirm + leave-stopped + progress banner), indented
-          under the id column (pl-24) to match the row's content alignment. */}
-      <div className="pl-24">
-        <RestoreAction
-          domain="vm"
-          name={vmName}
-          snapshotId={snap.id}
-          source={source}
-          otherActive={running}
-          successMessage={t("restore.completeVM")}
-          t={t}
-        />
-      </div>
+          under the id column (pl-24) to match the row's content alignment.
+          Only rendered once the user opts in via the toggle above. */}
+      {showRestore && (
+        <div className="pl-24">
+          <RestoreAction
+            domain="vm"
+            name={vmName}
+            snapshotId={snap.id}
+            source={source}
+            otherActive={running}
+            successMessage={t("restore.completeVM")}
+            t={t}
+          />
+        </div>
+      )}
       {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
@@ -633,7 +650,7 @@ function VMRow({
         {/* Name + state */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-carbon-text text-sm truncate">
+            <span className="font-semibold text-carbon-text text-sm min-w-0 truncate">
               {vm.name}
             </span>
             {installed ? (

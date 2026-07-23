@@ -98,7 +98,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
 
       {/* Absolute path preview */}
       {resolved && (
-        <p className="text-xs text-carbon-textMuted font-mono">→ {resolved}</p>
+        <p className="text-xs text-carbon-textMuted font-mono break-all">→ {resolved}</p>
       )}
       {!resolved && trimmed && (
         <p className="text-xs text-[#ff8389]">
@@ -111,7 +111,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
         <div className="mt-1 rounded-lg bg-carbon-surface2 border border-carbon-border p-3 flex flex-col gap-2">
           {/* Header: current path + close */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-mono text-carbon-textSub truncate">
+            <span className="text-xs font-mono text-carbon-textSub min-w-0 truncate">
               {hostMountRoot}/{browsePath || ""}
             </span>
             <button
@@ -171,7 +171,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
               >
                 {t("folder.use")}
               </button>
-              <span className="text-xs text-carbon-textMuted font-mono truncate">
+              <span className="text-xs text-carbon-textMuted font-mono min-w-0 truncate">
                 {browsePath || "(root)"}
               </span>
             </div>

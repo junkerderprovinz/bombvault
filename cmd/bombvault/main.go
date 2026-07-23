@@ -172,8 +172,16 @@ func run() error {
 	vc := virshcli.New(sc.VirshURI())
 
 	// Real restic CLI adapter. RcloneConfig points at the managed rclone config
-	// (written below) so off-site (rclone) repos authenticate.
-	engine := &restic.Restic{Bin: "restic", RcloneConfig: filepath.Join(cfg.DataDir, "rclone.conf")}
+	// (written below) so off-site (rclone) repos authenticate. CacheDir pins
+	// restic's index/pack cache under the persistent /config volume so it survives
+	// container restarts — without it every run after a restart re-downloads the
+	// repo index, which is ruinous for off-site (high-latency) replication (#95).
+	resticCacheDir := filepath.Join(cfg.DataDir, "cache", "restic")
+	if mkErr := os.MkdirAll(resticCacheDir, 0o750); mkErr != nil { // internal cache; restic manages its own subdir perms
+		log.Printf("main: could not create restic cache dir %s: %v (falling back to restic default)", resticCacheDir, mkErr)
+		resticCacheDir = ""
+	}
+	engine := &restic.Restic{Bin: "restic", RcloneConfig: filepath.Join(cfg.DataDir, "rclone.conf"), CacheDir: resticCacheDir}
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
@@ -195,18 +203,18 @@ func run() error {
 	// notification channel still fires per item.
 	scheduler := schedule.New(
 		func(name string) error {
-			ctx := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
+			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
 			_, bErr := svc.Backup(ctx, name)
 			if errors.Is(bErr, backup.ErrContainerNotInstalled) {
 				return nil // container no longer on the host: a skip (already recorded), not a job failure (#57)
 			}
 			return bErr
 		},
-		st.ListTargets,
+		st.ListTargetsScheduleOrder, // #95: never/least-recently-backed-up first so a slow run can't starve the same tail
 	)
 	scheduler.SetVMJob(
 		func(name string) error {
-			ctx := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
+			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
 			_, bErr := svc.BackupVM(ctx, name)
 			if errors.Is(bErr, backup.ErrVMNotInstalled) {
 				return nil // VM no longer on the host: a skip (already logged), not a job failure
@@ -237,12 +245,20 @@ func run() error {
 	// aggregate ping (SetHealthchecksAggregator above) represents the whole run.
 	// The scheduler hands over the set's stable ID, not its name.
 	scheduler.SetFilesJob(func(id string) error {
-		ctx := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
+		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
 		_, bErr := svc.BackupFileSet(ctx, id)
 		return bErr
 	}, st.ListFileSets)
 	scheduler.SetOffsiteJob(func(domain string) error {
 		return svc.ScheduledReplicateOffsite(context.Background(), domain)
+	})
+	// #95: batched off-site replication for scheduled multi-item domains. After the
+	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
+	// suppressed via WithBulkReplicateSuppressed above), so a high-latency off-site
+	// backend is opened + its index reloaded once per run instead of once per item.
+	// No-op for domains with no off-site repo or a separate off-site schedule.
+	scheduler.SetOffsiteAfterBulkJob(func(domain string) {
+		svc.ReplicateOffsiteAfterBulk(context.Background(), domain)
 	})
 	scheduler.SetDrillJob(func(domain, source, kind string) error {
 		// Scheduled: wait for the domain lock so a nightly backup/replication co-fire

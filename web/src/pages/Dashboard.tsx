@@ -105,7 +105,7 @@ function StatCard({
   danger?: boolean;
 }) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-1">
+    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-1 min-w-0 overflow-hidden">
       <span
         className={`text-2xl font-bold tabular-nums ${
           danger && value > 0 ? "text-[#ff8389]" : "text-carbon-text"
@@ -113,7 +113,7 @@ function StatCard({
       >
         {value}
       </span>
-      <span className="text-xs text-carbon-textMuted">{label}</span>
+      <span className="text-xs text-carbon-textMuted wrap-break-word leading-tight">{label}</span>
     </div>
   );
 }
@@ -146,8 +146,23 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
         // Scoped to backup/restore/update kinds — a failed prune/verify
         // (maintenance) run is surfaced in the Activity Log, not here, so this
         // badge keeps its original "backup/restore failures" meaning (#3).
-        const errors = runs.filter(
-          (r) => r.status === "failed" && (r.kind === "backup" || r.kind === "restore" || r.kind === "update")
+        //
+        // Reflects the LAST completed run per item (#100), not a cumulative
+        // count of every failure ever recorded — a target that has since
+        // backed up (or restored/updated) successfully must drop out. `runs`
+        // arrives newest-first, so the first non-"running" run seen per
+        // targetId is that item's latest completed outcome; "running" runs
+        // are skipped so an in-flight retry doesn't hide the prior result.
+        const latestCompletedByTarget = new Map<string, (typeof runs)[number]>();
+        for (const r of runs) {
+          if (r.kind !== "backup" && r.kind !== "restore" && r.kind !== "update") continue;
+          if (r.status === "running") continue;
+          if (!latestCompletedByTarget.has(r.targetId)) {
+            latestCompletedByTarget.set(r.targetId, r);
+          }
+        }
+        const errors = Array.from(latestCompletedByTarget.values()).filter(
+          (r) => r.status === "failed"
         ).length;
 
         setData({
@@ -235,7 +250,7 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {title}
@@ -813,11 +828,11 @@ function RansomwareCard({
                       <div className="flex items-center gap-2 text-sm">
                         <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
                         {row.state === "bad" ? (
-                          <Link to="/settings#offsite" className="text-[#ff8389] hover:underline flex-1 truncate">
+                          <Link to="/settings#offsite" className="text-[#ff8389] hover:underline flex-1 truncate min-w-0">
                             {row.label}
                           </Link>
                         ) : (
-                          <span className={`flex-1 truncate ${labelColor}`}>{row.label}</span>
+                          <span className={`flex-1 truncate min-w-0 ${labelColor}`}>{row.label}</span>
                         )}
                         {row.at !== undefined && (
                           <span className="text-xs text-carbon-textMuted shrink-0">{ageText(row.at)}</span>
@@ -903,10 +918,10 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
                   <StatusChip status={run.status} />
-                  <span className="text-carbon-text font-medium w-16 shrink-0">
+                  <span className="text-carbon-text font-medium w-16 shrink-0 truncate">
                     {runKindLabel(t, run.kind)}
                   </span>
-                  <span className="text-carbon-text flex-1 truncate">
+                  <span className="text-carbon-text flex-1 truncate min-w-0">
                     {runTargetText(t, run)}
                   </span>
                   {/* Start → end + duration, with the relative age underneath (#45/#50). */}
@@ -985,7 +1000,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             return (
               <div key={c.name} className="flex items-center gap-3 py-2.5 text-sm">
                 <div className="w-2 h-2 rounded-full bg-[#6fdc8c] shrink-0" />
-                <span className="text-carbon-text font-medium flex-1 truncate">{c.name}</span>
+                <span className="text-carbon-text font-medium flex-1 truncate min-w-0">{c.name}</span>
                 {hasStart ? (
                   <span className="text-carbon-textMuted text-xs shrink-0 text-right">
                     {formatTs(c.lastBackupStarted)} → {formatTs(c.lastBackup)}
@@ -1312,7 +1327,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                     <span className="text-carbon-text tabular-nums w-20 shrink-0 text-right">
                       {humanBytes(d.latest.rawSize)}
                     </span>
-                    <span className="text-carbon-textMuted text-xs shrink-0 w-24">
+                    <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
                       {t("dashboard.dedup")} {dedup}
                     </span>
                     <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
@@ -1487,9 +1502,9 @@ function minutesOfDay(hhmm: string): number {
 
 function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-2">
-      <span className="text-xs text-carbon-textMuted uppercase tracking-widest">{label}</span>
-      <div className="flex items-center gap-2 min-h-7">{children}</div>
+    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
+      <span className="text-xs text-carbon-textMuted uppercase tracking-widest truncate">{label}</span>
+      <div className="flex items-center gap-2 min-h-7 min-w-0">{children}</div>
     </div>
   );
 }
@@ -1554,7 +1569,7 @@ function SummaryTier({
         ) : (
           <>
             {health !== "off" && <StatusChip status={chipForRpo(health)} />}
-            <span className="text-sm text-carbon-text truncate">{healthLabel}</span>
+            <span className="text-sm text-carbon-text truncate min-w-0">{healthLabel}</span>
           </>
         )}
       </SummaryCell>
@@ -1564,7 +1579,7 @@ function SummaryTier({
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
-          <span className="text-sm text-carbon-text truncate">
+          <span className="text-sm text-carbon-text truncate min-w-0">
             {nextCadence || t("dashboard.rpoOff")}
           </span>
         )}
@@ -1575,11 +1590,11 @@ function SummaryTier({
         {newestRun ? (
           <>
             <StatusChip status={newestRun.status} />
-            <span className="text-sm text-carbon-text flex-1 truncate">
+            <span className="text-sm text-carbon-text flex-1 truncate min-w-0">
               {runTargetText(t, newestRun)}
             </span>
             <span
-              className="text-xs text-carbon-textMuted shrink-0"
+              className="text-xs text-carbon-textMuted shrink-0 whitespace-nowrap"
               title={formatTs(newestRun.startedAt)}
             >
               {relativeTime(t, newestRun.startedAt)}

@@ -167,7 +167,7 @@ function FileSetRecoveryRow({
   return (
     <div className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-carbon-text font-medium flex-1 truncate">{set.name}</span>
+        <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{set.name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
           {snapLabel || t("containers.never")}
         </span>

@@ -259,15 +259,22 @@ type Scheduler struct {
 	c              *cron.Cron
 	backup         BackupFunc
 	listFn         ListTargetsFunc
-	backupVM       BackupFunc                              // nil until SetVMJob wires VM backup
-	listVMsFn      ListVMTargetsFunc                       // nil until SetVMJob wires VM backup
-	backupFiles    BackupFunc                              // nil until SetFilesJob wires file-set backup
-	listFileSetsFn ListFileSetsFunc                        // nil until SetFilesJob wires file-set backup
-	backupFlash    func() error                            // nil until SetFlashJob wires flash backup
-	configJob      func() error                            // nil until SetConfigJob wires config self-backup
-	replicateOffFn func(domain string) error               // nil until SetOffsiteJob wires off-site replication
-	drillFn        func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
-	tamperFn       func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
+	backupVM       BackupFunc                // nil until SetVMJob wires VM backup
+	listVMsFn      ListVMTargetsFunc         // nil until SetVMJob wires VM backup
+	backupFiles    BackupFunc                // nil until SetFilesJob wires file-set backup
+	listFileSetsFn ListFileSetsFunc          // nil until SetFilesJob wires file-set backup
+	backupFlash    func() error              // nil until SetFlashJob wires flash backup
+	configJob      func() error              // nil until SetConfigJob wires config self-backup
+	replicateOffFn func(domain string) error // nil until SetOffsiteJob wires off-site replication
+	// replicateAfterBulkFn runs ONE batched off-site replication after a scheduled
+	// multi-item backup loop (containers/VMs/files) when the domain replicates on a
+	// blank (coupled) schedule — the per-item inline replication is suppressed in
+	// that case, so the whole domain is copied once at the end instead of 44× (#95).
+	// nil until SetOffsiteAfterBulkJob wires it; then it is a no-op for domains with
+	// no off-site repo or a separate off-site schedule (the callee gates that).
+	replicateAfterBulkFn func(domain string)
+	drillFn              func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
+	tamperFn             func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -353,10 +360,15 @@ func (s *Scheduler) NextRuns() []NextRun {
 // listFn retrieves the current target list when the job fires.
 func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 	return &Scheduler{
-		// Recover wraps every job so a panic in one backup is logged and contained
-		// instead of crashing the whole process (which would silently stop ALL
-		// schedules and take the web UI down).
-		c:      cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
+		// SkipIfStillRunning: if a domain's previous nightly run is still going when
+		// its next trigger fires, skip the new one instead of starting a second
+		// concurrent run over the same repo (#95 — a run that overran its window used
+		// to spawn an overlapping run that re-processed the head and starved the tail
+		// further). Each job gets its own guard (the wrapper is applied per entry).
+		// Recover then wraps every job so a panic in one backup is logged and
+		// contained instead of crashing the whole process (which would silently stop
+		// ALL schedules and take the web UI down).
+		c:      cron.New(cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger), cron.Recover(cron.DefaultLogger))),
 		backup: backupFn,
 		listFn: listFn,
 	}
@@ -402,6 +414,17 @@ func (s *Scheduler) SetConfigJob(backupConfigFn func() error) {
 // a no-op (logged). Call before Reload.
 func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
 	s.replicateOffFn = replicateFn
+}
+
+// SetOffsiteAfterBulkJob wires the batched post-loop off-site replication used by
+// scheduled multi-item domains (containers/VMs/files). After the whole backup loop
+// finishes, the job calls replicateFn(domain) ONCE — replacing the per-item inline
+// replication those runs suppress — so a high-latency off-site backend is opened and
+// its index reloaded a single time per domain instead of once per item (#95). The
+// callee no-ops when the domain has no off-site repo or uses its own off-site
+// schedule. Until this is called the batched pass is skipped. Call before Reload.
+func (s *Scheduler) SetOffsiteAfterBulkJob(replicateFn func(domain string)) {
+	s.replicateAfterBulkFn = replicateFn
 }
 
 // SetDrillJob wires scheduled restore-verification drills so the single drill
@@ -506,6 +529,12 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
+				// #95: one batched off-site replication after the whole loop (no-op
+				// unless containers replicate on a blank/coupled schedule with an
+				// off-site repo configured — the per-item inline copy was suppressed).
+				if s.replicateAfterBulkFn != nil {
+					s.replicateAfterBulkFn("containers")
+				}
 			},
 			lastRun: containersLastRun,
 		},
@@ -525,6 +554,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
+				if s.replicateAfterBulkFn != nil {
+					s.replicateAfterBulkFn("vms") // #95: one batched off-site copy after the loop
+				}
 			},
 			lastRun: vmsLastRun,
 		},
@@ -572,6 +604,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
+				if s.replicateAfterBulkFn != nil {
+					s.replicateAfterBulkFn("files") // #95: one batched off-site copy after the loop
+				}
 			},
 			lastRun: filesLastRun,
 		},
