@@ -1504,7 +1504,10 @@ function SummaryCell({ label, children }: { label: string; children: React.React
   return (
     <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
       <span className="text-xs text-carbon-textMuted uppercase tracking-widest truncate">{label}</span>
-      <div className="flex items-center gap-2 min-h-7 min-w-0">{children}</div>
+      {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
+          relative time in a narrow half-width cell) drops to a second line and stays
+          fully readable, instead of being hard-clipped by overflow-hidden (#98). */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-7 min-w-0">{children}</div>
     </div>
   );
 }
