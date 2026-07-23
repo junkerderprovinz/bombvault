@@ -34,6 +34,38 @@ func (f *flashZipFakeEngine) DumpZip(_ context.Context, _, _, _ string, w io.Wri
 	return err
 }
 
+// newFlashExportStore opens a migrated in-memory store for the export tests —
+// exportFlashZip now records a kind="export" run, so the Service needs a real
+// (empty) store instead of a nil one.
+func newFlashExportStore(t *testing.T) *store.Repo {
+	t.Helper()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	return store.New(db)
+}
+
+// latestExportRun returns the newest kind="export" run, or fails the test.
+func latestExportRun(t *testing.T, st *store.Repo) store.Run {
+	t.Helper()
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range runs {
+		if r.Kind == "export" {
+			return r
+		}
+	}
+	t.Fatalf("no export run recorded, got %+v", runs)
+	return store.Run{}
+}
+
 // TestExportFlashZipKeep0 proves the default (Keep==0) path: the snapshot lands
 // at <dir>/flash-latest.zip with exactly the bytes DumpZip wrote, the atomic temp
 // file is gone, and a second export overwrites flash-latest.zip in place.
@@ -43,6 +75,7 @@ func TestExportFlashZipKeep0(t *testing.T) {
 	svc := &Service{
 		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
 		engine: fake,
+		store:  newFlashExportStore(t),
 	}
 	settings := store.Settings{
 		FlashZipExportEnabled: true,
@@ -185,9 +218,11 @@ func TestPruneFlashZipsKeepZeroDeletesAllTimestamped(t *testing.T) {
 func TestExportFlashZipDumpError(t *testing.T) {
 	root := t.TempDir()
 	fake := &flashZipFakeEngine{dumpErr: errors.New("boom")}
+	st := newFlashExportStore(t)
 	svc := &Service{
 		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
 		engine: fake,
+		store:  st,
 	}
 	settings := store.Settings{
 		FlashZipExportEnabled: true,
@@ -197,6 +232,16 @@ func TestExportFlashZipDumpError(t *testing.T) {
 	err := svc.exportFlashZip(context.Background(), settings, "deadbeef", restic.Mode{}, "/repo")
 	if err == nil {
 		t.Fatal("expected an error when DumpZip fails")
+	}
+
+	// The failed attempt still lands in the Activity Log feed: a finished
+	// kind="export" run with status failed and the error text.
+	run := latestExportRun(t, st)
+	if run.TargetID != store.FlashTargetID || run.Status != "failed" {
+		t.Fatalf("a failed export must record a failed export run on the flash target, got %+v", run)
+	}
+	if run.Error == "" {
+		t.Fatalf("the failed export run must carry the error text, got %+v", run)
 	}
 
 	dir := filepath.Join(root, "export")
@@ -230,9 +275,11 @@ func TestExportFlashZipDisabled(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
 			fake := &flashZipFakeEngine{dumpBytes: []byte("nope")}
+			st := newFlashExportStore(t)
 			svc := &Service{
 				cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
 				engine: fake,
+				store:  st,
 			}
 
 			if err := svc.exportFlashZip(context.Background(), tc.settings, "deadbeef", restic.Mode{}, "/repo"); err != nil {
@@ -244,7 +291,45 @@ func TestExportFlashZipDisabled(t *testing.T) {
 			if _, err := os.Stat(filepath.Join(root, "export")); !os.IsNotExist(err) {
 				t.Fatalf("no output folder should be created, stat err = %v", err)
 			}
+			// A disabled export never ran, so it records NO run either.
+			if runs, err := st.ListRuns(10); err != nil || len(runs) != 0 {
+				t.Fatalf("a disabled export must record no run, got runs=%v err=%v", runs, err)
+			}
 		})
+	}
+}
+
+// TestExportFlashZipRecordsRun pins the Activity Log feed (G2): a successful
+// export records a finished kind="export" run on the reserved flash target with
+// bytes = the written zip's size.
+func TestExportFlashZipRecordsRun(t *testing.T) {
+	root := t.TempDir()
+	payload := []byte("PK\x03\x04digest-me")
+	fake := &flashZipFakeEngine{dumpBytes: payload}
+	st := newFlashExportStore(t)
+	svc := &Service{
+		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		engine: fake,
+		store:  st,
+	}
+	settings := store.Settings{
+		FlashZipExportEnabled: true,
+		FlashZipExportPath:    "export",
+	}
+
+	if err := svc.exportFlashZip(context.Background(), settings, "deadbeef", restic.Mode{}, "/repo"); err != nil {
+		t.Fatalf("exportFlashZip: %v", err)
+	}
+
+	run := latestExportRun(t, st)
+	if run.TargetID != store.FlashTargetID {
+		t.Fatalf("export run target = %q, want %q", run.TargetID, store.FlashTargetID)
+	}
+	if run.Status != "success" || run.FinishedAt == nil {
+		t.Fatalf("a successful export must record a finished success run, got %+v", run)
+	}
+	if run.Bytes != int64(len(payload)) {
+		t.Fatalf("export run bytes = %d, want the zip size %d", run.Bytes, len(payload))
 	}
 }
 

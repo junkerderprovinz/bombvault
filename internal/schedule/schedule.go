@@ -273,8 +273,17 @@ type Scheduler struct {
 	// nil until SetOffsiteAfterBulkJob wires it; then it is a no-op for domains with
 	// no off-site repo or a separate off-site schedule (the callee gates that).
 	replicateAfterBulkFn func(domain string)
-	drillFn              func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
-	tamperFn             func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
+	// pruneAfterBulkFn runs ONE local prune after a scheduled multi-item backup
+	// loop (containers/VMs/files): each item's post-backup retention runs forget
+	// WITHOUT --prune under the bulk flag, so the expensive space-reclaim happens
+	// once per run instead of once per item. Invoked BEFORE replicateAfterBulkFn
+	// (retention first = fewer snapshots to copy off-site). nil until
+	// SetPruneAfterBulkJob wires it; then it is a no-op for domains without a
+	// retention policy (the callee gates that).
+	pruneAfterBulkFn func(domain string)
+	drillFn          func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
+	tamperFn         func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
+	digestFn         func() error                            // nil until SetDigestJob wires the weekly digest notification
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -314,13 +323,16 @@ type NextRun struct {
 // the label logic lives in one place next to the names it interprets. Names in
 // use: "containers"|"vms"|"flash"|"config"|"files" (job=backup, domain=name),
 // "<domain>-offsite" (job=offsite, domain=<domain>), "drills" and "tamper"
-// (job=drill/tamper, domain="" — each iterates multiple domains per fire).
+// (job=drill/tamper, domain="" — each iterates multiple domains per fire), and
+// "digest" (job=digest, domain="" — one app-wide summary per fire).
 func jobDomainFromName(name string) (job, domain string) {
 	switch name {
 	case "drills":
 		return "drill", ""
 	case "tamper":
 		return "tamper", ""
+	case "digest":
+		return "digest", ""
 	}
 	if d, ok := strings.CutSuffix(name, "-offsite"); ok {
 		return "offsite", d
@@ -427,6 +439,18 @@ func (s *Scheduler) SetOffsiteAfterBulkJob(replicateFn func(domain string)) {
 	s.replicateAfterBulkFn = replicateFn
 }
 
+// SetPruneAfterBulkJob wires the batched post-loop local prune used by scheduled
+// multi-item domains (containers/VMs/files). After the whole backup loop finishes,
+// the job calls pruneFn(domain) ONCE — replacing the per-item inline prune those
+// runs defer (each item's forget runs without --prune under the bulk flag) — so a
+// 44-container night pays one local prune instead of 44. It runs BEFORE the
+// batched off-site replication: retention first means fewer snapshots to copy.
+// The callee no-ops when the domain has no retention policy configured. Until
+// this is called the batched prune is skipped. Call before Reload.
+func (s *Scheduler) SetPruneAfterBulkJob(pruneFn func(domain string)) {
+	s.pruneAfterBulkFn = pruneFn
+}
+
 // SetDrillJob wires scheduled restore-verification drills so the single drill
 // schedule actually runs. drillFn is called with (domain, source, kind) for each
 // scheduled drill task when the drill schedule fires — a local "subset" integrity
@@ -443,6 +467,14 @@ func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error)
 // schedule is a no-op (logged). Call before Reload.
 func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
 	s.tamperFn = tamperFn
+}
+
+// SetDigestJob wires the weekly digest notification so the digest schedule
+// actually runs. digestFn composes and sends ONE app-wide summary message when
+// the digest schedule fires. Until this is called the digest schedule is a
+// no-op (logged). Call before Reload.
+func (s *Scheduler) SetDigestJob(digestFn func() error) {
+	s.digestFn = digestFn
 }
 
 // SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
@@ -529,6 +561,12 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
+				// Retention first: ONE local prune for the whole loop (each item's
+				// forget ran without --prune under the bulk flag), then the batched
+				// off-site copy — fewer snapshots left to replicate.
+				if s.pruneAfterBulkFn != nil {
+					s.pruneAfterBulkFn("containers")
+				}
 				// #95: one batched off-site replication after the whole loop (no-op
 				// unless containers replicate on a blank/coupled schedule with an
 				// off-site repo configured — the per-item inline copy was suppressed).
@@ -554,6 +592,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
+				if s.pruneAfterBulkFn != nil {
+					s.pruneAfterBulkFn("vms") // one batched local prune first (retention before replication)
+				}
 				if s.replicateAfterBulkFn != nil {
 					s.replicateAfterBulkFn("vms") // #95: one batched off-site copy after the loop
 				}
@@ -604,6 +645,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
+				if s.pruneAfterBulkFn != nil {
+					s.pruneAfterBulkFn("files") // one batched local prune first (retention before replication)
+				}
 				if s.replicateAfterBulkFn != nil {
 					s.replicateAfterBulkFn("files") // #95: one batched off-site copy after the loop
 				}
@@ -679,6 +723,24 @@ func (s *Scheduler) ReloadWithDueChecks(
 					if err := s.tamperFn(dom); err != nil {
 						log.Printf("schedule: tamper job: %s: %v", dom, err)
 					}
+				}
+			},
+		})
+	}
+
+	// Weekly digest notification: ONE app-wide summary per fire, on its own
+	// cadence. Inert unless explicitly enabled (mirrors the drills gate).
+	if settings.DigestEnabled {
+		domains = append(domains, domainSpec{
+			cadence: settings.DigestSchedule,
+			name:    "digest",
+			fn: func() {
+				if s.digestFn == nil {
+					log.Print("schedule: digest job skipped — digest not wired (SetDigestJob)")
+					return
+				}
+				if err := s.digestFn(); err != nil {
+					log.Printf("schedule: digest job: %v", err)
 				}
 			},
 		})

@@ -104,26 +104,43 @@ func VerifyPassword(appKey, password, storedHash string) bool {
 	return hmac.Equal(a, b)
 }
 
+// sessionMessage builds the HMAC message a session token signs. The epoch is a
+// server-side revocation value: rotating it (POST /api/logout-all) changes the
+// message for every token, invalidating all outstanding sessions at once. An
+// EMPTY epoch reproduces the pre-epoch legacy message format (no epoch segment),
+// so cookies minted before the epoch existed keep validating until the first
+// rotation. This is unambiguous because passwordHash is hex (it can never
+// contain the ":" separator), so a legacy message can't collide with an
+// epoch-bearing one.
+func sessionMessage(expiry, passwordHash, epoch string) string {
+	if epoch == "" {
+		return "bombvault:session:" + expiry + ":" + passwordHash
+	}
+	return "bombvault:session:" + expiry + ":" + epoch + ":" + passwordHash
+}
+
 // NewSessionToken creates a signed, time-limited session token.
 //
 // Format: "<expiryUnix>.<hex-HMAC>"
 //
-// The MAC is bound to both the expiry timestamp and the current passwordHash so
-// that changing or clearing the password instantly invalidates all existing
-// sessions.
+// The MAC is bound to the expiry timestamp, the current passwordHash and the
+// session epoch, so that changing or clearing the password — or rotating the
+// epoch ("log out everywhere") — instantly invalidates all existing sessions.
+// An empty epoch is a valid (legacy) value; see sessionMessage.
 //
 // It panics on an invalid (non-hex) appKey.
-func NewSessionToken(appKey, passwordHash string, ttl time.Duration) string {
+func NewSessionToken(appKey, passwordHash, epoch string, ttl time.Duration) string {
 	expiry := strconv.FormatInt(time.Now().Add(ttl).Unix(), 10)
-	sig := hmacHex(appKey, "bombvault:session:"+expiry+":"+passwordHash)
+	sig := hmacHex(appKey, sessionMessage(expiry, passwordHash, epoch))
 	return expiry + "." + sig
 }
 
 // ValidSessionToken verifies a token produced by NewSessionToken.  It returns
-// false for any parse error, expired token, wrong APP_KEY, or tampered value.
+// false for any parse error, expired token, wrong APP_KEY, wrong epoch, or
+// tampered value.
 //
 // It panics on an invalid (non-hex) appKey.
-func ValidSessionToken(appKey, passwordHash, token string) bool {
+func ValidSessionToken(appKey, passwordHash, epoch, token string) bool {
 	// Split on the LAST "." so that the expiry part can never contain a dot.
 	dot := strings.LastIndex(token, ".")
 	if dot < 0 {
@@ -139,7 +156,7 @@ func ValidSessionToken(appKey, passwordHash, token string) bool {
 		return false // expired
 	}
 
-	wantSig := hmacHex(appKey, "bombvault:session:"+expStr+":"+passwordHash)
+	wantSig := hmacHex(appKey, sessionMessage(expStr, passwordHash, epoch))
 	// Constant-time hex comparison.
 	a, err1 := hex.DecodeString(gotSig)
 	b, err2 := hex.DecodeString(wantSig)

@@ -4,7 +4,8 @@
 // from three sources:
 //
 //   1. Finished runs (GET /api/runs via listRuns) — one line per completed
-//      backup/restore/update/prune/verify, ordered by finish time.
+//      backup/restore/update/prune/verify/offsite/drill/tamper/export,
+//      ordered by finish time.
 //   2. Currently-active SSE progress keys (useProgress()) — live tail lines,
 //      always rendered at the very bottom ("now").
 //   3. The soonest scheduled fire (GET /api/schedule/next) — a trailing idle
@@ -35,8 +36,11 @@ export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | ""
 
 /** The operation kind, for the type quick-filter. "update" is a real kind
  *  (the post-backup image-update run) that deliberately has no dedicated
- *  filter chip (see ActivityLog.tsx) but still carries a kind for search. */
-export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "";
+ *  filter chip (see ActivityLog.tsx) but still carries a kind for search.
+ *  "drill" (restore-verification drill), "tamper" (off-site tamper test) and
+ *  "export" (flash ZIP export) are persisted run kinds since the
+ *  everything-in-the-log wave. */
+export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "tamper" | "export" | "";
 
 export interface LogLine {
   /** Stable React key. */
@@ -83,6 +87,7 @@ const JOB_KEYS: Record<string, string> = {
   offsite: "activityLog.jobOffsite",
   drill: "activityLog.jobDrill",
   tamper: "activityLog.jobTamper",
+  digest: "activityLog.jobDigest",
 };
 
 /** Translates a domain literal ("containers"/"vms"/"flash"/"config"/"files");
@@ -92,7 +97,8 @@ function domainLabel(resolveName: ResolveName, domain: string): string {
   return key ? resolveName(key) : domain;
 }
 
-/** Translates a schedule job literal ("backup"/"offsite"/"drill"/"tamper"). */
+/** Translates a schedule job literal ("backup"/"offsite"/"drill"/"tamper"/
+ *  "digest"); an unknown literal falls back to the raw string. */
 function jobLabel(resolveName: ResolveName, job: string): string {
   const key = JOB_KEYS[job];
   return key ? resolveName(key) : job;
@@ -263,9 +269,10 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
     if (parsed.scope === "offsite") {
       const domain = normalizeDomain(parsed.domain);
       const text = resolveName("activityLog.lineOffsiteRunning", { domain: domainLabel(resolveName, domain) });
-      // Off-site replication writes no Run row today (backend audit note in
-      // the design doc) — nothing to dedupe against; it simply disappears
-      // from the tail once the SSE store drops the completed entry.
+      // Off-site replication now DOES write a Run row (kind="offsite" on the
+      // domain target) — register the domain-op signature so the finished-run
+      // line can't briefly double up with this live tail line.
+      signatures.add(domainOpSignature("offsite", domain));
       lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
       continue;
     }
@@ -308,6 +315,38 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "offsite") {
+    return run.status === "success"
+      ? { status: "offsite", text: resolveName("activityLog.lineOffsiteSuccess", { domain: domainText, duration }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineOffsiteFailed", { domain: domainText, error: run.error }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "drill") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineDrillSuccess", { domain: domainText }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineDrillFailed", { domain: domainText, error: run.error }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "tamper") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineTamperSuccess", { domain: domainText }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineTamperFailed", { domain: domainText, error: run.error }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "export") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineExportSuccess", { bytes: formatBytesShort(run.bytes), duration }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineExportFailed", { error: run.error }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+  }
+
   if (run.kind === "restore") {
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
@@ -340,8 +379,27 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 /** Narrows a raw Run.kind string to the known LogKind set; an unexpected
  *  future kind falls back to "" rather than a bogus filter value. */
 function asLogKind(kind: string): LogKind {
-  if (kind === "backup" || kind === "restore" || kind === "prune" || kind === "verify" || kind === "update") return kind;
+  if (
+    kind === "backup" ||
+    kind === "restore" ||
+    kind === "prune" ||
+    kind === "verify" ||
+    kind === "update" ||
+    kind === "offsite" ||
+    kind === "drill" ||
+    kind === "tamper" ||
+    kind === "export"
+  ) {
+    return kind;
+  }
   return "";
+}
+
+/** Kinds recorded against the reserved DOMAIN target id (see the backend's
+ *  domainRunTargetID): their targetId IS the domain literal (or the flash/
+ *  config singleton id), never a resolvable item id. */
+function isDomainOpKind(kind: string): boolean {
+  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "tamper" || kind === "export";
 }
 
 function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures: Set<string>): LogLine[] {
@@ -351,7 +409,7 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
     // by its live progress line instead (see the module doc comment).
     if (run.finishedAt == null) continue;
 
-    const isDomainOp = run.kind === "prune" || run.kind === "verify";
+    const isDomainOp = isDomainOpKind(run.kind);
     const domain: LogDomain = isDomainOp ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
     const name = run.target;
 
@@ -433,9 +491,9 @@ export function buildLogLines(
 /** Domain quick-filter value ("all" plus every LogDomain except ""). */
 export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files";
 
-/** Type quick-filter value ("all" plus the five operation kinds the filter
- *  bar offers — deliberately NOT including "update", which has no chip). */
-export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite";
+/** Type quick-filter value ("all" plus the operation kinds the filter bar
+ *  offers — deliberately NOT including "update", which has no chip). */
+export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "tamper" | "export";
 
 export interface LogFilter {
   domain: LogFilterDomain;

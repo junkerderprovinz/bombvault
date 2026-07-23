@@ -295,6 +295,9 @@ export function OffsiteWizard({
         ? t("offsite.tamperOk")
         : t("offsite.tamperFail")
     : "";
+  // The ✓/✗ glyph is rendered as its own JSX node (not baked into the i18n
+  // string) so RTL locales (ar/he) place it on the correct side via bidi.
+  const verdictGlyph = verdict && verdict.testable ? (verdict.protected ? "✓" : "✗") : "";
   const verdictColor = verdict
     ? !verdict.testable
       ? "text-[#f1c21b]"
@@ -522,7 +525,10 @@ export function OffsiteWizard({
             {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
           </button>
           {tamperState === "done" && verdict && (
-            <span className={`text-sm wrap-break-word ${verdictColor}`}>{verdictText}</span>
+            <span className={`text-sm wrap-break-word ${verdictColor}`}>
+              {verdictGlyph && <span aria-hidden="true">{verdictGlyph}&nbsp;</span>}
+              {verdictText}
+            </span>
           )}
           {tamperState === "error" && tamperErr && (
             <span className="text-sm text-[#ff8389] wrap-break-word">{tamperErr}</span>

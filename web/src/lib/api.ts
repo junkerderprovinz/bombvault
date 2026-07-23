@@ -30,6 +30,11 @@ export interface Container {
   /** Opt-in (#52): after a successful backup, pull the image and recreate the
    *  container if a newer image is available. Off by default. */
   updateAfterBackup?: boolean;
+  /** When the post-backup update check last completed (unix seconds, 0 = never)
+   *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed') — makes
+   *  "checked, up to date" distinguishable from "never reached". */
+  lastUpdateCheck: number;
+  lastUpdateResult: string;
   /** Compose project (com.docker.compose.project label) this container belongs to,
    *  "" if none. Drives the "restore whole stack" panel. */
   stack: string;
@@ -130,7 +135,10 @@ export interface Settings {
   offsiteLimitUpload: number;
   offsiteLimitDownload: number;
   metricsEnabled: boolean;
+  /** Write-only secret: GET always returns "" (blank-on-save keeps the stored
+   *  token); metricsTokenSet reports whether one is stored. */
   metricsToken: string;
+  metricsTokenSet: boolean;
   drillsEnabled: boolean;
   /** Scheduled off-site DR drill; default on. When off, only the manual
    *  off-site DR button runs (the free local integrity check still runs). */
@@ -157,6 +165,15 @@ export interface Settings {
   /** #56: after a post-backup container update, remove the superseded old image.
    *  Opt-in (default off) — keeping the old image makes a snapshot rollback cheap. */
   pruneImageAfterUpdate: boolean;
+  /** Size cap (MB) for restic's persistent cache under /config; least-recently-
+   *  used per-repo caches are evicted after scheduled runs. 0 = no limit
+   *  (default 4096). */
+  resticCacheMaxMB: number;
+  /** Weekly digest notification: one summary message per cadence fire through
+   *  the existing notify channels. Off by default. */
+  digestEnabled: boolean;
+  /** Digest cadence (shared schedule grammar; default "weekly Mon 08:00"). */
+  digestSchedule: string;
 }
 
 export interface GetSettingsResponse {
@@ -885,6 +902,72 @@ export function recoveryKitUrl(): string {
 }
 
 /**
+ * Fetch the recovery kit and trigger a browser download of
+ * bombvault-recovery-kit.md. Returns null on success, or the backend's error
+ * text on failure — notably the 403 refusal when no login password is set (the
+ * kit is the master secret, so the export fails closed while auth is off). A
+ * plain <a href> can't surface that refusal (the browser would just save the
+ * JSON error body as a .md file), which is why this goes through fetch.
+ *
+ * The browser globals are reached via globalThis with minimal structural
+ * types: runtime-identical to bare fetch/document/URL (cf. Flash.tsx's zip
+ * download), but immune to a toolchain whose DOM lib resolution is broken and
+ * would spuriously flag the bare global names.
+ */
+export async function downloadRecoveryKit(): Promise<string | null> {
+  const g = globalThis as unknown as {
+    fetch(url: string): Promise<{
+      ok: boolean;
+      status: number;
+      headers: { get(name: string): string | null };
+      json(): Promise<unknown>;
+      blob(): Promise<unknown>;
+    }>;
+    document: {
+      createElement(tag: string): {
+        href: string;
+        download: string;
+        click(): void;
+        remove(): void;
+      };
+      body: { appendChild(node: unknown): void };
+    };
+    URL: {
+      createObjectURL(blob: unknown): string;
+      revokeObjectURL(url: string): void;
+    };
+  };
+  try {
+    const res = await g.fetch(recoveryKitUrl());
+    const ct = res.headers.get("content-type") ?? "";
+    // Every failure path (403 auth-off refusal, 200 fail envelope on a build
+    // error) answers JSON; only the kit itself streams as text/markdown.
+    if (!res.ok || ct.includes("application/json")) {
+      // Backend-provided error text shown verbatim BY DESIGN — the API answers
+      // English and is not translated client-side (i18n-wave decision).
+      try {
+        const body = (await res.json()) as { error?: string };
+        return body.error || `download failed (HTTP ${res.status})`;
+      } catch {
+        return `download failed (HTTP ${res.status})`;
+      }
+    }
+    const blob = await res.blob();
+    const url = g.URL.createObjectURL(blob);
+    const a = g.document.createElement("a");
+    a.href = url;
+    a.download = "bombvault-recovery-kit.md";
+    g.document.body.appendChild(a);
+    a.click();
+    a.remove();
+    g.URL.revokeObjectURL(url);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
+/**
  * POST /api/recovery-kit/ack — record that the kit has been stored, dismissing
  * the dashboard nag. Flips only that one flag server-side, so it can't clobber
  * unrelated settings changes (unlike resubmitting the whole settings object).
@@ -1541,9 +1624,16 @@ export function login(password: string): Promise<OkEnvelope> {
   });
 }
 
-/** POST /api/logout — clears the bv_session cookie. */
+/** POST /api/logout — clears the bv_session cookie. Client-side only: the
+ *  stateless token stays valid until expiry; logoutAll is the revocation path. */
 export function logout(): Promise<OkEnvelope> {
   return fetchJSON("/api/logout", { method: "POST" });
+}
+
+/** POST /api/logout-all — rotate the server-side session epoch, invalidating
+ *  EVERY outstanding session cookie (all browsers/devices), then clear ours. */
+export function logoutAll(): Promise<OkEnvelope> {
+  return fetchJSON("/api/logout-all", { method: "POST" });
 }
 
 /**

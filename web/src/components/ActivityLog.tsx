@@ -220,6 +220,11 @@ export function ActivityLog() {
           <option value="prune">{t("activityLog.typePrune")}</option>
           <option value="verify">{t("activityLog.typeVerify")}</option>
           <option value="offsite">{t("activityLog.typeOffsite")}</option>
+          {/* Persisted kinds since the everything-in-the-log wave. Drill/tamper
+              reuse the existing job-label keys. */}
+          <option value="drill">{t("activityLog.jobDrill")}</option>
+          <option value="tamper">{t("activityLog.jobTamper")}</option>
+          <option value="export">{t("activityLog.typeExport")}</option>
         </select>
       </div>
 

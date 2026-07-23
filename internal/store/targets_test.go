@@ -195,3 +195,42 @@ func TestTargetDefinitionEmptyDefault(t *testing.T) {
 		t.Fatalf("expected empty definition for legacy target, got %q", got.Definition)
 	}
 }
+
+// TestSetUpdateCheckRoundTripAndUpsertPreserves pins the "checked, up to date"
+// signal (v67): SetUpdateCheck stamps last_update_check/last_update_result on
+// the target, a backup-time UpsertTarget never resets it, and an unknown
+// container errors instead of silently stamping nothing.
+func TestSetUpdateCheckRoundTripAndUpsertPreserves(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.SetUpdateCheck("plex", 1700000000, "up-to-date"); err != nil {
+		t.Fatalf("SetUpdateCheck: %v", err)
+	}
+	got, err := r.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LastUpdateCheck != 1700000000 || got.LastUpdateResult != "up-to-date" {
+		t.Fatalf("update check not stored: at=%d result=%q", got.LastUpdateCheck, got.LastUpdateResult)
+	}
+
+	// A subsequent backup-time UpsertTarget must NOT clobber the stamp.
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if got.LastUpdateCheck != 1700000000 || got.LastUpdateResult != "up-to-date" {
+		t.Fatalf("Upsert clobbered the update check: at=%d result=%q", got.LastUpdateCheck, got.LastUpdateResult)
+	}
+
+	if err := r.SetUpdateCheck("ghost", 1700000001, "failed"); err == nil {
+		t.Fatal("SetUpdateCheck on an unknown container must error")
+	}
+}

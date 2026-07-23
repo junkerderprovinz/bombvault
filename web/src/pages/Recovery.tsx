@@ -24,7 +24,7 @@ import {
   restoreConfig,
   waitForAppBack,
   getVMSSH,
-  recoveryKitUrl,
+  downloadRecoveryKit,
   foreignOpen,
   foreignClose,
   foreignRestore,
@@ -855,6 +855,10 @@ export default function Recovery() {
   const [restoreAllBusy, setRestoreAllBusy] = useState(false);
   const [restoreAllResult, setRestoreAllResult] = useState<{ ok: number; fail: number } | null>(null);
 
+  // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
+  // answer when auth is off) — surfaced next to the Step 6 download button.
+  const [kitError, setKitError] = useState<string | null>(null);
+
   // Is the libvirt SSH link set up? VM restore needs it. VMSSHInfo() errors
   // (ok:false) precisely when SSH is not wired, so this is the settings check.
   // Advisory only (a note, never a hard block).
@@ -1333,13 +1337,22 @@ export default function Recovery() {
       {/* Step 6 — Your recovery kit (safety net for next time) */}
       <StepCard n={6} title={t("recovery.step5")} state="idle">
         <p className="max-w-2xl">{t("recovery.kitHint")}</p>
-        <a
-          href={recoveryKitUrl()}
-          download="bombvault-recovery-kit.md"
+        <button
+          type="button"
+          onClick={() => {
+            setKitError(null);
+            void downloadRecoveryKit().then(setKitError);
+          }}
           className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.kitDownload")}
-        </a>
+        </button>
+        {kitError && (
+          // Backend-provided error text shown verbatim BY DESIGN (e.g. the
+          // fail-closed "set a login password" refusal when auth is off) —
+          // the API answers English and is not translated client-side.
+          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {kitError}</span>
+        )}
       </StepCard>
 
       {/* Restore from ANOTHER BombVault repo (#61) — visually separate from the
