@@ -25,7 +25,7 @@ export function SourceToggle({
       className={`px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
         source === val
           ? "bg-accent text-accentContrast"
-          : "text-carbon-textSub hover:text-carbon-text"
+          : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
       }`}
     >
       {label}

@@ -1,0 +1,9 @@
+{
+  "name": "bombvault-lint-ts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Side-by-side TypeScript 6 (JS API) for typescript-eslint only. The project's real compiler is the native `typescript` 7 devDep, which no longer ships the JS compiler API that typescript-eslint's parser requires (peer range >=4.8.4 <6.1.0). npm cannot nest a peer that conflicts with a root direct dependency, so this file: sub-package hosts the TS 6 copy — eslint.config.js redirects `typescript` imports made from inside the typescript-eslint module tree to it via a node:module resolve hook. Its tsc bin nests under lint-ts/node_modules/.bin and can never shadow the root TS 7 tsc.",
+  "dependencies": {
+    "typescript": "6.0.3"
+  }
+}

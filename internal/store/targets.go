@@ -37,6 +37,14 @@ type Target struct {
 	// newer image is available. Owned by SetUpdateAfterBackup (never reset by
 	// Upsert). Off by default.
 	UpdateAfterBackup bool
+	// LastUpdateCheck / LastUpdateResult record the outcome of the most recent
+	// post-backup update check, so "checked and current" is distinguishable from
+	// "never reached" without a noise run row per night. LastUpdateCheck is the
+	// unix time the check completed (0 = never); LastUpdateResult is '' |
+	// 'up-to-date' | 'updated' | 'failed'. Owned by SetUpdateCheck (never reset
+	// by Upsert).
+	LastUpdateCheck  int64
+	LastUpdateResult string
 }
 
 // UpsertTarget inserts or updates the target by container name.
@@ -93,7 +101,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -101,7 +109,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -127,7 +135,7 @@ func (r *Repo) ListTargets() ([]Target, error) {
 // The UI keeps using ListTargets (alphabetical) for a stable display order.
 func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup, t.last_update_check, t.last_update_result
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -198,6 +206,24 @@ func (r *Repo) SetUpdateAfterBackup(containerName string, updateAfterBackup bool
 		if _, err := r.UpsertTarget(Target{ContainerName: containerName, UpdateAfterBackup: updateAfterBackup}); err != nil {
 			return fmt.Errorf("SetUpdateAfterBackup create target: %w", err)
 		}
+	}
+	return nil
+}
+
+// SetUpdateCheck records the outcome of a completed post-backup update check
+// for a container: at is the unix time it finished, result is 'up-to-date' |
+// 'updated' | 'failed'. Plain UPDATE (no create-on-miss): the check only ever
+// runs right after a backup, which has already upserted the target row. Owned
+// by this setter; never reset by UpsertTarget.
+func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) error {
+	res, err := r.db.Exec(
+		`UPDATE targets SET last_update_check = ?, last_update_result = ? WHERE container_name = ?`,
+		at, result, containerName)
+	if err != nil {
+		return fmt.Errorf("SetUpdateCheck: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetUpdateCheck: container %q not found", containerName)
 	}
 	return nil
 }
@@ -310,7 +336,7 @@ func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON string
 	var include, updateAfter int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &updateAfter)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}

@@ -19,5 +19,9 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Vitest test files are excluded from the tsc program (vitest transpiles
+  // them itself via esbuild); keeps `tsc --noEmit` identical to before the
+  // test suite existed.
+  "exclude": ["src/**/*.test.ts"]
 }

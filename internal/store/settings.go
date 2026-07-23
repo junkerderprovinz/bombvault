@@ -55,6 +55,12 @@ type Settings struct {
 	// AuthPasswordHash is the HMAC-SHA256 password hash set by the admin.
 	// An empty string means authentication is disabled (the default).
 	AuthPasswordHash string
+	// SessionEpoch is mixed into every session token's HMAC. Rotating it to a
+	// fresh random value (POST /api/logout-all) invalidates ALL outstanding
+	// session cookies at once — the only revocation path for the otherwise
+	// stateless tokens. Empty (the default) is a valid legacy epoch: sessions
+	// minted before this column existed keep working until the first rotation.
+	SessionEpoch string
 	// Retention keep-policy (global, applied via `restic forget --prune` after
 	// each successful backup). All zero = retention off (snapshots kept forever).
 	RetentionKeepLast    int
@@ -133,6 +139,19 @@ type Settings struct {
 	// makes a fresh-snapshot rollback cheap. Best-effort + force=false (a shared base
 	// image is never deleted).
 	PruneImageAfterUpdate bool
+	// ResticCacheMaxMB caps restic's persistent cache (RESTIC_CACHE_DIR under
+	// /config, which survives restarts and therefore grows unbounded). When the
+	// cache exceeds this many MB, the least-recently-used per-repo cache
+	// subdirectories are evicted after scheduled runs. 0 = no size limit.
+	// Defaults to 4096 (4 GB).
+	ResticCacheMaxMB int
+	// DigestEnabled turns on the scheduled weekly digest: ONE summary message
+	// (per-kind run counts, backup bytes, off-site currency, top failures)
+	// through the existing notify fan-out. Off by default.
+	DigestEnabled bool
+	// DigestSchedule is the digest cadence (same grammar as the backup
+	// schedules). Defaults to "weekly Mon 08:00".
+	DigestSchedule string
 }
 
 // GetSettings returns the current app settings.
@@ -154,13 +173,14 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable, files_offsite_immutable,
 		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
 		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
-		       prune_image_after_update
+		       prune_image_after_update, session_epoch, restic_cache_max_mb,
+		       digest_enabled, digest_schedule
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
-	var flashZipExportEnabled, pruneImageAfterUpdate int
+	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -178,7 +198,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable, &filesImmutable,
 		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
 		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
-		&pruneImageAfterUpdate,
+		&pruneImageAfterUpdate, &s.SessionEpoch, &s.ResticCacheMaxMB,
+		&digestEnabled, &s.DigestSchedule,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -203,6 +224,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.FilesOffsiteImmutable = filesImmutable != 0
 	s.FlashZipExportEnabled = flashZipExportEnabled != 0
 	s.PruneImageAfterUpdate = pruneImageAfterUpdate != 0
+	s.DigestEnabled = digestEnabled != 0
 	return s, nil
 }
 
@@ -270,7 +292,11 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  flash_zip_export_enabled     = ?,
 		  flash_zip_export_path        = ?,
 		  flash_zip_export_keep        = ?,
-		  prune_image_after_update     = ?
+		  prune_image_after_update     = ?,
+		  session_epoch                = ?,
+		  restic_cache_max_mb          = ?,
+		  digest_enabled               = ?,
+		  digest_schedule              = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -293,7 +319,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable), boolInt(s.FilesOffsiteImmutable),
 		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,
 		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
-		boolInt(s.PruneImageAfterUpdate),
+		boolInt(s.PruneImageAfterUpdate), s.SessionEpoch, s.ResticCacheMaxMB,
+		boolInt(s.DigestEnabled), s.DigestSchedule,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

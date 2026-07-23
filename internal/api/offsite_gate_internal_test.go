@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -36,5 +37,30 @@ func TestOffsiteReplicatesOnOwnSchedule(t *testing.T) {
 				t.Fatalf("offsiteReplicatesOnOwnSchedule(%q) = %v, want %v", c.schedule, got, c.wantOwn)
 			}
 		})
+	}
+}
+
+// otherCtxKey is a distinct context key used to derive a CHILD context on top of
+// a bulk-suppressed one — proving the flag survives further derivation.
+type otherCtxKey struct{}
+
+// TestBulkReplicateSuppressedRoundTrip pins the #95 bulk-suppress mechanics: a
+// plain context is NOT suppressed, WithBulkReplicateSuppressed marks it, and the
+// mark survives further context derivation (the batch loops wrap bctx in
+// timeouts/progress contexts before replicateOffsite ever reads the flag — if a
+// child context dropped it, every batched run would silently regress to one full
+// off-site round-trip per item).
+func TestBulkReplicateSuppressedRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	if bulkReplicateSuppressed(ctx) {
+		t.Fatal("a plain context must NOT report bulk-suppressed")
+	}
+	sctx := WithBulkReplicateSuppressed(ctx)
+	if !bulkReplicateSuppressed(sctx) {
+		t.Fatal("WithBulkReplicateSuppressed(ctx) must report bulk-suppressed")
+	}
+	child := context.WithValue(sctx, otherCtxKey{}, "x")
+	if !bulkReplicateSuppressed(child) {
+		t.Fatal("a child context derived from a suppressed one must STAY suppressed")
 	}
 }

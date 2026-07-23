@@ -234,6 +234,7 @@ function VMIncludeToggle({
   name: string;
   initial: boolean;
 }) {
+  const { t } = useT();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,10 +252,10 @@ function VMIncludeToggle({
       if (res.ok) {
         setEnabled(next);
       } else {
-        setError(res.error ?? "Failed to update schedule");
+        setError(res.error ?? t("schedule.updateFailed"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update schedule");
+      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
     } finally {
       setBusy(false);
     }
@@ -264,11 +265,11 @@ function VMIncludeToggle({
     <div className="flex flex-col items-end gap-1">
       <button
         role="switch"
-        aria-label="Include in schedule"
+        aria-label={t("containers.includeInSchedule")}
         aria-checked={enabled}
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
-        title="Include in schedule"
+        title={t("containers.includeInSchedule")}
         className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
@@ -859,7 +860,7 @@ export function VMs() {
 
   useEffect(() => {
     void loadVMs().finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);
