@@ -600,6 +600,18 @@ func PruneArgs(repo string, m Mode) []string {
 	return args
 }
 
+// CacheCleanupArgs returns the argv slice for `restic cache --cleanup`, which
+// removes per-repo cache directories restic considers old (not used for more
+// than its --max-age default of 30 days). Unlike every other builder it takes
+// NO repo and no Mode flags: `restic cache` never opens a repository — it
+// operates on the local cache base directory, which restic resolves from the
+// RESTIC_CACHE_DIR environment variable (exported by authEnv when CacheDir is
+// set) or its platform default. Verified against restic 0.17.3
+// (cmd/restic/cmd_cache.go: flags --cleanup/--max-age/--no-size, no repo open).
+func CacheCleanupArgs() []string {
+	return []string{"cache", "--cleanup"}
+}
+
 // ---- execution helper ------------------------------------------------------
 
 // authEnv returns the process environment plus restic auth + backend credentials
@@ -1217,6 +1229,15 @@ func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode)
 // Prune reclaims repository space freed by forgotten snapshots (`restic prune`).
 func (r Restic) Prune(ctx context.Context, repo string, m Mode) error {
 	_, err := r.run(ctx, PruneArgs(repo, m), m)
+	return err
+}
+
+// CacheCleanup removes old per-repo cache directories (`restic cache --cleanup`).
+// It opens no repository — restic operates on the cache base dir it resolves
+// from RESTIC_CACHE_DIR (which authEnv exports for r.CacheDir), so a zero Mode
+// is passed: the password/insecure env it injects is simply unused.
+func (r Restic) CacheCleanup(ctx context.Context) error {
+	_, err := r.run(ctx, CacheCleanupArgs(), Mode{})
 	return err
 }
 

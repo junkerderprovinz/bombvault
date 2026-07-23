@@ -244,13 +244,17 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 //	→ restic backs up the now-static base disk(s)
 //	→ blockcommit --active --pivot (merge overlay back, pivot the live VM)
 //
-// RELIABILITY: when the live snapshot cannot be created (no writable disk, or
-// snapshot-create-as fails — e.g. a device that can't be snapshotted), the VM is
-// untouched, so we AUTOMATICALLY fall back to a graceful backup. The user always
-// gets a successful backup instead of a hard error. A leftover overlay from a
-// previous interrupted live run (snapshot "already exists") is committed back and
-// the snapshot retried once before falling back. Either way it is recorded as ONE
-// run.
+// RELIABILITY: there is NO fallback to a graceful (shutdown) backup — a VM the
+// user chose to back up live is never silently shut down (that is what the
+// explicit "graceful" method is for). The only self-heal here is the fsfreeze
+// case: a quiesced snapshot that fails with a freeze error (guest agent present
+// but its fsfreeze hook broken/blocking) is retried ONCE crash-consistent
+// (without --quiesce). Any other snapshot failure — no writable disk to
+// snapshot, or snapshot-create-as refusing a device — fails with a clear error
+// while the VM is untouched and still RUNNING (the snapshot is --atomic, so a
+// failed attempt creates nothing). Recovery from a leftover overlay of a
+// previously interrupted live run lives in the SERVICE layer, which commits a
+// leftover BombVault overlay back BEFORE this runs.
 //
 // SAFETY: on a failure AFTER the snapshot exists (restic or blockcommit) the VM
 // is left RUNNING and usable — never destroyed or undefined. A blockcommit

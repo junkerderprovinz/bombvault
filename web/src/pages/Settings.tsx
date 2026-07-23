@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, recoveryKitUrl, getHealth } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
@@ -1614,6 +1614,9 @@ export function SettingsPage() {
   // Per-section save state
   const [encSaveState, setEncSaveState] = useState<SaveState>("idle");
   const [encSaveError, setEncSaveError] = useState<string | null>(null);
+  // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
+  // answer when auth is off) — surfaced next to the download button.
+  const [kitError, setKitError] = useState<string | null>(null);
 
   const [pathSaveState, setPathSaveState] = useState<SaveState>("idle");
   const [pathSaveError, setPathSaveError] = useState<string | null>(null);
@@ -1638,6 +1641,9 @@ export function SettingsPage() {
   const [pruneSaveState, setPruneSaveState] = useState<SaveState>("idle");
   const [pruneSaveError, setPruneSaveError] = useState<string | null>(null);
 
+  const [cacheSaveState, setCacheSaveState] = useState<SaveState>("idle");
+  const [cacheSaveError, setCacheSaveError] = useState<string | null>(null);
+
   const [offRetSaveState, setOffRetSaveState] = useState<SaveState>("idle");
   const [offRetSaveError, setOffRetSaveError] = useState<string | null>(null);
 
@@ -1646,6 +1652,11 @@ export function SettingsPage() {
 
   const [metricsSaveState, setMetricsSaveState] = useState<SaveState>("idle");
   const [metricsSaveError, setMetricsSaveError] = useState<string | null>(null);
+
+  // Weekly digest (notifications tab) — its own save state, persisted via the
+  // shared baseline-merging save().
+  const [digestSaveState, setDigestSaveState] = useState<SaveState>("idle");
+  const [digestSaveError, setDigestSaveError] = useState<string | null>(null);
 
   // Schedules tab (migrated from the retired Plans page). The container list
   // feeds the Containers schedule section's included-members list; syncSchedules
@@ -1890,6 +1901,17 @@ export function SettingsPage() {
     await logout().catch(() => undefined);
     // Reload so the auth gate re-checks and shows the login screen.
     window.location.reload();
+  }
+
+  async function handleLogoutAll() {
+    // Rotates the server-side session epoch, revoking EVERY outstanding session
+    // cookie (all browsers/devices) — not just clearing this one.
+    await logoutAll().catch(() => undefined);
+    // Reload so the auth gate re-checks and shows the login screen. Reached via
+    // globalThis (cf. downloadRecoveryKit in api.ts): runtime-identical to bare
+    // window, but immune to the broken DOM lib resolution.
+    const g = globalThis as unknown as { location: { reload(): void } };
+    g.location.reload();
   }
 
   return (
@@ -2302,6 +2324,49 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — restic cache size limit. The persistent cache under        */}
+      {/* /config (RESTIC_CACHE_DIR) survives restarts and would otherwise     */}
+      {/* grow unbounded; LRU per-repo caches are evicted after scheduled runs.*/}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Advanced>
+      <Card title={t("settings.cacheTitle")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">
+          {t("settings.cacheHint")}
+        </p>
+        <label className="flex flex-col gap-1 sm:w-1/2">
+          <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
+          <input
+            type="number"
+            min={0}
+            value={settings.resticCacheMaxMB}
+            onChange={(e) => {
+              // Structural cast (cf. handleLogoutAll): runtime-identical to
+              // e.target.value, but immune to the broken DOM lib resolution.
+              const raw = (e.target as unknown as { value: string }).value;
+              const n = Math.max(0, parseInt(raw, 10) || 0);
+              setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
+            }}
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+          />
+        </label>
+        <SaveBar
+          state={cacheSaveState}
+          error={cacheSaveError}
+          onSave={() =>
+            void save(
+              { resticCacheMaxMB: settings.resticCacheMaxMB },
+              setCacheSaveState,
+              setCacheSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      </Advanced>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
       {/* STORAGE — Flash zip export (#28) — a plain .zip written after each   */}
       {/* flash backup, for off-server sync. Only relevant when Flash is on.   */}
       {/* ------------------------------------------------------------------ */}
@@ -2586,17 +2651,20 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, metricsEnabled: v } : prev)
           }
         />
+        {/* Write-only secret (the GET never echoes it): blank-on-save keeps the
+            stored token, so a stored one shows as the same "saved — leave blank
+            to keep" placeholder the cloud-credential secrets use. */}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.metricsToken")}</span>
           <input
-            type="text"
+            type="password"
             value={settings.metricsToken}
             spellCheck={false}
             autoComplete="off"
             onChange={(e) =>
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
-            placeholder=""
+            placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
             className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
           />
         </label>
@@ -2608,6 +2676,9 @@ export function SettingsPage() {
               {
                 metricsEnabled: settings.metricsEnabled,
                 metricsToken: settings.metricsToken,
+                // Keep the is-set flag honest locally: saving a non-blank token
+                // stores one; a blank save keeps whatever was stored before.
+                metricsTokenSet: settings.metricsToken.trim() !== "" || settings.metricsTokenSet,
               },
               setMetricsSaveState,
               setMetricsSaveError
@@ -2646,13 +2717,22 @@ export function SettingsPage() {
             <p className="text-xs text-carbon-textMuted leading-relaxed">
               {t("recovery.why")}
             </p>
-            <a
-              href={recoveryKitUrl()}
-              download="bombvault-recovery-kit.md"
+            <button
+              type="button"
+              onClick={() => {
+                setKitError(null);
+                void downloadRecoveryKit().then(setKitError);
+              }}
               className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
             >
               {t("recovery.download")}
-            </a>
+            </button>
+            {kitError && (
+              // Backend-provided error text shown verbatim BY DESIGN (e.g. the
+              // fail-closed "set a login password" refusal when auth is off) —
+              // the API answers English and is not translated client-side.
+              <span className="text-xs text-[#ff8389] wrap-break-word">✗ {kitError}</span>
+            )}
           </div>
         )}
         <SaveBar
@@ -2688,6 +2768,49 @@ export function SettingsPage() {
       {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}
       {/* ------------------------------------------------------------------ */}
       {tab === "notifications" && <NotifyCard t={t} />}
+
+      {/* NOTIFICATIONS — Weekly digest: one summary message per week through
+          the channels configured above. Schedule input mirrors the drills/
+          tamper cadence editors (CadenceBuilder + opacity gate). */}
+      {tab === "notifications" && (
+        <Card title={t("settings.digestTitle")}>
+          <p className="text-xs text-carbon-textMuted -mt-1">
+            {t("settings.digestHint")}
+          </p>
+          <ToggleRow
+            label={t("settings.digestToggle")}
+            checked={settings.digestEnabled}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
+            }
+          />
+          <div className={`rounded-lg bg-carbon-surface2 border border-carbon-border p-4 ${settings.digestEnabled ? "" : "opacity-50"}`}>
+            <CadenceBuilder
+              label={t("settings.schedule")}
+              value={settings.digestSchedule}
+              disabled={!settings.digestEnabled}
+              onChange={(v) =>
+                setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev))
+              }
+            />
+          </div>
+          <SaveBar
+            state={digestSaveState}
+            error={digestSaveError}
+            onSave={() =>
+              void save(
+                {
+                  digestEnabled: settings.digestEnabled,
+                  digestSchedule: settings.digestSchedule,
+                },
+                setDigestSaveState,
+                setDigestSaveError
+              )
+            }
+            t={t}
+          />
+        </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Spike (host-integration check; KEEP — it is LIVE).         */}
@@ -2787,14 +2910,22 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Logout button — only shown when currently signed in */}
+        {/* Logout buttons — only shown when currently signed in. Plain sign-out
+            clears THIS browser's cookie; "sign out everywhere" rotates the
+            server-side session epoch, revoking every outstanding session. */}
         {authEnabled && authAuthed && (
-          <div className="pt-2 border-t border-carbon-border">
+          <div className="pt-2 border-t border-carbon-border flex items-center gap-3">
             <button
               onClick={() => void handleLogout()}
               className="rounded-lg bg-carbon-surface2 border border-carbon-border px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("auth.logout")}
+            </button>
+            <button
+              onClick={() => void handleLogoutAll()}
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+            >
+              {t("settings.logoutAll")}
             </button>
           </div>
         )}

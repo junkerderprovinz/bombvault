@@ -330,6 +330,27 @@ func TestCopyArgsLimits(t *testing.T) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
+	t.Run("limit flags stay before the subcommand and positional ids", func(t *testing.T) {
+		// --limit-upload is a GLOBAL flag: restic rejects it after the subcommand,
+		// and it must never leak past -- into the snapshot-id positionals.
+		got := CopyArgs("/dest", "/src", []string{"abc123"}, Limits{UploadKBps: 1024}, Mode{Encrypted: true})
+		want := []string{"-r", "/dest", "--retry-lock", "5m", "--limit-upload", "1024", "copy", "--from-repo", "/src", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+// TestCacheCleanupArgs pins the persistent-cache janitor argv: `restic cache
+// --cleanup` takes NO repo flag and no mode flags — the cache command never
+// opens a repository, it operates on the cache base dir restic resolves from
+// RESTIC_CACHE_DIR (exported by authEnv) or its platform default.
+func TestCacheCleanupArgs(t *testing.T) {
+	got := CacheCleanupArgs()
+	want := []string{"cache", "--cleanup"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
 }
 
 func TestRestorePathArgs(t *testing.T) {

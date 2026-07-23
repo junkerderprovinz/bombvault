@@ -3235,6 +3235,7 @@ type fakeResticEngine struct {
 	unlockedRepos   []string
 	unlockRemoveAll []bool
 	manualPruned    []string
+	cacheCleanups   int // CacheCleanup call count (persistent-cache trim)
 	snapshotsCalls  int
 	snapshotsErr    error
 	initErr         error
@@ -3464,6 +3465,11 @@ func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool
 func (f *fakeResticEngine) Prune(_ context.Context, repo string, _ restic.Mode) error {
 	f.manualPruned = append(f.manualPruned, repo)
 	return f.pruneErr
+}
+
+func (f *fakeResticEngine) CacheCleanup(context.Context) error {
+	f.cacheCleanups++
+	return nil
 }
 
 func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Limits, _ restic.Mode) error {

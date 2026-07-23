@@ -106,6 +106,10 @@ type ResticEngine interface {
 	Unlock(ctx context.Context, repo string, removeAll bool, mode restic.Mode) error
 	// Prune reclaims space freed by forgotten snapshots (restic prune).
 	Prune(ctx context.Context, repo string, mode restic.Mode) error
+	// CacheCleanup removes old per-repo cache directories (`restic cache
+	// --cleanup`). Opens no repository — it operates on the local cache base dir
+	// (RESTIC_CACHE_DIR). Part of the persistent-cache size trim.
+	CacheCleanup(ctx context.Context) error
 	// Copy replicates snapshots from srcRepo into destRepo (restic copy) for
 	// off-site backup. Empty ids copy everything not already in dest. lim caps the
 	// transfer bandwidth (zero = unlimited) so replication doesn't saturate the WAN.
@@ -156,6 +160,11 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// resticCacheDir is the on-disk location of restic's persistent cache — the
+	// same path main.go exports to the engine as RESTIC_CACHE_DIR (set via
+	// SetResticCacheDir). Empty means the cache lives at restic's default
+	// (unmanaged) location, so the size-based trim is skipped. See TrimResticCache.
+	resticCacheDir string
 	// repoMu serialises operations per domain repo. A backup holds its domain's
 	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
@@ -768,12 +777,20 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // Best-effort: a failure never fails the backup that just succeeded — but it is
 // now NOTIFIED (not just logged), because silently skipped retention lets the
 // repo grow unseen for weeks.
+//
+// During a bulk run (the #95 bulk-suppress flag on ctx: scheduled multi-item
+// loops and the manual "back up all" batches) the expensive --prune is DEFERRED:
+// each item's forget runs without prune and PruneAfterBulk reclaims the space
+// ONCE after the whole loop — a 44-container night used to pay 44 full local
+// prunes. Single/manual backups (and flash/config, which never set the flag)
+// keep the immediate inline prune, byte-identical to before.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tag string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() {
 		return
 	}
-	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tag, true); err != nil {
+	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
+	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tag, prune); err != nil {
 		log.Printf("api: retention prune failed (backup is safe): %v", err)
 		s.notifyRetentionFailed(ctx, tag, truncateRunErr(err))
 	}
@@ -1669,11 +1686,31 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = 0
 	}
+	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
+	// the reserved domain target id, like prune/verify) so the replication shows
+	// up in the dashboard Activity Log/Run History as persisted history. The
+	// offsite_runs recording above stays EXACTLY as-is — the scorecard's currency
+	// checks depend on it. After the batching (#95) this is ONE row per domain per
+	// scheduled run, not one per container. Best-effort like the rest.
+	activityRunID, aErr := s.store.StartRun(domainRunTargetID(domain), "offsite")
+	if aErr != nil {
+		log.Printf("api: offsite %s: could not start activity run (continuing): %v", domain, aErr) //nolint:gosec // G706: domain is a fixed literal
+		activityRunID = ""
+	}
 	// ok is set true ONLY on the explicit success return below, so an unwinding
 	// panic (named-return err still nil) can't stamp a phantom successful run — the
 	// deferred finish then records a failure, not a false success.
 	var ok bool
 	defer func() {
+		if activityRunID != "" {
+			status := "failed"
+			if ok {
+				status = "success"
+			}
+			if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(err)); fErr != nil {
+				log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+			}
+		}
 		if runID == 0 {
 			return
 		}
@@ -2621,9 +2658,12 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		s.recordUpdateFailure(name, targetID, fmt.Errorf("resolve image id: %w", err))
 		return
 	}
-	// Nothing newer arrived → no recreate, no run record (keeps Run History clean
-	// on the common "already up to date" nightly-backup path).
+	// Nothing newer arrived → no recreate, and deliberately still NO run record
+	// (44 "nothing happened" rows a night would drown Run History). The check DID
+	// complete though — stamp it on the target so the UI can show "checked, up to
+	// date" instead of leaving it indistinguishable from "never reached".
 	if newID == "" || newID == in.Image {
+		s.setUpdateCheck(name, "up-to-date")
 		return
 	}
 	runID, rErr := runsAdapter{s.store}.Start(targetID, "update")
@@ -2633,10 +2673,12 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 	}
 	if err := s.recreateForUpdate(ctx, name, in); err != nil {
 		_ = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
 	_ = runsAdapter{s.store}.Finish(runID, "success", "", 0, "")
+	s.setUpdateCheck(name, "updated")
 
 	// #56: optionally remove the now-superseded old image. Opt-in (default off) — the
 	// old image is what makes a fresh-snapshot rollback cheap, so we never prune by
@@ -2682,13 +2724,25 @@ func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.I
 	return nil
 }
 
+// setUpdateCheck stamps the outcome of a completed post-backup update check on
+// the container's target row (last_update_check/last_update_result), so the
+// Containers page can show "checked, up to date / updated / check failed"
+// without a per-night run row. Best-effort: a store error is only logged.
+func (s *Service) setUpdateCheck(name, result string) {
+	if err := s.store.SetUpdateCheck(name, time.Now().Unix(), result); err != nil {
+		log.Printf("api: update-after-backup: %q could not record update check: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+	}
+}
+
 // recordUpdateFailure records a FAILED "update" run so a reached-but-failed
 // post-backup update — a registry check that failed before we could tell whether a
 // newer image exists — is visible in Run History and the Activity Log rather than
-// only the server log (#95). Best-effort: the backup already succeeded, so a
-// bookkeeping error here is only logged. (An update that WAS available but failed to
-// apply is recorded separately by the recreate path.)
+// only the server log (#95). It also stamps the target's update-check outcome as
+// 'failed'. Best-effort: the backup already succeeded, so a bookkeeping error
+// here is only logged. (An update that WAS available but failed to apply is
+// recorded separately by the recreate path.)
 func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
+	s.setUpdateCheck(name, "failed")
 	runID, rErr := runsAdapter{s.store}.Start(targetID, "update")
 	if rErr != nil {
 		log.Printf("api: update-after-backup: %q could not record update failure: %v (cause: %v)", name, rErr, cause) //nolint:gosec // G706: name is %q-quoted
@@ -2762,6 +2816,10 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
 		}
 		s.publishBatch(key, 100, false)
+		// Retention first: ONE local prune for the whole batch (each container's
+		// forget ran WITHOUT --prune under the bulk flag), BEFORE the batched
+		// off-site replication — fewer snapshots left to copy.
+		s.PruneAfterBulk(bctx, "containers")
 		// #95: one batched off-site replication after the whole manual batch (no-op
 		// unless containers replicate on a blank/coupled schedule with an off-site
 		// repo). The per-container inline copy was suppressed via the bulk flag on bctx.
@@ -2918,7 +2976,10 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	// Detach immediately so the batch is independent of the request that started
 	// it (canceled the moment the handler returns). Each per-set BackupFileSet
 	// applies its own hard timeout, so the batch needs no deadline of its own.
-	bctx := context.WithoutCancel(ctx)
+	// #95: suppress each set's inline off-site replication; the whole batch is
+	// replicated ONCE after the loop (ReplicateOffsiteAfterBulk below), mirroring
+	// the containers batch instead of re-opening the off-site repo per set.
+	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
 		defer s.batchActive.Store(false)
 
@@ -2942,6 +3003,14 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
 		}
 		s.publishBatch(key, 100, false)
+		// Retention first: ONE local prune for the whole batch (each set's forget
+		// ran WITHOUT --prune under the bulk flag), BEFORE the batched off-site
+		// replication — fewer snapshots left to copy.
+		s.PruneAfterBulk(bctx, "files")
+		// #95: one batched off-site replication after the whole manual batch (no-op
+		// unless files replicate on a blank/coupled schedule with an off-site
+		// repo). The per-set inline copy was suppressed via the bulk flag on bctx.
+		s.ReplicateOffsiteAfterBulk(bctx, "files")
 		log.Printf("api: backup-files-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(ids))
 	}()
 	return true, nil
@@ -5436,11 +5505,32 @@ var flashZipRe = regexp.MustCompile(`^flash-\d{8}-\d{6}\.zip$`)
 // folder as a plain .zip, for off-server sync (Syncthing etc.). It is non-fatal:
 // any failure is returned to the caller (BackupFlash logs it) and never fails the
 // backup itself. The write is atomic — a temp file is renamed into place — so a
-// sync tool never sees a half-written zip.
-func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, snapshotID string, mode restic.Mode, repo string) error {
+// sync tool never sees a half-written zip. Each attempt is recorded as a
+// kind="export" run on the flash target (bytes = the written zip size) so it
+// shows in the dashboard Activity Log/Run History; a disabled export records
+// nothing (nothing ran).
+func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, snapshotID string, mode restic.Mode, repo string) (err error) {
 	if !settings.FlashZipExportEnabled || settings.FlashZipExportPath == "" {
 		return nil
 	}
+	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
+	if rErr != nil {
+		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
+		runID = ""
+	}
+	var zipBytes int64
+	defer func() {
+		if runID == "" {
+			return
+		}
+		status := "success"
+		if err != nil {
+			status = "failed"
+		}
+		if fErr := s.store.FinishRun(runID, status, "", zipBytes, truncateRunErr(err)); fErr != nil {
+			log.Printf("api: flash zip export: could not finish run record: %v", fErr)
+		}
+	}()
 	dir, err := s.flashZipExportDir(settings)
 	if err != nil {
 		return err
@@ -5467,9 +5557,14 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	if settings.FlashZipExportKeep > 0 {
 		name = "flash-" + time.Now().UTC().Format("20060102-150405") + ".zip"
 	}
-	if err := os.Rename(tmp, filepath.Join(dir, name)); err != nil {
+	final := filepath.Join(dir, name)
+	if err := os.Rename(tmp, final); err != nil {
 		_ = os.Remove(tmp)
 		return fmt.Errorf("flash zip export: finalize: %w", err)
+	}
+	// Cheap size sample for the run record (bytes column) — best-effort only.
+	if fi, statErr := os.Stat(final); statErr == nil {
+		zipBytes = fi.Size()
 	}
 	// Prune in BOTH modes: in latest mode (Keep==0) the user opted out of history,
 	// so this deletes any stale flash-<ts>.zip left over from a previous history
@@ -6824,6 +6919,7 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
 			}
+			s.recordDomainRun(domain, "drill", false, skip.Detail)
 			s.notifyDrillFailure(ctx, domain, source, skip.Detail)
 			return skip, errDomainBusy
 		}
@@ -6875,6 +6971,10 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 		// Recording is the whole point of a drill; surface a record failure.
 		return store.RestoreDrill{}, fmt.Errorf("record drill: %w", recErr)
 	}
+	// Mirror the drill outcome into the shared runs table so it shows in the
+	// dashboard Activity Log/Run History (the restore_drills row above stays the
+	// badge/scorecard source of truth).
+	s.recordDomainRun(domain, "drill", drill.OK, drill.Detail)
 	// A failed restorability check is important — notify on failure (best-effort).
 	if checkErr != nil {
 		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
@@ -6967,6 +7067,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
 			}
+			s.recordDomainRun(domain, "drill", false, skip.Detail)
 			s.notifyDrillFailure(ctx, domain, "offsite", skip.Detail)
 			return skip, errDomainBusy
 		}
@@ -7023,6 +7124,10 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 	if recErr := s.store.AddRestoreDrill(drill); recErr != nil {
 		return store.RestoreDrill{}, fmt.Errorf("record drill: %w", recErr)
 	}
+	// Mirror the drill outcome into the shared runs table so it shows in the
+	// dashboard Activity Log/Run History (the restore_drills row above stays the
+	// badge/scorecard source of truth).
+	s.recordDomainRun(domain, "drill", drill.OK, drill.Detail)
 	if drillErr != nil {
 		s.notifyDrillFailure(ctx, domain, "offsite", drill.Detail)
 	}
@@ -7362,6 +7467,32 @@ func domainRunTargetID(domain string) string {
 	}
 }
 
+// recordDomainRun persists an ALREADY-COMPLETED domain-scoped check (restore
+// drill / tamper test) as a runs row on the reserved domain target id, so it
+// shows up in the dashboard Activity Log/Run History like prune/verify runs do.
+// The operation has finished by the time this is called, so the row is opened
+// and closed back-to-back (its own history table carries the full timing).
+// detail is bounded to the same cap as truncateRunErr. Best-effort: a store
+// error is logged and never fails the check that already ran.
+func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
+	runID, err := s.store.StartRun(domainRunTargetID(domain), kind)
+	if err != nil {
+		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
+		return
+	}
+	status := "success"
+	if !ok {
+		status = "failed"
+	}
+	const maxDetail = 500 // mirror truncateRunErr's cap for the runs.error column
+	if len(detail) > maxDetail {
+		detail = detail[:maxDetail]
+	}
+	if err := s.store.FinishRun(runID, status, "", 0, detail); err != nil {
+		log.Printf("api: %s %s: could not finish run record: %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
+	}
+}
+
 // localRepoMissing reports whether a LOCAL repo has not been initialised yet (no
 // `config` marker). It is ALWAYS false for a remote repo (rest:/s3:/b2:/…),
 // which has no local marker to stat — its emptiness is decided by actually
@@ -7448,7 +7579,44 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) error
 // (begin/terminal, indeterminate — restic prune/forget streams no percentage)
 // and records a "prune" run, so a manual/scheduled prune shows up on the
 // dashboard activity log/run history instead of running invisibly.
-func (s *Service) PruneDomain(ctx context.Context, domain, source string) (err error) {
+func (s *Service) PruneDomain(ctx context.Context, domain, source string) error {
+	return s.pruneDomain(ctx, domain, source, true)
+}
+
+// PruneAfterBulk runs ONE local prune for a domain after a bulk backup loop,
+// replacing the per-item inline prune that the bulk run deferred: under the #95
+// bulk flag applyRetention runs each item's forget WITHOUT --prune, so the
+// expensive space-reclaim happens here exactly once per run. It reuses the
+// PruneDomain core, so the batched prune takes the domain lock itself (the bulk
+// loop has released all locks by now), publishes maintenance progress and
+// records a kind="prune" run — visible in Run History/Activity Log exactly like
+// a manual prune. LOCAL repo only: off-site retention stays inside
+// copyToOffsite, and an immutable off-site repo is never pruned from this box.
+// Skipped silently when no local retention policy is configured (mirroring
+// applyRetention's own gate — nothing was forgotten, so there is nothing to
+// reclaim). Best-effort: failures are logged, never propagated.
+func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: prune %s: batched prune: read settings: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	if !s.retentionPolicy(settings).Any() {
+		return // no retention policy → the per-item passes forgot nothing (applyRetention's gate)
+	}
+	// applyPolicy=false: the per-item tag-scoped forgets already ran inline during
+	// the loop (without --prune), so this pass is a plain space-reclaim.
+	if err := s.pruneDomain(ctx, domain, "local", false); err != nil {
+		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+}
+
+// pruneDomain is the shared core of PruneDomain and PruneAfterBulk. applyPolicy
+// selects the manual-prune semantics (a configured retention policy is APPLIED:
+// per-identity forget --keep-* then one prune — "apply retention now") versus a
+// plain space-reclaim (`restic prune` only — the batched post-bulk pass, whose
+// per-item forgets already ran inline without --prune).
+func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (err error) {
 	settings, repo, err := s.domainRepoSource(domain, source)
 	if err != nil {
 		return err
@@ -7506,11 +7674,16 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) (err e
 	// keep-flags would delete every snapshot, so that path is guarded by p.Any().
 	// The policy is per-source: pruning the off-site repo uses the off-site policy
 	// (not the local one), so an archive off-site isn't trimmed to the local rules.
-	if p := s.retentionPolicyForSource(settings, source); p.Any() {
-		// Per-identity: tag-scoped, ungrouped forget per item + one prune —
-		// also drains frozen path-groups left by the old grouping (issue #91).
-		err = s.applyRetentionPerIdentity(ctx, repo, p, mode)
-		return err
+	// The batched post-bulk pass skips this (applyPolicy=false): its per-item
+	// forgets already ran inline, so re-running them would only cost 44 more
+	// exclusive-lock round-trips for nothing.
+	if applyPolicy {
+		if p := s.retentionPolicyForSource(settings, source); p.Any() {
+			// Per-identity: tag-scoped, ungrouped forget per item + one prune —
+			// also drains frozen path-groups left by the old grouping (issue #91).
+			err = s.applyRetentionPerIdentity(ctx, repo, p, mode)
+			return err
+		}
 	}
 	err = s.engine.Prune(ctx, repo, mode)
 	return err

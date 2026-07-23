@@ -2,6 +2,7 @@ package secret
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -80,49 +81,86 @@ func TestVerifyPasswordWrongAppKey(t *testing.T) {
 
 func TestSessionTokenRoundtrip(t *testing.T) {
 	hash := HashPassword(appKey, "s3cret")
-	tok := NewSessionToken(appKey, hash, time.Hour)
-	if !ValidSessionToken(appKey, hash, tok) {
+	tok := NewSessionToken(appKey, hash, "", time.Hour)
+	if !ValidSessionToken(appKey, hash, "", tok) {
 		t.Fatal("ValidSessionToken: fresh token must be valid")
+	}
+}
+
+func TestSessionTokenRoundtripWithEpoch(t *testing.T) {
+	hash := HashPassword(appKey, "s3cret")
+	const epoch = "0011223344556677"
+	tok := NewSessionToken(appKey, hash, epoch, time.Hour)
+	if !ValidSessionToken(appKey, hash, epoch, tok) {
+		t.Fatal("ValidSessionToken: fresh token must be valid under its own epoch")
 	}
 }
 
 func TestSessionTokenExpired(t *testing.T) {
 	hash := HashPassword(appKey, "s3cret")
 	// TTL of -1s gives an already-expired token.
-	tok := NewSessionToken(appKey, hash, -time.Second)
-	if ValidSessionToken(appKey, hash, tok) {
+	tok := NewSessionToken(appKey, hash, "", -time.Second)
+	if ValidSessionToken(appKey, hash, "", tok) {
 		t.Fatal("ValidSessionToken: expired token must be invalid")
 	}
 }
 
 func TestSessionTokenTampered(t *testing.T) {
 	hash := HashPassword(appKey, "s3cret")
-	tok := NewSessionToken(appKey, hash, time.Hour)
+	tok := NewSessionToken(appKey, hash, "", time.Hour)
 	// Flip the last character of the signature.
 	b := []byte(tok)
 	b[len(b)-1] ^= 0x01
-	if ValidSessionToken(appKey, hash, string(b)) {
+	if ValidSessionToken(appKey, hash, "", string(b)) {
 		t.Fatal("ValidSessionToken: tampered token must be invalid")
 	}
 }
 
 func TestSessionTokenPasswordHashChanged(t *testing.T) {
 	hash := HashPassword(appKey, "s3cret")
-	tok := NewSessionToken(appKey, hash, time.Hour)
+	tok := NewSessionToken(appKey, hash, "", time.Hour)
 
 	newHash := HashPassword(appKey, "newpassword")
 	// Token was issued against old hash — must be invalid under new hash.
-	if ValidSessionToken(appKey, newHash, tok) {
+	if ValidSessionToken(appKey, newHash, "", tok) {
 		t.Fatal("ValidSessionToken: token must be invalid after password change")
+	}
+}
+
+func TestSessionTokenEpochChanged(t *testing.T) {
+	hash := HashPassword(appKey, "s3cret")
+	// Token minted under epoch A must fail validation under epoch B — this is
+	// the "log out everywhere" revocation mechanism.
+	tok := NewSessionToken(appKey, hash, "epochA", time.Hour)
+	if ValidSessionToken(appKey, hash, "epochB", tok) {
+		t.Fatal("ValidSessionToken: token minted under epoch A must be invalid under epoch B")
+	}
+	// Rotating AWAY from the legacy empty epoch must also revoke: a token minted
+	// under "" fails once any non-empty epoch is set.
+	legacyTok := NewSessionToken(appKey, hash, "", time.Hour)
+	if ValidSessionToken(appKey, hash, "epochB", legacyTok) {
+		t.Fatal("ValidSessionToken: empty-epoch token must be invalid after epoch rotation")
+	}
+}
+
+func TestSessionTokenLegacyFormatValidUnderEmptyEpoch(t *testing.T) {
+	hash := HashPassword(appKey, "s3cret")
+	// A token in the PRE-EPOCH wire format (message without an epoch segment)
+	// must keep validating under the empty epoch, so sessions minted before the
+	// epoch existed survive the upgrade until the first rotation.
+	expiry := strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10)
+	legacy := expiry + "." + hmacHex(appKey, "bombvault:session:"+expiry+":"+hash)
+	if !ValidSessionToken(appKey, hash, "", legacy) {
+		t.Fatal("ValidSessionToken: pre-epoch legacy token must be valid under the empty epoch")
 	}
 }
 
 func TestSessionTokenBadFormat(t *testing.T) {
 	hash := HashPassword(appKey, "x")
-	if ValidSessionToken(appKey, hash, "nodot") {
+	if ValidSessionToken(appKey, hash, "", "nodot") {
 		t.Fatal("ValidSessionToken: token without dot must be invalid")
 	}
-	if ValidSessionToken(appKey, hash, "notanumber.abc") {
+	if ValidSessionToken(appKey, hash, "", "notanumber.abc") {
 		t.Fatal("ValidSessionToken: non-numeric expiry must be invalid")
 	}
 }

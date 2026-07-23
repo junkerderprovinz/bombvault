@@ -185,6 +185,10 @@ func run() error {
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
+	// Tell the service where the persistent cache lives so the post-run cache
+	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty
+	// (the mkdir-failed fallback above) disables the size-based trim.
+	svc.SetResticCacheDir(resticCacheDir)
 	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
 	// Live backup/restore progress: the service publishes percentages here and the
 	// SSE endpoint (/api/progress) streams them to the SPA's per-card bars.
@@ -252,6 +256,15 @@ func run() error {
 	scheduler.SetOffsiteJob(func(domain string) error {
 		return svc.ScheduledReplicateOffsite(context.Background(), domain)
 	})
+	// Batched post-loop local prune for scheduled multi-item domains: each item's
+	// post-backup retention runs forget WITHOUT --prune under the bulk flag, so the
+	// expensive space-reclaim happens ONCE per run instead of once per item (a
+	// 44-container night used to pay 44 full local prunes). The scheduler invokes
+	// it just BEFORE the batched off-site replication — retention first means fewer
+	// snapshots to copy. No-op for domains without a retention policy.
+	scheduler.SetPruneAfterBulkJob(func(domain string) {
+		svc.PruneAfterBulk(context.Background(), domain)
+	})
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
 	// suppressed via WithBulkReplicateSuppressed above), so a high-latency off-site
@@ -259,6 +272,10 @@ func run() error {
 	// No-op for domains with no off-site repo or a separate off-site schedule.
 	scheduler.SetOffsiteAfterBulkJob(func(domain string) {
 		svc.ReplicateOffsiteAfterBulk(context.Background(), domain)
+		// End of the scheduled domain run: trim restic's persistent cache (its own
+		// `cache --cleanup` janitor + the ResticCacheMaxMB LRU eviction). Riding the
+		// existing after-bulk hook needs no new cron plumbing; best-effort and cheap.
+		svc.TrimResticCache(context.Background())
 	})
 	scheduler.SetDrillJob(func(domain, source, kind string) error {
 		// Scheduled: wait for the domain lock so a nightly backup/replication co-fire
@@ -269,6 +286,10 @@ func run() error {
 	scheduler.SetTamperJob(func(domain string) error {
 		_, tErr := svc.RunTamperTest(context.Background(), domain)
 		return tErr
+	})
+	// Weekly digest: one summary message per fire through the notify fan-out.
+	scheduler.SetDigestJob(func() error {
+		return svc.SendDigest(context.Background())
 	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
 	// successful backup within each domain (containers / VMs / flash scoped separately).

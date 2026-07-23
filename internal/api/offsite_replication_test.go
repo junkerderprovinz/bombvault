@@ -5,11 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // webhookCounter is an httptest server that counts the notifications posted to it,
@@ -73,6 +75,71 @@ func TestReplicateOffsiteFirstOverBudgetAlarms(t *testing.T) {
 	}
 	if atomic.LoadInt32(hits) == 0 {
 		t.Fatal("the FIRST over-budget replication must alarm (fresh size, no prior sample), got none")
+	}
+}
+
+// latestRunOfKind returns the newest run of the given kind from the shared runs
+// table, failing the test when none was recorded.
+func latestRunOfKind(t *testing.T, st *store.Repo, kind string) store.Run {
+	t.Helper()
+	runs, err := st.ListRuns(50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range runs {
+		if r.Kind == kind {
+			return r
+		}
+	}
+	t.Fatalf("no %q run recorded, got %+v", kind, runs)
+	return store.Run{}
+}
+
+// TestReplicateOffsiteRecordsActivityRun pins the Activity Log feed (G2): a
+// replication ALSO lands a kind="offsite" row in the SHARED runs table, on the
+// reserved domain target id (the prune/verify pattern) — additive to the
+// offsite_runs bookkeeping the scorecard's currency checks rely on, which must
+// keep being recorded exactly as before.
+func TestReplicateOffsiteRecordsActivityRun(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st := offsiteReplTestService(t, eng)
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+
+	run := latestRunOfKind(t, st, "offsite")
+	if run.TargetID != store.FlashTargetID {
+		t.Fatalf("offsite run target = %q, want %q", run.TargetID, store.FlashTargetID)
+	}
+	if run.Status != "success" || run.FinishedAt == nil {
+		t.Fatalf("a successful replication must record a finished success run, got %+v", run)
+	}
+	if run.Error != "" {
+		t.Fatalf("a successful offsite run must carry no error, got %q", run.Error)
+	}
+
+	// The offsite_runs history (currency source) is unchanged and still recorded.
+	if _, found, err := st.LatestSuccessfulOffsiteRun("flash"); err != nil || !found {
+		t.Fatalf("offsite_runs bookkeeping must still be recorded, found=%v err=%v", found, err)
+	}
+}
+
+// TestReplicateOffsiteFailureRecordsFailedActivityRun pins the failure side of
+// the same feed: a failed copy records the kind="offsite" run as failed with
+// the (truncated) error text.
+func TestReplicateOffsiteFailureRecordsFailedActivityRun(t *testing.T) {
+	eng := &fakeResticEngine{copyErr: errors.New("copy exploded")}
+	svc, st := offsiteReplTestService(t, eng)
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err == nil {
+		t.Fatal("a failed copy must surface the error")
+	}
+
+	run := latestRunOfKind(t, st, "offsite")
+	if run.Status != "failed" {
+		t.Fatalf("a failed replication must record a failed offsite run, got %+v", run)
+	}
+	if !strings.Contains(run.Error, "copy exploded") {
+		t.Fatalf("the failed offsite run must carry the error text, got %q", run.Error)
 	}
 }
 

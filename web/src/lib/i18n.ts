@@ -34,9 +34,10 @@ import vi from "./locales/vi";
 
 // ---------------------------------------------------------------------------
 // Translation key set — en is the source of truth
+// (exported so the locale-parity test can import the base table)
 // ---------------------------------------------------------------------------
 
-const en = {
+export const en = {
   // General
   "language.label": "Language",
   "theme.toggle": "Toggle theme",
@@ -140,6 +141,12 @@ const en = {
   "containers.batchRunning": "Backing up selected containers…",
   "containers.selfNote": "This is BombVault — it doesn't back up its own container (that would stop itself); its settings are recovered via Discover.",
 
+  // Post-backup update-check line (G4)
+  "containers.updateCheckLabel": "Update check",
+  "containers.updateCheckUpToDate": "up to date",
+  "containers.updateCheckUpdated": "updated",
+  "containers.updateCheckFailed": "check failed",
+
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",
   "snapshots.colId": "ID",
@@ -232,6 +239,7 @@ const en = {
   "run.kindBackup": "Backup",
   "run.kindRestore": "Restore",
   "run.kindUpdate": "Update",
+  "run.kindExport": "Export",
   "update.afterBackup": "Update after successful backup",
   "update.afterBackupHint": "Pull the image and recreate this container right after a successful backup, so you always have a fresh restore point first. It runs at the backup's time (backups run one after another), not a fixed clock time. For updates on a set schedule instead, version-gated, see ShipLog.",
   "run.statusRunning": "Running",
@@ -317,8 +325,10 @@ const en = {
   "offsite.s3Unverified": "Note: S3 append-only can't be verified automatically. Set bucket versioning + deny-delete manually; the scorecard keeps this domain marked unverified.",
   "offsite.tamperTestNow": "Test append-only now",
   "offsite.tamperTesting": "Testing…",
-  "offsite.tamperOk": "✓ delete refused — append-only active",
-  "offsite.tamperFail": "✗ server ACCEPTED the delete — NOT protected",
+  // Tamper verdicts carry NO ✓/✗ glyph — OffsiteWizard.tsx renders the glyph
+  // as its own JSX node so RTL locales (ar/he) place it correctly.
+  "offsite.tamperOk": "delete refused — append-only active",
+  "offsite.tamperFail": "server ACCEPTED the delete — NOT protected",
   "offsite.tamperUnverifiable": "not verifiable for this repo type",
   "offsite.tamperError": "Tamper test inconclusive (server unreachable)",
   "offsite.retention.title": "5 · Retention strategy",
@@ -625,6 +635,7 @@ const en = {
   "jobs.flashNotImplemented": "Note: Flash backup executor is not yet implemented in Phase 1 — schedule is stored but not executed.",
   "schedule.includeAll": "Include all in schedule",
   "schedule.excludeAll": "Exclude all from schedule",
+  "schedule.updateFailed": "Failed to update schedule",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -829,6 +840,15 @@ const en = {
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
 
+  // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
+  "settings.digestTitle": "Weekly digest",
+  "settings.digestHint": "One summary message per week: run counts, new backup data, off-site currency and the top failures — sent through the notification channels above.",
+  "settings.digestToggle": "Weekly digest",
+  "settings.cacheTitle": "Backup engine cache",
+  "settings.cacheHint": "The backup engine keeps a cache of repository data under /config so incremental and off-site runs stay fast. When it grows past this limit, the least-recently-used per-repository caches are removed after scheduled runs.",
+  "settings.cacheLimitLabel": "Cache size limit (MB, 0 = unlimited)",
+  "settings.logoutAll": "Sign out everywhere",
+
   // What's new dialog (#48) — shown once when a new version is running
   "whatsnew.title": "What's new in {version}",
   "whatsnew.loading": "Loading release notes…",
@@ -837,13 +857,15 @@ const en = {
   "whatsnew.viewOnGitHub": "View full release on GitHub",
   "whatsnew.close": "Close",
 
-  // Files domain (file-set backups, #62) — the Files tab
-  "nav.files": "Files",
-  "files.title": "Files",
+  // Files domain (folder-set backups, #62) — shown to the user as "Folders".
+  // The files.* KEY names, the "files" domain literal, routes and types are
+  // technical identifiers and deliberately keep the historical name.
+  "nav.files": "Folders",
+  "files.title": "Folders",
   "files.subtitle": "Back up any folders on this server — with schedules, off-site copies and restores.",
-  "files.empty": "No file sets yet. Add a folder — shares, documents, photos, anything under your mounts — and BombVault protects it like everything else: schedules, off-site copies, integrity checks and restores. No separate file-backup tool needed.",
-  "files.addSet": "Add file set",
-  "files.editSet": "Edit file set",
+  "files.empty": "No folder sets yet. Add a folder — shares, documents, photos, anything under your mounts — and BombVault protects it like everything else: schedules, off-site copies, integrity checks and restores. No separate file-backup tool needed.",
+  "files.addSet": "Add folder set",
+  "files.editSet": "Edit folder set",
   "files.name": "Name",
   "files.path": "Folder",
   "files.pathHint": "The folder to back up — a relative subpath under the host mount root.",
@@ -855,8 +877,8 @@ const en = {
   "files.noPath": "No folder set",
   "files.noPathHint": "Rebuilt from backups without a folder. Set a folder to back it up again — restoring to a folder already works.",
   "files.deleteSet": "Remove set",
-  "files.deleteSetConfirm": "Remove this file set from the list? Its backups are not deleted and can be rediscovered later.",
-  "files.deleteBackupsConfirm": "Delete ALL backups of this file set? The snapshots are permanently removed, the repository is pruned and the set is forgotten. This cannot be undone.",
+  "files.deleteSetConfirm": "Remove this folder set from the list? Its backups are not deleted and can be rediscovered later.",
+  "files.deleteBackupsConfirm": "Delete ALL backups of this folder set? The snapshots are permanently removed, the repository is pruned and the set is forgotten. This cannot be undone.",
   "files.restoreOriginal": "Restore to original location",
   "files.restoreOriginalConfirm": "Restore this backup over the set's folder? Existing files will be overwritten.",
   "files.restoreToFolder": "Restore to a folder",
@@ -866,17 +888,17 @@ const en = {
   "files.discoverHint": "Lost the set list? Rebuild it from the backups in storage.",
   "files.cancel": "Cancel",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
-  "settings.filesEnabled": "Files",
-  "settings.filesPath": "Files path",
-  "jobs.filesSection": "Files",
-  "jobs.filesIncludeHint": "Backs up every file set with “include in schedule” enabled — toggle each set below or on the Files tab.",
-  "jobs.noFileSetsIncluded": "No file sets yet — add them on the Files tab.",
-  "dashboard.domainFiles": "Files",
-  "recovery.filesFound": "Found {f} file sets.",
-  "recovery.filesRestoreHint": "Rediscovered file sets carry no original folder — each one restores into a folder you choose.",
+  "settings.filesEnabled": "Folders",
+  "settings.filesPath": "Folders path",
+  "jobs.filesSection": "Folders",
+  "jobs.filesIncludeHint": "Backs up every folder set with “include in schedule” enabled — toggle each set below or on the Folders tab.",
+  "jobs.noFileSetsIncluded": "No folder sets yet — add them on the Folders tab.",
+  "dashboard.domainFiles": "Folders",
+  "recovery.filesFound": "Found {f} folder sets.",
+  "recovery.filesRestoreHint": "Rediscovered folder sets carry no original folder — each one restores into a folder you choose.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Restore from another BombVault repo",
-  "recovery.foreignIntro": "Pull single containers, VMs or file sets out of a DIFFERENT BombVault instance's backups: connect read-only, browse what's inside, restore what you pick. This reads the other repository, changes nothing over there, and leaves your own backup settings untouched.",
+  "recovery.foreignIntro": "Pull single containers, VMs or folder sets out of a DIFFERENT BombVault instance's backups: connect read-only, browse what's inside, restore what you pick. This reads the other repository, changes nothing over there, and leaves your own backup settings untouched.",
   "recovery.foreignStepConnect": "Connect to the other repository",
   "recovery.foreignStepBrowse": "Browse & restore",
   "recovery.foreignLocation": "Repository location",
@@ -907,6 +929,7 @@ const en = {
   "activityLog.typePrune": "Prune",
   "activityLog.typeVerify": "Verify",
   "activityLog.typeOffsite": "Off-site",
+  "activityLog.typeExport": "Export",
   "activityLog.jumpToLatest": "Jump to latest",
   "activityLog.glyphRunning": "Running",
   "activityLog.glyphSuccess": "Success",
@@ -917,11 +940,12 @@ const en = {
   "activityLog.domainVMs": "VMs",
   "activityLog.domainFlash": "Flash",
   "activityLog.domainConfig": "Self-Backup",
-  "activityLog.domainFiles": "Files",
+  "activityLog.domainFiles": "Folders",
   "activityLog.jobBackup": "backup",
   "activityLog.jobOffsite": "off-site replication",
   "activityLog.jobDrill": "restore-verification drill",
   "activityLog.jobTamper": "tamper test",
+  "activityLog.jobDigest": "weekly digest",
   "activityLog.lineBackingUpItem": "Backing up {name} … {percent}%",
   "activityLog.lineRestoringItem": "Restoring {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Backing up all {domain} … {percent}%",
@@ -939,6 +963,14 @@ const en = {
   "activityLog.linePruneFailed": "Prune failed — {domain}: {error}",
   "activityLog.lineVerifySuccess": "Verify passed — {domain}",
   "activityLog.lineVerifyFailed": "Verify failed — {domain}: {error}",
+  "activityLog.lineOffsiteSuccess": "Off-site replication done — {domain} ({duration})",
+  "activityLog.lineOffsiteFailed": "Off-site replication failed — {domain}: {error}",
+  "activityLog.lineDrillSuccess": "Restore check passed — {domain}",
+  "activityLog.lineDrillFailed": "Restore check failed — {domain}: {error}",
+  "activityLog.lineTamperSuccess": "Tamper test passed — {domain} (delete refused)",
+  "activityLog.lineTamperFailed": "Tamper test FAILED — {domain} is not append-only: {error}",
+  "activityLog.lineExportSuccess": "Flash ZIP export done — {bytes} ({duration})",
+  "activityLog.lineExportFailed": "Flash ZIP export failed — {error}",
   "activityLog.lineOther": "{name} {kind} — {status}",
   "activityLog.lineNextWithDomain": "next: {job} ({domain}) at {time} (in {countdown})",
   "activityLog.lineNextNoDomain": "next: {job} at {time} (in {countdown})",
@@ -950,9 +982,10 @@ export type Translations = Record<TranslationKey, string>;
 
 // ---------------------------------------------------------------------------
 // German locale (full)
+// (exported so the locale-parity test can import it alongside `en`)
 // ---------------------------------------------------------------------------
 
-const de: Translations = {
+export const de: Translations = {
   "language.label": "Sprache",
   "theme.toggle": "Design umschalten",
   "theme.dark": "Dunkel",
@@ -1049,6 +1082,12 @@ const de: Translations = {
   "containers.batchRunning": "Sichere ausgewählte Container…",
   "containers.selfNote": "Das ist BombVault — es sichert seinen eigenen Container nicht (würde sich selbst stoppen); seine Einstellungen werden über Discover wiederhergestellt.",
 
+  // Post-Backup-Update-Prüfzeile (G4)
+  "containers.updateCheckLabel": "Update-Prüfung",
+  "containers.updateCheckUpToDate": "aktuell",
+  "containers.updateCheckUpdated": "aktualisiert",
+  "containers.updateCheckFailed": "Prüfung fehlgeschlagen",
+
   "snapshots.title": "Backups",
   "snapshots.colId": "ID",
   "snapshots.colTime": "Zeitpunkt",
@@ -1138,6 +1177,7 @@ const de: Translations = {
   "run.kindBackup": "Backup",
   "run.kindRestore": "Wiederherstellung",
   "run.kindUpdate": "Update",
+  "run.kindExport": "Export",
   "update.afterBackup": "Nach erfolgreichem Backup updaten",
   "update.afterBackupHint": "Zieht das Image und baut diesen Container direkt nach einem erfolgreichen Backup neu, du hast also immer zuerst einen frischen Wiederherstellungspunkt. Läuft zur Backup-Zeit (Backups laufen nacheinander), nicht zu einer festen Uhrzeit. Für Updates nach festem Zeitplan (nach Version gestaffelt) gibt es ShipLog.",
   "run.statusRunning": "Läuft",
@@ -1222,9 +1262,9 @@ const de: Translations = {
   "offsite.s3Unverified": "Hinweis: S3-Append-only lässt sich nicht automatisch verifizieren. Bucket-Versionierung + Delete-Verbot manuell setzen; die Scorecard führt diese Domäne weiterhin als unverifiziert.",
   "offsite.tamperTestNow": "Append-only jetzt testen",
   "offsite.tamperTesting": "Teste…",
-  "offsite.tamperOk": "✓ delete refused — append-only active",
-  "offsite.tamperFail": "✗ server ACCEPTED the delete — NOT protected",
-  "offsite.tamperUnverifiable": "not verifiable for this repo type",
+  "offsite.tamperOk": "Löschen verweigert — Append-only aktiv",
+  "offsite.tamperFail": "Server hat das Löschen AKZEPTIERT — NICHT geschützt",
+  "offsite.tamperUnverifiable": "für diesen Repository-Typ nicht überprüfbar",
   "offsite.tamperError": "Tamper-Test nicht eindeutig (Server nicht erreichbar)",
   "offsite.retention.title": "5 · Aufbewahrungsstrategie",
   "offsite.retention.farside": "Prune auf der Gegenseite (empfohlen)",
@@ -1530,6 +1570,7 @@ const de: Translations = {
   "jobs.flashNotImplemented": "Hinweis: Der Flash-Backup-Executor ist in Phase 1 noch nicht implementiert — der Zeitplan wird gespeichert, aber nicht ausgeführt.",
   "schedule.includeAll": "Alle in den Zeitplan",
   "schedule.excludeAll": "Alle aus dem Zeitplan",
+  "schedule.updateFailed": "Zeitplan konnte nicht aktualisiert werden",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1732,6 +1773,15 @@ const de: Translations = {
   // Filter-Auslöser (v5-Redesign)
   "filter.button": "Filter",
 
+  // Einstellungen — Wochenbericht-Karte, Backup-Engine-Cache, Alle-Sitzungen-Abmeldung
+  "settings.digestTitle": "Wochenbericht",
+  "settings.digestHint": "Eine Zusammenfassung pro Woche: Anzahl der Läufe, neue Backup-Daten, Off-site-Aktualität und die wichtigsten Fehler — gesendet über die oben konfigurierten Benachrichtigungskanäle.",
+  "settings.digestToggle": "Wochenbericht",
+  "settings.cacheTitle": "Backup-Engine-Cache",
+  "settings.cacheHint": "Die Backup-Engine hält unter /config einen Cache mit Repository-Daten, damit inkrementelle und Off-site-Läufe schnell bleiben. Wächst er über dieses Limit, werden nach geplanten Läufen die am längsten ungenutzten Repository-Caches entfernt.",
+  "settings.cacheLimitLabel": "Cache-Größenlimit (MB, 0 = unbegrenzt)",
+  "settings.logoutAll": "Überall abmelden",
+
   // Neu-Dialog (#48) — einmalig bei einer neuen laufenden Version
   "whatsnew.title": "Neu in {version}",
   "whatsnew.loading": "Lade Release-Notes…",
@@ -1740,13 +1790,14 @@ const de: Translations = {
   "whatsnew.viewOnGitHub": "Vollständige Release-Notes auf GitHub",
   "whatsnew.close": "Schließen",
 
-  // Dateien-Domäne (Datei-Set-Backups, #62) — der Dateien-Tab
-  "nav.files": "Dateien",
-  "files.title": "Dateien",
+  // Ordner-Domäne (Ordner-Set-Backups, #62) — der Ordner-Tab (Keys behalten
+  // die historischen files.*-Namen; nur die angezeigten Werte heißen "Ordner")
+  "nav.files": "Ordner",
+  "files.title": "Ordner",
   "files.subtitle": "Beliebige Ordner dieses Servers sichern — mit Zeitplänen, Off-site-Kopien und Wiederherstellungen.",
-  "files.empty": "Noch keine Datei-Sets. Füge einen Ordner hinzu — Shares, Dokumente, Fotos, alles unter deinen Mounts — und BombVault schützt ihn wie alles andere: Zeitpläne, Off-site-Kopien, Integritätsprüfungen und Wiederherstellungen. Kein separates Datei-Backup-Tool nötig.",
-  "files.addSet": "Datei-Set hinzufügen",
-  "files.editSet": "Datei-Set bearbeiten",
+  "files.empty": "Noch keine Ordner-Sets. Füge einen Ordner hinzu — Shares, Dokumente, Fotos, alles unter deinen Mounts — und BombVault schützt ihn wie alles andere: Zeitpläne, Off-site-Kopien, Integritätsprüfungen und Wiederherstellungen. Kein separates Datei-Backup-Tool nötig.",
+  "files.addSet": "Ordner-Set hinzufügen",
+  "files.editSet": "Ordner-Set bearbeiten",
   "files.name": "Name",
   "files.path": "Ordner",
   "files.pathHint": "Der zu sichernde Ordner — ein relativer Unterpfad unter dem Host-Mount-Root.",
@@ -1758,8 +1809,8 @@ const de: Translations = {
   "files.noPath": "Kein Ordner gesetzt",
   "files.noPathHint": "Aus Backups ohne Ordner wiederaufgebaut. Setze einen Ordner, um wieder zu sichern — die Wiederherstellung in einen Ordner funktioniert schon jetzt.",
   "files.deleteSet": "Set entfernen",
-  "files.deleteSetConfirm": "Dieses Datei-Set aus der Liste entfernen? Seine Backups werden nicht gelöscht und können später wiederentdeckt werden.",
-  "files.deleteBackupsConfirm": "ALLE Backups dieses Datei-Sets löschen? Die Snapshots werden dauerhaft entfernt, das Repository wird aufgeräumt und das Set wird vergessen. Kann nicht rückgängig gemacht werden.",
+  "files.deleteSetConfirm": "Dieses Ordner-Set aus der Liste entfernen? Seine Backups werden nicht gelöscht und können später wiederentdeckt werden.",
+  "files.deleteBackupsConfirm": "ALLE Backups dieses Ordner-Sets löschen? Die Snapshots werden dauerhaft entfernt, das Repository wird aufgeräumt und das Set wird vergessen. Kann nicht rückgängig gemacht werden.",
   "files.restoreOriginal": "An den Originalort wiederherstellen",
   "files.restoreOriginalConfirm": "Dieses Backup über den Ordner des Sets wiederherstellen? Vorhandene Dateien werden überschrieben.",
   "files.restoreToFolder": "In einen Ordner wiederherstellen",
@@ -1769,17 +1820,17 @@ const de: Translations = {
   "files.discoverHint": "Set-Liste verloren? Baue sie aus den Backups im Speicher neu auf.",
   "files.cancel": "Abbrechen",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
-  "settings.filesEnabled": "Dateien",
-  "settings.filesPath": "Dateien-Pfad",
-  "jobs.filesSection": "Dateien",
-  "jobs.filesIncludeHint": "Sichert jedes Datei-Set mit aktiviertem „Im Zeitplan einschließen“ — pro Set unten oder im Dateien-Tab umschaltbar.",
-  "jobs.noFileSetsIncluded": "Noch keine Datei-Sets — füge sie im Dateien-Tab hinzu.",
-  "dashboard.domainFiles": "Dateien",
-  "recovery.filesFound": "{f} Datei-Sets gefunden.",
-  "recovery.filesRestoreHint": "Wiederentdeckte Datei-Sets kennen ihren Ursprungsordner nicht — jedes wird in einen Ordner deiner Wahl wiederhergestellt.",
+  "settings.filesEnabled": "Ordner",
+  "settings.filesPath": "Ordner-Pfad",
+  "jobs.filesSection": "Ordner",
+  "jobs.filesIncludeHint": "Sichert jedes Ordner-Set mit aktiviertem „Im Zeitplan einschließen“ — pro Set unten oder im Ordner-Tab umschaltbar.",
+  "jobs.noFileSetsIncluded": "Noch keine Ordner-Sets — füge sie im Ordner-Tab hinzu.",
+  "dashboard.domainFiles": "Ordner",
+  "recovery.filesFound": "{f} Ordner-Sets gefunden.",
+  "recovery.filesRestoreHint": "Wiederentdeckte Ordner-Sets kennen ihren Ursprungsordner nicht — jedes wird in einen Ordner deiner Wahl wiederhergestellt.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Aus einem anderen BombVault-Repo wiederherstellen",
-  "recovery.foreignIntro": "Hole einzelne Container, VMs oder Datei-Sets aus den Backups einer ANDEREN BombVault-Instanz: schreibgeschützt verbinden, Inhalt durchstöbern, Auswahl wiederherstellen. Das andere Repository wird dabei nur gelesen — dort ändert sich nichts, und deine eigenen Backup-Einstellungen bleiben unangetastet.",
+  "recovery.foreignIntro": "Hole einzelne Container, VMs oder Ordner-Sets aus den Backups einer ANDEREN BombVault-Instanz: schreibgeschützt verbinden, Inhalt durchstöbern, Auswahl wiederherstellen. Das andere Repository wird dabei nur gelesen — dort ändert sich nichts, und deine eigenen Backup-Einstellungen bleiben unangetastet.",
   "recovery.foreignStepConnect": "Mit dem anderen Repository verbinden",
   "recovery.foreignStepBrowse": "Durchstöbern & wiederherstellen",
   "recovery.foreignLocation": "Repository-Speicherort",
@@ -1809,6 +1860,7 @@ const de: Translations = {
   "activityLog.typePrune": "Bereinigung",
   "activityLog.typeVerify": "Prüfung",
   "activityLog.typeOffsite": "Off-Site",
+  "activityLog.typeExport": "Export",
   "activityLog.jumpToLatest": "Zum Aktuellen springen",
   "activityLog.glyphRunning": "Läuft",
   "activityLog.glyphSuccess": "Erfolgreich",
@@ -1819,11 +1871,12 @@ const de: Translations = {
   "activityLog.domainVMs": "VMs",
   "activityLog.domainFlash": "Flash",
   "activityLog.domainConfig": "Selbst-Backup",
-  "activityLog.domainFiles": "Dateien",
+  "activityLog.domainFiles": "Ordner",
   "activityLog.jobBackup": "Backup",
   "activityLog.jobOffsite": "Off-Site-Replikation",
   "activityLog.jobDrill": "Wiederherstellungs-Prüfung",
   "activityLog.jobTamper": "Manipulationstest",
+  "activityLog.jobDigest": "Wochenbericht",
   "activityLog.lineBackingUpItem": "Sichere {name} … {percent}%",
   "activityLog.lineRestoringItem": "Stelle {name} wieder her … {percent}%",
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
@@ -1841,6 +1894,14 @@ const de: Translations = {
   "activityLog.linePruneFailed": "Bereinigung fehlgeschlagen — {domain}: {error}",
   "activityLog.lineVerifySuccess": "Prüfung bestanden — {domain}",
   "activityLog.lineVerifyFailed": "Prüfung fehlgeschlagen — {domain}: {error}",
+  "activityLog.lineOffsiteSuccess": "Off-Site-Replikation abgeschlossen — {domain} ({duration})",
+  "activityLog.lineOffsiteFailed": "Off-Site-Replikation fehlgeschlagen — {domain}: {error}",
+  "activityLog.lineDrillSuccess": "Wiederherstellungs-Prüfung bestanden — {domain}",
+  "activityLog.lineDrillFailed": "Wiederherstellungs-Prüfung fehlgeschlagen — {domain}: {error}",
+  "activityLog.lineTamperSuccess": "Manipulationstest bestanden — {domain} (Löschen verweigert)",
+  "activityLog.lineTamperFailed": "Manipulationstest FEHLGESCHLAGEN — {domain} ist nicht append-only: {error}",
+  "activityLog.lineExportSuccess": "Flash-ZIP-Export abgeschlossen — {bytes} ({duration})",
+  "activityLog.lineExportFailed": "Flash-ZIP-Export fehlgeschlagen — {error}",
   "activityLog.lineOther": "{name} {kind} — {status}",
   "activityLog.lineNextWithDomain": "als Nächstes: {job} ({domain}) um {time} (in {countdown})",
   "activityLog.lineNextNoDomain": "als Nächstes: {job} um {time} (in {countdown})",
@@ -1910,7 +1971,8 @@ export const isRtl = (code: string): boolean =>
 // fails the build). Any locale still absent from this map falls back to English.
 // en + de are the complete source of truth; the other 24 are Partial and fall
 // back to en at runtime for any missing key (see the t() lookup).
-const locales: Record<string, Partial<Translations>> = {
+// (exported so the locale-parity test can iterate the full registry)
+export const locales: Record<string, Partial<Translations>> = {
   en,
   de,
   fr,

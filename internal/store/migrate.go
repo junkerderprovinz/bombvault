@@ -520,6 +520,46 @@ CREATE INDEX IF NOT EXISTS idx_restore_drills_domain_source_kind_at ON restore_d
   created_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// Session-revocation epoch mixed into every session token's HMAC. Rotating
+		// it (POST /api/logout-all) invalidates all outstanding session cookies at
+		// once. '' (the default) is a valid legacy epoch, so existing sessions
+		// survive the upgrade until the first rotation.
+		version: 65, name: "settings_session_epoch",
+		sql: "ALTER TABLE settings ADD COLUMN session_epoch TEXT NOT NULL DEFAULT '';",
+	},
+	{
+		// Size cap (MB) for restic's persistent cache under /config (v6.7.0 pinned
+		// RESTIC_CACHE_DIR there so the cache survives restarts — but it now grows
+		// unbounded). 0 = no limit. The DEFAULT 4096 backfills existing rows AND
+		// seeds fresh installs (a new DB replays this migration after the v1 seed
+		// row), so both get the 4 GB cap without a separate defaults path.
+		version: 66, name: "settings_restic_cache_max_mb",
+		sql: "ALTER TABLE settings ADD COLUMN restic_cache_max_mb INTEGER NOT NULL DEFAULT 4096;",
+	},
+	{
+		// "Checked, up to date" update signal per container (#52 follow-up): the
+		// post-backup update check deliberately records NO run when nothing newer
+		// exists (44 noise rows a night), which made "checked and current"
+		// indistinguishable from "never reached". last_update_check stamps when the
+		// check last completed; last_update_result carries its outcome
+		// ('' = never, 'up-to-date', 'updated', 'failed'). Owned by SetUpdateCheck
+		// (never reset by Upsert).
+		version: 67, name: "targets_last_update_check",
+		sql: `
+ALTER TABLE targets ADD COLUMN last_update_check INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE targets ADD COLUMN last_update_result TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// Weekly digest notification: one summary message per week through the
+		// existing notify fan-out (counts, backup bytes, off-site currency, top
+		// failures). Off by default so existing setups are unchanged until the
+		// user opts in; the schedule uses the shared cadence grammar.
+		version: 68, name: "settings_digest",
+		sql: `
+ALTER TABLE settings ADD COLUMN digest_enabled INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN digest_schedule TEXT NOT NULL DEFAULT 'weekly Mon 08:00';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

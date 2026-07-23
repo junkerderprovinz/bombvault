@@ -95,7 +95,7 @@ export function Layout() {
         // short SHA doesn't re-nag on every rebuild (issue #48).
         const tag = h.version ? releaseTag(h.version) : null;
         if (!tag) return;
-        let last: string | null = null;
+        let last: string | null;
         try {
           last = localStorage.getItem(LAST_SEEN_VERSION_KEY);
         } catch {

@@ -1,7 +1,9 @@
 package api
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -175,6 +177,12 @@ type containerView struct {
 	StopContainers    []string `json:"stopContainers"`
 	Excludes          []string `json:"excludes"`
 	UpdateAfterBackup bool     `json:"updateAfterBackup"`
+	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
+	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
+	// 'updated' | 'failed') — so "checked, up to date" is visible without a
+	// per-night run row.
+	LastUpdateCheck  int64  `json:"lastUpdateCheck"`
+	LastUpdateResult string `json:"lastUpdateResult"`
 	// Stack is the compose project (com.docker.compose.project label) this
 	// container belongs to, "" if none. Drives the "restore whole stack" panel.
 	Stack string `json:"stack"`
@@ -220,6 +228,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.StopContainers = t.StopContainers
 			v.Excludes = t.Excludes
 			v.UpdateAfterBackup = t.UpdateAfterBackup
+			v.LastUpdateCheck = t.LastUpdateCheck
+			v.LastUpdateResult = t.LastUpdateResult
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -908,8 +918,15 @@ type settingsView struct {
 	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
 	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
 	// Opt-in Prometheus /metrics endpoint + its optional bearer scrape token.
-	MetricsEnabled bool   `json:"metricsEnabled"`
-	MetricsToken   string `json:"metricsToken"`
+	// The token is a secret and follows the house blank-and-report-is-set
+	// contract (see handleGetNotify/handleGetCloud): GET always returns
+	// MetricsToken blank + MetricsTokenSet reporting whether one is stored; on
+	// PUT a blank MetricsToken means "keep the stored one". MetricsTokenSet is
+	// on the struct (not a sibling) because the strict PUT decoder
+	// (DisallowUnknownFields) must accept a round-tripped GET body.
+	MetricsEnabled  bool   `json:"metricsEnabled"`
+	MetricsToken    string `json:"metricsToken"`
+	MetricsTokenSet bool   `json:"metricsTokenSet"`
 	// Scheduled restore-verification drills (restic check --read-data-subset).
 	DrillsEnabled   bool   `json:"drillsEnabled"`
 	DrillsSchedule  string `json:"drillsSchedule"`
@@ -933,6 +950,13 @@ type settingsView struct {
 	TamperTestSchedule    string `json:"tamperTestSchedule"`
 	DRDrillTarget         string `json:"drDrillTarget"`
 	PruneImageAfterUpdate bool   `json:"pruneImageAfterUpdate"`
+	// Size cap (MB) for restic's persistent cache under /config; LRU per-repo
+	// eviction after scheduled runs. 0 = no limit (default 4096).
+	ResticCacheMaxMB int `json:"resticCacheMaxMB"`
+	// Weekly digest notification: one summary message per cadence fire through
+	// the existing notify fan-out. Off by default.
+	DigestEnabled  bool   `json:"digestEnabled"`
+	DigestSchedule string `json:"digestSchedule"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -979,7 +1003,8 @@ func toView(s store.Settings) settingsView {
 		OffsiteLimitUpload:          s.OffsiteLimitUpload,
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 		MetricsEnabled:              s.MetricsEnabled,
-		MetricsToken:                s.MetricsToken,
+		MetricsToken:                "", // secret — never echoed; MetricsTokenSet reports presence
+		MetricsTokenSet:             s.MetricsToken != "",
 		DrillsEnabled:               s.DrillsEnabled,
 		DrillsSchedule:              s.DrillsSchedule,
 		DrillsSubsetPct:             s.DrillsSubsetPct,
@@ -994,6 +1019,9 @@ func toView(s store.Settings) settingsView {
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
 		PruneImageAfterUpdate:       s.PruneImageAfterUpdate,
+		ResticCacheMaxMB:            s.ResticCacheMaxMB,
+		DigestEnabled:               s.DigestEnabled,
+		DigestSchedule:              s.DigestSchedule,
 	}
 }
 
@@ -1068,7 +1096,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	for _, cad := range []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
-		v.DrillsSchedule, v.TamperTestSchedule,
+		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -1077,11 +1105,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Off-site, drills and tamper-test schedules can't use "everyN": those jobs
-	// have no per-domain last-run gate, so an everyN cadence would silently fire
-	// daily. Restrict them to off / daily / weekly / cron, which all fire on an
-	// exact schedule.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule} {
+	// Off-site, drills, tamper-test and digest schedules can't use "everyN":
+	// those jobs have no per-domain last-run gate, so an everyN cadence would
+	// silently fire daily. Restrict them to off / daily / weekly / cron, which
+	// all fire on an exact schedule.
+	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
@@ -1122,6 +1150,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+	}
+
+	// The metrics token is a secret the GET never echoes (toView blanks it), so
+	// an unchanged form re-submits it blank — blank therefore means "keep the
+	// stored token" (same contract as the notify/cloud secrets).
+	metricsToken := strings.TrimSpace(v.MetricsToken)
+	if metricsToken == "" {
+		metricsToken = existing.MetricsToken
 	}
 
 	s := store.Settings{
@@ -1167,7 +1203,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteLimitUpload:          max(0, v.OffsiteLimitUpload),
 		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
 		MetricsEnabled:              v.MetricsEnabled,
-		MetricsToken:                strings.TrimSpace(v.MetricsToken),
+		MetricsToken:                metricsToken,
 		DrillsEnabled:               v.DrillsEnabled,
 		DrillsSchedule:              v.DrillsSchedule,
 		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
@@ -1182,7 +1218,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		TamperTestSchedule:          v.TamperTestSchedule,
 		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
 		PruneImageAfterUpdate:       v.PruneImageAfterUpdate,
+		ResticCacheMaxMB:            max(0, v.ResticCacheMaxMB),
+		DigestEnabled:               v.DigestEnabled,
+		DigestSchedule:              v.DigestSchedule,
 		AuthPasswordHash:            existing.AuthPasswordHash,
+		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,
 		CloudConf:                   existing.CloudConf,
@@ -1214,12 +1254,26 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleRecoveryKit streams the encryption-key recovery kit as a download.
-// GET /api/recovery-kit — BEHIND authGate (NOT public allow-listed): the kit
-// contains the master APP_KEY + the derived restic password, so only the
-// session-authenticated owner may fetch it. The body is the owner's own recovery
-// document and carries the real repo locations (no path scrubbing here), and it
-// is never logged.
+// GET /api/recovery-kit — BEHIND authGate AND additionally requires auth to be
+// ENABLED: the kit is the master secret (the APP_KEY + the derived restic
+// password + the stored off-site backend credentials). The rest of the
+// trusted-LAN API is intentionally open to CURRENT data when auth is off, but
+// this export permanently decrypts EVERY repo — including the append-only
+// off-site archives designed to survive host compromise — so it fails CLOSED
+// when auth is disabled instead of handing the master key to any LAN client.
+// The body is the owner's own recovery document and carries the real repo
+// locations (no path scrubbing here), and it is never logged.
 func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
+	// Require auth to be enabled: when it is off, authGate is a pass-through and
+	// this handler would otherwise hand the master key to any LAN client. A store
+	// error also blocks (authEnabled reports auth OFF then) — fail closed.
+	if _, _, on := h.authEnabled(); !on {
+		writeJSON(w, http.StatusForbidden, map[string]any{
+			"ok":    false,
+			"error": "set a login password before downloading the recovery kit",
+		})
+		return
+	}
 	kit, err := h.svc.RecoveryKit()
 	if err != nil {
 		// A build failure (settings read) is reported as JSON before any body is
@@ -1856,16 +1910,17 @@ const (
 	sessionTTL        = 7 * 24 * time.Hour // 7 days
 )
 
-// authEnabled reads the stored password hash and reports whether authentication
-// is enabled.  On a store error it logs and treats auth as OFF (safe default for
-// a trusted-LAN tool — a transient DB error should not lock everyone out).
-func (h *Handler) authEnabled() (hash string, on bool) {
+// authEnabled reads the stored password hash + session epoch and reports whether
+// authentication is enabled.  On a store error it logs and treats auth as OFF
+// (safe default for a trusted-LAN tool — a transient DB error should not lock
+// everyone out).
+func (h *Handler) authEnabled() (hash, epoch string, on bool) {
 	s, err := h.store.GetSettings()
 	if err != nil {
 		log.Printf("api: authEnabled: GetSettings: %v", err)
-		return "", false
+		return "", "", false
 	}
-	return s.AuthPasswordHash, s.AuthPasswordHash != ""
+	return s.AuthPasswordHash, s.SessionEpoch, s.AuthPasswordHash != ""
 }
 
 // newSessionCookie constructs the bv_session cookie with the correct attributes.
@@ -1888,11 +1943,11 @@ func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 // Returns {ok, enabled, authed} so the SPA can decide whether to show the
 // login screen.
 func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
-	hash, on := h.authEnabled()
+	hash, epoch, on := h.authEnabled()
 	authed := false
 	if on {
 		if c, err := r.Cookie(sessionCookieName); err == nil {
-			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, c.Value)
+			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -1940,7 +1995,7 @@ func (h *Handler) recordLoginSuccess() {
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
-	hash, on := h.authEnabled()
+	hash, epoch, on := h.authEnabled()
 	if !on {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
 		return
@@ -1964,14 +2019,53 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	h.recordLoginSuccess()
 
-	tok := secret.NewSessionToken(h.cfg.AppKey, hash, sessionTTL)
+	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
 	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleLogout handles POST /api/logout.
-// Clears the session cookie unconditionally.
+// Clears the session cookie unconditionally. This is CLIENT-SIDE cookie removal
+// only: the stateless token itself stays valid until it expires, so a copied
+// cookie would still work. Revocation is handleLogoutAll (POST /api/logout-all),
+// which rotates the session epoch and thereby invalidates every outstanding
+// cookie server-side.
 func (h *Handler) handleLogout(w http.ResponseWriter, _ *http.Request) {
+	http.SetCookie(w, h.newSessionCookie("", -1))
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// newSessionEpoch returns a fresh random session epoch (16 bytes, hex).
+func newSessionEpoch() (string, error) {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return "", fmt.Errorf("generate session epoch: %w", err)
+	}
+	return hex.EncodeToString(buf), nil
+}
+
+// handleLogoutAll handles POST /api/logout-all — "log out everywhere".
+// It rotates the stored session epoch to a fresh random value; because every
+// session token's HMAC is bound to the epoch, ALL outstanding cookies (on every
+// browser/device) become invalid at once. This is the revocation path for the
+// otherwise stateless 7-day tokens. The caller's own cookie is cleared too, so
+// the SPA lands on the login screen immediately.
+func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	epoch, err := newSessionEpoch()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	s.SessionEpoch = epoch
+	if err := h.store.UpdateSettings(s); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	http.SetCookie(w, h.newSessionCookie("", -1))
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
@@ -2053,7 +2147,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 
 		// All other /api/* routes require a valid session cookie.
 		c, err := r.Cookie(sessionCookieName)
-		if err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, c.Value) {
+		if err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, s.SessionEpoch, c.Value) {
 			writeJSON(w, http.StatusUnauthorized, map[string]any{
 				"ok":    false,
 				"error": "authentication required",
