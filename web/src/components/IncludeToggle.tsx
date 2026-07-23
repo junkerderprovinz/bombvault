@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { setInclude } from "../lib/api";
+import { useT } from "../lib/i18n";
 
 interface IncludeToggleProps {
   name: string;
@@ -7,6 +8,7 @@ interface IncludeToggleProps {
 }
 
 export function IncludeToggle({ name, initial }: IncludeToggleProps) {
+  const { t } = useT();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,11 +27,11 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
         setEnabled(next);
       } else {
         // Server returned a graceful failure — revert and show the message.
-        setError(res.error ?? "Failed to update schedule");
+        setError(res.error ?? t("schedule.updateFailed"));
       }
     } catch (err) {
       // Network error — revert and show a brief message.
-      setError(err instanceof Error ? err.message : "Failed to update schedule");
+      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
     } finally {
       setBusy(false);
     }
@@ -39,11 +41,11 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
     <div className="flex flex-col items-end gap-1">
       <button
         role="switch"
-        aria-label="Include in schedule"
+        aria-label={t("containers.includeInSchedule")}
         aria-checked={enabled}
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
-        title="Include in schedule"
+        title={t("containers.includeInSchedule")}
         className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}

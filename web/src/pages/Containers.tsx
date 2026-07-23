@@ -13,6 +13,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
+import { relativeTime } from "../lib/reltime";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -835,6 +836,21 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   );
 }
 
+// updateCheckResultText maps the stored update-check result literal to its
+// translated display text; an unknown literal falls back to the raw string.
+function updateCheckResultText(t: T, result: string): string {
+  switch (result) {
+    case "up-to-date":
+      return t("containers.updateCheckUpToDate");
+    case "updated":
+      return t("containers.updateCheckUpdated");
+    case "failed":
+      return t("containers.updateCheckFailed");
+    default:
+      return result;
+  }
+}
+
 function ContainerRow({
   container,
   t,
@@ -897,6 +913,14 @@ function ContainerRow({
           <p className="text-xs text-carbon-textSub">
             {container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}
           </p>
+          {/* Post-backup update-check signal (G4): only meaningful when the
+              opt-in is on and a check has actually completed. An up-to-date
+              check records no run, so this line is its only surface. */}
+          {container.updateAfterBackup && container.lastUpdateCheck > 0 && (
+            <p className="text-xs text-carbon-textMuted">
+              {t("containers.updateCheckLabel")}: {relativeTime(t, container.lastUpdateCheck)} — {updateCheckResultText(t, container.lastUpdateResult)}
+            </p>
+          )}
         </div>
       </div>
 
@@ -1256,7 +1280,7 @@ export function Containers() {
 
   useEffect(() => {
     void loadContainers().finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);

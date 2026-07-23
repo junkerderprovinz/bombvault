@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, recoveryKitUrl, ackRecoveryKit, runDrill } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
@@ -58,24 +58,43 @@ function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
   switch (kind) {
     case "backup":
       return t("run.kindBackup");
+    case "restore":
+      return t("run.kindRestore");
     case "update":
       return t("run.kindUpdate");
     case "prune":
       return t("activityLog.typePrune");
     case "verify":
       return t("activityLog.typeVerify");
+    case "offsite":
+      return t("activityLog.typeOffsite");
+    case "drill":
+      return t("activityLog.jobDrill");
+    case "tamper":
+      return t("activityLog.jobTamper");
+    case "export":
+      return t("run.kindExport");
     default:
-      return t("run.kindRestore");
+      // An unknown future kind shows its raw literal rather than a wrong label.
+      return kind;
   }
 }
 
-// runTargetText resolves what to show in a run's "target" column. Prune/verify
-// runs carry the domain literal in targetId (see above) — reuse the same
-// domain-name keys the activity log uses instead of the generic
-// target/targetId fallback, which would show the raw literal (e.g.
-// "containers…") since it is never in the backend's target-name map.
+// isDomainOpRunKind mirrors the backend's domainRunTargetID users: these kinds
+// carry the DOMAIN literal (or the flash/config singleton id) in targetId, never
+// a resolvable item id.
+function isDomainOpRunKind(kind: string): boolean {
+  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "tamper" || kind === "export";
+}
+
+// runTargetText resolves what to show in a run's "target" column. Domain-op
+// runs (prune/verify/offsite/drill/tamper/export) carry the domain literal in
+// targetId (see above) — reuse the same domain-name keys the activity log uses
+// instead of the generic target/targetId fallback, which would show the raw
+// literal (e.g. "containers…") since it is never in the backend's
+// target-name map.
 function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string {
-  if (run.kind === "prune" || run.kind === "verify") {
+  if (isDomainOpRunKind(run.kind)) {
     return runDomainLabel(t, run.targetId);
   }
   return run.target || `${run.targetId.slice(0, 12)}…`;
@@ -460,7 +479,7 @@ function ProtectionCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && domains.length > 0 && (
-        <div className="divide-y divide-carbon-border">
+        <div className="@container divide-y divide-carbon-border">
           {domains.map((d) => {
             const off = d.status === "off";
             // Only containers, flash + files ever run an off-site DR drill
@@ -478,22 +497,26 @@ function ProtectionCard({
             const drFailed = !off && drCapable && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
             return (
               <div key={d.domain} className="flex flex-col gap-1 py-2.5 text-sm">
-                {/* Shared column grid (#66) — every row lays its cells on the SAME
-                    track template so the same kind of info sits in the same column
-                    down the whole card, regardless of which cells a row populates:
-                    [domain] [status] [schedule] [last run] [verified] [off-site
-                    verified] [off-site DR]. Fixed tracks for the fixed-width columns,
-                    fr tracks for the text/badges so a long badge (e.g. "proven
-                    restorable from off-site") wraps inside its column instead of
-                    overflowing the card, and absent badges just leave their column
-                    blank without re-flowing the others. The three badge columns get a
-                    readable floor width (not minmax(0,…)) so they wrap at word
-                    boundaries instead of being squeezed thin enough to hyphenate
-                    mid-word; overflow-x-auto on the row is the fallback once the
-                    floors no longer fit a narrow viewport. */}
-                <div className="grid items-center gap-3 overflow-x-auto grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_minmax(6.5rem,1fr)_minmax(7.5rem,1.2fr)_minmax(7.5rem,1.6fr)]">
+                {/* Two-mode row layout (#66 follow-up). WIDE card (container query
+                    @[44rem] on the rows wrapper): every row lays its cells on the
+                    SAME shared grid track template so the same kind of info sits in
+                    the same column down the whole card, regardless of which cells a
+                    row populates: [domain] [status] [schedule] [last run] [verified]
+                    [off-site verified] [off-site DR]. Fixed tracks for the
+                    fixed-width columns, fr tracks for the text/badges so a long
+                    badge (e.g. "proven restorable from off-site") wraps inside its
+                    column instead of overflowing the card, and absent badges just
+                    leave their column blank without re-flowing the others; the
+                    three badge columns get a readable floor width (not minmax(0,…))
+                    so they wrap at word boundaries instead of being squeezed thin
+                    enough to hyphenate mid-word. NARROW card: the row falls back to
+                    a wrapped flex stack — the domain name reads as a full-width
+                    heading (basis-full) and the remaining cells flow underneath —
+                    so a half-width card never grows per-row horizontal
+                    scrollbars. */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-0.5 @[44rem]:grid @[44rem]:gap-3 @[44rem]:grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_5rem_minmax(6.5rem,1fr)_minmax(7.5rem,1.2fr)_minmax(7.5rem,1.6fr)]">
                   <span
-                    className={`col-start-1 min-w-0 truncate font-medium ${
+                    className={`col-start-1 basis-full @[44rem]:basis-auto min-w-0 truncate font-medium ${
                       off ? "text-carbon-textMuted" : "text-carbon-text"
                     }`}
                   >
@@ -508,7 +531,9 @@ function ProtectionCard({
                       {/* Col 2 — status: the RPO chip + its label kept together so the
                           pill never drifts from the words it qualifies. */}
                       <div className="col-start-2 flex min-w-0 items-center gap-2">
-                        <StatusChip status={chipForRpo(d.status)} />
+                        <span className="shrink-0">
+                          <StatusChip status={chipForRpo(d.status)} />
+                        </span>
                         <span className="min-w-0 truncate text-carbon-text">
                           {rpoLabel(d.status)}
                         </span>
@@ -519,7 +544,7 @@ function ProtectionCard({
                       </span>
                       {/* Col 4 — last successful run. */}
                       <span
-                        className="col-start-4 text-right text-carbon-textMuted text-xs"
+                        className="col-start-4 text-left @[44rem]:text-right text-carbon-textMuted text-xs"
                         title={formatTs(d.lastSuccess)}
                       >
                         {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
@@ -1056,9 +1081,6 @@ function cellColor(stat: DayStat | undefined): string {
   return "#a7f0ba";
 }
 
-// MS_DAY is one day in milliseconds, used to walk the calendar grid.
-const MS_DAY = 86400000;
-
 // mondayIndex returns 0..6 for Mon..Sun (JS getDay() is 0=Sun..6=Sat).
 function mondayIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
@@ -1099,10 +1121,15 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     for (let i = 0; i < lead; i++) {
       cells.push({ key: `lead-${i}` });
     }
-    for (let ts = first.getTime(); ts <= last.getTime(); ts += MS_DAY) {
-      const iso = new Date(ts).toLocaleDateString("en-CA"); // YYYY-MM-DD, local
+    // Walk calendar days (setDate), not fixed 24h steps: a millisecond walk
+    // lands on the same local date twice on the 25h DST fall-back day, which
+    // would emit a duplicate cell and shift the whole grid.
+    const cur = new Date(first);
+    while (cur <= last) {
+      const iso = cur.toLocaleDateString("en-CA"); // YYYY-MM-DD, local
       const hd = byDate.get(iso);
       cells.push({ key: iso, date: iso, stat: statFor(hd) });
+      cur.setDate(cur.getDate() + 1);
     }
   }
 
@@ -1137,7 +1164,7 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           className={`px-2 py-0.5 rounded text-xs font-medium border ${
             domain === d
               ? "bg-carbon-surface2 text-carbon-text border-carbon-border"
-              : "bg-transparent text-carbon-textMuted border-transparent hover:text-carbon-text"
+              : "bg-transparent text-carbon-textMuted border-transparent hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
           {domainLabel(d)}
@@ -1314,7 +1341,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 ? `${(d.latest.restoreSize / d.latest.rawSize).toFixed(1)}x`
                 : "—";
             return (
-              <div key={d.domain} className="flex items-center gap-3 py-2.5 text-sm">
+              <div key={d.domain} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-sm min-w-0">
                 <span
                   className={`font-medium w-28 shrink-0 truncate ${
                     has ? "text-carbon-text" : "text-carbon-textMuted"
@@ -1333,8 +1360,9 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                     <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
                       {d.latest.snapshots} {t("dashboard.snapshotsLabel")}
                     </span>
-                    <span className="flex-1" />
-                    <Sparkline values={d.stats.map((s) => s.rawSize)} />
+                    <span className="ml-auto shrink-0">
+                      <Sparkline values={d.stats.map((s) => s.rawSize)} />
+                    </span>
                   </>
                 ) : (
                   <span className="text-xs text-carbon-textMuted flex-1">
@@ -1359,6 +1387,8 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppressed?: boolean }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [dismissing, setDismissing] = useState(false);
+  // Backend refusal text from the fetch-based kit download (null = no error).
+  const [kitError, setKitError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -1396,13 +1426,19 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         {t("recovery.nagBody")}
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <a
-          href={recoveryKitUrl()}
-          download="bombvault-recovery-kit.md"
+        {/* Fetch-based download (mirrors Settings): a raw <a download> would save
+            the 403 refusal body as the .md file when auth is off — the backend
+            fails closed for this export, so surface its message instead (#A1). */}
+        <button
+          type="button"
+          onClick={() => void downloadRecoveryKit().then(setKitError)}
           className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.download")}
-        </a>
+        </button>
+        {kitError && (
+          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {kitError}</span>
+        )}
         <button
           type="button"
           onClick={dismiss}
@@ -1840,7 +1876,7 @@ export function Dashboard() {
           className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
-              : "border border-carbon-border text-carbon-textSub hover:border-accent hover:text-accent"
+              : "border border-carbon-border text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

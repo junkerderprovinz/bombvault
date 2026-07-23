@@ -123,6 +123,11 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdi
 	if recErr := s.store.RecordTamperTest(domain, verdict.Protected, verdict.Detail); recErr != nil {
 		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
 	}
+	// Mirror the verdict into the shared runs table so the test shows in the
+	// dashboard Activity Log/Run History. success = the delete was refused
+	// (append-only enforced); failed = NOT protected — the alarming outcome.
+	// Inconclusive/non-testable paths return above and record nothing here too.
+	s.recordDomainRun(domain, "tamper", verdict.Protected, verdict.Detail)
 	if hadPrev && prev.Protected && !verdict.Protected {
 		s.notifyProtectionLost(ctx, domain, verdict.Detail)
 	}
