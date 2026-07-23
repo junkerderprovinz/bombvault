@@ -872,7 +872,7 @@ function ContainerRow({
         {/* Name + image */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-carbon-text text-sm truncate">
+            <span className="font-semibold text-carbon-text text-sm min-w-0 truncate">
               {container.name}
             </span>
             {installed ? (
@@ -1127,7 +1127,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
     <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-2">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <span className="font-semibold text-carbon-text text-sm">{group.project}</span>
+          <span className="font-semibold text-carbon-text text-sm wrap-break-word">{group.project}</span>
           <span className="ml-2 text-xs text-carbon-textMuted">
             {t("stack.members").replace("{n}", String(group.members.length))}
           </span>

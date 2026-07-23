@@ -119,6 +119,39 @@ func (r *Repo) ListTargets() ([]Target, error) {
 	return out, rows.Err()
 }
 
+// ListTargetsScheduleOrder returns the same targets as ListTargets but ordered for
+// a SCHEDULED run: never-backed-up targets first, then by oldest successful backup,
+// then alphabetically. This keeps a slow or interrupted nightly run from
+// perpetually starving the same alphabetical tail — a newly added container, or one
+// that missed last night, leads the next run instead of always coming last (#95).
+// The UI keeps using ListTargets (alphabetical) for a stable display order.
+func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
+	rows, err := r.db.Query(`
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup
+		FROM targets t
+		LEFT JOIN (
+			SELECT target_id, MAX(finished_at) AS last_ok
+			FROM runs
+			WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
+			GROUP BY target_id
+		) r ON r.target_id = t.id
+		ORDER BY (r.last_ok IS NULL) DESC, r.last_ok ASC, t.container_name ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("ListTargetsScheduleOrder: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []Target
+	for rows.Next() {
+		t, err := scanTarget(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
 // SetInclude updates the include_in_schedule flag for a container.
 func (r *Repo) SetInclude(containerName string, include bool) error {
 	res, err := r.db.Exec(`

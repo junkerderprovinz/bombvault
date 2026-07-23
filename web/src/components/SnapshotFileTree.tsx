@@ -74,7 +74,7 @@ function FileRow({
         className="shrink-0"
         style={{ accentColor: "var(--accent)" }}
       />
-      <span className="font-mono text-carbon-textSub flex-1 truncate" title={file.path}>
+      <span className="font-mono text-carbon-textSub flex-1 min-w-0 truncate" title={file.path}>
         {file.type === "dir" ? "📁 " : ""}
         {file.path}
       </span>
