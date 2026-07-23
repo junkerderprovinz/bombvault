@@ -1793,16 +1793,85 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 	}
 }
 
+// offsiteReplicatesOnOwnSchedule reports whether a domain's off-site copy is driven
+// by its OWN cron entry (a real, ENABLED cadence) rather than coupled to the backup
+// run. Both a blank schedule and the literal "off" parse to a disabled cadence and
+// therefore mean "coupled" — the backup path owns replication. Using ParseCadence
+// makes this decision IDENTICAL to the scheduler's registration logic (the separate
+// off-site cron entry registers only for an enabled cadence, schedule.go), so a
+// domain can never fall between the two gates and be silently never replicated: a
+// user who sets the off-site schedule to "off" now gets coupled replication instead
+// of a silently rotting off-site copy (#95 review). A cadence that fails to parse
+// defaults to coupled (replicate) — the safe direction.
+func (s *Service) offsiteReplicatesOnOwnSchedule(domain string, settings store.Settings) bool {
+	cad, err := schedule.ParseCadence(s.offsiteScheduleFor(domain, settings))
+	return err == nil && cad.Enabled
+}
+
+// bulkReplicateSuppressKey marks a context whose post-backup inline off-site
+// replication is DEFERRED to a single batched pass after the whole scheduled
+// domain loop (issue #95). A blank off-site schedule normally couples replication
+// to each backup; during a scheduled multi-item run that couples a full off-site
+// repo open + index reload to EVERY item (44 containers → 44 high-latency B2
+// round-trips, turning a ~seconds job into ~hours). The scheduled multi-item
+// closures (containers/VMs/files) set this flag so each item's inline replication
+// is skipped and the scheduler runs ONE ReplicateOffsiteAfterBulk per domain
+// instead. Manual "Back up now" does NOT set it, so a single-item backup still
+// replicates immediately.
+type bulkReplicateSuppressKey struct{}
+
+// WithBulkReplicateSuppressed defers a context's inline off-site replication to a
+// batched post-loop pass (see bulkReplicateSuppressKey). Set by the scheduled
+// multi-item backup closures in main.go; read by replicateOffsite.
+func WithBulkReplicateSuppressed(ctx context.Context) context.Context {
+	return context.WithValue(ctx, bulkReplicateSuppressKey{}, true)
+}
+
+// bulkReplicateSuppressed reports whether inline off-site replication is deferred
+// to a batched post-loop pass for this context.
+func bulkReplicateSuppressed(ctx context.Context) bool {
+	v, _ := ctx.Value(bulkReplicateSuppressKey{}).(bool)
+	return v
+}
+
+// ReplicateOffsiteAfterBulk runs ONE off-site replication for a domain after a
+// scheduled multi-item backup loop, replacing the per-item inline replication that
+// the scheduled run suppressed (issue #95). It is a no-op when the domain has no
+// off-site repo, or when the domain replicates on its OWN off-site schedule (that
+// path fires from its own cron entry). Like ScheduledReplicateOffsite it takes the
+// domain lock (so it serialises after the last item's backup releases it) and
+// NOTIFIES on failure — a scheduled replication that silently failed would let the
+// off-site copy rot unseen.
+func (s *Service) ReplicateOffsiteAfterBulk(ctx context.Context, domain string) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: offsite %s: batched replicate: read settings: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	if s.offsiteRepoFor(domain, settings) == "" {
+		return // no off-site configured for this domain
+	}
+	if s.offsiteReplicatesOnOwnSchedule(domain, settings) {
+		return // replicated on its own schedule (a separate cron entry drives it)
+	}
+	if err := s.ScheduledReplicateOffsite(ctx, domain); err != nil {
+		log.Printf("api: offsite %s: batched replicate failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+}
+
 // replicateOffsite runs right after a successful local backup (caller holds the
 // domain lock). It replicates ONLY when the domain has no separate off-site
 // schedule — a blank schedule couples replication to each backup; a set schedule
 // hands it to the scheduler instead. Best-effort: the local backup has already
 // succeeded, so an off-site failure is logged, never propagated.
 func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) {
+	if bulkReplicateSuppressed(ctx) {
+		return // scheduled multi-item run: replicated once after the whole loop (#95)
+	}
 	if s.offsiteRepoFor(domain, settings) == "" {
 		return
 	}
-	if strings.TrimSpace(s.offsiteScheduleFor(domain, settings)) != "" {
+	if s.offsiteReplicatesOnOwnSchedule(domain, settings) {
 		return // replicated on its own schedule, not after every backup
 	}
 	if err := s.copyToOffsite(ctx, domain, settings, mode, localRepo); err != nil {
@@ -1875,6 +1944,12 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 // a scheduled failure alerts immediately. Best-effort notify; the error is still
 // returned for the scheduler log.
 func (s *Service) ScheduledReplicateOffsite(ctx context.Context, domain string) error {
+	// Detached upper bound so a copy wedged on a dead link can't hold the domain
+	// lock forever and block subsequent backups (mirrors the manual
+	// StartReplicateOffsite ceiling). SkipIfStillRunning stops the NEXT run from
+	// piling on; this stops the current one from hanging indefinitely.
+	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
+	defer cancel()
 	err := s.ReplicateOffsite(ctx, domain)
 	if err != nil {
 		s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
@@ -2532,12 +2607,18 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		ref = in.Image
 	}
 	if err := s.docker.Pull(ctx, ref); err != nil {
+		// Reached, but couldn't even CHECK for an update (registry rate-limit, auth,
+		// network). Record a failed "update" run so "why wasn't this updated?" is
+		// answerable from Run History / the Activity Log instead of vanishing into
+		// the server log (#95). The backup itself already succeeded.
 		log.Printf("api: update-after-backup: pull %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		s.recordUpdateFailure(name, targetID, fmt.Errorf("pull image: %w", err))
 		return
 	}
 	newID, err := s.docker.ImageID(ctx, ref)
 	if err != nil {
 		log.Printf("api: update-after-backup: resolve image id for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		s.recordUpdateFailure(name, targetID, fmt.Errorf("resolve image id: %w", err))
 		return
 	}
 	// Nothing newer arrived → no recreate, no run record (keeps Run History clean
@@ -2601,6 +2682,21 @@ func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.I
 	return nil
 }
 
+// recordUpdateFailure records a FAILED "update" run so a reached-but-failed
+// post-backup update — a registry check that failed before we could tell whether a
+// newer image exists — is visible in Run History and the Activity Log rather than
+// only the server log (#95). Best-effort: the backup already succeeded, so a
+// bookkeeping error here is only logged. (An update that WAS available but failed to
+// apply is recorded separately by the recreate path.)
+func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
+	runID, rErr := runsAdapter{s.store}.Start(targetID, "update")
+	if rErr != nil {
+		log.Printf("api: update-after-backup: %q could not record update failure: %v (cause: %v)", name, rErr, cause) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	_ = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(cause))
+}
+
 // StartBackupAll launches a server-side batch backup of the named containers,
 // running them sequentially in a background goroutine. This is the robust path
 // for "back up all selected": it runs ON THE SERVER, so it survives the browser
@@ -2633,7 +2729,10 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	// handler returns). Each per-container Backup applies its own hard timeout, so
 	// the batch needs no deadline of its own; WithoutCancel keeps request values
 	// without a cancel func to leak.
-	bctx := context.WithoutCancel(ctx)
+	// #95: suppress each container's inline off-site replication; the whole batch is
+	// replicated ONCE after the loop (ReplicateOffsiteAfterBulk below), mirroring the
+	// scheduled path instead of re-opening the off-site repo per container.
+	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
 		defer s.batchActive.Store(false)
 
@@ -2663,6 +2762,10 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
 		}
 		s.publishBatch(key, 100, false)
+		// #95: one batched off-site replication after the whole manual batch (no-op
+		// unless containers replicate on a blank/coupled schedule with an off-site
+		// repo). The per-container inline copy was suppressed via the bulk flag on bctx.
+		s.ReplicateOffsiteAfterBulk(bctx, "containers")
 		log.Printf("api: backup-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(names))
 	}()
 	return true, nil

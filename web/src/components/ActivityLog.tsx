@@ -238,7 +238,7 @@ export function ActivityLog() {
               <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
                 {glyphFor(l.status)}
               </span>
-              <span className={`flex-1 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
+              <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
             </div>
           ))}
         </div>

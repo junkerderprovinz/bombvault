@@ -116,6 +116,14 @@ type Restic struct {
 	// exists, RCLONE_CONFIG is exported for every restic run so rclone-backed
 	// (off-site) repos authenticate. Ignored for local repos.
 	RcloneConfig string
+	// CacheDir, when set, is exported as RESTIC_CACHE_DIR so restic's index/pack
+	// cache lives on persistent storage (/config) instead of restic's default
+	// ($HOME/.cache/restic, which is ephemeral here — only /config is a volume, so
+	// the cache is lost on every container restart/update). A warm cache is what
+	// keeps incremental runs fast and, above all, keeps off-site replication to a
+	// high-latency backend (e.g. Backblaze B2) from re-downloading the whole
+	// destination index on every run (issue #95).
+	CacheDir string
 }
 
 // bin returns the binary to invoke, defaulting to "restic".
@@ -609,6 +617,9 @@ func (r Restic) authEnv(m Mode) []string {
 		if _, statErr := os.Stat(r.RcloneConfig); statErr == nil {
 			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
 		}
+	}
+	if r.CacheDir != "" {
+		env = append(env, "RESTIC_CACHE_DIR="+r.CacheDir)
 	}
 	env = append(env, m.Env...)
 	return env
