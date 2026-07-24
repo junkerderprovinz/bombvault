@@ -485,6 +485,41 @@ export function buildLogLines(
 }
 
 // ---------------------------------------------------------------------------
+// Per-line date formatting (#104 — the log now spans many days since
+// everything-in-the-log, so a time-only stamp is ambiguous and must also be
+// date-searchable)
+// ---------------------------------------------------------------------------
+
+/**
+ * formatLogDate renders a line's `atMs` as a locale-aware short date — day/
+ * month in the ORDER the app's active language reads it (e.g. "23.07." for
+ * de, "07/23" for en) — via Intl.DateTimeFormat. Exported so ActivityLog.tsx
+ * can pair it with reltime.ts's formatClockTime for the leftmost per-line
+ * stamp; filterLogLines below builds the identical string into its search
+ * haystack so typing that same date filters correctly. Deliberately only the
+ * date is locale-ordered — the time stays formatClockTime's fixed 24-hour
+ * face, for the same reason that helper gives (a stable, unambiguous clock,
+ * not a locale-varying 12/24-hour one).
+ */
+export function formatLogDate(atMs: number, lang: string): string {
+  return new Intl.DateTimeFormat(lang, { day: "2-digit", month: "2-digit" }).format(new Date(atMs));
+}
+
+/**
+ * isoDateOf renders a line's `atMs` as its local-calendar-day ISO date
+ * (YYYY-MM-DD), independent of the app's display language — lets
+ * filterLogLines match a typed ISO date (e.g. "2026-07-23") no matter which
+ * language is active.
+ */
+function isoDateOf(atMs: number): string {
+  const d = new Date(atMs);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// ---------------------------------------------------------------------------
 // filterLogLines — the client-side "docker logs | grep" filter
 // ---------------------------------------------------------------------------
 
@@ -498,17 +533,26 @@ export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | 
 export interface LogFilter {
   domain: LogFilterDomain;
   kind: LogFilterKind;
-  /** Free-text, case-insensitive substring match against the line's message. */
+  /** Free-text, case-insensitive substring match against the line's message,
+   *  its ISO date (YYYY-MM-DD) and its locale-short date (#104). */
   text: string;
+  /** Active app language (e.g. "de"), used to format each line's date the
+   *  same way the UI displays it so typing that localized date also filters
+   *  (#104). Optional — defaults to "en" for callers that only care about
+   *  the domain/kind chips. */
+  lang?: string;
 }
 
 /**
  * Narrows `lines` to those matching the domain/type quick-filters and the
  * free-text search — a pure filter, extracted from ActivityLog.tsx so it can
- * be unit-tested independently of any rendering.
+ * be unit-tested independently of any rendering. The free-text search
+ * matches against the line's message AND its date (both the ISO form and the
+ * locale-short form the UI displays), so typing a date narrows the log too.
  */
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
+  const lang = filter.lang ?? "en";
   return lines.filter((l) => {
     // The idle line (`idle: true`) carries no domain/kind of its own — it is
     // exempt from the domain/type quick-filters so an active filter chip
@@ -517,7 +561,10 @@ export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
       if (filter.domain !== "all" && l.domain !== filter.domain) return false;
       if (filter.kind !== "all" && l.kind !== filter.kind) return false;
     }
-    if (q && !l.text.toLowerCase().includes(q)) return false;
+    if (q) {
+      const haystack = `${l.text} ${isoDateOf(l.atMs)} ${formatLogDate(l.atMs, lang)}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 }

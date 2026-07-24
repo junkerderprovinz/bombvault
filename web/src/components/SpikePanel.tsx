@@ -8,20 +8,20 @@ type T = ReturnType<typeof useT>["t"];
 function StatusChip({ ok, bestEffort }: { ok: boolean; bestEffort?: boolean }) {
   if (bestEffort && !ok) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBg text-statusWarn border border-statusWarnBorder">
         INFO
       </span>
     );
   }
   if (ok) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusOkBg text-statusOk border border-statusOkBorder">
         OK
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail border border-statusFailBorder">
       FAIL
     </span>
   );
@@ -92,7 +92,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
         {allOk !== null && !loading && (
           <span
             className={`text-sm font-medium ${
-              !hasRequiredFails ? "text-[#6fdc8c]" : "text-[#ff8389]"
+              !hasRequiredFails ? "text-statusOk" : "text-statusFail"
             }`}
           >
             {!hasRequiredFails ? t("spike.allOk") : t("spike.degraded")}
@@ -101,7 +101,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
       </div>
 
       {error && (
-        <p className="text-xs text-[#ff8389]">{error}</p>
+        <p className="text-xs text-statusFail">{error}</p>
       )}
 
       {checks && checks.length > 0 && (

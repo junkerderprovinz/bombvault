@@ -279,7 +279,7 @@ export function OffsiteWizard({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
   // Far-side prune cron hint (includes --keep-within 14d + a snapshot-count note).
@@ -300,10 +300,10 @@ export function OffsiteWizard({
   const verdictGlyph = verdict && verdict.testable ? (verdict.protected ? "✓" : "✗") : "";
   const verdictColor = verdict
     ? !verdict.testable
-      ? "text-[#f1c21b]"
+      ? "text-statusWarn"
       : verdict.protected
-        ? "text-[#6fdc8c]"
-        : "text-[#ff8389]"
+        ? "text-statusOk"
+        : "text-statusFail"
     : "";
 
   // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
@@ -351,10 +351,10 @@ export function OffsiteWizard({
               {snipState === "busy" ? t("common.saving") : t("offsite.wizard.generate")}
             </button>
           )}
-          {snipState === "error" && snipErr && <span className="text-xs text-[#ff8389]">{snipErr}</span>}
+          {snipState === "error" && snipErr && <span className="text-xs text-statusFail">{snipErr}</span>}
           {snippet && (
             <div className="flex flex-col gap-2">
-              <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2 text-xs text-[#f1c21b] leading-relaxed">
+              <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2 text-xs text-statusWarn leading-relaxed">
                 {t("offsite.wizard.passwordWarning")}
               </div>
               <div className="flex flex-col gap-1">
@@ -375,7 +375,7 @@ export function OffsiteWizard({
               <button
                 type="button"
                 onClick={() => void genSnippet()}
-                className="self-start text-xs text-[#78a9ff] hover:underline"
+                className="self-start text-xs text-statusInfo hover:underline"
               >
                 {t("offsite.wizard.regenerate")}
               </button>
@@ -414,8 +414,8 @@ export function OffsiteWizard({
           >
             {repoState === "saving" ? t("common.saving") : t("offsite.wizard.saveRepo")}
           </button>
-          {repoState === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
-          {repoState === "error" && repoErr && <span className="text-xs text-[#ff8389]">{repoErr}</span>}
+          {repoState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+          {repoState === "error" && repoErr && <span className="text-xs text-statusFail">{repoErr}</span>}
         </div>
 
         {/* REST credentials — reuse the cloud-credential endpoints. */}
@@ -441,7 +441,7 @@ export function OffsiteWizard({
               className={inputCls}
             />
           </label>
-          {cloudLoadErr && <span className="text-xs text-[#ff8389]">{cloudLoadErr}</span>}
+          {cloudLoadErr && <span className="text-xs text-statusFail">{cloudLoadErr}</span>}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -451,8 +451,8 @@ export function OffsiteWizard({
             >
               {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
             </button>
-            {credState === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
-            {credState === "error" && credErr && <span className="text-xs text-[#ff8389]">{credErr}</span>}
+            {credState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+            {credState === "error" && credErr && <span className="text-xs text-statusFail">{credErr}</span>}
           </div>
         </div>
 
@@ -466,10 +466,10 @@ export function OffsiteWizard({
           >
             {testState === "busy" ? t("offsite.testing") : t("offsite.test")}
           </button>
-          {testState === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.testOk")}</span>}
-          {testState === "uninit" && <span className="text-xs text-[#f1c21b]">{t("offsite.testUninitialized")}</span>}
+          {testState === "ok" && <span className="text-xs text-statusOk">{t("offsite.testOk")}</span>}
+          {testState === "uninit" && <span className="text-xs text-statusWarn">{t("offsite.testUninitialized")}</span>}
           {testState === "fail" && (
-            <span className="text-xs text-[#ff8389] wrap-break-word">{testErr ?? t("offsite.testFailed")}</span>
+            <span className="text-xs text-statusFail wrap-break-word">{testErr ?? t("offsite.testFailed")}</span>
           )}
         </div>
       </div>
@@ -489,7 +489,7 @@ export function OffsiteWizard({
             aria-labelledby={`imm-label-${domain}`}
             disabled={immState === "saving"}
             onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
               immutable ? "bg-accent" : "bg-carbon-surface3"
             }`}
           >
@@ -500,11 +500,11 @@ export function OffsiteWizard({
             />
           </button>
         </div>
-        {immState === "error" && immErr && <span className="text-xs text-[#ff8389]">{immErr}</span>}
+        {immState === "error" && immErr && <span className="text-xs text-statusFail">{immErr}</span>}
 
         {/* Backend-specific caveats (Step 5) — driven by the live repo URL. */}
         {urlBackend === "rclone" && (
-          <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2 text-xs text-[#f1c21b] leading-relaxed">
+          <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2 text-xs text-statusWarn leading-relaxed">
             {t("offsite.rcloneWarning")}
           </div>
         )}
@@ -531,7 +531,7 @@ export function OffsiteWizard({
             </span>
           )}
           {tamperState === "error" && tamperErr && (
-            <span className="text-sm text-[#ff8389] wrap-break-word">{tamperErr}</span>
+            <span className="text-sm text-statusFail wrap-break-word">{tamperErr}</span>
           )}
         </div>
       </div>
@@ -580,7 +580,7 @@ export function OffsiteWizard({
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
               />
             </label>
             <div className="flex items-center gap-3">
@@ -598,7 +598,7 @@ export function OffsiteWizard({
               >
                 {budgetState === "saving" ? t("common.saving") : t("offsite.retention.saveBudget")}
               </button>
-              {budgetState === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
+              {budgetState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
             </div>
           </div>
         )}

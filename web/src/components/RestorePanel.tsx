@@ -427,7 +427,7 @@ function CompareSnapshots({
     : "";
 
   const selectCls =
-    "rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-[#78a9ff] max-w-[16rem] truncate";
+    "rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid max-w-[16rem] truncate";
 
   return (
     <div className="py-2 border-b border-carbon-border">
@@ -463,12 +463,12 @@ function CompareSnapshots({
               {loading ? "…" : t("snapshot.compare")}
             </button>
           </div>
-          {error && <p className="text-xs text-[#ff8389] wrap-break-word">{error}</p>}
+          {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
           {diff && (
             <p className="text-xs text-carbon-text font-mono wrap-break-word" title={summary}>
-              <span className="text-[#6fdc8c]">+{diff.addedFiles}</span> {t("snapshot.added")} ({humanBytes(diff.addedBytes)}),{" "}
+              <span className="text-statusOk">+{diff.addedFiles}</span> {t("snapshot.added")} ({humanBytes(diff.addedBytes)}),{" "}
               <span className="text-carbon-textSub">~{diff.changedFiles}</span> {t("snapshot.changed")},{" "}
-              <span className="text-[#ff8389]">-{diff.removedFiles}</span> {t("snapshot.removed")} ({humanBytes(diff.removedBytes)})
+              <span className="text-statusFail">-{diff.removedFiles}</span> {t("snapshot.removed")} ({humanBytes(diff.removedBytes)})
             </p>
           )}
         </div>
@@ -550,7 +550,7 @@ function SnapshotTags({
           onBlur={() => void submit()}
           placeholder={t("snapshot.addTag")}
           spellCheck={false}
-          className="w-24 rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-hidden focus:border-[#78a9ff]"
+          className="w-24 rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-hidden focus:border-statusInfoSolid"
         />
       ) : (
         <button
@@ -561,7 +561,7 @@ function SnapshotTags({
           + {t("snapshot.tags")}
         </button>
       )}
-      {err && <span className="text-[10px] text-[#ff8389]">{err}</span>}
+      {err && <span className="text-[10px] text-statusFail">{err}</span>}
     </div>
   );
 }
@@ -659,12 +659,12 @@ function SnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
       {showRestore && (
@@ -846,7 +846,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
           {error && (
-            <p className="py-3 text-xs text-[#ff8389]">{error}</p>
+            <p className="py-3 text-xs text-statusFail">{error}</p>
           )}
           {!loading && !error && snapshots.length === 0 && (
             <div className="py-3 flex flex-col gap-1">

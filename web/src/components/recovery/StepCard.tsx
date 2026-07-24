@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export type StepState = "idle" | "ok" | "warn" | "bad";
 
 export function StepCard({ n, title, state, children }: { n: number; title: string; state: StepState; children: ReactNode }) {
-  const dot = state === "ok" ? "bg-[#6fdc8c]" : state === "bad" ? "bg-[#ff8389]" : state === "warn" ? "bg-[#f1c21b]" : "bg-carbon-surface3";
+  const dot = state === "ok" ? "bg-statusOkSolid" : state === "bad" ? "bg-statusFailSolid" : state === "warn" ? "bg-statusWarnSolid" : "bg-carbon-surface3";
   return (
     <div className="rounded-xl border border-carbon-border bg-carbon-surface p-4">
       <div className="flex items-center gap-2.5 mb-2">
