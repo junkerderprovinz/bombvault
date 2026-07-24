@@ -4,7 +4,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { CadenceBuilder } from "../components/CadenceBuilder";
-import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView } from "../lib/api";
+import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView, RegistryAuthEntry } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -99,7 +99,7 @@ export function ToggleRow({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -152,10 +152,10 @@ function SaveBar({
         )}
       </button>
       {state === "saved" && (
-        <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>
+        <span className="text-sm text-statusOk">{t("settings.saved")}</span>
       )}
       {state === "error" && error && (
-        <span className="text-sm text-[#ff8389]">{error}</span>
+        <span className="text-sm text-statusFail">{error}</span>
       )}
     </div>
   );
@@ -291,7 +291,7 @@ chmod 600 /root/.ssh/authorized_keys`
             href="https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md"
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-[#78a9ff] hover:underline"
+            className="text-xs text-statusInfo hover:underline"
           >
             {t("vm.ssh.guide")} →
           </a>
@@ -370,7 +370,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-3 py-2 focus:outline-hidden focus:border-[#78a9ff]"
+        className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-3 py-2 focus:outline-hidden focus:border-statusInfoSolid"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
@@ -381,8 +381,8 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         >
           {state === "saving" ? t("auth.saving") : t("rclone.save")}
         </button>
-        {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
-        {state === "error" && msg && <span className="text-sm text-[#ff8389]">{msg}</span>}
+        {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
+        {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
       </div>
     </Card>
   );
@@ -436,7 +436,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -471,8 +471,8 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         >
           {state === "saving" ? t("auth.saving") : t("settings.save")}
         </button>
-        {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
-        {state === "error" && msg && <span className="text-sm text-[#ff8389]">{msg}</span>}
+        {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
+        {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
       </div>
     </Card>
   );
@@ -565,9 +565,9 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
   const selectCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
@@ -772,9 +772,9 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           className="rounded-lg border border-carbon-border bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
           {t("notify.test")}
         </button>
-        {state === "saved" && <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>}
-        {tested && <span className="text-sm text-[#6fdc8c]">{t("notify.tested")}</span>}
-        {state === "error" && msg && <span className="text-sm text-[#ff8389] wrap-break-word">{msg}</span>}
+        {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
+        {tested && <span className="text-sm text-statusOk">{t("notify.tested")}</span>}
+        {state === "error" && msg && <span className="text-sm text-statusFail wrap-break-word">{msg}</span>}
       </div>
     </Card>
   );
@@ -818,8 +818,8 @@ function ReplicateNowButton({
       >
         {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
       </button>
-      {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.replicateStarted")}</span>}
-      {st === "fail" && <span className="text-xs text-[#ff8389] wrap-break-word">{err}</span>}
+      {st === "ok" && <span className="text-xs text-statusOk">{t("offsite.replicateStarted")}</span>}
+      {st === "fail" && <span className="text-xs text-statusFail wrap-break-word">{err}</span>}
     </span>
   );
 }
@@ -864,10 +864,10 @@ function TestConnectionButton({
       >
         {t("offsite.test")}
       </button>
-      {st === "ok" && <span className="text-xs text-[#6fdc8c]">{t("offsite.testOk")}</span>}
-      {st === "uninit" && <span className="text-xs text-[#f1c21b]">{t("offsite.testUninitialized")}</span>}
+      {st === "ok" && <span className="text-xs text-statusOk">{t("offsite.testOk")}</span>}
+      {st === "uninit" && <span className="text-xs text-statusWarn">{t("offsite.testUninitialized")}</span>}
       {st === "fail" && (
-        <span className="text-xs text-[#ff8389] wrap-break-word">{err ?? t("offsite.testFailed")}</span>
+        <span className="text-xs text-statusFail wrap-break-word">{err ?? t("offsite.testFailed")}</span>
       )}
     </span>
   );
@@ -1019,7 +1019,7 @@ function IntegrityCard({
   ];
 
   const selectCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-[#78a9ff]";
+    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
 
   return (
     <Card title={t("integrity.title")}>
@@ -1097,8 +1097,8 @@ function IntegrityCard({
               ))}
             </select>
           </label>
-          {tgtState === "saved" && <span className="text-xs text-[#6fdc8c]">{t("settings.saved")}</span>}
-          {tgtState === "error" && tgtError && <span className="text-xs text-[#ff8389]">{tgtError}</span>}
+          {tgtState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+          {tgtState === "error" && tgtError && <span className="text-xs text-statusFail">{tgtError}</span>}
         </div>
       )}
 
@@ -1125,7 +1125,7 @@ function IntegrityCard({
                       >
                         {state[k] === "busy" ? a.busy : a.label}
                       </button>
-                      {state[k] === "ok" && <span className="text-sm text-[#6fdc8c]">{t("integrity.ok")}</span>}
+                      {state[k] === "ok" && <span className="text-sm text-statusOk">{t("integrity.ok")}</span>}
                     </span>
                   );
                 })}
@@ -1150,9 +1150,9 @@ function IntegrityCard({
                         ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
                         : kind === "dr" ? t("drill.runDR") : t("verify.now")}
                     </button>
-                    {state[dKey] === "ok" && <span className="text-sm text-[#6fdc8c]">✓ {t("verify.ok")}</span>}
+                    {state[dKey] === "ok" && <span className="text-sm text-statusOk">✓ {t("verify.ok")}</span>}
                     {state[dKey] === "fail" && (
-                      <span className="text-sm text-[#ff8389] wrap-break-word">✗ {msg[dKey] || t("verify.failed")}</span>
+                      <span className="text-sm text-statusFail wrap-break-word">✗ {msg[dKey] || t("verify.failed")}</span>
                     )}
                     {/* Last recorded drill for this domain/source (idle state only).
                         Names WHICH check ran (off-site DR vs local integrity) and,
@@ -1168,7 +1168,7 @@ function IntegrityCard({
                             {t("verify.last").replace("{time}", relativeTime(t, drill.at))} {drill.ok ? "✓" : "✗"}
                           </span>
                           {!drill.ok && drill.detail && (
-                            <span className="text-xs text-[#ff8389] wrap-break-word" title={drill.detail}>
+                            <span className="text-xs text-statusFail wrap-break-word" title={drill.detail}>
                               {t("drill.failReasonPrefix")} {drill.detail}
                             </span>
                           )}
@@ -1183,7 +1183,7 @@ function IntegrityCard({
 
               {actions.map((a) =>
                 state[`${domain}:${a.key}`] === "fail" ? (
-                  <span key={a.key} className="text-xs text-[#ff8389] wrap-break-word">
+                  <span key={a.key} className="text-xs text-statusFail wrap-break-word">
                     {a.label}: {msg[`${domain}:${a.key}`] || t("integrity.failed")}
                   </span>
                 ) : null
@@ -1235,8 +1235,8 @@ function ScheduleBadge({
   label: string;
 }) {
   const cls: Record<ScheduleStatus, string> = {
-    active: "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]",
-    paused: "bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]",
+    active: "bg-statusOkBg text-statusOk border border-statusOkBorder",
+    paused: "bg-statusWarnBg text-statusWarn border border-statusWarnBorder",
     off:    "bg-carbon-surface2 text-carbon-textSub border border-carbon-border",
   };
   return (
@@ -1304,7 +1304,7 @@ function ContainersSection({
               <div
                 className={`w-2 h-2 rounded-full shrink-0 ${
                   c.state.toLowerCase() === "running"
-                    ? "bg-[#6fdc8c]"
+                    ? "bg-statusOkSolid"
                     : "bg-carbon-surface3"
                 }`}
               />
@@ -1484,7 +1484,7 @@ function FilesSection({
             <div key={s.id} className="flex items-center gap-3 py-2 text-sm">
               <div
                 className={`w-2 h-2 rounded-full shrink-0 ${
-                  s.enabled ? "bg-[#6fdc8c]" : "bg-carbon-surface3"
+                  s.enabled ? "bg-statusOkSolid" : "bg-carbon-surface3"
                 }`}
               />
               <span className="font-medium text-carbon-text flex-1 min-w-0 truncate">{s.name}</span>
@@ -1499,7 +1499,7 @@ function FilesSection({
                 aria-label={`${t("files.enabled")}: ${s.name}`}
                 disabled={!!busy[s.id]}
                 onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
                   s.enabled ? "bg-accent" : "bg-carbon-surface3"
                 }`}
               >
@@ -1513,7 +1513,7 @@ function FilesSection({
           ))}
         </div>
       )}
-      {error && <p className="text-xs text-[#ff8389] wrap-break-word">{error}</p>}
+      {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
     </Card>
   );
 }
@@ -1567,7 +1567,7 @@ function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
         />
       </label>
     </Card>
@@ -1640,6 +1640,11 @@ export function SettingsPage() {
 
   const [pruneSaveState, setPruneSaveState] = useState<SaveState>("idle");
   const [pruneSaveError, setPruneSaveError] = useState<string | null>(null);
+
+  // Container-registry credentials (#106) — its own save state, persisted via
+  // the shared baseline-merging save().
+  const [registrySaveState, setRegistrySaveState] = useState<SaveState>("idle");
+  const [registrySaveError, setRegistrySaveError] = useState<string | null>(null);
 
   const [cacheSaveState, setCacheSaveState] = useState<SaveState>("idle");
   const [cacheSaveError, setCacheSaveError] = useState<string | null>(null);
@@ -1853,7 +1858,7 @@ export function SettingsPage() {
   if (loadError) {
     return (
       <div className="max-w-3xl">
-        <p className="text-sm text-[#ff8389]">{loadError}</p>
+        <p className="text-sm text-statusFail">{loadError}</p>
       </div>
     );
   }
@@ -2268,7 +2273,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
               />
             </label>
           ))}
@@ -2324,6 +2329,173 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — Private container registries (#106): credentials the       */}
+      {/* post-backup update pull uses for images in private/sponsor-gated     */}
+      {/* registries (e.g. a ghcr.io sponsor image). Tokens are write-only:    */}
+      {/* GET returns them blank (tokenSet = stored), blank-on-save keeps the  */}
+      {/* stored one, and removing a row deletes that registry's credential.   */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Card title={t("settings.registriesTitle")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">
+          {t("settings.registriesHint")}
+        </p>
+        {settings.registryAuths.length === 0 && (
+          <p className="text-sm text-carbon-textMuted">
+            {t("settings.registriesEmpty")}
+          </p>
+        )}
+        {settings.registryAuths.map((entry, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end"
+          >
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">
+                {t("settings.registryHost")}
+              </span>
+              <input
+                type="text"
+                value={entry.host}
+                placeholder="ghcr.io"
+                onChange={(e) => {
+                  const host = e.target.value;
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          registryAuths: prev.registryAuths.map((a, j) =>
+                            j === i ? { ...a, host } : a
+                          ),
+                        }
+                      : prev
+                  );
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">
+                {t("settings.registryUser")}
+              </span>
+              <input
+                type="text"
+                value={entry.username}
+                autoComplete="off"
+                onChange={(e) => {
+                  const username = e.target.value;
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          registryAuths: prev.registryAuths.map((a, j) =>
+                            j === i ? { ...a, username } : a
+                          ),
+                        }
+                      : prev
+                  );
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">
+                {t("settings.registryToken")}
+              </span>
+              <input
+                type="password"
+                value={entry.token}
+                autoComplete="new-password"
+                placeholder={
+                  entry.tokenSet && entry.token === ""
+                    ? t("cloud.secretSet")
+                    : ""
+                }
+                onChange={(e) => {
+                  const token = e.target.value;
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          registryAuths: prev.registryAuths.map((a, j) =>
+                            j === i ? { ...a, token } : a
+                          ),
+                        }
+                      : prev
+                  );
+                }}
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() =>
+                setSettings((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        registryAuths: prev.registryAuths.filter((_, j) => j !== i),
+                      }
+                    : prev
+                )
+              }
+              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+            >
+              {t("settings.registryRemove")}
+            </button>
+          </div>
+        ))}
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              setSettings((prev) => {
+                if (!prev) return prev;
+                const blank: RegistryAuthEntry = {
+                  host: "",
+                  username: "",
+                  token: "",
+                  tokenSet: false,
+                };
+                return { ...prev, registryAuths: [...prev.registryAuths, blank] };
+              })
+            }
+            className="rounded-lg border border-carbon-border bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+          >
+            {t("settings.registryAdd")}
+          </button>
+        </div>
+        <SaveBar
+          state={registrySaveState}
+          error={registrySaveError}
+          onSave={() =>
+            void save(
+              {
+                // Drop untouched blank rows; mark a freshly typed token as
+                // stored so its input shows the kept-placeholder after saving
+                // (mirrors the metricsTokenSet handling).
+                registryAuths: settings.registryAuths
+                  .filter(
+                    (a) =>
+                      a.host.trim() !== "" ||
+                      a.username.trim() !== "" ||
+                      a.token.trim() !== ""
+                  )
+                  .map((a) => ({
+                    ...a,
+                    tokenSet: a.tokenSet || a.token.trim() !== "",
+                  })),
+              },
+              setRegistrySaveState,
+              setRegistrySaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
       {/* STORAGE — restic cache size limit. The persistent cache under        */}
       {/* /config (RESTIC_CACHE_DIR) survives restarts and would otherwise     */}
       {/* grow unbounded; LRU per-repo caches are evicted after scheduled runs.*/}
@@ -2347,7 +2519,7 @@ export function SettingsPage() {
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
             }}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
           />
         </label>
         <SaveBar
@@ -2383,7 +2555,7 @@ export function SettingsPage() {
         />
         {settings.flashZipExportEnabled && (
           <>
-            <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+            <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("flash.zipExport.plaintextWarn")}
             </div>
             <FolderBrowser
@@ -2396,7 +2568,7 @@ export function SettingsPage() {
             />
             <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.pathHint")}</p>
             {!settings.flashZipExportPath.trim() && (
-              <p className="text-xs text-[#ff8389] -mt-1">{t("flash.zipExport.pathRequired")}</p>
+              <p className="text-xs text-statusFail -mt-1">{t("flash.zipExport.pathRequired")}</p>
             )}
             <ToggleRow
               label={t("flash.zipExport.keepHistory")}
@@ -2425,7 +2597,7 @@ export function SettingsPage() {
                     setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
-                  className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+                  className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
                 />
                 <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
@@ -2563,7 +2735,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
               />
             </label>
           ))}
@@ -2612,7 +2784,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-[#78a9ff]"
+                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
               />
             </label>
           ))}
@@ -2665,7 +2837,7 @@ export function SettingsPage() {
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
           />
         </label>
         <SaveBar
@@ -2706,7 +2878,7 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, encryptionEnabled: v } : prev)
           }
         />
-        <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+        <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
           {t("settings.encryptionWarning")}
         </div>
         {settings.encryptionEnabled && (
@@ -2731,7 +2903,7 @@ export function SettingsPage() {
               // Backend-provided error text shown verbatim BY DESIGN (e.g. the
               // fail-closed "set a login password" refusal when auth is off) —
               // the API answers English and is not translated client-side.
-              <span className="text-xs text-[#ff8389] wrap-break-word">✗ {kitError}</span>
+              <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
             )}
           </div>
         )}
@@ -2841,7 +3013,7 @@ export function SettingsPage() {
         {/* Status badge */}
         <div className="flex items-center gap-2">
           <span
-            className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-[#6fdc8c]" : "bg-carbon-textMuted"}`}
+            className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
           />
           <span className="text-sm text-carbon-text">
             {authEnabled ? t("auth.authOn") : t("auth.authOff")}
@@ -2865,7 +3037,7 @@ export function SettingsPage() {
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -2878,7 +3050,7 @@ export function SettingsPage() {
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
             />
           </div>
 
@@ -2902,10 +3074,10 @@ export function SettingsPage() {
               )}
             </button>
             {pwSaveState === "saved" && pwSaveMsg && (
-              <span className="text-sm text-[#6fdc8c]">{pwSaveMsg}</span>
+              <span className="text-sm text-statusOk">{pwSaveMsg}</span>
             )}
             {pwSaveState === "error" && pwSaveMsg && (
-              <span className="text-sm text-[#ff8389]">{pwSaveMsg}</span>
+              <span className="text-sm text-statusFail">{pwSaveMsg}</span>
             )}
           </div>
         </div>

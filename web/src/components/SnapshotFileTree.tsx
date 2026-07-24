@@ -175,10 +175,10 @@ export function SnapshotFileTree({
         onChange={(e) => onFilterChange(e.target.value)}
         placeholder={t("files.filterPlaceholder")}
         spellCheck={false}
-        className="rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-[#78a9ff]"
+        className="rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid"
       />
       {loading && <p className="text-xs text-carbon-textMuted">…</p>}
-      {error && <p className="text-xs text-[#ff8389]">{error}</p>}
+      {error && <p className="text-xs text-statusFail">{error}</p>}
       {!loading && !error && (q ? matched.length === 0 : topLevel.length === 0) && (
         <p className="text-xs text-carbon-textMuted">{t("files.none")}</p>
       )}

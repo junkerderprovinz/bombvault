@@ -60,13 +60,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
               autoComplete="current-password"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-2 focus:outline-hidden focus:border-[#78a9ff]"
+              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-2 focus:outline-hidden focus:border-statusInfoSolid"
             />
           </div>
 
           {/* Error message */}
           {error && (
-            <p className="text-xs text-[#ff8389]" role="alert">
+            <p className="text-xs text-statusFail" role="alert">
               {error}
             </p>
           )}

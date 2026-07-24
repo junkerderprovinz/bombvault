@@ -523,10 +523,11 @@ func (f *foreignFakeDocker) Restart(context.Context, string, time.Duration) erro
 func (f *foreignFakeDocker) WaitRunning(context.Context, string, time.Duration) error {
 	return nil
 }
-func (f *foreignFakeDocker) Remove(context.Context, string) error            { return nil }
-func (f *foreignFakeDocker) Pull(context.Context, string) error              { return nil }
-func (f *foreignFakeDocker) ImageID(context.Context, string) (string, error) { return "", nil }
-func (f *foreignFakeDocker) ImageRemove(context.Context, string) error       { return nil }
+func (f *foreignFakeDocker) Remove(context.Context, string) error               { return nil }
+func (f *foreignFakeDocker) Pull(context.Context, string) error                 { return nil }
+func (f *foreignFakeDocker) PullWithAuth(context.Context, string, string) error { return nil }
+func (f *foreignFakeDocker) ImageID(context.Context, string) (string, error)    { return "", nil }
+func (f *foreignFakeDocker) ImageRemove(context.Context, string) error          { return nil }
 
 func (f *foreignFakeDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {
 	f.mu.Lock()

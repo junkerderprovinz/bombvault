@@ -17,6 +17,40 @@
   --color-accent: var(--accent);
   --color-accentContrast: var(--accent-contrast);
 
+  /* Status tokens (#105) — semantic ok/fail/warn/info/neutral colors that flip
+     with the theme. text = plain colored text, Bg/Border = tinted chip surfaces,
+     Solid = dots/bars/focus accents that must stay visible as graphics. */
+  --color-statusOk: var(--status-ok-text);
+  --color-statusOkBg: var(--status-ok-bg);
+  --color-statusOkBorder: var(--status-ok-border);
+  --color-statusOkSolid: var(--status-ok-solid);
+
+  --color-statusFail: var(--status-fail-text);
+  --color-statusFailBg: var(--status-fail-bg);
+  --color-statusFailBgSoft: var(--status-fail-bg-soft);
+  --color-statusFailBgHover: var(--status-fail-bg-hover);
+  --color-statusFailBorder: var(--status-fail-border);
+  --color-statusFailBorderSoft: var(--status-fail-border-soft);
+  --color-statusFailSolid: var(--status-fail-solid);
+
+  --color-statusWarn: var(--status-warn-text);
+  --color-statusWarnBg: var(--status-warn-bg);
+  --color-statusWarnBgStrong: var(--status-warn-bg-strong);
+  --color-statusWarnBorder: var(--status-warn-border);
+  --color-statusWarnBorderStrong: var(--status-warn-border-strong);
+  --color-statusWarnSolid: var(--status-warn-solid);
+
+  --color-statusInfo: var(--status-info-text);
+  --color-statusInfoBg: var(--status-info-bg);
+  --color-statusInfoBorder: var(--status-info-border);
+  --color-statusInfoBorderSoft: var(--status-info-border-soft);
+  --color-statusInfoSolid: var(--status-info-solid);
+
+  --color-statusNeutral: var(--status-neutral-text);
+  --color-statusNeutralBg: var(--status-neutral-bg);
+  --color-statusNeutralBorder: var(--status-neutral-border);
+  --color-statusNeutralSolid: var(--status-neutral-solid);
+
   --radius-card: 0.75rem;
 }
 
@@ -71,6 +105,45 @@
   /* Accent — default sunflower yellow; overridden at runtime via accent.ts */
   --accent:           #FCC419;
   --accent-contrast:  #161616;
+
+  /* Status colors (#105) — the exact hexes the UI has always used in dark mode
+     (Carbon dark support tones); the light block swaps them for Carbon light
+     counterparts so status text/chips stay readable on light surfaces. */
+  --status-ok-text:           #6fdc8c;  /* green-30 */
+  --status-ok-bg:             #1c3a2a;
+  --status-ok-border:         #2a5540;
+  --status-ok-solid:          #6fdc8c;
+
+  --status-fail-text:         #ff8389;  /* red-30 */
+  --status-fail-bg:           #3a1c1c;
+  --status-fail-bg-soft:      #2a1c1c;  /* quieter error banners (Recovery) */
+  --status-fail-bg-hover:     #4a2424;  /* destructive-button hover */
+  --status-fail-border:       #5a2a2a;
+  --status-fail-border-soft:  #4a2a2a;
+  --status-fail-solid:        #ff8389;
+
+  --status-warn-text:         #f1c21b;  /* yellow-30 */
+  --status-warn-bg:           #2a2a1c;
+  --status-warn-bg-strong:    #3a2f1c;  /* emphasised warn chip (Files) */
+  --status-warn-border:       #4a4a2a;
+  --status-warn-border-strong:#5a4a2a;
+  --status-warn-solid:        #f1c21b;
+
+  --status-info-text:         #78a9ff;  /* blue-40 */
+  --status-info-bg:           #1c2a3a;
+  --status-info-border:       #2a3a5a;
+  --status-info-border-soft:  #2a4055;  /* info banners (Config/Flash) */
+  --status-info-solid:        #78a9ff;  /* also the input focus border/outline */
+
+  --status-neutral-text:      #a8a8b0;  /* skipped/neutral chip */
+  --status-neutral-bg:        #2a2a2e;
+  --status-neutral-border:    #3a3a40;
+  --status-neutral-solid:     #8a8a92;
+
+  /* Health-heatmap green scale (less → more); fail cells use --status-fail-solid. */
+  --heat-ok-1:                #a7f0ba;
+  --heat-ok-2:                #6fdc8c;
+  --heat-ok-3:                #42be65;
 }
 
 [data-theme="light"] {
@@ -95,6 +168,46 @@
 
   /* Accent inherits from :root; override here only if light theme needs adjustment */
   --accent-contrast:  #161616;
+
+  /* Status colors (#105) — Carbon light-theme counterparts. Text tones keep
+     ≥4.5:1 on white/#f4f4f4 and on their own chip tints; solids keep ≥3:1 as
+     graphics on light surfaces. Chip bgs are the Carbon *-10 tints with the
+     *-20 tones as visible borders. */
+  --status-ok-text:           #198038;  /* green-60 */
+  --status-ok-bg:             #defbe6;  /* green-10 */
+  --status-ok-border:         #a7f0ba;  /* green-20 */
+  --status-ok-solid:          #24a148;  /* green-50 */
+
+  --status-fail-text:         #da1e28;  /* red-60 */
+  --status-fail-bg:           #fff1f1;  /* red-10 */
+  --status-fail-bg-soft:      #fff1f1;
+  --status-fail-bg-hover:     #ffd7d9;  /* red-20 — hover deepens the tint */
+  --status-fail-border:       #ffd7d9;
+  --status-fail-border-soft:  #ffd7d9;
+  --status-fail-solid:        #da1e28;
+
+  --status-warn-text:         #8e6a00;  /* yellow-60 — dark enough for light bgs */
+  --status-warn-bg:           #fcf4d6;  /* yellow-10 */
+  --status-warn-bg-strong:    #fcf4d6;
+  --status-warn-border:       #fddc69;  /* yellow-20 */
+  --status-warn-border-strong:#fddc69;
+  --status-warn-solid:        #b28600;  /* yellow-50 — #f1c21b is <3:1 on light */
+
+  --status-info-text:         #0043ce;  /* blue-70 */
+  --status-info-bg:           #edf5ff;  /* blue-10 */
+  --status-info-border:       #d0e2ff;  /* blue-20 */
+  --status-info-border-soft:  #d0e2ff;
+  --status-info-solid:        #0f62fe;  /* blue-60 — Carbon focus blue */
+
+  --status-neutral-text:      #525252;  /* gray-70 */
+  --status-neutral-bg:        #e8e8e8;
+  --status-neutral-border:    #c6c6c6;  /* gray-30 */
+  --status-neutral-solid:     #8d8d8d;  /* gray-50 */
+
+  /* Heatmap greens deepen toward green-60 so "more" stays legible on white. */
+  --heat-ok-1:                #a7f0ba;  /* green-20 */
+  --heat-ok-2:                #42be65;  /* green-40 */
+  --heat-ok-3:                #198038;  /* green-60 */
 }
 
 /* Easter-egg shatter uses whichever logo is currently on screen: the dark sidebar

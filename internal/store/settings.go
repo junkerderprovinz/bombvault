@@ -90,6 +90,10 @@ type Settings struct {
 	// CloudConf is the cloud-backend credentials (S3 keys, restic-REST auth) for
 	// off-site repos, an AES-256-GCM-encrypted JSON blob (base64). Empty = none.
 	CloudConf string
+	// RegistryAuths holds private container-registry credentials for the
+	// post-backup update pull (#106), an AES-256-GCM-encrypted JSON array
+	// (base64) of {host, username, token} entries. Empty = anonymous pulls only.
+	RegistryAuths string
 	// MetricsEnabled exposes the Prometheus-format /metrics endpoint when true.
 	// Default false (opt-in): when off, /metrics returns 404 and is not served.
 	MetricsEnabled bool
@@ -166,7 +170,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
 		       offsite_limit_upload, offsite_limit_download,
-		       rclone_conf, notify_conf, cloud_conf,
+		       rclone_conf, notify_conf, cloud_conf, registry_auths,
 		       metrics_enabled, metrics_token,
 		       drills_enabled, drills_schedule, drills_subset_pct, offsite_drills_enabled,
 		       recovery_kit_ack,
@@ -191,7 +195,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
 		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
 		&s.OffsiteLimitUpload, &s.OffsiteLimitDownload,
-		&s.RcloneConf, &s.NotifyConf, &s.CloudConf,
+		&s.RcloneConf, &s.NotifyConf, &s.CloudConf, &s.RegistryAuths,
 		&metricsEnabled, &s.MetricsToken,
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct, &offsiteDrillsEnabled,
 		&recoveryKitAck,
@@ -274,6 +278,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  rclone_conf            = ?,
 		  notify_conf            = ?,
 		  cloud_conf             = ?,
+		  registry_auths         = ?,
 		  metrics_enabled        = ?,
 		  metrics_token          = ?,
 		  drills_enabled         = ?,
@@ -312,7 +317,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
 		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
 		s.OffsiteLimitUpload, s.OffsiteLimitDownload,
-		s.RcloneConf, s.NotifyConf, s.CloudConf,
+		s.RcloneConf, s.NotifyConf, s.CloudConf, s.RegistryAuths,
 		boolInt(s.MetricsEnabled), s.MetricsToken,
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct, boolInt(s.OffsiteDrillsEnabled),
 		boolInt(s.RecoveryKitAck),

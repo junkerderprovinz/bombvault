@@ -56,7 +56,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
 
       {state.phase === "success" &&
         (state.snapshotId ? (
-          <span className="text-xs text-[#6fdc8c]">
+          <span className="text-xs text-statusOk">
             ✓ {t("common.done")}
             <span className="font-mono ml-1 text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
@@ -72,7 +72,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
         ))}
 
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[18rem] wrap-break-word">
+        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word">
           {state.message}
         </span>
       )}

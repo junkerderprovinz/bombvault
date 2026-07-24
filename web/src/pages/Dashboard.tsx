@@ -127,7 +127,7 @@ function StatCard({
     <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-1 min-w-0 overflow-hidden">
       <span
         className={`text-2xl font-bold tabular-nums ${
-          danger && value > 0 ? "text-[#ff8389]" : "text-carbon-text"
+          danger && value > 0 ? "text-statusFail" : "text-carbon-text"
         }`}
       >
         {value}
@@ -235,17 +235,17 @@ function StatusChip({
   status: "success" | "failed" | "running" | "ok" | "degraded" | "checking" | "skipped" | string;
 }) {
   const map: Record<string, string> = {
-    success: "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]",
-    ok:      "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]",
-    failed:  "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]",
-    degraded:"bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]",
-    running: "bg-[#1c2a3a] text-[#78a9ff] border border-[#2a3a5a]",
-    checking:"bg-[#1c2a3a] text-[#78a9ff] border border-[#2a3a5a]",
-    info:    "bg-[#2a2a1c] text-[#f1c21b] border border-[#4a4a2a]",
+    success: "bg-statusOkBg text-statusOk border border-statusOkBorder",
+    ok:      "bg-statusOkBg text-statusOk border border-statusOkBorder",
+    failed:  "bg-statusFailBg text-statusFail border border-statusFailBorder",
+    degraded:"bg-statusFailBg text-statusFail border border-statusFailBorder",
+    running: "bg-statusInfoBg text-statusInfo border border-statusInfoBorder",
+    checking:"bg-statusInfoBg text-statusInfo border border-statusInfoBorder",
+    info:    "bg-statusWarnBg text-statusWarn border border-statusWarnBorder",
     // A skip is neither success nor failure: a muted, neutral chip so a removed
     // container's scheduled target reads as "intentionally not run", distinct
     // from green success and red failure (#57).
-    skipped: "bg-[#2a2a2e] text-[#a8a8b0] border border-[#3a3a40]",
+    skipped: "bg-statusNeutralBg text-statusNeutral border border-statusNeutralBorder",
   };
   const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
@@ -337,7 +337,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       )}
 
       {error && (
-        <p className="text-xs text-[#ff8389]">{error}</p>
+        <p className="text-xs text-statusFail">{error}</p>
       )}
 
       {checks && checks.length > 0 && (
@@ -556,8 +556,8 @@ function ProtectionCard({
                             title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
                             className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
                               d.lastVerifiedOK
-                                ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                                : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                                ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
+                                : "bg-statusFailBg text-statusFail border border-statusFailBorder"
                             }`}
                           >
                             {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
@@ -577,8 +577,8 @@ function ProtectionCard({
                             title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
                             className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
                               d.lastOffsiteSubsetOK
-                                ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
-                                : "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                                ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
+                                : "bg-statusFailBg text-statusFail border border-statusFailBorder"
                             }`}
                           >
                             {d.lastOffsiteSubsetOK ? "✓" : "✗"} {t("drill.offsiteVerified")} {relativeTime(t, d.lastOffsiteSubsetAt)}
@@ -598,7 +598,7 @@ function ProtectionCard({
                           // scheduled DR drill is opted out.
                           <span
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusOkBg text-statusOk border border-statusOkBorder"
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -612,7 +612,7 @@ function ProtectionCard({
                                 ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                                 : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                             }
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusFailBg text-statusFail border border-statusFailBorder"
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -639,7 +639,7 @@ function ProtectionCard({
                 {!off && drCapable && (drFailed || d.offsiteConfigured) && (
                   <div className="flex flex-wrap items-center gap-2 pl-1">
                     {drFailed && d.drillDetail && (
-                      <span className="text-xs text-[#ff8389] wrap-break-word" title={d.drillDetail}>
+                      <span className="text-xs text-statusFail wrap-break-word" title={d.drillDetail}>
                         {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
                       </span>
                     )}
@@ -658,7 +658,7 @@ function ProtectionCard({
                       </button>
                     )}
                     {drRunError[d.domain] && (
-                      <span className="text-xs text-[#ff8389] wrap-break-word">✗ {drRunError[d.domain]}</span>
+                      <span className="text-xs text-statusFail wrap-break-word">✗ {drRunError[d.domain]}</span>
                     )}
                   </div>
                 )}
@@ -836,15 +836,15 @@ function RansomwareCard({
                     row.state === "ok" ? "✓" : row.state === "amber" ? "!" : row.state === "bad" ? "✗" : "—";
                   const iconColor =
                     row.state === "ok"
-                      ? "text-[#6fdc8c]"
+                      ? "text-statusOk"
                       : row.state === "amber"
-                        ? "text-[#f1c21b]"
+                        ? "text-statusWarn"
                         : row.state === "bad"
-                          ? "text-[#ff8389]"
+                          ? "text-statusFail"
                           : "text-carbon-textMuted";
                   const labelColor =
                     row.state === "amber"
-                      ? "text-[#f1c21b]"
+                      ? "text-statusWarn"
                       : row.state === "muted"
                         ? "text-carbon-textMuted"
                         : "text-carbon-textSub";
@@ -853,7 +853,7 @@ function RansomwareCard({
                       <div className="flex items-center gap-2 text-sm">
                         <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
                         {row.state === "bad" ? (
-                          <Link to="/settings#offsite" className="text-[#ff8389] hover:underline flex-1 truncate min-w-0">
+                          <Link to="/settings#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0">
                             {row.label}
                           </Link>
                         ) : (
@@ -865,7 +865,7 @@ function RansomwareCard({
                       </div>
                       {/* WHICH check + WHY it failed (off-site DR reason from /api/status). */}
                       {row.detail && (
-                        <span className="text-xs text-[#ff8389] wrap-break-word pl-6" title={row.detail}>
+                        <span className="text-xs text-statusFail wrap-break-word pl-6" title={row.detail}>
                           {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {row.detail}
                         </span>
                       )}
@@ -915,7 +915,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
-      {error && <p className="text-sm text-[#ff8389]">{error}</p>}
+      {error && <p className="text-sm text-statusFail">{error}</p>}
       {!loading && !error && runs.length === 0 && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noRuns")}</p>
       )}
@@ -962,7 +962,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
-                  <p className="pl-16 text-xs text-[#ff8389] wrap-break-word">{run.error}</p>
+                  <p className="pl-16 text-xs text-statusFail wrap-break-word">{run.error}</p>
                 )}
                 {run.status === "skipped" && run.error && (
                   <p className="pl-16 text-xs text-carbon-textMuted wrap-break-word">{run.error}</p>
@@ -1024,7 +1024,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               : "";
             return (
               <div key={c.name} className="flex items-center gap-3 py-2.5 text-sm">
-                <div className="w-2 h-2 rounded-full bg-[#6fdc8c] shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-statusOkSolid shrink-0" />
                 <span className="text-carbon-text font-medium flex-1 truncate min-w-0">{c.name}</span>
                 {hasStart ? (
                   <span className="text-carbon-textMuted text-xs shrink-0 text-right">
@@ -1071,14 +1071,15 @@ type HeatDomain = "containers" | "vms" | "flash" | "config" | "files";
 
 // cellColor maps a day's outcome (for the selected domain) to a fill color:
 // any failure → red; all-ok → green shades that deepen with more successful
-// runs; no runs → neutral carbon surface.
+// runs; no runs → neutral carbon surface. Colors come from the theme vars in
+// index.css (#105) so the scale stays legible in light mode too.
 function cellColor(stat: DayStat | undefined): string {
   if (!stat || (stat.ok === 0 && stat.failed === 0)) return "var(--carbon-surface2, #262626)";
-  if (stat.failed > 0) return "#ff8389";
-  // All ok — darker green for more runs that day.
-  if (stat.ok >= 3) return "#42be65";
-  if (stat.ok === 2) return "#6fdc8c";
-  return "#a7f0ba";
+  if (stat.failed > 0) return "var(--status-fail-solid, #ff8389)";
+  // All ok — deeper green for more runs that day.
+  if (stat.ok >= 3) return "var(--heat-ok-3, #42be65)";
+  if (stat.ok === 2) return "var(--heat-ok-2, #6fdc8c)";
+  return "var(--heat-ok-1, #a7f0ba)";
 }
 
 // mondayIndex returns 0..6 for Mon..Sun (JS getDay() is 0=Sun..6=Sat).
@@ -1204,9 +1205,9 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <div className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
             <span>{t("dashboard.heatLess")}</span>
             <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "var(--carbon-surface2, #262626)" }} />
-            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "#a7f0ba" }} />
-            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "#6fdc8c" }} />
-            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "#42be65" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "var(--heat-ok-1, #a7f0ba)" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "var(--heat-ok-2, #6fdc8c)" }} />
+            <span className="w-[11px] h-[11px] rounded-xs" style={{ backgroundColor: "var(--heat-ok-3, #42be65)" }} />
             <span>{t("dashboard.heatMore")}</span>
           </div>
         </div>
@@ -1249,7 +1250,7 @@ function Sparkline({
     .join(" ");
 
   return (
-    <span className="text-[#78a9ff] shrink-0">
+    <span className="text-statusInfo shrink-0">
       <svg
         width={width}
         height={height}
@@ -1418,11 +1419,11 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
   };
 
   return (
-    <div className="rounded-card border border-[#4a4a2a] bg-[#2a2a1c] px-4 py-3 flex flex-col gap-2">
-      <h2 className="text-sm font-semibold text-[#f1c21b]">
+    <div className="rounded-card border border-statusWarnBorder bg-statusWarnBg px-4 py-3 flex flex-col gap-2">
+      <h2 className="text-sm font-semibold text-statusWarn">
         {t("recovery.nagTitle")}
       </h2>
-      <p className="text-xs text-[#f1c21b] leading-relaxed">
+      <p className="text-xs text-statusWarn leading-relaxed">
         {t("recovery.nagBody")}
       </p>
       <div className="flex flex-wrap items-center gap-2">
@@ -1437,7 +1438,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
           {t("recovery.download")}
         </button>
         {kitError && (
-          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {kitError}</span>
+          <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
         )}
         <button
           type="button"

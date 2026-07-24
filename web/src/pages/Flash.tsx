@@ -62,7 +62,7 @@ function FlashBackupButton({
         </span>
       )}
       {state.phase === "success" && (
-        <span className="text-xs text-[#6fdc8c]">
+        <span className="text-xs text-statusOk">
           ✓ {t("settings.saved")}
           {state.snapshotId && (
             <span className="font-mono ml-1 text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
@@ -70,7 +70,7 @@ function FlashBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-md wrap-break-word">{state.message}</span>
+        <span className="text-xs text-statusFail max-w-md wrap-break-word">{state.message}</span>
       )}
     </div>
   );
@@ -182,13 +182,13 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           onClick={() => void handleDelete()}
           disabled={deleting || downloading}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {dl.phase === "error" && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{dl.message}</p>}
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
+      {dl.phase === "error" && <p className="text-xs text-statusFail pl-24 wrap-break-word">{dl.message}</p>}
+      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }
@@ -261,7 +261,7 @@ export function Flash() {
           {t("snapshots.title")}
         </h2>
         {/* Safe-restore explainer */}
-        <div className="rounded-lg bg-[#1c2a3a] border border-[#2a4055] px-3 py-2.5 text-xs text-[#78a9ff] leading-relaxed">
+        <div className="rounded-lg bg-statusInfoBg border border-statusInfoBorderSoft px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("flash.restoreNote")}
         </div>
 
@@ -274,7 +274,7 @@ export function Flash() {
         </div>
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
-        {error && <p className="text-xs text-[#ff8389]">{error}</p>}
+        {error && <p className="text-xs text-statusFail">{error}</p>}
         {!loading && !error && snapshots.length === 0 && (
           <p className="text-xs text-carbon-textMuted">{t("flash.none")}</p>
         )}

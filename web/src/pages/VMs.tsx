@@ -32,9 +32,9 @@ function StateChip({ state }: { state: string }) {
   const lower = state.toLowerCase();
   const cls =
     lower === "running"
-      ? "bg-[#1c3a2a] text-[#6fdc8c] border border-[#2a5540]"
+      ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
       : lower === "shut off" || lower === "shutoff" || lower === "stopped"
-      ? "bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]"
+      ? "bg-statusFailBg text-statusFail border border-statusFailBorder"
       : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
@@ -219,7 +219,7 @@ function VMMethodSelect({
         <option value="live">{t("vm.method.live")}</option>
       </select>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
@@ -270,7 +270,7 @@ function VMIncludeToggle({
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -281,7 +281,7 @@ function VMIncludeToggle({
         />
       </button>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
@@ -323,9 +323,9 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
         {state === "pending" ? "…" : t("export.button")}
       </button>
       {state === "done" && (
-        <span className="text-xs text-[#6fdc8c] break-all">{t("export.exportedTo")} {msg}</span>
+        <span className="text-xs text-statusOk break-all">{t("export.exportedTo")} {msg}</span>
       )}
-      {state === "error" && <span className="text-xs text-[#ff8389] break-all">{msg}</span>}
+      {state === "error" && <span className="text-xs text-statusFail break-all">{msg}</span>}
     </div>
   );
 }
@@ -380,7 +380,7 @@ function VMBackupButton({
       {/* Plain export is an advanced-only extra. */}
       <Advanced><VMExportButton name={name} t={t} /></Advanced>
       {state.phase === "success" && (
-        <span className="text-xs text-[#6fdc8c]">
+        <span className="text-xs text-statusOk">
           ✓ {t("common.done")}
           {state.phase === "success" && state.snapshotId && (
             <span className="font-mono ml-1 text-carbon-textMuted">
@@ -390,7 +390,7 @@ function VMBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[18rem] wrap-break-word">
+        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word">
           {state.message}
         </span>
       )}
@@ -474,7 +474,7 @@ function VMSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -495,7 +495,7 @@ function VMSnapshotRow({
           />
         </div>
       )}
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }
@@ -575,7 +575,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
                 <button
                   onClick={handleDeleteAll}
                   disabled={deletingAll || loading}
-                  className="ml-auto text-[11px] text-[#ff8389] hover:underline disabled:opacity-50 disabled:no-underline"
+                  className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </button>
@@ -588,7 +588,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
           {error && (
-            <p className="py-3 text-xs text-[#ff8389]">{error}</p>
+            <p className="py-3 text-xs text-statusFail">{error}</p>
           )}
           {!loading && !error && snapshots.length === 0 && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
@@ -752,11 +752,11 @@ function VMForgetButton({
       <button
         onClick={() => void handleForget()}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-[#3a1c1c] px-3 py-1.5 text-xs font-medium text-[#ff8389] hover:bg-[#4a2424] transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
       >
         {pending ? t("dashboard.checking") : t("vms.removeEntry")}
       </button>
-      {error && <p className="text-xs text-[#ff8389]">{error}</p>}
+      {error && <p className="text-xs text-statusFail">{error}</p>}
     </div>
   );
 }
@@ -804,7 +804,7 @@ function ScheduleIncludeAllControl({
       >
         {t("schedule.excludeAll")}
       </button>
-      {error && <span className="text-xs text-[#ff8389]">{error}</span>}
+      {error && <span className="text-xs text-statusFail">{error}</span>}
     </div>
   );
 }
@@ -1016,7 +1016,7 @@ export function VMs() {
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {error && (
-        <p className="text-sm text-[#ff8389]">{error}</p>
+        <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && vms.length === 0 && (
         <div className="bg-carbon-surface rounded-card border border-carbon-border p-6 text-center">
@@ -1035,7 +1035,7 @@ export function VMs() {
               placeholder={t("vms.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+              className="w-full rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
             />
             <ChipFilter<ScheduleFilterKey>
               label={t("filter.schedule")}
