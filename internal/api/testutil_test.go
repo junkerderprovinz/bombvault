@@ -106,6 +106,14 @@ func (f *fakeServiceDocker) Pull(_ context.Context, image string) error {
 	return f.pullErr
 }
 
+// PullWithAuth records the same "pull:" call label as Pull (the auth string is
+// resolved server-side; "" = anonymous), so call-order assertions hold across
+// both pull entry points.
+func (f *fakeServiceDocker) PullWithAuth(_ context.Context, image, _ string) error {
+	f.calls = append(f.calls, "pull:"+image)
+	return f.pullErr
+}
+
 func (f *fakeServiceDocker) ImageID(_ context.Context, ref string) (string, error) {
 	f.calls = append(f.calls, "imageID:"+ref)
 	return f.imageID, f.imageIDErr

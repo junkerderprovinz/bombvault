@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -20,10 +21,22 @@ type updateFakeDocker struct {
 	dockercli.Docker
 	imageID string
 	calls   []string
+	// pullAuths records the registryAuth string of every PullWithAuth call, so
+	// the #106 tests can assert whether a credential reached the pull.
+	pullAuths []string
 }
 
 func (f *updateFakeDocker) Pull(_ context.Context, ref string) error {
 	f.calls = append(f.calls, "pull:"+ref)
+	f.pullAuths = append(f.pullAuths, "")
+	return nil
+}
+
+// PullWithAuth records the same "pull:" label as Pull (assertions cover both
+// entry points) plus the auth string the service resolved.
+func (f *updateFakeDocker) PullWithAuth(_ context.Context, ref, registryAuth string) error {
+	f.calls = append(f.calls, "pull:"+ref)
+	f.pullAuths = append(f.pullAuths, registryAuth)
 	return nil
 }
 
@@ -158,5 +171,59 @@ func TestUpdateAfterBackup_PrunesOldImageWhenEnabled(t *testing.T) {
 
 	if !strings.Contains(strings.Join(f.calls, ","), "imageRemove:sha256:OLD") {
 		t.Fatalf("prune-after-update must remove the OLD image; calls %v", f.calls)
+	}
+}
+
+// TestUpdateAfterBackup_RegistryAuthReachesPull (#106): with a credential
+// stored for the image's registry host, the post-backup update pull carries the
+// encoded RegistryAuth; a ref on a different registry still pulls anonymously.
+func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	svc.cfg = config.Config{AppKey: strings.Repeat("a", 64)}
+
+	// Store one credential for ghcr.io via the same encrypt path the settings
+	// PUT uses.
+	blob, err := svc.EncodeRegistryAuths([]RegistryAuth{
+		{Host: "ghcr.io", Username: "sponsor", Token: "s3cret"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RegistryAuths = blob
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "tcm"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Matching host → the encoded credential must reach the pull.
+	f := &updateFakeDocker{imageID: "sha256:SAME"}
+	svc.docker = f
+	in := model.Inspect{Name: "/tcm", Image: "sha256:SAME", Config: model.Config{Image: "ghcr.io/owner/tcm-ui:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "tcm", in, tg.ID)
+	if len(f.pullAuths) != 1 {
+		t.Fatalf("expected exactly one pull, got calls %v", f.calls)
+	}
+	want, err := dockercli.EncodeRegistryAuth("sponsor", "s3cret", "ghcr.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.pullAuths[0] != want {
+		t.Fatalf("ghcr.io pull must carry the stored credential: got %q, want %q", f.pullAuths[0], want)
+	}
+
+	// Non-matching host (a bare Docker Hub ref) → anonymous pull ("").
+	f2 := &updateFakeDocker{imageID: "sha256:SAME"}
+	svc.docker = f2
+	in2 := model.Inspect{Name: "/plex", Image: "sha256:SAME", Config: model.Config{Image: "plex:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "plex", in2, tg.ID)
+	if len(f2.pullAuths) != 1 || f2.pullAuths[0] != "" {
+		t.Fatalf("a Docker Hub ref must NOT receive the ghcr.io credential: %q", f2.pullAuths)
 	}
 }

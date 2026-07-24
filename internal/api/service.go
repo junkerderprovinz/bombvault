@@ -2643,7 +2643,10 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 	if ref == "" {
 		ref = in.Image
 	}
-	if err := s.docker.Pull(ctx, ref); err != nil {
+	// #106: images in a private/sponsor-gated registry need credentials — resolve
+	// the ref's registry host against the stored registry credentials and pass
+	// the match along ("" = no credential = the previous anonymous behavior).
+	if err := s.docker.PullWithAuth(ctx, ref, s.registryAuthFor(ref)); err != nil {
 		// Reached, but couldn't even CHECK for an update (registry rate-limit, auth,
 		// network). Record a failed "update" run so "why wasn't this updated?" is
 		// answerable from Run History / the Activity Log instead of vanishing into

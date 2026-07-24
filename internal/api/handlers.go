@@ -957,6 +957,23 @@ type settingsView struct {
 	// the existing notify fan-out. Off by default.
 	DigestEnabled  bool   `json:"digestEnabled"`
 	DigestSchedule string `json:"digestSchedule"`
+	// Private container-registry credentials for the post-backup update pull
+	// (#106). Per-entry the token follows the house blank-and-report-is-set
+	// contract (see MetricsToken): GET returns every token blank with TokenSet
+	// reporting presence; on PUT a blank token keeps the stored one for that
+	// host, and a host missing from the list is deleted. nil (field absent, an
+	// old client) keeps the stored list unchanged.
+	RegistryAuths []registryAuthView `json:"registryAuths"`
+}
+
+// registryAuthView is one container-registry credential in the settings view
+// (#106). Token is write-only; TokenSet lives on the struct (not a sibling)
+// because the strict PUT decoder must accept a round-tripped GET body.
+type registryAuthView struct {
+	Host     string `json:"host"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+	TokenSet bool   `json:"tokenSet"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -1031,6 +1048,21 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	view := toView(s)
+	// Registry credentials (#106) live encrypted in the settings row, so toView
+	// (a pure store.Settings mapping) can't decode them — fill the view here.
+	// Tokens are secrets and never echoed; TokenSet reports presence.
+	regs, err := h.svc.decodeRegistryAuths(s)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	view.RegistryAuths = make([]registryAuthView, 0, len(regs))
+	for _, a := range regs {
+		view.RegistryAuths = append(view.RegistryAuths, registryAuthView{
+			Host: a.Host, Username: a.Username, TokenSet: a.Token != "",
+		})
+	}
 	// Nest under "settings" so the GET response is shape-symmetric with the PUT
 	// body: a client can GET, edit, and PUT back the same settings object without
 	// the envelope's "ok" leaking into the strict PUT decoder.
@@ -1038,7 +1070,7 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// never sees it and cannot reject it as an unknown field.
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
-		"settings":      toView(s),
+		"settings":      view,
 		"hostMountRoot": h.cfg.HostMountRoot,
 	})
 }
@@ -1160,6 +1192,29 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		metricsToken = existing.MetricsToken
 	}
 
+	// Registry credentials (#106): nil = field absent (an old client) → keep the
+	// stored encrypted blob unchanged; a present list REPLACES the stored one,
+	// with blank tokens filled from storage per host (mergeRegistryAuths).
+	registryAuths := existing.RegistryAuths
+	if v.RegistryAuths != nil {
+		stored, dErr := h.svc.decodeRegistryAuths(existing)
+		if dErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(dErr))
+			return
+		}
+		merged, mErr := mergeRegistryAuths(v.RegistryAuths, stored)
+		if mErr != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": mErr.Error()})
+			return
+		}
+		blob, eErr := h.svc.EncodeRegistryAuths(merged)
+		if eErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(eErr))
+			return
+		}
+		registryAuths = blob
+	}
+
 	s := store.Settings{
 		EncryptionEnabled:           v.EncryptionEnabled,
 		ContainersEnabled:           v.ContainersEnabled,
@@ -1226,6 +1281,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		RcloneConf:                  existing.RcloneConf,
 		NotifyConf:                  existing.NotifyConf,
 		CloudConf:                   existing.CloudConf,
+		RegistryAuths:               registryAuths,
 	}
 	if err := h.store.UpdateSettings(s); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

@@ -67,7 +67,7 @@ function ConfigBackupButton({
         </span>
       )}
       {state.phase === "success" && (
-        <span className="text-xs text-[#6fdc8c]">
+        <span className="text-xs text-statusOk">
           ✓ {t("settings.saved")}
           {state.snapshotId && (
             <span className="font-mono ml-1 text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
@@ -75,7 +75,7 @@ function ConfigBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-md wrap-break-word">{state.message}</span>
+        <span className="text-xs text-statusFail max-w-md wrap-break-word">{state.message}</span>
       )}
     </div>
   );
@@ -223,10 +223,10 @@ function ConfigSettingsCard({
           )}
         </button>
         {saveState === "saved" && (
-          <span className="text-sm text-[#6fdc8c]">{t("settings.saved")}</span>
+          <span className="text-sm text-statusOk">{t("settings.saved")}</span>
         )}
         {saveState === "error" && saveError && (
-          <span className="text-sm text-[#ff8389]">{saveError}</span>
+          <span className="text-sm text-statusFail">{saveError}</span>
         )}
       </div>
     </div>
@@ -280,12 +280,12 @@ function ConfigSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }
@@ -372,7 +372,7 @@ export function Config() {
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("config.snapshotsTitle")}
         </h2>
-        <div className="rounded-lg bg-[#1c2a3a] border border-[#2a4055] px-3 py-2.5 text-xs text-[#78a9ff] leading-relaxed">
+        <div className="rounded-lg bg-statusInfoBg border border-statusInfoBorderSoft px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("config.snapshotsHint")}
         </div>
 
@@ -385,7 +385,7 @@ export function Config() {
         </div>
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
-        {error && <p className="text-xs text-[#ff8389]">{error}</p>}
+        {error && <p className="text-xs text-statusFail">{error}</p>}
         {!loading && !error && snapshots.length === 0 && (
           <p className="text-xs text-carbon-textMuted">{t("config.none")}</p>
         )}

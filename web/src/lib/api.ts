@@ -174,6 +174,22 @@ export interface Settings {
   digestEnabled: boolean;
   /** Digest cadence (shared schedule grammar; default "weekly Mon 08:00"). */
   digestSchedule: string;
+  /** Private container-registry credentials for the post-backup update pull
+   *  (#106). The submitted list REPLACES the stored one (a removed entry is
+   *  deleted); per entry the token follows the metricsToken contract: GET
+   *  returns it blank with tokenSet reporting presence, and a blank token on
+   *  save keeps the stored one for that host. */
+  registryAuths: RegistryAuthEntry[];
+}
+
+/** One private container-registry credential (#106), e.g. ghcr.io. */
+export interface RegistryAuthEntry {
+  host: string;
+  username: string;
+  /** Write-only secret: GET always returns "" (blank-on-save keeps the stored
+   *  token); tokenSet reports whether one is stored. */
+  token: string;
+  tokenSet: boolean;
 }
 
 export interface GetSettingsResponse {

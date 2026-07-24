@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
@@ -253,10 +254,17 @@ func (c *Client) Remove(ctx context.Context, name string) error {
 	return nil
 }
 
-// Pull pulls an image, draining the progress stream to completion so the image
-// is guaranteed present when Pull returns.
+// Pull pulls an image anonymously, draining the progress stream to completion
+// so the image is guaranteed present when Pull returns.
 func (c *Client) Pull(ctx context.Context, img string) error {
-	rc, err := c.api.ImagePull(ctx, img, image.PullOptions{})
+	return c.PullWithAuth(ctx, img, "")
+}
+
+// PullWithAuth is Pull with an optional registry credential (#106): registryAuth
+// is the base64url JSON blob the Docker Engine API expects (EncodeRegistryAuth),
+// "" pulls anonymously exactly like Pull.
+func (c *Client) PullWithAuth(ctx context.Context, img, registryAuth string) error {
+	rc, err := c.api.ImagePull(ctx, img, image.PullOptions{RegistryAuth: registryAuth})
 	if err != nil {
 		return fmt.Errorf("dockercli: pull: %w", err)
 	}
@@ -266,6 +274,22 @@ func (c *Client) Pull(ctx context.Context, img string) error {
 		return fmt.Errorf("dockercli: pull drain: %w", err)
 	}
 	return nil
+}
+
+// EncodeRegistryAuth renders a registry credential into the base64url JSON blob
+// the Docker Engine API expects in image.PullOptions.RegistryAuth (the
+// X-Registry-Auth header). serverAddress is the registry host the credential is
+// for (e.g. "ghcr.io"). Kept here so the wire format stays a dockercli concern.
+func EncodeRegistryAuth(username, password, serverAddress string) (string, error) {
+	enc, err := registry.EncodeAuthConfig(registry.AuthConfig{
+		Username:      username,
+		Password:      password,
+		ServerAddress: serverAddress,
+	})
+	if err != nil {
+		return "", fmt.Errorf("dockercli: encode registry auth: %w", err)
+	}
+	return enc, nil
 }
 
 // ImageID returns the local image ID (sha256:…) resolved for a registry
