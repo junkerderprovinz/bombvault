@@ -6,7 +6,7 @@
 // interpolated params assertable without any i18n context.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
-import { buildLogLines, filterLogLines } from "./activityLog";
+import { buildLogLines, filterLogLines, formatLogDate } from "./activityLog";
 import type { LogLine } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap } from "./progress";
@@ -104,5 +104,54 @@ describe("filterLogLines", () => {
 
   it("matches free text case-insensitively (idle line included)", () => {
     expect(filterLogLines(lines, { domain: "all", kind: "all", text: "PLEX" }).map((l) => l.id)).toEqual(["a"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #104 — the activity log now spans many days, so each line must show AND be
+// searchable by its date, not just its time. Timestamps below are built with
+// the local Date constructor (not a bare epoch number) so the expected
+// calendar day is stable no matter which timezone the test runner is in —
+// formatLogDate/isoDateOf both read back via local getters too.
+// ---------------------------------------------------------------------------
+describe("formatLogDate", () => {
+  it("orders day/month per the active language (locale-aware date, fixed-face time stays formatClockTime's job)", () => {
+    const atMs = new Date(2026, 6, 23, 5, 4, 8).getTime(); // 23 July 2026, local wall-clock
+    expect(formatLogDate(atMs, "de")).toBe("23.07.");
+    expect(formatLogDate(atMs, "en")).toBe("07/23");
+  });
+});
+
+describe("filterLogLines — date search (#104)", () => {
+  const day1 = new Date(2026, 6, 23, 5, 4, 8).getTime(); // 23 July 2026
+  const day2 = new Date(2026, 6, 24, 9, 0, 0).getTime(); // 24 July 2026
+
+  const dateLines: LogLine[] = [
+    { id: "d1", atMs: day1, status: "success", text: "Backed up plex", domain: "containers", kind: "backup", live: false },
+    { id: "d2", atMs: day2, status: "success", text: "Backed up sonarr", domain: "containers", kind: "backup", live: false },
+  ];
+
+  it("matches an ISO date typed into the filter, regardless of the active language", () => {
+    expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: "2026-07-23" }).map((l) => l.id)).toEqual(["d1"]);
+    expect(
+      filterLogLines(dateLines, { domain: "all", kind: "all", text: "2026-07-24", lang: "de" }).map((l) => l.id)
+    ).toEqual(["d2"]);
+  });
+
+  it("matches the localized short date the UI actually displays", () => {
+    expect(
+      filterLogLines(dateLines, { domain: "all", kind: "all", text: "23.07", lang: "de" }).map((l) => l.id)
+    ).toEqual(["d1"]);
+    expect(
+      filterLogLines(dateLines, { domain: "all", kind: "all", text: "07/24", lang: "en" }).map((l) => l.id)
+    ).toEqual(["d2"]);
+  });
+
+  it("defaults the localized-date match to English ordering when no language is given", () => {
+    expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: "07/23" }).map((l) => l.id)).toEqual(["d1"]);
+  });
+
+  it("still narrows by plain message text alongside the new date matching", () => {
+    expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: "sonarr" }).map((l) => l.id)).toEqual(["d2"]);
   });
 });

@@ -560,6 +560,14 @@ ALTER TABLE targets ADD COLUMN last_update_result TEXT NOT NULL DEFAULT '';`,
 ALTER TABLE settings ADD COLUMN digest_enabled INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE settings ADD COLUMN digest_schedule TEXT NOT NULL DEFAULT 'weekly Mon 08:00';`,
 	},
+	{
+		// #106: private container-registry credentials for the post-backup update
+		// pull (e.g. a sponsor-gated ghcr.io image). Stored like notify_conf /
+		// cloud_conf: an AES-256-GCM-encrypted JSON array (base64) of
+		// {host, username, token} entries. Empty = anonymous pulls only.
+		version: 69, name: "settings_registry_auths",
+		sql: "ALTER TABLE settings ADD COLUMN registry_auths TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

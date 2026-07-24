@@ -91,7 +91,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#78a9ff] disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -102,7 +102,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         />
       </button>
       {error && (
-        <span className="text-xs text-[#ff8389] max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
           {error}
         </span>
       )}
@@ -162,7 +162,7 @@ function FileSetBackupButton({
         <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
       )}
       {state.phase === "success" && (
-        <span className="text-xs text-[#6fdc8c]">
+        <span className="text-xs text-statusOk">
           ✓ {t("common.done")}
           {state.snapshotId && (
             <span className="font-mono ml-1 text-carbon-textMuted">
@@ -172,7 +172,7 @@ function FileSetBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-[#ff8389] max-w-[18rem] wrap-break-word">
+        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word">
           {state.message}
         </span>
       )}
@@ -531,7 +531,7 @@ function FileSetSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-[#3a1c1c] hover:text-[#ff8389] transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -548,7 +548,7 @@ function FileSetSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-[#ff8389] pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );
 }
@@ -650,7 +650,7 @@ function FileSetRestorePanel({
                 <button
                   onClick={handleDeleteAll}
                   disabled={deletingAll || loading}
-                  className="ml-auto text-[11px] text-[#ff8389] hover:underline disabled:opacity-50 disabled:no-underline"
+                  className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </button>
@@ -662,7 +662,7 @@ function FileSetRestorePanel({
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
-          {error && <p className="py-3 text-xs text-[#ff8389]">{error}</p>}
+          {error && <p className="py-3 text-xs text-statusFail">{error}</p>}
           {!loading && !error && snapshots.length === 0 && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
           )}
@@ -764,7 +764,7 @@ function FileSetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
           />
         </div>
 
@@ -788,7 +788,7 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
           />
           <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
@@ -805,7 +805,7 @@ function FileSetDialog({
           {t("files.enabled")}
         </label>
 
-        {error && <p className="text-xs text-[#ff8389] wrap-break-word">{error}</p>}
+        {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
@@ -891,13 +891,13 @@ function FileSetRow({
             {noPath && (
               <span
                 title={t("files.noPathHint")}
-                className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#3a2f1c] text-[#f1c21b] border border-[#5a4a2a]"
+                className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBgStrong text-statusWarn border border-statusWarnBorderStrong"
               >
                 {t("files.noPath")}
               </span>
             )}
             {pathMissing && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-[#3a1c1c] text-[#ff8389] border border-[#5a2a2a]">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail border border-statusFailBorder">
                 {t("files.pathMissing")}
               </span>
             )}
@@ -937,11 +937,11 @@ function FileSetRow({
           <button
             onClick={() => void handleRemove()}
             disabled={removing}
-            className="inline-flex items-center rounded-lg bg-[#3a1c1c] px-3 py-1.5 text-xs font-medium text-[#ff8389] hover:bg-[#4a2424] transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
           >
             {removing ? t("dashboard.checking") : t("files.deleteSet")}
           </button>
-          {removeErr && <span className="text-xs text-[#ff8389]">{removeErr}</span>}
+          {removeErr && <span className="text-xs text-statusFail">{removeErr}</span>}
         </div>
         <div className="ml-auto flex flex-col items-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
@@ -1088,7 +1088,7 @@ export function Files() {
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
-      {error && <p className="text-sm text-[#ff8389]">{error}</p>}
+      {error && <p className="text-sm text-statusFail">{error}</p>}
 
       {/* Empty state — the "no separate file-backup tool needed" pitch */}
       {!loading && !error && sets.length === 0 && (

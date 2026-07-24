@@ -16,7 +16,7 @@ import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
-import { buildLogLines, filterLogLines } from "../lib/activityLog";
+import { buildLogLines, filterLogLines, formatLogDate } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
 import { formatClockTime } from "../lib/reltime";
 
@@ -50,14 +50,14 @@ function glyphFor(status: LogStatus): string {
 function colorFor(status: LogStatus): string {
   switch (status) {
     case "success":
-      return "text-[#6fdc8c]";
+      return "text-statusOk";
     case "failed":
-      return "text-[#ff8389]";
+      return "text-statusFail";
     case "running":
     case "offsite":
-      return "text-[#78a9ff]";
+      return "text-statusInfo";
     case "info":
-      return "text-[#f1c21b]";
+      return "text-statusWarn";
   }
 }
 
@@ -77,7 +77,7 @@ function glyphLabelKey(status: LogStatus): TranslationKey {
 }
 
 export function ActivityLog() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
@@ -154,8 +154,8 @@ export function ActivityLog() {
   );
 
   const filteredLines = useMemo(
-    () => filterLogLines(lines, { domain: filterDomain, kind: filterType, text: filterText }),
-    [lines, filterDomain, filterType, filterText]
+    () => filterLogLines(lines, { domain: filterDomain, kind: filterType, text: filterText, lang }),
+    [lines, filterDomain, filterType, filterText, lang]
   );
 
   // Auto-follow tail: while pinned to the bottom, stay pinned as new lines
@@ -238,7 +238,7 @@ export function ActivityLog() {
           {filteredLines.map((l) => (
             <div key={l.id} className="flex items-start gap-2">
               <span className="text-carbon-textMuted shrink-0 tabular-nums">
-                {formatClockTime(l.atMs / 1000, true)}
+                {formatLogDate(l.atMs, lang)} {formatClockTime(l.atMs / 1000, true)}
               </span>
               <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
                 {glyphFor(l.status)}

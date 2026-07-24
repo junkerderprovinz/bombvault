@@ -85,7 +85,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
           placeholder="user/bombvault/container"
-          className="flex-1 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-[#78a9ff]"
+          className="flex-1 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
         />
         <button
           onClick={handleOpen}
@@ -101,7 +101,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
         <p className="text-xs text-carbon-textMuted font-mono break-all">→ {resolved}</p>
       )}
       {!resolved && trimmed && (
-        <p className="text-xs text-[#ff8389]">
+        <p className="text-xs text-statusFail">
           {t("folder.pathHint")}
         </p>
       )}
@@ -124,13 +124,13 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
 
           {/* Error state with manual fallback */}
           {browseError && (
-            <p className="text-xs text-[#ff8389]">{browseError}</p>
+            <p className="text-xs text-statusFail">{browseError}</p>
           )}
 
           {/* Loading spinner */}
           {loading && (
             <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
-              <span className="h-3 w-3 rounded-full border-2 border-[#78a9ff] border-t-transparent animate-spin" />
+              <span className="h-3 w-3 rounded-full border-2 border-statusInfoSolid border-t-transparent animate-spin" />
               {t("folder.loading")}
             </div>
           )}

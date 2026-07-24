@@ -16,13 +16,13 @@ const MAX_RUNS = 8;
 function statusDotClass(status: string): string {
   switch (status.toLowerCase()) {
     case "success":
-      return "bg-[#6fdc8c]";
+      return "bg-statusOkSolid";
     case "failed":
-      return "bg-[#ff8389]";
+      return "bg-statusFailSolid";
     case "running":
-      return "bg-[#78a9ff]";
+      return "bg-statusInfoSolid";
     case "skipped":
-      return "bg-[#8a8a92]";
+      return "bg-statusNeutralSolid";
     default:
       return "bg-carbon-surface3";
   }

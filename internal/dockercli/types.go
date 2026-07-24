@@ -49,6 +49,12 @@ type Docker interface {
 	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
+	// PullWithAuth is Pull with an optional registry credential: registryAuth is
+	// the base64url JSON blob the Docker Engine API expects in
+	// image.PullOptions.RegistryAuth (see EncodeRegistryAuth), "" = anonymous
+	// (identical to Pull). Used by the post-backup update pull for images in
+	// private/sponsor-gated registries (#106).
+	PullWithAuth(ctx context.Context, image, registryAuth string) error
 	// ImageID returns the local image ID (sha256:…) currently resolved for a
 	// registry reference (e.g. "plexinc/pms-docker:latest"), or "" when the
 	// reference is not present locally. Used after a Pull to decide whether a

@@ -192,9 +192,9 @@ function FileSetRecoveryRow({
           )}
           {state === "busy" ? t("common.restoring") : t("snapshots.restore")}
         </button>
-        {state === "ok" && <span className="text-xs text-[#6fdc8c]">✓ {t("common.done")}</span>}
+        {state === "ok" && <span className="text-xs text-statusOk">✓ {t("common.done")}</span>}
         {state === "fail" && error && (
-          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {error}</span>
+          <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>
         )}
       </div>
     </div>
@@ -336,9 +336,9 @@ function ForeignItemRow({
           )}
           {state === "busy" ? t("common.restoring") : t("recovery.foreignRestore")}
         </button>
-        {state === "ok" && <span className="text-xs text-[#6fdc8c]">✓ {t("common.done")}</span>}
+        {state === "ok" && <span className="text-xs text-statusOk">✓ {t("common.done")}</span>}
         {state === "fail" && error && (
-          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {error}</span>
+          <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>
         )}
       </div>
     </div>
@@ -530,7 +530,7 @@ function ForeignRestoreCard({
           </button>
           {phase === "connected" && (
             <>
-              <span className="text-sm text-[#6fdc8c]">{t("recovery.foreignConnected")}</span>
+              <span className="text-sm text-statusOk">{t("recovery.foreignConnected")}</span>
               <button
                 type="button"
                 onClick={disconnect}
@@ -542,7 +542,7 @@ function ForeignRestoreCard({
           )}
         </div>
         {phase === "error" && connectError && (
-          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed wrap-break-word">
+          <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
             {connectError}
           </div>
         )}
@@ -556,7 +556,7 @@ function ForeignRestoreCard({
           <>
             {/* Session lapsed mid-browse (30-min TTL) — offer the reconnect. */}
             {sessionGone && (
-              <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed flex items-center gap-3 flex-wrap">
+              <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
                 <span className="flex-1">{t("recovery.foreignExpired")}</span>
                 <button
                   type="button"
@@ -568,7 +568,7 @@ function ForeignRestoreCard({
               </div>
             )}
             {total === 0 ? (
-              <p className="text-sm text-[#f1c21b]">{t("recovery.foreignEmpty")}</p>
+              <p className="text-sm text-statusWarn">{t("recovery.foreignEmpty")}</p>
             ) : (
               groups.map((g) => (
                 <div key={g.domain} className="flex flex-col">
@@ -946,16 +946,16 @@ export default function Recovery() {
           </button>
 
           {readableState === "ok" && (
-            <span className="text-sm text-[#6fdc8c]">{t("recovery.readable")}</span>
+            <span className="text-sm text-statusOk">{t("recovery.readable")}</span>
           )}
           {readableState === "warn" && (
-            <span className="text-sm text-[#f1c21b]">{t("recovery.notReachable")}</span>
+            <span className="text-sm text-statusWarn">{t("recovery.notReachable")}</span>
           )}
         </div>
 
         {/* Exact remedy when the key doesn't match the repo. */}
         {readableState === "bad" && (
-          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed">
+          <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed">
             {t("recovery.appKeyRemedy")}
           </div>
         )}
@@ -1042,7 +1042,7 @@ export default function Recovery() {
                     watching the spinner and can reload the moment the app is up. */}
                 {configPhase === "restarting" && (
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm text-[#78a9ff]">{t("recovery.configRestarting")}</p>
+                    <p className="text-sm text-statusInfo">{t("recovery.configRestarting")}</p>
                     <button
                       type="button"
                       onClick={() => window.location.reload()}
@@ -1054,14 +1054,14 @@ export default function Recovery() {
                 )}
                 {/* Manual restart needed (Docker socket unreachable). */}
                 {configPhase === "manual" && (
-                  <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+                  <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                     {t("recovery.configManualRestart")}
                   </div>
                 )}
                 {/* Auto-restart poll timed out — offer a manual reload. */}
                 {configPhase === "reload" && (
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xs text-[#f1c21b]">{t("recovery.configReloadWhenBack")}</span>
+                    <span className="text-xs text-statusWarn">{t("recovery.configReloadWhenBack")}</span>
                     <button
                       type="button"
                       onClick={() => window.location.reload()}
@@ -1072,7 +1072,7 @@ export default function Recovery() {
                   </div>
                 )}
                 {configPhase === "error" && configError && (
-                  <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed wrap-break-word">
+                  <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
                     {configError}
                   </div>
                 )}
@@ -1174,10 +1174,10 @@ export default function Recovery() {
                 {t("recovery.connectPreview")}
               </button>
               {attachState === "saved" && previewed && readableState === "ok" && (
-                <span className="text-sm text-[#6fdc8c]">{t("recovery.readable")}</span>
+                <span className="text-sm text-statusOk">{t("recovery.readable")}</span>
               )}
               {attachState === "error" && attachError && (
-                <span className="text-sm text-[#ff8389]">{attachError}</span>
+                <span className="text-sm text-statusFail">{attachError}</span>
               )}
             </div>
           </>
@@ -1204,7 +1204,7 @@ export default function Recovery() {
           </button>
 
           {discovered && discovered.containers + discovered.vms + discovered.files > 0 && (
-            <span className="text-sm text-[#6fdc8c]">
+            <span className="text-sm text-statusOk">
               {t("recovery.foundCounts")
                 .replace("{c}", String(discovered.containers))
                 .replace("{v}", String(discovered.vms))}
@@ -1217,10 +1217,10 @@ export default function Recovery() {
 
         {/* 0/0/0 — nothing found: point back to Step 1/2. */}
         {discovered && discovered.containers + discovered.vms + discovered.files === 0 && (
-          <p className="text-sm text-[#f1c21b]">{t("recovery.foundNone")}</p>
+          <p className="text-sm text-statusWarn">{t("recovery.foundNone")}</p>
         )}
         {discoverError && (
-          <div className="rounded-lg bg-[#2a1c1c] border border-[#4a2a2a] px-3 py-2.5 text-xs text-[#ff8389] leading-relaxed wrap-break-word">
+          <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
             {discoverError}
           </div>
         )}
@@ -1256,7 +1256,7 @@ export default function Recovery() {
               )}
               {restoreAllResult && (
                 <span
-                  className={`text-sm ${restoreAllResult.fail > 0 ? "text-[#f1c21b]" : "text-[#6fdc8c]"}`}
+                  className={`text-sm ${restoreAllResult.fail > 0 ? "text-statusWarn" : "text-statusOk"}`}
                 >
                   {t("recovery.restoreAllResult")
                     .replace("{ok}", String(restoreAllResult.ok))
@@ -1268,7 +1268,7 @@ export default function Recovery() {
 
             {/* VM restore needs the libvirt SSH link — advisory note, not a block. */}
             {vms.length > 0 && vmSshConfigured === false && (
-              <div className="rounded-lg bg-[#2a2a1c] border border-[#4a4a2a] px-3 py-2.5 text-xs text-[#f1c21b] leading-relaxed">
+              <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                 {t("recovery.vmSshNote")}
               </div>
             )}
@@ -1351,7 +1351,7 @@ export default function Recovery() {
           // Backend-provided error text shown verbatim BY DESIGN (e.g. the
           // fail-closed "set a login password" refusal when auth is off) —
           // the API answers English and is not translated client-side.
-          <span className="text-xs text-[#ff8389] wrap-break-word">✗ {kitError}</span>
+          <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
         )}
       </StepCard>
 

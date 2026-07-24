@@ -213,6 +213,54 @@ func TestSettingsFlashZipExportRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsRegistryAuthsRoundTrip pins the v69 registry_auths column (#106):
+// the migration backfills existing rows with ” (no credentials → anonymous
+// pulls, unchanged behavior), and the opaque encrypted blob round-trips
+// verbatim through UpdateSettings/GetSettings like notify_conf/cloud_conf.
+func TestSettingsRegistryAuthsRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RegistryAuths != "" {
+		t.Fatalf("default registry_auths must be empty, got %q", s.RegistryAuths)
+	}
+
+	// The store treats the value as an opaque (encrypted) blob — it must come
+	// back byte-identical.
+	const blob = "b64-ciphertext-opaque"
+	s.RegistryAuths = blob
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.RegistryAuths != blob {
+		t.Fatalf("registry_auths not round-tripped: %q", got.RegistryAuths)
+	}
+
+	// Clearing (removing every credential) persists too.
+	got.RegistryAuths = ""
+	if err := r.UpdateSettings(got); err != nil {
+		t.Fatal(err)
+	}
+	cleared, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cleared.RegistryAuths != "" {
+		t.Fatalf("registry_auths not cleared: %q", cleared.RegistryAuths)
+	}
+}
+
 func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
