@@ -5,8 +5,8 @@
 // resolveName renders "key a=1 b=2", which keeps the translation key AND the
 // interpolated params assertable without any i18n context.
 // ---------------------------------------------------------------------------
-import { describe, expect, it } from "vitest";
-import { buildLogLines, filterLogLines, formatLogDate } from "./activityLog";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildLogLines, filterLogLines, formatLogDate, preferredDateLocale } from "./activityLog";
 import type { LogLine } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap } from "./progress";
@@ -153,5 +153,32 @@ describe("filterLogLines — date search (#104)", () => {
 
   it("still narrows by plain message text alongside the new date matching", () => {
     expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: "sonarr" }).map((l) => l.id)).toEqual(["d2"]);
+  });
+});
+
+// -- preferredDateLocale (issue #104 follow-up) ------------------------------
+// Regional date order must follow the browser/system locale when present and
+// only fall back to the app language without one — an English UI in Portugal
+// shows 24/07, not the US 07/23 (manilx).
+
+describe("preferredDateLocale", () => {
+  // Node's globalThis.navigator is getter-only — vi.stubGlobal handles it.
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("prefers the browser locale over the app language", () => {
+    vi.stubGlobal("navigator", { language: "pt-PT" });
+    expect(preferredDateLocale("en")).toBe("pt-PT");
+    // and the resulting date really is day-first
+    const ts = new Date(2026, 6, 23, 5, 0, 0).getTime();
+    expect(formatLogDate(ts, preferredDateLocale("en"))).toBe("23/07");
+  });
+
+  it("falls back to the app language without a navigator locale", () => {
+    vi.stubGlobal("navigator", undefined);
+    expect(preferredDateLocale("de")).toBe("de");
+    vi.stubGlobal("navigator", {}); // navigator without language (defensive)
+    expect(preferredDateLocale("en")).toBe("en");
   });
 });
