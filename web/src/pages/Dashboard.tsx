@@ -7,6 +7,7 @@ import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
 import type { CadenceState } from "../components/CadenceBuilder";
+import { cronPeriodSeconds } from "../lib/cron";
 import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
@@ -1525,6 +1526,13 @@ function cadencePeriodDays(s: CadenceState): number {
       return Math.max(1, s.intervalDays);
     case "weekly":
       return 7 / Math.max(1, s.weekdays.length);
+    case "cron": {
+      // Raw cron cadence (#107): approximate the fire interval from the gap
+      // between its first two fires (mirrors the backend's PeriodSeconds).
+      // 0 = not computable → Infinity so it never falsely wins "soonest".
+      const secs = cronPeriodSeconds(s.cron);
+      return secs > 0 ? secs / 86400 : Infinity;
+    }
     default:
       return Infinity;
   }

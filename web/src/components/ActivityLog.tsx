@@ -16,7 +16,7 @@ import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
-import { buildLogLines, filterLogLines, formatLogDate } from "../lib/activityLog";
+import { buildLogLines, filterLogLines, formatLogDate, preferredDateLocale } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
 import { formatClockTime } from "../lib/reltime";
 
@@ -153,9 +153,15 @@ export function ActivityLog() {
     [runs, progressMap, scheduleNext, now, t]
   );
 
+  // Regional date order follows the browser/system locale, not the UI
+  // language (issue #104 follow-up: English UI in Portugal must show 24/07).
+  // Used for BOTH the per-line stamp and the filter haystack, so the shown
+  // date is always the searchable one.
+  const dateLocale = preferredDateLocale(lang);
+
   const filteredLines = useMemo(
-    () => filterLogLines(lines, { domain: filterDomain, kind: filterType, text: filterText, lang }),
-    [lines, filterDomain, filterType, filterText, lang]
+    () => filterLogLines(lines, { domain: filterDomain, kind: filterType, text: filterText, lang: dateLocale }),
+    [lines, filterDomain, filterType, filterText, dateLocale]
   );
 
   // Auto-follow tail: while pinned to the bottom, stay pinned as new lines
@@ -238,7 +244,7 @@ export function ActivityLog() {
           {filteredLines.map((l) => (
             <div key={l.id} className="flex items-start gap-2">
               <span className="text-carbon-textMuted shrink-0 tabular-nums">
-                {formatLogDate(l.atMs, lang)} {formatClockTime(l.atMs / 1000, true)}
+                {formatLogDate(l.atMs, dateLocale)} {formatClockTime(l.atMs / 1000, true)}
               </span>
               <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
                 {glyphFor(l.status)}

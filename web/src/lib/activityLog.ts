@@ -491,18 +491,34 @@ export function buildLogLines(
 // ---------------------------------------------------------------------------
 
 /**
- * formatLogDate renders a line's `atMs` as a locale-aware short date — day/
- * month in the ORDER the app's active language reads it (e.g. "23.07." for
- * de, "07/23" for en) — via Intl.DateTimeFormat. Exported so ActivityLog.tsx
- * can pair it with reltime.ts's formatClockTime for the leftmost per-line
- * stamp; filterLogLines below builds the identical string into its search
- * haystack so typing that same date filters correctly. Deliberately only the
- * date is locale-ordered — the time stays formatClockTime's fixed 24-hour
- * face, for the same reason that helper gives (a stable, unambiguous clock,
- * not a locale-varying 12/24-hour one).
+ * preferredDateLocale picks the locale used to ORDER the log's date stamps:
+ * the browser/system locale when available, the app language only as a
+ * fallback. UI language and regional date order are different things — a
+ * user in Portugal running the English UI must still read "24/07", not the
+ * US "07/24" (issue #104 follow-up). The component computes this once and
+ * passes it to BOTH formatLogDate (display) and filterLogLines (search), so
+ * what is shown is always what is searchable.
  */
-export function formatLogDate(atMs: number, lang: string): string {
-  return new Intl.DateTimeFormat(lang, { day: "2-digit", month: "2-digit" }).format(new Date(atMs));
+export function preferredDateLocale(appLang: string): string {
+  const nav = (globalThis as { navigator?: { language?: string } }).navigator;
+  return nav?.language || appLang;
+}
+
+/**
+ * formatLogDate renders a line's `atMs` as a locale-aware short date — day/
+ * month in the ORDER the given locale reads it (e.g. "23.07." for de,
+ * "24/07" for pt-PT, "07/23" for en-US) — via Intl.DateTimeFormat. Callers
+ * pass preferredDateLocale(appLang) so the REGIONAL format follows the
+ * user's system, not the UI language. Exported so ActivityLog.tsx can pair
+ * it with reltime.ts's formatClockTime for the leftmost per-line stamp;
+ * filterLogLines below builds the identical string into its search haystack
+ * so typing that same date filters correctly. Deliberately only the date is
+ * locale-ordered — the time stays formatClockTime's fixed 24-hour face, for
+ * the same reason that helper gives (a stable, unambiguous clock, not a
+ * locale-varying 12/24-hour one).
+ */
+export function formatLogDate(atMs: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit" }).format(new Date(atMs));
 }
 
 /**
