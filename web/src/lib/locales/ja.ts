@@ -545,6 +545,18 @@ const ja: Partial<Translations> = {
   "settings.metricsEnable": "/metrics を公開",
   "settings.metricsToken": "スクレイプトークン（任意）",
   "settings.metricsHint": "Grafana/Uptime Kuma 用に /metrics で Prometheus 形式のメトリクスを公開します。トークンを設定した場合は Authorization: Bearer <token> でスクレイプしてください。",
+  "settings.widget": "ダッシュボードウィジェット",
+  "settings.widgetHint": "BombVault のアクティビティログを Homepage、Organizr、Heimdall など iframe を表示できるダッシュボードに埋め込めます — ログだけの小さな独立ページです。",
+  "settings.widgetHow": "URL をダッシュボードの iframe ウィジェットに貼り付けるだけで使えます。",
+  "settings.widgetAccess": "トークンはアクティビティログへの読み取り専用アクセスのみを許可します。「無効化」で即座に取り消せます。",
+  "settings.widgetEnglish": "ウィジェットページ自体は英語のみです。Unraid ダッシュボード版は今後追加されるかもしれません。",
+  "settings.widgetGenerate": "トークンを生成",
+  "settings.widgetRegenerate": "再生成",
+  "settings.widgetDisable": "無効化",
+  "settings.widgetToken": "ウィジェットトークン",
+  "settings.widgetUrl": "ウィジェット URL",
+  "settings.widgetUrlOnce": "URL（トークン付き）は生成直後にのみ表示されます。新しい URL は再生成で取得してください。",
+  "settings.widgetPreview": "ライブプレビュー",
 
   // Email (SMTP)
   "notify.smtp": "メール (SMTP)",

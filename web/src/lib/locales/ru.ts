@@ -546,6 +546,18 @@ const ru: Partial<Translations> = {
   "settings.metricsEnable": "Публиковать /metrics",
   "settings.metricsToken": "Токен сбора (необязательно)",
   "settings.metricsHint": "Метрики в формате Prometheus по адресу /metrics для Grafana/Uptime Kuma. Если задан токен, выполняйте сбор с заголовком Authorization: Bearer <token>.",
+  "settings.widget": "Виджет для дашборда",
+  "settings.widgetHint": "Встройте журнал активности BombVault в Homepage, Organizr, Heimdall или любой дашборд с iframe-виджетом — крошечная автономная страница только с журналом.",
+  "settings.widgetHow": "Вставьте URL в iframe-виджет вашего дашборда — больше ничего не нужно.",
+  "settings.widgetAccess": "Токен даёт доступ только на чтение журнала активности и ничего больше; «Отключить» немедленно отзывает его.",
+  "settings.widgetEnglish": "Сама страница виджета только на английском. Вариант для дашборда Unraid может появиться позже.",
+  "settings.widgetGenerate": "Создать токен",
+  "settings.widgetRegenerate": "Создать заново",
+  "settings.widgetDisable": "Отключить",
+  "settings.widgetToken": "Токен виджета",
+  "settings.widgetUrl": "URL виджета",
+  "settings.widgetUrlOnce": "URL (с токеном) показывается только сразу после создания. Создайте заново, чтобы получить новый.",
+  "settings.widgetPreview": "Предпросмотр в реальном времени",
 
   // Email (SMTP)
   "notify.smtp": "Эл. почта (SMTP)",

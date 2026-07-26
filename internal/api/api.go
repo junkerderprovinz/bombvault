@@ -96,6 +96,16 @@ func (h *Handler) Router() http.Handler {
 	// the handler instead.
 	mux.HandleFunc("GET /metrics", h.handleMetrics)
 
+	// Embeddable dashboard widget (mini activity log for iframes). The page +
+	// its feed follow the /metrics pattern: allow-listed in authGate (an iframe
+	// can't carry the session cookie) and self-gated on the stored widget token
+	// inside the handlers — no token stored = 403, fail closed. The token
+	// management endpoints stay session-protected like every other /api route.
+	mux.HandleFunc("GET /widget", h.handleWidgetPage)
+	mux.HandleFunc("GET /api/widget/data", h.handleWidgetData)
+	mux.HandleFunc("POST /api/widget/token", h.handleWidgetTokenGenerate)
+	mux.HandleFunc("DELETE /api/widget/token", h.handleWidgetTokenDisable)
+
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
 	mux.HandleFunc("POST /api/containers/backup-all", h.handleBackupAll)

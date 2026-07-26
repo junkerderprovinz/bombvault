@@ -570,6 +570,18 @@ const vi: Partial<Translations> = {
   "settings.metricsEnable": "Cung cấp /metrics",
   "settings.metricsToken": "Token scrape (tùy chọn)",
   "settings.metricsHint": "Số liệu định dạng Prometheus tại /metrics cho Grafana/Uptime Kuma. Nếu đặt token, scrape với Authorization: Bearer <token>.",
+  "settings.widget": "Widget bảng điều khiển",
+  "settings.widgetHint": "Nhúng nhật ký hoạt động của BombVault vào Homepage, Organizr, Heimdall hoặc bất kỳ bảng điều khiển nào hiển thị được iframe — một trang độc lập nhỏ gọn chỉ chứa nhật ký.",
+  "settings.widgetHow": "Dán URL vào widget iframe của bảng điều khiển — chỉ cần vậy thôi.",
+  "settings.widgetAccess": "Mã thông báo chỉ cấp quyền đọc nhật ký hoạt động, không gì khác; Tắt sẽ thu hồi ngay lập tức.",
+  "settings.widgetEnglish": "Bản thân trang widget chỉ có tiếng Anh. Phiên bản cho bảng điều khiển Unraid có thể ra mắt sau.",
+  "settings.widgetGenerate": "Tạo mã thông báo",
+  "settings.widgetRegenerate": "Tạo lại",
+  "settings.widgetDisable": "Tắt",
+  "settings.widgetToken": "Mã thông báo widget",
+  "settings.widgetUrl": "URL widget",
+  "settings.widgetUrlOnce": "URL (kèm mã thông báo) chỉ hiển thị ngay sau khi tạo. Tạo lại để nhận URL mới.",
+  "settings.widgetPreview": "Xem trước trực tiếp",
 
   // Notifications — Email (SMTP)
   "notify.smtp": "Email (SMTP)",

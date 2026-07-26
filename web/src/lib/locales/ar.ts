@@ -581,6 +581,18 @@ const ar: Partial<Translations> = {
   "settings.metricsEnable": "إتاحة /metrics",
   "settings.metricsToken": "رمز الاستخلاص (اختياري)",
   "settings.metricsHint": "مقاييس بتنسيق Prometheus على /metrics لـ Grafana/Uptime Kuma. إذا حُدِّد رمز، استخلص باستخدام Authorization: Bearer <token>.",
+  "settings.widget": "ودجة لوحة التحكم",
+  "settings.widgetHint": "ضمِّن سجل نشاط BombVault في Homepage أو Organizr أو Heimdall أو أي لوحة تحكم تعرض iframe — صفحة مستقلة صغيرة تعرض السجل فقط.",
+  "settings.widgetHow": "الصق الرابط في ودجة iframe الخاصة بلوحتك — لا يحتاج إلى أي شيء آخر.",
+  "settings.widgetAccess": "يمنح الرمز وصولًا للقراءة فقط إلى سجل النشاط ولا شيء غير ذلك؛ التعطيل يلغيه فورًا.",
+  "settings.widgetEnglish": "صفحة الودجة نفسها بالإنجليزية فقط. قد تتوفر نسخة للوحة تحكم Unraid لاحقًا.",
+  "settings.widgetGenerate": "إنشاء رمز",
+  "settings.widgetRegenerate": "إعادة الإنشاء",
+  "settings.widgetDisable": "تعطيل",
+  "settings.widgetToken": "رمز الودجة",
+  "settings.widgetUrl": "رابط الودجة",
+  "settings.widgetUrlOnce": "يظهر الرابط (مع رمزه) مباشرة بعد الإنشاء فقط. أعد الإنشاء للحصول على رابط جديد.",
+  "settings.widgetPreview": "معاينة مباشرة",
 
   // Email (SMTP)
   "notify.smtp": "البريد الإلكتروني (SMTP)",
