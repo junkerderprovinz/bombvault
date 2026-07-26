@@ -106,9 +106,10 @@ function handleMessage(e: MessageEvent<string>): void {
       // Preserve the real domain: a "replicate" (off-site) phase must stay
       // distinct so anyActive can word the busy hint correctly (the activity
       // tracker refuses a backup while a replication runs). "maintenance"
-      // (prune/verify) must ALSO stay distinct — it must not masquerade as a
-      // backup, but it is deliberately excluded from anyActive() below (see
-      // there). Anything else unknown collapses to "backup".
+      // (prune/verify/drill/tamper/flash-ZIP export) must ALSO stay distinct —
+      // it must not masquerade as a backup, but it is deliberately excluded
+      // from anyActive() below (see there). Anything else unknown collapses to
+      // "backup".
       phase:
         ev.phase === "restore"
           ? "restore"
@@ -162,11 +163,13 @@ function closeSource(): void {
  * disable start buttons and show a busy hint. Returns the first matching phase so
  * the caller can word the hint ("a restore is running" vs "a backup is running").
  *
- * Deliberately excludes "maintenance" (prune/verify): every caller (BackupButton,
- * Containers/VMs/Flash/Files pages, RestorePanel, RestoreAction) uses this to
- * busy-guard repo-writing backup/restore/replicate starts. A running prune or
- * verify is not that kind of conflict, so it must not disable the bulk start
- * buttons app-wide.
+ * Deliberately excludes "maintenance" (prune/verify — and, since #109,
+ * drill/tamper/flash-ZIP export, which publish the same phase): every caller
+ * (BackupButton, Containers/VMs/Flash/Files pages, RestorePanel, RestoreAction)
+ * uses this to busy-guard repo-writing backup/restore/replicate starts. A
+ * running maintenance op is not that kind of conflict (it takes the per-domain
+ * lock itself and reports "busy" cleanly), so it must not disable the bulk
+ * start buttons app-wide.
  */
 export function anyActive(
   map: Record<string, { phase: string; active: boolean; lastSeen?: number }>

@@ -49,7 +49,7 @@ var tamperHTTPClient = &http.Client{
 // neither protected nor unprotected — so RunTamperTest returns a non-nil error and
 // records NOTHING in that case; only a real HTTP verdict is persisted. A recorded
 // protected→unprotected flip fires a protection-loss notification.
-func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdict, error) {
+func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
 	switch domain {
 	case "containers", "vms", "flash", "config", "files":
 	default:
@@ -59,6 +59,13 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdi
 	// concurrent test then reads the verdict this one recorded (no double / dropped
 	// protection-loss alert on a flip).
 	defer s.lockTamper(domain)()
+	// Publish a live "maintenance" progress pair keyed "tamper:<domain>" (mirroring
+	// prune:/verify:/drill:) so a running tamper test shows on the dashboard
+	// activity log WHILE it probes the far side (#109). The terminal event is
+	// deferred so an early error/panic can never leave a stuck live line.
+	tkey := "tamper:" + domain
+	s.progBegin(ctx, tkey, "maintenance")
+	defer func() { s.progEnd(tkey, "maintenance", err == nil) }()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
@@ -112,7 +119,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdi
 		}
 	}
 
-	verdict := TamperVerdict{Testable: true, Protected: protected}
+	verdict = TamperVerdict{Testable: true, Protected: protected}
 	if !protected {
 		verdict.Detail = strings.Join(details, "; ")
 	}
