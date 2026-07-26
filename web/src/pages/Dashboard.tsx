@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -12,19 +12,10 @@ import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
-
-// humanBytes formats a byte count with a binary (1024) unit and one decimal.
-function humanBytes(n: number): string {
-  if (!n || n <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  let v = n;
-  let i = 0;
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024;
-    i++;
-  }
-  return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
-}
+// humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
+// storage forecast line shares the exact formatter of the size column.
+import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
+import type { TranslationKey } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
 // Run kind/target label helpers — shared by every dashboard card that renders
@@ -1090,7 +1081,20 @@ function mondayIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
 
-function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function HealthHeatmapCard({
+  t,
+  selectedDay,
+  onSelectDay,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  /** The Activity Log's active day filter (ISO YYYY-MM-DD, local) — the
+   *  matching cell renders an accent outline; clicking it again clears. */
+  selectedDay: string | null;
+  /** Fired with a cell's local ISO day — the Dashboard toggles the Activity
+   *  Log day filter and scrolls the log into view. Zero-run days fire too:
+   *  the log then honestly shows nothing for that day. */
+  onSelectDay: (isoDay: string) => void;
+}) {
   const [days, setDays] = useState<HistoryDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [domain, setDomain] = useState<HeatDomain>("containers");
@@ -1191,13 +1195,25 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   if (!cell.date) {
                     return <div key={cell.key} className="w-[11px] h-[11px]" />;
                   }
+                  const date = cell.date;
                   const stat = cell.stat ?? { ok: 0, failed: 0 };
+                  const active = selectedDay === date;
+                  // A real <button> for free keyboard operability (Enter/
+                  // Space) — Tailwind's preflight strips the browser button
+                  // chrome, so only the cell's own size/fill classes remain.
+                  // The tooltip stays the plain "<date>: N ok, N failed" data
+                  // line (it doubles as the accessible name).
                   return (
-                    <div
+                    <button
                       key={cell.key}
-                      className="w-[11px] h-[11px] rounded-xs"
+                      type="button"
+                      onClick={() => onSelectDay(date)}
+                      aria-pressed={active}
+                      className={`w-[11px] h-[11px] rounded-xs cursor-pointer focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid ${
+                        active ? "outline-solid outline-2 outline-accent" : ""
+                      }`}
                       style={{ backgroundColor: cellColor(cell.stat) }}
-                      title={`${cell.date}: ${stat.ok} ok, ${stat.failed} failed`}
+                      title={`${date}: ${stat.ok} ok, ${stat.failed} failed`}
                     />
                   );
                 })}
@@ -1284,11 +1300,24 @@ interface DomainStats {
   domain: StorageDomain;
   stats: RepoStat[];
   latest: RepoStat | null;
+  /** Growth + time-to-full forecast riding the same /api/stats response. */
+  forecast: StorageForecast | null;
 }
 
 function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [data, setData] = useState<DomainStats[] | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Resolves a translation key (+ optional {placeholder} params) for the
+  // forecast line — the same injected seam ActivityLog uses, so
+  // buildForecastLine stays pure and testable without an I18nProvider.
+  const resolveForecast: ResolveForecast = (key, params) => {
+    let s = t(key as TranslationKey);
+    if (params) {
+      for (const [name, value] of Object.entries(params)) s = s.split(`{${name}}`).join(value);
+    }
+    return s;
+  };
 
   useEffect(() => {
     let active = true;
@@ -1301,6 +1330,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             domain: domains[i],
             stats: res.ok ? (res.stats ?? []) : [],
             latest: res.ok ? (res.latest ?? null) : null,
+            forecast: res.ok ? (res.forecast ?? null) : null,
           }))
         );
       })
@@ -1344,34 +1374,55 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               d.latest && d.latest.restoreSize > 0 && d.latest.rawSize > 0
                 ? `${(d.latest.restoreSize / d.latest.rawSize).toFixed(1)}x`
                 : "—";
+            // Compact per-domain forecast line (growth/week + time-to-full +
+            // free space) from the same /api/stats response. Null when the
+            // backend could determine nothing — then no line renders at all.
+            const forecastLine = buildForecastLine(d.forecast, resolveForecast);
             return (
-              <div key={d.domain} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-sm min-w-0">
-                <span
-                  className={`font-medium w-28 shrink-0 truncate ${
-                    has ? "text-carbon-text" : "text-carbon-textMuted"
-                  }`}
-                >
-                  {domainLabel(d.domain)}
-                </span>
-                {has && d.latest ? (
-                  <>
-                    <span className="text-carbon-text tabular-nums w-20 shrink-0 text-right">
-                      {humanBytes(d.latest.rawSize)}
-                    </span>
-                    <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
-                      {t("dashboard.dedup")} {dedup}
-                    </span>
-                    <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
-                      {d.latest.snapshots} {t("dashboard.snapshotsLabel")}
-                    </span>
-                    <span className="ml-auto shrink-0">
-                      <Sparkline values={d.stats.map((s) => s.rawSize)} />
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-xs text-carbon-textMuted flex-1">
-                    {t("dashboard.noStats")}
+              <div key={d.domain} className="flex flex-col gap-0.5 py-2.5 min-w-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm min-w-0">
+                  <span
+                    className={`font-medium w-28 shrink-0 truncate ${
+                      has ? "text-carbon-text" : "text-carbon-textMuted"
+                    }`}
+                  >
+                    {domainLabel(d.domain)}
                   </span>
+                  {has && d.latest ? (
+                    <>
+                      <span className="text-carbon-text tabular-nums w-20 shrink-0 text-right">
+                        {humanBytes(d.latest.rawSize)}
+                      </span>
+                      <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
+                        {t("dashboard.dedup")} {dedup}
+                      </span>
+                      <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
+                        {d.latest.snapshots} {t("dashboard.snapshotsLabel")}
+                      </span>
+                      <span className="ml-auto shrink-0">
+                        <Sparkline values={d.stats.map((s) => s.rawSize)} />
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-carbon-textMuted flex-1">
+                      {t("dashboard.noStats")}
+                    </span>
+                  )}
+                </div>
+                {forecastLine && (
+                  <p className="pl-1 text-xs text-carbon-textSub wrap-break-word">
+                    {forecastLine.growth}
+                    {forecastLine.growth && (forecastLine.projection || forecastLine.free) ? " · " : ""}
+                    {forecastLine.projection && (
+                      /* Near-term projection (< 8 weeks to full) flips to the
+                         existing warn text token; otherwise it stays muted. */
+                      <span className={forecastLine.warn ? "text-statusWarn" : undefined}>
+                        {forecastLine.projection}
+                      </span>
+                    )}
+                    {forecastLine.projection && forecastLine.free ? " · " : ""}
+                    {forecastLine.free}
+                  </p>
                 )}
               </div>
             );
@@ -1730,6 +1781,24 @@ export function Dashboard() {
     };
   }, []);
 
+  // Heatmap → Activity Log drilldown: clicking a heatmap cell narrows the log
+  // to that LOCAL calendar day (ISO YYYY-MM-DD — the same en-CA local mapping
+  // the heatmap cells are keyed by) and scrolls the log card into view.
+  // Clicking the active day again — or the chip's × inside ActivityLog —
+  // clears it. State lives here because the two cards are independent,
+  // individually hideable dashboard blocks with no other shared parent.
+  const [logDayFilter, setLogDayFilter] = useState<string | null>(null);
+  const activityLogBlockRef = useRef<HTMLDivElement>(null);
+  const selectLogDay = (isoDay: string) => {
+    const next = logDayFilter === isoDay ? null : isoDay;
+    setLogDayFilter(next);
+    if (next === null) return; // toggled off — stay put, nothing to show
+    const el = activityLogBlockRef.current;
+    if (!el) return; // Activity Log block hidden via customize — filter still set
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+  };
+
   // Customizable dashboard (#46) — everything below the heading + banners is a
   // reorderable / hideable block, persisted per-browser via useDashboardLayout.
   const [editing, setEditing] = useState(false);
@@ -1760,7 +1829,13 @@ export function Dashboard() {
     {
       id: "activityLog",
       label: t("activityLog.title"),
-      node: <ActivityLog />,
+      // The wrapper div carries the scroll anchor for the heatmap drilldown
+      // (scroll-mt keeps the card heading clear of the viewport's top edge).
+      node: (
+        <div ref={activityLogBlockRef} className="scroll-mt-4">
+          <ActivityLog dayFilter={logDayFilter} onClearDayFilter={() => setLogDayFilter(null)} />
+        </div>
+      ),
     },
     {
       id: "stats",
@@ -1793,7 +1868,7 @@ export function Dashboard() {
     {
       id: "heatmap",
       label: t("dashboard.healthTitle"),
-      node: <HealthHeatmapCard t={t} />,
+      node: <HealthHeatmapCard t={t} selectedDay={logDayFilter} onSelectDay={selectLogDay} />,
     },
     {
       id: "storage",

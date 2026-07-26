@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, ApiError } from "../lib/api";
-import type { Container, MountInfo } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, ApiError } from "../lib/api";
+import type { Container, ExcludeSuggestion, MountInfo } from "../lib/api";
+import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
@@ -740,16 +741,24 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
     };
   }, [text, name, open]);
 
-  async function save() {
+  // The current exclude lines as the editor holds them (unsaved edits included) —
+  // the single source both the save button and the assistant's one-click actions
+  // work from, so they can never diverge.
+  const currentLines = text
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // saveLines persists an explicit line list and mirrors it back into the
+  // textarea, sharing the editor's save state machine. The save button passes
+  // the parsed textarea; the assistant passes the list ± one line.
+  async function saveLines(list: string[]) {
     setState("saving");
     setMsg(null);
-    const list = text
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
     try {
       const r = await setContainerExcludes(name, list);
       if (r.ok) {
+        setText(list.join("\n"));
         setState("saved");
         setTimeout(() => setState("idle"), 2500);
       } else {
@@ -761,6 +770,56 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
       setMsg(err instanceof Error ? err.message : t("excludes.error"));
     }
   }
+
+  async function save() {
+    await saveLines(currentLines);
+  }
+
+  // --- Exclusion assistant: server-side scan for junk/large folders with
+  // one-click exclude.
+  const [assistOpen, setAssistOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [suggestions, setSuggestions] = useState<ExcludeSuggestion[] | null>(null); // null = not scanned yet
+  const [truncated, setTruncated] = useState(false);
+  const [assistErr, setAssistErr] = useState<string | null>(null);
+
+  async function scan() {
+    setScanning(true);
+    setAssistErr(null);
+    try {
+      const r = await suggestContainerExcludes(name);
+      if (r.ok) {
+        setSuggestions(r.suggestions);
+        setTruncated(r.truncated);
+      } else {
+        setSuggestions([]);
+        setAssistErr(r.error ?? t("excludes.assistScanFailed"));
+      }
+    } catch (err) {
+      setSuggestions([]);
+      setAssistErr(err instanceof Error ? err.message : t("excludes.assistScanFailed"));
+    }
+    setScanning(false);
+  }
+
+  function toggleAssistant() {
+    const opening = !assistOpen;
+    setAssistOpen(opening);
+    if (opening && suggestions === null) void scan();
+  }
+
+  async function addExclude(line: string) {
+    if (currentLines.includes(line)) return;
+    await saveLines([...currentLines, line]);
+  }
+
+  async function removeExclude(line: string) {
+    await saveLines(currentLines.filter((l) => l !== line));
+  }
+
+  // A suggestion whose line is already stored disappears from the list (it shows
+  // up in the current-exclusions chips instead).
+  const openSuggestions = (suggestions ?? []).filter((sg) => !currentLines.includes(sg.line));
 
   const inputCls =
     "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
@@ -829,6 +888,96 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
             </button>
             {state === "saved" && <span className="text-xs text-statusOk">{t("excludes.saved")}</span>}
             {state === "error" && msg && <span className="text-xs text-statusFail wrap-break-word">{msg}</span>}
+          </div>
+
+          {/* Exclusion assistant */}
+          <div className="mt-1 flex flex-col gap-2">
+            <button
+              onClick={toggleAssistant}
+              className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : ""}`}>
+                <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t("excludes.assistTitle")}
+            </button>
+            {assistOpen && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => void scan()}
+                    disabled={scanning}
+                    className="rounded-lg bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                  >
+                    {scanning
+                      ? t("excludes.assistScanning")
+                      : suggestions === null
+                        ? t("excludes.assistScan")
+                        : t("excludes.assistRescan")}
+                  </button>
+                  {truncated && !scanning && (
+                    <span className="text-xs text-statusWarn">{t("excludes.assistTruncated")}</span>
+                  )}
+                  {assistErr && !scanning && <span className="text-xs text-statusFail wrap-break-word">{assistErr}</span>}
+                </div>
+                {!scanning && suggestions !== null && !assistErr && openSuggestions.length === 0 && (
+                  <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
+                )}
+                {!scanning && openSuggestions.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    {openSuggestions.map((sg) => (
+                      <div
+                        key={sg.line}
+                        title={sg.line}
+                        className="flex items-center gap-2 rounded-sm bg-carbon-surface2 px-2 py-1.5"
+                      >
+                        <span className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text">{sg.path}</span>
+                        <span
+                          className={`inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-medium ${
+                            sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusInfoBg text-statusInfo"
+                          }`}
+                        >
+                          {sg.reason === "large" ? t("excludes.assistReasonLarge") : t("excludes.assistReasonCache")}
+                        </span>
+                        <span className="text-xs text-carbon-textSub whitespace-nowrap">{humanBytes(sg.sizeBytes)}</span>
+                        <button
+                          onClick={() => void addExclude(sg.line)}
+                          disabled={state === "saving"}
+                          className="rounded-lg bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                        >
+                          {t("excludes.assistExclude")}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-carbon-textSub">{t("excludes.assistCurrent")}</p>
+                {currentLines.length === 0 ? (
+                  <p className="text-xs text-carbon-textMuted">{t("excludes.assistNoneYet")}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {currentLines.map((line) => (
+                      <span
+                        key={line}
+                        className="inline-flex items-center gap-1.5 rounded-sm bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
+                      >
+                        {line}
+                        <button
+                          onClick={() => void removeExclude(line)}
+                          disabled={state === "saving"}
+                          aria-label={t("excludes.assistRemoveLine").replace("{line}", line)}
+                          title={t("excludes.assistRemove")}
+                          className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

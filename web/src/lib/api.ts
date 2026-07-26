@@ -180,6 +180,12 @@ export interface Settings {
   digestEnabled: boolean;
   /** Digest cadence (shared schedule grammar; default "weekly Mon 08:00"). */
   digestSchedule: string;
+  /** Anacron-style catch-up: a scheduled backup the server slept through (it
+   *  was off across the fire) runs ~2 minutes after the next start. Default on. */
+  catchUpMissed: boolean;
+  /** Daily overdue-backup watchdog: one push notification per overdue episode
+   *  through the configured notify channels. Default on. */
+  watchdogEnabled: boolean;
   /** Private container-registry credentials for the post-backup update pull
    *  (#106). The submitted list REPLACES the stored one (a removed entry is
    *  deleted); per entry the token follows the metricsToken contract: GET
@@ -700,6 +706,11 @@ export interface NotifyConfig {
   smtpFrom: string;
   smtpTo: string;
   smtpTls: string; // "starttls" | "tls" | "none"
+  // Full notify endpoint of a user-run Apprise API server (caronc/apprise-api),
+  // typically http://host:8000/notify/<key> — fans out to Apprise's 100+ services.
+  appriseUrl: string;
+  // Optional comma-separated Apprise tag filter (payload "tag"); blank = all targets.
+  appriseTags: string;
   // #56: collapse a scheduled per-domain run's per-item messages into one summary.
   scheduledSummary: boolean;
   // #56: notify per container updated by the post-backup image update.
@@ -807,6 +818,31 @@ export function previewContainerExcludes(
     method: "POST",
     body: JSON.stringify({ patterns }),
   });
+}
+
+/** One exclusion-assistant scan candidate: a directory in this container's
+ *  backup worth excluding. `path` is relative to the backed-up folder (display),
+ *  `line` is the ready-to-store exclude line (container path when a mount covers
+ *  it), `reason` says why it surfaced. */
+export interface ExcludeSuggestion {
+  path: string;
+  line: string;
+  sizeBytes: number;
+  reason: "known-cache" | "large";
+}
+
+/**
+ * GET /api/containers/{name}/excludes/suggest — the exclusion assistant's scan:
+ * walks the container's backed-up folders server-side and returns exclude
+ * candidates (well-known junk dirs like cache/tmp/logs by name, plus any
+ * directory over the size threshold), biggest first, capped. Depth- and
+ * time-bounded; `truncated` means the time budget ran out and the list is
+ * partial. Read-only — picked lines are stored via setContainerExcludes.
+ */
+export function suggestContainerExcludes(
+  name: string
+): Promise<{ ok: boolean; error?: string; suggestions: ExcludeSuggestion[]; truncated: boolean }> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest`);
 }
 
 /**
@@ -1249,10 +1285,28 @@ export interface RepoStat {
   snapshots: number;
 }
 
+/**
+ * Storage forecast riding the /api/stats response (backend contract:
+ * internal/api/forecast.go). Every field is optional — absent means "unknown":
+ * `growthBytesPerWeek` is the repo's growth slope over the trailing ~4 weeks of
+ * size samples (negative when the repo shrank), `freeBytes` the free space on
+ * the volume the LOCAL repo lives on, and `weeksToFull` (one decimal) is only
+ * present when growth is known AND positive AND freeBytes is known — a flat or
+ * shrinking repo never "fills" the disk. The whole object is null/absent when
+ * nothing could be determined.
+ */
+export interface StorageForecast {
+  growthBytesPerWeek?: number;
+  freeBytes?: number;
+  weeksToFull?: number;
+}
+
 export interface StatsResponse {
   ok: boolean;
   stats?: RepoStat[];
   latest?: RepoStat | null;
+  /** Growth + time-to-full projection for the storage card; null when unknown. */
+  forecast?: StorageForecast | null;
   error?: string;
 }
 

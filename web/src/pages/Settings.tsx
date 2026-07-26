@@ -828,6 +828,8 @@ const emptyNotify: NotifyConfig = {
   smtpFrom: "",
   smtpTo: "",
   smtpTls: "starttls",
+  appriseUrl: "",
+  appriseTags: "",
   scheduledSummary: false,
   notifyOnUpdate: false,
 };
@@ -983,6 +985,24 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <option value="ntfy">ntfy</option>
           </select>
         </label>
+      </div>
+
+      {/* Apprise API: posts to a user-run apprise-api server, unlocking Apprise's
+          100+ services without bundling Python. Shares the card's Save + Test bar
+          like the other channels. */}
+      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+        <span className="text-xs font-medium text-carbon-textSub">{t("notify.apprise")}</span>
+        <label className={labelCls}>
+          {t("notify.appriseUrl")}
+          <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
+            placeholder="http://apprise:8000/notify/bombvault" className={inputCls} />
+        </label>
+        <label className={labelCls}>
+          {t("notify.appriseTags")}
+          <input value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
+            placeholder="backups,homelab" className={inputCls} />
+        </label>
+        <p className="text-xs text-carbon-textMuted">{t("notify.appriseHint")}</p>
       </div>
 
       <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
@@ -2120,6 +2140,11 @@ export function SettingsPage() {
   const [digestSaveState, setDigestSaveState] = useState<SaveState>("idle");
   const [digestSaveError, setDigestSaveError] = useState<string | null>(null);
 
+  // Overdue-backup watchdog (notifications tab) — its own save state, same
+  // baseline-merging save() as the digest card above it.
+  const [watchdogSaveState, setWatchdogSaveState] = useState<SaveState>("idle");
+  const [watchdogSaveError, setWatchdogSaveError] = useState<string | null>(null);
+
   // Schedules tab (migrated from the retired Plans page). The container list
   // feeds the Containers schedule section's included-members list; syncSchedules
   // applies the Containers cadence to VMs + Flash; schedSave* drives its SaveBar.
@@ -2309,6 +2334,8 @@ export function SettingsPage() {
     // Self-backup cadence + scheduled off-site tamper test.
     patch.configSchedule = settings.configSchedule;
     patch.tamperTestSchedule = settings.tamperTestSchedule;
+    // Anacron-style catch-up toggle (Missed schedules card on this tab).
+    patch.catchUpMissed = settings.catchUpMissed;
     return patch;
   }
 
@@ -2548,6 +2575,20 @@ export function SettingsPage() {
             }
             t={t}
           />
+
+          {/* Missed schedules: anacron-style catch-up after start. Backend runs
+              the missed domain job ~2 minutes after boot (see internal/schedule
+              CatchUpMissed). */}
+          <Card title={t("settings.missedSchedulesTitle")}>
+            <ToggleRow
+              label={t("settings.catchUpMissed")}
+              description={t("settings.catchUpMissedHint")}
+              checked={settings.catchUpMissed}
+              onChange={(v) =>
+                setSettings((prev) => (prev ? { ...prev, catchUpMissed: v } : prev))
+              }
+            />
+          </Card>
 
           {/* Restore-check schedule (schedulesChecks): the scheduled off-site
               append-only tamper test. Previously had no UI editor at all. */}
@@ -3472,6 +3513,34 @@ export function SettingsPage() {
                 },
                 setDigestSaveState,
                 setDigestSaveError
+              )
+            }
+            t={t}
+          />
+        </Card>
+      )}
+
+      {/* NOTIFICATIONS — Overdue-backup watchdog: a fixed daily check (09:00)
+          that pushes ONE notification per overdue episode through the channels
+          configured above; a new successful backup re-arms it. */}
+      {tab === "notifications" && (
+        <Card title={t("settings.watchdogTitle")}>
+          <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.watchdogHint")}</p>
+          <ToggleRow
+            label={t("settings.watchdogToggle")}
+            checked={settings.watchdogEnabled}
+            onChange={(v) =>
+              setSettings((prev) => (prev ? { ...prev, watchdogEnabled: v } : prev))
+            }
+          />
+          <SaveBar
+            state={watchdogSaveState}
+            error={watchdogSaveError}
+            onSave={() =>
+              void save(
+                { watchdogEnabled: settings.watchdogEnabled },
+                setWatchdogSaveState,
+                setWatchdogSaveError
               )
             }
             t={t}

@@ -165,6 +165,10 @@ type Service struct {
 	// SetResticCacheDir). Empty means the cache lives at restic's default
 	// (unmanaged) location, so the size-based trim is skipped. See TrimResticCache.
 	resticCacheDir string
+	// diskFree is the storage forecast's free-space probe seam: nil (the normal
+	// case) uses the platform statfs implementation (diskFreeBytes); tests
+	// inject a fake. Accessed via diskFreeFn.
+	diskFree func(path string) (uint64, error)
 	// repoMu serialises operations per domain repo. A backup holds its domain's
 	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /

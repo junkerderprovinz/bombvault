@@ -276,6 +276,20 @@ func TestBackupArgsExcludes(t *testing.T) {
 	}
 }
 
+func TestBackupArgsContainerExcludes(t *testing.T) {
+	// A container backup carries the RESOLVED per-container exclude list (the
+	// exclusion assistant / excludes editor output): anchored host-mount paths
+	// and bare names alike each become their own --exclude flag, in order,
+	// between the --tag flags and the -- path separator.
+	got := BackupArgs("/repo", []string{"/host/user/user/appdata/plex"}, []string{"container:plex"}, Mode{Encrypted: true},
+		"/host/user/user/appdata/plex/Cache", "logs")
+	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex",
+		"--exclude", "/host/user/user/appdata/plex/Cache", "--exclude", "logs", "--", "/host/user/user/appdata/plex"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}

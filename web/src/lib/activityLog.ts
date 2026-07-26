@@ -90,6 +90,7 @@ const JOB_KEYS: Record<string, string> = {
   drill: "activityLog.jobDrill",
   tamper: "activityLog.jobTamper",
   digest: "activityLog.jobDigest",
+  watchdog: "activityLog.jobWatchdog",
 };
 
 /** Translates a domain literal ("containers"/"vms"/"flash"/"config"/"files");
@@ -100,7 +101,7 @@ function domainLabel(resolveName: ResolveName, domain: string): string {
 }
 
 /** Translates a schedule job literal ("backup"/"offsite"/"drill"/"tamper"/
- *  "digest"); an unknown literal falls back to the raw string. */
+ *  "digest"/"watchdog"); an unknown literal falls back to the raw string. */
 function jobLabel(resolveName: ResolveName, job: string): string {
   const key = JOB_KEYS[job];
   return key ? resolveName(key) : job;
@@ -589,14 +590,22 @@ export interface LogFilter {
    *  matching exactly what formatLogDate displays (#108). Tests pass an
    *  explicit locale for deterministic assertions. */
   lang?: string;
+  /** Optional exact-day filter (ISO YYYY-MM-DD), set by clicking a Dashboard
+   *  heatmap cell: keeps only lines whose `atMs` falls on that LOCAL calendar
+   *  day (the same local-day mapping the heatmap itself uses). Like the
+   *  domain/kind quick-filters — and unlike the free-text search — the idle
+   *  "next up" line is exempt, so the day chip can never hide the only line
+   *  telling the user what's coming next. */
+  day?: string;
 }
 
 /**
- * Narrows `lines` to those matching the domain/type quick-filters and the
- * free-text search — a pure filter, extracted from ActivityLog.tsx so it can
- * be unit-tested independently of any rendering. The free-text search
- * matches against the line's message AND its date (both the ISO form and the
- * locale-short form the UI displays), so typing a date narrows the log too.
+ * Narrows `lines` to those matching the domain/type quick-filters, the
+ * optional heatmap day filter and the free-text search — a pure filter,
+ * extracted from ActivityLog.tsx so it can be unit-tested independently of
+ * any rendering. The free-text search matches against the line's message AND
+ * its date (both the ISO form and the locale-short form the UI displays), so
+ * typing a date narrows the log too.
  */
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
@@ -608,6 +617,7 @@ export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
     if (!l.idle) {
       if (filter.domain !== "all" && l.domain !== filter.domain) return false;
       if (filter.kind !== "all" && l.kind !== filter.kind) return false;
+      if (filter.day && isoDateOf(l.atMs) !== filter.day) return false;
     }
     if (q) {
       const haystack = `${l.text} ${isoDateOf(l.atMs)} ${formatLogDate(l.atMs, lang)}`.toLowerCase();

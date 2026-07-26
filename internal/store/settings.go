@@ -161,6 +161,14 @@ type Settings struct {
 	// DigestSchedule is the digest cadence (same grammar as the backup
 	// schedules). Defaults to "weekly Mon 08:00".
 	DigestSchedule string
+	// CatchUpMissed runs a scheduled backup that was MISSED while the app was
+	// down (the server was off across the scheduled fire) shortly after the next
+	// start, anacron-style. Default on.
+	CatchUpMissed bool
+	// WatchdogEnabled turns on the daily overdue-backup watchdog: an active
+	// notification (once per overdue episode) when a domain's backups are
+	// overdue by the dashboard's own RPO rule. Default on.
+	WatchdogEnabled bool
 }
 
 // GetSettings returns the current app settings.
@@ -183,13 +191,15 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
 		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
 		       prune_image_after_update, session_epoch, restic_cache_max_mb,
-		       digest_enabled, digest_schedule
+		       digest_enabled, digest_schedule,
+		       catch_up_missed, watchdog_enabled
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
+	var catchUpMissed, watchdogEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -209,6 +219,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
 		&pruneImageAfterUpdate, &s.SessionEpoch, &s.ResticCacheMaxMB,
 		&digestEnabled, &s.DigestSchedule,
+		&catchUpMissed, &watchdogEnabled,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -234,6 +245,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.FlashZipExportEnabled = flashZipExportEnabled != 0
 	s.PruneImageAfterUpdate = pruneImageAfterUpdate != 0
 	s.DigestEnabled = digestEnabled != 0
+	s.CatchUpMissed = catchUpMissed != 0
+	s.WatchdogEnabled = watchdogEnabled != 0
 	return s, nil
 }
 
@@ -307,7 +320,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  session_epoch                = ?,
 		  restic_cache_max_mb          = ?,
 		  digest_enabled               = ?,
-		  digest_schedule              = ?
+		  digest_schedule              = ?,
+		  catch_up_missed              = ?,
+		  watchdog_enabled             = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -332,6 +347,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
 		boolInt(s.PruneImageAfterUpdate), s.SessionEpoch, s.ResticCacheMaxMB,
 		boolInt(s.DigestEnabled), s.DigestSchedule,
+		boolInt(s.CatchUpMissed), boolInt(s.WatchdogEnabled),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
