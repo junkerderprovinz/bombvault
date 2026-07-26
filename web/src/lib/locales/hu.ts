@@ -556,6 +556,18 @@ const hu: Partial<Translations> = {
   "settings.metricsEnable": "/metrics közzététele",
   "settings.metricsToken": "Lekérdezési token (opcionális)",
   "settings.metricsHint": "Prometheus-formátumú metrikák a /metrics címen a Grafana/Uptime Kuma számára. Ha be van állítva token, az Authorization: Bearer <token> fejléccel kérdezd le.",
+  "settings.widget": "Irányítópult-widget",
+  "settings.widgetHint": "Ágyazd be a BombVault tevékenységnaplóját a Homepage-be, az Organizrba, a Heimdallba vagy bármely irányítópultba, amely iframe-et jelenít meg — egy apró önálló oldal csak a naplóval.",
+  "settings.widgetHow": "Illeszd be az URL-t az irányítópultod iframe-widgetjébe — másra nincs szükség.",
+  "settings.widgetAccess": "A token csak olvasási hozzáférést ad a tevékenységnaplóhoz, semmi máshoz; a Letiltás azonnal visszavonja.",
+  "settings.widgetEnglish": "Maga a widget-oldal csak angolul érhető el. Az Unraid-irányítópulthoz később jöhet egy változat.",
+  "settings.widgetGenerate": "Token létrehozása",
+  "settings.widgetRegenerate": "Újragenerálás",
+  "settings.widgetDisable": "Letiltás",
+  "settings.widgetToken": "Widget-token",
+  "settings.widgetUrl": "Widget-URL",
+  "settings.widgetUrlOnce": "Az URL (a tokennel) csak közvetlenül a létrehozás után látható. Újat az újragenerálással kapsz.",
+  "settings.widgetPreview": "Élő előnézet",
 
   // Notifications — SMTP
   "notify.smtp": "E-mail (SMTP)",

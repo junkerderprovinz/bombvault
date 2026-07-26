@@ -581,6 +581,18 @@ const th: Partial<Translations> = {
   "settings.metricsEnable": "เปิดเผย /metrics",
   "settings.metricsToken": "โทเค็น scrape (ไม่บังคับ)",
   "settings.metricsHint": "เมตริกรูปแบบ Prometheus ที่ /metrics สำหรับ Grafana/Uptime Kuma หากตั้งโทเค็นไว้ ให้ scrape ด้วย Authorization: Bearer <token>",
+  "settings.widget": "วิดเจ็ตแดชบอร์ด",
+  "settings.widgetHint": "ฝังบันทึกกิจกรรมของ BombVault ลงใน Homepage, Organizr, Heimdall หรือแดชบอร์ดใดก็ได้ที่แสดง iframe — หน้าเล็ก ๆ แบบสแตนด์อโลนที่มีเฉพาะบันทึก",
+  "settings.widgetHow": "วาง URL ลงในวิดเจ็ต iframe ของแดชบอร์ดของคุณ — แค่นั้นก็พอ",
+  "settings.widgetAccess": "โทเคนให้สิทธิ์อ่านอย่างเดียวกับบันทึกกิจกรรมเท่านั้น ไม่มีอย่างอื่น การปิดใช้งานจะเพิกถอนทันที",
+  "settings.widgetEnglish": "หน้าวิดเจ็ตเองมีเฉพาะภาษาอังกฤษ เวอร์ชันสำหรับแดชบอร์ด Unraid อาจตามมาภายหลัง",
+  "settings.widgetGenerate": "สร้างโทเคน",
+  "settings.widgetRegenerate": "สร้างใหม่",
+  "settings.widgetDisable": "ปิดใช้งาน",
+  "settings.widgetToken": "โทเคนวิดเจ็ต",
+  "settings.widgetUrl": "URL ของวิดเจ็ต",
+  "settings.widgetUrlOnce": "URL (พร้อมโทเคน) จะแสดงเฉพาะทันทีหลังสร้างเท่านั้น สร้างใหม่เพื่อรับอันใหม่",
+  "settings.widgetPreview": "ตัวอย่างแบบสด",
 
   // Email (SMTP)
   "notify.smtp": "อีเมล (SMTP)",

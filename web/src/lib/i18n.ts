@@ -390,6 +390,20 @@ export const en = {
   "settings.metricsToken": "Scrape token (optional)",
   "settings.metricsHint": "Prometheus-format metrics at /metrics for Grafana/Uptime Kuma. If a token is set, scrape with Authorization: Bearer <token>.",
 
+  // Dashboard widget (embeddable activity log)
+  "settings.widget": "Dashboard widget",
+  "settings.widgetHint": "Embed BombVault's activity log in Homepage, Organizr, Heimdall or any dashboard that can show an iframe — a tiny standalone page with just the log.",
+  "settings.widgetHow": "Paste the URL into your dashboard's iframe widget — that is all it needs.",
+  "settings.widgetAccess": "The token grants read-only access to the activity log and nothing else; Disable revokes it immediately.",
+  "settings.widgetEnglish": "The widget page itself is English-only. An Unraid dashboard variant may come later.",
+  "settings.widgetGenerate": "Generate token",
+  "settings.widgetRegenerate": "Regenerate",
+  "settings.widgetDisable": "Disable",
+  "settings.widgetToken": "Widget token",
+  "settings.widgetUrl": "Widget URL",
+  "settings.widgetUrlOnce": "The URL (with its token) is shown only right after generating. Regenerate to get a fresh one.",
+  "settings.widgetPreview": "Live preview",
+
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
   "rclone.hint": "Paste an rclone config to back up to the cloud (Backblaze B2, S3, Google Drive, …). It is stored encrypted. SMB/NFS need no rclone: mount the share on Unraid and set a Backup Path to it.",
@@ -1359,6 +1373,20 @@ export const de: Translations = {
   "settings.metricsEnable": "/metrics bereitstellen",
   "settings.metricsToken": "Scrape-Token (optional)",
   "settings.metricsHint": "Prometheus-Metriken unter /metrics für Grafana/Uptime Kuma. Mit gesetztem Token via Authorization: Bearer <token> abrufen.",
+
+  // Dashboard widget (embeddable activity log)
+  "settings.widget": "Dashboard-Widget",
+  "settings.widgetHint": "BombVaults Aktivitätslog in Homepage, Organizr, Heimdall oder jedem Dashboard mit iframe-Widget einbetten — eine winzige eigenständige Seite nur mit dem Log.",
+  "settings.widgetHow": "Die URL einfach ins iframe-Widget des Dashboards einfügen — mehr braucht es nicht.",
+  "settings.widgetAccess": "Das Token erlaubt nur Lesezugriff auf das Aktivitätslog, sonst nichts; Deaktivieren widerruft es sofort.",
+  "settings.widgetEnglish": "Die Widget-Seite selbst ist nur auf Englisch. Eine Unraid-Dashboard-Variante kommt eventuell später.",
+  "settings.widgetGenerate": "Token erzeugen",
+  "settings.widgetRegenerate": "Neu erzeugen",
+  "settings.widgetDisable": "Deaktivieren",
+  "settings.widgetToken": "Widget-Token",
+  "settings.widgetUrl": "Widget-URL",
+  "settings.widgetUrlOnce": "Die URL (mit Token) wird nur direkt nach dem Erzeugen angezeigt. Für eine neue einfach neu erzeugen.",
+  "settings.widgetPreview": "Live-Vorschau",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

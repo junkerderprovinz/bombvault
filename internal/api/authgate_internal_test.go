@@ -16,7 +16,10 @@ import (
 // stay reachable both when auth is on without a cookie AND when the settings
 // store is erroring (so the SPA can render the login screen and health checks
 // keep working).
-var authGatePublicPaths = []string{"/api/auth", "/api/login", "/api/health", "/metrics"}
+// /widget and /api/widget/data are on it too: an embedding iframe cannot carry
+// the session cookie, so both self-gate on the widget token inside their
+// handlers (fail-closed 403 while no token is stored).
+var authGatePublicPaths = []string{"/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data"}
 
 // newAuthGateHandler wires a Handler over a fresh in-memory store and also
 // returns the raw *sql.DB so a test can force store errors by closing it.

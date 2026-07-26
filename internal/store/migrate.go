@@ -568,6 +568,14 @@ ALTER TABLE settings ADD COLUMN digest_schedule TEXT NOT NULL DEFAULT 'weekly Mo
 		version: 69, name: "settings_registry_auths",
 		sql: "ALTER TABLE settings ADD COLUMN registry_auths TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Embeddable dashboard-widget token: the shared secret that authorizes
+		// the session-free GET /widget page + GET /api/widget/data feed (the
+		// iframe-embeddable mini activity log). Empty (the default) = the widget
+		// feature is OFF and both endpoints fail closed with 403.
+		version: 70, name: "settings_widget_token",
+		sql: "ALTER TABLE settings ADD COLUMN widget_token TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

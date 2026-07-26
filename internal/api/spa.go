@@ -8,6 +8,9 @@ import (
 
 // NewSPAHandler returns an http.Handler that:
 //   - delegates any /api/ request to apiRouter;
+//   - delegates the API-owned non-/api pages (/metrics, /widget) to apiRouter
+//     too — they live outside /api by design (Prometheus scrape convention /
+//     an embeddable page URL) and must never fall back to the SPA index;
 //   - serves a matching static file from spaFS for everything else;
 //   - falls back to index.html for unmatched, non-/api/ routes so client-side
 //     routing (deep links, refresh) works.
@@ -17,7 +20,8 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// API routes are owned by the JSON router (it 404s unknown routes itself,
 		// so an unknown /api/ path never falls back to the SPA index).
-		if r.URL.Path == "/api" || strings.HasPrefix(r.URL.Path, "/api/") {
+		if r.URL.Path == "/api" || strings.HasPrefix(r.URL.Path, "/api/") ||
+			r.URL.Path == "/metrics" || r.URL.Path == "/widget" {
 			apiRouter.ServeHTTP(w, r)
 			return
 		}

@@ -139,6 +139,12 @@ export interface Settings {
    *  token); metricsTokenSet reports whether one is stored. */
   metricsToken: string;
   metricsTokenSet: boolean;
+  /** Embeddable dashboard-widget token (GET /widget). Same write-only contract
+   *  as metricsToken: GET always returns "" and a blank save keeps the stored
+   *  one; widgetTokenSet reports presence. Managed via generateWidgetToken /
+   *  disableWidgetToken (the Settings card), not via this field. */
+  widgetToken: string;
+  widgetTokenSet: boolean;
   drillsEnabled: boolean;
   /** Scheduled off-site DR drill; default on. When off, only the manual
    *  off-site DR button runs (the free local integrity check still runs). */
@@ -905,6 +911,24 @@ export function putSettings(
     method: "PUT",
     body: JSON.stringify(settings),
   });
+}
+
+/**
+ * POST /api/widget/token — generate (or rotate) the embeddable dashboard-widget
+ * token. The server stores it and returns it ONCE; it is never echoed again
+ * (settings GET only reports widgetTokenSet), so the widget URL can only be
+ * shown right after this call. Rotating revokes the previous token.
+ */
+export function generateWidgetToken(): Promise<OkEnvelope & { token?: string }> {
+  return fetchJSON("/api/widget/token", { method: "POST" });
+}
+
+/**
+ * DELETE /api/widget/token — clear the widget token. Both widget endpoints
+ * (/widget + /api/widget/data) immediately fail closed with 403 again.
+ */
+export function disableWidgetToken(): Promise<OkEnvelope> {
+  return fetchJSON("/api/widget/token", { method: "DELETE" });
 }
 
 /**

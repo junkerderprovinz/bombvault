@@ -576,6 +576,18 @@ const cs: Partial<Translations> = {
   "settings.metricsEnable": "Zpřístupnit /metrics",
   "settings.metricsToken": "Scrape token (volitelné)",
   "settings.metricsHint": "Metriky ve formátu Prometheus na /metrics pro Grafana/Uptime Kuma. Pokud je nastaven token, scrapujte s Authorization: Bearer <token>.",
+  "settings.widget": "Widget pro dashboard",
+  "settings.widgetHint": "Vložte log aktivit BombVaultu do Homepage, Organizr, Heimdall nebo jakéhokoli dashboardu s iframe widgetem — drobná samostatná stránka jen s logem.",
+  "settings.widgetHow": "Vložte URL do iframe widgetu svého dashboardu — víc není potřeba.",
+  "settings.widgetAccess": "Token dává přístup k logu aktivit pouze pro čtení a k ničemu jinému; Zakázat ho okamžitě odvolá.",
+  "settings.widgetEnglish": "Samotná stránka widgetu je pouze anglicky. Varianta pro dashboard Unraidu možná přijde později.",
+  "settings.widgetGenerate": "Vygenerovat token",
+  "settings.widgetRegenerate": "Vygenerovat znovu",
+  "settings.widgetDisable": "Zakázat",
+  "settings.widgetToken": "Token widgetu",
+  "settings.widgetUrl": "URL widgetu",
+  "settings.widgetUrlOnce": "URL (s tokenem) se zobrazí jen hned po vygenerování. Pro novou ji vygenerujte znovu.",
+  "settings.widgetPreview": "Živý náhled",
 
   // Email (SMTP)
   "notify.smtp": "E-mail (SMTP)",

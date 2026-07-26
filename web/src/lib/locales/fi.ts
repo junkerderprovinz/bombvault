@@ -578,6 +578,18 @@ const fi: Partial<Translations> = {
   "settings.metricsEnable": "Tarjoa /metrics",
   "settings.metricsToken": "Scrape-tunniste (valinnainen)",
   "settings.metricsHint": "Prometheus-muotoiset mittarit osoitteessa /metrics Grafanalle/Uptime Kumalle. Jos tunniste on asetettu, scrape Authorization: Bearer <token> -otsikolla.",
+  "settings.widget": "Dashboard-widget",
+  "settings.widgetHint": "Upota BombVaultin toimintaloki Homepageen, Organizriin, Heimdalliin tai mihin tahansa kojelautaan, joka näyttää iframen — pikkuruinen itsenäinen sivu, jossa on vain loki.",
+  "settings.widgetHow": "Liitä URL kojelautasi iframe-widgetiin — muuta ei tarvita.",
+  "settings.widgetAccess": "Token antaa vain lukuoikeuden toimintalokiin eikä mihinkään muuhun; Poista käytöstä kumoaa sen heti.",
+  "settings.widgetEnglish": "Itse widget-sivu on vain englanniksi. Unraid-kojelautaversio saattaa tulla myöhemmin.",
+  "settings.widgetGenerate": "Luo token",
+  "settings.widgetRegenerate": "Luo uudelleen",
+  "settings.widgetDisable": "Poista käytöstä",
+  "settings.widgetToken": "Widget-token",
+  "settings.widgetUrl": "Widgetin URL",
+  "settings.widgetUrlOnce": "URL (tokeneineen) näytetään vain heti luonnin jälkeen. Luo uudelleen saadaksesi uuden.",
+  "settings.widgetPreview": "Live-esikatselu",
 
   // Notifications — SMTP
   "notify.smtp": "Sähköposti (SMTP)",

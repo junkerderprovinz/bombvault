@@ -927,6 +927,14 @@ type settingsView struct {
 	MetricsEnabled  bool   `json:"metricsEnabled"`
 	MetricsToken    string `json:"metricsToken"`
 	MetricsTokenSet bool   `json:"metricsTokenSet"`
+	// Embeddable dashboard-widget token (GET /widget + GET /api/widget/data).
+	// Same secret contract as MetricsToken: GET always returns WidgetToken blank
+	// with WidgetTokenSet reporting presence; on PUT a blank WidgetToken keeps
+	// the stored one. Generated/cleared via POST/DELETE /api/widget/token (the
+	// Settings card), but the field participates in the PUT round-trip so a
+	// full settings save can never silently wipe it.
+	WidgetToken    string `json:"widgetToken"`
+	WidgetTokenSet bool   `json:"widgetTokenSet"`
 	// Scheduled restore-verification drills (restic check --read-data-subset).
 	DrillsEnabled   bool   `json:"drillsEnabled"`
 	DrillsSchedule  string `json:"drillsSchedule"`
@@ -1022,6 +1030,8 @@ func toView(s store.Settings) settingsView {
 		MetricsEnabled:              s.MetricsEnabled,
 		MetricsToken:                "", // secret — never echoed; MetricsTokenSet reports presence
 		MetricsTokenSet:             s.MetricsToken != "",
+		WidgetToken:                 "", // secret — never echoed; WidgetTokenSet reports presence
+		WidgetTokenSet:              s.WidgetToken != "",
 		DrillsEnabled:               s.DrillsEnabled,
 		DrillsSchedule:              s.DrillsSchedule,
 		DrillsSubsetPct:             s.DrillsSubsetPct,
@@ -1191,6 +1201,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if metricsToken == "" {
 		metricsToken = existing.MetricsToken
 	}
+	// Same contract for the widget token (normally managed by POST/DELETE
+	// /api/widget/token; the round-trip here only has to never wipe it).
+	widgetToken := strings.TrimSpace(v.WidgetToken)
+	if widgetToken == "" {
+		widgetToken = existing.WidgetToken
+	}
 
 	// Registry credentials (#106): nil = field absent (an old client) → keep the
 	// stored encrypted blob unchanged; a present list REPLACES the stored one,
@@ -1259,6 +1275,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
 		MetricsEnabled:              v.MetricsEnabled,
 		MetricsToken:                metricsToken,
+		WidgetToken:                 widgetToken,
 		DrillsEnabled:               v.DrillsEnabled,
 		DrillsSchedule:              v.DrillsSchedule,
 		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
@@ -1798,18 +1815,12 @@ type runView struct {
 	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | ""
 }
 
-func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
-	// Return a generous window so the dashboard's day-filter can show several
-	// days of history, not just the latest handful.
-	runs, err := h.store.ListRuns(500)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	// Resolve target_id → (name, domain). Best-effort: an unknown id (e.g. a
-	// deleted target) just leaves the name blank.
-	name := map[string]string{store.FlashTargetID: "Unraid flash", store.ConfigTargetID: "App configuration"}
-	domain := map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
+// runTargetMaps resolves target_id → (human name, domain) across every domain,
+// for enriching stored runs (handleRuns + the widget feed). Best-effort: an
+// unknown id (e.g. a deleted target) simply stays absent, so lookups yield "".
+func (h *Handler) runTargetMaps() (name, domain map[string]string) {
+	name = map[string]string{store.FlashTargetID: "Unraid flash", store.ConfigTargetID: "App configuration"}
+	domain = map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
 	if cts, lErr := h.store.ListTargets(); lErr == nil {
 		for _, t := range cts {
 			name[t.ID] = t.ContainerName
@@ -1828,6 +1839,18 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 			domain[fs.ID] = "files"
 		}
 	}
+	return name, domain
+}
+
+func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
+	// Return a generous window so the dashboard's day-filter can show several
+	// days of history, not just the latest handful.
+	runs, err := h.store.ListRuns(500)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	name, domain := h.runTargetMaps()
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
 		views = append(views, runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]})
@@ -2166,6 +2189,11 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 //   - GET  /api/health
 //   - GET  /metrics  (Prometheus can't carry the session cookie; the endpoint
 //     gates itself via its own enabled flag + optional bearer token)
+//   - GET  /widget and GET /api/widget/data  (the embeddable dashboard widget —
+//     an iframe on another dashboard can't carry the session cookie either;
+//     both endpoints gate themselves via the stored widget token instead,
+//     failing closed with 403 when none is set. POST/DELETE /api/widget/token
+//     stay session-protected — only a logged-in admin manages the token.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -2176,7 +2204,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
 			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health", "/metrics":
+			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data":
 				next.ServeHTTP(w, r)
 			default:
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
@@ -2194,9 +2222,10 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		}
 
 		// Always allow the public auth + health endpoints, plus the self-gating
-		// /metrics scrape endpoint (Prometheus can't carry the session cookie).
+		// /metrics scrape endpoint (Prometheus can't carry the session cookie)
+		// and the self-gating widget endpoints (an embedding iframe can't either).
 		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health", "/metrics":
+		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data":
 			next.ServeHTTP(w, r)
 			return
 		}
