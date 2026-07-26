@@ -932,6 +932,34 @@ export function disableWidgetToken(): Promise<OkEnvelope> {
 }
 
 /**
+ * GET /api/dashboard-plugin — status of the companion Unraid dashboard-tile
+ * plugin (bombvaultdash), probed over the host SSH connection.
+ * sshConfigured:false means the state is unknowable (no SSH set up) — the UI
+ * shows manual-install instructions then; `installed` is only present when
+ * sshConfigured, `version` only when installed and readable.
+ */
+export function getDashboardPlugin(): Promise<
+  OkEnvelope & { sshConfigured?: boolean; installed?: boolean; version?: string }
+> {
+  return fetchJSON("/api/dashboard-plugin");
+}
+
+/**
+ * POST /api/dashboard-plugin/install — install the companion dashboard-tile
+ * plugin on the Unraid host via the regular `plugin install` mechanism (a
+ * hard-coded URL server-side). `output` is the truncated transcript tail —
+ * present on failure too, so the UI can show why the plugin CLI refused.
+ */
+export function installDashboardPlugin(): Promise<OkEnvelope & { output?: string }> {
+  return fetchJSON("/api/dashboard-plugin/install", { method: "POST" });
+}
+
+/** POST /api/dashboard-plugin/remove — uninstall the companion plugin (same contract). */
+export function removeDashboardPlugin(): Promise<OkEnvelope & { output?: string }> {
+  return fetchJSON("/api/dashboard-plugin/remove", { method: "POST" });
+}
+
+/**
  * GET /api/recovery-kit — URL that streams the encryption-key recovery kit as a
  * download (bombvault-recovery-kit.md). Used as a plain <a href> with download:
  * the GET carries the session cookie, so the browser saves the file. The kit
