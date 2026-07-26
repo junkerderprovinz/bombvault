@@ -136,6 +136,79 @@ describe("buildLogLines — live domain-op checks (#109)", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// #109 follow-up — the off-site DR drill has its own kind "drdrill" (live key
+// "drdrill:<domain>", run kind "drdrill") so it is distinguishable from the
+// local subset drill ("drill"), and a tamper run that produced no verdict is
+// recorded "skipped" and rendered as a neutral info line, never a red.
+// ---------------------------------------------------------------------------
+describe("buildLogLines — DR drill kind + skipped tamper (#109 follow-up)", () => {
+  it("renders a live DR check with kind drdrill and the DR-running line", () => {
+    const progress: ProgressMap = {
+      "drdrill:containers": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines).toHaveLength(1);
+    const live = lines[0];
+    expect(live.id).toBe("live:drdrill:containers");
+    expect(live.live).toBe(true);
+    expect(live.status).toBe("running");
+    expect(live.kind).toBe("drdrill");
+    expect(live.domain).toBe("containers");
+    expect(live.text).toContain("activityLog.lineDRDrillRunning");
+    expect(live.text).toContain("domain=activityLog.domainContainers");
+  });
+
+  it("renders a finished drdrill run with its own success line and kind", () => {
+    const run = makeRun({ id: "r-drdrill", kind: "drdrill", targetId: "containers", target: "containers" });
+    const lines = buildLogLines([run], {}, [], resolveName, 5_000_000);
+    expect(lines.map((l) => l.id)).toEqual(["run:r-drdrill"]);
+    expect(lines[0].kind).toBe("drdrill");
+    expect(lines[0].domain).toBe("containers");
+    expect(lines[0].status).toBe("success");
+    expect(lines[0].text).toContain("activityLog.lineDRDrillSuccess");
+  });
+
+  it("renders a failed drdrill run with the DR failure line", () => {
+    const run = makeRun({ id: "r-drdrill-f", kind: "drdrill", targetId: "containers", target: "containers", status: "failed", error: "boom" });
+    const lines = buildLogLines([run], {}, [], resolveName, 5_000_000);
+    expect(lines[0].status).toBe("failed");
+    expect(lines[0].text).toContain("activityLog.lineDRDrillFailed");
+    expect(lines[0].text).toContain("error=boom");
+  });
+
+  it("renders a skipped tamper run as a neutral info line carrying the reason", () => {
+    const run = makeRun({
+      id: "r-tamper-s",
+      kind: "tamper",
+      targetId: "containers",
+      target: "containers",
+      status: "skipped",
+      error: "only REST repos are verifiable",
+    });
+    const lines = buildLogLines([run], {}, [], resolveName, 5_000_000);
+    expect(lines.map((l) => l.id)).toEqual(["run:r-tamper-s"]);
+    expect(lines[0].status).toBe("info"); // neutral — the test ran, no verdict; never a red
+    expect(lines[0].text).toContain("activityLog.lineTamperSkipped");
+    expect(lines[0].text).toContain("error=only REST repos are verifiable");
+  });
+
+  it("keeps the subset drill line unchanged alongside the new DR kind", () => {
+    const subset = makeRun({ id: "r-drill", kind: "drill", targetId: "containers", target: "containers" });
+    const lines = buildLogLines([subset], {}, [], resolveName, 5_000_000);
+    expect(lines[0].kind).toBe("drill");
+    expect(lines[0].text).toContain("activityLog.lineDrillSuccess");
+    // The kind filter tells the two families apart: "drill" matches only the
+    // subset check, "drdrill" only the DR check.
+    const both = [
+      ...buildLogLines([subset], {}, [], resolveName, 5_000_000),
+      ...buildLogLines([makeRun({ id: "r-dr", kind: "drdrill", targetId: "containers", target: "containers" })], {}, [], resolveName, 5_000_000),
+    ];
+    expect(filterLogLines(both, { domain: "all", kind: "drill", text: "" }).map((l) => l.id)).toEqual(["run:r-drill"]);
+    expect(filterLogLines(both, { domain: "all", kind: "drdrill", text: "" }).map((l) => l.id)).toEqual(["run:r-dr"]);
+  });
+});
+
 describe("filterLogLines", () => {
   const makeLine = (over: Partial<LogLine>): LogLine => ({
     id: "x",
