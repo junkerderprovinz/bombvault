@@ -8,20 +8,20 @@ type T = ReturnType<typeof useT>["t"];
 function StatusChip({ ok, bestEffort }: { ok: boolean; bestEffort?: boolean }) {
   if (bestEffort && !ok) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBg text-statusWarn border border-statusWarnBorder">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBg text-statusWarn">
         INFO
       </span>
     );
   }
   if (ok) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusOkBg text-statusOk border border-statusOkBorder">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusOkBg text-statusOk">
         OK
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail border border-statusFailBorder">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail">
       FAIL
     </span>
   );
@@ -105,7 +105,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
       )}
 
       {checks && checks.length > 0 && (
-        <div className="rounded-lg border border-carbon-border overflow-hidden">
+        <div className="rounded-lg overflow-hidden">
           {/* Table header */}
           <div className="grid grid-cols-[8rem_5rem_1fr_5rem] gap-x-3 bg-carbon-surface2 px-3 py-2 text-xs font-semibold text-carbon-textMuted uppercase tracking-wider">
             <span>{t("spike.colCheck")}</span>

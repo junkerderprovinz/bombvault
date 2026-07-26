@@ -32,7 +32,7 @@ export function SourceToggle({
     </button>
   );
   return (
-    <div className="inline-flex rounded-lg border border-carbon-border overflow-hidden">
+    <div className="inline-flex rounded-lg bg-carbon-surface2 overflow-hidden">
       {opt("local", t("source.local"))}
       {opt("offsite", t("source.offsite"))}
     </div>

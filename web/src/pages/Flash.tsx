@@ -182,7 +182,7 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           onClick={() => void handleDelete()}
           disabled={deleting || downloading}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -237,7 +237,7 @@ export function Flash() {
       </div>
 
       {/* Backup card */}
-      <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+      <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("flash.backupTitle")}
         </h2>
@@ -256,12 +256,12 @@ export function Flash() {
       </div>
 
       {/* Restore card */}
-      <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("snapshots.title")}
         </h2>
         {/* Safe-restore explainer */}
-        <div className="rounded-lg bg-statusInfoBg border border-statusInfoBorderSoft px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        <div className="rounded-lg bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("flash.restoreNote")}
         </div>
 
@@ -279,7 +279,7 @@ export function Flash() {
           <p className="text-xs text-carbon-textMuted">{t("flash.none")}</p>
         )}
         {!loading && snapshots.length > 0 && (
-          <div className="rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
+          <div className="rounded-lg bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
               <FlashSnapshotRow key={snap.id} snap={snap} source={source} onDeleted={() => void load()} t={t} />
             ))}
