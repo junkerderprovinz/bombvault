@@ -427,7 +427,7 @@ function CompareSnapshots({
     : "";
 
   const selectCls =
-    "rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid max-w-[16rem] truncate";
+    "rounded-sm bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid max-w-[16rem] truncate";
 
   return (
     <div className="py-2 border-b border-carbon-border">
@@ -550,7 +550,7 @@ function SnapshotTags({
           onBlur={() => void submit()}
           placeholder={t("snapshot.addTag")}
           spellCheck={false}
-          className="w-24 rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-hidden focus:border-statusInfoSolid"
+          className="w-24 rounded-sm bg-carbon-surface2 text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
       ) : (
         <button

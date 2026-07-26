@@ -60,7 +60,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
               autoComplete="current-password"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-2 focus:outline-hidden focus:border-statusInfoSolid"
+              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>
 
