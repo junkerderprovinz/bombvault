@@ -553,6 +553,18 @@ const he: Partial<Translations> = {
   "settings.metricsEnable": "חשוף את /metrics",
   "settings.metricsToken": "אסימון Scrape (אופציונלי)",
   "settings.metricsHint": "מדדים בפורמט Prometheus בכתובת /metrics עבור Grafana/Uptime Kuma. אם מוגדר אסימון, בצע scrape עם Authorization: Bearer <token>.",
+  "settings.widget": "וידג'ט ללוח מחוונים",
+  "settings.widgetHint": "הטמיעו את יומן הפעילות של BombVault ב-Homepage, ב-Organizr, ב-Heimdall או בכל לוח מחוונים שמציג iframe — עמוד עצמאי זעיר עם היומן בלבד.",
+  "settings.widgetHow": "הדביקו את הכתובת בווידג'ט ה-iframe של הלוח שלכם — לא צריך שום דבר נוסף.",
+  "settings.widgetAccess": "האסימון מעניק גישת קריאה בלבד ליומן הפעילות ותו לא; השבתה מבטלת אותו מיד.",
+  "settings.widgetEnglish": "עמוד הווידג'ט עצמו זמין באנגלית בלבד. גרסה ללוח המחוונים של Unraid אולי תגיע בהמשך.",
+  "settings.widgetGenerate": "יצירת אסימון",
+  "settings.widgetRegenerate": "יצירה מחדש",
+  "settings.widgetDisable": "השבתה",
+  "settings.widgetToken": "אסימון הווידג'ט",
+  "settings.widgetUrl": "כתובת הווידג'ט",
+  "settings.widgetUrlOnce": "הכתובת (עם האסימון) מוצגת רק מיד לאחר היצירה. צרו מחדש כדי לקבל חדשה.",
+  "settings.widgetPreview": "תצוגה מקדימה חיה",
 
   // Notifications — SMTP
   "notify.smtp": "אימייל (SMTP)",

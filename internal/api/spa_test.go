@@ -64,6 +64,28 @@ func TestSPADelegatesAPIRoutes(t *testing.T) {
 	}
 }
 
+// The API-owned pages OUTSIDE /api (/metrics for Prometheus, /widget for the
+// embeddable dashboard widget) must reach the API router — never the SPA index
+// fallback (a scrape/iframe getting index.html would be a silent breakage).
+func TestSPADelegatesAPIOwnedPages(t *testing.T) {
+	apiMux := http.NewServeMux()
+	apiMux.HandleFunc("GET /metrics", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("metrics-body"))
+	})
+	apiMux.HandleFunc("GET /widget", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("widget-body"))
+	})
+	h := api.NewSPAHandler(testSPAFS(), apiMux)
+
+	for path, want := range map[string]string{"/metrics": "metrics-body", "/widget": "widget-body"} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		if w.Code != http.StatusOK || w.Body.String() != want {
+			t.Fatalf("%s delegation failed: code=%d body=%q", path, w.Code, w.Body.String())
+		}
+	}
+}
+
 func TestSPAUnknownAPIRouteDoesNotFallBack(t *testing.T) {
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("GET /api/health", func(w http.ResponseWriter, _ *http.Request) {})

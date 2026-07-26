@@ -551,6 +551,18 @@ const pt: Partial<Translations> = {
   "settings.metricsEnable": "Expor /metrics",
   "settings.metricsToken": "Token de scrape (opcional)",
   "settings.metricsHint": "Métricas em formato Prometheus em /metrics para Grafana/Uptime Kuma. Se um token estiver definido, faça scrape com Authorization: Bearer <token>.",
+  "settings.widget": "Widget de painel",
+  "settings.widgetHint": "Incorpore o registo de atividade do BombVault no Homepage, Organizr, Heimdall ou em qualquer painel com widget iframe — uma pequena página autónoma só com o registo.",
+  "settings.widgetHow": "Cole o URL no widget iframe do seu painel — não precisa de mais nada.",
+  "settings.widgetAccess": "O token dá acesso apenas de leitura ao registo de atividade e nada mais; Desativar revoga-o de imediato.",
+  "settings.widgetEnglish": "A página do widget está apenas em inglês. Uma variante para o painel do Unraid poderá chegar mais tarde.",
+  "settings.widgetGenerate": "Gerar token",
+  "settings.widgetRegenerate": "Regenerar",
+  "settings.widgetDisable": "Desativar",
+  "settings.widgetToken": "Token do widget",
+  "settings.widgetUrl": "URL do widget",
+  "settings.widgetUrlOnce": "O URL (com o token) só é mostrado logo após a geração. Regenere para obter um novo.",
+  "settings.widgetPreview": "Pré-visualização ao vivo",
 
   // Notifications — email (SMTP)
   "notify.smtp": "E-mail (SMTP)",

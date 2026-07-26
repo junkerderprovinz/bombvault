@@ -101,6 +101,11 @@ type Settings struct {
 	// must send `Authorization: Bearer <token>`; empty means open (LAN trust
 	// model, like /api/health). The endpoint exposes only non-sensitive metrics.
 	MetricsToken string
+	// WidgetToken authorizes the session-free embeddable dashboard widget
+	// (GET /widget + GET /api/widget/data, via ?token= or X-Widget-Token).
+	// Empty (the default) = widget OFF; both endpoints fail closed with 403.
+	// Unlike MetricsToken it is never optional-open: no token, no widget.
+	WidgetToken string
 	// DrillsEnabled turns on scheduled restore-verification drills. Off by default
 	// (drills read back real pack data, so they cost I/O), so existing setups are
 	// unchanged until the user opts in.
@@ -171,7 +176,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
 		       offsite_limit_upload, offsite_limit_download,
 		       rclone_conf, notify_conf, cloud_conf, registry_auths,
-		       metrics_enabled, metrics_token,
+		       metrics_enabled, metrics_token, widget_token,
 		       drills_enabled, drills_schedule, drills_subset_pct, offsite_drills_enabled,
 		       recovery_kit_ack,
 		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable, files_offsite_immutable,
@@ -196,7 +201,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
 		&s.OffsiteLimitUpload, &s.OffsiteLimitDownload,
 		&s.RcloneConf, &s.NotifyConf, &s.CloudConf, &s.RegistryAuths,
-		&metricsEnabled, &s.MetricsToken,
+		&metricsEnabled, &s.MetricsToken, &s.WidgetToken,
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct, &offsiteDrillsEnabled,
 		&recoveryKitAck,
 		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable, &filesImmutable,
@@ -281,6 +286,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  registry_auths         = ?,
 		  metrics_enabled        = ?,
 		  metrics_token          = ?,
+		  widget_token           = ?,
 		  drills_enabled         = ?,
 		  drills_schedule        = ?,
 		  drills_subset_pct      = ?,
@@ -318,7 +324,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
 		s.OffsiteLimitUpload, s.OffsiteLimitDownload,
 		s.RcloneConf, s.NotifyConf, s.CloudConf, s.RegistryAuths,
-		boolInt(s.MetricsEnabled), s.MetricsToken,
+		boolInt(s.MetricsEnabled), s.MetricsToken, s.WidgetToken,
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct, boolInt(s.OffsiteDrillsEnabled),
 		boolInt(s.RecoveryKitAck),
 		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable), boolInt(s.FilesOffsiteImmutable),

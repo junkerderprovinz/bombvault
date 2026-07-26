@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth, generateWidgetToken, disableWidgetToken } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
@@ -313,6 +313,162 @@ chmod 600 /root/.ssh/authorized_keys`
           )}
         </div>
       </div>
+    </Card>
+  );
+}
+
+// DashboardWidgetCard manages the embeddable activity-log widget (GET /widget):
+// generate/rotate/disable its access token, show the copyable widget URL and a
+// live iframe preview. The token is a show-once secret — the server stores it
+// but never echoes it back (settings GET only reports widgetTokenSet), so the
+// URL + preview render only right after generating; after a reload the card
+// shows the kept-placeholder until the user regenerates.
+function DashboardWidgetCard({
+  t,
+  tokenSet,
+  onTokenSet,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  tokenSet: boolean;
+  onTokenSet: (set: boolean) => void;
+}) {
+  const [token, setToken] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const widgetUrl = token ? `${window.location.origin}/widget?token=${token}` : null;
+
+  async function handleGenerate() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await generateWidgetToken();
+      if (r.ok && r.token) {
+        setToken(r.token);
+        onTokenSet(true);
+      } else {
+        setError(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDisable() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await disableWidgetToken();
+      if (r.ok) {
+        setToken(null);
+        onTokenSet(false);
+      } else {
+        setError(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!widgetUrl) return;
+    try {
+      await navigator.clipboard.writeText(widgetUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable (non-HTTPS) — the URL is selectable in the box */
+    }
+  }
+
+  return (
+    <Card title={t("settings.widget")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.widgetHint")}</p>
+
+      <ul className="list-disc pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+        <li>{t("settings.widgetHow")}</li>
+        <li>{t("settings.widgetAccess")}</li>
+        <li>{t("settings.widgetEnglish")}</li>
+      </ul>
+
+      {tokenSet ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-carbon-textSub">{t("settings.widgetToken")}</span>
+          <div className="flex items-center gap-2">
+            {/* Show-once secret: value is only the freshly generated token; a
+                stored-but-unknown one renders the cloud.secretSet placeholder. */}
+            <input
+              type="password"
+              readOnly
+              value={token ?? ""}
+              placeholder={token ? "" : t("cloud.secretSet")}
+              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5"
+            />
+            <button
+              type="button"
+              onClick={() => void handleGenerate()}
+              disabled={busy}
+              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            >
+              {t("settings.widgetRegenerate")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDisable()}
+              disabled={busy}
+              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+            >
+              {t("settings.widgetDisable")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => void handleGenerate()}
+          disabled={busy}
+          className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {t("settings.widgetGenerate")}
+        </button>
+      )}
+      {error && <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>}
+
+      {tokenSet && !token && (
+        <p className="text-xs text-carbon-textMuted">{t("settings.widgetUrlOnce")}</p>
+      )}
+      {widgetUrl && (
+        <>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("settings.widgetUrl")}</span>
+            <div className="flex items-start gap-2">
+              <code className="flex-1 break-all rounded-sm border border-carbon-border bg-carbon-surface2 p-2 text-xs text-carbon-text">
+                {widgetUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              >
+                {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("settings.widgetPreview")}</span>
+            <iframe
+              src={widgetUrl}
+              title={t("settings.widgetPreview")}
+              className="w-full max-w-[560px] h-[300px] rounded-card border border-carbon-border bg-carbon-surface2"
+            />
+          </div>
+        </>
+      )}
     </Card>
   );
 }
@@ -3000,6 +3156,24 @@ export function SettingsPage() {
         />
       </Card>
       </Advanced>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* SYSTEM — Dashboard widget (embeddable activity log). Not behind      */}
+      {/* Advanced: it is an end-user feature, unlike the ops-y metrics card.  */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "system" && (
+        <DashboardWidgetCard
+          t={t}
+          tokenSet={settings.widgetTokenSet}
+          onTokenSet={(set) => {
+            // Keep BOTH the live and the saved baseline in sync: the token is
+            // managed by its own endpoints, so a later card save (which merges
+            // onto savedSettings) must not carry a stale widgetTokenSet.
+            setSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
+            setSavedSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
+          }}
+        />
       )}
 
       {/* ------------------------------------------------------------------ */}

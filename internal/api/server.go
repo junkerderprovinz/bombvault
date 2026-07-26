@@ -53,6 +53,13 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 // inline style= props and CSS variables → style-src needs 'unsafe-inline'.
 // 'unsafe-eval' is intentionally absent.  img-src and font-src allow data: for
 // flag-icons and any inline SVG/font the SPA embeds.
+//
+// GET /widget is the ONE deliberate exception: the embeddable dashboard-widget
+// page exists to be framed by OTHER dashboards (Homepage/Organizr/…), so it
+// gets its own CSP with `frame-ancestors *` and NO X-Frame-Options — and,
+// being a single self-contained page, inline script/style instead of 'self'
+// bundles. Every other path (the SPA and all /api routes, including the
+// widget's own /api/widget/data feed) keeps the strict DENY/'none' posture.
 func securityHeaders(next http.Handler) http.Handler {
 	const csp = "default-src 'self'; " +
 		"script-src 'self'; " +
@@ -64,12 +71,29 @@ func securityHeaders(next http.Handler) http.Handler {
 		"base-uri 'self'; " +
 		"frame-ancestors 'none'"
 
+	// The widget page is fully self-contained (inline style + script, fetches
+	// only its same-origin /api/widget/data feed) and must stay frame-able
+	// cross-origin.
+	const widgetCSP = "default-src 'none'; " +
+		"script-src 'unsafe-inline'; " +
+		"style-src 'unsafe-inline'; " +
+		"connect-src 'self'; " +
+		"object-src 'none'; " +
+		"base-uri 'none'; " +
+		"form-action 'none'; " +
+		"frame-ancestors *"
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-		w.Header().Set("Content-Security-Policy", csp)
+		if r.URL.Path == "/widget" {
+			// Frame-able by design: no X-Frame-Options, frame-ancestors *.
+			w.Header().Set("Content-Security-Policy", widgetCSP)
+		} else {
+			w.Header().Set("X-Frame-Options", "DENY")
+			w.Header().Set("Content-Security-Policy", csp)
+		}
 		next.ServeHTTP(w, r)
 	})
 }
