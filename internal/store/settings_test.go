@@ -261,6 +261,51 @@ func TestSettingsRegistryAuthsRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsWidgetTokenRoundTrip pins the v70 widget_token column: the
+// migration backfills existing rows with ” (widget off — both widget endpoints
+// fail closed), and set/clear round-trips through UpdateSettings/GetSettings.
+func TestSettingsWidgetTokenRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.WidgetToken != "" {
+		t.Fatalf("default widget_token must be empty (widget off), got %q", s.WidgetToken)
+	}
+
+	const tok = "0123456789abcdef0123456789abcdef"
+	s.WidgetToken = tok
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.WidgetToken != tok {
+		t.Fatalf("widget_token not round-tripped: %q", got.WidgetToken)
+	}
+
+	// Clearing (Disable in the Settings card) persists too — back to fail-closed.
+	got.WidgetToken = ""
+	if err := r.UpdateSettings(got); err != nil {
+		t.Fatal(err)
+	}
+	cleared, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cleared.WidgetToken != "" {
+		t.Fatalf("widget_token not cleared: %q", cleared.WidgetToken)
+	}
+}
+
 func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

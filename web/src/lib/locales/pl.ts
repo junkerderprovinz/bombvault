@@ -546,6 +546,18 @@ const pl: Partial<Translations> = {
   "settings.metricsEnable": "Udostępnij /metrics",
   "settings.metricsToken": "Token scrapowania (opcjonalnie)",
   "settings.metricsHint": "Metryki w formacie Prometheus pod /metrics dla Grafana/Uptime Kuma. Jeśli ustawiono token, scrapuj z nagłówkiem Authorization: Bearer <token>.",
+  "settings.widget": "Widżet pulpitu",
+  "settings.widgetHint": "Osadź log aktywności BombVault w Homepage, Organizr, Heimdall lub dowolnym pulpicie z widżetem iframe — malutka samodzielna strona z samym logiem.",
+  "settings.widgetHow": "Wklej URL do widżetu iframe swojego pulpitu — nic więcej nie trzeba.",
+  "settings.widgetAccess": "Token daje dostęp tylko do odczytu logu aktywności i nic poza tym; Wyłącz natychmiast go unieważnia.",
+  "settings.widgetEnglish": "Sama strona widżetu jest tylko po angielsku. Wariant dla pulpitu Unraid może pojawić się później.",
+  "settings.widgetGenerate": "Wygeneruj token",
+  "settings.widgetRegenerate": "Wygeneruj ponownie",
+  "settings.widgetDisable": "Wyłącz",
+  "settings.widgetToken": "Token widżetu",
+  "settings.widgetUrl": "URL widżetu",
+  "settings.widgetUrlOnce": "URL (z tokenem) jest pokazywany tylko zaraz po wygenerowaniu. Wygeneruj ponownie, aby otrzymać nowy.",
+  "settings.widgetPreview": "Podgląd na żywo",
 
   // Notifications — SMTP
   "notify.smtp": "E-mail (SMTP)",

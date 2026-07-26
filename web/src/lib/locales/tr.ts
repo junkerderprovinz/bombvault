@@ -578,6 +578,18 @@ const tr: Partial<Translations> = {
   "settings.metricsEnable": "/metrics'i yayınla",
   "settings.metricsToken": "Scrape belirteci (isteğe bağlı)",
   "settings.metricsHint": "Grafana/Uptime Kuma için /metrics adresinde Prometheus biçiminde metrikler. Bir belirteç ayarlanırsa Authorization: Bearer <token> ile scrape edin.",
+  "settings.widget": "Panel widget'ı",
+  "settings.widgetHint": "BombVault'un etkinlik günlüğünü Homepage, Organizr, Heimdall veya iframe gösterebilen herhangi bir panele gömün — yalnızca günlüğü içeren minicik bağımsız bir sayfa.",
+  "settings.widgetHow": "URL'yi panelinizin iframe widget'ına yapıştırın — başka bir şey gerekmez.",
+  "settings.widgetAccess": "Belirteç, etkinlik günlüğüne yalnızca okuma erişimi verir, başka hiçbir şeye değil; Devre dışı bırak onu hemen iptal eder.",
+  "settings.widgetEnglish": "Widget sayfasının kendisi yalnızca İngilizcedir. Unraid paneli için bir sürüm daha sonra gelebilir.",
+  "settings.widgetGenerate": "Belirteç oluştur",
+  "settings.widgetRegenerate": "Yeniden oluştur",
+  "settings.widgetDisable": "Devre dışı bırak",
+  "settings.widgetToken": "Widget belirteci",
+  "settings.widgetUrl": "Widget URL'si",
+  "settings.widgetUrlOnce": "URL (belirteciyle birlikte) yalnızca oluşturmadan hemen sonra gösterilir. Yenisi için yeniden oluşturun.",
+  "settings.widgetPreview": "Canlı önizleme",
 
   // Notifications — Email (SMTP)
   "notify.smtp": "E-posta (SMTP)",

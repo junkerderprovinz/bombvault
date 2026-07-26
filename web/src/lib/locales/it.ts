@@ -553,6 +553,18 @@ const it: Partial<Translations> = {
   "settings.metricsEnable": "Esponi /metrics",
   "settings.metricsToken": "Token di scrape (facoltativo)",
   "settings.metricsHint": "Metriche in formato Prometheus su /metrics per Grafana/Uptime Kuma. Se è impostato un token, esegui lo scrape con Authorization: Bearer <token>.",
+  "settings.widget": "Widget per dashboard",
+  "settings.widgetHint": "Integra il log attività di BombVault in Homepage, Organizr, Heimdall o in qualsiasi dashboard con widget iframe — una piccola pagina autonoma con solo il log.",
+  "settings.widgetHow": "Incolla l'URL nel widget iframe della tua dashboard — non serve altro.",
+  "settings.widgetAccess": "Il token concede accesso in sola lettura al log attività e nient'altro; Disattiva lo revoca subito.",
+  "settings.widgetEnglish": "La pagina del widget è solo in inglese. Una variante per la dashboard di Unraid potrebbe arrivare in seguito.",
+  "settings.widgetGenerate": "Genera token",
+  "settings.widgetRegenerate": "Rigenera",
+  "settings.widgetDisable": "Disattiva",
+  "settings.widgetToken": "Token del widget",
+  "settings.widgetUrl": "URL del widget",
+  "settings.widgetUrlOnce": "L'URL (con il token) viene mostrato solo subito dopo la generazione. Rigenera per ottenerne uno nuovo.",
+  "settings.widgetPreview": "Anteprima dal vivo",
 
   // Restore-verification drills ("verify restorability")
   "verify.now": "Verifica ripristinabilità",

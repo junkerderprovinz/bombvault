@@ -551,6 +551,18 @@ const no: Partial<Translations> = {
   "settings.metricsEnable": "Eksponer /metrics",
   "settings.metricsToken": "Scrape-token (valgfritt)",
   "settings.metricsHint": "Metrikker i Prometheus-format på /metrics for Grafana/Uptime Kuma. Hvis et token er satt, scrape med Authorization: Bearer <token>.",
+  "settings.widget": "Dashbord-widget",
+  "settings.widgetHint": "Bygg inn BombVaults aktivitetslogg i Homepage, Organizr, Heimdall eller et hvilket som helst dashbord med en iframe-widget — en bitteliten frittstående side med bare loggen.",
+  "settings.widgetHow": "Lim inn URL-en i dashbordets iframe-widget — mer trengs ikke.",
+  "settings.widgetAccess": "Tokenet gir kun lesetilgang til aktivitetsloggen og ingenting annet; Deaktiver tilbakekaller det umiddelbart.",
+  "settings.widgetEnglish": "Selve widget-siden er kun på engelsk. En variant for Unraid-dashbordet kommer kanskje senere.",
+  "settings.widgetGenerate": "Generer token",
+  "settings.widgetRegenerate": "Generer på nytt",
+  "settings.widgetDisable": "Deaktiver",
+  "settings.widgetToken": "Widget-token",
+  "settings.widgetUrl": "Widget-URL",
+  "settings.widgetUrlOnce": "URL-en (med token) vises bare rett etter genereringen. Generer på nytt for å få en ny.",
+  "settings.widgetPreview": "Direkte forhåndsvisning",
 
   // Notifications — email (SMTP)
   "notify.smtp": "E-post (SMTP)",

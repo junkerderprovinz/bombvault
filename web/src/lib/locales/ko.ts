@@ -545,6 +545,18 @@ const ko: Partial<Translations> = {
   "settings.metricsEnable": "/metrics 노출",
   "settings.metricsToken": "스크레이프 토큰 (선택)",
   "settings.metricsHint": "Grafana/Uptime Kuma용 Prometheus 형식 메트릭이 /metrics에 제공됩니다. 토큰이 설정되어 있으면 Authorization: Bearer <token>으로 스크레이프하세요.",
+  "settings.widget": "대시보드 위젯",
+  "settings.widgetHint": "BombVault의 활동 로그를 Homepage, Organizr, Heimdall 등 iframe을 표시할 수 있는 대시보드에 삽입하세요 — 로그만 있는 작은 독립 페이지입니다.",
+  "settings.widgetHow": "URL을 대시보드의 iframe 위젯에 붙여넣기만 하면 됩니다.",
+  "settings.widgetAccess": "토큰은 활동 로그에 대한 읽기 전용 접근만 허용합니다. 비활성화하면 즉시 취소됩니다.",
+  "settings.widgetEnglish": "위젯 페이지 자체는 영어로만 제공됩니다. Unraid 대시보드용 버전은 나중에 나올 수 있습니다.",
+  "settings.widgetGenerate": "토큰 생성",
+  "settings.widgetRegenerate": "다시 생성",
+  "settings.widgetDisable": "비활성화",
+  "settings.widgetToken": "위젯 토큰",
+  "settings.widgetUrl": "위젯 URL",
+  "settings.widgetUrlOnce": "URL(토큰 포함)은 생성 직후에만 표시됩니다. 새 URL은 다시 생성으로 받으세요.",
+  "settings.widgetPreview": "실시간 미리보기",
 
   // Restore-verification drills
   "verify.now": "복원 가능 여부 검증",
