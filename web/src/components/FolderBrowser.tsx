@@ -85,7 +85,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
           placeholder="user/bombvault/container"
-          className="flex-1 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+          className="flex-1 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
         <button
           onClick={handleOpen}

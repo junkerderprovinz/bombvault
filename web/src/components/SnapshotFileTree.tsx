@@ -175,7 +175,7 @@ export function SnapshotFileTree({
         onChange={(e) => onFilterChange(e.target.value)}
         placeholder={t("files.filterPlaceholder")}
         spellCheck={false}
-        className="rounded-sm bg-carbon-background border border-carbon-border text-carbon-text text-xs px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid"
+        className="rounded-sm bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
       />
       {loading && <p className="text-xs text-carbon-textMuted">…</p>}
       {error && <p className="text-xs text-statusFail">{error}</p>}

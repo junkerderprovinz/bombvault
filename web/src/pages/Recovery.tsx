@@ -53,7 +53,7 @@ function isKeyMismatch(err: string | undefined): boolean {
 
 // Shared mono text-input styling (off-site URLs, foreign location/key fields).
 const offsiteInput =
-  "rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent";
+  "rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
 // RestoreRow — a single discovered target (container or VM) with its latest
 // snapshot and a per-item Restore button. The restore mechanics are the shared
@@ -304,7 +304,7 @@ function ForeignItemRow({
           value={snapshot}
           onChange={(e) => setSnapshot(e.target.value)}
           disabled={state === "busy"}
-          className="rounded-lg border border-carbon-border bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-hidden focus:ring-1 focus:ring-accent"
+          className="rounded-lg bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         >
           <option value="latest">{t("recovery.foreignLatest")}</option>
           {snaps.map((s) => (

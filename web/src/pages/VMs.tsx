@@ -213,7 +213,7 @@ function VMMethodSelect({
         disabled={busy}
         onChange={(e) => void handleChange(e.target.value)}
         title={t("vm.method.hint")}
-        className="rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text disabled:opacity-50"
+        className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50"
       >
         <option value="graceful">{t("vm.method.graceful")}</option>
         <option value="live">{t("vm.method.live")}</option>
@@ -1035,7 +1035,7 @@ export function VMs() {
               placeholder={t("vms.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+              className="w-full rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <ChipFilter<ScheduleFilterKey>
               label={t("filter.schedule")}
