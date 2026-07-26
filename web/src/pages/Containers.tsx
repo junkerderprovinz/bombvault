@@ -372,7 +372,7 @@ function HooksEditor({
   }
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <div className="mt-1">
@@ -536,7 +536,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   }
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <div className="mt-1">
@@ -657,7 +657,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
   }
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <div className="mt-1">
@@ -763,7 +763,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   }
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-2 py-1 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <div className="mt-1">
@@ -1518,7 +1518,7 @@ export function Containers() {
               placeholder={t("containers.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
             <ChipFilter<ScheduleFilterKey>

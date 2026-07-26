@@ -580,7 +580,7 @@ function DashboardWidgetCard({
               readOnly
               value={token ?? ""}
               placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5"
+              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <button
               type="button"
@@ -702,7 +702,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-xs font-mono px-3 py-2 focus:outline-hidden focus:border-statusInfoSolid"
+        className="rounded-lg bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
@@ -768,7 +768,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -897,9 +897,14 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const selectCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+  // Card-level sibling of selectCls: same styling, but this one sits directly on
+  // the Card (bg-carbon-surface), so its fill is surface2 — the panel-level
+  // fields above use surface3 because they sit ON a surface2 panel.
+  const selectCardCls =
+    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
@@ -908,7 +913,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       <label className={labelCls}>
         {t("notify.on")}
-        <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCls}>
+        <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCardCls}>
           <option value="never">{t("notify.onNever")}</option>
           <option value="failure">{t("notify.onFailure")}</option>
           <option value="always">{t("notify.onAlways")}</option>
@@ -1423,7 +1428,7 @@ function IntegrityCard({
   };
 
   const selectCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <Card title={t("integrity.title")}>
@@ -2019,7 +2024,7 @@ function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+          className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
       </label>
     </Card>
@@ -2512,7 +2517,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
+                  className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 />
               </div>
             ))}
@@ -2529,7 +2534,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
+                className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -2745,7 +2750,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
           ))}
@@ -2843,7 +2848,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -2867,7 +2872,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -2896,7 +2901,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <button
@@ -2991,7 +2996,7 @@ export function SettingsPage() {
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
             }}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </label>
         <SaveBar
@@ -3069,7 +3074,7 @@ export function SettingsPage() {
                     setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
-                  className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                  className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 />
                 <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
@@ -3154,7 +3159,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                 }
                 placeholder="rest:http://host:8000/repo"
-                className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-hidden focus:ring-1 focus:ring-accent"
+                className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             )}
           </div>
@@ -3207,7 +3212,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
           ))}
@@ -3256,7 +3261,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
           ))}
@@ -3309,7 +3314,7 @@ export function SettingsPage() {
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </label>
         <SaveBar
@@ -3527,7 +3532,7 @@ export function SettingsPage() {
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -3540,7 +3545,7 @@ export function SettingsPage() {
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>
 
@@ -3611,7 +3616,7 @@ export function SettingsPage() {
                   setAccentHex(e.target.value);
                   setAccent(e.target.value);
                 }}
-                className="h-8 w-14 cursor-pointer rounded-sm border border-carbon-border bg-carbon-surface2 p-0.5"
+                className="h-8 w-14 cursor-pointer rounded-sm bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 title={t("settings.accentColor")}
               />
               {/* Preset swatches */}
