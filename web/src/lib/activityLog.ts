@@ -151,16 +151,18 @@ function formatBytesShort(n: number): string {
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
-  | { scope: "offsite" | "prune" | "verify"; domain: string };
+  | { scope: "offsite" | "prune" | "verify" | "drill" | "tamper" | "export"; domain: string };
 
 /**
  * parseProgressKey decodes a live SSE progress key into what it refers to.
  * See web/src/lib/progress.ts for the wire key shapes this must track:
  * "container:<name>", "vm:<name>", "flash", "config", "files:<set>",
  * "batch:containers", "batch:files", "offsite:<domain>", "prune:<domain>",
- * "verify:<domain>". Every "<name>"/"<set>" suffix is ALREADY the human name
- * (the backend publishes "container:" + containerName, "files:" + set.Name,
- * etc. — see internal/api/service.go), so no id→name lookup is needed here.
+ * "verify:<domain>", "drill:<domain>", "tamper:<domain>", "export:flash"
+ * (#109 — drills/tamper tests/the flash-ZIP export publish live pairs too).
+ * Every "<name>"/"<set>" suffix is ALREADY the human name (the backend
+ * publishes "container:" + containerName, "files:" + set.Name, etc. — see
+ * internal/api/service.go), so no id→name lookup is needed here.
  * Returns null for an unrecognized key shape (defensive; should not happen).
  */
 function parseProgressKey(key: string): ParsedKey | null {
@@ -173,6 +175,9 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("offsite:")) return { scope: "offsite", domain: key.slice("offsite:".length) };
   if (key.startsWith("prune:")) return { scope: "prune", domain: key.slice("prune:".length) };
   if (key.startsWith("verify:")) return { scope: "verify", domain: key.slice("verify:".length) };
+  if (key.startsWith("drill:")) return { scope: "drill", domain: key.slice("drill:".length) };
+  if (key.startsWith("tamper:")) return { scope: "tamper", domain: key.slice("tamper:".length) };
+  if (key.startsWith("export:")) return { scope: "export", domain: key.slice("export:".length) };
   return null;
 }
 
@@ -223,6 +228,17 @@ function itemSignature(kind: string, domain: LogDomain, name: string): string {
 function domainOpSignature(kind: string, domain: string): string {
   return `domain|${kind}|${domain}`;
 }
+
+/** Live-line text template per domain-scoped operation scope ("Pruning —
+ *  {domain} …" etc.). The export line deliberately takes no {domain} — the
+ *  flash-ZIP export is flash-only, so its text names flash itself. */
+const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "tamper" | "export", string> = {
+  prune: "activityLog.linePruneRunning",
+  verify: "activityLog.lineVerifyRunning",
+  drill: "activityLog.lineDrillRunning",
+  tamper: "activityLog.lineTamperRunning",
+  export: "activityLog.lineExportRunning",
+};
 
 function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now: number): LiveResult {
   const lines: LogLine[] = [];
@@ -277,10 +293,13 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
       continue;
     }
 
-    // "prune" | "verify"
+    // "prune" | "verify" | "drill" | "tamper" | "export" — domain-scoped ops.
+    // Same dedupe mechanics as offsite above: each of these records a Run row
+    // on the reserved domain target when it finishes (recordDomainRun /
+    // StartRun+FinishRun), so registering the domain-op signature lets the
+    // finished-run line supersede this live tail line without doubling up.
     const domain = normalizeDomain(parsed.domain);
-    const templateKey = parsed.scope === "prune" ? "activityLog.linePruneRunning" : "activityLog.lineVerifyRunning";
-    const text = resolveName(templateKey, { domain: domainLabel(resolveName, domain) });
+    const text = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
     signatures.add(domainOpSignature(parsed.scope, domain));
     lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
   }
@@ -491,33 +510,23 @@ export function buildLogLines(
 // ---------------------------------------------------------------------------
 
 /**
- * preferredDateLocale picks the locale used to ORDER the log's date stamps:
- * the browser/system locale when available, the app language only as a
- * fallback. UI language and regional date order are different things — a
- * user in Portugal running the English UI must still read "24/07", not the
- * US "07/24" (issue #104 follow-up). The component computes this once and
- * passes it to BOTH formatLogDate (display) and filterLogLines (search), so
- * what is shown is always what is searchable.
- */
-export function preferredDateLocale(appLang: string): string {
-  const nav = (globalThis as { navigator?: { language?: string } }).navigator;
-  return nav?.language || appLang;
-}
-
-/**
  * formatLogDate renders a line's `atMs` as a locale-aware short date — day/
- * month in the ORDER the given locale reads it (e.g. "23.07." for de,
- * "24/07" for pt-PT, "07/23" for en-US) — via Intl.DateTimeFormat. Callers
- * pass preferredDateLocale(appLang) so the REGIONAL format follows the
- * user's system, not the UI language. Exported so ActivityLog.tsx can pair
- * it with reltime.ts's formatClockTime for the leftmost per-line stamp;
- * filterLogLines below builds the identical string into its search haystack
- * so typing that same date filters correctly. Deliberately only the date is
- * locale-ordered — the time stays formatClockTime's fixed 24-hour face, for
- * the same reason that helper gives (a stable, unambiguous clock, not a
- * locale-varying 12/24-hour one).
+ * month in the ORDER the locale reads it (e.g. "23.07." for de, "24/07" for
+ * pt-PT, "07/23" for en-US) — via Intl.DateTimeFormat. `locale` is normally
+ * OMITTED: `undefined` runs the SAME default-locale negotiation every other
+ * date in the app uses (formatTs's plain toLocaleString), which is the fix
+ * for issue #108 — navigator.language can disagree with the browser's
+ * formatting default (e.g. a macOS "en-US" UI language with a Portuguese
+ * region), which made the log the ONLY place showing US order. Tests pass
+ * an explicit locale for deterministic assertions. Exported so
+ * ActivityLog.tsx can pair it with reltime.ts's formatClockTime for the
+ * leftmost per-line stamp; filterLogLines below builds the identical string
+ * into its search haystack so typing that same date filters correctly.
+ * Deliberately only the date is locale-ordered — the time stays
+ * formatClockTime's fixed 24-hour face, for the same reason that helper
+ * gives (a stable, unambiguous clock, not a locale-varying 12/24-hour one).
  */
-export function formatLogDate(atMs: number, locale: string): string {
+export function formatLogDate(atMs: number, locale?: string): string {
   return new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit" }).format(new Date(atMs));
 }
 
@@ -552,10 +561,10 @@ export interface LogFilter {
   /** Free-text, case-insensitive substring match against the line's message,
    *  its ISO date (YYYY-MM-DD) and its locale-short date (#104). */
   text: string;
-  /** Active app language (e.g. "de"), used to format each line's date the
-   *  same way the UI displays it so typing that localized date also filters
-   *  (#104). Optional — defaults to "en" for callers that only care about
-   *  the domain/kind chips. */
+  /** Explicit date locale for the localized-date match (#104). Normally
+   *  OMITTED — undefined runs the browser's default-locale negotiation,
+   *  matching exactly what formatLogDate displays (#108). Tests pass an
+   *  explicit locale for deterministic assertions. */
   lang?: string;
 }
 
@@ -568,7 +577,7 @@ export interface LogFilter {
  */
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
-  const lang = filter.lang ?? "en";
+  const lang = filter.lang; // undefined = browser-default locale, matching the display (#108)
   return lines.filter((l) => {
     // The idle line (`idle: true`) carries no domain/kind of its own — it is
     // exempt from the domain/type quick-filters so an active filter chip

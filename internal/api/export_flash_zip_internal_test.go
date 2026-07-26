@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -330,6 +331,53 @@ func TestExportFlashZipRecordsRun(t *testing.T) {
 	}
 	if run.Bytes != int64(len(payload)) {
 		t.Fatalf("export run bytes = %d, want the zip size %d", run.Bytes, len(payload))
+	}
+}
+
+// TestExportFlashZipEmitsLiveProgress pins #109: a running flash-ZIP export —
+// which can take a while on a big flash — publishes a begin/terminal
+// "maintenance" progress pair keyed "export:flash", so the dashboard activity
+// log shows a live line while the zip is written. A DumpZip failure still ends
+// the pair (Active=false, Percent=0) via the deferred progEnd.
+func TestExportFlashZipEmitsLiveProgress(t *testing.T) {
+	root := t.TempDir()
+	fake := &flashZipFakeEngine{dumpBytes: []byte("PK\x03\x04live")}
+	prog := progress.NewStore()
+	svc := &Service{
+		cfg:      config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		engine:   fake,
+		store:    newFlashExportStore(t),
+		progress: prog,
+	}
+	settings := store.Settings{
+		FlashZipExportEnabled: true,
+		FlashZipExportPath:    "export",
+	}
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if err := svc.exportFlashZip(context.Background(), settings, "deadbeef", restic.Mode{}, "/repo"); err != nil {
+		t.Fatalf("exportFlashZip: %v", err)
+	}
+	begin, term := drainTwoProgressEvents(t, ch)
+	if begin.Key != "export:flash" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=export:flash Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "export:flash" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=export:flash Phase=maintenance Active=false Percent=100", term)
+	}
+
+	// Failure side: a dump error still ends the live pair (Percent=0).
+	fake.dumpErr = errors.New("boom")
+	if err := svc.exportFlashZip(context.Background(), settings, "cafebabe", restic.Mode{}, "/repo"); err == nil {
+		t.Fatal("expected an error when DumpZip fails")
+	}
+	begin, term = drainTwoProgressEvents(t, ch)
+	if begin.Key != "export:flash" || !begin.Active {
+		t.Fatalf("failure begin event = %+v, want Key=export:flash Active=true", begin)
+	}
+	if term.Key != "export:flash" || term.Active || term.Percent != 0 {
+		t.Fatalf("failure terminal event = %+v, want Key=export:flash Active=false Percent=0", term)
 	}
 }
 

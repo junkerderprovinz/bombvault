@@ -5516,6 +5516,13 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	if !settings.FlashZipExportEnabled || settings.FlashZipExportPath == "" {
 		return nil
 	}
+	// Publish a live "maintenance" progress pair keyed "export:flash" (mirroring
+	// prune:/verify:/drill:) so a long zip export of a big flash shows on the
+	// dashboard activity log WHILE it writes, not only after (#109). The terminal
+	// event is deferred so any failure path above clears the live line. A disabled
+	// export publishes nothing (nothing ran) — hence below the guard.
+	s.progBegin(ctx, "export:flash", "maintenance")
+	defer func() { s.progEnd("export:flash", "maintenance", err == nil) }()
 	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
 	if rErr != nil {
 		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
@@ -6876,7 +6883,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // returns errDomainBusy and records nothing. A missing/empty repo returns a clear
 // "no backups to verify" error and records nothing (no misleading failure). Both
 // a passing and a failing drill ARE recorded; a failure also fires a notification.
-func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (store.RestoreDrill, error) {
+func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
 	case "containers", "vms", "flash", "config", "files":
 	default:
@@ -6936,6 +6943,15 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	}
 	defer unlock()
 
+	// Publish a live "maintenance" progress pair keyed "drill:<domain>" (mirroring
+	// prune:/verify:) so a running restore-verification drill shows on the
+	// dashboard activity log WHILE it reads back pack data, not only after it
+	// finished (#109). The terminal event is deferred so an error/panic can never
+	// leave a stuck live line.
+	dkey := "drill:" + domain
+	s.progBegin(ctx, dkey, "maintenance")
+	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
+
 	mode := s.ModeFor(settings)
 	// An initialised-but-empty repo (no snapshots) has nothing to verify. Treat it
 	// like a missing repo: a clear error, no misleading failure recorded.
@@ -6957,7 +6973,7 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	defer cancel()
 	checkErr := s.engine.CheckData(dctx, repo, drillSubsetPct(settings.DrillsSubsetPct), mode)
 
-	drill := store.RestoreDrill{
+	drill = store.RestoreDrill{
 		Domain: domain,
 		Source: source,
 		At:     time.Now().Unix(),
@@ -7022,7 +7038,7 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // lock exactly like a real restore, so a scheduled backup can never fire mid-drill
 // and vice-versa; busy → errDomainBusy, recording nothing. A failure records
 // kind='dr' ok=false AND fires the drill-failure notification.
-func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (store.RestoreDrill, error) {
+func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
 	case "containers", "flash", "files":
 	case "vms":
@@ -7084,6 +7100,14 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 	}
 	defer unlock()
 
+	// Publish a live "maintenance" progress pair keyed "drill:<domain>" (mirroring
+	// prune:/verify:) so a running DR drill shows on the dashboard activity log
+	// WHILE it sandbox-restores, not only after it finished (#109). The terminal
+	// event is deferred so an error/panic can never leave a stuck live line.
+	dkey := "drill:" + domain
+	s.progBegin(ctx, dkey, "maintenance")
+	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
+
 	// Detach from the request/scheduler ctx for the whole drill: a real DR restore
 	// can take hours over a slow off-site link, and a browser tab close (request
 	// ctx) or a context.Background scheduler parent must not abort it. The snapshot
@@ -7111,7 +7135,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (sto
 	if errors.Is(drillErr, errNothingToDrill) {
 		return store.RestoreDrill{}, drillErr
 	}
-	drill := store.RestoreDrill{
+	drill = store.RestoreDrill{
 		Domain: domain,
 		Source: "offsite",
 		At:     time.Now().Unix(),

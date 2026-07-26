@@ -5,8 +5,8 @@
 // resolveName renders "key a=1 b=2", which keeps the translation key AND the
 // interpolated params assertable without any i18n context.
 // ---------------------------------------------------------------------------
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildLogLines, filterLogLines, formatLogDate, preferredDateLocale } from "./activityLog";
+import { describe, expect, it } from "vitest";
+import { buildLogLines, filterLogLines, formatLogDate } from "./activityLog";
 import type { LogLine } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap } from "./progress";
@@ -75,6 +75,64 @@ describe("buildLogLines", () => {
     expect(lines[0].idle).toBe(true);
     expect(lines[0].text).toContain("activityLog.lineNextWithDomain");
     expect(lines[0].text).toContain("countdown=1h 0m");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #109 — drills, tamper tests and the flash-ZIP export publish live progress
+// keys ("drill:<domain>", "tamper:<domain>", "export:flash") so they show in
+// the log WHILE running, with the same dedupe-signature mechanics as the
+// other domain-op live lines (offsite/prune/verify).
+// ---------------------------------------------------------------------------
+describe("buildLogLines — live domain-op checks (#109)", () => {
+  it("renders a live drill as a running restore-check line with drill kind/domain", () => {
+    const progress: ProgressMap = {
+      "drill:containers": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines).toHaveLength(1); // live line suppresses the idle "nothing yet" line too
+    const live = lines[0];
+    expect(live.id).toBe("live:drill:containers");
+    expect(live.live).toBe(true);
+    expect(live.status).toBe("running");
+    expect(live.kind).toBe("drill");
+    expect(live.domain).toBe("containers");
+    expect(live.text).toContain("activityLog.lineDrillRunning");
+    expect(live.text).toContain("domain=activityLog.domainContainers");
+  });
+
+  it("supersedes the finished drill run row while its live line still shows (no doubling)", () => {
+    // The backend records the drill run (recordDomainRun) BEFORE the terminal
+    // progress frame clears the live entry — during that window both exist.
+    const finishedDrill = makeRun({ id: "r-drill", kind: "drill", targetId: "containers", target: "containers" });
+    const progress: ProgressMap = {
+      "drill:containers": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const during = buildLogLines([finishedDrill], progress, [], resolveName, 5_000_000);
+    expect(during.map((l) => l.id)).toEqual(["live:drill:containers"]);
+
+    // Once the live entry is gone, the finished run row takes over.
+    const after = buildLogLines([finishedDrill], {}, [], resolveName, 5_000_000);
+    expect(after.map((l) => l.id)).toEqual(["run:r-drill"]);
+    expect(after[0].kind).toBe("drill");
+    expect(after[0].domain).toBe("containers");
+    expect(after[0].text).toContain("activityLog.lineDrillSuccess");
+  });
+
+  it("renders live tamper and flash-ZIP-export lines with their kinds", () => {
+    const progress: ProgressMap = {
+      "tamper:vms": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+      "export:flash": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_001 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_100);
+    expect(lines.map((l) => l.id)).toEqual(["live:tamper:vms", "live:export:flash"]);
+    const [tamper, exp] = lines;
+    expect(tamper.kind).toBe("tamper");
+    expect(tamper.domain).toBe("vms");
+    expect(tamper.text).toContain("activityLog.lineTamperRunning");
+    expect(exp.kind).toBe("export");
+    expect(exp.domain).toBe("flash");
+    expect(exp.text).toContain("activityLog.lineExportRunning");
   });
 });
 
@@ -147,8 +205,12 @@ describe("filterLogLines — date search (#104)", () => {
     ).toEqual(["d2"]);
   });
 
-  it("defaults the localized-date match to English ordering when no language is given", () => {
-    expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: "07/23" }).map((l) => l.id)).toEqual(["d1"]);
+  it("defaults the localized-date match to the environment's own locale when no language is given (#108)", () => {
+    // With lang omitted the haystack uses the engine's default negotiation —
+    // whatever THIS environment renders for day1 must match (and does so on
+    // any OS locale, which is exactly the #108 contract).
+    const shown = formatLogDate(day1);
+    expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: shown }).map((l) => l.id)).toEqual(["d1"]);
   });
 
   it("still narrows by plain message text alongside the new date matching", () => {
@@ -156,29 +218,16 @@ describe("filterLogLines — date search (#104)", () => {
   });
 });
 
-// -- preferredDateLocale (issue #104 follow-up) ------------------------------
-// Regional date order must follow the browser/system locale when present and
-// only fall back to the app language without one — an English UI in Portugal
-// shows 24/07, not the US 07/23 (manilx).
-
-describe("preferredDateLocale", () => {
-  // Node's globalThis.navigator is getter-only — vi.stubGlobal handles it.
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("prefers the browser locale over the app language", () => {
-    vi.stubGlobal("navigator", { language: "pt-PT" });
-    expect(preferredDateLocale("en")).toBe("pt-PT");
-    // and the resulting date really is day-first
+// -- #108: an omitted locale = the engine's default negotiation --------------
+// The log's date must use the SAME default-locale path as every other date in
+// the app (formatTs's plain toLocaleString) — never navigator.language, which
+// can disagree with the browser's formatting default (e.g. a macOS "en-US" UI
+// language with a Portuguese region). Omitting the locale is that contract.
+describe("formatLogDate with omitted locale (#108)", () => {
+  it("matches toLocaleDateString's default-locale day/month rendering", () => {
     const ts = new Date(2026, 6, 23, 5, 0, 0).getTime();
-    expect(formatLogDate(ts, preferredDateLocale("en"))).toBe("23/07");
-  });
-
-  it("falls back to the app language without a navigator locale", () => {
-    vi.stubGlobal("navigator", undefined);
-    expect(preferredDateLocale("de")).toBe("de");
-    vi.stubGlobal("navigator", {}); // navigator without language (defensive)
-    expect(preferredDateLocale("en")).toBe("en");
+    // Build the expected day/month string via the same default negotiation.
+    const expected = new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "2-digit" }).format(new Date(ts));
+    expect(formatLogDate(ts)).toBe(expected);
   });
 });
