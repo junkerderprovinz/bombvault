@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth, generateWidgetToken, disableWidgetToken } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView, RegistryAuthEntry } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { copyText } from "../lib/clipboard";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
@@ -225,22 +226,17 @@ chmod 600 /root/.ssh/authorized_keys`
   }
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(pub);
+    // copyText falls back to execCommand in non-secure contexts (#112).
+    if (await copyText(pub)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable (non-HTTPS) — the key is selectable in the box */
     }
   }
 
   async function handleCopyCmd() {
-    try {
-      await navigator.clipboard.writeText(authorizeCmd);
+    if (await copyText(authorizeCmd)) {
       setCmdCopied(true);
       setTimeout(() => setCmdCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable — the command is selectable in the box */
     }
   }
 
@@ -317,6 +313,186 @@ chmod 600 /root/.ssh/authorized_keys`
   );
 }
 
+// The companion dashboard-tile plugin's .plg URL + repo — shown for manual
+// install when SSH is missing, and linked for transparency before installing.
+// (Install itself uses a hard-coded server-side constant; these are display-only.)
+const DASH_PLUGIN_PLG_URL =
+  "https://raw.githubusercontent.com/junkerderprovinz/bombvault-dashboard/main/plugin/bombvaultdash.plg";
+const DASH_PLUGIN_REPO_URL = "https://github.com/junkerderprovinz/bombvault-dashboard";
+
+type DashPluginStatus =
+  | { kind: "loading" }
+  | { kind: "noSsh" }
+  | { kind: "absent" }
+  | { kind: "installed"; version: string }
+  | { kind: "error"; message: string; output?: string };
+
+// UnraidTileSection — the "Unraid dashboard tile" block inside the Dashboard
+// widget card: one-click install/remove of the companion bombvaultdash plugin
+// over the existing host SSH connection. Without SSH it degrades to manual
+// instructions (the copyable .plg URL + a CA hint).
+function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [status, setStatus] = useState<DashPluginStatus>({ kind: "loading" });
+  const [busy, setBusy] = useState<"idle" | "install" | "remove">("idle");
+  const [installOk, setInstallOk] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  function refresh() {
+    getDashboardPlugin()
+      .then((r) => {
+        if (!r.ok) {
+          setStatus({ kind: "error", message: r.error ?? t("settings.error") });
+        } else if (!r.sshConfigured) {
+          setStatus({ kind: "noSsh" });
+        } else if (r.installed) {
+          setStatus({ kind: "installed", version: r.version ?? "" });
+        } else {
+          setStatus({ kind: "absent" });
+        }
+      })
+      .catch((err) => {
+        setStatus({
+          kind: "error",
+          message: err instanceof Error ? err.message : t("settings.error"),
+        });
+      });
+  }
+
+  useEffect(refresh, []); // eslint-disable-line react-hooks/exhaustive-deps -- status check on card mount only
+
+  async function run(op: "install" | "remove") {
+    setBusy(op);
+    setInstallOk(false);
+    try {
+      const r = await (op === "install" ? installDashboardPlugin() : removeDashboardPlugin());
+      if (r.ok) {
+        if (op === "install") setInstallOk(true);
+        refresh();
+      } else {
+        setStatus({
+          kind: "error",
+          message: r.error ?? t("settings.error"),
+          output: r.output,
+        });
+      }
+    } catch (err) {
+      setStatus({
+        kind: "error",
+        message: err instanceof Error ? err.message : t("settings.error"),
+      });
+    } finally {
+      setBusy("idle");
+    }
+  }
+
+  async function handleCopyUrl() {
+    if (await copyText(DASH_PLUGIN_PLG_URL)) {
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+      <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+        {t("settings.dashTile")}
+      </h3>
+      <p className="text-xs text-carbon-textMuted">{t("settings.dashTileHint")}</p>
+
+      {status.kind === "loading" && (
+        <span className="text-xs text-carbon-textMuted">{t("settings.dashTileChecking")}</span>
+      )}
+
+      {status.kind === "noSsh" && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-carbon-textSub">{t("settings.dashTileNoSsh")}</p>
+          <div className="flex items-start gap-2">
+            <code className="flex-1 break-all rounded-sm border border-carbon-border bg-carbon-surface2 p-2 text-xs text-carbon-text">
+              {DASH_PLUGIN_PLG_URL}
+            </code>
+            <button
+              type="button"
+              onClick={() => void handleCopyUrl()}
+              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+            >
+              {urlCopied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+            </button>
+          </div>
+          <p className="text-xs text-carbon-textMuted">{t("settings.dashTileCa")}</p>
+        </div>
+      )}
+
+      {status.kind === "absent" && (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-carbon-text">{t("settings.dashTileNotInstalled")}</span>
+          {/* Transparency BEFORE the call: what Install does, and where the code lives. */}
+          <p className="text-xs text-carbon-textMuted">{t("settings.dashTileConfirm")}</p>
+          <a
+            href={DASH_PLUGIN_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-statusInfo hover:underline self-start"
+          >
+            {t("settings.dashTileRepo")} →
+          </a>
+          <button
+            type="button"
+            onClick={() => void run("install")}
+            disabled={busy !== "idle"}
+            className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {busy === "install" ? t("settings.dashTileInstalling") : t("settings.dashTileInstall")}
+          </button>
+        </div>
+      )}
+
+      {status.kind === "installed" && (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-statusOk">
+            ✓{" "}
+            {status.version
+              ? t("settings.dashTileInstalled").replace("{version}", status.version)
+              : t("settings.dashTileInstalledNoV")}
+          </span>
+          {installOk && (
+            <span className="text-xs text-statusOk">{t("settings.dashTileInstallOk")}</span>
+          )}
+          <p className="text-xs text-carbon-textMuted">{t("settings.dashTileInstalledHint")}</p>
+          <button
+            type="button"
+            onClick={() => void run("remove")}
+            disabled={busy !== "idle"}
+            className="self-start rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+          >
+            {busy === "remove" ? t("settings.dashTileRemoving") : t("settings.dashTileRemove")}
+          </button>
+        </div>
+      )}
+
+      {status.kind === "error" && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
+          {status.output && (
+            <pre className="overflow-x-auto rounded-sm border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
+              {status.output}
+            </pre>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setStatus({ kind: "loading" });
+              refresh();
+            }}
+            className="self-start rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+          >
+            {t("whatsnew.retry")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // DashboardWidgetCard manages the embeddable activity-log widget (GET /widget):
 // generate/rotate/disable its access token, show the copyable widget URL and a
 // live iframe preview. The token is a show-once secret — the server stores it
@@ -377,12 +553,9 @@ function DashboardWidgetCard({
 
   async function handleCopy() {
     if (!widgetUrl) return;
-    try {
-      await navigator.clipboard.writeText(widgetUrl);
+    if (await copyText(widgetUrl)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable (non-HTTPS) — the URL is selectable in the box */
     }
   }
 
@@ -469,6 +642,9 @@ function DashboardWidgetCard({
           </div>
         </>
       )}
+
+      {/* Companion Unraid dashboard-tile plugin (one-click install over SSH). */}
+      <UnraidTileSection t={t} />
     </Card>
   );
 }
