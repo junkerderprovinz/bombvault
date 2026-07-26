@@ -199,12 +199,12 @@ export function ActivityLog() {
           onChange={(e) => setFilterText(e.target.value)}
           placeholder={t("activityLog.filterPlaceholder")}
           aria-label={t("activityLog.filterPlaceholder")}
-          className="flex-1 min-w-[10rem] rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted"
+          className="flex-1 min-w-[10rem] rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
         <select
           value={filterDomain}
           onChange={(e) => setFilterDomain(e.target.value as LogFilterDomain)}
-          className="rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text"
+          className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         >
           <option value="all">{t("activityLog.filterAllDomains")}</option>
           <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -216,7 +216,7 @@ export function ActivityLog() {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as LogFilterKind)}
-          className="rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text"
+          className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         >
           <option value="all">{t("activityLog.filterAllTypes")}</option>
           <option value="backup">{t("activityLog.typeBackup")}</option>

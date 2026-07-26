@@ -930,7 +930,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="rounded-sm border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text"
+              className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             >
               <option value="all">{t("run.allDays")}</option>
               {days.map((d) => (
@@ -1887,7 +1887,7 @@ export function Dashboard() {
           className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
-              : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

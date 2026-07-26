@@ -279,7 +279,7 @@ export function OffsiteWizard({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
+    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
   // Far-side prune cron hint (includes --keep-within 14d + a snapshot-count note).
@@ -580,7 +580,7 @@ export function OffsiteWizard({
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-hidden focus:border-statusInfoSolid"
+                className="rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <div className="flex items-center gap-3">

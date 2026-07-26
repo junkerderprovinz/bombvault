@@ -267,7 +267,7 @@ function FileSetFileBrowser({
   const count = selected.size;
 
   return (
-    <div className="mt-1 rounded-lg bg-carbon-surface2 p-2 flex flex-col gap-2">
+    <div className="mt-1 rounded-lg bg-carbon-background p-2 flex flex-col gap-2">
       <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
@@ -764,7 +764,7 @@ function FileSetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </div>
 
@@ -788,7 +788,7 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-hidden focus:border-statusInfoSolid"
+            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
           <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
