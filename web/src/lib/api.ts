@@ -933,7 +933,7 @@ export function disableWidgetToken(): Promise<OkEnvelope> {
 
 /**
  * GET /api/dashboard-plugin — status of the companion Unraid dashboard-tile
- * plugin (bombvaultdash), probed over the host SSH connection.
+ * plugin (bombvaultwidget), probed over the host SSH connection.
  * sshConfigured:false means the state is unknowable (no SSH set up) — the UI
  * shows manual-install instructions then; `installed` is only present when
  * sshConfigured, `version` only when installed and readable.

@@ -83,8 +83,8 @@ func TestDashboardPluginStatusInstalled(t *testing.T) {
 	// accidental edit of the constant (user input creeping in, marker change)
 	// fails loudly.
 	want := []string{"sh", "-c",
-		"if [ -e /var/log/plugins/bombvaultdash.plg ]; then echo INSTALLED; " +
-			"/usr/local/sbin/plugin version /var/log/plugins/bombvaultdash.plg 2>/dev/null; else echo ABSENT; fi"}
+		"if [ -e /var/log/plugins/bombvaultwidget.plg ]; then echo INSTALLED; " +
+			"/usr/local/sbin/plugin version /var/log/plugins/bombvaultwidget.plg 2>/dev/null; else echo ABSENT; fi"}
 	if got := ssh.runs[0]; strings.Join(got, "\x00") != strings.Join(want, "\x00") {
 		t.Fatalf("status command drifted:\n got %q\nwant %q", got, want)
 	}
@@ -129,7 +129,7 @@ func TestDashboardPluginStatusSSHError(t *testing.T) {
 // hard-coded `plugin install <const URL>` (no user input, ever) and returns
 // the transcript.
 func TestDashboardPluginInstallRunsPinnedCommand(t *testing.T) {
-	ssh := &fakeHostSSH{runOut: "plugin: installing: bombvaultdash.plg\nplugin: bombvaultdash.plg installed"}
+	ssh := &fakeHostSSH{runOut: "plugin: installing: bombvaultwidget.plg\nplugin: bombvaultwidget.plg installed"}
 	h := dashHandler(ssh)
 	rec := httptest.NewRecorder()
 	h.handleDashboardPluginInstall(rec, httptest.NewRequest(http.MethodPost, "/api/dashboard-plugin/install", nil))
@@ -138,7 +138,7 @@ func TestDashboardPluginInstallRunsPinnedCommand(t *testing.T) {
 		t.Fatalf("expected exactly one SSH round-trip, got %d", len(ssh.runs))
 	}
 	want := []string{"sh", "-c",
-		"/usr/local/sbin/plugin install https://raw.githubusercontent.com/junkerderprovinz/bombvault-dashboard/main/plugin/bombvaultdash.plg 2>&1"}
+		"/usr/local/sbin/plugin install https://raw.githubusercontent.com/junkerderprovinz/bombvault-widget/main/plugin/bombvaultwidget.plg 2>&1"}
 	if got := ssh.runs[0]; strings.Join(got, "\x00") != strings.Join(want, "\x00") {
 		t.Fatalf("install command drifted:\n got %q\nwant %q", got, want)
 	}
@@ -154,7 +154,7 @@ func TestDashboardPluginInstallRunsPinnedCommand(t *testing.T) {
 }
 
 // TestDashboardPluginRemoveRunsPinnedCommand: remove runs EXACTLY the
-// hard-coded `plugin remove bombvaultdash.plg`.
+// hard-coded `plugin remove bombvaultwidget.plg`.
 func TestDashboardPluginRemoveRunsPinnedCommand(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	h := dashHandler(ssh)
@@ -164,7 +164,7 @@ func TestDashboardPluginRemoveRunsPinnedCommand(t *testing.T) {
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected exactly one SSH round-trip, got %d", len(ssh.runs))
 	}
-	want := []string{"sh", "-c", "/usr/local/sbin/plugin remove bombvaultdash.plg 2>&1"}
+	want := []string{"sh", "-c", "/usr/local/sbin/plugin remove bombvaultwidget.plg 2>&1"}
 	if got := ssh.runs[0]; strings.Join(got, "\x00") != strings.Join(want, "\x00") {
 		t.Fatalf("remove command drifted:\n got %q\nwant %q", got, want)
 	}
@@ -177,7 +177,7 @@ func TestDashboardPluginRemoveRunsPinnedCommand(t *testing.T) {
 // returns the transcript tail so the UI can show WHY the plugin CLI refused.
 func TestDashboardPluginInstallFailureCarriesOutputTail(t *testing.T) {
 	ssh := &fakeHostSSH{
-		runOut: "plugin: downloading: bombvaultdash.txz\nplugin: bad file MD5",
+		runOut: "plugin: downloading: bombvaultwidget.txz\nplugin: bad file MD5",
 		runErr: errors.New("sshconn: run \"sh\": exit status 1"),
 	}
 	h := dashHandler(ssh)

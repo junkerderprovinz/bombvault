@@ -12,7 +12,7 @@ import (
 // Companion Unraid dashboard-tile plugin — GET /api/dashboard-plugin (status)
 // + POST /api/dashboard-plugin/install + POST /api/dashboard-plugin/remove.
 //
-// BombVault can install/remove the bombvaultdash companion plugin (a BombVault
+// BombVault can install/remove the bombvaultwidget companion plugin (a BombVault
 // status tile on the Unraid Dashboard) over the SAME host SSH connection the
 // VM/NVRAM features and Unraid notifications already use. Everything runs
 // Unraid's regular plugin mechanism (`plugin install <url>` / `plugin remove
@@ -26,14 +26,14 @@ import (
 // dashPluginURL is the companion plugin's .plg install URL (the Unraid plugin
 // manager downloads the txz payload it references from the matching GitHub
 // release).
-const dashPluginURL = "https://raw.githubusercontent.com/junkerderprovinz/bombvault-dashboard/main/plugin/bombvaultdash.plg"
+const dashPluginURL = "https://raw.githubusercontent.com/junkerderprovinz/bombvault-widget/main/plugin/bombvaultwidget.plg"
 
 // dashPluginMarker is Unraid's canonical installed-plugin marker: the plugin
 // manager symlinks every installed plugin's .plg into /var/log/plugins/<name>.plg
 // (the webGui's Plugins page enumerates exactly that directory), and `plugin
 // remove` takes the same basename. `[ -e ]` follows the symlink, so a dangling
 // link (plugin file gone from the flash) counts as not installed.
-const dashPluginMarker = "/var/log/plugins/bombvaultdash.plg"
+const dashPluginMarker = "/var/log/plugins/bombvaultwidget.plg"
 
 // dashPluginStatusCmd probes the marker in ONE round-trip and always exits 0 so
 // an "absent" answer is distinguishable from an SSH failure (a bare `test -e`
@@ -47,7 +47,7 @@ const dashPluginStatusCmd = "if [ -e " + dashPluginMarker + " ]; then echo INSTA
 // returned to the UI even on failure (sshconn.Run keeps stdout on error).
 const (
 	dashPluginInstallCmd = "/usr/local/sbin/plugin install " + dashPluginURL + " 2>&1"
-	dashPluginRemoveCmd  = "/usr/local/sbin/plugin remove bombvaultdash.plg 2>&1"
+	dashPluginRemoveCmd  = "/usr/local/sbin/plugin remove bombvaultwidget.plg 2>&1"
 )
 
 // Timeouts: the status probe is a quick marker test (the SSH layer's own
@@ -112,7 +112,7 @@ func (s *Service) InstallDashboardPlugin(_ context.Context) (output string, err 
 	return s.runDashPluginCmd(dashPluginInstallCmd, dashPluginInstallTimeout)
 }
 
-// RemoveDashboardPlugin runs the hard-coded `plugin remove bombvaultdash.plg`
+// RemoveDashboardPlugin runs the hard-coded `plugin remove bombvaultwidget.plg`
 // on the host, same contract as InstallDashboardPlugin.
 func (s *Service) RemoveDashboardPlugin(_ context.Context) (output string, err error) {
 	return s.runDashPluginCmd(dashPluginRemoveCmd, dashPluginRemoveTimeout)
