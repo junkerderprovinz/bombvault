@@ -3667,6 +3667,59 @@ func TestRunRestoreDrillFailureRecorded(t *testing.T) {
 	}
 }
 
+// TestRunSubsetDrillEmitsLiveProgress pins #109: a running restore-verification
+// drill — previously invisible until it finished (its run row is recorded
+// back-to-back by recordDomainRun) — now publishes a begin/terminal
+// "maintenance" progress pair keyed "drill:<domain>", so the dashboard activity
+// log shows a live line WHILE the drill reads back pack data.
+func TestRunSubsetDrillEmitsLiveProgress(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := initRepoSvc(t, eng)
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset", false); err != nil {
+		t.Fatalf("RunRestoreDrill: %v", err)
+	}
+
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "drill:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=drill:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "drill:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=drill:containers Phase=maintenance Active=false Percent=100", term)
+	}
+}
+
+// TestRunSubsetDrillFailureEndsLiveProgress pins the failure side of the #109
+// seam: a failing drill still emits the terminal frame (Active=false, Percent=0)
+// via the deferred progEnd, so a red drill can never leave a stuck live line.
+func TestRunSubsetDrillFailureEndsLiveProgress(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps:        []restic.Snapshot{{ID: "aaaa1111bbbb2222"}},
+		checkDataErr: errors.New("data corruption in pack"),
+	}
+	svc := initRepoSvc(t, eng)
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "local", "subset", false); err == nil {
+		t.Fatal("expected the drill to surface the CheckData failure")
+	}
+
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "drill:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=drill:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "drill:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 0 {
+		t.Fatalf("terminal event on failure = %+v, want Key=drill:containers Phase=maintenance Active=false Percent=0", term)
+	}
+}
+
 // drDrillService builds a service with an off-site repo configured for domain and
 // DR drills enabled, so RunRestoreDrill(..., "dr") can run against the fake engine.
 // HostMountRoot is a temp dir so the drill sandbox is created + torn down under it.
@@ -3722,6 +3775,10 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 		},
 	}
 	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
 
 	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err != nil {
@@ -3729,6 +3786,15 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 	}
 	if !drill.OK || drill.Kind != "dr" || drill.Source != "offsite" || drill.Domain != "containers" {
 		t.Fatalf("want an ok dr/offsite/containers drill, got %+v", drill)
+	}
+	// #109: the DR drill publishes the same live "drill:<domain>" maintenance
+	// pair as the subset drill, so it shows on the activity log while running.
+	begin, term := drainTwoEvents(t, ch)
+	if begin.Key != "drill:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=drill:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "drill:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=drill:containers Phase=maintenance Active=false Percent=100", term)
 	}
 	if len(eng.restored) != 1 {
 		t.Fatalf("want exactly one whole-tree sandbox restore, got %v", eng.restored)

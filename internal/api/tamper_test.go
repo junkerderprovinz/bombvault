@@ -9,9 +9,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -94,6 +96,54 @@ func TestRunTamperTestProtected(t *testing.T) {
 	}
 	if !last.Protected {
 		t.Fatalf("recorded verdict should be protected")
+	}
+}
+
+// drainTwoProgressEvents reads a begin + terminal progress event pair a
+// synchronous call published (the Subscribe channel is buffered, so both are
+// already queued when the call returns); a 5s deadline keeps a regression from
+// hanging. Shared by the tamper and flash-ZIP-export progress tests (#109).
+func drainTwoProgressEvents(t *testing.T, ch <-chan progress.Event) (begin, term progress.Event) {
+	t.Helper()
+	deadline := time.After(5 * time.Second)
+	select {
+	case begin = <-ch:
+	case <-deadline:
+		t.Fatal("timed out waiting for the begin progress event")
+	}
+	select {
+	case term = <-ch:
+	case <-deadline:
+		t.Fatal("timed out waiting for the terminal progress event")
+	}
+	return begin, term
+}
+
+// TestRunTamperTestEmitsLiveProgress pins #109: a running tamper test —
+// previously invisible until its verdict row appeared — now publishes a
+// begin/terminal "maintenance" progress pair keyed "tamper:<domain>", so the
+// dashboard activity log shows a live line while the far side is probed.
+func TestRunTamperTestEmitsLiveProgress(t *testing.T) {
+	var seen []string
+	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
+	defer srv.Close()
+
+	svc, _ := tamperService(t, "rest:"+srv.URL, &fakeHostSSH{})
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	if _, err := svc.RunTamperTest(context.Background(), "containers"); err != nil {
+		t.Fatalf("RunTamperTest: %v", err)
+	}
+
+	begin, term := drainTwoProgressEvents(t, ch)
+	if begin.Key != "tamper:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=tamper:containers Phase=maintenance Active=true", begin)
+	}
+	if term.Key != "tamper:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=tamper:containers Phase=maintenance Active=false Percent=100", term)
 	}
 }
 
