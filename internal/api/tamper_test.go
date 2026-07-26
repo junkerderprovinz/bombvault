@@ -48,6 +48,24 @@ func tamperService(t *testing.T, offsite string, ssh HostSSH) (*Service, *store.
 	return svc, st
 }
 
+// latestTamperRun returns the newest runs-table row of kind "tamper", failing
+// the test when none exists — the open-at-start run seam under test: EVERY
+// tamper outcome (success/failed/skipped) must settle exactly such a row.
+func latestTamperRun(t *testing.T, st *store.Repo) store.Run {
+	t.Helper()
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range runs {
+		if r.Kind == "tamper" {
+			return r
+		}
+	}
+	t.Fatal("no tamper run row recorded")
+	return store.Run{}
+}
+
 // deleteRecorder is an httptest handler that returns a fixed status to every
 // DELETE and records the paths it saw, so a test can assert both probes ran.
 func deleteRecorder(status int, seen *[]string) http.Handler {
@@ -96,6 +114,11 @@ func TestRunTamperTestProtected(t *testing.T) {
 	}
 	if !last.Protected {
 		t.Fatalf("recorded verdict should be protected")
+	}
+	// And the shared runs table settled a "success" tamper run on the domain target.
+	run := latestTamperRun(t, st)
+	if run.Status != "success" || run.TargetID != "containers" || run.FinishedAt == nil {
+		t.Fatalf("tamper run = %+v, want Status=success TargetID=containers finished", run)
 	}
 }
 
@@ -192,13 +215,14 @@ func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 }
 
 // TestRunTamperTestAccepted: a server that accepts the delete (200) is NOT
-// protected, with a clear detail.
+// protected, with a clear detail — and records a "failed" run (the alarming
+// outcome) in the shared runs table.
 func TestRunTamperTestAccepted(t *testing.T) {
 	var seen []string
 	srv := httptest.NewServer(deleteRecorder(http.StatusOK, &seen))
 	defer srv.Close()
 
-	svc, _ := tamperService(t, "rest:"+srv.URL, &fakeHostSSH{})
+	svc, st := tamperService(t, "rest:"+srv.URL, &fakeHostSSH{})
 	v, err := svc.RunTamperTest(context.Background(), "containers")
 	if err != nil {
 		t.Fatalf("RunTamperTest: %v", err)
@@ -209,10 +233,20 @@ func TestRunTamperTestAccepted(t *testing.T) {
 	if !strings.Contains(strings.ToLower(v.Detail), "accepted") {
 		t.Fatalf("detail should say the server accepted a delete, got %q", v.Detail)
 	}
+	run := latestTamperRun(t, st)
+	if run.Status != "failed" || run.TargetID != "containers" {
+		t.Fatalf("tamper run = %+v, want Status=failed TargetID=containers", run)
+	}
+	if !strings.Contains(strings.ToLower(run.Error), "accepted") {
+		t.Fatalf("failed tamper run should carry the detail, got %q", run.Error)
+	}
 }
 
-// TestRunTamperTestNonRestNotTestable: a non-REST off-site repo is honestly
-// reported as not testable, with nothing recorded.
+// TestRunTamperTestNonRestNotTestable: a non-REST off-site repo (the user's B2
+// object-lock case) is honestly reported as not testable, with no VERDICT
+// recorded — but the shared runs table still settles a "skipped" run carrying
+// the reason, so the scheduled test is visible in the activity log instead of
+// running invisibly (#109 follow-up).
 func TestRunTamperTestNonRestNotTestable(t *testing.T) {
 	svc, st := tamperService(t, "s3:s3.amazonaws.com/bucket/containers", &fakeHostSSH{})
 	v, err := svc.RunTamperTest(context.Background(), "containers")
@@ -226,13 +260,21 @@ func TestRunTamperTestNonRestNotTestable(t *testing.T) {
 		t.Fatalf("detail should explain only REST repos are verifiable, got %q", v.Detail)
 	}
 	if _, found, _ := st.LatestTamperTest("containers"); found {
-		t.Fatalf("a non-testable repo must record nothing")
+		t.Fatalf("a non-testable repo must record no verdict")
+	}
+	run := latestTamperRun(t, st)
+	if run.Status != "skipped" || run.TargetID != "containers" || run.FinishedAt == nil {
+		t.Fatalf("tamper run = %+v, want Status=skipped TargetID=containers finished", run)
+	}
+	if !strings.Contains(run.Error, "REST") {
+		t.Fatalf("skipped tamper run should carry the not-a-REST-server reason, got %q", run.Error)
 	}
 }
 
 // TestRunTamperTestTransportErrorInconclusive: a server that refuses the
 // connection makes the test INCONCLUSIVE — RunTamperTest returns an error and
-// records NOTHING (never treats an unreachable server as protected OR unprotected).
+// records NO VERDICT (never treats an unreachable server as protected OR
+// unprotected), while still settling a "skipped" run row for visibility.
 func TestRunTamperTestTransportErrorInconclusive(t *testing.T) {
 	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, new([]string)))
 	url := srv.URL
@@ -259,13 +301,19 @@ func TestRunTamperTestTransportErrorInconclusive(t *testing.T) {
 	if !last.Protected || last.Detail != seedMarker {
 		t.Fatalf("inconclusive run must record nothing (seeded marker must stand), got protected=%v detail=%q", last.Protected, last.Detail)
 	}
+	// But the shared runs table still settles a "skipped" run carrying the
+	// transport error, so the attempt shows up in the activity log.
+	run := latestTamperRun(t, st)
+	if run.Status != "skipped" || run.TargetID != "containers" || run.Error == "" {
+		t.Fatalf("tamper run = %+v, want Status=skipped TargetID=containers with an error text", run)
+	}
 }
 
 // TestRunTamperTestInconclusiveStatuses: a 401 (rotated creds) or 503 (far-side
 // maintenance / proxy) is NOT a delete verdict — it is INCONCLUSIVE, exactly like
-// a transport error: RunTamperTest returns an error, records NO row and fires NO
-// notification (it must never flip a stored PROTECTED verdict to a false
-// "protection LOST" on a non-decisive status).
+// a transport error: RunTamperTest returns an error, records NO verdict row and
+// fires NO notification (it must never flip a stored PROTECTED verdict to a false
+// "protection LOST" on a non-decisive status) — only a "skipped" run row.
 func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 	for _, status := range []int{http.StatusUnauthorized, http.StatusServiceUnavailable} {
 		t.Run(fmt.Sprintf("status_%d", status), func(t *testing.T) {
@@ -296,6 +344,11 @@ func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 			// And no protection-loss notification fired.
 			if len(ssh.runs) != 0 {
 				t.Fatalf("status %d must not notify, got %d notifications", status, len(ssh.runs))
+			}
+			// But the runs table still settles a "skipped" row for the attempt.
+			run := latestTamperRun(t, st)
+			if run.Status != "skipped" || !strings.Contains(run.Error, "inconclusive") {
+				t.Fatalf("status %d tamper run = %+v, want Status=skipped with the inconclusive reason", status, run)
 			}
 		})
 	}

@@ -225,8 +225,10 @@ export function ActivityLog() {
           <option value="verify">{t("activityLog.typeVerify")}</option>
           <option value="offsite">{t("activityLog.typeOffsite")}</option>
           {/* Persisted kinds since the everything-in-the-log wave. Drill/tamper
-              reuse the existing job-label keys. */}
+              reuse the existing job-label keys; the off-site DR check ("drdrill")
+              is its own kind and reuses Run History's kind label. */}
           <option value="drill">{t("activityLog.jobDrill")}</option>
+          <option value="drdrill">{t("run.kindDRDrill")}</option>
           <option value="tamper">{t("activityLog.jobTamper")}</option>
           <option value="export">{t("activityLog.typeExport")}</option>
         </select>

@@ -25,7 +25,7 @@ const digestMaxFailures = 5
 
 // digestKindOrder fixes the print order of the per-kind count lines so the
 // digest reads stably week over week (map iteration order is random).
-var digestKindOrder = []string{"backup", "restore", "update", "prune", "verify", "offsite", "drill", "tamper", "export"}
+var digestKindOrder = []string{"backup", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
 
 // digestKindCount is one kind's finished-run tally inside the digest window.
 type digestKindCount struct {

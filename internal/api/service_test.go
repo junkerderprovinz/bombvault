@@ -3723,7 +3723,9 @@ func TestRunSubsetDrillFailureEndsLiveProgress(t *testing.T) {
 // drDrillService builds a service with an off-site repo configured for domain and
 // DR drills enabled, so RunRestoreDrill(..., "dr") can run against the fake engine.
 // HostMountRoot is a temp dir so the drill sandbox is created + torn down under it.
-func drDrillService(t *testing.T, eng *fakeResticEngine, domain, offsite, drillTarget string) *api.Service {
+// The store is returned too so tests can assert the shared runs-table rows the
+// drill records (kind "drdrill").
+func drDrillService(t *testing.T, eng *fakeResticEngine, domain, offsite, drillTarget string) (*api.Service, *store.Repo) {
 	t.Helper()
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -3744,7 +3746,7 @@ func drDrillService(t *testing.T, eng *fakeResticEngine, domain, offsite, drillT
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
 }
 
 // sandboxTarget extracts the restore target (the drill sandbox dir) from a fake
@@ -3774,7 +3776,7 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 			{Path: "/appdata/plex/sub", Type: "dir", Size: 0},
 		},
 	}
-	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	svc, st := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 	prog := progress.NewStore()
 	svc.SetProgress(prog)
 	ch, cancel := prog.Subscribe()
@@ -3787,14 +3789,15 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 	if !drill.OK || drill.Kind != "dr" || drill.Source != "offsite" || drill.Domain != "containers" {
 		t.Fatalf("want an ok dr/offsite/containers drill, got %+v", drill)
 	}
-	// #109: the DR drill publishes the same live "drill:<domain>" maintenance
-	// pair as the subset drill, so it shows on the activity log while running.
+	// #109: the DR drill publishes a live maintenance pair like the subset drill,
+	// but keyed "drdrill:<domain>" — its own kind, so the activity log tells the
+	// off-site DR restore check apart from the local subset check.
 	begin, term := drainTwoEvents(t, ch)
-	if begin.Key != "drill:containers" || begin.Phase != "maintenance" || !begin.Active {
-		t.Fatalf("begin event = %+v, want Key=drill:containers Phase=maintenance Active=true", begin)
+	if begin.Key != "drdrill:containers" || begin.Phase != "maintenance" || !begin.Active {
+		t.Fatalf("begin event = %+v, want Key=drdrill:containers Phase=maintenance Active=true", begin)
 	}
-	if term.Key != "drill:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
-		t.Fatalf("terminal event = %+v, want Key=drill:containers Phase=maintenance Active=false Percent=100", term)
+	if term.Key != "drdrill:containers" || term.Phase != "maintenance" || term.Active || term.Percent != 100 {
+		t.Fatalf("terminal event = %+v, want Key=drdrill:containers Phase=maintenance Active=false Percent=100", term)
 	}
 	if len(eng.restored) != 1 {
 		t.Fatalf("want exactly one whole-tree sandbox restore, got %v", eng.restored)
@@ -3819,6 +3822,15 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 	if latest.Kind != "dr" || !latest.OK || latest.At == 0 {
 		t.Fatalf("recorded drill = %+v, want kind=dr ok=true with a timestamp", latest)
 	}
+	// The shared runs table mirrors the outcome under its own kind "drdrill"
+	// (NOT the subset drill's "drill"), on the reserved domain target id.
+	runs, rErr := st.ListRuns(10)
+	if rErr != nil {
+		t.Fatal(rErr)
+	}
+	if len(runs) != 1 || runs[0].Kind != "drdrill" || runs[0].TargetID != "containers" || runs[0].Status != "success" {
+		t.Fatalf("runs = %+v, want exactly one Kind=drdrill TargetID=containers Status=success", runs)
+	}
 }
 
 // TestRunDRDrillFlashWholeSnapshot pins the flash branch: with no per-container
@@ -3830,7 +3842,7 @@ func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
 			{Path: "/config/go", Type: "file", Size: 42},
 		},
 	}
-	svc := drDrillService(t, eng, "flash", "rest:http://192.168.20.9:8000/flash", "")
+	svc, _ := drDrillService(t, eng, "flash", "rest:http://192.168.20.9:8000/flash", "")
 
 	drill, err := svc.RunRestoreDrill(context.Background(), "flash", "offsite", "dr", false)
 	if err != nil {
@@ -3852,7 +3864,7 @@ func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
 // no drill recorded.
 func TestRunDRDrillVMRefused(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"vm:win11"}}}}
-	svc := drDrillService(t, eng, "vms", "rest:http://192.168.20.9:8000/vms", "")
+	svc, _ := drDrillService(t, eng, "vms", "rest:http://192.168.20.9:8000/vms", "")
 
 	_, err := svc.RunRestoreDrill(context.Background(), "vms", "offsite", "dr", false)
 	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "vm") {
@@ -3872,7 +3884,7 @@ func TestRunDRDrillVMRefused(t *testing.T) {
 // repo configured — nothing is restored or recorded.
 func TestRunDRDrillNoOffsite(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
-	svc := drDrillService(t, eng, "containers", "", "plex") // no off-site set
+	svc, _ := drDrillService(t, eng, "containers", "", "plex") // no off-site set
 
 	_, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil || !strings.Contains(err.Error(), "off-site") {
@@ -3894,7 +3906,7 @@ func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 		},
 		statsRestoreBytes: 9_000_000, // restic claims far more than the sandbox holds → mismatch
 	}
-	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	svc, st := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
 	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil {
@@ -3907,6 +3919,14 @@ func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 	latest, found, lErr := svc.LatestDrill("containers", "offsite")
 	if lErr != nil || !found || latest.Kind != "dr" || latest.OK {
 		t.Fatalf("failed dr drill must be recorded kind=dr ok=false: %+v found=%v err=%v", latest, found, lErr)
+	}
+	// The runs-table mirror carries the failure under kind "drdrill".
+	runs, rErr := st.ListRuns(10)
+	if rErr != nil {
+		t.Fatal(rErr)
+	}
+	if len(runs) != 1 || runs[0].Kind != "drdrill" || runs[0].Status != "failed" || runs[0].Error == "" {
+		t.Fatalf("runs = %+v, want exactly one Kind=drdrill Status=failed with an error text", runs)
 	}
 	if len(eng.restored) == 1 {
 		if _, statErr := os.Stat(sandboxTarget(t, eng.restored[0])); !os.IsNotExist(statErr) {
@@ -3934,7 +3954,7 @@ func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 		// (=6250) so the OLD band waved it through; 5000 > the tight 4 KB floor.
 		statsRestoreBytes: 125000,
 	}
-	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
 	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil {
@@ -3959,7 +3979,7 @@ func TestRunDRDrillEmptySnapshotSkips(t *testing.T) {
 		// No file entries → StatsRestoreSize reports 0 files / 0 bytes.
 		lsEntries: nil,
 	}
-	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
 	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
 	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "nothing to drill") {
@@ -3989,7 +4009,7 @@ func TestRunDRDrillDetachedAndBounded(t *testing.T) {
 			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
 		},
 	}
-	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // parent is already cancelled before the drill starts
@@ -4227,7 +4247,7 @@ func TestRunDRDrillClearsStaleLockBeforeRestore(t *testing.T) {
 			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
 		},
 	}
-	svc := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
 	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false); err != nil {
 		t.Fatalf("RunRestoreDrill dr: %v", err)
