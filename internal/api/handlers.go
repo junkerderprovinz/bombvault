@@ -965,6 +965,13 @@ type settingsView struct {
 	// the existing notify fan-out. Off by default.
 	DigestEnabled  bool   `json:"digestEnabled"`
 	DigestSchedule string `json:"digestSchedule"`
+	// CatchUpMissed runs a scheduled backup the server slept through (it was off
+	// across the scheduled fire) shortly after the next app start, anacron-style.
+	// Default on.
+	CatchUpMissed bool `json:"catchUpMissed"`
+	// WatchdogEnabled turns on the daily overdue-backup watchdog: one push
+	// notification per overdue episode through the notify channels. Default on.
+	WatchdogEnabled bool `json:"watchdogEnabled"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -1049,6 +1056,8 @@ func toView(s store.Settings) settingsView {
 		ResticCacheMaxMB:            s.ResticCacheMaxMB,
 		DigestEnabled:               s.DigestEnabled,
 		DigestSchedule:              s.DigestSchedule,
+		CatchUpMissed:               s.CatchUpMissed,
+		WatchdogEnabled:             s.WatchdogEnabled,
 	}
 }
 
@@ -1293,6 +1302,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ResticCacheMaxMB:            max(0, v.ResticCacheMaxMB),
 		DigestEnabled:               v.DigestEnabled,
 		DigestSchedule:              v.DigestSchedule,
+		CatchUpMissed:               v.CatchUpMissed,
+		WatchdogEnabled:             v.WatchdogEnabled,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,
@@ -1924,6 +1935,10 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 // latest sample (or null when there is none) for the headline figure. "files" is
 // accepted because CollectStatsOnStartup / maybeCollectStats already sample the
 // files repo, so the Storage card can show it (#61 Task 2).
+//
+// The response additionally carries "forecast" — growth rate + free space +
+// time-to-full for the Storage card (see StorageForecast for the exact field
+// contract) — null when nothing could be determined.
 func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
@@ -1964,7 +1979,11 @@ func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 		// fills in on the next load instead of staying on "no data".
 		h.svc.CollectStatsAsync(domain, source)
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"stats": stats, "latest": latest}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"stats":    stats,
+		"latest":   latest,
+		"forecast": h.svc.StorageForecast(domain, source, stats),
+	}))
 }
 
 // browseDirEntry is a single subdirectory entry in the browse response.

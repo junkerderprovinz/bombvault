@@ -1,9 +1,10 @@
 // Package notify sends best-effort backup notifications to optional channels: a
 // webhook (generic JSON, Discord, Slack, Gotify or ntfy), a Matrix room, an
-// email (SMTP), and a Healthchecks.io ping. Every send is best-effort and
-// time-bounded; a failure to notify never affects a backup. URLs/tokens are
-// admin-configured, so reaching internal endpoints is intentional (no SSRF
-// filtering).
+// email (SMTP), a user-run Apprise API server (caronc/apprise-api — fans out to
+// Apprise's 100+ services), and a Healthchecks.io ping. Every send is
+// best-effort and time-bounded; a failure to notify never affects a backup.
+// URLs/tokens are admin-configured, so reaching internal endpoints is
+// intentional (no SSRF filtering).
 package notify
 
 import (
@@ -39,8 +40,8 @@ func redactErr(err error) error {
 const sendTimeout = 15 * time.Second
 
 // hcSuppressKey is the context key that suppresses the per-call Healthchecks ping
-// in Send and SendStart while leaving every message channel (webhook/Matrix/SMTP)
-// untouched. A SCHEDULED per-domain run sets it on each item's context so the many
+// in Send and SendStart while leaving every message channel (webhook/Matrix/SMTP/
+// Apprise) untouched. A SCHEDULED per-domain run sets it on each item's context so the many
 // per-item Healthchecks pings collapse into ONE aggregate start/success/fail ping
 // for the whole domain job (see PingDomainStart / PingDomainResult and #49).
 type hcSuppressKey struct{}
@@ -60,7 +61,7 @@ func healthchecksSuppressed(ctx context.Context) bool {
 }
 
 // msgSuppressKey is the context key that marks a per-item MESSAGE send (webhook/
-// Matrix/SMTP) as a candidate for domain-level summarisation. A scheduled per-domain
+// Matrix/SMTP/Apprise) as a candidate for domain-level summarisation. A scheduled per-domain
 // run sets it on each backup item; Send then skips the per-item message ONLY when the
 // config also asks for a summary (Config.ScheduledSummary), so the many per-item
 // messages collapse into ONE "N of M" summary for the whole run (#56). It is separate
@@ -69,7 +70,7 @@ func healthchecksSuppressed(ctx context.Context) bool {
 type msgSuppressKey struct{}
 
 // WithMessagesSuppressed marks ctx as a per-item scheduled-backup message: Send drops
-// the per-item webhook/Matrix/SMTP send when the config's ScheduledSummary is on.
+// the per-item webhook/Matrix/SMTP/Apprise send when the config's ScheduledSummary is on.
 func WithMessagesSuppressed(ctx context.Context) context.Context {
 	return context.WithValue(ctx, msgSuppressKey{}, true)
 }
@@ -108,6 +109,16 @@ type Config struct {
 	SMTPFrom     string `json:"smtpFrom"`
 	SMTPTo       string `json:"smtpTo"`
 	SMTPTLS      string `json:"smtpTls"` // "starttls" (default) | "tls" | "none"
+	// AppriseURL is the full notify endpoint of a user-run Apprise API server
+	// (github.com/caronc/apprise-api), typically http://host:8000/notify/<key>.
+	// Each event is POSTed there as JSON {title, body, type}, unlocking Apprise's
+	// 100+ services without bundling Python. The <key> in the path is the secret,
+	// so errors are logged through redactErr like the webhook URL.
+	AppriseURL string `json:"appriseUrl"`
+	// AppriseTags is an optional comma-separated tag filter passed as the
+	// payload's "tag" field, so a shared Apprise config key can route BombVault
+	// events to a subset of its targets. Empty = Apprise's default (all).
+	AppriseTags string `json:"appriseTags"`
 	// ScheduledSummary collapses a scheduled per-domain run's per-item messages into
 	// ONE "N of M succeeded/failed" summary on the message channels (webhook/Matrix/
 	// SMTP/Unraid), instead of one message per container/VM (#56). Off by default, so
@@ -142,7 +153,7 @@ func (c Config) shouldSend(ok bool) bool {
 // Configured reports whether at least one channel is set. Healthchecks counts when
 // the global URL or any per-domain URL is set.
 func (c Config) Configured() bool {
-	return c.WebhookURL != "" || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady()
+	return c.WebhookURL != "" || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.AppriseURL != ""
 }
 
 // healthchecksURLFor returns the per-domain Healthchecks URL when one is set for
@@ -208,8 +219,8 @@ func (c Config) smtpReady() bool {
 // Send dispatches ev to the configured channels. Healthchecks is a monitor, not a
 // human message: it must get the success ping to stay green, so it fires on both
 // outcomes whenever configured (except when notifications are "never"). The On
-// policy governs only the message channels (webhook/matrix/smtp). Each channel's
-// error is logged, never returned (best-effort).
+// policy governs only the message channels (webhook/matrix/smtp/apprise). Each
+// channel's error is logged, never returned (best-effort).
 func Send(ctx context.Context, c Config, domain string, ev Event) {
 	if c.On != "always" && c.On != "failure" {
 		return
@@ -259,23 +270,50 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 			log.Printf("notify: smtp: %v", err)
 		}
 	}
+	if c.AppriseURL != "" {
+		if err := sendApprise(ctx, client, c, ev); err != nil {
+			log.Printf("notify: apprise: %v", redactErr(err))
+		}
+	}
 }
 
-// SendStart pings the Healthchecks check's /start endpoint at the beginning of a
-// backup, so the check can measure duration and detect a hung/never-finished run.
-// Healthchecks-only (message channels have no "start" concept); best-effort.
+// SendStart marks the beginning of a backup: it pings the Healthchecks check's
+// /start endpoint (so the check can measure duration and detect a hung run) and
+// posts an "info"-type message to Apprise, the one message channel with a native
+// start-suited type. The Apprise start fires ONLY under On=always — a
+// failure-only setup gets no routine start notices — and never for a per-item
+// scheduled send in summary mode (the run's messages collapse into the one
+// summary, so its starts must not leak either). The Healthchecks-suppress flag
+// keeps affecting only the Healthchecks ping. Best-effort.
 func SendStart(ctx context.Context, c Config, domain string) {
+	if c.On != "always" && c.On != "failure" {
+		return
+	}
 	hcURL := c.healthchecksURLFor(domain)
 	// A scheduled per-domain run suppresses this per-item /start (context flag) so the
 	// run's ONE aggregate /start (PingDomainStart) speaks for the whole domain job.
-	if (c.On != "always" && c.On != "failure") || hcURL == "" || healthchecksSuppressed(ctx) {
+	pingHC := hcURL != "" && !healthchecksSuppressed(ctx)
+	postApprise := c.AppriseURL != "" && c.On == "always" &&
+		(!MessagesSuppressed(ctx) || !c.ScheduledSummary)
+	if !pingHC && !postApprise {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	client := &http.Client{Timeout: sendTimeout}
-	if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
-		log.Printf("notify: healthchecks start: %v", redactErr(err))
+	if pingHC {
+		if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
+			log.Printf("notify: healthchecks start: %v", redactErr(err))
+		}
+	}
+	if postApprise {
+		body := "Backup started"
+		if domain != "" {
+			body = "Backup started (" + domain + ")"
+		}
+		if err := postAppriseJSON(ctx, client, c, "BombVault", body, "info"); err != nil {
+			log.Printf("notify: apprise start: %v", redactErr(err))
+		}
 	}
 }
 
@@ -352,7 +390,36 @@ func SendTest(ctx context.Context, c Config) error {
 			return fmt.Errorf("smtp: %w", err)
 		}
 	}
+	if c.AppriseURL != "" {
+		if err := sendApprise(ctx, client, c, ev); err != nil {
+			return fmt.Errorf("apprise: %w", err)
+		}
+	}
 	return nil
+}
+
+// sendApprise posts ev to a user-run Apprise API server: a JSON
+// {title, body, type} POST to the configured full /notify/<key> endpoint, per
+// the apprise-api stateful-notify contract. The event outcome maps onto
+// Apprise's native message types: OK→"success", !OK→"failure" (SendStart posts
+// "info" for a backup start).
+func sendApprise(ctx context.Context, client *http.Client, c Config, ev Event) error {
+	typ := "success"
+	if !ev.OK {
+		typ = "failure"
+	}
+	return postAppriseJSON(ctx, client, c, ev.Title, ev.Message, typ)
+}
+
+// postAppriseJSON is the shared Apprise POST: {title, body, type}, plus the
+// optional "tag" filter when AppriseTags is set (comma-separated, routed to a
+// subset of the key's targets; absent = Apprise's default).
+func postAppriseJSON(ctx context.Context, client *http.Client, c Config, title, body, typ string) error {
+	payload := map[string]string{"title": title, "body": body, "type": typ}
+	if c.AppriseTags != "" {
+		payload["tag"] = c.AppriseTags
+	}
+	return postJSON(ctx, client, c.AppriseURL, payload)
 }
 
 func sendWebhook(ctx context.Context, client *http.Client, c Config, ev Event) error {

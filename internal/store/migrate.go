@@ -576,6 +576,38 @@ ALTER TABLE settings ADD COLUMN digest_schedule TEXT NOT NULL DEFAULT 'weekly Mo
 		version: 70, name: "settings_widget_token",
 		sql: "ALTER TABLE settings ADD COLUMN widget_token TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Anacron-style catch-up for missed scheduled backups: when the server was
+		// off across a scheduled fire (home boxes sleep at night), the missed
+		// domain backup runs shortly after the next app start instead of silently
+		// waiting a whole cadence period (RPO slowly going red). DEFAULT 1 (ON):
+		// catching up is the behaviour a backup tool should have out of the box;
+		// the toggle exists for setups where a boot-time backup is unwanted.
+		version: 71, name: "settings_catch_up_missed",
+		sql: "ALTER TABLE settings ADD COLUMN catch_up_missed INTEGER NOT NULL DEFAULT 1;",
+	},
+	{
+		// Overdue-backup watchdog: a daily scheduled check that actively NOTIFIES
+		// (via the existing notify fan-out) when a domain's backups are overdue —
+		// today that state is only visible on the dashboard. DEFAULT 1 (ON): the
+		// check is silent unless something is actually overdue AND notifications
+		// are configured, so it is safe to enable for everyone.
+		version: 72, name: "settings_watchdog_enabled",
+		sql: "ALTER TABLE settings ADD COLUMN watchdog_enabled INTEGER NOT NULL DEFAULT 1;",
+	},
+	{
+		// Watchdog once-per-episode memory: one row per domain the watchdog has
+		// notified for, keyed by the last-success timestamp the overdue verdict was
+		// based on. While that timestamp is unchanged the episode is the same and
+		// no further notification fires; a new success changes it (or clears the
+		// row via the recovery path), re-arming the watchdog for the next episode.
+		version: 73, name: "watchdog_state",
+		sql: `CREATE TABLE IF NOT EXISTS watchdog_state (
+  domain          TEXT    PRIMARY KEY,
+  notified_at     INTEGER NOT NULL,
+  last_success_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

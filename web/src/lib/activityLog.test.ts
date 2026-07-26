@@ -291,6 +291,67 @@ describe("filterLogLines — date search (#104)", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Heatmap → Activity Log drilldown — the optional `day` filter (ISO
+// YYYY-MM-DD) keeps only lines on that LOCAL calendar day. Timestamps are
+// built with the local Date constructor so the expected day is stable in any
+// runner timezone (isoDateOf reads back via local getters too).
+// ---------------------------------------------------------------------------
+describe("filterLogLines — heatmap day filter", () => {
+  const day1Morning = new Date(2026, 6, 23, 0, 0, 1).getTime(); // 23 July 2026, local
+  const day1Night = new Date(2026, 6, 23, 23, 59, 59).getTime(); // same local day
+  const day2 = new Date(2026, 6, 24, 9, 0, 0).getTime(); // 24 July 2026, local
+
+  const lines: LogLine[] = [
+    { id: "m", atMs: day1Morning, status: "success", text: "Backed up plex", domain: "containers", kind: "backup", live: false },
+    { id: "n", atMs: day1Night, status: "success", text: "Backed up win11", domain: "vms", kind: "backup", live: false },
+    { id: "p", atMs: day1Night, status: "success", text: "Pruned containers", domain: "containers", kind: "prune", live: false },
+    { id: "o", atMs: day2, status: "success", text: "Backed up sonarr", domain: "containers", kind: "backup", live: false },
+    { id: "idle", atMs: day2, status: "info", text: "next up", domain: "", kind: "", live: false, idle: true },
+  ];
+
+  it("keeps only lines on the picked local calendar day (whole day, midnight to midnight)", () => {
+    expect(
+      filterLogLines(lines, { domain: "all", kind: "all", text: "", day: "2026-07-23" }).map((l) => l.id)
+    ).toEqual(["m", "n", "p", "idle"]);
+  });
+
+  it("returns no run lines for a day with no runs (honest empty drilldown)", () => {
+    expect(
+      filterLogLines(lines, { domain: "all", kind: "all", text: "", day: "2026-07-25" }).map((l) => l.id)
+    ).toEqual(["idle"]);
+  });
+
+  it("combines with the domain and kind quick-filters", () => {
+    expect(
+      filterLogLines(lines, { domain: "containers", kind: "all", text: "", day: "2026-07-23" }).map((l) => l.id)
+    ).toEqual(["m", "p", "idle"]);
+    expect(
+      filterLogLines(lines, { domain: "all", kind: "prune", text: "", day: "2026-07-23" }).map((l) => l.id)
+    ).toEqual(["p", "idle"]);
+    expect(
+      filterLogLines(lines, { domain: "vms", kind: "backup", text: "", day: "2026-07-24" }).map((l) => l.id)
+    ).toEqual(["idle"]);
+  });
+
+  it("combines with the free-text search", () => {
+    expect(
+      filterLogLines(lines, { domain: "all", kind: "all", text: "backed up", day: "2026-07-23" }).map((l) => l.id)
+    ).toEqual(["m", "n"]);
+  });
+
+  it("exempts the idle line, like the domain/kind quick-filters do", () => {
+    // The idle "next up" line sits on day2 but survives a day1 filter — the
+    // chip can never hide the only line telling the user what's coming next.
+    const ids = filterLogLines(lines, { domain: "all", kind: "all", text: "", day: "2026-07-23" }).map((l) => l.id);
+    expect(ids).toContain("idle");
+  });
+
+  it("is off when day is omitted (backwards compatible)", () => {
+    expect(filterLogLines(lines, { domain: "all", kind: "all", text: "" })).toHaveLength(lines.length);
+  });
+});
+
 // -- #108: an omitted locale = the engine's default negotiation --------------
 // The log's date must use the SAME default-locale path as every other date in
 // the app (formatTs's plain toLocaleString) — never navigator.language, which

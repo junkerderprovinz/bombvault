@@ -183,6 +183,87 @@ func (c Cadence) PeriodSeconds() int64 {
 	return int64(d.Seconds())
 }
 
+// LastFire returns the most recent fire time of this cadence's cron spec at or
+// before now — the "Prev" robfig/cron does not provide. It is the basis of the
+// anacron-style catch-up: a domain whose last successful backup predates its
+// last scheduled fire MISSED that run (the box was off).
+//
+// robfig only exposes Next(), so the last fire is found by walking Next() from
+// a reference in the past: a doubling search window locates SOME fire at or
+// before now, then the walk steps forward to the LAST one. Both loops are
+// bounded — the window at most doubles once past one period, so the final walk
+// crosses at most ~2× period worth of fires (≤ ~61 steps even for a
+// every-minute spec at the initial 1-hour window).
+//
+// The bool is false when the cadence is disabled, unparseable, or has no fire
+// within the two-year lookback (a spec that fires less than every two years has
+// no meaningful catch-up semantics).
+func (c Cadence) LastFire(now time.Time) (time.Time, bool) {
+	if !c.Enabled || c.Spec == "" {
+		return time.Time{}, false
+	}
+	sched, err := cron.ParseStandard(c.Spec)
+	if err != nil {
+		return time.Time{}, false
+	}
+	const maxLookback = 2 * 366 * 24 * time.Hour
+	for window := time.Hour; window <= maxLookback; window *= 2 {
+		first := sched.Next(now.Add(-window))
+		if first.IsZero() || first.After(now) {
+			continue // no fire inside this window yet — widen it
+		}
+		last := first
+		for {
+			next := sched.Next(last)
+			if next.IsZero() || next.After(now) {
+				return last, true
+			}
+			last = next
+		}
+	}
+	return time.Time{}, false
+}
+
+// WatchdogCadence is the fixed daily cadence of the overdue-backup watchdog.
+// It is deliberately not user-configurable: the check is cheap and only its
+// once-a-day rhythm matters — 09:00 is late enough that any overnight backup
+// window has had its chance to complete before the currency verdict is taken.
+const WatchdogCadence = "daily 09:00"
+
+// catchUpGrace is the slack applied when deciding whether a scheduled fire was
+// missed: a success within this margin BEFORE the fire still counts as covering
+// it (a manual run moments before the trigger, or clock jitter, must not cause
+// a duplicate catch-up backup right after boot).
+const catchUpGrace = 10 * time.Minute
+
+// missedRun decides whether a domain MISSED its most recent scheduled run:
+// the cadence is enabled, the last fire lies more than catchUpGrace after the
+// last successful backup, and (for everyN cadences) the interval-days due-gate
+// would actually let a run proceed. It returns the computed last fire time for
+// logging alongside the verdict.
+//
+// A domain that has NEVER succeeded (lastSuccess zero) is deliberately not
+// treated as missed: the last computed fire may predate the schedule's very
+// creation (we do not record when a cadence was configured), and surprising a
+// fresh setup with a full backup on every restart until the first scheduled
+// success would be worse than waiting for the next regular fire.
+func missedRun(cad Cadence, lastSuccess, now time.Time) (lastFire time.Time, missed bool) {
+	if !cad.Enabled || lastSuccess.IsZero() {
+		return time.Time{}, false
+	}
+	lastFire, ok := cad.LastFire(now)
+	if !ok {
+		return time.Time{}, false
+	}
+	// everyN: the daily trigger fires every day but the due-gate only runs the
+	// job once the interval elapsed — mirror it here so a not-yet-due domain is
+	// never flagged missed (the invoked job re-checks the gate anyway).
+	if cad.IntervalDays > 0 && now.Sub(lastSuccess) < time.Duration(cad.IntervalDays)*24*time.Hour {
+		return lastFire, false
+	}
+	return lastFire, lastSuccess.Add(catchUpGrace).Before(lastFire)
+}
+
 // parseHHMM splits "HH:MM" into (hour, minute) integers and validates ranges.
 func parseHHMM(s string) (h, m int, err error) {
 	parts := strings.SplitN(s, ":", 2)
@@ -284,6 +365,7 @@ type Scheduler struct {
 	drillFn          func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
 	tamperFn         func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
 	digestFn         func() error                            // nil until SetDigestJob wires the weekly digest notification
+	watchdogFn       func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -292,13 +374,30 @@ type Scheduler struct {
 	hcRunStart  func(domain string)
 	hcRunFinish func(domain string, attempted, failed int, failures []ItemFailure)
 
-	// mu guards entries: ReloadWithDueChecks (settings POST goroutine) mutates
-	// it while NextRuns (the /api/schedule/next GET handler goroutine) reads
-	// it concurrently. It guards ONLY the slice access — never held while
+	// mu guards entries and catchUps: ReloadWithDueChecks (settings POST
+	// goroutine) mutates them while NextRuns (the /api/schedule/next GET handler
+	// goroutine) and CatchUpMissed (the startup goroutine) read them
+	// concurrently. It guards ONLY the slice access — never held while
 	// calling into cron.Cron (AddFunc/Remove/Entry), which has its own
 	// internal locking, so the two locks never nest and cannot deadlock.
 	mu      sync.Mutex
 	entries []scheduledEntry
+	// catchUps is the anacron seam: one entry per registered BACKUP domain
+	// (containers/vms/flash/config/files) with a last-run query, so
+	// CatchUpMissed can compare each domain's last scheduled fire against its
+	// last success and re-run what the box slept through. Rebuilt on every
+	// ReloadWithDueChecks alongside entries.
+	catchUps []catchUpEntry
+}
+
+// catchUpEntry pairs a backup domain's parsed cadence and last-run query with
+// its registered cron entry, so a missed run can be triggered through the SAME
+// wrapped job chain (SkipIfStillRunning + Recover) a real cron fire would use.
+type catchUpEntry struct {
+	domain  string
+	cadence Cadence
+	lastRun LastRunFunc
+	id      cron.EntryID
 }
 
 // scheduledEntry pairs a registered cron.EntryID with the job+domain label
@@ -333,6 +432,8 @@ func jobDomainFromName(name string) (job, domain string) {
 		return "tamper", ""
 	case "digest":
 		return "digest", ""
+	case "watchdog":
+		return "watchdog", "" // one app-wide overdue check per fire
 	}
 	if d, ok := strings.CutSuffix(name, "-offsite"); ok {
 		return "offsite", d
@@ -477,6 +578,14 @@ func (s *Scheduler) SetDigestJob(digestFn func() error) {
 	s.digestFn = digestFn
 }
 
+// SetWatchdogJob wires the daily overdue-backup watchdog so its fixed schedule
+// (WatchdogCadence) actually runs. watchdogFn checks every enabled domain's
+// backup currency and notifies once per overdue episode. Until this is called
+// the watchdog schedule is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetWatchdogJob(watchdogFn func() error) {
+	s.watchdogFn = watchdogFn
+}
+
 // SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
 // multi-item runs (containers + VMs). A scheduled run then pings the domain's check
 // /start ONCE via startFn before the first item and success/fail ONCE via finishFn
@@ -537,10 +646,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 ) error {
 	// Snapshot + clear the existing entries under the lock, then remove them
 	// from cron OUTSIDE the lock — never call into cron while holding s.mu.
+	// catchUps is rebuilt alongside entries: a stale catch-up entry would point
+	// at a removed cron EntryID (CatchUpMissed additionally nil-guards that).
 	s.mu.Lock()
 	oldEntries := make([]scheduledEntry, len(s.entries))
 	copy(oldEntries, s.entries)
 	s.entries = s.entries[:0]
+	s.catchUps = s.catchUps[:0]
 	s.mu.Unlock()
 
 	for _, e := range oldEntries {
@@ -746,6 +858,26 @@ func (s *Scheduler) ReloadWithDueChecks(
 		})
 	}
 
+	// Overdue-backup watchdog: ONE lightweight app-wide currency check per fire
+	// on the fixed WatchdogCadence (no per-user cadence — the check is cheap and
+	// its exact hour does not matter, only that it runs daily after the usual
+	// overnight backup window). Gated on WatchdogEnabled (default on).
+	if settings.WatchdogEnabled {
+		domains = append(domains, domainSpec{
+			cadence: WatchdogCadence,
+			name:    "watchdog",
+			fn: func() {
+				if s.watchdogFn == nil {
+					log.Print("schedule: watchdog job skipped — watchdog not wired (SetWatchdogJob)")
+					return
+				}
+				if err := s.watchdogFn(); err != nil {
+					log.Printf("schedule: watchdog job: %v", err)
+				}
+			},
+		})
+	}
+
 	for _, d := range domains {
 		cad, err := ParseCadence(d.cadence)
 		if err != nil {
@@ -789,10 +921,62 @@ func (s *Scheduler) ReloadWithDueChecks(
 		job, domain := jobDomainFromName(d.name)
 		s.mu.Lock()
 		s.entries = append(s.entries, scheduledEntry{id: id, job: job, domain: domain})
+		// Backup domains with a last-run query join the anacron catch-up set —
+		// only they can tell whether the last scheduled fire was actually covered
+		// by a success. job=="backup" is exactly the five per-domain backup specs
+		// (offsite/drills/tamper/digest/watchdog map to their own job labels).
+		if job == "backup" && d.lastRun != nil {
+			s.catchUps = append(s.catchUps, catchUpEntry{domain: d.name, cadence: cad, lastRun: d.lastRun, id: id})
+		}
 		s.mu.Unlock()
 	}
 
 	return nil
+}
+
+// CatchUpMissed runs, once, every enabled backup domain that MISSED its most
+// recent scheduled fire while the app was down (anacron-style): a home server
+// that is off overnight simply never sees its "daily 03:00" trigger, so the
+// backup silently ages until the RPO indicator goes red. Call it once shortly
+// after startup (main.go delays it a couple of minutes so the array/Docker are
+// up); it compares each domain's last scheduled fire (Cadence.LastFire) with
+// its last successful backup and, when the fire was missed (missedRun), invokes
+// the SAME wrapped cron job a real fire would run — including its
+// SkipIfStillRunning guard, so a concurrent scheduled run is never doubled, and
+// the run records/notifies exactly like a normal scheduled run (no new run
+// kinds). Domains run sequentially on the caller's goroutine: at boot the box
+// is busy enough without five concurrent repo jobs.
+//
+// It returns the domains it caught up (for tests/logging). Deliberately NOT
+// re-run after a settings reload: editing a schedule must not surprise the user
+// with an immediate backup.
+func (s *Scheduler) CatchUpMissed(now time.Time) []string {
+	s.mu.Lock()
+	pending := make([]catchUpEntry, len(s.catchUps))
+	copy(pending, s.catchUps)
+	s.mu.Unlock()
+
+	var ran []string
+	for _, e := range pending {
+		last, err := e.lastRun()
+		if err != nil {
+			log.Printf("schedule: catch-up %s: last-run query failed: %v", e.domain, err)
+			continue
+		}
+		lastFire, missed := missedRun(e.cadence, last, now)
+		if !missed {
+			continue
+		}
+		entry := s.c.Entry(e.id)
+		if entry.WrappedJob == nil {
+			continue // entry vanished under a concurrent Reload — its fresh set will judge again
+		}
+		log.Printf("schedule: catching up missed %s backup (last fire %s, last success %s)",
+			e.domain, lastFire.Format(time.RFC3339), last.Format(time.RFC3339))
+		entry.WrappedJob.Run()
+		ran = append(ran, e.domain)
+	}
+	return ran
 }
 
 // drillTask is one scheduled restore-verification drill: a (domain, source, kind)

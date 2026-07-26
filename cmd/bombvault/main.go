@@ -88,6 +88,14 @@ func healthcheckAt(port, httpsPort string) int {
 	return 1
 }
 
+// catchUpStartupDelay is how long after boot the anacron-style catch-up for
+// missed scheduled backups waits before checking. Two minutes is enough for the
+// Unraid array, Docker and any late-mounting backup shares to come up (backing
+// up into a not-yet-mounted share would mis-fire), yet short enough that a
+// missed overnight backup lands promptly. Fixed on purpose — a knob would
+// mostly invite foot-guns; revisit only if real setups need longer.
+const catchUpStartupDelay = 2 * time.Minute
+
 // ensureDataDirWritable verifies the data dir exists and is writable before the
 // store is opened, so a missing/read-only /config mount fails loudly instead of
 // silently persisting state to the container's ephemeral layer.
@@ -291,6 +299,12 @@ func run() error {
 	scheduler.SetDigestJob(func() error {
 		return svc.SendDigest(context.Background())
 	})
+	// Overdue-backup watchdog: a daily currency check (fixed cadence, gated on
+	// WatchdogEnabled inside Reload) that notifies ONCE per overdue episode via
+	// the same fan-out — the dashboard's red RPO state, pushed.
+	scheduler.SetWatchdogJob(func() error {
+		return svc.RunWatchdog(context.Background())
+	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
 	// successful backup within each domain (containers / VMs / flash scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
@@ -308,6 +322,26 @@ func run() error {
 	}
 	scheduler.Start()
 	defer scheduler.Stop()
+
+	// Anacron-style catch-up (gated on Settings.CatchUpMissed, default on): a
+	// home server that is off overnight never sees its scheduled fire, so shortly
+	// after boot each enabled backup domain whose last success predates its last
+	// scheduled fire is re-run through the exact cron job it missed. The fixed
+	// delay gives the array/Docker/shares time to come up first; the settings are
+	// re-read at fire time so a toggle during the window is honored. One-shot on
+	// purpose — a later settings reload must not trigger surprise backups.
+	go func() {
+		time.Sleep(catchUpStartupDelay)
+		settings, sErr := st.GetSettings()
+		if sErr != nil {
+			log.Printf("schedule: catch-up skipped — could not read settings: %v", sErr)
+			return
+		}
+		if !settings.CatchUpMissed {
+			return
+		}
+		scheduler.CatchUpMissed(time.Now())
+	}()
 
 	// JSON API + embedded SPA.
 	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())

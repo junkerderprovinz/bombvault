@@ -437,6 +437,10 @@ export const en = {
   "notify.onAlways": "On success and failure",
   "notify.webhook": "Webhook URL",
   "notify.webhookFormat": "Webhook format",
+  "notify.apprise": "Apprise",
+  "notify.appriseUrl": "Apprise API URL",
+  "notify.appriseTags": "Tags (optional)",
+  "notify.appriseHint": "Point at your Apprise API container's /notify/<key> endpoint to fan out to its 100+ services (Telegram, Pushover, Signal, …). Tags route to a subset of that key's targets; leave blank for all.",
   "notify.matrix": "Matrix",
   "notify.matrixHomeserver": "Homeserver URL",
   "notify.matrixToken": "Access token",
@@ -557,6 +561,22 @@ export const en = {
   // Exclude preview status (#38)
   "excludes.willExclude": "will be excluded from the backup",
   "excludes.matchesAnywhere": "will be excluded wherever it appears",
+  // Exclusion assistant — server-side junk/large-folder scan with one-click exclude
+  "excludes.assistTitle": "Exclusion assistant",
+  "excludes.assistHint": "Scans this container's backup folders for well-known cache/temp/log folders and unusually large directories, so you can exclude them and shrink the backup.",
+  "excludes.assistScan": "Scan for junk & large folders",
+  "excludes.assistRescan": "Rescan",
+  "excludes.assistScanning": "Scanning…",
+  "excludes.assistScanFailed": "Scan failed",
+  "excludes.assistTruncated": "Scan hit its time limit — showing what was found so far.",
+  "excludes.assistNothingFound": "Nothing left to exclude — no junk or oversized folders found in this container's backup.",
+  "excludes.assistReasonCache": "Known cache",
+  "excludes.assistReasonLarge": "Large folder",
+  "excludes.assistExclude": "Exclude",
+  "excludes.assistCurrent": "Current exclusions",
+  "excludes.assistNoneYet": "None yet — pick a suggestion above or type one.",
+  "excludes.assistRemove": "Remove exclusion",
+  "excludes.assistRemoveLine": "Remove exclusion {line}",
 
   // Appearance / Accent
   "settings.appearance": "Appearance",
@@ -615,6 +635,14 @@ export const en = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "No data yet",
+
+  // Storage forecast line (growth/week + time-to-full, riding /api/stats)
+  "dashboard.forecastGrowth": "Growing {bytes}/week",
+  "dashboard.forecastShrink": "Shrinking {bytes}/week",
+  "dashboard.forecastFull": "Repo volume full in ~{weeks} weeks",
+  "dashboard.forecastFullOneWeek": "Repo volume full in ~1 week",
+  "dashboard.forecastFullOverYear": "Repo volume full in > 1 year",
+  "dashboard.forecastFree": "{bytes} free",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duration",
@@ -902,6 +930,13 @@ export const en = {
   "settings.digestTitle": "Weekly digest",
   "settings.digestHint": "One summary message per week: run counts, new backup data, off-site currency and the top failures — sent through the notification channels above.",
   "settings.digestToggle": "Weekly digest",
+  // Settings — missed-schedule catch-up (schedules tab) + overdue-backup watchdog (notifications tab)
+  "settings.missedSchedulesTitle": "Missed schedules",
+  "settings.catchUpMissed": "Catch up missed backups after start",
+  "settings.catchUpMissedHint": "If the server was off when a schedule was due, run that backup about two minutes after BombVault starts.",
+  "settings.watchdogTitle": "Overdue backup watchdog",
+  "settings.watchdogHint": "Checks once a day whether any enabled backup is overdue (older than twice its schedule) and sends one notification per incident through the channels configured above.",
+  "settings.watchdogToggle": "Notify when backups are overdue",
   "settings.cacheTitle": "Backup engine cache",
   "settings.cacheHint": "The backup engine keeps a cache of repository data under /config so incremental and off-site runs stay fast. When it grows past this limit, the least-recently-used per-repository caches are removed after scheduled runs.",
   "settings.cacheLimitLabel": "Cache size limit (MB, 0 = unlimited)",
@@ -1004,6 +1039,7 @@ export const en = {
   "activityLog.jobDrill": "restore-verification drill",
   "activityLog.jobTamper": "tamper test",
   "activityLog.jobDigest": "weekly digest",
+  "activityLog.jobWatchdog": "overdue-backup check",
   "activityLog.lineBackingUpItem": "Backing up {name} … {percent}%",
   "activityLog.lineRestoringItem": "Restoring {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Backing up all {domain} … {percent}%",
@@ -1040,6 +1076,10 @@ export const en = {
   "activityLog.lineNextWithDomain": "next: {job} ({domain}) at {time} (in {countdown})",
   "activityLog.lineNextNoDomain": "next: {job} at {time} (in {countdown})",
   "activityLog.lineEmpty": "nothing yet",
+  // Heatmap → Activity Log day drilldown (clicking a heatmap cell filters the
+  // log to that day; the chip shows the active day and its × clears it).
+  "activityLog.dayFilterChip": "Showing {date}",
+  "activityLog.clearDayFilter": "Clear day filter",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1437,6 +1477,10 @@ export const de: Translations = {
   "notify.onAlways": "Bei Erfolg und Fehler",
   "notify.webhook": "Webhook-URL",
   "notify.webhookFormat": "Webhook-Format",
+  "notify.apprise": "Apprise",
+  "notify.appriseUrl": "Apprise-API-URL",
+  "notify.appriseTags": "Tags (optional)",
+  "notify.appriseHint": "Zeige auf den /notify/<key>-Endpunkt deines Apprise-API-Containers, um an dessen über 100 Dienste (Telegram, Pushover, Signal, …) zu verteilen. Tags erreichen nur einen Teil der Ziele dieses Keys; leer lassen für alle.",
   "notify.matrix": "Matrix",
   "notify.matrixHomeserver": "Homeserver-URL",
   "notify.matrixToken": "Access-Token",
@@ -1555,6 +1599,22 @@ export const de: Translations = {
   // Exclude preview status (#38)
   "excludes.willExclude": "wird vom Backup ausgeschlossen",
   "excludes.matchesAnywhere": "wird überall ausgeschlossen, wo es vorkommt",
+  // Ausschluss-Assistent — serverseitiger Junk/Groß-Ordner-Scan mit Ein-Klick-Ausschluss
+  "excludes.assistTitle": "Ausschluss-Assistent",
+  "excludes.assistHint": "Durchsucht die gesicherten Ordner dieses Containers nach bekannten Cache-/Temp-/Log-Ordnern und ungewöhnlich großen Verzeichnissen, damit du sie ausschließen und das Backup verkleinern kannst.",
+  "excludes.assistScan": "Nach Junk- und großen Ordnern suchen",
+  "excludes.assistRescan": "Erneut scannen",
+  "excludes.assistScanning": "Scanne…",
+  "excludes.assistScanFailed": "Scan fehlgeschlagen",
+  "excludes.assistTruncated": "Der Scan hat sein Zeitlimit erreicht — gezeigt wird, was bis dahin gefunden wurde.",
+  "excludes.assistNothingFound": "Nichts mehr auszuschließen — kein Junk und keine übergroßen Ordner im Backup dieses Containers gefunden.",
+  "excludes.assistReasonCache": "Bekannter Cache",
+  "excludes.assistReasonLarge": "Großer Ordner",
+  "excludes.assistExclude": "Ausschließen",
+  "excludes.assistCurrent": "Aktuelle Ausschlüsse",
+  "excludes.assistNoneYet": "Noch keine — wähle oben einen Vorschlag oder tippe einen ein.",
+  "excludes.assistRemove": "Ausschluss entfernen",
+  "excludes.assistRemoveLine": "Ausschluss {line} entfernen",
 
   // Appearance / Accent
   "settings.appearance": "Erscheinungsbild",
@@ -1613,6 +1673,14 @@ export const de: Translations = {
   "dashboard.dedup": "Dedup",
   "dashboard.snapshotsLabel": "Snapshots",
   "dashboard.noStats": "Noch keine Daten",
+
+  // Storage forecast line (growth/week + time-to-full, riding /api/stats)
+  "dashboard.forecastGrowth": "Wächst {bytes}/Woche",
+  "dashboard.forecastShrink": "Schrumpft {bytes}/Woche",
+  "dashboard.forecastFull": "Repo-Volume voll in ~{weeks} Wochen",
+  "dashboard.forecastFullOneWeek": "Repo-Volume voll in ~1 Woche",
+  "dashboard.forecastFullOverYear": "Repo-Volume voll in > 1 Jahr",
+  "dashboard.forecastFree": "{bytes} frei",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Dauer",
@@ -1898,6 +1966,13 @@ export const de: Translations = {
   "settings.digestTitle": "Wochenbericht",
   "settings.digestHint": "Eine Zusammenfassung pro Woche: Anzahl der Läufe, neue Backup-Daten, Off-site-Aktualität und die wichtigsten Fehler — gesendet über die oben konfigurierten Benachrichtigungskanäle.",
   "settings.digestToggle": "Wochenbericht",
+  // Einstellungen — Nachholen verpasster Zeitpläne (Zeitpläne-Tab) + Wächter für überfällige Backups (Benachrichtigungen-Tab)
+  "settings.missedSchedulesTitle": "Verpasste Zeitpläne",
+  "settings.catchUpMissed": "Verpasste Backups nach dem Start nachholen",
+  "settings.catchUpMissedHint": "War der Server aus, als ein Zeitplan fällig war, wird dieses Backup etwa zwei Minuten nach dem Start von BombVault nachgeholt.",
+  "settings.watchdogTitle": "Wächter für überfällige Backups",
+  "settings.watchdogHint": "Prüft einmal täglich, ob ein aktiviertes Backup überfällig ist (älter als das Doppelte seines Zeitplans), und sendet pro Vorfall eine Benachrichtigung über die oben konfigurierten Kanäle.",
+  "settings.watchdogToggle": "Bei überfälligen Backups benachrichtigen",
   "settings.cacheTitle": "Backup-Engine-Cache",
   "settings.cacheHint": "Die Backup-Engine hält unter /config einen Cache mit Repository-Daten, damit inkrementelle und Off-site-Läufe schnell bleiben. Wächst er über dieses Limit, werden nach geplanten Läufen die am längsten ungenutzten Repository-Caches entfernt.",
   "settings.cacheLimitLabel": "Cache-Größenlimit (MB, 0 = unbegrenzt)",
@@ -1998,6 +2073,7 @@ export const de: Translations = {
   "activityLog.jobDrill": "Wiederherstellungs-Prüfung",
   "activityLog.jobTamper": "Manipulationstest",
   "activityLog.jobDigest": "Wochenbericht",
+  "activityLog.jobWatchdog": "Backup-Überfälligkeitsprüfung",
   "activityLog.lineBackingUpItem": "Sichere {name} … {percent}%",
   "activityLog.lineRestoringItem": "Stelle {name} wieder her … {percent}%",
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
@@ -2034,6 +2110,8 @@ export const de: Translations = {
   "activityLog.lineNextWithDomain": "als Nächstes: {job} ({domain}) um {time} (in {countdown})",
   "activityLog.lineNextNoDomain": "als Nächstes: {job} um {time} (in {countdown})",
   "activityLog.lineEmpty": "noch nichts",
+  "activityLog.dayFilterChip": "Zeige {date}",
+  "activityLog.clearDayFilter": "Tagesfilter entfernen",
 };
 
 // ---------------------------------------------------------------------------

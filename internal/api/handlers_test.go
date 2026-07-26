@@ -751,6 +751,97 @@ func TestSettingsPruneImageAfterUpdateRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsCatchUpAndWatchdogRoundTrip guards the /api/settings wire boundary
+// for the anacron catch-up + overdue-watchdog toggles: the strict PUT decoder
+// rejects unknown fields, so both must be in settingsView (PUT) and mapped by
+// toView (GET). Opposite values prove each is decoded and persisted (not just
+// echoing the DB defaults, which are both ON).
+func TestSettingsCatchUpAndWatchdogRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"catchUpMissed": false,
+		"watchdogEnabled": true
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	if settings["catchUpMissed"] != false {
+		t.Fatalf("catchUpMissed not round-tripped: got %v", settings["catchUpMissed"])
+	}
+	if settings["watchdogEnabled"] != true {
+		t.Fatalf("watchdogEnabled not round-tripped: got %v", settings["watchdogEnabled"])
+	}
+}
+
+// TestNotifyAppriseRoundTrip guards the /api/notify wire boundary for the Apprise
+// channel. Unlike the toggles above, the Apprise URL lives in the encrypted
+// notify_conf blob (like the webhook URL), NOT in a settings column — so the seam
+// is the strict POST decoder (rejects unknown fields → appriseUrl/appriseTags must
+// be on notify.Config) and the GET, which returns the URL as-is: like webhookUrl
+// and healthchecksUrl it is an endpoint the form edits in place, not a blanked
+// secret (only the SMTP password / Matrix token get the is-set treatment).
+func TestNotifyAppriseRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"on": "failure",
+		"appriseUrl": "http://apprise:8000/notify/bombvault",
+		"appriseTags": "backups"
+	}`
+	w, m := doJSON(t, h, http.MethodPost, "/api/notify", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("post status=%d body=%s", w.Code, w.Body.String())
+	}
+	w, m = doJSON(t, h, http.MethodGet, "/api/notify", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("get status=%d body=%s", w.Code, w.Body.String())
+	}
+	cfg, ok := m["notify"].(map[string]any)
+	if !ok {
+		t.Fatalf("notify config missing or not nested: %v", m)
+	}
+	if cfg["appriseUrl"] != "http://apprise:8000/notify/bombvault" {
+		t.Fatalf("appriseUrl not round-tripped: got %v", cfg["appriseUrl"])
+	}
+	if cfg["appriseTags"] != "backups" {
+		t.Fatalf("appriseTags not round-tripped: got %v", cfg["appriseTags"])
+	}
+}
+
+// TestStatsCarriesForecast pins the /api/stats payload extension: the response
+// always carries the "forecast" key (null when nothing could be determined —
+// here: no samples and no statfs-able repo dir), so the Storage card's future
+// consumer has a stable shape to bind to.
+func TestStatsCarriesForecast(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/stats?domain=containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
+	}
+	if _, present := m["forecast"]; !present {
+		t.Fatalf("stats response must carry the forecast key, got %v", m)
+	}
+}
+
 // TestRestoreConfigHandlerStagesAndAutoRestarts drives POST /api/config/restore
 // end-to-end over the real service + fakes: the restore is staged (staged:true)
 // and, because the self container name resolves, the response reports an

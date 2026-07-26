@@ -76,7 +76,18 @@ function glyphLabelKey(status: LogStatus): TranslationKey {
   }
 }
 
-export function ActivityLog() {
+export function ActivityLog({
+  dayFilter = null,
+  onClearDayFilter,
+}: {
+  /** Externally-controlled day filter (ISO YYYY-MM-DD, local calendar day) —
+   *  the Dashboard sets it when a heatmap cell is clicked; null = off. Shown
+   *  as a filled chip next to the filter bar and combined with the local
+   *  text/domain/type filters. */
+  dayFilter?: string | null;
+  /** Invoked by the chip's × — the owner (Dashboard) clears its state. */
+  onClearDayFilter?: () => void;
+} = {}) {
   const { t } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
@@ -158,8 +169,14 @@ export function ActivityLog() {
   // exact same one every other date in the app uses (formatTs), so the log
   // can never disagree with the rest of the UI again (#108).
   const filteredLines = useMemo(
-    () => filterLogLines(lines, { domain: filterDomain, kind: filterType, text: filterText }),
-    [lines, filterDomain, filterType, filterText]
+    () =>
+      filterLogLines(lines, {
+        domain: filterDomain,
+        kind: filterType,
+        text: filterText,
+        day: dayFilter ?? undefined,
+      }),
+    [lines, filterDomain, filterType, filterText, dayFilter]
   );
 
   // Auto-follow tail: while pinned to the bottom, stay pinned as new lines
@@ -232,6 +249,27 @@ export function ActivityLog() {
           <option value="tamper">{t("activityLog.jobTamper")}</option>
           <option value="export">{t("activityLog.typeExport")}</option>
         </select>
+        {/* Heatmap day-filter chip — a filled pill (accent, no border, same
+            language as the heatmap's active domain toggle) showing which day
+            the Dashboard heatmap narrowed the log to; its × hands the clear
+            back to the owner. The ISO day is parsed as LOCAL midnight so the
+            label always names the same calendar day the cell was. */}
+        {dayFilter && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
+            {resolveName("activityLog.dayFilterChip", {
+              date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
+            })}
+            <button
+              type="button"
+              onClick={onClearDayFilter}
+              aria-label={t("activityLog.clearDayFilter")}
+              title={t("activityLog.clearDayFilter")}
+              className="cursor-pointer rounded-full px-1 leading-none hover:bg-black/10"
+            >
+              ×
+            </button>
+          </span>
+        )}
       </div>
 
       {/* The log itself — a single scrollable, monospace, newest-at-bottom list. */}

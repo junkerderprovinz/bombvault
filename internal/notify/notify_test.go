@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -410,6 +411,165 @@ func TestPingDomainSuppressedWhenNeverOrNoURL(t *testing.T) {
 	notify.PingDomainResult(context.Background(), notify.Config{On: "always"}, "containers", true, "x")
 	if hits != 0 {
 		t.Fatalf("aggregate pings must be a no-op under never/no-URL, hits=%d", hits)
+	}
+}
+
+// TestApprisePayloadAndTypeMapping: Send posts the apprise-api notify contract —
+// JSON {title, body, type} to the configured endpoint — mapping the event outcome
+// onto Apprise's native types: OK→"success", !OK→"failure". Without AppriseTags
+// no "tag" key is sent, so the key's default target selection applies.
+func TestApprisePayloadAndTypeMapping(t *testing.T) {
+	var got map[string]any
+	var path, contentType string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		path, contentType = r.URL.Path, r.Header.Get("Content-Type")
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &got)
+	}))
+	defer srv.Close()
+	cfg := notify.Config{On: "always", AppriseURL: srv.URL + "/notify/mykey"}
+
+	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "backup done", OK: true})
+	if path != "/notify/mykey" || contentType != "application/json" {
+		t.Fatalf("apprise POST path=%q content-type=%q", path, contentType)
+	}
+	if got["title"] != "BombVault" || got["body"] != "backup done" || got["type"] != "success" {
+		t.Fatalf("success payload = %v", got)
+	}
+	if _, ok := got["tag"]; ok {
+		t.Fatalf("no tag configured must mean no tag key, payload = %v", got)
+	}
+
+	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "backup failed", OK: false})
+	if got["type"] != "failure" {
+		t.Fatalf("failure event should map to type=failure, payload = %v", got)
+	}
+}
+
+// TestAppriseTagPassedThrough: a configured AppriseTags value rides along as the
+// payload's "tag" field so a shared config key can route to a subset of targets.
+func TestAppriseTagPassedThrough(t *testing.T) {
+	var got map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &got)
+	}))
+	defer srv.Close()
+	notify.Send(context.Background(),
+		notify.Config{On: "always", AppriseURL: srv.URL, AppriseTags: "backups,homelab"},
+		"", notify.Event{Title: "BombVault", Message: "hi", OK: true})
+	if got["tag"] != "backups,homelab" {
+		t.Fatalf("tag = %v, want backups,homelab", got["tag"])
+	}
+}
+
+// TestAppriseStartPostsInfo: SendStart posts an Apprise "info" message under
+// On=always — including when the Healthchecks ping is context-suppressed, which
+// must keep affecting ONLY Healthchecks — but stays silent under On=failure (a
+// failure-only setup gets no routine start notices).
+func TestAppriseStartPostsInfo(t *testing.T) {
+	var got map[string]any
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		hits++
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &got)
+	}))
+	defer srv.Close()
+
+	notify.SendStart(context.Background(), notify.Config{On: "always", AppriseURL: srv.URL}, "containers")
+	if hits != 1 {
+		t.Fatalf("On=always should post an apprise start, hits=%d", hits)
+	}
+	if got["type"] != "info" || got["body"] != "Backup started (containers)" {
+		t.Fatalf("start payload = %v", got)
+	}
+
+	// The Healthchecks-suppress flag affects only Healthchecks, never Apprise.
+	notify.SendStart(notify.WithHealthchecksSuppressed(context.Background()),
+		notify.Config{On: "always", AppriseURL: srv.URL}, "containers")
+	if hits != 2 {
+		t.Fatalf("HC suppression must not silence the apprise start, hits=%d", hits)
+	}
+
+	notify.SendStart(context.Background(), notify.Config{On: "failure", AppriseURL: srv.URL}, "containers")
+	if hits != 2 {
+		t.Fatalf("On=failure must not post a start notice, hits=%d", hits)
+	}
+}
+
+// TestAppriseScheduledSummarySuppression: Apprise is a message channel, so the
+// scheduled-summary collapse applies exactly like webhook/Matrix/SMTP — a
+// per-item send (WithMessagesSuppressed) is dropped in summary mode for BOTH the
+// result message and the start notice, and fires as before with the toggle off.
+func TestAppriseScheduledSummarySuppression(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+	cfg := notify.Config{On: "always", AppriseURL: srv.URL, ScheduledSummary: true}
+	ictx := notify.WithMessagesSuppressed(context.Background())
+
+	notify.Send(ictx, cfg, "container", notify.Event{OK: true})
+	notify.SendStart(ictx, cfg, "container")
+	if hits != 0 {
+		t.Fatalf("summary mode must suppress per-item apprise sends, hits=%d", hits)
+	}
+	// A non-marked message (the summary itself) still fires.
+	notify.Send(context.Background(), cfg, "containers", notify.Event{OK: true})
+	if hits != 1 {
+		t.Fatalf("a non-marked apprise message must still send, hits=%d", hits)
+	}
+	// Toggle off → the marked per-item message fires as before.
+	cfg.ScheduledSummary = false
+	notify.Send(ictx, cfg, "container", notify.Event{OK: true})
+	if hits != 2 {
+		t.Fatalf("with summary off a marked apprise message must send, hits=%d", hits)
+	}
+}
+
+// TestAppriseSendErrorRedactsURL: the Apprise endpoint path carries the secret
+// notify key, so a failed send must log the error WITHOUT the URL (redactErr) —
+// only the operation and the underlying cause.
+func TestAppriseSendErrorRedactsURL(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	deadURL := srv.URL + "/notify/secretkey"
+	srv.Close() // now unreachable → *url.Error carrying the full URL
+
+	var buf strings.Builder
+	prev := log.Writer()
+	log.SetOutput(&buf)
+	defer log.SetOutput(prev)
+
+	notify.Send(context.Background(),
+		notify.Config{On: "always", AppriseURL: deadURL},
+		"", notify.Event{Title: "BombVault", Message: "x", OK: true})
+
+	if !strings.Contains(buf.String(), "notify: apprise:") {
+		t.Fatalf("failed apprise send should be logged, log=%q", buf.String())
+	}
+	if strings.Contains(buf.String(), "secretkey") {
+		t.Fatalf("logged apprise error must not leak the notify key, log=%q", buf.String())
+	}
+}
+
+// TestConfiguredWithOnlyAppriseURL: an Apprise URL alone counts as a configured
+// channel, so SendTest reaches it (and posts a success-type test message).
+func TestConfiguredWithOnlyAppriseURL(t *testing.T) {
+	var got map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &got)
+	}))
+	defer srv.Close()
+	cfg := notify.Config{AppriseURL: srv.URL}
+	if !cfg.Configured() {
+		t.Fatal("Configured() should be true with only an Apprise URL")
+	}
+	if err := notify.SendTest(context.Background(), cfg); err != nil {
+		t.Fatalf("SendTest: %v", err)
+	}
+	if got["type"] != "success" || got["title"] == "" {
+		t.Fatalf("test payload = %v", got)
 	}
 }
 
