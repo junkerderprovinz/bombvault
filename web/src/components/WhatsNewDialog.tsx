@@ -226,7 +226,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
         role="dialog"
         aria-modal="true"
         aria-labelledby="whatsnew-title"
-        className="bv-modal-card flex max-h-[85vh] w-full max-w-lg flex-col rounded-card border border-carbon-border bg-carbon-surface shadow-2xl"
+        className="bv-modal-card flex max-h-[85vh] w-full max-w-lg flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">

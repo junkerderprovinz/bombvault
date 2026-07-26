@@ -5,7 +5,7 @@ export type StepState = "idle" | "ok" | "warn" | "bad";
 export function StepCard({ n, title, state, children }: { n: number; title: string; state: StepState; children: ReactNode }) {
   const dot = state === "ok" ? "bg-statusOkSolid" : state === "bad" ? "bg-statusFailSolid" : state === "warn" ? "bg-statusWarnSolid" : "bg-carbon-surface3";
   return (
-    <div className="rounded-xl border border-carbon-border bg-carbon-surface p-4">
+    <div className="rounded-xl bg-carbon-surface p-4">
       <div className="flex items-center gap-2.5 mb-2">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-carbon-surface2 text-xs font-semibold text-carbon-textSub">{n}</span>
         <h2 className="text-sm font-semibold text-carbon-text flex-1">{title}</h2>

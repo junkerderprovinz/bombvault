@@ -166,7 +166,7 @@ function ConfigSettingsCard({
   }
 
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
         {t("config.settingsTitle")}
       </h2>
@@ -280,7 +280,7 @@ function ConfigSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -349,7 +349,7 @@ export function Config() {
       )}
 
       {/* Backup card */}
-      <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+      <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("config.backupTitle")}
         </h2>
@@ -368,11 +368,11 @@ export function Config() {
       </div>
 
       {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
-      <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4">
+      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("config.snapshotsTitle")}
         </h2>
-        <div className="rounded-lg bg-statusInfoBg border border-statusInfoBorderSoft px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        <div className="rounded-lg bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("config.snapshotsHint")}
         </div>
 
@@ -390,7 +390,7 @@ export function Config() {
           <p className="text-xs text-carbon-textMuted">{t("config.none")}</p>
         )}
         {!loading && snapshots.length > 0 && (
-          <div className="rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
+          <div className="rounded-lg bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
               <ConfigSnapshotRow
                 key={snap.id}
