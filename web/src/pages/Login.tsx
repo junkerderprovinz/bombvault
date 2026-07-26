@@ -38,7 +38,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-carbon-background">
-      <div className="w-full max-w-sm rounded-card border border-carbon-border bg-carbon-surface p-8 flex flex-col gap-6 shadow-lg">
+      <div className="w-full max-w-sm rounded-card bg-carbon-surface p-8 flex flex-col gap-6 shadow-lg">
         {/* Title */}
         <h1 className="text-2xl font-semibold text-carbon-text text-center">
           {t("auth.loginTitle")}

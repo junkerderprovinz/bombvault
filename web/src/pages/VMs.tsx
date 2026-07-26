@@ -32,10 +32,10 @@ function StateChip({ state }: { state: string }) {
   const lower = state.toLowerCase();
   const cls =
     lower === "running"
-      ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
+      ? "bg-statusOkBg text-statusOk"
       : lower === "shut off" || lower === "shutoff" || lower === "stopped"
-      ? "bg-statusFailBg text-statusFail border border-statusFailBorder"
-      : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
+      ? "bg-statusFailBg text-statusFail"
+      : "bg-carbon-surface2 text-carbon-textSub";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
       {stateLabel(t, state)}
@@ -318,7 +318,7 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
       <button
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -464,7 +464,7 @@ function VMSnapshotRow({
             (mirrors Containers' SnapshotRow) instead of always rendering it. */}
         <button
           onClick={() => setShowRestore((p) => !p)}
-          className={`shrink-0 rounded-lg border border-carbon-border px-2.5 py-1 text-xs transition-colors ${
+          className={`shrink-0 rounded-lg px-2.5 py-1 text-xs transition-colors ${
             showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
@@ -474,7 +474,7 @@ function VMSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -563,7 +563,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
       </button>
 
       {open && (
-        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
+        <div className="mt-2 rounded-lg bg-carbon-background px-3 py-1">
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
@@ -634,7 +634,7 @@ function VMRow({
   // backup (its OWN in-flight backup is handled by isPending inside the button).
   const running = anyActive(progressMap);
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
+    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed VMs only) */}
@@ -657,7 +657,7 @@ function VMRow({
             {installed ? (
               <StateChip state={vm.state} />
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
                 {t("containers.notInstalled")}
               </span>
             )}
@@ -1019,7 +1019,7 @@ export function VMs() {
         <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && vms.length === 0 && (
-        <div className="bg-carbon-surface rounded-card border border-carbon-border p-6 text-center">
+        <div className="bg-carbon-surface rounded-card p-6 text-center">
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
       )}
@@ -1081,7 +1081,7 @@ export function VMs() {
 
       {/* Bulk action bar */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-lg bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>

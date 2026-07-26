@@ -35,10 +35,10 @@ function StateChip({ state }: { state: string }) {
   const lower = state.toLowerCase();
   const cls =
     lower === "running"
-      ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
+      ? "bg-statusOkBg text-statusOk"
       : lower === "exited" || lower === "stopped"
-      ? "bg-statusFailBg text-statusFail border border-statusFailBorder"
-      : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
+      ? "bg-statusFailBg text-statusFail"
+      : "bg-carbon-surface2 text-carbon-textSub";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
       {stateLabel(t, state)}
@@ -321,7 +321,7 @@ function ExportButton({ name, t }: { name: string; t: T }) {
       <button
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -387,7 +387,7 @@ function HooksEditor({
         {(initialPre || initialPost) && <span className="text-statusOk">●</span>}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
@@ -550,7 +550,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
         {t("folders.title")}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
           {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
           {!loading && mounts.length === 0 && custom.length === 0 && (
@@ -604,7 +604,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
             />
             <button
               onClick={addCustom}
-              className="rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-lg bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("folders.add")}
             </button>
@@ -672,7 +672,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
         {initial.length > 0 && <span className="text-statusOk">●</span>}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
           <textarea
             value={text}
@@ -778,7 +778,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         {initial.length > 0 && <span className="text-statusOk">●</span>}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("excludes.hint")}</p>
           <textarea
             value={text}
@@ -871,7 +871,7 @@ function ContainerRow({
   // own backup button (its OWN in-flight backup is handled by isPending inside).
   const running = anyActive(progressMap);
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
+    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed containers only) */}
@@ -894,7 +894,7 @@ function ContainerRow({
             {installed ? (
               <StateChip state={container.state} />
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
                 {t("containers.notInstalled")}
               </span>
             )}
@@ -1148,7 +1148,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   }
 
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-2">
+    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-2">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <span className="font-semibold text-carbon-text text-sm wrap-break-word">{group.project}</span>
@@ -1166,7 +1166,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           aria-expanded={open}
           aria-label={t("stack.restore")}
           title={t("stack.restore")}
-          className="shrink-0 inline-flex items-center rounded-lg border border-carbon-border p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 inline-flex items-center rounded-lg p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
             <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1175,7 +1175,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
       </div>
 
       {open && (
-        <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-1 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
           <div className="flex items-center gap-2">
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
@@ -1482,7 +1482,7 @@ export function Containers() {
       {/* Server-side batch-backup banner — visible while a "back up all" run is in
           flight, even if it was started from another tab/session. */}
       {batchActive && (
-        <div className="flex items-center gap-3 rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 rounded-lg bg-carbon-surface2 px-3 py-2">
           <span
             className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
             style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
@@ -1501,7 +1501,7 @@ export function Containers() {
         <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && containers.length === 0 && (
-        <div className="bg-carbon-surface rounded-card border border-carbon-border p-6 text-center">
+        <div className="bg-carbon-surface rounded-card p-6 text-center">
           <p className="text-sm text-carbon-textMuted">
             {t("containers.emptyDocker")}
           </p>
@@ -1565,7 +1565,7 @@ export function Containers() {
 
       {/* Bulk action bar — appears when one or more containers are selected. */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-lg bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>

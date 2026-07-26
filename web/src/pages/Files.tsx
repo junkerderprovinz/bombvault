@@ -267,7 +267,7 @@ function FileSetFileBrowser({
   const count = selected.size;
 
   return (
-    <div className="mt-1 rounded-lg border border-carbon-border bg-carbon-surface2 p-2 flex flex-col gap-2">
+    <div className="mt-1 rounded-lg bg-carbon-surface2 p-2 flex flex-col gap-2">
       <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
@@ -531,7 +531,7 @@ function FileSetSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg border border-carbon-border px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -636,7 +636,7 @@ function FileSetRestorePanel({
       </button>
 
       {open && (
-        <div className="mt-2 rounded-lg border border-carbon-border bg-carbon-background px-3 py-1">
+        <div className="mt-2 rounded-lg bg-carbon-background px-3 py-1">
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
@@ -748,7 +748,7 @@ function FileSetDialog({
         aria-modal="true"
         aria-label={initial ? t("files.editSet") : t("files.addSet")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card border border-carbon-border bg-carbon-surface p-5 flex flex-col gap-4"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
         <h2 className="text-lg font-semibold text-carbon-text">
           {initial ? t("files.editSet") : t("files.addSet")}
@@ -873,7 +873,7 @@ function FileSetRow({
   }
 
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card border border-carbon-border p-4 flex flex-col gap-3">
+    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
       {/* Top row: name + chips, path, last backup */}
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -882,7 +882,7 @@ function FileSetRow({
               {set.name}
             </span>
             {set.excludes.length > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub border border-carbon-border">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
               </span>
             )}
@@ -891,13 +891,13 @@ function FileSetRow({
             {noPath && (
               <span
                 title={t("files.noPathHint")}
-                className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBgStrong text-statusWarn border border-statusWarnBorderStrong"
+                className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBgStrong text-statusWarn"
               >
                 {t("files.noPath")}
               </span>
             )}
             {pathMissing && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail border border-statusFailBorder">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail">
                 {t("files.pathMissing")}
               </span>
             )}
@@ -930,7 +930,7 @@ function FileSetRow({
           </label>
           <button
             onClick={onEdit}
-            className="inline-flex items-center rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("files.editSet")}
           </button>
@@ -1072,7 +1072,7 @@ export function Files() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("files.discoverHint")}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -1092,7 +1092,7 @@ export function Files() {
 
       {/* Empty state — the "no separate file-backup tool needed" pitch */}
       {!loading && !error && sets.length === 0 && (
-        <div className="bg-carbon-surface rounded-card border border-carbon-border p-6 text-center flex flex-col items-center gap-3">
+        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("files.empty")}</p>
           <button
             onClick={() => setDialog("new")}

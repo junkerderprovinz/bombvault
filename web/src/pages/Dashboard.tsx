@@ -127,7 +127,7 @@ function StatCard({
   danger?: boolean;
 }) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-1 min-w-0 overflow-hidden">
+    <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-1 min-w-0 overflow-hidden">
       <span
         className={`text-2xl font-bold tabular-nums ${
           danger && value > 0 ? "text-statusFail" : "text-carbon-text"
@@ -238,19 +238,19 @@ function StatusChip({
   status: "success" | "failed" | "running" | "ok" | "degraded" | "checking" | "skipped" | string;
 }) {
   const map: Record<string, string> = {
-    success: "bg-statusOkBg text-statusOk border border-statusOkBorder",
-    ok:      "bg-statusOkBg text-statusOk border border-statusOkBorder",
-    failed:  "bg-statusFailBg text-statusFail border border-statusFailBorder",
-    degraded:"bg-statusFailBg text-statusFail border border-statusFailBorder",
-    running: "bg-statusInfoBg text-statusInfo border border-statusInfoBorder",
-    checking:"bg-statusInfoBg text-statusInfo border border-statusInfoBorder",
-    info:    "bg-statusWarnBg text-statusWarn border border-statusWarnBorder",
+    success: "bg-statusOkBg text-statusOk",
+    ok:      "bg-statusOkBg text-statusOk",
+    failed:  "bg-statusFailBg text-statusFail",
+    degraded:"bg-statusFailBg text-statusFail",
+    running: "bg-statusInfoBg text-statusInfo",
+    checking:"bg-statusInfoBg text-statusInfo",
+    info:    "bg-statusWarnBg text-statusWarn",
     // A skip is neither success nor failure: a muted, neutral chip so a removed
     // container's scheduled target reads as "intentionally not run", distinct
     // from green success and red failure (#57).
-    skipped: "bg-statusNeutralBg text-statusNeutral border border-statusNeutralBorder",
+    skipped: "bg-statusNeutralBg text-statusNeutral",
   };
-  const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub border border-carbon-border";
+  const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
       {status}
@@ -272,7 +272,7 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-4 overflow-hidden">
+    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {title}
@@ -559,8 +559,8 @@ function ProtectionCard({
                             title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
                             className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
                               d.lastVerifiedOK
-                                ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
-                                : "bg-statusFailBg text-statusFail border border-statusFailBorder"
+                                ? "bg-statusOkBg text-statusOk"
+                                : "bg-statusFailBg text-statusFail"
                             }`}
                           >
                             {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
@@ -580,8 +580,8 @@ function ProtectionCard({
                             title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
                             className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
                               d.lastOffsiteSubsetOK
-                                ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
-                                : "bg-statusFailBg text-statusFail border border-statusFailBorder"
+                                ? "bg-statusOkBg text-statusOk"
+                                : "bg-statusFailBg text-statusFail"
                             }`}
                           >
                             {d.lastOffsiteSubsetOK ? "✓" : "✗"} {t("drill.offsiteVerified")} {relativeTime(t, d.lastOffsiteSubsetAt)}
@@ -601,7 +601,7 @@ function ProtectionCard({
                           // scheduled DR drill is opted out.
                           <span
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusOkBg text-statusOk border border-statusOkBorder"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusOkBg text-statusOk"
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -615,7 +615,7 @@ function ProtectionCard({
                                 ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                                 : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                             }
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusFailBg text-statusFail border border-statusFailBorder"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusFailBg text-statusFail"
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -624,7 +624,7 @@ function ProtectionCard({
                           // failing to show: muted, never red. File's no-claim styling.
                           <span
                             title={t("drill.manualOnlyTitle")}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted border border-carbon-border"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted"
                           >
                             {t("drill.manualOnly")}
                           </span>
@@ -651,7 +651,7 @@ function ProtectionCard({
                         type="button"
                         onClick={() => runOffsiteDr(d.domain)}
                         disabled={drRunning === d.domain}
-                        className="rounded-md border border-carbon-border bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className="rounded-md bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {drRunning === d.domain
                           ? t("drill.runningOffsiteDr")
@@ -1165,10 +1165,10 @@ function HealthHeatmapCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           key={d}
           type="button"
           onClick={() => setDomain(d)}
-          className={`px-2 py-0.5 rounded text-xs font-medium border ${
+          className={`px-2 py-0.5 rounded text-xs font-medium ${
             domain === d
-              ? "bg-carbon-surface2 text-carbon-text border-carbon-border"
-              : "bg-transparent text-carbon-textMuted border-transparent hover:bg-carbon-hover hover:text-carbon-text"
+              ? "bg-accent text-accentContrast"
+              : "text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
           {domainLabel(d)}
@@ -1422,7 +1422,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
   };
 
   return (
-    <div className="rounded-card border border-statusWarnBorder bg-statusWarnBg px-4 py-3 flex flex-col gap-2">
+    <div className="rounded-card bg-statusWarnBg px-4 py-3 flex flex-col gap-2">
       <h2 className="text-sm font-semibold text-statusWarn">
         {t("recovery.nagTitle")}
       </h2>
@@ -1447,7 +1447,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
           type="button"
           onClick={dismiss}
           disabled={dismissing}
-          className="rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
+          className="rounded-md px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
         >
           {t("recovery.stored")}
         </button>
@@ -1486,7 +1486,7 @@ function FreshInstallNudge({
   if (!isFreshInstall(domains)) return null;
 
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex items-center gap-4">
+    <div className="bg-carbon-surface rounded-card p-5 flex items-center gap-4">
       <div className="flex-1 flex flex-col gap-1.5">
         <p className="text-sm text-carbon-text">{t("recovery.freshNudge")}</p>
         <Link
@@ -1501,7 +1501,7 @@ function FreshInstallNudge({
         type="button"
         onClick={onDismiss}
         aria-label={t("common.close")}
-        className="shrink-0 rounded-md border border-carbon-border px-2 py-1 text-sm text-carbon-textSub hover:text-carbon-text transition-colors"
+        className="shrink-0 rounded-md px-2 py-1 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
       >
         ✕
       </button>
@@ -1549,7 +1549,7 @@ function minutesOfDay(hhmm: string): number {
 
 function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
+    <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
       <span className="text-xs text-carbon-textMuted uppercase tracking-widest truncate">{label}</span>
       {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
           relative time in a narrow half-width cell) drops to a second line and stays
@@ -1887,7 +1887,7 @@ export function Dashboard() {
           className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
-              : "border border-carbon-border text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1930,7 +1930,7 @@ export function Dashboard() {
           <button
             type="button"
             onClick={reset}
-            className="self-start rounded-md border border-carbon-border px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text motion-safe:transition-colors"
+            className="self-start rounded-md bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
           >
             {t("dashboard.resetLayout")}
           </button>
@@ -1993,7 +1993,7 @@ export function Dashboard() {
             {hiddenBlocks.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-2 rounded-md border border-carbon-border bg-carbon-surface2 px-2.5 py-1.5"
+                className="flex items-center gap-2 rounded-md bg-carbon-surface2 px-2.5 py-1.5"
               >
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}

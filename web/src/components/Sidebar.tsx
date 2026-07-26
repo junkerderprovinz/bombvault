@@ -258,7 +258,7 @@ function SidebarControls() {
           <div
             role="listbox"
             aria-label={t("language.label")}
-            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-xl border border-carbon-border bg-carbon-surface shadow-lg"
+            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-xl bg-carbon-surface shadow-xl"
             style={{ scrollbarColor: "var(--carbon-border) transparent" }}
           >
             {languages.map((l) => (

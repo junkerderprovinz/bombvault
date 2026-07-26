@@ -434,7 +434,7 @@ export function CustomizableBlock({
       )}
 
       {/* Control bar */}
-      <div className="mb-2 flex items-center gap-2 rounded-md border border-carbon-border bg-carbon-surface2 px-2 py-1.5">
+      <div className="mb-2 flex items-center gap-2 rounded-md bg-carbon-surface2 px-2 py-1.5">
         <span className="shrink-0 cursor-move select-none text-carbon-textMuted" aria-hidden="true">
           <GripIcon />
         </span>
