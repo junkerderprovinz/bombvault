@@ -17,9 +17,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 // `active` marks that at least one filter inside is set to a non-default value.
 // The schedule/backup (and Containers' installed) filters persist to
 // localStorage, so a restored non-"all" filter would otherwise silently shrink
-// the list behind the collapsed button with no hint. The accent dot + accent
-// border on the trigger surface that a filter is applied; each page computes
-// `active` from its own current filter state.
+// the list behind the collapsed button with no hint. The accent dot on the
+// trigger surfaces that a filter is applied; each page computes `active` from
+// its own current filter state.
 
 export function FilterPopover({
   label,
@@ -56,9 +56,7 @@ export function FilterPopover({
         onClick={() => setOpen((p) => !p)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className={`inline-flex items-center gap-1.5 rounded-lg border bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors ${
-          active ? "border-accent" : "border-carbon-border"
-        }`}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
@@ -72,7 +70,7 @@ export function FilterPopover({
         <div
           role="dialog"
           aria-label={label}
-          className="absolute left-0 top-full z-20 mt-2 w-max min-w-[16rem] max-w-[min(90vw,26rem)] rounded-card border border-carbon-border bg-carbon-surface p-4 shadow-lg flex flex-col gap-4"
+          className="absolute left-0 top-full z-20 mt-2 w-max min-w-[16rem] max-w-[min(90vw,26rem)] rounded-card bg-carbon-surface p-4 shadow-xl flex flex-col gap-4"
         >
           {children}
         </div>

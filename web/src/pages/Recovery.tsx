@@ -542,7 +542,7 @@ function ForeignRestoreCard({
           )}
         </div>
         {phase === "error" && connectError && (
-          <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
+          <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
             {connectError}
           </div>
         )}
@@ -556,7 +556,7 @@ function ForeignRestoreCard({
           <>
             {/* Session lapsed mid-browse (30-min TTL) — offer the reconnect. */}
             {sessionGone && (
-              <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
+              <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
                 <span className="flex-1">{t("recovery.foreignExpired")}</span>
                 <button
                   type="button"
@@ -955,7 +955,7 @@ export default function Recovery() {
 
         {/* Exact remedy when the key doesn't match the repo. */}
         {readableState === "bad" && (
-          <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed">
+          <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed">
             {t("recovery.appKeyRemedy")}
           </div>
         )}
@@ -1054,7 +1054,7 @@ export default function Recovery() {
                 )}
                 {/* Manual restart needed (Docker socket unreachable). */}
                 {configPhase === "manual" && (
-                  <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                  <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                     {t("recovery.configManualRestart")}
                   </div>
                 )}
@@ -1072,7 +1072,7 @@ export default function Recovery() {
                   </div>
                 )}
                 {configPhase === "error" && configError && (
-                  <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
+                  <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
                     {configError}
                   </div>
                 )}
@@ -1220,7 +1220,7 @@ export default function Recovery() {
           <p className="text-sm text-statusWarn">{t("recovery.foundNone")}</p>
         )}
         {discoverError && (
-          <div className="rounded-lg bg-statusFailBgSoft border border-statusFailBorderSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
+          <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
             {discoverError}
           </div>
         )}
@@ -1268,7 +1268,7 @@ export default function Recovery() {
 
             {/* VM restore needs the libvirt SSH link — advisory note, not a block. */}
             {vms.length > 0 && vmSshConfigured === false && (
-              <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+              <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                 {t("recovery.vmSshNote")}
               </div>
             )}

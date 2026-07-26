@@ -224,7 +224,7 @@ export function CadenceBuilder({
             onClick={() => update({ mode: m })}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               state.mode === m
-                ? "bg-carbon-surface3 text-carbon-text"
+                ? "bg-accent text-accentContrast"
                 : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
             }`}
           >
@@ -265,8 +265,8 @@ export function CadenceBuilder({
                 onClick={() => toggleWeekday(d)}
                 className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
                   state.weekdays.includes(d)
-                    ? "bg-statusOkBg text-statusOk border border-statusOkBorder"
-                    : "bg-carbon-surface2 text-carbon-textSub border border-carbon-border hover:bg-carbon-hover"
+                    ? "bg-accent text-accentContrast"
+                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                 }`}
               >
                 {d}

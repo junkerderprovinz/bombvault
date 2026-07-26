@@ -186,7 +186,7 @@ export function ActivityLog() {
   };
 
   return (
-    <div className="bg-carbon-surface rounded-card border border-carbon-border p-5 flex flex-col gap-3">
+    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
       <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
         {t("activityLog.title")}
       </h2>
@@ -257,7 +257,7 @@ export function ActivityLog() {
           <button
             type="button"
             onClick={jumpToLatest}
-            className="absolute bottom-3 right-3 rounded-full border border-carbon-border bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
+            className="absolute bottom-3 right-3 rounded-full bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
           >
             ↓ {t("activityLog.jumpToLatest")}
           </button>

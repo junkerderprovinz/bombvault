@@ -68,7 +68,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-sm border border-carbon-border bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
@@ -312,7 +312,7 @@ export function OffsiteWizard({
   const urlBackend = inferBackend(repoURL);
 
   return (
-    <div className="mt-2 flex flex-col gap-4 rounded-lg border border-carbon-border bg-carbon-surface2 p-4">
+    <div className="mt-2 flex flex-col gap-4 rounded-lg bg-carbon-surface2 p-4">
       {/* Step 1 — backend choice */}
       <div className="flex flex-col gap-2">
         <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
@@ -354,7 +354,7 @@ export function OffsiteWizard({
           {snipState === "error" && snipErr && <span className="text-xs text-statusFail">{snipErr}</span>}
           {snippet && (
             <div className="flex flex-col gap-2">
-              <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2 text-xs text-statusWarn leading-relaxed">
+              <div className="rounded-lg bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
                 {t("offsite.wizard.passwordWarning")}
               </div>
               <div className="flex flex-col gap-1">
@@ -369,7 +369,7 @@ export function OffsiteWizard({
                 <span className="text-xs text-carbon-textMuted">docker-compose</span>
                 <CopyBlock text={snippet.compose} t={t} />
               </div>
-              <div className="rounded-lg bg-carbon-surface border border-carbon-border px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
+              <div className="rounded-lg bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
               </div>
               <button
@@ -419,7 +419,7 @@ export function OffsiteWizard({
         </div>
 
         {/* REST credentials — reuse the cloud-credential endpoints. */}
-        <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface border border-carbon-border p-3 mt-1">
+        <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface p-3 mt-1">
           <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
           <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
             RESTIC_REST_USERNAME
@@ -447,7 +447,7 @@ export function OffsiteWizard({
               type="button"
               onClick={() => void saveCreds()}
               disabled={credState === "saving" || !cloudLoaded}
-              className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
             </button>
@@ -462,7 +462,7 @@ export function OffsiteWizard({
             type="button"
             onClick={() => void runTest()}
             disabled={testState === "busy"}
-            className="rounded-lg border border-carbon-border bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {testState === "busy" ? t("offsite.testing") : t("offsite.test")}
           </button>
@@ -504,12 +504,12 @@ export function OffsiteWizard({
 
         {/* Backend-specific caveats (Step 5) — driven by the live repo URL. */}
         {urlBackend === "rclone" && (
-          <div className="rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2 text-xs text-statusWarn leading-relaxed">
+          <div className="rounded-lg bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
             {t("offsite.rcloneWarning")}
           </div>
         )}
         {urlBackend === "s3" && (
-          <div className="rounded-lg bg-carbon-surface border border-carbon-border px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
+          <div className="rounded-lg bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
             {t("offsite.s3Unverified")}
           </div>
         )}
@@ -520,7 +520,7 @@ export function OffsiteWizard({
             type="button"
             onClick={() => void runTamper()}
             disabled={tamperState === "busy" || !immutable}
-            className="rounded-lg border border-carbon-border bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
           </button>

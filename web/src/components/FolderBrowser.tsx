@@ -90,7 +90,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
         <button
           onClick={handleOpen}
           title={t("folder.browseTitle")}
-          className="shrink-0 rounded-lg bg-carbon-surface2 border border-carbon-border px-3 py-1.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           {t("folder.browse")}
         </button>
@@ -108,7 +108,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
 
       {/* Browser panel */}
       {open && (
-        <div className="mt-1 rounded-lg bg-carbon-surface2 border border-carbon-border p-3 flex flex-col gap-2">
+        <div className="mt-1 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
           {/* Header: current path + close */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-mono text-carbon-textSub min-w-0 truncate">
