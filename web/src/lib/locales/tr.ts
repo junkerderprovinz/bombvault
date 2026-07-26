@@ -361,6 +361,10 @@ const tr: Partial<Translations> = {
   "integrity.unlockHint": "Çöken/kesintiye uğrayan bir çalışmadan kalan takılı depo kilitlerini temizleyin ('repository is already locked' hatasını giderir).",
   "integrity.pruneHint": "Saklama politikanı uygula ve alan geri kazan (politika yoksa yalnızca alan geri kazanır; biraz sürebilir).",
   "integrity.pruneConfirm": "Budama artık saklama politikanı uygular — kurallarının (last/daily/weekly/monthly) ötesindeki anlık görüntüleri kaldırır ve alan geri kazanır. Politika yoksa yalnızca alan geri kazanır. Devam edilsin mi?",
+  "integrity.appendOnly": "Append-only denetimi",
+  "integrity.appendOnlyHint": "Uzak deponun silmeleri hâlâ reddettiğini kanıtlar (salt-ekleme koruması) — off-site sihirbazındaki kurcalama testiyle aynı denetimdir.",
+  "integrity.appendOnlyLast": "append-only koruması · Son denetim {time}",
+  "integrity.appendOnlyNever": "append-only koruması · hiç denetlenmedi",
 
   // Pre/post-backup hooks
   "hooks.title": "Yedekleme kancaları",
@@ -786,6 +790,7 @@ const tr: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",
   "settings.schedulesChecks": "Geri yükleme denetimi zamanlaması",
   "settings.tamperTestSchedule": "Kurcalama testi zamanlaması",
+  "settings.tamperScheduleInactive": "Etkin değil — hiçbir site dışı depo append-only olarak işaretlenmediği için bu zamanlama asla çalışmaz. Etkinleştirmek için bir site dışı depoyu kendi site dışı ayarlarında append-only olarak işaretle.",
   "settings.subtitle": "BombVault yapılandırması — değişiklikler hemen etkili olur.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtreler",

@@ -361,6 +361,10 @@ const el: Partial<Translations> = {
   "integrity.unlockHint": "Καθαρισμός κολλημένων κλειδωμάτων αποθετηρίου από διακοπείσα εκτέλεση (διορθώνει 'repository is already locked').",
   "integrity.pruneHint": "Εφαρμογή της πολιτικής διατήρησης και ανάκτηση χώρου (χωρίς πολιτική ανακτά μόνο χώρο· μπορεί να πάρει λίγο).",
   "integrity.pruneConfirm": "Το κλάδεμα εφαρμόζει τώρα την πολιτική διατήρησής σας — αφαιρεί στιγμιότυπα πέρα από τους κανόνες σας (last/daily/weekly/monthly) και ανακτά χώρο. Χωρίς πολιτική ανακτά μόνο χώρο. Συνέχεια;",
+  "integrity.appendOnly": "Έλεγχος append-only",
+  "integrity.appendOnlyHint": "Αποδεικνύει ότι το απομακρυσμένο αποθετήριο εξακολουθεί να απορρίπτει διαγραφές (προστασία append-only) — ο ίδιος έλεγχος με το tamper test του οδηγού off-site.",
+  "integrity.appendOnlyLast": "προστασία append-only · Τελευταίος έλεγχος {time}",
+  "integrity.appendOnlyNever": "προστασία append-only · κανένας έλεγχος ακόμη",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks αντιγράφων",
@@ -786,6 +790,7 @@ const el: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
   "settings.schedulesChecks": "Προγραμματισμός ελέγχου επαναφοράς",
   "settings.tamperTestSchedule": "Προγραμματισμός δοκιμής παραποίησης",
+  "settings.tamperScheduleInactive": "Ανενεργό — κανένα αποθετήριο εκτός τόπου δεν είναι επισημασμένο ως append-only, επομένως αυτός ο προγραμματισμός δεν εκτελείται ποτέ. Επισήμανε ένα αποθετήριο εκτός τόπου ως append-only στις ρυθμίσεις εκτός τόπου του για να τον ενεργοποιήσεις.",
   "settings.subtitle": "Διαμόρφωση BombVault — οι αλλαγές τίθενται σε ισχύ αμέσως.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Φίλτρα",

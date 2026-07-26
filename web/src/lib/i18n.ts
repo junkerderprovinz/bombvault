@@ -446,6 +446,12 @@ export const en = {
   "integrity.unlockHint": "Clear stale repository locks left by a crashed or interrupted run (fixes 'repository is already locked').",
   "integrity.pruneHint": "Apply your retention policy and reclaim space (reclaims space only when no policy is set; can take a while).",
   "integrity.pruneConfirm": "Prune now applies your retention policy — it removes snapshots beyond your keep rules (last/daily/weekly/monthly) and reclaims space. With no policy set it only reclaims space. Continue?",
+  // #109: the off-site wizard's tamper test, surfaced in Integrity & maintenance
+  // under its plainer name. The verdict strings are shared (offsite.tamperOk/…).
+  "integrity.appendOnly": "Append-only check",
+  "integrity.appendOnlyHint": "Prove the off-site repository still refuses deletes (append-only protection) — the same check as the off-site wizard's tamper test.",
+  "integrity.appendOnlyLast": "append-only protection · Last checked {time}",
+  "integrity.appendOnlyNever": "append-only protection · never checked",
 
   // Restore-verification drills ("verify restorability")
   "verify.now": "Verify restorability",
@@ -857,6 +863,7 @@ export const en = {
   "settings.schedulesSelfBackup": "Self-backup schedule",
   "settings.schedulesChecks": "Restore-check schedule",
   "settings.tamperTestSchedule": "Tamper-test schedule",
+  "settings.tamperScheduleInactive": "Inactive — no off-site repo is marked append-only, so this schedule never runs. Mark an off-site repo as append-only in its off-site settings to enable it.",
   "settings.subtitle": "BombVault configuration — changes take effect immediately.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
@@ -1409,6 +1416,10 @@ export const de: Translations = {
   "integrity.unlockHint": "Verwaiste Repo-Locks eines abgestürzten/abgebrochenen Laufs entfernen (behebt „repository is already locked“).",
   "integrity.pruneHint": "Retention anwenden und Speicher freigeben (ohne Policy nur Speicher; kann dauern).",
   "integrity.pruneConfirm": "Aufräumen wendet jetzt deine Retention an — entfernt Snapshots jenseits deiner Keep-Regeln (last/daily/weekly/monthly) und gibt Speicher frei. Ohne Policy wird nur Speicher freigegeben. Fortfahren?",
+  "integrity.appendOnly": "Append-only-Prüfung",
+  "integrity.appendOnlyHint": "Beweist, dass das Off-site-Repository Löschungen weiterhin verweigert (Append-only-Schutz) — dieselbe Prüfung wie der Tamper-Test im Off-site-Assistenten.",
+  "integrity.appendOnlyLast": "Append-only-Schutz · Zuletzt geprüft {time}",
+  "integrity.appendOnlyNever": "Append-only-Schutz · nie geprüft",
 
   // Restore-verification drills ("verify restorability")
   "verify.now": "Wiederherstellbarkeit prüfen",
@@ -1818,6 +1829,7 @@ export const de: Translations = {
   "settings.schedulesSelfBackup": "Selbst-Backup-Zeitplan",
   "settings.schedulesChecks": "Wiederherstellungs-Prüfplan",
   "settings.tamperTestSchedule": "Tamper-Test-Zeitplan",
+  "settings.tamperScheduleInactive": "Inaktiv — kein Off-site-Repo ist als append-only markiert, daher läuft dieser Zeitplan nie. Markiere ein Off-site-Repo in dessen Off-site-Einstellungen als append-only, um ihn zu aktivieren.",
   "settings.subtitle": "BombVault-Konfiguration — Änderungen wirken sofort.",
   // Filter-Auslöser (v5-Redesign)
   "filter.button": "Filter",

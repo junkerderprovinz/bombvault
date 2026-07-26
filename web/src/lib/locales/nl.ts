@@ -356,6 +356,10 @@ const nl: Partial<Translations> = {
   "integrity.unlockHint": "Verwijder vastgelopen repository-locks van een gecrashte/onderbroken run (lost 'repository is already locked' op).",
   "integrity.pruneHint": "Pas je bewaarbeleid toe en maak ruimte vrij (maakt alleen ruimte vrij als er geen beleid is ingesteld; kan even duren).",
   "integrity.pruneConfirm": "Opschonen past nu je bewaarbeleid toe: het verwijdert snapshots buiten je regels (last/daily/weekly/monthly) en maakt ruimte vrij. Zonder beleid maakt het alleen ruimte vrij. Doorgaan?",
+  "integrity.appendOnly": "Append-only-controle",
+  "integrity.appendOnlyHint": "Bewijst dat de off-site-repository verwijderingen nog steeds weigert (append-only-bescherming) — dezelfde controle als de tamper-test van de off-site-wizard.",
+  "integrity.appendOnlyLast": "append-only-bescherming · Laatst gecontroleerd {time}",
+  "integrity.appendOnlyNever": "append-only-bescherming · nooit gecontroleerd",
 
   // Pre/post-backup hooks
   "hooks.title": "Back-uphooks",
@@ -783,6 +787,7 @@ const nl: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Zelf-back-upschema",
   "settings.schedulesChecks": "Herstelcontroleschema",
   "settings.tamperTestSchedule": "Tamper-test-schema",
+  "settings.tamperScheduleInactive": "Inactief — geen enkele off-site repo is gemarkeerd als append-only, dus dit schema wordt nooit uitgevoerd. Markeer een off-site repo als append-only in de bijbehorende off-site-instellingen om het te activeren.",
   "settings.subtitle": "BombVault-configuratie — wijzigingen worden meteen van kracht.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",

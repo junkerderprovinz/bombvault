@@ -359,6 +359,10 @@ const cs: Partial<Translations> = {
   "integrity.unlockHint": "Odstranit zaseklé zámky repozitáře po havarovaném/přerušeném běhu (řeší 'repository is already locked').",
   "integrity.pruneHint": "Použít zásady uchovávání a uvolnit místo (bez zásad pouze uvolní místo; může chvíli trvat).",
   "integrity.pruneConfirm": "Úklid nyní použije vaše zásady uchovávání — odebere snímky nad rámec vašich pravidel (last/daily/weekly/monthly) a uvolní místo. Bez zásad pouze uvolní místo. Pokračovat?",
+  "integrity.appendOnly": "Kontrola append-only",
+  "integrity.appendOnlyHint": "Prokáže, že off-site repozitář stále odmítá mazání (ochrana append-only) — stejná kontrola jako tamper test v průvodci off-site.",
+  "integrity.appendOnlyLast": "ochrana append-only · Naposledy zkontrolováno {time}",
+  "integrity.appendOnlyNever": "ochrana append-only · zatím nekontrolováno",
 
   // Backup hooks
   "hooks.title": "Zálohovací hooky",
@@ -784,6 +788,7 @@ const cs: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Plán vlastního zálohování",
   "settings.schedulesChecks": "Plán kontroly obnovení",
   "settings.tamperTestSchedule": "Plán testu manipulace",
+  "settings.tamperScheduleInactive": "Neaktivní — žádný repozitář mimo lokalitu není označen jako append-only, takže tento plán nikdy neběží. Označ repozitář mimo lokalitu jako append-only v jeho nastavení mimo lokalitu, abys ho aktivoval.",
   "settings.subtitle": "Konfigurace BombVault — změny se projeví okamžitě.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtry",

@@ -356,6 +356,10 @@ const ko: Partial<Translations> = {
   "integrity.unlockHint": "중단된 실행이 남긴 멈춘 저장소 잠금을 제거합니다('repository is already locked' 해결).",
   "integrity.pruneHint": "보존 정책을 적용하고 공간을 회수합니다(정책이 없으면 공간만 회수, 시간이 걸릴 수 있음).",
   "integrity.pruneConfirm": "정리는 이제 보존 정책을 적용합니다 — 규칙(last/daily/weekly/monthly)을 벗어난 스냅샷을 제거하고 공간을 회수합니다. 정책이 없으면 공간만 회수합니다. 계속할까요?",
+  "integrity.appendOnly": "Append-only 검사",
+  "integrity.appendOnlyHint": "오프사이트 저장소가 여전히 삭제를 거부하는지(추가 전용 보호) 증명합니다 — 오프사이트 마법사의 변조 테스트와 동일한 검사입니다.",
+  "integrity.appendOnlyLast": "append-only 보호 · 마지막 검사 {time}",
+  "integrity.appendOnlyNever": "append-only 보호 · 검사한 적 없음",
 
   "hooks.title": "백업 훅",
   "hooks.hint": "명령은 컨테이너 내부(sh -c)에서 실행됩니다. Pre는 백업 전에 실행되며(예: DB를 appdata로 덤프하여 포함) 실패 시 백업이 중단됩니다. Post는 컨테이너가 다시 가동된 후 실행되며 그 실패는 로그에만 기록됩니다.",
@@ -778,6 +782,7 @@ const ko: Partial<Translations> = {
   "settings.schedulesSelfBackup": "자체 백업 일정",
   "settings.schedulesChecks": "복원 확인 일정",
   "settings.tamperTestSchedule": "변조 테스트 일정",
+  "settings.tamperScheduleInactive": "비활성 — append-only로 표시된 오프사이트 저장소가 없어 이 일정은 실행되지 않습니다. 활성화하려면 오프사이트 저장소의 오프사이트 설정에서 append-only로 표시하세요.",
   "settings.subtitle": "BombVault 구성 — 변경 사항이 즉시 적용됩니다.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "필터",

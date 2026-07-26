@@ -359,6 +359,10 @@ const ro: Partial<Translations> = {
   "integrity.unlockHint": "Elimină blocajele rămase ale depozitului după o rulare întreruptă (rezolvă 'repository is already locked').",
   "integrity.pruneHint": "Aplică politica de retenție și recuperează spațiu (fără politică doar recuperează spațiu; poate dura).",
   "integrity.pruneConfirm": "Curățarea aplică acum politica ta de retenție — elimină instantaneele dincolo de regulile tale (last/daily/weekly/monthly) și recuperează spațiu. Fără politică doar recuperează spațiu. Continui?",
+  "integrity.appendOnly": "Verificare append-only",
+  "integrity.appendOnlyHint": "Dovedește că depozitul off-site refuză în continuare ștergerile (protecție append-only) — aceeași verificare ca testul de manipulare din asistentul off-site.",
+  "integrity.appendOnlyLast": "protecție append-only · Ultima verificare {time}",
+  "integrity.appendOnlyNever": "protecție append-only · niciodată verificată",
 
   // Pre/post-backup hooks
   "hooks.title": "Hook-uri de backup",
@@ -789,6 +793,7 @@ const ro: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Programare de auto-backup",
   "settings.schedulesChecks": "Programare de verificare a restaurării",
   "settings.tamperTestSchedule": "Programare de test tamper",
+  "settings.tamperScheduleInactive": "Inactiv — niciun repo off-site nu este marcat ca append-only, așa că această programare nu rulează niciodată. Marchează un repo off-site ca append-only în setările sale off-site pentru a o activa.",
   "settings.subtitle": "Configurația BombVault — modificările au efect imediat.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",

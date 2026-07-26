@@ -81,6 +81,74 @@ func TestLastReasonAppendsItemErrorToCount(t *testing.T) {
 	}
 }
 
+// TestLastReasonDecodesJSONItemErrors pins the issue #110 fix: a restore run
+// with --json (every BombVault restore) reports its per-file errors as
+// {"message_type":"error",…} JSON objects on stderr, followed by a plain
+// "Fatal: There were N errors" tally. The tally alone is useless — the decoded
+// error.message causes must be surfaced (path-scrubbed), never the raw JSON.
+// The stderr shape is taken from a live restic 0.17.3 repeat-restore repro.
+func TestLastReasonDecodesJSONItemErrors(t *testing.T) {
+	stderr := strings.Join([]string{
+		`{"message_type":"error","error":{"message":"open /host/user/user/temp/host/user/appdata/plex/db.sqlite: file exists"},"during":"restore","item":"/host/user/appdata/plex/db.sqlite"}`,
+		"Fatal: There were 1 errors",
+	}, "\n")
+	got := lastReason(stderr)
+	if !strings.Contains(got, "There were 1 errors") {
+		t.Fatalf("should keep the count summary, got %q", got)
+	}
+	if !strings.Contains(got, "file exists") {
+		t.Fatalf("should surface the decoded per-item cause, got %q", got)
+	}
+	if strings.Contains(got, "/host/user") {
+		t.Fatalf("should scrub the host path, got %q", got)
+	}
+	if strings.Contains(got, "message_type") {
+		t.Fatalf("should never surface raw JSON, got %q", got)
+	}
+}
+
+// TestLastReasonJSONCausesDedupedAndBounded pins the bounding contract: repeated
+// identical causes collapse into one, at most three distinct causes are joined,
+// and further distinct causes fold into a "(+N more)" count.
+func TestLastReasonJSONCausesDedupedAndBounded(t *testing.T) {
+	line := func(msg, item string) string {
+		return `{"message_type":"error","error":{"message":"` + msg + `"},"during":"restore","item":"` + item + `"}`
+	}
+	stderr := strings.Join([]string{
+		line("UtimesNano: operation not supported", "/a/1"),
+		line("UtimesNano: operation not supported", "/a/2"), // duplicate cause — must collapse
+		line("open /host/user/x: file exists", "/a/3"),
+		line("symlink /host/user/y: invalid argument", "/a/4"),
+		line("mkfifo /host/user/z: function not implemented", "/a/5"), // 4th distinct — folded
+		"Fatal: There were 5 errors",
+	}, "\n")
+	got := lastReason(stderr)
+	if strings.Count(got, "operation not supported") != 1 {
+		t.Fatalf("identical causes must be deduplicated, got %q", got)
+	}
+	for _, want := range []string{"file exists", "invalid argument", "(+1 more)"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("want %q in reason, got %q", want, got)
+		}
+	}
+	if strings.Contains(got, "function not implemented") {
+		t.Fatalf("4th distinct cause must be folded into the more-count, got %q", got)
+	}
+}
+
+// TestLastReasonRawJSONLineDecoded pins that when the chosen reason line IS a
+// raw per-item JSON error (restic died before printing its tally), the decoded
+// cause is shown instead of the JSON object.
+func TestLastReasonRawJSONLineDecoded(t *testing.T) {
+	got := lastReason(`{"message_type":"error","error":{"message":"open /host/user/x: no space left on device"},"during":"restore","item":"/x"}`)
+	if strings.Contains(got, "message_type") {
+		t.Fatalf("raw JSON must be decoded, got %q", got)
+	}
+	if !strings.Contains(got, "no space left on device") {
+		t.Fatalf("decoded cause must be surfaced, got %q", got)
+	}
+}
+
 // TestIsMetadataOnlyRestoreFailure pins the Part-3 classifier used to downgrade a
 // files restore to success-with-warning: it is true ONLY when every error is a
 // per-file ownership/permission error on the target (the /mnt/user FUSE case), and
@@ -114,6 +182,41 @@ func TestIsMetadataOnlyRestoreFailure(t *testing.T) {
 	// No error lines at all → nothing to downgrade.
 	if isMetadataOnlyRestoreFailure("") {
 		t.Fatal("empty stderr must NOT be metadata-only")
+	}
+}
+
+// TestIsMetadataOnlyRestoreFailureJSONForm pins that the classifier ALSO
+// understands restic's --json per-item error objects — the phrasing every
+// BombVault restore actually produces (the text "ignoring error for …" form
+// only appears without --json). Before issue #110 the JSON form was never
+// recognized, so the files-restore success-with-warning downgrade could never
+// fire in production.
+func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
+	permLine := `{"message_type":"error","error":{"message":"Lchown: lchown /host/user/restore/docs/a.txt: operation not permitted"},"during":"restore","item":"/docs/a.txt"}`
+	metaOnly := strings.Join([]string{
+		permLine,
+		`{"message_type":"error","error":{"message":"UtimesNano: operation not permitted"},"during":"restore","item":"/docs/b.txt"}`,
+		"Fatal: There were 2 errors",
+	}, "\n")
+	if !isMetadataOnlyRestoreFailure(metaOnly) {
+		t.Fatal("all-permission JSON stderr must classify as metadata-only")
+	}
+
+	// A non-permission JSON per-item error mixed in is a GENUINE failure.
+	mixed := strings.Join([]string{
+		permLine,
+		`{"message_type":"error","error":{"message":"open /host/user/restore/docs/big.bin: no space left on device"},"during":"restore","item":"/docs/big.bin"}`,
+		"Fatal: There were 2 errors",
+	}, "\n")
+	if isMetadataOnlyRestoreFailure(mixed) {
+		t.Fatal("a non-permission JSON per-item error must NOT be metadata-only")
+	}
+
+	// runError must tag the sentinel for the JSON form too.
+	err := runError([]string{"-r", "/repo", "restore", "--target", "/t", "--", "abc:/p"},
+		permLine+"\nFatal: There were 1 errors")
+	if !errors.Is(err, ErrRestoreMetadataOnly) {
+		t.Fatalf("JSON-form metadata-only restore failure must wrap ErrRestoreMetadataOnly, got %v", err)
 	}
 }
 
