@@ -142,10 +142,13 @@ func (c *Conn) EnsureKnownHost(ctx context.Context) error {
 }
 
 // Run executes a command on the host over SSH and returns trimmed stdout.
+// The collected stdout is returned even when the command exits non-zero, so a
+// caller can surface the failing command's output (e.g. the tail of a `plugin
+// install` transcript) alongside the error.
 func (c *Conn) Run(ctx context.Context, args ...string) (string, error) {
 	out, err := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...).Output() //nolint:gosec // remote args shell-quoted; host/user from config
 	if err != nil {
-		return "", fmt.Errorf("sshconn: run %q: %w", args[0], err)
+		return strings.TrimSpace(string(out)), fmt.Errorf("sshconn: run %q: %w", args[0], err)
 	}
 	return strings.TrimSpace(string(out)), nil
 }

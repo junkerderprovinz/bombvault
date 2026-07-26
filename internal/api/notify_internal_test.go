@@ -16,10 +16,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// fakeHostSSH records Run calls so the Unraid-notification channel can be tested
-// without a real host.
+// fakeHostSSH records Run calls so the Unraid-notification channel (and the
+// dashboard-plugin endpoints) can be tested without a real host. runOut scripts
+// the remote command's stdout; the zero value keeps the original "empty output"
+// behaviour.
 type fakeHostSSH struct {
 	runs   [][]string
+	runOut string
 	runErr error
 }
 
@@ -32,7 +35,7 @@ func (f *fakeHostSSH) Test(context.Context) error                       { return
 func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return nil }
 func (f *fakeHostSSH) Run(_ context.Context, args ...string) (string, error) {
 	f.runs = append(f.runs, args)
-	return "", f.runErr
+	return f.runOut, f.runErr
 }
 
 func unraidNotifyService(t *testing.T, ssh HostSSH) *Service {
