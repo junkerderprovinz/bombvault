@@ -361,6 +361,10 @@ const ar: Partial<Translations> = {
   "integrity.unlockHint": "إزالة أقفال المستودع العالقة من تشغيل تعطل أو انقطع (يصلح 'repository is already locked').",
   "integrity.pruneHint": "تطبيق سياسة الاحتفاظ واستعادة المساحة (تستعيد المساحة فقط إذا لم تُحدَّد سياسة؛ قد يستغرق وقتًا).",
   "integrity.pruneConfirm": "يطبّق التقليم الآن سياسة الاحتفاظ الخاصة بك — يزيل اللقطات التي تتجاوز قواعدك (last/daily/weekly/monthly) ويستعيد المساحة. بدون سياسة يستعيد المساحة فقط. هل تريد المتابعة؟",
+  "integrity.appendOnly": "فحص append-only",
+  "integrity.appendOnlyHint": "يثبت أن مستودع النسخ الخارجي لا يزال يرفض الحذف (حماية append-only) — وهو نفس فحص العبث في مُعالج التخزين الخارجي.",
+  "integrity.appendOnlyLast": "حماية append-only · آخر فحص {time}",
+  "integrity.appendOnlyNever": "حماية append-only · لم يُفحص بعد",
 
   // Pre/post-backup hooks
   "hooks.title": "خطافات النسخ الاحتياطي",
@@ -789,6 +793,7 @@ const ar: Partial<Translations> = {
   "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",
   "settings.schedulesChecks": "جدول فحص الاستعادة",
   "settings.tamperTestSchedule": "جدول اختبار العبث",
+  "settings.tamperScheduleInactive": "غير نشط — لا يوجد مستودع خارج الموقع مُعلَّم كـ append-only، لذا لا يعمل هذا الجدول الزمني أبدًا. علّم مستودعًا خارج الموقع كـ append-only ضمن إعداداته الخاصة بالتخزين خارج الموقع لتفعيله.",
   "settings.subtitle": "تكوين BombVault — تسري التغييرات فوراً.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "عوامل التصفية",

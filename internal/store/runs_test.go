@@ -179,6 +179,63 @@ func TestRunsSince(t *testing.T) {
 	}
 }
 
+// TestLastRunForTarget pins the skip-warning debounce query (#111): it must
+// return the most recent BACKUP run regardless of status (here a "skipped" run
+// recorded after a success), ignore other run kinds (a newer tamper run must not
+// mask the backup history) and other targets' runs, and report nil when the
+// target has no backup runs at all.
+func TestLastRunForTarget(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "sonarr", AppdataPaths: []string{"/data"}})
+	if err != nil {
+		t.Fatalf("UpsertTarget: %v", err)
+	}
+	other, err := r.UpsertTarget(store.Target{ContainerName: "radarr", AppdataPaths: []string{"/data"}})
+	if err != nil {
+		t.Fatalf("UpsertTarget: %v", err)
+	}
+
+	if run, err := r.LastRunForTarget(tg.ID); err != nil || run != nil {
+		t.Fatalf("no runs yet: got (%+v, %v), want (nil, nil)", run, err)
+	}
+
+	// Seed with explicit started_at stamps (StartRun's second granularity would
+	// make same-second ordering ambiguous): a success, then a newer skip, then an
+	// even newer non-backup run and a newer run of ANOTHER target — neither of the
+	// last two may win.
+	now := time.Now().Unix()
+	seed := []struct {
+		id, target, kind, status string
+		at                       int64
+	}{
+		{"run-old-success", tg.ID, "backup", "success", now - 300},
+		{"run-newest-backup", tg.ID, "backup", "skipped", now - 200},
+		{"run-newer-tamper", tg.ID, "tamper", "success", now - 100},
+		{"run-other-target", other.ID, "backup", "failed", now - 50},
+	}
+	for _, s := range seed {
+		if _, err := db.Exec(
+			`INSERT INTO runs (id, target_id, kind, status, started_at) VALUES (?, ?, ?, ?, ?)`,
+			s.id, s.target, s.kind, s.status, s.at,
+		); err != nil {
+			t.Fatalf("seed %s: %v", s.id, err)
+		}
+	}
+
+	run, err := r.LastRunForTarget(tg.ID)
+	if err != nil {
+		t.Fatalf("LastRunForTarget: %v", err)
+	}
+	if run == nil || run.ID != "run-newest-backup" || run.Status != "skipped" {
+		t.Fatalf("run = %+v, want the newest BACKUP run of this target (run-newest-backup, skipped)", run)
+	}
+}
+
 // TestLastSuccessfulBackupDomainScoped verifies that the per-domain everyN
 // due-gate queries are scoped to their own table: a VM backup must NOT satisfy
 // the containers gate, and vice versa. (Both kinds share kind='backup'; the

@@ -359,6 +359,10 @@ const pt: Partial<Translations> = {
   "integrity.unlockHint": "Remova bloqueios travados do repositório deixados por uma execução interrompida (corrige 'repository is already locked').",
   "integrity.pruneHint": "Aplicar sua política de retenção e liberar espaço (só libera espaço se nenhuma política estiver definida; pode demorar).",
   "integrity.pruneConfirm": "A limpeza agora aplica sua política de retenção: remove snapshots além das suas regras (last/daily/weekly/monthly) e libera espaço. Sem política, só libera espaço. Continuar?",
+  "integrity.appendOnly": "Verificação append-only",
+  "integrity.appendOnlyHint": "Prova que o repositório off-site continua a recusar eliminações (proteção append-only) — a mesma verificação do teste de adulteração do assistente off-site.",
+  "integrity.appendOnlyLast": "proteção append-only · Última verificação {time}",
+  "integrity.appendOnlyNever": "proteção append-only · nunca verificada",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de backup",
@@ -786,6 +790,7 @@ const pt: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Agendamento de auto-backup",
   "settings.schedulesChecks": "Agendamento de verificação de restauração",
   "settings.tamperTestSchedule": "Agendamento de teste de adulteração",
+  "settings.tamperScheduleInactive": "Inativo — nenhum repo externo está marcado como append-only, por isso este agendamento nunca é executado. Marca um repo externo como append-only nas suas definições externas para o ativar.",
   "settings.subtitle": "Configuração do BombVault — as alterações têm efeito imediato.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtros",

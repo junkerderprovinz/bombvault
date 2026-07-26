@@ -361,6 +361,10 @@ const th: Partial<Translations> = {
   "integrity.unlockHint": "ล้างล็อกที่ค้างของที่เก็บจากการทำงานที่ขัดข้อง/ถูกขัดจังหวะ (แก้ 'repository is already locked')",
   "integrity.pruneHint": "ใช้นโยบายการเก็บรักษาและคืนพื้นที่ (ถ้าไม่ได้ตั้งนโยบายจะคืนพื้นที่เท่านั้น; อาจใช้เวลาสักครู่)",
   "integrity.pruneConfirm": "ตอนนี้การพรูนจะใช้นโยบายการเก็บรักษาของคุณ — ลบสแนปช็อตที่เกินกฎของคุณ (last/daily/weekly/monthly) และคืนพื้นที่ หากไม่มีนโยบายจะคืนพื้นที่เท่านั้น ดำเนินการต่อหรือไม่?",
+  "integrity.appendOnly": "การตรวจสอบ append-only",
+  "integrity.appendOnlyHint": "พิสูจน์ว่าที่เก็บสำรองภายนอกยังคงปฏิเสธการลบ (การป้องกันแบบเขียนต่อท้ายเท่านั้น) — เป็นการตรวจสอบเดียวกับการทดสอบการแทรกแซงในตัวช่วยตั้งค่าภายนอก",
+  "integrity.appendOnlyLast": "การป้องกัน append-only · ตรวจสอบล่าสุด {time}",
+  "integrity.appendOnlyNever": "การป้องกัน append-only · ยังไม่เคยตรวจสอบ",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks การสำรองข้อมูล",
@@ -789,6 +793,7 @@ const th: Partial<Translations> = {
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
   "settings.schedulesChecks": "กำหนดการตรวจสอบการกู้คืน",
   "settings.tamperTestSchedule": "กำหนดการทดสอบการงัดแงะ",
+  "settings.tamperScheduleInactive": "ไม่ทำงาน — ไม่มีรีพอสิทอรีนอกสถานที่ใดถูกทำเครื่องหมายเป็น append-only จึงทำให้กำหนดการนี้ไม่ทำงานเลย ทำเครื่องหมายรีพอสิทอรีนอกสถานที่เป็น append-only ในการตั้งค่านอกสถานที่ของมันเพื่อเปิดใช้งาน",
   "settings.subtitle": "การกำหนดค่า BombVault — การเปลี่ยนแปลงมีผลทันที",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "ตัวกรอง",

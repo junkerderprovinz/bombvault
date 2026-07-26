@@ -361,6 +361,10 @@ const he: Partial<Translations> = {
   "integrity.unlockHint": "ניקוי נעילות מאגר תקועות שנותרו מהרצה שקרסה/הופסקה (מתקן 'repository is already locked').",
   "integrity.pruneHint": "החלת מדיניות השמירה ושחרור מקום (ללא מדיניות משחרר רק מקום; עשוי לקחת זמן).",
   "integrity.pruneConfirm": "הגיזום מחיל כעת את מדיניות השמירה שלך — מסיר תמונות מעבר לכללים שלך (last/daily/weekly/monthly) ומשחרר מקום. ללא מדיניות משחרר רק מקום. להמשיך?",
+  "integrity.appendOnly": "בדיקת append-only",
+  "integrity.appendOnlyHint": "מוכיחה שמאגר הגיבוי המרוחק עדיין דוחה מחיקות (הגנת append-only) — אותה בדיקת חבלה כמו באשף האחסון המרוחק.",
+  "integrity.appendOnlyLast": "הגנת append-only · נבדק לאחרונה {time}",
+  "integrity.appendOnlyNever": "הגנת append-only · טרם נבדק",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks לגיבוי",
@@ -786,6 +790,7 @@ const he: Partial<Translations> = {
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",
   "settings.schedulesChecks": "תזמון בדיקת שחזור",
   "settings.tamperTestSchedule": "תזמון בדיקת חבלה",
+  "settings.tamperScheduleInactive": "לא פעיל — אף מאגר מחוץ לאתר אינו מסומן כ-append-only, ולכן תזמון זה לעולם לא פועל. סמן מאגר מחוץ לאתר כ-append-only בהגדרות מחוץ לאתר שלו כדי להפעיל אותו.",
   "settings.subtitle": "תצורת BombVault — השינויים נכנסים לתוקף מיד.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "מסננים",

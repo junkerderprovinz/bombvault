@@ -359,6 +359,10 @@ const no: Partial<Translations> = {
   "integrity.unlockHint": "Fjern fastlåste repository-låser etter en krasjet/avbrutt kjøring (retter 'repository is already locked').",
   "integrity.pruneHint": "Bruk oppbevaringspolicyen din og frigjør plass (frigjør bare plass hvis ingen policy er satt; kan ta litt tid).",
   "integrity.pruneConfirm": "Opprydding bruker nå oppbevaringspolicyen din — den fjerner øyeblikksbilder utover reglene dine (last/daily/weekly/monthly) og frigjør plass. Uten policy frigjør den bare plass. Fortsette?",
+  "integrity.appendOnly": "Append-only-sjekk",
+  "integrity.appendOnlyHint": "Beviser at off-site-repositoriet fortsatt avviser slettinger (append-only-beskyttelse) — samme sjekk som tamper-testen i off-site-veiviseren.",
+  "integrity.appendOnlyLast": "append-only-beskyttelse · Sist sjekket {time}",
+  "integrity.appendOnlyNever": "append-only-beskyttelse · aldri sjekket",
 
   // Pre/post-backup hooks
   "hooks.title": "Sikkerhetskopi-hooks",
@@ -786,6 +790,7 @@ const no: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Plan for selvsikkerhetskopiering",
   "settings.schedulesChecks": "Plan for gjenopprettingssjekk",
   "settings.tamperTestSchedule": "Plan for tukletest",
+  "settings.tamperScheduleInactive": "Inaktiv — ingen off-site-repo er merket som append-only, så denne planen kjører aldri. Merk en off-site-repo som append-only i dens off-site-innstillinger for å aktivere den.",
   "settings.subtitle": "BombVault-konfigurasjon — endringer trer i kraft umiddelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",

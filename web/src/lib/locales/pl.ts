@@ -354,6 +354,10 @@ const pl: Partial<Translations> = {
   "integrity.unlockHint": "Usuń zablokowane blokady repozytorium pozostałe po przerwanym uruchomieniu (naprawia 'repository is already locked').",
   "integrity.pruneHint": "Zastosuj politykę retencji i zwolnij miejsce (bez polityki tylko zwalnia miejsce; może chwilę potrwać).",
   "integrity.pruneConfirm": "Czyszczenie stosuje teraz politykę retencji — usuwa migawki poza Twoimi regułami (last/daily/weekly/monthly) i zwalnia miejsce. Bez polityki tylko zwalnia miejsce. Kontynuować?",
+  "integrity.appendOnly": "Kontrola append-only",
+  "integrity.appendOnlyHint": "Dowodzi, że zdalne repozytorium nadal odrzuca usunięcia (ochrona append-only) — ta sama kontrola co tamper test w kreatorze off-site.",
+  "integrity.appendOnlyLast": "ochrona append-only · Ostatnia kontrola {time}",
+  "integrity.appendOnlyNever": "ochrona append-only · nigdy nie sprawdzano",
 
   // Backup hooks
   "hooks.title": "Hooki kopii zapasowych",
@@ -781,6 +785,7 @@ const pl: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",
   "settings.schedulesChecks": "Harmonogram sprawdzania przywracania",
   "settings.tamperTestSchedule": "Harmonogram testu manipulacji",
+  "settings.tamperScheduleInactive": "Nieaktywny — żadne repo off-site nie jest oznaczone jako append-only, więc ten harmonogram nigdy się nie uruchamia. Oznacz repo off-site jako append-only w jego ustawieniach off-site, aby go włączyć.",
   "settings.subtitle": "Konfiguracja BombVault — zmiany są stosowane natychmiast.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtry",
