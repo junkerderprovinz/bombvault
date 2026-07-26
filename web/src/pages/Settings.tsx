@@ -317,8 +317,8 @@ chmod 600 /root/.ssh/authorized_keys`
 // install when SSH is missing, and linked for transparency before installing.
 // (Install itself uses a hard-coded server-side constant; these are display-only.)
 const DASH_PLUGIN_PLG_URL =
-  "https://raw.githubusercontent.com/junkerderprovinz/bombvault-dashboard/main/plugin/bombvaultdash.plg";
-const DASH_PLUGIN_REPO_URL = "https://github.com/junkerderprovinz/bombvault-dashboard";
+  "https://raw.githubusercontent.com/junkerderprovinz/bombvault-widget/main/plugin/bombvaultwidget.plg";
+const DASH_PLUGIN_REPO_URL = "https://github.com/junkerderprovinz/bombvault-widget";
 
 type DashPluginStatus =
   | { kind: "loading" }
@@ -328,7 +328,7 @@ type DashPluginStatus =
   | { kind: "error"; message: string; output?: string };
 
 // UnraidTileSection — the "Unraid dashboard tile" block inside the Dashboard
-// widget card: one-click install/remove of the companion bombvaultdash plugin
+// widget card: one-click install/remove of the companion bombvaultwidget plugin
 // over the existing host SSH connection. Without SSH it degrades to manual
 // instructions (the copyable .plg URL + a CA hint).
 function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
