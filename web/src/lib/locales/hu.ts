@@ -361,6 +361,10 @@ const hu: Partial<Translations> = {
   "integrity.unlockHint": "Megszakadt futás után ottragadt repository-zárolások törlése (javítja a 'repository is already locked' hibát).",
   "integrity.pruneHint": "Alkalmazd a megőrzési szabályt és szabadíts fel helyet (szabály nélkül csak helyet szabadít fel; eltarthat egy ideig).",
   "integrity.pruneConfirm": "A karbantartás most alkalmazza a megőrzési szabályodat — eltávolítja a szabályaidon (last/daily/weekly/monthly) túli pillanatképeket és helyet szabadít fel. Szabály nélkül csak helyet szabadít fel. Folytatod?",
+  "integrity.appendOnly": "Append-only ellenőrzés",
+  "integrity.appendOnlyHint": "Bizonyítja, hogy a távoli tároló továbbra is elutasítja a törléseket (append-only védelem) — ugyanaz az ellenőrzés, mint az off-site varázsló tamper-tesztje.",
+  "integrity.appendOnlyLast": "append-only védelem · Utoljára ellenőrizve {time}",
+  "integrity.appendOnlyNever": "append-only védelem · még nem ellenőrizve",
 
   // Pre/post-backup hooks
   "hooks.title": "Mentési horgok",
@@ -789,6 +793,7 @@ const hu: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Önmentési ütemezés",
   "settings.schedulesChecks": "Visszaállítás-ellenőrzési ütemezés",
   "settings.tamperTestSchedule": "Manipulációs teszt ütemezése",
+  "settings.tamperScheduleInactive": "Inaktív — egyetlen telephelyen kívüli repó sincs append-only-ként megjelölve, ezért ez az ütemezés soha nem fut le. Jelölj meg egy telephelyen kívüli repót append-only-ként annak telephelyen kívüli beállításaiban, hogy engedélyezd.",
   "settings.subtitle": "BombVault-konfiguráció — a módosítások azonnal életbe lépnek.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Szűrők",

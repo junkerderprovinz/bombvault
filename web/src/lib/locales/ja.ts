@@ -356,6 +356,10 @@ const ja: Partial<Translations> = {
   "integrity.unlockHint": "中断された実行で残ったリポジトリのロックを削除します（'repository is already locked' を解消）。",
   "integrity.pruneHint": "保持ポリシーを適用して領域を回収します（ポリシー未設定なら領域回収のみ。時間がかかる場合があります）。",
   "integrity.pruneConfirm": "プルーンは保持ポリシーを適用し、ルール（last/daily/weekly/monthly）を超えるスナップショットを削除して領域を回収します。ポリシー未設定なら領域回収のみです。続行しますか？",
+  "integrity.appendOnly": "append-only チェック",
+  "integrity.appendOnlyHint": "オフサイトリポジトリが削除を拒否し続けていること(追記専用保護)を証明します — オフサイトウィザードの改ざんテストと同じチェックです。",
+  "integrity.appendOnlyLast": "append-only 保護 · 最終チェック {time}",
+  "integrity.appendOnlyNever": "append-only 保護 · 未チェック",
 
   "hooks.title": "バックアップフック",
   "hooks.hint": "コマンドはコンテナ内（sh -c）で実行されます。Pre はバックアップ前に実行（例：DB を appdata にダンプして含める）— 失敗するとバックアップは中止されます。Post はコンテナの復帰後に実行され、その失敗はログに記録されるだけです。",
@@ -778,6 +782,7 @@ const ja: Partial<Translations> = {
   "settings.schedulesSelfBackup": "セルフバックアップスケジュール",
   "settings.schedulesChecks": "復元チェックスケジュール",
   "settings.tamperTestSchedule": "改ざんテストスケジュール",
+  "settings.tamperScheduleInactive": "非アクティブ — append-only としてマークされたオフサイトリポジトリがないため、このスケジュールは実行されません。有効にするには、オフサイトリポジトリのオフサイト設定で append-only としてマークしてください。",
   "settings.subtitle": "BombVault の設定 — 変更は即座に反映されます。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "フィルター",

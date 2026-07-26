@@ -361,6 +361,10 @@ const fr: Partial<Translations> = {
   "integrity.unlockHint": "Supprimer les verrous bloqués du dépôt laissés par une exécution interrompue (corrige 'repository is already locked').",
   "integrity.pruneHint": "Appliquer la politique de rétention et récupérer de l'espace (récupère seulement l'espace si aucune politique n'est définie ; peut prendre du temps).",
   "integrity.pruneConfirm": "La purge applique maintenant votre politique de rétention — elle supprime les instantanés au-delà de vos règles (last/daily/weekly/monthly) et récupère de l'espace. Sans politique, elle ne fait que récupérer de l'espace. Continuer ?",
+  "integrity.appendOnly": "Vérification append-only",
+  "integrity.appendOnlyHint": "Prouve que le dépôt hors site refuse toujours les suppressions (protection append-only) — la même vérification que le test de sabotage de l'assistant hors site.",
+  "integrity.appendOnlyLast": "protection append-only · Dernière vérification {time}",
+  "integrity.appendOnlyNever": "protection append-only · jamais vérifiée",
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de sauvegarde",
@@ -786,6 +790,7 @@ const fr: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Planning d'auto-sauvegarde",
   "settings.schedulesChecks": "Planning de vérification de restauration",
   "settings.tamperTestSchedule": "Planning de test d'altération",
+  "settings.tamperScheduleInactive": "Inactif — aucun dépôt hors site n'est marqué comme append-only, donc ce planning ne s'exécute jamais. Marque un dépôt hors site comme append-only dans ses paramètres hors site pour l'activer.",
   "settings.subtitle": "Configuration de BombVault — les modifications prennent effet immédiatement.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtres",

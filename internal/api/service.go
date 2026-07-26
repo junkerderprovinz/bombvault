@@ -8309,7 +8309,11 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	if err != nil || (c.On != "always" && c.On != "failure") {
 		return
 	}
-	msg := fmt.Sprintf("Container %q no longer exists on the host but is still a scheduled backup target. It was skipped (not failed). Remove it in BombVault if this is intentional.", name)
+	// #111: the old wording ("…is still a scheduled backup target. It was skipped…")
+	// read as "BombVault is still trying to back it up". Say the opposite loudly:
+	// nothing is backed up anymore, the existing backups stay restorable, and how
+	// to stop the reminder.
+	msg := fmt.Sprintf("Container %q was removed from this host. BombVault is not backing it up anymore; the scheduled backup now skips it. Its existing backups are kept and remain restorable. To stop this reminder, exclude the container from the backup schedule or delete its backups in BombVault.", name)
 	// Suppress the per-call Healthchecks ping unconditionally: a skip must never flip
 	// the monitor to fail, and the scheduled run's aggregate ping already speaks for
 	// the domain. Base the ctx on Background (not the scheduled ctx) so the message is

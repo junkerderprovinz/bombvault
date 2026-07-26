@@ -361,6 +361,10 @@ const da: Partial<Translations> = {
   "integrity.unlockHint": "Ryd fastlåste repository-låse fra et nedbrudt/afbrudt kørsel (retter 'repository is already locked').",
   "integrity.pruneHint": "Anvend din opbevaringspolitik og frigør plads (frigør kun plads hvis ingen politik er sat; kan tage et stykke tid).",
   "integrity.pruneConfirm": "Oprydning anvender nu din opbevaringspolitik — den fjerner snapshots ud over dine regler (last/daily/weekly/monthly) og frigør plads. Uden politik frigør den kun plads. Fortsæt?",
+  "integrity.appendOnly": "Append-only-tjek",
+  "integrity.appendOnlyHint": "Beviser at off-site-repositoriet stadig afviser sletninger (append-only-beskyttelse) — samme tjek som tamper-testen i off-site-guiden.",
+  "integrity.appendOnlyLast": "append-only-beskyttelse · Sidst tjekket {time}",
+  "integrity.appendOnlyNever": "append-only-beskyttelse · aldrig tjekket",
 
   // Pre/post-backup hooks
   "hooks.title": "Sikkerhedskopi-hooks",
@@ -786,6 +790,7 @@ const da: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Tidsplan for selv-sikkerhedskopiering",
   "settings.schedulesChecks": "Tidsplan for gendannelsestjek",
   "settings.tamperTestSchedule": "Tidsplan for manipulationstest",
+  "settings.tamperScheduleInactive": "Inaktiv — intet off-site-repo er markeret som append-only, så denne tidsplan kører aldrig. Markér et off-site-repo som append-only i dets off-site-indstillinger for at aktivere den.",
   "settings.subtitle": "BombVault-konfiguration — ændringer træder i kraft med det samme.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",

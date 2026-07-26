@@ -356,6 +356,10 @@ const uk: Partial<Translations> = {
   "integrity.unlockHint": "Видалити застряглі блокування репозиторію після перерваного запуску (виправляє 'repository is already locked').",
   "integrity.pruneHint": "Застосувати політику зберігання та звільнити місце (без політики лише звільняє місце; може зайняти час).",
   "integrity.pruneConfirm": "Очищення тепер застосовує вашу політику зберігання — видаляє знімки понад ваші правила (last/daily/weekly/monthly) і звільняє місце. Без політики лише звільняє місце. Продовжити?",
+  "integrity.appendOnly": "Перевірка append-only",
+  "integrity.appendOnlyHint": "Доводить, що віддалене сховище й далі відхиляє видалення (захист append-only) — та сама перевірка, що й tamper-тест у майстрі off-site.",
+  "integrity.appendOnlyLast": "захист append-only · Остання перевірка {time}",
+  "integrity.appendOnlyNever": "захист append-only · ще не перевірявся",
 
   // Backup hooks
   "hooks.title": "Хуки резервного копіювання",
@@ -781,6 +785,7 @@ const uk: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Розклад самокопіювання",
   "settings.schedulesChecks": "Розклад перевірки відновлення",
   "settings.tamperTestSchedule": "Розклад тесту на втручання",
+  "settings.tamperScheduleInactive": "Неактивно — жоден зовнішній репозиторій не позначений як append-only, тому цей розклад ніколи не запускається. Познач зовнішній репозиторій як append-only в його зовнішніх налаштуваннях, щоб увімкнути його.",
   "settings.subtitle": "Конфігурація BombVault — зміни набувають чинності негайно.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Фільтри",
