@@ -71,6 +71,8 @@ function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
       return t("activityLog.typeOffsite");
     case "drill":
       return t("activityLog.jobDrill");
+    case "drdrill":
+      return t("run.kindDRDrill");
     case "tamper":
       return t("activityLog.jobTamper");
     case "export":
@@ -85,7 +87,7 @@ function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
 // carry the DOMAIN literal (or the flash/config singleton id) in targetId, never
 // a resolvable item id.
 function isDomainOpRunKind(kind: string): boolean {
-  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "tamper" || kind === "export";
+  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
 // runTargetText resolves what to show in a run's "target" column. Domain-op

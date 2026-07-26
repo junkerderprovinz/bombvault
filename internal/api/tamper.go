@@ -47,8 +47,13 @@ var tamperHTTPClient = &http.Client{
 // Only `rest:` repos are testable this way; anything else reports Testable=false
 // honestly. A transport/network error (dial fail, timeout) is INCONCLUSIVE — it is
 // neither protected nor unprotected — so RunTamperTest returns a non-nil error and
-// records NOTHING in that case; only a real HTTP verdict is persisted. A recorded
-// protected→unprotected flip fires a protection-loss notification.
+// records NO VERDICT in that case; only a real HTTP verdict is persisted, and a
+// recorded protected→unprotected flip fires a protection-loss notification.
+// Independently of the verdict store, EVERY outcome settles a run row in the
+// shared runs table (open-at-start, mirroring verify/prune): "success" =
+// protected, "failed" = NOT protected, "skipped" = ran but produced no verdict
+// (non-REST backend, transport error, inconclusive probe) — so a scheduled test
+// against e.g. a B2 object-lock off-site never runs invisibly (#109).
 func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
 	switch domain {
 	case "containers", "vms", "flash", "config", "files":
@@ -72,11 +77,54 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	}
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
+		// Nothing to test, so no run row either: the manual caller gets this clear
+		// error directly, and the schedule only dispatches domains flagged immutable
+		// (immutableOffsiteDomains) — a flag without a repo is a misconfiguration the
+		// scheduler already logs, not a nightly no-op worth a log line each fire.
 		return TamperVerdict{}, errors.New("no off-site repo configured for this domain")
 	}
+	// Open the run row NOW (mirroring verify/prune) and settle it from the named
+	// returns in the deferred finish below, so EVERY outcome past this point —
+	// protected, unprotected, non-REST backend, transport error, inconclusive
+	// probe — leaves a dated row in the activity log. Pre-fix, only a decisive
+	// REST verdict recorded a run, so a non-REST (e.g. B2 object-lock) off-site's
+	// scheduled tamper test ran invisibly (#109 follow-up).
+	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "tamper")
+	if rErr != nil {
+		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
+		runID = ""
+	}
+	defer func() {
+		if runID == "" {
+			return
+		}
+		// Status vocabulary mirrors the rest of the runs table: "success" = probed
+		// and protected; "failed" = probed and NOT protected (the alarming outcome);
+		// "skipped" = the test ran but produced no verdict (non-REST backend,
+		// transport error, inconclusive status) — visible, but never a false red.
+		status := "success"
+		detail := verdict.Detail
+		switch {
+		case err != nil:
+			status = statusSkipped
+			detail = truncateRunErr(err)
+		case !verdict.Testable:
+			status = statusSkipped
+		case !verdict.Protected:
+			status = "failed"
+		}
+		const maxDetail = 500 // mirror truncateRunErr's cap for the runs.error column
+		if len(detail) > maxDetail {
+			detail = detail[:maxDetail]
+		}
+		if fErr := s.store.FinishRun(runID, status, "", 0, detail); fErr != nil {
+			log.Printf("api: tamper %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
 	// Stage-1 tamper testing speaks the REST protocol directly (raw HTTP DELETE to
 	// the rest-server). Other backends (rclone/s3/sftp/local) can't be probed this
-	// way — say so honestly instead of guessing a verdict.
+	// way — say so honestly instead of guessing a verdict (the deferred finish
+	// records this exit as a "skipped" run carrying the detail).
 	if !strings.HasPrefix(loc, "rest:") {
 		return TamperVerdict{Testable: false, Detail: "only REST repos are verifiable"}, nil
 	}
@@ -106,9 +154,10 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	for _, url := range probes {
 		p, detail, perr := tamperProbe(ctx, url, creds.RESTUser, creds.RESTPassword)
 		if perr != nil {
-			// Transport/network error → the test is INCONCLUSIVE. Record NOTHING and
-			// return the error: an unreachable server is neither protected nor
-			// unprotected, and must never flip the stored verdict either way.
+			// Transport/network error → the test is INCONCLUSIVE. Record NO verdict
+			// and return the error: an unreachable server is neither protected nor
+			// unprotected, and must never flip the stored verdict either way. The
+			// deferred finish above still settles the run row as "skipped".
 			return TamperVerdict{}, perr
 		}
 		if !p {
@@ -130,11 +179,9 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	if recErr := s.store.RecordTamperTest(domain, verdict.Protected, verdict.Detail); recErr != nil {
 		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
 	}
-	// Mirror the verdict into the shared runs table so the test shows in the
-	// dashboard Activity Log/Run History. success = the delete was refused
-	// (append-only enforced); failed = NOT protected — the alarming outcome.
-	// Inconclusive/non-testable paths return above and record nothing here too.
-	s.recordDomainRun(domain, "tamper", verdict.Protected, verdict.Detail)
+	// The deferred open-at-start finish mirrors the verdict into the shared runs
+	// table (success = delete refused, failed = NOT protected — the alarming
+	// outcome) so the test shows in the dashboard Activity Log/Run History.
 	if hadPrev && prev.Protected && !verdict.Protected {
 		s.notifyProtectionLost(ctx, domain, verdict.Detail)
 	}
@@ -144,7 +191,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 // tamperProbe issues one authenticated DELETE and maps the status code to a
 // protection verdict. ONLY decisive statuses yield a verdict; everything else is
 // treated as INCONCLUSIVE and returned as a non-nil error (exactly like a
-// transport error), so the caller records nothing and notifies nothing rather
+// transport error), so the caller records no verdict and notifies nothing rather
 // than flip a stored verdict on an ambiguous response.
 //
 //   - 403 / 405 → protected (the delete was refused — append-only enforced)
@@ -180,9 +227,9 @@ func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, d
 		return false, "server accepted a delete", nil
 	default:
 		// 401/3xx/5xx/unexpected: not a delete verdict → inconclusive, like a
-		// transport error. Returning an error makes RunTamperTest record + notify
-		// nothing, so a rotated credential or a far-side maintenance window can never
-		// masquerade as a lost append-only guarantee.
+		// transport error. Returning an error makes RunTamperTest record no verdict
+		// and notify nothing, so a rotated credential or a far-side maintenance
+		// window can never masquerade as a lost append-only guarantee.
 		return false, "", fmt.Errorf("inconclusive tamper probe: unexpected status %d", resp.StatusCode)
 	}
 }

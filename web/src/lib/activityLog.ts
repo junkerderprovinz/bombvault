@@ -37,10 +37,12 @@ export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | ""
 /** The operation kind, for the type quick-filter. "update" is a real kind
  *  (the post-backup image-update run) that deliberately has no dedicated
  *  filter chip (see ActivityLog.tsx) but still carries a kind for search.
- *  "drill" (restore-verification drill), "tamper" (off-site tamper test) and
- *  "export" (flash ZIP export) are persisted run kinds since the
+ *  "drill" (local restore-verification drill), "drdrill" (off-site DR restore
+ *  check — a distinct kind so the two drill families are tellable apart; rows
+ *  recorded before the split stay "drill"), "tamper" (off-site tamper test)
+ *  and "export" (flash ZIP export) are persisted run kinds since the
  *  everything-in-the-log wave. */
-export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "tamper" | "export" | "";
+export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "drdrill" | "tamper" | "export" | "";
 
 export interface LogLine {
   /** Stable React key. */
@@ -151,14 +153,15 @@ function formatBytesShort(n: number): string {
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
-  | { scope: "offsite" | "prune" | "verify" | "drill" | "tamper" | "export"; domain: string };
+  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
 
 /**
  * parseProgressKey decodes a live SSE progress key into what it refers to.
  * See web/src/lib/progress.ts for the wire key shapes this must track:
  * "container:<name>", "vm:<name>", "flash", "config", "files:<set>",
  * "batch:containers", "batch:files", "offsite:<domain>", "prune:<domain>",
- * "verify:<domain>", "drill:<domain>", "tamper:<domain>", "export:flash"
+ * "verify:<domain>", "drill:<domain>" (local subset drill), "drdrill:<domain>"
+ * (off-site DR restore check), "tamper:<domain>", "export:flash"
  * (#109 — drills/tamper tests/the flash-ZIP export publish live pairs too).
  * Every "<name>"/"<set>" suffix is ALREADY the human name (the backend
  * publishes "container:" + containerName, "files:" + set.Name, etc. — see
@@ -176,6 +179,7 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("prune:")) return { scope: "prune", domain: key.slice("prune:".length) };
   if (key.startsWith("verify:")) return { scope: "verify", domain: key.slice("verify:".length) };
   if (key.startsWith("drill:")) return { scope: "drill", domain: key.slice("drill:".length) };
+  if (key.startsWith("drdrill:")) return { scope: "drdrill", domain: key.slice("drdrill:".length) };
   if (key.startsWith("tamper:")) return { scope: "tamper", domain: key.slice("tamper:".length) };
   if (key.startsWith("export:")) return { scope: "export", domain: key.slice("export:".length) };
   return null;
@@ -232,10 +236,11 @@ function domainOpSignature(kind: string, domain: string): string {
 /** Live-line text template per domain-scoped operation scope ("Pruning —
  *  {domain} …" etc.). The export line deliberately takes no {domain} — the
  *  flash-ZIP export is flash-only, so its text names flash itself. */
-const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "tamper" | "export", string> = {
+const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | "tamper" | "export", string> = {
   prune: "activityLog.linePruneRunning",
   verify: "activityLog.lineVerifyRunning",
   drill: "activityLog.lineDrillRunning",
+  drdrill: "activityLog.lineDRDrillRunning",
   tamper: "activityLog.lineTamperRunning",
   export: "activityLog.lineExportRunning",
 };
@@ -293,7 +298,8 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
       continue;
     }
 
-    // "prune" | "verify" | "drill" | "tamper" | "export" — domain-scoped ops.
+    // "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export" —
+    // domain-scoped ops.
     // Same dedupe mechanics as offsite above: each of these records a Run row
     // on the reserved domain target when it finishes (recordDomainRun /
     // StartRun+FinishRun), so registering the domain-op signature lets the
@@ -350,12 +356,25 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "drdrill") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineDRDrillSuccess", { domain: domainText }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineDRDrillFailed", { domain: domainText, error: run.error }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+  }
+
   if (run.kind === "tamper") {
+    // "skipped" = the test ran but produced no verdict (non-REST off-site,
+    // transport error, inconclusive probe) — a neutral info line carrying the
+    // backend's reason, never a red.
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineTamperSuccess", { domain: domainText }) }
       : run.status === "failed"
         ? { status: "failed", text: resolveName("activityLog.lineTamperFailed", { domain: domainText, error: run.error }) }
-        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+        : run.status === "skipped"
+          ? { status: "info", text: resolveName("activityLog.lineTamperSkipped", { domain: domainText, error: run.error }) }
+          : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
   if (run.kind === "export") {
@@ -406,6 +425,7 @@ function asLogKind(kind: string): LogKind {
     kind === "update" ||
     kind === "offsite" ||
     kind === "drill" ||
+    kind === "drdrill" ||
     kind === "tamper" ||
     kind === "export"
   ) {
@@ -418,7 +438,7 @@ function asLogKind(kind: string): LogKind {
  *  domainRunTargetID): their targetId IS the domain literal (or the flash/
  *  config singleton id), never a resolvable item id. */
 function isDomainOpKind(kind: string): boolean {
-  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "tamper" || kind === "export";
+  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
 function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures: Set<string>): LogLine[] {
@@ -552,8 +572,11 @@ function isoDateOf(atMs: number): string {
 export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files";
 
 /** Type quick-filter value ("all" plus the operation kinds the filter bar
- *  offers — deliberately NOT including "update", which has no chip). */
-export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "tamper" | "export";
+ *  offers — deliberately NOT including "update", which has no chip). "drill"
+ *  and "drdrill" are separate filter values (local subset check vs off-site DR
+ *  restore check); DR rows recorded before the kind split stay "drill" and so
+ *  keep matching the drill filter. */
+export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
 
 export interface LogFilter {
   domain: LogFilterDomain;

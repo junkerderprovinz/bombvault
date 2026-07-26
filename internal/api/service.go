@@ -7086,7 +7086,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
 			}
-			s.recordDomainRun(domain, "drill", false, skip.Detail)
+			s.recordDomainRun(domain, "drdrill", false, skip.Detail)
 			s.notifyDrillFailure(ctx, domain, "offsite", skip.Detail)
 			return skip, errDomainBusy
 		}
@@ -7100,11 +7100,14 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 	}
 	defer unlock()
 
-	// Publish a live "maintenance" progress pair keyed "drill:<domain>" (mirroring
-	// prune:/verify:) so a running DR drill shows on the dashboard activity log
-	// WHILE it sandbox-restores, not only after it finished (#109). The terminal
-	// event is deferred so an error/panic can never leave a stuck live line.
-	dkey := "drill:" + domain
+	// Publish a live "maintenance" progress pair keyed "drdrill:<domain>"
+	// (mirroring prune:/verify:) so a running DR drill shows on the dashboard
+	// activity log WHILE it sandbox-restores, not only after it finished (#109).
+	// The "drdrill" key/kind is deliberately distinct from the local subset
+	// drill's "drill", so the log tells the off-site DR restore check apart from
+	// the local read-back check. The terminal event is deferred so an error/panic
+	// can never leave a stuck live line.
+	dkey := "drdrill:" + domain
 	s.progBegin(ctx, dkey, "maintenance")
 	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
 
@@ -7153,8 +7156,9 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 	}
 	// Mirror the drill outcome into the shared runs table so it shows in the
 	// dashboard Activity Log/Run History (the restore_drills row above stays the
-	// badge/scorecard source of truth).
-	s.recordDomainRun(domain, "drill", drill.OK, drill.Detail)
+	// badge/scorecard source of truth). Kind "drdrill" — distinct from the local
+	// subset drill's "drill" — so the log names the off-site DR restore check.
+	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
 	if drillErr != nil {
 		s.notifyDrillFailure(ctx, domain, "offsite", drill.Detail)
 	}
