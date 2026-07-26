@@ -356,6 +356,10 @@ const vi: Partial<Translations> = {
   "integrity.unlockHint": "Xóa các khóa kho bị kẹt do lần chạy bị treo/gián đoạn (sửa 'repository is already locked').",
   "integrity.pruneHint": "Áp dụng chính sách lưu giữ và thu hồi dung lượng (không có chính sách thì chỉ thu hồi dung lượng; có thể mất một lúc).",
   "integrity.pruneConfirm": "Dọn dẹp giờ áp dụng chính sách lưu giữ của bạn — xóa các ảnh chụp vượt quá quy tắc (last/daily/weekly/monthly) và thu hồi dung lượng. Không có chính sách thì chỉ thu hồi dung lượng. Tiếp tục?",
+  "integrity.appendOnly": "Kiểm tra append-only",
+  "integrity.appendOnlyHint": "Chứng minh kho lưu trữ ngoài trạm vẫn từ chối thao tác xóa (bảo vệ chỉ ghi thêm) — cùng phép kiểm tra với bài kiểm tra can thiệp của trình hướng dẫn off-site.",
+  "integrity.appendOnlyLast": "bảo vệ append-only · Kiểm tra lần cuối {time}",
+  "integrity.appendOnlyNever": "bảo vệ append-only · chưa từng kiểm tra",
 
   "hooks.title": "Hook sao lưu",
   "hooks.hint": "Lệnh chạy bên trong container (sh -c). Pre chạy trước khi sao lưu (ví dụ: dump một CSDL vào appdata để được bao gồm) — lỗi sẽ hủy việc sao lưu. Post chạy sau khi container hoạt động trở lại; lỗi của nó chỉ được ghi log.",
@@ -778,6 +782,7 @@ const vi: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Lịch tự sao lưu",
   "settings.schedulesChecks": "Lịch kiểm tra khôi phục",
   "settings.tamperTestSchedule": "Lịch kiểm tra giả mạo",
+  "settings.tamperScheduleInactive": "Không hoạt động — không có kho off-site nào được đánh dấu là append-only, vì vậy lịch này không bao giờ chạy. Đánh dấu một kho off-site là append-only trong phần cài đặt off-site của kho đó để bật lịch này.",
   "settings.subtitle": "Cấu hình BombVault — các thay đổi có hiệu lực ngay lập tức.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Bộ lọc",

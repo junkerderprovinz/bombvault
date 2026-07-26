@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
@@ -909,6 +909,17 @@ function IntegrityCard({
   const [kind, setKind] = useState<DrillKind>("subset");
   // The last recorded drill per domain (for the current source), keyed by domain.
   const [lastDrill, setLastDrill] = useState<Record<string, RestoreDrill | null>>({});
+  // Append-only check (#109): the off-site wizard's tamper test, surfaced here
+  // under its plainer name because this card is where users look for checks.
+  // TamperRes mirrors the wizard's tri-state verdict: not-testable (amber) /
+  // protected (green) / delete-accepted (red); lastTamper feeds the idle
+  // "append-only protection · Last checked …" caption from /api/status.
+  type TamperRes =
+    | { kind: "busy" }
+    | { kind: "verdict"; testable: boolean; protected: boolean }
+    | { kind: "error"; message: string };
+  const [tamper, setTamper] = useState<Record<string, TamperRes | undefined>>({});
+  const [lastTamper, setLastTamper] = useState<Record<string, { at: number; ok: boolean } | null>>({});
   // Container list feeding the DR-drill target dropdown (kind "dr", containers).
   const [containers, setContainers] = useState<Container[]>([]);
   // Save state for the drill-target dropdown (persisted via the parent save()).
@@ -957,6 +968,57 @@ function IntegrityCard({
     // domains is a stable literal list; re-run only when the source changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
+
+  // Load each domain's last tamper-test verdict once, so the append-only row's
+  // idle caption mirrors the drill row's "last verified" line. The check always
+  // probes the OFF-SITE repo, so the source toggle never re-triggers this.
+  useEffect(() => {
+    let active = true;
+    getStatus()
+      .then((r) => {
+        if (!active || !r.ok || !r.domains) return;
+        const m: Record<string, { at: number; ok: boolean } | null> = {};
+        for (const d of r.domains) {
+          m[d.domain] = d.lastTamperAt > 0 ? { at: d.lastTamperAt, ok: d.lastTamperOK } : null;
+        }
+        setLastTamper(m);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // runTamperFor proves the domain's off-site repo still refuses deletes — the
+  // exact tamper-test API behind the wizard's "Test append-only now" (#109: users
+  // searched for it here, and "append-only" is the plainer word for it).
+  async function runTamperFor(domain: Domain) {
+    setTamper((m) => ({ ...m, [domain]: { kind: "busy" } }));
+    try {
+      const r = await tamperTest(domain);
+      if (r.ok) {
+        setTamper((m) => ({
+          ...m,
+          [domain]: { kind: "verdict", testable: !!r.testable, protected: !!r.protected },
+        }));
+        // A decisive verdict is also the new "last checked" fact; a not-testable
+        // repo records no verdict server-side, so leave the caption untouched.
+        if (r.testable) {
+          setLastTamper((m) => ({ ...m, [domain]: { at: Math.floor(Date.now() / 1000), ok: !!r.protected } }));
+        }
+        // The verdict + its run row land in /api/status (scorecard tamper state) —
+        // broadcast so the dashboard refetches, mirroring runDrillFor above.
+        window.dispatchEvent(new Event("bv:settings-changed"));
+      } else {
+        setTamper((m) => ({ ...m, [domain]: { kind: "error", message: r.error ?? t("offsite.tamperError") } }));
+      }
+    } catch (err) {
+      setTamper((m) => ({
+        ...m,
+        [domain]: { kind: "error", message: err instanceof Error ? err.message : t("offsite.tamperError") },
+      }));
+    }
+  }
 
   async function run(domain: Domain, action: Action) {
     if (action === "prune" && !window.confirm(t("integrity.pruneConfirm"))) return;
@@ -1017,6 +1079,16 @@ function IntegrityCard({
     // Prune deletes snapshots — keep it behind Advanced so novices can't reach it.
     ...(advanced ? [{ key: "prune" as Action, label: t("integrity.prune"), busy: "…" }] : []),
   ];
+
+  // Append-only check eligibility: only a domain whose off-site repo is set AND
+  // flagged immutable gets the button — the same precondition the wizard's manual
+  // test has (anything else could only ever surface a backend error).
+  const appendOnlyEligible: Record<Domain, boolean> = {
+    containers: settings.containersOffsite !== "" && settings.containersOffsiteImmutable,
+    vms: settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable,
+    flash: settings.flashOffsite !== "" && settings.flashOffsiteImmutable,
+    files: settings.filesOffsite !== "" && settings.filesOffsiteImmutable,
+  };
 
   const selectCls =
     "rounded-lg bg-carbon-surface2 border border-carbon-border text-carbon-text text-sm px-2.5 py-1.5 focus:outline-hidden focus:border-statusInfoSolid";
@@ -1106,6 +1178,8 @@ function IntegrityCard({
         {domains.map(({ key: domain, label }) => {
           const dKey = `${domain}:drill`;
           const drill = lastDrill[domain];
+          const tRes = tamper[domain];
+          const tLast = lastTamper[domain];
           // A DR drill can't run for VMs (server refuses it) — show a short note
           // in place of the run button instead of a button that always errors.
           const drDisabledForVM = kind === "dr" && domain === "vms";
@@ -1180,6 +1254,52 @@ function IntegrityCard({
                   </>
                 )}
               </div>
+
+              {/* Append-only check (#109): the wizard's tamper test, findable in
+                  this card and led by the plainer name. Immutable off-site domains
+                  only; always probes the OFF-SITE repo (source-independent). The
+                  verdict rendering mirrors the wizard, incl. the glyph as its own
+                  node so RTL locales place it correctly. */}
+              {appendOnlyEligible[domain] && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="w-24 shrink-0" />
+                  <button
+                    onClick={() => void runTamperFor(domain)}
+                    disabled={tRes?.kind === "busy"}
+                    title={t("integrity.appendOnlyHint")}
+                    className="rounded-lg border border-carbon-border bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                  >
+                    {tRes?.kind === "busy" ? t("integrity.checking") : t("integrity.appendOnly")}
+                  </button>
+                  {tRes?.kind === "verdict" && (
+                    <span
+                      className={`text-sm wrap-break-word ${
+                        !tRes.testable ? "text-statusWarn" : tRes.protected ? "text-statusOk" : "text-statusFail"
+                      }`}
+                    >
+                      {tRes.testable && <span aria-hidden="true">{tRes.protected ? "✓" : "✗"}&nbsp;</span>}
+                      {!tRes.testable
+                        ? t("offsite.tamperUnverifiable")
+                        : tRes.protected
+                          ? t("offsite.tamperOk")
+                          : t("offsite.tamperFail")}
+                    </span>
+                  )}
+                  {tRes?.kind === "error" && (
+                    <span className="text-sm text-statusFail wrap-break-word">{tRes.message}</span>
+                  )}
+                  {/* Idle caption: the last recorded check, mirroring the drill
+                      row's "Last verified …" line. */}
+                  {!tRes &&
+                    (tLast ? (
+                      <span className="text-xs text-carbon-textMuted">
+                        {t("integrity.appendOnlyLast").replace("{time}", relativeTime(t, tLast.at))} {tLast.ok ? "✓" : "✗"}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-carbon-textMuted">{t("integrity.appendOnlyNever")}</span>
+                    ))}
+                </div>
+              )}
 
               {actions.map((a) =>
                 state[`${domain}:${a.key}`] === "fail" ? (
@@ -1919,6 +2039,19 @@ export function SettingsPage() {
     g.location.reload();
   }
 
+  // Tamper-test schedule eligibility (#109): mirrors immutableOffsiteDomains in
+  // internal/schedule/schedule.go — the scheduler only wires the scheduled
+  // tamper-test job when at least one domain's off-site repo is set AND
+  // flagged immutable. Without that, the cadence editor below silently never
+  // runs (the same per-domain predicate as appendOnlyEligible in IntegrityCard,
+  // widened to "any domain including config").
+  const tamperScheduleActive =
+    (settings.containersOffsite !== "" && settings.containersOffsiteImmutable) ||
+    (settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable) ||
+    (settings.flashOffsite !== "" && settings.flashOffsiteImmutable) ||
+    (settings.configOffsite !== "" && settings.configOffsiteImmutable) ||
+    (settings.filesOffsite !== "" && settings.filesOffsiteImmutable);
+
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       {/* Page heading */}
@@ -2090,6 +2223,13 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, tamperTestSchedule: v } : prev))
                 }
               />
+              {/* #109: the scheduler stays inert without a qualifying domain — this
+                  is the only place that told manilx why Sun 08:00 never ran. */}
+              {!tamperScheduleActive && (
+                <div className="mt-3 rounded-lg bg-statusWarnBg border border-statusWarnBorder px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                  {t("settings.tamperScheduleInactive")}
+                </div>
+              )}
             </div>
           </Card>
 

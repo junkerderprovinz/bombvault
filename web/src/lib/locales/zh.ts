@@ -356,6 +356,10 @@ const zh: Partial<Translations> = {
   "integrity.unlockHint": "清除崩溃或中断的运行遗留的卡住的仓库锁（修复 'repository is already locked'）。",
   "integrity.pruneHint": "应用你的保留策略并回收空间（未设置策略时仅回收空间；可能需要一些时间）。",
   "integrity.pruneConfirm": "清理现在会应用你的保留策略——删除超出规则（last/daily/weekly/monthly）的快照并回收空间。未设置策略时仅回收空间。是否继续？",
+  "integrity.appendOnly": "Append-only 检查",
+  "integrity.appendOnlyHint": "证明异地仓库仍然拒绝删除操作(仅追加保护)— 与异地向导中的防篡改测试相同。",
+  "integrity.appendOnlyLast": "append-only 保护 · 上次检查 {time}",
+  "integrity.appendOnlyNever": "append-only 保护 · 从未检查",
 
   "hooks.title": "备份钩子",
   "hooks.hint": "命令在容器内运行（sh -c）。Pre 在备份前运行（例如将数据库导出到 appdata 以便一起备份）——失败会中止备份。Post 在容器恢复运行后执行；其失败仅记录日志。",
@@ -778,6 +782,7 @@ const zh: Partial<Translations> = {
   "settings.schedulesSelfBackup": "自备份计划",
   "settings.schedulesChecks": "还原检查计划",
   "settings.tamperTestSchedule": "篡改测试计划",
+  "settings.tamperScheduleInactive": "未激活 — 没有任何异地仓库被标记为 append-only，因此此计划永远不会运行。在其异地设置中将某个异地仓库标记为 append-only 即可启用。",
   "settings.subtitle": "BombVault 配置 — 更改立即生效。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "筛选",

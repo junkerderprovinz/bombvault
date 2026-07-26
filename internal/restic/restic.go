@@ -798,7 +798,8 @@ func runError(args []string, stderr string) error {
 // isMetadataOnlyRestoreFailure reports whether a failed restore's stderr shows
 // ONLY per-file ownership/permission/metadata errors on the target — i.e. restic
 // extracted every file's data but could not set its ownership/permissions on the
-// share (the norm on an Unraid /mnt/user FUSE mount). It is deliberately
+// share (the norm on an Unraid /mnt/user FUSE mount). It understands BOTH of
+// restic's per-item error phrasings (see itemErrorCause). It is deliberately
 // conservative: it requires at least one such per-file permission error and treats
 // ANY other content — a Fatal that is not restic's error-count tally, a data/
 // space/I-O/read-only/connection/repo error, restic's corruption trailer, or a
@@ -811,29 +812,29 @@ func isMetadataOnlyRestoreFailure(stderr string) bool {
 		if line == "" {
 			continue
 		}
-		low := strings.ToLower(line)
-		switch {
-		case isPerFilePermError(low):
+		if cause, ok := itemErrorCause(line); ok {
+			if !isPermCause(cause) {
+				return false // a per-item error that is NOT a permission error
+			}
 			sawPermErr = true
-		case errorCountRe.MatchString(low):
+			continue
+		}
+		if errorCountRe.MatchString(strings.ToLower(line)) {
 			// restic's "There were N errors" tally (often prefixed "Fatal:") — the
 			// expected companion to the per-file errors; it names no cause of its own.
-		default:
-			return false // anything else means we cannot prove it was metadata-only
+			continue
 		}
+		return false // anything else means we cannot prove it was metadata-only
 	}
 	return sawPermErr
 }
 
-// isPerFilePermError reports whether a lower-cased stderr line is one of restic's
-// per-file "ignoring error for <path>: … operation not permitted / permission
-// denied" lines — the shape restic emits when it cannot set a restored file's
-// ownership/permissions/metadata on the target (observed as thousands of "Lchown:
-// operation not permitted" lines restoring onto /mnt/user).
-func isPerFilePermError(low string) bool {
-	if !strings.Contains(low, "ignoring error") {
-		return false
-	}
+// isPermCause reports whether a per-item error cause is an ownership/permission/
+// metadata error on the target (the shape restic emits when it cannot set a
+// restored file's ownership/permissions/metadata — observed as thousands of
+// "Lchown: operation not permitted" causes restoring onto /mnt/user).
+func isPermCause(cause string) bool {
+	low := strings.ToLower(cause)
 	return strings.Contains(low, "operation not permitted") ||
 		strings.Contains(low, "permission denied")
 }
@@ -898,40 +899,121 @@ func lastReason(stderr string) string {
 		}
 	}
 
+	// A raw per-item error line (the --json object) is unreadable as-is — show
+	// its decoded cause instead (only reachable when restic died before printing
+	// its "There were N errors" tally).
+	if cause, ok := itemErrorCause(reason); ok {
+		reason = cause
+	}
+
 	// restic's restore summary "There were N errors" names a count but not a
-	// cause. When that is all we have, append the first concrete per-item error
-	// (e.g. an "ignoring error for <file>: …" line) so the UI shows WHY a restore
-	// partially failed instead of just a number.
+	// cause. When that is all we have, append the concrete per-item causes (the
+	// per-file errors restic printed during the run — issue #110: with --json
+	// those are {"message_type":"error",…} lines, whose message was previously
+	// lost) so the UI shows WHY a restore partially failed instead of just a
+	// number.
 	if errorCountRe.MatchString(reason) {
-		if sample := firstItemError(lines); sample != "" {
-			reason += " (e.g. " + sample + ")"
+		if causes, more := itemErrorCauses(lines); len(causes) > 0 {
+			reason += ": " + strings.Join(causes, "; ")
+			if more > 0 {
+				reason += fmt.Sprintf(" (+%d more)", more)
+			}
 		}
 	}
 
 	reason = reasonPathRe.ReplaceAllString(reason, "[path]")
-	if len(reason) > 200 {
-		reason = reason[:200]
+	if len(reason) > maxReasonLen {
+		reason = reason[:maxReasonLen]
 	}
 	return reason
 }
+
+// maxReasonLen caps the surfaced failure reason. It must hold the error-count
+// tally plus up to maxReasonCauses per-item causes, and stay well under the
+// runs.error column bound (truncateRunErr caps at 500).
+const maxReasonLen = 300
 
 // errorCountRe matches restic's count-only restore summary ("There were N
 // errors"), which says how many items failed but not why.
 var errorCountRe = regexp.MustCompile(`(?i)there were \d+ errors`)
 
-// firstItemError returns the first stderr line that names a concrete per-item
-// failure (the kind restic prints once per file during a partial restore), so it
-// can be surfaced alongside the count-only summary.
-func firstItemError(lines []string) string {
+// restoreJSONError mirrors one per-item error object of restic's --json output
+// (internal/ui/restore/json.go errorUpdate, verified against restic 0.17.3):
+// {"message_type":"error","error":{"message":…},"during":"restore","item":…}.
+// These land on STDERR (termstatus routes Error() to the error writer when
+// stdout is a pipe), one JSON object per line, followed by a plain-text
+// "Fatal: There were N errors" tally.
+type restoreJSONError struct {
+	MessageType string `json:"message_type"`
+	Error       struct {
+		Message string `json:"message"`
+	} `json:"error"`
+	During string `json:"during"`
+	Item   string `json:"item"`
+}
+
+// itemErrorCause extracts the cause out of ONE per-item error line of restic
+// stderr, in either of restic's phrasings: the --json object (what every
+// BombVault restore argv produces — see restoreJSONError) or the plain-text
+// printer's "ignoring error for <path>: <cause>". Returns ok=false for any
+// other line (tallies, warnings, boilerplate).
+func itemErrorCause(line string) (string, bool) {
+	if strings.HasPrefix(line, "{") {
+		var e restoreJSONError
+		if json.Unmarshal([]byte(line), &e) == nil && e.MessageType == "error" {
+			cause := strings.TrimSpace(e.Error.Message)
+			if cause == "" {
+				cause = strings.TrimSpace(e.Item) // degenerate: at least name the item
+			}
+			return cause, cause != ""
+		}
+		return "", false
+	}
+	low := strings.ToLower(line)
+	if idx := strings.Index(low, "ignoring error for "); idx >= 0 {
+		cause := strings.TrimSpace(line[idx+len("ignoring error for "):])
+		return cause, cause != ""
+	}
+	return "", false
+}
+
+// maxReasonCauses bounds how many DISTINCT per-item causes are joined into the
+// surfaced reason; further distinct causes are folded into a "(+N more)" count.
+const maxReasonCauses = 3
+
+// maxCauseLen clips one per-item cause so a single giant message cannot crowd
+// out the others (defense-in-depth; real causes are "syscall: errno" sized).
+const maxCauseLen = 100
+
+// itemErrorCauses collects the distinct per-item error causes from a failed
+// run's stderr lines, path-scrubbed (same policy as the reason itself),
+// clipped, and bounded to maxReasonCauses. more is the count of ADDITIONAL
+// distinct causes that were folded away. Thousands of identical "Lchown:
+// operation not permitted" lines therefore collapse into one cause, while a
+// mixed failure shows up to three different causes.
+func itemErrorCauses(lines []string) (causes []string, more int) {
+	seen := make(map[string]bool)
 	for _, l := range lines {
-		ll := strings.ToLower(l)
-		if strings.Contains(ll, "ignoring error") ||
-			strings.Contains(ll, "operation not permitted") ||
-			strings.Contains(ll, "permission denied") {
-			return l
+		cause, ok := itemErrorCause(l)
+		if !ok {
+			continue
+		}
+		cause = strings.Join(strings.Fields(cause), " ") // collapse newlines/runs of space
+		cause = reasonPathRe.ReplaceAllString(cause, "[path]")
+		if len(cause) > maxCauseLen {
+			cause = cause[:maxCauseLen]
+		}
+		if seen[cause] {
+			continue
+		}
+		seen[cause] = true
+		if len(causes) < maxReasonCauses {
+			causes = append(causes, cause)
+		} else {
+			more++
 		}
 	}
-	return ""
+	return causes, more
 }
 
 // isInformativeReason reports whether a stderr line names an actual failure

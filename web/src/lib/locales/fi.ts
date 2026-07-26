@@ -361,6 +361,10 @@ const fi: Partial<Translations> = {
   "integrity.unlockHint": "Poista keskeytyneen ajon jättämät jumittuneet repositorion lukot (korjaa 'repository is already locked').",
   "integrity.pruneHint": "Sovella säilytyskäytäntöä ja vapauta tilaa (ilman käytäntöä vain vapauttaa tilaa; voi kestää).",
   "integrity.pruneConfirm": "Karsinta soveltaa nyt säilytyskäytäntöäsi — se poistaa tilannevedokset sääntöjesi (last/daily/weekly/monthly) ulkopuolelta ja vapauttaa tilaa. Ilman käytäntöä se vain vapauttaa tilaa. Jatketaanko?",
+  "integrity.appendOnly": "Append-only-tarkistus",
+  "integrity.appendOnlyHint": "Todistaa, että off-site-repositorio torjuu poistot edelleen (append-only-suojaus) — sama tarkistus kuin off-site-avustajan peukalointitesti.",
+  "integrity.appendOnlyLast": "append-only-suojaus · Viimeksi tarkistettu {time}",
+  "integrity.appendOnlyNever": "append-only-suojaus · ei koskaan tarkistettu",
 
   // Pre/post-backup hooks
   "hooks.title": "Varmuuskopiokoukut",
@@ -786,6 +790,7 @@ const fi: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",
   "settings.schedulesChecks": "Palautustarkistuksen aikataulu",
   "settings.tamperTestSchedule": "Peukalointitestin aikataulu",
+  "settings.tamperScheduleInactive": "Ei aktiivinen — mikään etärepo ei ole merkitty append-only-tilaan, joten tämä aikataulu ei koskaan käynnisty. Merkitse etärepo append-only-tilaan sen etäasetuksissa ottaaksesi sen käyttöön.",
   "settings.subtitle": "BombVaultin asetukset — muutokset tulevat voimaan heti.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Suodattimet",

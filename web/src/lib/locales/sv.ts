@@ -361,6 +361,10 @@ const sv: Partial<Translations> = {
   "integrity.unlockHint": "Ta bort fastnade repository-lås från en kraschad/avbruten körning (åtgärdar 'repository is already locked').",
   "integrity.pruneHint": "Tillämpa din lagringspolicy och frigör utrymme (frigör bara utrymme om ingen policy är satt; kan ta en stund).",
   "integrity.pruneConfirm": "Rensning tillämpar nu din lagringspolicy — den tar bort ögonblicksbilder utöver dina regler (last/daily/weekly/monthly) och frigör utrymme. Utan policy frigör den bara utrymme. Fortsätta?",
+  "integrity.appendOnly": "Append-only-kontroll",
+  "integrity.appendOnlyHint": "Bevisar att off-site-arkivet fortfarande nekar raderingar (append-only-skydd) — samma kontroll som tamper-testet i off-site-guiden.",
+  "integrity.appendOnlyLast": "append-only-skydd · Senast kontrollerad {time}",
+  "integrity.appendOnlyNever": "append-only-skydd · aldrig kontrollerad",
 
   // Pre/post-backup hooks
   "hooks.title": "Säkerhetskopierings-hooks",
@@ -786,6 +790,7 @@ const sv: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Schema för självsäkerhetskopiering",
   "settings.schedulesChecks": "Schema för återställningskontroll",
   "settings.tamperTestSchedule": "Schema för manipuleringstest",
+  "settings.tamperScheduleInactive": "Inaktivt — inget off-site-repo är markerat som append-only, så det här schemat körs aldrig. Markera ett off-site-repo som append-only i dess off-site-inställningar för att aktivera det.",
   "settings.subtitle": "BombVault-konfiguration — ändringar träder i kraft omedelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filter",

@@ -3,6 +3,9 @@ package api_test
 import (
 	"context"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -56,9 +60,36 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 		t.Fatalf("seed target: %v", err)
 	}
 
+	// Point the notify webhook at a counting test server: the "container removed"
+	// warning must reach the user on the FIRST skip only (#111 — it fired every
+	// night), while every skip still records its run row below. notify.Send is
+	// synchronous, so plain counters are race-free here.
+	var webhookHits int
+	var webhookBody string
+	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		webhookBody = string(b)
+		webhookHits++
+	}))
+	defer wh.Close()
+	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookURL: wh.URL}); err != nil {
+		t.Fatalf("SetNotifyConfig: %v", err)
+	}
+
 	_, err = svc.Backup(context.Background(), "Nexterm")
 	if !errors.Is(err, backup.ErrContainerNotInstalled) {
 		t.Fatalf("Backup err = %v, want ErrContainerNotInstalled", err)
+	}
+	if webhookHits != 1 {
+		t.Fatalf("first skip must notify exactly once, webhook hits = %d", webhookHits)
+	}
+	// The rewritten #111 message must be unmistakable: nothing is being backed up
+	// anymore and the existing backups stay restorable (the old wording read as
+	// "BombVault is still trying to back it up").
+	for _, want := range []string{"not backing it up anymore", "remain restorable"} {
+		if !strings.Contains(webhookBody, want) {
+			t.Fatalf("skip notification missing %q:\n%s", want, webhookBody)
+		}
 	}
 
 	// The orchestrator must never run for a removed container.
@@ -87,5 +118,11 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 	}
 	if runs, _ = st.ListRuns(10); len(runs) != 2 {
 		t.Fatalf("after second skip, runs = %d, want 2", len(runs))
+	}
+	// …but it must NOT notify again: the previous run for this target is already a
+	// skip (LastRunForTarget), so the warning stays quiet until the target either
+	// comes back or is removed. Stateless, so it also survives restarts.
+	if webhookHits != 1 {
+		t.Fatalf("second consecutive skip must not notify again (debounced), webhook hits = %d", webhookHits)
 	}
 }
