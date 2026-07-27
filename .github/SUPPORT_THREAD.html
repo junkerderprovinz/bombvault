@@ -79,6 +79,17 @@ schedule, retention) is configured in the modern dark web UI; nothing to hand-ed
   <li><strong>Trusted LAN only:</strong> BombVault holds root-equivalent control of your host (via <code>docker.sock</code> and the <code>/mnt</code> mount). Run it on a non-exposed network; optional password protection is in Settings (off by default)</li>
 </ul>
 
+<h2>Companion: BombVault Widget (dashboard tile)</h2>
+<p><a href="https://github.com/junkerderprovinz/bombvault-widget">BombVault Widget</a> is a small,
+optional Unraid <strong>plugin</strong> (no container) that puts BombVault's activity log on the
+Unraid&nbsp;7 dashboard as a real, native tile — every backup, restore, verify, prune, off-site
+replication and drill as it happens, plus the next scheduled run, in the same dark terminal-style
+log. Read-only by construction: it talks to BombVault through a same-origin proxy with a widget
+token that never reaches the browser. Install it from <strong>Community Applications</strong>
+(search <strong>BombVault Widget</strong>) or one-click from <em>BombVault → Settings → System →
+Dashboard widget</em>. Requires BombVault&nbsp;&ge;&nbsp;6.9.0. <strong>Post widget questions in
+this thread too</strong> — it has no separate support thread.</p>
+
 <h2>Posting a bug report</h2>
 <p>Please post:</p>
 <ul>
