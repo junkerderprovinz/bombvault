@@ -201,7 +201,6 @@ func fileExists(p string) bool {
 // ---------------------------------------------------------------------------
 
 const (
-	bannerSep      = "───────────────────────────────────────────────────────────────────"
 	bannerName     = "bombvault"
 	bannerSubtitle = "Backup & disaster recovery for Docker containers and KVM/libvirt VMs"
 )
@@ -230,26 +229,20 @@ func versionTag() string {
 //	<blank>
 //	<brand ASCII art>
 //	<blank>
-//	  ───×67
 //	  bombvault
 //	  Backup & disaster recovery for Docker containers and KVM/libvirt VMs
-//	  ───×67
 //	<blank>
 //
-// printBanner prints the shared Junker-der-Provinz brand banner exactly like the
-// other containers' print-banner.sh: a leading blank, the brand art, ONE blank
-// line, then the name/subtitle block framed by the ─ rule. TrimRight makes the
-// spacing deterministic regardless of the embedded file's trailing newline.
+// A leading blank, the brand art, ONE blank line, then a clean name/subtitle
+// block with no rules. TrimRight makes the spacing deterministic regardless of
+// the embedded file's trailing newline.
 func printBanner() {
-	sep := "  " + bannerSep
 	art := strings.TrimRight(brandArt, "\n")
 	fmt.Println()
 	fmt.Println(art)
 	fmt.Println()
-	fmt.Println(sep)
 	fmt.Println("  " + bannerName + versionTag())
 	fmt.Println("  " + bannerSubtitle)
-	fmt.Println(sep)
 	fmt.Println()
 }
 
