@@ -1,0 +1,3 @@
+# Documentation site toolchain (MkDocs Material).
+# Pinned to a recent stable line so CI builds the site reproducibly.
+mkdocs-material>=9.5,<10

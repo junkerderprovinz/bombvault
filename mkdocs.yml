@@ -1,0 +1,70 @@
+site_name: BombVault
+site_description: Backup and full disaster recovery for Unraid (Docker containers, KVM VMs, USB flash, appdata/config).
+site_url: https://junkerderprovinz.github.io/bombvault/
+site_author: Junker der Provinz
+
+repo_url: https://github.com/junkerderprovinz/bombvault
+repo_name: junkerderprovinz/bombvault
+edit_uri: edit/main/docs/
+
+copyright: Copyright (C) 2026 Junker der Provinz. Licensed AGPL-3.0.
+
+theme:
+  name: material
+  language: en
+  palette:
+    # Light scheme (IBM Carbon inspired: black chrome, blue accent).
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: light blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark scheme (slate over a near-black Carbon #161616 background).
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: light blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+    - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+# Internal planning docs and the GitHub-only VM guide ship in docs/ but are not
+# part of the published site, so they are excluded from the build (keeps
+# mkdocs build --strict clean instead of warning on pages missing from nav).
+exclude_docs: |
+  superpowers/
+  vm-backup-ssh-setup.md
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Features: features.md
+  - Configuration: configuration.md
+  - Off-site & recovery: offsite-recovery.md
+  - Troubleshooting: troubleshooting.md
