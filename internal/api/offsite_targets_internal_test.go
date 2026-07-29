@@ -50,3 +50,51 @@ func TestPrimaryOffsiteTarget(t *testing.T) {
 		t.Fatal("primaryOffsiteTarget(vms) should be false")
 	}
 }
+
+// TestOffsiteTargetsFor pins the stage-2 target resolver: it returns the domain's
+// ENABLED targets in stable order for a configured domain (the backfilled single
+// target for an N=1 install) and an empty slice for an unconfigured one.
+func TestOffsiteTargetsFor(t *testing.T) {
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open mem store: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	st := store.New(db)
+	s := &Service{store: st}
+
+	// Unconfigured domain: empty slice.
+	if got := s.offsiteTargetsFor("containers"); len(got) != 0 {
+		t.Fatalf("offsiteTargetsFor on an unconfigured domain = %d targets, want 0", len(got))
+	}
+
+	// One enabled target (the shape the stage-1 backfill produces for N=1).
+	want, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A disabled target for the same domain must be filtered out.
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Disabled", Repo: "s3:x", Enabled: false, SortOrder: 9,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got := s.offsiteTargetsFor("containers")
+	if len(got) != 1 {
+		t.Fatalf("offsiteTargetsFor(containers) = %d targets, want 1 (the enabled one)", len(got))
+	}
+	if got[0].ID != want.ID || got[0].Repo != "s3:c" {
+		t.Fatalf("offsiteTargetsFor(containers) = %+v, want id %s repo s3:c", got[0], want.ID)
+	}
+
+	// A different, unconfigured domain still returns empty.
+	if got := s.offsiteTargetsFor("vms"); len(got) != 0 {
+		t.Fatalf("offsiteTargetsFor(vms) = %d targets, want 0", len(got))
+	}
+}

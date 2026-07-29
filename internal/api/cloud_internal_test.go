@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // TestCloudEnv: only the set credentials become env vars, with restic's names.
@@ -143,5 +145,38 @@ func TestHandleGetCloudReturnsStorageClass(t *testing.T) {
 	}
 	if !env.S3SecretSet {
 		t.Fatal("secret presence flag should still report set")
+	}
+}
+
+// TestOffsiteModeForTargetStorageClassFallback pins the #1 multi-off-site
+// regression trap: the per-DESTINATION restic mode must PRESERVE the global S3
+// storage class when a target does not carry its own. The stage-1 backfill left
+// offsite_targets.storage_class = "" (the pure-SQL migration cannot decrypt the
+// cloud_conf blob), while the global class still lives in CloudCreds — so a
+// target with class "" must fall back to it, and only a non-empty target class
+// overrides. Unconditionally copying the (empty) target class would wipe the
+// global to "" for every existing single-off-site install.
+func TestOffsiteModeForTargetStorageClassFallback(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+
+	// Global class set on the shared cloud creds (as an existing install has it).
+	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3StorageClass: "STANDARD_IA"}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// A backfilled N=1 target has an empty StorageClass → the global is preserved.
+	backfilled := store.OffsiteTarget{Domain: "containers", Repo: "s3:c", Enabled: true, StorageClass: ""}
+	if got := s.offsiteModeForTarget(settings, backfilled).StorageClass; got != "STANDARD_IA" {
+		t.Fatalf("empty target class must preserve the global class, got %q, want STANDARD_IA", got)
+	}
+
+	// A target that sets its own class overrides the global for that destination.
+	override := store.OffsiteTarget{Domain: "containers", Repo: "s3:c", Enabled: true, StorageClass: "GLACIER_IR"}
+	if got := s.offsiteModeForTarget(settings, override).StorageClass; got != "GLACIER_IR" {
+		t.Fatalf("a non-empty target class must override, got %q, want GLACIER_IR", got)
 	}
 }
