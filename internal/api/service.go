@@ -25,6 +25,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
@@ -430,24 +431,20 @@ func (s *Service) progEnd(key, phase string, ok bool) {
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
 // derives the password from APP_KEY; OFF uses a password-less repo.
 func (s *Service) ModeFor(settings store.Settings) restic.Mode {
-	m := restic.Mode{Env: s.cloudEnvFor(settings)}
+	// Decode the cloud creds once for BOTH the backend-credential env vars and the
+	// off-site S3 storage class (they ride the same encrypted blob). Best-effort: a
+	// decode failure logs and yields a zero CloudCreds, so the restic op fails
+	// clearly on auth rather than panicking.
+	c, err := s.decodeCloud(settings)
+	if err != nil {
+		log.Printf("api: cloud creds decode failed (ignoring): %v", err)
+	}
+	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass}
 	if settings.EncryptionEnabled {
 		m.Encrypted = true
 		m.Password = restickey.Derive(s.cfg.AppKey)
 	}
 	return m
-}
-
-// cloudEnvFor returns the backend-credential env vars for off-site repos, decoded
-// from the stored (encrypted) cloud config. Best-effort: a decode failure logs
-// and yields no env (the restic op then fails clearly on auth, not on a panic).
-func (s *Service) cloudEnvFor(settings store.Settings) []string {
-	c, err := s.decodeCloud(settings)
-	if err != nil {
-		log.Printf("api: cloud creds decode failed (ignoring): %v", err)
-		return nil
-	}
-	return cloudEnv(c)
 }
 
 // resolveRepo turns a configured repo location into the value passed to restic
@@ -5504,9 +5501,10 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 }
 
 // flashZipRe matches ONLY the timestamped export filenames pruneFlashZips is
-// allowed to delete (flash-<YYYYMMDD>-<HHMMSS>.zip). flash-latest.zip and any
-// unrelated file the operator drops in the folder never match, so they survive.
-var flashZipRe = regexp.MustCompile(`^flash-\d{8}-\d{6}\.zip$`)
+// allowed to delete (flash-<YYYYMMDD>-<HHMMSS>.zip, or the .age-sealed variant
+// when export encryption is on). flash-latest.zip(.age) and any unrelated file the
+// operator drops in the folder never match, so they survive.
+var flashZipRe = regexp.MustCompile(`^flash-\d{8}-\d{6}\.zip(\.age)?$`)
 
 // exportFlashZip writes the just-backed-up flash snapshot to the configured
 // folder as a plain .zip, for off-server sync (Syncthing etc.). It is non-fatal:
@@ -5519,6 +5517,13 @@ var flashZipRe = regexp.MustCompile(`^flash-\d{8}-\d{6}\.zip$`)
 func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, snapshotID string, mode restic.Mode, repo string) (err error) {
 	if !settings.FlashZipExportEnabled || settings.FlashZipExportPath == "" {
 		return nil
+	}
+	// Resolve age recipients up front: with export encryption on but no valid
+	// recipient this fails BEFORE the temp zip is created, so no plaintext artifact
+	// is ever produced when the user asked for encryption.
+	recipients, _, err := s.exportRecipients(settings)
+	if err != nil {
+		return err
 	}
 	// Publish a live "maintenance" progress pair keyed "export:flash" (mirroring
 	// prune:/verify:/drill:) so a long zip export of a big flash shows on the
@@ -5571,8 +5576,10 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	if settings.FlashZipExportKeep > 0 {
 		name = "flash-" + time.Now().UTC().Format("20060102-150405") + ".zip"
 	}
-	final := filepath.Join(dir, name)
-	if err := os.Rename(tmp, final); err != nil {
+	// Publish the temp zip: plain rename, or age-encrypted to <name>.zip.age when
+	// export encryption is on (the plaintext temp is removed by sealOrRename).
+	final, err := sealOrRename(tmp, filepath.Join(dir, name), recipients)
+	if err != nil {
 		_ = os.Remove(tmp)
 		return fmt.Errorf("flash zip export: finalize: %w", err)
 	}
@@ -6468,6 +6475,13 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
 	}
+	// Resolve age recipients up front: with export encryption on but no valid
+	// recipient the download fails BEFORE onResolved fires (no headers) and before
+	// any bytes are streamed, so a plaintext zip is never sent.
+	recipients, encOn, err := s.exportRecipients(settings)
+	if err != nil {
+		return err
+	}
 	repo, err := s.repoFor(settings, "flash", source)
 	if err != nil {
 		return err
@@ -6488,7 +6502,19 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 	if err != nil {
 		return fmt.Errorf("flash download: start run: %w", err)
 	}
-	if derr := s.engine.DumpZip(ctx, repo, id, s.cfg.FlashDir, w, mode); derr != nil {
+	// When encryption is on, wrap the response writer so the streamed zip is
+	// age-sealed on the fly. The age writer MUST be closed to finalize the stream.
+	dst := w
+	var ageW io.WriteCloser
+	if encOn {
+		ageW, err = ageseal.WrapWriter(w, recipients)
+		if err != nil {
+			_ = s.store.FinishRun(runID, "failed", "", 0, err.Error())
+			return err
+		}
+		dst = ageW
+	}
+	if derr := s.engine.DumpZip(ctx, repo, id, s.cfg.FlashDir, dst, mode); derr != nil {
 		// A client disconnect / user cancel of the download is context.Canceled —
 		// record it as "cancelled", not a failure.
 		status, msg := "failed", derr.Error()
@@ -6498,8 +6524,26 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 		_ = s.store.FinishRun(runID, status, "", 0, msg)
 		return derr
 	}
+	if ageW != nil {
+		if cerr := ageW.Close(); cerr != nil { // flush + finalize the age stream
+			_ = s.store.FinishRun(runID, "failed", "", 0, cerr.Error())
+			return cerr
+		}
+	}
 	_ = s.store.FinishRun(runID, "success", id, 0, "")
 	return nil
+}
+
+// ExportEncryptionOn reports whether the plain-export age encryption is enabled
+// (best-effort; a settings read error reports false). The flash-download handler
+// uses it to append the ".age" suffix to the Content-Disposition filename before
+// streaming begins.
+func (s *Service) ExportEncryptionOn() bool {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return false
+	}
+	return settings.ExportEncryptEnabled
 }
 
 // SnapshotsFlash lists restic snapshots in the flash repo (the repo is dedicated
@@ -7944,6 +7988,13 @@ type CloudCreds struct {
 	S3Region     string `json:"s3Region"`
 	RESTUser     string `json:"restUser"`
 	RESTPassword string `json:"restPassword"`
+	// S3StorageClass is the S3 storage class for restic writes to a native s3:
+	// off-site backend (empty = the provider default). Unlike the credential
+	// fields it is NOT a secret (a class name), so handleGetCloud returns it. It
+	// rides this same AES-256-GCM-encrypted cloud_conf blob, so it needs no schema
+	// migration. It is validated against restic.AllowedStorageClasses on save
+	// (SetCloudCreds), so only a restore-readable tier is ever stored/emitted.
+	S3StorageClass string `json:"s3StorageClass"`
 }
 
 // cloudEnv renders the credentials into the env vars restic expects (only the set
@@ -7998,6 +8049,14 @@ func (s *Service) CloudConfig() (CloudCreds, error) {
 // previously stored secret (so the UI can edit non-secret fields without
 // re-entering keys). A config with nothing set clears it.
 func (s *Service) SetCloudCreds(c CloudCreds) error {
+	// Normalize + validate the S3 storage class BEFORE anything is stored: uppercase
+	// it, and reject a non-empty value that is not a whitelisted, restore-readable
+	// tier (see restic.AllowedStorageClasses) so an archival class that would break
+	// restic restore is never silently persisted. Empty = the provider default.
+	c.S3StorageClass = strings.ToUpper(strings.TrimSpace(c.S3StorageClass))
+	if c.S3StorageClass != "" && !restic.StorageClassAllowed(c.S3StorageClass) {
+		return fmt.Errorf("unsupported S3 storage class %q (allowed: %s)", c.S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return err

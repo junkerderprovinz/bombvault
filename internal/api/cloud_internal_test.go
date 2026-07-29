@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -72,5 +75,73 @@ func TestSetCloudCredsMergeAndModeEnv(t *testing.T) {
 	cleared, _ := s.CloudConfig()
 	if (cleared != CloudCreds{}) {
 		t.Fatalf("a blank save must clear stored creds, got %+v", cleared)
+	}
+}
+
+// TestSetCloudCredsStorageClass: the off-site S3 storage class round-trips through
+// SetCloudCreds -> decodeCloud -> ModeFor (the mode carries it), is normalized to
+// uppercase, and a non-whitelisted (archival) class is rejected on save.
+func TestSetCloudCredsStorageClass(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+
+	// A lowercase whitelisted class is normalized and persisted.
+	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3StorageClass: "standard_ia"}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.CloudConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.S3StorageClass != "STANDARD_IA" {
+		t.Fatalf("storage class must be uppercased/persisted, got %q", got.S3StorageClass)
+	}
+
+	// ModeFor carries the class into the restic Mode.
+	settings, _ := s.store.GetSettings()
+	if mode := s.ModeFor(settings); mode.StorageClass != "STANDARD_IA" {
+		t.Fatalf("ModeFor must carry the storage class, got %q", mode.StorageClass)
+	}
+
+	// A non-whitelisted (archival) class is rejected and never stored.
+	for _, bad := range []string{"GLACIER", "DEEP_ARCHIVE", "nonsense"} {
+		if err := s.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3StorageClass: bad}); err == nil {
+			t.Fatalf("class %q must be rejected", bad)
+		}
+	}
+	// The rejected saves left the previous valid value intact.
+	again, _ := s.CloudConfig()
+	if again.S3StorageClass != "STANDARD_IA" {
+		t.Fatalf("a rejected save must not overwrite the stored class, got %q", again.S3StorageClass)
+	}
+}
+
+// TestHandleGetCloudReturnsStorageClass: unlike the secret fields, handleGetCloud
+// echoes s3StorageClass so the UI can show and re-edit it.
+func TestHandleGetCloudReturnsStorageClass(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3Secret: "SEC", S3StorageClass: "GLACIER_IR"}); err != nil {
+		t.Fatal(err)
+	}
+	h := &Handler{svc: s}
+	w := httptest.NewRecorder()
+	h.handleGetCloud(w, httptest.NewRequest(http.MethodGet, "/api/cloud", nil))
+
+	var env struct {
+		OK             bool   `json:"ok"`
+		S3StorageClass string `json:"s3StorageClass"`
+		S3Secret       string `json:"s3Secret"`
+		S3SecretSet    bool   `json:"s3SecretSet"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&env); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if env.S3StorageClass != "GLACIER_IR" {
+		t.Fatalf("handleGetCloud must return the storage class, got %q", env.S3StorageClass)
+	}
+	if env.S3Secret != "" {
+		t.Fatal("the secret must never be echoed")
+	}
+	if !env.S3SecretSet {
+		t.Fatal("secret presence flag should still report set")
 	}
 }
