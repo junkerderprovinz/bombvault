@@ -1,6 +1,71 @@
-/* Nudge the dark (slate) scheme toward the IBM Carbon near-black background. */
+/* BombVault documentation theme.
+   Match the app's IBM Carbon look: a #161616 base, shaded rather than bordered,
+   with the BombVault sunflower-yellow accent. Dark is the primary experience. */
+
+:root {
+  --bv-accent: #fcc419;      /* BombVault brand yellow (the app's default accent) */
+  --bv-accent-ink: #161616;  /* dark text on a yellow fill */
+  --bv-accent-link: #9a7500; /* darker gold: readable as link text on white */
+}
+
+/* ---------- Dark scheme: Carbon #161616, yellow accent (the app default) ---------- */
 [data-md-color-scheme="slate"] {
-  --md-default-bg-color: #161616;
-  --md-default-bg-color--light: #1c1c1c;
+  --md-default-bg-color:           #161616;
+  --md-default-bg-color--light:    #1c1c1c;
+  --md-default-bg-color--lighter:  #262626;
+  --md-default-fg-color:           #f4f4f4;
+  --md-default-fg-color--light:    #c6c6c6;
+  --md-default-fg-color--lighter:  #8d8d8d;
+  --md-default-fg-color--lightest: #2a2a2a; /* rules/borders sink into the shade */
   --md-code-bg-color: #262626;
+  --md-code-fg-color: #f4f4f4;
+  --md-primary-fg-color: #161616;
+  --md-primary-bg-color: #f4f4f4;
+  --md-accent-fg-color:  var(--bv-accent);
+  --md-typeset-a-color:  var(--bv-accent);
+  --md-typeset-mark-color: rgba(252, 196, 25, 0.28);
+  --md-footer-bg-color:       #0f0f0f;
+  --md-footer-bg-color--dark: #0f0f0f;
+}
+/* Nav rail one shade up from the content, like the app sidebar. */
+[data-md-color-scheme="slate"] .md-sidebar {
+  background-color: #262626;
+}
+[data-md-color-scheme="slate"] .md-nav__link--active,
+[data-md-color-scheme="slate"] a.md-nav__link:hover,
+[data-md-color-scheme="slate"] a.md-nav__link:focus {
+  color: var(--bv-accent);
+}
+
+/* ---------- Light scheme: Carbon light, dark-gold link colour for contrast ---------- */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #ffffff;
+  --md-default-fg-color: #161616;
+  --md-code-bg-color:    #f4f4f4;
+  --md-primary-fg-color: #161616;
+  --md-primary-bg-color: #f4f4f4;
+  --md-accent-fg-color:  var(--bv-accent-link);
+  --md-typeset-a-color:  var(--bv-accent-link);
+}
+[data-md-color-scheme="default"] .md-sidebar {
+  background-color: #f4f4f4;
+}
+
+/* Primary buttons use the bright brand yellow with dark ink (Carbon chip look). */
+.md-typeset .md-button--primary {
+  background-color: var(--bv-accent);
+  border-color: var(--bv-accent);
+  color: var(--bv-accent-ink);
+}
+
+/* Flat Carbon header: no drop shadow, separate by shade not by a line. */
+.md-header {
+  box-shadow: none;
+}
+
+/* Give the logo a little room in the header. */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.6rem;
+  width: auto;
 }
