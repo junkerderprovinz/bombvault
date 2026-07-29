@@ -56,9 +56,9 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 7. [Install on Unraid](#7-install-on-unraid)
 8. [Configuration](#8-configuration)
 9. [Development](#9-development)
-10. [Support this project](#10-support-this-project)
-11. [Credits](#11-credits)
-12. [License](#12-license)
+10. [Credits](#10-credits)
+11. [License](#11-license)
+12. [Support this project](#12-support-this-project)
 
 <br>
 
@@ -71,7 +71,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Schedules** incremental backups in the background (per domain) from one place — the **Schedules** tab under Settings — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
 - **Optionally updates a container right after its backup** — flip on *Update after successful backup* on a container (advanced, off by default) and BombVault pulls the newest image and recreates it, but only when there's actually a newer image. A fresh restore point always exists first, so a bad update is one restore away. Optional extras: a **notification per updated container** so you know to check it, and **image cleanup** (Settings → Paths & Storage) that removes the superseded image afterwards — a base image shared by other containers is never deleted.
 
-The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#11-credits).
+The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#10-credits).
 
 <br>
 
@@ -119,7 +119,8 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 | **App configuration** | BombVault's own `/config` — its settings database, off-site credentials (`rclone.conf`) and libvirt SSH keypair, snapshotted with SQLite `VACUUM INTO` so a WAL-mode database is never captured mid-write. No container stop. Restore is from the **Recovery** tab, staged and applied by a self-restart so the live database is never overwritten under an open handle |
 | **Files & folders** | Named **file sets** — any folder on the server (a share, your documents, a photo library), each with optional per-set **exclude patterns**. Full parity with the other domains: schedules, retention, off-site copy, integrity checks and restore drills. Sources just need to be visible under the container's `/mnt` mapping — the Unraid template's default Host Data mount (all of `/mnt`) already covers shares, cache and pool paths |
 
-### Restore (the good part)
+<details>
+<summary><b>Restore (the good part)</b></summary>
 
 - **One-click full restore** — pick a snapshot, click Restore. Done.
 - **Restore from local or off-site** — every backup browser (and the integrity/maintenance card) has a **Local | Off-site** switch, so if a local repo is lost or corrupt you can list and restore straight from the off-site replica. Delete is per-source: removing a backup only affects the copy you're viewing, never both.
@@ -137,7 +138,10 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Guided recovery** — a dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case: it **restores BombVault's own settings first** (so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled — applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle), checks BombVault can read your backups (the encryption-key gotcha up front), lets you point at your existing repo (local or off-site), **discovers** the containers, VMs and file sets stored in it, and **restores them all** (left stopped, so you start them deliberately) — with your recovery kit one click away. Everything a disaster recovery needs, in one place.
 - **Restore from another BombVault repo** — a separate card on the **Recovery** tab opens a *different* BombVault instance's repo (a share mounted under `/mnt`, or a remote URL) with **that instance's `APP_KEY`**, in a **one-time, read-only session**: browse the containers, VMs and file sets stored there, pick a snapshot and restore it — the restored object becomes a normal local container / VM / file set. Nothing is ever written to the other repo, and **your own backup settings stay untouched** (the session lives in memory and expires by itself), so moving a container from server A to server B no longer means repointing your repo settings and reverting them afterwards. Live server-to-server federation (two instances talking to each other) is explicitly out of scope — this is a deliberate one-shot pull.
 
-### Storage & scheduling
+</details>
+
+<details>
+<summary><b>Storage &amp; scheduling</b></summary>
 
 - Incremental, deduplicated backups via restic — even large VM disks don't balloon the repo.
 - Destinations: a **local path**, or **off-site** — SMB/CIFS & NFS (mount the share on Unraid and point a Backup Path at it), **native restic backends** without rclone (`s3:…`, `rest:http://host:8000/repo`, `b2:…`, `sftp:user@host:/repo`) with their credentials stored encrypted under Settings → Off-site → Cloud credentials, or **rclone** (any of its remotes) via Settings → Off-site (`rclone:<remote>:<bucket>/path`). All credentials are stored encrypted.
@@ -148,7 +152,10 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Off-site bandwidth limits** (Settings → Off-site) — cap the `restic` upload/download rate so replication doesn't saturate your WAN.
 - **Backup folders stay copyable off-box** — restic writes local repos owner-only (`0700`/`0600`), which over an SMB share can lock a non-root sync user out of the whole folder. After every backup BombVault relaxes the local repo tree to dirs `0755` / files `0644` (repos are encrypted, so nothing is exposed) and heals folders an older version locked down. Recovery definitions live **inside** each repo (`<repo>/def`, `<repo>/vm-def`), so a copied repo folder is fully self-contained.
 
-### Insight, verification & monitoring
+</details>
+
+<details>
+<summary><b>Insight, verification &amp; monitoring</b></summary>
 
 - **Protection status (RPO)** — the Dashboard shows a green / amber / red indicator per domain comparing the last successful backup against its schedule, so an overdue backup turns red instead of hiding in a log.
 - **Backup-health heatmap** — a GitHub-contributions-style calendar of per-day backup outcomes per domain (green = all OK, red = a failure), with a Containers / VMs / Flash / Config / Files toggle.
@@ -161,7 +168,10 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)**, a self-hosted **[Apprise API](https://github.com/caronc/apprise-api)** server (point BombVault at its `/notify/<key>` endpoint to fan out to Apprise's 100+ services — Telegram, Pushover, Signal, …) and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always. A scheduled run of many containers/VMs can send **one "N of M succeeded" summary** per run instead of a message per item (off by default — 45 containers no longer means 45 emails); manual backups still notify per item. **Healthchecks** gets the full lifecycle — a `/start` ping when a backup begins, then success / `/fail` on done — whenever a URL is set, independent of that policy, so it measures duration, catches a run that started but never finished, and stays green on success even with failure-only notifications. You can also give each domain (containers / VMs / flash / config / files) its own Healthchecks check for per-domain runtime and history, or leave them blank to share one global check.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 
-### Ransomware protection
+</details>
+
+<details>
+<summary><b>Ransomware protection</b></summary>
 
 - **Immutable (append-only) off-site** — flag an off-site repo append-only so ransomware (or a compromised host) can't delete or rewrite your backups. The far side (a `restic/rest-server` in `--append-only` mode) *enforces* it; BombVault only ever *verifies* it and never shows green on a configuration claim alone.
 - **Tamper test** — BombVault periodically *proves* the append-only guarantee by actually attempting a delete against the off-site repo (aimed at a non-existent object): refused = protected, accepted = not protected. An inconclusive result (server unreachable, auth error) never flips the stored verdict, and a real protected → unprotected flip fires a single alert.
@@ -170,7 +180,10 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - **Ransomware-protection scorecard** — a Dashboard card with a green / amber / red posture per domain and an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set); every red row deep-links to the fix. The card and its chip only ever go green on *verified* facts, never on intent.
 - **Growth-budget alarm** — for an immutable off-site (where old snapshots are deliberately never pruned), set a size budget and get alerted before it runs away.
 
-### Other
+</details>
+
+<details>
+<summary><b>Other</b></summary>
 
 - **Back up many at once** — multi-select containers and hit **Back up selected**. The batch runs **server-side**, so it keeps going even if you close the tab, lose the connection, or back up the very container your browser is running in. Each container shows its own progress bar plus an overall batch indicator. BombVault never backs up (and so never stops) its own container.
 - Snapshot browser with a restore-point list; **delete individual backups** you no longer want, and a **collapsible folder tree** for file-level restore.
@@ -186,6 +199,8 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **26 languages** with a flag picker.
+
+</details>
 
 <br>
 
@@ -329,17 +344,7 @@ Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unra
 
 <br>
 
-## 10. Support this project
-
-Questions, bugs, ideas? **[Unraid support thread →](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)** (or open a [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues)).
-
-<a href="https://buymeacoffee.com/junkerderprovinz">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" height="40">
-</a>
-
-<br>
-
-## 11. Credits
+## 10. Credits
 
 - **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) — the original idea that sparked BombVault: one-click backup and automatic re-install of Docker containers. Thank you. BombVault is an independent rewrite (Go + restic) that extends the concept to VMs and the Unraid flash.
 - **[restic](https://restic.net/)** — the fast, secure, deduplicating backup engine BombVault orchestrates.
@@ -347,10 +352,22 @@ Questions, bugs, ideas? **[Unraid support thread →](https://forums.unraid.net/
 
 <br>
 
-## 12. License
+## 11. License
 
 **Copyright (C) 2026 Junker der Provinz.**
 
 BombVault is free software under the **GNU Affero General Public License v3.0** (AGPL-3.0); see [LICENSE](LICENSE). You may run, study, share and modify it. If you distribute it, or run a modified version as a network service, you must release your source under the same AGPL-3.0 terms and keep the existing copyright and attribution notices intact.
 
 **Name and branding are not licensed.** The AGPL covers the source code only. "BombVault", its logo and its branding remain reserved: a fork or derivative must use its own distinct name and branding, and may not present itself as BombVault. This keeps it unambiguous which project is the original.
+
+<br>
+
+## 12. Support this project
+
+Questions, bugs, ideas? **[Unraid support thread →](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)** (or open a [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues)).
+
+<p align="center">
+  <a href="https://buymeacoffee.com/junkerderprovinz">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="220">
+  </a>
+</p>
