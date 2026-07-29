@@ -346,6 +346,17 @@ const sv: Partial<Translations> = {
   "cloud.title": "Molnuppgifter (S3 / restic REST)",
   "cloud.hint": "Uppgifter för fjärrbaserade restic-backender, utan rclone. Ange efter sparande en backup-sökväg till ett fjärrrepo, t.ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path eller sftp:user@host:/repo. Hemligheter lagras krypterade och visas inte igen.",
   "cloud.secretSet": "sparat — lämna tomt för att behålla",
+  "cloud.storageClass.label": "Off-site-lagringsklass",
+  "cloud.storageClass.default": "(leverantörens standard)",
+  "cloud.storageClass.hint": "Gäller endast native S3-backends (repositorier som börjar med s3:). Djuparkivnivåer (Glacier Flexible Retrieval, Deep Archive) erbjuds avsiktligt inte eftersom de bryter restic-återställning.",
+  "export.encrypt.title": "Kryptera oskyddade exporter (age)",
+  "export.encrypt.hint": "restic-repositorierna är redan krypterade. Detta krypterar valfritt de oskyddade exportartefakterna (container- och VM-tar.gz med deras xml, och flash-zip) med age, så att de kan lagras eller flyttas utanför servern på ett säkert sätt.",
+  "export.encrypt.enable": "Kryptera exporter med age",
+  "export.encrypt.enableHint": "När på förseglas container-, VM- och flash-exporter med age innan de skrivs till disk och får ändelsen .age.",
+  "export.encrypt.recipients": "age-mottagare",
+  "export.encrypt.recipientsHint": "En mottagare per rad. Använd en age-publik nyckel (age1...) eller en SSH-publik nyckel. Motsvarande privat nyckel behövs för att dekryptera utanför servern. Med kryptering på och ingen giltig mottagare misslyckas exporten istället för att skriva klartext.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Lägg till minst en age-mottagare, annars misslyckas den krypterade exporten.",
   "rclone.save": "Spara konfiguration",
 
   // Integrity (restic check)

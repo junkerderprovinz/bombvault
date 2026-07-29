@@ -346,6 +346,17 @@ const el: Partial<Translations> = {
   "cloud.title": "Διαπιστευτήρια cloud (S3 / restic REST)",
   "cloud.hint": "Διαπιστευτήρια για απομακρυσμένα backend του restic, χωρίς rclone. Μετά την αποθήκευση, ορίστε μια διαδρομή αντιγράφου σε απομακρυσμένο repo, π.χ. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path ή sftp:user@host:/repo. Τα μυστικά αποθηκεύονται κρυπτογραφημένα και δεν εμφανίζονται ξανά.",
   "cloud.secretSet": "αποθηκεύτηκε — αφήστε κενό για διατήρηση",
+  "cloud.storageClass.label": "Κλάση αποθήκευσης off-site",
+  "cloud.storageClass.default": "(προεπιλογή παρόχου)",
+  "cloud.storageClass.hint": "Ισχύει μόνο για εγγενή backend S3 (αποθετήρια που ξεκινούν με s3:). Τα επίπεδα βαθιάς αρχειοθέτησης (Glacier Flexible Retrieval, Deep Archive) σκόπιμα δεν προσφέρονται επειδή χαλούν την επαναφορά του restic.",
+  "export.encrypt.title": "Κρυπτογράφηση απλών εξαγωγών (age)",
+  "export.encrypt.hint": "Τα αποθετήρια restic είναι ήδη κρυπτογραφημένα. Αυτό κρυπτογραφεί προαιρετικά τα απλά artifacts εξαγωγής (tar.gz κοντέινερ και VM μαζί με τα xml τους, και το flash zip) με age, ώστε να αποθηκεύονται ή να μετακινούνται με ασφάλεια εκτός του διακομιστή.",
+  "export.encrypt.enable": "Κρυπτογράφηση εξαγωγών με age",
+  "export.encrypt.enableHint": "Όταν είναι ενεργό, οι εξαγωγές κοντέινερ, VM και flash σφραγίζονται με age πριν γραφτούν στον δίσκο και αποκτούν κατάληξη .age.",
+  "export.encrypt.recipients": "Παραλήπτες age",
+  "export.encrypt.recipientsHint": "Ένας παραλήπτης ανά γραμμή. Χρησιμοποιήστε ένα δημόσιο κλειδί age (age1...) ή ένα δημόσιο κλειδί SSH. Το αντίστοιχο ιδιωτικό κλειδί χρειάζεται για αποκρυπτογράφηση εκτός διακομιστή. Με την κρυπτογράφηση ενεργή και χωρίς έγκυρο παραλήπτη, η εξαγωγή αποτυγχάνει αντί να γράψει απλό κείμενο.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Προσθέστε τουλάχιστον έναν παραλήπτη age, αλλιώς η κρυπτογραφημένη εξαγωγή θα αποτύχει.",
   "rclone.save": "Αποθήκευση διαμόρφωσης",
 
   // Integrity (restic check)

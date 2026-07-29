@@ -346,6 +346,17 @@ const es: Partial<Translations> = {
   "cloud.title": "Credenciales de la nube (S3 / restic REST)",
   "cloud.hint": "Credenciales para backends remotos de restic, sin rclone. Tras guardar, establece una ruta de copia a un repo remoto, p. ej. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path o sftp:user@host:/repo. Los secretos se guardan cifrados y no se vuelven a mostrar.",
   "cloud.secretSet": "guardado — déjalo vacío para conservar",
+  "cloud.storageClass.label": "Clase de almacenamiento off-site",
+  "cloud.storageClass.default": "(predeterminado del proveedor)",
+  "cloud.storageClass.hint": "Se aplica solo a los backends S3 nativos (repositorios que empiezan por s3:). Los niveles de archivo profundo (Glacier Flexible Retrieval, Deep Archive) no se ofrecen a propósito porque rompen la restauración de restic.",
+  "export.encrypt.title": "Cifrar exportaciones en texto plano (age)",
+  "export.encrypt.hint": "Los repositorios de restic ya están cifrados. Esto cifra opcionalmente los artefactos de exportación en texto plano (tar.gz de contenedor y VM junto con sus xml, y el zip flash) con age, para que se puedan almacenar o mover fuera del servidor de forma segura.",
+  "export.encrypt.enable": "Cifrar exportaciones con age",
+  "export.encrypt.enableHint": "Cuando está activado, las exportaciones de contenedor, VM y flash se sellan con age antes de escribirse en disco y reciben el sufijo .age.",
+  "export.encrypt.recipients": "Destinatarios age",
+  "export.encrypt.recipientsHint": "Un destinatario por línea. Usa una clave pública age (age1...) o una clave pública SSH. La clave privada correspondiente es necesaria para descifrar fuera del servidor. Con el cifrado activado y sin un destinatario válido, la exportación falla en lugar de escribir texto plano.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Añade al menos un destinatario age, de lo contrario la exportación cifrada fallará.",
   "rclone.save": "Guardar configuración",
 
   // Integrity (restic check)

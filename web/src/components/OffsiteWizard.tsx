@@ -113,7 +113,7 @@ export function OffsiteWizard({
 
   // Step 3 — REST credentials (reuses the cloud-credential endpoints). S3 fields
   // are loaded + preserved on save so this flow never clobbers them.
-  const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "" });
+  const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [restPwSet, setRestPwSet] = useState(false);
   const [credState, setCredState] = useState<SaveState>("idle");
   const [credErr, setCredErr] = useState<string | null>(null);
@@ -160,6 +160,7 @@ export function OffsiteWizard({
           s3KeyId: r.s3KeyId ?? "",
           s3Region: r.s3Region ?? "",
           restUser: r.restUser ?? "",
+          s3StorageClass: r.s3StorageClass ?? "",
         }));
         setRestPwSet(!!r.restPasswordSet);
         // Only now is a save safe: the object about to be POSTed reflects the
@@ -208,7 +209,7 @@ export function OffsiteWizard({
     try {
       // Blank secrets = keep the stored value; S3 fields are round-tripped so the
       // wizard never wipes an existing S3 credential.
-      const r = await setCloud({ s3KeyId: cloud.s3KeyId, s3Secret: "", s3Region: cloud.s3Region, restUser: cloud.restUser, restPassword: cloud.restPassword });
+      const r = await setCloud({ s3KeyId: cloud.s3KeyId, s3Secret: "", s3Region: cloud.s3Region, restUser: cloud.restUser, restPassword: cloud.restPassword, s3StorageClass: cloud.s3StorageClass });
       if (r.ok) {
         setCredState("saved");
         setCloudState((p) => ({ ...p, restPassword: "" }));

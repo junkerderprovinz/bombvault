@@ -344,6 +344,17 @@ const pt: Partial<Translations> = {
   "cloud.title": "Credenciais da nuvem (S3 / restic REST)",
   "cloud.hint": "Credenciais para backends restic remotos, sem rclone. Após salvar, defina um caminho de backup para um repo remoto, ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path ou sftp:user@host:/repo. Os segredos são armazenados criptografados e não são exibidos novamente.",
   "cloud.secretSet": "salvo — deixe em branco para manter",
+  "cloud.storageClass.label": "Classe de armazenamento off-site",
+  "cloud.storageClass.default": "(padrão do provedor)",
+  "cloud.storageClass.hint": "Aplica-se apenas aos backends S3 nativos (repositórios que começam com s3:). Os níveis de arquivo profundo (Glacier Flexible Retrieval, Deep Archive) não são oferecidos de propósito porque quebram a restauração do restic.",
+  "export.encrypt.title": "Cifrar exportações em texto simples (age)",
+  "export.encrypt.hint": "Os repositórios restic já são cifrados. Isto cifra opcionalmente os artefatos de exportação em texto simples (tar.gz de contêiner e VM com os seus xml, e o zip flash) com age, para que possam ser armazenados ou movidos para fora do servidor com segurança.",
+  "export.encrypt.enable": "Cifrar exportações com age",
+  "export.encrypt.enableHint": "Quando ativado, as exportações de contêiner, VM e flash são seladas com age antes de serem gravadas no disco e recebem o sufixo .age.",
+  "export.encrypt.recipients": "Destinatários age",
+  "export.encrypt.recipientsHint": "Um destinatário por linha. Use uma chave pública age (age1...) ou uma chave pública SSH. A chave privada correspondente é necessária para decifrar fora do servidor. Com a cifragem ativada e nenhum destinatário válido, a exportação falha em vez de gravar texto simples.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Adicione pelo menos um destinatário age, caso contrário a exportação cifrada falhará.",
   "rclone.save": "Guardar configuração",
 
   // Integrity (restic check)

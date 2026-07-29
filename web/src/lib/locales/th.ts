@@ -346,6 +346,17 @@ const th: Partial<Translations> = {
   "cloud.title": "ข้อมูลรับรองคลาวด์ (S3 / restic REST)",
   "cloud.hint": "ข้อมูลรับรองสำหรับแบ็กเอนด์ restic ระยะไกล โดยไม่ใช้ rclone หลังบันทึก ให้ตั้งค่าเส้นทางสำรองข้อมูลไปยังที่เก็บระยะไกล เช่น s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path หรือ sftp:user@host:/repo ความลับจะถูกเก็บแบบเข้ารหัสและจะไม่แสดงอีก",
   "cloud.secretSet": "บันทึกแล้ว — เว้นว่างเพื่อคงไว้",
+  "cloud.storageClass.label": "คลาสพื้นที่จัดเก็บ off-site",
+  "cloud.storageClass.default": "(ค่าเริ่มต้นของผู้ให้บริการ)",
+  "cloud.storageClass.hint": "ใช้ได้เฉพาะกับแบ็กเอนด์ S3 ดั้งเดิม (ที่เก็บที่ขึ้นต้นด้วย s3:) เท่านั้น ระดับการเก็บถาวรเชิงลึก (Glacier Flexible Retrieval, Deep Archive) ไม่ได้ถูกนำเสนอโดยเจตนาเพราะทำให้การกู้คืน restic เสียหาย",
+  "export.encrypt.title": "เข้ารหัสการส่งออกแบบข้อความธรรมดา (age)",
+  "export.encrypt.hint": "ที่เก็บ restic ถูกเข้ารหัสอยู่แล้ว สิ่งนี้จะเข้ารหัสอาร์ติแฟกต์การส่งออกแบบข้อความธรรมดา (tar.gz ของคอนเทนเนอร์และ VM พร้อมไฟล์ xml และ zip แฟลช) ด้วย age เป็นทางเลือก เพื่อให้จัดเก็บหรือย้ายออกนอกเซิร์ฟเวอร์ได้อย่างปลอดภัย",
+  "export.encrypt.enable": "เข้ารหัสการส่งออกด้วย age",
+  "export.encrypt.enableHint": "เมื่อเปิด การส่งออกคอนเทนเนอร์ VM และแฟลชจะถูกผนึกด้วย age ก่อนเขียนลงดิสก์ และได้รับส่วนขยาย .age",
+  "export.encrypt.recipients": "ผู้รับ age",
+  "export.encrypt.recipientsHint": "หนึ่งผู้รับต่อบรรทัด ใช้คีย์สาธารณะ age (age1...) หรือคีย์สาธารณะ SSH ต้องใช้คีย์ส่วนตัวที่ตรงกันเพื่อถอดรหัสนอกเซิร์ฟเวอร์ เมื่อเปิดการเข้ารหัสและไม่มีผู้รับที่ถูกต้อง การส่งออกจะล้มเหลวแทนที่จะเขียนข้อความธรรมดา",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "เพิ่มผู้รับ age อย่างน้อยหนึ่งราย มิฉะนั้นการส่งออกที่เข้ารหัสจะล้มเหลว",
   "rclone.save": "บันทึกการตั้งค่า",
 
   // Integrity (restic check)

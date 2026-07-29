@@ -341,6 +341,17 @@ const uk: Partial<Translations> = {
   "cloud.title": "Облікові дані хмари (S3 / restic REST)",
   "cloud.hint": "Облікові дані для віддалених бекендів restic, без rclone. Після збереження вкажіть шлях резервної копії на віддалене сховище, напр. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path або sftp:user@host:/repo. Секрети зберігаються зашифрованими й більше не показуються.",
   "cloud.secretSet": "збережено — залиште порожнім, щоб зберегти",
+  "cloud.storageClass.label": "Клас сховища off-site",
+  "cloud.storageClass.default": "(за замовчуванням провайдера)",
+  "cloud.storageClass.hint": "Застосовується лише до нативних бекендів S3 (репозиторіїв, що починаються з s3:). Рівні глибокого архіву (Glacier Flexible Retrieval, Deep Archive) навмисно не пропонуються, бо вони ламають відновлення restic.",
+  "export.encrypt.title": "Шифрувати звичайні експорти (age)",
+  "export.encrypt.hint": "Репозиторії restic вже зашифровані. Це за бажанням шифрує звичайні артефакти експорту (tar.gz контейнера та ВМ разом із їхніми xml, і flash-zip) за допомогою age, щоб їх можна було безпечно зберігати чи переміщувати за межі сервера.",
+  "export.encrypt.enable": "Шифрувати експорти за допомогою age",
+  "export.encrypt.enableHint": "Коли увімкнено, експорти контейнерів, ВМ і flash запечатуються age перед записом на диск та отримують суфікс .age.",
+  "export.encrypt.recipients": "Отримувачі age",
+  "export.encrypt.recipientsHint": "По одному отримувачу в рядку. Використовуйте публічний ключ age (age1...) або публічний ключ SSH. Для розшифрування поза сервером потрібен відповідний приватний ключ. Якщо шифрування увімкнено, але немає дійсного отримувача, експорт завершується помилкою замість запису відкритого тексту.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Додайте принаймні одного отримувача age, інакше зашифрований експорт не вдасться.",
   "rclone.save": "Зберегти конфігурацію",
 
   // Integrity (restic check)

@@ -344,6 +344,17 @@ const ro: Partial<Translations> = {
   "cloud.title": "Credențiale cloud (S3 / restic REST)",
   "cloud.hint": "Credențiale pentru backenduri restic la distanță, fără rclone. După salvare, setează o cale de backup către un repo la distanță, ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path sau sftp:user@host:/repo. Secretele se stochează criptat și nu se mai afișează.",
   "cloud.secretSet": "salvat — lasă gol pentru a păstra",
+  "cloud.storageClass.label": "Clasă de stocare off-site",
+  "cloud.storageClass.default": "(implicit al furnizorului)",
+  "cloud.storageClass.hint": "Se aplică doar backendurilor S3 native (depozite care încep cu s3:). Nivelurile de arhivă profundă (Glacier Flexible Retrieval, Deep Archive) nu sunt oferite în mod intenționat deoarece strică restaurarea restic.",
+  "export.encrypt.title": "Criptează exporturile în clar (age)",
+  "export.encrypt.hint": "Depozitele restic sunt deja criptate. Aceasta criptează opțional artefactele de export în clar (tar.gz de container și VM împreună cu fișierele lor xml, și zip-ul flash) cu age, astfel încât să poată fi stocate sau mutate în siguranță în afara serverului.",
+  "export.encrypt.enable": "Criptează exporturile cu age",
+  "export.encrypt.enableHint": "Când este activat, exporturile de container, VM și flash sunt sigilate cu age înainte de a fi scrise pe disc și primesc sufixul .age.",
+  "export.encrypt.recipients": "Destinatari age",
+  "export.encrypt.recipientsHint": "Un destinatar pe linie. Folosește o cheie publică age (age1...) sau o cheie publică SSH. Cheia privată corespunzătoare este necesară pentru decriptare în afara serverului. Cu criptarea activată și fără un destinatar valid, exportul eșuează în loc să scrie text în clar.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Adaugă cel puțin un destinatar age, altfel exportul criptat va eșua.",
   "rclone.save": "Salvează configurația",
 
   // Integrity (restic check)

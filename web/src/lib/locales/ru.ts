@@ -339,6 +339,17 @@ const ru: Partial<Translations> = {
   "cloud.title": "Учётные данные облака (S3 / restic REST)",
   "cloud.hint": "Учётные данные для удалённых бэкендов restic, без rclone. После сохранения задайте путь резервной копии на удалённый репозиторий, напр. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path или sftp:user@host:/repo. Секреты хранятся в зашифрованном виде и больше не показываются.",
   "cloud.secretSet": "сохранено — оставьте пустым, чтобы сохранить",
+  "cloud.storageClass.label": "Класс хранения off-site",
+  "cloud.storageClass.default": "(по умолчанию провайдера)",
+  "cloud.storageClass.hint": "Применяется только к нативным бэкендам S3 (репозитории, начинающиеся с s3:). Уровни глубокого архива (Glacier Flexible Retrieval, Deep Archive) намеренно не предлагаются, так как они ломают восстановление restic.",
+  "export.encrypt.title": "Шифровать обычные экспорты (age)",
+  "export.encrypt.hint": "Репозитории restic уже зашифрованы. Это опционально шифрует обычные артефакты экспорта (tar.gz контейнера и ВМ вместе с их xml, и flash-zip) с помощью age, чтобы их можно было безопасно хранить или перемещать за пределы сервера.",
+  "export.encrypt.enable": "Шифровать экспорты с помощью age",
+  "export.encrypt.enableHint": "Когда включено, экспорты контейнеров, ВМ и flash запечатываются age перед записью на диск и получают суффикс .age.",
+  "export.encrypt.recipients": "Получатели age",
+  "export.encrypt.recipientsHint": "По одному получателю в строке. Используйте публичный ключ age (age1...) или публичный ключ SSH. Для расшифровки вне сервера нужен соответствующий закрытый ключ. Если шифрование включено, но нет действительного получателя, экспорт завершается ошибкой вместо записи открытого текста.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Добавьте хотя бы одного получателя age, иначе зашифрованный экспорт завершится ошибкой.",
   "rclone.save": "Сохранить конфигурацию",
 
   // Integrity (restic check)

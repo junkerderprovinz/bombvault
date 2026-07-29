@@ -108,6 +108,14 @@ export interface Settings {
   flashZipExportEnabled: boolean;
   flashZipExportPath: string;
   flashZipExportKeep: number;
+  // Optional age encryption for the PLAIN export artifacts (container/VM tar.gz +
+  // xml sidecars, and the flash zip). The restic repos are already encrypted;
+  // this only protects the plain exports so they are safe to store off the box.
+  // Recipients are age public keys (age1...) or SSH public keys, one per line;
+  // they are non-secret and returned as-is. With encryption on and no valid
+  // recipient, every export fails loudly rather than writing plaintext.
+  exportEncryptEnabled: boolean;
+  exportAgeRecipients: string;
   containersOffsite: string;
   vmsOffsite: string;
   flashOffsite: string;
@@ -743,6 +751,9 @@ export interface CloudInfo extends OkEnvelope {
   restUser?: string;
   s3SecretSet?: boolean;
   restPasswordSet?: boolean;
+  /** Off-site S3 storage class for native s3: repos ("" = provider default).
+   *  Not a secret, so unlike the credentials it IS returned by the GET. */
+  s3StorageClass?: string;
 }
 export function getCloud(): Promise<CloudInfo> {
   return fetchJSON("/api/cloud");
@@ -755,6 +766,10 @@ export interface CloudCreds {
   s3Region: string;
   restUser: string;
   restPassword: string;
+  /** S3 storage class for native s3: off-site writes ("" = provider default).
+   *  Restricted server-side to restore-readable tiers (STANDARD, STANDARD_IA,
+   *  ONEZONE_IA, INTELLIGENT_TIERING, GLACIER_IR). */
+  s3StorageClass: string;
 }
 export function setCloud(c: CloudCreds): Promise<OkEnvelope> {
   return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });

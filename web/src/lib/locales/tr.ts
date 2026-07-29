@@ -346,6 +346,17 @@ const tr: Partial<Translations> = {
   "cloud.title": "Bulut kimlik bilgileri (S3 / restic REST)",
   "cloud.hint": "rclone olmadan uzak restic arka uçları için kimlik bilgileri. Kaydettikten sonra bir yedek yolunu uzak bir depoya ayarlayın, ör. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path veya sftp:user@host:/repo. Gizli bilgiler şifreli saklanır ve bir daha gösterilmez.",
   "cloud.secretSet": "kaydedildi — korumak için boş bırakın",
+  "cloud.storageClass.label": "Off-site depolama sınıfı",
+  "cloud.storageClass.default": "(sağlayıcı varsayılanı)",
+  "cloud.storageClass.hint": "Yalnızca yerel S3 arka uçları için geçerlidir (s3: ile başlayan depolar). Derin arşiv katmanları (Glacier Flexible Retrieval, Deep Archive) restic geri yüklemesini bozdukları için bilerek sunulmaz.",
+  "export.encrypt.title": "Düz metin dışa aktarmalarını şifrele (age)",
+  "export.encrypt.hint": "restic depoları zaten şifrelidir. Bu, düz metin dışa aktarma yapıtlarını (konteyner ve VM tar.gz dosyaları ile xml'leri ve flash zip) isteğe bağlı olarak age ile şifreler; böylece sunucu dışında güvenle saklanabilir veya taşınabilirler.",
+  "export.encrypt.enable": "Dışa aktarmaları age ile şifrele",
+  "export.encrypt.enableHint": "Açıkken konteyner, VM ve flash dışa aktarmaları diske yazılmadan önce age ile mühürlenir ve .age uzantısı alır.",
+  "export.encrypt.recipients": "age alıcıları",
+  "export.encrypt.recipientsHint": "Her satıra bir alıcı. Bir age genel anahtarı (age1...) veya bir SSH genel anahtarı kullanın. Sunucu dışında şifre çözmek için eşleşen özel anahtar gerekir. Şifreleme açıkken ve geçerli alıcı yoksa, dışa aktarma düz metin yazmak yerine başarısız olur.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "En az bir age alıcısı ekleyin, aksi halde şifreli dışa aktarma başarısız olur.",
   "rclone.save": "Yapılandırmayı kaydet",
 
   // Integrity (restic check)

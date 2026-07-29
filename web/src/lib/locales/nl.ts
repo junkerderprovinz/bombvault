@@ -341,6 +341,17 @@ const nl: Partial<Translations> = {
   "cloud.title": "Cloud-inloggegevens (S3 / restic REST)",
   "cloud.hint": "Inloggegevens voor externe restic-backends, zonder rclone. Stel na opslaan een back-uppad in naar een externe repo, bijv. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path of sftp:user@host:/repo. Geheimen worden versleuteld opgeslagen en niet meer getoond.",
   "cloud.secretSet": "opgeslagen — laat leeg om te behouden",
+  "cloud.storageClass.label": "Off-site opslagklasse",
+  "cloud.storageClass.default": "(standaard van provider)",
+  "cloud.storageClass.hint": "Geldt alleen voor native S3-backends (repositories die met s3: beginnen). Deep-archive-niveaus (Glacier Flexible Retrieval, Deep Archive) worden bewust niet aangeboden omdat ze het restic-herstel breken.",
+  "export.encrypt.title": "Platte exports versleutelen (age)",
+  "export.encrypt.hint": "De restic-repositories zijn al versleuteld. Dit versleutelt optioneel de platte export-artefacten (container- en VM-tar.gz met hun xml, en de flash-zip) met age, zodat ze veilig buiten de server kunnen worden bewaard of verplaatst.",
+  "export.encrypt.enable": "Exports versleutelen met age",
+  "export.encrypt.enableHint": "Indien aan worden container-, VM- en flash-exports met age verzegeld voordat ze naar schijf worden geschreven, en krijgen ze een .age-achtervoegsel.",
+  "export.encrypt.recipients": "age-ontvangers",
+  "export.encrypt.recipientsHint": "Eén ontvanger per regel. Gebruik een age-publieke sleutel (age1...) of een SSH-publieke sleutel. De bijbehorende privésleutel is nodig om buiten de server te ontsleutelen. Met versleuteling aan en geen geldige ontvanger mislukt de export in plaats van platte tekst te schrijven.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Voeg minstens één age-ontvanger toe, anders mislukt de versleutelde export.",
   "rclone.save": "Configuratie opslaan",
 
   // Integrity (restic check)

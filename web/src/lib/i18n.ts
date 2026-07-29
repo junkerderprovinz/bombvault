@@ -428,6 +428,9 @@ export const en = {
   "cloud.title": "Cloud credentials (S3 / restic REST)",
   "cloud.hint": "Credentials for off-site restic backends, without rclone. After saving, set a Backup Path to a remote repo, e.g. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path or sftp:user@host:/repo. Secrets are stored encrypted and never shown again.",
   "cloud.secretSet": "saved — leave blank to keep",
+  "cloud.storageClass.label": "Off-site storage class",
+  "cloud.storageClass.default": "(provider default)",
+  "cloud.storageClass.hint": "Applies to native S3 backends only (repositories that start with s3:). Deep-archive tiers (Glacier Flexible Retrieval, Deep Archive) are intentionally not offered because they break restic restore.",
   "rclone.save": "Save config",
   "notify.title": "Notifications",
   "notify.hint": "Get notified when a backup finishes. Set up any of the channels below; they all fire according to the policy.",
@@ -793,6 +796,14 @@ export const en = {
   "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
   "flash.zipExport.plaintextWarn": "The exported .zip is not encrypted, even if your flash repository is. Only sync it somewhere you trust.",
   "flash.zipExport.pathRequired": "Choose an export folder to turn this on.",
+  "export.encrypt.title": "Encrypt plain exports (age)",
+  "export.encrypt.hint": "The restic repositories are already encrypted. This optionally seals the plain export artifacts (container and VM tar.gz plus their xml sidecars, and the flash zip) with age, so they are safe to store or move off the box.",
+  "export.encrypt.enable": "Encrypt exports with age",
+  "export.encrypt.enableHint": "When on, container, VM, and flash exports are sealed with age before they are written to disk, and gain a .age suffix.",
+  "export.encrypt.recipients": "age recipients",
+  "export.encrypt.recipientsHint": "One recipient per line. Use an age public key (age1...) or an SSH public key. The matching private key is needed to decrypt off-box. With encryption on and no valid recipient, the export fails rather than writing plaintext.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Add at least one age recipient, otherwise the encrypted export will fail.",
 
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
@@ -1468,6 +1479,9 @@ export const de: Translations = {
   "cloud.title": "Cloud-Zugangsdaten (S3 / restic REST)",
   "cloud.hint": "Zugangsdaten für off-site restic-Backends, ohne rclone. Nach dem Speichern einen Backup-Pfad auf ein Remote-Repo setzen, z.B. s3:s3.amazonaws.com/bucket/pfad, rest:http://host:8000/repo, b2:bucket:pfad oder sftp:user@host:/repo. Secrets werden verschlüsselt gespeichert und nie wieder angezeigt.",
   "cloud.secretSet": "gespeichert — leer lassen zum Beibehalten",
+  "cloud.storageClass.label": "Off-site-Speicherklasse",
+  "cloud.storageClass.default": "(Standard des Anbieters)",
+  "cloud.storageClass.hint": "Gilt nur für native S3-Backends (Repositories, die mit s3: beginnen). Deep-Archive-Stufen (Glacier Flexible Retrieval, Deep Archive) werden absichtlich nicht angeboten, weil sie die restic-Wiederherstellung brechen.",
   "rclone.save": "Konfig speichern",
   "notify.title": "Benachrichtigungen",
   "notify.hint": "Lass dich benachrichtigen, wenn ein Backup fertig ist. Richte beliebige Kanäle unten ein; sie feuern alle gemäß der Richtlinie.",
@@ -1831,6 +1845,14 @@ export const de: Translations = {
   "flash.zipExport.latestNote": "Eine einzige flash-latest.zip wird nach jedem Backup überschrieben.",
   "flash.zipExport.plaintextWarn": "Das exportierte .zip ist nicht verschlüsselt, auch wenn dein Flash-Repository es ist. Synce es nur an einen vertrauenswürdigen Ort.",
   "flash.zipExport.pathRequired": "Wähle einen Export-Ordner, um dies zu aktivieren.",
+  "export.encrypt.title": "Plain-Exporte verschlüsseln (age)",
+  "export.encrypt.hint": "Die restic-Repositories sind bereits verschlüsselt. Dies verschlüsselt optional die Plain-Export-Artefakte (Container- und VM-tar.gz samt xml-Beidateien sowie das Flash-Zip) mit age, damit sie sicher außerhalb des Servers gespeichert oder bewegt werden können.",
+  "export.encrypt.enable": "Exporte mit age verschlüsseln",
+  "export.encrypt.enableHint": "Wenn aktiv, werden Container-, VM- und Flash-Exporte vor dem Schreiben mit age versiegelt und erhalten die Endung .age.",
+  "export.encrypt.recipients": "age-Empfänger",
+  "export.encrypt.recipientsHint": "Ein Empfänger pro Zeile. Nutze einen age-Public-Key (age1...) oder einen SSH-Public-Key. Zum Entschlüsseln außerhalb des Servers wird der passende private Schlüssel benötigt. Ist die Verschlüsselung aktiv und kein gültiger Empfänger vorhanden, schlägt der Export fehl, statt Klartext zu schreiben.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Füge mindestens einen age-Empfänger hinzu, sonst schlägt der verschlüsselte Export fehl.",
 
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.
