@@ -346,6 +346,17 @@ const he: Partial<Translations> = {
   "cloud.title": "פרטי התחברות לענן (S3 / restic REST)",
   "cloud.hint": "פרטי התחברות ל-backends מרוחקים של restic, ללא rclone. לאחר השמירה, הגדר נתיב גיבוי למאגר מרוחק, למשל s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path או sftp:user@host:/repo. הסודות נשמרים מוצפנים ואינם מוצגים שוב.",
   "cloud.secretSet": "נשמר — השאר ריק כדי לשמור",
+  "cloud.storageClass.label": "מחלקת אחסון off-site",
+  "cloud.storageClass.default": "(ברירת המחדל של הספק)",
+  "cloud.storageClass.hint": "חל רק על backends מסוג S3 מקוריים (מאגרים שמתחילים ב-s3:). שכבות ארכיון עמוק (Glacier Flexible Retrieval, Deep Archive) לא מוצעות במכוון כי הן שוברות את שחזור restic.",
+  "export.encrypt.title": "הצפנת ייצוא רגיל (age)",
+  "export.encrypt.hint": "מאגרי restic כבר מוצפנים. זה מצפין באופן אופציונלי את פריטי הייצוא הרגילים (tar.gz של קונטיינר ו-VM יחד עם קובצי ה-xml שלהם, וה-zip של flash) באמצעות age, כדי שניתן יהיה לאחסן או להעביר אותם מחוץ לשרת בבטחה.",
+  "export.encrypt.enable": "הצפנת ייצוא באמצעות age",
+  "export.encrypt.enableHint": "כשמופעל, ייצוא של קונטיינר, VM ו-flash נאטם באמצעות age לפני הכתיבה לדיסק ומקבל סיומת .age.",
+  "export.encrypt.recipients": "נמעני age",
+  "export.encrypt.recipientsHint": "נמען אחד בכל שורה. השתמש במפתח ציבורי age (age1...) או במפתח ציבורי SSH. כדי לפענח מחוץ לשרת נדרש המפתח הפרטי התואם. כשההצפנה מופעלת ואין נמען תקף, הייצוא נכשל במקום לכתוב טקסט גלוי.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "הוסף לפחות נמען age אחד, אחרת הייצוא המוצפן ייכשל.",
   "rclone.save": "שמור תצורה",
 
   // Integrity (restic check)

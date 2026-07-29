@@ -346,6 +346,17 @@ const ar: Partial<Translations> = {
   "cloud.title": "بيانات اعتماد السحابة (S3 / restic REST)",
   "cloud.hint": "بيانات اعتماد لخلفيات restic عن بُعد، بدون rclone. بعد الحفظ، عيّن مسار النسخ الاحتياطي إلى مستودع بعيد، مثل s3:s3.amazonaws.com/bucket/path أو rest:http://host:8000/repo أو b2:bucket:path أو sftp:user@host:/repo. تُخزَّن الأسرار مشفّرة ولا تُعرض مرة أخرى.",
   "cloud.secretSet": "محفوظ — اتركه فارغًا للإبقاء عليه",
+  "cloud.storageClass.label": "فئة التخزين خارج الموقع",
+  "cloud.storageClass.default": "(الافتراضي للمزود)",
+  "cloud.storageClass.hint": "ينطبق فقط على خلفيات S3 الأصلية (المستودعات التي تبدأ بـ s3:). لا يتم تقديم مستويات الأرشفة العميقة (Glacier Flexible Retrieval وDeep Archive) عمدًا لأنها تُعطّل استعادة restic.",
+  "export.encrypt.title": "تشفير عمليات التصدير النصية (age)",
+  "export.encrypt.hint": "مستودعات restic مشفّرة بالفعل. هذا يشفّر اختياريًا مخرجات التصدير النصية (ملفات tar.gz للحاوية والجهاز الافتراضي مع ملفات xml الخاصة بها، وملف flash المضغوط) باستخدام age، لتخزينها أو نقلها خارج الخادم بأمان.",
+  "export.encrypt.enable": "تشفير عمليات التصدير باستخدام age",
+  "export.encrypt.enableHint": "عند التفعيل، تُختم عمليات تصدير الحاوية والجهاز الافتراضي وflash باستخدام age قبل كتابتها على القرص، وتحصل على اللاحقة .age.",
+  "export.encrypt.recipients": "مستلمو age",
+  "export.encrypt.recipientsHint": "مستلم واحد لكل سطر. استخدم مفتاح age العام (age1...) أو مفتاح SSH العام. المفتاح الخاص المطابق مطلوب لفك التشفير خارج الخادم. مع تفعيل التشفير وعدم وجود مستلم صالح، يفشل التصدير بدلًا من كتابة نص عادي.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "أضِف مستلم age واحدًا على الأقل، وإلا سيفشل التصدير المشفّر.",
   "rclone.save": "حفظ الإعداد",
 
   // Integrity (restic check)

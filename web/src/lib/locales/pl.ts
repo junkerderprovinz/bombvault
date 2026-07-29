@@ -339,6 +339,17 @@ const pl: Partial<Translations> = {
   "cloud.title": "Poświadczenia chmury (S3 / restic REST)",
   "cloud.hint": "Poświadczenia dla zdalnych backendów restic, bez rclone. Po zapisaniu ustaw ścieżkę kopii na zdalne repo, np. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path lub sftp:user@host:/repo. Sekrety są zapisywane zaszyfrowane i nie są ponownie pokazywane.",
   "cloud.secretSet": "zapisano — zostaw puste, aby zachować",
+  "cloud.storageClass.label": "Klasa pamięci off-site",
+  "cloud.storageClass.default": "(domyślna dostawcy)",
+  "cloud.storageClass.hint": "Dotyczy tylko natywnych backendów S3 (repozytoriów zaczynających się od s3:). Poziomy głębokiego archiwum (Glacier Flexible Retrieval, Deep Archive) celowo nie są oferowane, ponieważ psują przywracanie restic.",
+  "export.encrypt.title": "Szyfruj eksporty w postaci jawnej (age)",
+  "export.encrypt.hint": "Repozytoria restic są już zaszyfrowane. To opcjonalnie szyfruje jawne artefakty eksportu (tar.gz kontenera i VM wraz z ich plikami xml oraz zip flash) za pomocą age, aby można je było bezpiecznie przechowywać lub przenosić poza serwer.",
+  "export.encrypt.enable": "Szyfruj eksporty za pomocą age",
+  "export.encrypt.enableHint": "Gdy włączone, eksporty kontenera, VM i flash są pieczętowane za pomocą age przed zapisem na dysk i otrzymują przyrostek .age.",
+  "export.encrypt.recipients": "Odbiorcy age",
+  "export.encrypt.recipientsHint": "Jeden odbiorca na wiersz. Użyj klucza publicznego age (age1...) lub klucza publicznego SSH. Do odszyfrowania poza serwerem potrzebny jest pasujący klucz prywatny. Przy włączonym szyfrowaniu i braku prawidłowego odbiorcy eksport kończy się błędem zamiast zapisać tekst jawny.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Dodaj co najmniej jednego odbiorcę age, w przeciwnym razie zaszyfrowany eksport się nie powiedzie.",
   "rclone.save": "Zapisz konfigurację",
 
   // Integrity (restic check)

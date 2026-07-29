@@ -724,7 +724,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
 // stored value. Field labels are restic's actual env var names (self-documenting).
 export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
-  const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "" });
+  const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [secretSet, setSecretSet] = useState(false);
   const [pwSet, setPwSet] = useState(false);
   const [state, setState] = useState<SaveState>("idle");
@@ -734,7 +734,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     getCloud()
       .then((r) => {
         if (r.ok) {
-          setC((p) => ({ ...p, s3KeyId: r.s3KeyId ?? "", s3Region: r.s3Region ?? "", restUser: r.restUser ?? "" }));
+          setC((p) => ({ ...p, s3KeyId: r.s3KeyId ?? "", s3Region: r.s3Region ?? "", restUser: r.restUser ?? "", s3StorageClass: r.s3StorageClass ?? "" }));
           setSecretSet(!!r.s3SecretSet);
           setPwSet(!!r.restPasswordSet);
         }
@@ -784,6 +784,16 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             placeholder={secretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
         <label className={fieldCls}>AWS_DEFAULT_REGION
           <input value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
+        <label className={fieldCls}>{t("cloud.storageClass.label")}
+          <select value={c.s3StorageClass} onChange={(e) => set("s3StorageClass", e.target.value)} className={inputCls}>
+            <option value="">{t("cloud.storageClass.default")}</option>
+            <option value="STANDARD">STANDARD</option>
+            <option value="STANDARD_IA">STANDARD_IA</option>
+            <option value="ONEZONE_IA">ONEZONE_IA</option>
+            <option value="INTELLIGENT_TIERING">INTELLIGENT_TIERING</option>
+            <option value="GLACIER_IR">GLACIER_IR</option>
+          </select></label>
+        <p className="text-xs text-carbon-textMuted normal-case font-sans">{t("cloud.storageClass.hint")}</p>
       </div>
 
       <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
@@ -2104,6 +2114,8 @@ export function SettingsPage() {
   // zeroes flashZipExportKeep) and back ON restores their count instead of the
   // default. Updated whenever the keepN input is set to a value >= 1.
   const [rememberedKeep, setRememberedKeep] = useState(7);
+  const [exportEncSaveState, setExportEncSaveState] = useState<SaveState>("idle");
+  const [exportEncSaveError, setExportEncSaveError] = useState<string | null>(null);
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
   const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
@@ -3137,6 +3149,60 @@ export function SettingsPage() {
               },
               setFlashZipSaveState,
               setFlashZipSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STORAGE: Export encryption (age). Optionally seals the PLAIN export   */}
+      {/* artifacts (container/VM tar.gz + xml, flash zip) with age recipients. */}
+      {/* Applies across domains, so it is not gated on any single domain.      */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Card title={t("export.encrypt.title")}>
+        <p className="text-xs text-carbon-textMuted -mt-1">{t("export.encrypt.hint")}</p>
+        <ToggleRow
+          label={t("export.encrypt.enable")}
+          description={t("export.encrypt.enableHint")}
+          checked={settings.exportEncryptEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, exportEncryptEnabled: v } : prev)
+          }
+        />
+        {settings.exportEncryptEnabled && (
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
+            <textarea
+              value={settings.exportAgeRecipients}
+              spellCheck={false}
+              rows={3}
+              onChange={(e) =>
+                setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
+              }
+              placeholder={t("export.encrypt.recipientsPlaceholder")}
+              className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            />
+            <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
+            {!settings.exportAgeRecipients.trim() && (
+              <span className="text-xs text-statusFail">{t("export.encrypt.recipientsRequired")}</span>
+            )}
+          </label>
+        )}
+        <SaveBar
+          state={exportEncSaveState}
+          error={exportEncSaveError}
+          disabled={settings.exportEncryptEnabled && !settings.exportAgeRecipients.trim()}
+          onSave={() =>
+            void save(
+              {
+                exportEncryptEnabled: settings.exportEncryptEnabled,
+                exportAgeRecipients: settings.exportAgeRecipients,
+              },
+              setExportEncSaveState,
+              setExportEncSaveError
             )
           }
           t={t}

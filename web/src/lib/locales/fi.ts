@@ -346,6 +346,17 @@ const fi: Partial<Translations> = {
   "cloud.title": "Pilvitunnukset (S3 / restic REST)",
   "cloud.hint": "Tunnukset etä-restic-taustajärjestelmille, ilman rclonea. Aseta tallennuksen jälkeen varmuuskopiopolku etärepoon, esim. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path tai sftp:user@host:/repo. Salaisuudet tallennetaan salattuina eikä niitä näytetä uudelleen.",
   "cloud.secretSet": "tallennettu — jätä tyhjäksi säilyttääksesi",
+  "cloud.storageClass.label": "Off-site-tallennusluokka",
+  "cloud.storageClass.default": "(palveluntarjoajan oletus)",
+  "cloud.storageClass.hint": "Koskee vain natiiveja S3-taustajärjestelmiä (arkistot, jotka alkavat s3:). Syväarkistotasoja (Glacier Flexible Retrieval, Deep Archive) ei tarjota tarkoituksella, koska ne rikkovat restic-palautuksen.",
+  "export.encrypt.title": "Salaa selkokieliset viennit (age)",
+  "export.encrypt.hint": "restic-arkistot ovat jo salattuja. Tämä salaa valinnaisesti selkokieliset vientiartefaktit (kontin ja virtuaalikoneen tar.gz sekä niiden xml, ja flash-zip) age:lla, jotta ne voi tallentaa tai siirtää turvallisesti pois palvelimelta.",
+  "export.encrypt.enable": "Salaa viennit age:lla",
+  "export.encrypt.enableHint": "Kun päällä, kontin, virtuaalikoneen ja flashin viennit sinetöidään age:lla ennen levylle kirjoittamista, ja ne saavat .age-päätteen.",
+  "export.encrypt.recipients": "age-vastaanottajat",
+  "export.encrypt.recipientsHint": "Yksi vastaanottaja riviä kohti. Käytä age-julkista avainta (age1...) tai SSH-julkista avainta. Vastaava yksityinen avain tarvitaan salauksen purkuun palvelimen ulkopuolella. Jos salaus on päällä eikä kelvollista vastaanottajaa ole, vienti epäonnistuu selkokielisen tekstin kirjoittamisen sijaan.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Lisää vähintään yksi age-vastaanottaja, muuten salattu vienti epäonnistuu.",
   "rclone.save": "Tallenna määritys",
 
   // Integrity (restic check)

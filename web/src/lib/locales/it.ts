@@ -346,6 +346,17 @@ const it: Partial<Translations> = {
   "cloud.title": "Credenziali cloud (S3 / restic REST)",
   "cloud.hint": "Credenziali per backend restic remoti, senza rclone. Dopo il salvataggio, imposta un percorso di backup su un repo remoto, es. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path o sftp:user@host:/repo. I segreti sono memorizzati cifrati e non vengono più mostrati.",
   "cloud.secretSet": "salvato — lascia vuoto per mantenere",
+  "cloud.storageClass.label": "Classe di archiviazione off-site",
+  "cloud.storageClass.default": "(predefinito del provider)",
+  "cloud.storageClass.hint": "Si applica solo ai backend S3 nativi (repository che iniziano con s3:). I livelli di archivio profondo (Glacier Flexible Retrieval, Deep Archive) non vengono offerti di proposito perché interrompono il ripristino di restic.",
+  "export.encrypt.title": "Cifra le esportazioni in chiaro (age)",
+  "export.encrypt.hint": "I repository restic sono già cifrati. Questo cifra facoltativamente gli artefatti di esportazione in chiaro (tar.gz di container e VM con i relativi xml, e lo zip flash) con age, così da poterli archiviare o spostare fuori dal server in sicurezza.",
+  "export.encrypt.enable": "Cifra le esportazioni con age",
+  "export.encrypt.enableHint": "Se attivo, le esportazioni di container, VM e flash vengono sigillate con age prima di essere scritte su disco e ricevono il suffisso .age.",
+  "export.encrypt.recipients": "Destinatari age",
+  "export.encrypt.recipientsHint": "Un destinatario per riga. Usa una chiave pubblica age (age1...) o una chiave pubblica SSH. Per decifrare fuori dal server serve la chiave privata corrispondente. Con la cifratura attiva e nessun destinatario valido, l'esportazione fallisce invece di scrivere testo in chiaro.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Aggiungi almeno un destinatario age, altrimenti l'esportazione cifrata fallirà.",
   "rclone.save": "Salva config",
 
   // Integrity (restic check)

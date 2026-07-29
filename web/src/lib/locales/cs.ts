@@ -344,6 +344,17 @@ const cs: Partial<Translations> = {
   "cloud.title": "Přihlašovací údaje cloudu (S3 / restic REST)",
   "cloud.hint": "Údaje pro vzdálená restic úložiště, bez rclone. Po uložení nastav cestu zálohy na vzdálené repo, např. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path nebo sftp:user@host:/repo. Tajné údaje se ukládají šifrovaně a už se nezobrazí.",
   "cloud.secretSet": "uloženo — ponech prázdné pro zachování",
+  "cloud.storageClass.label": "Třída úložiště off-site",
+  "cloud.storageClass.default": "(výchozí poskytovatele)",
+  "cloud.storageClass.hint": "Platí pouze pro nativní backendy S3 (repozitáře začínající s3:). Úrovně hlubokého archivu (Glacier Flexible Retrieval, Deep Archive) se záměrně nenabízejí, protože rozbíjejí obnovu restic.",
+  "export.encrypt.title": "Šifrovat prosté exporty (age)",
+  "export.encrypt.hint": "Repozitáře restic jsou už šifrované. Toto volitelně šifruje prosté artefakty exportu (tar.gz kontejneru a VM spolu s jejich xml a flash zip) pomocí age, aby je bylo možné bezpečně uložit nebo přesunout mimo server.",
+  "export.encrypt.enable": "Šifrovat exporty pomocí age",
+  "export.encrypt.enableHint": "Když je zapnuto, exporty kontejneru, VM a flash se před zápisem na disk zapečetí pomocí age a získají příponu .age.",
+  "export.encrypt.recipients": "Příjemci age",
+  "export.encrypt.recipientsHint": "Jeden příjemce na řádek. Použijte veřejný klíč age (age1...) nebo veřejný klíč SSH. K dešifrování mimo server je potřeba odpovídající soukromý klíč. Pokud je šifrování zapnuté a není platný příjemce, export selže místo zápisu prostého textu.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Přidejte alespoň jednoho příjemce age, jinak šifrovaný export selže.",
   "rclone.save": "Uložit konfiguraci",
 
   // Integrity (restic check)

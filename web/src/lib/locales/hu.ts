@@ -346,6 +346,17 @@ const hu: Partial<Translations> = {
   "cloud.title": "Felhő hitelesítő adatok (S3 / restic REST)",
   "cloud.hint": "Hitelesítő adatok távoli restic backendekhez, rclone nélkül. Mentés után állíts be egy biztonsági mentési útvonalat egy távoli repóra, pl. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo, b2:bucket:path vagy sftp:user@host:/repo. A titkok titkosítva tárolódnak és többé nem jelennek meg.",
   "cloud.secretSet": "elmentve — hagyd üresen a megtartáshoz",
+  "cloud.storageClass.label": "Off-site tárolási osztály",
+  "cloud.storageClass.default": "(szolgáltató alapértelmezése)",
+  "cloud.storageClass.hint": "Csak natív S3 háttértárakra vonatkozik (s3: kezdetű tárolók). A mély archív szinteket (Glacier Flexible Retrieval, Deep Archive) szándékosan nem kínáljuk fel, mert megtörik a restic visszaállítást.",
+  "export.encrypt.title": "Sima exportok titkosítása (age)",
+  "export.encrypt.hint": "A restic tárolók már titkosítottak. Ez opcionálisan titkosítja a sima exportált fájlokat (konténer és VM tar.gz az xml fájljaikkal, valamint a flash zip) age segítségével, hogy biztonságosan tárolhatók vagy mozgathatók legyenek a szerveren kívülre.",
+  "export.encrypt.enable": "Exportok titkosítása age-dzsel",
+  "export.encrypt.enableHint": "Ha be van kapcsolva, a konténer-, VM- és flash-exportok age-dzsel lezárásra kerülnek, mielőtt lemezre írnák őket, és .age kiterjesztést kapnak.",
+  "export.encrypt.recipients": "age címzettek",
+  "export.encrypt.recipientsHint": "Soronként egy címzett. Használj age nyilvános kulcsot (age1...) vagy SSH nyilvános kulcsot. A szerveren kívüli visszafejtéshez a hozzá tartozó privát kulcs szükséges. Ha a titkosítás be van kapcsolva és nincs érvényes címzett, az export hibával leáll ahelyett, hogy sima szöveget írna.",
+  "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
+  "export.encrypt.recipientsRequired": "Adj hozzá legalább egy age címzettet, különben a titkosított export meghiúsul.",
   "rclone.save": "Konfiguráció mentése",
 
   // Integrity (restic check)
