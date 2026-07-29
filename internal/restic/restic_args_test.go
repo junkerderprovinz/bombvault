@@ -558,3 +558,90 @@ func TestSubcommandSkipsGlobalFlagValues(t *testing.T) {
 		})
 	}
 }
+
+// TestStorageClassFlags pins the off-site S3 storage-class selector (Feature 1):
+// the `-o s3.storage-class=<class>` GLOBAL option is emitted ONLY for a native
+// s3: repo AND a whitelisted, restore-readable class, placed right after the repo
+// flag (before the subcommand). It is omitted for a non-s3 (rclone:) repo, an
+// empty class, and a non-whitelisted class even if one reaches the builder.
+func TestStorageClassFlags(t *testing.T) {
+	const s3Repo = "s3:s3.amazonaws.com/bucket/repo"
+	const rcloneRepo = "rclone:remote:bucket/repo"
+
+	t.Run("InitArgs s3 emits class after repo flag", func(t *testing.T) {
+		got := InitArgs(s3Repo, Mode{Encrypted: true, StorageClass: "STANDARD_IA"})
+		want := []string{"-r", s3Repo, "-o", "s3.storage-class=STANDARD_IA", "init"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("BackupArgs s3 emits class before retry-lock and subcommand", func(t *testing.T) {
+		got := BackupArgs(s3Repo, []string{"/p"}, nil, Mode{Encrypted: true, StorageClass: "GLACIER_IR"})
+		// Expect -r <repo> -o s3.storage-class=GLACIER_IR --retry-lock 5m backup ...
+		want := []string{"-r", s3Repo, "-o", "s3.storage-class=GLACIER_IR", "--retry-lock", resticRetryLock, "backup"}
+		if len(got) < len(want) || !reflect.DeepEqual(got[:len(want)], want) {
+			t.Fatalf("got prefix %v, want %v", got, want)
+		}
+		if subcommand(got) != "backup" {
+			t.Fatalf("subcommand misidentified: %q", subcommand(got))
+		}
+	})
+	t.Run("CopyArgs s3 dest emits class after repo flag", func(t *testing.T) {
+		got := CopyArgs(s3Repo, "s3:src/repo", nil, Limits{}, Mode{Encrypted: true, StorageClass: "STANDARD"})
+		want := []string{"-r", s3Repo, "-o", "s3.storage-class=STANDARD", "--retry-lock", resticRetryLock, "copy", "--from-repo", "s3:src/repo"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+		if subcommand(got) != "copy" {
+			t.Fatalf("subcommand misidentified: %q", subcommand(got))
+		}
+	})
+	t.Run("rclone repo omits the class", func(t *testing.T) {
+		for _, got := range [][]string{
+			InitArgs(rcloneRepo, Mode{Encrypted: true, StorageClass: "STANDARD_IA"}),
+			BackupArgs(rcloneRepo, []string{"/p"}, nil, Mode{Encrypted: true, StorageClass: "STANDARD_IA"}),
+			CopyArgs(rcloneRepo, "rclone:src", nil, Limits{}, Mode{Encrypted: true, StorageClass: "STANDARD_IA"}),
+		} {
+			if argsContain(got, "-o") {
+				t.Fatalf("rclone repo must not emit -o storage class: %v", got)
+			}
+		}
+	})
+	t.Run("empty class omits the flag", func(t *testing.T) {
+		got := InitArgs(s3Repo, Mode{Encrypted: true, StorageClass: ""})
+		want := []string{"-r", s3Repo, "init"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("non-whitelisted class is never emitted", func(t *testing.T) {
+		for _, bad := range []string{"GLACIER", "DEEP_ARCHIVE", "BOGUS"} {
+			got := InitArgs(s3Repo, Mode{Encrypted: true, StorageClass: bad})
+			if argsContain(got, "-o") {
+				t.Fatalf("non-whitelisted class %q must not be emitted: %v", bad, got)
+			}
+		}
+	})
+	t.Run("StorageClassAllowed matches the whitelist and rejects archival tiers", func(t *testing.T) {
+		for _, ok := range AllowedStorageClasses {
+			if !StorageClassAllowed(ok) {
+				t.Fatalf("%q should be allowed", ok)
+			}
+		}
+		for _, no := range []string{"GLACIER", "DEEP_ARCHIVE", "", "standard_ia", "unknown"} {
+			if StorageClassAllowed(no) {
+				t.Fatalf("%q must not be allowed", no)
+			}
+		}
+	})
+}
+
+// argsContain reports whether needle appears as an element of args.
+func argsContain(args []string, needle string) bool {
+	for _, a := range args {
+		if a == needle {
+			return true
+		}
+	}
+	return false
+}

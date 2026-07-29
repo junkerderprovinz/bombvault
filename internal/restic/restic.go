@@ -63,6 +63,60 @@ type Mode struct {
 	// backup/restore paths leave it false and lock normally. Snapshot listings are
 	// always lock-free regardless (SnapshotsArgs hard-codes --no-lock).
 	NoLock bool
+	// StorageClass is the S3 storage class for restic writes to a NATIVE s3:
+	// backend (empty = the provider default). It is emitted as
+	// `-o s3.storage-class=<class>` only for s3: repos AND only for a whitelisted,
+	// restore-readable class (see storageClassFlags / AllowedStorageClasses); it is
+	// ignored for any other backend (rclone:, local, ...) where the class belongs in
+	// rclone.conf, and for a non-whitelisted value. Not a secret (a class name), so
+	// it may travel in argv unlike the credentials in Env.
+	StorageClass string
+}
+
+// AllowedStorageClasses is the whitelist of S3 storage classes BombVault will emit
+// for restic writes. It is restricted to tiers restic can read back SYNCHRONOUSLY,
+// so an archival class cuts cost without silently breaking restore/copy/check.
+// GLACIER (Flexible Retrieval) and DEEP_ARCHIVE are deliberately excluded: they
+// require an asynchronous thaw before the objects are readable, which breaks
+// restic restore. Both the POST /api/cloud validation and storageClassFlags gate
+// on this set, so an unknown or excluded value is never persisted nor emitted.
+var AllowedStorageClasses = []string{
+	"STANDARD",
+	"STANDARD_IA",
+	"ONEZONE_IA",
+	"INTELLIGENT_TIERING",
+	"GLACIER_IR",
+}
+
+// allowedStorageClassSet is AllowedStorageClasses as a lookup set.
+var allowedStorageClassSet = func() map[string]bool {
+	m := make(map[string]bool, len(AllowedStorageClasses))
+	for _, c := range AllowedStorageClasses {
+		m[c] = true
+	}
+	return m
+}()
+
+// StorageClassAllowed reports whether class is a whitelisted, restore-readable S3
+// storage class (see AllowedStorageClasses). The empty string ("provider default")
+// is NOT a member, so callers test it separately.
+func StorageClassAllowed(class string) bool { return allowedStorageClassSet[class] }
+
+// storageClassFlags returns restic's `-o s3.storage-class=<class>` option, but
+// ONLY when class is a whitelisted, restore-readable class (StorageClassAllowed)
+// AND repo uses restic's native s3: backend. For any other backend the class is
+// configured in rclone.conf, so emitting it on the restic argv would be wrong;
+// for an empty or non-whitelisted class it returns nil. This is a GLOBAL restic
+// option (-o), so callers place it before the subcommand, right after the repo
+// flag (same slot as retryLockFlags / limitFlags).
+func storageClassFlags(repo, class string) []string {
+	if class == "" || !StorageClassAllowed(class) {
+		return nil
+	}
+	if !strings.HasPrefix(repo, "s3:") {
+		return nil
+	}
+	return []string{"-o", "s3.storage-class=" + class}
 }
 
 // Summary holds the fields we extract from restic's --json backup summary line.
@@ -187,7 +241,9 @@ func retryLockFlags() []string { return []string{"--retry-lock", resticRetryLock
 
 // InitArgs returns the argv slice (without the binary name) for `restic init`.
 func InitArgs(repo string, m Mode) []string {
-	args := append(repoFlag(repo), "init")
+	args := repoFlag(repo)
+	args = append(args, storageClassFlags(repo, m.StorageClass)...)
+	args = append(args, "init")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -216,6 +272,7 @@ func CatConfigArgs(repo string, m Mode) []string {
 // (arg-injection guard).
 func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...string) []string {
 	args := repoFlag(repo)
+	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, "backup")
 	if !m.Encrypted {
@@ -262,6 +319,7 @@ func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
 // before the subcommand as restic requires for global flags.
 func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) []string {
 	args := repoFlag(destRepo)
+	args = append(args, storageClassFlags(destRepo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(lim)...)
 	args = append(args, "copy", "--from-repo", srcRepo)
@@ -1037,17 +1095,19 @@ func isBoilerplateReason(line string) bool {
 }
 
 // subcommandValueFlags are restic's GLOBAL flags that take a value and are
-// placed before the subcommand word (see repoFlag, retryLockFlags, limitFlags):
-// -r <repo>, --retry-lock <duration> (every lock-taking op), and
-// --limit-upload/--limit-download <KiB/s> (CopyArgs). Without skipping their
-// values, subcommand() below would misidentify the flag's VALUE (e.g. "5m",
-// a limit number) as the subcommand name, since it is otherwise just "the
+// placed before the subcommand word (see repoFlag, retryLockFlags, limitFlags,
+// storageClassFlags): -r <repo>, --retry-lock <duration> (every lock-taking op),
+// --limit-upload/--limit-download <KiB/s> (CopyArgs), and -o <key=value> (the
+// s3.storage-class option). Without skipping their values, subcommand() below
+// would misidentify the flag's VALUE (e.g. "5m", a limit number, or
+// "s3.storage-class=...") as the subcommand name, since it is otherwise just "the
 // first arg not starting with -".
 var subcommandValueFlags = map[string]bool{
 	"-r":               true,
 	"--retry-lock":     true,
 	"--limit-upload":   true,
 	"--limit-download": true,
+	"-o":               true, // -o s3.storage-class=<class> (storageClassFlags)
 }
 
 // subcommand extracts the subcommand name from an args slice for use in error
