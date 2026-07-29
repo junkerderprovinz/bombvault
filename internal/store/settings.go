@@ -169,6 +169,17 @@ type Settings struct {
 	// notification (once per overdue episode) when a domain's backups are
 	// overdue by the dashboard's own RPO rule. Default on.
 	WatchdogEnabled bool
+	// ExportEncryptEnabled seals the PLAIN export paths (tool-free tar.gz / xml /
+	// zip exports) with age public-key encryption when true. Off by default, so
+	// exports stay byte-identical plaintext until the user opts in. The restic
+	// repository is always encrypted independently of this.
+	ExportEncryptEnabled bool
+	// ExportAgeRecipients is the whitespace/newline-separated list of age recipients
+	// (age1... public keys or SSH public keys) the exports are encrypted to. These
+	// are PUBLIC keys, so this is NOT a secret and is stored/returned as-is. With
+	// ExportEncryptEnabled on and this empty/invalid, every export path fails loudly
+	// rather than writing plaintext.
+	ExportAgeRecipients string
 }
 
 // GetSettings returns the current app settings.
@@ -192,14 +203,15 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
 		       prune_image_after_update, session_epoch, restic_cache_max_mb,
 		       digest_enabled, digest_schedule,
-		       catch_up_missed, watchdog_enabled
+		       catch_up_missed, watchdog_enabled,
+		       export_encrypt_enabled, export_age_recipients
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
-	var catchUpMissed, watchdogEnabled int
+	var catchUpMissed, watchdogEnabled, exportEncryptEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -220,6 +232,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&pruneImageAfterUpdate, &s.SessionEpoch, &s.ResticCacheMaxMB,
 		&digestEnabled, &s.DigestSchedule,
 		&catchUpMissed, &watchdogEnabled,
+		&exportEncryptEnabled, &s.ExportAgeRecipients,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -247,6 +260,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.DigestEnabled = digestEnabled != 0
 	s.CatchUpMissed = catchUpMissed != 0
 	s.WatchdogEnabled = watchdogEnabled != 0
+	s.ExportEncryptEnabled = exportEncryptEnabled != 0
 	return s, nil
 }
 
@@ -322,7 +336,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  digest_enabled               = ?,
 		  digest_schedule              = ?,
 		  catch_up_missed              = ?,
-		  watchdog_enabled             = ?
+		  watchdog_enabled             = ?,
+		  export_encrypt_enabled       = ?,
+		  export_age_recipients        = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -348,6 +364,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.PruneImageAfterUpdate), s.SessionEpoch, s.ResticCacheMaxMB,
 		boolInt(s.DigestEnabled), s.DigestSchedule,
 		boolInt(s.CatchUpMissed), boolInt(s.WatchdogEnabled),
+		boolInt(s.ExportEncryptEnabled), s.ExportAgeRecipients,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
