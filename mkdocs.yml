@@ -12,27 +12,34 @@ copyright: Copyright (C) 2026 Junker der Provinz. Licensed AGPL-3.0.
 theme:
   name: material
   language: en
+  logo: assets/logo.svg
+  favicon: assets/favicon.png
+  font:
+    text: IBM Plex Sans
+    code: IBM Plex Mono
   palette:
-    # Light scheme (IBM Carbon inspired: black chrome, blue accent).
+    # Light scheme (IBM Carbon: black chrome, BombVault sunflower-yellow accent).
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: black
-      accent: light blue
+      accent: yellow
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    # Dark scheme (slate over a near-black Carbon #161616 background).
+    # Dark scheme (Carbon #161616 background, the BombVault default look).
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: black
-      accent: light blue
+      accent: yellow
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   features:
-    - navigation.tabs
-    - navigation.sections
+    # No top tabs: the left rail always shows the whole page tree, and
+    # toc.integrate expands only the active page's sections underneath it.
     - navigation.top
+    - navigation.footer
+    - navigation.instant
     - content.code.copy
     - search.suggest
     - toc.integrate
