@@ -16,3 +16,9 @@ linters:
         text: "G304|G306"
       - path: node_modules/
         linters: [govet]
+      # t.Fatal / t.Fatalf guard the deref, but staticcheck 2.12.x does not treat
+      # them as terminating and flags SA5011 (possible nil deref) on the idiomatic
+      # "if x == nil { t.Fatal(...) }; x.field" test pattern. Suppress it in tests.
+      - path: '_test\.go'
+        linters: [staticcheck]
+        text: "SA5011"
