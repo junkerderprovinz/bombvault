@@ -790,9 +790,11 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 }
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
-// source: the off-site policy for "offsite", the local policy otherwise.
+// source: the off-site policy for any off-site source, the local policy
+// otherwise. (The off-site policy is the settings-level one; per-target
+// retention is a later stage — bare "offsite" is unchanged.)
 func (s *Service) retentionPolicyForSource(settings store.Settings, source string) restic.RetentionPolicy {
-	if source == "offsite" {
+	if isOffsiteSource(source) {
 		return s.offsiteRetentionPolicy(settings)
 	}
 	return s.retentionPolicy(settings)
@@ -4075,7 +4077,7 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 	if !validResourceName(name) {
 		return filesRestorePlan{}, errors.New("invalid container name")
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return filesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
@@ -4357,7 +4359,7 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 	if !validResourceName(name) {
 		return toPathRestorePlan{}, errors.New("invalid container name")
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return toPathRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
@@ -4473,7 +4475,7 @@ func (s *Service) DiffSnapshots(ctx context.Context, name, source, snap1, snap2 
 	if !validResourceName(name) {
 		return restic.DiffResult{}, errors.New("invalid container name")
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return restic.DiffResult{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snap1) || !backup.ValidSnapshotID(snap2) {
@@ -4514,7 +4516,7 @@ func (s *Service) TagSnapshot(ctx context.Context, name, source, snapID string, 
 	if !validResourceName(name) {
 		return errors.New("invalid container name")
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapID) {
@@ -4677,7 +4679,9 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	// Bulk-deleting from an immutable off-site repo is refused, same gate as
 	// DeleteSnapshot/PruneDomain: this path runs Forget with prune=true, exactly
 	// the destructive op append-only exists to block. The local repo is unaffected.
-	if source == "offsite" && offsiteImmutableFor("vms", settings) {
+	// The gate is per-target: bare "offsite" checks the primary target's flag (==
+	// today), "offsite:<id>" checks that specific target's.
+	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, "vms", source) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
@@ -4708,9 +4712,9 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	}
 
 	// Only drop the store target when clearing the PRIMARY (local) copy: the target
-	// keeps the VM restorable from off-site, so purging only the off-site replica
+	// keeps the VM restorable from off-site, so purging any off-site replica
 	// must not strand it.
-	if source != "offsite" {
+	if !isOffsiteSource(source) {
 		if err := s.store.DeleteVMTarget(name); err != nil {
 			return fmt.Errorf("delete vm target: %w", err)
 		}
@@ -6070,7 +6074,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	if err != nil {
 		return fileSetRestorePlan{}, errFileSetNotFound
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return fileSetRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
@@ -6245,7 +6249,7 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 	if err != nil {
 		return fileSetFilesRestorePlan{}, errFileSetNotFound
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return fileSetFilesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
@@ -7095,8 +7099,8 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
-	switch source {
-	case "local", "offsite":
+	switch {
+	case source == "local", isOffsiteSource(source):
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown source %q", source)
 	}
@@ -7639,17 +7643,20 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 }
 
 // repoFor resolves the restic repo path for a domain ("containers"|"vms"|
-// "flash"|"config"|"files") and source. source "offsite" selects the configured
-// off-site repo (erroring if none is set); anything else ("" / "local") selects
-// the primary local repo. This lets browse/restore/maintenance operate on
-// either copy.
+// "flash"|"config"|"files") and source. An off-site source selects the
+// configured off-site repo (erroring if none is set); anything else ("" /
+// "local") selects the primary local repo. This lets browse/restore/maintenance
+// operate on either copy. The off-site source is either the bare "offsite" (the
+// domain's PRIMARY target — the same repo as today) or "offsite:<id>" (a specific
+// target); offsiteTargetForSource does the parsing so no caller pattern-matches
+// the literal.
 func (s *Service) repoFor(settings store.Settings, domain, source string) (string, error) {
-	if source == "offsite" {
-		loc := s.offsiteRepoFor(domain, settings)
-		if loc == "" {
+	if isOffsiteSource(source) {
+		target, ok := s.offsiteTargetForSource(settings, domain, source)
+		if !ok {
 			return "", errors.New("no off-site repo configured for this domain")
 		}
-		return s.resolveRepo(loc)
+		return s.resolveRepo(target.Repo)
 	}
 	switch domain {
 	case "containers":
@@ -7860,8 +7867,9 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	}
 	// An immutable off-site repo is never pruned from this box (append-only is
 	// the point). Only the offsite+immutable combination is gated — the local
-	// repo stays fully maintainable.
-	if source == "offsite" && offsiteImmutableFor(domain, settings) {
+	// repo stays fully maintainable. Per-target: bare "offsite" uses the primary
+	// target's flag (== today), "offsite:<id>" that specific target's.
+	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, domain, source) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to prune yet"); err != nil {
@@ -7941,8 +7949,9 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	}
 	// Deleting snapshots from an immutable off-site repo is refused (same gate
 	// as PruneDomain): append-only means credentials on this box cannot erase
-	// off-site history. The local repo is unaffected.
-	if source == "offsite" && offsiteImmutableFor(domain, settings) {
+	// off-site history. The local repo is unaffected. Per-target: bare "offsite"
+	// uses the primary target's flag (== today), "offsite:<id>" that target's.
+	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, domain, source) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
