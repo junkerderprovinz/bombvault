@@ -751,14 +751,42 @@ func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.Retenti
 	}
 }
 
-// offsiteLimits maps the stored bandwidth caps to restic transfer limits (KiB/s)
-// for off-site replication. All-zero (the default) means unlimited, so the WAN is
-// never throttled until the user opts in.
-func (s *Service) offsiteLimits(settings store.Settings) restic.Limits {
-	return restic.Limits{
-		UploadKBps:   settings.OffsiteLimitUpload,
-		DownloadKBps: settings.OffsiteLimitDownload,
+// targetOffsiteRetentionPolicy is the per-DESTINATION off-site keep-policy (the
+// plural successor to offsiteRetentionPolicy, which reads the single global
+// columns). All-zero means keep-everything, exactly as the global default. For a
+// backfilled N=1 target these fields equal the global policy, so behavior is
+// unchanged.
+func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
+	return restic.RetentionPolicy{
+		KeepLast:    t.RetentionKeepLast,
+		KeepDaily:   t.RetentionKeepDaily,
+		KeepWeekly:  t.RetentionKeepWeekly,
+		KeepMonthly: t.RetentionKeepMonthly,
 	}
+}
+
+// targetOffsiteLimits is the per-DESTINATION bandwidth cap (KiB/s). All-zero means
+// unlimited. For a backfilled N=1 target these equal the global caps.
+func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
+	return restic.Limits{
+		UploadKBps:   t.LimitUpload,
+		DownloadKBps: t.LimitDownload,
+	}
+}
+
+// offsiteModeForTarget builds the restic mode for one off-site DESTINATION: it
+// starts from the global mode (ModeFor already sets StorageClass to the global S3
+// class from CloudCreds) and overrides the class ONLY when this destination sets
+// its own. A target with an empty StorageClass — e.g. the stage-1 backfilled N=1
+// target, which the pure-SQL migration could not populate — therefore PRESERVES
+// the global class. The class is never unconditionally overwritten, which would
+// wipe it to empty for existing single-off-site installs.
+func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
+	mode := s.ModeFor(settings)
+	if target.StorageClass != "" {
+		mode.StorageClass = target.StorageClass
+	}
+	return mode
 }
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
@@ -880,9 +908,86 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 	}
 }
 
+// offsiteTargetsFor returns a domain's ENABLED off-site destinations from the
+// store, in stable per-domain order (sort_order, then created_at). It is the
+// plural successor to the single-repo Settings.*Offsite* columns: a backfilled
+// single-off-site install yields a one-element slice, an unconfigured domain an
+// empty one. A missing store (used by pure-settings unit tests) or a query error
+// falls back to empty so callers apply their Settings fallback.
+func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
+	if s.store == nil {
+		return nil
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		log.Printf("api: offsite %s: list targets failed (falling back to settings): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return nil
+	}
+	var out []store.OffsiteTarget
+	for _, t := range targets {
+		if t.Enabled {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// offsiteReplicationTargets is the destination set copyToOffsite replicates a
+// domain to: the domain's enabled off-site targets, or — when no target row
+// exists (a fresh install configured only through the legacy Settings columns, or
+// one configured after the stage-1 backfill ran) — a single target synthesized
+// from those Settings columns. This keeps N=1 byte-identical whether or not the
+// row was backfilled.
+func (s *Service) offsiteReplicationTargets(domain string, settings store.Settings) []store.OffsiteTarget {
+	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
+		return ts
+	}
+	loc := offsiteRepoFromSettings(domain, settings)
+	if loc == "" {
+		return nil
+	}
+	return []store.OffsiteTarget{settingsOffsiteTarget(domain, settings, loc)}
+}
+
+// settingsOffsiteTarget synthesizes the one off-site target the stage-1 backfill
+// would have produced from the legacy Settings.*Offsite* columns, so the target
+// loop reproduces today's single-destination behavior for an un-backfilled
+// install. StorageClass stays "" on purpose: the global S3 class lives in
+// CloudCreds and is supplied by ModeFor, and the "" here preserves it (see the
+// per-target mode in copyToOffsiteTarget).
+func settingsOffsiteTarget(domain string, settings store.Settings, loc string) store.OffsiteTarget {
+	return store.OffsiteTarget{
+		Domain:               domain,
+		Name:                 "Primary",
+		Repo:                 loc,
+		StorageClass:         "",
+		Immutable:            offsiteImmutableFor(domain, settings),
+		Schedule:             offsiteScheduleFromSettings(domain, settings),
+		RetentionKeepLast:    settings.OffsiteRetentionKeepLast,
+		RetentionKeepDaily:   settings.OffsiteRetentionKeepDaily,
+		RetentionKeepWeekly:  settings.OffsiteRetentionKeepWeekly,
+		RetentionKeepMonthly: settings.OffsiteRetentionKeepMonthly,
+		LimitUpload:          settings.OffsiteLimitUpload,
+		LimitDownload:        settings.OffsiteLimitDownload,
+		GrowthBudgetGB:       settings.OffsiteGrowthBudgetGB,
+		Enabled:              true,
+	}
+}
+
 // offsiteRepoFor returns the configured off-site repo location for a domain, or
-// "" when none is set.
+// "" when none is set. It is a thin wrapper over the first enabled off-site
+// target, falling back to the legacy Settings column when no target row exists so
+// nothing regresses (N=1: the backfilled target's Repo equals that column).
 func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string {
+	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
+		return ts[0].Repo
+	}
+	return offsiteRepoFromSettings(domain, settings)
+}
+
+// offsiteRepoFromSettings reads the legacy single-repo off-site location straight
+// off the Settings columns (the fallback source for offsiteRepoFor).
+func offsiteRepoFromSettings(domain string, settings store.Settings) string {
 	switch domain {
 	case "containers":
 		return settings.ContainersOffsite
@@ -900,8 +1005,19 @@ func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string 
 
 // offsiteScheduleFor returns the per-domain off-site replication schedule. Empty
 // means "replicate after every local backup"; a non-empty cadence means
-// replication is driven by the scheduler instead (decoupled from backups).
+// replication is driven by the scheduler instead (decoupled from backups). Thin
+// wrapper over the first enabled off-site target, falling back to the legacy
+// Settings column when no target row exists.
 func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) string {
+	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
+		return ts[0].Schedule
+	}
+	return offsiteScheduleFromSettings(domain, settings)
+}
+
+// offsiteScheduleFromSettings reads the legacy per-domain off-site schedule
+// straight off the Settings columns (the fallback source for offsiteScheduleFor).
+func offsiteScheduleFromSettings(domain string, settings store.Settings) string {
 	switch domain {
 	case "containers":
 		return settings.ContainersOffsiteSchedule
@@ -1666,52 +1782,93 @@ func (s *Service) CollectStatsOnStartup() {
 	}
 }
 
-// copyToOffsite replicates a domain's local repo to its off-site repo with
-// `restic copy` (the local repo stays primary). It creates the off-site repo on
-// first use and copies everything not already there (restic skips dupes, so the
-// first run seeds history and later runs ship just the new snapshot). Returns the
-// (scrubbed) error so on-demand/scheduled callers can surface it; it never logs
-// the off-site location, which can embed credentials. Lock-free — the caller
-// holds the domain lock.
-func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) (err error) {
-	loc := s.offsiteRepoFor(domain, settings)
-	if loc == "" {
+// copyToOffsite replicates a domain's local repo to its off-site DESTINATIONS with
+// `restic copy` (the local repo stays primary). It resolves the domain's off-site
+// targets (one per domain for a single-off-site install) and replicates to each in
+// turn. It creates each off-site repo on first use and copies everything not
+// already there (restic skips dupes, so the first run seeds history and later runs
+// ship just the new snapshot). Returns the (scrubbed) error so on-demand/scheduled
+// callers can surface it; it never logs an off-site location, which can embed
+// credentials. Lock-free — the caller holds the domain lock.
+//
+// The passed-in mode is superseded by a per-target mode built inside the loop (so
+// each destination carries its own S3 storage class); it is kept in the signature
+// only to keep call-sites compiling.
+func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, _ restic.Mode, localRepo string) (err error) {
+	targets := s.offsiteReplicationTargets(domain, settings)
+	if len(targets) == 0 {
 		return errors.New("no off-site repo configured for this domain")
-	}
-	// Persist this replication attempt to the off-site run history (begin now, close
-	// on the way out via defer with outcome + scrubbed error). restic copy has no
-	// machine-readable progress, so only duration + outcome are recorded. Bookkeeping
-	// is best-effort: a store error is logged and never fails the replication.
-	runID, recErr := s.store.RecordOffsiteRun(domain, time.Now().Unix())
-	if recErr != nil {
-		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
-		runID = 0
 	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
 	// the reserved domain target id, like prune/verify) so the replication shows
-	// up in the dashboard Activity Log/Run History as persisted history. The
-	// offsite_runs recording above stays EXACTLY as-is — the scorecard's currency
-	// checks depend on it. After the batching (#95) this is ONE row per domain per
-	// scheduled run, not one per container. Best-effort like the rest.
+	// up in the dashboard Activity Log/Run History as persisted history. This stays
+	// per-DOMAIN (one row per domain per call) — per-target activity/progress is a
+	// later stage, and with a single target it is identical to before. Best-effort.
 	activityRunID, aErr := s.store.StartRun(domainRunTargetID(domain), "offsite")
 	if aErr != nil {
 		log.Printf("api: offsite %s: could not start activity run (continuing): %v", domain, aErr) //nolint:gosec // G706: domain is a fixed literal
 		activityRunID = ""
 	}
-	// ok is set true ONLY on the explicit success return below, so an unwinding
-	// panic (named-return err still nil) can't stamp a phantom successful run — the
+	// ok is set true ONLY when every target succeeded, so an unwinding panic
+	// (named-return err still nil) can't stamp a phantom successful run — the
 	// deferred finish then records a failure, not a false success.
 	var ok bool
 	defer func() {
-		if activityRunID != "" {
-			status := "failed"
-			if ok {
-				status = "success"
-			}
-			if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(err)); fErr != nil {
-				log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
-			}
+		if activityRunID == "" {
+			return
 		}
+		status := "failed"
+		if ok {
+			status = "success"
+		}
+		if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(err)); fErr != nil {
+			log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
+	// Publish an active "off-site replication running" indicator for this domain so
+	// the UI shows WHICH domain is replicating. restic copy has no machine-readable
+	// progress, so this is active/indeterminate (no percent), not a filling bar. Kept
+	// per-DOMAIN so the OffsiteIndicator + dashboard stay unchanged for N=1.
+	s.progBegin(ctx, "offsite:"+domain, "replicate")
+	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil) }()
+
+	// Replicate to each destination best-effort: one target's failure is recorded
+	// and logged but must NOT abort the others (moot for N=1). The joined error
+	// surfaces to on-demand/scheduled callers so a failure still reports/notifies.
+	var errs []error
+	for _, t := range targets {
+		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo); cerr != nil {
+			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
+			errs = append(errs, cerr)
+		}
+	}
+	if len(errs) > 0 {
+		err = errors.Join(errs...)
+		return err
+	}
+	ok = true
+	return nil
+}
+
+// copyToOffsiteTarget replicates a domain's local repo to a SINGLE off-site
+// destination and records that destination's own offsite_runs row (stamped with
+// offsite_target_id). Per-target: destination repo, restic mode (S3 storage
+// class), retention, bandwidth limits and append-only flag. Best-effort
+// bookkeeping like the rest; returns the (scrubbed) copy error.
+func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string) (err error) {
+	// Persist this destination's replication attempt to the off-site run history
+	// (begin now, close on the way out via defer with outcome + scrubbed error).
+	// restic copy has no machine-readable progress, so only duration + outcome are
+	// recorded. Bookkeeping is best-effort: a store error is logged, never fatal.
+	// offsite_target_id attributes the run to this destination (empty for a
+	// settings-synthesized N=1 target, exactly as before the backfill).
+	runID, recErr := s.store.RecordOffsiteRunForTarget(domain, target.ID, time.Now().Unix())
+	if recErr != nil {
+		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
+		runID = 0
+	}
+	var ok bool
+	defer func() {
 		if runID == 0 {
 			return
 		}
@@ -1719,15 +1876,14 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			log.Printf("api: offsite %s: could not finish replication run: %v", domain, ferr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
-	dest, rerr := s.resolveRepo(loc)
+	dest, rerr := s.resolveRepo(target.Repo)
 	if rerr != nil {
 		return fmt.Errorf("resolve off-site repo: %w", rerr)
 	}
-	// Publish an active "off-site replication running" indicator for this domain so
-	// the UI shows WHICH domain is replicating. restic copy has no machine-readable
-	// progress, so this is active/indeterminate (no percent), not a filling bar.
-	s.progBegin(ctx, "offsite:"+domain, "replicate")
-	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil) }()
+	// Per-target restic mode carrying this destination's S3 storage class (see
+	// offsiteModeForTarget: the global class is preserved for a backfilled N=1
+	// target whose class is "").
+	mode := s.offsiteModeForTarget(settings, target)
 	if err = s.EnsureRepo(ctx, dest, mode); err != nil {
 		return fmt.Errorf("ensure off-site repo: %w", err)
 	}
@@ -1739,7 +1895,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	s.unlockStale(ctx, dest, mode)
 	// Cap the transfer rate so off-site replication doesn't saturate the WAN
 	// (zero limits = unlimited, the default).
-	if err = s.engine.Copy(ctx, dest, localRepo, nil, s.offsiteLimits(settings), mode); err != nil {
+	if err = s.engine.Copy(ctx, dest, localRepo, nil, targetOffsiteLimits(target), mode); err != nil {
 		return err
 	}
 	// Apply the off-site retention policy (separate from local) after a successful
@@ -1748,9 +1904,9 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// must not fail the replication that already succeeded. An IMMUTABLE
 	// (append-only) off-site repo is never pruned from here: the far side would
 	// refuse the delete anyway, and retention is enforced far-side by design.
-	if offsiteImmutableFor(domain, settings) {
+	if target.Immutable {
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
-	} else if op := s.offsiteRetentionPolicy(settings); op.Any() {
+	} else if op := targetOffsiteRetentionPolicy(target); op.Any() {
 		// Per-identity: one tag-scoped, ungrouped forget per item, one prune —
 		// identity-stable like the local retention (issue #91).
 		if perr := s.applyRetentionPerIdentity(ctx, dest, op, mode); perr != nil {
@@ -1765,6 +1921,8 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// or miss the seed. Without a budget we sample in the background (throttled) just
 	// for the Storage card. The REST protocol can't see the far side's free space —
 	// only BombVault's own growth — so the budget is a detection aid, not a hard cap.
+	// The budget stays per-DOMAIN (the global setting) for N=1; per-target budgets
+	// are a later stage.
 	if settings.OffsiteGrowthBudgetGB > 0 {
 		if serr := s.CollectStats(ctx, domain, "offsite"); serr != nil {
 			log.Printf("api: offsite %s: budget size sample failed (replica is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
