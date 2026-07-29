@@ -608,6 +608,18 @@ ALTER TABLE settings ADD COLUMN digest_schedule TEXT NOT NULL DEFAULT 'weekly Mo
   last_success_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// Optional age public-key encryption for the plain export paths (tool-free
+		// tar.gz / xml / zip exports; the restic repo is already encrypted). When
+		// enabled, exports are sealed to the age recipients below and written with a
+		// .age suffix. Recipients are PUBLIC keys (age1... or SSH), so they are not a
+		// secret and are stored/returned as plain columns. Off by default so existing
+		// setups produce byte-identical plaintext exports until the user opts in.
+		version: 74, name: "settings_export_encrypt",
+		sql: `
+ALTER TABLE settings ADD COLUMN export_encrypt_enabled INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN export_age_recipients  TEXT    NOT NULL DEFAULT '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
