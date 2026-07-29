@@ -620,6 +620,133 @@ ALTER TABLE settings ADD COLUMN digest_schedule TEXT NOT NULL DEFAULT 'weekly Mo
 ALTER TABLE settings ADD COLUMN export_encrypt_enabled INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE settings ADD COLUMN export_age_recipients  TEXT    NOT NULL DEFAULT '';`,
 	},
+	{
+		// Multi-off-site, stage 1 (data model only, behavior-preserving). Introduce
+		// the off-site DESTINATION table `offsite_targets` (the plural successor to
+		// the single-repo-per-domain Settings.*Offsite* columns, which are kept
+		// intact for backward compatibility), add a target dimension to the off-site
+		// history tables, and backfill exactly one 'Primary' target per domain that
+		// currently has an off-site repo configured — stamping the existing history
+		// rows with the new target's id so nothing is orphaned. Nothing consumes the
+		// table in the live path yet; the engine/UI rewire lands in later stages.
+		//
+		// NAMING TRAP: `targets` already means backup SOURCES (containers). This is a
+		// separate concept — off-site destinations — hence `offsite_targets` /
+		// `offsite_target_id`, never a reuse of `targets`.
+		//
+		// storage_class is deliberately NOT backfilled: it lives inside the encrypted
+		// cloud_conf blob, which this pure-SQL migration cannot decode (that needs the
+		// app secret key). The row is created with storage_class='' and stage 2 copies
+		// it once ModeFor becomes target-aware. All other values ARE backfilled.
+		//
+		// The ALTER TABLE ADD COLUMN steps run exactly once because the version gate
+		// (schema_migrations) skips already-applied migrations, so no per-column
+		// existence guard is needed (same as every other ADD COLUMN migration here).
+		version: 75, name: "offsite_targets",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_targets (
+  id                     TEXT    PRIMARY KEY,
+  domain                 TEXT    NOT NULL,
+  name                   TEXT    NOT NULL DEFAULT '',
+  repo                   TEXT    NOT NULL DEFAULT '',
+  creds_ref              TEXT    NOT NULL DEFAULT '',
+  storage_class          TEXT    NOT NULL DEFAULT '',
+  immutable              INTEGER NOT NULL DEFAULT 0,
+  schedule               TEXT    NOT NULL DEFAULT '',
+  retention_keep_last    INTEGER NOT NULL DEFAULT 0,
+  retention_keep_daily   INTEGER NOT NULL DEFAULT 0,
+  retention_keep_weekly  INTEGER NOT NULL DEFAULT 0,
+  retention_keep_monthly INTEGER NOT NULL DEFAULT 0,
+  limit_upload           INTEGER NOT NULL DEFAULT 0,
+  limit_download         INTEGER NOT NULL DEFAULT 0,
+  growth_budget_gb       INTEGER NOT NULL DEFAULT 0,
+  enabled                INTEGER NOT NULL DEFAULT 1,
+  created_at             INTEGER NOT NULL DEFAULT 0,
+  sort_order             INTEGER NOT NULL DEFAULT 0
+);
+
+ALTER TABLE offsite_runs   ADD COLUMN offsite_target_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE tamper_tests   ADD COLUMN offsite_target_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE restore_drills ADD COLUMN offsite_target_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE repo_stats     ADD COLUMN offsite_target_id TEXT NOT NULL DEFAULT '';
+
+-- Backfill one 'Primary' target per domain with a non-empty off-site repo. Each
+-- INSERT gets its own fresh 32-hex id (lower(hex(randomblob(16))) mirrors the
+-- Go newID() format) and copies that domain's per-domain off-site repo/schedule/
+-- immutable plus the GLOBAL retention/limits/growth-budget from the settings row.
+INSERT INTO offsite_targets (id, domain, name, repo, creds_ref, storage_class, immutable, schedule,
+  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
+SELECT lower(hex(randomblob(16))), 'containers', 'Primary', containers_offsite, '', '',
+  containers_offsite_immutable, containers_offsite_schedule,
+  offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
+  offsite_limit_upload, offsite_limit_download, offsite_growth_budget_gb, 1, strftime('%s','now'), 0
+FROM settings WHERE id = 1 AND containers_offsite <> '';
+
+INSERT INTO offsite_targets (id, domain, name, repo, creds_ref, storage_class, immutable, schedule,
+  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
+SELECT lower(hex(randomblob(16))), 'vms', 'Primary', vms_offsite, '', '',
+  vms_offsite_immutable, vms_offsite_schedule,
+  offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
+  offsite_limit_upload, offsite_limit_download, offsite_growth_budget_gb, 1, strftime('%s','now'), 0
+FROM settings WHERE id = 1 AND vms_offsite <> '';
+
+INSERT INTO offsite_targets (id, domain, name, repo, creds_ref, storage_class, immutable, schedule,
+  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
+SELECT lower(hex(randomblob(16))), 'flash', 'Primary', flash_offsite, '', '',
+  flash_offsite_immutable, flash_offsite_schedule,
+  offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
+  offsite_limit_upload, offsite_limit_download, offsite_growth_budget_gb, 1, strftime('%s','now'), 0
+FROM settings WHERE id = 1 AND flash_offsite <> '';
+
+INSERT INTO offsite_targets (id, domain, name, repo, creds_ref, storage_class, immutable, schedule,
+  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
+SELECT lower(hex(randomblob(16))), 'config', 'Primary', config_offsite, '', '',
+  config_offsite_immutable, config_offsite_schedule,
+  offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
+  offsite_limit_upload, offsite_limit_download, offsite_growth_budget_gb, 1, strftime('%s','now'), 0
+FROM settings WHERE id = 1 AND config_offsite <> '';
+
+INSERT INTO offsite_targets (id, domain, name, repo, creds_ref, storage_class, immutable, schedule,
+  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
+SELECT lower(hex(randomblob(16))), 'files', 'Primary', files_offsite, '', '',
+  files_offsite_immutable, files_offsite_schedule,
+  offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
+  offsite_limit_upload, offsite_limit_download, offsite_growth_budget_gb, 1, strftime('%s','now'), 0
+FROM settings WHERE id = 1 AND files_offsite <> '';
+
+-- Stamp the existing off-site history rows with their domain's new target id.
+-- The EXISTS guard skips domains that got no target (empty repo), keeping the
+-- NOT NULL column at its '' default there instead of writing a NULL.
+UPDATE offsite_runs
+   SET offsite_target_id = (SELECT ot.id FROM offsite_targets ot WHERE ot.domain = offsite_runs.domain)
+ WHERE EXISTS (SELECT 1 FROM offsite_targets ot WHERE ot.domain = offsite_runs.domain);
+
+UPDATE tamper_tests
+   SET offsite_target_id = (SELECT ot.id FROM offsite_targets ot WHERE ot.domain = tamper_tests.domain)
+ WHERE EXISTS (SELECT 1 FROM offsite_targets ot WHERE ot.domain = tamper_tests.domain);
+
+UPDATE restore_drills
+   SET offsite_target_id = (SELECT ot.id FROM offsite_targets ot WHERE ot.domain = restore_drills.domain)
+ WHERE source = 'offsite'
+   AND EXISTS (SELECT 1 FROM offsite_targets ot WHERE ot.domain = restore_drills.domain);
+
+UPDATE repo_stats
+   SET offsite_target_id = (SELECT ot.id FROM offsite_targets ot WHERE ot.domain = repo_stats.domain)
+ WHERE source = 'offsite'
+   AND EXISTS (SELECT 1 FROM offsite_targets ot WHERE ot.domain = repo_stats.domain);
+
+-- Covering indexes on the new target dimension, parallel to the v43 domain
+-- indexes (tamper_tests, offsite_runs, restore_drills), so target-scoped
+-- "latest row" lookups skip a full scan once stage 2 queries per target.
+CREATE INDEX IF NOT EXISTS idx_tamper_tests_target_at ON tamper_tests(offsite_target_id, at);
+CREATE INDEX IF NOT EXISTS idx_offsite_runs_target_started ON offsite_runs(offsite_target_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_restore_drills_target_source_kind_at ON restore_drills(offsite_target_id, source, kind, at);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
