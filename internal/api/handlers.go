@@ -972,6 +972,12 @@ type settingsView struct {
 	// WatchdogEnabled turns on the daily overdue-backup watchdog: one push
 	// notification per overdue episode through the notify channels. Default on.
 	WatchdogEnabled bool `json:"watchdogEnabled"`
+	// Optional age public-key encryption for the plain export paths (tool-free
+	// tar.gz / xml / zip exports). Recipients are PUBLIC keys (age1... or SSH), so
+	// they are not secret and round-trip in the clear. With encryption on and no
+	// valid recipient every export fails loudly rather than writing plaintext.
+	ExportEncryptEnabled bool   `json:"exportEncryptEnabled"`
+	ExportAgeRecipients  string `json:"exportAgeRecipients"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -1058,6 +1064,8 @@ func toView(s store.Settings) settingsView {
 		DigestSchedule:              s.DigestSchedule,
 		CatchUpMissed:               s.CatchUpMissed,
 		WatchdogEnabled:             s.WatchdogEnabled,
+		ExportEncryptEnabled:        s.ExportEncryptEnabled,
+		ExportAgeRecipients:         s.ExportAgeRecipients,
 	}
 }
 
@@ -1304,6 +1312,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		DigestSchedule:              v.DigestSchedule,
 		CatchUpMissed:               v.CatchUpMissed,
 		WatchdogEnabled:             v.WatchdogEnabled,
+		ExportEncryptEnabled:        v.ExportEncryptEnabled,
+		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,
@@ -1713,6 +1723,7 @@ func (h *Handler) handleGetCloud(w http.ResponseWriter, _ *http.Request) {
 		"s3KeyId":         c.S3KeyID,
 		"s3Region":        c.S3Region,
 		"restUser":        c.RESTUser,
+		"s3StorageClass":  c.S3StorageClass,
 		"s3SecretSet":     c.S3Secret != "",
 		"restPasswordSet": c.RESTPassword != "",
 	}))
@@ -2459,10 +2470,19 @@ func (h *headerOnFirstWrite) Write(p []byte) (int, error) {
 // is never touched. ?snapshot=<id> selects the snapshot ("" / "latest" = newest).
 func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("snapshot")
+	// When export encryption is on, DownloadFlashZip age-seals the stream, so the
+	// attachment is <name>.zip.age and the browser must save it under that name.
+	encrypted := h.svc.ExportEncryptionOn()
 	var resolved string
 	lw := &headerOnFirstWrite{w: w, header: func() {
-		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", `attachment; filename="`+FlashDownloadName(resolved)+`"`)
+		name := FlashDownloadName(resolved)
+		if encrypted {
+			w.Header().Set("Content-Type", "application/octet-stream")
+			name += ".age"
+		} else {
+			w.Header().Set("Content-Type", "application/zip")
+		}
+		w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
 	}}
 	err := h.svc.DownloadFlashZip(r.Context(), id, sourceParam(r), func(rid string) { resolved = rid }, lw)
 	// No bytes streamed yet → headers not sent, so report the failure as JSON
