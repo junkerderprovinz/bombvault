@@ -1,0 +1,68 @@
+# Off-site & recovery
+
+Local backups protect you from a lost container or a bad update. Off-site replication and a tested recovery kit protect you from the whole box, ransomware, or a fire. This page covers replicating off-site, making that copy tamper-proof, proving you can restore, and recovering when BombVault itself is gone.
+
+## Off-site replication
+
+Keep the fast local backup and add an off-site replica. Set a second repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. The local repo stays primary.
+
+- **Per-domain off-site schedule** (edited alongside every other schedule on Settings, Schedules): leave it blank to replicate after every local backup, or set a cadence (for example `weekly Sun 03:00`) to ship off-site less often than you back up locally. A **Replicate now** button covers on-demand runs.
+- **Off-site retention** lives on Settings, Off-site so you can keep off-site copies longer as an archive. Leave the policy all-zero to never auto-trim off-site snapshots.
+- **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
+- A **replication indicator** shows which domain is replicating while it runs (on its page and the Dashboard). It is an active indicator, not a percentage bar, because `restic copy` exposes no machine-readable progress.
+
+!!! note "Restore straight from off-site"
+    Every backup browser has a **Local / Off-site** switch, so if a local repo is lost or corrupt you can list and restore directly from the off-site replica. Delete is per-source: removing a backup only affects the copy you are viewing.
+
+## Immutable (append-only) off-site
+
+Flag an off-site repo append-only so ransomware, or a compromised host, cannot delete or rewrite your backups. The far side (a `restic/rest-server` running in `--append-only` mode) **enforces** it. BombVault only ever **verifies** it and never shows green on a configuration claim alone.
+
+The **guided off-site setup** wizard walks you from backend choice (rest-server / rclone / S3) through a ready-to-paste rest-server deploy snippet, a connection test, the immutable toggle (which runs the tamper test immediately) and a retention strategy, so append-only off-site is reachable without hand-editing configs.
+
+!!! warning "Immutable repos are never pruned from this box"
+    An immutable off-site deliberately never prunes old snapshots. Set a **growth-budget alarm** for it so you are alerted before the repo size runs away.
+
+## Tamper test
+
+BombVault periodically proves the append-only guarantee by actually attempting a delete against the off-site repo, aimed at a non-existent object:
+
+- **Refused** means protected.
+- **Accepted** means not protected.
+- An **inconclusive** result (server unreachable, auth error) never flips the stored verdict.
+
+A real protected-to-unprotected flip fires a single alert.
+
+## DR drills
+
+BombVault offers two levels of proof that your backups are actually restorable, not just present.
+
+- **Restore-verification drills (local).** BombVault periodically runs `restic check --read-data-subset` (bounded, never a disk-filling full restore) and shows a *last verified restorable* badge per domain. The cadence lives on Settings, Schedules; the badge on Settings, Integrity.
+- **DR drills (off-site).** BombVault restores a real target from the off-site repo into a throwaway sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers.
+
+The **ransomware-protection scorecard** on the Dashboard rolls this up into a green / amber / red posture per domain, with an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set). Every red row deep-links to the fix, and the card only ever goes green on verified facts.
+
+## Guided recovery
+
+A dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case, in one place:
+
+1. **Restores BombVault's own settings first**, so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled (applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle).
+2. **Checks BombVault can read your backups** (the encryption-key gotcha up front).
+3. Lets you **point at your existing repo** (local or off-site).
+4. **Discovers** the containers, VMs and file sets stored in it.
+5. **Restores them all** (left stopped, so you start them deliberately), with your recovery kit one click away.
+
+### Restore from another BombVault repo
+
+A separate card on the **Recovery** tab opens a *different* BombVault instance's repo (a share mounted under `/mnt`, or a remote URL) with **that instance's `APP_KEY`**, in a one-time, read-only session. Browse the containers, VMs and file sets stored there, pick a snapshot and restore it, and the restored object becomes a normal local container, VM or file set. Nothing is ever written to the other repo, and your own backup settings stay untouched (the session lives in memory and expires by itself). Moving a container from server A to server B no longer means repointing your repo settings and reverting them afterwards. Live server-to-server federation is explicitly out of scope; this is a deliberate one-shot pull.
+
+## Encryption-key recovery kit
+
+This is the piece that makes disaster recovery possible even when there is no running BombVault.
+
+One click downloads the **master key**, the **derived restic password**, and the **exact repo locations and commands**, so you can restore straight with the restic CLI on any machine. A Dashboard reminder nags until you have stored it.
+
+!!! danger "Store the recovery kit off the server"
+    The kit contains the secret that decrypts your backups. Keep it somewhere safe and separate from the server (a password manager, a printed copy in a safe). If you lose both BombVault and `APP_KEY` with no recovery kit, your encrypted backups cannot be recovered.
+
+Because recovery definitions live **inside** each repo (`<repo>/def`, `<repo>/vm-def`), a copied repo folder is fully self-contained, so the kit plus the repo is everything a bare-metal restore needs.
