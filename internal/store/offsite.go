@@ -65,12 +65,40 @@ type OffsiteRun struct {
 }
 
 // RecordOffsiteRun records the start of an off-site replication run and returns
-// the row's id (rowid), to be passed to FinishOffsiteRun when the run ends.
+// the row's id (rowid), to be passed to FinishOffsiteRun when the run ends. The
+// run is not attributed to a specific destination (offsite_target_id keeps its
+// default ""). This INSERT is deliberately column-minimal — it must keep working
+// against the pre-v75 schema (before offsite_target_id existed); use
+// RecordOffsiteRunForTarget to stamp the destination.
 func (r *Repo) RecordOffsiteRun(domain string, startedAt int64) (int64, error) {
 	res, err := r.db.Exec(`
 		INSERT INTO offsite_runs (domain, started_at)
 		VALUES (?, ?)`,
 		domain, startedAt,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("RecordOffsiteRun: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("RecordOffsiteRun: rowid: %w", err)
+	}
+	return id, nil
+}
+
+// RecordOffsiteRunForTarget is RecordOffsiteRun that also attributes the run to a
+// specific off-site destination via offsite_target_id (the plural-destination
+// column added in migration v75). An EMPTY targetID delegates to RecordOffsiteRun
+// so the column is left at its default and the INSERT stays byte-identical for a
+// single-destination (N=1) install whose target was synthesized from Settings.
+func (r *Repo) RecordOffsiteRunForTarget(domain, targetID string, startedAt int64) (int64, error) {
+	if targetID == "" {
+		return r.RecordOffsiteRun(domain, startedAt)
+	}
+	res, err := r.db.Exec(`
+		INSERT INTO offsite_runs (domain, started_at, offsite_target_id)
+		VALUES (?, ?, ?)`,
+		domain, startedAt, targetID,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("RecordOffsiteRun: %w", err)
