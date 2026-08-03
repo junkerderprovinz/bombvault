@@ -207,7 +207,7 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "empty import file"})
 			return exp, false
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "malformed import file — expected a BombVault settings-export JSON"})
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "malformed import file: expected a BombVault settings-export JSON"})
 		return exp, false
 	}
 	return exp, true
@@ -217,7 +217,7 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 // Returns a user-facing error string, or "" when valid.
 func validateExport(exp settingsExport) string {
 	if exp.SchemaVersion != settingsExportSchema {
-		return fmt.Sprintf("unsupported schemaVersion %d — this build reads version %d", exp.SchemaVersion, settingsExportSchema)
+		return fmt.Sprintf("unsupported schemaVersion %d (this build reads version %d)", exp.SchemaVersion, settingsExportSchema)
 	}
 	// Off-site targets must each map to a valid domain + non-empty repo. Validate
 	// against the same contract the CRUD endpoints enforce, so a bad file is

@@ -488,11 +488,11 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <dl className="flex flex-col gap-1.5 text-xs text-carbon-text">
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewExportedAt")}</dt>
-                <dd className="font-mono text-right wrap-break-word">{preview.exportedAt || "—"}</dd>
+                <dd className="font-mono text-right wrap-break-word">{preview.exportedAt || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewAppVersion")}</dt>
-                <dd className="font-mono text-right wrap-break-word">{preview.appVersion || "—"}</dd>
+                <dd className="font-mono text-right wrap-break-word">{preview.appVersion || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewOffsiteTargets")}</dt>
