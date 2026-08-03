@@ -7665,6 +7665,21 @@ func isLockErr(err error) bool {
 	return strings.Contains(msg, "unable to create lock") || strings.Contains(msg, "already locked")
 }
 
+// isRepoUninitialized reports whether a restic error is the "repository not
+// initialised yet" signal (as opposed to a genuine auth/connectivity failure).
+// restic phrases it as "repository does not exist" or, when it cannot read the
+// config marker, "unable to open config file". Used to treat a not-yet-replicated
+// REMOTE off-site repo as simply empty rather than surfacing restic's raw fatal
+// (issue #117). Scoped to remote repos by the caller — local repos are guarded
+// upstream by localRepoMissing.
+func isRepoUninitialized(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "repository does not exist") || strings.Contains(msg, "unable to open config file")
+}
+
 // unlockStale best-effort clears stale locks (plain restic unlock: only locks
 // from dead processes or old enough — never an active concurrent lock). Logged,
 // never fatal.
@@ -7682,6 +7697,15 @@ func (s *Service) listSnapshots(ctx context.Context, repo string, mode restic.Mo
 	if isLockErr(err) {
 		s.unlockStale(ctx, repo, mode)
 		snaps, err = s.engine.Snapshots(ctx, repo, mode)
+	}
+	// A REMOTE off-site repo that has not been replicated/initialised yet has no
+	// snapshots — restic reports "repository does not exist", which must read as
+	// "no backups yet", not a fatal (issue #117). Local repos are already
+	// short-circuited upstream by localRepoMissing, so this only affects remotes;
+	// genuine auth/connectivity errors do NOT match isRepoUninitialized and still
+	// propagate.
+	if err != nil && restic.IsRemoteRepo(repo) && isRepoUninitialized(err) {
+		return nil, nil
 	}
 	return snaps, err
 }
