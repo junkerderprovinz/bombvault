@@ -30,6 +30,27 @@ func (r *Repo) RecordTamperTest(domain string, protected bool, detail string) er
 	return nil
 }
 
+// RecordTamperTestForTarget is RecordTamperTest that also attributes the verdict
+// to a specific off-site destination via offsite_target_id (the plural-destination
+// column added in migration v75). An EMPTY targetID delegates to RecordTamperTest
+// so the column is left at its default and the INSERT stays byte-identical for a
+// single-destination (N=1) install whose target was synthesized from Settings.
+// This mirrors RecordOffsiteRunForTarget.
+func (r *Repo) RecordTamperTestForTarget(domain, targetID string, protected bool, detail string) error {
+	if targetID == "" {
+		return r.RecordTamperTest(domain, protected, detail)
+	}
+	_, err := r.db.Exec(`
+		INSERT INTO tamper_tests (domain, at, protected, detail, offsite_target_id)
+		VALUES (?, ?, ?, ?, ?)`,
+		domain, time.Now().Unix(), boolInt(protected), detail, targetID,
+	)
+	if err != nil {
+		return fmt.Errorf("RecordTamperTestForTarget: %w", err)
+	}
+	return nil
+}
+
 // LatestTamperTest returns the most recent tamper test for a domain. The bool
 // is false (with a zero TamperTest) when none has been recorded yet. Ties on
 // `at` (two tests within the same second) are broken by insertion order.
@@ -48,6 +69,34 @@ func (r *Repo) LatestTamperTest(domain string) (TamperTest, bool, error) {
 	}
 	if err != nil {
 		return TamperTest{}, false, fmt.Errorf("LatestTamperTest: %w", err)
+	}
+	tt.Protected = protected != 0
+	return tt, true, nil
+}
+
+// LatestTamperTestForTarget returns the most recent tamper test for a domain
+// scoped to ONE off-site destination (offsite_target_id). It powers per-target
+// flip detection and the worst-of scorecard aggregation. An empty targetID
+// delegates to LatestTamperTest so an un-backfilled (N=1) install — whose rows
+// carry the default "" target id — reads byte-identically.
+func (r *Repo) LatestTamperTestForTarget(domain, targetID string) (TamperTest, bool, error) {
+	if targetID == "" {
+		return r.LatestTamperTest(domain)
+	}
+	row := r.db.QueryRow(`
+		SELECT domain, at, protected, detail
+		FROM tamper_tests
+		WHERE domain = ? AND offsite_target_id = ?
+		ORDER BY at DESC, rowid DESC
+		LIMIT 1`, domain, targetID)
+	var tt TamperTest
+	var protected int
+	err := row.Scan(&tt.Domain, &tt.At, &protected, &tt.Detail)
+	if errors.Is(err, sql.ErrNoRows) {
+		return TamperTest{}, false, nil
+	}
+	if err != nil {
+		return TamperTest{}, false, fmt.Errorf("LatestTamperTestForTarget: %w", err)
 	}
 	tt.Protected = protected != 0
 	return tt, true, nil
@@ -171,6 +220,35 @@ func (r *Repo) LatestSuccessfulOffsiteRun(domain string) (OffsiteRun, bool, erro
 	}
 	if err != nil {
 		return OffsiteRun{}, false, fmt.Errorf("LatestSuccessfulOffsiteRun: %w", err)
+	}
+	run.FinishedAt = finished.Int64
+	run.OK = ok != 0
+	return run, true, nil
+}
+
+// LatestSuccessfulOffsiteRunForTarget is LatestSuccessfulOffsiteRun scoped to ONE
+// off-site destination (offsite_target_id) — the per-target currency source for
+// the worst-of scorecard aggregation. An empty targetID delegates to the
+// domain-wide query so an un-backfilled (N=1) install reads byte-identically.
+func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (OffsiteRun, bool, error) {
+	if targetID == "" {
+		return r.LatestSuccessfulOffsiteRun(domain)
+	}
+	row := r.db.QueryRow(`
+		SELECT domain, started_at, finished_at, ok, error
+		FROM offsite_runs
+		WHERE domain = ? AND ok = 1 AND offsite_target_id = ?
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT 1`, domain, targetID)
+	var run OffsiteRun
+	var finished sql.NullInt64
+	var ok int
+	err := row.Scan(&run.Domain, &run.StartedAt, &finished, &ok, &run.Error)
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteRun{}, false, nil
+	}
+	if err != nil {
+		return OffsiteRun{}, false, fmt.Errorf("LatestSuccessfulOffsiteRunForTarget: %w", err)
 	}
 	run.FinishedAt = finished.Int64
 	run.OK = ok != 0
