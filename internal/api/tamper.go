@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // TamperVerdict is the result of a stage-1 off-site tamper test: an active probe
@@ -75,8 +76,13 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
 	}
-	loc := s.offsiteRepoFor(domain, settings)
-	if loc == "" {
+	// Resolve the domain's off-site DESTINATIONS (one per domain for a
+	// single-off-site install; the settings-synthesized target for an un-backfilled
+	// one). Each is probed in turn and the verdicts are folded worst-of, mirroring
+	// how copyToOffsite fans replication out per target while keeping ONE per-domain
+	// run row + progress line. For N=1 this is a single iteration → byte-identical.
+	targets := s.offsiteReplicationTargets(domain, settings)
+	if len(targets) == 0 {
 		// Nothing to test, so no run row either: the manual caller gets this clear
 		// error directly, and the schedule only dispatches domains flagged immutable
 		// (immutableOffsiteDomains) — a flag without a repo is a misconfiguration the
@@ -121,21 +127,75 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 			log.Printf("api: tamper %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
+
+	// Basic-auth credentials for the rest-server come from the encrypted cloud
+	// config (best-effort: a decode failure just means no auth header, and the
+	// server then answers 401 — a real HTTP verdict, not a transport error).
+	creds, _ := s.decodeCloud(settings)
+
+	// Fold each destination's verdict worst-of: testable if ANY is testable,
+	// protected only if EVERY testable destination refused the delete, details
+	// joined. A destination whose probe is INCONCLUSIVE (transport/ambiguous
+	// status) records no verdict and contributes its error; for N=1 that single
+	// error is returned as-is (skipped run, no verdict) exactly as before.
+	var (
+		anyTestable  bool
+		allProtected = true
+		details      []string
+		errs         []error
+	)
+	for _, t := range targets {
+		v, perr := s.runTamperTestForTarget(ctx, domain, t, creds)
+		if perr != nil {
+			errs = append(errs, perr)
+			continue
+		}
+		if !v.Testable {
+			continue
+		}
+		anyTestable = true
+		if !v.Protected {
+			allProtected = false
+			if v.Detail != "" {
+				details = append(details, v.Detail)
+			}
+		}
+	}
+	if len(errs) > 0 {
+		// Inconclusive probe(s): record no aggregate verdict and surface the error so
+		// the deferred finish settles a "skipped" run. errors.Join of a single error
+		// reads identically to that error for N=1.
+		return TamperVerdict{}, errors.Join(errs...)
+	}
+	if !anyTestable {
+		// No destination could be probed this way (e.g. all non-REST backends).
+		return TamperVerdict{Testable: false, Detail: "only REST repos are verifiable"}, nil
+	}
+	verdict = TamperVerdict{Testable: true, Protected: allProtected}
+	if !allProtected {
+		verdict.Detail = strings.Join(details, "; ")
+	}
+	return verdict, nil
+}
+
+// runTamperTestForTarget probes ONE off-site destination's delete path and — on a
+// decisive REST verdict — records it (offsite_target_id-stamped) and fires the
+// protection-loss alert on a per-destination protected→unprotected flip. It
+// returns Testable=false (nil error) for a non-REST backend, and a non-nil error
+// (recording nothing) for an INCONCLUSIVE probe (transport/ambiguous status) so an
+// unreachable server never flips a stored verdict. Serialisation is the caller's
+// per-domain lock, so read-prev → record → notify stays atomic.
+func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, target store.OffsiteTarget, creds CloudCreds) (TamperVerdict, error) {
+	loc := target.Repo
 	// Stage-1 tamper testing speaks the REST protocol directly (raw HTTP DELETE to
 	// the rest-server). Other backends (rclone/s3/sftp/local) can't be probed this
-	// way — say so honestly instead of guessing a verdict (the deferred finish
-	// records this exit as a "skipped" run carrying the detail).
+	// way — say so honestly instead of guessing a verdict.
 	if !strings.HasPrefix(loc, "rest:") {
 		return TamperVerdict{Testable: false, Detail: "only REST repos are verifiable"}, nil
 	}
 	// rest:http://host:8000/path -> http://host:8000/path (the HTTP base the
 	// rest-server serves; a trailing slash is trimmed so path joins are clean).
 	base := strings.TrimRight(strings.TrimPrefix(loc, "rest:"), "/")
-
-	// Basic-auth credentials for the rest-server come from the encrypted cloud
-	// config (best-effort: a decode failure just means no auth header, and the
-	// server then answers 401 — a real HTTP verdict, not a transport error).
-	creds, _ := s.decodeCloud(settings)
 
 	// Two provably non-existent object IDs: a 64-hex data blob id and an 8-hex
 	// snapshot id. Deleting them can never touch real repo data.
@@ -154,10 +214,8 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	for _, url := range probes {
 		p, detail, perr := tamperProbe(ctx, url, creds.RESTUser, creds.RESTPassword)
 		if perr != nil {
-			// Transport/network error → the test is INCONCLUSIVE. Record NO verdict
-			// and return the error: an unreachable server is neither protected nor
-			// unprotected, and must never flip the stored verdict either way. The
-			// deferred finish above still settles the run row as "skipped".
+			// Transport/network error → INCONCLUSIVE. Record NO verdict and return the
+			// error: an unreachable server is neither protected nor unprotected.
 			return TamperVerdict{}, perr
 		}
 		if !p {
@@ -168,20 +226,17 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 		}
 	}
 
-	verdict = TamperVerdict{Testable: true, Protected: protected}
+	verdict := TamperVerdict{Testable: true, Protected: protected}
 	if !protected {
 		verdict.Detail = strings.Join(details, "; ")
 	}
 
-	// Read the previous verdict BEFORE recording the new one so a
-	// protected→unprotected flip fires exactly one protection-loss alert.
-	prev, hadPrev, _ := s.store.LatestTamperTest(domain)
-	if recErr := s.store.RecordTamperTest(domain, verdict.Protected, verdict.Detail); recErr != nil {
+	// Read the previous verdict for THIS destination BEFORE recording the new one so
+	// a protected→unprotected flip fires exactly one protection-loss alert.
+	prev, hadPrev, _ := s.store.LatestTamperTestForTarget(domain, target.ID)
+	if recErr := s.store.RecordTamperTestForTarget(domain, target.ID, verdict.Protected, verdict.Detail); recErr != nil {
 		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
 	}
-	// The deferred open-at-start finish mirrors the verdict into the shared runs
-	// table (success = delete refused, failed = NOT protected — the alarming
-	// outcome) so the test shows in the dashboard Activity Log/Run History.
 	if hadPrev && prev.Protected && !verdict.Protected {
 		s.notifyProtectionLost(ctx, domain, verdict.Detail)
 	}
