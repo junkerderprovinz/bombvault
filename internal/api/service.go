@@ -1031,6 +1031,66 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 	}
 }
 
+// aggregateTamper folds a domain's off-site tamper verdicts worst-of across its
+// destinations for the ransomware scorecard: had is true only when EVERY
+// destination has a recorded verdict, protected only when EVERY one refused the
+// delete, and at is the OLDEST verdict timestamp (so the least-recently-checked
+// destination drives the currency/overdue judgement). For a single-destination
+// (N=1) domain — the only shape possible before stage 5 — it is EXACTLY
+// LatestTamperTest(domain), byte-identical to the pre-aggregation read.
+func (s *Service) aggregateTamper(domain string) (had, protected bool, at int64) {
+	targets := s.offsiteTargetsFor(domain)
+	if len(targets) <= 1 {
+		tt, found, err := s.store.LatestTamperTest(domain)
+		if err != nil || !found {
+			return false, false, 0
+		}
+		return true, tt.Protected, tt.At
+	}
+	protected = true
+	for _, t := range targets {
+		tt, found, err := s.store.LatestTamperTestForTarget(domain, t.ID)
+		if err != nil || !found {
+			return false, false, 0 // an untested destination → no protected claim
+		}
+		had = true
+		if !tt.Protected {
+			protected = false
+		}
+		if at == 0 || tt.At < at {
+			at = tt.At
+		}
+	}
+	return had, protected, at
+}
+
+// aggregateReplicationCurrency folds a domain's last-successful-replication
+// currency worst-of across its off-site destinations: ok only when EVERY
+// destination has landed a successful copy, and at is the OLDEST of those (the
+// least-recently-replicated destination sets the domain's freshness). For a
+// single-destination (N=1) domain it is EXACTLY LatestSuccessfulOffsiteRun(domain),
+// byte-identical to the pre-aggregation read.
+func (s *Service) aggregateReplicationCurrency(domain string) (at int64, ok bool) {
+	targets := s.offsiteTargetsFor(domain)
+	if len(targets) <= 1 {
+		run, found, err := s.store.LatestSuccessfulOffsiteRun(domain)
+		if err != nil || !found {
+			return 0, false
+		}
+		return run.StartedAt, true
+	}
+	for _, t := range targets {
+		run, found, err := s.store.LatestSuccessfulOffsiteRunForTarget(domain, t.ID)
+		if err != nil || !found {
+			return 0, false // a never-replicated destination → domain is not current
+		}
+		if at == 0 || run.StartedAt < at {
+			at = run.StartedAt
+		}
+	}
+	return at, true
+}
+
 // offsiteRepoFor returns the configured off-site repo location for a domain, or
 // "" when none is set. It is a thin wrapper over the first enabled off-site
 // target, falling back to the legacy Settings column when no target row exists so
@@ -1479,22 +1539,17 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 		offsiteConfigured := s.offsiteRepoFor(d.name, settings) != ""
 		offsiteImmutable := offsiteImmutableFor(d.name, settings)
 
-		var lastTamperAt int64
-		var lastTamperOK, hadTamper bool
-		if tt, found, tErr := s.store.LatestTamperTest(d.name); tErr == nil && found {
-			hadTamper = true
-			lastTamperAt = tt.At
-			lastTamperOK = tt.Protected
-		}
+		// Tamper facts are aggregated worst-of across the domain's off-site
+		// destinations (protected only when EVERY destination is, currency = the
+		// oldest). For a single-destination (N=1) domain this is exactly
+		// LatestTamperTest(domain) — byte-identical.
+		hadTamper, lastTamperOK, lastTamperAt := s.aggregateTamper(d.name)
 		// Currency uses the last SUCCESSFUL replication (mirrors backups' last-SUCCESS):
 		// a perpetually-failing replication then reads as stale → overdue → amber,
-		// rather than staying fresh off a failed attempt's timestamp.
-		var lastReplicationAt int64
-		var lastReplicationOK bool
-		if run, found, rErr := s.store.LatestSuccessfulOffsiteRun(d.name); rErr == nil && found {
-			lastReplicationAt = run.StartedAt
-			lastReplicationOK = true
-		}
+		// rather than staying fresh off a failed attempt's timestamp. Aggregated
+		// worst-of (the OLDEST successful copy across destinations); byte-identical to
+		// LatestSuccessfulOffsiteRun(domain) for N=1.
+		lastReplicationAt, lastReplicationOK := s.aggregateReplicationCurrency(d.name)
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
 		var drDetail string
@@ -1799,9 +1854,7 @@ func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
 // scheduled backup). Best-effort; errors are only logged. domain/source are always
 // from a fixed whitelist (handler-validated or literal).
 func (s *Service) CollectStatsAsync(domain, source string) {
-	if source != "offsite" {
-		source = "local"
-	}
+	source = collectStatsSource(source)
 	if latest, found, err := s.store.LatestRepoStat(domain, source); err == nil && found &&
 		time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
 		return // sampled recently enough
@@ -1813,6 +1866,19 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
 		}
 	}()
+}
+
+// collectStatsSource normalises a stats source: any off-site source — bare
+// "offsite" (primary target) OR the per-target "offsite:<id>" form — samples the
+// off-site repo and passes through unchanged; everything else collapses to
+// "local". Using isOffsiteSource (not a literal "offsite" compare) lets a
+// per-target source thread through to repoFor's off-site resolution instead of
+// being clobbered to "local" (stage-3 carry-over).
+func collectStatsSource(source string) string {
+	if isOffsiteSource(source) {
+		return source
+	}
+	return "local"
 }
 
 // CollectStatsOnStartup samples each enabled domain's LOCAL repo shortly after boot
@@ -1892,9 +1958,15 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// Replicate to each destination best-effort: one target's failure is recorded
 	// and logged but must NOT abort the others (moot for N=1). The joined error
 	// surfaces to on-demand/scheduled callers so a failure still reports/notifies.
+	// multiTarget is false for a single-destination (N=1) domain: the budget then
+	// stays on the byte-identical DOMAIN path (source "offsite", the global
+	// OffsiteGrowthBudgetGB, latch keyed by domain). Only with 2+ destinations does
+	// each carry its OWN growth budget + per-target size sample + latch — dormant
+	// until the stage-5 UI can add a second destination.
+	multiTarget := len(targets) > 1
 	var errs []error
 	for _, t := range targets {
-		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo); cerr != nil {
+		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo, multiTarget); cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
 		}
@@ -1912,7 +1984,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 // offsite_target_id). Per-target: destination repo, restic mode (S3 storage
 // class), retention, bandwidth limits and append-only flag. Best-effort
 // bookkeeping like the rest; returns the (scrubbed) copy error.
-func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string) (err error) {
+func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string, multiTarget bool) (err error) {
 	// Persist this destination's replication attempt to the off-site run history
 	// (begin now, close on the way out via defer with outcome + scrubbed error).
 	// restic copy has no machine-readable progress, so only duration + outcome are
@@ -1978,18 +2050,88 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// or miss the seed. Without a budget we sample in the background (throttled) just
 	// for the Storage card. The REST protocol can't see the far side's free space —
 	// only BombVault's own growth — so the budget is a detection aid, not a hard cap.
-	// The budget stays per-DOMAIN (the global setting) for N=1; per-target budgets
-	// are a later stage.
-	if settings.OffsiteGrowthBudgetGB > 0 {
-		if serr := s.CollectStats(ctx, domain, "offsite"); serr != nil {
+	//
+	// N=1 (single destination): the budget stays on the DOMAIN path — the size is
+	// sampled under source "offsite", the global OffsiteGrowthBudgetGB drives it, and
+	// the latch is keyed by domain. This is byte-identical to before. Only with 2+
+	// destinations does each carry its OWN budget: the size is sampled under this
+	// destination's per-target source ("offsite:<id>"), the threshold is this
+	// target's GrowthBudgetGB, and the latch is keyed by (domain,targetID).
+	if !multiTarget {
+		if settings.OffsiteGrowthBudgetGB > 0 {
+			if serr := s.CollectStats(ctx, domain, "offsite"); serr != nil {
+				log.Printf("api: offsite %s: budget size sample failed (replica is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
+			}
+		} else {
+			s.CollectStatsAsync(domain, "offsite")
+		}
+		s.checkOffsiteBudget(ctx, domain, settings)
+		ok = true
+		return nil
+	}
+	statSource := offsiteStatSource(target.ID)
+	if target.GrowthBudgetGB > 0 {
+		if serr := s.CollectStats(ctx, domain, statSource); serr != nil {
 			log.Printf("api: offsite %s: budget size sample failed (replica is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	} else {
-		s.CollectStatsAsync(domain, "offsite")
+		s.CollectStatsAsync(domain, statSource)
 	}
-	s.checkOffsiteBudget(ctx, domain, settings)
+	s.checkOffsiteBudgetForTarget(ctx, domain, target)
 	ok = true
 	return nil
+}
+
+// offsiteStatSource maps an off-site destination id to the repo_stats source
+// string used to sample THAT destination's size: bare "offsite" for a
+// settings-synthesized target (empty id) so an un-backfilled N=1 install keeps
+// sampling under "offsite", or "offsite:<id>" for a real per-target destination.
+func offsiteStatSource(targetID string) string {
+	if targetID == "" {
+		return "offsite"
+	}
+	return offsiteSourcePrefix + targetID
+}
+
+// offsiteBudgetLatchKey keys the over-budget latch per (domain,targetID) so each
+// destination alarms independently. The NUL separator keeps it unambiguous.
+func offsiteBudgetLatchKey(domain, targetID string) string {
+	return domain + "\x00" + targetID
+}
+
+// checkOffsiteBudgetForTarget is checkOffsiteBudget for ONE off-site destination:
+// it compares that destination's latest sampled size (repo_stats source
+// "offsite:<id>") against the target's OWN GrowthBudgetGB and fires a
+// notification ONCE on each false→true crossing, latched per (domain,targetID).
+// Used only for multi-destination domains; a single-destination domain stays on
+// the byte-identical checkOffsiteBudget path.
+func (s *Service) checkOffsiteBudgetForTarget(ctx context.Context, domain string, target store.OffsiteTarget) {
+	if target.GrowthBudgetGB <= 0 {
+		return // budget disabled for this destination
+	}
+	stat, found, err := s.store.LatestRepoStat(domain, offsiteStatSource(target.ID))
+	if err != nil {
+		log.Printf("api: offsite %s: budget check could not read latest sample: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	if !found {
+		return // no sample yet for this destination — nothing to compare
+	}
+	budgetBytes := int64(target.GrowthBudgetGB) * 1024 * 1024 * 1024
+	over := stat.RawSize > budgetBytes
+
+	key := offsiteBudgetLatchKey(domain, target.ID)
+	s.budgetMu.Lock()
+	if s.offsiteOverBudget == nil {
+		s.offsiteOverBudget = map[string]bool{}
+	}
+	prev := s.offsiteOverBudget[key]
+	s.offsiteOverBudget[key] = over
+	s.budgetMu.Unlock()
+
+	if over && !prev {
+		s.notifyOverBudget(ctx, domain, stat.RawSize, budgetBytes)
+	}
 }
 
 // checkOffsiteBudget compares the latest sampled off-site repo size for a domain
@@ -7156,7 +7298,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 	case "", "subset":
 		return s.runSubsetDrill(ctx, domain, source, wait)
 	case "dr":
-		return s.runDRDrill(ctx, domain, wait)
+		return s.runDRDrill(ctx, domain, source, wait)
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown drill kind %q", kind)
 	}
@@ -7327,7 +7469,7 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // lock exactly like a real restore, so a scheduled backup can never fire mid-drill
 // and vice-versa; busy → errDomainBusy, recording nothing. A failure records
 // kind='dr' ok=false AND fires the drill-failure notification.
-func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (drill store.RestoreDrill, err error) {
+func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
 	case "containers", "flash", "files":
 	case "vms":
@@ -7335,16 +7477,23 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
+	// A DR drill only ever restores from an off-site repo. A non-offsite source
+	// (e.g. the scheduler's legacy call, or "local") normalises to the bare
+	// "offsite" PRIMARY so behaviour is byte-identical to before; an "offsite:<id>"
+	// source drills — and records under — that SPECIFIC destination.
+	if !isOffsiteSource(source) {
+		source = "offsite"
+	}
 
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return store.RestoreDrill{}, fmt.Errorf("read settings: %w", err)
 	}
-	loc := s.offsiteRepoFor(domain, settings)
-	if loc == "" {
+	target, ok := s.offsiteTargetForSource(settings, domain, source)
+	if !ok {
 		return store.RestoreDrill{}, errors.New("no off-site repo configured for this domain")
 	}
-	repo, err := s.resolveRepo(loc)
+	repo, err := s.resolveRepo(target.Repo)
 	if err != nil {
 		return store.RestoreDrill{}, err
 	}
@@ -7366,7 +7515,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 			// freezing the red with no reason (#30).
 			skip := store.RestoreDrill{
 				Domain: domain,
-				Source: "offsite",
+				Source: source,
 				Kind:   "dr",
 				At:     time.Now().Unix(),
 				OK:     false,
@@ -7376,7 +7525,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
 			}
 			s.recordDomainRun(domain, "drdrill", false, skip.Detail)
-			s.notifyDrillFailure(ctx, domain, "offsite", skip.Detail)
+			s.notifyDrillFailure(ctx, domain, source, skip.Detail)
 			return skip, errDomainBusy
 		}
 		unlock = u
@@ -7429,7 +7578,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 	}
 	drill = store.RestoreDrill{
 		Domain: domain,
-		Source: "offsite",
+		Source: source,
 		At:     time.Now().Unix(),
 		OK:     drillErr == nil,
 		Kind:   "dr",
@@ -7449,7 +7598,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain string, wait bool) (dri
 	// subset drill's "drill" — so the log names the off-site DR restore check.
 	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
 	if drillErr != nil {
-		s.notifyDrillFailure(ctx, domain, "offsite", drill.Detail)
+		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
 	}
 	return drill, drillErr
 }
