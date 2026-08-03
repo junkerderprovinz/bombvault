@@ -2335,11 +2335,22 @@ type MountInfo struct {
 	Reachable bool   `json:"reachable"` // reachable under the host mount (backable)
 }
 
+// CustomPath is a selected backup folder that does not correspond to a current
+// bind mount (a manually added path, or an appdata folder for a container whose
+// mount is gone). Exists reports whether it is still present under the host mount,
+// so the UI can flag a stored-but-missing path ("no data folder detected")
+// instead of showing it as a selected folder that backs up nothing (issue #115).
+type CustomPath struct {
+	Path   string `json:"path"`   // host path (shown to the user)
+	Exists bool   `json:"exists"` // still present under the host mount
+}
+
 // ContainerMounts returns the container's bind mounts annotated for the folder
 // selector, plus any selected custom paths (in host form) that do not match a
-// current mount. The selection is the stored explicit choice, or the automatic
-// appdata default when none is configured.
-func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []string, error) {
+// current mount, each flagged with whether it still exists. The selection is the
+// stored explicit choice, or the automatic appdata default when none is
+// configured.
+func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
 		return nil, nil, fmt.Errorf("inspect container: %w", err)
@@ -2371,10 +2382,13 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 	}
 
 	// Custom = selected paths with no matching current mount, shown in host form.
-	var custom []string
+	// Flag each with whether it still exists under the host mount so the UI can
+	// distinguish a real selected folder from a stale/phantom one (issue #115).
+	var custom []CustomPath
 	for _, cp := range effective {
 		if !matched[cp] {
-			custom = append(custom, s.toHostPath(cp))
+			_, statErr := os.Stat(cp) //nolint:gosec // G703: cp is a stored container path already validated under the mount root on save, not raw user input
+			custom = append(custom, CustomPath{Path: s.toHostPath(cp), Exists: statErr == nil})
 		}
 	}
 	return mounts, custom, nil
@@ -4636,11 +4650,20 @@ func (s *Service) ForgetVMTarget(name string) error {
 func (s *Service) SetInclude(ctx context.Context, name string, include bool) error {
 	if _, err := s.store.GetTargetByContainer(name); err != nil {
 		// Target does not exist yet — find-or-create it before calling SetInclude.
-		appdata := []string{path.Join(s.cfg.HostMountRoot, "appdata", name)}
+		var appdata []string
 		if in, inspErr := s.docker.Inspect(ctx, name); inspErr == nil {
 			appdata = s.resolveAppdataPaths(name, in)
 		} else {
-			log.Printf("api: SetInclude: inspect %q failed (using fallback path): %v", name, inspErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
+			log.Printf("api: SetInclude: inspect %q failed (checking fallback path): %v", name, inspErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
+			// Fall back to the conventional appdata dir, but ONLY if it actually
+			// exists on disk (same os.Stat guard as resolveAppdataPaths). Persisting
+			// a phantom placeholder would show as a selected folder that backs up
+			// nothing (issue #115); leave AppdataPaths empty (definition-only) until
+			// the user points it at a real folder.
+			cand := path.Join(s.cfg.HostMountRoot, "appdata", name)
+			if _, statErr := os.Stat(cand); statErr == nil { //nolint:gosec // G703: cand is HostMountRoot + "appdata" + a validated container name, not raw user input
+				appdata = []string{cand}
+			}
 		}
 		if _, upsertErr := s.store.UpsertTarget(store.Target{
 			ContainerName: name,
