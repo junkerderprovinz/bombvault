@@ -1007,6 +1007,10 @@ type settingsView struct {
 	// valid recipient every export fails loudly rather than writing plaintext.
 	ExportEncryptEnabled bool   `json:"exportEncryptEnabled"`
 	ExportAgeRecipients  string `json:"exportAgeRecipients"`
+	// ReceiverEnabled gates the read-only receiver dashboard (a box that RECEIVES
+	// immutable off-site copies and monitors the received repo). Default false
+	// (opt-in), like the Files/VMs domain tabs; the sidebar gates its tab on it.
+	ReceiverEnabled bool `json:"receiverEnabled"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -1095,6 +1099,7 @@ func toView(s store.Settings) settingsView {
 		WatchdogEnabled:             s.WatchdogEnabled,
 		ExportEncryptEnabled:        s.ExportEncryptEnabled,
 		ExportAgeRecipients:         s.ExportAgeRecipients,
+		ReceiverEnabled:             s.ReceiverEnabled,
 	}
 }
 
@@ -1343,6 +1348,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		WatchdogEnabled:             v.WatchdogEnabled,
 		ExportEncryptEnabled:        v.ExportEncryptEnabled,
 		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
+		ReceiverEnabled:             v.ReceiverEnabled,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,

@@ -464,6 +464,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 		WatchdogEnabled:             v.WatchdogEnabled,
 		ExportEncryptEnabled:        v.ExportEncryptEnabled,
 		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
+		ReceiverEnabled:             v.ReceiverEnabled,
 		// Per-instance / secret-managed fields preserved from the target instance:
 		AuthPasswordHash: existing.AuthPasswordHash,
 		SessionEpoch:     existing.SessionEpoch,
