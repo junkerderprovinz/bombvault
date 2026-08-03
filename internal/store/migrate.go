@@ -780,6 +780,26 @@ CREATE TABLE IF NOT EXISTS received_repos (
 
 ALTER TABLE settings ADD COLUMN receiver_enabled INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// Receiver dead-mans-switch episode memory (one row per stale SOURCE on a
+		// received repo), so the scheduled receiver check alerts ONCE per stale
+		// episode instead of every tick — the exact once-per-episode discipline
+		// watchdog_state gives the overdue-backup watchdog. based_on is the newest
+		// snapshot time (unix) the stale verdict was taken against: while it is
+		// unchanged the source is still in the SAME episode and the receiver stays
+		// quiet; a newer snapshot (the source recovered) changes it or clears the row,
+		// re-arming the alert. Keyed by (received_repo_id, source). Integrity alerts
+		// need no state here — they debounce off received_repos.last_check_ok.
+		version: 77, name: "received_alert_state",
+		sql: `
+CREATE TABLE IF NOT EXISTS received_alert_state (
+  received_repo_id TEXT    NOT NULL,
+  source           TEXT    NOT NULL,
+  notified_at      INTEGER NOT NULL,
+  based_on         INTEGER NOT NULL,
+  PRIMARY KEY (received_repo_id, source)
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

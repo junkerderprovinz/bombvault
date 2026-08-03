@@ -123,6 +123,27 @@ func (r *Repo) UpdateReceivedRepo(rr ReceivedRepo) error {
 	return nil
 }
 
+// UpdateReceivedRepoCheckResult writes ONLY the last-check columns for the repo
+// with the given id, leaving name/repo/app_key_enc/settings untouched. The
+// scheduled receiver check and the manual check-now endpoint use it to persist a
+// verdict without a read-modify-write of the whole row (which could clobber a
+// concurrent edit). Updating a missing id affects no rows and is not an error.
+func (r *Repo) UpdateReceivedRepoCheckResult(id string, at int64, ok sql.NullBool, checkErr string, ranReadData bool) error {
+	_, err := r.db.Exec(`
+		UPDATE received_repos SET
+		  last_check_at        = ?,
+		  last_check_ok        = ?,
+		  last_check_error     = ?,
+		  last_check_read_data = ?
+		WHERE id = ?`,
+		at, nullBool(ok), checkErr, boolInt(ranReadData), id,
+	)
+	if err != nil {
+		return fmt.Errorf("UpdateReceivedRepoCheckResult: %w", err)
+	}
+	return nil
+}
+
 // ListReceivedRepos returns all received repos ordered by sort_order then
 // created_at (a stable display order).
 func (r *Repo) ListReceivedRepos() ([]ReceivedRepo, error) {
