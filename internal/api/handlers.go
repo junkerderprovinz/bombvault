@@ -850,9 +850,16 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 		mounts = []MountInfo{}
 	}
 	if custom == nil {
-		custom = []string{}
+		custom = []CustomPath{}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"mounts": mounts, "custom": custom}))
+	// hostMountRoot/hostSourceRoot let the folder picker translate a browsed path
+	// (relative to the host mount) back to the host path SetBackupPaths expects.
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"mounts":         mounts,
+		"custom":         custom,
+		"hostMountRoot":  h.cfg.HostMountRoot,
+		"hostSourceRoot": h.cfg.HostSourceRoot,
+	}))
 }
 
 // handleExcludesPreview resolves a candidate list of exclude patterns against a

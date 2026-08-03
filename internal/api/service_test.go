@@ -1880,6 +1880,54 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 }
 
+// TestContainerMountsFlagsMissingCustomPath verifies the #115 flag: a stored
+// custom selection whose folder no longer exists under the host mount is returned
+// with Exists=false (so the UI can say "no data folder detected"), while an
+// existing custom path is Exists=true.
+func TestContainerMountsFlagsMissingCustomPath(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+
+	// One real folder (exists) and one that never existed on disk.
+	realCP := root + "/user/present"
+	if err := os.MkdirAll(realCP, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/app", Image: "app:latest"}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	ctx := context.Background()
+
+	// Store both as explicit custom selections (host paths, both reachable; only
+	// one exists on disk). SetBackupPaths does not require existence.
+	if err := svc.SetBackupPaths(ctx, "app", []string{"/mnt/user/present", "/mnt/user/gone"}); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+
+	_, custom, err := svc.ContainerMounts(ctx, "app")
+	if err != nil {
+		t.Fatalf("ContainerMounts: %v", err)
+	}
+	got := map[string]bool{}
+	for _, c := range custom {
+		got[c.Path] = c.Exists
+	}
+	if len(custom) != 2 {
+		t.Fatalf("expected 2 custom paths, got %d (%+v)", len(custom), custom)
+	}
+	if exists, ok := got["/mnt/user/present"]; !ok || !exists {
+		t.Fatalf("existing custom path must be Exists=true, got %+v", custom)
+	}
+	if exists, ok := got["/mnt/user/gone"]; !ok || exists {
+		t.Fatalf("missing custom path must be flagged Exists=false, got %+v", custom)
+	}
+}
+
 // TestServiceBackupTranslatesHostAppdataPath pins the box-gate fix: the broad
 // mount is host /mnt → container /host/user, so host /mnt/user/appdata/<x> is
 // reachable at /host/user/USER/appdata/<x> (note the extra "user" segment). Docker
@@ -2018,6 +2066,42 @@ func TestServiceSetIncludeInspectFailFallback(t *testing.T) {
 	}
 	if !tg.IncludeInSchedule {
 		t.Fatal("include flag must be true")
+	}
+	// #115: with inspect failing AND no conventional appdata folder on disk, NO
+	// phantom placeholder path may be stored (it would show as a selected folder
+	// that backs up nothing). The container is definition-only until pointed at a
+	// real folder.
+	if len(tg.AppdataPaths) != 0 {
+		t.Fatalf("no phantom appdata path must be stored when the conventional folder does not exist, got %v", tg.AppdataPaths)
+	}
+}
+
+// TestServiceSetIncludeInspectFailFallbackExistingDir verifies the complementary
+// case: when inspect fails but the conventional <mountRoot>/appdata/<name> folder
+// DOES exist on disk, it is still stored (the common, non-phantom case is
+// unchanged by the #115 guard).
+func TestServiceSetIncludeInspectFailFallbackExistingDir(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	appdata := root + "/appdata/known"
+	if err := os.MkdirAll(appdata, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &fakeServiceDocker{inspectErr: errors.New("no such container")}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.SetInclude(context.Background(), "known", true); err != nil {
+		t.Fatalf("SetInclude: %v", err)
+	}
+	tg, err := st.GetTargetByContainer("known")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !contains(tg.AppdataPaths, appdata) {
+		t.Fatalf("an existing conventional appdata folder must still be stored, got %v", tg.AppdataPaths)
 	}
 }
 

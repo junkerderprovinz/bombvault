@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -357,14 +358,68 @@ func (s *Service) tryLockDomain(domain string) (func(), bool) {
 	return s.tryLockDomainFor(domain, "maintenance")
 }
 
+// backupHardCap returns the maximum wall-clock time a single backup run may hold
+// its domain lock before being force-cancelled — a guard so a wedged run cannot
+// hold the lock forever. It is configurable via the BACKUP_MAX_HOURS env var:
+//
+//	unset/empty          -> 48h (generous default; very large or slow cloud
+//	                        backups routinely need more than the original 12h,
+//	                        which killed >1 TB runs at ~11h59m).
+//	N (positive integer) -> N hours.
+//	0                    -> no hard cap (returns 0; callers keep
+//	                        context.WithoutCancel with no deadline — a wedged run
+//	                        is still bounded by the scheduler overlap guard).
+//	invalid              -> a warning is logged and the 48h default is used.
+func backupHardCap() time.Duration {
+	const def = 48 * time.Hour
+	raw := strings.TrimSpace(os.Getenv("BACKUP_MAX_HOURS"))
+	if raw == "" {
+		return def
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 0 {
+		log.Printf("api: invalid BACKUP_MAX_HOURS=%q (want a non-negative integer number of hours), using default %v", raw, def) //nolint:gosec // G706: %q-quoted; no raw user bytes reach the log formatter
+		return def
+	}
+	if n == 0 {
+		return 0 // unlimited
+	}
+	return time.Duration(n) * time.Hour
+}
+
+// backupHoldCtx detaches ctx from the caller's cancellation (keeping its values)
+// so a backup survives the triggering client disconnecting, and applies the
+// configurable hard cap (backupHardCap). With an unlimited cap
+// (BACKUP_MAX_HOURS=0) no deadline is set; the returned context is still
+// cancelled by the deferred cancel func when the run returns.
+func backupHoldCtx(ctx context.Context) (context.Context, context.CancelFunc) {
+	base := context.WithoutCancel(ctx)
+	if cap := backupHardCap(); cap > 0 {
+		return context.WithTimeout(base, cap)
+	}
+	return context.WithCancel(base)
+}
+
 // drillLockWait is the most a SCHEDULED drill waits for the per-domain lock to
 // free (matches the backup cap); drillLockPoll is how often it re-tries the lock
 // while waiting. They are package-level vars (not consts) purely so tests can
 // shrink them to sub-second values via a hook — production behaviour is fixed.
 var (
-	drillLockWait = 12 * time.Hour   // max a scheduled drill waits for the domain to free (matches the backup cap)
+	drillLockWait = drillWaitCap()   // max a scheduled drill waits for the domain to free (matches the backup cap)
 	drillLockPoll = 15 * time.Second // how often it re-tries the domain lock while waiting
 )
+
+// drillWaitCap derives the scheduled-drill lock wait from the backup cap: a drill
+// waiting for a domain to free should never give up sooner than a backup can run.
+// When the backup cap is unlimited (BACKUP_MAX_HOURS=0) the drill wait is bounded
+// at an effectively unbounded 100 years (safe for time.Time.Add, unlike a
+// max-int sentinel which would overflow into the past).
+func drillWaitCap() time.Duration {
+	if cap := backupHardCap(); cap > 0 {
+		return cap
+	}
+	return 100 * 365 * 24 * time.Hour
+}
 
 // waitLockDomainFor acquires the per-domain lock, waiting up to drillLockWait by
 // polling tryLock (so a wedged lock-holder can't block a scheduled drill forever
@@ -2440,11 +2495,22 @@ type MountInfo struct {
 	Reachable bool   `json:"reachable"` // reachable under the host mount (backable)
 }
 
+// CustomPath is a selected backup folder that does not correspond to a current
+// bind mount (a manually added path, or an appdata folder for a container whose
+// mount is gone). Exists reports whether it is still present under the host mount,
+// so the UI can flag a stored-but-missing path ("no data folder detected")
+// instead of showing it as a selected folder that backs up nothing (issue #115).
+type CustomPath struct {
+	Path   string `json:"path"`   // host path (shown to the user)
+	Exists bool   `json:"exists"` // still present under the host mount
+}
+
 // ContainerMounts returns the container's bind mounts annotated for the folder
 // selector, plus any selected custom paths (in host form) that do not match a
-// current mount. The selection is the stored explicit choice, or the automatic
-// appdata default when none is configured.
-func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []string, error) {
+// current mount, each flagged with whether it still exists. The selection is the
+// stored explicit choice, or the automatic appdata default when none is
+// configured.
+func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
 		return nil, nil, fmt.Errorf("inspect container: %w", err)
@@ -2476,10 +2542,13 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 	}
 
 	// Custom = selected paths with no matching current mount, shown in host form.
-	var custom []string
+	// Flag each with whether it still exists under the host mount so the UI can
+	// distinguish a real selected folder from a stale/phantom one (issue #115).
+	var custom []CustomPath
 	for _, cp := range effective {
 		if !matched[cp] {
-			custom = append(custom, s.toHostPath(cp))
+			_, statErr := os.Stat(cp) //nolint:gosec // G703: cp is a stored container path already validated under the mount root on save, not raw user input
+			custom = append(custom, CustomPath{Path: s.toHostPath(cp), Exists: statErr == nil})
 		}
 	}
 	return mounts, custom, nil
@@ -2635,7 +2704,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// the browser tab, or stopping the very container the BombVault UI runs in.
 	// Detach from the request's cancellation (keeping its values) with a generous
 	// hard cap so a wedged run can't hold the domain lock forever.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	// Never back up our own container: stopping it mid-run is suicide.
 	if self := s.selfContainerName(ctx); self != "" && name == self {
@@ -3834,9 +3903,10 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 // (StartRestore/StartRestoreVM/StartRestoreFiles/StartRestoreToPath/
 // StartRestoreStack). Aborting a restore mid-flight is DESTRUCTIVE — the
 // container has already been removed and the appdata is partially written — so
-// unlike the 12h backup cap this one is deliberately generous: it exists only
-// so a truly wedged restic can't hold the single-flight guard (and the domain
-// lock) forever, never to bound a legitimate huge restore.
+// unlike the configurable backup cap (backupHardCap, default 48h) this one is
+// deliberately generous: it exists only so a truly wedged restic can't hold the
+// single-flight guard (and the domain lock) forever, never to bound a
+// legitimate huge restore.
 const restoreTimeout = 48 * time.Hour
 
 // registerCancel records the CancelFunc of a running restore under its progress
@@ -4742,11 +4812,20 @@ func (s *Service) ForgetVMTarget(name string) error {
 func (s *Service) SetInclude(ctx context.Context, name string, include bool) error {
 	if _, err := s.store.GetTargetByContainer(name); err != nil {
 		// Target does not exist yet — find-or-create it before calling SetInclude.
-		appdata := []string{path.Join(s.cfg.HostMountRoot, "appdata", name)}
+		var appdata []string
 		if in, inspErr := s.docker.Inspect(ctx, name); inspErr == nil {
 			appdata = s.resolveAppdataPaths(name, in)
 		} else {
-			log.Printf("api: SetInclude: inspect %q failed (using fallback path): %v", name, inspErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
+			log.Printf("api: SetInclude: inspect %q failed (checking fallback path): %v", name, inspErr) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
+			// Fall back to the conventional appdata dir, but ONLY if it actually
+			// exists on disk (same os.Stat guard as resolveAppdataPaths). Persisting
+			// a phantom placeholder would show as a selected folder that backs up
+			// nothing (issue #115); leave AppdataPaths empty (definition-only) until
+			// the user points it at a real folder.
+			cand := path.Join(s.cfg.HostMountRoot, "appdata", name)
+			if _, statErr := os.Stat(cand); statErr == nil { //nolint:gosec // G703: cand is HostMountRoot + "appdata" + a validated container name, not raw user input
+				appdata = []string{cand}
+			}
 		}
 		if _, upsertErr := s.store.UpsertTarget(store.Target{
 			ContainerName: name,
@@ -5097,7 +5176,7 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
@@ -5615,7 +5694,7 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
@@ -5796,7 +5875,7 @@ var _ backup.FilesRestic = (*resticAdapter)(nil)
 func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary, error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
@@ -6542,7 +6621,7 @@ var _ backup.ConfigRestic = (*resticAdapter)(nil)
 func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Hour)
+	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
@@ -7774,6 +7853,21 @@ func isLockErr(err error) bool {
 	return strings.Contains(msg, "unable to create lock") || strings.Contains(msg, "already locked")
 }
 
+// isRepoUninitialized reports whether a restic error is the "repository not
+// initialised yet" signal (as opposed to a genuine auth/connectivity failure).
+// restic phrases it as "repository does not exist" or, when it cannot read the
+// config marker, "unable to open config file". Used to treat a not-yet-replicated
+// REMOTE off-site repo as simply empty rather than surfacing restic's raw fatal
+// (issue #117). Scoped to remote repos by the caller — local repos are guarded
+// upstream by localRepoMissing.
+func isRepoUninitialized(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "repository does not exist") || strings.Contains(msg, "unable to open config file")
+}
+
 // unlockStale best-effort clears stale locks (plain restic unlock: only locks
 // from dead processes or old enough — never an active concurrent lock). Logged,
 // never fatal.
@@ -7791,6 +7885,15 @@ func (s *Service) listSnapshots(ctx context.Context, repo string, mode restic.Mo
 	if isLockErr(err) {
 		s.unlockStale(ctx, repo, mode)
 		snaps, err = s.engine.Snapshots(ctx, repo, mode)
+	}
+	// A REMOTE off-site repo that has not been replicated/initialised yet has no
+	// snapshots — restic reports "repository does not exist", which must read as
+	// "no backups yet", not a fatal (issue #117). Local repos are already
+	// short-circuited upstream by localRepoMissing, so this only affects remotes;
+	// genuine auth/connectivity errors do NOT match isRepoUninitialized and still
+	// propagate.
+	if err != nil && restic.IsRemoteRepo(repo) && isRepoUninitialized(err) {
+		return nil, nil
 	}
 	return snaps, err
 }

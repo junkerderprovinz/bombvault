@@ -445,6 +445,7 @@ const es: Partial<Translations> = {
   "folders.hint": "Elige qué carpetas mapeadas de este contenedor copiar. La carpeta appdata está seleccionada por defecto. Marca otras para incluirlas, o añade una ruta personalizada dentro del montaje del host. Si lo desmarcas todo, vuelve al valor automático de appdata.",
   "folders.appdataDefault": "appdata (por defecto)",
   "folders.notReachable": "no está dentro del montaje del host, no se puede copiar",
+  "folders.customMissing": "no se detectó ninguna carpeta de datos (nada que respaldar aquí)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Añadir una ruta de carpeta",
   "folders.add": "Añadir",

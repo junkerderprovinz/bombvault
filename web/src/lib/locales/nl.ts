@@ -440,6 +440,7 @@ const nl: Partial<Translations> = {
   "folders.hint": "Kies welke van de gekoppelde mappen van deze container je wilt back-uppen. De appdata-map is standaard geselecteerd. Vink andere aan om ze mee te nemen, of voeg een eigen pad toe binnen de host-mount. Alles uitvinken keert terug naar de automatische appdata-standaard.",
   "folders.appdataDefault": "appdata (standaard)",
   "folders.notReachable": "valt niet onder de host-mount, kan niet worden geback-upt",
+  "folders.customMissing": "geen datamap gevonden (hier valt niets te back-uppen)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Een mappad toevoegen",
   "folders.add": "Toevoegen",

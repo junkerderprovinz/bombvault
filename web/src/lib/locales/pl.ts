@@ -438,6 +438,7 @@ const pl: Partial<Translations> = {
   "folders.hint": "Wybierz, które z zamapowanych folderów tego kontenera mają być kopiowane. Folder appdata jest zaznaczony domyślnie. Zaznacz inne, aby je dołączyć, lub dodaj własną ścieżkę w obrębie montowania hosta. Odznaczenie wszystkiego przywraca automatyczne domyślne ustawienie appdata.",
   "folders.appdataDefault": "appdata (domyślnie)",
   "folders.notReachable": "nie znajduje się w montowaniu hosta, nie można utworzyć kopii",
+  "folders.customMissing": "nie wykryto folderu danych (nie ma czego kopiować)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Dodaj ścieżkę folderu",
   "folders.add": "Dodaj",

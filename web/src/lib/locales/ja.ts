@@ -437,6 +437,7 @@ const ja: Partial<Translations> = {
   "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すと、自動の appdata デフォルトに戻ります。",
   "folders.appdataDefault": "appdata（デフォルト）",
   "folders.notReachable": "ホストマウント配下にないため、バックアップできません",
+  "folders.customMissing": "データフォルダーが見つかりません (バックアップ対象なし)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "フォルダパスを追加",
   "folders.add": "追加",
