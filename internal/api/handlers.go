@@ -1354,6 +1354,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// Dual-write: mirror the just-saved off-site config into each domain's PRIMARY
+	// offsite_targets row so the replication path (which now reads those rows) sees
+	// the change. Settings stays authoritative for the fallback/rollback path.
+	h.svc.syncAllPrimaryOffsiteTargets(s)
 	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
@@ -1768,6 +1772,12 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	if err := h.svc.SetCloudCreds(c); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	// The S3 storage class rides the cloud creds, so a change here must re-flow
+	// into each domain's primary off-site target (whose storage_class the
+	// replication path reads). Best-effort; a store read failure just skips it.
+	if settings, sErr := h.store.GetSettings(); sErr == nil {
+		h.svc.syncAllPrimaryOffsiteTargets(settings)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
