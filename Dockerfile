@@ -114,6 +114,12 @@ ENV DATA_DIR=/config \
     PORT=3000 \
     HTTPS_PORT=3443
 
+# BACKUP_MAX_HOURS caps how long a single backup run may hold its domain lock
+# before being force-cancelled (a guard against a wedged run). Empty = the 48h
+# default; set an integer number of hours for very large/slow cloud backups, or
+# 0 to disable the cap entirely. Left empty here so operators opt in.
+ENV BACKUP_MAX_HOURS=
+
 VOLUME /config
 EXPOSE 3000 3443
 
