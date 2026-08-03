@@ -224,5 +224,16 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/foreign/close", h.handleForeignClose)
 	mux.HandleFunc("POST /api/foreign/restore", h.handleForeignRestore)
 
+	// Receiver dashboard (read-only): register + monitor immutable off-site repos
+	// this box RECEIVES copies into. Gated behind the receiverEnabled settings flag
+	// in the SPA; the endpoints stay session-protected like every other /api route.
+	// The literal path segments are more specific than any {id}, so no collision.
+	mux.HandleFunc("GET /api/receiver/repos", h.handleListReceiverRepos)
+	mux.HandleFunc("POST /api/receiver/repos", h.handleCreateReceiverRepo)
+	mux.HandleFunc("PUT /api/receiver/repos/{id}", h.handleUpdateReceiverRepo)
+	mux.HandleFunc("DELETE /api/receiver/repos/{id}", h.handleDeleteReceiverRepo)
+	mux.HandleFunc("GET /api/receiver/repos/{id}/inventory", h.handleReceiverInventory)
+	mux.HandleFunc("POST /api/receiver/repos/{id}/check", h.handleReceiverCheck)
+
 	return h.authGate(mux)
 }

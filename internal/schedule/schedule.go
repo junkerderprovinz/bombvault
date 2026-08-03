@@ -230,6 +230,15 @@ func (c Cadence) LastFire(now time.Time) (time.Time, bool) {
 // window has had its chance to complete before the currency verdict is taken.
 const WatchdogCadence = "daily 09:00"
 
+// ReceiverCadence is the fixed daily cadence of the receiver watch (dead-mans-
+// switch sweep + due integrity checks for received off-site repos). Like the
+// watchdog it is not user-configurable at the app level: the per-repo integrity
+// check cadence is configured on each received repo, and the daily tick only
+// decides which repos are due and evaluates each repo's dead-mans-switch. 09:15 is
+// just after the watchdog so the two currency passes do not fire in the same
+// minute.
+const ReceiverCadence = "daily 09:15"
+
 // catchUpGrace is the slack applied when deciding whether a scheduled fire was
 // missed: a success within this margin BEFORE the fire still counts as covering
 // it (a manual run moments before the trigger, or clock jitter, must not cause
@@ -366,6 +375,7 @@ type Scheduler struct {
 	tamperFn         func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
 	digestFn         func() error                            // nil until SetDigestJob wires the weekly digest notification
 	watchdogFn       func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
+	receiverFn       func() error                            // nil until SetReceiverJob wires the receiver watch (dead-mans-switch + integrity checks)
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -434,6 +444,8 @@ func jobDomainFromName(name string) (job, domain string) {
 		return "digest", ""
 	case "watchdog":
 		return "watchdog", "" // one app-wide overdue check per fire
+	case "receiver":
+		return "receiver", "" // one app-wide received-repo watch per fire
 	}
 	if d, ok := strings.CutSuffix(name, "-offsite"); ok {
 		return "offsite", d
@@ -584,6 +596,15 @@ func (s *Scheduler) SetDigestJob(digestFn func() error) {
 // the watchdog schedule is a no-op (logged). Call before Reload.
 func (s *Scheduler) SetWatchdogJob(watchdogFn func() error) {
 	s.watchdogFn = watchdogFn
+}
+
+// SetReceiverJob wires the daily receiver watch so its fixed schedule
+// (ReceiverCadence) actually runs. receiverFn evaluates every enabled received
+// repo's dead-mans-switch and runs each repo's due integrity check, notifying once
+// per stale episode / once per integrity-failure transition. Until this is called
+// the receiver schedule is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetReceiverJob(receiverFn func() error) {
+	s.receiverFn = receiverFn
 }
 
 // SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
@@ -873,6 +894,26 @@ func (s *Scheduler) ReloadWithDueChecks(
 				}
 				if err := s.watchdogFn(); err != nil {
 					log.Printf("schedule: watchdog job: %v", err)
+				}
+			},
+		})
+	}
+
+	// Receiver watch: ONE app-wide pass per fire on the fixed ReceiverCadence,
+	// evaluating every enabled received repo's dead-mans-switch and running each
+	// repo's due integrity check. Gated on ReceiverEnabled (default off), exactly
+	// like the domain toggles the receiver dashboard hangs off.
+	if settings.ReceiverEnabled {
+		domains = append(domains, domainSpec{
+			cadence: ReceiverCadence,
+			name:    "receiver",
+			fn: func() {
+				if s.receiverFn == nil {
+					log.Print("schedule: receiver job skipped — receiver not wired (SetReceiverJob)")
+					return
+				}
+				if err := s.receiverFn(); err != nil {
+					log.Printf("schedule: receiver job: %v", err)
 				}
 			},
 		})
