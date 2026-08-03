@@ -124,6 +124,16 @@ The restore is the star: a backed-up container or VM reappears in the Docker or 
     Required="false"
     Mask="false">BombVault</Config>
   <Config
+    Name="BACKUP_MAX_HOURS"
+    Target="BACKUP_MAX_HOURS"
+    Default=""
+    Mode=""
+    Description="Maximum wall-clock hours a single backup run may hold its domain lock before it is force-cancelled (a guard so a wedged run cannot block the domain forever). Leave empty for the 48h default. Raise it for very large or slow cloud backups (a run cancelled at the cap fails with 'context deadline exceeded'). Set 0 to disable the cap entirely."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false"></Config>
+  <Config
     Name="VM Backup: Host"
     Target="LIBVIRT_HOST"
     Default="192.168.x.x"

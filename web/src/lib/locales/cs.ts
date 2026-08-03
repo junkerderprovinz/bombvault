@@ -443,6 +443,7 @@ const cs: Partial<Translations> = {
   "folders.hint": "Vyberte, které z namapovaných složek tohoto kontejneru se mají zálohovat. Složka appdata je vybrána ve výchozím nastavení. Zaškrtnutím zahrnete další, nebo přidejte vlastní cestu v rámci připojení hostitele. Odškrtnutí všeho se vrátí k automatickému výchozímu nastavení appdata.",
   "folders.appdataDefault": "appdata (výchozí)",
   "folders.notReachable": "není v rámci připojení hostitele, nelze zálohovat",
+  "folders.customMissing": "nenalezena žádná datová složka (není co zálohovat)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Přidat cestu ke složce",
   "folders.add": "Přidat",

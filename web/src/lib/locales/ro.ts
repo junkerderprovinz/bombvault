@@ -443,6 +443,7 @@ const ro: Partial<Translations> = {
   "folders.hint": "Alege care dintre folderele mapate ale acestui container să fie salvate. Folderul appdata este selectat implicit. Bifează altele pentru a le include sau adaugă o cale personalizată sub montarea gazdei. Debifarea tuturor revine la valoarea implicită automată appdata.",
   "folders.appdataDefault": "appdata (implicit)",
   "folders.notReachable": "nu se află sub montarea gazdei, nu poate fi salvat",
+  "folders.customMissing": "niciun folder de date detectat (nimic de salvat aici)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Adaugă o cale de folder",
   "folders.add": "Adaugă",

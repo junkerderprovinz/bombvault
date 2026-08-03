@@ -445,6 +445,7 @@ const sv: Partial<Translations> = {
   "folders.hint": "Välj vilka av den här containerns mappade mappar som ska säkerhetskopieras. appdata-mappen är vald som standard. Kryssa i andra för att inkludera dem, eller lägg till en egen sökväg under host-monteringen. Om du avmarkerar allt återgår det till det automatiska appdata-standardvalet.",
   "folders.appdataDefault": "appdata (standard)",
   "folders.notReachable": "ligger inte under host-monteringen, kan inte säkerhetskopieras",
+  "folders.customMissing": "ingen datamapp hittades (inget att säkerhetskopiera här)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Lägg till en mappsökväg",
   "folders.add": "Lägg till",

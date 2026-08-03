@@ -445,6 +445,7 @@ const tr: Partial<Translations> = {
   "folders.hint": "Bu kapsayıcının eşlenen klasörlerinden hangilerinin yedekleneceğini seçin. appdata klasörü varsayılan olarak seçilidir. Diğerlerini dahil etmek için işaretleyin veya host bağlama noktası altında özel bir yol ekleyin. Tüm işaretleri kaldırmak otomatik appdata varsayılanına döner.",
   "folders.appdataDefault": "appdata (varsayılan)",
   "folders.notReachable": "host bağlama noktası altında değil, yedeklenemez",
+  "folders.customMissing": "veri klasörü bulunamadı (burada yedeklenecek bir şey yok)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Klasör yolu ekle",
   "folders.add": "Ekle",

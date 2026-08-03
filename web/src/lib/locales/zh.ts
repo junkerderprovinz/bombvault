@@ -437,6 +437,7 @@ const zh: Partial<Translations> = {
   "folders.hint": "选择此容器映射的哪些文件夹进行备份。appdata 文件夹默认已选中。勾选其他文件夹以将其包含在内，或在主机挂载下添加自定义路径。取消所有勾选将恢复到自动的 appdata 默认值。",
   "folders.appdataDefault": "appdata（默认）",
   "folders.notReachable": "不在主机挂载范围内，无法备份",
+  "folders.customMissing": "未检测到数据文件夹 (这里没有可备份的内容)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "添加文件夹路径",
   "folders.add": "添加",
