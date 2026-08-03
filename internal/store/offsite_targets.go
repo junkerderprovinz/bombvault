@@ -4,8 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
+
+// ErrEmptyOffsiteRepo is returned by UpsertOffsiteTarget when the target has no
+// repo location. An off-site DESTINATION with an empty repo is meaningless (it
+// addresses nowhere) and would make offsiteRepoFor return "" for a domain that
+// still has a target row, so it is rejected at the store boundary. The backfill
+// migration only inserts rows for a non-empty off-site column, so it is unaffected.
+var ErrEmptyOffsiteRepo = errors.New("off-site target repo must not be empty")
 
 // OffsiteTarget is one off-site DESTINATION for a domain: a restic repo the
 // domain's local backups are replicated to, plus that destination's own
@@ -51,6 +59,9 @@ type OffsiteTarget struct {
 // is assigned via newID(); CreatedAt is stamped now when 0. Returns the stored
 // OffsiteTarget (with the assigned id/timestamp).
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
+	if strings.TrimSpace(t.Repo) == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
 	if t.ID == "" {
 		t.ID = newID()
 	}

@@ -1,10 +1,35 @@
 package store_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// TestUpsertOffsiteTargetEmptyRepoRejected pins the empty-repo guard: a target
+// with a blank (or whitespace-only) repo addresses nowhere and is refused with
+// ErrEmptyOffsiteRepo, and nothing is written.
+func TestUpsertOffsiteTargetEmptyRepoRejected(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	for _, repo := range []string{"", "   "} {
+		if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Bad", Repo: repo}); !errors.Is(err, store.ErrEmptyOffsiteRepo) {
+			t.Fatalf("UpsertOffsiteTarget(repo=%q) err = %v, want ErrEmptyOffsiteRepo", repo, err)
+		}
+	}
+	all, err := r.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 0 {
+		t.Fatalf("a rejected empty-repo upsert must write nothing, got %d rows", len(all))
+	}
+}
 
 func TestOffsiteTargetCRUD(t *testing.T) {
 	db := store.OpenMem(t)
