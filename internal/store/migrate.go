@@ -747,6 +747,39 @@ CREATE INDEX IF NOT EXISTS idx_tamper_tests_target_at ON tamper_tests(offsite_ta
 CREATE INDEX IF NOT EXISTS idx_offsite_runs_target_started ON offsite_runs(offsite_target_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_restore_drills_target_source_kind_at ON restore_drills(offsite_target_id, source, kind, at);`,
 	},
+	{
+		// Receiver dashboard (read-only off-site RECEIVER monitoring). A box that
+		// RECEIVES immutable off-site copies registers the received repo here and
+		// monitors it READ-ONLY: snapshot inventory grouped by source, an independent
+		// restic check on the receiving hardware, and dead-mans-switch alerting. The
+		// SENDING instance's APP_KEY is stored ENCRYPTED at rest (internal/secret) in
+		// app_key_enc and is only ever decrypted in-engine — never logged, never
+		// returned in the clear. last_check_ok is nullable (NULL = never checked yet).
+		//
+		// receiver_enabled gates the whole feature (default 0 = off), exactly like the
+		// files/vms domain toggles. It is added in the same migration so the settings
+		// row and the table land together.
+		version: 76, name: "received_repos",
+		sql: `
+CREATE TABLE IF NOT EXISTS received_repos (
+  id                   TEXT    PRIMARY KEY,
+  name                 TEXT    NOT NULL DEFAULT '',
+  repo                 TEXT    NOT NULL DEFAULT '',
+  app_key_enc          BLOB    NOT NULL DEFAULT x'',
+  dead_man_hours       INTEGER NOT NULL DEFAULT 26,
+  check_cadence        TEXT    NOT NULL DEFAULT 'off',
+  read_data_percent    INTEGER NOT NULL DEFAULT 0,
+  last_check_at        INTEGER NOT NULL DEFAULT 0,
+  last_check_ok        INTEGER,                       -- nullable: NULL = never checked
+  last_check_error     TEXT    NOT NULL DEFAULT '',
+  last_check_read_data INTEGER NOT NULL DEFAULT 0,
+  enabled              INTEGER NOT NULL DEFAULT 1,
+  created_at           INTEGER NOT NULL DEFAULT 0,
+  sort_order           INTEGER NOT NULL DEFAULT 0
+);
+
+ALTER TABLE settings ADD COLUMN receiver_enabled INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

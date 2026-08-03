@@ -38,22 +38,22 @@ func TestOffsiteBackfillV75(t *testing.T) {
 
 	// Configure a single off-site repo for the containers domain, plus the GLOBAL
 	// retention / limits / growth-budget the backfill copies. Leave every other
-	// domain's off-site repo empty.
-	s, err := r.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	s.ContainersOffsite = "s3:https://example/containers"
-	s.ContainersOffsiteSchedule = "daily 04:00"
-	s.ContainersOffsiteImmutable = true
-	s.OffsiteRetentionKeepLast = 5
-	s.OffsiteRetentionKeepDaily = 10
-	s.OffsiteRetentionKeepWeekly = 6
-	s.OffsiteRetentionKeepMonthly = 9
-	s.OffsiteLimitUpload = 1500
-	s.OffsiteLimitDownload = 3000
-	s.OffsiteGrowthBudgetGB = 42
-	if err := r.UpdateSettings(s); err != nil {
+	// domain's off-site repo empty. Written with direct SQL against the v74 schema:
+	// GetSettings/UpdateSettings track the CURRENT settings columns (including the
+	// later v76 receiver_enabled), which do not exist in this reconstructed pre-v75
+	// install.
+	if _, err := db.Exec(`UPDATE settings SET
+		containers_offsite            = ?,
+		containers_offsite_schedule   = ?,
+		containers_offsite_immutable  = 1,
+		offsite_retention_keep_last   = 5,
+		offsite_retention_keep_daily  = 10,
+		offsite_retention_keep_weekly = 6,
+		offsite_retention_keep_monthly = 9,
+		offsite_limit_upload          = 1500,
+		offsite_limit_download        = 3000,
+		offsite_growth_budget_gb      = 42
+	  WHERE id = 1`, "s3:https://example/containers", "daily 04:00"); err != nil {
 		t.Fatal(err)
 	}
 
