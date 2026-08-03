@@ -445,6 +445,7 @@ const ar: Partial<Translations> = {
   "folders.hint": "اختر أي من المجلدات المربوطة بهذه الحاوية تريد نسخها احتياطياً. مجلد appdata محدد بشكل افتراضي. حدّد مجلدات أخرى لتضمينها، أو أضف مساراً مخصصاً ضمن نقطة تركيب المضيف. إلغاء تحديد كل شيء يعيد الوضع إلى الافتراضي التلقائي لمجلد appdata.",
   "folders.appdataDefault": "appdata (افتراضي)",
   "folders.notReachable": "ليس ضمن نقطة تركيب المضيف، لا يمكن نسخه احتياطياً",
+  "folders.customMissing": "لم يتم العثور على مجلد بيانات (لا شيء للنسخ الاحتياطي هنا)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "إضافة مسار مجلد",
   "folders.add": "إضافة",

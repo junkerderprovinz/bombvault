@@ -445,6 +445,7 @@ const fi: Partial<Translations> = {
   "folders.hint": "Valitse, mitkä tämän kontin liitetyistä kansioista varmuuskopioidaan. appdata-kansio on valittuna oletuksena. Rastita muut sisällyttääksesi ne, tai lisää oma polku host-liitoksen alle. Kaikkien rastien poistaminen palauttaa automaattisen appdata-oletuksen.",
   "folders.appdataDefault": "appdata (oletus)",
   "folders.notReachable": "ei ole host-liitoksen alla, ei voida varmuuskopioida",
+  "folders.customMissing": "datakansiota ei löytynyt (ei mitään varmuuskopioitavaa)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Lisää kansiopolku",
   "folders.add": "Lisää",

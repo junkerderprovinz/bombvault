@@ -445,6 +445,7 @@ const fr: Partial<Translations> = {
   "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher revient au comportement automatique du dossier appdata.",
   "folders.appdataDefault": "appdata (par défaut)",
   "folders.notReachable": "n'est pas sous le montage de l'hôte, ne peut pas être sauvegardé",
+  "folders.customMissing": "aucun dossier de données détecté (rien à sauvegarder ici)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Ajouter un chemin de dossier",
   "folders.add": "Ajouter",
