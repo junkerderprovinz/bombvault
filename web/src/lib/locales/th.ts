@@ -767,6 +767,23 @@ const th: Partial<Translations> = {
   "offsite.retention.budget": "งบประมาณการเติบโต (GB, 0 = ปิด)",
   "offsite.retention.saveBudget": "บันทึกงบประมาณ",
 
+  "offsite.targets.title": "เป้าหมายนอกสถานที่เพิ่มเติม",
+  "offsite.targets.hint": "จำลองโดเมนนี้ไปยังตำแหน่งนอกสถานที่มากกว่าหนึ่งแห่ง เป้าหมายหลักด้านบนแก้ไขแยกต่างหาก รายการที่คุณเพิ่มที่นี่เป็นสำเนาเพิ่มเติม",
+  "offsite.targets.scheduleNote": "เป้าหมายทั้งหมดของโดเมนนี้จะจำลองตามกำหนดการนอกสถานที่ของโดเมนนี้ ไม่มีกำหนดการแยกต่างหากต่อเป้าหมาย",
+  "offsite.targets.add": "เพิ่มเป้าหมาย",
+  "offsite.targets.none": "ยังไม่มีเป้าหมายเพิ่มเติม",
+  "offsite.targets.edit": "แก้ไข",
+  "offsite.targets.remove": "ลบ",
+  "offsite.targets.removing": "กำลังลบ…",
+  "offsite.targets.confirmRemove": "ยืนยันการลบ",
+  "offsite.targets.save": "บันทึกเป้าหมาย",
+  "offsite.targets.cancel": "ยกเลิก",
+  "offsite.targets.name": "ชื่อ (ไม่บังคับ)",
+  "offsite.targets.namePlaceholder": "เช่น Backblaze B2",
+  "offsite.targets.repoRequired": "ป้อน URL ของที่เก็บ",
+  "offsite.targets.loadError": "ไม่สามารถโหลดเป้าหมายนอกสถานที่ได้",
+  "offsite.targets.retentionTitle": "การเก็บรักษา (0 = เก็บทั้งหมด)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "ประเภทการทดสอบ:",
   "drill.kindSubset": "การตรวจสอบความสมบูรณ์",

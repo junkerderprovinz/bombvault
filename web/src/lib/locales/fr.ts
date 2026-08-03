@@ -739,6 +739,23 @@ const fr: Partial<Translations> = {
   "offsite.retention.budget": "Budget de croissance (GB, 0 = désactivé)",
   "offsite.retention.saveBudget": "Enregistrer le budget",
 
+  "offsite.targets.title": "Cibles hors-site supplémentaires",
+  "offsite.targets.hint": "Répliquez ce domaine vers plusieurs emplacements hors-site. La cible principale ci-dessus se modifie séparément ; celles ajoutées ici sont des copies supplémentaires.",
+  "offsite.targets.scheduleNote": "Toutes les cibles de ce domaine se répliquent selon le planning hors-site de ce domaine. Il n'y a pas de planning distinct par cible.",
+  "offsite.targets.add": "Ajouter une cible",
+  "offsite.targets.none": "Aucune cible supplémentaire pour l'instant.",
+  "offsite.targets.edit": "Modifier",
+  "offsite.targets.remove": "Supprimer",
+  "offsite.targets.removing": "Suppression…",
+  "offsite.targets.confirmRemove": "Confirmer la suppression",
+  "offsite.targets.save": "Enregistrer la cible",
+  "offsite.targets.cancel": "Annuler",
+  "offsite.targets.name": "Nom (facultatif)",
+  "offsite.targets.namePlaceholder": "ex. Backblaze B2",
+  "offsite.targets.repoRequired": "Saisissez une URL de dépôt.",
+  "offsite.targets.loadError": "Impossible de charger les cibles hors-site.",
+  "offsite.targets.retentionTitle": "Rétention (0 = tout conserver)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Type d'exercice :",
   "drill.kindSubset": "Vérification d'intégrité",

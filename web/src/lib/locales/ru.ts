@@ -731,6 +731,23 @@ const ru: Partial<Translations> = {
   "offsite.retention.budget": "Бюджет роста (ГБ, 0 = выкл.)",
   "offsite.retention.saveBudget": "Сохранить бюджет",
 
+  "offsite.targets.title": "Дополнительные удалённые цели",
+  "offsite.targets.hint": "Реплицируйте этот домен в несколько удалённых мест. Основная цель выше редактируется отдельно; добавленные здесь являются дополнительными копиями.",
+  "offsite.targets.scheduleNote": "Все цели этого домена реплицируются по удалённому расписанию этого домена. Отдельного расписания для каждой цели нет.",
+  "offsite.targets.add": "Добавить цель",
+  "offsite.targets.none": "Дополнительных целей пока нет.",
+  "offsite.targets.edit": "Изменить",
+  "offsite.targets.remove": "Удалить",
+  "offsite.targets.removing": "Удаление…",
+  "offsite.targets.confirmRemove": "Подтвердить удаление",
+  "offsite.targets.save": "Сохранить цель",
+  "offsite.targets.cancel": "Отмена",
+  "offsite.targets.name": "Имя (необязательно)",
+  "offsite.targets.namePlaceholder": "напр. Backblaze B2",
+  "offsite.targets.repoRequired": "Введите URL репозитория.",
+  "offsite.targets.loadError": "Не удалось загрузить удалённые цели.",
+  "offsite.targets.retentionTitle": "Хранение (0 = хранить всё)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Тип проверки:",
   "drill.kindSubset": "Проверка целостности",

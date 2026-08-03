@@ -736,6 +736,23 @@ const no: Partial<Translations> = {
   "offsite.retention.budget": "Vekstbudsjett (GB, 0 = av)",
   "offsite.retention.saveBudget": "Lagre budsjett",
 
+  "offsite.targets.title": "Flere eksterne mål",
+  "offsite.targets.hint": "Replikér dette domenet til mer enn ett eksternt sted. Det primære målet over redigeres separat; de du legger til her er ekstra kopier.",
+  "offsite.targets.scheduleNote": "Alle mål for dette domenet replikeres etter domenets eksterne tidsplan. Det finnes ingen egen tidsplan per mål.",
+  "offsite.targets.add": "Legg til mål",
+  "offsite.targets.none": "Ingen flere mål ennå.",
+  "offsite.targets.edit": "Rediger",
+  "offsite.targets.remove": "Fjern",
+  "offsite.targets.removing": "Fjerner…",
+  "offsite.targets.confirmRemove": "Bekreft fjerning",
+  "offsite.targets.save": "Lagre mål",
+  "offsite.targets.cancel": "Avbryt",
+  "offsite.targets.name": "Navn (valgfritt)",
+  "offsite.targets.namePlaceholder": "f.eks. Backblaze B2",
+  "offsite.targets.repoRequired": "Skriv inn en repository-URL.",
+  "offsite.targets.loadError": "Kunne ikke laste eksterne mål.",
+  "offsite.targets.retentionTitle": "Oppbevaring (0 = behold alt)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Øvelsestype:",
   "drill.kindSubset": "Integritetssjekk",

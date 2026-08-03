@@ -742,6 +742,23 @@ const hu: Partial<Translations> = {
   "offsite.retention.budget": "Növekedési keret (GB, 0 = ki)",
   "offsite.retention.saveBudget": "Keret mentése",
 
+  "offsite.targets.title": "További külső célok",
+  "offsite.targets.hint": "Replikálja ezt a tartományt több külső helyre is. A fenti elsődleges cél külön szerkeszthető; az itt hozzáadottak további másolatok.",
+  "offsite.targets.scheduleNote": "A tartomány összes célja a tartomány külső ütemezése szerint replikálódik. Nincs célonkénti külön ütemezés.",
+  "offsite.targets.add": "Cél hozzáadása",
+  "offsite.targets.none": "Még nincsenek további célok.",
+  "offsite.targets.edit": "Szerkesztés",
+  "offsite.targets.remove": "Eltávolítás",
+  "offsite.targets.removing": "Eltávolítás…",
+  "offsite.targets.confirmRemove": "Eltávolítás megerősítése",
+  "offsite.targets.save": "Cél mentése",
+  "offsite.targets.cancel": "Mégse",
+  "offsite.targets.name": "Név (nem kötelező)",
+  "offsite.targets.namePlaceholder": "pl. Backblaze B2",
+  "offsite.targets.repoRequired": "Adjon meg egy adattár URL-t.",
+  "offsite.targets.loadError": "A külső célok betöltése nem sikerült.",
+  "offsite.targets.retentionTitle": "Megőrzés (0 = mind megtartása)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Próba típusa:",
   "drill.kindSubset": "Integritásellenőrzés",

@@ -762,6 +762,23 @@ const es: Partial<Translations> = {
   "offsite.retention.budget": "Presupuesto de crecimiento (GB, 0 = desactivado)",
   "offsite.retention.saveBudget": "Guardar presupuesto",
 
+  "offsite.targets.title": "Destinos externos adicionales",
+  "offsite.targets.hint": "Replica este dominio en más de una ubicación externa. El destino principal de arriba se edita por separado; los que añadas aquí son copias adicionales.",
+  "offsite.targets.scheduleNote": "Todos los destinos de este dominio se replican según el horario externo de este dominio. No hay un horario independiente por destino.",
+  "offsite.targets.add": "Añadir destino",
+  "offsite.targets.none": "Aún no hay destinos adicionales.",
+  "offsite.targets.edit": "Editar",
+  "offsite.targets.remove": "Eliminar",
+  "offsite.targets.removing": "Eliminando…",
+  "offsite.targets.confirmRemove": "Confirmar eliminación",
+  "offsite.targets.save": "Guardar destino",
+  "offsite.targets.cancel": "Cancelar",
+  "offsite.targets.name": "Nombre (opcional)",
+  "offsite.targets.namePlaceholder": "p. ej. Backblaze B2",
+  "offsite.targets.repoRequired": "Introduce una URL de repositorio.",
+  "offsite.targets.loadError": "No se pudieron cargar los destinos externos.",
+  "offsite.targets.retentionTitle": "Retención (0 = conservar todo)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Tipo de simulacro:",
   "drill.kindSubset": "Comprobación de integridad",

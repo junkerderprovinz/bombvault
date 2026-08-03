@@ -756,6 +756,23 @@ const zh: Partial<Translations> = {
   "offsite.retention.budget": "增长预算（GB，0 = 关闭）",
   "offsite.retention.saveBudget": "保存预算",
 
+  "offsite.targets.title": "其他异地目标",
+  "offsite.targets.hint": "将此域复制到多个异地位置。上面的主目标单独编辑；此处添加的是额外副本。",
+  "offsite.targets.scheduleNote": "此域的所有目标均按此域的异地计划进行复制。没有针对单个目标的单独计划。",
+  "offsite.targets.add": "添加目标",
+  "offsite.targets.none": "尚无其他目标。",
+  "offsite.targets.edit": "编辑",
+  "offsite.targets.remove": "移除",
+  "offsite.targets.removing": "正在移除…",
+  "offsite.targets.confirmRemove": "确认移除",
+  "offsite.targets.save": "保存目标",
+  "offsite.targets.cancel": "取消",
+  "offsite.targets.name": "名称（可选）",
+  "offsite.targets.namePlaceholder": "例如 Backblaze B2",
+  "offsite.targets.repoRequired": "请输入仓库 URL。",
+  "offsite.targets.loadError": "无法加载异地目标。",
+  "offsite.targets.retentionTitle": "保留（0 = 全部保留）",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "演练类型：",
   "drill.kindSubset": "完整性检查",

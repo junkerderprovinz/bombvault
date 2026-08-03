@@ -739,6 +739,23 @@ const he: Partial<Translations> = {
   "offsite.retention.budget": "תקציב גדילה (GB, 0 = כבוי)",
   "offsite.retention.saveBudget": "שמור תקציב",
 
+  "offsite.targets.title": "יעדים חיצוניים נוספים",
+  "offsite.targets.hint": "שכפל תחום זה ליותר ממיקום חיצוני אחד. היעד הראשי למעלה נערך בנפרד; אלה שתוסיף כאן הם עותקים נוספים.",
+  "offsite.targets.scheduleNote": "כל היעדים של תחום זה משוכפלים לפי לוח הזמנים החיצוני של תחום זה. אין לוח זמנים נפרד לכל יעד.",
+  "offsite.targets.add": "הוסף יעד",
+  "offsite.targets.none": "אין עדיין יעדים נוספים.",
+  "offsite.targets.edit": "עריכה",
+  "offsite.targets.remove": "הסרה",
+  "offsite.targets.removing": "מסיר…",
+  "offsite.targets.confirmRemove": "אישור הסרה",
+  "offsite.targets.save": "שמור יעד",
+  "offsite.targets.cancel": "ביטול",
+  "offsite.targets.name": "שם (אופציונלי)",
+  "offsite.targets.namePlaceholder": "לדוגמה Backblaze B2",
+  "offsite.targets.repoRequired": "הזן כתובת URL של מאגר.",
+  "offsite.targets.loadError": "לא ניתן היה לטעון את היעדים החיצוניים.",
+  "offsite.targets.retentionTitle": "שמירה (0 = שמור הכול)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "סוג תרגיל:",
   "drill.kindSubset": "בדיקת שלמות",
