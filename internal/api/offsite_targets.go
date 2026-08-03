@@ -1,10 +1,97 @@
 package api
 
 import (
+	"log"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// offsiteConfigDomains is the set of domains that can have an off-site
+// destination — the same whitelist every off-site handler validates against.
+var offsiteConfigDomains = []string{"containers", "vms", "flash", "config", "files"}
+
+// validOffsiteDomain reports whether domain is one of the five off-site-capable
+// domains (the CRUD/setter whitelist).
+func validOffsiteDomain(domain string) bool {
+	for _, d := range offsiteConfigDomains {
+		if d == domain {
+			return true
+		}
+	}
+	return false
+}
+
+// syncPrimaryOffsiteTarget reconciles a domain's PRIMARY off-site target row with
+// the current Settings columns (+ the decoded cloud storage class), so that
+// editing off-site config through the legacy Settings setters keeps working now
+// that the replication path reads the offsite_targets rows instead of Settings.
+//
+// The PRIMARY target is the domain's first row in per-domain order (the shape the
+// stage-1 backfill produced: name "Primary", sort_order 0). When it exists, its
+// identity (id/created_at/sort_order/creds_ref) is preserved and only the mutable
+// config is rewritten from Settings — so an N=1 install stays a single, same-id
+// target. When it does not exist yet (a post-backfill install configured only via
+// Settings) a fresh one is created. When the domain's off-site repo has been
+// CLEARED, the primary row is DELETED so offsiteRepoFor falls back to the (now
+// empty) Settings column instead of a stale repo.
+//
+// The storage class is copied from the shared cloud creds (best-effort: a decode
+// failure leaves it empty, which offsiteModeForTarget treats as "use the global
+// class" — identical replication behavior). This finally populates the primary
+// target's storage_class, which the pure-SQL backfill could not.
+func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
+	if s.store == nil {
+		return nil
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		return err
+	}
+	var primary *store.OffsiteTarget
+	if len(targets) > 0 {
+		primary = &targets[0] // first in (sort_order, created_at) order
+	}
+
+	repo := offsiteRepoFromSettings(domain, settings)
+	if repo == "" {
+		// Off-site cleared for this domain: drop the primary so offsiteRepoFor
+		// resolves back to the empty Settings column rather than a stale target.
+		if primary != nil {
+			return s.store.DeleteOffsiteTarget(primary.ID)
+		}
+		return nil
+	}
+
+	t := settingsOffsiteTarget(domain, settings, repo)
+	if c, cErr := s.decodeCloud(settings); cErr == nil {
+		t.StorageClass = c.S3StorageClass
+	}
+	if primary != nil {
+		// Preserve the existing row's identity + placement + creds selector; only
+		// the Settings-derived config is refreshed.
+		t.ID = primary.ID
+		t.CreatedAt = primary.CreatedAt
+		t.SortOrder = primary.SortOrder
+		t.CredsRef = primary.CredsRef
+	}
+	_, err = s.store.UpsertOffsiteTarget(t)
+	return err
+}
+
+// syncAllPrimaryOffsiteTargets reconciles every domain's primary off-site target
+// with the given Settings. Best-effort per domain: a failure is logged and does
+// not abort the others (Settings remain the source of truth for the fallback
+// path, so a sync miss degrades to the legacy read, not data loss). Called after
+// any write that changes off-site config: the settings save and the cloud-creds
+// save (which changes the storage class).
+func (s *Service) syncAllPrimaryOffsiteTargets(settings store.Settings) {
+	for _, d := range offsiteConfigDomains {
+		if err := s.syncPrimaryOffsiteTarget(d, settings); err != nil {
+			log.Printf("api: sync primary offsite target %s failed: %v", d, err) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}
+}
 
 // offsiteSourcePrefix is the "offsite:<id>" form's prefix. The bare source
 // "offsite" (no id) addresses a domain's PRIMARY off-site target; the prefixed
