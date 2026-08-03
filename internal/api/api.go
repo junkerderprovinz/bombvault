@@ -145,6 +145,12 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/unlock/{domain}", h.handleUnlock)
 	mux.HandleFunc("POST /api/prune/{domain}", h.handlePrune)
 	mux.HandleFunc("DELETE /api/snapshots/{domain}/{id}", h.handleDeleteSnapshot)
+	// Off-site target CRUD (multi-off-site). The literal "targets" segment is more
+	// specific than "{domain}", so these never collide with the per-domain routes.
+	mux.HandleFunc("GET /api/offsite/targets", h.handleListOffsiteTargets)
+	mux.HandleFunc("POST /api/offsite/targets", h.handleCreateOffsiteTarget)
+	mux.HandleFunc("PUT /api/offsite/targets/{id}", h.handleUpdateOffsiteTarget)
+	mux.HandleFunc("DELETE /api/offsite/targets/{id}", h.handleDeleteOffsiteTarget)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)
 	mux.HandleFunc("GET /api/offsite/{domain}/deploy-snippet", h.handleDeploySnippet)
