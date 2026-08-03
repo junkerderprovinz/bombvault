@@ -180,6 +180,10 @@ type Settings struct {
 	// ExportEncryptEnabled on and this empty/invalid, every export path fails loudly
 	// rather than writing plaintext.
 	ExportAgeRecipients string
+	// ReceiverEnabled gates the read-only receiver dashboard (a box that RECEIVES
+	// immutable off-site copies and monitors the received repo). Default false
+	// (opt-in), exactly like the Files/VMs domain tabs.
+	ReceiverEnabled bool
 }
 
 // GetSettings returns the current app settings.
@@ -204,14 +208,15 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       prune_image_after_update, session_epoch, restic_cache_max_mb,
 		       digest_enabled, digest_schedule,
 		       catch_up_missed, watchdog_enabled,
-		       export_encrypt_enabled, export_age_recipients
+		       export_encrypt_enabled, export_age_recipients,
+		       receiver_enabled
 		FROM settings WHERE id = 1`)
 
 	var s Settings
 	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
-	var catchUpMissed, watchdogEnabled, exportEncryptEnabled int
+	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -233,6 +238,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&digestEnabled, &s.DigestSchedule,
 		&catchUpMissed, &watchdogEnabled,
 		&exportEncryptEnabled, &s.ExportAgeRecipients,
+		&receiverEnabled,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -261,6 +267,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.CatchUpMissed = catchUpMissed != 0
 	s.WatchdogEnabled = watchdogEnabled != 0
 	s.ExportEncryptEnabled = exportEncryptEnabled != 0
+	s.ReceiverEnabled = receiverEnabled != 0
 	return s, nil
 }
 
@@ -338,7 +345,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  catch_up_missed              = ?,
 		  watchdog_enabled             = ?,
 		  export_encrypt_enabled       = ?,
-		  export_age_recipients        = ?
+		  export_age_recipients        = ?,
+		  receiver_enabled             = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -365,6 +373,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.DigestEnabled), s.DigestSchedule,
 		boolInt(s.CatchUpMissed), boolInt(s.WatchdogEnabled),
 		boolInt(s.ExportEncryptEnabled), s.ExportAgeRecipients,
+		boolInt(s.ReceiverEnabled),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
