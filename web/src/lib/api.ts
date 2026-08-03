@@ -674,9 +674,17 @@ export interface MountInfo {
   reachable: boolean; // reachable under the host mount (backable)
 }
 
+/** A selected backup folder with no matching current mount (manual/phantom path). */
+export interface CustomPath {
+  path: string; // host path (shown to the user)
+  exists: boolean; // still present under the host mount
+}
+
 export interface ContainerMountsResponse extends OkEnvelope {
   mounts?: MountInfo[];
-  custom?: string[];
+  custom?: CustomPath[];
+  hostMountRoot?: string;
+  hostSourceRoot?: string;
 }
 
 /** GET /api/containers/{name}/mounts — list bind mounts + the current selection. */

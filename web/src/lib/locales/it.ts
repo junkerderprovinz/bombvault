@@ -445,6 +445,7 @@ const it: Partial<Translations> = {
   "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionando tutto si torna al valore automatico di appdata.",
   "folders.appdataDefault": "appdata (predefinita)",
   "folders.notReachable": "non si trova sotto il mount dell'host, non può essere salvata",
+  "folders.customMissing": "nessuna cartella dati rilevata (niente da salvare qui)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Aggiungi un percorso di cartella",
   "folders.add": "Aggiungi",

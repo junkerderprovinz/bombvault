@@ -437,6 +437,7 @@ const vi: Partial<Translations> = {
   "folders.hint": "Chọn những thư mục được ánh xạ của container này để sao lưu. Thư mục appdata được chọn theo mặc định. Đánh dấu các thư mục khác để bao gồm chúng, hoặc thêm một đường dẫn tùy chỉnh bên trong điểm gắn kết của host. Bỏ chọn tất cả sẽ trở về mặc định appdata tự động.",
   "folders.appdataDefault": "appdata (mặc định)",
   "folders.notReachable": "không nằm trong điểm gắn kết của host, không thể sao lưu",
+  "folders.customMissing": "không tìm thấy thư mục dữ liệu (không có gì để sao lưu ở đây)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Thêm đường dẫn thư mục",
   "folders.add": "Thêm",

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, ApiError } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo } from "../lib/api";
+import type { Container, ExcludeSuggestion, MountInfo, CustomPath } from "../lib/api";
+import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -474,8 +475,12 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   const [loading, setLoading] = useState(false);
   const [mounts, setMounts] = useState<MountInfo[]>([]);
   const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [custom, setCustom] = useState<string[]>([]);
-  const [customInput, setCustomInput] = useState("");
+  const [custom, setCustom] = useState<CustomPath[]>([]);
+  // The folder picker works in paths relative to the host mount (like File Sets);
+  // browseValue stages one pick before it is translated to a host path and added.
+  const [browseValue, setBrowseValue] = useState("");
+  const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+  const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -489,6 +494,8 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
           setMounts(ms);
           setChecked(new Set(ms.filter((m) => m.selected && m.reachable).map((m) => m.source)));
           setCustom(r.custom ?? []);
+          if (r.hostMountRoot) setHostMountRoot(r.hostMountRoot);
+          if (r.hostSourceRoot) setHostSourceRoot(r.hostSourceRoot);
         } else {
           setState("error");
           setMsg(r.error ?? t("settings.error"));
@@ -513,14 +520,19 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
     });
   }
   function addCustom() {
-    const p = customInput.trim();
-    if (p && !custom.includes(p)) setCustom((c) => [...c, p]);
-    setCustomInput("");
+    const raw = browseValue.trim();
+    if (!raw) return;
+    // The folder picker yields a path relative to the host mount; translate it to
+    // the host path SetBackupPaths expects. An already-absolute path (manual
+    // fallback) is used as-is.
+    const p = raw.startsWith("/") ? raw : `${hostSourceRoot}/${raw}`;
+    if (!custom.some((c) => c.path === p)) setCustom((c) => [...c, { path: p, exists: true }]);
+    setBrowseValue("");
   }
   async function save() {
     setState("saving");
     setMsg(null);
-    const paths = [...checked, ...custom];
+    const paths = [...checked, ...custom.map((c) => c.path)];
     try {
       const r = await setBackupPaths(name, paths);
       if (r.ok) {
@@ -535,9 +547,6 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
       setMsg(err instanceof Error ? err.message : t("settings.error"));
     }
   }
-
-  const inputCls =
-    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <div className="mt-1">
@@ -576,12 +585,15 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
               </span>
             </label>
           ))}
-          {custom.map((p) => (
-            <div key={p} className="flex items-center gap-2 text-xs text-carbon-text">
-              <input type="checkbox" checked readOnly className="accent-(--accent)" />
-              <span className="font-mono break-all flex-1">{p}</span>
+          {custom.map((cp) => (
+            <div key={cp.path} className="flex items-start gap-2 text-xs text-carbon-text">
+              <input type="checkbox" checked readOnly className="mt-0.5 accent-(--accent)" />
+              <span className="flex flex-col flex-1 min-w-0">
+                <span className="font-mono break-all">{cp.path}</span>
+                {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
+              </span>
               <button
-                onClick={() => setCustom((c) => c.filter((x) => x !== p))}
+                onClick={() => setCustom((c) => c.filter((x) => x.path !== cp.path))}
                 className="text-carbon-textMuted hover:text-statusFail px-1"
                 aria-label="remove"
               >
@@ -589,23 +601,18 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
               </button>
             </div>
           ))}
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCustom();
-                }
-              }}
-              spellCheck={false}
-              placeholder={t("folders.customPlaceholder")}
-              className={`${inputCls} flex-1`}
-            />
+          <div className="flex items-end gap-2 pt-1">
+            <div className="flex-1 min-w-0">
+              <FolderBrowser
+                label={t("folders.addCustom")}
+                value={browseValue}
+                hostMountRoot={hostMountRoot}
+                onChange={setBrowseValue}
+              />
+            </div>
             <button
               onClick={addCustom}
-              className="rounded-lg bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("folders.add")}
             </button>

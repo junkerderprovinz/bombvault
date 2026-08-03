@@ -443,6 +443,7 @@ const pt: Partial<Translations> = {
   "folders.hint": "Escolha quais das pastas mapeadas deste contentor copiar. A pasta appdata está selecionada por predefinição. Marque outras para as incluir, ou adicione um caminho personalizado dentro do mount do host. Desmarcar tudo volta à predefinição automática da appdata.",
   "folders.appdataDefault": "appdata (predefinição)",
   "folders.notReachable": "não está dentro do mount do host, não pode ser copiada",
+  "folders.customMissing": "nenhuma pasta de dados detectada (nada para fazer backup aqui)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Adicionar um caminho de pasta",
   "folders.add": "Adicionar",
