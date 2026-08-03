@@ -305,6 +305,12 @@ func run() error {
 	scheduler.SetWatchdogJob(func() error {
 		return svc.RunWatchdog(context.Background())
 	})
+	// Receiver watch: the daily dead-mans-switch sweep + due integrity checks for
+	// every enabled received off-site repo, notifying once per stale episode /
+	// integrity-failure transition through the same notify fan-out.
+	scheduler.SetReceiverJob(func() error {
+		return svc.RunReceiverChecks(context.Background())
+	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
 	// successful backup within each domain (containers / VMs / flash scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
