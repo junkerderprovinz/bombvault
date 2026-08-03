@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import { useEffect, useRef, useState } from "react";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
-import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView, RegistryAuthEntry } from "../lib/api";
-import { useT } from "../lib/i18n";
+import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -309,6 +309,245 @@ chmod 600 /root/.ssh/authorized_keys`
             <span className="text-sm text-red-400">{testMsg ?? t("vm.ssh.testFail")}</span>
           )}
         </div>
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SettingsPortabilityCard — export this instance's configuration to a JSON file,
+// or import a previously exported file. Self-contained: it moves only settings +
+// off-site destinations (and, opt-in, the decrypted credentials). Backups,
+// snapshots and history are never touched. Import always previews first and asks
+// for confirmation before it replaces anything.
+// ---------------------------------------------------------------------------
+
+// The machine ids the import summary returns for populated setting areas, mapped
+// to their translation keys so the preview lists them human-readably. An unknown
+// (future) id falls back to its raw value.
+const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
+  domains: "settingsIO.group.domains",
+  schedules: "settingsIO.group.schedules",
+  retention: "settingsIO.group.retention",
+  offsite: "settingsIO.group.offsite",
+  drills: "settingsIO.group.drills",
+  digest: "settingsIO.group.digest",
+  monitoring: "settingsIO.group.monitoring",
+  language: "settingsIO.group.language",
+  exportEncryption: "settingsIO.group.exportEncryption",
+};
+
+function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [includeCreds, setIncludeCreds] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Import is a two-step flow: pick a file → preview summary + confirm → apply.
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importBusy, setImportBusy] = useState<"idle" | "reading" | "applying">("idle");
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importDone, setImportDone] = useState(false);
+  // The parsed preview and the raw file text held for the confirmed apply.
+  const [preview, setPreview] = useState<ImportSettingsSummary | null>(null);
+  const [pendingText, setPendingText] = useState<string | null>(null);
+
+  function resetImport() {
+    setPreview(null);
+    setPendingText(null);
+    setImportError(null);
+    setImportDone(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleExport() {
+    setExportError(null);
+    setExporting(true);
+    // Backend-provided error text (if any) is shown verbatim BY DESIGN — the API
+    // answers English and is not translated client-side.
+    const err = await exportSettings(includeCreds);
+    setExportError(err);
+    setExporting(false);
+  }
+
+  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    setImportDone(false);
+    setPreview(null);
+    setImportBusy("reading");
+    try {
+      const text = await file.text();
+      const res = await importSettingsPreview(text);
+      if (res.ok && res.summary) {
+        setPendingText(text);
+        setPreview(res.summary);
+      } else {
+        setImportError(res.error ?? t("settingsIO.importFailed"));
+      }
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImportBusy("idle");
+    }
+  }
+
+  async function handleConfirmImport() {
+    if (!pendingText) return;
+    setImportError(null);
+    setImportBusy("applying");
+    try {
+      const res = await importSettingsApply(pendingText);
+      if (res.ok) {
+        setImportDone(true);
+        setPreview(null);
+        setPendingText(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } else {
+        setImportError(res.error ?? t("settingsIO.importFailed"));
+      }
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImportBusy("idle");
+    }
+  }
+
+  const busy = importBusy !== "idle" || exporting;
+
+  return (
+    <Card title={t("settingsIO.title")}>
+      <p className="text-sm text-carbon-textSub leading-relaxed -mt-1">
+        {t("settingsIO.desc")}
+      </p>
+
+      {/* EXPORT ---------------------------------------------------------- */}
+      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+        <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+          {t("settingsIO.exportHeading")}
+        </h3>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeCreds}
+            onChange={(e) => setIncludeCreds(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
+          />
+          <span className="text-sm text-carbon-text">{t("settingsIO.includeCreds")}</span>
+        </label>
+        {includeCreds && (
+          <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            {t("settingsIO.credsWarning")}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => void handleExport()}
+          disabled={busy}
+          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+        >
+          {exporting ? t("settingsIO.exporting") : t("settingsIO.exportButton")}
+        </button>
+        {exportError && (
+          // Backend error text shown verbatim BY DESIGN (English, not translated).
+          <span className="text-xs text-statusFail wrap-break-word">✗ {exportError}</span>
+        )}
+      </div>
+
+      {/* IMPORT ---------------------------------------------------------- */}
+      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+        <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+          {t("settingsIO.importHeading")}
+        </h3>
+        <p className="text-xs text-carbon-textMuted leading-relaxed">
+          {t("settingsIO.importHint")}
+        </p>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={(e) => void handleFilePicked(e)}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={busy}
+          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+        >
+          {importBusy === "reading" ? t("settingsIO.reading") : t("settingsIO.chooseFile")}
+        </button>
+
+        {/* Preview + confirmation before anything is written. */}
+        {preview && (
+          <div className="rounded-lg bg-carbon-surface2 p-4 flex flex-col gap-3">
+            <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+              {t("settingsIO.previewTitle")}
+            </span>
+            <dl className="flex flex-col gap-1.5 text-xs text-carbon-text">
+              <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("settingsIO.previewExportedAt")}</dt>
+                <dd className="font-mono text-right wrap-break-word">{preview.exportedAt || "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("settingsIO.previewAppVersion")}</dt>
+                <dd className="font-mono text-right wrap-break-word">{preview.appVersion || "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("settingsIO.previewOffsiteTargets")}</dt>
+                <dd className="font-mono">{preview.offsiteTargets}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("settingsIO.previewCredentials")}</dt>
+                <dd className="text-right">
+                  {preview.credentials.present
+                    ? t("settingsIO.previewCredsIncluded")
+                    : t("settingsIO.previewCredsNotIncluded")}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted shrink-0">{t("settingsIO.previewSettingsAreas")}</dt>
+                <dd className="text-right wrap-break-word">
+                  {preview.settingsGroups.length > 0
+                    ? preview.settingsGroups
+                        .map((g) => (IMPORT_GROUP_KEYS[g] ? t(IMPORT_GROUP_KEYS[g]) : g))
+                        .join(", ")
+                    : t("settingsIO.previewNone")}
+                </dd>
+              </div>
+            </dl>
+            <div className="rounded-md bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+              {t("settingsIO.confirmWarning")}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleConfirmImport()}
+                disabled={busy}
+                className="rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
+              </button>
+              <button
+                type="button"
+                onClick={resetImport}
+                disabled={busy}
+                className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+              >
+                {t("settingsIO.cancel")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {importDone && (
+          <span className="text-xs text-statusOk">✓ {t("settingsIO.importSuccess")}</span>
+        )}
+        {importError && (
+          // Backend error text shown verbatim BY DESIGN (English, not translated).
+          <span className="text-xs text-statusFail wrap-break-word">✗ {importError}</span>
+        )}
       </div>
     </Card>
   );
@@ -3796,6 +4035,14 @@ export function SettingsPage() {
         </div>
       </Card>
       )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* SYSTEM — Export / import settings                                   */}
+      {/* Portable config file: move this instance's settings + off-site      */}
+      {/* destinations (and, opt-in, credentials) to another install. Backups, */}
+      {/* snapshots and history are never touched.                            */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "system" && <SettingsPortabilityCard t={t} />}
 
       {/* SYSTEM — Version + report-a-bug (kept out of the sidebar for a clean UI). */}
       {tab === "system" && <AboutFooter />}
