@@ -128,6 +128,11 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PATCH /api/containers/{name}", h.handlePatchContainer)
 	mux.HandleFunc("GET /api/settings", h.handleGetSettings)
 	mux.HandleFunc("PUT /api/settings", h.handlePutSettings)
+	// Portable settings export / import (a JSON file to move a configuration
+	// between instances; no live link). Session-protected like every other /api
+	// route — the credentialed export is as sensitive as the recovery kit.
+	mux.HandleFunc("GET /api/settings/export", h.handleExportSettings)
+	mux.HandleFunc("POST /api/settings/import", h.handleImportSettings)
 	mux.HandleFunc("GET /api/recovery-kit", h.handleRecoveryKit)
 	mux.HandleFunc("POST /api/recovery-kit/ack", h.handleRecoveryKitAck)
 	mux.HandleFunc("GET /api/rclone", h.handleRcloneInfo)
