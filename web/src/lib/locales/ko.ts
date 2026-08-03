@@ -731,6 +731,23 @@ const ko: Partial<Translations> = {
   "offsite.retention.budget": "증가 예산 (GB, 0 = 끔)",
   "offsite.retention.saveBudget": "예산 저장",
 
+  "offsite.targets.title": "추가 오프사이트 대상",
+  "offsite.targets.hint": "이 도메인을 두 곳 이상의 오프사이트 위치에 복제합니다. 위의 기본 대상은 별도로 편집합니다. 여기서 추가한 것은 추가 사본입니다.",
+  "offsite.targets.scheduleNote": "이 도메인의 모든 대상은 이 도메인의 오프사이트 일정에 따라 복제됩니다. 대상별 별도 일정은 없습니다.",
+  "offsite.targets.add": "대상 추가",
+  "offsite.targets.none": "아직 추가 대상이 없습니다.",
+  "offsite.targets.edit": "편집",
+  "offsite.targets.remove": "제거",
+  "offsite.targets.removing": "제거 중…",
+  "offsite.targets.confirmRemove": "제거 확인",
+  "offsite.targets.save": "대상 저장",
+  "offsite.targets.cancel": "취소",
+  "offsite.targets.name": "이름 (선택 사항)",
+  "offsite.targets.namePlaceholder": "예: Backblaze B2",
+  "offsite.targets.repoRequired": "저장소 URL을 입력하세요.",
+  "offsite.targets.loadError": "오프사이트 대상을 불러올 수 없습니다.",
+  "offsite.targets.retentionTitle": "보존 (0 = 모두 유지)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "훈련 유형:",
   "drill.kindSubset": "무결성 검사",

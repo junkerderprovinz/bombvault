@@ -759,6 +759,23 @@ const uk: Partial<Translations> = {
   "offsite.retention.budget": "Бюджет зростання (ГБ, 0 = вимк)",
   "offsite.retention.saveBudget": "Зберегти бюджет",
 
+  "offsite.targets.title": "Додаткові віддалені цілі",
+  "offsite.targets.hint": "Реплікуйте цей домен у декілька віддалених місць. Основна ціль вище редагується окремо; додані тут є додатковими копіями.",
+  "offsite.targets.scheduleNote": "Усі цілі цього домену реплікуються за віддаленим розкладом цього домену. Окремого розкладу для кожної цілі немає.",
+  "offsite.targets.add": "Додати ціль",
+  "offsite.targets.none": "Додаткових цілей поки немає.",
+  "offsite.targets.edit": "Редагувати",
+  "offsite.targets.remove": "Видалити",
+  "offsite.targets.removing": "Видалення…",
+  "offsite.targets.confirmRemove": "Підтвердити видалення",
+  "offsite.targets.save": "Зберегти ціль",
+  "offsite.targets.cancel": "Скасувати",
+  "offsite.targets.name": "Назва (необов'язково)",
+  "offsite.targets.namePlaceholder": "напр. Backblaze B2",
+  "offsite.targets.repoRequired": "Введіть URL репозиторію.",
+  "offsite.targets.loadError": "Не вдалося завантажити віддалені цілі.",
+  "offsite.targets.retentionTitle": "Зберігання (0 = зберігати все)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Тип перевірки:",
   "drill.kindSubset": "Перевірка цілісності",

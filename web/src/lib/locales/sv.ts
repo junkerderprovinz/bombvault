@@ -764,6 +764,23 @@ const sv: Partial<Translations> = {
   "offsite.retention.budget": "Tillväxtbudget (GB, 0 = av)",
   "offsite.retention.saveBudget": "Spara budget",
 
+  "offsite.targets.title": "Ytterligare externa mål",
+  "offsite.targets.hint": "Replikera denna domän till fler än en extern plats. Det primära målet ovan redigeras separat; de du lägger till här är extra kopior.",
+  "offsite.targets.scheduleNote": "Alla mål för denna domän replikeras enligt domänens externa schema. Det finns inget separat schema per mål.",
+  "offsite.targets.add": "Lägg till mål",
+  "offsite.targets.none": "Inga ytterligare mål ännu.",
+  "offsite.targets.edit": "Redigera",
+  "offsite.targets.remove": "Ta bort",
+  "offsite.targets.removing": "Tar bort…",
+  "offsite.targets.confirmRemove": "Bekräfta borttagning",
+  "offsite.targets.save": "Spara mål",
+  "offsite.targets.cancel": "Avbryt",
+  "offsite.targets.name": "Namn (valfritt)",
+  "offsite.targets.namePlaceholder": "t.ex. Backblaze B2",
+  "offsite.targets.repoRequired": "Ange en repository-URL.",
+  "offsite.targets.loadError": "Kunde inte läsa in externa mål.",
+  "offsite.targets.retentionTitle": "Bevarande (0 = behåll allt)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Övningstyp:",
   "drill.kindSubset": "Integritetskontroll",

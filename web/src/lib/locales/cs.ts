@@ -762,6 +762,23 @@ const cs: Partial<Translations> = {
   "offsite.retention.budget": "Rozpočet růstu (GB, 0 = vypnuto)",
   "offsite.retention.saveBudget": "Uložit rozpočet",
 
+  "offsite.targets.title": "Další vzdálené cíle",
+  "offsite.targets.hint": "Replikujte tuto doménu do více vzdálených umístění. Primární cíl výše se upravuje samostatně; zde přidané jsou dodatečné kopie.",
+  "offsite.targets.scheduleNote": "Všechny cíle této domény se replikují podle vzdáleného plánu této domény. Samostatný plán pro jednotlivé cíle neexistuje.",
+  "offsite.targets.add": "Přidat cíl",
+  "offsite.targets.none": "Zatím žádné další cíle.",
+  "offsite.targets.edit": "Upravit",
+  "offsite.targets.remove": "Odebrat",
+  "offsite.targets.removing": "Odebírání…",
+  "offsite.targets.confirmRemove": "Potvrdit odebrání",
+  "offsite.targets.save": "Uložit cíl",
+  "offsite.targets.cancel": "Zrušit",
+  "offsite.targets.name": "Název (volitelné)",
+  "offsite.targets.namePlaceholder": "např. Backblaze B2",
+  "offsite.targets.repoRequired": "Zadejte URL repozitáře.",
+  "offsite.targets.loadError": "Vzdálené cíle se nepodařilo načíst.",
+  "offsite.targets.retentionTitle": "Uchování (0 = ponechat vše)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Typ cvičení:",
   "drill.kindSubset": "Kontrola integrity",

@@ -3,6 +3,7 @@ import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, 
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView, RegistryAuthEntry } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -3269,6 +3270,9 @@ export function SettingsPage() {
                 className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             )}
+            {/* Additional off-site targets (multi-off-site): extra copies of this
+                domain beyond the primary editor above, managed via the CRUD API. */}
+            <OffsiteTargetsSection domain={domain} t={t} />
           </div>
           );
         })}

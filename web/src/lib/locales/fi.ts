@@ -764,6 +764,23 @@ const fi: Partial<Translations> = {
   "offsite.retention.budget": "Kasvubudjetti (GB, 0 = pois)",
   "offsite.retention.saveBudget": "Tallenna budjetti",
 
+  "offsite.targets.title": "Lisää etäkohteita",
+  "offsite.targets.hint": "Replikoi tämä toimialue useampaan kuin yhteen etäsijaintiin. Yllä oleva ensisijainen kohde muokataan erikseen; tähän lisätyt ovat lisäkopioita.",
+  "offsite.targets.scheduleNote": "Kaikki tämän toimialueen kohteet replikoidaan tämän toimialueen etäaikataulun mukaan. Kohdekohtaista erillistä aikataulua ei ole.",
+  "offsite.targets.add": "Lisää kohde",
+  "offsite.targets.none": "Ei vielä lisäkohteita.",
+  "offsite.targets.edit": "Muokkaa",
+  "offsite.targets.remove": "Poista",
+  "offsite.targets.removing": "Poistetaan…",
+  "offsite.targets.confirmRemove": "Vahvista poisto",
+  "offsite.targets.save": "Tallenna kohde",
+  "offsite.targets.cancel": "Peruuta",
+  "offsite.targets.name": "Nimi (valinnainen)",
+  "offsite.targets.namePlaceholder": "esim. Backblaze B2",
+  "offsite.targets.repoRequired": "Anna arkiston URL-osoite.",
+  "offsite.targets.loadError": "Etäkohteita ei voitu ladata.",
+  "offsite.targets.retentionTitle": "Säilytys (0 = säilytä kaikki)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Harjoitustyyppi:",
   "drill.kindSubset": "Eheystarkistus",

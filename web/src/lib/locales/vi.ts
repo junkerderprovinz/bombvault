@@ -756,6 +756,23 @@ const vi: Partial<Translations> = {
   "offsite.retention.budget": "Hạn mức tăng trưởng (GB, 0 = tắt)",
   "offsite.retention.saveBudget": "Lưu hạn mức",
 
+  "offsite.targets.title": "Đích ngoại vi bổ sung",
+  "offsite.targets.hint": "Sao chép miền này đến nhiều vị trí ngoại vi. Đích chính ở trên được chỉnh sửa riêng; những đích bạn thêm ở đây là bản sao bổ sung.",
+  "offsite.targets.scheduleNote": "Tất cả các đích của miền này sao chép theo lịch ngoại vi của miền này. Không có lịch riêng cho từng đích.",
+  "offsite.targets.add": "Thêm đích",
+  "offsite.targets.none": "Chưa có đích bổ sung nào.",
+  "offsite.targets.edit": "Chỉnh sửa",
+  "offsite.targets.remove": "Xóa",
+  "offsite.targets.removing": "Đang xóa…",
+  "offsite.targets.confirmRemove": "Xác nhận xóa",
+  "offsite.targets.save": "Lưu đích",
+  "offsite.targets.cancel": "Hủy",
+  "offsite.targets.name": "Tên (tùy chọn)",
+  "offsite.targets.namePlaceholder": "ví dụ: Backblaze B2",
+  "offsite.targets.repoRequired": "Nhập URL kho lưu trữ.",
+  "offsite.targets.loadError": "Không thể tải các đích ngoại vi.",
+  "offsite.targets.retentionTitle": "Lưu giữ (0 = giữ tất cả)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Loại diễn tập:",
   "drill.kindSubset": "Kiểm tra toàn vẹn",

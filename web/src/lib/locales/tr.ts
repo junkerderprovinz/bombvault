@@ -764,6 +764,23 @@ const tr: Partial<Translations> = {
   "offsite.retention.budget": "Büyüme bütçesi (GB, 0 = kapalı)",
   "offsite.retention.saveBudget": "Bütçeyi kaydet",
 
+  "offsite.targets.title": "Ek dış hedefler",
+  "offsite.targets.hint": "Bu etki alanını birden fazla dış konuma çoğaltın. Yukarıdaki birincil hedef ayrı düzenlenir; buraya eklediğiniz hedefler ek kopyalardır.",
+  "offsite.targets.scheduleNote": "Bu etki alanının tüm hedefleri, bu etki alanının dış zamanlamasına göre çoğaltılır. Hedef başına ayrı bir zamanlama yoktur.",
+  "offsite.targets.add": "Hedef ekle",
+  "offsite.targets.none": "Henüz ek hedef yok.",
+  "offsite.targets.edit": "Düzenle",
+  "offsite.targets.remove": "Kaldır",
+  "offsite.targets.removing": "Kaldırılıyor…",
+  "offsite.targets.confirmRemove": "Kaldırmayı onayla",
+  "offsite.targets.save": "Hedefi kaydet",
+  "offsite.targets.cancel": "İptal",
+  "offsite.targets.name": "Ad (isteğe bağlı)",
+  "offsite.targets.namePlaceholder": "örn. Backblaze B2",
+  "offsite.targets.repoRequired": "Bir depo URL'si girin.",
+  "offsite.targets.loadError": "Dış hedefler yüklenemedi.",
+  "offsite.targets.retentionTitle": "Saklama (0 = tümünü sakla)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Tatbikat türü:",
   "drill.kindSubset": "Bütünlük denetimi",

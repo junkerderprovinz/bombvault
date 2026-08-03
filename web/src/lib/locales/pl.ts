@@ -731,6 +731,23 @@ const pl: Partial<Translations> = {
   "offsite.retention.budget": "Budżet wzrostu (GB, 0 = wył.)",
   "offsite.retention.saveBudget": "Zapisz budżet",
 
+  "offsite.targets.title": "Dodatkowe cele zdalne",
+  "offsite.targets.hint": "Replikuj tę domenę do więcej niż jednej lokalizacji zdalnej. Główny cel powyżej edytuje się osobno; te dodane tutaj są dodatkowymi kopiami.",
+  "offsite.targets.scheduleNote": "Wszystkie cele tej domeny replikują się według harmonogramu zdalnego tej domeny. Nie ma osobnego harmonogramu dla poszczególnych celów.",
+  "offsite.targets.add": "Dodaj cel",
+  "offsite.targets.none": "Brak dodatkowych celów.",
+  "offsite.targets.edit": "Edytuj",
+  "offsite.targets.remove": "Usuń",
+  "offsite.targets.removing": "Usuwanie…",
+  "offsite.targets.confirmRemove": "Potwierdź usunięcie",
+  "offsite.targets.save": "Zapisz cel",
+  "offsite.targets.cancel": "Anuluj",
+  "offsite.targets.name": "Nazwa (opcjonalnie)",
+  "offsite.targets.namePlaceholder": "np. Backblaze B2",
+  "offsite.targets.repoRequired": "Wprowadź adres URL repozytorium.",
+  "offsite.targets.loadError": "Nie udało się załadować celów zdalnych.",
+  "offsite.targets.retentionTitle": "Przechowywanie (0 = zachowaj wszystko)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Typ próby:",
   "drill.kindSubset": "Sprawdzenie integralności",

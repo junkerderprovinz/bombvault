@@ -739,6 +739,23 @@ const it: Partial<Translations> = {
   "offsite.retention.budget": "Budget di crescita (GB, 0 = disattivato)",
   "offsite.retention.saveBudget": "Salva budget",
 
+  "offsite.targets.title": "Destinazioni off-site aggiuntive",
+  "offsite.targets.hint": "Replica questo dominio in più posizioni off-site. La destinazione principale sopra si modifica separatamente; quelle aggiunte qui sono copie aggiuntive.",
+  "offsite.targets.scheduleNote": "Tutte le destinazioni di questo dominio si replicano secondo la pianificazione off-site di questo dominio. Non esiste una pianificazione separata per destinazione.",
+  "offsite.targets.add": "Aggiungi destinazione",
+  "offsite.targets.none": "Nessuna destinazione aggiuntiva.",
+  "offsite.targets.edit": "Modifica",
+  "offsite.targets.remove": "Rimuovi",
+  "offsite.targets.removing": "Rimozione…",
+  "offsite.targets.confirmRemove": "Conferma rimozione",
+  "offsite.targets.save": "Salva destinazione",
+  "offsite.targets.cancel": "Annulla",
+  "offsite.targets.name": "Nome (facoltativo)",
+  "offsite.targets.namePlaceholder": "es. Backblaze B2",
+  "offsite.targets.repoRequired": "Inserisci un URL del repository.",
+  "offsite.targets.loadError": "Impossibile caricare le destinazioni off-site.",
+  "offsite.targets.retentionTitle": "Conservazione (0 = mantieni tutto)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Tipo di prova:",
   "drill.kindSubset": "Controllo di integrità",

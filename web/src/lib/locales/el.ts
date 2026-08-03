@@ -764,6 +764,23 @@ const el: Partial<Translations> = {
   "offsite.retention.budget": "Προϋπολογισμός ανάπτυξης (GB, 0 = ανενεργό)",
   "offsite.retention.saveBudget": "Αποθήκευση προϋπολογισμού",
 
+  "offsite.targets.title": "Πρόσθετοι απομακρυσμένοι προορισμοί",
+  "offsite.targets.hint": "Αναπαραγάγετε αυτόν τον τομέα σε περισσότερες από μία απομακρυσμένες τοποθεσίες. Ο κύριος προορισμός παραπάνω επεξεργάζεται ξεχωριστά· όσοι προσθέτετε εδώ είναι επιπλέον αντίγραφα.",
+  "offsite.targets.scheduleNote": "Όλοι οι προορισμοί αυτού του τομέα αναπαράγονται σύμφωνα με το απομακρυσμένο πρόγραμμα αυτού του τομέα. Δεν υπάρχει ξεχωριστό πρόγραμμα ανά προορισμό.",
+  "offsite.targets.add": "Προσθήκη προορισμού",
+  "offsite.targets.none": "Δεν υπάρχουν ακόμη πρόσθετοι προορισμοί.",
+  "offsite.targets.edit": "Επεξεργασία",
+  "offsite.targets.remove": "Αφαίρεση",
+  "offsite.targets.removing": "Αφαίρεση…",
+  "offsite.targets.confirmRemove": "Επιβεβαίωση αφαίρεσης",
+  "offsite.targets.save": "Αποθήκευση προορισμού",
+  "offsite.targets.cancel": "Ακύρωση",
+  "offsite.targets.name": "Όνομα (προαιρετικό)",
+  "offsite.targets.namePlaceholder": "π.χ. Backblaze B2",
+  "offsite.targets.repoRequired": "Εισαγάγετε μια διεύθυνση URL αποθετηρίου.",
+  "offsite.targets.loadError": "Δεν ήταν δυνατή η φόρτωση των απομακρυσμένων προορισμών.",
+  "offsite.targets.retentionTitle": "Διατήρηση (0 = διατήρηση όλων)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Τύπος δοκιμής:",
   "drill.kindSubset": "Έλεγχος ακεραιότητας",

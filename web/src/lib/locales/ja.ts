@@ -731,6 +731,23 @@ const ja: Partial<Translations> = {
   "offsite.retention.budget": "増加予算（GB、0 = オフ）",
   "offsite.retention.saveBudget": "予算を保存",
 
+  "offsite.targets.title": "追加のオフサイトターゲット",
+  "offsite.targets.hint": "このドメインを複数のオフサイトの場所に複製します。上記のプライマリターゲットは別途編集します。ここで追加するものは追加のコピーです。",
+  "offsite.targets.scheduleNote": "このドメインのすべてのターゲットは、このドメインのオフサイトスケジュールに従って複製されます。ターゲットごとの個別のスケジュールはありません。",
+  "offsite.targets.add": "ターゲットを追加",
+  "offsite.targets.none": "追加のターゲットはまだありません。",
+  "offsite.targets.edit": "編集",
+  "offsite.targets.remove": "削除",
+  "offsite.targets.removing": "削除中…",
+  "offsite.targets.confirmRemove": "削除を確認",
+  "offsite.targets.save": "ターゲットを保存",
+  "offsite.targets.cancel": "キャンセル",
+  "offsite.targets.name": "名前（任意）",
+  "offsite.targets.namePlaceholder": "例: Backblaze B2",
+  "offsite.targets.repoRequired": "リポジトリのURLを入力してください。",
+  "offsite.targets.loadError": "オフサイトターゲットを読み込めませんでした。",
+  "offsite.targets.retentionTitle": "保持（0 = すべて保持）",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "ドリルの種類:",
   "drill.kindSubset": "整合性チェック",

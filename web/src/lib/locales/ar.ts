@@ -767,6 +767,23 @@ const ar: Partial<Translations> = {
   "offsite.retention.budget": "ميزانية النمو (GB، 0 = إيقاف)",
   "offsite.retention.saveBudget": "حفظ الميزانية",
 
+  "offsite.targets.title": "أهداف خارجية إضافية",
+  "offsite.targets.hint": "انسخ هذا النطاق إلى أكثر من موقع خارجي. يتم تحرير الهدف الأساسي أعلاه بشكل منفصل؛ الأهداف التي تضيفها هنا هي نسخ إضافية.",
+  "offsite.targets.scheduleNote": "تتكرر جميع أهداف هذا النطاق وفقًا للجدول الخارجي لهذا النطاق. لا يوجد جدول منفصل لكل هدف.",
+  "offsite.targets.add": "إضافة هدف",
+  "offsite.targets.none": "لا توجد أهداف إضافية بعد.",
+  "offsite.targets.edit": "تحرير",
+  "offsite.targets.remove": "إزالة",
+  "offsite.targets.removing": "جارٍ الإزالة…",
+  "offsite.targets.confirmRemove": "تأكيد الإزالة",
+  "offsite.targets.save": "حفظ الهدف",
+  "offsite.targets.cancel": "إلغاء",
+  "offsite.targets.name": "الاسم (اختياري)",
+  "offsite.targets.namePlaceholder": "مثال: Backblaze B2",
+  "offsite.targets.repoRequired": "أدخل عنوان URL للمستودع.",
+  "offsite.targets.loadError": "تعذّر تحميل الأهداف الخارجية.",
+  "offsite.targets.retentionTitle": "الاحتفاظ (0 = الاحتفاظ بالكل)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "نوع التمرين:",
   "drill.kindSubset": "فحص السلامة",

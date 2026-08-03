@@ -1224,6 +1224,80 @@ export function tamperTest(
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
 
+/**
+ * An off-site replication target row from the offsite_targets table (multi-off-site).
+ * Matches OffsiteTargetView in internal/api/offsite_targets_crud.go exactly. Carries
+ * NO secret fields: `credsRef` selects a stored credential set and `storageClass` is
+ * an S3 class name. The PRIMARY target of a domain (sortOrder 0, synced from the
+ * Settings off-site config) is edited through the existing single off-site editor;
+ * ADDITIONAL targets (sortOrder > 0) are managed through the CRUD below.
+ */
+export interface OffsiteTarget {
+  id: string;
+  domain: string;
+  name: string;
+  repo: string;
+  credsRef: string;
+  /** S3 storage class ("" = provider default); one of the restore-readable tiers. */
+  storageClass: string;
+  /** Append-only (immutable): BombVault never prunes/deletes this repo. */
+  immutable: boolean;
+  /** Per-target schedule is NOT exposed in the UI: every target of a domain
+   *  replicates on that domain's off-site schedule. Round-tripped as-is. */
+  schedule: string;
+  retentionKeepLast: number;
+  retentionKeepDaily: number;
+  retentionKeepWeekly: number;
+  retentionKeepMonthly: number;
+  limitUpload: number;
+  limitDownload: number;
+  growthBudgetGb: number;
+  enabled: boolean;
+  createdAt: number;
+  /** Ordering within a domain; the primary is 0, additional targets are > 0. */
+  sortOrder: number;
+}
+
+/**
+ * GET /api/offsite/targets?domain=<d> — the off-site targets for one domain in a
+ * stable order (sortOrder, then createdAt). Omit `domain` to list every target.
+ * An unknown domain answers HTTP 400.
+ */
+export function listOffsiteTargets(
+  domain?: "containers" | "vms" | "flash" | "config" | "files"
+): Promise<OkEnvelope & { targets?: OffsiteTarget[] }> {
+  const qs = domain ? `?domain=${encodeURIComponent(domain)}` : "";
+  return fetchJSON(`/api/offsite/targets${qs}`);
+}
+
+/** POST /api/offsite/targets — create a target (id/createdAt are minted server-side). */
+export function createOffsiteTarget(
+  target: Omit<OffsiteTarget, "id" | "createdAt">
+): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+  return fetchJSON("/api/offsite/targets", {
+    method: "POST",
+    body: JSON.stringify(target),
+  });
+}
+
+/** PUT /api/offsite/targets/{id} — replace a target (createdAt is preserved; unknown id → 404). */
+export function updateOffsiteTarget(
+  id: string,
+  target: OffsiteTarget
+): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(target),
+  });
+}
+
+/** DELETE /api/offsite/targets/{id} — remove a target (no-op success when absent). */
+export function deleteOffsiteTarget(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
 export function deleteSnapshot(
   domain: "containers" | "vms" | "flash" | "config" | "files",

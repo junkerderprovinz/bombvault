@@ -733,6 +733,23 @@ const nl: Partial<Translations> = {
   "offsite.retention.budget": "Groeibudget (GB, 0 = uit)",
   "offsite.retention.saveBudget": "Budget opslaan",
 
+  "offsite.targets.title": "Aanvullende off-site bestemmingen",
+  "offsite.targets.hint": "Repliceer dit domein naar meer dan één off-site locatie. De primaire bestemming hierboven wordt apart bewerkt; de bestemmingen die je hier toevoegt zijn extra kopieën.",
+  "offsite.targets.scheduleNote": "Alle bestemmingen van dit domein repliceren volgens het off-site schema van dit domein. Er is geen apart schema per bestemming.",
+  "offsite.targets.add": "Bestemming toevoegen",
+  "offsite.targets.none": "Nog geen aanvullende bestemmingen.",
+  "offsite.targets.edit": "Bewerken",
+  "offsite.targets.remove": "Verwijderen",
+  "offsite.targets.removing": "Verwijderen…",
+  "offsite.targets.confirmRemove": "Verwijderen bevestigen",
+  "offsite.targets.save": "Bestemming opslaan",
+  "offsite.targets.cancel": "Annuleren",
+  "offsite.targets.name": "Naam (optioneel)",
+  "offsite.targets.namePlaceholder": "bijv. Backblaze B2",
+  "offsite.targets.repoRequired": "Voer een repository-URL in.",
+  "offsite.targets.loadError": "Kon off-site bestemmingen niet laden.",
+  "offsite.targets.retentionTitle": "Bewaring (0 = alles bewaren)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Testtype:",
   "drill.kindSubset": "Integriteitscontrole",

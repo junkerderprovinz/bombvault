@@ -739,6 +739,23 @@ const ro: Partial<Translations> = {
   "offsite.retention.budget": "Buget de creștere (GB, 0 = oprit)",
   "offsite.retention.saveBudget": "Salvează bugetul",
 
+  "offsite.targets.title": "Ținte externe suplimentare",
+  "offsite.targets.hint": "Replicați acest domeniu în mai multe locații externe. Ținta principală de mai sus se editează separat; cele adăugate aici sunt copii suplimentare.",
+  "offsite.targets.scheduleNote": "Toate țintele acestui domeniu se replică după programul extern al acestui domeniu. Nu există un program separat per țintă.",
+  "offsite.targets.add": "Adaugă țintă",
+  "offsite.targets.none": "Încă nu există ținte suplimentare.",
+  "offsite.targets.edit": "Editează",
+  "offsite.targets.remove": "Elimină",
+  "offsite.targets.removing": "Se elimină…",
+  "offsite.targets.confirmRemove": "Confirmă eliminarea",
+  "offsite.targets.save": "Salvează ținta",
+  "offsite.targets.cancel": "Anulează",
+  "offsite.targets.name": "Nume (opțional)",
+  "offsite.targets.namePlaceholder": "ex. Backblaze B2",
+  "offsite.targets.repoRequired": "Introduceți un URL de depozit.",
+  "offsite.targets.loadError": "Nu s-au putut încărca țintele externe.",
+  "offsite.targets.retentionTitle": "Retenție (0 = păstrează tot)",
+
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.kindLabel": "Tip de test:",
   "drill.kindSubset": "Verificare de integritate",
