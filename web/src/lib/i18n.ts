@@ -1111,6 +1111,47 @@ export const en = {
   // log to that day; the chip shows the active day and its × clears it).
   "activityLog.dayFilterChip": "Showing {date}",
   "activityLog.clearDayFilter": "Clear day filter",
+
+  // Export / import settings (portable config file)
+  "settingsIO.title": "Export / import settings",
+  "settingsIO.desc":
+    "Save this instance's configuration to a file, or load a file exported earlier into this instance. Only settings and off-site destinations are moved. Your backups, snapshots and history are not affected.",
+  "settingsIO.exportHeading": "Export",
+  "settingsIO.includeCreds": "Include credentials (off-site and notification secrets)",
+  "settingsIO.credsWarning":
+    "With credentials, this file is as sensitive as your recovery kit: it holds your off-site and notification secrets in readable form. Store it somewhere safe.",
+  "settingsIO.exportButton": "Export settings",
+  "settingsIO.exporting": "Exporting…",
+  "settingsIO.importHeading": "Import",
+  "settingsIO.importHint":
+    "Load a settings file exported from BombVault. You'll see a summary and a confirmation before anything changes.",
+  "settingsIO.chooseFile": "Choose a settings file",
+  "settingsIO.reading": "Reading file…",
+  "settingsIO.previewTitle": "This file contains",
+  "settingsIO.previewExportedAt": "Exported",
+  "settingsIO.previewAppVersion": "From BombVault version",
+  "settingsIO.previewOffsiteTargets": "Off-site targets",
+  "settingsIO.previewCredentials": "Credentials",
+  "settingsIO.previewCredsIncluded": "included",
+  "settingsIO.previewCredsNotIncluded": "not included",
+  "settingsIO.previewSettingsAreas": "Settings areas",
+  "settingsIO.previewNone": "none",
+  "settingsIO.confirmWarning":
+    "This replaces your current BombVault settings. Your backup data and history are not affected.",
+  "settingsIO.confirmButton": "Replace settings",
+  "settingsIO.importing": "Importing…",
+  "settingsIO.cancel": "Cancel",
+  "settingsIO.importSuccess": "Settings imported.",
+  "settingsIO.importFailed": "Import failed",
+  "settingsIO.group.domains": "Backup sources",
+  "settingsIO.group.schedules": "Schedules",
+  "settingsIO.group.retention": "Retention",
+  "settingsIO.group.offsite": "Off-site",
+  "settingsIO.group.drills": "Restore drills",
+  "settingsIO.group.digest": "Digest",
+  "settingsIO.group.monitoring": "Monitoring",
+  "settingsIO.group.language": "Language",
+  "settingsIO.group.exportEncryption": "Export encryption",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -2174,6 +2215,47 @@ export const de: Translations = {
   "activityLog.lineEmpty": "noch nichts",
   "activityLog.dayFilterChip": "Zeige {date}",
   "activityLog.clearDayFilter": "Tagesfilter entfernen",
+
+  // Einstellungen exportieren / importieren (portable Konfigurationsdatei)
+  "settingsIO.title": "Einstellungen exportieren / importieren",
+  "settingsIO.desc":
+    "Speichere die Konfiguration dieser Instanz in einer Datei oder lade eine zuvor exportierte Datei in diese Instanz. Es werden nur Einstellungen und Off-site-Ziele übertragen. Deine Backups, Snapshots und der Verlauf bleiben unberührt.",
+  "settingsIO.exportHeading": "Export",
+  "settingsIO.includeCreds": "Zugangsdaten einschließen (Off-site- und Benachrichtigungs-Geheimnisse)",
+  "settingsIO.credsWarning":
+    "Mit Zugangsdaten ist diese Datei so sensibel wie dein Recovery-Kit: Sie enthält deine Off-site- und Benachrichtigungs-Geheimnisse im Klartext. Bewahre sie sicher auf.",
+  "settingsIO.exportButton": "Einstellungen exportieren",
+  "settingsIO.exporting": "Exportiere…",
+  "settingsIO.importHeading": "Import",
+  "settingsIO.importHint":
+    "Lade eine aus BombVault exportierte Einstellungsdatei. Du siehst eine Zusammenfassung und eine Bestätigung, bevor etwas geändert wird.",
+  "settingsIO.chooseFile": "Einstellungsdatei wählen",
+  "settingsIO.reading": "Lese Datei…",
+  "settingsIO.previewTitle": "Diese Datei enthält",
+  "settingsIO.previewExportedAt": "Exportiert",
+  "settingsIO.previewAppVersion": "Aus BombVault-Version",
+  "settingsIO.previewOffsiteTargets": "Off-site-Ziele",
+  "settingsIO.previewCredentials": "Zugangsdaten",
+  "settingsIO.previewCredsIncluded": "enthalten",
+  "settingsIO.previewCredsNotIncluded": "nicht enthalten",
+  "settingsIO.previewSettingsAreas": "Einstellungsbereiche",
+  "settingsIO.previewNone": "keine",
+  "settingsIO.confirmWarning":
+    "Dies ersetzt deine aktuellen BombVault-Einstellungen. Deine Backup-Daten und der Verlauf bleiben unberührt.",
+  "settingsIO.confirmButton": "Einstellungen ersetzen",
+  "settingsIO.importing": "Importiere…",
+  "settingsIO.cancel": "Abbrechen",
+  "settingsIO.importSuccess": "Einstellungen importiert.",
+  "settingsIO.importFailed": "Import fehlgeschlagen",
+  "settingsIO.group.domains": "Backup-Quellen",
+  "settingsIO.group.schedules": "Zeitpläne",
+  "settingsIO.group.retention": "Aufbewahrung",
+  "settingsIO.group.offsite": "Off-site",
+  "settingsIO.group.drills": "Wiederherstellungs-Übungen",
+  "settingsIO.group.digest": "Zusammenfassung",
+  "settingsIO.group.monitoring": "Überwachung",
+  "settingsIO.group.language": "Sprache",
+  "settingsIO.group.exportEncryption": "Export-Verschlüsselung",
 };
 
 // ---------------------------------------------------------------------------

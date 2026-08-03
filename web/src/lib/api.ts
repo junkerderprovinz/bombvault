@@ -221,6 +221,39 @@ export interface GetSettingsResponse {
   error?: string;
 }
 
+/**
+ * Preview/apply summary from POST /api/settings/import — what an apply would (or
+ * did) change. Descriptive only: `offsiteTargets` is the count of off-site
+ * destination rows the file carries, `credentials` reports which secret kinds are
+ * present (never the values), and `settingsGroups` names the setting areas the
+ * file populates (machine ids: "domains","schedules","retention","offsite",
+ * "drills","digest","monitoring","language","exportEncryption").
+ */
+export interface ImportSettingsSummary {
+  schemaVersion: number;
+  exportedAt: string;
+  appVersion: string;
+  offsiteTargets: number;
+  credentials: {
+    present: boolean;
+    cloud: boolean;
+    rclone: boolean;
+    notify: boolean;
+  };
+  settingsGroups: string[];
+}
+
+/**
+ * Response from POST /api/settings/import. `preview` is true for the validate-only
+ * pass (apply=false), `applied` is true after a write (apply=true); `summary` is
+ * present on both. On rejection the server answers {ok:false, error} at HTTP 200.
+ */
+export interface ImportSettingsResponse extends OkEnvelope {
+  preview?: boolean;
+  applied?: boolean;
+  summary?: ImportSettingsSummary;
+}
+
 /** A run record from GET /api/runs — camelCase matches store.Run JSON tags */
 export interface Run {
   id: string;
@@ -969,6 +1002,98 @@ export function putSettings(
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
+  });
+}
+
+/**
+ * GET /api/settings/export — fetch the portable settings file and trigger a
+ * browser download of bombvault-settings-<date>.json. Returns null on success, or
+ * the backend's error text on failure.
+ *
+ * With `includeCredentials` the file also carries the DECRYPTED off-site and
+ * notification secrets, making it as sensitive as the recovery kit.
+ *
+ * Both success AND the graceful failure envelope answer HTTP 200 with a JSON
+ * body, so the two can't be told apart by status or content-type; only the
+ * success path sets a Content-Disposition attachment header. We key off that (and
+ * read the filename from it), mirroring downloadRecoveryKit's fetch-then-blob
+ * pattern via globalThis so a broken DOM-lib resolution can't flag the globals.
+ */
+export async function exportSettings(includeCredentials: boolean): Promise<string | null> {
+  const g = globalThis as unknown as {
+    fetch(url: string): Promise<{
+      ok: boolean;
+      status: number;
+      headers: { get(name: string): string | null };
+      json(): Promise<unknown>;
+      blob(): Promise<unknown>;
+    }>;
+    document: {
+      createElement(tag: string): {
+        href: string;
+        download: string;
+        click(): void;
+        remove(): void;
+      };
+      body: { appendChild(node: unknown): void };
+    };
+    URL: {
+      createObjectURL(blob: unknown): string;
+      revokeObjectURL(url: string): void;
+    };
+  };
+  try {
+    const res = await g.fetch(
+      `/api/settings/export?includeCredentials=${includeCredentials ? "true" : "false"}`
+    );
+    const disposition = res.headers.get("content-disposition") ?? "";
+    // A failure answers a plain JSON envelope with no attachment header; only the
+    // real file streams as an attachment.
+    if (!res.ok || !disposition.includes("attachment")) {
+      // Backend-provided error text shown verbatim BY DESIGN — the API answers
+      // English and is not translated client-side (i18n-wave decision).
+      try {
+        const body = (await res.json()) as { error?: string };
+        return body.error || `export failed (HTTP ${res.status})`;
+      } catch {
+        return `export failed (HTTP ${res.status})`;
+      }
+    }
+    const match = /filename="?([^"]+)"?/.exec(disposition);
+    const filename = match?.[1] ?? "bombvault-settings.json";
+    const blob = await res.blob();
+    const url = g.URL.createObjectURL(blob);
+    const a = g.document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    g.document.body.appendChild(a);
+    a.click();
+    a.remove();
+    g.URL.revokeObjectURL(url);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
+/**
+ * POST /api/settings/import — validate a previously exported settings file WITHOUT
+ * writing anything, returning a summary of what an apply would change. `fileText`
+ * is the raw JSON text read from the picked file, sent through as the request body.
+ */
+export function importSettingsPreview(fileText: string): Promise<ImportSettingsResponse> {
+  return fetchJSON("/api/settings/import", { method: "POST", body: fileText });
+}
+
+/**
+ * POST /api/settings/import?apply=true — write a validated settings file: it
+ * replaces the current settings + off-site targets and re-encrypts any credentials
+ * with this instance's key. Backups, snapshots and history are untouched.
+ */
+export function importSettingsApply(fileText: string): Promise<ImportSettingsResponse> {
+  return fetchJSON("/api/settings/import?apply=true", {
+    method: "POST",
+    body: fileText,
   });
 }
 
