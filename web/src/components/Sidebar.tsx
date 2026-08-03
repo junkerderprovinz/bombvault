@@ -156,6 +156,18 @@ function IconRecovery() {
   );
 }
 
+// Inbox / tray-with-down-arrow glyph for the Receiver tab — "off-site copies
+// land here". Stroked to match the sibling VM/Files/Recovery nav icons.
+function IconReceiver() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
+      <path d="M3 12.5 4.4 5.2A1.75 1.75 0 0 1 6.1 3.75h7.8a1.75 1.75 0 0 1 1.7 1.45L17 12.5v2.75a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 15.25V12.5Z" strokeLinejoin="round" />
+      <path d="M3 12.5h3.5a1 1 0 0 1 1 1 1.5 1.5 0 0 0 1.5 1.5h2a1.5 1.5 0 0 0 1.5-1.5 1 1 0 0 1 1-1H17" strokeLinejoin="round" />
+      <path d="M10 5.75v4.5M8 8.25l2 2 2-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
 function IconLayers() {
@@ -329,6 +341,7 @@ export function Sidebar({ settings }: SidebarProps) {
   const flashEnabled = settings?.flashEnabled ?? false;
   const configEnabled = settings?.configEnabled ?? false;
   const filesEnabled = settings?.filesEnabled ?? false;
+  const receiverEnabled = settings?.receiverEnabled ?? false;
 
   // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
   // then reappears. A short click still navigates to the Dashboard; once the
@@ -505,6 +518,10 @@ export function Sidebar({ settings }: SidebarProps) {
         {/* Config self-backup tab appears only once its domain is enabled. */}
         {configEnabled && (
           <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} />
+        )}
+        {/* Receiver dashboard appears only once its domain is enabled. */}
+        {receiverEnabled && (
+          <NavItem to="/receiver" label={t("nav.receiver")} icon={<IconReceiver />} />
         )}
       </nav>
 

@@ -2922,6 +2922,14 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, configEnabled: v } : prev)
           }
         />
+        <ToggleRow
+          label={t("settings.receiverEnabled")}
+          description={t("settings.receiverEnabledHint")}
+          checked={settings.receiverEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, receiverEnabled: v } : prev)
+          }
+        />
         <SaveBar
           state={domSaveState}
           error={domSaveError}
@@ -2933,6 +2941,7 @@ export function SettingsPage() {
                 flashEnabled: settings.flashEnabled,
                 filesEnabled: settings.filesEnabled,
                 configEnabled: settings.configEnabled,
+                receiverEnabled: settings.receiverEnabled,
               },
               setDomSaveState,
               setDomSaveError

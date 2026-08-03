@@ -95,6 +95,10 @@ export interface Settings {
   flashEnabled: boolean;
   configEnabled: boolean;
   filesEnabled: boolean;
+  /** Receiver dashboard (read-only monitoring of an append-only off-site repo
+   *  that another BombVault pushes to). Gates the Receiver tab like the other
+   *  domain enables. Default false. */
+  receiverEnabled: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
@@ -1949,6 +1953,145 @@ export async function foreignRestore(req: {
     // Non-JSON body (proxy error page etc.) — fall back to the HTTP status.
     throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Receiver dashboard API — READ-ONLY monitoring of an append-only off-site repo
+// that ANOTHER BombVault instance pushes to. Matches internal/api/receiver_*.go.
+// Repos are opened read-only with the SENDING instance's APP_KEY (never
+// EnsureRepo, never a write); the key is encrypted at rest and never returned.
+// ---------------------------------------------------------------------------
+
+/** The stored config + last-check verdict of a received repo (never the key). */
+export interface ReceivedRepoView {
+  id: string;
+  name: string;
+  /** restic location verbatim (rest:/s3:/rclone:/local path). */
+  repo: string;
+  /** Dead-mans-switch window in hours; a source with no newer snapshot inside
+   *  this window raises the "no backup received" alert. */
+  deadManHours: number;
+  /** Integrity-check cadence ("" server-defaults to "daily 04:00"; "off"
+   *  disables scheduled checks; else the shared schedule grammar). */
+  checkCadence: string;
+  /** restic check --read-data-subset percent, 0..100; 0 = structural only. */
+  readDataPercent: number;
+  /** Unix seconds of the last integrity check; 0 = never. */
+  lastCheckAt: number;
+  /** null = never checked, else whether the last check passed. */
+  lastCheckOk: boolean | null;
+  lastCheckError: string;
+  lastCheckReadData: boolean;
+  enabled: boolean;
+  createdAt: number;
+  sortOrder: number;
+  /** A sending key is stored; the key itself is NEVER returned. */
+  hasAppKey: boolean;
+}
+
+/** A received repo PLUS the live read-only status attached by the list endpoint. */
+export interface ReceivedRepoStatus extends ReceivedRepoView {
+  /** Newest snapshot time (RFC3339 as restic reports); "" if none/unreachable. */
+  lastReceived: string;
+  snapshotCount: number;
+  /** False when the repo could not be opened read-only. */
+  reachable: boolean;
+}
+
+/** The create/update request body. On PUT an empty appKey keeps the stored key. */
+export interface ReceivedRepoInput {
+  name: string;
+  repo: string;
+  appKey: string;
+  deadManHours: number;
+  checkCadence: string;
+  readDataPercent: number;
+  enabled: boolean;
+  sortOrder: number;
+}
+
+/** One backup source (host + item) received into the repo. */
+export interface ReceiverSource {
+  host: string;
+  item: string;
+  snapshotCount: number;
+  /** Newest snapshot time for this source (RFC3339 as restic reports). */
+  lastReceived: string;
+  totalSize: number;
+}
+
+/** The received repo's contents grouped by source, plus repo-wide totals. */
+export interface ReceiverInventory {
+  sources: ReceiverSource[];
+  snapshotCount: number;
+  lastReceived: string;
+  totalSize: number;
+}
+
+/** The verdict of an independent restic check on the receiving hardware. */
+export interface ReceiverCheckResult {
+  ok: boolean;
+  error: string;
+  ranReadData: boolean;
+  at: number;
+}
+
+/** GET /api/receiver/repos — every registered received repo with live status. */
+export function listReceivedRepos(): Promise<OkEnvelope & { repos?: ReceivedRepoStatus[] }> {
+  return fetchJSON("/api/receiver/repos");
+}
+
+/** POST /api/receiver/repos — register a received repo. The server validates the
+ *  app key shape, encrypts it at rest, and PROBES the repo read-only before
+ *  saving; an unopenable repo is rejected and nothing is persisted. */
+export function createReceivedRepo(
+  input: ReceivedRepoInput
+): Promise<OkEnvelope & { repo?: ReceivedRepoView }> {
+  return fetchJSON("/api/receiver/repos", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/** PUT /api/receiver/repos/{id} — update a received repo (empty appKey keeps the
+ *  stored key). Unknown id answers 404 {ok:false}. */
+export function updateReceivedRepo(
+  id: string,
+  input: ReceivedRepoInput
+): Promise<OkEnvelope & { repo?: ReceivedRepoView }> {
+  return fetchJSON(`/api/receiver/repos/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+/** DELETE /api/receiver/repos/{id} — drop the DB row + its alert state only; the
+ *  received repo on disk is never touched. */
+export function deleteReceivedRepo(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/receiver/repos/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+/** GET /api/receiver/repos/{id}/inventory — the snapshot inventory grouped by
+ *  source (read-only). Unknown id answers 404 {ok:false}. */
+export function receiverInventory(
+  id: string
+): Promise<OkEnvelope & { inventory?: ReceiverInventory }> {
+  return fetchJSON(`/api/receiver/repos/${encodeURIComponent(id)}/inventory`);
+}
+
+/** POST /api/receiver/repos/{id}/check[?readData=true] — run an independent
+ *  restic check on the receiving hardware now and persist the verdict. It does
+ *  NOT itself fire an integrity alert (the scheduled run drives alerting). */
+export function checkReceivedRepo(
+  id: string,
+  readData = false
+): Promise<OkEnvelope & { result?: ReceiverCheckResult }> {
+  const qs = readData ? "?readData=true" : "";
+  return fetchJSON(`/api/receiver/repos/${encodeURIComponent(id)}/check${qs}`, {
+    method: "POST",
+  });
 }
 
 // ---------------------------------------------------------------------------
