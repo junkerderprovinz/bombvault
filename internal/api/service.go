@@ -3076,6 +3076,16 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 	_ = runsAdapter{s.store}.Finish(runID, "success", "", 0, "")
 	s.setUpdateCheck(name, "updated")
 
+	// #116: BombVault just recreated the container, so its image tag moved to the
+	// new digest — but Unraid did not perform the update and still shows a stale
+	// "update available" banner on the Docker tab, because its cached status file
+	// was never refreshed. Ask Unraid to run its OWN update-status recheck over the
+	// existing host SSH link so it rewrites that file itself. Only fires here (an
+	// update actually happened), opt-out via the toggle, best-effort and non-fatal.
+	if st, sErr := s.store.GetSettings(); sErr == nil && st.ReconcileUnraidUpdateStatus {
+		s.reconcileUnraidUpdateStatus(ctx, ref)
+	}
+
 	// #56: optionally remove the now-superseded old image. Opt-in (default off) — the
 	// old image is what makes a fresh-snapshot rollback cheap, so we never prune by
 	// default. Best-effort with force=false, so the daemon refuses if another
@@ -3118,6 +3128,38 @@ func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.I
 		return fmt.Errorf("recreate container: %w", err)
 	}
 	return nil
+}
+
+// unraidReconcileUpdateStatusPHP is the one-liner run on the Unraid host to make
+// Unraid refresh its OWN cached "update available" status for a single container
+// image (#116). It require_once's DockerClient.php (which also defines the
+// $dockerManPaths used for the status file), invalidates the image's cached entry
+// via DockerUtil so the stale local digest is dropped, then reloadUpdateStatus
+// re-inspects the now-current local image and rewrites the status file through
+// Unraid's own locked DockerUtil::saveJSON writer. The image tag is passed as a
+// separate argv token (never interpolated into this source) to avoid injection and
+// quoting problems. The leading unset is required: on Unraid 7.0.1 a bare
+// reloadUpdateStatus trusts the cached local digest and would keep the flag set.
+const unraidReconcileUpdateStatusPHP = `require_once "/usr/local/emhttp/plugins/dynamix.docker.manager/include/DockerClient.php"; global $dockerManPaths; $img=DockerUtil::ensureImageTag($argv[1]); $s=DockerUtil::loadJSON($dockerManPaths["update-status"]); unset($s[$img]); DockerUtil::saveJSON($dockerManPaths["update-status"],$s); (new DockerUpdate())->reloadUpdateStatus($img);`
+
+// reconcileUnraidUpdateStatus asks Unraid to refresh its own cached update status
+// for a container BombVault just recreated (#116), so the Docker tab's stale
+// "update available" banner clears. It runs Unraid's own update-status recheck
+// over the existing host SSH link (the same mechanism as sendUnraidNotify), which
+// means Unraid rewrites its status file itself rather than BombVault hand-writing
+// the JSON (which would race Unraid's writer). Best-effort and non-fatal: a nil
+// SSH link, a host that is not Unraid, or a command error is only logged and never
+// affects the backup or update outcome. The recheck does a registry round-trip, so
+// it gets a generous timeout.
+func (s *Service) reconcileUnraidUpdateStatus(ctx context.Context, ref string) {
+	if s.ssh == nil || ref == "" {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	if _, err := s.ssh.Run(ctx, "php", "-r", unraidReconcileUpdateStatusPHP, "--", ref); err != nil {
+		log.Printf("api: update-after-backup: unraid update-status reconcile for %q failed (harmless): %v", ref, err) //nolint:gosec // G706: ref is %q-quoted
+	}
 }
 
 // setUpdateCheck stamps the outcome of a completed post-backup update check on

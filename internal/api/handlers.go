@@ -1069,6 +1069,12 @@ type settingsView struct {
 	// RestartHealthTimeoutSec caps that per-container wait (default 120).
 	RestartHealthWait       bool `json:"restartHealthWait"`
 	RestartHealthTimeoutSec int  `json:"restartHealthTimeoutSec"`
+	// ReconcileUnraidUpdateStatus asks Unraid to refresh its OWN cached container
+	// "update available" status after BombVault recreates a container in the
+	// post-backup update step (#116), so the Docker tab's stale banner clears. The
+	// recheck runs over the existing host SSH link; best-effort and non-fatal.
+	// Default on.
+	ReconcileUnraidUpdateStatus bool `json:"reconcileUnraidUpdateStatus"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -1155,6 +1161,7 @@ func toView(s store.Settings) settingsView {
 		DigestSchedule:              s.DigestSchedule,
 		CatchUpMissed:               s.CatchUpMissed,
 		WatchdogEnabled:             s.WatchdogEnabled,
+		ReconcileUnraidUpdateStatus: s.ReconcileUnraidUpdateStatus,
 		ExportEncryptEnabled:        s.ExportEncryptEnabled,
 		ExportAgeRecipients:         s.ExportAgeRecipients,
 		ReceiverEnabled:             s.ReceiverEnabled,
@@ -1417,6 +1424,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		DigestSchedule:              v.DigestSchedule,
 		CatchUpMissed:               v.CatchUpMissed,
 		WatchdogEnabled:             v.WatchdogEnabled,
+		ReconcileUnraidUpdateStatus: v.ReconcileUnraidUpdateStatus,
 		ExportEncryptEnabled:        v.ExportEncryptEnabled,
 		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
 		ReceiverEnabled:             v.ReceiverEnabled,

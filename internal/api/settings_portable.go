@@ -462,6 +462,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 		DigestSchedule:              v.DigestSchedule,
 		CatchUpMissed:               v.CatchUpMissed,
 		WatchdogEnabled:             v.WatchdogEnabled,
+		ReconcileUnraidUpdateStatus: v.ReconcileUnraidUpdateStatus,
 		ExportEncryptEnabled:        v.ExportEncryptEnabled,
 		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
 		ReceiverEnabled:             v.ReceiverEnabled,
