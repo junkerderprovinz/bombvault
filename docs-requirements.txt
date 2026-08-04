@@ -1,3 +1,6 @@
 # Documentation site toolchain (MkDocs Material).
 # Pinned to a recent stable line so CI builds the site reproducibly.
 mkdocs-material>=9.5,<10
+# Multi-language build (per-locale pages + English fallback). See mkdocs.yml
+# plugins.i18n. Pinned to a stable line compatible with Material >=9.5.
+mkdocs-static-i18n>=1.2,<2

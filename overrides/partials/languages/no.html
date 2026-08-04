@@ -1,0 +1,8 @@
+{#-
+  Norwegian ("no"): Material for MkDocs ships UI translations for Bokmaal (nb)
+  and Nynorsk (nn) but not the macrolanguage code "no", which is the locale the
+  app uses. Delegate to Bokmaal so the "no" locale still renders Norwegian chrome
+  instead of failing the build with TemplateNotFound.
+-#}
+{% import "partials/languages/nb.html" as nb %}
+{% macro t(key) %}{{ nb.t(key) }}{% endmacro %}

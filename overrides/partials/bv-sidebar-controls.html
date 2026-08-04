@@ -1,0 +1,66 @@
+{#
+  Sidebar footer controls — a faithful copy of the app's SidebarControls
+  (web/src/components/Sidebar.tsx): a flag + language-name button that opens a
+  listbox of the 26 languages, and a sun/moon dark/light row. Rendered inside
+  .md-sidebar--primary and pinned to the bottom by extra.css; wired by
+  javascripts/bv-sidebar-controls.js.
+
+  Language list mirrors the app locales (web/src/lib/i18n.ts): [locale, native
+  name, ISO 3166-1 alpha-2 for the flag]. The flag emoji is derived from the ISO
+  code at runtime so this template stays plain. English is the default (served at
+  the site root, no locale prefix).
+#}
+{% set bv_langs = [
+  ["en", "English",     "gb"],
+  ["de", "Deutsch",     "de"],
+  ["ar", "العربية",       "sa"],
+  ["cs", "Čeština",     "cz"],
+  ["da", "Dansk",       "dk"],
+  ["el", "Ελληνικά",     "gr"],
+  ["es", "Español",     "es"],
+  ["fi", "Suomi",       "fi"],
+  ["fr", "Français",    "fr"],
+  ["he", "עברית",        "il"],
+  ["hu", "Magyar",      "hu"],
+  ["it", "Italiano",    "it"],
+  ["ja", "日本語",       "jp"],
+  ["ko", "한국어",       "kr"],
+  ["nl", "Nederlands",  "nl"],
+  ["no", "Norsk",       "no"],
+  ["pl", "Polski",      "pl"],
+  ["pt", "Português",   "pt"],
+  ["ro", "Română",      "ro"],
+  ["ru", "Русский",     "ru"],
+  ["sv", "Svenska",     "se"],
+  ["th", "ไทย",          "th"],
+  ["tr", "Türkçe",      "tr"],
+  ["uk", "Українська",  "ua"],
+  ["vi", "Tiếng Việt",  "vn"],
+  ["zh", "中文",         "cn"]
+] %}
+<div class="bv-sidebar-controls" data-bv-default="en" data-bv-base="{{ base_url }}">
+  {# Language picker — current flag + name, dropdown opens upward. #}
+  <div class="bv-lang-wrap">
+    <button type="button" class="bv-ctl-row bv-lang" aria-haspopup="listbox" aria-expanded="false" data-bv-lang-toggle title="Language">
+      <span class="bv-ctl-flag" data-bv-current-flag aria-hidden="true"></span>
+      <span class="bv-ctl-label" data-bv-current-label>English</span>
+      <svg class="bv-ctl-caret" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M5 12l5-5 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="bv-lang-menu" role="listbox" aria-label="Language" hidden>
+      {% for code, label, flag in bv_langs %}
+      <button type="button" class="bv-lang-opt" role="option" data-bv-lang="{{ code }}" data-bv-flag="{{ flag }}" aria-selected="false">
+        <span class="bv-ctl-flag" aria-hidden="true"></span>
+        <span class="bv-ctl-label">{{ label }}</span>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Dark / light — icon + current-mode label, mirrors the app's theme row. #}
+  <button type="button" class="bv-ctl-row bv-theme" data-bv-theme-toggle title="Toggle dark / light">
+    <span class="bv-ctl-flag bv-theme-icon" aria-hidden="true"></span>
+    <span class="bv-ctl-label" data-bv-theme-label>Dark</span>
+  </button>
+</div>

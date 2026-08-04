@@ -1,0 +1,91 @@
+# Tính năng
+
+BombVault đơn giản theo mặc định và sâu sắc khi bạn cần. Giao diện chỉ hiển thị những thứ thiết yếu cho đến khi bạn gạt công tắc **Simple / Advanced**. Trang này gom nhóm toàn bộ bộ tính năng.
+
+## Phạm vi sao lưu
+
+| Cái gì | Những gì được lưu |
+|---|---|
+| **Docker container** | Thư mục appdata cùng với định nghĩa container (image, biến môi trường, cổng, nhãn, volume). |
+| **KVM / libvirt VM** | (Các) ảnh đĩa VM, định nghĩa XML và UEFI NVRAM (tắt máy êm ái hoặc snapshot trực tiếp, qua SSH). Snapshot trực tiếp tự động rơi về sao lưu êm ái nếu không tạo được snapshot, nên một lần sao lưu VM không bao giờ chỉ báo lỗi. |
+| **Unraid flash** | Toàn bộ USB flash (`/boot`): OS, giấy phép, cấu hình mảng, share, cấu hình mạng và plugin. Khôi phục là một lần tải xuống `.zip` một cú nhấp và không bao giờ ghi đè flash đang chạy. |
+| **Cấu hình ứng dụng** | `/config` của chính BombVault (cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site, cặp khóa SSH libvirt), được chụp bằng SQLite `VACUUM INTO` nên một cơ sở dữ liệu chế độ WAL không bao giờ bị chụp giữa lúc đang ghi. Được khôi phục qua một lần tự khởi động lại, nên cơ sở dữ liệu đang chạy không bao giờ bị ghi đè dưới một handle đang mở. |
+| **Tập tin & thư mục** | Các **bộ tập tin** có tên: bất kỳ thư mục nào trên máy chủ (một share, tài liệu của bạn, một thư viện ảnh), mỗi bộ có tùy chọn mẫu loại trừ riêng. Ngang hàng đầy đủ với các miền khác (lịch trình, lưu giữ, bản sao off-site, kiểm tra toàn vẹn và diễn tập khôi phục). |
+
+## Khôi phục
+
+- **Khôi phục toàn bộ một cú nhấp.** Chọn một snapshot, nhấp Restore. Xong.
+- **Khôi phục từ cục bộ hoặc off-site.** Mọi trình duyệt sao lưu đều có công tắc **Local / Off-site**, nên nếu một kho cục bộ bị mất hay hỏng, bạn có thể liệt kê và khôi phục thẳng từ bản sao off-site. Việc xóa là theo từng nguồn: xóa một bản sao lưu chỉ ảnh hưởng đến bản sao bạn đang xem.
+- **Container được tự động cài đặt lại.** Định nghĩa container được phát lại qua Docker API, nên container xuất hiện lại trong tab Docker của Unraid y hệt như trước.
+- **VM được tự động tạo lại.** XML được nhập lại qua SSH nên VM xuất hiện lại trong VM Manager cùng với đĩa và UEFI NVRAM được gắn lại, ngay cả sau khi VM đã bị xóa. **Discover backups** dựng lại một mục đã biến mất hoàn toàn (ví dụ sau khi cài mới).
+- **Khôi phục riêng lẻ.** Khôi phục một container, một VM hay một bộ tập tin mà không đụng đến những cái khác.
+- **Khôi phục flash là một lần tải xuống `.zip`.** Nó truyền tới trình duyệt của bạn dưới dạng `flash-<id>.zip`, sẵn sàng thả vào trình tạo USB của Unraid. Phân vùng `/boot` đang chạy không bao giờ bị đụng đến.
+- **Xuất zip flash theo lịch.** Sau mỗi lần sao lưu flash, tùy chọn ghi snapshot ra một tệp `.zip` thường vào một thư mục bạn chọn (một tệp `flash-latest.zip` duy nhất bị ghi đè hoặc một lịch sử luân phiên). Trỏ nó tới một thư mục Syncthing hoặc rclone để bản sao lưu USB khởi động được của bạn tự động rời khỏi máy chủ.
+- **Kiểm tra xung đột trước khi chạy.** Trước khi bất cứ thứ gì bị dừng hoặc xóa, việc khôi phục xác minh rằng IP tĩnh của container và các cổng máy chủ được công bố đều còn trống, và hủy bỏ với một thông báo rõ ràng thay vì để lại một lần khôi phục dở dang.
+- **Khôi phục ở cấp tập tin.** Mở rộng phần **Files** của một snapshot container, lọc, đánh dấu bất kỳ số lượng tập tin và thư mục nào, rồi khôi phục lựa chọn đó tại chỗ hoặc vào một thư mục bạn chọn.
+- **Khôi phục bộ tập tin.** Khôi phục một snapshot bộ tập tin tại chỗ (sau một xác nhận rõ ràng) hoặc vào một thư mục bạn chọn, không bao giờ âm thầm. Khôi phục chọn lọc cũng hoạt động ở đây.
+- **Khôi phục giữ nguyên trạng thái chạy.** Một container hay VM đang chạy khi được sao lưu sẽ quay lại đang chạy; một cái đang dừng vẫn giữ nguyên dừng. Đánh dấu **Leave stopped after restore** để tạo lại mà không khởi động.
+- **Khôi phục nguyên một stack.** Các container thuộc cùng một dự án Docker Compose được gom vào một bảng **Stacks**. **Restore stack** dựng lại mọi thành viên từ bản sao lưu mới nhất của nó ở trạng thái dừng, rồi tùy chọn khởi động chúng theo thứ tự `depends_on`.
+- **Tiến độ trực tiếp, hủy và phản hồi bận.** Một lần khôi phục dài hiển thị một thanh phần trăm trực tiếp và có thể bị hủy với một xác nhận nhận biết theo loại. Một lần khôi phục đã hủy được ghi nhận là *đã hủy*, không phải thất bại.
+- **Khôi phục có hướng dẫn.** Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới đi qua tình huống thảm họa. Xem [Off-site & khôi phục](offsite-recovery.md).
+- **Khôi phục từ một kho BombVault khác.** Một phiên chỉ đọc, dùng một lần, mở kho của một phiên bản BombVault khác bằng `APP_KEY` của phiên bản đó, nên bạn có thể kéo một container từ máy chủ A sang máy chủ B mà không đụng đến cài đặt của chính mình. Xem [Off-site & khôi phục](offsite-recovery.md).
+
+## Lưu trữ & lập lịch
+
+- Sao lưu tăng dần, khử trùng lặp qua restic, nên ngay cả các đĩa VM lớn cũng không làm phình kho.
+- **Đích:** một đường dẫn cục bộ, hoặc off-site. SMB/CIFS và NFS (gắn kết share trên Unraid và trỏ một Backup Path tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào qua `rclone:<remote>:<bucket>/path`. Mọi thông tin đăng nhập đều được lưu mã hóa.
+- **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH, nên một Raspberry Pi trần trụi (không Docker, không restic) vẫn dùng được làm đích off-site. Host key được ghim tự động ở lần liên lạc đầu tiên.
+- **Bản sao off-site (cục bộ + từ xa).** Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site, được nhân bản bằng `restic copy` theo kiểu nỗ lực tối đa (một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ). Mỗi miền có lịch trình off-site riêng, cùng với một nút **Replicate now**.
+- **Nhiều đích off-site cho mỗi miền.** Mỗi miền (container, VM, flash, config và bộ tập tin) có thể nhân bản tới nhiều đích off-site cùng lúc, không chỉ một. Thêm các đích bổ sung trên tab Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng. Bản sao off-site hiện có của bạn được chuyển sang làm đích đầu tiên, nên không có gì thay đổi cho đến khi bạn thêm cái thứ hai, và mọi đích của một miền đều nhân bản theo lịch trình off-site của miền đó.
+- **Thứ tự sao lưu thủ công.** Đặt chính xác thứ tự các container của bạn được sao lưu từ bảng backup-order trên trang Containers. Các lần chạy theo lịch và chọn nhiều sẽ tuân theo thứ tự này; bất kỳ container nào bạn để không sắp xếp vẫn giữ hành vi quá hạn nhất trước như trước, và một lần sao lưu container đơn lẻ không thay đổi.
+- **Lưu giữ có thể cấu hình:** giữ gần nhất / theo ngày / theo tuần / theo tháng, được dọn tự động sau mỗi lần sao lưu, đặt **theo từng nguồn** (cục bộ nằm cạnh các đường dẫn sao lưu, off-site trên tab Off-site để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ).
+- Lập lịch theo từng miền (theo ngày / theo tuần bao gồm các bộ nhiều ngày / mỗi N ngày / cron thô), tất cả được chỉnh ở một nơi trên **Settings, Schedules**.
+- **Giới hạn băng thông off-site.** Giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
+- **Lớp lưu trữ nguội và lưu trữ dài hạn (S3).** Với một kho off-site S3 gốc, bạn có thể chọn lớp lưu trữ, giới hạn ở các tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval) nên giá lưu trữ dài hạn không bao giờ âm thầm phá hỏng một lần khôi phục. Các tầng lưu trữ sâu cần một lần rã đông bất đồng bộ trước (Glacier Flexible, Deep Archive) được cố ý bỏ ra ngoài. Chỉ dành cho backend S3 gốc; các remote rclone đặt lớp của chúng trong cấu hình rclone.
+- **Các thư mục sao lưu luôn có thể sao chép ra ngoài máy.** Sau mỗi lần sao lưu, BombVault nới lỏng cây kho cục bộ thành thư mục `0755` / tập tin `0644` (các kho được mã hóa, nên không có gì bị phơi ra) để một người dùng đồng bộ không phải root qua SMB không bị khóa ngoài. Các định nghĩa khôi phục nằm bên trong mỗi kho, nên một thư mục kho được sao chép hoàn toàn tự chứa.
+
+## Thấu hiểu, xác minh & giám sát
+
+- **Trạng thái bảo vệ (RPO).** Bảng điều khiển hiển thị một chỉ báo xanh / hổ phách / đỏ cho mỗi miền, so sánh bản sao lưu thành công gần nhất với lịch trình của nó, nên một bản sao lưu quá hạn chuyển sang đỏ thay vì ẩn mình trong một nhật ký.
+- **Bản đồ nhiệt tình trạng sao lưu.** Một lịch theo kiểu đóng góp GitHub về kết quả sao lưu theo từng ngày cho mỗi miền, với một công tắc Containers / VMs / Flash / Config / Files.
+- **Thời gian chạy ở khắp nơi.** Mỗi mục lịch sử chạy đọc là `start, end (duration)`, và mỗi container và VM mang danh sách **Recent runs** riêng trên trang của nó.
+- **Một bảng điều khiển bạn có thể sắp xếp lại.** Bật chế độ tùy chỉnh để kéo các thẻ theo thứ tự của bạn và ẩn những cái bạn không cần. Bố cục được lưu theo từng trình duyệt.
+- **Kích thước kho & xu hướng khử trùng lặp.** Kích thước kho hiện tại, tỷ lệ khử trùng lặp và số lượng snapshot cho mỗi miền, với một sparkline về sự tăng trưởng lưu trữ.
+- **Diễn tập xác minh khôi phục.** BombVault định kỳ chứng minh rằng các bản sao lưu của bạn có thể khôi phục được (`restic check --read-data-subset`, có giới hạn) và hiển thị một huy hiệu *xác minh khôi phục được lần cuối* cho mỗi miền.
+- **Vận hành tự phục hồi.** Một khóa restic mồ côi được chứng minh (bị bỏ lại bởi một lần khởi động lại giữa chừng thao tác) được xóa cưỡng bức và thử lại một lần, tự động. Việc lưu giữ ổn định theo danh tính (dọn theo từng mục, miễn nhiễm với thay đổi đường dẫn hoặc máy chủ) và một lần lưu giữ thất bại sẽ gửi một thông báo.
+- **Bộ khôi phục khóa mã hóa.** Tải xuống một cú nhấp khóa chính, mật khẩu restic dẫn xuất và các vị trí kho cùng lệnh chính xác, nên bạn có thể khôi phục mà không cần một BombVault đang chạy. Xem [Off-site & khôi phục](offsite-recovery.md).
+- **Xuất và nhập cài đặt của bạn.** Một thẻ *Xuất và nhập cài đặt* trên trang Settings ghi toàn bộ cấu hình của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Bạn chọn có bao gồm thông tin đăng nhập off-site và thông báo hay không; kèm theo chúng thì tệp nhạy cảm như bộ khôi phục của bạn. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
+- **Thông báo.** Webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, email (SMTP), một máy chủ [Apprise API](https://github.com/caronc/apprise-api) tự lưu trữ, và hệ thống thông báo gốc của Unraid. Chính sách theo từng lần sao lưu: không bao giờ / khi thất bại / luôn luôn. Một lần chạy theo lịch của nhiều mục có thể gửi một bản tóm tắt *N trên M thành công*. Healthchecks nhận trọn vòng đời (`/start`, rồi thành công hoặc `/fail`) mỗi khi một URL được đặt.
+- **Prometheus `/metrics`.** Tùy chọn tham gia (mặc định tắt, tùy chọn bearer token) cho Grafana hoặc Uptime Kuma. Phơi bày trạng thái, kích thước và dấu thời gian sao lưu, không có bí mật hay đường dẫn nào trong các nhãn.
+
+## Bảo vệ chống ransomware
+
+- **Off-site bất biến (append-only).** Đánh dấu một kho off-site là append-only để ransomware hoặc một máy chủ bị xâm nhập không thể xóa hay ghi lại các bản sao lưu của bạn. Phía bên kia (một `restic/rest-server` ở chế độ `--append-only`) thực thi điều đó; BombVault chỉ luôn xác minh nó và không bao giờ hiển thị xanh chỉ dựa trên một tuyên bố cấu hình.
+- **Kiểm tra can thiệp.** BombVault định kỳ chứng minh bảo đảm append-only bằng cách thực sự thử một thao tác xóa nhắm vào kho off-site (nhắm vào một đối tượng không tồn tại): bị từ chối nghĩa là được bảo vệ, được chấp nhận nghĩa là không được bảo vệ. Một kết quả không kết luận được không bao giờ lật ngược phán quyết đã lưu.
+- **Thiết lập off-site có hướng dẫn.** Một trình hướng dẫn dẫn bạn từ lựa chọn backend qua một đoạn triển khai rest-server sẵn sàng để dán, một lần kiểm tra kết nối, công tắc bất biến và một chiến lược lưu giữ.
+- **Diễn tập DR (off-site).** Khôi phục một đích thực từ kho off-site vào một hộp cát dùng một lần, xác minh nó từng tập tin và từng byte, rồi dọn dẹp. Xem [Off-site & khôi phục](offsite-recovery.md).
+- **Bảng điểm bảo vệ chống ransomware.** Một thẻ trên bảng điều khiển với thế phòng thủ xanh / hổ phách / đỏ cho mỗi miền và một danh sách kiểm tra có đóng dấu tuổi; mỗi hàng đỏ liên kết sâu tới bản sửa. Nó chỉ chuyển xanh dựa trên các sự thật đã xác minh.
+- **Cảnh báo ngân sách tăng trưởng.** Với một off-site bất biến (nơi các snapshot cũ cố ý không bao giờ bị dọn), hãy đặt một ngân sách kích thước và được cảnh báo trước khi nó vượt tầm kiểm soát.
+- **Bảng điều khiển bên nhận (phía nhận).** Trên máy nhận các bản sao off-site bất biến từ một BombVault khác, hãy bật công tắc **Receiver** (Settings) để hé lộ một tab **Receiver**. Đăng ký một kho đã nhận ở chế độ chỉ đọc (mở bằng khóa của phiên bản gửi) để xem kho snapshot của nó được gom theo nguồn, mỗi nguồn đến lần cuối khi nào, và chạy một `restic check` độc lập trên phần cứng bên nhận. Nó cảnh báo bạn khi một nguồn ngừng gửi trong một khoảng thời gian bạn đặt (một công tắc người chết) hoặc khi một lần kiểm tra toàn vẹn thất bại. Nghiêm ngặt chỉ đọc, nên nó không bao giờ ghi vào kho đã nhận, và tắt theo mặc định. Xem [Off-site & khôi phục](offsite-recovery.md).
+
+## Xuất dạng thô
+
+- **Xuất thô container.** Một nút **Export** theo từng container ghi một bản sao có thể duyệt, không cần công cụ, ngay cạnh kho: `<name>.tar.gz` của các thư mục sao lưu cùng với template Unraid `<name>.xml`. Restic vẫn là công cụ; đây là một bản sao tiện lợi bổ sung.
+- **Xuất thô VM.** Các VM có cùng **Export (plain tar)**: `<name>.tar.gz` của (các) ảnh đĩa cùng với `<name>.xml`, có thể khôi phục bằng `virsh define` cùng với đĩa, không cần BombVault hay restic.
+- **Mã hóa các bản xuất thô (age).** Các bản xuất nằm ngoài restic, nên chúng là văn bản thô theo mặc định. Bật mã hóa age trong Settings và thêm một hoặc nhiều người nhận (một khóa công khai age hoặc một khóa công khai SSH). Mỗi bản xuất (`.tar.gz` của container và VM, các tệp `.xml` đi kèm, và ZIP flash) sau đó được niêm phong cho những người nhận đó, và bạn giải mã nó sau này ngoài máy chủ bằng khóa riêng khớp. Như một quy tắc an toàn, khi bật mã hóa mà không có người nhận hợp lệ, một bản xuất sẽ thất bại với một lỗi rõ ràng thay vì bao giờ ghi văn bản thô.
+
+## Khác
+
+- **Sao lưu nhiều cái cùng lúc.** Chọn nhiều container và nhấp **Back up selected**. Lô này chạy ở phía máy chủ, nên nó tiếp tục ngay cả khi bạn đóng tab hay mất kết nối. BombVault không bao giờ sao lưu (và do đó không bao giờ dừng) container của chính nó.
+- **Trình duyệt snapshot** với một danh sách điểm khôi phục, xóa theo từng snapshot, và một cây thư mục có thể thu gọn để khôi phục ở cấp tập tin.
+- **Bảo trì kho theo từng miền:** **Verify** (`restic check`), **Unlock** (xóa một khóa bị kẹt), và **Prune** (áp dụng chính sách lưu giữ theo yêu cầu khi có một chính sách, nếu không thì là một lần thu hồi dung lượng thuần túy).
+- **Hook trước/sau sao lưu theo từng container.** Các lệnh shell chạy bên trong container (ví dụ `mysqldump` vào appdata trước khi sao lưu); một hook trước thất bại sẽ hủy việc sao lưu.
+- **Dừng các container khác trong khi sao lưu, với khởi động lại có kiểm soát sức khỏe.** Đặt tên các container phụ thuộc (ví dụ một cơ sở dữ liệu) để dừng trong khi cái này được sao lưu. Sau đó BombVault đưa chúng trở lại theo thứ tự `depends_on` của Compose và, theo mặc định, chờ mỗi cái báo khỏe mạnh (hoặc đang chạy, nếu nó không có healthcheck) trước khi khởi động các container phụ thuộc vào nó, nên một phụ thuộc như Pi-hole, một cơ sở dữ liệu hay một VPN gateway thực sự đã sẵn sàng trước các dịch vụ cần nó, thay vì để chúng trả về *connection refused*. Việc chờ bị giới hạn bởi một thời gian chờ theo từng container (mặc định 120 giây) nên một container chậm hoặc không bao giờ khỏe mạnh không bao giờ có thể treo cả lần chạy; cả việc chờ và thời gian chờ đều nằm trên Settings, Schedules (tắt việc chờ để trở về khởi động lại tất-cả-cùng-lúc trước đây). Việc khởi động lại có thứ tự, có kiểm soát sức khỏe tương tự cũng bọc lấy việc cập nhật image sau sao lưu, nên vào ngày một bản cập nhật đến, các phụ thuộc được giữ xuống suốt quá trình tạo lại và chỉ được đưa trở lại, có kiểm soát sức khỏe, khi nó hoàn tất.
+- **Mẫu loại trừ theo từng container.** Liệt kê các thư mục con cần bỏ qua bên trong một volume đã sao lưu, mỗi dòng một cái. Gõ các đường dẫn như bạn thấy chúng bên trong container; một bản xem trước trực tiếp hiển thị mỗi dòng phân giải thành gì và cảnh báo khi một dòng sẽ không loại trừ gì cả.
+- **Cập nhật sau khi sao lưu thành công (nâng cao, mặc định tắt).** Gạt nó trên một container và BombVault kéo image mới nhất rồi tạo lại nó, nhưng chỉ khi thực sự có một image mới hơn, nên một điểm khôi phục mới luôn tồn tại trước. Các tùy chọn bổ sung: một thông báo cho mỗi container được cập nhật và dọn dẹp image (một image cơ sở dùng chung bởi các container khác không bao giờ bị xóa). Sau khi cập nhật, BombVault cũng yêu cầu Unraid kiểm tra lại trạng thái cập nhật của riêng container đó, nên biểu ngữ *update available* lỗi thời của tab Docker tự xóa thay vì nấn ná (các bản cập nhật Unraid đi thẳng qua Docker API, nên trạng thái đã cache của nó, và trên một số phiên bản là một digest đã cache, nếu không sẽ tiếp tục hiển thị biểu ngữ). Nó là nỗ lực tối đa, không bao giờ ảnh hưởng đến việc sao lưu, mặc định bật và có một công tắc trong Settings.
+- **Khôi phục vào một thư mục khác** để nhân bản hoặc kiểm tra.
+- **So sánh & thẻ snapshot.** So sánh hai snapshot để xem những gì đã thay đổi, và gắn thẻ các snapshot để lọc chúng.
+- **Có gì mới sau một bản cập nhật.** Ghi chú phát hành bật lên một lần cho mỗi phiên bản mới, được phục vụ từ các ghi chú nhúng trong binary, nên hộp thoại hoạt động ngoại tuyến.
+- **HTTPS ngay từ đầu** (tự ký, hoặc mang chứng chỉ riêng của bạn phía sau một reverse proxy).
+- **Docker healthcheck.** Container báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó, nên một công cụ tự phục hồi có thể khởi động lại nó nếu công cụ có bao giờ bị kẹt.
+- **Giao diện tối/sáng bằng 26 ngôn ngữ** với một bộ chọn cờ.

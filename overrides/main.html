@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{#
+  BombVault docs — sidebar footer controls.
+
+  Overrides only Material's `site_nav` block to inject the app-style controls
+  (language picker + dark/light toggle) as a pinned footer inside the primary
+  navigation rail (.md-sidebar--primary), directly reproducing the app's
+  SidebarControls (web/src/components/Sidebar.tsx). Everything else is stock
+  Material. Styling lives in docs/stylesheets/extra.css (SIDEBAR FOOTER CONTROLS
+  section); behaviour in docs/javascripts/bv-sidebar-controls.js.
+
+  The block body is copied verbatim from the pinned Material base.html (>=9.5,<10)
+  with a single added line: the bv-sidebar-controls partial include.
+#}
+{% block site_nav %}
+  {% if nav %}
+    {% if page.meta and page.meta.hide %}
+      {% set hidden = "hidden" if "navigation" in page.meta.hide %}
+    {% endif %}
+    <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" {{ hidden }}>
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner">
+          {% include "partials/nav.html" %}
+          {% include "partials/bv-sidebar-controls.html" %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {% if "toc.integrate" not in features %}
+    {% if page.meta and page.meta.hide %}
+      {% set hidden = "hidden" if "toc" in page.meta.hide %}
+    {% endif %}
+    <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" {{ hidden }}>
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner">
+          {% include "partials/toc.html" %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
