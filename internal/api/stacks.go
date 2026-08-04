@@ -6,74 +6,22 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/compose"
 )
 
 // composeProject / composeService read the standard compose identity labels off a
 // container's label map. "" when the label is absent (not a compose container).
-func composeProject(labels map[string]string) string { return labels["com.docker.compose.project"] }
-func composeService(labels map[string]string) string { return labels["com.docker.compose.service"] }
+// The depends_on ordering primitives live in internal/compose so the backup
+// restart phase shares this exact logic (one topological sort, no drift).
+func composeProject(labels map[string]string) string { return compose.Project(labels) }
+func composeService(labels map[string]string) string { return compose.Service(labels) }
 
-// parseDependsOn extracts the compose service names a container depends on, from
-// the com.docker.compose.depends_on label. That label's format has varied across
-// compose versions, so all three encodings are handled:
-//   - JSON object: {"svc":{"condition":"..."}}                         -> object keys
-//   - colon list:  "svc:service_started:true,svc2:service_healthy:false" -> part before first ':'
-//   - plain list:  "svc,svc2"                                          -> as-is
-//
-// Names are trimmed and empties dropped. Returns nil when the label is
-// absent/blank.
-func parseDependsOn(labels map[string]string) []string {
-	raw := strings.TrimSpace(labels["com.docker.compose.depends_on"])
-	if raw == "" {
-		return nil
-	}
-	// JSON forms start with a bracket: the modern object encoding
-	// ({"svc":{...}}), or an array of names (["svc",...]). Parse those directly;
-	// a bracketed-but-unparseable value returns nil rather than being fed to the
-	// comma parser (which would turn "{...}"/"[...]" into garbage service names).
-	if raw[0] == '{' || raw[0] == '[' {
-		var obj map[string]json.RawMessage
-		if err := json.Unmarshal([]byte(raw), &obj); err == nil {
-			deps := make([]string, 0, len(obj))
-			for k := range obj {
-				if k = strings.TrimSpace(k); k != "" {
-					deps = append(deps, k)
-				}
-			}
-			// Deterministic order (map iteration is random) so callers are stable.
-			sort.Strings(deps)
-			return deps
-		}
-		var arr []string
-		if err := json.Unmarshal([]byte(raw), &arr); err == nil {
-			deps := make([]string, 0, len(arr))
-			for _, svc := range arr {
-				if svc = strings.TrimSpace(svc); svc != "" {
-					deps = append(deps, svc)
-				}
-			}
-			return deps
-		}
-		return nil
-	}
-	// Comma-separated list; each item may carry ":condition:restart" suffixes, so
-	// keep only the part before the first ':'. Covers the plain-list form too.
-	var deps []string
-	for _, part := range strings.Split(raw, ",") {
-		svc := part
-		if i := strings.IndexByte(svc, ':'); i >= 0 {
-			svc = svc[:i]
-		}
-		if svc = strings.TrimSpace(svc); svc != "" {
-			deps = append(deps, svc)
-		}
-	}
-	return deps
-}
+// parseDependsOn extracts the compose service names a container depends on. See
+// compose.ParseDependsOn for the label-encoding details it handles.
+func parseDependsOn(labels map[string]string) []string { return compose.ParseDependsOn(labels) }
 
 // StackMemberResult is the per-container outcome of a stack restore.
 type StackMemberResult struct {
@@ -292,32 +240,23 @@ func (s *Service) StartRestoreStack(ctx context.Context, project, source string,
 	return true, nil
 }
 
+// memberServicesAndDeps unpacks a member list into the parallel (services, deps)
+// slices the shared compose ordering primitives consume.
+func memberServicesAndDeps(members []stackMember) ([]string, [][]string) {
+	services := make([]string, len(members))
+	deps := make([][]string, len(members))
+	for i, m := range members {
+		services[i] = m.service
+		deps[i] = m.deps
+	}
+	return services, deps
+}
+
 // stackDepGraph maps each member to the indices of the OTHER in-stack members it
-// depends on (via com.docker.compose.depends_on service names). A service name can
-// resolve to MORE THAN ONE member (compose replicas / a shared service label), so
-// every matching member becomes a dependency edge. Deps that name a service
-// outside the stack, and self-deps, are ignored; edges are de-duplicated.
+// depends on (via com.docker.compose.depends_on service names). Thin adapter over
+// compose.DepGraph — see it for the edge/replica/self-dep semantics.
 func stackDepGraph(members []stackMember) [][]int {
-	svcIndex := make(map[string][]int, len(members))
-	for i, m := range members {
-		if m.service != "" {
-			svcIndex[m.service] = append(svcIndex[m.service], i)
-		}
-	}
-	graph := make([][]int, len(members))
-	for i, m := range members {
-		seen := make(map[int]bool)
-		for _, d := range m.deps {
-			for _, j := range svcIndex[d] {
-				if j == i || seen[j] {
-					continue // self-dep or duplicate edge
-				}
-				seen[j] = true
-				graph[i] = append(graph[i], j)
-			}
-		}
-	}
-	return graph
+	return compose.DepGraph(memberServicesAndDeps(members))
 }
 
 // firstBlockedDep returns the index of the first dependency in deps that is
@@ -332,49 +271,8 @@ func firstBlockedDep(deps []int, blocked []bool) int {
 }
 
 // stackStartOrder returns member indices in dependency order (a member's deps
-// start before it) via Kahn's topological sort over the in-stack dependency graph.
-// If a cycle leaves members unresolved, they are appended in their original
-// enumeration order so every member is still returned exactly once.
+// start before it). Thin adapter over compose.StartOrder — see it for the
+// topological-sort and cycle-fallback semantics.
 func stackStartOrder(members []stackMember) []int {
-	deps := stackDepGraph(members)
-	indeg := make([]int, len(members))
-	for i := range members {
-		indeg[i] = len(deps[i])
-	}
-	// Kahn's algorithm: repeatedly emit a zero-in-degree member (lowest index
-	// first, for determinism) and relax the members that depend on it.
-	order := make([]int, 0, len(members))
-	emitted := make([]bool, len(members))
-	for len(order) < len(members) {
-		progressed := false
-		for i := range members {
-			if emitted[i] || indeg[i] != 0 {
-				continue
-			}
-			order = append(order, i)
-			emitted[i] = true
-			progressed = true
-			// Relax dependents: any member that depends on i loses one in-degree.
-			for k := range members {
-				if emitted[k] {
-					continue
-				}
-				for _, dj := range deps[k] {
-					if dj == i {
-						indeg[k]--
-					}
-				}
-			}
-		}
-		if !progressed {
-			break // a cycle remains — fall back to enumeration order below
-		}
-	}
-	// Append any leftover (cycle) members in enumeration order.
-	for i := range members {
-		if !emitted[i] {
-			order = append(order, i)
-		}
-	}
-	return order
+	return compose.StartOrder(memberServicesAndDeps(members))
 }
