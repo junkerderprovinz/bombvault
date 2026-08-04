@@ -96,6 +96,11 @@ func (f *fakeServiceDocker) WaitRunning(_ context.Context, name string, _ time.D
 	return nil
 }
 
+func (f *fakeServiceDocker) Health(_ context.Context, name string) (model.Health, error) {
+	f.calls = append(f.calls, "health:"+name)
+	return model.Health{Running: true}, nil
+}
+
 func (f *fakeServiceDocker) Remove(_ context.Context, name string) error {
 	f.calls = append(f.calls, "remove:"+name)
 	return f.removeErr

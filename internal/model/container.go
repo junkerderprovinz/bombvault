@@ -135,3 +135,19 @@ type Inspect struct {
 	// reconnected, so a multi-network container comes back fully attached.
 	Networks []NetworkEndpoint
 }
+
+// Health is the readiness snapshot of a live container, used by the health-gated
+// ordered restart after a backup: a dependency must be ready before the
+// containers that depend on it are started again.
+type Health struct {
+	// Running is the container's run state (State.Running).
+	Running bool
+	// HasHealthcheck is true when the container defines a Docker healthcheck
+	// (State.Health is present). When false the caller treats Running plus a short
+	// grace as readiness, since there is no health verdict to wait for.
+	HasHealthcheck bool
+	// Healthy is true only when a healthcheck is defined AND its verdict is
+	// "healthy" (State.Health.Status == "healthy"). Always false when
+	// HasHealthcheck is false.
+	Healthy bool
+}

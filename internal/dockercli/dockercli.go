@@ -200,6 +200,31 @@ func (c *Client) WaitRunning(ctx context.Context, name string, timeout time.Dura
 	}
 }
 
+// Health returns the readiness snapshot of a container (Running, whether it
+// defines a Docker healthcheck, and — if it does — whether that healthcheck is
+// currently "healthy"). Used by the health-gated ordered restart after a backup
+// to wait for a dependency to be ready before starting the containers that
+// depend on it. A container with no healthcheck reports HasHealthcheck=false, so
+// the caller falls back to Running plus a short grace.
+func (c *Client) Health(ctx context.Context, name string) (model.Health, error) {
+	resp, err := c.api.ContainerInspect(ctx, name)
+	if err != nil {
+		return model.Health{}, fmt.Errorf("dockercli: health: %w", err)
+	}
+	var h model.Health
+	if resp.State != nil {
+		h.Running = resp.State.Running
+		// State.Health is nil when no healthcheck is configured; some daemons
+		// instead report it present with Status "none". Treat both as "no
+		// healthcheck" so the caller uses the running-plus-grace fallback.
+		if resp.State.Health != nil && resp.State.Health.Status != container.NoHealthcheck {
+			h.HasHealthcheck = true
+			h.Healthy = resp.State.Health.Status == container.Healthy
+		}
+	}
+	return h, nil
+}
+
 // Exec runs cmd inside a running container and returns an error when it exits
 // non-zero (used for pre/post-backup hooks). Output is captured only to surface
 // a short failure reason; it is demuxed via stdcopy and drained so the exec

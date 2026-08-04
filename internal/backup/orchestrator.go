@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/compose"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
@@ -75,6 +76,11 @@ type Docker interface {
 	// A backed-up target must be running again before its network-namespace
 	// dependents (network_mode: container:<target>) can restart.
 	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
+	// Health returns the readiness snapshot of a container (Running, whether it
+	// defines a Docker healthcheck, and whether that healthcheck is currently
+	// healthy). The health-gated ordered restart polls this to wait for a
+	// dependency to be ready before starting the containers that depend on it.
+	Health(ctx context.Context, name string) (model.Health, error)
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
 	CreateAndStart(ctx context.Context, in model.Inspect, start bool) error
@@ -130,6 +136,15 @@ type Runs interface {
 type StopContainer struct {
 	Name       string
 	WasRunning bool
+	// Service and DependsOn carry the container's compose identity (the
+	// com.docker.compose.service label and the service names it depends_on) so the
+	// restart-after-backup phase can bring the stopped set back up in dependency
+	// order — a dependency before the containers that depend on it — reusing the
+	// same topological sort the stack restore uses. Both empty for a container that
+	// is not part of a compose project; such containers keep a stable order among
+	// themselves.
+	Service   string
+	DependsOn []string
 }
 
 // BackupDeps bundles everything BackupContainer needs.
@@ -168,8 +183,22 @@ type BackupDeps struct {
 	// backup (e.g. a database) and restart afterwards. Each carries its own
 	// WasRunning: a dependency that was already stopped is left untouched
 	// (neither stopped nor restarted). Stop/start is best-effort: a failure is
-	// logged but never fails the backup.
+	// logged but never fails the backup. On restart they are brought back up in
+	// compose depends_on order (always applied — strictly safer than unordered).
 	StopContainers []StopContainer
+	// HealthWait, when true, makes the restart-after-backup phase wait for each
+	// stopped dependency to become ready (its Docker healthcheck reports "healthy",
+	// or — with no healthcheck — Running plus a short grace) BEFORE starting the
+	// containers that depend on it, so a dependency is never beaten to a start by
+	// the service that needs it (#119). The depends_on ordering itself is always
+	// applied; only this wait is governed by the flag. Default-off in the zero
+	// value; the service layer passes the user setting.
+	HealthWait bool
+	// HealthTimeout bounds the per-container health wait: after it elapses the
+	// restart logs a warning and proceeds to the dependents anyway, so the backup
+	// flow never hangs forever on a container that never turns healthy. <=0 uses
+	// defaultHealthTimeout.
+	HealthTimeout time.Duration
 	// Excludes are restic --exclude patterns for this container's backup
 	// (already resolved to the paths restic stores).
 	Excludes []string
@@ -240,6 +269,20 @@ const (
 	// runningWaitTimeout bounds how long we wait for a just-restarted backup target
 	// to report Running before restarting its dependents (netns peers need it live).
 	runningWaitTimeout = 60 * time.Second
+	// defaultHealthTimeout is the per-container cap for the health-gated ordered
+	// restart when BackupDeps.HealthTimeout is unset (<=0). After it elapses the
+	// restart logs a warning and proceeds to the dependents, so the flow never hangs.
+	defaultHealthTimeout = 120 * time.Second
+)
+
+// healthPollInterval (how often the health wait re-inspects a container) and
+// healthNoCheckGrace (the settle grace for a container with no Docker healthcheck
+// once it reports Running) are vars, not consts, ONLY so the tests can shrink them
+// to exercise the wait loop without real-time delays. They are never mutated in
+// production.
+var (
+	healthPollInterval = 2 * time.Second
+	healthNoCheckGrace = 4 * time.Second
 )
 
 // snapshotIDRe matches a restic short or full snapshot id (8–64 lowercase hex).
@@ -312,8 +355,10 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	func() {
 		// stoppedDeps tracks the dependency containers we actually stopped, so the
 		// restart unwind only starts those (and never spuriously starts a dep when
-		// we bailed before stopping them).
-		var stoppedDeps []string
+		// we bailed before stopping them). The full StopContainer is kept (not just
+		// the name) so the restart phase has each dep's compose identity for the
+		// depends_on ordering.
+		var stoppedDeps []StopContainer
 
 		// ONE restart path, registered up front so it is the LAST defer to run on
 		// unwind. Order matters: bring the backed-up TARGET back first and wait
@@ -322,7 +367,8 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// container:<target>) and cannot start until the target is live — restarting
 		// them first failed with "cannot join network namespace of a non running
 		// container". A target that was not running is left stopped; its dependents
-		// are still restarted (best-effort).
+		// are still restarted (best-effort). The dependents themselves come back in
+		// compose depends_on order, optionally health-gated (see restartStoppedDeps).
 		defer func() {
 			if d.WasRunning {
 				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil {
@@ -333,11 +379,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 					backupErr = fmt.Errorf("backup: wait container running: %w", waitErr)
 				}
 			}
-			for _, dep := range stoppedDeps {
-				if startErr := d.Docker.Start(ctx, dep); startErr != nil {
-					log.Printf("backup: restart dependency %q failed: %v", dep, startErr)
-				}
-			}
+			restartStoppedDeps(ctx, d, stoppedDeps)
 		}()
 
 		// Stop the target for its own backup (consistent appdata) when it was
@@ -361,7 +403,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
 				continue
 			}
-			stoppedDeps = append(stoppedDeps, dep.Name)
+			stoppedDeps = append(stoppedDeps, dep)
 		}
 
 		// A container with no existing source paths (a stateless app, or appdata
@@ -422,6 +464,111 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
 	return summary, nil
+}
+
+// restartStoppedDeps brings the dependency containers we stopped for a backup
+// back up, in compose depends_on order (a dependency before the containers that
+// depend on it), reusing the same topological sort the stack restore uses. It is
+// fully best-effort: every failure is logged, never returned, so the restart of
+// one dependency can never abort the restart of the others or the backup flow.
+//
+// The depends_on ORDERING is ALWAYS applied — it is strictly safer than the old
+// unordered restart and cannot make things worse. When d.HealthWait is set, the
+// restart additionally waits for each dependency to become ready (its Docker
+// healthcheck reports "healthy", or — with no healthcheck — Running plus a short
+// grace) BEFORE it starts the containers that depend on it, bounded by a
+// per-container timeout after which it warns and proceeds so nothing hangs. This
+// is what fixes the real case where a service (Authelia/Nextcloud) came back
+// before the dependency it needs (Pi-hole) and stayed broken (#119).
+//
+// Containers not in a compose project (no service label / no depends_on) have no
+// edges, so they keep a stable order among themselves and are simply started.
+func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer) {
+	if len(deps) == 0 {
+		return
+	}
+	services := make([]string, len(deps))
+	dependsOn := make([][]string, len(deps))
+	for i, dep := range deps {
+		services[i] = dep.Service
+		dependsOn[i] = dep.DependsOn
+	}
+	order := compose.StartOrder(services, dependsOn)
+	graph := compose.DepGraph(services, dependsOn)
+
+	timeout := d.HealthTimeout
+	if timeout <= 0 {
+		timeout = defaultHealthTimeout
+	}
+
+	// resolved[i] means dep i no longer blocks its dependents: it is healthy, its
+	// wait timed out (we proceed anyway), or it failed to start (a dependent must
+	// not wait forever on a container that never came up — these were RUNNING
+	// before the backup and we restart them best-effort regardless).
+	resolved := make([]bool, len(deps))
+	for _, i := range order {
+		// Before starting dep i, make sure every in-set dependency it needs is
+		// resolved (ready or given up on). Processing in topological order means
+		// those dependencies were started in an earlier iteration; here we wait for
+		// them lazily, exactly when a dependent needs them.
+		if d.HealthWait {
+			for _, j := range graph[i] {
+				if !resolved[j] {
+					waitHealthy(ctx, d, deps[j].Name, timeout)
+					resolved[j] = true
+				}
+			}
+		}
+		if startErr := d.Docker.Start(ctx, deps[i].Name); startErr != nil {
+			log.Printf("backup: restart dependency %q failed: %v", deps[i].Name, startErr)
+			resolved[i] = true // never let a dependent block on a container that failed to start
+		}
+	}
+}
+
+// waitHealthy polls a container until it is ready or timeout elapses. Readiness
+// is: its Docker healthcheck reports "healthy"; or, for a container with no
+// healthcheck, it reports Running and then a short grace passes. On timeout it
+// logs a warning and returns (the caller proceeds — the flow must never hang).
+//
+// It degrades gracefully on every edge the restart can hit: an inspect error
+// (e.g. the container was removed mid-wait, or docker is briefly unreachable)
+// stops the wait and returns rather than blocking, and a cancelled context
+// returns immediately. It never returns an error — the restart is best-effort.
+func waitHealthy(ctx context.Context, d BackupDeps, name string, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	for {
+		h, err := d.Docker.Health(ctx, name)
+		if err != nil {
+			// Cannot see the container (removed mid-wait, transient docker error):
+			// do not block the whole restart on it — log and move on.
+			log.Printf("backup: health check for dependency %q failed, proceeding: %v", name, err)
+			return
+		}
+		switch {
+		case h.HasHealthcheck:
+			if h.Healthy {
+				return
+			}
+		case h.Running:
+			// No healthcheck to wait on: Running plus a short settle grace is our
+			// readiness signal for the containers that depend on it.
+			select {
+			case <-ctx.Done():
+			case <-time.After(healthNoCheckGrace):
+			}
+			return
+		}
+		if time.Now().After(deadline) {
+			log.Printf("backup: dependency %q not healthy after %s, proceeding anyway", name, timeout)
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(healthPollInterval):
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------

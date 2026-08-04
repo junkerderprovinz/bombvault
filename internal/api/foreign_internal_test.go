@@ -523,6 +523,9 @@ func (f *foreignFakeDocker) Restart(context.Context, string, time.Duration) erro
 func (f *foreignFakeDocker) WaitRunning(context.Context, string, time.Duration) error {
 	return nil
 }
+func (f *foreignFakeDocker) Health(context.Context, string) (model.Health, error) {
+	return model.Health{Running: true}, nil
+}
 func (f *foreignFakeDocker) Remove(context.Context, string) error               { return nil }
 func (f *foreignFakeDocker) Pull(context.Context, string) error                 { return nil }
 func (f *foreignFakeDocker) PullWithAuth(context.Context, string, string) error { return nil }

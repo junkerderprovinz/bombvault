@@ -43,6 +43,12 @@ type fakeDocker struct {
 
 	// execErr, when set, fails the NEXT Exec (for hook tests).
 	execErr error
+
+	// healthSeq scripts Health responses per container name (consumed one per call,
+	// last entry sticks) so a wait test can make a dep become healthy after N polls.
+	healthSeq map[string][]model.Health
+	// healthErr scripts a Health inspect error per name (graceful-degradation test).
+	healthErr map[string]error
 }
 
 func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
@@ -59,6 +65,31 @@ func (d *fakeDocker) Start(_ context.Context, name string) error {
 func (d *fakeDocker) WaitRunning(_ context.Context, name string, _ time.Duration) error {
 	d.log = append(d.log, "waitRunning:"+name)
 	return d.waitRunningErr
+}
+
+// Health returns a scripted readiness snapshot for name. The wait tests advance a
+// container's readiness by mutating d.health between/over polls: healthSeq gives a
+// per-name queue of snapshots consumed one per Health call (the last one sticks),
+// so a test can make a container become healthy only after N polls. A name with no
+// scripted entry reports Running and no healthcheck (ready after the grace). When
+// healthErr[name] is set, the call returns that error (inspect-error degradation).
+func (d *fakeDocker) Health(_ context.Context, name string) (model.Health, error) {
+	d.log = append(d.log, "health:"+name)
+	if d.healthErr != nil {
+		if err, ok := d.healthErr[name]; ok {
+			return model.Health{}, err
+		}
+	}
+	if d.healthSeq != nil {
+		if seq, ok := d.healthSeq[name]; ok && len(seq) > 0 {
+			h := seq[0]
+			if len(seq) > 1 {
+				d.healthSeq[name] = seq[1:]
+			}
+			return h, nil
+		}
+	}
+	return model.Health{Running: true}, nil
 }
 
 func (d *fakeDocker) Remove(_ context.Context, name string) error {
