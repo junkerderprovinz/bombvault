@@ -171,6 +171,19 @@ func TestCheckArgs(t *testing.T) {
 	if got, want := CheckArgs("/repo", Mode{Encrypted: false}), []string{"-r", "/repo", "--retry-lock", "5m", "check", "--insecure-no-password"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
+	// Receiver read-only check (#61 discipline): NoLock swaps --retry-lock for
+	// --no-lock so the integrity check never writes a lock into the received
+	// (append-only / immutable) repo.
+	t.Run("no-lock swaps out retry-lock", func(t *testing.T) {
+		got := CheckArgs("/repo", Mode{Encrypted: true, NoLock: true})
+		want := []string{"-r", "/repo", "--no-lock", "check"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+		if argsContain(got, "--retry-lock") {
+			t.Fatalf("a NoLock check must not add --retry-lock, got %v", got)
+		}
+	})
 }
 
 func TestCheckDataArgs(t *testing.T) {
@@ -200,6 +213,18 @@ func TestCheckDataArgs(t *testing.T) {
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "check", "--read-data-subset=100%"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	// Receiver read-only deep check (#61 discipline): NoLock swaps --retry-lock
+	// for --no-lock so the deep check never writes a lock into the received repo.
+	t.Run("no-lock swaps out retry-lock", func(t *testing.T) {
+		got := CheckDataArgs("/repo", 5, Mode{Encrypted: true, NoLock: true})
+		want := []string{"-r", "/repo", "--no-lock", "check", "--read-data-subset=5%"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+		if argsContain(got, "--retry-lock") {
+			t.Fatalf("a NoLock deep check must not add --retry-lock, got %v", got)
 		}
 	})
 }
