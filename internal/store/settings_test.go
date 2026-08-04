@@ -254,6 +254,37 @@ func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsReconcileUnraidUpdateStatusRoundTrip pins the v80 column (#116):
+// it defaults ON (Unraid is asked to refresh its own status after an applied
+// update) and round-trips being turned off.
+func TestSettingsReconcileUnraidUpdateStatusRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s.ReconcileUnraidUpdateStatus {
+		t.Fatal("default reconcile_unraid_update_status must be true")
+	}
+
+	s.ReconcileUnraidUpdateStatus = false
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ReconcileUnraidUpdateStatus {
+		t.Fatal("reconcile_unraid_update_status=false not round-tripped")
+	}
+}
+
 // TestSettingsRegistryAuthsRoundTrip pins the v69 registry_auths column (#106):
 // the migration backfills existing rows with ” (no credentials → anonymous
 // pulls, unchanged behavior), and the opaque encrypted blob round-trips

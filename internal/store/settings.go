@@ -196,6 +196,15 @@ type Settings struct {
 	// wait: once it elapses the restart logs a warning and proceeds to the
 	// dependents anyway, so the backup flow never hangs forever. Default 120.
 	RestartHealthTimeoutSec int
+	// ReconcileUnraidUpdateStatus asks Unraid to refresh its OWN cached container
+	// "update available" status after BombVault recreates a container in the
+	// post-backup update step (#116). BombVault moved the image to the new digest,
+	// but Unraid did not do the update and never rechecked, so its Docker tab keeps
+	// showing a stale banner. When on, BombVault runs Unraid's own update-status
+	// recheck over the existing host SSH link so Unraid rewrites its status file
+	// itself (never a racing BombVault write). Default on; best-effort and
+	// non-fatal, so a reconcile failure never affects the backup or update.
+	ReconcileUnraidUpdateStatus bool
 }
 
 // GetSettings returns the current app settings.
@@ -222,7 +231,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       catch_up_missed, watchdog_enabled,
 		       export_encrypt_enabled, export_age_recipients,
 		       receiver_enabled,
-		       restart_health_wait, restart_health_timeout_sec
+		       restart_health_wait, restart_health_timeout_sec,
+		       reconcile_unraid_update_status
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -230,7 +240,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
-	var restartHealthWait int
+	var restartHealthWait, reconcileUnraidUpdateStatus int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -254,6 +264,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&exportEncryptEnabled, &s.ExportAgeRecipients,
 		&receiverEnabled,
 		&restartHealthWait, &s.RestartHealthTimeoutSec,
+		&reconcileUnraidUpdateStatus,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -284,6 +295,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.ExportEncryptEnabled = exportEncryptEnabled != 0
 	s.ReceiverEnabled = receiverEnabled != 0
 	s.RestartHealthWait = restartHealthWait != 0
+	s.ReconcileUnraidUpdateStatus = reconcileUnraidUpdateStatus != 0
 	return s, nil
 }
 
@@ -364,7 +376,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  export_age_recipients        = ?,
 		  receiver_enabled             = ?,
 		  restart_health_wait          = ?,
-		  restart_health_timeout_sec   = ?
+		  restart_health_timeout_sec   = ?,
+		  reconcile_unraid_update_status = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -393,6 +406,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.ExportEncryptEnabled), s.ExportAgeRecipients,
 		boolInt(s.ReceiverEnabled),
 		boolInt(s.RestartHealthWait), s.RestartHealthTimeoutSec,
+		boolInt(s.ReconcileUnraidUpdateStatus),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

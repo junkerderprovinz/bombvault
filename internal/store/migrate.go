@@ -824,6 +824,17 @@ CREATE TABLE IF NOT EXISTS received_alert_state (
 ALTER TABLE settings ADD COLUMN restart_health_wait        INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE settings ADD COLUMN restart_health_timeout_sec INTEGER NOT NULL DEFAULT 120;`,
 	},
+	{
+		// After BombVault recreates a container in the post-backup update step (#116),
+		// Unraid's Docker tab still shows a stale "update available" banner because
+		// Unraid did not perform the update and never refreshed its cached status file.
+		// reconcile_unraid_update_status DEFAULT 1 (ON): BombVault asks Unraid to run
+		// its OWN update-status recheck for that container over the existing host SSH
+		// link, so Unraid rewrites the file itself (never a racing BombVault write).
+		// Best-effort and non-fatal, so a reconcile failure never affects the backup.
+		version: 80, name: "settings_reconcile_unraid_update_status",
+		sql: "ALTER TABLE settings ADD COLUMN reconcile_unraid_update_status INTEGER NOT NULL DEFAULT 1;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

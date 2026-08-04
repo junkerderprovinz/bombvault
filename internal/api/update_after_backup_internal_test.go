@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -171,6 +172,120 @@ func TestUpdateAfterBackup_PrunesOldImageWhenEnabled(t *testing.T) {
 
 	if !strings.Contains(strings.Join(f.calls, ","), "imageRemove:sha256:OLD") {
 		t.Fatalf("prune-after-update must remove the OLD image; calls %v", f.calls)
+	}
+}
+
+// unraidReconcilePHPRun scans an SSH run for the #116 update-status reconcile:
+// a `php -r <snippet> -- <ref>` invocation carrying reloadUpdateStatus. Returns
+// the ref token and whether such a run was found.
+func unraidReconcilePHPRun(runs [][]string) (string, bool) {
+	for _, r := range runs {
+		if len(r) >= 5 && r[0] == "php" && r[1] == "-r" &&
+			strings.Contains(r[2], "reloadUpdateStatus") && r[3] == "--" {
+			return r[4], true
+		}
+	}
+	return "", false
+}
+
+// A real update (newer image → recreate) must, with the toggle on (the default),
+// trigger Unraid's own update-status recheck for that image over SSH so the stale
+// Docker-tab banner clears (#116).
+func TestUpdateAfterBackup_ReconcilesUnraidStatusOnUpdate(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	ssh := &fakeHostSSH{}
+	svc.ssh = ssh
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
+
+	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+
+	ref, ok := unraidReconcilePHPRun(ssh.runs)
+	if !ok {
+		t.Fatalf("an applied update must reconcile Unraid's status; runs %v", ssh.runs)
+	}
+	if ref != "plex:latest" {
+		t.Fatalf("reconcile must pass the image ref as a separate token: got %q", ref)
+	}
+}
+
+// The reconcile must fire ONLY when an update actually happened: an up-to-date
+// image (no recreate) must not touch Unraid's status file (#116).
+func TestUpdateAfterBackup_NoReconcileWhenUpToDate(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	ssh := &fakeHostSSH{}
+	svc.ssh = ssh
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.docker = &updateFakeDocker{imageID: "sha256:SAME"}
+
+	in := model.Inspect{Name: "/plex", Image: "sha256:SAME", Config: model.Config{Image: "plex:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+
+	if _, ok := unraidReconcilePHPRun(ssh.runs); ok {
+		t.Fatalf("no update happened — Unraid status must not be reconciled; runs %v", ssh.runs)
+	}
+}
+
+// With the toggle disabled, an applied update must skip the Unraid reconcile.
+func TestUpdateAfterBackup_ReconcileSkippedWhenDisabled(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	ssh := &fakeHostSSH{}
+	svc.ssh = ssh
+	cfg, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.ReconcileUnraidUpdateStatus = false
+	if err := st.UpdateSettings(cfg); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
+
+	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+
+	if _, ok := unraidReconcilePHPRun(ssh.runs); ok {
+		t.Fatalf("reconcile is disabled — it must not run; runs %v", ssh.runs)
+	}
+}
+
+// A reconcile trigger error must NOT fail the update: the "update" run is still
+// recorded as a success and nothing panics (#116, best-effort/non-fatal).
+func TestUpdateAfterBackup_ReconcileErrorDoesNotFailUpdate(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	svc.ssh = &fakeHostSSH{runErr: errors.New("ssh down")}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
+
+	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var updateRun *store.Run
+	for i := range runs {
+		if runs[i].Kind == "update" {
+			updateRun = &runs[i]
+		}
+	}
+	if updateRun == nil || updateRun.Status != "success" {
+		t.Fatalf("a reconcile failure must not fail the update run; got %v", runs)
 	}
 }
 
