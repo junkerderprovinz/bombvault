@@ -1142,22 +1142,27 @@ const fr: Partial<Translations> = {
   "receiver.saveError": "Impossible d'enregistrer le dépôt reçu.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Ordre des sauvegardes",
+  "backupOrder.hint": "Définissez la séquence dans laquelle s'exécutent les sauvegardes planifiées et par lots. Les conteneurs absents de la liste s'exécutent ensuite, les plus en retard d'abord.",
+  "backupOrder.moveUp": "Monter",
+  "backupOrder.moveDown": "Descendre",
+  "backupOrder.save": "Enregistrer l'ordre",
+  "backupOrder.saved": "Ordre enregistré",
+  "backupOrder.saveError": "Impossible d'enregistrer l'ordre des sauvegardes.",
+  "backupOrder.empty": "Aucun conteneur planifié à ordonner pour l'instant.",
+  "backupOrder.reset": "Effacer l'ordre",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Redémarrage après la sauvegarde",
+  "settings.restartHealthWait": "Attendre que les dépendances soient saines avant de démarrer le suivant",
+  "settings.restartHealthWaitHint": "Quand 'Arrêter les autres conteneurs pendant la sauvegarde' arrête des conteneurs, ils redémarrent dans l'ordre des dépendances après la sauvegarde (et après toute mise à jour ultérieure). Avec cette option activée, chaque conteneur doit se signaler comme sain ou en cours d'exécution avant que ceux qui en dépendent démarrent.",
+  "settings.restartHealthTimeoutLabel": "Délai de santé par conteneur (secondes)",
+  "settings.restartHealthTimeoutHint": "Combien de temps attendre qu'un conteneur devienne sain avant que ses dépendants démarrent quand même. Plage de 5 à 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "État des mises à jour Unraid",
+  "settings.reconcileUnraidStatus": "Actualiser l'état des mises à jour d'Unraid après la mise à jour d'un conteneur",
+  "settings.reconcileUnraidStatusHint": "Efface la bannière de mise à jour d'Unraid après que BombVault a mis à jour un conteneur lors de l'étape de mise à jour suivant la sauvegarde.",
 };
 
 export default fr;

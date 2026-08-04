@@ -1145,22 +1145,27 @@ const ro: Partial<Translations> = {
   "receiver.saveError": "Nu s-a putut salva depozitul primit.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Ordinea backupurilor",
+  "backupOrder.hint": "Stabilește secvența în care rulează backupurile programate și în lot. Containerele care nu sunt în listă rulează după aceea, mai întâi cele mai întârziate.",
+  "backupOrder.moveUp": "Mută în sus",
+  "backupOrder.moveDown": "Mută în jos",
+  "backupOrder.save": "Salvează ordinea",
+  "backupOrder.saved": "Ordine salvată",
+  "backupOrder.saveError": "Nu s-a putut salva ordinea backupurilor.",
+  "backupOrder.empty": "Încă nu există containere programate de ordonat.",
+  "backupOrder.reset": "Șterge ordinea",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Repornire după backup",
+  "settings.restartHealthWait": "Așteaptă ca dependențele să fie sănătoase înainte de a-l porni pe următorul",
+  "settings.restartHealthWaitHint": "Când 'Oprește alte containere în timpul backupului' oprește containere, acestea repornesc în ordinea dependențelor după backup (și după o eventuală actualizare). Cu această opțiune activată, fiecare container trebuie să raporteze sănătos sau în rulare înainte ca cele care depind de el să pornească.",
+  "settings.restartHealthTimeoutLabel": "Timp de așteptare pentru sănătate per container (secunde)",
+  "settings.restartHealthTimeoutHint": "Cât se așteaptă ca un container să devină sănătos înainte ca dependenții săi să pornească oricum. Interval de la 5 la 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Stare actualizări Unraid",
+  "settings.reconcileUnraidStatus": "Reîmprospătează starea actualizărilor Unraid după actualizarea unui container",
+  "settings.reconcileUnraidStatusHint": "Șterge bannerul de actualizare Unraid după ce BombVault actualizează un container în pasul de actualizare de după backup.",
 };
 
 export default ro;

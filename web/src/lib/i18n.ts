@@ -1227,6 +1227,13 @@ export const en = {
   "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
   "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
   "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+
+  // Reconcile Unraid update status (#116) — Settings, Storage tab. After the
+  // post-backup container update recreates a container, ask Unraid to refresh
+  // its own cached update status so the Docker tab's stale banner clears.
+  "settings.reconcileTitle": "Unraid update status",
+  "settings.reconcileUnraidStatus": "Refresh Unraid's update status after updating a container",
+  "settings.reconcileUnraidStatusHint": "Clear Unraid's update banner after BombVault updates a container in the post-backup update step.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -2406,6 +2413,11 @@ export const de: Translations = {
   "settings.restartHealthWaitHint": "Wenn 'Andere Container während des Backups stoppen' Container stoppt, werden sie nach dem Backup (und nach einem etwaigen Update) in Abhängigkeitsreihenfolge neu gestartet. Ist dies aktiv, muss jeder Container als gesund oder laufend melden, bevor die von ihm abhängigen starten.",
   "settings.restartHealthTimeoutLabel": "Gesundheits-Timeout pro Container (Sekunden)",
   "settings.restartHealthTimeoutHint": "Wie lange auf einen Container gewartet wird, bis er gesund ist, bevor seine Abhängigen trotzdem starten. Bereich 5 bis 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid-Update-Status",
+  "settings.reconcileUnraidStatus": "Unraids Update-Status nach dem Aktualisieren eines Containers auffrischen",
+  "settings.reconcileUnraidStatusHint": "Unraids Update-Banner zurücksetzen, nachdem BombVault im Update-Schritt nach dem Backup einen Container aktualisiert hat.",
 };
 
 // ---------------------------------------------------------------------------

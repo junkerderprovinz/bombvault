@@ -1137,22 +1137,27 @@ const uk: Partial<Translations> = {
   "receiver.saveError": "Не вдалося зберегти отриманий репозиторій.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Порядок резервного копіювання",
+  "backupOrder.hint": "Задайте послідовність виконання запланованих і пакетних резервних копій. Контейнери, яких немає в списку, виконуються після, спершу найбільш прострочені.",
+  "backupOrder.moveUp": "Вгору",
+  "backupOrder.moveDown": "Вниз",
+  "backupOrder.save": "Зберегти порядок",
+  "backupOrder.saved": "Порядок збережено",
+  "backupOrder.saveError": "Не вдалося зберегти порядок резервного копіювання.",
+  "backupOrder.empty": "Поки немає запланованих контейнерів для впорядкування.",
+  "backupOrder.reset": "Очистити порядок",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Перезапуск після резервного копіювання",
+  "settings.restartHealthWait": "Зачекати, поки залежності стануть справними, перш ніж запускати наступний",
+  "settings.restartHealthWaitHint": "Коли параметр 'Зупиняти інші контейнери під час копіювання' зупиняє контейнери, вони перезапускаються в порядку залежностей після копіювання (і після можливого оновлення). За ввімкненої опції кожен контейнер має повідомити про справність або роботу, перш ніж запустяться ті, що від нього залежать.",
+  "settings.restartHealthTimeoutLabel": "Тайм-аут справності на контейнер (секунди)",
+  "settings.restartHealthTimeoutHint": "Скільки чекати, поки контейнер стане справним, перш ніж залежні від нього все одно запустяться. Діапазон від 5 до 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Статус оновлень Unraid",
+  "settings.reconcileUnraidStatus": "Оновлювати статус оновлень Unraid після оновлення контейнера",
+  "settings.reconcileUnraidStatusHint": "Прибирає банер оновлення Unraid після того, як BombVault оновить контейнер на етапі оновлення після резервного копіювання.",
 };
 
 export default uk;

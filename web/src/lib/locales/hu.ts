@@ -1145,22 +1145,27 @@ const hu: Partial<Translations> = {
   "receiver.saveError": "A fogadott tárolót nem sikerült menteni.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Mentések sorrendje",
+  "backupOrder.hint": "Add meg a sorrendet, amelyben az ütemezett és a kötegelt mentések futnak. A listán nem szereplő konténerek utána futnak, a legrégebben esedékesek először.",
+  "backupOrder.moveUp": "Mozgatás fel",
+  "backupOrder.moveDown": "Mozgatás le",
+  "backupOrder.save": "Sorrend mentése",
+  "backupOrder.saved": "Sorrend elmentve",
+  "backupOrder.saveError": "A mentések sorrendjét nem sikerült elmenteni.",
+  "backupOrder.empty": "Még nincs ütemezett konténer a sorrendezéshez.",
+  "backupOrder.reset": "Sorrend törlése",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Újraindítás mentés után",
+  "settings.restartHealthWait": "Várakozás, amíg a függőségek egészségesek lesznek, mielőtt a következő elindul",
+  "settings.restartHealthWaitHint": "Amikor a 'Más konténerek leállítása a mentés alatt' leállít konténereket, azok a mentés után (és egy esetleges frissítés után) függőségi sorrendben indulnak újra. Ha ez be van kapcsolva, minden konténernek egészségesként vagy futóként kell jelentkeznie, mielőtt a tőle függők elindulnak.",
+  "settings.restartHealthTimeoutLabel": "Egészség-időkorlát konténerenként (másodperc)",
+  "settings.restartHealthTimeoutHint": "Mennyi ideig vár a rendszer, hogy egy konténer egészségessé váljon, mielőtt a függői mégis elindulnak. Tartomány 5 és 3600 között.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid frissítési állapota",
+  "settings.reconcileUnraidStatus": "Az Unraid frissítési állapotának frissítése egy konténer frissítése után",
+  "settings.reconcileUnraidStatusHint": "Törli az Unraid frissítési szalagcímét, miután a BombVault a mentés utáni frissítési lépésben frissített egy konténert.",
 };
 
 export default hu;

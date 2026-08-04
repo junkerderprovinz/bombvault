@@ -1142,22 +1142,27 @@ const tr: Partial<Translations> = {
   "receiver.saveError": "Alınan depo kaydedilemedi.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Yedekleme sırası",
+  "backupOrder.hint": "Zamanlanmış ve toplu yedeklemelerin çalışma sırasını belirleyin. Listede olmayan konteynerler daha sonra çalışır, en çok geciken önce.",
+  "backupOrder.moveUp": "Yukarı taşı",
+  "backupOrder.moveDown": "Aşağı taşı",
+  "backupOrder.save": "Sırayı kaydet",
+  "backupOrder.saved": "Sıra kaydedildi",
+  "backupOrder.saveError": "Yedekleme sırası kaydedilemedi.",
+  "backupOrder.empty": "Sıralanacak zamanlanmış konteyner henüz yok.",
+  "backupOrder.reset": "Sırayı temizle",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Yedeklemeden sonra yeniden başlatma",
+  "settings.restartHealthWait": "Sonrakini başlatmadan önce bağımlılıkların sağlıklı olmasını bekle",
+  "settings.restartHealthWaitHint": "'Yedekleme sırasında diğer konteynerleri durdur' konteynerleri durdurduğunda, yedeklemeden (ve varsa güncellemeden) sonra bağımlılık sırasına göre yeniden başlatılır. Bu açıkken, ona bağlı olanlar başlamadan önce her konteynerin sağlıklı veya çalışıyor olarak bildirmesi gerekir.",
+  "settings.restartHealthTimeoutLabel": "Konteyner başına sağlık zaman aşımı (saniye)",
+  "settings.restartHealthTimeoutHint": "Bağımlıları yine de başlamadan önce bir konteynerin sağlıklı hale gelmesi için ne kadar beklenir. Aralık 5 ile 3600 arası.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid güncelleme durumu",
+  "settings.reconcileUnraidStatus": "Bir konteyneri güncelledikten sonra Unraid'in güncelleme durumunu yenile",
+  "settings.reconcileUnraidStatusHint": "BombVault, yedeklemeden sonraki güncelleme adımında bir konteyneri güncelledikten sonra Unraid'in güncelleme afişini temizler.",
 };
 
 export default tr;

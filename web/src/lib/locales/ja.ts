@@ -1134,22 +1134,27 @@ const ja: Partial<Translations> = {
   "receiver.saveError": "受信リポジトリを保存できませんでした。",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "バックアップ順序",
+  "backupOrder.hint": "スケジュールおよび一括バックアップを実行する順序を設定します。一覧にないコンテナはその後、最も期限超過のものから実行されます。",
+  "backupOrder.moveUp": "上へ移動",
+  "backupOrder.moveDown": "下へ移動",
+  "backupOrder.save": "順序を保存",
+  "backupOrder.saved": "順序を保存しました",
+  "backupOrder.saveError": "バックアップ順序を保存できませんでした。",
+  "backupOrder.empty": "並べ替えるスケジュール済みコンテナはまだありません。",
+  "backupOrder.reset": "順序をクリア",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "バックアップ後の再起動",
+  "settings.restartHealthWait": "次を開始する前に依存関係が正常になるまで待つ",
+  "settings.restartHealthWaitHint": "「バックアップ中に他のコンテナを停止」がコンテナを停止した場合、バックアップ後（およびバックアップ後の更新後）に依存関係の順序で再起動されます。これを有効にすると、各コンテナは正常または稼働中を報告してから、それに依存するコンテナが起動します。",
+  "settings.restartHealthTimeoutLabel": "コンテナごとのヘルスタイムアウト（秒）",
+  "settings.restartHealthTimeoutHint": "依存するコンテナがとにかく起動する前に、1つのコンテナが正常になるまで待つ時間。範囲は 5 から 3600 です。",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid の更新ステータス",
+  "settings.reconcileUnraidStatus": "コンテナの更新後に Unraid の更新ステータスを更新する",
+  "settings.reconcileUnraidStatusHint": "バックアップ後の更新ステップで BombVault がコンテナを更新した後、Unraid の更新バナーをクリアします。",
 };
 
 export default ja;

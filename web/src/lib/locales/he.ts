@@ -1142,22 +1142,27 @@ const he: Partial<Translations> = {
   "receiver.saveError": "לא ניתן לשמור את המאגר שהתקבל.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "סדר הגיבויים",
+  "backupOrder.hint": "קבע את הסדר שבו רצים הגיבויים המתוזמנים והמקובצים. מכולות שאינן ברשימה רצות לאחר מכן, המאחרות ביותר תחילה.",
+  "backupOrder.moveUp": "העבר למעלה",
+  "backupOrder.moveDown": "העבר למטה",
+  "backupOrder.save": "שמור סדר",
+  "backupOrder.saved": "הסדר נשמר",
+  "backupOrder.saveError": "לא ניתן היה לשמור את סדר הגיבויים.",
+  "backupOrder.empty": "אין עדיין מכולות מתוזמנות לסידור.",
+  "backupOrder.reset": "נקה סדר",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "הפעלה מחדש לאחר הגיבוי",
+  "settings.restartHealthWait": "המתן עד שהתלויות יהיו תקינות לפני הפעלת הבאה",
+  "settings.restartHealthWaitHint": "כאשר האפשרות 'עצירת מכולות אחרות במהלך הגיבוי' עוצרת מכולות, הן מופעלות מחדש בסדר התלויות לאחר הגיבוי (ולאחר עדכון כלשהו). כשאפשרות זו פעילה, כל מכולה חייבת לדווח שהיא תקינה או פועלת לפני שהמכולות התלויות בה מופעלות.",
+  "settings.restartHealthTimeoutLabel": "פסק זמן תקינות לכל מכולה (שניות)",
+  "settings.restartHealthTimeoutHint": "כמה זמן להמתין שמכולה תהיה תקינה לפני שהתלויות בה מופעלות בכל מקרה. טווח 5 עד 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "סטטוס עדכוני Unraid",
+  "settings.reconcileUnraidStatus": "רענן את סטטוס העדכונים של Unraid לאחר עדכון מכולה",
+  "settings.reconcileUnraidStatusHint": "מנקה את באנר העדכון של Unraid לאחר ש-BombVault מעדכן מכולה בשלב העדכון שלאחר הגיבוי.",
 };
 
 export default he;

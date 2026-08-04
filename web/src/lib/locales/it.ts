@@ -1142,22 +1142,27 @@ const it: Partial<Translations> = {
   "receiver.saveError": "Impossibile salvare il repository ricevuto.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Ordine dei backup",
+  "backupOrder.hint": "Imposta la sequenza in cui vengono eseguiti i backup pianificati e in blocco. I container esclusi dall'elenco vengono eseguiti dopo, prima i più in ritardo.",
+  "backupOrder.moveUp": "Sposta su",
+  "backupOrder.moveDown": "Sposta giù",
+  "backupOrder.save": "Salva ordine",
+  "backupOrder.saved": "Ordine salvato",
+  "backupOrder.saveError": "Impossibile salvare l'ordine dei backup.",
+  "backupOrder.empty": "Nessun container pianificato da ordinare per ora.",
+  "backupOrder.reset": "Cancella ordine",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Riavvio dopo il backup",
+  "settings.restartHealthWait": "Attendere che le dipendenze siano integre prima di avviare il successivo",
+  "settings.restartHealthWaitHint": "Quando 'Arresta altri container durante il backup' arresta dei container, questi vengono riavviati in ordine di dipendenza dopo il backup (e dopo un eventuale aggiornamento). Con questa opzione attiva, ogni container deve risultare integro o in esecuzione prima che partano quelli che dipendono da esso.",
+  "settings.restartHealthTimeoutLabel": "Timeout di integrità per container (secondi)",
+  "settings.restartHealthTimeoutHint": "Quanto attendere che un container diventi integro prima che i suoi dipendenti partano comunque. Intervallo da 5 a 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Stato aggiornamenti Unraid",
+  "settings.reconcileUnraidStatus": "Aggiorna lo stato degli aggiornamenti di Unraid dopo aver aggiornato un container",
+  "settings.reconcileUnraidStatusHint": "Cancella l'avviso di aggiornamento di Unraid dopo che BombVault aggiorna un container nel passaggio di aggiornamento successivo al backup.",
 };
 
 export default it;

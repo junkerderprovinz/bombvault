@@ -1142,22 +1142,27 @@ const da: Partial<Translations> = {
   "receiver.saveError": "Kunne ikke gemme det modtagne arkiv.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Rækkefølge for sikkerhedskopiering",
+  "backupOrder.hint": "Angiv rækkefølgen, som planlagte og batch-sikkerhedskopieringer køres i. Containere, der ikke er på listen, køres bagefter, de mest forsinkede først.",
+  "backupOrder.moveUp": "Flyt op",
+  "backupOrder.moveDown": "Flyt ned",
+  "backupOrder.save": "Gem rækkefølge",
+  "backupOrder.saved": "Rækkefølge gemt",
+  "backupOrder.saveError": "Rækkefølgen for sikkerhedskopiering kunne ikke gemmes.",
+  "backupOrder.empty": "Ingen planlagte containere at ordne endnu.",
+  "backupOrder.reset": "Ryd rækkefølge",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Genstart efter sikkerhedskopiering",
+  "settings.restartHealthWait": "Vent, til afhængigheder er sunde, før den næste startes",
+  "settings.restartHealthWaitHint": "Når 'Stop andre containere under sikkerhedskopiering' stopper containere, genstartes de i afhængighedsrækkefølge efter sikkerhedskopieringen (og efter en eventuel opdatering). Med denne slået til skal hver container melde sund eller kørende, før de containere, der afhænger af den, startes.",
+  "settings.restartHealthTimeoutLabel": "Sundhedstimeout pr. container (sekunder)",
+  "settings.restartHealthTimeoutHint": "Hvor længe der ventes på, at en container bliver sund, før dens afhængige alligevel startes. Interval 5 til 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid-opdateringsstatus",
+  "settings.reconcileUnraidStatus": "Opdater Unraids opdateringsstatus efter opdatering af en container",
+  "settings.reconcileUnraidStatusHint": "Rydder Unraids opdateringsbanner, efter at BombVault har opdateret en container i opdateringstrinnet efter sikkerhedskopieringen.",
 };
 
 export default da;

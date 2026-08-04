@@ -1145,22 +1145,27 @@ const ar: Partial<Translations> = {
   "receiver.saveError": "تعذّر حفظ المستودع المستلَم.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "ترتيب النسخ الاحتياطي",
+  "backupOrder.hint": "حدّد التسلسل الذي تُنفَّذ به النسخ الاحتياطية المجدولة والمجمّعة. تُنفَّذ الحاويات غير المدرجة في القائمة بعد ذلك، الأكثر تأخّرًا أولًا.",
+  "backupOrder.moveUp": "نقل لأعلى",
+  "backupOrder.moveDown": "نقل لأسفل",
+  "backupOrder.save": "حفظ الترتيب",
+  "backupOrder.saved": "تم حفظ الترتيب",
+  "backupOrder.saveError": "تعذّر حفظ ترتيب النسخ الاحتياطي.",
+  "backupOrder.empty": "لا توجد حاويات مجدولة لترتيبها بعد.",
+  "backupOrder.reset": "مسح الترتيب",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "إعادة التشغيل بعد النسخ الاحتياطي",
+  "settings.restartHealthWait": "الانتظار حتى تصبح التبعيات سليمة قبل بدء التالي",
+  "settings.restartHealthWaitHint": "عندما يوقف خيار 'إيقاف حاويات أخرى أثناء النسخ الاحتياطي' الحاويات، تُعاد تشغيلها بترتيب التبعيات بعد النسخ الاحتياطي (وبعد أي تحديث لاحق). عند تفعيل هذا، يجب أن تُبلِّغ كل حاوية أنها سليمة أو قيد التشغيل قبل أن تبدأ الحاويات التي تعتمد عليها.",
+  "settings.restartHealthTimeoutLabel": "مهلة السلامة لكل حاوية (بالثواني)",
+  "settings.restartHealthTimeoutHint": "مدة انتظار أن تصبح الحاوية سليمة قبل أن تبدأ الحاويات المعتمدة عليها على أي حال. النطاق من 5 إلى 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "حالة تحديثات Unraid",
+  "settings.reconcileUnraidStatus": "تحديث حالة تحديثات Unraid بعد تحديث حاوية",
+  "settings.reconcileUnraidStatusHint": "يمسح لافتة التحديث في Unraid بعد أن يحدّث BombVault حاوية في خطوة التحديث بعد النسخ الاحتياطي.",
 };
 
 export default ar;

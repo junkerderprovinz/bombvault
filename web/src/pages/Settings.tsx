@@ -2369,6 +2369,9 @@ export function SettingsPage() {
 
   const [pruneSaveState, setPruneSaveState] = useState<SaveState>("idle");
   const [pruneSaveError, setPruneSaveError] = useState<string | null>(null);
+  // #116: reconcile Unraid's cached update status after a post-backup update.
+  const [reconcileSaveState, setReconcileSaveState] = useState<SaveState>("idle");
+  const [reconcileSaveError, setReconcileSaveError] = useState<string | null>(null);
 
   // Container-registry credentials (#106) — its own save state, persisted via
   // the shared baseline-merging save().
@@ -2873,7 +2876,9 @@ export function SettingsPage() {
                   value={settings.restartHealthTimeoutSec}
                   onChange={(e) => {
                     const raw = (e.target as unknown as { value: string }).value;
-                    const n = Math.max(0, parseInt(raw, 10) || 0);
+                    // Clamp to the field minimum (5): never let a transient sub-5
+                    // value sit in component state. The server clamps to 5..3600.
+                    const n = Math.max(5, parseInt(raw, 10) || 0);
                     setSettings((prev) =>
                       prev ? { ...prev, restartHealthTimeoutSec: n } : prev
                     );
@@ -3160,6 +3165,39 @@ export function SettingsPage() {
               { pruneImageAfterUpdate: settings.pruneImageAfterUpdate },
               setPruneSaveState,
               setPruneSaveError
+            )
+          }
+          t={t}
+        />
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — Reconcile Unraid's update status (#116). After the         */}
+      {/* post-backup update recreates a container, ask Unraid to refresh its  */}
+      {/* own cached "update available" status over the host SSH link so the   */}
+      {/* Docker tab's stale banner clears. Best-effort and non-fatal.         */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Card title={t("settings.reconcileTitle")}>
+        <ToggleRow
+          label={t("settings.reconcileUnraidStatus")}
+          description={t("settings.reconcileUnraidStatusHint")}
+          checked={settings.reconcileUnraidUpdateStatus}
+          onChange={(v) =>
+            setSettings((prev) =>
+              prev ? { ...prev, reconcileUnraidUpdateStatus: v } : prev
+            )
+          }
+        />
+        <SaveBar
+          state={reconcileSaveState}
+          error={reconcileSaveError}
+          onSave={() =>
+            void save(
+              { reconcileUnraidUpdateStatus: settings.reconcileUnraidUpdateStatus },
+              setReconcileSaveState,
+              setReconcileSaveError
             )
           }
           t={t}

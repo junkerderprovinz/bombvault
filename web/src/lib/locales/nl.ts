@@ -1139,22 +1139,27 @@ const nl: Partial<Translations> = {
   "receiver.saveError": "Kon de ontvangen repo niet opslaan.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Back-upvolgorde",
+  "backupOrder.hint": "Stel de volgorde in waarin geplande en batch-back-ups worden uitgevoerd. Containers die niet in de lijst staan, draaien daarna, de meest achterstallige eerst.",
+  "backupOrder.moveUp": "Omhoog",
+  "backupOrder.moveDown": "Omlaag",
+  "backupOrder.save": "Volgorde opslaan",
+  "backupOrder.saved": "Volgorde opgeslagen",
+  "backupOrder.saveError": "Kon de back-upvolgorde niet opslaan.",
+  "backupOrder.empty": "Nog geen geplande containers om te ordenen.",
+  "backupOrder.reset": "Volgorde wissen",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Herstarten na back-up",
+  "settings.restartHealthWait": "Wachten tot afhankelijkheden gezond zijn voordat de volgende start",
+  "settings.restartHealthWaitHint": "Wanneer 'Andere containers stoppen tijdens de back-up' containers stopt, worden ze na de back-up (en na een eventuele update) in afhankelijkheidsvolgorde herstart. Met deze optie aan moet elke container als gezond of draaiend gemeld worden voordat de containers die ervan afhangen starten.",
+  "settings.restartHealthTimeoutLabel": "Gezondheidstime-out per container (seconden)",
+  "settings.restartHealthTimeoutHint": "Hoe lang op een container wordt gewacht tot deze gezond is voordat zijn afhankelijke containers toch starten. Bereik 5 tot 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid-updatestatus",
+  "settings.reconcileUnraidStatus": "Unraids updatestatus vernieuwen na het bijwerken van een container",
+  "settings.reconcileUnraidStatusHint": "Wist de updatemelding van Unraid nadat BombVault een container heeft bijgewerkt in de updatestap na de back-up.",
 };
 
 export default nl;

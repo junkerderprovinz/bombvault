@@ -1142,22 +1142,27 @@ const el: Partial<Translations> = {
   "receiver.saveError": "Δεν ήταν δυνατή η αποθήκευση του ληφθέντος αποθετηρίου.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Σειρά αντιγράφων ασφαλείας",
+  "backupOrder.hint": "Ορίστε τη σειρά με την οποία εκτελούνται τα προγραμματισμένα και τα ομαδικά αντίγραφα ασφαλείας. Τα κοντέινερ εκτός λίστας εκτελούνται μετά, πρώτα τα πιο καθυστερημένα.",
+  "backupOrder.moveUp": "Μετακίνηση πάνω",
+  "backupOrder.moveDown": "Μετακίνηση κάτω",
+  "backupOrder.save": "Αποθήκευση σειράς",
+  "backupOrder.saved": "Η σειρά αποθηκεύτηκε",
+  "backupOrder.saveError": "Δεν ήταν δυνατή η αποθήκευση της σειράς αντιγράφων ασφαλείας.",
+  "backupOrder.empty": "Δεν υπάρχουν ακόμη προγραμματισμένα κοντέινερ για ταξινόμηση.",
+  "backupOrder.reset": "Εκκαθάριση σειράς",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Επανεκκίνηση μετά το αντίγραφο ασφαλείας",
+  "settings.restartHealthWait": "Αναμονή έως ότου οι εξαρτήσεις είναι υγιείς πριν ξεκινήσει το επόμενο",
+  "settings.restartHealthWaitHint": "Όταν η επιλογή 'Διακοπή άλλων κοντέινερ κατά τη διάρκεια του αντιγράφου' σταματά κοντέινερ, αυτά επανεκκινούνται με σειρά εξαρτήσεων μετά το αντίγραφο (και μετά από τυχόν ενημέρωση). Με αυτό ενεργό, κάθε κοντέινερ πρέπει να αναφέρει ότι είναι υγιές ή σε λειτουργία πριν ξεκινήσουν όσα εξαρτώνται από αυτό.",
+  "settings.restartHealthTimeoutLabel": "Χρονικό όριο υγείας ανά κοντέινερ (δευτερόλεπτα)",
+  "settings.restartHealthTimeoutHint": "Πόσο να περιμένει ένα κοντέινερ να γίνει υγιές πριν ξεκινήσουν ούτως ή άλλως τα εξαρτώμενα. Εύρος από 5 έως 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Κατάσταση ενημερώσεων Unraid",
+  "settings.reconcileUnraidStatus": "Ανανέωση της κατάστασης ενημερώσεων του Unraid μετά την ενημέρωση ενός κοντέινερ",
+  "settings.reconcileUnraidStatusHint": "Καθαρίζει το μπάνερ ενημέρωσης του Unraid αφού το BombVault ενημερώσει ένα κοντέινερ στο βήμα ενημέρωσης μετά το αντίγραφο ασφαλείας.",
 };
 
 export default el;
