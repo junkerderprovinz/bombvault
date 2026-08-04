@@ -2455,15 +2455,27 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// Opens with neither mode → not initialised (a brand-new location) OR its
 	// backing store vanished. Local repos need their directory; remote backends do not.
 	if !restic.IsRemoteRepo(repo) {
-		// #55: if a repo was established here before but its `config` is now
-		// physically gone, the destination vanished (typically a remote share that
-		// mounts AFTER the container started, so it is invisible to the running
-		// container). REFUSE to re-init — that would write an empty repo shadowing
-		// the real backups once the share reappears — and surface a clear "not
-		// mounted" error instead. (A repo the user deleted clears its marker, so
-		// this only fires for an unexpectedly-vanished repo.)
+		// #55/#120: a repo was established here before but its `config` is now
+		// missing. Two very different causes:
+		//   - The backing store genuinely vanished (typically a remote share that
+		//     mounts AFTER the container started, so it is invisible right now).
+		//     RE-INIT would write an empty repo that shadows the real backups once
+		//     the share reappears, so we REFUSE and surface "not mounted" (#55).
+		//   - The destination is present, writable, and mounted, but this repo is
+		//     legitimately not there yet — e.g. a phantom marker from a pre-mount
+		//     init on a UD disk that mounted over it later (#120). The established
+		//     marker is permanent (nothing deletes it, so a restart cannot clear
+		//     it), so we must recognise the healthy disk and re-establish on it.
+		// destinationMounted (kernel mount table, not a stat/write probe) tells the
+		// two apart: an unmounted mountpoint dir is often still writable, which is
+		// exactly the #55 case we keep protecting.
 		if localRepoMissing(repo) && s.repoEstablished(repo) {
-			return ErrBackupPathNotMounted
+			if !destinationMounted(repo) {
+				return ErrBackupPathNotMounted // #55: backing store not mounted
+			}
+			// #120: stale/phantom marker on a live disk — drop it and fall through
+			// to EnsureDir+Init so the repo is re-established on the mounted disk.
+			s.clearRepoEstablished(repo)
 		}
 		// Genuine first run (marker unset): create the repo dir chain as before.
 		// The marker guard above is what prevents re-initialising over an
@@ -2509,6 +2521,18 @@ func (s *Service) markRepoEstablished(repo string) {
 	}
 	if err := s.store.MarkRepoEstablished(repo); err != nil {
 		log.Printf("api: mark repo established: %v", err)
+	}
+}
+
+// clearRepoEstablished removes the established marker for a LOCAL repo, used when
+// the destination is confirmed mounted but the repo legitimately is not there yet
+// (a stale/phantom pre-mount marker, #120). Remote repos have no marker. Best-effort.
+func (s *Service) clearRepoEstablished(repo string) {
+	if restic.IsRemoteRepo(repo) {
+		return
+	}
+	if err := s.store.ClearRepoEstablished(repo); err != nil {
+		log.Printf("api: clear repo established: %v", err)
 	}
 }
 
@@ -4258,8 +4282,11 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 // non-settings callers (the foreign-repo session) pass their own repoRef parts.
 func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.Mode, tag string) ([]restic.Snapshot, error) {
 	if localRepoMissing(repo) {
-		if s.repoEstablished(repo) {
-			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		// #55 vs #120: only surface "not mounted" when the backing store is truly
+		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
+		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
+		if s.repoEstablished(repo) && !destinationMounted(repo) {
+			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil
 	}
@@ -6286,8 +6313,11 @@ func (s *Service) SnapshotsFileSet(ctx context.Context, id, source string) ([]re
 	mode := s.ModeFor(settings)
 	// A listing before any backup has run is "no snapshots yet", not an error.
 	if localRepoMissing(repo) {
-		if s.repoEstablished(repo) {
-			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		// #55 vs #120: only surface "not mounted" when the backing store is truly
+		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
+		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
+		if s.repoEstablished(repo) && !destinationMounted(repo) {
+			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil
 	}
@@ -7014,8 +7044,11 @@ func (s *Service) SnapshotsFlash(ctx context.Context, source string) ([]restic.S
 	}
 	mode := s.ModeFor(settings)
 	if localRepoMissing(repo) {
-		if s.repoEstablished(repo) {
-			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		// #55 vs #120: only surface "not mounted" when the backing store is truly
+		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
+		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
+		if s.repoEstablished(repo) && !destinationMounted(repo) {
+			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil // no backups yet
 	}
@@ -7066,8 +7099,11 @@ func (s *Service) SnapshotsConfig(ctx context.Context, source string) ([]restic.
 	}
 	mode := s.ModeFor(settings)
 	if localRepoMissing(repo) {
-		if s.repoEstablished(repo) {
-			return nil, ErrBackupPathNotMounted // #55: share not mounted, not empty
+		// #55 vs #120: only surface "not mounted" when the backing store is truly
+		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
+		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
+		if s.repoEstablished(repo) && !destinationMounted(repo) {
+			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil // no backups yet
 	}
