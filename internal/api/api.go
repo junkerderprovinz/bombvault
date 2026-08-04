@@ -110,6 +110,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
 	mux.HandleFunc("POST /api/containers/backup-all", h.handleBackupAll)
 	mux.HandleFunc("POST /api/containers/schedule-include", h.handleScheduleIncludeAll)
+	mux.HandleFunc("GET /api/containers/backup-order", h.handleGetBackupOrder)
+	mux.HandleFunc("PUT /api/containers/backup-order", h.handleSetBackupOrder)
 	mux.HandleFunc("POST /api/containers/{name}/backup", h.handleBackup)
 	mux.HandleFunc("GET /api/containers/{name}/snapshots", h.handleSnapshots)
 	mux.HandleFunc("POST /api/containers/{name}/restore", h.handleRestore)

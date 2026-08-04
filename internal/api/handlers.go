@@ -177,6 +177,9 @@ type containerView struct {
 	StopContainers    []string `json:"stopContainers"`
 	Excludes          []string `json:"excludes"`
 	UpdateAfterBackup bool     `json:"updateAfterBackup"`
+	// BackupOrder is the container's explicit manual backup position (#119): a
+	// positive value runs earlier, 0 means unordered (overdue-first tiebreak).
+	BackupOrder int `json:"backupOrder"`
 	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
 	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
 	// 'updated' | 'failed') — so "checked, up to date" is visible without a
@@ -230,6 +233,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.UpdateAfterBackup = t.UpdateAfterBackup
 			v.LastUpdateCheck = t.LastUpdateCheck
 			v.LastUpdateResult = t.LastUpdateResult
+			v.BackupOrder = t.BackupOrder
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -827,6 +831,52 @@ func (h *Handler) handleScheduleIncludeAll(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := h.svc.SetIncludeAll(r.Context(), body.Include); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleGetBackupOrder returns the current manual backup ordering (#119): the
+// containers with an explicit order, sorted by order ascending.
+// GET /api/containers/backup-order  →  {order: [{container, order}, ...]}
+func (h *Handler) handleGetBackupOrder(w http.ResponseWriter, r *http.Request) {
+	orders, err := h.svc.BackupOrders(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if orders == nil {
+		orders = []store.ContainerOrder{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"order": orders}))
+}
+
+// handleSetBackupOrder replaces the manual backup ordering (#119) from an ordered
+// list of container names: the first name runs earliest. Any container omitted
+// from the list is returned to the most-overdue-first tiebreak. The ordering is
+// authoritative, so an empty list clears all explicit orders.
+// PUT /api/containers/backup-order  body {order: ["nameA", "nameB", ...]}
+func (h *Handler) handleSetBackupOrder(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Order []string `json:"order"`
+	}
+	if !decodeBody(w, r, &body) { // caps the body at 1 MiB
+		return
+	}
+	if len(body.Order) > 1000 { // far beyond any real container count — reject abuse
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many containers"})
+		return
+	}
+	// Validate every name at the boundary (same guard as the batch-backup route)
+	// so no traversal/option-injection name reaches the service layer.
+	for _, n := range body.Order {
+		if !validResourceName(n) {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid name"})
+			return
+		}
+	}
+	if err := h.svc.SetBackupOrders(r.Context(), body.Order); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
