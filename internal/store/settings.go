@@ -205,6 +205,12 @@ type Settings struct {
 	// itself (never a racing BombVault write). Default on; best-effort and
 	// non-fatal, so a reconcile failure never affects the backup or update.
 	ReconcileUnraidUpdateStatus bool
+	// PerItemSchedules opts into per-container/VM schedule overrides (#121). Default
+	// false: the per-domain schedule stays authoritative for every item, so the
+	// scheduler behaves byte-for-byte as before. When true, an included item with a
+	// non-empty ScheduleCadence is backed up on its OWN cadence; an item with an
+	// empty override still follows its domain schedule exactly as today.
+	PerItemSchedules bool
 }
 
 // GetSettings returns the current app settings.
@@ -232,7 +238,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       export_encrypt_enabled, export_age_recipients,
 		       receiver_enabled,
 		       restart_health_wait, restart_health_timeout_sec,
-		       reconcile_unraid_update_status
+		       reconcile_unraid_update_status,
+		       per_item_schedules
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -240,7 +247,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
-	var restartHealthWait, reconcileUnraidUpdateStatus int
+	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -265,6 +272,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&receiverEnabled,
 		&restartHealthWait, &s.RestartHealthTimeoutSec,
 		&reconcileUnraidUpdateStatus,
+		&perItemSchedules,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -296,6 +304,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.ReceiverEnabled = receiverEnabled != 0
 	s.RestartHealthWait = restartHealthWait != 0
 	s.ReconcileUnraidUpdateStatus = reconcileUnraidUpdateStatus != 0
+	s.PerItemSchedules = perItemSchedules != 0
 	return s, nil
 }
 
@@ -377,7 +386,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  receiver_enabled             = ?,
 		  restart_health_wait          = ?,
 		  restart_health_timeout_sec   = ?,
-		  reconcile_unraid_update_status = ?
+		  reconcile_unraid_update_status = ?,
+		  per_item_schedules           = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -407,6 +417,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.ReceiverEnabled),
 		boolInt(s.RestartHealthWait), s.RestartHealthTimeoutSec,
 		boolInt(s.ReconcileUnraidUpdateStatus),
+		boolInt(s.PerItemSchedules),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

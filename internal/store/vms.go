@@ -16,6 +16,12 @@ type VMTarget struct {
 	// after the VM has been deleted or BombVault's /config is lost (full DR).
 	Definition string
 	CreatedAt  int64
+	// ScheduleCadence is this VM's OPTIONAL per-item schedule override (#121, same
+	// cadence grammar as the domain schedules). Empty (the default) means "use the
+	// VMs domain schedule exactly as today"; only consulted when the per-item-
+	// schedules feature toggle is on. Owned by SetVMScheduleCadence (never reset by
+	// UpsertVMTarget).
+	ScheduleCadence string
 }
 
 // UpsertVMTarget inserts or updates a VM target by name.
@@ -34,12 +40,12 @@ func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 	}
 
 	_, err := r.db.Exec(`
-		INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at, schedule_cadence)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(name) DO UPDATE SET
 		  method     = excluded.method,
 		  definition = excluded.definition`,
-		t.ID, t.Name, t.Method, boolInt(t.IncludeInSchedule), t.Definition, t.CreatedAt,
+		t.ID, t.Name, t.Method, boolInt(t.IncludeInSchedule), t.Definition, t.CreatedAt, t.ScheduleCadence,
 	)
 	if err != nil {
 		return VMTarget{}, fmt.Errorf("UpsertVMTarget: %w", err)
@@ -50,7 +56,7 @@ func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 // GetVMTargetByName returns the VM target for the named domain.
 func (r *Repo) GetVMTargetByName(name string) (VMTarget, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, method, include_in_schedule, definition, created_at
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence
 		FROM vms WHERE name = ?`, name)
 	return scanVMTarget(row)
 }
@@ -58,7 +64,7 @@ func (r *Repo) GetVMTargetByName(name string) (VMTarget, error) {
 // ListVMTargets returns all known VM targets ordered by name.
 func (r *Repo) ListVMTargets() ([]VMTarget, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, method, include_in_schedule, definition, created_at
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence
 		FROM vms ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListVMTargets: %w", err)
@@ -84,6 +90,21 @@ func (r *Repo) SetVMMethod(name, method string) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("SetVMMethod: vm %q not found", name)
+	}
+	return nil
+}
+
+// SetVMScheduleCadence sets this VM's per-item schedule override (#121). An empty
+// string clears the override so the VM falls back to the VMs domain schedule. Plain
+// UPDATE (no create-on-miss): a VM row is created by Discover/Upsert before it can
+// be scheduled. Owned by this setter; never reset by UpsertVMTarget.
+func (r *Repo) SetVMScheduleCadence(name, cadence string) error {
+	res, err := r.db.Exec(`UPDATE vms SET schedule_cadence = ? WHERE name = ?`, cadence, name)
+	if err != nil {
+		return fmt.Errorf("SetVMScheduleCadence: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetVMScheduleCadence: vm %q not found", name)
 	}
 	return nil
 }
@@ -124,7 +145,7 @@ func (r *Repo) DeleteVMTarget(name string) error {
 func scanVMTarget(s scanner) (VMTarget, error) {
 	var t VMTarget
 	var include int
-	err := s.Scan(&t.ID, &t.Name, &t.Method, &include, &t.Definition, &t.CreatedAt)
+	err := s.Scan(&t.ID, &t.Name, &t.Method, &include, &t.Definition, &t.CreatedAt, &t.ScheduleCadence)
 	if err != nil {
 		return VMTarget{}, fmt.Errorf("scanVMTarget: %w", err)
 	}
