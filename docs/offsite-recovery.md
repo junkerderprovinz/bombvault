@@ -4,8 +4,9 @@ Local backups protect you from a lost container or a bad update. Off-site replic
 
 ## Off-site replication
 
-Keep the fast local backup and add an off-site replica. Set a second repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. The local repo stays primary.
+Keep the fast local backup and add one or more off-site replicas. Set a repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. The local repo stays primary.
 
+- **Multiple off-site targets per domain.** Each domain (containers, VMs, flash, config and file sets) can replicate to several off-site destinations at once, not just one, so you can keep, for example, a rest-server on a friend's box and an S3 bucket in parallel. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget. An existing single off-site setup is carried over untouched as the first target, and every target of a domain replicates on that domain's off-site schedule.
 - **Per-domain off-site schedule** (edited alongside every other schedule on Settings, Schedules): leave it blank to replicate after every local backup, or set a cadence (for example `weekly Sun 03:00`) to ship off-site less often than you back up locally. A **Replicate now** button covers on-demand runs.
 - **Off-site retention** lives on Settings, Off-site so you can keep off-site copies longer as an archive. Leave the policy all-zero to never auto-trim off-site snapshots.
 - **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
@@ -42,6 +43,20 @@ BombVault offers two levels of proof that your backups are actually restorable, 
 
 The **ransomware-protection scorecard** on the Dashboard rolls this up into a green / amber / red posture per domain, with an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set). Every red row deep-links to the fix, and the card only ever goes green on verified facts.
 
+## Receiver dashboard (the receiving side)
+
+Everything above is the *sending* side. On the box that **receives** immutable off-site copies from another BombVault, the Receiver dashboard gives you independent, read-only monitoring of those repositories on the receiving hardware, so a silent failure at the far end does not go unnoticed.
+
+Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is off by default; enable it only on a box that actually receives immutable off-site backups. Then register a received repository (read-only, opened with the sending instance's key) to get:
+
+- **A snapshot inventory grouped by source**, so you can see exactly which containers, VMs and file sets have landed.
+- **Last-received** per source, so you know how fresh each one is.
+- **An independent `restic check`** run on the receiving hardware, so integrity is verified where the data actually sits, not only on the sender.
+- **A dead-man's switch:** an alert when a source stops sending within a window you set.
+- **Integrity alerts:** an alert when a check on the receiving side fails.
+
+The Receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
+
 ## Guided recovery
 
 A dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case, in one place:
@@ -51,6 +66,9 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 3. Lets you **point at your existing repo** (local or off-site).
 4. **Discovers** the containers, VMs and file sets stored in it.
 5. **Restores them all** (left stopped, so you start them deliberately), with your recovery kit one click away.
+
+!!! tip "Planned migration versus disaster"
+    Guided recovery restores BombVault's own settings from a backup. For a *planned* move to a new box, you can instead carry your configuration over directly with the **Export and import settings** card (a portable JSON file). See [Configuration](configuration.md#portable-settings-export-and-import).
 
 ### Restore from another BombVault repo
 

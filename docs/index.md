@@ -25,6 +25,8 @@ Powered by [restic](https://restic.net), so every backup is deduplicated, increm
 
 After copying data back from the restic snapshot, BombVault replays the saved container definition against the Docker API, so the container reappears in the Unraid Docker tab as if it had always been there (same image, same settings, same port mappings). VMs get their XML re-defined over SSH and their disks and UEFI NVRAM reattached, even after the VM was deleted.
 
+When a backup stops dependent containers, they come back in the right order: BombVault restarts them in their Compose `depends_on` order and waits for each to report healthy before starting the ones that depend on it, so nothing races ahead of a database or a gateway that is not up yet. See [Features](features.md).
+
 ## How it works
 
 ```
@@ -45,6 +47,8 @@ BombVault is the orchestration and UI layer, not the storage engine. All actual 
 ## Quick start
 
 New here? Head to **[Getting started](getting-started.md)** to install BombVault on Unraid via Community Applications and run your first backup. Then explore the full **[Features](features.md)**, tune your **[Configuration](configuration.md)**, and set up **[Off-site & recovery](offsite-recovery.md)**.
+
+Off-site can fan out to several targets per domain at once, a read-only **receiver dashboard** monitors those copies on the box that receives them, and you can carry your whole configuration to a new box with the **Export and import settings** card. See [Off-site & recovery](offsite-recovery.md) and [Configuration](configuration.md#portable-settings-export-and-import).
 
 ## Links
 
