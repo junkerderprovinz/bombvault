@@ -18,22 +18,24 @@ theme:
     text: IBM Plex Sans
     code: IBM Plex Mono
   palette:
-    # Light scheme (IBM Carbon: black chrome, BombVault sunflower-yellow accent).
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: black
-      accent: yellow
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
-    # Dark scheme (Carbon #161616 background, the BombVault default look).
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+    # Dark scheme listed FIRST, with no media query, so it is the unconditional
+    # default: with plain (media-less) palettes Material uses the first as the
+    # default and does not follow the OS preference. BombVault is dark-first (Carbon
+    # #161616, sunflower-yellow accent), so the site opens dark for every visitor.
+    - scheme: slate
       primary: black
       accent: yellow
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+    # Light scheme (IBM Carbon light: black chrome, dark-gold links for contrast).
+    # Reachable via the toggle and remembered per browser afterwards.
+    - scheme: default
+      primary: black
+      accent: yellow
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
   features:
     # No top tabs: the left rail always shows the whole page tree, and
     # toc.integrate expands only the active page's sections underneath it.
