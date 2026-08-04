@@ -397,6 +397,52 @@ func TestRestoreVMHappyPath(t *testing.T) {
 	}
 }
 
+// TestRestoreVMRemapsDisksAndLeavesStopped pins the cross-instance (#122) shape:
+// when RestoreDirs is set the restore uses RestoreSubtreeTo (source subtree →
+// chosen destination dir) rather than restoring each path back to its own
+// location, and with WasAutostart=false + StartAfter=false the VM is defined,
+// autostart is cleared, and it is NEVER started.
+func TestRestoreVMRemapsDisksAndLeavesStopped(t *testing.T) {
+	vm := &fakeVM{stateVal: ""} // absent on the destination host
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+
+	deps := sampleVMRestoreDeps(t, vm, r, runs)
+	deps.WasAutostart = false
+	deps.StartAfter = false
+	// The disks END UP under /host/user/user/domains/win10 on the destination; the
+	// snapshot's own subtree is the SOURCE dir.
+	deps.DiskPaths = []string{"/host/user/user/domains/win10/win10.qcow2"}
+	deps.NVRAMPath = ""
+	deps.RestoreDirs = []backup.VMRestoreDir{
+		{Subtree: "/host/user/zfs/domains/win10", Target: "/host/user/user/domains/win10"},
+	}
+
+	if err := backup.RestoreVM(t.Context(), deps); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	// Remapped restore: RestoreSubtreeTo(source -> dest), NOT the restore-in-place path.
+	wantSubtree := "restoreSubtree:/repo/vms:deadbeef12345678:/host/user/zfs/domains/win10->/host/user/user/domains/win10"
+	if !vmContains(r.log, wantSubtree) {
+		t.Fatalf("expected remapped RestoreSubtreeTo, got %v", r.log)
+	}
+	for _, e := range r.log {
+		if strings.HasPrefix(e, "restore:") {
+			t.Fatalf("remapped restore must NOT use restore-in-place, got %v", r.log)
+		}
+	}
+	// Autostart cleared, VM never started.
+	if !vmContains(vm.log, "autostart:win10:off") {
+		t.Fatalf("autostart must be cleared for a cross-instance restore, got %v", vm.log)
+	}
+	for _, e := range vm.log {
+		if strings.HasPrefix(e, "start:") {
+			t.Fatalf("a left-stopped restore must NOT start the VM, got %v", vm.log)
+		}
+	}
+}
+
 func TestRestoreVMDoesNotDestroyWhenAbsent(t *testing.T) {
 	// VM does not exist on host → destroy/undefine must NOT be called.
 	vm := &fakeVM{stateVal: ""} // empty state = not found
