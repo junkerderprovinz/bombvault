@@ -1124,7 +1124,7 @@ const nl: Partial<Translations> = {
   "receiver.repoLocationHint": "De restic-locatie van deze repo: rest:http://host:8000/repo, s3:…, rclone:remote:pad, of een subpad onder de host-mount.",
   "receiver.appKey": "Verzendende APP_KEY",
   "receiver.appKeyHint": "De APP_KEY (64 hex-tekens) van de BombVault die naar deze repo pusht, zodat hij alleen-lezen geopend kan worden. Versleuteld opgeslagen en nooit meer getoond.",
-  "receiver.appKeyKeep": "opgeslagen — laat leeg om te behouden",
+  "receiver.appKeyKeep": "opgeslagen (laat leeg om te behouden)",
   "receiver.appKeyInvalid": "De APP_KEY moet 64 kleine hexadecimale tekens hebben.",
   "receiver.deadManHours": "Dodemansknop (uren)",
   "receiver.deadManHoursHint": "Waarschuw wanneer binnen dit aantal uren geen back-up van een bron is ontvangen.",

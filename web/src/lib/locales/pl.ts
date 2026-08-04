@@ -1122,7 +1122,7 @@ const pl: Partial<Translations> = {
   "receiver.repoLocationHint": "Lokalizacja restic tego repozytorium: rest:http://host:8000/repo, s3:…, rclone:remote:ścieżka lub podścieżka pod montowaniem hosta.",
   "receiver.appKey": "Wysyłający APP_KEY",
   "receiver.appKeyHint": "APP_KEY (64 znaki szesnastkowe) BombVault wysyłającego do tego repozytorium, aby otworzyć je tylko do odczytu. Przechowywany zaszyfrowany i nigdy więcej niepokazywany.",
-  "receiver.appKeyKeep": "zapisano — pozostaw puste, aby zachować",
+  "receiver.appKeyKeep": "zapisano (pozostaw puste, aby zachować)",
   "receiver.appKeyInvalid": "APP_KEY musi mieć 64 małe znaki szesnastkowe.",
   "receiver.deadManHours": "Wyłącznik bezpieczeństwa (godziny)",
   "receiver.deadManHoursHint": "Ostrzegaj, gdy w tylu godzinach nie odebrano żadnej kopii ze źródła.",

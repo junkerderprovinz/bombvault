@@ -1130,7 +1130,7 @@ const ar: Partial<Translations> = {
   "receiver.repoLocationHint": "موقع restic لهذا المستودع: rest:http://host:8000/repo أو s3:… أو rclone:remote:path أو مسار فرعي ضمن تحميل المضيف.",
   "receiver.appKey": "APP_KEY المُرسِل",
   "receiver.appKeyHint": "مفتاح APP_KEY (64 حرفًا سداسيًا عشريًا) الخاص بـ BombVault الذي يرسل إلى هذا المستودع، لفتحه للقراءة فقط. يُخزَّن مشفَّرًا ولا يُعرض مرة أخرى.",
-  "receiver.appKeyKeep": "محفوظ — اتركه فارغًا للإبقاء عليه",
+  "receiver.appKeyKeep": "محفوظ (اتركه فارغًا للإبقاء عليه)",
   "receiver.appKeyInvalid": "يجب أن يتكون APP_KEY من 64 حرفًا سداسيًا عشريًا صغيرًا.",
   "receiver.deadManHours": "مفتاح الرجل الميت (ساعات)",
   "receiver.deadManHoursHint": "التنبيه عند عدم استلام أي نسخة احتياطية من مصدر خلال هذا العدد من الساعات.",

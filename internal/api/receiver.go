@@ -97,7 +97,7 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	case s.engine.RepoOpens(ctx, repo, plainMode):
 		return repo, plainMode, nil
 	default:
-		return "", restic.Mode{}, errors.New("could not open the received repository — wrong APP_KEY, or the location is not a BombVault/restic repository")
+		return "", restic.Mode{}, errors.New("could not open the received repository: wrong APP_KEY, or the location is not a BombVault/restic repository")
 	}
 }
 

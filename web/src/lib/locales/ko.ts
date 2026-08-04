@@ -1119,7 +1119,7 @@ const ko: Partial<Translations> = {
   "receiver.repoLocationHint": "이 저장소의 restic 위치: rest:http://host:8000/repo, s3:…, rclone:remote:경로, 또는 호스트 마운트 아래의 하위 경로.",
   "receiver.appKey": "발신 APP_KEY",
   "receiver.appKeyHint": "이 저장소로 푸시하는 BombVault의 APP_KEY(16진수 64자)로, 읽기 전용으로 열 수 있습니다. 암호화되어 저장되며 다시 표시되지 않습니다.",
-  "receiver.appKeyKeep": "저장됨 — 유지하려면 비워 두세요",
+  "receiver.appKeyKeep": "저장됨 (유지하려면 비워 두세요)",
   "receiver.appKeyInvalid": "APP_KEY는 소문자 16진수 64자여야 합니다.",
   "receiver.deadManHours": "데드맨 스위치(시간)",
   "receiver.deadManHoursHint": "이 시간 내에 소스로부터 백업을 수신하지 못하면 경고합니다.",

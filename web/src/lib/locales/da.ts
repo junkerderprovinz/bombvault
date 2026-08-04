@@ -1127,7 +1127,7 @@ const da: Partial<Translations> = {
   "receiver.repoLocationHint": "restic-placeringen for dette arkiv: rest:http://host:8000/repo, s3:…, rclone:remote:sti, eller en understi under værtsmonteringen.",
   "receiver.appKey": "Afsendende APP_KEY",
   "receiver.appKeyHint": "APP_KEY (64 hex-tegn) for den BombVault, der sender til dette arkiv, så det kan åbnes skrivebeskyttet. Gemmes krypteret og vises aldrig igen.",
-  "receiver.appKeyKeep": "gemt — lad stå tomt for at beholde",
+  "receiver.appKeyKeep": "gemt (lad stå tomt for at beholde)",
   "receiver.appKeyInvalid": "APP_KEY skal være 64 små hex-tegn.",
   "receiver.deadManHours": "Dødmandsknap (timer)",
   "receiver.deadManHoursHint": "Advar, når der ikke er modtaget nogen sikkerhedskopi fra en kilde inden for så mange timer.",

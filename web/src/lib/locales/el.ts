@@ -1127,7 +1127,7 @@ const el: Partial<Translations> = {
   "receiver.repoLocationHint": "Η τοποθεσία restic αυτού του αποθετηρίου: rest:http://host:8000/repo, s3:…, rclone:remote:διαδρομή ή μια υποδιαδρομή κάτω από το σημείο προσάρτησης του κεντρικού υπολογιστή.",
   "receiver.appKey": "APP_KEY αποστολέα",
   "receiver.appKeyHint": "Το APP_KEY (64 δεκαεξαδικοί χαρακτήρες) του BombVault που στέλνει σε αυτό το αποθετήριο, ώστε να ανοίγει μόνο για ανάγνωση. Αποθηκεύεται κρυπτογραφημένο και δεν εμφανίζεται ξανά.",
-  "receiver.appKeyKeep": "αποθηκεύτηκε — αφήστε κενό για διατήρηση",
+  "receiver.appKeyKeep": "αποθηκεύτηκε (αφήστε κενό για διατήρηση)",
   "receiver.appKeyInvalid": "Το APP_KEY πρέπει να έχει 64 πεζούς δεκαεξαδικούς χαρακτήρες.",
   "receiver.deadManHours": "Διακόπτης ασφαλείας (ώρες)",
   "receiver.deadManHoursHint": "Ειδοποίηση όταν δεν έχει ληφθεί αντίγραφο από μια πηγή εντός τόσων ωρών.",
