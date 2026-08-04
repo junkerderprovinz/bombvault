@@ -835,6 +835,20 @@ ALTER TABLE settings ADD COLUMN restart_health_timeout_sec INTEGER NOT NULL DEFA
 		version: 80, name: "settings_reconcile_unraid_update_status",
 		sql: "ALTER TABLE settings ADD COLUMN reconcile_unraid_update_status INTEGER NOT NULL DEFAULT 1;",
 	},
+	{
+		// Per-item schedule overrides (#121). An OPT-IN feature: per_item_schedules
+		// DEFAULT 0 (off) keeps the per-domain schedule authoritative for everyone, so
+		// existing setups are byte-for-byte unchanged. schedule_cadence on targets/vms
+		// is an OPTIONAL per-item cadence (same grammar as the domain schedules); '' (the
+		// default) means "use the domain default exactly as today". Only consulted when
+		// per_item_schedules is on. Owned by SetScheduleCadence/SetVMScheduleCadence
+		// (never reset by UpsertTarget/UpsertVMTarget).
+		version: 81, name: "per_item_schedules",
+		sql: `
+ALTER TABLE settings ADD COLUMN per_item_schedules INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE targets  ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';
+ALTER TABLE vms      ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

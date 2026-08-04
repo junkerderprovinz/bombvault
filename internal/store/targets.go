@@ -51,6 +51,12 @@ type Target struct {
 	// (the default) means "unordered" and falls back to the most-overdue-first
 	// tiebreak. Owned by SetBackupOrder (never reset by Upsert).
 	BackupOrder int
+	// ScheduleCadence is this container's OPTIONAL per-item schedule override (#121,
+	// same cadence grammar as the domain schedules). Empty (the default) means "use
+	// the containers domain schedule exactly as today"; only consulted when the
+	// per-item-schedules feature toggle is on. Owned by SetScheduleCadence (never
+	// reset by Upsert).
+	ScheduleCadence string
 }
 
 // ContainerOrder pairs a container name with its explicit backup order (#119).
@@ -118,13 +124,13 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	// setter and intentionally NOT in the ON CONFLICT update set, so a backup's
 	// UpsertTarget never clobbers the user's chosen sequence.
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, backup_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, backup_order, schedule_cadence)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -137,7 +143,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result, backup_order
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -145,7 +151,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result, backup_order
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -179,7 +185,7 @@ func (r *Repo) ListTargets() ([]Target, error) {
 // verbatim.
 func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -349,6 +355,26 @@ func (r *Repo) SetBackupOrder(containerName string, order int) error {
 	return nil
 }
 
+// SetScheduleCadence sets this container's per-item schedule override (#121),
+// creating the target row if it does not exist yet (so an override can be set
+// before the first backup). An empty string clears the override so the container
+// falls back to the containers domain schedule. Owned by this setter; never reset
+// by UpsertTarget.
+func (r *Repo) SetScheduleCadence(containerName, cadence string) error {
+	res, err := r.db.Exec(
+		`UPDATE targets SET schedule_cadence = ? WHERE container_name = ?`,
+		cadence, containerName)
+	if err != nil {
+		return fmt.Errorf("SetScheduleCadence: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, ScheduleCadence: cadence}); err != nil {
+			return fmt.Errorf("SetScheduleCadence create target: %w", err)
+		}
+	}
+	return nil
+}
+
 // SetBackupOrders authoritatively replaces the whole manual backup ordering (#119)
 // in one transaction: every container is first reset to unordered (0), then each
 // listed container is stamped with its order. A container omitted from orders is
@@ -506,7 +532,7 @@ func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON string
 	var include, updateAfter int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
