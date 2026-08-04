@@ -1,71 +1,438 @@
 /* BombVault documentation theme.
-   Match the app's IBM Carbon look: a #161616 base, shaded rather than bordered,
-   with the BombVault sunflower-yellow accent. Dark is the primary experience. */
+   A faithful copy of the BombVault app's IBM Carbon UI: a #161616 base, a #262626
+   sidebar rail, shaded rather than bordered, with the BombVault sunflower-yellow
+   accent (#FCC419) and dark ink on the accent. Dark is the primary, default
+   experience (the app is dark-first); the light toggle mirrors the app's light theme.
+
+   Every hex below is copied verbatim from the app's palette
+   (web/src/index.css and web/src/lib/accent.ts) so the site and the app match. */
 
 :root {
-  --bv-accent: #fcc419;      /* BombVault brand yellow (the app's default accent) */
-  --bv-accent-ink: #161616;  /* dark text on a yellow fill */
-  --bv-accent-link: #9a7500; /* darker gold: readable as link text on white */
+  /* Brand accent — the app's default sunflower yellow, identical in both themes.
+     --bv-accent is the pill / graphic colour; --bv-accent-ink is dark text on it. */
+  --bv-accent:     #FCC419;
+  --bv-accent-ink: #161616;
 }
 
-/* ---------- Dark scheme: Carbon #161616, yellow accent (the app default) ---------- */
+/* =========================================================================
+   DARK SCHEME (slate) — Carbon #161616, the BombVault default look.
+   These are the exact app tokens from web/src/index.css :root/[data-theme=dark].
+   ========================================================================= */
 [data-md-color-scheme="slate"] {
+  /* Carbon greys (app tokens) */
+  --bv-bg:          #161616; /* carbon-bg      */
+  --bv-sidebar:     #262626; /* carbon-sidebar */
+  --bv-surface:     #262626; /* carbon-surface */
+  --bv-surface2:    #393939; /* carbon-surface2 */
+  --bv-surface3:    #525252; /* carbon-surface3 */
+  --bv-raised:      #1c1c1c; /* admonition / table body, one step above bg */
+  --bv-text:        #f4f4f4; /* carbon-text     */
+  --bv-text-sub:    #c6c6c6; /* carbon-text-sub */
+  --bv-text-muted:  #8d8d8d; /* carbon-text-muted */
+  --bv-border:      #393939; /* carbon-border   */
+  --bv-hover:       #353535; /* carbon-hover    */
+  --bv-sidebar-text:#e0e0e0; /* sidebar-text    */
+  --bv-link:        #FCC419; /* accent reads fine on the dark body */
+
+  /* Status tones (app tokens) drive the admonitions */
+  --bv-ok:   #6fdc8c; --bv-ok-bg:   #1c3a2a;
+  --bv-warn: #f1c21b; --bv-warn-bg: #2a2a1c;
+  --bv-fail: #ff8389; --bv-fail-bg: #3a1c1c;
+  --bv-info: #78a9ff; --bv-info-bg: #1c2a3a;
+
+  /* --- Material variable overrides --- */
   --md-default-bg-color:           #161616;
   --md-default-bg-color--light:    #1c1c1c;
   --md-default-bg-color--lighter:  #262626;
+  --md-default-bg-color--lightest: #393939;
   --md-default-fg-color:           #f4f4f4;
   --md-default-fg-color--light:    #c6c6c6;
   --md-default-fg-color--lighter:  #8d8d8d;
-  --md-default-fg-color--lightest: #2a2a2a; /* rules/borders sink into the shade */
+  --md-default-fg-color--lightest: #393939; /* rules sink into the shade */
+
   --md-code-bg-color: #262626;
   --md-code-fg-color: #f4f4f4;
-  --md-primary-fg-color: #161616;
-  --md-primary-bg-color: #f4f4f4;
-  --md-accent-fg-color:  var(--bv-accent);
-  --md-typeset-a-color:  var(--bv-accent);
+
+  --md-primary-fg-color:  #161616;
+  --md-primary-bg-color:  #f4f4f4;
+  --md-primary-bg-color--light: #c6c6c6;
+
+  --md-accent-fg-color:   var(--bv-accent);
+  --md-accent-fg-color--transparent: rgba(252, 196, 25, 0.1);
+  --md-typeset-a-color:   var(--bv-link);
   --md-typeset-mark-color: rgba(252, 196, 25, 0.28);
-  --md-footer-bg-color:       #0f0f0f;
-  --md-footer-bg-color--dark: #0f0f0f;
+
+  --md-footer-bg-color:        #0f0f0f;
+  --md-footer-bg-color--dark:  #0f0f0f;
+  --md-footer-fg-color:        #f4f4f4;
+  --md-footer-fg-color--light: #8d8d8d;
 }
-/* Nav rail one shade up from the content, like the app sidebar. */
-[data-md-color-scheme="slate"] .md-sidebar {
-  background-color: #262626;
+
+/* =========================================================================
+   LIGHT SCHEME (default) — the app's Carbon light theme.
+   ========================================================================= */
+[data-md-color-scheme="default"] {
+  --bv-bg:          #ffffff;
+  --bv-sidebar:     #f4f4f4;
+  --bv-surface:     #f4f4f4;
+  --bv-surface2:    #e0e0e0;
+  --bv-surface3:    #c6c6c6;
+  --bv-raised:      #f4f4f4;
+  --bv-text:        #161616;
+  --bv-text-sub:    #393939;
+  --bv-text-muted:  #6f6f6f;
+  --bv-border:      #e0e0e0;
+  --bv-hover:       #e8e8e8;
+  --bv-sidebar-text:#21272a;
+  /* Accent yellow is unreadable as link text on white, so links use a darker
+     gold; the active pill stays the bright accent (dark ink), like the app. */
+  --bv-link:        #9a7500;
+
+  --bv-ok:   #198038; --bv-ok-bg:   #defbe6;
+  --bv-warn: #8e6a00; --bv-warn-bg: #fcf4d6;
+  --bv-fail: #da1e28; --bv-fail-bg: #fff1f1;
+  --bv-info: #0043ce; --bv-info-bg: #edf5ff;
+
+  --md-default-bg-color:  #ffffff;
+  --md-default-fg-color:  #161616;
+  --md-code-bg-color:     #f4f4f4;
+  --md-code-fg-color:     #161616;
+
+  --md-primary-fg-color:  #161616;
+  --md-primary-bg-color:  #f4f4f4;
+
+  --md-accent-fg-color:   var(--bv-link);
+  --md-typeset-a-color:   var(--bv-link);
+
+  --md-footer-bg-color:        #161616;
+  --md-footer-bg-color--dark:  #0f0f0f;
 }
-[data-md-color-scheme="slate"] .md-nav__link--active,
-[data-md-color-scheme="slate"] a.md-nav__link:hover,
-[data-md-color-scheme="slate"] a.md-nav__link:focus {
+
+/* Body + typeset use IBM Plex (set in mkdocs.yml) on the Carbon base. */
+body,
+.md-typeset {
+  font-feature-settings: "kern", "liga";
+}
+
+/* =========================================================================
+   LEFT SIDEBAR — an exact copy of the BombVault app nav rail.
+   App source (web/src/components/Sidebar.tsx):
+     rail  = bg-carbon-sidebar (#262626), w-56
+     item  = px-3.5 py-2.5 rounded-lg text-[15px] font-medium
+     hover = bg-carbon-hover + text-carbon-text
+     active= bg-accent (#FCC419) + text-accentContrast (#161616)  -> a yellow pill
+   ========================================================================= */
+
+/* The rail sits one shade up from the #161616 content, exactly like the app —
+   separated by shade, never a border line. */
+.md-sidebar--primary {
+  background-color: var(--bv-sidebar);
+}
+.md-sidebar--primary .md-sidebar__scrollwrap {
+  margin: 0;
+  padding: 0 .5rem;
+}
+
+/* Top-level page links = the app's nav items (the yellow-pill list). */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+  display: flex;
+  align-items: center;
+  gap: .75rem;                 /* gap-3 */
+  margin: 2px 0;               /* gap-1 between items */
+  padding: 10px 14px;          /* py-2.5 px-3.5 */
+  border-radius: 8px;          /* rounded-lg */
+  font-size: 15px;             /* text-[15px] */
+  font-weight: 500;            /* font-medium */
+  line-height: 1.25;
+  color: var(--bv-sidebar-text);
+  transition: background-color .15s ease, color .15s ease, transform .15s ease;
+}
+
+/* Hover — carbon-hover surface + full-strength text, plus the app's tiny nudge. */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link:hover,
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link:focus {
+  background-color: var(--bv-hover);
+  color: var(--bv-text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link:hover {
+    transform: translateX(2px); /* motion-safe:hover:translate-x-0.5 */
+  }
+}
+
+/* Active page — the yellow accent pill with dark ink, like the app's active tab. */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link--active,
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link--active:hover,
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link--active:focus {
+  background-color: var(--bv-accent);
+  color: var(--bv-accent-ink);
+  font-weight: 600;
+  transform: none;
+}
+
+/* toc.integrate turns the active page into an expandable item and injects a toggle
+   <label> that duplicates the page link (a second pill). The integrated TOC is
+   always shown here, so the toggle is redundant: hide it so exactly one yellow
+   pill remains — the real page anchor. */
+.md-nav--primary > .md-nav__list > .md-nav__item--active > label.md-nav__link {
+  display: none;
+}
+
+/* Integrated table-of-contents (toc.integrate) sits nested under the active page.
+   Keep it quiet: no pill, just muted text with an accent highlight on the current
+   heading, so only the page itself wears the yellow pill. */
+.md-nav--primary .md-nav .md-nav__link {
+  padding: 4px 14px;
+  margin: 1px 0;
+  font-size: 13px;
+  font-weight: 400;
+  border-radius: 6px;
+  color: var(--bv-text-muted);
+}
+.md-nav--primary .md-nav .md-nav__link:hover {
+  color: var(--bv-text);
+  background-color: transparent;
+}
+.md-nav--primary .md-nav .md-nav__link--active {
+  color: var(--bv-link);
+  font-weight: 500;
+  background-color: transparent;
+}
+
+/* Mobile drawer title bar — keep it on the Carbon surface, no bright line. */
+.md-nav--primary .md-nav__title {
+  background-color: var(--bv-sidebar);
+  color: var(--bv-text);
+  box-shadow: none;
+}
+
+/* Secondary (right) TOC, when shown on its own, matches the same quiet style. */
+.md-sidebar--secondary .md-nav__link {
+  color: var(--bv-text-muted);
+}
+.md-sidebar--secondary .md-nav__link:hover,
+.md-sidebar--secondary .md-nav__link--active {
+  color: var(--bv-link);
+}
+
+/* =========================================================================
+   HEADER — flat Carbon black chrome, separated by shade not by a shadow line.
+   ========================================================================= */
+.md-header {
+  background-color: var(--md-primary-fg-color);
+  box-shadow: none;
+}
+.md-header--shadow {
+  box-shadow: none;
+}
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.7rem;
+  width: auto;
+}
+.md-header__title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Search — Carbon surfaces, no Material blue. */
+.md-search__form {
+  background-color: var(--bv-surface2);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.md-search__form:hover {
+  background-color: var(--bv-surface3);
+}
+[data-md-toggle="search"]:checked ~ .md-header .md-search__form {
+  background-color: var(--bv-surface);
+}
+.md-search__input::placeholder {
+  color: var(--bv-text-muted);
+}
+.md-search__output {
+  border-radius: 8px;
+}
+.md-search-result__meta {
+  background-color: var(--bv-surface);
+  color: var(--bv-text-sub);
+}
+[data-md-color-scheme="slate"] .md-search__inner {
+  background-color: transparent;
+}
+
+/* =========================================================================
+   LINKS + accents
+   ========================================================================= */
+.md-typeset a {
+  color: var(--bv-link);
+}
+.md-typeset a:hover,
+.md-typeset a:focus {
   color: var(--bv-accent);
 }
-
-/* ---------- Light scheme: Carbon light, dark-gold link colour for contrast ---------- */
-[data-md-color-scheme="default"] {
-  --md-default-bg-color: #ffffff;
-  --md-default-fg-color: #161616;
-  --md-code-bg-color:    #f4f4f4;
-  --md-primary-fg-color: #161616;
-  --md-primary-bg-color: #f4f4f4;
-  --md-accent-fg-color:  var(--bv-accent-link);
-  --md-typeset-a-color:  var(--bv-accent-link);
-}
-[data-md-color-scheme="default"] .md-sidebar {
-  background-color: #f4f4f4;
+[data-md-color-scheme="default"] .md-typeset a:hover {
+  color: #b98d00;
 }
 
-/* Primary buttons use the bright brand yellow with dark ink (Carbon chip look). */
+/* Primary buttons use the bright accent with dark ink (Carbon chip look). */
 .md-typeset .md-button--primary {
   background-color: var(--bv-accent);
   border-color: var(--bv-accent);
   color: var(--bv-accent-ink);
 }
-
-/* Flat Carbon header: no drop shadow, separate by shade not by a line. */
-.md-header {
-  box-shadow: none;
+.md-typeset .md-button--primary:hover {
+  background-color: #ffd43b;
+  border-color: #ffd43b;
+  color: var(--bv-accent-ink);
 }
 
-/* Give the logo a little room in the header. */
-.md-header__button.md-logo img,
-.md-header__button.md-logo svg {
-  height: 1.6rem;
-  width: auto;
+/* =========================================================================
+   CODE — Carbon surface blocks with subtle shading, no bright frame.
+   ========================================================================= */
+.md-typeset code,
+.md-typeset pre > code {
+  border-radius: 6px;
+}
+.md-typeset pre > code {
+  border: 1px solid var(--bv-border);
+}
+.md-typeset .highlight,
+.md-typeset .highlighttable {
+  border-radius: 8px;
+}
+.md-typeset code {
+  background-color: var(--md-code-bg-color);
+}
+/* Inline code keeps the accent-tinted brand colour off; use plain Carbon text. */
+.md-typeset a code {
+  color: var(--bv-link);
+}
+
+/* =========================================================================
+   TABLES — Carbon surfaces, shaded header, subtle carbon-border, no bright lines.
+   ========================================================================= */
+.md-typeset table:not([class]) {
+  background-color: var(--bv-raised);
+  border: 1px solid var(--bv-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.md-typeset table:not([class]) th {
+  background-color: var(--bv-surface);
+  color: var(--bv-text);
+  font-weight: 600;
+  border: none;
+}
+.md-typeset table:not([class]) td {
+  border-top: 1px solid var(--bv-border);
+}
+.md-typeset table:not([class]) tr:hover {
+  background-color: var(--bv-hover);
+}
+
+/* =========================================================================
+   ADMONITIONS / details — the app's status-banner look.
+   Body sits on a raised Carbon surface with a subtle carbon-border box; the type
+   is shown by a coloured left bar + a tinted title strip + a coloured icon,
+   reusing the exact app status tones (green/yellow/red/blue + brand accent).
+   ========================================================================= */
+.md-typeset .admonition,
+.md-typeset details {
+  background-color: var(--bv-raised);
+  border: 1px solid var(--bv-border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: .74rem;
+}
+.md-typeset .admonition-title,
+.md-typeset summary {
+  background-color: var(--bv-surface);
+  color: var(--bv-text);
+  font-weight: 600;
+  border: none;
+}
+.md-typeset .admonition-title::before,
+.md-typeset summary::before {
+  background-color: var(--bv-text-sub);
+}
+
+/* note -> info blue */
+.md-typeset .admonition.note,
+.md-typeset details.note { border-left-color: var(--bv-info); }
+.md-typeset .note > .admonition-title,
+.md-typeset .note > summary { background-color: var(--bv-info-bg); }
+.md-typeset .note > .admonition-title::before,
+.md-typeset .note > summary::before { background-color: var(--bv-info); }
+
+/* tip -> ok green */
+.md-typeset .admonition.tip,
+.md-typeset details.tip { border-left-color: var(--bv-ok); }
+.md-typeset .tip > .admonition-title,
+.md-typeset .tip > summary { background-color: var(--bv-ok-bg); }
+.md-typeset .tip > .admonition-title::before,
+.md-typeset .tip > summary::before { background-color: var(--bv-ok); }
+
+/* warning -> warn yellow */
+.md-typeset .admonition.warning,
+.md-typeset details.warning { border-left-color: var(--bv-warn); }
+.md-typeset .warning > .admonition-title,
+.md-typeset .warning > summary { background-color: var(--bv-warn-bg); }
+.md-typeset .warning > .admonition-title::before,
+.md-typeset .warning > summary::before { background-color: var(--bv-warn); }
+
+/* danger -> fail red */
+.md-typeset .admonition.danger,
+.md-typeset details.danger { border-left-color: var(--bv-fail); }
+.md-typeset .danger > .admonition-title,
+.md-typeset .danger > summary { background-color: var(--bv-fail-bg); }
+.md-typeset .danger > .admonition-title::before,
+.md-typeset .danger > summary::before { background-color: var(--bv-fail); }
+
+/* important -> brand accent (BombVault yellow) */
+.md-typeset .admonition.important,
+.md-typeset details.important { border-left-color: var(--bv-accent); }
+.md-typeset .important > .admonition-title,
+.md-typeset .important > summary { background-color: rgba(252, 196, 25, 0.14); }
+.md-typeset .important > .admonition-title::before,
+.md-typeset .important > summary::before { background-color: var(--bv-accent); }
+
+/* =========================================================================
+   Content tabs (pymdownx.tabbed) — accent underline, no Material blue.
+   ========================================================================= */
+.md-typeset .tabbed-set > input:checked + label {
+  color: var(--bv-link);
+  border-color: var(--bv-accent);
+}
+.md-typeset .tabbed-labels > label:hover {
+  color: var(--bv-link);
+}
+
+/* =========================================================================
+   MISC — blockquotes, rules, footer, back-to-top, scrollbar.
+   ========================================================================= */
+.md-typeset blockquote {
+  border-left-color: var(--bv-surface3);
+  color: var(--bv-text-sub);
+}
+.md-typeset hr {
+  border-bottom-color: var(--bv-border);
+}
+.md-footer-meta {
+  background-color: var(--md-footer-bg-color--dark);
+}
+.md-top {
+  background-color: var(--bv-surface);
+  color: var(--bv-text);
+  box-shadow: none;
+}
+.md-top:hover {
+  background-color: var(--bv-accent);
+  color: var(--bv-accent-ink);
+}
+
+/* Carbon scrollbars in the sidebars. */
+[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
+  scrollbar-color: var(--bv-surface3) transparent;
 }
