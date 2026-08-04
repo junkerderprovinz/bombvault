@@ -37,6 +37,10 @@ type foreignRecordingEngine struct {
 	snaps        []restic.Snapshot
 	snapsErr     error
 
+	// statsRestoreBytes is the size StatsRestoreSize reports (the VM restore guard's
+	// "does it fit" number); 0 (the default) skips the free-space check.
+	statsRestoreBytes int64
+
 	mu            sync.Mutex
 	calls         []string
 	snapshotRepos []string      // repo argument of every Snapshots call (which repo was listed)
@@ -164,6 +168,14 @@ func (f *foreignRecordingEngine) RestoreSubtreeTo(_ context.Context, repo, snaps
 	f.restores = append(f.restores, "RestoreSubtreeTo|"+repo+"|"+snapshotID+"|"+subtreePath+"->"+target)
 	f.mu.Unlock()
 	return nil
+}
+
+// StatsRestoreSize is a READ of the source repo the VM restore's host-brick guard
+// uses to size the restore. statsRestoreBytes lets a test force a specific size.
+func (f *foreignRecordingEngine) StatsRestoreSize(_ context.Context, _, _ string, m restic.Mode) (int, int64, error) {
+	f.record("StatsRestoreSize")
+	f.recordMode(m)
+	return 0, f.statsRestoreBytes, nil
 }
 
 // The forbidden writes — implemented (recording) rather than left to panic, so
