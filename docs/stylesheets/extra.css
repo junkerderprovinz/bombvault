@@ -123,10 +123,11 @@ body,
      active= bg-accent (#FCC419) + text-accentContrast (#161616)  -> a yellow pill
    ========================================================================= */
 
-/* The rail sits one shade up from the #161616 content, exactly like the app —
-   separated by shade, never a border line. */
+/* The rail shares the #161616 content ground: no grey bar, no border line. The
+   scrollwrap is transparent, so the primary rail (and the controls pinned below)
+   are painted the body colour too, seamlessly. */
 .md-sidebar--primary {
-  background-color: var(--bv-sidebar);
+  background-color: var(--bv-bg);
 }
 .md-sidebar--primary .md-sidebar__scrollwrap {
   margin: 0;
@@ -141,7 +142,7 @@ body,
   margin: 2px 0;               /* gap-1 between items */
   padding: 10px 14px;          /* py-2.5 px-3.5 */
   border-radius: 8px;          /* rounded-lg */
-  font-size: 16px;             /* slightly larger than the app's 15px, per request */
+  font-size: 17px;             /* larger sidebar text, per request */
   font-weight: 500;            /* font-medium */
   line-height: 1.25;
   color: var(--bv-sidebar-text);
@@ -184,7 +185,7 @@ body,
 .md-nav--primary .md-nav .md-nav__link {
   padding: 4px 14px;
   margin: 1px 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   border-radius: 6px;
   color: var(--bv-text-muted);
@@ -474,7 +475,7 @@ body,
   flex-direction: column;
   gap: 2px;
   padding: .6rem .4rem .5rem;
-  background: var(--bv-sidebar);
+  background: var(--bv-bg);
 }
 
 /* A control row = an app nav item: same size, radius, hover and press feedback. */
@@ -489,7 +490,7 @@ body,
   background: transparent;
   color: var(--bv-sidebar-text);
   font: inherit;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 500;
   line-height: 1.25;
   text-align: left;
@@ -567,7 +568,7 @@ body,
   background: transparent;
   color: var(--bv-text-sub);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   text-align: left;
   cursor: pointer;
   transition: background-color .12s ease, color .12s ease;
