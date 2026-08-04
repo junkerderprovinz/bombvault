@@ -213,6 +213,47 @@ func TestSettingsFlashZipExportRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsRestartHealthWaitRoundTrip pins the v79 health-gated ordered
+// restart columns (#119): the migration defaults are ON (true) with a 120s
+// per-container timeout so the reported bug is fixed out of the box, and both
+// values round-trip through UpdateSettings/GetSettings.
+func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// Migration defaults: enabled, 120s timeout.
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s.RestartHealthWait {
+		t.Fatal("default restart_health_wait must be true")
+	}
+	if s.RestartHealthTimeoutSec != 120 {
+		t.Fatalf("default restart_health_timeout_sec must be 120, got %d", s.RestartHealthTimeoutSec)
+	}
+
+	// Turning it off and changing the timeout must persist.
+	s.RestartHealthWait = false
+	s.RestartHealthTimeoutSec = 45
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.RestartHealthWait {
+		t.Fatal("restart_health_wait=false not round-tripped")
+	}
+	if got.RestartHealthTimeoutSec != 45 {
+		t.Fatalf("restart_health_timeout_sec not round-tripped: got %d", got.RestartHealthTimeoutSec)
+	}
+}
+
 // TestSettingsRegistryAuthsRoundTrip pins the v69 registry_auths column (#106):
 // the migration backfills existing rows with ” (no credentials → anonymous
 // pulls, unchanged behavior), and the opaque encrypted blob round-trips

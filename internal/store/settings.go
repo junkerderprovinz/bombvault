@@ -184,6 +184,18 @@ type Settings struct {
 	// immutable off-site copies and monitors the received repo). Default false
 	// (opt-in), exactly like the Files/VMs domain tabs.
 	ReceiverEnabled bool
+	// RestartHealthWait gates the health-gated ordered restart of the "stop other
+	// containers during backup" set (#119). The depends_on ORDERING is always
+	// applied; this flag governs only whether the restart also WAITS for each
+	// dependency to become healthy (or Running plus a short grace when it has no
+	// healthcheck) before starting the containers that depend on it. Default on
+	// (true) so the reported failure — a dependency coming back after the service
+	// that needs it, leaving it stopped — is fixed out of the box.
+	RestartHealthWait bool
+	// RestartHealthTimeoutSec is the per-container cap (seconds) for that health
+	// wait: once it elapses the restart logs a warning and proceeds to the
+	// dependents anyway, so the backup flow never hangs forever. Default 120.
+	RestartHealthTimeoutSec int
 }
 
 // GetSettings returns the current app settings.
@@ -209,7 +221,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       digest_enabled, digest_schedule,
 		       catch_up_missed, watchdog_enabled,
 		       export_encrypt_enabled, export_age_recipients,
-		       receiver_enabled
+		       receiver_enabled,
+		       restart_health_wait, restart_health_timeout_sec
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -217,6 +230,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
+	var restartHealthWait int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -239,6 +253,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&catchUpMissed, &watchdogEnabled,
 		&exportEncryptEnabled, &s.ExportAgeRecipients,
 		&receiverEnabled,
+		&restartHealthWait, &s.RestartHealthTimeoutSec,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -268,6 +283,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.WatchdogEnabled = watchdogEnabled != 0
 	s.ExportEncryptEnabled = exportEncryptEnabled != 0
 	s.ReceiverEnabled = receiverEnabled != 0
+	s.RestartHealthWait = restartHealthWait != 0
 	return s, nil
 }
 
@@ -346,7 +362,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  watchdog_enabled             = ?,
 		  export_encrypt_enabled       = ?,
 		  export_age_recipients        = ?,
-		  receiver_enabled             = ?
+		  receiver_enabled             = ?,
+		  restart_health_wait          = ?,
+		  restart_health_timeout_sec   = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -374,6 +392,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.CatchUpMissed), boolInt(s.WatchdogEnabled),
 		boolInt(s.ExportEncryptEnabled), s.ExportAgeRecipients,
 		boolInt(s.ReceiverEnabled),
+		boolInt(s.RestartHealthWait), s.RestartHealthTimeoutSec,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

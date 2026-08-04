@@ -465,6 +465,8 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 		ExportEncryptEnabled:        v.ExportEncryptEnabled,
 		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
 		ReceiverEnabled:             v.ReceiverEnabled,
+		RestartHealthWait:           v.RestartHealthWait,
+		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
 		// Per-instance / secret-managed fields preserved from the target instance:
 		AuthPasswordHash: existing.AuthPasswordHash,
 		SessionEpoch:     existing.SessionEpoch,

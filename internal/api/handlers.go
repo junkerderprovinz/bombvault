@@ -1061,6 +1061,14 @@ type settingsView struct {
 	// immutable off-site copies and monitors the received repo). Default false
 	// (opt-in), like the Files/VMs domain tabs; the sidebar gates its tab on it.
 	ReceiverEnabled bool `json:"receiverEnabled"`
+	// RestartHealthWait toggles the health-gated ordered restart of the "stop other
+	// containers during backup" set (#119): when on, the restart waits for each
+	// stopped dependency to become healthy (or Running plus a short grace when it
+	// has no healthcheck) before starting the containers that depend on it. The
+	// depends_on ordering is always applied; only this wait is toggled. Default on.
+	// RestartHealthTimeoutSec caps that per-container wait (default 120).
+	RestartHealthWait       bool `json:"restartHealthWait"`
+	RestartHealthTimeoutSec int  `json:"restartHealthTimeoutSec"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -1150,7 +1158,20 @@ func toView(s store.Settings) settingsView {
 		ExportEncryptEnabled:        s.ExportEncryptEnabled,
 		ExportAgeRecipients:         s.ExportAgeRecipients,
 		ReceiverEnabled:             s.ReceiverEnabled,
+		RestartHealthWait:           s.RestartHealthWait,
+		RestartHealthTimeoutSec:     s.RestartHealthTimeoutSec,
 	}
+}
+
+// clampHealthTimeoutSec keeps the per-container restart health-wait timeout in a
+// sane range: a non-positive value falls back to the 120s default (so a client
+// that omits or zeroes it never persists a nonsense 0), and it is capped at one
+// hour so a typo cannot make a single stuck dependency block a restart for days.
+func clampHealthTimeoutSec(sec int) int {
+	if sec <= 0 {
+		return 120
+	}
+	return min(3600, max(5, sec))
 }
 
 func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
@@ -1399,6 +1420,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ExportEncryptEnabled:        v.ExportEncryptEnabled,
 		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
 		ReceiverEnabled:             v.ReceiverEnabled,
+		RestartHealthWait:           v.RestartHealthWait,
+		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,

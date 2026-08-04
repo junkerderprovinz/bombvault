@@ -809,6 +809,21 @@ CREATE TABLE IF NOT EXISTS received_alert_state (
 		version: 78, name: "target_backup_order",
 		sql: "ALTER TABLE targets ADD COLUMN backup_order INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// Health-gated ordered restart of the "stop other containers during backup"
+		// set (#119). restart_health_wait DEFAULT 1 (ON): after a backup the stopped
+		// dependencies are brought back in compose depends_on order and, with this on,
+		// the restart WAITS for each to become healthy (or Running plus a short grace
+		// when it has no healthcheck) before starting the containers that depend on it,
+		// so a dependency is never beaten to a start by the service that needs it. The
+		// depends_on ordering itself is always applied, independent of this flag.
+		// restart_health_timeout_sec DEFAULT 120 caps that per-container wait, after
+		// which the restart warns and proceeds so the backup flow never hangs.
+		version: 79, name: "settings_restart_health_wait",
+		sql: `
+ALTER TABLE settings ADD COLUMN restart_health_wait        INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE settings ADD COLUMN restart_health_timeout_sec INTEGER NOT NULL DEFAULT 120;`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

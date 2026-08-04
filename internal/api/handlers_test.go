@@ -790,6 +790,45 @@ func TestSettingsCatchUpAndWatchdogRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsRestartHealthWaitRoundTrip guards the /api/settings wire boundary
+// for the health-gated ordered restart toggle + timeout (#119). The strict PUT
+// decoder rejects unknown fields, so restartHealthWait / restartHealthTimeoutSec
+// must live in settingsView (PUT) and be mapped by toView (GET). The default is
+// ON with a 120s timeout, so opposite/other values prove real decode+persist.
+func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"restartHealthWait": false,
+		"restartHealthTimeoutSec": 45
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	if settings["restartHealthWait"] != false {
+		t.Fatalf("restartHealthWait not round-tripped: got %v", settings["restartHealthWait"])
+	}
+	if settings["restartHealthTimeoutSec"] != float64(45) {
+		t.Fatalf("restartHealthTimeoutSec not round-tripped: got %v", settings["restartHealthTimeoutSec"])
+	}
+}
+
 // TestNotifyAppriseRoundTrip guards the /api/notify wire boundary for the Apprise
 // channel. Unlike the toggles above, the Apprise URL lives in the encrypted
 // notify_conf blob (like the webhook URL), NOT in a settings column — so the seam
