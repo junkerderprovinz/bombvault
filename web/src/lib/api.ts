@@ -213,6 +213,10 @@ export interface Settings {
   /** Per-container cap (seconds) for that health wait before dependents start
    *  anyway. Clamped server-side to 5..3600 (default 120). */
   restartHealthTimeoutSec: number;
+  /** #116: after a post-backup container update, ask Unraid to refresh its OWN
+   *  cached "update available" status over the host SSH link so the Docker tab's
+   *  stale update banner clears. Best-effort and non-fatal. Default true. */
+  reconcileUnraidUpdateStatus: boolean;
 }
 
 /** One private container-registry credential (#106), e.g. ghcr.io. */

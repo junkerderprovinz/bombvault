@@ -1142,22 +1142,27 @@ const fi: Partial<Translations> = {
   "receiver.saveError": "Vastaanotettua varastoa ei voitu tallentaa.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Varmuuskopioiden järjestys",
+  "backupOrder.hint": "Määritä järjestys, jossa ajastetut ja erävarmuuskopiot suoritetaan. Luettelon ulkopuoliset säiliöt suoritetaan sen jälkeen, eniten myöhässä olevat ensin.",
+  "backupOrder.moveUp": "Siirrä ylös",
+  "backupOrder.moveDown": "Siirrä alas",
+  "backupOrder.save": "Tallenna järjestys",
+  "backupOrder.saved": "Järjestys tallennettu",
+  "backupOrder.saveError": "Varmuuskopioiden järjestystä ei voitu tallentaa.",
+  "backupOrder.empty": "Ei vielä ajastettuja säiliöitä järjestettäväksi.",
+  "backupOrder.reset": "Tyhjennä järjestys",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Uudelleenkäynnistys varmuuskopioinnin jälkeen",
+  "settings.restartHealthWait": "Odota, että riippuvuudet ovat kunnossa, ennen seuraavan käynnistämistä",
+  "settings.restartHealthWaitHint": "Kun 'Pysäytä muut säiliöt varmuuskopioinnin ajaksi' pysäyttää säiliöitä, ne käynnistetään riippuvuusjärjestyksessä varmuuskopioinnin jälkeen (ja mahdollisen päivityksen jälkeen). Kun tämä on käytössä, jokaisen säiliön on ilmoitettava olevansa kunnossa tai käynnissä, ennen kuin siitä riippuvat säiliöt käynnistyvät.",
+  "settings.restartHealthTimeoutLabel": "Säiliökohtainen kunnon aikakatkaisu (sekuntia)",
+  "settings.restartHealthTimeoutHint": "Kuinka kauan odotetaan säiliön kuntoon tuloa, ennen kuin siitä riippuvat käynnistyvät joka tapauksessa. Väli 5-3600 sekuntia.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraidin päivitystila",
+  "settings.reconcileUnraidStatus": "Päivitä Unraidin päivitystila säiliön päivittämisen jälkeen",
+  "settings.reconcileUnraidStatusHint": "Tyhjentää Unraidin päivitysbannerin sen jälkeen, kun BombVault on päivittänyt säiliön varmuuskopioinnin jälkeisessä päivitysvaiheessa.",
 };
 
 export default fi;

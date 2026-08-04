@@ -1140,22 +1140,27 @@ const cs: Partial<Translations> = {
   "receiver.saveError": "Nepodařilo se uložit přijatý repozitář.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Pořadí záloh",
+  "backupOrder.hint": "Nastavte pořadí, ve kterém běží naplánované a hromadné zálohy. Kontejnery mimo seznam běží poté, nejdříve nejvíce opožděné.",
+  "backupOrder.moveUp": "Nahoru",
+  "backupOrder.moveDown": "Dolů",
+  "backupOrder.save": "Uložit pořadí",
+  "backupOrder.saved": "Pořadí uloženo",
+  "backupOrder.saveError": "Pořadí záloh se nepodařilo uložit.",
+  "backupOrder.empty": "Zatím nejsou naplánované žádné kontejnery k seřazení.",
+  "backupOrder.reset": "Vymazat pořadí",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Restart po záloze",
+  "settings.restartHealthWait": "Před spuštěním dalšího počkat, až budou závislosti v pořádku",
+  "settings.restartHealthWaitHint": "Když volba 'Zastavit ostatní kontejnery během zálohy' zastaví kontejnery, po záloze (a po případné aktualizaci) se restartují v pořadí závislostí. Je-li tato volba zapnutá, musí každý kontejner hlásit stav v pořádku nebo běžící, než se spustí ty, které na něm závisí.",
+  "settings.restartHealthTimeoutLabel": "Časový limit stavu na kontejner (sekundy)",
+  "settings.restartHealthTimeoutHint": "Jak dlouho čekat, než bude kontejner v pořádku, než se jeho závislé kontejnery přesto spustí. Rozsah 5 až 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Stav aktualizací Unraid",
+  "settings.reconcileUnraidStatus": "Po aktualizaci kontejneru obnovit stav aktualizací Unraid",
+  "settings.reconcileUnraidStatusHint": "Vymaže banner aktualizace Unraid poté, co BombVault aktualizuje kontejner v kroku aktualizace po záloze.",
 };
 
 export default cs;

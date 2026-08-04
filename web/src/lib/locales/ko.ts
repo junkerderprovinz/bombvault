@@ -1134,22 +1134,27 @@ const ko: Partial<Translations> = {
   "receiver.saveError": "수신 저장소를 저장하지 못했습니다.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "백업 순서",
+  "backupOrder.hint": "예약 및 일괄 백업이 실행되는 순서를 설정합니다. 목록에 없는 컨테이너는 그다음에 실행되며, 가장 오래 밀린 것부터 실행됩니다.",
+  "backupOrder.moveUp": "위로 이동",
+  "backupOrder.moveDown": "아래로 이동",
+  "backupOrder.save": "순서 저장",
+  "backupOrder.saved": "순서 저장됨",
+  "backupOrder.saveError": "백업 순서를 저장할 수 없습니다.",
+  "backupOrder.empty": "아직 정렬할 예약된 컨테이너가 없습니다.",
+  "backupOrder.reset": "순서 지우기",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "백업 후 재시작",
+  "settings.restartHealthWait": "다음을 시작하기 전에 종속 항목이 정상 상태가 될 때까지 대기",
+  "settings.restartHealthWaitHint": "'백업 중 다른 컨테이너 중지'가 컨테이너를 중지하면, 백업 후(그리고 백업 후 업데이트 후)에 종속성 순서로 다시 시작됩니다. 이 옵션을 켜면 각 컨테이너가 정상 또는 실행 중으로 보고해야 그에 의존하는 컨테이너가 시작됩니다.",
+  "settings.restartHealthTimeoutLabel": "컨테이너별 상태 확인 제한 시간(초)",
+  "settings.restartHealthTimeoutHint": "종속 컨테이너가 어쨌든 시작되기 전에 한 컨테이너가 정상 상태가 될 때까지 대기하는 시간입니다. 범위는 5에서 3600까지입니다.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid 업데이트 상태",
+  "settings.reconcileUnraidStatus": "컨테이너를 업데이트한 후 Unraid의 업데이트 상태 새로 고침",
+  "settings.reconcileUnraidStatusHint": "백업 후 업데이트 단계에서 BombVault가 컨테이너를 업데이트한 후 Unraid의 업데이트 배너를 지웁니다.",
 };
 
 export default ko;

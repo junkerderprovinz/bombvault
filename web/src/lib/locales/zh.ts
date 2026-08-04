@@ -1134,22 +1134,27 @@ const zh: Partial<Translations> = {
   "receiver.saveError": "无法保存接收仓库。",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "备份顺序",
+  "backupOrder.hint": "设置计划备份和批量备份的运行顺序。未列入列表的容器随后运行，最逾期的优先。",
+  "backupOrder.moveUp": "上移",
+  "backupOrder.moveDown": "下移",
+  "backupOrder.save": "保存顺序",
+  "backupOrder.saved": "顺序已保存",
+  "backupOrder.saveError": "无法保存备份顺序。",
+  "backupOrder.empty": "暂无可排序的计划容器。",
+  "backupOrder.reset": "清除顺序",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "备份后重启",
+  "settings.restartHealthWait": "在启动下一个之前等待依赖项恢复正常",
+  "settings.restartHealthWaitHint": "当“备份期间停止其他容器”停止容器时，它们会在备份后（以及任何备份后更新后）按依赖顺序重启。启用此项后，每个容器必须报告为正常或运行中，依赖它的容器才会启动。",
+  "settings.restartHealthTimeoutLabel": "每个容器的健康超时（秒）",
+  "settings.restartHealthTimeoutHint": "在依赖它的容器无论如何启动之前，等待某个容器恢复正常的时长。范围为 5 到 3600。",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Unraid 更新状态",
+  "settings.reconcileUnraidStatus": "更新容器后刷新 Unraid 的更新状态",
+  "settings.reconcileUnraidStatusHint": "在备份后更新步骤中 BombVault 更新容器后，清除 Unraid 的更新横幅。",
 };
 
 export default zh;

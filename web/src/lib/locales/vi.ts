@@ -1134,22 +1134,27 @@ const vi: Partial<Translations> = {
   "receiver.saveError": "Không thể lưu kho đã nhận.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Thứ tự sao lưu",
+  "backupOrder.hint": "Đặt trình tự chạy các bản sao lưu theo lịch và theo lô. Các container không có trong danh sách sẽ chạy sau đó, quá hạn nhiều nhất trước.",
+  "backupOrder.moveUp": "Di chuyển lên",
+  "backupOrder.moveDown": "Di chuyển xuống",
+  "backupOrder.save": "Lưu thứ tự",
+  "backupOrder.saved": "Đã lưu thứ tự",
+  "backupOrder.saveError": "Không thể lưu thứ tự sao lưu.",
+  "backupOrder.empty": "Chưa có container theo lịch nào để sắp xếp.",
+  "backupOrder.reset": "Xóa thứ tự",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Khởi động lại sau khi sao lưu",
+  "settings.restartHealthWait": "Chờ các phụ thuộc khỏe mạnh trước khi khởi động cái tiếp theo",
+  "settings.restartHealthWaitHint": "Khi 'Dừng các container khác trong khi sao lưu' dừng các container, chúng khởi động lại theo thứ tự phụ thuộc sau khi sao lưu (và sau mọi bản cập nhật). Khi bật tùy chọn này, mỗi container phải báo cáo khỏe mạnh hoặc đang chạy trước khi những container phụ thuộc vào nó khởi động.",
+  "settings.restartHealthTimeoutLabel": "Thời gian chờ tình trạng theo từng container (giây)",
+  "settings.restartHealthTimeoutHint": "Chờ một container trở nên khỏe mạnh trong bao lâu trước khi các container phụ thuộc vào nó vẫn khởi động. Phạm vi từ 5 đến 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Trạng thái cập nhật Unraid",
+  "settings.reconcileUnraidStatus": "Làm mới trạng thái cập nhật của Unraid sau khi cập nhật một container",
+  "settings.reconcileUnraidStatusHint": "Xóa biểu ngữ cập nhật của Unraid sau khi BombVault cập nhật một container trong bước cập nhật sau khi sao lưu.",
 };
 
 export default vi;

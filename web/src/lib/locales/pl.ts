@@ -1137,22 +1137,27 @@ const pl: Partial<Translations> = {
   "receiver.saveError": "Nie udało się zapisać odebranego repozytorium.",
 
   // Backup order (#119)
-  "backupOrder.title": "Backup order",
-  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
-  "backupOrder.moveUp": "Move up",
-  "backupOrder.moveDown": "Move down",
-  "backupOrder.save": "Save order",
-  "backupOrder.saved": "Order saved",
-  "backupOrder.saveError": "Could not save the backup order.",
-  "backupOrder.empty": "No scheduled containers to order yet.",
-  "backupOrder.reset": "Clear order",
+  "backupOrder.title": "Kolejność kopii zapasowych",
+  "backupOrder.hint": "Ustaw kolejność, w jakiej wykonywane są zaplanowane i zbiorcze kopie zapasowe. Kontenery spoza listy są wykonywane później, najpierw najbardziej zaległe.",
+  "backupOrder.moveUp": "W górę",
+  "backupOrder.moveDown": "W dół",
+  "backupOrder.save": "Zapisz kolejność",
+  "backupOrder.saved": "Kolejność zapisana",
+  "backupOrder.saveError": "Nie udało się zapisać kolejności kopii zapasowych.",
+  "backupOrder.empty": "Brak zaplanowanych kontenerów do uporządkowania.",
+  "backupOrder.reset": "Wyczyść kolejność",
 
   // Health-gated restart (#119)
-  "settings.restartHealthTitle": "Restart after backup",
-  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
-  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
-  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
-  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
+  "settings.restartHealthTitle": "Ponowne uruchomienie po kopii zapasowej",
+  "settings.restartHealthWait": "Zaczekaj, aż zależności będą sprawne, zanim uruchomisz następny",
+  "settings.restartHealthWaitHint": "Gdy opcja 'Zatrzymaj inne kontenery podczas kopii zapasowej' zatrzyma kontenery, są one uruchamiane ponownie w kolejności zależności po wykonaniu kopii (i po ewentualnej aktualizacji). Przy tej włączonej opcji każdy kontener musi zgłosić stan sprawny lub działający, zanim uruchomią się te, które od niego zależą.",
+  "settings.restartHealthTimeoutLabel": "Limit czasu sprawności na kontener (sekundy)",
+  "settings.restartHealthTimeoutHint": "Jak długo czekać, aż kontener stanie się sprawny, zanim mimo to uruchomią się zależne od niego. Zakres od 5 do 3600.",
+
+  // Reconcile Unraid update status (#116)
+  "settings.reconcileTitle": "Status aktualizacji Unraid",
+  "settings.reconcileUnraidStatus": "Odśwież status aktualizacji Unraid po zaktualizowaniu kontenera",
+  "settings.reconcileUnraidStatusHint": "Usuwa baner aktualizacji Unraid po tym, jak BombVault zaktualizuje kontener w kroku aktualizacji po kopii zapasowej.",
 };
 
 export default pl;
