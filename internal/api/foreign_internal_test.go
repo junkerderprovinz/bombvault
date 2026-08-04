@@ -872,6 +872,57 @@ func TestForeignRestoreValidation(t *testing.T) {
 	waitForeignIdle(t, s)
 }
 
+// TestForeignRestoreVMNameIsLibvirtAware pins #122: a foreign VM restore
+// validates the item name with the libvirt-aware validVMName, so a VM whose
+// name contains a space ("Windows Server 2022") is NOT rejected as "invalid
+// item name" — it proceeds past the name check (and only then fails because the
+// seeded repo mirrors no def for it). An unsafe VM name is still rejected, and
+// containers / file sets keep the strict validResourceName (spaces rejected).
+func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{{ID: "dddddddd44444444", Time: "2026-07-04T10:00:00Z", Tags: []string{"vm:win"}}},
+	}
+	s := newForeignTestService(t, eng)
+	seedForeignRepoMarker(t, s, "backups/other")
+	ctx := context.Background()
+
+	id, _, err := s.OpenForeign(ctx, "backups/other", foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	// A VM name with a space passes the name check: the failure is the later
+	// missing-definition error, never "invalid item name".
+	started, err := s.StartForeignRestore(ctx, id, "vms", "Windows Server 2022", "latest", true, "")
+	if started {
+		t.Fatalf("no def seeded, restore must not start; got started=%v", started)
+	}
+	if err == nil || strings.Contains(err.Error(), "invalid item name") {
+		t.Fatalf("spaced VM name must pass the name check (fail later on the def), got %v", err)
+	}
+	if !strings.Contains(err.Error(), "definition") {
+		t.Fatalf("expected the missing-definition error, got %v", err)
+	}
+
+	// Unsafe VM names are still rejected by the name check itself.
+	for _, unsafe := range []string{"../evil", "win/../etc", `win\evil`, "-oProxyCommand"} {
+		started, err = s.StartForeignRestore(ctx, id, "vms", unsafe, "latest", true, "")
+		if started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
+			t.Fatalf("unsafe VM name %q: want the name rejection, got started=%v err=%v", unsafe, started, err)
+		}
+	}
+
+	// Containers and file sets keep the strict validResourceName: a space is not
+	// a valid Docker container / file-set name, so it is rejected on the name.
+	for _, domain := range []string{"containers", "files"} {
+		started, err = s.StartForeignRestore(ctx, id, domain, "has space", "latest", true, "restore-here")
+		if started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
+			t.Fatalf("%s spaced name: want the strict name rejection, got started=%v err=%v", domain, started, err)
+		}
+	}
+}
+
 // TestOpenForeignRejectsRemoteLocation pins the confused-deputy fix (#61): a
 // remote-backend location (or an unprefixed rclone remote name) is rejected
 // BEFORE any engine call, so restic never contacts a third-party server carrying
