@@ -204,6 +204,15 @@ export interface Settings {
    *  returns it blank with tokenSet reporting presence, and a blank token on
    *  save keeps the stored one for that host. */
   registryAuths: RegistryAuthEntry[];
+  /** Health-gated ordered restart (#119): after a backup that stopped other
+   *  containers ("Stop other containers during backup"), restart them in compose
+   *  depends_on order and wait for each to report healthy/running before the ones
+   *  that depend on it start (this also holds through the post-backup update).
+   *  Default true. */
+  restartHealthWait: boolean;
+  /** Per-container cap (seconds) for that health wait before dependents start
+   *  anyway. Clamped server-side to 5..3600 (default 120). */
+  restartHealthTimeoutSec: number;
 }
 
 /** One private container-registry credential (#106), e.g. ghcr.io. */
@@ -988,6 +997,34 @@ export function setIncludeAll(include: boolean): Promise<OkEnvelope> {
   return fetchJSON("/api/containers/schedule-include", {
     method: "POST",
     body: JSON.stringify({ include }),
+  });
+}
+
+/** One container's explicit manual backup position (#119). */
+export interface ContainerOrder {
+  container: string;
+  order: number;
+}
+
+/**
+ * GET /api/containers/backup-order — the current manual backup ordering (#119):
+ * the containers with an explicit order, sorted by order ascending. Containers
+ * with no explicit order are omitted (they run afterwards, most overdue first).
+ */
+export function getBackupOrder(): Promise<OkEnvelope & { order?: ContainerOrder[] }> {
+  return fetchJSON("/api/containers/backup-order");
+}
+
+/**
+ * PUT /api/containers/backup-order — replace the manual backup ordering from an
+ * ordered list of container names (first name runs earliest). The list is
+ * authoritative: any omitted container returns to the most-overdue-first
+ * tiebreak, and an empty list clears every explicit order.
+ */
+export function setBackupOrder(order: string[]): Promise<OkEnvelope> {
+  return fetchJSON("/api/containers/backup-order", {
+    method: "PUT",
+    body: JSON.stringify({ order }),
   });
 }
 

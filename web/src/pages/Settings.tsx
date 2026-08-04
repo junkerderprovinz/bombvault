@@ -2406,6 +2406,10 @@ export function SettingsPage() {
   const [syncSchedules, setSyncSchedules] = useState(false);
   const [schedSaveState, setSchedSaveState] = useState<SaveState>("idle");
   const [schedSaveError, setSchedSaveError] = useState<string | null>(null);
+  // Health-gated ordered restart (#119) — its own save state, same
+  // baseline-merging save() as the other cards on this tab.
+  const [restartSaveState, setRestartSaveState] = useState<SaveState>("idle");
+  const [restartSaveError, setRestartSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getSettings()
@@ -2839,6 +2843,62 @@ export function SettingsPage() {
               onChange={(v) =>
                 setSettings((prev) => (prev ? { ...prev, catchUpMissed: v } : prev))
               }
+            />
+          </Card>
+
+          {/* Health-gated ordered restart (#119): after a backup that stopped
+              other containers ("Stop other containers during backup"), they
+              restart in compose depends_on order and each must report
+              healthy/running before its dependents start. The wait also holds
+              through the post-backup update recreate (see internal/backup
+              orchestrator WhileDependentsStopped). */}
+          <Card title={t("settings.restartHealthTitle")}>
+            <ToggleRow
+              label={t("settings.restartHealthWait")}
+              description={t("settings.restartHealthWaitHint")}
+              checked={settings.restartHealthWait}
+              onChange={(v) =>
+                setSettings((prev) => (prev ? { ...prev, restartHealthWait: v } : prev))
+              }
+            />
+            {settings.restartHealthWait && (
+              <label className="flex flex-col gap-1 sm:w-1/2">
+                <span className="text-xs text-carbon-textSub">
+                  {t("settings.restartHealthTimeoutLabel")}
+                </span>
+                <input
+                  type="number"
+                  min={5}
+                  max={3600}
+                  value={settings.restartHealthTimeoutSec}
+                  onChange={(e) => {
+                    const raw = (e.target as unknown as { value: string }).value;
+                    const n = Math.max(0, parseInt(raw, 10) || 0);
+                    setSettings((prev) =>
+                      prev ? { ...prev, restartHealthTimeoutSec: n } : prev
+                    );
+                  }}
+                  className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                />
+                <span className="text-xs text-carbon-textMuted">
+                  {t("settings.restartHealthTimeoutHint")}
+                </span>
+              </label>
+            )}
+            <SaveBar
+              state={restartSaveState}
+              error={restartSaveError}
+              onSave={() =>
+                void save(
+                  {
+                    restartHealthWait: settings.restartHealthWait,
+                    restartHealthTimeoutSec: settings.restartHealthTimeoutSec,
+                  },
+                  setRestartSaveState,
+                  setRestartSaveError
+                )
+              }
+              t={t}
             />
           </Card>
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, ApiError } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo, CustomPath } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
+import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder } from "../lib/api";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
@@ -1398,6 +1398,176 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
 }
 
 // ---------------------------------------------------------------------------
+// Backup-order panel (#119) — manual per-container backup sequence
+// ---------------------------------------------------------------------------
+
+// BackupOrderPanel lets the user arrange the order scheduled + batch backups run
+// in. The orderable set is the installed, schedule-included containers (never
+// BombVault itself). It hydrates once from the persisted order (GET
+// /api/containers/backup-order), then reconciles as containers come and go
+// without discarding an in-progress reorder. Save PUTs the whole displayed
+// sequence (authoritative: the list becomes the explicit order); Clear order
+// PUTs an empty list, returning every container to the most-overdue-first
+// tiebreak.
+function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) {
+  const [savedOrder, setSavedOrder] = useState<ContainerOrder[] | null>(null);
+  const [names, setNames] = useState<string[]>([]);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const hydrated = useRef(false);
+
+  useEffect(() => {
+    getBackupOrder()
+      .then((res) => setSavedOrder(res.ok ? res.order ?? [] : []))
+      .catch(() => setSavedOrder([]));
+  }, []);
+
+  useEffect(() => {
+    if (savedOrder === null) return; // still loading the persisted order
+    const orderable = containers
+      .filter((c) => c.installed && c.includeInSchedule && !c.self)
+      .map((c) => c.name);
+    const set = new Set(orderable);
+    const byName = (a: string, b: string) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" });
+    if (!hydrated.current) {
+      hydrated.current = true;
+      const ranked = savedOrder
+        .filter((o) => set.has(o.container))
+        .sort((a, b) => a.order - b.order)
+        .map((o) => o.container);
+      const rest = orderable.filter((n) => !ranked.includes(n)).sort(byName);
+      setNames([...ranked, ...rest]);
+      return;
+    }
+    setNames((prev) => {
+      const kept = prev.filter((n) => set.has(n));
+      const added = orderable.filter((n) => !kept.includes(n)).sort(byName);
+      const next = [...kept, ...added];
+      return next.length === prev.length && next.every((n, i) => n === prev[i])
+        ? prev
+        : next;
+    });
+  }, [containers, savedOrder]);
+
+  function move(index: number, dir: -1 | 1) {
+    setNames((prev) => {
+      const to = index + dir;
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+    setSaveState("idle");
+  }
+
+  async function persist(order: string[]) {
+    setSaveState("saving");
+    setError(null);
+    try {
+      const res = await setBackupOrder(order);
+      if (res.ok) {
+        setSavedOrder(order.map((container, i) => ({ container, order: i + 1 })));
+        setSaveState("saved");
+        setTimeout(() => setSaveState("idle"), 3000);
+      } else {
+        setError(res.error ?? t("backupOrder.saveError"));
+        setSaveState("error");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("backupOrder.saveError"));
+      setSaveState("error");
+    }
+  }
+
+  function clearOrder() {
+    const sorted = [...names].sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+    setNames(sorted);
+    void persist([]);
+  }
+
+  if (savedOrder === null) return null;
+
+  return (
+    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+      <div>
+        <span className="font-semibold text-carbon-text text-sm">
+          {t("backupOrder.title")}
+        </span>
+        <p className="mt-0.5 text-xs text-carbon-textMuted">{t("backupOrder.hint")}</p>
+      </div>
+      {names.length === 0 ? (
+        <p className="text-xs text-carbon-textMuted">{t("backupOrder.empty")}</p>
+      ) : (
+        <>
+          <ol className="flex flex-col gap-1">
+            {names.map((name, i) => (
+              <li
+                key={name}
+                className="flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5"
+              >
+                <span className="w-6 text-xs text-carbon-textMuted tabular-nums">
+                  {i + 1}.
+                </span>
+                <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
+                  {name}
+                </span>
+                <button
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0 || saveState === "saving"}
+                  aria-label={t("backupOrder.moveUp")}
+                  title={t("backupOrder.moveUp")}
+                  className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => move(i, 1)}
+                  disabled={i === names.length - 1 || saveState === "saving"}
+                  aria-label={t("backupOrder.moveDown")}
+                  title={t("backupOrder.moveDown")}
+                  className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </li>
+            ))}
+          </ol>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => void persist(names)}
+              disabled={saveState === "saving"}
+              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {t("backupOrder.save")}
+            </button>
+            <button
+              onClick={clearOrder}
+              disabled={saveState === "saving"}
+              className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            >
+              {t("backupOrder.reset")}
+            </button>
+            {saveState === "saved" && (
+              <span className="text-xs text-statusOk">{t("backupOrder.saved")}</span>
+            )}
+            {saveState === "error" && error && (
+              <span className="text-xs text-statusFail">{error}</span>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Containers page
 // ---------------------------------------------------------------------------
 
@@ -1763,6 +1933,14 @@ export function Containers() {
         <p className="text-xs text-carbon-textSub">
           {bulkBusy ? t("containers.working") : bulkMsg}
         </p>
+      )}
+
+      {/* Backup-order panel (#119) — advanced: arrange the scheduled/batch backup
+          sequence. Above the list, next to the stacks panel. */}
+      {!loading && !error && (
+        <Advanced>
+          <BackupOrderPanel containers={containers} t={t} />
+        </Advanced>
       )}
 
       {/* Stacks panel — one card per detected compose stack, above the list. */}
