@@ -364,7 +364,15 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 	if !confirm {
 		return "", nil, backup.ErrNotConfirmed
 	}
-	if !validResourceName(item) {
+	// Domain-aware name check: libvirt VM names legitimately contain spaces
+	// (e.g. "Windows Server 2022"), so VMs use the libvirt-aware validVMName
+	// (still blocks empty/over-long/path-separators/".."/leading "-"/control
+	// chars) while containers and file sets keep the strict validResourceName.
+	nameOK := validResourceName(item)
+	if domain == "vms" {
+		nameOK = validVMName(item)
+	}
+	if !nameOK {
 		return "", nil, errors.New("invalid item name")
 	}
 	sess, err := s.foreignSession(sessionID)
