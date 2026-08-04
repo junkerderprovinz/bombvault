@@ -206,6 +206,15 @@ body,
   box-shadow: none;
 }
 
+/* The top bar shows the logo and name already, so hide the redundant site-name
+   title at the very top of the DESKTOP sidebar rail. The mobile drawer title
+   (same element, different breakpoint) is kept intact. */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary .md-nav--primary > .md-nav__title {
+    display: none;
+  }
+}
+
 /* Secondary (right) TOC, when shown on its own, matches the same quiet style. */
 .md-sidebar--secondary .md-nav__link {
   color: var(--bv-text-muted);
