@@ -21,6 +21,18 @@ func (r *Repo) MarkRepoEstablished(repo string) error {
 	return nil
 }
 
+// ClearRepoEstablished removes the established marker for a repo destination.
+// Called when the destination is confirmed present (mounted + writable) but the
+// repo is legitimately not there yet — a stale/phantom marker from a pre-mount
+// init that must not block re-establishing the repo on the live disk (#120).
+// Idempotent: deleting a missing row is not an error.
+func (r *Repo) ClearRepoEstablished(repo string) error {
+	if _, err := r.db.Exec(`DELETE FROM established_repos WHERE repo = ?`, repo); err != nil {
+		return fmt.Errorf("ClearRepoEstablished: %w", err)
+	}
+	return nil
+}
+
 // IsRepoEstablished reports whether MarkRepoEstablished has ever recorded this
 // repo destination.
 func (r *Repo) IsRepoEstablished(repo string) (bool, error) {
