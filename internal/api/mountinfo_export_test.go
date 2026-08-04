@@ -21,8 +21,8 @@ func SetMountinfoPath(p string) (restore func()) {
 	return func() { mountinfoPath = prev }
 }
 
-// DestinationMounted exposes destinationMounted for tests.
-func DestinationMounted(repo string) bool { return destinationMounted(repo) }
+// DestinationMounted exposes the discriminator (now HostMountRoot-aware) for tests.
+func (s *Service) DestinationMounted(repo string) bool { return s.destinationMounted(repo) }
 
 // SnapshotsForTag exposes the explicit-repo snapshot lister (and its
 // not-mounted vs empty gate) for tests.
