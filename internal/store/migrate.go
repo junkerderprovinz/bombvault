@@ -800,6 +800,15 @@ CREATE TABLE IF NOT EXISTS received_alert_state (
   PRIMARY KEY (received_repo_id, source)
 );`,
 	},
+	{
+		// Per-container manual backup order (#119): the explicit sequence a scheduled
+		// or multi-select batch run processes containers in. 0 (the default) means
+		// "unordered" — those containers keep the existing most-overdue-first order as
+		// the tiebreak, so existing setups are byte-for-byte unchanged until the user
+		// assigns explicit orders. Owned by SetBackupOrder (never reset by UpsertTarget).
+		version: 78, name: "target_backup_order",
+		sql: "ALTER TABLE targets ADD COLUMN backup_order INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
