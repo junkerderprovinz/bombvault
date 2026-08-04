@@ -429,10 +429,17 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 }
 
 // CheckArgs returns the argv slice for `restic check` (verifies repository
-// structure + metadata integrity).
+// structure + metadata integrity). Under NoLock (the receiver's read-only
+// integrity check on a received / append-only repo) the check is lock-free
+// (--no-lock) so it never writes a lock into the received repo; otherwise it
+// carries --retry-lock so the off-site DR check waits out a transient lock.
 func CheckArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, retryLockFlags()...)
+	if m.NoLock {
+		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
+	} else {
+		args = append(args, retryLockFlags()...)
+	}
 	args = append(args, "check")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -443,8 +450,11 @@ func CheckArgs(repo string, m Mode) []string {
 // CheckDataArgs returns the argv slice for a restore-readiness "drill":
 // `restic check --read-data-subset=<pct>%`. Unlike a plain CheckArgs (metadata
 // only), this actually reads back a random subset of the real pack data and
-// re-verifies it, proving the backup is genuinely restorable — without needing a
-// scratch disk to restore to. subsetPercent is clamped to 1..100.
+// re-verifies it, proving the backup is genuinely restorable, without needing a
+// scratch disk to restore to. subsetPercent is clamped to 1..100. Under NoLock
+// (the receiver's read-only deep check on a received / append-only repo) the
+// check is lock-free (--no-lock) so it never writes a lock into the received
+// repo; otherwise it carries --retry-lock (off-site DR path, unchanged).
 func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 	if subsetPercent < 1 {
 		subsetPercent = 1
@@ -452,7 +462,11 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 		subsetPercent = 100
 	}
 	args := repoFlag(repo)
-	args = append(args, retryLockFlags()...)
+	if m.NoLock {
+		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
+	} else {
+		args = append(args, retryLockFlags()...)
+	}
 	args = append(args, "check", fmt.Sprintf("--read-data-subset=%d%%", subsetPercent))
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
