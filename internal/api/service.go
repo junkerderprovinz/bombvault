@@ -2470,7 +2470,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 		// two apart: an unmounted mountpoint dir is often still writable, which is
 		// exactly the #55 case we keep protecting.
 		if localRepoMissing(repo) && s.repoEstablished(repo) {
-			if !destinationMounted(repo) {
+			if !s.destinationMounted(repo) {
 				return ErrBackupPathNotMounted // #55: backing store not mounted
 			}
 			// #120: stale/phantom marker on a live disk — drop it and fall through
@@ -2510,7 +2510,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 // the running container until the mount is restored. BombVault refuses to
 // re-initialise an empty repo over it (which would shadow the real backups) and
 // surfaces this instead of a misleading "no backups" (#55).
-var ErrBackupPathNotMounted = errors.New("backup path is not mounted yet — a remote backup share may mount late at boot; it recovers once the mount is available (restart BombVault if it persists)")
+var ErrBackupPathNotMounted = errors.New("backup path is not mounted yet: a remote backup share may mount late at boot; it recovers once the mount is available (restart BombVault if it persists)")
 
 // markRepoEstablished records a successfully created/opened LOCAL repo so a later
 // open-failure can be told apart from a fresh location (#55). Remote repos have
@@ -4285,7 +4285,7 @@ func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.
 		// #55 vs #120: only surface "not mounted" when the backing store is truly
 		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
 		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
-		if s.repoEstablished(repo) && !destinationMounted(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
 			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil
@@ -6316,7 +6316,7 @@ func (s *Service) SnapshotsFileSet(ctx context.Context, id, source string) ([]re
 		// #55 vs #120: only surface "not mounted" when the backing store is truly
 		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
 		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
-		if s.repoEstablished(repo) && !destinationMounted(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
 			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil
@@ -7047,7 +7047,7 @@ func (s *Service) SnapshotsFlash(ctx context.Context, source string) ([]restic.S
 		// #55 vs #120: only surface "not mounted" when the backing store is truly
 		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
 		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
-		if s.repoEstablished(repo) && !destinationMounted(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
 			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil // no backups yet
@@ -7102,7 +7102,7 @@ func (s *Service) SnapshotsConfig(ctx context.Context, source string) ([]restic.
 		// #55 vs #120: only surface "not mounted" when the backing store is truly
 		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
 		// healthy disk, so report an empty list (EnsureRepo re-establishes on write).
-		if s.repoEstablished(repo) && !destinationMounted(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
 			return nil, ErrBackupPathNotMounted // #55: backing store not mounted
 		}
 		return nil, nil // no backups yet

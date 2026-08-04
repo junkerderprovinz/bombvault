@@ -18,18 +18,32 @@ import (
 var mountinfoPath = "/proc/self/mountinfo"
 
 // destinationMounted reports whether the LOCAL repo path sits on a genuinely
-// PRESENT mount, by consulting the kernel mount table (mountinfoPath). It returns
-// true only when the repo itself or one of its ancestor directories is an actual
-// mount point — a bare os.Stat / temp-write probe is NOT enough, because an
+// PRESENT per-share/per-disk mount, by consulting the kernel mount table
+// (mountinfoPath). A bare os.Stat / temp-write probe is NOT enough, because an
 // unmounted mountpoint directory is usually still writable, which is exactly the
 // late-mount case (#55) we must keep protecting.
+//
+// The discriminator: the repo counts as mounted only when some mount point M is
+// the repo itself OR an ancestor directory of it, AND M is a STRICT/PROPER
+// DESCENDANT of HostMountRoot (path.Clean(s.cfg.HostMountRoot), e.g. /host/user).
+// In a real /proc/self/mountinfo "/" is ALWAYS a mount point, and the broad host
+// bind (HostMountRoot itself, from HostSourceRoot) is too; neither may satisfy
+// the check, or every local repo would look mounted and the #55 guard would be
+// defeated. #55 protects paths served by a DISTINCT per-disk/per-share mount BELOW
+// the broad host bind, and that mount only appears in mountinfo when actually
+// mounted. So: EXCLUDE "/", EXCLUDE HostMountRoot itself, and exclude any mount at
+// or above HostMountRoot. Examples (HostMountRoot=/host/user):
+//   - UD disk mounted at /host/user/disks/X → repo under it is mounted → self-heal.
+//   - genuinely-unmounted share: only "/" and /host/user present → not mounted → #55.
+//   - array-default repo /host/user/bombvault/…: nearest mount is the broad bind
+//     itself → not mounted → stays protected (safe/over-protective, acceptable).
 //
 // Remote repos have no local backing store and are never gated on a mount.
 //
 // On ANY error reading or parsing the mount table it is CONSERVATIVE and returns
 // false (destination treated as NOT mounted), so the #55 protection still holds:
 // a marker is never cleared on uncertainty.
-func destinationMounted(repo string) bool {
+func (s *Service) destinationMounted(repo string) bool {
 	if restic.IsRemoteRepo(repo) {
 		return false
 	}
@@ -40,20 +54,35 @@ func destinationMounted(repo string) bool {
 	defer f.Close() //nolint:errcheck // read-only handle
 	mounted := parseMountedDirs(f)
 
-	// Walk repo and each ancestor; if any is a listed mount point, the backing
-	// store is present. mount records are kernel paths (forward slashes), so
-	// normalise the repo the same way before comparing.
+	// Walk repo and each ancestor; a match counts only when the ancestor is a
+	// listed mount point AND a proper descendant of HostMountRoot. mount records
+	// are kernel paths (forward slashes), so normalise both the same way.
+	root := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
 	p := path.Clean(filepath.ToSlash(repo))
 	for {
-		if mounted[p] {
+		if mounted[p] && isStrictSubpath(root, p) {
 			return true
 		}
 		parent := path.Dir(p)
 		if parent == p {
-			return false // reached the root without a match
+			return false // reached the filesystem root without a qualifying mount
 		}
 		p = parent
 	}
+}
+
+// isStrictSubpath reports whether p is a proper (strict) descendant of root: root
+// is a path-prefix of p and p != root. Both must already be path.Clean'd. This is
+// what excludes "/" and HostMountRoot itself from counting as the backing mount.
+func isStrictSubpath(root, p string) bool {
+	if p == root {
+		return false
+	}
+	prefix := root
+	if prefix != "/" {
+		prefix += "/"
+	}
+	return strings.HasPrefix(p, prefix)
 }
 
 // parseMountedDirs reads /proc/self/mountinfo-format records from r and returns
