@@ -54,6 +54,9 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
 3. On the **Containers** tab, pick a container and click **Back up** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files}` and are created on the first backup.
 4. Set up scheduling from **Settings, Schedules**. There is a one-click *include all in schedule* for containers and VMs.
 
+!!! tip "Optional: pick a backup order"
+    If some containers should always be backed up before others (for example a database before the app that uses it), open the **backup-order** panel on the Containers page and drag them into the sequence you want. Scheduled and multi-select runs then follow it; anything you leave unordered is backed up most-overdue-first, as before.
+
 !!! note "Host integration check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces, so you can confirm the container is wired up correctly before you rely on it.
 
@@ -64,5 +67,6 @@ By default the interface shows only the essentials (back up, restore, schedule).
 ## Next steps
 
 - Browse the full **[Features](features.md)**.
-- Add an **[Off-site & recovery](offsite-recovery.md)** replica and save your recovery kit.
+- Add one or more **[Off-site & recovery](offsite-recovery.md)** replicas (each domain can ship to several destinations at once) and save your recovery kit.
+- Cloning a setup or moving to a new box? Carry your whole configuration over with the **Export and import settings** card. See [Configuration](configuration.md#portable-settings-export-and-import).
 - Hit a snag? See **[Troubleshooting](troubleshooting.md)**.
