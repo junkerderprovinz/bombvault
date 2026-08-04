@@ -199,6 +199,20 @@ type BackupDeps struct {
 	// flow never hangs forever on a container that never turns healthy. <=0 uses
 	// defaultHealthTimeout.
 	HealthTimeout time.Duration
+	// WhileDependentsStopped is an optional hook run AFTER a successful backup, with
+	// the backed-up target already restarted and running, but while the stopped
+	// dependents are STILL DOWN — and the dependents are only restarted once it
+	// returns. It exists so a step that RECREATES the target after the backup (the
+	// "update after successful backup" flow, which stops/removes/recreates the
+	// container) completes inside the stop window: otherwise the dependents come
+	// back during the backup and then break against the target while it is torn
+	// down for the recreate (bostafari, #119). Skipped when the backup failed (the
+	// dependents are still restarted unconditionally). The hook is best-effort — it
+	// owns its own error handling and must never panic; the dependent restart in the
+	// deferred unwind runs regardless, so a dependency is never left stopped. Nil in
+	// the zero value: with no hook, the dependents restart immediately after the
+	// backup exactly as before.
+	WhileDependentsStopped func()
 	// Excludes are restic --exclude patterns for this container's backup
 	// (already resolved to the paths restic stores).
 	Excludes []string
@@ -360,26 +374,52 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// depends_on ordering.
 		var stoppedDeps []StopContainer
 
-		// ONE restart path, registered up front so it is the LAST defer to run on
-		// unwind. Order matters: bring the backed-up TARGET back first and wait
-		// until it is actually Running, THEN restart the stopped dependents. Some
-		// dependents share the target's network namespace (network_mode:
-		// container:<target>) and cannot start until the target is live — restarting
-		// them first failed with "cannot join network namespace of a non running
-		// container". A target that was not running is left stopped; its dependents
-		// are still restarted (best-effort). The dependents themselves come back in
-		// compose depends_on order, optionally health-gated (see restartStoppedDeps).
+		// The restart is split across TWO defers so a dependency is NEVER left
+		// stopped. This one is registered FIRST, so it runs LAST on unwind: it always
+		// brings the stopped dependents back (in compose depends_on order, optionally
+		// health-gated — see restartStoppedDeps), even if the target-restart/hook
+		// defer below fails or panics. It is the "never leave a dep stopped" guard.
 		defer func() {
+			restartStoppedDeps(ctx, d, stoppedDeps)
+		}()
+
+		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
+		// backed-up TARGET back and wait until it is actually Running BEFORE the
+		// dependents are restarted (by the defer above). Some dependents share the
+		// target's network namespace (network_mode: container:<target>) and cannot
+		// start until the target is live — restarting them first failed with "cannot
+		// join network namespace of a non running container". A target that was not
+		// running is left stopped; its dependents are still restarted (best-effort).
+		//
+		// On a clean backup, the optional WhileDependentsStopped hook then runs while
+		// the dependents are STILL down — it may RECREATE the target (the update-after-
+		// backup flow), so we re-wait for the target to be Running afterwards so the
+		// netns dependents don't start against a torn-down target (bostafari, #119).
+		defer func() {
+			targetUp := false
 			if d.WasRunning {
 				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil {
 					if backupErr == nil {
 						backupErr = fmt.Errorf("backup: restart container: %w", startErr)
 					}
-				} else if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil && backupErr == nil {
-					backupErr = fmt.Errorf("backup: wait container running: %w", waitErr)
+				} else if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+					if backupErr == nil {
+						backupErr = fmt.Errorf("backup: wait container running: %w", waitErr)
+					}
+				} else {
+					targetUp = true
 				}
 			}
-			restartStoppedDeps(ctx, d, stoppedDeps)
+			if backupErr == nil && d.WhileDependentsStopped != nil {
+				d.WhileDependentsStopped()
+				// The hook may have recreated the target (stop/remove/create+start);
+				// re-wait so it is Running before its netns dependents are restarted.
+				if targetUp {
+					if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+						log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, waitErr)
+					}
+				}
+			}
 		}()
 
 		// Stop the target for its own backup (consistent appdata) when it was
