@@ -468,6 +468,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 		ReceiverEnabled:             v.ReceiverEnabled,
 		RestartHealthWait:           v.RestartHealthWait,
 		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
+		PerItemSchedules:            v.PerItemSchedules,
 		// Per-instance / secret-managed fields preserved from the target instance:
 		AuthPasswordHash: existing.AuthPasswordHash,
 		SessionEpoch:     existing.SessionEpoch,

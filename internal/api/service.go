@@ -5078,6 +5078,40 @@ func (s *Service) SetInclude(ctx context.Context, name string, include bool) err
 	return s.store.SetInclude(name, include)
 }
 
+// SetScheduleCadence sets a container's per-item schedule override (#121). It
+// find-or-creates the target row (exactly like SetInclude) so an override can be
+// set before the first backup. The cadence is validated with the same grammar the
+// domain schedules use; an empty string clears the override (back to the domain
+// default). everyN is rejected here because a per-item entry has no per-item
+// last-run gate to enforce the interval — the same restriction the off-site/drills
+// schedules carry.
+func (s *Service) SetScheduleCadence(ctx context.Context, name, cadence string) error {
+	cadence = strings.TrimSpace(cadence)
+	if cadence != "" {
+		cad, err := schedule.ParseCadence(cadence)
+		if err != nil {
+			return fmt.Errorf("invalid schedule: %w", err)
+		}
+		if cad.IntervalDays > 0 {
+			return fmt.Errorf("per-item schedules do not support 'everyN' — use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
+		}
+	}
+	if _, err := s.store.GetTargetByContainer(name); err != nil {
+		// Target does not exist yet — find-or-create it (same path as SetInclude).
+		var appdata []string
+		if in, inspErr := s.docker.Inspect(ctx, name); inspErr == nil {
+			appdata = s.resolveAppdataPaths(name, in)
+		}
+		if _, upsertErr := s.store.UpsertTarget(store.Target{
+			ContainerName: name,
+			AppdataPaths:  appdata,
+		}); upsertErr != nil {
+			return fmt.Errorf("ensure target: %w", upsertErr)
+		}
+	}
+	return s.store.SetScheduleCadence(name, cadence)
+}
+
 // SetIncludeAll sets the include_in_schedule flag for EVERY installed container
 // in one call — the one-click "include all in schedule" / "exclude all" action.
 // It iterates the same installed-container source the containers list uses
@@ -5233,6 +5267,10 @@ type VMView struct {
 	IncludeInSchedule bool   `json:"includeInSchedule"`
 	LastBackup        *int64 `json:"lastBackup"`
 	LastBackupStarted *int64 `json:"lastBackupStarted"`
+	// ScheduleCadence is the VM's optional per-item schedule override (#121); ""
+	// means it follows the VMs domain schedule. Only takes effect when the
+	// perItemSchedules setting is on.
+	ScheduleCadence string `json:"scheduleCadence"`
 }
 
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
@@ -5269,6 +5307,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		if t, ok := byName[vm.Name]; ok {
 			v.Method = t.Method
 			v.IncludeInSchedule = t.IncludeInSchedule
+			v.ScheduleCadence = t.ScheduleCadence
 			if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -5281,7 +5320,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		if live[t.Name] {
 			continue
 		}
-		v := VMView{Name: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule}
+		v := VMView{Name: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
 		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
 			v.LastBackupStarted = &run.StartedAt
@@ -7216,6 +7255,29 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 		}
 	}
 	return s.store.SetVMInclude(name, include)
+}
+
+// SetVMScheduleCadence sets a VM's per-item schedule override (#121), creating the
+// target if absent. The cadence is validated with the domain-schedule grammar; an
+// empty string clears the override. everyN is rejected (no per-item last-run gate),
+// exactly like SetScheduleCadence.
+func (s *Service) SetVMScheduleCadence(_ context.Context, name, cadence string) error {
+	cadence = strings.TrimSpace(cadence)
+	if cadence != "" {
+		cad, err := schedule.ParseCadence(cadence)
+		if err != nil {
+			return fmt.Errorf("invalid schedule: %w", err)
+		}
+		if cad.IntervalDays > 0 {
+			return fmt.Errorf("per-item schedules do not support 'everyN' — use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
+		}
+	}
+	if _, err := s.store.GetVMTargetByName(name); err != nil {
+		if _, uErr := s.store.UpsertVMTarget(store.VMTarget{Name: name, Method: "graceful"}); uErr != nil {
+			return fmt.Errorf("ensure vm target: %w", uErr)
+		}
+	}
+	return s.store.SetVMScheduleCadence(name, cadence)
 }
 
 // SetVMIncludeAll sets the include_in_schedule flag for EVERY known VM in one

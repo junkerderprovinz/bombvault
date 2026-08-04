@@ -180,6 +180,10 @@ type containerView struct {
 	// BackupOrder is the container's explicit manual backup position (#119): a
 	// positive value runs earlier, 0 means unordered (overdue-first tiebreak).
 	BackupOrder int `json:"backupOrder"`
+	// ScheduleCadence is the container's optional per-item schedule override (#121);
+	// "" means it follows the containers domain schedule. Only takes effect when the
+	// perItemSchedules setting is on.
+	ScheduleCadence string `json:"scheduleCadence"`
 	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
 	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
 	// 'updated' | 'failed') — so "checked, up to date" is visible without a
@@ -234,6 +238,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.LastUpdateCheck = t.LastUpdateCheck
 			v.LastUpdateResult = t.LastUpdateResult
 			v.BackupOrder = t.BackupOrder
+			v.ScheduleCadence = t.ScheduleCadence
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -270,6 +275,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			State:             "not-installed",
 			Installed:         false,
 			IncludeInSchedule: t.IncludeInSchedule,
+			ScheduleCadence:   t.ScheduleCadence,
 		}
 		if t.Definition != "" {
 			var def containerDefinition
@@ -776,6 +782,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		StopContainers    *[]string `json:"stopContainers"`
 		Excludes          *[]string `json:"excludes"`
 		UpdateAfterBackup *bool     `json:"updateAfterBackup"`
+		ScheduleCadence   *string   `json:"scheduleCadence"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -817,7 +824,31 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if body.ScheduleCadence != nil {
+		if err := h.svc.SetScheduleCadence(r.Context(), name, *body.ScheduleCadence); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		// A per-item override registers/removes a dedicated cron entry (#121), which
+		// only takes effect on a scheduler reload — settings changes reload, but a
+		// container PATCH does not, so reload here.
+		if err := h.reloadScheduler(); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// reloadScheduler re-reads the settings and re-registers every schedule entry,
+// including the per-item override entries (#121). Called after a change that alters
+// the schedule structure outside the settings form (a per-item cadence PATCH).
+func (h *Handler) reloadScheduler() error {
+	s, err := h.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun)
 }
 
 // handleScheduleIncludeAll sets the include_in_schedule flag for EVERY installed
@@ -1075,6 +1106,11 @@ type settingsView struct {
 	// recheck runs over the existing host SSH link; best-effort and non-fatal.
 	// Default on.
 	ReconcileUnraidUpdateStatus bool `json:"reconcileUnraidUpdateStatus"`
+	// PerItemSchedules opts into per-container/VM schedule overrides (#121). Default
+	// false: the per-domain schedule stays authoritative for every item and the UI
+	// is unchanged. When on, an included item with a non-empty scheduleCadence runs
+	// on its own cadence; an item with an empty override follows its domain schedule.
+	PerItemSchedules bool `json:"perItemSchedules"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -1167,6 +1203,7 @@ func toView(s store.Settings) settingsView {
 		ReceiverEnabled:             s.ReceiverEnabled,
 		RestartHealthWait:           s.RestartHealthWait,
 		RestartHealthTimeoutSec:     s.RestartHealthTimeoutSec,
+		PerItemSchedules:            s.PerItemSchedules,
 	}
 }
 
@@ -1430,6 +1467,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		ReceiverEnabled:             v.ReceiverEnabled,
 		RestartHealthWait:           v.RestartHealthWait,
 		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
+		PerItemSchedules:            v.PerItemSchedules,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,
@@ -2627,6 +2665,7 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Method            *string `json:"method"`
 		IncludeInSchedule *bool   `json:"includeInSchedule"`
+		ScheduleCadence   *string `json:"scheduleCadence"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -2639,6 +2678,18 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.IncludeInSchedule != nil {
 		if err := h.svc.SetVMInclude(r.Context(), name, *body.IncludeInSchedule); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.ScheduleCadence != nil {
+		if err := h.svc.SetVMScheduleCadence(r.Context(), name, *body.ScheduleCadence); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		// A per-item override (#121) is structural: reload so the VM's own cron entry
+		// is (de)registered (a VM PATCH does not otherwise reload the scheduler).
+		if err := h.reloadScheduler(); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
