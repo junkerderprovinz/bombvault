@@ -36,7 +36,7 @@ const THEMES = [
   { suffix: "-dark", bg: "#0d1117", name: "#e6edf3", claim: "#9aa4ad" },
 ];
 const W = 1600, H = 500;
-const LH = 300;                    // logo height (house standard)
+const LH = 386;                    // logo height (house standard)
 // Logo 2.0 geometry (viewBox 898.34 x 865.1). The logo's OPTICAL centre —
 // marked by the designer with a helper dot in the source file — is NOT the
 // geometric centre: the sparks at the top right add visual weight the eye
