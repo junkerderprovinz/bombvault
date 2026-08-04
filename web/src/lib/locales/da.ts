@@ -1140,6 +1140,24 @@ const da: Partial<Translations> = {
   "receiver.nameRequired": "Indtast et navn.",
   "receiver.repoRequired": "Indtast en arkivplacering.",
   "receiver.saveError": "Kunne ikke gemme det modtagne arkiv.",
+
+  // Backup order (#119)
+  "backupOrder.title": "Backup order",
+  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
+  "backupOrder.moveUp": "Move up",
+  "backupOrder.moveDown": "Move down",
+  "backupOrder.save": "Save order",
+  "backupOrder.saved": "Order saved",
+  "backupOrder.saveError": "Could not save the backup order.",
+  "backupOrder.empty": "No scheduled containers to order yet.",
+  "backupOrder.reset": "Clear order",
+
+  // Health-gated restart (#119)
+  "settings.restartHealthTitle": "Restart after backup",
+  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
+  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
+  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
+  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
 };
 
 export default da;

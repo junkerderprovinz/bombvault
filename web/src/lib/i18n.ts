@@ -1209,6 +1209,24 @@ export const en = {
   "settingsIO.group.monitoring": "Monitoring",
   "settingsIO.group.language": "Language",
   "settingsIO.group.exportEncryption": "Export encryption",
+
+  // Backup order (#119) — manual per-container backup sequence, Containers page.
+  "backupOrder.title": "Backup order",
+  "backupOrder.hint": "Set the sequence scheduled and batch backups run in. Containers left off the list run afterwards, most overdue first.",
+  "backupOrder.moveUp": "Move up",
+  "backupOrder.moveDown": "Move down",
+  "backupOrder.save": "Save order",
+  "backupOrder.saved": "Order saved",
+  "backupOrder.saveError": "Could not save the backup order.",
+  "backupOrder.empty": "No scheduled containers to order yet.",
+  "backupOrder.reset": "Clear order",
+
+  // Health-gated restart (#119) — Settings, Schedules tab.
+  "settings.restartHealthTitle": "Restart after backup",
+  "settings.restartHealthWait": "Wait for dependencies to be healthy before starting the next",
+  "settings.restartHealthWaitHint": "When 'Stop other containers during backup' stops containers, they restart in dependency order after the backup (and after any post-backup update). With this on, each container must report healthy or running before the ones that depend on it start.",
+  "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
+  "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -2370,6 +2388,24 @@ export const de: Translations = {
   "settingsIO.group.monitoring": "Überwachung",
   "settingsIO.group.language": "Sprache",
   "settingsIO.group.exportEncryption": "Export-Verschlüsselung",
+
+  // Backup order (#119)
+  "backupOrder.title": "Backup-Reihenfolge",
+  "backupOrder.hint": "Lege die Reihenfolge fest, in der geplante und Sammel-Backups laufen. Nicht gelistete Container laufen danach, am längsten überfällige zuerst.",
+  "backupOrder.moveUp": "Nach oben",
+  "backupOrder.moveDown": "Nach unten",
+  "backupOrder.save": "Reihenfolge speichern",
+  "backupOrder.saved": "Reihenfolge gespeichert",
+  "backupOrder.saveError": "Backup-Reihenfolge konnte nicht gespeichert werden.",
+  "backupOrder.empty": "Noch keine geplanten Container zum Sortieren.",
+  "backupOrder.reset": "Reihenfolge löschen",
+
+  // Health-gated restart (#119)
+  "settings.restartHealthTitle": "Neustart nach Backup",
+  "settings.restartHealthWait": "Vor dem Start des nächsten warten, bis Abhängigkeiten gesund sind",
+  "settings.restartHealthWaitHint": "Wenn 'Andere Container während des Backups stoppen' Container stoppt, werden sie nach dem Backup (und nach einem etwaigen Update) in Abhängigkeitsreihenfolge neu gestartet. Ist dies aktiv, muss jeder Container als gesund oder laufend melden, bevor die von ihm abhängigen starten.",
+  "settings.restartHealthTimeoutLabel": "Gesundheits-Timeout pro Container (Sekunden)",
+  "settings.restartHealthTimeoutHint": "Wie lange auf einen Container gewartet wird, bis er gesund ist, bevor seine Abhängigen trotzdem starten. Bereich 5 bis 3600.",
 };
 
 // ---------------------------------------------------------------------------
