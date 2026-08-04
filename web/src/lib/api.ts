@@ -2013,7 +2013,10 @@ export function foreignClose(session: string): Promise<OkEnvelope> {
  * ASYNC (see restore): the ack only confirms the detached job started; watch
  * the "container:/vm:/files:<item>" SSE key + the recorded run (kind
  * "restore") for the outcome. `snapshot` accepts "latest"; `target` (relative
- * subpath under the host mount) is REQUIRED for the files domain.
+ * subpath under the host mount) is REQUIRED for the files domain and, for the
+ * vms domain, names the destination base the VM disks are remapped into
+ * (<target>/<vm-name>/). An empty vms `target` lets the backend fall back to
+ * the configured restore folder, then the local VM domains path.
  *
  * Unlike most endpoints this one answers validation failures with HTTP 400
  * and a held single-flight guard with HTTP 409 — both still carry the

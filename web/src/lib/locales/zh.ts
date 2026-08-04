@@ -1164,6 +1164,8 @@ const zh: Partial<Translations> = {
   "settings.reconcileTitle": "Unraid 更新状态",
   "settings.reconcileUnraidStatus": "更新容器后刷新 Unraid 的更新状态",
   "settings.reconcileUnraidStatusHint": "在备份后更新步骤中 BombVault 更新容器后，清除 Unraid 的更新横幅。",
+  "recovery.foreignVMDest": "虚拟机磁盘目标位置",
+  "recovery.foreignVMDestHint": "虚拟机磁盘的写入位置。磁盘映像会写入 <destination>/<vm-name>/，因此请选择真正已挂载存储池中的文件夹，而不是内存盘。外部虚拟机以停止状态恢复，请在检查后自行启动。",
 };
 
 export default zh;

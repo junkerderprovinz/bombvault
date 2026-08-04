@@ -1172,6 +1172,8 @@ const tr: Partial<Translations> = {
   "settings.reconcileTitle": "Unraid güncelleme durumu",
   "settings.reconcileUnraidStatus": "Bir konteyneri güncelledikten sonra Unraid'in güncelleme durumunu yenile",
   "settings.reconcileUnraidStatusHint": "BombVault, yedeklemeden sonraki güncelleme adımında bir konteyneri güncelledikten sonra Unraid'in güncelleme afişini temizler.",
+  "recovery.foreignVMDest": "VM disk hedefi",
+  "recovery.foreignVMDestHint": "VM'nin disklerinin nereye yazılacağı. Disk imajları <destination>/<vm-name>/ konumuna gider, bu yüzden RAM diski yerine gerçekten bağlı bir havuzdaki bir klasör seçin. Yabancı bir VM durdurulmuş olarak geri yüklenir, bu yüzden kontrol ettikten sonra kendiniz başlatın.",
 };
 
 export default tr;

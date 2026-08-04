@@ -1175,6 +1175,8 @@ const ar: Partial<Translations> = {
   "settings.reconcileTitle": "حالة تحديثات Unraid",
   "settings.reconcileUnraidStatus": "تحديث حالة تحديثات Unraid بعد تحديث حاوية",
   "settings.reconcileUnraidStatusHint": "يمسح لافتة التحديث في Unraid بعد أن يحدّث BombVault حاوية في خطوة التحديث بعد النسخ الاحتياطي.",
+  "recovery.foreignVMDest": "وجهة أقراص الجهاز الافتراضي",
+  "recovery.foreignVMDestHint": "المكان الذي تُكتب فيه أقراص الجهاز الافتراضي. تذهب صور الأقراص إلى <destination>/<vm-name>/، لذا اختر مجلدًا على تجمّع مثبّت فعليًا، وليس على قرص الذاكرة العشوائية. يُستعاد الجهاز الافتراضي الخارجي متوقفًا، لذا شغّله بنفسك بعد فحصه.",
 };
 
 export default ar;

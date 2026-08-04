@@ -220,10 +220,19 @@ function isForeignSessionGone(err: string | undefined): boolean {
   return !!err && /session/i.test(err) && /(expired|unknown)/i.test(err);
 }
 
-// One restorable foreign item: snapshot picker (default latest), a target
-// folder for file sets (required — a foreign file set has no trusted local
-// path), and a Restore button driven by fireAndWaitRun on the recorded run —
+// One restorable foreign item: snapshot picker (default latest), a destination
+// folder, and a Restore button driven by fireAndWaitRun on the recorded run —
 // runs land with domain "container" | "vm" | "files" exactly like local ones.
+//
+// The destination folder is REQUIRED for two domains, for different reasons:
+//   - files: a foreign file set has no trusted local source path, so it always
+//     extracts into a folder the user picks.
+//   - vms (#122): a cross-instance VM must NEVER reuse the source server's disk
+//     paths (that wrote multi-GB images onto the destination host's RAM rootfs
+//     and bricked it). The user chooses where the disks land; they are written
+//     to <destination>/<vm-name>/ and the backend rewrites the libvirt XML to
+//     match. Defaults to the local VM domains path; a foreign VM is restored
+//     LEFT STOPPED so the operator can check it before starting it.
 function ForeignItemRow({
   domain,
   item,
@@ -247,7 +256,12 @@ function ForeignItemRow({
   onSessionGone: () => void;
 }) {
   const [snapshot, setSnapshot] = useState("latest");
-  const [target, setTarget] = useState("");
+  // VMs default the destination to the local VM domains path (subpath under the
+  // host mount); this exact subpath resolves to the same folder the backend
+  // would fall back to, so leaving it untouched matches the safe default. File
+  // sets start blank (the user must pick a folder).
+  const [target, setTarget] = useState(domain === "vms" ? "user/domains" : "");
+  const needsTarget = domain === "files" || domain === "vms";
   const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -259,7 +273,7 @@ function ForeignItemRow({
 
   async function handleRestore() {
     if (state === "busy" || blocked) return;
-    if (domain === "files" && target.trim() === "") return;
+    if (needsTarget && target.trim() === "") return;
     // Same-named local item: explicit overwrite confirm BEFORE anything fires.
     if (existsLocally && !window.confirm(t("recovery.foreignExistsConfirm").replace("{name}", item.name))) {
       return;
@@ -278,7 +292,7 @@ function ForeignItemRow({
             item: item.name,
             snapshot,
             confirm: true,
-            target: domain === "files" ? target.trim() : undefined,
+            target: needsTarget ? target.trim() : undefined,
           }),
       });
       if (res.ok) {
@@ -322,10 +336,23 @@ function ForeignItemRow({
           onChange={setTarget}
         />
       )}
+      {domain === "vms" && (
+        <div className="flex flex-col gap-1.5">
+          <FolderBrowser
+            label={t("recovery.foreignVMDest")}
+            value={target}
+            hostMountRoot={hostMountRoot}
+            onChange={setTarget}
+          />
+          <p className="text-xs text-carbon-textMuted max-w-2xl">
+            {t("recovery.foreignVMDestHint")}
+          </p>
+        </div>
+      )}
       <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => void handleRestore()}
-          disabled={state === "busy" || blocked || (domain === "files" && target.trim() === "")}
+          disabled={state === "busy" || blocked || (needsTarget && target.trim() === "")}
           className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {state === "busy" && (

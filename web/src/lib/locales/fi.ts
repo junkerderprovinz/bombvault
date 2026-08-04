@@ -1172,6 +1172,8 @@ const fi: Partial<Translations> = {
   "settings.reconcileTitle": "Unraidin päivitystila",
   "settings.reconcileUnraidStatus": "Päivitä Unraidin päivitystila säiliön päivittämisen jälkeen",
   "settings.reconcileUnraidStatusHint": "Tyhjentää Unraidin päivitysbannerin sen jälkeen, kun BombVault on päivittänyt säiliön varmuuskopioinnin jälkeisessä päivitysvaiheessa.",
+  "recovery.foreignVMDest": "VM-levyjen kohde",
+  "recovery.foreignVMDestHint": "Minne VM:n levyt kirjoitetaan. Levykuvat menevät kohteeseen <destination>/<vm-name>/, joten valitse kansio aidosti liitetystä poolista, ei RAM-levyltä. Vieras VM palautetaan pysäytettynä, joten käynnistä se itse tarkistettuasi sen.",
 };
 
 export default fi;

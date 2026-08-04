@@ -1172,6 +1172,8 @@ const it: Partial<Translations> = {
   "settings.reconcileTitle": "Stato aggiornamenti Unraid",
   "settings.reconcileUnraidStatus": "Aggiorna lo stato degli aggiornamenti di Unraid dopo aver aggiornato un container",
   "settings.reconcileUnraidStatusHint": "Cancella l'avviso di aggiornamento di Unraid dopo che BombVault aggiorna un container nel passaggio di aggiornamento successivo al backup.",
+  "recovery.foreignVMDest": "Destinazione dei dischi della VM",
+  "recovery.foreignVMDestHint": "Dove vengono scritti i dischi della VM. Le immagini disco finiscono in <destination>/<vm-name>/, quindi scegli una cartella su un pool realmente montato, non sul disco RAM. Una VM esterna viene ripristinata spenta, quindi avviala tu stesso dopo averla controllata.",
 };
 
 export default it;

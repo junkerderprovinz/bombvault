@@ -1167,6 +1167,8 @@ const uk: Partial<Translations> = {
   "settings.reconcileTitle": "Статус оновлень Unraid",
   "settings.reconcileUnraidStatus": "Оновлювати статус оновлень Unraid після оновлення контейнера",
   "settings.reconcileUnraidStatusHint": "Прибирає банер оновлення Unraid після того, як BombVault оновить контейнер на етапі оновлення після резервного копіювання.",
+  "recovery.foreignVMDest": "Розташування дисків ВМ",
+  "recovery.foreignVMDestHint": "Куди записуються диски віртуальної машини. Образи дисків потрапляють до <destination>/<vm-name>/, тож виберіть теку на справді змонтованому пулі, а не на диску в ОЗП. Чужа ВМ відновлюється зупиненою, тож запустіть її самостійно після перевірки.",
 };
 
 export default uk;

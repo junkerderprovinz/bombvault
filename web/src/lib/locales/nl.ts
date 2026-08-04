@@ -1169,6 +1169,8 @@ const nl: Partial<Translations> = {
   "settings.reconcileTitle": "Unraid-updatestatus",
   "settings.reconcileUnraidStatus": "Unraids updatestatus vernieuwen na het bijwerken van een container",
   "settings.reconcileUnraidStatusHint": "Wist de updatemelding van Unraid nadat BombVault een container heeft bijgewerkt in de updatestap na de back-up.",
+  "recovery.foreignVMDest": "Bestemming van de VM-schijven",
+  "recovery.foreignVMDestHint": "Waar de schijven van de VM worden weggeschreven. De schijfimages komen in <destination>/<vm-name>/, kies dus een map op een echt aangekoppelde pool, niet op de RAM-schijf. Een externe VM wordt gestopt hersteld, start hem dus zelf nadat je hem hebt gecontroleerd.",
 };
 
 export default nl;

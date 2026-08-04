@@ -1170,6 +1170,8 @@ const cs: Partial<Translations> = {
   "settings.reconcileTitle": "Stav aktualizací Unraid",
   "settings.reconcileUnraidStatus": "Po aktualizaci kontejneru obnovit stav aktualizací Unraid",
   "settings.reconcileUnraidStatusHint": "Vymaže banner aktualizace Unraid poté, co BombVault aktualizuje kontejner v kroku aktualizace po záloze.",
+  "recovery.foreignVMDest": "Cíl disků VM",
+  "recovery.foreignVMDestHint": "Kam se zapíšou disky virtuálního stroje. Obrazy disků jdou do <destination>/<vm-name>/, proto zvolte složku na skutečně připojeném poolu, ne na RAM disku. Cizí VM se obnoví zastavená, takže ji po kontrole spusťte sami.",
 };
 
 export default cs;

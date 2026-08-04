@@ -1175,6 +1175,8 @@ const hu: Partial<Translations> = {
   "settings.reconcileTitle": "Unraid frissítési állapota",
   "settings.reconcileUnraidStatus": "Az Unraid frissítési állapotának frissítése egy konténer frissítése után",
   "settings.reconcileUnraidStatusHint": "Törli az Unraid frissítési szalagcímét, miután a BombVault a mentés utáni frissítési lépésben frissített egy konténert.",
+  "recovery.foreignVMDest": "VM lemezek célhelye",
+  "recovery.foreignVMDestHint": "Ahová a VM lemezei íródnak. A lemezképek a <destination>/<vm-name>/ helyre kerülnek, ezért válassz egy mappát egy valóban csatolt poolon, ne a RAM-lemezen. Egy idegen VM leállítva áll vissza, ezért ellenőrzés után magad indítsd el.",
 };
 
 export default hu;

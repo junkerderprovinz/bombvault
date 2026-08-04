@@ -1172,6 +1172,8 @@ const no: Partial<Translations> = {
   "settings.reconcileTitle": "Unraid-oppdateringsstatus",
   "settings.reconcileUnraidStatus": "Oppdater Unraids oppdateringsstatus etter oppdatering av en container",
   "settings.reconcileUnraidStatusHint": "Fjerner Unraids oppdateringsbanner etter at BombVault har oppdatert en container i oppdateringstrinnet etter sikkerhetskopieringen.",
+  "recovery.foreignVMDest": "Destinasjon for VM-disker",
+  "recovery.foreignVMDestHint": "Hvor VM-ens disker skrives. Diskbildene havner i <destination>/<vm-name>/, så velg en mappe på en faktisk montert pool, ikke på RAM-disken. En fremmed VM gjenopprettes stoppet, så start den selv etter at du har sjekket den.",
 };
 
 export default no;
