@@ -2958,6 +2958,19 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		})
 	}
 
+	// #119 follow-up: "update after successful backup" RECREATES the container
+	// (stop/remove/create) after the backup. If the stopped dependents were already
+	// brought back (Part B) by then, they break against the target while it is torn
+	// down for the recreate (bostafari: a dependent fires against a down target,
+	// connection refused). Hand the update to the orchestrator as its
+	// WhileDependentsStopped hook so it runs INSIDE the stop window — the dependents
+	// are restarted only after the recreate. Only for a running, opted-in container;
+	// otherwise nil, so the dependents restart right after the backup (unchanged).
+	var whileDepsStopped func()
+	if tg.UpdateAfterBackup && in.Running {
+		whileDepsStopped = func() { s.updateContainerAfterBackup(ctx, name, in, tg.ID) }
+	}
+
 	pkey := "container:" + name
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
@@ -2967,25 +2980,26 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// so the pre-flight failure finisher above must stand down to avoid a double record.
 	orchestrated = true
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
-		ContainerRef:         name,
-		ContainerName:        name,
-		RepoPath:             repo,
-		AppdataPaths:         effective,
-		StopTimeout:          30 * time.Second,
-		TargetID:             tg.ID,
-		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
-		FlashTemplatesDir:    s.cfg.FlashTemplatesDir,
-		WasRunning:           in.Running,
-		PreHook:              tg.PreHook,
-		PostHook:             tg.PostHook,
-		StopContainers:       deps,
-		HealthWait:           settings.RestartHealthWait,
-		HealthTimeout:        time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
-		Excludes:             s.resolveExcludePatterns(tg.Excludes, in),
-		Docker:               s.docker,
-		Restic:               &resticAdapter{engine: s.engine, mode: mode},
-		Templates:            templatesAdapter{},
-		Runs:                 runsAdapter{s.store},
+		ContainerRef:           name,
+		ContainerName:          name,
+		RepoPath:               repo,
+		AppdataPaths:           effective,
+		StopTimeout:            30 * time.Second,
+		TargetID:               tg.ID,
+		SnapshotTemplatesDir:   filepath.Join(s.cfg.DataDir, "templates"),
+		FlashTemplatesDir:      s.cfg.FlashTemplatesDir,
+		WasRunning:             in.Running,
+		PreHook:                tg.PreHook,
+		PostHook:               tg.PostHook,
+		StopContainers:         deps,
+		HealthWait:             settings.RestartHealthWait,
+		HealthTimeout:          time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
+		WhileDependentsStopped: whileDepsStopped,
+		Excludes:               s.resolveExcludePatterns(tg.Excludes, in),
+		Docker:                 s.docker,
+		Restic:                 &resticAdapter{engine: s.engine, mode: mode},
+		Templates:              templatesAdapter{},
+		Runs:                   runsAdapter{s.store},
 	})
 	s.progEnd(pkey, "backup", err == nil)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
@@ -2999,18 +3013,15 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if wErr := s.writeDefToStorage(settings, name, defBytes); wErr != nil {
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
+	// #52: the optional post-backup image update already ran, if enabled, as the
+	// orchestrator's WhileDependentsStopped hook (above) — inside the stop window,
+	// so a recreate of the target completes BEFORE its dependents are restarted
+	// (#119). The backup + fresh snapshot are its safety net; any failure there is
+	// logged + recorded as a failed "update" run, but never fails the backup.
 	s.applyRetention(ctx, repo, settings, mode, "container:"+name)
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	s.maybeCollectStats(ctx, "containers")
-
-	// #52: optional post-backup image update. Runs LAST — the backup + fresh
-	// snapshot are the safety net — and only for a running container the user
-	// opted in. Any failure is logged + recorded as a failed "update" run, but
-	// never fails the backup that already succeeded.
-	if tg.UpdateAfterBackup && in.Running {
-		s.updateContainerAfterBackup(ctx, name, in, tg.ID)
-	}
 	return sum, nil
 }
 
