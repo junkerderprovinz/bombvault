@@ -415,7 +415,17 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
 			return "", nil, backup.ErrInvalidSnapshotID
 		}
-		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg)
+		// A cross-instance VM restore MUST remap the source server's disk paths onto
+		// a destination on THIS host (the source pool is not mounted here — restoring
+		// there would fill the host's RAM and brick it, #122). targetSubPath (the
+		// request Target) chooses the destination; empty falls back to the local VM
+		// domains path. prepareRestoreVMForTarget remaps disks + XML and guards the
+		// destination before any restic write.
+		destBase, err := s.foreignVMDestBase(targetSubPath)
+		if err != nil {
+			return "", nil, err
+		}
+		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, destBase)
 		if err != nil {
 			return "", nil, err
 		}
@@ -424,8 +434,13 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 			return "", nil, fmt.Errorf("adopt vm %q: %w", item, err)
 		}
 		plan.targetID = adopted.ID
+		// A foreign-restored VM is defined but NEVER autostarted: it carries the
+		// SOURCE host's domain XML (host-specific devices/paths), so booting it — now
+		// or on host boot — could wedge libvirt. Force autostart off and leave it
+		// stopped; the operator starts it once they have vetted the definition.
+		plan.wasAutostart = false
 		return "vm:" + item, func(rctx context.Context) error {
-			return s.executeRestoreVM(rctx, item, plan, false)
+			return s.executeRestoreVM(rctx, item, plan, true)
 		}, nil
 	case "files":
 		plan, err := s.prepareForeignFileSetRestore(ctx, sess, item, snapshotID, targetSubPath)

@@ -5183,6 +5183,10 @@ func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID strin
 	return nil
 }
 
+func (a *resticAdapter) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string) error {
+	return a.engine.RestoreSubtreeTo(ctx, repo, snapshotID, subtreePath, target, a.mode)
+}
+
 // VerifySnapshot lists the repo (which also proves it is reachable and the key
 // is right) and confirms snapshotID is present, so a restore aborts before any
 // destructive teardown if the snapshot is missing or the repo is unreadable.
@@ -5688,6 +5692,10 @@ type vmRestorePlan struct {
 	diskPaths    []string
 	domainXML    string
 	wasAutostart bool
+	// restoreDirs drives a REMAPPED restore (cross-instance): each entry restores a
+	// snapshot subtree into a chosen destination dir. Empty = same-instance restore
+	// (each disk goes back to its own path), byte-for-byte the historical behaviour.
+	restoreDirs []backup.VMRestoreDir
 	// wasRunning is the captured run state (nil = old backup with no recorded
 	// state → boot after restore, the historical behaviour).
 	wasRunning *bool
@@ -5739,7 +5747,9 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 	if err != nil {
 		return vmRestorePlan{}, errors.New("vm has not been backed up yet")
 	}
-	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg)
+	// Same-instance restore: no destination base, so disks go back to their own
+	// paths and the domain XML is used verbatim (byte-for-byte historical behaviour).
+	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, "")
 }
 
 // prepareRestoreVMForTarget builds a VM restore plan for an ALREADY-RESOLVED VM
@@ -5749,7 +5759,15 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 // is validated BEFORE that recipe is persisted locally (prepareForeignRestore
 // adopts it only once this returns a plan, never on a validation failure). The
 // caller runs the confirm / explicit-snapshot-id-shape guards first.
-func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget) (vmRestorePlan, error) {
+//
+// destBase, when non-empty, REMAPS every disk (and the NVRAM) to
+// <destBase>/<name>/<basename>: the restic restore target, the domain XML
+// <disk><source file> / <nvram> paths, and the SSH NVRAM write all point at the
+// destination pool instead of the source server's paths. A remap ALSO gates the
+// restore behind guardVMRestoreDestination, so it can never write a multi-GB
+// disk onto an unmounted path (the RAM rootfs) and brick the host (#122). An
+// empty destBase leaves the same-instance restore byte-for-byte unchanged.
+func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, destBase string) (vmRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
@@ -5792,20 +5810,60 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
 	}
 
+	domainXML := def.DomainXML
+	nvramHostPath := def.NVRAMHostPath
+	var restoreDirs []backup.VMRestoreDir
+
+	// REMAP (cross-instance restore): place every disk under <destBase>/<name>/ on
+	// the DESTINATION pool, rewrite the domain XML disk/nvram sources to match, and
+	// GUARD the destination so the restore can never fill an unmounted path (the RAM
+	// rootfs) and brick the host (#122). An empty destBase is the same-instance
+	// restore and skips all of this (disks return to their own paths, XML verbatim).
+	if destBase != "" {
+		destDir := path.Join(path.Clean(destBase), name) // container path
+		destHostDir := s.toHostPath(destDir)             // host path for the domain XML
+		diskRemap := make(map[string]string, len(diskPaths))
+		seenDir := map[string]bool{}
+		remapped := make([]string, 0, len(diskPaths))
+		for _, cp := range diskPaths {
+			base := path.Base(cp)
+			remapped = append(remapped, destDir+"/"+base)
+			diskRemap[s.toHostPath(cp)] = destHostDir + "/" + base
+			if src := path.Dir(cp); !seenDir[src] {
+				seenDir[src] = true
+				restoreDirs = append(restoreDirs, backup.VMRestoreDir{Subtree: src, Target: destDir})
+			}
+		}
+		diskPaths = remapped
+		domainXML = virshcli.RewriteDiskSources(domainXML, diskRemap)
+		if nvramHostPath != "" {
+			newNVRAM := destHostDir + "/" + path.Base(nvramHostPath)
+			domainXML = virshcli.RewriteNVRAM(domainXML, newNVRAM)
+			nvramHostPath = newNVRAM
+		}
+		// HOST-BRICK GUARD: prove the destination is on a real mounted pool with room
+		// BEFORE any restic write. On failure nothing is written.
+		if err := s.guardVMRestoreDestination(ctx, ref, snapshotID, destDir); err != nil {
+			return vmRestorePlan{}, err
+		}
+	}
+
 	// Make UEFI domains bootable even if the captured NVRAM is absent: add a
 	// template= to <nvram> so libvirt regenerates it from the OVMF master. When
 	// NVRAM bytes were captured, PreDefine writes them back over SSH first, so
 	// libvirt uses the real var store (boot entries preserved).
-	domainXML := virshcli.EnsureNVRAMTemplate(def.DomainXML)
+	domainXML = virshcli.EnsureNVRAMTemplate(domainXML)
 
 	// preDefine writes the captured NVRAM back to the host over SSH AFTER the old
 	// domain is undefined (which removes its nvram) and BEFORE `virsh define`, so
-	// the restored VM boots with its original UEFI variables. No-op when there is
-	// nothing to write or SSH is unavailable.
+	// the restored VM boots with its original UEFI variables. It writes to the
+	// (possibly remapped) destination nvram path. No-op when there is nothing to
+	// write or SSH is unavailable.
 	var preDefine func(context.Context) error
-	if len(def.NVRAMBytes) > 0 && def.NVRAMHostPath != "" && s.ssh != nil {
+	if len(def.NVRAMBytes) > 0 && nvramHostPath != "" && s.ssh != nil {
+		writeNVRAMPath := nvramHostPath
 		preDefine = func(ctx context.Context) error {
-			if err := s.ssh.WriteFile(ctx, def.NVRAMHostPath, def.NVRAMBytes); err != nil {
+			if err := s.ssh.WriteFile(ctx, writeNVRAMPath, def.NVRAMBytes); err != nil {
 				log.Printf("api: RestoreVM: WARN NVRAM write over SSH failed for %q (%v) — the VM is restored and will boot, but libvirt regenerates the UEFI variables from the firmware template, so boot entries may need to be re-added", name, err) //nolint:gosec // G706: name is %q-quoted
 			}
 			return nil // never block the restore on NVRAM — the firmware-template fallback keeps the VM bootable
@@ -5827,9 +5885,77 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		diskPaths:    diskPaths,
 		domainXML:    domainXML,
 		wasAutostart: def.WasAutostart,
+		restoreDirs:  restoreDirs,
 		wasRunning:   def.WasRunning,
 		preDefine:    preDefine,
 	}, nil
+}
+
+// guardVMRestoreDestination is the HOST-BRICK GUARD for a remapped (cross-instance)
+// VM restore (#122): it proves the destination directory is safe to write a
+// multi-GB disk image into BEFORE restic writes anything. Two checks:
+//
+//  1. destDir must sit on a REAL mounted pool/share — a mount point that is a
+//     proper descendant of HostMountRoot (destinationMounted, shared with #120).
+//     The failure this prevents: a source path like /mnt/zfs/domains maps to an
+//     UNMOUNTED dir on the destination, so /mnt lives on the RAM rootfs and restic
+//     writes the image into tmpfs → OOM kills emhttpd/nginx → the host is bricked.
+//  2. There must be enough free space for the restore. The size comes from the
+//     SOURCE snapshot's restore-size (a read of the source repo); the free-space
+//     probe runs on the nearest existing ancestor of destDir. A probe error is
+//     treated as "cannot prove insufficient" and does not block (the mount check
+//     is the primary defence); only a proven shortfall aborts.
+func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, snapshotID, destDir string) error {
+	if !s.destinationMounted(destDir) {
+		return fmt.Errorf("restore destination %q is not on a mounted pool or share; a VM disk restored there would be written into the host's RAM and crash it. Choose a destination folder on real storage and retry", s.toHostPath(destDir))
+	}
+	_, wantBytes, err := s.engine.StatsRestoreSize(ctx, ref.repo, snapshotID, ref.mode)
+	if err != nil {
+		return fmt.Errorf("restore preflight: measure restore size: %w", err)
+	}
+	if wantBytes > 0 {
+		if free, ferr := s.diskFreeFn()(nearestExistingDir(destDir)); ferr == nil && free < uint64(wantBytes) {
+			return fmt.Errorf("not enough free space to restore this VM: it needs %d bytes but the destination %q has only %d free. Free up space or choose another destination", wantBytes, s.toHostPath(destDir), free)
+		}
+	}
+	return nil
+}
+
+// foreignVMDestBase resolves the destination base directory (a container path)
+// for a cross-instance VM restore's disks. Resolution order, NEVER the source
+// pool: an explicit target subpath (the request Target) wins; else the configured
+// RestoreFolder (the settings default restore location); else the Unraid-conventional
+// local VM domains share under the host mount. Target/RestoreFolder are relative
+// subpaths validated by paths.Resolve (no absolute path, no traversal), exactly
+// like the file-set to-folder restore.
+func (s *Service) foreignVMDestBase(target string) (string, error) {
+	if sub := strings.TrimSpace(target); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	return path.Join(path.Clean(s.cfg.HostMountRoot), "user/domains"), nil
+}
+
+// nearestExistingDir walks up from p until it finds a directory that exists, so
+// a free-space probe (statfs needs a real path) can run against the filesystem
+// the restore will write into even before the leaf destination dir is created.
+func nearestExistingDir(p string) string {
+	for {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+		parent := path.Dir(p)
+		if parent == p {
+			return p
+		}
+		p = parent
+	}
 }
 
 // executeRestoreVM drives the long-running (destructive) part of a VM restore
@@ -5848,6 +5974,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		Name:         name,
 		SnapshotID:   plan.snapshotID,
 		DiskPaths:    plan.diskPaths,
+		RestoreDirs:  plan.restoreDirs,
 		DomainXML:    plan.domainXML,
 		WasAutostart: plan.wasAutostart,
 		// Boot after restore iff the VM was running when backed up (nil = old backup
