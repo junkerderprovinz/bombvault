@@ -747,6 +747,16 @@ export const en = {
   "schedule.includeAll": "Include all in schedule",
   "schedule.excludeAll": "Exclude all from schedule",
   "schedule.updateFailed": "Failed to update schedule",
+  // Per-item schedule overrides (#121)
+  "jobs.noVMsIncluded": "No VMs included in schedule.",
+  "settings.perItemSchedules": "Per-item schedules",
+  "settings.perItemSchedulesHint": "Let individual containers and VMs override the domain schedule with their own cadence. Off by default; an item left blank keeps the domain schedule.",
+  "schedule.overrideTitle": "Schedule override",
+  "schedule.overrideUsesDefault": "Uses the domain schedule",
+  "schedule.overrideEdit": "Set override",
+  "schedule.overrideHint": "Empty uses the domain schedule. Per-item overrides do not support the every-N-days mode.",
+  "schedule.overrideSave": "Save override",
+  "schedule.overrideSaved": "Override saved",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1939,6 +1949,16 @@ export const de: Translations = {
   "schedule.includeAll": "Alle in den Zeitplan",
   "schedule.excludeAll": "Alle aus dem Zeitplan",
   "schedule.updateFailed": "Zeitplan konnte nicht aktualisiert werden",
+  // Pro-Element-Zeitpläne (#121)
+  "jobs.noVMsIncluded": "Keine VMs im Zeitplan enthalten.",
+  "settings.perItemSchedules": "Zeitpläne pro Element",
+  "settings.perItemSchedulesHint": "Lässt einzelne Container und VMs den Domänen-Zeitplan mit einem eigenen Rhythmus überschreiben. Standardmäßig aus; ein leeres Element behält den Domänen-Zeitplan.",
+  "schedule.overrideTitle": "Zeitplan-Überschreibung",
+  "schedule.overrideUsesDefault": "Nutzt den Domänen-Zeitplan",
+  "schedule.overrideEdit": "Überschreibung festlegen",
+  "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan. Überschreibungen pro Element unterstützen den Alle-N-Tage-Modus nicht.",
+  "schedule.overrideSave": "Überschreibung speichern",
+  "schedule.overrideSaved": "Überschreibung gespeichert",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",

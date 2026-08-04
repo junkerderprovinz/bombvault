@@ -41,6 +41,10 @@ export interface Container {
   /** True for BombVault's own container: it can't be backed up (it would stop
    *  itself), so the UI hides its backup action and excludes it from "select all". */
   self?: boolean;
+  /** Optional per-item schedule override (#121): a cadence string that overrides
+   *  the containers domain schedule for this container. "" means it follows the
+   *  domain schedule. Only takes effect when the perItemSchedules setting is on. */
+  scheduleCadence?: string;
 }
 
 export interface ListContainersResponse {
@@ -217,6 +221,11 @@ export interface Settings {
    *  cached "update available" status over the host SSH link so the Docker tab's
    *  stale update banner clears. Best-effort and non-fatal. Default true. */
   reconcileUnraidUpdateStatus: boolean;
+  /** #121: opt into per-item schedule overrides. Off by default, so every item
+   *  follows its domain schedule and the UI is unchanged. When on, a container or
+   *  VM with a non-empty scheduleCadence runs on its own cadence; an item left
+   *  blank keeps its domain schedule. */
+  perItemSchedules: boolean;
 }
 
 /** One private container-registry credential (#106), e.g. ghcr.io. */
@@ -994,6 +1003,23 @@ export function setInclude(
 }
 
 /**
+ * PATCH /api/containers/{name} — set (or clear) this container's per-item schedule
+ * override (#121). Pass a cadence string ("daily HH:MM", "weekly DOW HH:MM", a cron
+ * expression, or "off"); an empty string clears the override so the container falls
+ * back to the containers domain schedule. Only takes effect when perItemSchedules
+ * is on. everyN is rejected server-side (no per-item last-run gate).
+ */
+export function setScheduleCadence(
+  name: string,
+  scheduleCadence: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ scheduleCadence }),
+  });
+}
+
+/**
  * POST /api/containers/schedule-include — one-click set the "include in schedule"
  * flag for EVERY installed container (true = include all, false = exclude all).
  */
@@ -1609,6 +1635,10 @@ export interface VM {
   includeInSchedule: boolean;
   lastBackup: number | null;
   lastBackupStarted: number | null;
+  /** Optional per-item schedule override (#121): a cadence string that overrides
+   *  the VMs domain schedule for this VM. "" means it follows the domain schedule.
+   *  Only takes effect when the perItemSchedules setting is on. */
+  scheduleCadence?: string;
 }
 
 export interface ListVMsResponse {
@@ -1656,6 +1686,22 @@ export function setVMInclude(
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ includeInSchedule }),
+  });
+}
+
+/**
+ * PATCH /api/vms/{name} — set (or clear) this VM's per-item schedule override
+ * (#121). Same grammar and semantics as setScheduleCadence: an empty string clears
+ * the override so the VM falls back to the VMs domain schedule, and it only takes
+ * effect when perItemSchedules is on.
+ */
+export function setVMScheduleCadence(
+  name: string,
+  scheduleCadence: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ scheduleCadence }),
   });
 }
 

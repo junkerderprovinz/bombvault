@@ -1,0 +1,105 @@
+import { useState } from "react";
+import { useT } from "../lib/i18n";
+import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
+
+// ---------------------------------------------------------------------------
+// Per-item schedule override (#121)
+//
+// A single container's or VM's optional schedule override. It reuses the exact
+// same CadenceBuilder the domain schedules use, so the grammar and editing feel
+// are identical. An empty override ("" / "off") means the item follows its domain
+// schedule; a concrete cadence overrides it. This control is only rendered while
+// the perItemSchedules setting is on — when it is off the item lists are unchanged.
+//
+// The editor is collapsed by default and shows a one-line summary (the override
+// cadence, or "uses the domain schedule"), so a long member list stays compact.
+// A single save persists the current value via the supplied PATCH function.
+// ---------------------------------------------------------------------------
+
+export function ItemScheduleOverride({
+  name,
+  initial,
+  onSave,
+}: {
+  /** The container/VM name (only used for the accessible label). */
+  name: string;
+  /** The stored override cadence ("" = follows the domain schedule). */
+  initial: string;
+  /** Persist the override; an empty string clears it. */
+  onSave: (cadence: string) => Promise<{ ok: boolean; error?: string }>;
+}) {
+  const { t, lang } = useT();
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(initial ?? "");
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // A non-empty, non-"off" cadence is an active override; anything else means the
+  // item follows its domain schedule.
+  const active = value.trim() !== "" && value.trim() !== "off";
+  const summary = active ? formatCadence(value, t, lang) : t("schedule.overrideUsesDefault");
+
+  async function handleSave() {
+    setBusy(true);
+    setError(null);
+    setSaved(false);
+    try {
+      // Normalize "off" to an empty override: the backend treats "off" as a valid
+      // cadence, but for a per-item override the intent of "off" is "no override".
+      const toStore = value.trim() === "off" ? "" : value.trim();
+      const res = await onSave(toStore);
+      if (res.ok) {
+        setSaved(true);
+      } else {
+        setError(res.error ?? t("schedule.updateFailed"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 pl-5">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("schedule.overrideTitle")}:</span>
+        <span className={`text-xs ${active ? "text-carbon-textSub" : "text-carbon-textMuted italic"}`}>
+          {summary}
+        </span>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="text-xs text-carbon-textSub hover:text-carbon-text underline underline-offset-2"
+        >
+          {open ? t("common.close") : t("schedule.overrideEdit")}
+        </button>
+      </div>
+
+      {open && (
+        <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-3">
+          <CadenceBuilder
+            label={`${t("schedule.overrideTitle")}: ${name}`}
+            value={value}
+            onChange={(v) => {
+              setValue(v);
+              setSaved(false);
+            }}
+          />
+          <p className="text-xs text-carbon-textMuted">{t("schedule.overrideHint")}</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => void handleSave()}
+              disabled={busy}
+              className="rounded-lg bg-accent text-accentContrast px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            >
+              {busy ? t("common.saving") : t("schedule.overrideSave")}
+            </button>
+            {saved && <span className="text-xs text-statusOk">{t("schedule.overrideSaved")}</span>}
+            {error && <span className="text-xs text-statusFail">{error}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
