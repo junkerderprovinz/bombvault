@@ -3375,10 +3375,18 @@ type fakeResticEngine struct {
 	// bounded). Recording only — the fake's behaviour is unchanged.
 	restoreCtxErrs       []error
 	snapshotsCtxDeadline []bool
+	// initWritesConfig, when true, makes Init drop a `config` marker so a
+	// subsequent RepoOpens/localRepoMissing reflects a real, freshly-created repo
+	// (used by the #120 re-establish-on-live-disk test).
+	initWritesConfig bool
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
 	f.inited = append(f.inited, repo)
+	if f.initErr == nil && f.initWritesConfig {
+		_ = os.MkdirAll(repo, 0o700)
+		_ = os.WriteFile(filepath.Join(repo, "config"), []byte("{}"), 0o600)
+	}
 	return f.initErr
 }
 
