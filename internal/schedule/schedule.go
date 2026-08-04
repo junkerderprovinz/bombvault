@@ -144,6 +144,93 @@ func ParseCadence(s string) (Cadence, error) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Per-item schedule overrides (#121)
+// ---------------------------------------------------------------------------
+
+// itemSchedule is how one INCLUDED item participates when per-item schedules are
+// ON, derived from its optional per-item override string.
+type itemSchedule struct {
+	// ownEntry is true when the item has a concrete, valid cadence override and
+	// should therefore get its OWN cron entry firing on Spec. When false the item
+	// is handled by the domain (inDomainRun) unless it is explicitly off.
+	ownEntry bool
+	// inDomainRun is true when the item is backed up as part of the domain-cadence
+	// run (an empty or invalid override falls back to the domain default exactly as
+	// today). Mutually exclusive with ownEntry.
+	inDomainRun bool
+	// Spec is the 5-field cron expression for the item's own entry (valid only when
+	// ownEntry is true).
+	Spec string
+}
+
+// classifyItemOverride decides how an item participates under per-item schedules
+// from its override string. It is the single seam both the per-item entry
+// registration and the domain-run filter consult, so their decisions can never
+// diverge — and it is a pure function so the due-selection logic is unit-testable
+// without cron or a store.
+//
+//   - ""  (empty)            → follow the domain default (inDomainRun). This is the
+//     "no override, unchanged" case: exactly as today.
+//   - invalid (ParseCadence  → follow the domain default. A garbage override never
+//     errors)                  silently drops an item from all scheduling.
+//   - "everyN N HH:MM"        → follow the domain default. Per-item entries have no
+//     per-item last-run gate, so an everyN override cannot enforce its interval;
+//     it degrades to the domain schedule rather than firing every day. The API
+//     rejects everyN overrides at save time, so this only guards a legacy value.
+//   - "off"                   → the item is NOT scheduled at all (no entry, and
+//     excluded from the domain run). A deliberate per-item pause.
+//   - any concrete cadence    → the item gets its OWN entry on that cadence.
+func classifyItemOverride(override string) itemSchedule {
+	if strings.TrimSpace(override) == "" {
+		return itemSchedule{inDomainRun: true}
+	}
+	cad, err := ParseCadence(override)
+	if err != nil {
+		return itemSchedule{inDomainRun: true} // invalid → domain default
+	}
+	if cad.IntervalDays > 0 {
+		return itemSchedule{inDomainRun: true} // everyN unsupported per-item → domain default
+	}
+	if !cad.Enabled {
+		return itemSchedule{} // "off" → not scheduled at all
+	}
+	return itemSchedule{ownEntry: true, Spec: cad.Spec}
+}
+
+// DomainRunTargets filters container targets to those the DOMAIN-cadence job
+// should back up. When perItem is false it returns targets UNCHANGED (byte-for-
+// byte as before — overrides are ignored). When true it drops targets that have
+// their own per-item entry (a concrete override) or that are explicitly "off",
+// leaving the items that follow the domain default. IncludeInSchedule is still
+// checked by RunContainersJob, so this only removes overridden/off items.
+func DomainRunTargets(targets []store.Target, perItem bool) []store.Target {
+	if !perItem {
+		return targets
+	}
+	out := make([]store.Target, 0, len(targets))
+	for _, t := range targets {
+		if classifyItemOverride(t.ScheduleCadence).inDomainRun {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// DomainRunVMTargets is the VM counterpart of DomainRunTargets.
+func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
+	if !perItem {
+		return vms
+	}
+	out := make([]store.VMTarget, 0, len(vms))
+	for _, v := range vms {
+		if classifyItemOverride(v.ScheduleCadence).inDomainRun {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
 // PeriodSeconds returns the expected interval between fires for this cadence, in
 // seconds — the RPO (recovery-point objective) window a backup is expected to
 // stay within. It is the basis of the per-domain protection status: a backup
@@ -680,6 +767,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 		s.c.Remove(e.id)
 	}
 
+	// Per-item schedule overrides (#121). When OFF (the default) every item follows
+	// its domain schedule and the domain jobs run the FULL included list exactly as
+	// before; the override column is ignored. When ON, an item with a concrete
+	// override runs on its own per-item entry (registered after the domain loop) and
+	// is filtered out of the domain run, so it is never backed up twice.
+	perItem := settings.PerItemSchedules
+
 	// Register enabled domains.
 	domains := []domainSpec{
 		{
@@ -691,6 +785,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
+				targets = DomainRunTargets(targets, perItem) // drop items on their own per-item cadence (#121)
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
@@ -722,6 +817,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: vms job: list VM targets: %v", err)
 					return
 				}
+				vms = DomainRunVMTargets(vms, perItem) // drop VMs on their own per-item cadence (#121)
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
@@ -972,7 +1068,151 @@ func (s *Scheduler) ReloadWithDueChecks(
 		s.mu.Unlock()
 	}
 
+	// #121: register one cron entry per INCLUDED container/VM that carries a concrete
+	// per-item cadence override (only when the feature is on). Each fires on its OWN
+	// cadence and backs up just that item through the SAME batched machinery a domain
+	// run uses (aggregated Healthchecks + after-bulk prune/off-site), so off-site
+	// replication and retention still happen. Items without an override stay in the
+	// domain run above. A no-op when the feature is off.
+	if perItem {
+		if err := s.registerPerItemEntries(); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// registerPerItemEntries adds a dedicated cron entry for every INCLUDED item whose
+// per-item override is a concrete cadence (#121). It is called only when the
+// feature is on and after the domain entries are registered. The item list is read
+// once here (not re-listed at fire time like the domain jobs), so a settings save —
+// which reloads the scheduler — is what picks up a newly added or newly overridden
+// item. A per-item entry re-checks the item still exists and is still included at
+// fire time, so a container removed or excluded between reloads is skipped cleanly.
+func (s *Scheduler) registerPerItemEntries() error {
+	if s.listFn != nil {
+		targets, err := s.listFn()
+		if err != nil {
+			log.Printf("schedule: per-item containers: list targets: %v", err)
+		} else {
+			for _, t := range targets {
+				if !t.IncludeInSchedule {
+					continue
+				}
+				sched := classifyItemOverride(t.ScheduleCadence)
+				if !sched.ownEntry {
+					continue
+				}
+				name := t.ContainerName
+				if err := s.addPerItemEntry(sched.Spec, "containers", func() {
+					s.runContainerItem(name)
+				}); err != nil {
+					return fmt.Errorf("schedule: per-item container %q: %w", name, err)
+				}
+			}
+		}
+	}
+	if s.backupVM != nil && s.listVMsFn != nil {
+		vms, err := s.listVMsFn()
+		if err != nil {
+			log.Printf("schedule: per-item vms: list VM targets: %v", err)
+		} else {
+			for _, v := range vms {
+				if !v.IncludeInSchedule {
+					continue
+				}
+				sched := classifyItemOverride(v.ScheduleCadence)
+				if !sched.ownEntry {
+					continue
+				}
+				name := v.Name
+				if err := s.addPerItemEntry(sched.Spec, "vms", func() {
+					s.runVMItem(name)
+				}); err != nil {
+					return fmt.Errorf("schedule: per-item vm %q: %w", name, err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// addPerItemEntry registers one per-item cron entry (#121) and records it under the
+// domain's "backup" label so it surfaces in NextRuns like any other backup fire.
+// It is deliberately NOT added to the anacron catch-up set: per-item entries have
+// no per-item last-run query, so a missed override run is simply picked up on the
+// next fire (the domain catch-up still covers the domain-default items).
+func (s *Scheduler) addPerItemEntry(spec, domain string, jobFn func()) error {
+	id, err := s.c.AddFunc(spec, func() {
+		log.Printf("schedule: running per-item %s job", domain)
+		jobFn()
+	})
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	s.entries = append(s.entries, scheduledEntry{id: id, job: "backup", domain: domain})
+	s.mu.Unlock()
+	return nil
+}
+
+// runContainerItem backs up a single container on its per-item cadence (#121)
+// through the same batched machinery a scheduled containers run uses. It re-lists
+// at fire time so a container removed or excluded since the last reload is skipped.
+func (s *Scheduler) runContainerItem(name string) {
+	targets, err := s.listFn()
+	if err != nil {
+		log.Printf("schedule: per-item containers job: list targets: %v", err)
+		return
+	}
+	var one *store.Target
+	for i := range targets {
+		if targets[i].ContainerName == name {
+			one = &targets[i]
+			break
+		}
+	}
+	if one == nil || !one.IncludeInSchedule {
+		return // removed or excluded since the last reload
+	}
+	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
+		return RunContainersJob([]store.Target{*one}, s.backup)
+	})
+	if s.pruneAfterBulkFn != nil {
+		s.pruneAfterBulkFn("containers")
+	}
+	if s.replicateAfterBulkFn != nil {
+		s.replicateAfterBulkFn("containers")
+	}
+}
+
+// runVMItem is the VM counterpart of runContainerItem (#121).
+func (s *Scheduler) runVMItem(name string) {
+	vms, err := s.listVMsFn()
+	if err != nil {
+		log.Printf("schedule: per-item vms job: list VM targets: %v", err)
+		return
+	}
+	var one *store.VMTarget
+	for i := range vms {
+		if vms[i].Name == name {
+			one = &vms[i]
+			break
+		}
+	}
+	if one == nil || !one.IncludeInSchedule {
+		return // removed or excluded since the last reload
+	}
+	s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
+		return RunVMsJob([]store.VMTarget{*one}, s.backupVM)
+	})
+	if s.pruneAfterBulkFn != nil {
+		s.pruneAfterBulkFn("vms")
+	}
+	if s.replicateAfterBulkFn != nil {
+		s.replicateAfterBulkFn("vms")
+	}
 }
 
 // CatchUpMissed runs, once, every enabled backup domain that MISSED its most
