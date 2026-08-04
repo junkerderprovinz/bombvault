@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
-import type { Settings, NotifyConfig, RestoreDrill, Container, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
+import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
+import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
 import { useAdvanced, Advanced } from "../lib/advanced";
@@ -1980,11 +1981,14 @@ function ContainersSection({
   settings,
   containers,
   onChange,
+  perItem,
   t,
 }: {
   settings: Settings;
   containers: Container[];
   onChange: (schedule: string) => void;
+  /** #121: when on, each included container exposes a per-item schedule override. */
+  perItem: boolean;
   t: ReturnType<typeof useT>["t"];
 }) {
   const schedule = settings.containersSchedule;
@@ -2024,24 +2028,30 @@ function ContainersSection({
       ) : (
         <div className="flex flex-col gap-1 divide-y divide-carbon-border">
           {included.map((c) => (
-            <div
-              key={c.name}
-              className="flex items-center gap-3 py-2 text-sm"
-            >
-              <div
-                className={`w-2 h-2 rounded-full shrink-0 ${
-                  c.state.toLowerCase() === "running"
-                    ? "bg-statusOkSolid"
-                    : "bg-carbon-surface3"
-                }`}
-              />
-              <span className="font-medium text-carbon-text flex-1 truncate">
-                {c.name}
-              </span>
-              {c.image && (
-                <span className="text-xs text-carbon-textMuted truncate hidden sm:block max-w-xs">
-                  {c.image}
+            <div key={c.name} className="flex flex-col gap-2 py-2 text-sm">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    c.state.toLowerCase() === "running"
+                      ? "bg-statusOkSolid"
+                      : "bg-carbon-surface3"
+                  }`}
+                />
+                <span className="font-medium text-carbon-text flex-1 truncate">
+                  {c.name}
                 </span>
+                {c.image && (
+                  <span className="text-xs text-carbon-textMuted truncate hidden sm:block max-w-xs">
+                    {c.image}
+                  </span>
+                )}
+              </div>
+              {perItem && (
+                <ItemScheduleOverride
+                  name={c.name}
+                  initial={c.scheduleCadence ?? ""}
+                  onSave={(cadence) => setScheduleCadence(c.name, cadence)}
+                />
               )}
             </div>
           ))}
@@ -2056,15 +2066,22 @@ function VMsSection({
   settings,
   syncSchedules,
   onChange,
+  vms,
+  perItem,
   t,
 }: {
   settings: Settings;
   syncSchedules: boolean;
   onChange: (schedule: string) => void;
+  /** Included VMs, for the per-item override list (#121). */
+  vms: VM[];
+  /** #121: when on, each included VM exposes a per-item schedule override. */
+  perItem: boolean;
   t: ReturnType<typeof useT>["t"];
 }) {
   const schedule = syncSchedules ? settings.containersSchedule : settings.vmsSchedule;
   const status = scheduleStatus(schedule);
+  const included = vms.filter((v) => v.includeInSchedule);
 
   return (
     <Card title={t("jobs.vmsSection")}>
@@ -2090,6 +2107,34 @@ function VMsSection({
           <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.vmIncludeHint")}</p>
         )}
       </div>
+
+      {/* Per-item overrides (#121): an included-VM list with a per-VM cadence,
+          shown only when the toggle is on so the section is otherwise unchanged. */}
+      {perItem && (
+        included.length === 0 ? (
+          <p className="text-sm text-carbon-textMuted">{t("jobs.noVMsIncluded")}</p>
+        ) : (
+          <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+            {included.map((v) => (
+              <div key={v.name} className="flex flex-col gap-2 py-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      v.state.toLowerCase() === "running" ? "bg-statusOkSolid" : "bg-carbon-surface3"
+                    }`}
+                  />
+                  <span className="font-medium text-carbon-text flex-1 truncate">{v.name}</span>
+                </div>
+                <ItemScheduleOverride
+                  name={v.name}
+                  initial={v.scheduleCadence ?? ""}
+                  onSave={(cadence) => setVMScheduleCadence(v.name, cadence)}
+                />
+              </div>
+            ))}
+          </div>
+        )
+      )}
     </Card>
   );
 }
@@ -2404,6 +2449,8 @@ export function SettingsPage() {
   // feeds the Containers schedule section's included-members list; syncSchedules
   // applies the Containers cadence to VMs + Flash; schedSave* drives its SaveBar.
   const [containers, setContainers] = useState<Container[]>([]);
+  // VMs feed the VMs schedule section's per-item override list (#121).
+  const [vms, setVMs] = useState<VM[]>([]);
   // File sets feed the Files schedule section's member list (live enabled toggles).
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
   const [syncSchedules, setSyncSchedules] = useState(false);
@@ -2457,6 +2504,15 @@ export function SettingsPage() {
       })
       .catch(() => {
         // Non-fatal: the Containers schedule section shows an empty member list.
+      });
+
+    // Load the VM list for the Schedules tab's VMs section per-item overrides (#121).
+    listVMs()
+      .then((r) => {
+        if (r.ok) setVMs(r.vms ?? []);
+      })
+      .catch(() => {
+        // Non-fatal: the VMs schedule section shows an empty per-item list.
       });
 
     // Load the file sets for the Schedules tab's Files section. Non-fatal too.
@@ -2595,6 +2651,8 @@ export function SettingsPage() {
     patch.tamperTestSchedule = settings.tamperTestSchedule;
     // Anacron-style catch-up toggle (Missed schedules card on this tab).
     patch.catchUpMissed = settings.catchUpMissed;
+    // Per-item schedules opt-in (#121).
+    patch.perItemSchedules = settings.perItemSchedules;
     return patch;
   }
 
@@ -2739,12 +2797,29 @@ export function SettingsPage() {
           <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("settings.schedulesBackup")}
           </h2>
+          {/* Per-item schedules toggle (#121): opt in to per-container/VM overrides.
+              Off by default — while off, the member lists below are unchanged. */}
+          <label className="flex items-start gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={settings.perItemSchedules}
+              onChange={(e) =>
+                setSettings((prev) => (prev ? { ...prev, perItemSchedules: e.target.checked } : prev))
+              }
+              className="mt-0.5 h-4 w-4 rounded-sm border-carbon-border bg-carbon-surface2 accent-(--accent)"
+            />
+            <span className="flex flex-col">
+              <span className="text-sm text-carbon-text">{t("settings.perItemSchedules")}</span>
+              <span className="text-xs text-carbon-textMuted">{t("settings.perItemSchedulesHint")}</span>
+            </span>
+          </label>
           <ContainersSection
             settings={settings}
             containers={containers}
             onChange={(v) =>
               setSettings((prev) => (prev ? { ...prev, containersSchedule: v } : prev))
             }
+            perItem={settings.perItemSchedules}
             t={t}
           />
           {/* Sync checkbox — applies the Containers cadence to VMs + Flash too. */}
@@ -2763,6 +2838,8 @@ export function SettingsPage() {
             onChange={(v) =>
               setSettings((prev) => (prev ? { ...prev, vmsSchedule: v } : prev))
             }
+            vms={vms}
+            perItem={settings.perItemSchedules}
             t={t}
           />
           <FlashSection
