@@ -1175,6 +1175,8 @@ const ro: Partial<Translations> = {
   "settings.reconcileTitle": "Stare actualizări Unraid",
   "settings.reconcileUnraidStatus": "Reîmprospătează starea actualizărilor Unraid după actualizarea unui container",
   "settings.reconcileUnraidStatusHint": "Șterge bannerul de actualizare Unraid după ce BombVault actualizează un container în pasul de actualizare de după backup.",
+  "recovery.foreignVMDest": "Destinația discurilor VM",
+  "recovery.foreignVMDestHint": "Unde sunt scrise discurile mașinii virtuale. Imaginile de disc ajung în <destination>/<vm-name>/, așa că alege un folder pe un pool montat cu adevărat, nu pe discul RAM. O mașină străină este restaurată oprită, deci pornește-o tu însuți după ce ai verificat-o.",
 };
 
 export default ro;

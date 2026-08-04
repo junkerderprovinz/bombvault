@@ -1167,6 +1167,8 @@ const pl: Partial<Translations> = {
   "settings.reconcileTitle": "Status aktualizacji Unraid",
   "settings.reconcileUnraidStatus": "Odśwież status aktualizacji Unraid po zaktualizowaniu kontenera",
   "settings.reconcileUnraidStatusHint": "Usuwa baner aktualizacji Unraid po tym, jak BombVault zaktualizuje kontener w kroku aktualizacji po kopii zapasowej.",
+  "recovery.foreignVMDest": "Miejsce docelowe dysków VM",
+  "recovery.foreignVMDestHint": "Gdzie zapisywane są dyski maszyny wirtualnej. Obrazy dysków trafiają do <destination>/<vm-name>/, więc wybierz folder na rzeczywiście zamontowanej puli, a nie na dysku RAM. Obca maszyna jest przywracana zatrzymana, więc uruchom ją samodzielnie po sprawdzeniu.",
 };
 
 export default pl;

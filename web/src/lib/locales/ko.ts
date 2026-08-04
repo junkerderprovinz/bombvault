@@ -1164,6 +1164,8 @@ const ko: Partial<Translations> = {
   "settings.reconcileTitle": "Unraid 업데이트 상태",
   "settings.reconcileUnraidStatus": "컨테이너를 업데이트한 후 Unraid의 업데이트 상태 새로 고침",
   "settings.reconcileUnraidStatusHint": "백업 후 업데이트 단계에서 BombVault가 컨테이너를 업데이트한 후 Unraid의 업데이트 배너를 지웁니다.",
+  "recovery.foreignVMDest": "VM 디스크 대상 위치",
+  "recovery.foreignVMDestHint": "VM 디스크가 기록되는 위치입니다. 디스크 이미지는 <destination>/<vm-name>/ 에 저장되므로 RAM 디스크가 아니라 실제로 마운트된 풀의 폴더를 선택하세요. 외부 VM은 중지된 상태로 복원되므로 확인한 뒤 직접 시작하세요.",
 };
 
 export default ko;

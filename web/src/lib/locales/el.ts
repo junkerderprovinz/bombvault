@@ -1172,6 +1172,8 @@ const el: Partial<Translations> = {
   "settings.reconcileTitle": "Κατάσταση ενημερώσεων Unraid",
   "settings.reconcileUnraidStatus": "Ανανέωση της κατάστασης ενημερώσεων του Unraid μετά την ενημέρωση ενός κοντέινερ",
   "settings.reconcileUnraidStatusHint": "Καθαρίζει το μπάνερ ενημέρωσης του Unraid αφού το BombVault ενημερώσει ένα κοντέινερ στο βήμα ενημέρωσης μετά το αντίγραφο ασφαλείας.",
+  "recovery.foreignVMDest": "Προορισμός δίσκων VM",
+  "recovery.foreignVMDestHint": "Πού γράφονται οι δίσκοι της VM. Οι εικόνες δίσκων πηγαίνουν στο <destination>/<vm-name>/, γι' αυτό επιλέξτε έναν φάκελο σε ένα πραγματικά προσαρτημένο pool, όχι στον δίσκο RAM. Μια ξένη VM επαναφέρεται σταματημένη, γι' αυτό ξεκινήστε την μόνοι σας αφού την ελέγξετε.",
 };
 
 export default el;

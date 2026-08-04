@@ -1108,6 +1108,8 @@ export const en = {
   "recovery.foreignExistsConfirm": "“{name}” already exists on this system — restoring will OVERWRITE it with the foreign backup. Continue?",
   "recovery.foreignExpired": "The session has expired (sessions last 30 minutes) — reconnect to keep browsing.",
   "recovery.foreignReconnect": "Reconnect",
+  "recovery.foreignVMDest": "VM disk destination",
+  "recovery.foreignVMDestHint": "Where the VM's disks are written. The disk images go to <destination>/<vm-name>/, so pick a folder on a real mounted pool, not the RAM disk. A foreign VM is restored left stopped, so start it yourself once you have checked it.",
 
   // Dashboard activity log (Task 4) — a flat, docker-logs-style merged view of
   // run history + live SSE progress + the next scheduled run.
@@ -2307,6 +2309,8 @@ export const de: Translations = {
   "recovery.foreignExistsConfirm": "„{name}“ existiert bereits auf diesem System — die Wiederherstellung ÜBERSCHREIBT es mit dem fremden Backup. Fortfahren?",
   "recovery.foreignExpired": "Die Sitzung ist abgelaufen (Sitzungen gelten 30 Minuten) — verbinde dich erneut, um weiterzustöbern.",
   "recovery.foreignReconnect": "Erneut verbinden",
+  "recovery.foreignVMDest": "Ziel der VM-Datenträger",
+  "recovery.foreignVMDestHint": "Wohin die Datenträger der VM geschrieben werden. Die Abbilder landen in <destination>/<vm-name>/. Wähle daher einen Ordner auf einem echten eingebundenen Pool, nicht auf der RAM-Disk. Eine fremde VM wird gestoppt wiederhergestellt, starte sie also selbst, sobald du sie geprüft hast.",
 
   // Dashboard activity log (Task 4)
   "activityLog.title": "Aktivitätsprotokoll",
