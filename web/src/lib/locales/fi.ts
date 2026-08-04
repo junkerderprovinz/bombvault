@@ -1127,7 +1127,7 @@ const fi: Partial<Translations> = {
   "receiver.repoLocationHint": "Tämän varaston restic-sijainti: rest:http://host:8000/repo, s3:…, rclone:remote:polku tai alipolku isäntäliitoksen alla.",
   "receiver.appKey": "Lähettävä APP_KEY",
   "receiver.appKeyHint": "Sen BombVaultin APP_KEY (64 heksamerkkiä), joka lähettää tähän varastoon, jotta se voidaan avata vain luettavaksi. Tallennetaan salattuna eikä näytetä enää.",
-  "receiver.appKeyKeep": "tallennettu — jätä tyhjäksi säilyttääksesi",
+  "receiver.appKeyKeep": "tallennettu (jätä tyhjäksi säilyttääksesi)",
   "receiver.appKeyInvalid": "APP_KEY:n on oltava 64 pientä heksamerkkiä.",
   "receiver.deadManHours": "Kuollutmieskytkin (tuntia)",
   "receiver.deadManHoursHint": "Varoita, kun lähteestä ei ole vastaanotettu varmuuskopiota tämän tuntimäärän sisällä.",

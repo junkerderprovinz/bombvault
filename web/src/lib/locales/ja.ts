@@ -1119,7 +1119,7 @@ const ja: Partial<Translations> = {
   "receiver.repoLocationHint": "このリポジトリの restic の場所: rest:http://host:8000/repo、s3:…、rclone:remote:path、またはホストマウント下のサブパス。",
   "receiver.appKey": "送信側 APP_KEY",
   "receiver.appKeyHint": "このリポジトリに送信する BombVault の APP_KEY（16進数64文字）。読み取り専用で開くために使用します。暗号化して保存され、二度と表示されません。",
-  "receiver.appKeyKeep": "保存済み — 変更しない場合は空欄",
+  "receiver.appKeyKeep": "保存済み (変更しない場合は空欄)",
   "receiver.appKeyInvalid": "APP_KEY は小文字の16進数64文字である必要があります。",
   "receiver.deadManHours": "デッドマンスイッチ（時間）",
   "receiver.deadManHoursHint": "ソースからこの時間内にバックアップが受信されない場合に警告します。",

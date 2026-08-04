@@ -1119,7 +1119,7 @@ const zh: Partial<Translations> = {
   "receiver.repoLocationHint": "此仓库的 restic 位置：rest:http://host:8000/repo、s3:…、rclone:remote:path，或主机挂载下的子路径。",
   "receiver.appKey": "发送方 APP_KEY",
   "receiver.appKeyHint": "推送到此仓库的 BombVault 的 APP_KEY（64 位十六进制字符），用于以只读方式打开它。加密存储，不再显示。",
-  "receiver.appKeyKeep": "已保存 — 留空以保留",
+  "receiver.appKeyKeep": "已保存 (留空以保留)",
   "receiver.appKeyInvalid": "APP_KEY 必须为 64 个小写十六进制字符。",
   "receiver.deadManHours": "死人开关（小时）",
   "receiver.deadManHoursHint": "当在这么多小时内未从某来源接收到备份时发出警报。",

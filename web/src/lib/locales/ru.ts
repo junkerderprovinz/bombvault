@@ -1122,7 +1122,7 @@ const ru: Partial<Translations> = {
   "receiver.repoLocationHint": "Расположение restic этого репозитория: rest:http://host:8000/repo, s3:…, rclone:remote:путь или подпуть под точкой монтирования хоста.",
   "receiver.appKey": "APP_KEY отправителя",
   "receiver.appKeyHint": "APP_KEY (64 шестнадцатеричных символа) того BombVault, который отправляет в этот репозиторий, чтобы открыть его только для чтения. Хранится в зашифрованном виде и больше не показывается.",
-  "receiver.appKeyKeep": "сохранено — оставьте пустым, чтобы сохранить",
+  "receiver.appKeyKeep": "сохранено (оставьте пустым, чтобы сохранить)",
   "receiver.appKeyInvalid": "APP_KEY должен состоять из 64 строчных шестнадцатеричных символов.",
   "receiver.deadManHours": "Датчик простоя (часы)",
   "receiver.deadManHoursHint": "Предупреждать, когда от источника не получено копий в течение этого числа часов.",

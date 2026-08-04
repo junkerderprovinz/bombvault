@@ -1130,7 +1130,7 @@ const th: Partial<Translations> = {
   "receiver.repoLocationHint": "ตำแหน่ง restic ของที่เก็บนี้: rest:http://host:8000/repo, s3:…, rclone:remote:path หรือพาธย่อยภายใต้จุดเมานต์ของโฮสต์",
   "receiver.appKey": "APP_KEY ผู้ส่ง",
   "receiver.appKeyHint": "APP_KEY (อักขระฐานสิบหก 64 ตัว) ของ BombVault ที่ส่งไปยังที่เก็บนี้ เพื่อเปิดแบบอ่านอย่างเดียว จัดเก็บแบบเข้ารหัสและจะไม่แสดงอีก",
-  "receiver.appKeyKeep": "บันทึกแล้ว — เว้นว่างไว้เพื่อคงไว้",
+  "receiver.appKeyKeep": "บันทึกแล้ว (เว้นว่างไว้เพื่อคงไว้)",
   "receiver.appKeyInvalid": "APP_KEY ต้องเป็นอักขระฐานสิบหกตัวพิมพ์เล็ก 64 ตัว",
   "receiver.deadManHours": "สวิตช์นิรภัย (ชั่วโมง)",
   "receiver.deadManHoursHint": "แจ้งเตือนเมื่อไม่ได้รับสำรองจากแหล่งใดภายในชั่วโมงจำนวนนี้",

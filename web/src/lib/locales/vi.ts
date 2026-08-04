@@ -1119,7 +1119,7 @@ const vi: Partial<Translations> = {
   "receiver.repoLocationHint": "Vị trí restic của kho này: rest:http://host:8000/repo, s3:…, rclone:remote:path, hoặc một đường dẫn con dưới điểm gắn kết của máy chủ.",
   "receiver.appKey": "APP_KEY gửi",
   "receiver.appKeyHint": "APP_KEY (64 ký tự hex) của BombVault đẩy tới kho này, để có thể mở nó ở chế độ chỉ đọc. Được lưu mã hóa và không bao giờ hiển thị lại.",
-  "receiver.appKeyKeep": "đã lưu — để trống để giữ lại",
+  "receiver.appKeyKeep": "đã lưu (để trống để giữ lại)",
   "receiver.appKeyInvalid": "APP_KEY phải là 64 ký tự hex thường.",
   "receiver.deadManHours": "Công tắc an toàn (giờ)",
   "receiver.deadManHoursHint": "Cảnh báo khi không nhận được bản sao lưu nào từ một nguồn trong bấy nhiêu giờ.",

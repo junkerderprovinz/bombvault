@@ -1130,7 +1130,7 @@ const ro: Partial<Translations> = {
   "receiver.repoLocationHint": "Locația restic a acestui depozit: rest:http://host:8000/repo, s3:…, rclone:remote:cale sau o subcale sub punctul de montare al gazdei.",
   "receiver.appKey": "APP_KEY expeditor",
   "receiver.appKeyHint": "APP_KEY-ul (64 de caractere hexazecimale) al BombVault care trimite în acest depozit, ca să poată fi deschis doar în citire. Stocat criptat și niciodată reafișat.",
-  "receiver.appKeyKeep": "salvat — lasă gol pentru a păstra",
+  "receiver.appKeyKeep": "salvat (lasă gol pentru a păstra)",
   "receiver.appKeyInvalid": "APP_KEY trebuie să aibă 64 de caractere hexazecimale minuscule.",
   "receiver.deadManHours": "Comutator de siguranță (ore)",
   "receiver.deadManHoursHint": "Avertizează când nu s-a primit nicio copie de la o sursă în acest număr de ore.",

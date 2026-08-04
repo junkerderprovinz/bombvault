@@ -1125,7 +1125,7 @@ const cs: Partial<Translations> = {
   "receiver.repoLocationHint": "Umístění restic tohoto repozitáře: rest:http://host:8000/repo, s3:…, rclone:remote:cesta nebo podcesta pod připojením hostitele.",
   "receiver.appKey": "Odesílající APP_KEY",
   "receiver.appKeyHint": "APP_KEY (64 hexadecimálních znaků) toho BombVault, který odesílá do tohoto repozitáře, aby jej bylo možné otevřít jen ke čtení. Uloženo šifrovaně a nikdy znovu nezobrazeno.",
-  "receiver.appKeyKeep": "uloženo — ponechte prázdné pro zachování",
+  "receiver.appKeyKeep": "uloženo (ponechte prázdné pro zachování)",
   "receiver.appKeyInvalid": "APP_KEY musí mít 64 malých hexadecimálních znaků.",
   "receiver.deadManHours": "Pojistka mrtvého muže (hodiny)",
   "receiver.deadManHoursHint": "Upozornit, když ze zdroje nebyla přijata žádná záloha během tolika hodin.",

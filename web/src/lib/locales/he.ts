@@ -1127,7 +1127,7 @@ const he: Partial<Translations> = {
   "receiver.repoLocationHint": "מיקום ה-restic של מאגר זה: rest:http://host:8000/repo, s3:…, rclone:remote:path, או תת-נתיב תחת נקודת העגינה של המארח.",
   "receiver.appKey": "APP_KEY שולח",
   "receiver.appKeyHint": "ה-APP_KEY (64 תווים הקסדצימליים) של ה-BombVault שדוחף למאגר זה, כדי לפתוח אותו בקריאה בלבד. נשמר מוצפן ולעולם אינו מוצג שוב.",
-  "receiver.appKeyKeep": "נשמר — השאר ריק כדי לשמור",
+  "receiver.appKeyKeep": "נשמר (השאר ריק כדי לשמור)",
   "receiver.appKeyInvalid": "ה-APP_KEY חייב להיות 64 תווים הקסדצימליים קטנים.",
   "receiver.deadManHours": "מתג איש מת (שעות)",
   "receiver.deadManHoursHint": "התרעה כאשר לא התקבל גיבוי ממקור בתוך מספר שעות זה.",

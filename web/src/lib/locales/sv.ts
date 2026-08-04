@@ -1127,7 +1127,7 @@ const sv: Partial<Translations> = {
   "receiver.repoLocationHint": "restic-platsen där arkivet ligger: rest:http://host:8000/repo, s3:…, rclone:remote:sökväg, eller en undersökväg under värdmonteringen.",
   "receiver.appKey": "Sändande APP_KEY",
   "receiver.appKeyHint": "APP_KEY (64 hex-tecken) för den BombVault som skickar till arkivet, så att det kan öppnas skrivskyddat. Lagras krypterat och visas aldrig igen.",
-  "receiver.appKeyKeep": "sparad — lämna tomt för att behålla",
+  "receiver.appKeyKeep": "sparad (lämna tomt för att behålla)",
   "receiver.appKeyInvalid": "APP_KEY måste vara 64 gemena hex-tecken.",
   "receiver.deadManHours": "Dödmansgrepp (timmar)",
   "receiver.deadManHoursHint": "Varna när ingen säkerhetskopia har mottagits från en källa inom så här många timmar.",

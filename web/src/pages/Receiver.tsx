@@ -122,7 +122,7 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
           {inv.sources.map((s, i) => (
             <tr key={`${s.host}/${s.item}/${i}`} className="border-t border-carbon-border">
               <td className="py-1.5 pr-3 text-carbon-text">
-                <span className="font-medium">{s.item || "—"}</span>
+                <span className="font-medium">{s.item || "-"}</span>
                 {s.host && <span className="text-carbon-textMuted"> · {s.host}</span>}
               </td>
               <td className="py-1.5 pr-3 text-right text-carbon-textSub font-mono">{s.snapshotCount}</td>

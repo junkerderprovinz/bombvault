@@ -1127,7 +1127,7 @@ const tr: Partial<Translations> = {
   "receiver.repoLocationHint": "Bu deponun restic konumu: rest:http://host:8000/repo, s3:…, rclone:remote:yol veya ana bilgisayar bağlama noktası altında bir alt yol.",
   "receiver.appKey": "Gönderen APP_KEY",
   "receiver.appKeyHint": "Bu depoya gönderen BombVault'un APP_KEY'i (64 onaltılık karakter), salt okunur açılabilmesi için. Şifreli saklanır ve bir daha gösterilmez.",
-  "receiver.appKeyKeep": "kaydedildi — korumak için boş bırakın",
+  "receiver.appKeyKeep": "kaydedildi (korumak için boş bırakın)",
   "receiver.appKeyInvalid": "APP_KEY 64 küçük onaltılık karakter olmalıdır.",
   "receiver.deadManHours": "Ölü adam anahtarı (saat)",
   "receiver.deadManHoursHint": "Bir kaynaktan bu kadar saat içinde hiç yedek alınmadığında uyar.",

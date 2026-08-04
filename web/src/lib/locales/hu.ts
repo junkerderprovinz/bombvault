@@ -1130,7 +1130,7 @@ const hu: Partial<Translations> = {
   "receiver.repoLocationHint": "A tároló restic-helye: rest:http://host:8000/repo, s3:…, rclone:remote:útvonal, vagy egy alútvonal a gazdacsatolás alatt.",
   "receiver.appKey": "Küldő APP_KEY",
   "receiver.appKeyHint": "Az ebbe a tárolóba küldő BombVault APP_KEY-e (64 hexadecimális karakter), hogy csak olvasható módban megnyitható legyen. Titkosítva tárolódik, és többé nem jelenik meg.",
-  "receiver.appKeyKeep": "mentve — hagyja üresen a megtartáshoz",
+  "receiver.appKeyKeep": "mentve (hagyja üresen a megtartáshoz)",
   "receiver.appKeyInvalid": "Az APP_KEY 64 kisbetűs hexadecimális karakter kell legyen.",
   "receiver.deadManHours": "Éberségi kapcsoló (óra)",
   "receiver.deadManHoursHint": "Riasztás, ha egy forrásból ennyi órán belül nem érkezett mentés.",
