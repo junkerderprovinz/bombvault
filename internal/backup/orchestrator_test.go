@@ -156,6 +156,12 @@ func (r *fakeRestic) RestorePaths(_ context.Context, repo, snapshotID string, pa
 	return r.restoreErr
 }
 
+func (r *fakeRestic) RestoreSubtreeTo(_ context.Context, repo, snapshotID, subtreePath, target string) error {
+	r.log = append(r.log, "restoreSubtree:"+repo+":"+snapshotID+":"+subtreePath+"->"+target)
+	r.capturedPaths = append(r.capturedPaths, subtreePath+"->"+target)
+	return r.restoreErr
+}
+
 type fakeTemplates struct {
 	log      []string
 	readXML  string

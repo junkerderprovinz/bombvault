@@ -106,6 +106,15 @@ type VMBackupDeps struct {
 	Runs   Runs
 }
 
+// VMRestoreDir pairs a snapshot subtree (Subtree, a dir the backup recorded)
+// with the destination dir (Target) its contents are restored into. Used to
+// place a cross-instance VM restore's disks on a chosen pool rather than the
+// source server's original paths.
+type VMRestoreDir struct {
+	Subtree string
+	Target  string
+}
+
 // VMRestoreDeps bundles everything RestoreVM needs.
 type VMRestoreDeps struct {
 	// Confirmed MUST be true — guard against an accidental destructive restore.
@@ -114,8 +123,17 @@ type VMRestoreDeps struct {
 	Name string
 	// SnapshotID is the restic snapshot to restore (validated hex).
 	SnapshotID string
-	// DiskPaths are the absolute container-visible paths to restore.
+	// DiskPaths are the absolute container-visible paths the restored disks END UP
+	// at (the destination). For a same-instance restore these ARE the snapshot's
+	// own paths; for a cross-instance restore they are the remapped destination
+	// paths. Used for the safety path check and (in the same-instance case) as the
+	// restic restore subtrees.
 	DiskPaths []string
+	// RestoreDirs, when non-empty, drives a REMAPPED restore: each entry restores a
+	// snapshot subtree (Subtree, the source dir) INTO a destination dir (Target),
+	// instead of the default restore-each-path-back-to-its-own-location behaviour.
+	// A cross-instance VM restore sets this so the disks land on the chosen pool.
+	RestoreDirs []VMRestoreDir
 	// NVRAMPath is the absolute container-visible NVRAM path (may be empty).
 	NVRAMPath string
 	// DomainXML is the captured libvirt domain XML, written to a temp file and
@@ -445,15 +463,27 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	}
 
 	// VM disk images and NVRAM are FILES; restic's <id>:<subpath> subtree form
-	// needs a DIRECTORY (a file path fails with "not a directory"). Restore each
-	// file's PARENT directory instead (deduplicated): restic restores only the
-	// snapshot's files in that dir and never deletes existing siblings.
-	restoreDirs := parentDirs(allPaths)
-	if len(restoreDirs) == 0 {
-		return fmt.Errorf("vm restore: no restorable directories derived from paths")
-	}
-	if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, restoreDirs); err != nil {
-		return fmt.Errorf("vm restore: restic restore: %w", err)
+	// needs a DIRECTORY (a file path fails with "not a directory").
+	if len(d.RestoreDirs) > 0 {
+		// REMAPPED restore (cross-instance): each source subtree is restored INTO a
+		// chosen destination dir, so the disks land on the destination host's pool
+		// rather than the source server's original paths.
+		for _, rd := range d.RestoreDirs {
+			if err := d.Restic.RestoreSubtreeTo(ctx, d.RepoPath, d.SnapshotID, rd.Subtree, rd.Target); err != nil {
+				return fmt.Errorf("vm restore: restic restore: %w", err)
+			}
+		}
+	} else {
+		// Same-instance restore: restore each file's PARENT directory back to its own
+		// location (deduplicated). restic restores only the snapshot's files in that
+		// dir and never deletes existing siblings.
+		restoreDirs := parentDirs(allPaths)
+		if len(restoreDirs) == 0 {
+			return fmt.Errorf("vm restore: no restorable directories derived from paths")
+		}
+		if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, restoreDirs); err != nil {
+			return fmt.Errorf("vm restore: restic restore: %w", err)
+		}
 	}
 
 	// Write the captured NVRAM back to the host (over SSH) now that the old
