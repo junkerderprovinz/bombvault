@@ -141,7 +141,7 @@ body,
   margin: 2px 0;               /* gap-1 between items */
   padding: 10px 14px;          /* py-2.5 px-3.5 */
   border-radius: 8px;          /* rounded-lg */
-  font-size: 15px;             /* text-[15px] */
+  font-size: 16px;             /* slightly larger than the app's 15px, per request */
   font-weight: 500;            /* font-medium */
   line-height: 1.25;
   color: var(--bv-sidebar-text);
@@ -445,3 +445,156 @@ body,
 [data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
   scrollbar-color: var(--bv-surface3) transparent;
 }
+
+/* =========================================================================
+   SIDEBAR FOOTER CONTROLS — the app's language picker + dark/light toggle
+   (overrides/partials/bv-sidebar-controls.html), pinned to the bottom of the
+   primary nav rail. Mirrors web/src/components/Sidebar.tsx SidebarControls.
+   ========================================================================= */
+
+/* The primary nav rail becomes a column so the page list stays at the top and
+   the controls pin to the bottom (mirrors the app). Short nav: margin-top:auto
+   pushes the controls down. Long nav: they stick to the bottom while the list
+   scrolls behind them. The controls live inside .md-sidebar__inner (see
+   overrides/main.html) so they share the nav's scroll area. */
+.md-sidebar--primary .md-sidebar__inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.md-sidebar--primary .md-sidebar__inner > .md-nav--primary {
+  flex: 0 0 auto;
+}
+
+.bv-sidebar-controls {
+  margin-top: auto;      /* push to the bottom when the nav is short */
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: .6rem .4rem .5rem;
+  background: var(--bv-sidebar);
+}
+
+/* A control row = an app nav item: same size, radius, hover and press feedback. */
+.bv-ctl-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bv-sidebar-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, transform .15s ease;
+}
+.bv-ctl-row:hover,
+.bv-ctl-row:focus-visible {
+  background-color: var(--bv-hover);
+  color: var(--bv-text);
+  outline: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bv-ctl-row:active { transform: scale(.97); }
+}
+
+.bv-ctl-flag {
+  flex: 0 0 auto;
+  width: 1.5em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05em;
+  line-height: 1;
+}
+/* When it carries a flag (fi fi-XX), give it a real 4:3 flag box. */
+.bv-ctl-flag.fi {
+  width: 1.35em;
+  height: 1em;
+  border-radius: 2px;
+}
+.bv-ctl-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bv-ctl-caret {
+  flex: 0 0 auto;
+  opacity: .7;
+  transition: transform .15s ease;
+}
+.bv-open .bv-ctl-caret { transform: rotate(180deg); }
+
+/* Language menu — opens upward on an elevated shade (no border line, per the
+   house rule: separate by shade, not by a line), scrolls when it overflows. */
+.bv-lang-wrap { position: relative; }
+.bv-lang-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 4px);
+  z-index: 10;
+  max-height: 15rem;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bv-raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .5), 0 2px 8px rgba(0, 0, 0, .4);
+  scrollbar-color: var(--bv-border) transparent;
+  scrollbar-width: thin;
+}
+.bv-lang-menu::-webkit-scrollbar { width: 8px; }
+.bv-lang-menu::-webkit-scrollbar-thumb { background: var(--bv-border); border-radius: 8px; }
+
+.bv-lang-opt {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bv-text-sub);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.bv-lang-opt:hover,
+.bv-lang-opt:focus-visible {
+  background-color: var(--bv-hover);
+  color: var(--bv-text);
+  outline: none;
+}
+.bv-lang-opt[aria-selected="true"] {
+  background-color: var(--bv-hover);
+  color: var(--bv-text);
+  font-weight: 600;
+}
+
+.bv-theme-icon svg { display: block; }
+
+/* Exactly one dark/light control, like the app: hide Material's header toggle
+   (its palette inputs stay in the DOM so our sidebar toggle can still drive it). */
+.md-header [data-md-component="palette"] { display: none; }
+
+/* Likewise hide Material's header language selector (added by mkdocs-static-i18n):
+   the sidebar picker is the single language control, exactly like the app. */
+.md-header .md-select { display: none; }
+.md-header__option:has(.md-select) { display: none; }
+
+/* RTL locales (ar, he): right-align the rows. */
+[dir="rtl"] .bv-ctl-row,
+[dir="rtl"] .bv-lang-opt { text-align: right; }

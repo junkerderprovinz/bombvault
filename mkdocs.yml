@@ -12,6 +12,9 @@ copyright: Copyright (C) 2026 Junker der Provinz. Licensed AGPL-3.0.
 theme:
   name: material
   language: en
+  # App-style sidebar-footer controls (language picker + dark/light toggle) are
+  # injected by a partial override; see overrides/main.html.
+  custom_dir: overrides
   logo: assets/logo.svg
   favicon: assets/favicon.png
   font:
@@ -41,7 +44,10 @@ theme:
     # toc.integrate expands only the active page's sections underneath it.
     - navigation.top
     - navigation.footer
-    - navigation.instant
+    # navigation.instant is intentionally NOT enabled: mkdocs-static-i18n warns
+    # (build --strict fails) that its language handling is incompatible with
+    # instant navigation, and our own sidebar language switcher navigates with a
+    # full load anyway, so instant nav buys nothing here.
     - content.code.copy
     - search.suggest
     - toc.integrate
@@ -49,11 +55,67 @@ theme:
     repo: fontawesome/brands/github
 
 extra_css:
+  # Real flag images for the language picker (same library the app uses), so the
+  # flags render everywhere instead of degrading to letter pairs on Windows.
+  - stylesheets/flag-icons.min.css
   - stylesheets/extra.css
+
+extra_javascript:
+  # Wires the sidebar-footer language picker + dark/light toggle injected by
+  # overrides/main.html. Uses event delegation + document$, so it survives
+  # Material's instant navigation.
+  - javascripts/bv-sidebar-controls.js
+
+# =============================================================================
+# Multi-language (mkdocs-static-i18n). English is the default and the fallback:
+# every locale is built (26 in total, matching the app's language set), and any
+# page without a translation falls back to the English content, so no broken or
+# empty pages are ever produced. Translations are added later as suffixed files
+# (e.g. index.de.md next to index.md); until then every locale serves English.
+# =============================================================================
+plugins:
+  # Adding a plugins block disables the implicit search plugin, so re-add it.
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - { locale: en, name: English,       default: true }
+        - { locale: de, name: Deutsch }
+        - { locale: ar, name: العربية }
+        - { locale: cs, name: Čeština }
+        - { locale: da, name: Dansk }
+        - { locale: el, name: Ελληνικά }
+        - { locale: es, name: Español }
+        - { locale: fi, name: Suomi }
+        - { locale: fr, name: Français }
+        - { locale: he, name: עברית }
+        - { locale: hu, name: Magyar }
+        - { locale: it, name: Italiano }
+        - { locale: ja, name: 日本語 }
+        - { locale: ko, name: 한국어 }
+        - { locale: nl, name: Nederlands }
+        # "no" is quoted: YAML parses the bare word no as the boolean false.
+        - { locale: "no", name: Norsk }
+        - { locale: pl, name: Polski }
+        - { locale: pt, name: Português }
+        - { locale: ro, name: Română }
+        - { locale: ru, name: Русский }
+        - { locale: sv, name: Svenska }
+        - { locale: th, name: ไทย }
+        - { locale: tr, name: Türkçe }
+        - { locale: uk, name: Українська }
+        - { locale: vi, name: Tiếng Việt }
+        - { locale: zh, name: 中文 }
 
 markdown_extensions:
   - admonition
   - tables
+  # attr_list lets a heading carry an explicit, language-stable id ({#slug}) so
+  # cross-page anchor links keep working after the heading text is translated.
+  - attr_list
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight:
@@ -70,10 +132,12 @@ exclude_docs: |
   superpowers/
   vm-backup-ssh-setup.md
 
+# No explicit titles: each page's (translated) H1 becomes its nav label, so the
+# sidebar navigation is localized per language along with the page content.
 nav:
-  - Home: index.md
-  - Getting started: getting-started.md
-  - Features: features.md
-  - Configuration: configuration.md
-  - Off-site & recovery: offsite-recovery.md
-  - Troubleshooting: troubleshooting.md
+  - index.md
+  - getting-started.md
+  - features.md
+  - configuration.md
+  - offsite-recovery.md
+  - troubleshooting.md

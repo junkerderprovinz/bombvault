@@ -67,7 +67,7 @@ Set up an off-site replica on the **Settings, Off-site** tab. See [Off-site & re
 - **Bandwidth limits:** cap the restic upload/download rate under Settings, Off-site.
 - **Cold and archival storage class (S3):** for a native S3 off-site repo, pick a restore-readable tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes set their class in the rclone config.
 
-## Portable settings (export and import)
+## Portable settings (export and import) {#portable-settings-export-and-import}
 
 The **Export and import settings** card on the Settings page writes your whole BombVault configuration (domain settings, off-site targets, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
 

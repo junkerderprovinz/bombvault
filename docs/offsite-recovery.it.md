@@ -1,0 +1,86 @@
+# Off-site e ripristino
+
+I backup locali ti proteggono da un container perso o da un aggiornamento andato male. La replica off-site e un kit di ripristino testato ti proteggono dall'intera macchina, dal ransomware o da un incendio. Questa pagina copre la replica off-site, il rendere quella copia a prova di manomissione, il dimostrare di poter ripristinare e il recuperare quando BombVault stesso non c'è più.
+
+## Replica off-site
+
+Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Imposta un repo per dominio nella scheda **Impostazioni, Off-site**. BombVault vi replica i nuovi snapshot con `restic copy` su base best-effort, così un intoppo off-site non fa mai fallire il backup locale. Il repo locale resta primario.
+
+- **Più destinazioni off-site per dominio.** Ogni dominio (container, VM, flash, config e set di file) può replicare verso più destinazioni off-site contemporaneamente, non solo una, così puoi tenere, per esempio, un rest-server sulla macchina di un amico e un bucket S3 in parallelo. Aggiungi destinazioni extra in Impostazioni, Off-site, ciascuna con il proprio repository, classe di archiviazione S3, flag append-only, conservazione e budget di crescita. Una configurazione off-site singola esistente viene riportata intatta come prima destinazione, e ogni destinazione di un dominio replica secondo il calendario off-site di quel dominio.
+- **Calendario off-site per dominio** (modificato insieme a ogni altro calendario su Impostazioni, Calendari): lascialo vuoto per replicare dopo ogni backup locale, oppure imposta una cadenza (per esempio `weekly Sun 03:00`) per spedire off-site meno spesso di quanto esegui il backup localmente. Un pulsante **Replica ora** copre le esecuzioni su richiesta.
+- **La conservazione off-site** risiede su Impostazioni, Off-site così puoi tenere le copie off-site più a lungo come archivio. Lascia la policy tutta a zero per non tagliare mai automaticamente gli snapshot off-site.
+- **I limiti di banda** (Impostazioni, Off-site) limitano la velocità di upload/download di restic così la replica non satura la tua WAN.
+- Un **indicatore di replica** mostra quale dominio sta replicando mentre è in corso (sulla sua pagina e sulla Dashboard). È un indicatore attivo, non una barra di percentuale, perché `restic copy` non espone alcun progresso leggibile da una macchina.
+
+!!! note "Ripristina direttamente da off-site"
+    Ogni browser dei backup ha un interruttore **Locale / Off-site**, così se un repo locale è perso o corrotto puoi elencare e ripristinare direttamente dalla replica off-site. L'eliminazione è per sorgente: rimuovere un backup interessa solo la copia che stai visualizzando.
+
+## Off-site immutabile (append-only)
+
+Contrassegna un repo off-site come append-only così ransomware, o un host compromesso, non possano eliminare o riscrivere i tuoi backup. L'altro lato (un `restic/rest-server` in esecuzione in modalità `--append-only`) lo **impone**. BombVault lo **verifica** soltanto e non mostra mai verde sulla sola affermazione di una configurazione.
+
+La procedura guidata di **configurazione off-site guidata** ti accompagna dalla scelta del backend (rest-server / rclone / S3) attraverso uno snippet di deploy del rest-server pronto da incollare, un test di connessione, l'interruttore immutabile (che esegue immediatamente il tamper test) e una strategia di conservazione, così l'off-site append-only è raggiungibile senza modificare a mano le configurazioni.
+
+!!! warning "I repo immutabili non vengono mai potati da questa macchina"
+    Un off-site immutabile deliberatamente non pota mai i vecchi snapshot. Impostagli un **allarme del budget di crescita** così vieni avvisato prima che la dimensione del repo sfugga di mano.
+
+## Tamper test
+
+BombVault dimostra periodicamente la garanzia append-only tentando effettivamente un'eliminazione contro il repo off-site, mirata a un oggetto inesistente:
+
+- **Rifiutata** significa protetto.
+- **Accettata** significa non protetto.
+- Un risultato **inconcludente** (server irraggiungibile, errore di autenticazione) non ribalta mai il verdetto memorizzato.
+
+Un reale passaggio da protetto a non protetto fa scattare un unico avviso.
+
+## Esercitazioni DR
+
+BombVault offre due livelli di prova che i tuoi backup siano effettivamente ripristinabili, non solo presenti.
+
+- **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco) e mostra un badge *ultima ripristinabilità verificata* per dominio. La cadenza risiede su Impostazioni, Calendari; il badge su Impostazioni, Integrità.
+- **Esercitazioni DR (off-site).** BombVault ripristina una destinazione reale dal repo off-site in una sandbox usa e getta, la verifica file per file e byte per byte, poi ripulisce. Questo dimostra che puoi recuperare da off-site, non solo che il repo risponde.
+
+La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto questo in una postura verde / ambra / rossa per dominio, con una checklist con marca temporale (off-site configurato, append-only verificato, replica aggiornata, esercitazione di ripristino superata, cifratura attiva, strategia di pota impostata). Ogni riga rossa collega direttamente alla soluzione, e la scheda diventa verde solo su fatti verificati.
+
+## Dashboard ricevente (il lato ricevente)
+
+Tutto quanto sopra è il lato *mittente*. Sulla macchina che **riceve** copie off-site immutabili da un altro BombVault, la dashboard Ricevente ti offre un monitoraggio indipendente e in sola lettura di quei repository sull'hardware ricevente, così un fallimento silenzioso all'altra estremità non passa inosservato.
+
+Attiva l'interruttore **Ricevente** in Impostazioni per rivelare una scheda **Ricevente**. È disattivato di default; abilitalo solo su una macchina che riceve effettivamente backup off-site immutabili. Poi registra un repository ricevuto (in sola lettura, aperto con la chiave dell'istanza mittente) per ottenere:
+
+- **Un inventario di snapshot raggruppato per sorgente**, così puoi vedere esattamente quali container, VM e set di file sono arrivati.
+- **Ultimo ricevuto** per sorgente, così sai quanto è fresco ciascuno.
+- **Un `restic check` indipendente** eseguito sull'hardware ricevente, così l'integrità viene verificata dove i dati effettivamente risiedono, non solo sul mittente.
+- **Un dead-man's switch:** un avviso quando una sorgente smette di inviare entro una finestra che imposti.
+- **Avvisi di integrità:** un avviso quando un controllo sul lato ricevente fallisce.
+
+Il Ricevente è rigorosamente in sola lettura. Non scrive mai nel repository ricevuto, così non può mai rompere la garanzia append-only su cui il mittente fa affidamento.
+
+## Ripristino guidato
+
+Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostruita attraverso il caso di disastro, in un unico posto:
+
+1. **Ripristina prima le impostazioni di BombVault stesso**, così i percorsi di backup, le destinazioni off-site e le credenziali di cui il resto del flusso ha bisogno risultano precompilati (applicato tramite un auto-riavvio sul socket Docker, così il database delle impostazioni in esecuzione non viene mai sovrascritto sotto un handle aperto).
+2. **Verifica che BombVault possa leggere i tuoi backup** (l'insidia della chiave di crittografia messa in primo piano).
+3. Ti permette di **puntare al tuo repo esistente** (locale o off-site).
+4. **Scopre** i container, le VM e i set di file memorizzati al suo interno.
+5. **Li ripristina tutti** (lasciati fermi, così li avvii deliberatamente), con il tuo kit di ripristino a un clic di distanza.
+
+!!! tip "Migrazione pianificata contro disastro"
+    Il ripristino guidato ripristina le impostazioni di BombVault stesso da un backup. Per uno spostamento *pianificato* su una nuova macchina, puoi invece portare la tua configurazione direttamente con la scheda **Esporta e importa impostazioni** (un file JSON portatile). Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
+
+### Ripristino da un altro repo BombVault
+
+Una scheda separata nella scheda **Ripristino** apre il repo di un'*altra* istanza BombVault (una condivisione montata sotto `/mnt`, o un URL remoto) con l'**`APP_KEY` di quell'istanza**, in una sessione monouso e in sola lettura. Sfoglia i container, le VM e i set di file memorizzati lì, scegli uno snapshot e ripristinalo, e l'oggetto ripristinato diventa un normale container, VM o set di file locale. Nulla viene mai scritto nell'altro repo, e le tue impostazioni di backup restano intatte (la sessione risiede in memoria e scade da sé). Spostare un container dal server A al server B non significa più ripuntare le impostazioni del tuo repo e riportarle indietro dopo. La federazione dal vivo server-a-server è esplicitamente fuori ambito; questa è una deliberata estrazione monouso.
+
+## Kit di ripristino della chiave di crittografia
+
+Questo è il pezzo che rende possibile il disaster recovery anche quando non c'è alcun BombVault in esecuzione.
+
+Un clic scarica la **chiave master**, la **password restic derivata** e le **posizioni e comandi esatti del repo**, così puoi ripristinare direttamente con la CLI di restic su qualsiasi macchina. Un promemoria sulla Dashboard ti assilla finché non l'hai conservato.
+
+!!! danger "Conserva il kit di ripristino fuori dal server"
+    Il kit contiene il segreto che decifra i tuoi backup. Tienilo in un luogo sicuro e separato dal server (un password manager, una copia stampata in una cassaforte). Se perdi sia BombVault che `APP_KEY` senza kit di ripristino, i tuoi backup cifrati non possono essere recuperati.
+
+Poiché le definizioni di ripristino risiedono **dentro** ogni repo (`<repo>/def`, `<repo>/vm-def`), una cartella di repo copiata è completamente autonoma, così il kit più il repo sono tutto ciò che serve per un ripristino bare-metal.

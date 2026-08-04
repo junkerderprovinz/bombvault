@@ -8,6 +8,9 @@ dist/
 build/
 tsconfig.tsbuildinfo
 
+# MkDocs build output (the Docs workflow builds and deploys it fresh)
+/site/
+
 # Keep the embedded-SPA placeholder so `//go:embed all:web/dist` compiles
 # before the Vite build exists; real build artifacts under web/dist stay ignored.
 !web/dist/
