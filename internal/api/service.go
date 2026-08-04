@@ -3172,6 +3172,15 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 				queue = append(queue, n)
 			}
 		}
+		// #119: sequence the batch by the user's explicit manual backup order first,
+		// then most-overdue-first as the tiebreak — the same ordering a scheduled run
+		// uses. A store error here must never abort the batch (do not regress), so the
+		// original selection order is kept as the fallback.
+		if ordered, err := s.store.OrderContainerNamesForRun(queue); err != nil {
+			log.Printf("api: backup-all: order containers: %v (using selection order)", err)
+		} else {
+			queue = ordered
+		}
 		total := len(queue)
 		const key = "batch:containers"
 		s.publishBatch(key, 0, true)
@@ -7170,6 +7179,30 @@ func (s *Service) SetStopContainers(_ context.Context, name string, stop []strin
 		clean = append(clean, c)
 	}
 	return s.store.SetStopContainers(name, clean)
+}
+
+// BackupOrders returns the current explicit manual backup ordering (#119): the
+// containers with a positive order, sorted by order ascending.
+func (s *Service) BackupOrders(_ context.Context) ([]store.ContainerOrder, error) {
+	return s.store.BackupOrders()
+}
+
+// SetBackupOrders authoritatively replaces the manual backup ordering (#119) from
+// an ordered list of container names: the first name gets order 1, the next 2, and
+// so on, and every container not in the list is returned to unordered. Blanks and
+// duplicates (first occurrence wins) are dropped so the positions stay dense.
+func (s *Service) SetBackupOrders(_ context.Context, names []string) error {
+	orders := make([]store.ContainerOrder, 0, len(names))
+	seen := map[string]bool{}
+	for _, n := range names {
+		n = strings.TrimSpace(n)
+		if n == "" || seen[n] {
+			continue // skip blanks and duplicates
+		}
+		seen[n] = true
+		orders = append(orders, store.ContainerOrder{Container: n, Order: len(orders) + 1})
+	}
+	return s.store.SetBackupOrders(orders)
 }
 
 // SetExcludes stores the restic --exclude patterns for a container's backup.
