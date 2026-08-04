@@ -2947,7 +2947,15 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
 			continue
 		}
-		deps = append(deps, backup.StopContainer{Name: dep, WasRunning: di.Running})
+		// Carry the dependency's compose identity so the restart-after-backup phase
+		// can bring the stopped set back up in depends_on order (dependencies first)
+		// and, when enabled, wait for each to be healthy before its dependents (#119).
+		deps = append(deps, backup.StopContainer{
+			Name:       dep,
+			WasRunning: di.Running,
+			Service:    composeService(di.Config.Labels),
+			DependsOn:  parseDependsOn(di.Config.Labels),
+		})
 	}
 
 	pkey := "container:" + name
@@ -2971,6 +2979,8 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		PreHook:              tg.PreHook,
 		PostHook:             tg.PostHook,
 		StopContainers:       deps,
+		HealthWait:           settings.RestartHealthWait,
+		HealthTimeout:        time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
 		Excludes:             s.resolveExcludePatterns(tg.Excludes, in),
 		Docker:               s.docker,
 		Restic:               &resticAdapter{engine: s.engine, mode: mode},

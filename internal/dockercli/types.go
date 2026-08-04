@@ -47,6 +47,11 @@ type Docker interface {
 	// timeout. Used after restarting a backed-up container so its network-namespace
 	// dependents (network_mode: container:<ref>) can attach to a live target.
 	WaitRunning(ctx context.Context, name string, timeout time.Duration) error
+	// Health returns the readiness snapshot of a container (Running, whether it
+	// defines a Docker healthcheck, and whether that healthcheck is currently
+	// healthy). Used by the health-gated ordered restart after a backup to wait
+	// for a dependency to be ready before starting the containers that depend on it.
+	Health(ctx context.Context, name string) (model.Health, error)
 	Remove(ctx context.Context, name string) error
 	Pull(ctx context.Context, image string) error
 	// PullWithAuth is Pull with an optional registry credential: registryAuth is
