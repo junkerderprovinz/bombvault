@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" width="460" height="120" role="img" aria-label="Documentation">
+  <!-- BombVault Carbon docs button: #161616 surface, sunflower #FCC419 accent, light text -->
+  <rect x="2.5" y="2.5" width="455" height="115" rx="18" ry="18" fill="#161616" stroke="#FCC419" stroke-width="2.5"/>
+  <!-- Document glyph (folded corner) in sunflower yellow -->
+  <g fill="none" stroke="#FCC419" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M40,30 h20 l18,18 v36 q0,6 -6,6 h-32 q-6,0 -6,-6 v-48 q0,-6 6,-6 z"/>
+    <path d="M60,30 v18 h18"/>
+    <path d="M44,64 h24"/>
+    <path d="M44,74 h24"/>
+    <path d="M44,84 h14"/>
+  </g>
+  <!-- Label -->
+  <text x="278" y="62" text-anchor="middle" dominant-baseline="central"
+        font-family="'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="38" font-weight="600" fill="#f4f4f4" letter-spacing="0.3">Documentation</text>
+</svg>
