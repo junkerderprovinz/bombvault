@@ -4,7 +4,7 @@
 #
 # GitHub:  https://github.com/junkerderprovinz/bombvault
 # Image:   ghcr.io/junkerderprovinz/bombvault
-# License: MIT
+# License: AGPL-3.0-only
 #
 # Single static Go binary that serves the JSON API + an embedded React SPA and
 # shells out to restic over the mounted docker.sock (Docker SDK, no docker-cli)
@@ -57,7 +57,7 @@ FROM debian:stable-slim@sha256:328d16499860ae6cb9b345e2e4cebca08c2a36e4f7278482c
 LABEL org.opencontainers.image.title="bombvault" \
       org.opencontainers.image.description="Backup & disaster recovery for Docker containers and KVM/libvirt VMs, powered by restic." \
       org.opencontainers.image.source="https://github.com/junkerderprovinz/bombvault" \
-      org.opencontainers.image.licenses="MIT"
+      org.opencontainers.image.licenses="AGPL-3.0-only"
 
 # restic ≥0.17 is required for `--insecure-no-password`; Debian's apt restic is
 # too old, so pull the official static binary from GitHub for the target arch.
