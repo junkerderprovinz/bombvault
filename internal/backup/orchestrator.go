@@ -103,6 +103,12 @@ type Restic interface {
 	// RestorePaths restores each backed-up path back to its own location as a
 	// subtree, so restic never reconciles shared parent dirs (SEC §8 / DR).
 	RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error
+	// RestoreSubtreeTo restores the snapshot subtree at subtreePath INTO target
+	// (target receives that subtree's contents directly, no absolute-path nesting).
+	// Used to place a cross-instance VM restore's disks on a DIFFERENT pool than
+	// the source server's paths (subtreePath = the source dir in the snapshot,
+	// target = the chosen destination dir).
+	RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string) error
 	// VerifySnapshot confirms snapshotID resolves to a readable snapshot in repo.
 	// It is the restore PRE-FLIGHT: a missing snapshot, wrong key, or unreachable
 	// repo must abort BEFORE any destructive teardown (stop/remove a container,
