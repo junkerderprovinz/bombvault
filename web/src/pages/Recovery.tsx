@@ -239,6 +239,7 @@ function ForeignItemRow({
   session,
   hostMountRoot,
   existsLocally,
+  collisionKnown,
   t,
   blocked,
   onBusyChange,
@@ -248,8 +249,11 @@ function ForeignItemRow({
   item: ForeignItem;
   session: string;
   hostMountRoot: string;
-  /** A same-named local container/VM exists — restore would overwrite it. */
+  /** Show the overwrite confirm before restoring (a real or unverifiable collision). */
   existsLocally: boolean;
+  /** True only when a same-named local item is KNOWN to exist; false when the local
+   *  inventory could not be read, so the confirm should say "could not verify". */
+  collisionKnown: boolean;
   t: ReturnType<typeof useT>["t"];
   blocked: boolean;
   onBusyChange: (busy: boolean) => void;
@@ -274,9 +278,12 @@ function ForeignItemRow({
   async function handleRestore() {
     if (state === "busy" || blocked) return;
     if (needsTarget && target.trim() === "") return;
-    // Same-named local item: explicit overwrite confirm BEFORE anything fires.
-    if (existsLocally && !window.confirm(t("recovery.foreignExistsConfirm").replace("{name}", item.name))) {
-      return;
+    // Overwrite confirm BEFORE anything fires. A KNOWN same-named local item warns
+    // that it will be overwritten; an unreadable local inventory instead says it
+    // could not verify (it is not claiming the item exists).
+    if (existsLocally) {
+      const key = collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm";
+      if (!window.confirm(t(key).replace("{name}", item.name))) return;
     }
     setState("busy");
     setError(null);
@@ -617,6 +624,15 @@ function ForeignRestoreCard({
                           localNames.has(
                             (g.domain === "containers" ? "container:" : "vm:") + item.name
                           ))
+                      }
+                      collisionKnown={
+                        // A real, verified collision (vs an unreadable inventory) —
+                        // decides whether the confirm says "exists" or "could not verify".
+                        g.domain !== "files" &&
+                        localKnown &&
+                        localNames.has(
+                          (g.domain === "containers" ? "container:" : "vm:") + item.name
+                        )
                       }
                       t={t}
                       blocked={rowBlocked}

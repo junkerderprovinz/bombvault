@@ -949,6 +949,7 @@ const pl: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Folder docelowy",
   "recovery.foreignRestore": "Przywróć tutaj",
   "recovery.foreignExistsConfirm": "„{name}” już istnieje w tym systemie — przywracanie NADPISZE go obcą kopią. Kontynuować?",
+  "recovery.foreignUnverifiedConfirm": "BombVault nie mógł odczytać bieżących kontenerów i maszyn wirtualnych tego systemu, więc nie może ustalić, czy „{name}” już tutaj istnieje. Przywracanie może nadpisać istniejący element. Kontynuować?",
   "recovery.foreignExpired": "Sesja wygasła (sesje trwają 30 minut) — połącz się ponownie, aby dalej przeglądać.",
   "recovery.foreignReconnect": "Połącz ponownie",
 

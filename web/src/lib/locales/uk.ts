@@ -949,6 +949,7 @@ const uk: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Цільова папка",
   "recovery.foreignRestore": "Відновити сюди",
   "recovery.foreignExistsConfirm": "«{name}» вже існує в цій системі — відновлення ПЕРЕЗАПИШЕ його чужою копією. Продовжити?",
+  "recovery.foreignUnverifiedConfirm": "BombVault не зміг прочитати поточний перелік контейнерів і віртуальних машин цієї системи, тому не може визначити, чи «{name}» уже тут існує. Відновлення може перезаписати наявний елемент. Продовжити?",
   "recovery.foreignExpired": "Сеанс минув (сеанси тривають 30 хвилин) — підключіться знову, щоб продовжити перегляд.",
   "recovery.foreignReconnect": "Підключитися знову",
 

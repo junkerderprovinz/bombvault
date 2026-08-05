@@ -946,6 +946,7 @@ const zh: Partial<Translations> = {
   "recovery.foreignTargetFolder": "目标文件夹",
   "recovery.foreignRestore": "恢复到此处",
   "recovery.foreignExistsConfirm": "“{name}”已存在于本系统 — 恢复会用外部备份将其覆盖。是否继续？",
+  "recovery.foreignUnverifiedConfirm": "BombVault 无法读取本系统当前的容器和虚拟机，因此无法确定“{name}”是否已存在于此。恢复可能会覆盖已有的同名项。是否继续？",
   "recovery.foreignExpired": "会话已过期（会话有效期为 30 分钟）— 请重新连接以继续浏览。",
   "recovery.foreignReconnect": "重新连接",
 

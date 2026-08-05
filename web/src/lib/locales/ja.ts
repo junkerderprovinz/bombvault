@@ -946,6 +946,7 @@ const ja: Partial<Translations> = {
   "recovery.foreignTargetFolder": "対象フォルダー",
   "recovery.foreignRestore": "ここに復元",
   "recovery.foreignExistsConfirm": "「{name}」はこのシステムに既に存在します — 復元すると外部のバックアップで上書きされます。続行しますか？",
+  "recovery.foreignUnverifiedConfirm": "BombVault はこのシステムの現在のコンテナと VM を読み取れなかったため、「{name}」がここに既に存在するかどうか判断できません。復元すると既存のものを上書きする可能性があります。続行しますか？",
   "recovery.foreignExpired": "セッションの有効期限が切れました（セッションは 30 分間有効）— 閲覧を続けるには再接続してください。",
   "recovery.foreignReconnect": "再接続",
 

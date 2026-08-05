@@ -954,6 +954,7 @@ const no: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Målmappe",
   "recovery.foreignRestore": "Gjenopprett hit",
   "recovery.foreignExistsConfirm": "«{name}» finnes allerede på dette systemet — gjenopprettingen OVERSKRIVER den med den fremmede sikkerhetskopien. Fortsette?",
+  "recovery.foreignUnverifiedConfirm": "BombVault kunne ikke lese dette systemets nåværende containere og VM-er, og kan derfor ikke avgjøre om «{name}» allerede finnes her. Gjenoppretting kan overskrive en eksisterende. Fortsette?",
   "recovery.foreignExpired": "Økten er utløpt (økter varer i 30 minutter) — koble til på nytt for å fortsette å bla.",
   "recovery.foreignReconnect": "Koble til på nytt",
 

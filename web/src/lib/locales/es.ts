@@ -952,6 +952,7 @@ const es: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Carpeta de destino",
   "recovery.foreignRestore": "Restaurar aquí",
   "recovery.foreignExistsConfirm": "«{name}» ya existe en este sistema — la restauración lo SOBRESCRIBIRÁ con la copia ajena. ¿Continuar?",
+  "recovery.foreignUnverifiedConfirm": "BombVault no pudo leer los contenedores y las VM actuales de este sistema, por lo que no puede saber si «{name}» ya existe aquí. La restauración podría sobrescribir uno existente. ¿Continuar?",
   "recovery.foreignExpired": "La sesión ha caducado (las sesiones duran 30 minutos) — reconéctate para seguir explorando.",
   "recovery.foreignReconnect": "Reconectar",
 
