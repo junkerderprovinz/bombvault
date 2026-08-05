@@ -954,6 +954,7 @@ const pt: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Pasta de destino",
   "recovery.foreignRestore": "Restaurar aqui",
   "recovery.foreignExistsConfirm": "«{name}» já existe neste sistema — o restauro irá SOBRESCREVÊ-LO com o backup externo. Continuar?",
+  "recovery.foreignUnverifiedConfirm": "O BombVault não conseguiu ler os contentores e VMs atuais deste sistema, pelo que não consegue saber se «{name}» já existe aqui. O restauro pode sobrescrever um existente. Continuar?",
   "recovery.foreignExpired": "A sessão expirou (as sessões duram 30 minutos) — volte a ligar-se para continuar a explorar.",
   "recovery.foreignReconnect": "Voltar a ligar",
 

@@ -954,6 +954,7 @@ const fi: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Kohdekansio",
   "recovery.foreignRestore": "Palauta tänne",
   "recovery.foreignExistsConfirm": "”{name}” on jo tässä järjestelmässä — palautus KORVAA sen vieraalla varmuuskopiolla. Jatketaanko?",
+  "recovery.foreignUnverifiedConfirm": "BombVault ei voinut lukea tämän järjestelmän nykyisiä kontteja ja virtuaalikoneita, joten se ei voi tietää, onko ”{name}” jo täällä. Palautus saattaa korvata olemassa olevan. Jatketaanko?",
   "recovery.foreignExpired": "Istunto on vanhentunut (istunnot kestävät 30 minuuttia) — yhdistä uudelleen jatkaaksesi selaamista.",
   "recovery.foreignReconnect": "Yhdistä uudelleen",
 

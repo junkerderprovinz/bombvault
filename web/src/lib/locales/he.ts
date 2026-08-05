@@ -954,6 +954,7 @@ const he: Partial<Translations> = {
   "recovery.foreignTargetFolder": "תיקיית יעד",
   "recovery.foreignRestore": "שחזר לכאן",
   "recovery.foreignExistsConfirm": "\"{name}\" כבר קיים במערכת הזו — השחזור ידרוס אותו עם הגיבוי הזר. להמשיך?",
+  "recovery.foreignUnverifiedConfirm": "BombVault לא הצליח לקרוא את הקונטיינרים והמכונות הווירטואליות הנוכחיים של המערכת הזו, ולכן אינו יכול לדעת אם \"{name}\" כבר קיים כאן. השחזור עלול לדרוס פריט קיים. להמשיך?",
   "recovery.foreignExpired": "תוקף ההפעלה פג (הפעלות נמשכות 30 דקות) — התחברו שוב כדי להמשיך לעיין.",
   "recovery.foreignReconnect": "התחבר מחדש",
 

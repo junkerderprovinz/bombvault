@@ -957,6 +957,7 @@ const ro: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Folder țintă",
   "recovery.foreignRestore": "Restaurează aici",
   "recovery.foreignExistsConfirm": "„{name}” există deja pe acest sistem — restaurarea îl va SUPRASCRIE cu copia străină. Continuați?",
+  "recovery.foreignUnverifiedConfirm": "BombVault nu a putut citi containerele și mașinile virtuale curente ale acestui sistem, așa că nu poate stabili dacă „{name}” există deja aici. Restaurarea ar putea suprascrie unul existent. Continuați?",
   "recovery.foreignExpired": "Sesiunea a expirat (sesiunile durează 30 de minute) — reconectați-vă pentru a continua răsfoirea.",
   "recovery.foreignReconnect": "Reconectare",
 

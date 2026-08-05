@@ -957,6 +957,7 @@ const ar: Partial<Translations> = {
   "recovery.foreignTargetFolder": "المجلد الهدف",
   "recovery.foreignRestore": "الاستعادة إلى هنا",
   "recovery.foreignExistsConfirm": "«{name}» موجود بالفعل على هذا النظام — ستؤدي الاستعادة إلى الكتابة فوقه بالنسخة الخارجية. هل تريد المتابعة؟",
+  "recovery.foreignUnverifiedConfirm": "تعذّر على BombVault قراءة الحاويات والأجهزة الافتراضية الحالية لهذا النظام، لذا لا يمكنه تحديد ما إذا كان «{name}» موجودًا هنا بالفعل. قد تؤدي الاستعادة إلى الكتابة فوق عنصر موجود. هل تريد المتابعة؟",
   "recovery.foreignExpired": "انتهت صلاحية الجلسة (تستمر الجلسات 30 دقيقة) — أعد الاتصال لمواصلة التصفح.",
   "recovery.foreignReconnect": "إعادة الاتصال",
 

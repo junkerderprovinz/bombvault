@@ -954,6 +954,7 @@ const da: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Målmappe",
   "recovery.foreignRestore": "Gendan hertil",
   "recovery.foreignExistsConfirm": "”{name}” findes allerede på dette system — gendannelsen OVERSKRIVER det med den fremmede sikkerhedskopi. Fortsæt?",
+  "recovery.foreignUnverifiedConfirm": "BombVault kunne ikke læse dette systems aktuelle containere og VM'er og kan derfor ikke afgøre, om ”{name}” allerede findes her. Gendannelsen kan overskrive en eksisterende. Fortsæt?",
   "recovery.foreignExpired": "Sessionen er udløbet (sessioner varer 30 minutter) — forbind igen for at fortsætte med at gennemse.",
   "recovery.foreignReconnect": "Forbind igen",
 

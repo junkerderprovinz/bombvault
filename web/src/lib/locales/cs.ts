@@ -952,6 +952,7 @@ const cs: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Cílová složka",
   "recovery.foreignRestore": "Obnovit sem",
   "recovery.foreignExistsConfirm": "„{name}“ v tomto systému už existuje — obnova ho PŘEPÍŠE cizí zálohou. Pokračovat?",
+  "recovery.foreignUnverifiedConfirm": "BombVault nedokázal načíst aktuální kontejnery a virtuální stroje tohoto systému, takže nemůže zjistit, zda „{name}“ zde už existuje. Obnova může přepsat stávající položku. Pokračovat?",
   "recovery.foreignExpired": "Relace vypršela (relace trvají 30 minut) — připojte se znovu a pokračujte v procházení.",
   "recovery.foreignReconnect": "Připojit znovu",
 

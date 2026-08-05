@@ -957,6 +957,7 @@ const hu: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Célmappa",
   "recovery.foreignRestore": "Visszaállítás ide",
   "recovery.foreignExistsConfirm": "„{name}” már létezik ezen a rendszeren — a visszaállítás FELÜLÍRJA az idegen mentéssel. Folytatja?",
+  "recovery.foreignUnverifiedConfirm": "A BombVault nem tudta beolvasni ezen a rendszeren jelenleg futó konténereket és VM-eket, ezért nem tudja megállapítani, hogy „{name}” már létezik-e itt. A visszaállítás felülírhat egy meglévőt. Folytatja?",
   "recovery.foreignExpired": "A munkamenet lejárt (a munkamenetek 30 percig tartanak) — csatlakozzon újra a böngészés folytatásához.",
   "recovery.foreignReconnect": "Újracsatlakozás",
 

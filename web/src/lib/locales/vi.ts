@@ -946,6 +946,7 @@ const vi: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Thư mục đích",
   "recovery.foreignRestore": "Khôi phục vào đây",
   "recovery.foreignExistsConfirm": "\"{name}\" đã tồn tại trên hệ thống này — việc khôi phục sẽ GHI ĐÈ nó bằng bản sao lưu bên ngoài. Tiếp tục?",
+  "recovery.foreignUnverifiedConfirm": "BombVault không thể đọc danh sách container và máy ảo hiện tại của hệ thống này, nên không thể biết \"{name}\" đã tồn tại ở đây hay chưa. Việc khôi phục có thể ghi đè một mục đang có. Tiếp tục?",
   "recovery.foreignExpired": "Phiên đã hết hạn (mỗi phiên kéo dài 30 phút) — hãy kết nối lại để tiếp tục duyệt.",
   "recovery.foreignReconnect": "Kết nối lại",
 

@@ -951,6 +951,7 @@ const nl: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Doelmap",
   "recovery.foreignRestore": "Hierheen herstellen",
   "recovery.foreignExistsConfirm": "“{name}” bestaat al op dit systeem — herstellen zal het OVERSCHRIJVEN met de vreemde back-up. Doorgaan?",
+  "recovery.foreignUnverifiedConfirm": "BombVault kon de huidige containers en VM's van dit systeem niet uitlezen en kan daarom niet bepalen of “{name}” hier al bestaat. Herstellen kan een bestaande overschrijven. Doorgaan?",
   "recovery.foreignExpired": "De sessie is verlopen (sessies duren 30 minuten) — maak opnieuw verbinding om verder te bladeren.",
   "recovery.foreignReconnect": "Opnieuw verbinden",
 

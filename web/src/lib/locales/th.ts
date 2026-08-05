@@ -957,6 +957,7 @@ const th: Partial<Translations> = {
   "recovery.foreignTargetFolder": "โฟลเดอร์ปลายทาง",
   "recovery.foreignRestore": "กู้คืนมาที่นี่",
   "recovery.foreignExistsConfirm": "\"{name}\" มีอยู่แล้วในระบบนี้ — การกู้คืนจะเขียนทับด้วยข้อมูลสำรองภายนอก ดำเนินการต่อหรือไม่?",
+  "recovery.foreignUnverifiedConfirm": "BombVault ไม่สามารถอ่านรายการคอนเทนเนอร์และ VM ปัจจุบันของระบบนี้ได้ จึงไม่สามารถระบุได้ว่า \"{name}\" มีอยู่ที่นี่แล้วหรือไม่ การกู้คืนอาจเขียนทับรายการที่มีอยู่ ดำเนินการต่อหรือไม่?",
   "recovery.foreignExpired": "เซสชันหมดอายุแล้ว (เซสชันมีอายุ 30 นาที) — เชื่อมต่อใหม่เพื่อเรียกดูต่อ",
   "recovery.foreignReconnect": "เชื่อมต่อใหม่",
 

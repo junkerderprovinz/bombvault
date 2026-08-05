@@ -954,6 +954,7 @@ const tr: Partial<Translations> = {
   "recovery.foreignTargetFolder": "Hedef klasör",
   "recovery.foreignRestore": "Buraya geri yükle",
   "recovery.foreignExistsConfirm": "\"{name}\" bu sistemde zaten var — geri yükleme onu yabancı yedekle ÜZERİNE YAZACAK. Devam edilsin mi?",
+  "recovery.foreignUnverifiedConfirm": "BombVault bu sistemin mevcut konteyner ve sanal makinelerini okuyamadı, bu yüzden \"{name}\" burada zaten var mı bilemiyor. Geri yükleme mevcut bir öğeyi üzerine yazabilir. Devam edilsin mi?",
   "recovery.foreignExpired": "Oturum süresi doldu (oturumlar 30 dakika sürer) — göz atmaya devam etmek için yeniden bağlanın.",
   "recovery.foreignReconnect": "Yeniden bağlan",
 
