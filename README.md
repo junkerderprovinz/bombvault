@@ -33,16 +33,6 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="One-click restore — a deleted container is back and running in seconds" width="100%">
-</p>
-
-<p align="center">
-  <sub><i>One click: a deleted container is restored from its backup and running again in seconds.</i></sub>
-</p>
-
-<br>
-
-<p align="center">
   <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-docs.png" alt="Documentation" width="220"></a>
 </p>
 
@@ -93,6 +83,13 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 <br>
 
 ## 2. Screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="One-click restore — a deleted container is back and running in seconds" width="90%">
+  <br><em>One click: a deleted container is restored from its backup and running again in seconds.</em>
+</p>
+
+<br>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
