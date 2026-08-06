@@ -148,3 +148,76 @@ func TestForeignRestoreRoute(t *testing.T) {
 		t.Fatalf("restored = %v, want one whole-tree restore from the session repo %q", eng.restored, sessionRepo)
 	}
 }
+
+// TestForeignFilesAndSelectiveRestoreRoutes pins the #123 route wiring: POST
+// /api/foreign/files lists the session snapshot's file tree so the Recovery card
+// can offer a subfolder picker, and POST /api/foreign/restore with a non-empty
+// "paths" selection restores ONLY those subfolders — from the SESSION repo, via a
+// subtree-relative include (the contents land in the target, not nested under
+// /host/user/…).
+func TestForeignFilesAndSelectiveRestoreRoutes(t *testing.T) {
+	enc := true
+	location := "backups/other"
+	eng := &fakeResticEngine{
+		existingMode: &enc,
+		snaps: []restic.Snapshot{
+			{ID: "aaaaaaaa11111111", Time: "2026-07-05T10:00:00Z", Paths: []string{"/host/user/appdata"}, Tags: []string{"fileset:appdata"}},
+		},
+		lsEntries: []restic.FileEntry{
+			{Path: "/host/user/appdata", Type: "dir"},
+			{Path: "/host/user/appdata/vaultwarden", Type: "dir"},
+			{Path: "/host/user/appdata/vaultwarden/db.sqlite3", Type: "file", Size: 4096},
+		},
+	}
+	h, _, svc, dir := newTestRouterSvcDir(t, &fakeServiceDocker{}, eng)
+
+	sessionRepo, err := paths.Resolve(dir, location)
+	if err != nil {
+		t.Fatalf("resolve session repo: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "backups", "other"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "backups", "other", "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	key := strings.Repeat("ab", 32)
+	w, m := doJSON(t, h, http.MethodPost, "/api/foreign/open", `{"location":"`+location+`","key":"`+key+`"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("open: status=%d body=%v", w.Code, m)
+	}
+	session, _ := m["session"].(string)
+	if session == "" {
+		t.Fatalf("open must return a session id, got %v", m)
+	}
+
+	// POST /api/foreign/files → 200 {ok:true, files:[...]} (the picker's tree).
+	w, m = doJSON(t, h, http.MethodPost, "/api/foreign/files",
+		`{"session":"`+session+`","domain":"files","item":"appdata","snapshot":"latest"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("files: status=%d body=%v, want 200 ok:true", w.Code, m)
+	}
+	files, _ := m["files"].([]any)
+	if len(files) != 3 {
+		t.Fatalf("files: want 3 entries, got %v", m["files"])
+	}
+
+	// POST /api/foreign/restore with a "paths" selection → 200 {ok,started}, and
+	// the detached work restores only that subfolder from the SESSION repo.
+	w, m = doJSON(t, h, http.MethodPost, "/api/foreign/restore",
+		`{"session":"`+session+`","domain":"files","item":"appdata","snapshot":"latest","confirm":true,"target":"restore-here/subset","paths":["/host/user/appdata/vaultwarden"]}`)
+	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+		t.Fatalf("selective restore: status=%d body=%v, want 200 {ok:true, started:true}", w.Code, m)
+	}
+	waitForBackupDone(t, svc)
+
+	wantTarget, err := paths.Resolve(dir, "restore-here/subset")
+	if err != nil {
+		t.Fatalf("resolve want target: %v", err)
+	}
+	want := sessionRepo + ":aaaaaaaa11111111:/host/user/appdata|/vaultwarden->" + wantTarget
+	if len(eng.restored) != 1 || eng.restored[0] != want {
+		t.Fatalf("restored = %v, want exactly [%s]", eng.restored, want)
+	}
+}

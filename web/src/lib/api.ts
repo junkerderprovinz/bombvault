@@ -89,6 +89,9 @@ export interface FileEntry {
 export interface ListFilesResponse {
   ok: boolean;
   files: FileEntry[];
+  /** Present on {ok:false} (HTTP 200) — e.g. an expired foreign session; the
+   *  local list endpoints never populate it. */
+  error?: string;
 }
 
 /** Settings from GET /api/settings (nested under "settings") */
@@ -2018,6 +2021,11 @@ export function foreignClose(session: string): Promise<OkEnvelope> {
  * (<target>/<vm-name>/). An empty vms `target` lets the backend fall back to
  * the configured restore folder, then the local VM domains path.
  *
+ * For the files domain, a non-empty `paths` selection restores ONLY those
+ * subfolders/files of the set (the #123 case: pull one stack out of a
+ * whole-appdata set) — `target` is then REQUIRED (foreign restores never write
+ * in place). Omit `paths` (or pass an empty array) to restore the whole set.
+ *
  * Unlike most endpoints this one answers validation failures with HTTP 400
  * and a held single-flight guard with HTTP 409 — both still carry the
  * {ok:false, error} envelope, so this parses the body on EVERY status instead
@@ -2031,6 +2039,7 @@ export async function foreignRestore(req: {
   snapshot: string;
   confirm: boolean;
   target?: string;
+  paths?: string[];
 }): Promise<OkEnvelope & { started?: boolean }> {
   const res = await fetch("/api/foreign/restore", {
     method: "POST",
@@ -2043,6 +2052,21 @@ export async function foreignRestore(req: {
     // Non-JSON body (proxy error page etc.) — fall back to the HTTP status.
     throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
   }
+}
+
+/** POST /api/foreign/files — list the files of one file set's snapshot in an open
+ *  foreign session, so the Recovery card can offer a subfolder/file picker before
+ *  a selective foreign restore (#123). Read-only and files-domain only; `snapshot`
+ *  accepts "latest". The foreign, session-scoped twin of listSnapshotFilesFileSet. */
+export function listForeignFiles(
+  session: string,
+  item: string,
+  snapshot: string
+): Promise<ListFilesResponse> {
+  return fetchJSON("/api/foreign/files", {
+    method: "POST",
+    body: JSON.stringify({ session, domain: "files", item, snapshot }),
+  });
 }
 
 // ---------------------------------------------------------------------------

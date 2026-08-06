@@ -28,13 +28,16 @@ import {
   foreignOpen,
   foreignClose,
   foreignRestore,
+  listForeignFiles,
   type Settings,
   type Container,
   type VM,
   type FileSetView,
+  type FileEntry,
   type ForeignInventory,
   type ForeignItem,
 } from "../lib/api";
+import { SnapshotFileTree } from "../components/SnapshotFileTree";
 
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
 // (they read the mirrored, restic-encrypted definitions), so they are the
@@ -269,15 +272,77 @@ function ForeignItemRow({
   const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Files domain only: restore the WHOLE set (default) or PICK a subfolder/file
+  // subset of it (#123 — pull one stack out of a whole-appdata set). The subset
+  // selection + its file tree are lazy: nothing is listed until the user switches
+  // to "pick a subfolder".
+  const [filesMode, setFilesMode] = useState<"whole" | "subset">("whole");
+  const [foreignFiles, setForeignFiles] = useState<FileEntry[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [filesError, setFilesError] = useState<string | null>(null);
+  const [filesFilter, setFilesFilter] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const subsetActive = domain === "files" && filesMode === "subset";
+
+  // onSessionGone is an inline arrow at the call site, so its identity changes on
+  // every parent re-render — and the parent re-renders on every /api/progress SSE
+  // tick. Hold it in a ref so the file-listing effect below can call the latest
+  // handler WITHOUT listing it as a dependency (else each SSE tick would wipe the
+  // ticked selection and re-fetch the tree mid-pick).
+  const onSessionGoneRef = useRef(onSessionGone);
+  onSessionGoneRef.current = onSessionGone;
+
   // The recorded run's domain strings (see handleRuns): singular for
   // containers/VMs, "files" for file sets.
   const runDomain = domain === "containers" ? "container" : domain === "vms" ? "vm" : "files";
   // Newest-first for the picker; restic lists snapshots oldest-first.
   const snaps = [...item.snapshots].reverse();
 
+  // Lazily list the chosen snapshot's file tree for the subset picker; re-list
+  // when the snapshot changes and clear any prior selection (it belonged to the
+  // previous snapshot). Read-only session-scoped call (listForeignFiles).
+  useEffect(() => {
+    if (!subsetActive) return;
+    let cancelled = false;
+    setFilesLoading(true);
+    setFilesError(null);
+    setSelected(new Set());
+    listForeignFiles(session, item.name, snapshot)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.ok) setForeignFiles(res.files ?? []);
+        else setForeignFiles([]);
+        if (!res.ok) {
+          setFilesError(res.error ?? t("files.loadFailed"));
+          if (isForeignSessionGone(res.error)) onSessionGoneRef.current();
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setFilesError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setFilesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subsetActive, session, item.name, snapshot, t]);
+
+  function toggleSelected(p: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) next.delete(p);
+      else next.add(p);
+      return next;
+    });
+  }
+
   async function handleRestore() {
     if (state === "busy" || blocked) return;
     if (needsTarget && target.trim() === "") return;
+    // A subset restore needs at least one ticked path (the whole-set restore
+    // sends none).
+    if (subsetActive && selected.size === 0) return;
     // Overwrite confirm BEFORE anything fires. A KNOWN same-named local item warns
     // that it will be overwritten; an unreadable local inventory instead says it
     // could not verify (it is not claiming the item exists).
@@ -300,6 +365,8 @@ function ForeignItemRow({
             snapshot,
             confirm: true,
             target: needsTarget ? target.trim() : undefined,
+            // Only the subset mode selects paths; the whole-set restore omits them.
+            paths: subsetActive ? [...selected] : undefined,
           }),
       });
       if (res.ok) {
@@ -336,12 +403,54 @@ function ForeignItemRow({
         </select>
       </div>
       {domain === "files" && (
-        <FolderBrowser
-          label={t("recovery.foreignTargetFolder")}
-          value={target}
-          hostMountRoot={hostMountRoot}
-          onChange={setTarget}
-        />
+        <div className="flex flex-col gap-2">
+          {/* Whole set vs. a subfolder/file subset of it (#123). */}
+          <div className="flex items-center gap-4 text-xs">
+            <label className="inline-flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                name={`filesmode-${item.name}`}
+                checked={filesMode === "whole"}
+                onChange={() => setFilesMode("whole")}
+                disabled={state === "busy"}
+                className="accent-accent"
+              />
+              <span className="text-carbon-text">{t("recovery.foreignWholeSet")}</span>
+            </label>
+            <label className="inline-flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                name={`filesmode-${item.name}`}
+                checked={filesMode === "subset"}
+                onChange={() => setFilesMode("subset")}
+                disabled={state === "busy"}
+                className="accent-accent"
+              />
+              <span className="text-carbon-text">{t("recovery.foreignPickSubfolder")}</span>
+            </label>
+          </div>
+          {subsetActive && (
+            <>
+              <p className="text-[11px] text-carbon-textMuted">{t("recovery.foreignSubfolderHint")}</p>
+              <SnapshotFileTree
+                files={foreignFiles}
+                loading={filesLoading}
+                error={filesError}
+                filter={filesFilter}
+                onFilterChange={setFilesFilter}
+                selected={selected}
+                onToggle={toggleSelected}
+                t={t}
+              />
+            </>
+          )}
+          <FolderBrowser
+            label={t("recovery.foreignTargetFolder")}
+            value={target}
+            hostMountRoot={hostMountRoot}
+            onChange={setTarget}
+          />
+        </div>
       )}
       {domain === "vms" && (
         <div className="flex flex-col gap-1.5">
@@ -359,7 +468,12 @@ function ForeignItemRow({
       <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => void handleRestore()}
-          disabled={state === "busy" || blocked || (needsTarget && target.trim() === "")}
+          disabled={
+            state === "busy" ||
+            blocked ||
+            (needsTarget && target.trim() === "") ||
+            (subsetActive && selected.size === 0)
+          }
           className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {state === "busy" && (

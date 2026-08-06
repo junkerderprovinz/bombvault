@@ -36,6 +36,7 @@ type foreignRecordingEngine struct {
 	opens        func(m restic.Mode) bool
 	snaps        []restic.Snapshot
 	snapsErr     error
+	lsEntries    []restic.FileEntry // what Ls returns (the foreign subfolder picker's tree)
 
 	// statsRestoreBytes is the size StatsRestoreSize reports (the VM restore guard's
 	// "does it fit" number); 0 (the default) skips the free-space check.
@@ -168,6 +169,27 @@ func (f *foreignRecordingEngine) RestoreSubtreeTo(_ context.Context, repo, snaps
 	f.restores = append(f.restores, "RestoreSubtreeTo|"+repo+"|"+snapshotID+"|"+subtreePath+"->"+target)
 	f.mu.Unlock()
 	return nil
+}
+
+// RestoreSubtreeInclude is the selective (pick-some-files/subfolder) restore the
+// #123 foreign path uses: it reads the foreign repo and writes only to a LOCAL
+// target, so it is allowed — recorded with subtree + the subtree-relative include.
+func (f *foreignRecordingEngine) RestoreSubtreeInclude(_ context.Context, repo, snapshotID, subtreePath, includePath, target string, m restic.Mode) error {
+	f.record("RestoreSubtreeInclude")
+	f.recordMode(m)
+	f.mu.Lock()
+	f.restores = append(f.restores, "RestoreSubtreeInclude|"+repo+"|"+snapshotID+"|"+subtreePath+"|"+includePath+"->"+target)
+	f.mu.Unlock()
+	return nil
+}
+
+// Ls lists a foreign snapshot's files for the recovery subfolder picker — a READ
+// of the source repo, so it is allowed. lsEntries lets a test fix the returned
+// tree; the mode is recorded so tests can assert the listing stays lock-free.
+func (f *foreignRecordingEngine) Ls(_ context.Context, _, _ string, m restic.Mode) ([]restic.FileEntry, error) {
+	f.record("Ls")
+	f.recordMode(m)
+	return f.lsEntries, nil
 }
 
 // StatsRestoreSize is a READ of the source repo the VM restore's host-brick guard
@@ -638,7 +660,7 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 		t.Fatalf("foreignSession: %v", err)
 	}
 
-	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", "latest", true, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", "latest", true, "", nil)
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}
@@ -708,6 +730,91 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 // into the chosen folder under the host mount, adopts the name as a LOCAL
 // disabled path-less set (like DiscoverFileSets) and records a "restore" run
 // against it — performing ONLY reads plus the one RestoreInclude.
+// containerGuardTarget builds an in-memory container target (valid Definition +
+// one appdata path) for the foreign-container mount-guard tests, so
+// prepareRestoreForTarget resolves a real snapshot (not recreate-only) and reaches
+// the appdata destination guard.
+func containerGuardTarget(t *testing.T, appdata string) store.Target {
+	t.Helper()
+	defJSON, err := json.Marshal(containerDefinition{
+		Inspect: model.Inspect{Name: "web", Config: model.Config{Image: "nginx:latest"}},
+	})
+	if err != nil {
+		t.Fatalf("marshal def: %v", err)
+	}
+	return store.Target{ID: "t-web", ContainerName: "web", Definition: string(defJSON), AppdataPaths: []string{appdata}}
+}
+
+// TestForeignContainerRestoreGuardAbortsWhenAppdataPoolMissing pins the #123 /
+// #122-class container fix: a cross-instance container restore whose appdata pool
+// is NOT mounted on this host is REFUSED during preparation, before the caller
+// ever adopts the target or reaches executeRestore's destructive Stop/Remove — so
+// appdata can never be silently written to the wrong pool / the RAM rootfs.
+func TestForeignContainerRestoreGuardAbortsWhenAppdataPoolMissing(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	// Only "/" and the broad host bind are mounted — the appdata pool is NOT.
+	writeMountFixture(t, "/", "/host/user")
+
+	tg := containerGuardTarget(t, "/host/user/appdata/web")
+	_, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, true)
+	if err == nil || !strings.Contains(err.Error(), "not on a mounted") {
+		t.Fatalf("want the appdata not-mounted refusal, got %v", err)
+	}
+	// The guard fires during preparation, so nothing was restored.
+	if len(eng.restores) != 0 {
+		t.Fatalf("a refused foreign container restore must not restore anything, got %v", eng.restores)
+	}
+}
+
+// TestForeignContainerRestoreGuardAllowsMountedAppdata is the counterpart: when
+// the appdata path sits on a genuinely mounted pool/share (the standard
+// /host/user/appdata shfs case) the guard passes and a plan is built. It also
+// pins that preparation itself performs no restic restore.
+func TestForeignContainerRestoreGuardAllowsMountedAppdata(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	// The appdata share IS mounted (a strict descendant of the host mount).
+	writeMountFixture(t, "/", "/host/user", "/host/user/appdata")
+
+	tg := containerGuardTarget(t, "/host/user/appdata/web")
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, true)
+	if err != nil {
+		t.Fatalf("mounted appdata must pass the guard, got %v", err)
+	}
+	if plan.snapshotID != "abcdef0123456789" || len(plan.appdataPaths) != 1 || plan.appdataPaths[0] != "/host/user/appdata/web" {
+		t.Fatalf("unexpected plan: %+v", plan)
+	}
+	if len(eng.restores) != 0 {
+		t.Fatalf("preparation must not restore, got %v", eng.restores)
+	}
+}
+
+// TestLocalContainerRestoreSkipsMountGuard proves the guard is cross-instance
+// ONLY: a same-instance (foreign=false) restore keeps its historical behaviour
+// and is NOT refused even when the appdata mount is absent — the local path never
+// gained a new refusal.
+func TestLocalContainerRestoreSkipsMountGuard(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	writeMountFixture(t, "/", "/host/user") // appdata NOT mounted
+
+	tg := containerGuardTarget(t, "/host/user/appdata/web")
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, false)
+	if err != nil {
+		t.Fatalf("local restore must not gain the mount guard, got %v", err)
+	}
+	if len(plan.appdataPaths) != 1 {
+		t.Fatalf("unexpected local plan: %+v", plan)
+	}
+}
+
 func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 	location := "backups/other" // a LOCAL mounted share — remote backends are rejected
 	eng := &foreignRecordingEngine{
@@ -728,7 +835,7 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 		t.Fatalf("inventory fileSets = %+v, want [docs]", inv.FileSets)
 	}
 
-	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs")
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs", nil)
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}
@@ -790,6 +897,195 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 	}
 }
 
+// TestForeignRestoreFileSetSelectiveUsesSubtreeInclude pins the #123 selective
+// path: when StartForeignRestore is given a non-empty selection, only the chosen
+// subfolders are restored — each via RestoreSubtreeInclude rooted at the
+// snapshot's own backed-up path with the selection RELATIVE to that subtree, so
+// its contents land at <target>/<rel> (no /host/user/… nesting, issue #62), read
+// from the SESSION repo, lock-free, and never a repo write.
+func TestForeignRestoreFileSetSelectiveUsesSubtreeInclude(t *testing.T) {
+	location := "backups/other"
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{
+			{ID: "aaaaaaaa11111111", Time: "2026-07-05T10:00:00Z", Paths: []string{"/host/user/appdata"}, Tags: []string{"fileset:appdata"}},
+			{ID: "bbbbbbbb22222222", Time: "2026-07-06T10:00:00Z", Paths: []string{"/host/user/appdata"}, Tags: []string{"fileset:appdata"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	sessionRepo := seedForeignRepoMarker(t, s, location)
+
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	sel := []string{"/host/user/appdata/vaultwarden", "/host/user/appdata/immich"}
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "appdata", "latest", true, "restore-here/subset", sel)
+	if err != nil || !started {
+		t.Fatalf("StartForeignRestore (selective): started=%v err=%v", started, err)
+	}
+	waitForeignIdle(t, s)
+
+	wantTarget, err := paths.Resolve(s.cfg.HostMountRoot, "restore-here/subset")
+	if err != nil {
+		t.Fatalf("resolve want target: %v", err)
+	}
+	eng.mu.Lock()
+	restores := append([]string(nil), eng.restores...)
+	eng.mu.Unlock()
+	// One RestoreSubtreeInclude per selected path, in selection order, from the
+	// SESSION repo, of the NEWEST snapshot, subtree = the snapshot's backed-up
+	// root, include = the selection RELATIVE to that subtree.
+	want := []string{
+		"RestoreSubtreeInclude|" + sessionRepo + "|bbbbbbbb22222222|/host/user/appdata|/vaultwarden->" + wantTarget,
+		"RestoreSubtreeInclude|" + sessionRepo + "|bbbbbbbb22222222|/host/user/appdata|/immich->" + wantTarget,
+	}
+	if !reflect.DeepEqual(restores, want) {
+		t.Fatalf("selective restore calls = %v, want %v", restores, want)
+	}
+	if _, err := os.Stat(wantTarget); err != nil {
+		t.Fatalf("target folder must be created under the host mount: %v", err)
+	}
+	// A selective restore uses RestoreSubtreeInclude only — never the whole-set
+	// RestoreInclude/RestoreSubtreeTo, and never the in-place RestorePath.
+	if eng.count("RestoreInclude") != 0 || eng.count("RestoreSubtreeTo") != 0 || eng.count("RestorePath") != 0 {
+		t.Fatalf("selective restore must use RestoreSubtreeInclude only, got calls %v", eng.calls)
+	}
+	// Read-only guarantee (#61): the foreign session took no repository lock and
+	// attached no cloud credentials, and performed no forbidden repo writes.
+	if !eng.everyModeNoLock() {
+		t.Fatalf("every foreign read/restore must be lock-free (NoLock), got modes %+v", eng.modes)
+	}
+	if eng.anyModeHasEnv() {
+		t.Fatalf("a local-only foreign session must not attach cloud credentials, got modes %+v", eng.modes)
+	}
+	if bad := eng.calledForbidden(); len(bad) > 0 {
+		t.Fatalf("selective foreign restore performed forbidden repo writes: %v (all calls: %v)", bad, eng.calls)
+	}
+
+	// The set was adopted locally (disabled, path-less) and the run is attributable.
+	set, err := s.store.GetFileSetByName("appdata")
+	if err != nil {
+		t.Fatalf("adopted file set must exist locally: %v", err)
+	}
+	if set.Enabled || set.Path != "" {
+		t.Fatalf("adopted set must be disabled and path-less, got %+v", set)
+	}
+	runs, err := s.store.ListRuns(10)
+	if err != nil {
+		t.Fatalf("list runs: %v", err)
+	}
+	found := false
+	for _, r := range runs {
+		if r.TargetID == set.ID && r.Kind == "restore" && r.Status == "success" && r.SnapshotID == "bbbbbbbb22222222" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected a successful selective restore run for set %s, got %+v", set.ID, runs)
+	}
+}
+
+// TestForeignRestoreFileSetSelectiveGuards pins the selective path's synchronous
+// guards: a selection outside the snapshot's backed-up subtree is a traversal
+// attempt and is rejected before any engine restore; a selection with no target
+// folder is rejected (foreign restores are never in place); and neither leaks the
+// single-flight guard.
+func TestForeignRestoreFileSetSelectiveGuards(t *testing.T) {
+	location := "backups/other"
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{
+			{ID: "aaaaaaaa11111111", Time: "2026-07-05T10:00:00Z", Paths: []string{"/host/user/appdata"}, Tags: []string{"fileset:appdata"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	seedForeignRepoMarker(t, s, location)
+	ctx := context.Background()
+
+	id, _, err := s.OpenForeign(ctx, location, foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	// A selected path outside the snapshot's subtree is a traversal attempt.
+	started, err := s.StartForeignRestore(ctx, id, "files", "appdata", "latest", true, "restore-here/x", []string{"/host/other/secret"})
+	if started || err == nil || !strings.Contains(err.Error(), "outside the file set snapshot") {
+		t.Fatalf("outside-subtree selection: want the containment error, got started=%v err=%v", started, err)
+	}
+	// A selection with no target folder: foreign restores never go in place.
+	started, err = s.StartForeignRestore(ctx, id, "files", "appdata", "latest", true, "", []string{"/host/user/appdata/vaultwarden"})
+	if started || err == nil || !strings.Contains(err.Error(), "target folder") {
+		t.Fatalf("selection without target: want the target-folder error, got started=%v err=%v", started, err)
+	}
+	// No restore write was performed and the single-flight guard is free.
+	if len(eng.restores) != 0 {
+		t.Fatalf("a rejected selective restore must not touch the engine restores, got %v", eng.restores)
+	}
+	if s.BackupInProgress() {
+		t.Fatal("a rejected selective restore must release the single-flight guard")
+	}
+}
+
+// TestListForeignFiles pins the foreign subfolder picker's read: ListForeignFiles
+// returns the session snapshot's file tree via a lock-free Ls on the SESSION repo,
+// and rejects a non-files domain, an unsafe item name and an unknown session.
+func TestListForeignFiles(t *testing.T) {
+	location := "backups/other"
+	entries := []restic.FileEntry{
+		{Path: "/host/user/appdata", Type: "dir"},
+		{Path: "/host/user/appdata/vaultwarden", Type: "dir"},
+		{Path: "/host/user/appdata/vaultwarden/db.sqlite3", Type: "file", Size: 4096},
+	}
+	eng := &foreignRecordingEngine{
+		opens:     opensEncrypted,
+		lsEntries: entries,
+		snaps: []restic.Snapshot{
+			{ID: "aaaaaaaa11111111", Time: "2026-07-05T10:00:00Z", Paths: []string{"/host/user/appdata"}, Tags: []string{"fileset:appdata"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	seedForeignRepoMarker(t, s, location)
+	ctx := context.Background()
+
+	id, _, err := s.OpenForeign(ctx, location, foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	files, err := s.ListForeignFiles(ctx, id, "files", "appdata", "latest")
+	if err != nil {
+		t.Fatalf("ListForeignFiles: %v", err)
+	}
+	if !reflect.DeepEqual(files, entries) {
+		t.Fatalf("ListForeignFiles returned %+v, want %+v", files, entries)
+	}
+	if eng.count("Ls") != 1 {
+		t.Fatalf("expected exactly one Ls, got calls %v", eng.calls)
+	}
+	// The listing is read-only (#61): every recorded mode carried NoLock.
+	if !eng.everyModeNoLock() {
+		t.Fatalf("foreign file listing must be lock-free (NoLock), got modes %+v", eng.modes)
+	}
+	if bad := eng.calledForbidden(); len(bad) > 0 {
+		t.Fatalf("foreign file listing performed forbidden repo writes: %v", bad)
+	}
+
+	// A non-files domain is rejected (containers/vms have no file tree here).
+	if _, err := s.ListForeignFiles(ctx, id, "containers", "appdata", "latest"); err == nil || !strings.Contains(err.Error(), "files domain") {
+		t.Fatalf("non-files domain: want the domain error, got %v", err)
+	}
+	// An unsafe item name is rejected before any engine call.
+	if _, err := s.ListForeignFiles(ctx, id, "files", "../evil", "latest"); err == nil || !strings.Contains(err.Error(), "invalid item name") {
+		t.Fatalf("unsafe item: want the name error, got %v", err)
+	}
+	// An unknown session is rejected.
+	if _, err := s.ListForeignFiles(ctx, "nope", "files", "appdata", "latest"); !errors.Is(err, errForeignSession) {
+		t.Fatalf("unknown session: want errForeignSession, got %v", err)
+	}
+}
+
 // TestForeignRestoreLeavesSettingsUntouched pins guarantee #1 across the FULL
 // flow: after open + restore the settings read back deeply equal AND
 // byte-identical — the foreign path must never take the attach flow's
@@ -807,7 +1103,7 @@ func TestForeignRestoreLeavesSettingsUntouched(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
-	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs")
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs", nil)
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}
@@ -835,7 +1131,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Unconfirmed: the sentinel, before ANY engine call or session lookup.
-	started, err := s.StartForeignRestore(ctx, "whatever", "containers", "web", "latest", false, "")
+	started, err := s.StartForeignRestore(ctx, "whatever", "containers", "web", "latest", false, "", nil)
 	if started || !errors.Is(err, backup.ErrNotConfirmed) {
 		t.Fatalf("unconfirmed: want ErrNotConfirmed, got started=%v err=%v", started, err)
 	}
@@ -844,7 +1140,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 	}
 
 	// Unknown session (also the expired case — foreignSession sweeps first).
-	started, err = s.StartForeignRestore(ctx, "nope", "containers", "web", "latest", true, "")
+	started, err = s.StartForeignRestore(ctx, "nope", "containers", "web", "latest", true, "", nil)
 	if started || !errors.Is(err, errForeignSession) {
 		t.Fatalf("unknown session: want errForeignSession, got started=%v err=%v", started, err)
 	}
@@ -855,20 +1151,20 @@ func TestForeignRestoreValidation(t *testing.T) {
 	}
 
 	// Unknown domain.
-	if started, err = s.StartForeignRestore(ctx, id, "flash", "boot", "latest", true, ""); started || err == nil || !strings.Contains(err.Error(), "unknown domain") {
+	if started, err = s.StartForeignRestore(ctx, id, "flash", "boot", "latest", true, "", nil); started || err == nil || !strings.Contains(err.Error(), "unknown domain") {
 		t.Fatalf("unknown domain: want the domain error, got started=%v err=%v", started, err)
 	}
 	// File set without a target folder (foreign sets never restore in place).
-	if started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, ""); started || err == nil || !strings.Contains(err.Error(), "target folder") {
+	if started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "", nil); started || err == nil || !strings.Contains(err.Error(), "target folder") {
 		t.Fatalf("files without target: want the target-folder error, got started=%v err=%v", started, err)
 	}
 	// Unsafe item name (feeds tags, def filenames and progress keys).
-	if started, err = s.StartForeignRestore(ctx, id, "files", "../evil", "latest", true, "restore-here"); started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
+	if started, err = s.StartForeignRestore(ctx, id, "files", "../evil", "latest", true, "restore-here", nil); started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 		t.Fatalf("unsafe item: want the name error, got started=%v err=%v", started, err)
 	}
 	// Container whose def the foreign repo does not mirror (the seeded repo has a
 	// config marker but no def/ghost.def to read).
-	if started, err = s.StartForeignRestore(ctx, id, "containers", "ghost", "latest", true, ""); started || err == nil || !strings.Contains(err.Error(), "definition") {
+	if started, err = s.StartForeignRestore(ctx, id, "containers", "ghost", "latest", true, "", nil); started || err == nil || !strings.Contains(err.Error(), "definition") {
 		t.Fatalf("missing def: want the definition error, got started=%v err=%v", started, err)
 	}
 
@@ -877,7 +1173,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 	if s.BackupInProgress() {
 		t.Fatal("a failed foreign restore must release the single-flight guard")
 	}
-	started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "restore-here/docs")
+	started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "restore-here/docs", nil)
 	if err != nil || !started {
 		t.Fatalf("valid restore after failures: started=%v err=%v", started, err)
 	}
@@ -906,7 +1202,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 
 	// A VM name with a space passes the name check: the failure is the later
 	// missing-definition error, never "invalid item name".
-	started, err := s.StartForeignRestore(ctx, id, "vms", "Windows Server 2022", "latest", true, "")
+	started, err := s.StartForeignRestore(ctx, id, "vms", "Windows Server 2022", "latest", true, "", nil)
 	if started {
 		t.Fatalf("no def seeded, restore must not start; got started=%v", started)
 	}
@@ -919,7 +1215,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 
 	// Unsafe VM names are still rejected by the name check itself.
 	for _, unsafe := range []string{"../evil", "win/../etc", `win\evil`, "-oProxyCommand"} {
-		started, err = s.StartForeignRestore(ctx, id, "vms", unsafe, "latest", true, "")
+		started, err = s.StartForeignRestore(ctx, id, "vms", unsafe, "latest", true, "", nil)
 		if started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 			t.Fatalf("unsafe VM name %q: want the name rejection, got started=%v err=%v", unsafe, started, err)
 		}
@@ -928,7 +1224,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 	// Containers and file sets keep the strict validResourceName: a space is not
 	// a valid Docker container / file-set name, so it is rejected on the name.
 	for _, domain := range []string{"containers", "files"} {
-		started, err = s.StartForeignRestore(ctx, id, domain, "has space", "latest", true, "restore-here")
+		started, err = s.StartForeignRestore(ctx, id, domain, "has space", "latest", true, "restore-here", nil)
 		if started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 			t.Fatalf("%s spaced name: want the strict name rejection, got started=%v err=%v", domain, started, err)
 		}
@@ -1057,7 +1353,7 @@ func TestForeignRestoreValidationFailureLeavesLocalTargetIntact(t *testing.T) {
 	// A valid-shaped but not-owned snapshot id → validation fails synchronously,
 	// before any adoption.
 	notOwned := strings.Repeat("ab", 8) // 16 lowercase hex = a well-formed short id
-	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", notOwned, true, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", notOwned, true, "", nil)
 	if started || err == nil || !strings.Contains(err.Error(), "does not belong") {
 		t.Fatalf("want a not-owned-snapshot failure that starts nothing, got started=%v err=%v", started, err)
 	}

@@ -3188,20 +3188,23 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 // fails right away with a 4xx and nothing starts; the shared single-flight
 // guard answers 409 like the other backup/restore starters. The session key
 // stays server-side (never in this request), and errors are scrubbed.
-// POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target}
+// POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target, paths}
+// A non-empty paths[] (files domain only) restores just those subfolders/files
+// from the set into target; empty restores the whole set (issue #123).
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Session  string `json:"session"`
-		Domain   string `json:"domain"`
-		Item     string `json:"item"`
-		Snapshot string `json:"snapshot"`
-		Confirm  bool   `json:"confirm"`
-		Target   string `json:"target"`
+		Session  string   `json:"session"`
+		Domain   string   `json:"domain"`
+		Item     string   `json:"item"`
+		Snapshot string   `json:"snapshot"`
+		Confirm  bool     `json:"confirm"`
+		Target   string   `json:"target"`
+		Paths    []string `json:"paths"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target)
+	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths)
 	if err != nil { // synchronous validation failed — nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
 		return
@@ -3211,4 +3214,30 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// handleForeignFiles lists the files of one file set's snapshot in an open foreign
+// session, so the recovery UI can offer a subfolder/file picker before a selective
+// restore (issue #123). Read-only; the session key stays server-side and errors
+// are scrubbed. The response mirrors the local list-files endpoint so the SPA
+// reuses the same shape. POST /api/foreign/files  body {session, domain, item, snapshot}
+func (h *Handler) handleForeignFiles(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session  string `json:"session"`
+		Domain   string `json:"domain"`
+		Item     string `json:"item"`
+		Snapshot string `json:"snapshot"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	files, err := h.svc.ListForeignFiles(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if files == nil {
+		files = []restic.FileEntry{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
 }
