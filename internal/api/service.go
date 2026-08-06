@@ -4008,7 +4008,7 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 		log.Printf("api: restore: unknown target %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 		return containerRestorePlan{}, errors.New("container has not been backed up yet")
 	}
-	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg)
+	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg, false)
 }
 
 // prepareRestoreForTarget builds a container restore plan for an ALREADY-RESOLVED
@@ -4019,7 +4019,7 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 // (prepareForeignRestore adopts it only once this returns a plan — never on a
 // validation failure, which would otherwise clobber a same-named local target).
 // The caller runs the confirm / name / explicit-snapshot-id-shape guards first.
-func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target) (containerRestorePlan, error) {
+func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, foreign bool) (containerRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the container's newest snapshot — used by
@@ -4064,6 +4064,19 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			if !paths.Within(s.cfg.HostMountRoot, p) {
 				log.Printf("api: restore: appdata path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
 				return containerRestorePlan{}, errors.New("a stored backup path is outside the host mount — refusing to restore")
+			}
+		}
+		// Cross-instance ONLY: a foreign recipe carries the SOURCE host's absolute
+		// appdata paths. If this host lacks that pool/share the restic write would
+		// land in an unmounted dir under the host mount (the array/RAM rootfs),
+		// silently writing appdata to the wrong place (or bricking the host on a big
+		// restore, issue #123 / the #122 class for containers). Prove every appdata
+		// target is on a real mount BEFORE the caller reaches executeRestore's
+		// destructive Stop/Remove. Same-instance restore (foreign=false) keeps its
+		// historical behaviour untouched.
+		if foreign {
+			if err := s.guardContainerRestoreDestination(ctx, ref, snapshotID, appdataForRestore); err != nil {
+				return containerRestorePlan{}, err
 			}
 		}
 	}
@@ -5921,6 +5934,40 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 	return nil
 }
 
+// guardContainerRestoreDestination is the container counterpart of
+// guardVMRestoreDestination, run ONLY for a cross-instance (foreign) container
+// restore (issue #123 / the #122 class for containers). A foreign recipe carries
+// the SOURCE host's absolute appdata paths; if the destination host lacks that
+// pool (e.g. the source used /mnt/zfs but this box has no zfs share) restic would
+// write appdata into an UNMOUNTED dir under the host mount — the array/RAM rootfs
+// — silently landing the data in the wrong place (or bricking the host on a large
+// restore). This proves every appdata target sits on a genuinely mounted
+// pool/share BEFORE the caller reaches executeRestore's destructive Stop/Remove,
+// turning that silent wrong-write into a clear, actionable refusal. The standard
+// /mnt/user/appdata case always passes (shfs is a live mount below the host bind),
+// so a normal cross-Unraid restore never regresses.
+func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repoRef, snapshotID string, appdataPaths []string) error {
+	for _, p := range appdataPaths {
+		if !s.destinationMounted(p) {
+			return fmt.Errorf("appdata destination %q is not on a mounted pool or share on this system — the source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
+		}
+	}
+	// Free-space preflight ONLY when the whole restore lands in a SINGLE appdata
+	// path: with several paths they may sit on different pools and the snapshot's
+	// total restore-size can't be attributed per pool, which would falsely refuse a
+	// legitimate split restore. Non-blocking either way — a probe error is "cannot
+	// prove insufficient" and never blocks; only a PROVEN shortfall aborts (exactly
+	// like guardVMRestoreDestination).
+	if len(appdataPaths) == 1 {
+		if _, wantBytes, err := s.engine.StatsRestoreSize(ctx, ref.repo, snapshotID, ref.mode); err == nil && wantBytes > 0 {
+			if free, ferr := s.diskFreeFn()(nearestExistingDir(appdataPaths[0])); ferr == nil && free < uint64(wantBytes) {
+				return fmt.Errorf("not enough free space to restore this container's appdata: it needs %d bytes but %q has only %d free. Free up space and retry", wantBytes, s.toHostPath(appdataPaths[0]), free)
+			}
+		}
+	}
+	return nil
+}
+
 // foreignVMDestBase resolves the destination base directory (a container path)
 // for a cross-instance VM restore's disks. Resolution order, NEVER the source
 // pool: an explicit target subpath (the request Target) wins; else the configured
@@ -6741,6 +6788,49 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 	if source != "local" && !isOffsiteSource(source) {
 		return fileSetFilesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
 	}
+	// Cheap guards BEFORE the snapshot listing: a malformed id or an empty
+	// selection must fail fast without a (possibly remote, slow) restic snapshots
+	// call — the pre-refactor order. buildFileSetFilesPlan re-checks both, so the
+	// shared path stays safe on its own.
+	if !backup.ValidSnapshotID(snapshotID) {
+		return fileSetFilesRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
+	if len(filePaths) == 0 {
+		return fileSetFilesRestorePlan{}, errors.New("no files selected")
+	}
+	// Scope to THIS set: the snapshot must be one of ITS snapshots.
+	snaps, err := s.SnapshotsFileSet(ctx, id, source)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fileSetFilesRestorePlan{}, fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.repoFor(settings, "files", source)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, err
+	}
+	return s.buildFileSetFilesPlan(snaps, snapshotID, set.ID, set.Name, repo, s.ModeFor(settings), filePaths, targetSubPath)
+}
+
+// buildFileSetFilesPlan builds a validated selective plan from ALREADY resolved
+// snaps + repo/mode + the set identity. It is the shared core of both the local
+// (settings-driven) prepareRestoreFileSetFiles and the foreign (session-driven)
+// prepareForeignFileSetFilesRestore, so the containment/target guards are written
+// once and both paths inherit them.
+//
+// SEC: the snapshot id passes the strict hex guard (backup.ValidSnapshotID) and
+// must belong to the passed snaps (tag-scoped by the caller via SnapshotsFileSet
+// or snapshotsForTag), so one set's data can't be extracted through another's
+// route. Empty targetSubPath restores IN PLACE (each selected path back to its
+// absolute location, restic target "/"), so every path is re-validated inside the
+// host mount (paths.Within, defense-in-depth). A non-empty targetSubPath is
+// resolved with paths.Resolve under the host mount (rejects absolute/`..` escapes)
+// and, when the snapshot has a backed-up root, every selected path must sit within
+// that subtree (a traversal guard: the selection feeds --include patterns). The
+// target dir is created (EnsureDirReadable, 0o755) only AFTER all containment passes.
+func (s *Service) buildFileSetFilesPlan(snaps []restic.Snapshot, snapshotID, setID, setName, repo string, mode restic.Mode, filePaths []string, targetSubPath string) (fileSetFilesRestorePlan, error) {
 	if !backup.ValidSnapshotID(snapshotID) {
 		return fileSetFilesRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
@@ -6754,11 +6844,6 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 		cleaned = append(cleaned, path.Clean(p))
 	}
 
-	// Scope to THIS set: the snapshot must be one of ITS snapshots.
-	snaps, err := s.SnapshotsFileSet(ctx, id, source)
-	if err != nil {
-		return fileSetFilesRestorePlan{}, err
-	}
 	if !snapshotBelongs(snaps, snapshotID) {
 		return fileSetFilesRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
 	}
@@ -6771,9 +6856,11 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 	}
 
 	plan := fileSetFilesRestorePlan{
+		repo:       repo,
+		mode:       mode,
 		snapshotID: snapshotID,
-		setID:      set.ID,
-		setName:    set.Name,
+		setID:      setID,
+		setName:    setName,
 		paths:      cleaned,
 		subtree:    subtree,
 	}
@@ -6806,17 +6893,6 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 			}
 		}
 	}
-
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return fileSetFilesRestorePlan{}, fmt.Errorf("read settings: %w", err)
-	}
-	repo, err := s.repoFor(settings, "files", source)
-	if err != nil {
-		return fileSetFilesRestorePlan{}, err
-	}
-	plan.repo = repo
-	plan.mode = s.ModeFor(settings)
 
 	// Create the alternate target dir ONLY after every validation passed — readable
 	// (0o755) variant, so the operator's non-root SMB user can read what root

@@ -327,11 +327,11 @@ func foreignItems(m map[string][]restic.Snapshot) []ForeignItem {
 // so a bad request fails immediately and no goroutine starts. Shares
 // batchActive with backups and the other restores; returns (false, nil) when
 // one is already running.
-func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string) (bool, error) {
+func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	key, run, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath)
+	key, run, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths)
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
@@ -360,7 +360,7 @@ func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, it
 // work for the domain. The confirm guard fires FIRST (the familiar sentinel,
 // same discipline as prepareRestore); the item name is boundary-checked here
 // because it feeds restic tags, def filenames and progress keys.
-func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string) (string, func(context.Context) error, error) {
+func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string) (string, func(context.Context) error, error) {
 	if !confirm {
 		return "", nil, backup.ErrNotConfirmed
 	}
@@ -394,7 +394,7 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
 			return "", nil, backup.ErrInvalidSnapshotID
 		}
-		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg)
+		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, true)
 		if err != nil {
 			return "", nil, err
 		}
@@ -443,6 +443,22 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 			return s.executeRestoreVM(rctx, item, plan, true)
 		}, nil
 	case "files":
+		// A non-empty selection restores only those paths/subfolders (the manilx
+		// #123 case: pull one stack out of a whole-appdata set); empty restores the
+		// whole set. Both extract into the required target folder.
+		if len(filePaths) > 0 {
+			plan, err := s.prepareForeignFileSetFilesRestore(ctx, sess, item, snapshotID, targetSubPath, filePaths)
+			if err != nil {
+				return "", nil, err
+			}
+			rkey := "files:" + plan.setName
+			return rkey, func(rctx context.Context) error {
+				runID := s.beginRestoreRunForTarget(plan.setID)
+				pctx := s.progBegin(rctx, rkey, "restore")
+				rerr := s.runRestoreFileSetFiles(pctx, plan)
+				return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr)
+			}, nil
+		}
 		plan, err := s.prepareForeignFileSetRestore(ctx, sess, item, snapshotID, targetSubPath)
 		if err != nil {
 			return "", nil, err
@@ -596,4 +612,94 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 		// path (issue #62); "" (path-less snapshot) → whole-tree fallback.
 		subtree: snapshotSubtree(snaps, snapshotID),
 	}, nil
+}
+
+// prepareForeignFileSetFilesRestore is the selective (pick-some-files/subfolder)
+// counterpart of prepareForeignFileSetRestore: it restores only the chosen paths
+// of a foreign file set into a target folder — the manilx #123 case, pulling one
+// stack subfolder out of a whole-appdata set. Cross-instance is ALWAYS to a folder
+// (never in place: writing the source host's absolute paths onto this host is the
+// #122 class of bug), so a target is required. Snapshot ownership + local-set
+// adoption mirror the whole-set path; the selection's containment + target guards
+// live in the shared buildFileSetFilesPlan.
+func (s *Service) prepareForeignFileSetFilesRestore(ctx context.Context, sess foreignSession, item, snapshotID, targetSubPath string, filePaths []string) (fileSetFilesRestorePlan, error) {
+	if strings.TrimSpace(targetSubPath) == "" {
+		return fileSetFilesRestorePlan{}, errors.New("a target folder is required to restore files from a foreign repository")
+	}
+	// Snapshot ownership: an explicit id must be well-formed hex AND belong to
+	// THIS item's fileset:<Name> tag in the SESSION repo; "latest"/"" resolves to
+	// the newest matching snapshot (restic lists oldest-first).
+	explicitID := snapshotID != "latest" && snapshotID != ""
+	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+		return fileSetFilesRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
+	snaps, err := s.snapshotsForTag(ctx, sess.repo, sess.mode, "fileset:"+item)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, err
+	}
+	if explicitID {
+		if !snapshotBelongs(snaps, snapshotID) {
+			return fileSetFilesRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+		}
+	} else {
+		if len(snaps) == 0 {
+			return fileSetFilesRestorePlan{}, errors.New("no backups found for this file set")
+		}
+		snapshotID = snaps[len(snaps)-1].ID
+	}
+
+	// Adopt the name locally when unknown (disabled + path-less, like DiscoverFileSets)
+	// so the restore run records against a stable file_sets.id; an existing local set
+	// of the same name is reused untouched. Mirrors the whole-set foreign path.
+	setID := ""
+	if set, gErr := s.store.GetFileSetByName(item); gErr == nil {
+		setID = set.ID
+	} else {
+		created, cErr := s.store.CreateFileSet(store.FileSet{Name: item, Enabled: false})
+		if cErr != nil {
+			return fileSetFilesRestorePlan{}, fmt.Errorf("adopt file set %q: %w", item, cErr)
+		}
+		setID = created.ID
+	}
+
+	// The shared builder does the strict snapshot/selection validation, the
+	// subtree-containment traversal guard, target resolution + EnsureDirReadable.
+	return s.buildFileSetFilesPlan(snaps, snapshotID, setID, item, sess.repo, sess.mode, filePaths, targetSubPath)
+}
+
+// ListForeignFiles lists the files of one file set's snapshot in an open foreign
+// session, so the recovery UI can offer a subfolder/file picker before a selective
+// restore. It is the foreign, session-scoped twin of ListSnapshotFilesFileSet:
+// read-only (sess.mode carries NoLock), tag-scoped to the item so one set's tree
+// can't be listed through another's id, and it never touches local repos.
+func (s *Service) ListForeignFiles(ctx context.Context, sessionID, domain, item, snapshotID string) ([]restic.FileEntry, error) {
+	if domain != "files" {
+		return nil, errors.New("file listing is only available for the files domain")
+	}
+	if !validResourceName(item) {
+		return nil, errors.New("invalid item name")
+	}
+	sess, err := s.foreignSession(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	explicitID := snapshotID != "latest" && snapshotID != ""
+	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+		return nil, backup.ErrInvalidSnapshotID
+	}
+	snaps, err := s.snapshotsForTag(ctx, sess.repo, sess.mode, "fileset:"+item)
+	if err != nil {
+		return nil, err
+	}
+	if explicitID {
+		if !snapshotBelongs(snaps, snapshotID) {
+			return nil, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+		}
+	} else {
+		if len(snaps) == 0 {
+			return nil, errors.New("no backups found for this file set")
+		}
+		snapshotID = snaps[len(snaps)-1].ID
+	}
+	return s.engine.Ls(ctx, sess.repo, snapshotID, sess.mode)
 }

@@ -1401,6 +1401,10 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
 // Backup-order panel (#119) — manual per-container backup sequence
 // ---------------------------------------------------------------------------
 
+// Per-browser: whether the backup-order card is collapsed (#124 — ptmorris1 has
+// many containers). Same "bombvault.*" localStorage convention as the other UI prefs.
+const BACKUP_ORDER_COLLAPSED_KEY = "bombvault.backupOrderCollapsed";
+
 // BackupOrderPanel lets the user arrange the order scheduled + batch backups run
 // in. The orderable set is the installed, schedule-included containers (never
 // BombVault itself). It hydrates once from the persisted order (GET
@@ -1415,6 +1419,16 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const hydrated = useRef(false);
+  // #124: collapse the whole card (persisted per browser) and reorder rows by
+  // native drag-and-drop. dragIndex is the row currently being dragged.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(BACKUP_ORDER_COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     getBackupOrder()
@@ -1461,6 +1475,31 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
     setSaveState("idle");
   }
 
+  // Drag-and-drop reorder: lift `from` out and drop it at `to` (arrows do a swap;
+  // a drag can jump several rows at once, so this splices instead).
+  function reorder(from: number, to: number) {
+    setNames((prev) => {
+      if (from === to || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    setSaveState("idle");
+  }
+
+  function toggleCollapsed() {
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(BACKUP_ORDER_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        /* private mode / quota — collapse just won't persist */
+      }
+      return next;
+    });
+  }
+
   async function persist(order: string[]) {
     setSaveState("saving");
     setError(null);
@@ -1492,77 +1531,138 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
 
   return (
     <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
-      <div>
-        <span className="font-semibold text-carbon-text text-sm">
-          {t("backupOrder.title")}
+      {/* Collapsible header (#124): chevron + title + a count badge so the size is
+          visible while collapsed. The hint only shows when expanded. */}
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-expanded={!collapsed}
+        className="flex w-full items-start gap-2 text-left"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 12 12"
+          fill="none"
+          aria-hidden="true"
+          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "" : "rotate-90"}`}
+        >
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="min-w-0 flex-1">
+          <span className="font-semibold text-carbon-text text-sm">
+            {t("backupOrder.title")}
+            {names.length > 0 && (
+              <span className="ml-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
+                ({names.length})
+              </span>
+            )}
+          </span>
+          {!collapsed && (
+            <span className="mt-0.5 block text-xs text-carbon-textMuted">{t("backupOrder.hint")}</span>
+          )}
         </span>
-        <p className="mt-0.5 text-xs text-carbon-textMuted">{t("backupOrder.hint")}</p>
-      </div>
-      {names.length === 0 ? (
-        <p className="text-xs text-carbon-textMuted">{t("backupOrder.empty")}</p>
-      ) : (
-        <>
-          <ol className="flex flex-col gap-1">
-            {names.map((name, i) => (
-              <li
-                key={name}
-                className="flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5"
+      </button>
+      {!collapsed &&
+        (names.length === 0 ? (
+          <p className="text-xs text-carbon-textMuted">{t("backupOrder.empty")}</p>
+        ) : (
+          <>
+            <ol className="flex flex-col gap-1">
+              {names.map((name, i) => (
+                <li
+                  key={name}
+                  draggable={saveState !== "saving"}
+                  onDragStart={(e) => {
+                    setDragIndex(i);
+                    e.dataTransfer.effectAllowed = "move";
+                    try {
+                      e.dataTransfer.setData("text/plain", String(i));
+                    } catch {
+                      /* some environments disallow setData; dragIndex still carries it */
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIndex !== null) reorder(dragIndex, i);
+                    setDragIndex(null);
+                  }}
+                  onDragEnd={() => setDragIndex(null)}
+                  className={`flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5 ${
+                    dragIndex === i ? "opacity-40" : ""
+                  }`}
+                >
+                  {/* Drag grip — a mouse affordance; keyboard users reorder with the
+                      arrow buttons below (so the grip is decorative / aria-hidden). */}
+                  <span className="shrink-0 cursor-grab text-carbon-textSub active:cursor-grabbing" aria-hidden="true">
+                    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+                      <circle cx="3" cy="3" r="1" />
+                      <circle cx="7" cy="3" r="1" />
+                      <circle cx="3" cy="7" r="1" />
+                      <circle cx="7" cy="7" r="1" />
+                      <circle cx="3" cy="11" r="1" />
+                      <circle cx="7" cy="11" r="1" />
+                    </svg>
+                  </span>
+                  <span className="w-6 text-xs text-carbon-textMuted tabular-nums">
+                    {i + 1}.
+                  </span>
+                  <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
+                    {name}
+                  </span>
+                  <button
+                    onClick={() => move(i, -1)}
+                    disabled={i === 0 || saveState === "saving"}
+                    aria-label={t("backupOrder.moveUp")}
+                    title={t("backupOrder.moveUp")}
+                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => move(i, 1)}
+                    disabled={i === names.length - 1 || saveState === "saving"}
+                    aria-label={t("backupOrder.moveDown")}
+                    title={t("backupOrder.moveDown")}
+                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => void persist(names)}
+                disabled={saveState === "saving"}
+                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                <span className="w-6 text-xs text-carbon-textMuted tabular-nums">
-                  {i + 1}.
-                </span>
-                <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
-                  {name}
-                </span>
-                <button
-                  onClick={() => move(i, -1)}
-                  disabled={i === 0 || saveState === "saving"}
-                  aria-label={t("backupOrder.moveUp")}
-                  title={t("backupOrder.moveUp")}
-                  className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => move(i, 1)}
-                  disabled={i === names.length - 1 || saveState === "saving"}
-                  aria-label={t("backupOrder.moveDown")}
-                  title={t("backupOrder.moveDown")}
-                  className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </li>
-            ))}
-          </ol>
-          <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={() => void persist(names)}
-              disabled={saveState === "saving"}
-              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {t("backupOrder.save")}
-            </button>
-            <button
-              onClick={clearOrder}
-              disabled={saveState === "saving"}
-              className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
-            >
-              {t("backupOrder.reset")}
-            </button>
-            {saveState === "saved" && (
-              <span className="text-xs text-statusOk">{t("backupOrder.saved")}</span>
-            )}
-            {saveState === "error" && error && (
-              <span className="text-xs text-statusFail">{error}</span>
-            )}
-          </div>
-        </>
-      )}
+                {t("backupOrder.save")}
+              </button>
+              <button
+                onClick={clearOrder}
+                disabled={saveState === "saving"}
+                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+              >
+                {t("backupOrder.reset")}
+              </button>
+              {saveState === "saved" && (
+                <span className="text-xs text-statusOk">{t("backupOrder.saved")}</span>
+              )}
+              {saveState === "error" && error && (
+                <span className="text-xs text-statusFail">{error}</span>
+              )}
+            </div>
+          </>
+        ))}
     </div>
   );
 }
