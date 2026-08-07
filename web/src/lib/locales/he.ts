@@ -1182,6 +1182,13 @@ const he: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "מנקה את באנר העדכון של Unraid לאחר ש-BombVault מעדכן מכולה בשלב העדכון שלאחר הגיבוי.",
   "recovery.foreignVMDest": "יעד הדיסקים של המכונה הווירטואלית",
   "recovery.foreignVMDestHint": "היכן נכתבים הדיסקים של המכונה הווירטואלית. קובצי הדיסק נכתבים אל <destination>/<vm-name>/, לכן בחר תיקייה במאגר שמחובר באמת, לא בדיסק ה-RAM. מכונה זרה משוחזרת במצב עצור, לכן הפעל אותה בעצמך לאחר שבדקת אותה.",
+  "folder.newFolder": "תיקייה חדשה",
+  "folder.newFolderPlaceholder": "שם התיקייה החדשה",
+  "folder.creating": "יוצר…",
+  "folder.createFailed": "לא ניתן ליצור את התיקייה",
+  "vmBackupOrder.title": "סדר גיבוי מכונות וירטואליות",
+  "vmBackupOrder.hint": "קבע את הסדר שבו הריצה המתוזמנת מגבה את המכונות הווירטואליות. מכונות שאינן ברשימה ירוצו אחר כך, לפי שם.",
+  "vmBackupOrder.empty": "אין עדיין מכונות וירטואליות מתוזמנות לסידור.",
 };
 
 export default he;

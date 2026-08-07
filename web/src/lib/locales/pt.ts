@@ -1182,6 +1182,13 @@ const pt: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Limpa o aviso de atualização do Unraid depois de o BombVault atualizar um contentor no passo de atualização após o backup.",
   "recovery.foreignVMDest": "Destino dos discos da VM",
   "recovery.foreignVMDestHint": "Onde os discos da VM são gravados. As imagens de disco vão para <destination>/<vm-name>/, portanto escolha uma pasta em um pool realmente montado, não no disco RAM. Uma VM externa é restaurada desligada, então inicie-a você mesmo depois de verificá-la.",
+  "folder.newFolder": "Nova pasta",
+  "folder.newFolderPlaceholder": "Nome da nova pasta",
+  "folder.creating": "Criando…",
+  "folder.createFailed": "Não foi possível criar a pasta",
+  "vmBackupOrder.title": "Ordem de backup das VMs",
+  "vmBackupOrder.hint": "Defina a ordem em que a execução agendada faz backup das VMs. As VMs fora da lista são executadas depois, por nome.",
+  "vmBackupOrder.empty": "Ainda não há VMs agendadas para ordenar.",
 };
 
 export default pt;

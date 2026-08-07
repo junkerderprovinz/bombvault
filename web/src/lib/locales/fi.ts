@@ -1182,6 +1182,13 @@ const fi: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Tyhjentää Unraidin päivitysbannerin sen jälkeen, kun BombVault on päivittänyt säiliön varmuuskopioinnin jälkeisessä päivitysvaiheessa.",
   "recovery.foreignVMDest": "VM-levyjen kohde",
   "recovery.foreignVMDestHint": "Minne VM:n levyt kirjoitetaan. Levykuvat menevät kohteeseen <destination>/<vm-name>/, joten valitse kansio aidosti liitetystä poolista, ei RAM-levyltä. Vieras VM palautetaan pysäytettynä, joten käynnistä se itse tarkistettuasi sen.",
+  "folder.newFolder": "Uusi kansio",
+  "folder.newFolderPlaceholder": "Uuden kansion nimi",
+  "folder.creating": "Luodaan…",
+  "folder.createFailed": "Kansiota ei voitu luoda",
+  "vmBackupOrder.title": "VM-varmuuskopioiden järjestys",
+  "vmBackupOrder.hint": "Määritä järjestys, jossa ajastettu ajo varmuuskopioi VM:t. Listan ulkopuoliset VM:t ajetaan sen jälkeen nimijärjestyksessä.",
+  "vmBackupOrder.empty": "Ei vielä ajastettuja VM:iä järjestettäväksi.",
 };
 
 export default fi;

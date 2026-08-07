@@ -1182,6 +1182,13 @@ const it: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Cancella l'avviso di aggiornamento di Unraid dopo che BombVault aggiorna un container nel passaggio di aggiornamento successivo al backup.",
   "recovery.foreignVMDest": "Destinazione dei dischi della VM",
   "recovery.foreignVMDestHint": "Dove vengono scritti i dischi della VM. Le immagini disco finiscono in <destination>/<vm-name>/, quindi scegli una cartella su un pool realmente montato, non sul disco RAM. Una VM esterna viene ripristinata spenta, quindi avviala tu stesso dopo averla controllata.",
+  "folder.newFolder": "Nuova cartella",
+  "folder.newFolderPlaceholder": "Nome della nuova cartella",
+  "folder.creating": "Creazione…",
+  "folder.createFailed": "Impossibile creare la cartella",
+  "vmBackupOrder.title": "Ordine di backup delle VM",
+  "vmBackupOrder.hint": "Imposta l'ordine in cui l'esecuzione pianificata effettua il backup delle VM. Le VM non in elenco vengono eseguite dopo, in ordine di nome.",
+  "vmBackupOrder.empty": "Nessuna VM pianificata da ordinare.",
 };
 
 export default it;

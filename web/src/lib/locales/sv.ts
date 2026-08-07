@@ -1182,6 +1182,13 @@ const sv: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Rensar Unraids uppdateringsbanner efter att BombVault har uppdaterat en container i uppdateringssteget efter säkerhetskopieringen.",
   "recovery.foreignVMDest": "Destination för VM-diskar",
   "recovery.foreignVMDestHint": "Var VM:ens diskar skrivs. Diskavbildningarna hamnar i <destination>/<vm-name>/, så välj en mapp på en verkligt monterad pool, inte på RAM-disken. En främmande VM återställs stoppad, så starta den själv efter att du kontrollerat den.",
+  "folder.newFolder": "Ny mapp",
+  "folder.newFolderPlaceholder": "Namn på ny mapp",
+  "folder.creating": "Skapar…",
+  "folder.createFailed": "Det gick inte att skapa mappen",
+  "vmBackupOrder.title": "Ordning för VM-säkerhetskopiering",
+  "vmBackupOrder.hint": "Ange ordningen som den schemalagda VM-körningen säkerhetskopierar VM:er i. VM:er utanför listan körs efteråt, i namnordning.",
+  "vmBackupOrder.empty": "Inga schemalagda VM:er att sortera ännu.",
 };
 
 export default sv;

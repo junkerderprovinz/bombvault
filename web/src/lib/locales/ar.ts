@@ -1185,6 +1185,13 @@ const ar: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "يمسح لافتة التحديث في Unraid بعد أن يحدّث BombVault حاوية في خطوة التحديث بعد النسخ الاحتياطي.",
   "recovery.foreignVMDest": "وجهة أقراص الجهاز الافتراضي",
   "recovery.foreignVMDestHint": "المكان الذي تُكتب فيه أقراص الجهاز الافتراضي. تذهب صور الأقراص إلى <destination>/<vm-name>/، لذا اختر مجلدًا على تجمّع مثبّت فعليًا، وليس على قرص الذاكرة العشوائية. يُستعاد الجهاز الافتراضي الخارجي متوقفًا، لذا شغّله بنفسك بعد فحصه.",
+  "folder.newFolder": "مجلد جديد",
+  "folder.newFolderPlaceholder": "اسم المجلد الجديد",
+  "folder.creating": "جارٍ الإنشاء…",
+  "folder.createFailed": "تعذّر إنشاء المجلد",
+  "vmBackupOrder.title": "ترتيب نسخ الأجهزة الافتراضية",
+  "vmBackupOrder.hint": "حدّد الترتيب الذي تُنسخ به الأجهزة الافتراضية في التشغيل المجدول. الأجهزة غير المدرجة تعمل بعد ذلك حسب الاسم.",
+  "vmBackupOrder.empty": "لا توجد أجهزة افتراضية مجدولة للترتيب بعد.",
 };
 
 export default ar;

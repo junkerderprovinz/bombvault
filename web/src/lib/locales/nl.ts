@@ -1179,6 +1179,13 @@ const nl: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Wist de updatemelding van Unraid nadat BombVault een container heeft bijgewerkt in de updatestap na de back-up.",
   "recovery.foreignVMDest": "Bestemming van de VM-schijven",
   "recovery.foreignVMDestHint": "Waar de schijven van de VM worden weggeschreven. De schijfimages komen in <destination>/<vm-name>/, kies dus een map op een echt aangekoppelde pool, niet op de RAM-schijf. Een externe VM wordt gestopt hersteld, start hem dus zelf nadat je hem hebt gecontroleerd.",
+  "folder.newFolder": "Nieuwe map",
+  "folder.newFolderPlaceholder": "Naam nieuwe map",
+  "folder.creating": "Bezig met maken…",
+  "folder.createFailed": "Kon de map niet maken",
+  "vmBackupOrder.title": "VM-back-upvolgorde",
+  "vmBackupOrder.hint": "Stel de volgorde in waarin de geplande VM-run VM's back-upt. VM's buiten de lijst draaien daarna, op naam.",
+  "vmBackupOrder.empty": "Nog geen geplande VM's om te ordenen.",
 };
 
 export default nl;

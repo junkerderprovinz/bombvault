@@ -1180,6 +1180,13 @@ const cs: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Vymaže banner aktualizace Unraid poté, co BombVault aktualizuje kontejner v kroku aktualizace po záloze.",
   "recovery.foreignVMDest": "Cíl disků VM",
   "recovery.foreignVMDestHint": "Kam se zapíšou disky virtuálního stroje. Obrazy disků jdou do <destination>/<vm-name>/, proto zvolte složku na skutečně připojeném poolu, ne na RAM disku. Cizí VM se obnoví zastavená, takže ji po kontrole spusťte sami.",
+  "folder.newFolder": "Nová složka",
+  "folder.newFolderPlaceholder": "Název nové složky",
+  "folder.creating": "Vytváření…",
+  "folder.createFailed": "Složku se nepodařilo vytvořit",
+  "vmBackupOrder.title": "Pořadí zálohování VM",
+  "vmBackupOrder.hint": "Nastavte pořadí, ve kterém plánovaná úloha zálohuje VM. VM mimo seznam běží poté, podle názvu.",
+  "vmBackupOrder.empty": "Zatím žádné plánované VM k seřazení.",
 };
 
 export default cs;

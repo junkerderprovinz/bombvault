@@ -1174,6 +1174,13 @@ const zh: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "在备份后更新步骤中 BombVault 更新容器后，清除 Unraid 的更新横幅。",
   "recovery.foreignVMDest": "虚拟机磁盘目标位置",
   "recovery.foreignVMDestHint": "虚拟机磁盘的写入位置。磁盘映像会写入 <destination>/<vm-name>/，因此请选择真正已挂载存储池中的文件夹，而不是内存盘。外部虚拟机以停止状态恢复，请在检查后自行启动。",
+  "folder.newFolder": "新建文件夹",
+  "folder.newFolderPlaceholder": "新文件夹名称",
+  "folder.creating": "正在创建…",
+  "folder.createFailed": "无法创建文件夹",
+  "vmBackupOrder.title": "虚拟机备份顺序",
+  "vmBackupOrder.hint": "设置计划运行备份虚拟机的顺序。不在列表中的虚拟机随后按名称运行。",
+  "vmBackupOrder.empty": "暂无计划的虚拟机可排序。",
 };
 
 export default zh;

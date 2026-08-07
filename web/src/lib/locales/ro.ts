@@ -1185,6 +1185,13 @@ const ro: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Șterge bannerul de actualizare Unraid după ce BombVault actualizează un container în pasul de actualizare de după backup.",
   "recovery.foreignVMDest": "Destinația discurilor VM",
   "recovery.foreignVMDestHint": "Unde sunt scrise discurile mașinii virtuale. Imaginile de disc ajung în <destination>/<vm-name>/, așa că alege un folder pe un pool montat cu adevărat, nu pe discul RAM. O mașină străină este restaurată oprită, deci pornește-o tu însuți după ce ai verificat-o.",
+  "folder.newFolder": "Folder nou",
+  "folder.newFolderPlaceholder": "Numele folderului nou",
+  "folder.creating": "Se creează…",
+  "folder.createFailed": "Nu s-a putut crea folderul",
+  "vmBackupOrder.title": "Ordinea backupului VM",
+  "vmBackupOrder.hint": "Stabilește ordinea în care rularea programată face backup VM-urilor. VM-urile din afara listei rulează după aceea, în ordinea numelui.",
+  "vmBackupOrder.empty": "Încă nu există VM-uri programate de ordonat.",
 };
 
 export default ro;

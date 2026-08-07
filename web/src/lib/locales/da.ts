@@ -1182,6 +1182,13 @@ const da: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Rydder Unraids opdateringsbanner, efter at BombVault har opdateret en container i opdateringstrinnet efter sikkerhedskopieringen.",
   "recovery.foreignVMDest": "Destination for VM-diske",
   "recovery.foreignVMDestHint": "Hvor VM'ens diske skrives. Diskbillederne havner i <destination>/<vm-name>/, så vælg en mappe på en reelt monteret pool, ikke på RAM-disken. En fremmed VM gendannes stoppet, så start den selv, når du har tjekket den.",
+  "folder.newFolder": "Ny mappe",
+  "folder.newFolderPlaceholder": "Navn på ny mappe",
+  "folder.creating": "Opretter…",
+  "folder.createFailed": "Kunne ikke oprette mappen",
+  "vmBackupOrder.title": "VM-sikkerhedskopieringsrækkefølge",
+  "vmBackupOrder.hint": "Angiv rækkefølgen, som den planlagte VM-kørsel sikkerhedskopierer VM'er i. VM'er uden for listen køres bagefter, i navnerækkefølge.",
+  "vmBackupOrder.empty": "Ingen planlagte VM'er at sortere endnu.",
 };
 
 export default da;
