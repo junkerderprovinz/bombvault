@@ -759,6 +759,9 @@ func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
+			return stdout.Bytes(), werr
+		}
 		return nil, runError(args, stderr.String())
 	}
 	return stdout.Bytes(), nil
@@ -814,6 +817,9 @@ func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, err
 		_, _ = io.Copy(io.Discard, stdout)
 	}
 	if err := cmd.Wait(); err != nil {
+		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
+			return out.Bytes(), werr
+		}
 		return nil, runError(args, stderr.String())
 	}
 	return out.Bytes(), nil
@@ -844,6 +850,43 @@ type metadataOnlyRestoreErr struct{ msg string }
 func (e *metadataOnlyRestoreErr) Error() string { return e.msg }
 
 func (e *metadataOnlyRestoreErr) Is(target error) bool { return target == ErrRestoreMetadataOnly }
+
+// ErrBackupSourceUnreadable tags a BACKUP that exited with restic's code 3 ("at
+// least one source file could not be read"): restic DID create the snapshot but
+// skipped one or more source files it could not read. That is normal when backing
+// up a live, actively-written directory (e.g. OpenCloud's NATS/metadata volume,
+// whose stream files rotate mid-scan) and is not a real failure. Restic.Backup
+// treats it as success (parses the summary, logs the skipped files); genuine
+// failures (exit 1, unreachable/locked/corrupt repo, out of space) carry a
+// different exit code and never this. Detect with errors.Is(err, ErrBackupSourceUnreadable).
+var ErrBackupSourceUnreadable = errors.New("backup completed but at least one source file could not be read")
+
+type backupUnreadableErr struct{ msg string }
+
+func (e *backupUnreadableErr) Error() string { return e.msg }
+
+func (e *backupUnreadableErr) Is(target error) bool { return target == ErrBackupSourceUnreadable }
+
+// backupExit3Err returns a backupUnreadableErr (success-with-warning) when a BACKUP
+// command exited with restic's code 3 (source file unreadable), else nil. It is
+// deliberately conservative: only exit code EXACTLY 3 on a "backup" subcommand
+// qualifies, so any other failure (a different exit code, or a non-backup command)
+// stays a hard error and is never masked as success.
+func backupExit3Err(args []string, err error, stderr string) error {
+	if subcommand(args) != "backup" {
+		return nil
+	}
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != 3 {
+		return nil
+	}
+	log.Printf("restic backup: exit 3 (at least one source file could not be read); snapshot created, some files skipped. stderr: %s", stderr)
+	msg := "at least one source file could not be read"
+	if reason := lastReason(stderr); reason != "" {
+		msg = reason
+	}
+	return &backupUnreadableErr{msg: msg}
+}
 
 // runError logs the full stderr server-side and returns a concise, path-scrubbed
 // reason to the caller so the UI shows WHY restic failed (e.g. "repository is
@@ -1169,6 +1212,15 @@ func (r Restic) RepoOpens(ctx context.Context, repo string, m Mode) bool {
 func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode, excludes ...string) (Summary, error) {
 	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m, excludes...), m)
 	if err != nil {
+		// restic exit 3 (a source file could not be read) still created the snapshot,
+		// so parse its summary and treat the backup as successful; the skipped file is
+		// logged in backupExit3Err. Un-parseable output means it was not a clean
+		// exit-3, so fall through to the real error.
+		if errors.Is(err, ErrBackupSourceUnreadable) {
+			if sum, perr := ParseBackupSummary(out); perr == nil {
+				return sum, nil
+			}
+		}
 		return Summary{}, err
 	}
 	return ParseBackupSummary(out)

@@ -12,10 +12,11 @@
 // left→right (keyframes `bv-indeterminate` live in index.css).
 // When inactive, it renders nothing.
 //
-// `label` adds a small caption so the bar can name its phase ("Restoring…" vs
-// "Backing up…"); on the pinned card bar it sits at the bottom-right corner, on
-// an `inline` bar it sits above the track. `inline` renders the bar in normal
-// document flow (for use inside a restore panel) instead of pinned to a card.
+// `label` adds a small caption naming the phase/percentage (e.g. "Restoring… 42%")
+// and is shown ONLY on an `inline` bar, above the track. The pinned card bar
+// renders just the track: the card's own action button already names the running
+// phase, so a bar caption there merely duplicated it. `inline` renders the bar in
+// normal document flow (for use inside a restore panel) instead of pinned to a card.
 // ---------------------------------------------------------------------------
 
 interface ProgressBarProps {
@@ -75,15 +76,9 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
     );
   }
 
-  // Pinned card bar: caption floats in the bottom-right corner (no layout churn).
-  return (
-    <>
-      {label && (
-        <span className="absolute bottom-1.5 right-2 z-10 text-[10px] text-carbon-textMuted pointer-events-none">
-          {label}
-        </span>
-      )}
-      {track}
-    </>
-  );
+  // Pinned card bar: just the track, no caption. The card's action button already
+  // names the running phase ("Sichere…" / "Wiederherstelle…"), so a bottom-right
+  // label on the bar only duplicated it. `label` is honoured on the inline bar
+  // (restore panel), where it carries the live percentage the button does not.
+  return track;
 }
