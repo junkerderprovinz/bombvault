@@ -914,6 +914,49 @@ func (h *Handler) handleSetBackupOrder(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleGetVmBackupOrder returns the explicit VM backup ordering (#119, VMs).
+// GET /api/vms/backup-order
+func (h *Handler) handleGetVmBackupOrder(w http.ResponseWriter, r *http.Request) {
+	orders, err := h.svc.VMBackupOrders(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if orders == nil {
+		orders = []store.VMOrder{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"order": orders}))
+}
+
+// handleSetVmBackupOrder replaces the VM backup ordering (#119, VMs) from an
+// ordered list of VM names: the first name runs earliest in a scheduled VM run.
+// A VM omitted from the list returns to the name-order tiebreak; an empty list
+// clears all explicit orders.
+// PUT /api/vms/backup-order  body {order: ["vmA", "vmB", ...]}
+func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Order []string `json:"order"`
+	}
+	if !decodeBody(w, r, &body) { // caps the body at 1 MiB
+		return
+	}
+	if len(body.Order) > 1000 { // far beyond any real VM count — reject abuse
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many vms"})
+		return
+	}
+	for _, n := range body.Order {
+		if !validResourceName(n) {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid name"})
+			return
+		}
+	}
+	if err := h.svc.SetVMBackupOrders(r.Context(), body.Order); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleContainerMounts lists a container's bind mounts (annotated with the
 // current selection) for the backup-folder selector.
 // GET /api/containers/{name}/mounts

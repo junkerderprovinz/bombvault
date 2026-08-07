@@ -1243,6 +1243,9 @@ export const en = {
   "backupOrder.saved": "Order saved",
   "backupOrder.saveError": "Could not save the backup order.",
   "backupOrder.empty": "No scheduled containers to order yet.",
+  "vmBackupOrder.title": "VM backup order",
+  "vmBackupOrder.hint": "Set the sequence the scheduled VM run backs VMs up in. VMs left off the list run afterwards, in name order.",
+  "vmBackupOrder.empty": "No scheduled VMs to order yet.",
   "backupOrder.reset": "Clear order",
 
   // Health-gated restart (#119) — Settings, Schedules tab.
@@ -2453,6 +2456,9 @@ export const de: Translations = {
   "backupOrder.saved": "Reihenfolge gespeichert",
   "backupOrder.saveError": "Backup-Reihenfolge konnte nicht gespeichert werden.",
   "backupOrder.empty": "Noch keine geplanten Container zum Sortieren.",
+  "vmBackupOrder.title": "VM-Backup-Reihenfolge",
+  "vmBackupOrder.hint": "Lege die Reihenfolge fest, in der der geplante VM-Lauf die VMs sichert. Nicht gelistete VMs laufen danach, in Namensreihenfolge.",
+  "vmBackupOrder.empty": "Noch keine geplanten VMs zum Sortieren.",
   "backupOrder.reset": "Reihenfolge löschen",
 
   // Health-gated restart (#119)
