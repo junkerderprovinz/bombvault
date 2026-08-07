@@ -230,6 +230,12 @@ type BackupDeps struct {
 }
 
 // RestoreDeps bundles everything RestoreContainer needs.
+// RestoreDir is one "restore this source subtree's CONTENTS into this target dir"
+// instruction — the seam a remapped (cross-instance / cross-pool) restore uses to
+// redirect writes off the source path. Identical shape to VMRestoreDir, aliased so
+// container and VM restores share one type.
+type RestoreDir = VMRestoreDir
+
 type RestoreDeps struct {
 	// Confirmed MUST be true — guard against an accidental destructive restore.
 	Confirmed bool
@@ -250,6 +256,11 @@ type RestoreDeps struct {
 	// subtree back to origin (restic restore <id>:<path> --target <path>), so
 	// restic never tries to reconcile (and fail on) the shared appdata parent.
 	AppdataPaths []string
+	// RestoreDirs, when non-empty, drives a REMAPPED restore (cross-instance,
+	// cross-pool): each entry restores a source subtree's CONTENTS into a chosen
+	// destination dir on THIS host, instead of restoring AppdataPaths in place.
+	// Empty = the historical in-place restore via AppdataPaths.
+	RestoreDirs []RestoreDir
 	// TemplateXML is the captured template flashed back on restore.
 	TemplateXML string
 	// FlashTemplatesDir is where the live Unraid templates live.
@@ -748,10 +759,18 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: remove existing container: %w", err)
 	}
 
-	// Restore each appdata path back to its origin as its own subtree. Skipped for
-	// a recreate-only restore (no snapshot, no paths) — the container is just
-	// recreated from its definition below.
-	if len(d.AppdataPaths) > 0 {
+	// Restore appdata. A REMAPPED restore (RestoreDirs set: cross-instance /
+	// cross-pool) restores each source subtree's CONTENTS into the chosen
+	// destination dir on THIS host; otherwise each backed-up path is restored back
+	// to its own origin as its own subtree. Both are skipped for a recreate-only
+	// restore (no snapshot, no paths) — the container is just recreated below.
+	if len(d.RestoreDirs) > 0 {
+		for _, rd := range d.RestoreDirs {
+			if err := d.Restic.RestoreSubtreeTo(ctx, d.RepoPath, d.SnapshotID, rd.Subtree, rd.Target); err != nil {
+				return fmt.Errorf("restore: restic restore: %w", err)
+			}
+		}
+	} else if len(d.AppdataPaths) > 0 {
 		if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, d.AppdataPaths); err != nil {
 			return fmt.Errorf("restore: restic restore: %w", err)
 		}

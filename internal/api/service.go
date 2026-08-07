@@ -171,6 +171,10 @@ type Service struct {
 	// case) uses the platform statfs implementation (diskFreeBytes); tests
 	// inject a fake. Accessed via diskFreeFn.
 	diskFree func(path string) (uint64, error)
+	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
+	// destination already hold data" seam: nil uses the real filesystem
+	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
+	dirNonEmptyProbe func(path string) bool
 	// repoMu serialises operations per domain repo. A backup holds its domain's
 	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
@@ -3921,7 +3925,8 @@ type containerRestorePlan struct {
 	targetID     string
 	snapshotID   string
 	recreateOnly bool
-	appdataPaths []string // restored per-path back to origin (nil = recreate-only)
+	appdataPaths []string            // restored per-path back to origin (nil = recreate-only)
+	restoreDirs  []backup.RestoreDir // cross-pool remap: Subtree->Target; empty = in-place via appdataPaths
 	inspect      model.Inspect
 	templateXML  string
 }
@@ -4008,7 +4013,9 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 		log.Printf("api: restore: unknown target %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 		return containerRestorePlan{}, errors.New("container has not been backed up yet")
 	}
-	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg, false)
+	// Same-instance restore: no destBase (in-place), no overwrite prompt — the
+	// cross-pool remap path is foreign-only (#125).
+	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg, "", false)
 }
 
 // prepareRestoreForTarget builds a container restore plan for an ALREADY-RESOLVED
@@ -4019,7 +4026,7 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 // (prepareForeignRestore adopts it only once this returns a plan — never on a
 // validation failure, which would otherwise clobber a same-named local target).
 // The caller runs the confirm / name / explicit-snapshot-id-shape guards first.
-func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, foreign bool) (containerRestorePlan, error) {
+func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, destBase string, overwrite bool) (containerRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the container's newest snapshot — used by
@@ -4054,6 +4061,8 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	// restoring (defense-in-depth in case the DB was tampered with). Skipped for a
 	// recreate-only restore, which has no paths.
 	appdataForRestore := tg.AppdataPaths
+	var restoreDirs []backup.RestoreDir
+	var bindRemap map[string]string
 	if recreateOnly {
 		appdataForRestore = nil
 	} else {
@@ -4066,17 +4075,39 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 				return containerRestorePlan{}, errors.New("a stored backup path is outside the host mount — refusing to restore")
 			}
 		}
-		// Cross-instance ONLY: a foreign recipe carries the SOURCE host's absolute
-		// appdata paths. If this host lacks that pool/share the restic write would
-		// land in an unmounted dir under the host mount (the array/RAM rootfs),
-		// silently writing appdata to the wrong place (or bricking the host on a big
-		// restore, issue #123 / the #122 class for containers). Prove every appdata
-		// target is on a real mount BEFORE the caller reaches executeRestore's
-		// destructive Stop/Remove. Same-instance restore (foreign=false) keeps its
-		// historical behaviour untouched.
-		if foreign {
-			if err := s.guardContainerRestoreDestination(ctx, ref, snapshotID, appdataForRestore); err != nil {
+		// Cross-instance / cross-pool remap (destBase set: foreign restore, #123/#125).
+		// A foreign recipe carries the SOURCE host's absolute appdata paths; if this
+		// host lacks that pool the in-place write would land in an unmounted dir under
+		// the host mount (the array/RAM rootfs), silently writing appdata to the wrong
+		// place or bricking the host (#122 class for containers). Instead restore every
+		// appdata path's CONTENTS into <destBase>/<leaf> on THIS host, GUARD those
+		// destination dirs, and point the recreated binds + template there. A standard
+		// container whose appdata already lives under destBase remaps to the same path
+		// (a no-op). destBase == "" is the same-instance in-place restore, unchanged.
+		if destBase != "" {
+			if !paths.Within(s.cfg.HostMountRoot, destBase) {
+				return containerRestorePlan{}, errors.New("restore destination is outside the host mount")
+			}
+			restoreDirs, bindRemap = s.containerAppdataRemap(destBase, appdataForRestore)
+			destDirs := make([]string, len(restoreDirs))
+			for i, d := range restoreDirs {
+				destDirs[i] = d.Target
+			}
+			// Host-brick guard on the DESTINATION dirs (not the source), BEFORE
+			// executeRestore's destructive Stop/Remove: prove each target is on a real
+			// mounted pool so a cross-pool restore can never fill the RAM rootfs.
+			if err := s.guardContainerRestoreDestination(ctx, ref, snapshotID, destDirs); err != nil {
 				return containerRestorePlan{}, err
+			}
+			// Overwrite guard: a target that is NOT this container's own source path and
+			// already holds data is likely a DIFFERENT container's appdata — refuse
+			// unless the caller explicitly confirmed the overwrite.
+			if !overwrite {
+				for _, d := range restoreDirs {
+					if d.Target != d.Subtree && s.dirNonEmptyFn()(d.Target) {
+						return containerRestorePlan{}, fmt.Errorf("restore destination %q already contains data — it may belong to a different container; confirm overwrite to proceed", s.toHostPath(d.Target))
+					}
+				}
 			}
 		}
 	}
@@ -4103,6 +4134,16 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
 	}
 
+	// Cross-pool remap: point the recreated container's binds + flashed template at
+	// the appdata's new location. ONLY appdata binds are rewritten (exact host-path
+	// match); docker.sock, /etc/localtime, /dev/dri and every non-appdata bind are
+	// left verbatim (they carry no backed-up data). See #125.
+	if len(bindRemap) > 0 {
+		in.HostConfig.Binds = rewriteBinds(in.HostConfig.Binds, bindRemap)
+		in.Mounts = rewriteMountSources(in.Mounts, bindRemap)
+		xml = template.RewriteHostPaths(xml, bindRemap)
+	}
+
 	return containerRestorePlan{
 		repo:         ref.repo,
 		mode:         ref.mode,
@@ -4110,6 +4151,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		snapshotID:   snapshotID,
 		recreateOnly: recreateOnly,
 		appdataPaths: appdataForRestore,
+		restoreDirs:  restoreDirs,
 		inspect:      in,
 		templateXML:  xml,
 	}, nil
@@ -4136,6 +4178,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		RepoPath:          plan.repo,
 		SnapshotID:        plan.snapshotID,
 		AppdataPaths:      plan.appdataPaths, // restored per-path back to origin (nil = recreate-only)
+		RestoreDirs:       plan.restoreDirs,  // cross-pool remap (foreign restore); empty = in-place
 		TemplateXML:       plan.templateXML,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           plan.inspect,
@@ -5975,6 +6018,101 @@ func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repo
 // local VM domains share under the host mount. Target/RestoreFolder are relative
 // subpaths validated by paths.Resolve (no absolute path, no traversal), exactly
 // like the file-set to-folder restore.
+// containerAppdataRemap builds the per-appdata-path remap for a cross-pool
+// (foreign) container restore: each backed-up appdata path's CONTENTS are
+// restored into <destBase>/<leaf> on the DESTINATION pool, and the recreated
+// container's binds + template are pointed there. destBase is a container path
+// under HostMountRoot. It returns (1) the restic restore dirs (Subtree = the
+// source appdata path, i.e. one of the snapshot's own backed-up paths; Target =
+// the dest path), and (2) a bindRemap of HOST source path -> HOST dest path for
+// rewriting HostConfig.Binds + the flashed template.
+//
+// SAFETY: RestoreSubtreeTo dumps the subtree's CONTENTS directly into Target
+// (no path nesting, issue #62), so two source paths mapping to the SAME Target
+// would silently MERGE data. Targets are therefore made unique: a residual
+// basename collision (two appdata dirs with the same leaf on different pools)
+// gets a "-2"/"-3" suffix so every Target is a distinct directory.
+func (s *Service) containerAppdataRemap(destBase string, appdataPaths []string) ([]backup.RestoreDir, map[string]string) {
+	base := path.Clean(destBase)
+	dirs := make([]backup.RestoreDir, 0, len(appdataPaths))
+	remap := make(map[string]string, len(appdataPaths))
+	seen := map[string]bool{}
+	for _, cp := range appdataPaths {
+		src := path.Clean(cp)
+		leaf := path.Base(src)
+		dest := base + "/" + leaf
+		for n := 2; seen[dest]; n++ {
+			dest = base + "/" + leaf + "-" + strconv.Itoa(n)
+		}
+		seen[dest] = true
+		dirs = append(dirs, backup.RestoreDir{Subtree: src, Target: dest})
+		remap[s.toHostPath(src)] = s.toHostPath(dest)
+	}
+	return dirs, remap
+}
+
+// rewriteBinds points a recreated container's docker binds at the remapped appdata
+// locations. Each bind is "HOSTPATH:CONTAINERPATH[:opts]"; only the HOST part is
+// rewritten and ONLY on an EXACT match against a remap key, so appdata binds move
+// to the destination while docker.sock, /etc/localtime, /dev/dri and every other
+// non-appdata bind (which carry no backed-up data) are left byte-for-byte. The
+// container path and option suffix (:ro,:z,…) are preserved.
+func rewriteBinds(binds []string, remap map[string]string) []string {
+	if len(binds) == 0 || len(remap) == 0 {
+		return binds
+	}
+	out := make([]string, len(binds))
+	for i, b := range binds {
+		if host, rest, found := strings.Cut(b, ":"); found {
+			// Canonicalize the bind host before the lookup: the remap keys are
+			// path.Clean'd host paths, so a non-canonical bind (trailing/doubled
+			// slash) must be cleaned the same way or it would be left pointing at the
+			// source pool while the warning classifier (foreignBindWarnings, which
+			// also cleans) silently treats it as remapped appdata.
+			if nw, ok := remap[path.Clean(host)]; ok {
+				out[i] = nw + ":" + rest
+				continue
+			}
+		}
+		out[i] = b
+	}
+	return out
+}
+
+// rewriteMountSources rewrites the Source of each captured Mount whose source is a
+// remap key, for display fidelity in the recreated definition (the actual recreate
+// binds come from HostConfig.Binds via rewriteBinds). Exact match; empty remap is a
+// no-op.
+func rewriteMountSources(mounts []model.Mount, remap map[string]string) []model.Mount {
+	if len(mounts) == 0 || len(remap) == 0 {
+		return mounts
+	}
+	out := make([]model.Mount, len(mounts))
+	for i, m := range mounts {
+		if nw, ok := remap[path.Clean(m.Source)]; ok {
+			m.Source = nw
+		}
+		out[i] = m
+	}
+	return out
+}
+
+// dirNonEmpty reports whether p exists and contains at least one entry — the
+// overwrite guard's "there is already data here" check.
+func dirNonEmpty(p string) bool {
+	entries, err := os.ReadDir(p)
+	return err == nil && len(entries) > 0
+}
+
+// dirNonEmptyFn returns the overwrite guard's dir probe: the injected test seam
+// when set, else the real filesystem check.
+func (s *Service) dirNonEmptyFn() func(string) bool {
+	if s.dirNonEmptyProbe != nil {
+		return s.dirNonEmptyProbe
+	}
+	return dirNonEmpty
+}
+
 func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -5987,6 +6125,27 @@ func (s *Service) foreignVMDestBase(target string) (string, error) {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
 	return path.Join(path.Clean(s.cfg.HostMountRoot), "user/domains"), nil
+}
+
+// foreignContainerDestBase resolves the destination base directory (a container
+// path) a cross-instance container restore remaps appdata INTO — the container
+// counterpart of foreignVMDestBase (#125). Resolution order, NEVER the source
+// pool: an explicit request Target wins; else the configured RestoreFolder; else
+// the Unraid-conventional local appdata share under the host mount. Target /
+// RestoreFolder are relative subpaths validated by paths.Resolve (no absolute
+// path, no traversal).
+func (s *Service) foreignContainerDestBase(target string) (string, error) {
+	if sub := strings.TrimSpace(target); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	return path.Join(path.Clean(s.cfg.HostMountRoot), "user/appdata"), nil
 }
 
 // nearestExistingDir walks up from p until it finds a directory that exists, so

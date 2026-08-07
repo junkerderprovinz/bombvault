@@ -3193,18 +3193,19 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 // from the set into target; empty restores the whole set (issue #123).
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Session  string   `json:"session"`
-		Domain   string   `json:"domain"`
-		Item     string   `json:"item"`
-		Snapshot string   `json:"snapshot"`
-		Confirm  bool     `json:"confirm"`
-		Target   string   `json:"target"`
-		Paths    []string `json:"paths"`
+		Session   string   `json:"session"`
+		Domain    string   `json:"domain"`
+		Item      string   `json:"item"`
+		Snapshot  string   `json:"snapshot"`
+		Confirm   bool     `json:"confirm"`
+		Target    string   `json:"target"`
+		Paths     []string `json:"paths"`
+		Overwrite bool     `json:"overwrite"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths)
+	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite)
 	if err != nil { // synchronous validation failed — nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
 		return
@@ -3240,4 +3241,28 @@ func (h *Handler) handleForeignFiles(w http.ResponseWriter, r *http.Request) {
 		files = []restic.FileEntry{}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
+}
+
+// handleForeignContainerWarnings returns the non-appdata binds of a foreign
+// container that point at a pool this host lacks, so the Recovery card can warn
+// the operator BEFORE a cross-pool restore (appdata is remapped automatically;
+// these binds are theirs to fix in the template). Read-only; key stays
+// server-side. POST /api/foreign/container-warnings  body {session, item}
+func (h *Handler) handleForeignContainerWarnings(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session string `json:"session"`
+		Item    string `json:"item"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	warnings, err := h.svc.ForeignContainerBindWarnings(r.Context(), body.Session, body.Item)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if warnings == nil {
+		warnings = []ForeignBindWarning{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings}))
 }
