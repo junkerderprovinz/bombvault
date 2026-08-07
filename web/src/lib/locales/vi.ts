@@ -1174,6 +1174,13 @@ const vi: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Xóa biểu ngữ cập nhật của Unraid sau khi BombVault cập nhật một container trong bước cập nhật sau khi sao lưu.",
   "recovery.foreignVMDest": "Đích của đĩa VM",
   "recovery.foreignVMDestHint": "Nơi ghi các đĩa của VM. Các tệp ảnh đĩa sẽ vào <destination>/<vm-name>/, vì vậy hãy chọn một thư mục trên pool thực sự được gắn kết, không phải trên đĩa RAM. Một VM lạ được khôi phục ở trạng thái dừng, vì vậy hãy tự khởi động sau khi bạn đã kiểm tra.",
+  "folder.newFolder": "Thư mục mới",
+  "folder.newFolderPlaceholder": "Tên thư mục mới",
+  "folder.creating": "Đang tạo…",
+  "folder.createFailed": "Không thể tạo thư mục",
+  "vmBackupOrder.title": "Thứ tự sao lưu VM",
+  "vmBackupOrder.hint": "Đặt thứ tự mà lần chạy theo lịch sao lưu các VM. Các VM ngoài danh sách chạy sau, theo tên.",
+  "vmBackupOrder.empty": "Chưa có VM theo lịch để sắp xếp.",
 };
 
 export default vi;

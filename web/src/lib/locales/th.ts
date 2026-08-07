@@ -1185,6 +1185,13 @@ const th: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "ล้างแบนเนอร์การอัปเดตของ Unraid หลังจากที่ BombVault อัปเดตคอนเทนเนอร์ในขั้นตอนการอัปเดตหลังการสำรองข้อมูล",
   "recovery.foreignVMDest": "ปลายทางของดิสก์ VM",
   "recovery.foreignVMDestHint": "ตำแหน่งที่จะเขียนดิสก์ของ VM อิมเมจดิสก์จะไปอยู่ที่ <destination>/<vm-name>/ ดังนั้นให้เลือกโฟลเดอร์บนพูลที่เมานต์จริง ไม่ใช่บน RAM ดิสก์ VM จากภายนอกจะถูกกู้คืนในสถานะหยุดทำงาน ดังนั้นให้คุณเริ่มเองหลังจากตรวจสอบแล้ว",
+  "folder.newFolder": "โฟลเดอร์ใหม่",
+  "folder.newFolderPlaceholder": "ชื่อโฟลเดอร์ใหม่",
+  "folder.creating": "กำลังสร้าง…",
+  "folder.createFailed": "ไม่สามารถสร้างโฟลเดอร์ได้",
+  "vmBackupOrder.title": "ลำดับการสำรองข้อมูล VM",
+  "vmBackupOrder.hint": "กำหนดลำดับที่การทำงานตามกำหนดการสำรองข้อมูล VM รายการที่ไม่อยู่ในลิสต์จะทำงานหลังจากนั้นตามชื่อ",
+  "vmBackupOrder.empty": "ยังไม่มี VM ตามกำหนดการให้จัดลำดับ",
 };
 
 export default th;

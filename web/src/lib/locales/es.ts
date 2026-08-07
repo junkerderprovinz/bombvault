@@ -1180,6 +1180,13 @@ const es: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Borra el aviso de actualización de Unraid después de que BombVault actualice un contenedor en el paso de actualización posterior a la copia.",
   "recovery.foreignVMDest": "Destino de los discos de la VM",
   "recovery.foreignVMDestHint": "Dónde se escriben los discos de la VM. Las imágenes de disco van a <destination>/<vm-name>/, así que elige una carpeta en un pool realmente montado, no en el disco RAM. Una VM ajena se restaura detenida, así que iníciala tú mismo después de comprobarla.",
+  "folder.newFolder": "Nueva carpeta",
+  "folder.newFolderPlaceholder": "Nombre de la nueva carpeta",
+  "folder.creating": "Creando…",
+  "folder.createFailed": "No se pudo crear la carpeta",
+  "vmBackupOrder.title": "Orden de copia de las VM",
+  "vmBackupOrder.hint": "Define el orden en que la ejecución programada respalda las VM. Las VM fuera de la lista se ejecutan después, por nombre.",
+  "vmBackupOrder.empty": "Aún no hay VM programadas para ordenar.",
 };
 
 export default es;

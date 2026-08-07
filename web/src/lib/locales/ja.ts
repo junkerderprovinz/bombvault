@@ -1174,6 +1174,13 @@ const ja: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "バックアップ後の更新ステップで BombVault がコンテナを更新した後、Unraid の更新バナーをクリアします。",
   "recovery.foreignVMDest": "VM ディスクの保存先",
   "recovery.foreignVMDestHint": "VM のディスクを書き込む場所です。ディスクイメージは <destination>/<vm-name>/ に置かれるため、RAM ディスクではなく実際にマウントされたプール上のフォルダーを選んでください。外部の VM は停止した状態で復元されるので、確認してから自分で起動してください。",
+  "folder.newFolder": "新しいフォルダー",
+  "folder.newFolderPlaceholder": "新しいフォルダー名",
+  "folder.creating": "作成中…",
+  "folder.createFailed": "フォルダーを作成できませんでした",
+  "vmBackupOrder.title": "VM バックアップ順",
+  "vmBackupOrder.hint": "スケジュール実行が VM をバックアップする順序を設定します。一覧にない VM はその後、名前順で実行されます。",
+  "vmBackupOrder.empty": "並べ替える予定の VM はまだありません。",
 };
 
 export default ja;

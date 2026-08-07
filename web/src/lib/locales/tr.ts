@@ -1182,6 +1182,13 @@ const tr: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "BombVault, yedeklemeden sonraki güncelleme adımında bir konteyneri güncelledikten sonra Unraid'in güncelleme afişini temizler.",
   "recovery.foreignVMDest": "VM disk hedefi",
   "recovery.foreignVMDestHint": "VM'nin disklerinin nereye yazılacağı. Disk imajları <destination>/<vm-name>/ konumuna gider, bu yüzden RAM diski yerine gerçekten bağlı bir havuzdaki bir klasör seçin. Yabancı bir VM durdurulmuş olarak geri yüklenir, bu yüzden kontrol ettikten sonra kendiniz başlatın.",
+  "folder.newFolder": "Yeni klasör",
+  "folder.newFolderPlaceholder": "Yeni klasör adı",
+  "folder.creating": "Oluşturuluyor…",
+  "folder.createFailed": "Klasör oluşturulamadı",
+  "vmBackupOrder.title": "VM yedekleme sırası",
+  "vmBackupOrder.hint": "Zamanlanmış VM çalıştırmasının VM'leri yedekleme sırasını belirleyin. Listede olmayan VM'ler sonra, ad sırasına göre çalışır.",
+  "vmBackupOrder.empty": "Sıralanacak zamanlanmış VM henüz yok.",
 };
 
 export default tr;

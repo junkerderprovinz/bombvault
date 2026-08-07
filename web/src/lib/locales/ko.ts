@@ -1174,6 +1174,13 @@ const ko: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "백업 후 업데이트 단계에서 BombVault가 컨테이너를 업데이트한 후 Unraid의 업데이트 배너를 지웁니다.",
   "recovery.foreignVMDest": "VM 디스크 대상 위치",
   "recovery.foreignVMDestHint": "VM 디스크가 기록되는 위치입니다. 디스크 이미지는 <destination>/<vm-name>/ 에 저장되므로 RAM 디스크가 아니라 실제로 마운트된 풀의 폴더를 선택하세요. 외부 VM은 중지된 상태로 복원되므로 확인한 뒤 직접 시작하세요.",
+  "folder.newFolder": "새 폴더",
+  "folder.newFolderPlaceholder": "새 폴더 이름",
+  "folder.creating": "만드는 중…",
+  "folder.createFailed": "폴더를 만들 수 없습니다",
+  "vmBackupOrder.title": "VM 백업 순서",
+  "vmBackupOrder.hint": "예약 실행이 VM을 백업하는 순서를 설정합니다. 목록에 없는 VM은 이후에 이름 순으로 실행됩니다.",
+  "vmBackupOrder.empty": "정렬할 예약된 VM이 아직 없습니다.",
 };
 
 export default ko;

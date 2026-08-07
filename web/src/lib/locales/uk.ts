@@ -1177,6 +1177,13 @@ const uk: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Прибирає банер оновлення Unraid після того, як BombVault оновить контейнер на етапі оновлення після резервного копіювання.",
   "recovery.foreignVMDest": "Розташування дисків ВМ",
   "recovery.foreignVMDestHint": "Куди записуються диски віртуальної машини. Образи дисків потрапляють до <destination>/<vm-name>/, тож виберіть теку на справді змонтованому пулі, а не на диску в ОЗП. Чужа ВМ відновлюється зупиненою, тож запустіть її самостійно після перевірки.",
+  "folder.newFolder": "Нова папка",
+  "folder.newFolderPlaceholder": "Назва нової папки",
+  "folder.creating": "Створення…",
+  "folder.createFailed": "Не вдалося створити папку",
+  "vmBackupOrder.title": "Порядок резервного копіювання ВМ",
+  "vmBackupOrder.hint": "Задайте порядок, у якому запланований запуск створює резервні копії ВМ. ВМ поза списком виконуються після, за іменем.",
+  "vmBackupOrder.empty": "Ще немає запланованих ВМ для впорядкування.",
 };
 
 export default uk;
