@@ -170,6 +170,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/history", h.handleHistory)
 	mux.HandleFunc("GET /api/stats", h.handleStats)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
+	mux.HandleFunc("POST /api/browse/mkdir", h.handleMkdir)
 	mux.HandleFunc("GET /api/progress", h.handleProgress)
 
 	// VM endpoints.

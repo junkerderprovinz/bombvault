@@ -16,6 +16,7 @@ import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
+import { useDragReorder } from "../lib/useDragReorder";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -1420,7 +1421,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
   const [error, setError] = useState<string | null>(null);
   const hydrated = useRef(false);
   // #124: collapse the whole card (persisted per browser) and reorder rows by
-  // native drag-and-drop. dragIndex is the row currently being dragged.
+  // native drag-and-drop (live reorder via the shared useDragReorder hook below).
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(BACKUP_ORDER_COLLAPSED_KEY) === "1";
@@ -1428,7 +1429,6 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
       return false;
     }
   });
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     getBackupOrder()
@@ -1487,6 +1487,10 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
     });
     setSaveState("idle");
   }
+
+  // Live drag-to-reorder: the shared hook calls reorder() as a row is dragged over
+  // another, so the rows shift immediately instead of only settling on drop.
+  const { dragIndex, rowProps } = useDragReorder<HTMLLIElement>(reorder, saveState === "saving");
 
   function toggleCollapsed() {
     setCollapsed((v) => {
@@ -1572,26 +1576,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
               {names.map((name, i) => (
                 <li
                   key={name}
-                  draggable={saveState !== "saving"}
-                  onDragStart={(e) => {
-                    setDragIndex(i);
-                    e.dataTransfer.effectAllowed = "move";
-                    try {
-                      e.dataTransfer.setData("text/plain", String(i));
-                    } catch {
-                      /* some environments disallow setData; dragIndex still carries it */
-                    }
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (dragIndex !== null) reorder(dragIndex, i);
-                    setDragIndex(null);
-                  }}
-                  onDragEnd={() => setDragIndex(null)}
+                  {...rowProps(i)}
                   className={`flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5 ${
                     dragIndex === i ? "opacity-40" : ""
                   }`}

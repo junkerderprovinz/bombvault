@@ -1625,6 +1625,27 @@ export function browse(path: string = ""): Promise<BrowseResponse> {
   return fetchJSON(`/api/browse${qs}`);
 }
 
+/** Response from POST /api/browse/mkdir. */
+export interface MkdirResponse {
+  ok: boolean;
+  /** The new folder's relative path from HostMountRoot, e.g. "appdata/plex". */
+  path?: string;
+  name?: string;
+  error?: string;
+}
+
+/**
+ * Create a new folder <name> inside the browsed directory <path> (both relative
+ * to HostMountRoot). Returns the new folder's relative path so the picker can
+ * navigate into it.
+ */
+export function createFolder(path: string, name: string): Promise<MkdirResponse> {
+  return fetchJSON(`/api/browse/mkdir`, {
+    method: "POST",
+    body: JSON.stringify({ path, name }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // VM API types — match VMView in internal/api/service.go exactly
 // ---------------------------------------------------------------------------

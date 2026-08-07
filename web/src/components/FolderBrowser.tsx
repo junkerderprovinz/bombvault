@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { browse } from "../lib/api";
+import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
@@ -23,6 +23,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
   const [browseError, setBrowseError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [manualFallback, setManualFallback] = useState(false);
+  // New-folder creation inside the current browsePath.
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const doFetch = useCallback((path: string) => {
     setLoading(true);
@@ -65,6 +69,27 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
   function handleSelect() {
     onChange(browsePath);
     setOpen(false);
+  }
+
+  function handleCreate() {
+    const name = newName.trim();
+    if (!name || creating) return;
+    setCreating(true);
+    setCreateError(null);
+    createFolder(browsePath, name)
+      .then((res) => {
+        if (!res.ok) {
+          setCreateError(res.error ?? t("folder.createFailed"));
+          return;
+        }
+        setNewName("");
+        // Navigate into the freshly created folder so "use this folder" selects it.
+        doFetch(res.path ?? browsePath);
+      })
+      .catch((err: unknown) => {
+        setCreateError(err instanceof Error ? err.message : t("folder.createFailed"));
+      })
+      .finally(() => setCreating(false));
   }
 
   const trimmed = value.trim();
@@ -161,6 +186,34 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
               ))}
             </div>
           )}
+
+          {/* Create a new folder inside the current directory */}
+          {!manualFallback && (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreate();
+                  }
+                }}
+                spellCheck={false}
+                placeholder={t("folder.newFolderPlaceholder")}
+                className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              />
+              <button
+                onClick={handleCreate}
+                disabled={creating || newName.trim() === ""}
+                className="shrink-0 rounded-lg bg-carbon-surface3 px-3 py-1 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {creating ? t("folder.creating") : t("folder.newFolder")}
+              </button>
+            </div>
+          )}
+          {createError && <p className="text-xs text-statusFail">{createError}</p>}
 
           {/* Action buttons */}
           {!manualFallback && (
