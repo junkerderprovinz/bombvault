@@ -1126,6 +1126,49 @@ func TestForeignRestoreFileSetSelectiveGuards(t *testing.T) {
 	}
 }
 
+// TestForeignRestoreFileSetSelectiveDeepSelectionNoTree pins the #123 fix
+// (manilx, 2026-08-07): a DEEPLY nested selection must land directly as
+// <target>/<name>, not recreate the whole path between the file-set root and the
+// selection. The restore roots at the selection's IMMEDIATE PARENT (not the set
+// root), so restic drops just the picked folder into the target.
+func TestForeignRestoreFileSetSelectiveDeepSelectionNoTree(t *testing.T) {
+	location := "backups/other"
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{
+			// File-set root is /host/user/appdata; the picked stack is nested deep.
+			{ID: "aaaaaaaa11111111", Time: "2026-07-05T10:00:00Z", Paths: []string{"/host/user/appdata"}, Tags: []string{"fileset:appdata"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	sessionRepo := seedForeignRepoMarker(t, s, location)
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+
+	deep := "/host/user/appdata/stacks/DXP480T/xo"
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "appdata", "latest", true, "restore-here", []string{deep}, false)
+	if err != nil || !started {
+		t.Fatalf("StartForeignRestore (deep selective): started=%v err=%v", started, err)
+	}
+	waitForeignIdle(t, s)
+
+	wantTarget, err := paths.Resolve(s.cfg.HostMountRoot, "restore-here")
+	if err != nil {
+		t.Fatalf("resolve want target: %v", err)
+	}
+	eng.mu.Lock()
+	restores := append([]string(nil), eng.restores...)
+	eng.mu.Unlock()
+	// Root = the selection's IMMEDIATE PARENT (/host/user/appdata/stacks/DXP480T),
+	// include = /xo -> the xo folder lands at <target>/xo, NOT <target>/stacks/DXP480T/xo.
+	want := "RestoreSubtreeInclude|" + sessionRepo + "|aaaaaaaa11111111|/host/user/appdata/stacks/DXP480T|/xo->" + wantTarget
+	if len(restores) != 1 || restores[0] != want {
+		t.Fatalf("deep selection must root at the parent (no intermediate tree):\n got %v\nwant [%s]", restores, want)
+	}
+}
+
 // TestListForeignFiles pins the foreign subfolder picker's read: ListForeignFiles
 // returns the session snapshot's file tree via a lock-free Ls on the SESSION repo,
 // and rejects a non-files domain, an unsafe item name and an unknown session.

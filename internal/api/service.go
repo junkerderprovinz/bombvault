@@ -7092,16 +7092,24 @@ func (s *Service) runRestoreFileSetFiles(ctx context.Context, plan fileSetFilesR
 // target (the degenerate discovered-set case).
 func (s *Service) restoreOneFileSetFile(ctx context.Context, plan fileSetFilesRestorePlan, sel string) error {
 	if plan.target == "" {
+		// In place: restore each selected path back to its own absolute location.
 		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, sel, "/", plan.mode)
 	}
-	if plan.subtree == "" {
-		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, sel, plan.target, plan.mode)
+	// To a folder: root the restore at the selection's IMMEDIATE PARENT and include
+	// only its basename, so the picked file or folder lands directly as
+	// <target>/<name> with NO intermediate tree. Rooting at the file-set's backed-up
+	// root instead (the pre-fix behaviour) recreated the whole path BETWEEN that root
+	// and a deeply nested selection under the target — e.g. selecting
+	// dockhand/stacks/DXP480T/xo produced <target>/stacks/DXP480T/xo instead of
+	// <target>/xo (manilx, #123, 2026-08-07). restic includes ancestor path nodes,
+	// so rooting at the parent is valid for files and folders at any depth.
+	parent := path.Dir(sel)
+	base := path.Base(sel)
+	if parent == "." || parent == "/" || base == "." || base == "/" || base == "" {
+		// Degenerate (no usable parent/name) — drop the selection's contents in.
+		return s.engine.RestoreSubtreeTo(ctx, plan.repo, plan.snapshotID, sel, plan.target, plan.mode)
 	}
-	rel := strings.TrimPrefix(sel, plan.subtree)
-	if rel == "" {
-		rel = "/" // the whole subtree was selected
-	}
-	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, plan.snapshotID, plan.subtree, rel, plan.target, plan.mode)
+	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, plan.snapshotID, parent, "/"+base, plan.target, plan.mode)
 }
 
 // StartRestoreFileSetFiles launches a selective file-set restore in a background

@@ -460,8 +460,10 @@ func TestRestoreFileSetFilesRestores(t *testing.T) {
 	fileA := root + "/data/docs/reports/2024.pdf"
 	dirB := root + "/data/docs/photos"
 	subtree := root + "/data/docs"
+	reportsDir := root + "/data/docs/reports" // fileA's immediate parent
 
-	// To a folder: both selections extracted, subtree-rooted, no nesting.
+	// To a folder: each selection is rooted at its OWN immediate parent and lands
+	// directly as <target>/<name>, with no intermediate tree recreated (#123 fix).
 	target, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{fileA, dirB}, "user/restore/docs", true)
 	if err != nil || !started {
 		t.Fatalf("to-folder selective restore: err=%v started=%v", err, started)
@@ -475,9 +477,9 @@ func TestRestoreFileSetFilesRestores(t *testing.T) {
 	}
 	waitForBackupDone(t, svc)
 	if len(eng.restored) != 2 ||
-		!strings.Contains(eng.restored[0], "aaaa1111:"+subtree+"|/reports/2024.pdf->"+wantTarget) ||
+		!strings.Contains(eng.restored[0], "aaaa1111:"+reportsDir+"|/2024.pdf->"+wantTarget) ||
 		!strings.Contains(eng.restored[1], "aaaa1111:"+subtree+"|/photos->"+wantTarget) {
-		t.Fatalf("expected both selections restored subtree-rooted into the folder, got %v", eng.restored)
+		t.Fatalf("expected each selection rooted at its own parent (no intermediate tree), got %v", eng.restored)
 	}
 	runs, err := st.ListRuns(10)
 	if err != nil {
