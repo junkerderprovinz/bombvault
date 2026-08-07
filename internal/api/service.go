@@ -7736,6 +7736,30 @@ func (s *Service) SetBackupOrders(_ context.Context, names []string) error {
 	return s.store.SetBackupOrders(orders)
 }
 
+// VMBackupOrders returns the current explicit VM backup ordering (#119, VMs): the
+// VMs with a positive order, sorted by order ascending.
+func (s *Service) VMBackupOrders(_ context.Context) ([]store.VMOrder, error) {
+	return s.store.VMBackupOrders()
+}
+
+// SetVMBackupOrders authoritatively replaces the VM backup ordering (#119, VMs)
+// from an ordered list of VM names: the first name gets order 1, the next 2, and so
+// on, and every VM not in the list is returned to unordered. Blanks and duplicates
+// (first occurrence wins) are dropped so the positions stay dense.
+func (s *Service) SetVMBackupOrders(_ context.Context, names []string) error {
+	orders := make([]store.VMOrder, 0, len(names))
+	seen := map[string]bool{}
+	for _, n := range names {
+		n = strings.TrimSpace(n)
+		if n == "" || seen[n] {
+			continue // skip blanks and duplicates
+		}
+		seen[n] = true
+		orders = append(orders, store.VMOrder{VM: n, Order: len(orders) + 1})
+	}
+	return s.store.SetVMBackupOrders(orders)
+}
+
 // SetExcludes stores the restic --exclude patterns for a container's backup.
 // Lines are trimmed; blanks and exact duplicates are dropped (order preserved).
 func (s *Service) SetExcludes(_ context.Context, name string, excludes []string) error {

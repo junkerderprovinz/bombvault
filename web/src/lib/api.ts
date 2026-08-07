@@ -1061,6 +1061,34 @@ export function setBackupOrder(order: string[]): Promise<OkEnvelope> {
   });
 }
 
+/** A VM name paired with its explicit backup order (#119, VMs). */
+export interface VmOrder {
+  vm: string;
+  order: number;
+}
+
+/**
+ * GET /api/vms/backup-order — the current VM backup ordering (#119, VMs): the VMs
+ * with an explicit order, sorted ascending. VMs with no explicit order are omitted
+ * (they run afterwards, in name order).
+ */
+export function getVmBackupOrder(): Promise<OkEnvelope & { order?: VmOrder[] }> {
+  return fetchJSON("/api/vms/backup-order");
+}
+
+/**
+ * PUT /api/vms/backup-order — replace the VM backup ordering from an ordered list
+ * of VM names (first name runs earliest in a scheduled VM run). The list is
+ * authoritative: any omitted VM returns to the name-order tiebreak, and an empty
+ * list clears every explicit order.
+ */
+export function setVmBackupOrder(order: string[]): Promise<OkEnvelope> {
+  return fetchJSON("/api/vms/backup-order", {
+    method: "PUT",
+    body: JSON.stringify({ order }),
+  });
+}
+
 export function getSettings(): Promise<GetSettingsResponse> {
   return fetchJSON("/api/settings");
 }

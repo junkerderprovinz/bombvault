@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM } from "../lib/api";
+import { useEffect, useRef, useState } from "react";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { VM, Snapshot } from "../lib/api";
+import type { VM, Snapshot, VmOrder } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
+import { useDragReorder } from "../lib/useDragReorder";
 import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
@@ -810,6 +811,237 @@ function ScheduleIncludeAllControl({
 }
 
 // ---------------------------------------------------------------------------
+// VM backup-order panel (#119, VMs) — manual per-VM scheduled-run sequence
+// ---------------------------------------------------------------------------
+
+const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
+
+// VMBackupOrderPanel lets the user arrange the order the scheduled VM run backs
+// VMs up in (mirrors the container BackupOrderPanel, sharing useDragReorder). The
+// orderable set is the schedule-included VMs. It hydrates once from the persisted
+// order (GET /api/vms/backup-order), then reconciles as VMs come and go without
+// discarding an in-progress reorder. Save PUTs the whole displayed sequence
+// (authoritative); Reset PUTs an empty list, returning every VM to the name-order
+// tiebreak.
+function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
+  const [savedOrder, setSavedOrder] = useState<VmOrder[] | null>(null);
+  const [names, setNames] = useState<string[]>([]);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const hydrated = useRef(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(VM_BACKUP_ORDER_COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    getVmBackupOrder()
+      .then((res) => setSavedOrder(res.ok ? res.order ?? [] : []))
+      .catch(() => setSavedOrder([]));
+  }, []);
+
+  useEffect(() => {
+    if (savedOrder === null) return;
+    const orderable = vms.filter((v) => v.includeInSchedule).map((v) => v.name);
+    const set = new Set(orderable);
+    const byName = (a: string, b: string) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" });
+    if (!hydrated.current) {
+      hydrated.current = true;
+      const ranked = savedOrder
+        .filter((o) => set.has(o.vm))
+        .sort((a, b) => a.order - b.order)
+        .map((o) => o.vm);
+      const rest = orderable.filter((n) => !ranked.includes(n)).sort(byName);
+      setNames([...ranked, ...rest]);
+      return;
+    }
+    setNames((prev) => {
+      const kept = prev.filter((n) => set.has(n));
+      const added = orderable.filter((n) => !kept.includes(n)).sort(byName);
+      const next = [...kept, ...added];
+      return next.length === prev.length && next.every((n, i) => n === prev[i])
+        ? prev
+        : next;
+    });
+  }, [vms, savedOrder]);
+
+  function move(index: number, dir: -1 | 1) {
+    setNames((prev) => {
+      const to = index + dir;
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+    setSaveState("idle");
+  }
+
+  function reorder(from: number, to: number) {
+    setNames((prev) => {
+      if (from === to || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    setSaveState("idle");
+  }
+
+  const { dragIndex, rowProps } = useDragReorder<HTMLLIElement>(reorder, saveState === "saving");
+
+  function toggleCollapsed() {
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(VM_BACKUP_ORDER_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        /* private mode / quota — collapse just won't persist */
+      }
+      return next;
+    });
+  }
+
+  async function persist(order: string[]) {
+    setSaveState("saving");
+    setError(null);
+    try {
+      const res = await setVmBackupOrder(order);
+      if (res.ok) {
+        setSavedOrder(order.map((vm, i) => ({ vm, order: i + 1 })));
+        setSaveState("saved");
+        setTimeout(() => setSaveState("idle"), 3000);
+      } else {
+        setError(res.error ?? t("backupOrder.saveError"));
+        setSaveState("error");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("backupOrder.saveError"));
+      setSaveState("error");
+    }
+  }
+
+  function clearOrder() {
+    const sorted = [...names].sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+    setNames(sorted);
+    void persist([]);
+  }
+
+  if (savedOrder === null) return null;
+
+  return (
+    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-expanded={!collapsed}
+        className="flex w-full items-start gap-2 text-left"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 12 12"
+          fill="none"
+          aria-hidden="true"
+          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "" : "rotate-90"}`}
+        >
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="min-w-0 flex-1">
+          <span className="font-semibold text-carbon-text text-sm">
+            {t("vmBackupOrder.title")}
+            {names.length > 0 && (
+              <span className="ml-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
+                ({names.length})
+              </span>
+            )}
+          </span>
+          {!collapsed && (
+            <span className="mt-0.5 block text-xs text-carbon-textMuted">{t("vmBackupOrder.hint")}</span>
+          )}
+        </span>
+      </button>
+      {!collapsed &&
+        (names.length === 0 ? (
+          <p className="text-xs text-carbon-textMuted">{t("vmBackupOrder.empty")}</p>
+        ) : (
+          <>
+            <ol className="flex flex-col gap-1">
+              {names.map((name, i) => (
+                <li
+                  key={name}
+                  {...rowProps(i)}
+                  className={`flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5 ${
+                    dragIndex === i ? "opacity-40" : ""
+                  }`}
+                >
+                  <span className="shrink-0 cursor-grab text-carbon-textSub active:cursor-grabbing" aria-hidden="true">
+                    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+                      <circle cx="3" cy="3" r="1" />
+                      <circle cx="7" cy="3" r="1" />
+                      <circle cx="3" cy="7" r="1" />
+                      <circle cx="7" cy="7" r="1" />
+                      <circle cx="3" cy="11" r="1" />
+                      <circle cx="7" cy="11" r="1" />
+                    </svg>
+                  </span>
+                  <span className="w-6 text-xs text-carbon-textMuted tabular-nums">{i + 1}.</span>
+                  <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">{name}</span>
+                  <button
+                    onClick={() => move(i, -1)}
+                    disabled={i === 0 || saveState === "saving"}
+                    aria-label={t("backupOrder.moveUp")}
+                    title={t("backupOrder.moveUp")}
+                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => move(i, 1)}
+                    disabled={i === names.length - 1 || saveState === "saving"}
+                    aria-label={t("backupOrder.moveDown")}
+                    title={t("backupOrder.moveDown")}
+                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => void persist(names)}
+                disabled={saveState === "saving"}
+                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {t("backupOrder.save")}
+              </button>
+              <button
+                onClick={clearOrder}
+                disabled={saveState === "saving"}
+                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+              >
+                {t("backupOrder.reset")}
+              </button>
+              {saveState === "saved" && <span className="text-xs text-statusOk">{t("backupOrder.saved")}</span>}
+              {saveState === "error" && error && <span className="text-xs text-statusFail">{error}</span>}
+            </div>
+          </>
+        ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // VMs page
 // ---------------------------------------------------------------------------
 
@@ -1022,6 +1254,14 @@ export function VMs() {
         <div className="bg-carbon-surface rounded-card p-6 text-center">
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
+      )}
+
+      {/* VM backup-order panel (#119, VMs) — advanced: arrange the scheduled VM
+          run sequence. Above the list, like the container backup-order card. */}
+      {!loading && !error && (
+        <Advanced>
+          <VMBackupOrderPanel vms={vms} t={t} />
+        </Advanced>
       )}
 
       {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all. */}

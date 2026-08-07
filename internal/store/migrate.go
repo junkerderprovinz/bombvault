@@ -849,6 +849,15 @@ ALTER TABLE settings ADD COLUMN per_item_schedules INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE targets  ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';
 ALTER TABLE vms      ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';`,
 	},
+	{
+		// #119, VMs: give VMs the same explicit manual backup order that containers
+		// have (targets.backup_order, v78). 0 (the default) means "unordered" — those
+		// VMs keep the existing name-order tiebreak, so existing setups are unchanged
+		// until the user assigns explicit orders. Owned by SetVMBackupOrders (never
+		// reset by UpsertVMTarget).
+		version: 82, name: "vm_backup_order",
+		sql: "ALTER TABLE vms ADD COLUMN backup_order INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

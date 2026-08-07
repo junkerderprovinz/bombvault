@@ -817,6 +817,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: vms job: list VM targets: %v", err)
 					return
 				}
+				store.SortVMTargetsForRun(vms)         // #119: explicit VM backup order first, name-order tiebreak
 				vms = DomainRunVMTargets(vms, perItem) // drop VMs on their own per-item cadence (#121)
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
