@@ -226,6 +226,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/foreign/close", h.handleForeignClose)
 	mux.HandleFunc("POST /api/foreign/restore", h.handleForeignRestore)
 	mux.HandleFunc("POST /api/foreign/files", h.handleForeignFiles)
+	mux.HandleFunc("POST /api/foreign/container-warnings", h.handleForeignContainerWarnings)
 
 	// Receiver dashboard (read-only): register + monitor immutable off-site repos
 	// this box RECEIVES copies into. Gated behind the receiverEnabled settings flag

@@ -358,7 +358,7 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
-	started, err := s.StartForeignRestore(context.Background(), id, "vms", "win10", "latest", true, "vmrestore", nil)
+	started, err := s.StartForeignRestore(context.Background(), id, "vms", "win10", "latest", true, "vmrestore", nil, false)
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}

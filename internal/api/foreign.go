@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -327,11 +328,11 @@ func foreignItems(m map[string][]restic.Snapshot) []ForeignItem {
 // so a bad request fails immediately and no goroutine starts. Shares
 // batchActive with backups and the other restores; returns (false, nil) when
 // one is already running.
-func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string) (bool, error) {
+func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	key, run, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths)
+	key, run, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite)
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
@@ -360,7 +361,7 @@ func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, it
 // work for the domain. The confirm guard fires FIRST (the familiar sentinel,
 // same discipline as prepareRestore); the item name is boundary-checked here
 // because it feeds restic tags, def filenames and progress keys.
-func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string) (string, func(context.Context) error, error) {
+func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool) (string, func(context.Context) error, error) {
 	if !confirm {
 		return "", nil, backup.ErrNotConfirmed
 	}
@@ -394,7 +395,18 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
 			return "", nil, backup.ErrInvalidSnapshotID
 		}
-		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, true)
+		// A cross-instance container restore ALWAYS remaps appdata onto a destination
+		// on THIS host (#125): the request Target chooses it, else the configured
+		// restore folder, else the conventional local appdata share. A standard
+		// container whose appdata already lives there remaps to the same path (no-op);
+		// a container from a pool this host lacks (e.g. /mnt/zfs) lands correctly
+		// instead of writing to the wrong pool. The guard + overwrite check run in
+		// prepareRestoreForTarget before any destructive Stop/Remove.
+		destBase, err := s.foreignContainerDestBase(targetSubPath)
+		if err != nil {
+			return "", nil, err
+		}
+		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, destBase, overwrite)
 		if err != nil {
 			return "", nil, err
 		}
@@ -702,4 +714,69 @@ func (s *Service) ListForeignFiles(ctx context.Context, sessionID, domain, item,
 		snapshotID = snaps[len(snaps)-1].ID
 	}
 	return s.engine.Ls(ctx, sess.repo, snapshotID, sess.mode)
+}
+
+// ForeignBindWarning is one NON-appdata bind of a foreign container that points at
+// a pool/share this host does not have mounted — so after a cross-pool restore the
+// recreated container's bind would land on empty/missing storage. The operator
+// fixes these in the Unraid template; appdata binds are remapped automatically and
+// never listed here (#125, Q1: "appdata only + warning").
+type ForeignBindWarning struct {
+	Host      string `json:"host"`
+	Container string `json:"container"`
+}
+
+// ForeignContainerBindWarnings inspects a foreign container's recipe and returns
+// the non-appdata binds whose source pool is not mounted on THIS host. Host
+// devices/sockets (docker.sock, /etc/localtime, /dev/dri — anything not under the
+// source mount root) are not pool binds and are skipped; appdata binds are
+// remapped by the restore and skipped. Read-only, session-scoped.
+func (s *Service) ForeignContainerBindWarnings(_ context.Context, sessionID, item string) ([]ForeignBindWarning, error) {
+	if !validResourceName(item) {
+		return nil, errors.New("invalid item name")
+	}
+	sess, err := s.foreignSession(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	tg, err := s.foreignContainerTarget(sess, item)
+	if err != nil {
+		return nil, err
+	}
+	var def containerDefinition
+	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
+		return nil, fmt.Errorf("foreign definition for %q is corrupt: %w", item, err)
+	}
+	return s.foreignBindWarnings(def.Inspect.HostConfig.Binds, tg.AppdataPaths), nil
+}
+
+// foreignBindWarnings is the pure classification behind ForeignContainerBindWarnings
+// (unit-tested in isolation): a bind is warned only when its host source is a
+// pool/share path (reachable through the mount) that is NOT one of the container's
+// appdata paths (those are remapped) AND is NOT mounted on this host. Host
+// devices/sockets (docker.sock, /etc/localtime, /dev/dri — not under the source
+// mount root) are skipped.
+func (s *Service) foreignBindWarnings(binds, appdataPaths []string) []ForeignBindWarning {
+	appdata := make(map[string]bool, len(appdataPaths))
+	for _, p := range appdataPaths {
+		appdata[path.Clean(p)] = true
+	}
+	var out []ForeignBindWarning
+	for _, b := range binds {
+		host, container, found := strings.Cut(b, ":")
+		if !found {
+			continue
+		}
+		cp, ok := s.toContainerPath(host)
+		if !ok {
+			continue // host device/socket, not a pool bind
+		}
+		if appdata[path.Clean(cp)] {
+			continue // appdata bind — remapped automatically
+		}
+		if !s.destinationMounted(cp) {
+			out = append(out, ForeignBindWarning{Host: host, Container: container})
+		}
+	}
+	return out
 }

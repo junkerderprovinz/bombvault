@@ -628,6 +628,33 @@ func restoreDeps(d *fakeDocker, r *fakeRestic, tpl *fakeTemplates, runs *fakeRun
 	}
 }
 
+// TestRestoreContainerRemapUsesSubtreeTo pins the #125 cross-pool branch: with
+// RestoreDirs set, RestoreContainer restores each source subtree INTO its chosen
+// destination via RestoreSubtreeTo and does NOT fall back to the in-place
+// RestorePaths.
+func TestRestoreContainerRemapUsesSubtreeTo(t *testing.T) {
+	d := &fakeDocker{liveName: "/plex"}
+	r := &fakeRestic{}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+
+	deps := restoreDeps(d, r, tpl, runs)
+	deps.RestoreDirs = []backup.RestoreDir{
+		{Subtree: "/host/user/zfs/appdata/plex", Target: "/host/user/user/appdata/plex"},
+	}
+	if err := backup.RestoreContainer(t.Context(), deps); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(r.capturedPaths) != 1 || r.capturedPaths[0] != "/host/user/zfs/appdata/plex->/host/user/user/appdata/plex" {
+		t.Fatalf("remap must use RestoreSubtreeTo subtree->target, got %v", r.capturedPaths)
+	}
+	for _, l := range r.log {
+		if strings.HasPrefix(l, "restore:") {
+			t.Fatalf("remap must NOT call in-place RestorePaths, got %v", r.log)
+		}
+	}
+}
+
 func TestRestoreAbortsWhenNotConfirmed(t *testing.T) {
 	d := &fakeDocker{liveName: "/plex"}
 	r := &fakeRestic{}

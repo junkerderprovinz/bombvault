@@ -2040,6 +2040,10 @@ export async function foreignRestore(req: {
   confirm: boolean;
   target?: string;
   paths?: string[];
+  /** containers domain: confirm overwriting a non-empty destination that may
+   *  belong to a different container (#125). Default off; the backend refuses
+   *  without it. */
+  overwrite?: boolean;
 }): Promise<OkEnvelope & { started?: boolean }> {
   const res = await fetch("/api/foreign/restore", {
     method: "POST",
@@ -2066,6 +2070,28 @@ export function listForeignFiles(
   return fetchJSON("/api/foreign/files", {
     method: "POST",
     body: JSON.stringify({ session, domain: "files", item, snapshot }),
+  });
+}
+
+/** One non-appdata bind of a foreign container whose source pool is not mounted
+ *  on this host (#125): after a cross-pool restore the recreated container's bind
+ *  would land on empty/missing storage. Appdata binds are remapped automatically
+ *  and never appear here. */
+export interface ForeignBindWarning {
+  host: string;
+  container: string;
+}
+
+/** POST /api/foreign/container-warnings — the foreign container's non-appdata
+ *  binds that point at a pool this host lacks, so the Recovery card can warn the
+ *  operator to fix them in the template after a cross-pool restore. Read-only. */
+export function foreignContainerWarnings(
+  session: string,
+  item: string
+): Promise<OkEnvelope & { warnings?: ForeignBindWarning[] }> {
+  return fetchJSON("/api/foreign/container-warnings", {
+    method: "POST",
+    body: JSON.stringify({ session, item }),
   });
 }
 

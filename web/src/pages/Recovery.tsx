@@ -29,6 +29,8 @@ import {
   foreignClose,
   foreignRestore,
   listForeignFiles,
+  foreignContainerWarnings,
+  type ForeignBindWarning,
   type Settings,
   type Container,
   type VM,
@@ -284,6 +286,14 @@ function ForeignItemRow({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const subsetActive = domain === "files" && filesMode === "subset";
 
+  // Containers domain only (#125): a cross-instance container restore remaps appdata
+  // onto a destination on THIS host. `overwrite` confirms writing into a non-empty
+  // destination that may belong to a different container; `warnings` lists the
+  // container's NON-appdata binds whose source pool this host lacks (appdata is
+  // remapped automatically — these the operator fixes in the template).
+  const [overwrite, setOverwrite] = useState(false);
+  const [warnings, setWarnings] = useState<ForeignBindWarning[]>([]);
+
   // onSessionGone is an inline arrow at the call site, so its identity changes on
   // every parent re-render — and the parent re-renders on every /api/progress SSE
   // tick. Hold it in a ref so the file-listing effect below can call the latest
@@ -297,6 +307,25 @@ function ForeignItemRow({
   const runDomain = domain === "containers" ? "container" : domain === "vms" ? "vm" : "files";
   // Newest-first for the picker; restic lists snapshots oldest-first.
   const snaps = [...item.snapshots].reverse();
+
+  // Containers: fetch the cross-pool bind warnings once (best-effort; the restore
+  // still guards the destination regardless). Read-only, session-scoped.
+  useEffect(() => {
+    if (domain !== "containers") return;
+    let cancelled = false;
+    foreignContainerWarnings(session, item.name)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.ok) setWarnings(res.warnings ?? []);
+        else if (isForeignSessionGone(res.error)) onSessionGoneRef.current();
+      })
+      .catch(() => {
+        /* non-fatal: the appdata remap + destination guard still protect the restore */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [domain, session, item.name]);
 
   // Lazily list the chosen snapshot's file tree for the subset picker; re-list
   // when the snapshot changes and clear any prior selection (it belonged to the
@@ -364,9 +393,14 @@ function ForeignItemRow({
             item: item.name,
             snapshot,
             confirm: true,
-            target: needsTarget ? target.trim() : undefined,
+            // Send whatever destination the field holds; empty lets the backend use
+            // its default (files require one, vms default to user/domains, containers
+            // default to the restore folder / user/appdata).
+            target: target.trim() || undefined,
             // Only the subset mode selects paths; the whole-set restore omits them.
             paths: subsetActive ? [...selected] : undefined,
+            // Containers only: confirm overwriting a non-empty destination (#125).
+            overwrite: domain === "containers" ? overwrite : undefined,
           }),
       });
       if (res.ok) {
@@ -463,6 +497,41 @@ function ForeignItemRow({
           <p className="text-xs text-carbon-textMuted max-w-2xl">
             {t("recovery.foreignVMDestHint")}
           </p>
+        </div>
+      )}
+      {domain === "containers" && (
+        <div className="flex flex-col gap-1.5">
+          <FolderBrowser
+            label={t("recovery.foreignAppdataDest")}
+            value={target}
+            hostMountRoot={hostMountRoot}
+            onChange={setTarget}
+          />
+          <p className="text-xs text-carbon-textMuted max-w-2xl">
+            {t("recovery.foreignAppdataDestHint")}
+          </p>
+          <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={overwrite}
+              onChange={(e) => setOverwrite(e.target.checked)}
+              disabled={state === "busy"}
+              className="accent-accent"
+            />
+            <span className="text-carbon-text">{t("recovery.foreignOverwrite")}</span>
+          </label>
+          {warnings.length > 0 && (
+            <div className="rounded-lg bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
+              <p className="text-statusWarn">{t("recovery.foreignBindWarning")}</p>
+              <ul className="mt-1 flex flex-col gap-0.5">
+                {warnings.map((wn) => (
+                  <li key={wn.host + " " + wn.container} className="font-mono wrap-break-word" dir="ltr">
+                    {wn.host} → {wn.container}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
       <div className="flex items-center gap-3 flex-wrap">
