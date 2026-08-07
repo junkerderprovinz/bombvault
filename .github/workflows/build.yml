@@ -89,7 +89,7 @@ jobs:
           exit-code: "0"
       - name: Upload Trivy results to the Security tab
         if: ${{ github.event_name != 'pull_request' }}
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4
         with:
           sarif_file: trivy-results.sarif
           category: trivy
@@ -109,7 +109,7 @@ jobs:
       # Push only on main / manual runs, never from pull requests.
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -119,7 +119,7 @@ jobs:
       # DOCKERHUB_TOKEN (secret) are set together; otherwise skipped (GHCR-only).
       - name: Log in to Docker Hub
         if: ${{ github.event_name != 'pull_request' && vars.DOCKERHUB_USERNAME != '' }}
-        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

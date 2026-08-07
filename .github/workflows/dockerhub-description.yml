@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ vars.DOCKERHUB_USERNAME != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Docker Hub description sync ready?
         id: ready
         env:
@@ -37,7 +37,7 @@ jobs:
           fi
       - name: Sync README to Docker Hub
         if: ${{ steps.ready.outputs.go == 'true' }}
-        uses: peter-evans/dockerhub-description@v5
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
