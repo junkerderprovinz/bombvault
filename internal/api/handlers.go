@@ -2795,6 +2795,61 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// mkdirRequest is the JSON body for POST /api/browse/mkdir.
+type mkdirRequest struct {
+	Path string `json:"path"` // parent subpath under HostMountRoot ("" = the root)
+	Name string `json:"name"` // new folder name — a single plain path component
+}
+
+// handleMkdir serves POST /api/browse/mkdir: it creates a new folder <name>
+// inside the browsed directory <path> (both under HostMountRoot) so the folder
+// picker can make a fresh backup destination without leaving the app. The new
+// folder is created operator-readable (0755, like every backup/restore target on
+// a user-visible share).
+func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
+	var req mkdirRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	name := strings.TrimSpace(req.Name)
+	// The name must be one plain path component: reject empty, ".", "..", any
+	// separator, NUL, or a leading dot. paths.Resolve below re-checks containment,
+	// but this keeps "create ONE folder here" honest (no nested paths, no traversal,
+	// and no hidden entry the browser would then hide again).
+	if name == "" || name == "." || name == ".." ||
+		strings.ContainsAny(name, "/\\\x00") || strings.HasPrefix(name, ".") {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid folder name"})
+		return
+	}
+	// Build the new subpath under the mount root and validate containment exactly
+	// the way handleBrowse does (rejecting traversal / absolute paths defensively).
+	sub := name
+	if req.Path != "" {
+		sub = req.Path + "/" + name
+	}
+	abs, err := paths.Resolve(h.cfg.HostMountRoot, sub)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "invalid path: must be a relative subpath under the mount root",
+		})
+		return
+	}
+	// os.Mkdir (not MkdirAll) so an existing folder is reported instead of silently
+	// reused; then force 0755 in case a strict umask stripped the mode.
+	if err := os.Mkdir(abs, 0o755); err != nil { //nolint:gosec // G301: a backup destination on a user-visible share must be operator-readable
+		if os.IsExist(err) {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a folder with that name already exists"})
+			return
+		}
+		log.Printf("api: mkdir %q: %v", abs, err) //nolint:gosec // G706: abs is a Resolve-validated child path; no raw user bytes reach the log formatter
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "could not create folder"})
+		return
+	}
+	_ = os.Chmod(abs, 0o755) //nolint:gosec // G302: see above — must be readable by the non-root share user
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "path": sub, "name": name})
+}
+
 // ---------------------------------------------------------------------------
 // Files handlers (the files domain — named host folders backed up as file sets)
 // ---------------------------------------------------------------------------
