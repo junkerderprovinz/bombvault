@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
 # =============================================================================
 # bombvault — backup & disaster recovery for Docker containers + KVM/libvirt VMs
 #
@@ -19,7 +19,7 @@ ARG BUILDPLATFORM
 
 # ---- Stage 1: web (build the React SPA → web/dist) --------------------------
 # Arch-independent JS output: build once on the native runner platform.
-FROM --platform=$BUILDPLATFORM node:24-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS web
+FROM --platform=$BUILDPLATFORM node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 AS web
 WORKDIR /src
 COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
@@ -27,7 +27,7 @@ RUN npm --prefix web run build
 
 # ---- Stage 2: build (cross-compile the static Go binary) --------------------
 # Runs natively on BUILDPLATFORM and cross-compiles via GOOS/GOARCH (set below).
-FROM --platform=$BUILDPLATFORM golang:1.26-bookworm@sha256:1ecb7edf62a0408027bd5729dfd6b1b8766e578e8df93995b225dfd0944eb651 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm@sha256:6c5605ab3a9a9fb3c4eafe5b3d63cdbf3881caf113262b67862547b54a9db599 AS build
 WORKDIR /src
 
 # Module graph first so `go mod download` is cached across source changes.
@@ -52,7 +52,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -ldflags "-s -w -X github.com/junkerderprovinz/bombvault/internal/api.Version=${VERSION}" -o /out/bombvault ./cmd/bombvault
 
 # ---- Stage 3: runtime (lean Debian + restic from upstream release) ----------
-FROM debian:stable-slim@sha256:328d16499860ae6cb9b345e2e4cebca08c2a36e4f7278482c7bd1f39d71e5bfd AS runtime
+FROM debian:stable-slim@sha256:0d97731c59efdde181e19c4a5ec22d16e9eefcb73175598b9b7bae712c7214eb AS runtime
 
 LABEL org.opencontainers.image.title="bombvault" \
       org.opencontainers.image.description="Backup & disaster recovery for Docker containers and KVM/libvirt VMs, powered by restic." \
