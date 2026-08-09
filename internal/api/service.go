@@ -4080,10 +4080,12 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// host lacks that pool the in-place write would land in an unmounted dir under
 		// the host mount (the array/RAM rootfs), silently writing appdata to the wrong
 		// place or bricking the host (#122 class for containers). Instead restore every
-		// appdata path's CONTENTS into <destBase>/<leaf> on THIS host, GUARD those
-		// destination dirs, and point the recreated binds + template there. A standard
-		// container whose appdata already lives under destBase remaps to the same path
-		// (a no-op). destBase == "" is the same-instance in-place restore, unchanged.
+		// appdata path's CONTENTS into its container-relative place under destBase on
+		// THIS host (containerAppdataRemap — a multi-bind container keeps the folder its
+		// binds share), GUARD those destination dirs, and point the recreated binds +
+		// template there. A standard container whose appdata already lives under
+		// destBase remaps to the same path (a no-op). destBase == "" is the
+		// same-instance in-place restore, unchanged.
 		if destBase != "" {
 			if !paths.Within(s.cfg.HostMountRoot, destBase) {
 				return containerRestorePlan{}, errors.New("restore destination is outside the host mount")
@@ -4105,7 +4107,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			if !overwrite {
 				for _, d := range restoreDirs {
 					if d.Target != d.Subtree && s.dirNonEmptyFn()(d.Target) {
-						return containerRestorePlan{}, fmt.Errorf("restore destination %q already contains data — it may belong to a different container; confirm overwrite to proceed", s.toHostPath(d.Target))
+						return containerRestorePlan{}, destinationRefusal("restore destination %q already contains data — it may belong to a different container; confirm overwrite to proceed", s.toHostPath(d.Target))
 					}
 				}
 			}
@@ -4161,6 +4163,23 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 // restore described by an already-validated plan, publishing "container:<name>"
 // progress. The orchestrator records the run (kindRestore) itself.
 func (s *Service) executeRestore(ctx context.Context, name string, plan containerRestorePlan, leaveStopped bool) error {
+	// Pre-create every remapped destination readable (0o755), same convention as
+	// the file-set/to-path restores (see EnsureDirReadable). restic's own
+	// restorer creates a fresh subtree TARGET at 0o700 and never revisits that
+	// root directory's own metadata (only its restored CONTENTS get the
+	// snapshot's ownership/mode) — on the cross-pool remap's brand-new
+	// destination dirs that leaves them root:root/0700, unreadable to whatever
+	// UID the container actually runs as. Pre-creating here means restic's own
+	// MkdirAll finds the dir already present and leaves the mode alone. In-place
+	// restores (empty RestoreDirs, or a Target that already existed before this
+	// restore) are an inexpensive no-op: EnsureDirReadable only heals mode, never
+	// touches ownership, so this does NOT fix numeric owner:group on the
+	// restored root (tracked separately, see #125) — only its readability.
+	for _, rd := range plan.restoreDirs {
+		if err := paths.EnsureDirReadable(rd.Target); err != nil {
+			return fmt.Errorf("restore: prepare destination %q: %w", s.toHostPath(rd.Target), err)
+		}
+	}
 	// Hold the domain repo lock for the whole restic/docker phase. The scheduler
 	// calls Backup/BackupVM directly and bypasses the batchActive single-flight
 	// guard BY DESIGN — the domain lock is the one layer scheduled jobs do
@@ -5963,7 +5982,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 //     is the primary defence); only a proven shortfall aborts.
 func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, snapshotID, destDir string) error {
 	if !s.destinationMounted(destDir) {
-		return fmt.Errorf("restore destination %q is not on a mounted pool or share; a VM disk restored there would be written into the host's RAM and crash it. Choose a destination folder on real storage and retry", s.toHostPath(destDir))
+		return destinationRefusal("restore destination %q is not on a mounted pool or share; a VM disk restored there would be written into the host's RAM and crash it. Choose a destination folder on real storage and retry", s.toHostPath(destDir))
 	}
 	_, wantBytes, err := s.engine.StatsRestoreSize(ctx, ref.repo, snapshotID, ref.mode)
 	if err != nil {
@@ -5971,7 +5990,7 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 	}
 	if wantBytes > 0 {
 		if free, ferr := s.diskFreeFn()(nearestExistingDir(destDir)); ferr == nil && free < uint64(wantBytes) {
-			return fmt.Errorf("not enough free space to restore this VM: it needs %d bytes but the destination %q has only %d free. Free up space or choose another destination", wantBytes, s.toHostPath(destDir), free)
+			return destinationRefusal("not enough free space to restore this VM: it needs %d bytes but the destination %q has only %d free. Free up space or choose another destination", wantBytes, s.toHostPath(destDir), free)
 		}
 	}
 	return nil
@@ -5992,7 +6011,7 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repoRef, snapshotID string, appdataPaths []string) error {
 	for _, p := range appdataPaths {
 		if !s.destinationMounted(p) {
-			return fmt.Errorf("appdata destination %q is not on a mounted pool or share on this system — the source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
+			return destinationRefusal("appdata destination %q is not on a mounted pool or share on this system — the source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
 		}
 	}
 	// Free-space preflight ONLY when the whole restore lands in a SINGLE appdata
@@ -6004,47 +6023,92 @@ func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repo
 	if len(appdataPaths) == 1 {
 		if _, wantBytes, err := s.engine.StatsRestoreSize(ctx, ref.repo, snapshotID, ref.mode); err == nil && wantBytes > 0 {
 			if free, ferr := s.diskFreeFn()(nearestExistingDir(appdataPaths[0])); ferr == nil && free < uint64(wantBytes) {
-				return fmt.Errorf("not enough free space to restore this container's appdata: it needs %d bytes but %q has only %d free. Free up space and retry", wantBytes, s.toHostPath(appdataPaths[0]), free)
+				return destinationRefusal("not enough free space to restore this container's appdata: it needs %d bytes but %q has only %d free. Free up space and retry", wantBytes, s.toHostPath(appdataPaths[0]), free)
 			}
 		}
 	}
 	return nil
 }
 
-// foreignVMDestBase resolves the destination base directory (a container path)
-// for a cross-instance VM restore's disks. Resolution order, NEVER the source
-// pool: an explicit target subpath (the request Target) wins; else the configured
-// RestoreFolder (the settings default restore location); else the Unraid-conventional
-// local VM domains share under the host mount. Target/RestoreFolder are relative
-// subpaths validated by paths.Resolve (no absolute path, no traversal), exactly
-// like the file-set to-folder restore.
+// appdataRelPath splits a backed-up container path into the appdata ROOT it lives
+// in and the container-relative remainder below it, e.g.
+// /host/user/user/appdata/SnapOtter/conf → ("/host/user/user/appdata",
+// "SnapOtter/conf") and /host/user/zfs/appdata/nexterm → ("/host/user/zfs/appdata",
+// "nexterm"). The split is on the FIRST "appdata" segment — that is the share/pool
+// root every recorded path is selected by (resolveAppdataPaths keeps a bind only
+// when hasSegment(src,"appdata")), and taking the first occurrence keeps a
+// container that happens to own a nested folder called "appdata"
+// (…/appdata/foo/appdata) anchored at the real root.
+//
+// rel is "" when the path has no "appdata" segment at all or IS an appdata root
+// (a container binding /mnt/user/appdata itself); callers then fall back to the
+// plain basename, which is exactly the pre-#125-fix behaviour for those shapes.
+func appdataRelPath(src string) (root, rel string) {
+	segs := strings.Split(src, "/")
+	for i, seg := range segs {
+		if seg == "appdata" && i+1 < len(segs) {
+			return strings.Join(segs[:i+1], "/"), strings.Join(segs[i+1:], "/")
+		}
+	}
+	return "", ""
+}
+
 // containerAppdataRemap builds the per-appdata-path remap for a cross-pool
 // (foreign) container restore: each backed-up appdata path's CONTENTS are
-// restored into <destBase>/<leaf> on the DESTINATION pool, and the recreated
-// container's binds + template are pointed there. destBase is a container path
-// under HostMountRoot. It returns (1) the restic restore dirs (Subtree = the
-// source appdata path, i.e. one of the snapshot's own backed-up paths; Target =
-// the dest path), and (2) a bindRemap of HOST source path -> HOST dest path for
-// rewriting HostConfig.Binds + the flashed template.
+// restored into <destBase>/<container-relative path> on the DESTINATION pool, and
+// the recreated container's binds + template are pointed there. destBase is a
+// container path under HostMountRoot. It returns (1) the restic restore dirs
+// (Subtree = the source appdata path, i.e. one of the snapshot's own backed-up
+// paths; Target = the dest path), and (2) a bindRemap of HOST source path -> HOST
+// dest path for rewriting HostConfig.Binds + the flashed template.
+//
+// The destination keeps the path structure BELOW the source's appdata root, not
+// just the final segment. resolveAppdataPaths records every appdata bind as its
+// OWN entry without merging binds that share a folder, so a container with two
+// binds — /mnt/user/appdata/SnapOtter/conf and …/SnapOtter/data — arrives here as
+// two paths sharing the "SnapOtter" ancestor. Mapping each one by its BASENAME
+// alone dropped that ancestor and scattered the container's data as "conf" and
+// "data" directly in the destination appdata root, next to (and able to overwrite)
+// other containers' folders. Keeping the relative path nests them back under
+// <destBase>/SnapOtter/… The single-bind case is unchanged: the relative path of
+// /mnt/user/appdata/nexterm IS "nexterm", so it still lands in <destBase>/nexterm.
 //
 // SAFETY: RestoreSubtreeTo dumps the subtree's CONTENTS directly into Target
 // (no path nesting, issue #62), so two source paths mapping to the SAME Target
-// would silently MERGE data. Targets are therefore made unique: a residual
-// basename collision (two appdata dirs with the same leaf on different pools)
-// gets a "-2"/"-3" suffix so every Target is a distinct directory.
+// would silently MERGE data. Uniqueness is therefore enforced on the destination
+// ROOT folder: a residual name collision (the same container folder name coming
+// from two different pools) gets a "-2"/"-3" suffix. The suffix is decided ONCE
+// per SOURCE root directory and reused by every path below it, so a multi-bind
+// container is never split across <destBase>/SnapOtter and <destBase>/SnapOtter-2.
+// Distinct source roots always get distinct destination roots, and two paths under
+// the same source root differ in their remainder, so every Target stays unique.
 func (s *Service) containerAppdataRemap(destBase string, appdataPaths []string) ([]backup.RestoreDir, map[string]string) {
 	base := path.Clean(destBase)
 	dirs := make([]backup.RestoreDir, 0, len(appdataPaths))
 	remap := make(map[string]string, len(appdataPaths))
-	seen := map[string]bool{}
+	destRootFor := map[string]string{} // SOURCE root dir -> its assigned dest root name
+	takenRoot := map[string]bool{}     // dest root names already handed out
 	for _, cp := range appdataPaths {
 		src := path.Clean(cp)
-		leaf := path.Base(src)
-		dest := base + "/" + leaf
-		for n := 2; seen[dest]; n++ {
-			dest = base + "/" + leaf + "-" + strconv.Itoa(n)
+		root, rel := appdataRelPath(src)
+		if rel == "" {
+			root, rel = path.Dir(src), path.Base(src)
 		}
-		seen[dest] = true
+		rootName, sub, _ := strings.Cut(rel, "/")
+		srcRoot := path.Join(root, rootName)
+		destRoot, ok := destRootFor[srcRoot]
+		if !ok {
+			destRoot = rootName
+			for n := 2; takenRoot[destRoot]; n++ {
+				destRoot = rootName + "-" + strconv.Itoa(n)
+			}
+			takenRoot[destRoot] = true
+			destRootFor[srcRoot] = destRoot
+		}
+		dest := base + "/" + destRoot
+		if sub != "" {
+			dest += "/" + sub
+		}
 		dirs = append(dirs, backup.RestoreDir{Subtree: src, Target: dest})
 		remap[s.toHostPath(src)] = s.toHostPath(dest)
 	}
@@ -6113,6 +6177,13 @@ func (s *Service) dirNonEmptyFn() func(string) bool {
 	return dirNonEmpty
 }
 
+// foreignVMDestBase resolves the destination base directory (a container path)
+// for a cross-instance VM restore's disks. Resolution order, NEVER the source
+// pool: an explicit target subpath (the request Target) wins; else the configured
+// RestoreFolder (the settings default restore location); else the Unraid-conventional
+// local VM domains share under the host mount. Target/RestoreFolder are relative
+// subpaths validated by paths.Resolve (no absolute path, no traversal), exactly
+// like the file-set to-folder restore.
 func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
