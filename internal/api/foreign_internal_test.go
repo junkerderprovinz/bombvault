@@ -32,11 +32,13 @@ const foreignTestKey = "42424242424242424242424242424242424242424242424242424242
 // so a write we forgot to record can never slip through silently. opens
 // decides which probe modes RepoOpens accepts (nil = none).
 type foreignRecordingEngine struct {
-	ResticEngine // nil — non-overridden calls panic loudly
-	opens        func(m restic.Mode) bool
-	snaps        []restic.Snapshot
-	snapsErr     error
-	lsEntries    []restic.FileEntry // what Ls returns (the foreign subfolder picker's tree)
+	ResticEngine  // nil — non-overridden calls panic loudly
+	opens         func(m restic.Mode) bool
+	snaps         []restic.Snapshot
+	snapsErr      error
+	lsEntries     []restic.FileEntry // what Ls returns (the foreign subfolder picker's tree)
+	lsPathEntries []restic.FileEntry // what LsPath returns (healRestoreDirOwnership's snapshot-node read)
+	lsPathErr     error
 
 	// statsRestoreBytes is the size StatsRestoreSize reports (the VM restore guard's
 	// "does it fit" number); 0 (the default) skips the free-space check.
@@ -47,6 +49,7 @@ type foreignRecordingEngine struct {
 	snapshotRepos []string      // repo argument of every Snapshots call (which repo was listed)
 	restores      []string      // "Method|repo|snapshot|path" of every RestorePath/RestoreInclude call
 	modes         []restic.Mode // mode of every read/restore call, for NoLock + cloudEnv assertions
+	lsPathCalls   []string      // dirPath argument of every LsPath call, in order
 }
 
 func (f *foreignRecordingEngine) record(name string) {
@@ -190,6 +193,22 @@ func (f *foreignRecordingEngine) Ls(_ context.Context, _, _ string, m restic.Mod
 	f.record("Ls")
 	f.recordMode(m)
 	return f.lsEntries, nil
+}
+
+// LsPath backs healRestoreDirOwnership's read of a remapped restore
+// directory's own recorded owner/mode. lsPathEntries/lsPathErr let a test fix
+// the response; lsPathCalls records the dirPath argument of every call, in
+// order, so a test can assert every RestoreDir in the batch was queried.
+func (f *foreignRecordingEngine) LsPath(_ context.Context, _, _, dirPath string, m restic.Mode) ([]restic.FileEntry, error) {
+	f.record("LsPath")
+	f.recordMode(m)
+	f.mu.Lock()
+	f.lsPathCalls = append(f.lsPathCalls, dirPath)
+	f.mu.Unlock()
+	if f.lsPathErr != nil {
+		return nil, f.lsPathErr
+	}
+	return f.lsPathEntries, nil
 }
 
 // StatsRestoreSize is a READ of the source repo the VM restore's host-brick guard

@@ -3318,6 +3318,9 @@ type fakeResticEngine struct {
 	copyErr         error
 	snaps           []restic.Snapshot
 	lsEntries       []restic.FileEntry
+	lsPathEntries   []restic.FileEntry // LsPath's own return value; see LsPath's doc comment
+	lsPathErr       error
+	lsPathCalls     []string // dirPath argument of every LsPath call, in order
 	unlockedRepos   []string
 	unlockRemoveAll []bool
 	manualPruned    []string
@@ -3479,6 +3482,19 @@ func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic
 
 func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]restic.FileEntry, error) {
 	return f.lsEntries, nil
+}
+
+// LsPath is deliberately backed by its OWN field (lsPathEntries), not lsEntries:
+// many existing tests set lsEntries for unrelated file-restore-browsing
+// assertions, and healRestoreDirOwnership (the only caller of LsPath) must not
+// pick those up and attempt a spurious ownership heal in tests that never meant
+// to exercise it.
+func (f *fakeResticEngine) LsPath(_ context.Context, _, _, dirPath string, _ restic.Mode) ([]restic.FileEntry, error) {
+	f.lsPathCalls = append(f.lsPathCalls, dirPath)
+	if f.lsPathErr != nil {
+		return nil, f.lsPathErr
+	}
+	return f.lsPathEntries, nil
 }
 
 func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
