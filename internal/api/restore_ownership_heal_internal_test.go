@@ -30,7 +30,7 @@ func TestHealRestoreDirOwnershipAppliesSnapshotMode(t *testing.T) {
 		t.Skip("unix mode/owner bits are not modelled on windows")
 	}
 	target := t.TempDir()
-	if err := os.Chmod(target, 0o755); err != nil {
+	if err := os.Chmod(target, 0o755); err != nil { //nolint:gosec // G302: test-only, seeding a starting mode the heal must then correct
 		t.Fatalf("seed target mode: %v", err)
 	}
 
@@ -74,7 +74,7 @@ func TestHealRestoreDirOwnershipContinuesPastAnErroringDir(t *testing.T) {
 	}
 	targetA := t.TempDir()
 	targetB := t.TempDir()
-	if err := os.Chmod(targetB, 0o755); err != nil {
+	if err := os.Chmod(targetB, 0o755); err != nil { //nolint:gosec // G302: test-only, seeding a starting mode the heal must then correct
 		t.Fatalf("seed target B mode: %v", err)
 	}
 
@@ -115,7 +115,7 @@ func TestHealRestoreDirOwnershipSkipsWhenNoMatchingEntry(t *testing.T) {
 		t.Skip("unix mode/owner bits are not modelled on windows")
 	}
 	target := t.TempDir()
-	if err := os.Chmod(target, 0o755); err != nil {
+	if err := os.Chmod(target, 0o755); err != nil { //nolint:gosec // G302: test-only, seeding a starting mode the heal must then correct
 		t.Fatalf("seed target mode: %v", err)
 	}
 	const subtree = "/host/user/zfs/appdata/SnapOtter/conf"
