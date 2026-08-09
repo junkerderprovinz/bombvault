@@ -60,6 +60,33 @@ func failEnvelope(err error) map[string]any {
 // message that slips through to the API surface.
 var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 
+// errRestoreDestination tags a restore-DESTINATION refusal whose message is only
+// actionable WITH the path in it: "this destination already holds data", "this
+// destination is not on a mounted pool", "this destination has no room". The path
+// is the operator's own chosen restore location on their own storage (or their own
+// container's appdata layout, which the folder selector and the foreign bind
+// warnings already show verbatim) — never a repo path, credential or secret — so
+// these bypass the path scrubber. Without the bypass the UI rendered the literal
+// placeholder, e.g. `restore destination "[path]" already contains data`, which
+// tells the operator nothing about WHICH folder is in the way.
+var errRestoreDestination = errors.New("restore destination refused")
+
+// restoreDestErr carries a destination refusal's ready-to-show message and
+// satisfies errors.Is(err, errRestoreDestination). Same shape as the restic
+// package's metadataOnlyRestoreErr/backupUnreadableErr: the message text is
+// untouched, only the classification is added.
+type restoreDestErr struct{ msg string }
+
+func (e *restoreDestErr) Error() string { return e.msg }
+
+func (e *restoreDestErr) Is(target error) bool { return target == errRestoreDestination }
+
+// destinationRefusal builds a restore-destination refusal (see
+// errRestoreDestination) whose host path reaches the operator verbatim.
+func destinationRefusal(format string, a ...any) error {
+	return &restoreDestErr{msg: fmt.Sprintf(format, a...)}
+}
+
 // scrubError maps known sentinels to clear messages and strips absolute paths
 // from anything else.
 func scrubError(err error) string {
@@ -73,6 +100,9 @@ func scrubError(err error) string {
 	case errors.Is(err, backup.ErrRestoreConflict):
 		// Already user-safe (IP / host-port / container names, no host paths) and
 		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
+		return err.Error()
+	case errors.Is(err, errRestoreDestination):
+		// The destination path IS the message (see errRestoreDestination).
 		return err.Error()
 	}
 	msg := err.Error()
