@@ -945,8 +945,8 @@ func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	for _, n := range body.Order {
-		if !validResourceName(n) {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid name"})
+		if !validVMName(n) { // VM names may contain spaces ("Windows 11"); validResourceName wrongly rejected them (#127)
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid VM name"})
 			return
 		}
 	}
