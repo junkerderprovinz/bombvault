@@ -83,6 +83,11 @@ type ResticEngine interface {
 	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
+	// LsPath lists one directory's own node plus its direct children, scoped to
+	// dirPath (a subtree root) — used to read back a restored directory's
+	// original owner/mode after a remapped restore, since restic's restorer
+	// never re-applies that metadata to the subtree root it creates.
+	LsPath(ctx context.Context, repo, snapshotID, dirPath string, mode restic.Mode) ([]restic.FileEntry, error)
 	// RestoreInclude restores a single path from a snapshot to target (file-level
 	// restore; target "/" = in-place to its original location).
 	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
@@ -4208,8 +4213,51 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{s.store},
 	})
+	if rerr == nil {
+		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
+	}
 	s.progEnd(rkey, "restore", rerr == nil)
 	return rerr
+}
+
+// healRestoreDirOwnership best-effort restores each remapped restore
+// directory's own root to the owner and mode it had in the snapshot. restic's
+// restorer creates a fresh subtree TARGET itself but never re-applies that
+// root directory's own metadata (only its restored CONTENTS get the
+// snapshot's ownership/mode — see the EnsureDirReadable call above, which only
+// fixes readability, not ownership). Read-then-heal, never fatal: the restore
+// already succeeded by the time this runs, so a failure here (repo busy, a
+// stale snapshot layout, an unexpected filesystem) must not turn a completed
+// restore into a reported failure — it is logged and the next dir is tried.
+func (s *Service) healRestoreDirOwnership(ctx context.Context, repo, snapshotID string, mode restic.Mode, dirs []backup.RestoreDir) {
+	for _, rd := range dirs {
+		entries, err := s.engine.LsPath(ctx, repo, snapshotID, rd.Subtree, mode)
+		if err != nil {
+			log.Printf("api: restore: reading original owner for %q: %v", s.toHostPath(rd.Target), err)
+			continue
+		}
+		var found *restic.FileEntry
+		for i := range entries {
+			if entries[i].Path == rd.Subtree {
+				found = &entries[i]
+				break
+			}
+		}
+		if found == nil {
+			log.Printf("api: restore: no snapshot entry for %q, leaving owner as restored", s.toHostPath(rd.Target))
+			continue
+		}
+		// Owner before mode: on some systems chown() clears setuid/setgid as a
+		// security measure, so applying it first means a later chmod restores
+		// the snapshot's real bits rather than having them silently stripped.
+		if err := os.Lchown(rd.Target, found.Uid, found.Gid); err != nil {
+			log.Printf("api: restore: restoring owner on %q: %v", s.toHostPath(rd.Target), err)
+			continue
+		}
+		if err := os.Chmod(rd.Target, os.FileMode(found.Mode).Perm()); err != nil {
+			log.Printf("api: restore: restoring mode on %q: %v", s.toHostPath(rd.Target), err)
+		}
+	}
 }
 
 // restoreTimeout is the hard cap on every detached restore goroutine

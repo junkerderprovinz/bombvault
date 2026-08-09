@@ -369,10 +369,18 @@ func RestorePathArgs(repo, snapshotID, p string, m Mode) []string {
 }
 
 // FileEntry is one node from `restic ls` (a file or directory in a snapshot).
+// Uid/Gid/Mode are the node's ORIGINAL owner and mode as recorded in the
+// snapshot — Mode is the full os.FileMode bit pattern restic emits (the type
+// bits, e.g. the directory bit, are set alongside the permission bits), so a
+// caller that wants a plain chmod-able permission value must mask it with
+// os.FileMode(e.Mode).Perm().
 type FileEntry struct {
 	Path string `json:"path"`
 	Type string `json:"type"` // "file" | "dir" | ...
 	Size int64  `json:"size"`
+	Uid  int    `json:"uid"`
+	Gid  int    `json:"gid"`
+	Mode uint32 `json:"mode"`
 }
 
 // LsArgs returns the argv slice for `restic ls --json <snapshotID>` (snapshot id
@@ -384,6 +392,22 @@ func LsArgs(repo, snapshotID string, m Mode) []string {
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--", snapshotID)
+	return args
+}
+
+// LsPathArgs returns the argv slice for `restic ls --json <snapshotID> <dirPath>`,
+// scoping the listing to one directory (its own node plus its direct children,
+// not the whole snapshot). Both the snapshot id and dirPath go after -- as an
+// arg-injection guard; dirPath must be an absolute, already-validated path (the
+// same shape RestoreSubtreeToArgs's subtreePath requires) — restic itself
+// rejects a non-absolute directory argument.
+func LsPathArgs(repo, snapshotID, dirPath string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "ls", "--json")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--", snapshotID, dirPath)
 	return args
 }
 
@@ -1362,6 +1386,27 @@ func (r Restic) Ls(ctx context.Context, repo, snapshotID string, m Mode) ([]File
 	if err != nil {
 		return nil, err
 	}
+	return parseFileEntries(out), nil
+}
+
+// LsPath lists one directory's own node plus its direct children (restic ls
+// scoped to dirPath, non-recursive) — the entry whose Path == dirPath is that
+// directory's own recorded owner/mode, exactly as it was backed up. Verified
+// live against restic 0.17.3: `restic ls --json <snap> <dir>` emits the
+// directory's own node (uid/gid/mode included) as the first node line, ahead of
+// its children.
+func (r Restic) LsPath(ctx context.Context, repo, snapshotID, dirPath string, m Mode) ([]FileEntry, error) {
+	out, err := r.run(ctx, LsPathArgs(repo, snapshotID, dirPath, m), m)
+	if err != nil {
+		return nil, err
+	}
+	return parseFileEntries(out), nil
+}
+
+// parseFileEntries extracts the FileEntry nodes from `restic ls --json` output:
+// a leading snapshot-metadata line, then one "node" object per path. Lines that
+// are not a path-carrying node (the metadata line, blank lines) are skipped.
+func parseFileEntries(out []byte) []FileEntry {
 	var entries []FileEntry
 	for _, line := range bytes.Split(out, []byte("\n")) {
 		line = bytes.TrimSpace(line)
@@ -1376,7 +1421,7 @@ func (r Restic) Ls(ctx context.Context, repo, snapshotID string, m Mode) ([]File
 			entries = append(entries, e)
 		}
 	}
-	return entries, nil
+	return entries
 }
 
 // RestoreInclude restores ONLY includePath from a snapshot to target. With
