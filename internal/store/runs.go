@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,10 @@ type Run struct {
 	SnapshotID string `json:"snapshotId"`
 	Bytes      int64  `json:"bytes"`
 	Error      string `json:"error"`
+	// Acknowledged is set once the user dismisses this failed run from the
+	// dashboard error panel (#126); an acknowledged run no longer counts toward
+	// the dashboard's failure badge.
+	Acknowledged bool `json:"acknowledged"`
 }
 
 // StartRun records the beginning of a run and returns its ID.
@@ -79,7 +84,7 @@ func (r *Repo) ReapInterruptedRuns() (int64, error) {
 // LastSuccessfulBackup returns the most recent successful backup run for targetID, or nil.
 func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND status = 'success'
 		ORDER BY started_at DESC
@@ -100,7 +105,7 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 // stay quiet while the target keeps being skipped.
 func (r *Repo) LastRunForTarget(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup'
 		ORDER BY started_at DESC
@@ -213,7 +218,7 @@ func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {
 // ListRuns returns up to limit recent runs across all targets, newest first.
 func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
 		FROM runs
 		ORDER BY started_at DESC
 		LIMIT ?`, limit)
@@ -238,7 +243,7 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 // runs by day and domain.
 func (r *Repo) RunsSince(since int64) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
 		FROM runs
 		WHERE started_at >= ?
 		ORDER BY started_at DESC`, since)
@@ -256,6 +261,42 @@ func (r *Repo) RunsSince(since int64) ([]Run, error) {
 		out = append(out, run)
 	}
 	return out, rows.Err()
+}
+
+// AcknowledgeRuns marks the given run ids as acknowledged so the dashboard's
+// error panel can dismiss them from the failure count without editing SQLite by
+// hand (#126). It is a no-op (0 rows, no query) on an empty id list. Returns the
+// number of rows affected.
+func (r *Repo) AcknowledgeRuns(ids []string) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	//nolint:gosec // G202: only "?" placeholders are concatenated; the ids are passed as parameterized args below, never interpolated.
+	q := "UPDATE runs SET acknowledged = 1 WHERE id IN (" + strings.Join(placeholders, ", ") + ")"
+	res, err := r.db.Exec(q, args...)
+	if err != nil {
+		return 0, fmt.Errorf("AcknowledgeRuns: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}
+
+// AcknowledgeAllFailed marks every currently-unacknowledged failed run as
+// acknowledged, clearing the whole dashboard error badge in one call (#126).
+// Returns the number of rows affected.
+func (r *Repo) AcknowledgeAllFailed() (int64, error) {
+	res, err := r.db.Exec("UPDATE runs SET acknowledged = 1 WHERE status = 'failed' AND acknowledged = 0")
+	if err != nil {
+		return 0, fmt.Errorf("AcknowledgeAllFailed: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
 }
 
 // RunCounts returns the total number of backup runs per domain ("containers" |
@@ -312,7 +353,7 @@ func scanRun(s scanner) (Run, error) {
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
-		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol,
+		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged,
 	)
 	if err != nil {
 		return Run{}, err

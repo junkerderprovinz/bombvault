@@ -196,6 +196,15 @@ const fi: Partial<Translations> = {
   "dashboard.statMissingContainers": "Puuttuvat kontit",
   "dashboard.statMissingVMs": "Puuttuvat VMs",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Varmuuskopiointivirheet",
+  "errorPanel.resolve": "Ratkaise",
+  "errorPanel.resolveAll": "Merkitse kaikki ratkaistuiksi",
+  "errorPanel.affected": "Koskee",
+  "errorPanel.empty": "Ei ratkaisemattomia varmuuskopiointivirheitä.",
+  "errorPanel.count": "{count} esiintymää",
+  "errorPanel.filterPlaceholder": "Suodata virheitä…",
+
   // Jobs page
   "jobs.containersSection": "Kontit",
   "jobs.vmsSection": "VMs",

@@ -196,6 +196,15 @@ const zh: Partial<Translations> = {
   "dashboard.statMissingContainers": "缺失容器",
   "dashboard.statMissingVMs": "缺失虚拟机",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "备份错误",
+  "errorPanel.resolve": "解决",
+  "errorPanel.resolveAll": "全部标记为已解决",
+  "errorPanel.affected": "受影响",
+  "errorPanel.empty": "没有未解决的备份错误。",
+  "errorPanel.count": "{count} 次",
+  "errorPanel.filterPlaceholder": "筛选错误…",
+
   // Jobs page
   "jobs.containersSection": "容器",
   "jobs.vmsSection": "虚拟机",

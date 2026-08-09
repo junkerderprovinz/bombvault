@@ -196,6 +196,15 @@ const he: Partial<Translations> = {
   "dashboard.statMissingContainers": "Containers חסרים",
   "dashboard.statMissingVMs": "VMs חסרים",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "שגיאות גיבוי",
+  "errorPanel.resolve": "פתור",
+  "errorPanel.resolveAll": "סמן הכול כפתור",
+  "errorPanel.affected": "מושפעים",
+  "errorPanel.empty": "אין שגיאות גיבוי לא פתורות.",
+  "errorPanel.count": "{count} מופעים",
+  "errorPanel.filterPlaceholder": "סינון שגיאות…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

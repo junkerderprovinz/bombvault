@@ -196,6 +196,15 @@ const el: Partial<Translations> = {
   "dashboard.statMissingContainers": "Ελλείποντα containers",
   "dashboard.statMissingVMs": "Ελλείποντα VMs",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Σφάλματα αντιγράφων ασφαλείας",
+  "errorPanel.resolve": "Επίλυση",
+  "errorPanel.resolveAll": "Επισήμανση όλων ως επιλυμένων",
+  "errorPanel.affected": "Επηρεαζόμενα",
+  "errorPanel.empty": "Δεν υπάρχουν ανεπίλυτα σφάλματα αντιγράφων ασφαλείας.",
+  "errorPanel.count": "{count} εμφανίσεις",
+  "errorPanel.filterPlaceholder": "Φιλτράρισμα σφαλμάτων…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

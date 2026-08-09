@@ -192,6 +192,15 @@ const pl: Partial<Translations> = {
   "dashboard.statMissingContainers": "Brakujące kontenery",
   "dashboard.statMissingVMs": "Brakujące maszyny wirtualne",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Błędy kopii zapasowej",
+  "errorPanel.resolve": "Rozwiąż",
+  "errorPanel.resolveAll": "Oznacz wszystkie jako rozwiązane",
+  "errorPanel.affected": "Dotknięte",
+  "errorPanel.empty": "Brak nierozwiązanych błędów kopii zapasowej.",
+  "errorPanel.count": "{count} wystąpień",
+  "errorPanel.filterPlaceholder": "Filtruj błędy…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "Maszyny wirtualne",

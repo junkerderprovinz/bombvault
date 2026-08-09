@@ -618,6 +618,15 @@ export const en = {
   "dashboard.statMissingContainers": "Missing containers",
   "dashboard.statMissingVMs": "Missing VMs",
 
+  // Error detail panel (#126) — the modal opened from the dashboard error count
+  "errorPanel.title": "Backup errors",
+  "errorPanel.resolve": "Resolve",
+  "errorPanel.resolveAll": "Mark all resolved",
+  "errorPanel.affected": "Affected",
+  "errorPanel.empty": "No unresolved backup errors.",
+  "errorPanel.count": "{count} occurrences",
+  "errorPanel.filterPlaceholder": "Filter errors…",
+
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Protection status",
   "dashboard.rpoOk": "Up to date",
@@ -1836,6 +1845,15 @@ export const de: Translations = {
   "dashboard.statErrors": "Fehler",
   "dashboard.statMissingContainers": "Fehlende Container",
   "dashboard.statMissingVMs": "Fehlende VMs",
+
+  // Error detail panel (#126) — the modal opened from the dashboard error count
+  "errorPanel.title": "Sicherungsfehler",
+  "errorPanel.resolve": "Erledigt",
+  "errorPanel.resolveAll": "Alle als erledigt markieren",
+  "errorPanel.affected": "Betroffen",
+  "errorPanel.empty": "Keine offenen Sicherungsfehler.",
+  "errorPanel.count": "{count} Vorkommen",
+  "errorPanel.filterPlaceholder": "Fehler filtern…",
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Schutzstatus",

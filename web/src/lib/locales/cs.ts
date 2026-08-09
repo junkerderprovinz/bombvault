@@ -196,6 +196,15 @@ const cs: Partial<Translations> = {
   "dashboard.statMissingContainers": "Chybějící kontejnery",
   "dashboard.statMissingVMs": "Chybějící VMs",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Chyby zálohování",
+  "errorPanel.resolve": "Vyřešit",
+  "errorPanel.resolveAll": "Označit vše jako vyřešené",
+  "errorPanel.affected": "Dotčené",
+  "errorPanel.empty": "Žádné nevyřešené chyby zálohování.",
+  "errorPanel.count": "{count} výskytů",
+  "errorPanel.filterPlaceholder": "Filtrovat chyby…",
+
   // Jobs page
   "jobs.containersSection": "Kontejnery",
   "jobs.vmsSection": "VMs",

@@ -194,6 +194,15 @@ const no: Partial<Translations> = {
   "dashboard.statMissingContainers": "Manglende kontainere",
   "dashboard.statMissingVMs": "Manglende VM-er",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Sikkerhetskopieringsfeil",
+  "errorPanel.resolve": "Løs",
+  "errorPanel.resolveAll": "Merk alle som løst",
+  "errorPanel.affected": "Berørte",
+  "errorPanel.empty": "Ingen uløste sikkerhetskopieringsfeil.",
+  "errorPanel.count": "{count} forekomster",
+  "errorPanel.filterPlaceholder": "Filtrer feil…",
+
   // Jobs page
   "jobs.containersSection": "Kontainere",
   "jobs.vmsSection": "VM-er",

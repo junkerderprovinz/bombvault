@@ -192,6 +192,15 @@ const nl: Partial<Translations> = {
   "dashboard.statMissingContainers": "Ontbrekende containers",
   "dashboard.statMissingVMs": "Ontbrekende VM's",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Back-upfouten",
+  "errorPanel.resolve": "Oplossen",
+  "errorPanel.resolveAll": "Alles als opgelost markeren",
+  "errorPanel.affected": "Betrokken",
+  "errorPanel.empty": "Geen onopgeloste back-upfouten.",
+  "errorPanel.count": "{count} keer",
+  "errorPanel.filterPlaceholder": "Fouten filteren…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VM's",

@@ -196,6 +196,15 @@ const it: Partial<Translations> = {
   "dashboard.statMissingContainers": "Container mancanti",
   "dashboard.statMissingVMs": "VM mancanti",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Errori di backup",
+  "errorPanel.resolve": "Risolvi",
+  "errorPanel.resolveAll": "Segna tutti come risolti",
+  "errorPanel.affected": "Interessati",
+  "errorPanel.empty": "Nessun errore di backup non risolto.",
+  "errorPanel.count": "{count} occorrenze",
+  "errorPanel.filterPlaceholder": "Filtra errori…",
+
   // Jobs page
   "jobs.containersSection": "Container",
   "jobs.vmsSection": "VM",
