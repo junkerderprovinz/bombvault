@@ -194,6 +194,15 @@ const ro: Partial<Translations> = {
   "dashboard.statMissingContainers": "Containere lipsă",
   "dashboard.statMissingVMs": "VM-uri lipsă",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Erori de backup",
+  "errorPanel.resolve": "Rezolvă",
+  "errorPanel.resolveAll": "Marchează toate ca rezolvate",
+  "errorPanel.affected": "Afectate",
+  "errorPanel.empty": "Nicio eroare de backup nerezolvată.",
+  "errorPanel.count": "{count} apariții",
+  "errorPanel.filterPlaceholder": "Filtrează erorile…",
+
   // Jobs page
   "jobs.containersSection": "Containere",
   "jobs.vmsSection": "VM-uri",

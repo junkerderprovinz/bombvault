@@ -196,6 +196,15 @@ const th: Partial<Translations> = {
   "dashboard.statMissingContainers": "Containers ที่หายไป",
   "dashboard.statMissingVMs": "VMs ที่หายไป",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "ข้อผิดพลาดการสำรองข้อมูล",
+  "errorPanel.resolve": "แก้ไข",
+  "errorPanel.resolveAll": "ทำเครื่องหมายทั้งหมดว่าแก้ไขแล้ว",
+  "errorPanel.affected": "ที่ได้รับผลกระทบ",
+  "errorPanel.empty": "ไม่มีข้อผิดพลาดการสำรองข้อมูลที่ยังไม่ได้แก้ไข",
+  "errorPanel.count": "{count} ครั้ง",
+  "errorPanel.filterPlaceholder": "กรองข้อผิดพลาด…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

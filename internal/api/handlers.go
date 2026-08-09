@@ -310,6 +310,15 @@ func validResourceName(name string) bool {
 	return resourceNameRe.MatchString(name) && !strings.Contains(name, "..")
 }
 
+// runIDRe matches an opaque run id: exactly 32 lowercase hex chars (newID is 16
+// random bytes hex-encoded). The acknowledge route validates its ids against
+// this — NOT validResourceName, whose Docker/VM name shape is a different thing.
+var runIDRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
+
+func validRunID(id string) bool {
+	return runIDRe.MatchString(id)
+}
+
 // nameParam extracts and validates the {name} path value, writing a 400 and
 // returning ok=false when it is unsafe. Every name-keyed handler calls this at
 // the boundary so no traversal/option-injection name reaches the service layer.
@@ -2085,6 +2094,46 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 		views = append(views, runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": views})
+}
+
+// handleAckRuns marks failed runs as acknowledged so the dashboard's error panel
+// can dismiss them from the failure count (#126). POST /api/runs/ack with body
+// {"ids": []string (optional), "all": bool (optional)}: when `all` is set every
+// unacknowledged failed run is acknowledged; otherwise the given run ids (capped
+// at 5000, each a 32-hex opaque run id) are acknowledged. Responds {ok, count}.
+func (h *Handler) handleAckRuns(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		IDs []string `json:"ids"`
+		All bool     `json:"all"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.All {
+		n, err := h.store.AcknowledgeAllFailed()
+		if err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"count": n}))
+		return
+	}
+	if len(body.IDs) > 5000 {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "too many ids"})
+		return
+	}
+	for _, id := range body.IDs {
+		if !validRunID(id) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid run id"})
+			return
+		}
+	}
+	n, err := h.store.AcknowledgeRuns(body.IDs)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"count": n}))
 }
 
 // handleStatus returns the per-domain RPO (protection) status for the dashboard's

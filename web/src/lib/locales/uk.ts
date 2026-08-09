@@ -194,6 +194,15 @@ const uk: Partial<Translations> = {
   "dashboard.statMissingContainers": "Відсутні контейнери",
   "dashboard.statMissingVMs": "Відсутні віртуальні машини",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Помилки резервного копіювання",
+  "errorPanel.resolve": "Вирішити",
+  "errorPanel.resolveAll": "Позначити всі як вирішені",
+  "errorPanel.affected": "Зачеплені",
+  "errorPanel.empty": "Немає невирішених помилок резервного копіювання.",
+  "errorPanel.count": "{count} випадків",
+  "errorPanel.filterPlaceholder": "Фільтрувати помилки…",
+
   // Jobs page
   "jobs.containersSection": "Контейнери",
   "jobs.vmsSection": "Віртуальні машини",

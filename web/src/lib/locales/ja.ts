@@ -196,6 +196,15 @@ const ja: Partial<Translations> = {
   "dashboard.statMissingContainers": "不足しているコンテナ",
   "dashboard.statMissingVMs": "不足している VM",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "バックアップエラー",
+  "errorPanel.resolve": "解決",
+  "errorPanel.resolveAll": "すべて解決済みにする",
+  "errorPanel.affected": "対象",
+  "errorPanel.empty": "未解決のバックアップエラーはありません。",
+  "errorPanel.count": "{count} 件",
+  "errorPanel.filterPlaceholder": "エラーを絞り込み…",
+
   // Jobs page
   "jobs.containersSection": "コンテナ",
   "jobs.vmsSection": "VM",

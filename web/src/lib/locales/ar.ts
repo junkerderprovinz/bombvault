@@ -196,6 +196,15 @@ const ar: Partial<Translations> = {
   "dashboard.statMissingContainers": "Containers مفقودة",
   "dashboard.statMissingVMs": "VMs مفقودة",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "أخطاء النسخ الاحتياطي",
+  "errorPanel.resolve": "حلّ",
+  "errorPanel.resolveAll": "تحديد الكل كمحلول",
+  "errorPanel.affected": "المتأثرة",
+  "errorPanel.empty": "لا توجد أخطاء نسخ احتياطي غير محلولة.",
+  "errorPanel.count": "{count} مرات",
+  "errorPanel.filterPlaceholder": "تصفية الأخطاء…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

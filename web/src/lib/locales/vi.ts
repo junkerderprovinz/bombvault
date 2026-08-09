@@ -196,6 +196,15 @@ const vi: Partial<Translations> = {
   "dashboard.statMissingContainers": "Containers bị thiếu",
   "dashboard.statMissingVMs": "VMs bị thiếu",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Lỗi sao lưu",
+  "errorPanel.resolve": "Giải quyết",
+  "errorPanel.resolveAll": "Đánh dấu tất cả là đã giải quyết",
+  "errorPanel.affected": "Bị ảnh hưởng",
+  "errorPanel.empty": "Không có lỗi sao lưu chưa giải quyết.",
+  "errorPanel.count": "{count} lần",
+  "errorPanel.filterPlaceholder": "Lọc lỗi…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

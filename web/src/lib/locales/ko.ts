@@ -196,6 +196,15 @@ const ko: Partial<Translations> = {
   "dashboard.statMissingContainers": "누락된 컨테이너",
   "dashboard.statMissingVMs": "누락된 VM",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "백업 오류",
+  "errorPanel.resolve": "해결",
+  "errorPanel.resolveAll": "모두 해결됨으로 표시",
+  "errorPanel.affected": "영향받음",
+  "errorPanel.empty": "해결되지 않은 백업 오류가 없습니다.",
+  "errorPanel.count": "{count}건",
+  "errorPanel.filterPlaceholder": "오류 필터링…",
+
   // Jobs page
   "jobs.containersSection": "컨테이너",
   "jobs.vmsSection": "VM",

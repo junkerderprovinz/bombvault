@@ -196,6 +196,15 @@ const hu: Partial<Translations> = {
   "dashboard.statMissingContainers": "Hiányzó konténerek",
   "dashboard.statMissingVMs": "Hiányzó VM-ek",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Biztonsági mentési hibák",
+  "errorPanel.resolve": "Megoldás",
+  "errorPanel.resolveAll": "Összes megoldottként jelölése",
+  "errorPanel.affected": "Érintett",
+  "errorPanel.empty": "Nincsenek megoldatlan biztonsági mentési hibák.",
+  "errorPanel.count": "{count} előfordulás",
+  "errorPanel.filterPlaceholder": "Hibák szűrése…",
+
   // Jobs page
   "jobs.containersSection": "Konténerek",
   "jobs.vmsSection": "VM-ek",

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast } from "../lib/api";
+import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -112,13 +113,18 @@ function StatCard({
   label,
   value,
   danger,
+  onClick,
 }: {
   label: string;
   value: number;
   danger?: boolean;
+  /** When set, the card becomes a real button (pointer cursor, hover, focus
+   *  ring) — used to open the error-detail panel from the errors tile. */
+  onClick?: () => void;
 }) {
-  return (
-    <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-1 min-w-0 overflow-hidden">
+  const base = "bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-1 min-w-0 overflow-hidden";
+  const inner = (
+    <>
       <span
         className={`text-2xl font-bold tabular-nums ${
           danger && value > 0 ? "text-statusFail" : "text-carbon-text"
@@ -127,66 +133,89 @@ function StatCard({
         {value}
       </span>
       <span className="text-xs text-carbon-textMuted wrap-break-word leading-tight">{label}</span>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${base} text-left cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid`}
+      >
+        {inner}
+      </button>
+    );
+  }
+  return <div className={base}>{inner}</div>;
+}
+
+// computeStatData fetches the four inputs the stat cards need and derives the
+// tile values. Extracted from the component so it can be re-run on demand (after
+// the error panel acknowledges failures) as well as on mount. Rejects if any
+// fetch rejects — the caller then leaves the last known data in place.
+async function computeStatData(): Promise<StatData> {
+  const [contRes, settingsRes, runsRes, vmsRes] = await Promise.all([
+    listContainers(),
+    getSettings(),
+    listRuns(),
+    listVMs(),
+  ]);
+  const containers = contRes.ok ? (contRes.containers ?? []) : [];
+  const settings: Settings | null = settingsRes.ok ? settingsRes.settings : null;
+  const runs = runsRes.ok ? (runsRes.runs ?? []) : [];
+  // listVMs fails/returns empty when the VMs domain is off — treat as none.
+  const vms = vmsRes.ok ? (vmsRes.vms ?? []) : [];
+
+  const installed = containers.filter((c) => c.installed);
+  const notInstalled = containers.filter((c) => !c.installed);
+  const vmsInstalled = vms.filter((v) => v.state !== "not-installed");
+  const vmsMissing = vms.filter((v) => v.state === "not-installed");
+  const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
+  const activeJobs = schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
+  const pausedJobs = !schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
+  // Scoped to backup/restore/update kinds — a failed prune/verify
+  // (maintenance) run is surfaced in the Activity Log, not here, so this
+  // badge keeps its original "backup/restore failures" meaning (#3).
+  //
+  // Reflects the LAST completed run per item (#100), not a cumulative
+  // count of every failure ever recorded — a target that has since
+  // backed up (or restored/updated) successfully must drop out. `runs`
+  // arrives newest-first, so the first non-"running" run seen per
+  // targetId is that item's latest completed outcome; "running" runs
+  // are skipped so an in-flight retry doesn't hide the prior result.
+  // Acknowledged failures (#126) are skipped too, so resolving an error in the
+  // detail panel drops the target out of the badge just like a later success.
+  const latestCompletedByTarget = new Map<string, (typeof runs)[number]>();
+  for (const r of runs) {
+    if (r.kind !== "backup" && r.kind !== "restore" && r.kind !== "update") continue;
+    if (r.status === "running") continue;
+    if (r.acknowledged) continue;
+    if (!latestCompletedByTarget.has(r.targetId)) {
+      latestCompletedByTarget.set(r.targetId, r);
+    }
+  }
+  const errors = Array.from(latestCompletedByTarget.values()).filter((r) => r.status === "failed").length;
+
+  return {
+    containers: installed.length,
+    vms: vmsInstalled.length,
+    activeJobs,
+    pausedJobs,
+    errors,
+    missingContainers: notInstalled.length,
+    missingVMs: vmsMissing.length,
+  };
 }
 
 function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanced: boolean }) {
   const [data, setData] = useState<StatData | null>(null);
+  const [errorPanelOpen, setErrorPanelOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
-    Promise.all([listContainers(), getSettings(), listRuns(), listVMs()])
-      .then(([contRes, settingsRes, runsRes, vmsRes]) => {
-        if (!active) return;
-        const containers = contRes.ok ? (contRes.containers ?? []) : [];
-        const settings: Settings | null = settingsRes.ok ? settingsRes.settings : null;
-        const runs = runsRes.ok ? (runsRes.runs ?? []) : [];
-        // listVMs fails/returns empty when the VMs domain is off — treat as none.
-        const vms = vmsRes.ok ? (vmsRes.vms ?? []) : [];
-
-        const installed = containers.filter((c) => c.installed);
-        const notInstalled = containers.filter((c) => !c.installed);
-        const vmsInstalled = vms.filter((v) => v.state !== "not-installed");
-        const vmsMissing = vms.filter((v) => v.state === "not-installed");
-        const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
-        const activeJobs = schedEnabled
-          ? installed.filter((c) => c.includeInSchedule).length
-          : 0;
-        const pausedJobs = !schedEnabled
-          ? installed.filter((c) => c.includeInSchedule).length
-          : 0;
-        // Scoped to backup/restore/update kinds — a failed prune/verify
-        // (maintenance) run is surfaced in the Activity Log, not here, so this
-        // badge keeps its original "backup/restore failures" meaning (#3).
-        //
-        // Reflects the LAST completed run per item (#100), not a cumulative
-        // count of every failure ever recorded — a target that has since
-        // backed up (or restored/updated) successfully must drop out. `runs`
-        // arrives newest-first, so the first non-"running" run seen per
-        // targetId is that item's latest completed outcome; "running" runs
-        // are skipped so an in-flight retry doesn't hide the prior result.
-        const latestCompletedByTarget = new Map<string, (typeof runs)[number]>();
-        for (const r of runs) {
-          if (r.kind !== "backup" && r.kind !== "restore" && r.kind !== "update") continue;
-          if (r.status === "running") continue;
-          if (!latestCompletedByTarget.has(r.targetId)) {
-            latestCompletedByTarget.set(r.targetId, r);
-          }
-        }
-        const errors = Array.from(latestCompletedByTarget.values()).filter(
-          (r) => r.status === "failed"
-        ).length;
-
-        setData({
-          containers: installed.length,
-          vms: vmsInstalled.length,
-          activeJobs,
-          pausedJobs,
-          errors,
-          missingContainers: notInstalled.length,
-          missingVMs: vmsMissing.length,
-        });
+    computeStatData()
+      .then((d) => {
+        if (active) setData(d);
       })
       .catch(() => {
         // Non-fatal: stat cards stay null (not rendered)
@@ -196,26 +225,47 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
     };
   }, []);
 
+  // Re-run after the error panel acknowledges failures so the errors tile
+  // reflects the new count without a page reload.
+  const refresh = useCallback(() => {
+    computeStatData()
+      .then((d) => setData(d))
+      .catch(() => {
+        /* non-fatal — keep the current tile values */
+      });
+  }, []);
+
   if (!data) return null;
 
   return (
-    <div className={`grid grid-cols-2 gap-3 ${advanced ? "sm:grid-cols-4 lg:grid-cols-7" : "sm:grid-cols-3"}`}>
-      <StatCard label={t("dashboard.statContainers")} value={data.containers} />
-      <StatCard label={t("dashboard.statVMs")} value={data.vms} />
-      {advanced && (
-        <>
-          <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
-          <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
-        </>
+    <>
+      <div className={`grid grid-cols-2 gap-3 ${advanced ? "sm:grid-cols-4 lg:grid-cols-7" : "sm:grid-cols-3"}`}>
+        <StatCard label={t("dashboard.statContainers")} value={data.containers} />
+        <StatCard label={t("dashboard.statVMs")} value={data.vms} />
+        {advanced && (
+          <>
+            <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
+            <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
+          </>
+        )}
+        {/* Clickable only when there are errors to show — opens the detail panel. */}
+        <StatCard
+          label={t("dashboard.statErrors")}
+          value={data.errors}
+          danger
+          onClick={data.errors > 0 ? () => setErrorPanelOpen(true) : undefined}
+        />
+        {advanced && (
+          <>
+            <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
+            <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
+          </>
+        )}
+      </div>
+      {errorPanelOpen && (
+        <ErrorDetailPanel onClose={() => setErrorPanelOpen(false)} onChanged={refresh} />
       )}
-      <StatCard label={t("dashboard.statErrors")} value={data.errors} danger />
-      {advanced && (
-        <>
-          <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
-          <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
-        </>
-      )}
-    </div>
+    </>
   );
 }
 

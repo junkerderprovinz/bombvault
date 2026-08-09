@@ -294,6 +294,7 @@ export interface Run {
   snapshotId: string;
   bytes: number;
   error: string;
+  acknowledged: boolean; // true once dismissed from the dashboard error panel (#126)
   target: string; // human target name (container/VM/file-set name, or "Unraid flash")
   domain: string; // "container" | "vm" | "flash" | "files" | ""
 }
@@ -1559,6 +1560,16 @@ export function getSpike(): Promise<SpikeResponse> {
 
 export function listRuns(): Promise<ListRunsResponse> {
   return fetchJSON("/api/runs");
+}
+
+/**
+ * POST /api/runs/ack — mark failed runs as acknowledged so they drop out of the
+ * dashboard error count (#126). Pass `all: true` to acknowledge every
+ * unacknowledged failed run, or `ids` for a specific group. Returns the number
+ * of runs actually acknowledged.
+ */
+export function ackRuns(body: { ids?: string[]; all?: boolean }): Promise<{ ok: boolean; count?: number }> {
+  return fetchJSON("/api/runs/ack", { method: "POST", body: JSON.stringify(body) });
 }
 
 /** GET /api/status — per-domain RPO (protection) status for the dashboard. */

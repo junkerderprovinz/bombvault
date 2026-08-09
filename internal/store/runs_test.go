@@ -236,6 +236,89 @@ func TestLastRunForTarget(t *testing.T) {
 	}
 }
 
+// TestAcknowledgeRuns verifies both acknowledge paths (#126): AcknowledgeRuns
+// flips the flag for the given ids only and reports the right rows-affected
+// count (a no-op on an empty list), and AcknowledgeAllFailed acknowledges every
+// still-unacknowledged failed run while leaving successful runs untouched.
+func TestAcknowledgeRuns(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, _ := r.UpsertTarget(store.Target{ContainerName: "sonarr", AppdataPaths: []string{"/data"}})
+
+	// Two failed backup runs + one successful one.
+	fail1, _ := r.StartRun(tg.ID, "backup")
+	if err := r.FinishRun(fail1, "failed", "", 0, "restic backup failed"); err != nil {
+		t.Fatalf("FinishRun(fail1): %v", err)
+	}
+	fail2, _ := r.StartRun(tg.ID, "backup")
+	if err := r.FinishRun(fail2, "failed", "", 0, "restic backup failed"); err != nil {
+		t.Fatalf("FinishRun(fail2): %v", err)
+	}
+	okRun, _ := r.StartRun(tg.ID, "backup")
+	if err := r.FinishRun(okRun, "success", "snap", 1024, ""); err != nil {
+		t.Fatalf("FinishRun(ok): %v", err)
+	}
+
+	ackFlag := func(id string) bool {
+		runs, err := r.ListRuns(50)
+		if err != nil {
+			t.Fatalf("ListRuns: %v", err)
+		}
+		for _, run := range runs {
+			if run.ID == id {
+				return run.Acknowledged
+			}
+		}
+		t.Fatalf("run %s not found", id)
+		return false
+	}
+
+	// Fresh runs start unacknowledged.
+	if ackFlag(fail1) || ackFlag(fail2) || ackFlag(okRun) {
+		t.Fatal("runs should start unacknowledged")
+	}
+
+	// Empty id list is a no-op.
+	if n, err := r.AcknowledgeRuns(nil); err != nil || n != 0 {
+		t.Fatalf("AcknowledgeRuns(nil) = (%d, %v), want (0, nil)", n, err)
+	}
+
+	// Acknowledge one run by id.
+	n, err := r.AcknowledgeRuns([]string{fail1})
+	if err != nil {
+		t.Fatalf("AcknowledgeRuns: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("AcknowledgeRuns rows = %d, want 1", n)
+	}
+	if !ackFlag(fail1) {
+		t.Fatal("fail1 should be acknowledged")
+	}
+	if ackFlag(fail2) {
+		t.Fatal("fail2 should NOT be acknowledged yet")
+	}
+
+	// Acknowledge all remaining failed runs — only fail2 is still unacknowledged.
+	n, err = r.AcknowledgeAllFailed()
+	if err != nil {
+		t.Fatalf("AcknowledgeAllFailed: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("AcknowledgeAllFailed rows = %d, want 1 (only fail2 unacked)", n)
+	}
+	if !ackFlag(fail2) {
+		t.Fatal("fail2 should be acknowledged after AcknowledgeAllFailed")
+	}
+	// A successful run is never touched.
+	if ackFlag(okRun) {
+		t.Fatal("success run must not be acknowledged by AcknowledgeAllFailed")
+	}
+}
+
 // TestLastSuccessfulBackupDomainScoped verifies that the per-domain everyN
 // due-gate queries are scoped to their own table: a VM backup must NOT satisfy
 // the containers gate, and vice versa. (Both kinds share kind='backup'; the

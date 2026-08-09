@@ -196,6 +196,15 @@ const tr: Partial<Translations> = {
   "dashboard.statMissingContainers": "Eksik konteynerler",
   "dashboard.statMissingVMs": "Eksik VM'ler",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Yedekleme hataları",
+  "errorPanel.resolve": "Çöz",
+  "errorPanel.resolveAll": "Tümünü çözüldü olarak işaretle",
+  "errorPanel.affected": "Etkilenen",
+  "errorPanel.empty": "Çözülmemiş yedekleme hatası yok.",
+  "errorPanel.count": "{count} kez",
+  "errorPanel.filterPlaceholder": "Hataları filtrele…",
+
   // Jobs page
   "jobs.containersSection": "Konteynerler",
   "jobs.vmsSection": "VM'ler",

@@ -196,6 +196,15 @@ const da: Partial<Translations> = {
   "dashboard.statMissingContainers": "Manglende containers",
   "dashboard.statMissingVMs": "Manglende VMs",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Sikkerhedskopieringsfejl",
+  "errorPanel.resolve": "Løs",
+  "errorPanel.resolveAll": "Markér alle som løst",
+  "errorPanel.affected": "Berørte",
+  "errorPanel.empty": "Ingen uløste sikkerhedskopieringsfejl.",
+  "errorPanel.count": "{count} forekomster",
+  "errorPanel.filterPlaceholder": "Filtrér fejl…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

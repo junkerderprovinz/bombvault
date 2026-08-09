@@ -196,6 +196,15 @@ const sv: Partial<Translations> = {
   "dashboard.statMissingContainers": "Saknade containers",
   "dashboard.statMissingVMs": "Saknade VMs",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Säkerhetskopieringsfel",
+  "errorPanel.resolve": "Lös",
+  "errorPanel.resolveAll": "Markera alla som lösta",
+  "errorPanel.affected": "Berörda",
+  "errorPanel.empty": "Inga olösta säkerhetskopieringsfel.",
+  "errorPanel.count": "{count} förekomster",
+  "errorPanel.filterPlaceholder": "Filtrera fel…",
+
   // Jobs page
   "jobs.containersSection": "Containers",
   "jobs.vmsSection": "VMs",

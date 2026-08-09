@@ -858,6 +858,14 @@ ALTER TABLE vms      ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';`
 		version: 82, name: "vm_backup_order",
 		sql: "ALTER TABLE vms ADD COLUMN backup_order INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// #126: acknowledged lets the dashboard's error panel dismiss a failed run
+		// from the UI (per-group "Resolve" or "Mark all resolved") without editing
+		// SQLite by hand. DEFAULT 0 (unacknowledged) keeps every existing failed run
+		// counted until the user resolves it.
+		version: 83, name: "runs_acknowledged",
+		sql: "ALTER TABLE runs ADD COLUMN acknowledged INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

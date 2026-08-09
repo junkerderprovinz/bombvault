@@ -192,6 +192,15 @@ const ru: Partial<Translations> = {
   "dashboard.statMissingContainers": "Отсутствующие контейнеры",
   "dashboard.statMissingVMs": "Отсутствующие виртуальные машины",
 
+  // Error detail panel (#126)
+  "errorPanel.title": "Ошибки резервного копирования",
+  "errorPanel.resolve": "Решить",
+  "errorPanel.resolveAll": "Отметить все как решённые",
+  "errorPanel.affected": "Затронуты",
+  "errorPanel.empty": "Нет нерешённых ошибок резервного копирования.",
+  "errorPanel.count": "{count} случаев",
+  "errorPanel.filterPlaceholder": "Фильтр ошибок…",
+
   // Jobs page
   "jobs.containersSection": "Контейнеры",
   "jobs.vmsSection": "Виртуальные машины",
