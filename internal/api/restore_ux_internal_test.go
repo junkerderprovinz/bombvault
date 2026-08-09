@@ -2,11 +2,35 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 )
+
+// TestScrubErrorKeepsRestoreDestinationPath pins the destination-refusal scrubber
+// bypass: these messages exist to tell the operator WHICH folder is in the way, so
+// the generic absolute-path scrubber must not replace the path with the literal
+// "[path]" placeholder (the UI showed `restore destination "[path]" already
+// contains data`, which names nothing). Every OTHER error keeps being scrubbed.
+func TestScrubErrorKeepsRestoreDestinationPath(t *testing.T) {
+	refusal := destinationRefusal("restore destination %q already contains data — it may belong to a different container; confirm overwrite to proceed", "/mnt/cache/appdata/SnapOtter")
+	if !errors.Is(refusal, errRestoreDestination) {
+		t.Fatal("destinationRefusal must satisfy errors.Is(err, errRestoreDestination)")
+	}
+	got := scrubError(refusal)
+	if strings.Contains(got, "[path]") {
+		t.Fatalf("destination refusal must not be path-scrubbed, got %q", got)
+	}
+	if !strings.Contains(got, "/mnt/cache/appdata/SnapOtter") {
+		t.Fatalf("destination refusal must name the real destination, got %q", got)
+	}
+	// Unrelated errors still get their absolute paths stripped.
+	if other := scrubError(errors.New("open /config/bombvault.db: permission denied")); !strings.Contains(other, "[path]") {
+		t.Fatalf("ordinary errors must still be path-scrubbed, got %q", other)
+	}
+}
 
 // TestStartBackupAllRefusesBusyDomain pins the per-domain activity tracker: when
 // a maintenance/scheduler op already holds the containers domain (recorded via
