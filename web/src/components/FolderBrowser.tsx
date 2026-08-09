@@ -11,9 +11,16 @@ export interface FolderBrowserProps {
   value: string;
   hostMountRoot: string;
   onChange: (v: string) => void;
+  // Example path shown when the field is empty. Defaults to the conventional
+  // appdata share ("user/appdata" -> /mnt/user/appdata, which exists on every
+  // Unraid box). Pass a field-specific example (e.g. "user/domains" for VM
+  // disks) so the greyed hint matches what a blank field actually defaults to.
+  // The old hardcoded "user/bombvault/container" example named a path that does
+  // not exist and read as a real chosen default (#125).
+  placeholder?: string;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder }: FolderBrowserProps) {
   const { t } = useT();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
@@ -109,7 +116,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange }: FolderB
           value={value}
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
-          placeholder="user/bombvault/container"
+          placeholder={placeholder ?? "user/appdata"}
           className="flex-1 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
         <button
