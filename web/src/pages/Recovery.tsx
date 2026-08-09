@@ -493,6 +493,7 @@ function ForeignItemRow({
             value={target}
             hostMountRoot={hostMountRoot}
             onChange={setTarget}
+            placeholder="user/domains"
           />
           <p className="text-xs text-carbon-textMuted max-w-2xl">
             {t("recovery.foreignVMDestHint")}
@@ -506,6 +507,7 @@ function ForeignItemRow({
             value={target}
             hostMountRoot={hostMountRoot}
             onChange={setTarget}
+            placeholder="user/appdata"
           />
           <p className="text-xs text-carbon-textMuted max-w-2xl">
             {t("recovery.foreignAppdataDestHint")}
