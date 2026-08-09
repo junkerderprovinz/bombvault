@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -296,6 +297,14 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("foreign round trip seeds a slash-absolute host mount on disk (paths.Within needs a leading /)")
 	}
+	// lsPathEntries seeds the source disk directory's own recorded owner/mode
+	// (uid 99/gid 100, matching Unraid's conventional VM-service account) so
+	// this test also proves healRestoreDirOwnership is correctly wired into
+	// executeRestoreVM: the destination directory it produces must end up
+	// readable (0o750, set below) AND owned as the snapshot recorded, not left
+	// root:root/0700 the way restic's own restorer would leave it (#125 — the
+	// container restore path already had this; the VM path did not, until now).
+	const wantDirMode = 0o750
 	eng := &foreignRecordingEngine{
 		opens: opensEncrypted,
 		snaps: []restic.Snapshot{{ID: "dddddddd44444444", Time: "2026-07-04T10:00:00Z", Tags: []string{"vm:win10"}}},
@@ -325,6 +334,13 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 
 	// The disk lives under the host mount so paths.Within accepts it.
 	diskPath := filepath.ToSlash(filepath.Join(mountRoot, "pool/domains/win10/win10.qcow2"))
+	// The Subtree production computes for this disk is its PARENT directory
+	// (prepareRestoreVMForTarget: src := path.Dir(cp), deduplicated per disk
+	// directory) — that is exactly what LsPath gets queried with.
+	diskDir := filepath.Dir(diskPath)
+	eng.lsPathEntries = []restic.FileEntry{
+		{Path: diskDir, Type: "dir", Uid: os.Getuid(), Gid: os.Getgid(), Mode: uint32(fs.ModeDir | wantDirMode)},
+	}
 	xml := `<domain type='kvm'><name>win10</name><devices>` +
 		`<disk type='file' device='disk'><source file='` + s.toHostPath(diskPath) + `'/><target dev='vda'/></disk>` +
 		`</devices></domain>`
@@ -370,6 +386,24 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 	eng.mu.Unlock()
 	if len(restores) != 1 || !strings.HasPrefix(restores[0], "RestoreSubtreeTo|") || !strings.Contains(restores[0], "->"+destBase+"/win10") {
 		t.Fatalf("expected one remapped RestoreSubtreeTo into %s/win10, got %v", destBase, restores)
+	}
+
+	// The destination directory must exist, be readable, and carry the mode
+	// LsPath reported for the source disk directory (healRestoreDirOwnership
+	// wired into executeRestoreVM, mirroring the container restore path — #125
+	// applied to VMs, not just containers).
+	eng.mu.Lock()
+	lsPathCalls := append([]string(nil), eng.lsPathCalls...)
+	eng.mu.Unlock()
+	if len(lsPathCalls) != 1 || lsPathCalls[0] != diskDir {
+		t.Fatalf("LsPath calls = %v, want [%s] (the disk's source directory)", lsPathCalls, diskDir)
+	}
+	destDirInfo, err := os.Stat(filepath.Join(destBase, "win10"))
+	if err != nil {
+		t.Fatalf("stat remapped VM destination dir: %v", err)
+	}
+	if got := destDirInfo.Mode().Perm(); got != wantDirMode {
+		t.Fatalf("remapped VM destination dir mode = %o, want %o (heal did not apply the snapshot's recorded mode)", got, wantDirMode)
 	}
 
 	// Left stopped + autostart cleared.

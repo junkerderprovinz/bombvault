@@ -4168,6 +4168,14 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 // restore described by an already-validated plan, publishing "container:<name>"
 // progress. The orchestrator records the run (kindRestore) itself.
 func (s *Service) executeRestore(ctx context.Context, name string, plan containerRestorePlan, leaveStopped bool) error {
+	// Hold the domain repo lock for the whole restic/docker phase, INCLUDING the
+	// destination pre-create below. The scheduler calls Backup/BackupVM directly
+	// and bypasses the batchActive single-flight guard BY DESIGN — the domain
+	// lock is the one layer scheduled jobs do respect — so without it a
+	// detached multi-hour restore could overlap a scheduled backup of the same
+	// domain in both directions.
+	unlock := s.lockDomainFor("containers", "restore")
+	defer unlock()
 	// Pre-create every remapped destination readable (0o755), same convention as
 	// the file-set/to-path restores (see EnsureDirReadable). restic's own
 	// restorer creates a fresh subtree TARGET at 0o700 and never revisits that
@@ -4178,20 +4186,13 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	// MkdirAll finds the dir already present and leaves the mode alone. In-place
 	// restores (empty RestoreDirs, or a Target that already existed before this
 	// restore) are an inexpensive no-op: EnsureDirReadable only heals mode, never
-	// touches ownership, so this does NOT fix numeric owner:group on the
-	// restored root (tracked separately, see #125) — only its readability.
+	// touches ownership; the numeric owner:group is restored separately below,
+	// after a successful restore, by healRestoreDirOwnership (see #125).
 	for _, rd := range plan.restoreDirs {
 		if err := paths.EnsureDirReadable(rd.Target); err != nil {
 			return fmt.Errorf("restore: prepare destination %q: %w", s.toHostPath(rd.Target), err)
 		}
 	}
-	// Hold the domain repo lock for the whole restic/docker phase. The scheduler
-	// calls Backup/BackupVM directly and bypasses the batchActive single-flight
-	// guard BY DESIGN — the domain lock is the one layer scheduled jobs do
-	// respect — so without it a detached multi-hour restore could overlap a
-	// scheduled backup of the same domain in both directions.
-	unlock := s.lockDomainFor("containers", "restore")
-	defer unlock()
 	rkey := "container:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
@@ -6287,11 +6288,23 @@ func nearestExistingDir(p string) string {
 // described by an already-validated plan, publishing "vm:<name>" progress. The
 // orchestrator records the run (kindRestore) itself.
 func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRestorePlan, leaveStopped bool) error {
-	// Hold the domain repo lock for the whole restic/libvirt phase: the scheduler
-	// calls BackupVM directly (bypassing batchActive by design) and the domain
-	// lock is the layer scheduled jobs DO respect (see executeRestore).
+	// Hold the domain repo lock for the whole restic/libvirt phase, INCLUDING
+	// the destination pre-create below: the scheduler calls BackupVM directly
+	// (bypassing batchActive by design) and the domain lock is the layer
+	// scheduled jobs DO respect (see executeRestore).
 	unlock := s.lockDomainFor("vms", "restore")
 	defer unlock()
+	// Same remap-destination handling as executeRestore (container path), and
+	// for the same reason: restic.RestoreSubtreeTo (vm_orchestrator.go) is the
+	// identical call the container path uses, so a cross-instance VM restore's
+	// freshly created destination directory is just as root:root/0700 as a
+	// container's — see #125. Pre-create readable now; the numeric owner:group
+	// is restored below, after a successful restore, by healRestoreDirOwnership.
+	for _, rd := range plan.restoreDirs {
+		if err := paths.EnsureDirReadable(rd.Target); err != nil {
+			return fmt.Errorf("restore: prepare destination %q: %w", s.toHostPath(rd.Target), err)
+		}
+	}
 	rkey := "vm:" + name
 	rctx := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
@@ -6314,6 +6327,9 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		Restic:     &resticAdapter{engine: s.engine, mode: plan.mode},
 		Runs:       runsAdapter{s.store},
 	})
+	if rerr == nil {
+		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
+	}
 	s.progEnd(rkey, "restore", rerr == nil)
 	return rerr
 }
