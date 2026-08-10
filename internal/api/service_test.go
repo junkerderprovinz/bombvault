@@ -3318,6 +3318,8 @@ type fakeResticEngine struct {
 	copyErr         error
 	snaps           []restic.Snapshot
 	lsEntries       []restic.FileEntry
+	lsErr           error // when set, the FIRST Ls call fails (exercises the stale-unlock retry, #129)
+	lsCalls         int
 	lsPathEntries   []restic.FileEntry // LsPath's own return value; see LsPath's doc comment
 	lsPathErr       error
 	lsPathCalls     []string // dirPath argument of every LsPath call, in order
@@ -3481,6 +3483,12 @@ func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic
 }
 
 func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]restic.FileEntry, error) {
+	f.lsCalls++
+	if f.lsErr != nil {
+		e := f.lsErr
+		f.lsErr = nil // fail once, then succeed (exercises the stale-unlock retry, #129)
+		return nil, e
+	}
 	return f.lsEntries, nil
 }
 
@@ -4846,6 +4854,59 @@ func TestSnapshotsSelfHealsStaleLock(t *testing.T) {
 	}
 	if eng.snapshotsCalls != 2 {
 		t.Fatalf("expected snapshots to be retried once (2 calls), got %d", eng.snapshotsCalls)
+	}
+}
+
+// TestListSnapshotFilesSelfHealsStaleLock pins #129: ListSnapshotFiles (the
+// container "Select files" listing) must self-heal a stale-lock conflict the
+// same way listSnapshots already does for the backups list — a stale-unlock +
+// retry — instead of surfacing a bare "Failed to load files" until an
+// unrelated backup happens to clear the lock as a side effect.
+func TestListSnapshotFilesSelfHealsStaleLock(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps:     []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{{Path: "/data/a.txt", Type: "file"}},
+		lsErr:     errors.New("unable to create lock in backend: repository is already locked by PID 877"),
+	}
+	svc := initRepoSvc(t, eng)
+
+	files, err := svc.ListSnapshotFiles(context.Background(), "plex", "aaaa1111", "")
+	if err != nil {
+		t.Fatalf("ListSnapshotFiles should self-heal a stale lock, got %v", err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file after retry, got %d", len(files))
+	}
+	if len(eng.unlockedRepos) != 1 || eng.unlockRemoveAll[0] {
+		t.Fatalf("expected one STALE unlock (removeAll=false), got repos=%v removeAll=%v", eng.unlockedRepos, eng.unlockRemoveAll)
+	}
+	if eng.lsCalls != 2 {
+		t.Fatalf("expected ls to be retried once (2 calls), got %d", eng.lsCalls)
+	}
+}
+
+// TestListSnapshotFilesFileSetSelfHealsStaleLock is the file-set counterpart
+// of TestListSnapshotFilesSelfHealsStaleLock (#129): the selective-restore
+// file listing for a file set must self-heal the same stale-lock conflict.
+func TestListSnapshotFilesFileSetSelfHealsStaleLock(t *testing.T) {
+	eng := &fakeResticEngine{
+		lsEntries: []restic.FileEntry{{Path: "/data/docs/a.txt", Type: "file"}},
+		lsErr:     errors.New("unable to create lock in backend: repository is already locked by PID 877"),
+	}
+	svc, _, setID, _ := fileSetFilesRestoreService(t, eng)
+
+	files, err := svc.ListSnapshotFilesFileSet(context.Background(), setID, "aaaa1111", "local")
+	if err != nil {
+		t.Fatalf("ListSnapshotFilesFileSet should self-heal a stale lock, got %v", err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file after retry, got %d", len(files))
+	}
+	if len(eng.unlockedRepos) != 1 || eng.unlockRemoveAll[0] {
+		t.Fatalf("expected one STALE unlock (removeAll=false), got repos=%v removeAll=%v", eng.unlockedRepos, eng.unlockRemoveAll)
+	}
+	if eng.lsCalls != 2 {
+		t.Fatalf("expected ls to be retried once (2 calls), got %d", eng.lsCalls)
 	}
 }
 

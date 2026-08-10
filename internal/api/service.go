@@ -4460,7 +4460,7 @@ func (s *Service) ListSnapshotFiles(ctx context.Context, name, snapshotID, sourc
 	if err != nil {
 		return nil, err
 	}
-	return s.engine.Ls(ctx, repo, snapshotID, s.ModeFor(settings))
+	return s.lsSelfHeal(ctx, repo, snapshotID, s.ModeFor(settings))
 }
 
 // RestoreContainerFiles restores one or more files/dirs from a container
@@ -6869,7 +6869,7 @@ func (s *Service) ListSnapshotFilesFileSet(ctx context.Context, id, snapshotID, 
 	if err != nil {
 		return nil, err
 	}
-	return s.engine.Ls(ctx, repo, snapshotID, s.ModeFor(settings))
+	return s.lsSelfHeal(ctx, repo, snapshotID, s.ModeFor(settings))
 }
 
 // fileSetRestorePlan carries everything prepareRestoreFileSet validated and
@@ -8768,6 +8768,26 @@ func (s *Service) listSnapshots(ctx context.Context, repo string, mode restic.Mo
 		return nil, nil
 	}
 	return snaps, err
+}
+
+// lsSelfHeal lists a snapshot's files (restic ls), self-healing a stale-lock
+// conflict exactly like listSnapshots: on a lock error it clears stale locks
+// and retries once. `ls` only takes a SHARED lock, but a stale EXCLUSIVE lock
+// left behind by an interrupted write elsewhere in the repo (an off-site
+// replication or check that didn't finish cleanly, a killed backup, …) blocks
+// it all the same — restic itself never notices staleness on its own, and
+// nothing else touches this repo until the next scheduled backup runs its own
+// unlockStale as a side effect (see #29). Until then, every "Select files"
+// attempt failed with a bare "Failed to load files" (#129) even though the
+// backups list right above it kept working fine, because THAT already had
+// this self-heal and this sibling call never got it.
+func (s *Service) lsSelfHeal(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error) {
+	entries, err := s.engine.Ls(ctx, repo, snapshotID, mode)
+	if isLockErr(err) {
+		s.unlockStale(ctx, repo, mode)
+		entries, err = s.engine.Ls(ctx, repo, snapshotID, mode)
+	}
+	return entries, err
 }
 
 // UnlockDomain removes locks from a domain's repo (restic unlock --remove-all).
