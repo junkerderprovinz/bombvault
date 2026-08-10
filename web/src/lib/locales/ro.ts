@@ -744,6 +744,7 @@ const ro: Partial<Translations> = {
   "offsite.retention.grow": "Creștere + alarmă de buget",
   "offsite.retention.farsideHint": "Rulează restic forget --prune chiar pe storage box (BombVault rămâne append-only). Indiciu cron:",
   "offsite.retention.windowHint": "Rulează temporar un al doilea rest-server, fără append-only, fă prune, apoi oprește-l — credențialele nu sunt niciodată păstrate și urmează un re-test tamper obligatoriu. Folosește doar când prune pe partea la distanță nu este posibil.",
+  "offsite.retention.windowRestOnly": "Se aplică doar destinațiilor rest-server — acest backend nu poate rula un al doilea server temporar împotriva lui. Folosește în schimb prune pe partea la distanță sau Creștere + alarmă de buget.",
   "offsite.retention.growHint": "Nu face niciodată prune off-site; în schimb, alarmează când depozitul depășește un buget în octeți. Valoarea implicită onestă până alegi o cale de prune.",
   "offsite.retention.budget": "Buget de creștere (GB, 0 = oprit)",
   "offsite.retention.saveBudget": "Salvează bugetul",

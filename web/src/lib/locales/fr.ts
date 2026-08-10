@@ -744,6 +744,7 @@ const fr: Partial<Translations> = {
   "offsite.retention.grow": "Croissance + alarme de budget",
   "offsite.retention.farsideHint": "Exécutez restic forget --prune sur le serveur de stockage lui-même (BombVault reste append-only). Astuce cron :",
   "offsite.retention.windowHint": "Lancez temporairement un second rest-server non append-only, élaguez, puis arrêtez-le — les identifiants ne sont jamais conservés et un nouveau test d'altération obligatoire suit. À utiliser uniquement lorsque l'élagage côté distant n'est pas possible.",
+  "offsite.retention.windowRestOnly": "S'applique uniquement aux destinations rest-server — ce backend ne peut pas exécuter un second serveur temporaire contre lui. Utilisez plutôt l'élagage côté distant ou Croissance + alarme de budget.",
   "offsite.retention.growHint": "N'élaguez jamais hors site ; déclenchez plutôt une alarme lorsque le dépôt dépasse un budget d'octets. L'option honnête par défaut jusqu'à ce que vous optiez pour une stratégie d'élagage.",
   "offsite.retention.budget": "Budget de croissance (GB, 0 = désactivé)",
   "offsite.retention.saveBudget": "Enregistrer le budget",

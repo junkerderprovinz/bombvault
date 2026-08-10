@@ -741,6 +741,7 @@ const no: Partial<Translations> = {
   "offsite.retention.grow": "Voks + budsjettalarm",
   "offsite.retention.farsideHint": "Kjør restic forget --prune på selve lagringsboksen (BombVault forblir append-only). Cron-tips:",
   "offsite.retention.windowHint": "Kjør midlertidig en ekstra rest-server uten append-only, beskjær, og slå den deretter av — legitimasjon lagres aldri, og en obligatorisk ny tukletest følger. Bruk bare når beskjæring på fjernsiden ikke er mulig.",
+  "offsite.retention.windowRestOnly": "Gjelder bare for rest-server-mål — denne backenden kan ikke kjøre en midlertidig ekstra server mot den. Bruk i stedet beskjæring på fjernsiden eller Vekst + budsjettalarm.",
   "offsite.retention.growHint": "Beskjær aldri off-site; varsle i stedet når repoet vokser forbi et byte-budsjett. Det ærlige standardvalget til du velger en beskjæringsstrategi.",
   "offsite.retention.budget": "Vekstbudsjett (GB, 0 = av)",
   "offsite.retention.saveBudget": "Lagre budsjett",

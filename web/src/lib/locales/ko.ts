@@ -736,6 +736,7 @@ const ko: Partial<Translations> = {
   "offsite.retention.grow": "증가 + 예산 경고",
   "offsite.retention.farsideHint": "스토리지 박스에서 직접 restic forget --prune를 실행하세요 (BombVault는 append-only를 유지). Cron 힌트:",
   "offsite.retention.windowHint": "두 번째 non-append-only rest-server를 임시로 실행하여 정리한 뒤 종료하세요 — 자격 증명은 저장되지 않으며 필수 변조 재테스트가 뒤따릅니다. 원격 측 정리가 불가능할 때만 사용하세요.",
+  "offsite.retention.windowRestOnly": "rest-server 대상에만 적용됩니다 — 이 백엔드는 임시 두 번째 서버를 실행할 수 없습니다. 대신 원격 측 정리 또는 증가 + 예산 알림을 사용하세요.",
   "offsite.retention.growHint": "오프사이트를 절대 정리하지 않고, 대신 리포지토리가 바이트 예산을 초과하면 경고합니다. 정리 방식을 선택하기 전까지의 정직한 기본값입니다.",
   "offsite.retention.budget": "증가 예산 (GB, 0 = 끔)",
   "offsite.retention.saveBudget": "예산 저장",

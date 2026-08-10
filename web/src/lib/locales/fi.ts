@@ -769,6 +769,7 @@ const fi: Partial<Translations> = {
   "offsite.retention.grow": "Kasvu + budjettihälytys",
   "offsite.retention.farsideHint": "Suorita restic forget --prune tallennuspalvelimella itsellään (BombVault pysyy append-only-tilassa). Cron-vihje:",
   "offsite.retention.windowHint": "Käynnistä tilapäisesti toinen, ei-append-only rest-server, karsi ja sammuta se sitten — tunnuksia ei koskaan tallenneta, ja pakollinen peukalointitesti seuraa. Käytä vain, kun karsinta vastapuolella ei ole mahdollista.",
+  "offsite.retention.windowRestOnly": "Koskee vain rest-server-kohteita — tämä taustajärjestelmä ei voi ajaa väliaikaista toista palvelinta sitä vasten. Käytä sen sijaan karsintaa vastapuolella tai Kasvu + budjettihälytys.",
   "offsite.retention.growHint": "Älä koskaan karsi etäkopiota; hälytä sen sijaan, kun repo ylittää tavubudjetin. Rehellinen oletus, kunnes valitset karsintatavan.",
   "offsite.retention.budget": "Kasvubudjetti (GB, 0 = pois)",
   "offsite.retention.saveBudget": "Tallenna budjetti",

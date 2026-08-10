@@ -744,6 +744,7 @@ const it: Partial<Translations> = {
   "offsite.retention.grow": "Crescita + allarme di budget",
   "offsite.retention.farsideHint": "Esegui restic forget --prune sulla storage box stessa (BombVault resta append-only). Suggerimento cron:",
   "offsite.retention.windowHint": "Avvia temporaneamente un secondo rest-server non append-only, esegui la potatura, poi spegnilo — le credenziali non vengono mai salvate e segue un test di manomissione obbligatorio. Usalo solo quando la potatura sul lato remoto non è possibile.",
+  "offsite.retention.windowRestOnly": "Si applica solo alle destinazioni rest-server — questo backend non può eseguire un secondo server temporaneo contro di esso. Usa invece la potatura sul lato remoto o Crescita + allarme budget.",
   "offsite.retention.growHint": "Non potare mai off-site; invece attiva un allarme quando il repo supera un budget di byte. L'impostazione predefinita onesta finché non scegli un percorso di potatura.",
   "offsite.retention.budget": "Budget di crescita (GB, 0 = disattivato)",
   "offsite.retention.saveBudget": "Salva budget",

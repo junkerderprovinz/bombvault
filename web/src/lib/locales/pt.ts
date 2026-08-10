@@ -741,6 +741,7 @@ const pt: Partial<Translations> = {
   "offsite.retention.grow": "Crescer + alarme de orçamento",
   "offsite.retention.farsideHint": "Execute restic forget --prune na própria storage box (o BombVault mantém-se append-only). Sugestão de cron:",
   "offsite.retention.windowHint": "Execute temporariamente um segundo rest-server, sem append-only, faça a poda e depois desligue-o — as credenciais nunca são persistidas e segue-se um novo teste de adulteração obrigatório. Use apenas quando a poda no lado remoto não for possível.",
+  "offsite.retention.windowRestOnly": "Aplica-se apenas a destinos rest-server — este backend não pode executar um segundo servidor temporário contra ele. Use em vez disso a poda no lado remoto ou Crescimento + alarme de orçamento.",
   "offsite.retention.growHint": "Nunca faça poda no externo; em vez disso, alerte quando o repositório ultrapassar um orçamento de bytes. O padrão honesto até escolher uma estratégia de poda.",
   "offsite.retention.budget": "Orçamento de crescimento (GB, 0 = desativado)",
   "offsite.retention.saveBudget": "Guardar orçamento",

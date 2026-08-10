@@ -283,9 +283,24 @@ export function OffsiteWizard({
     "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
+  // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
+  // a saved/edited rclone: or s3: URL always shows its warning, and a REST/empty
+  // URL never shows a spurious one.
+  const urlBackend = inferBackend(repoURL);
+
   // Far-side prune cron hint (includes --keep-within 14d + a snapshot-count note).
-  const cronHint = `# Run on the storage box itself — BombVault stays append-only:
+  // REST has an actual "storage box" to SSH into with a local repo path; rclone/s3/
+  // other don't — the prune must run from any SEPARATE machine with the same remote
+  // configured, using the real repo URL, not a fabricated local path (#131).
+  const cronHint =
+    urlBackend === "rest"
+      ? `# Run on the storage box itself — BombVault stays append-only:
 0 4 * * 0 restic -r /path/on/storage-box/restic/bombvault-${domain}/${domain} forget \\
+  --keep-within 14d --keep-weekly 8 --keep-monthly 12 --prune
+# note: watch for a sudden snapshot-count drop (retention-policy timestamp attack)`
+      : `# Run from a SEPARATE machine with this remote configured — BombVault itself
+# never prunes an immutable off-site repo:
+0 4 * * 0 restic -r ${repoURL || "<repo-url>"} forget \\
   --keep-within 14d --keep-weekly 8 --keep-monthly 12 --prune
 # note: watch for a sudden snapshot-count drop (retention-policy timestamp attack)`;
 
@@ -306,11 +321,6 @@ export function OffsiteWizard({
         ? "text-statusOk"
         : "text-statusFail"
     : "";
-
-  // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
-  // a saved/edited rclone: or s3: URL always shows its warning, and a REST/empty
-  // URL never shows a spurious one.
-  const urlBackend = inferBackend(repoURL);
 
   return (
     <div className="mt-2 flex flex-col gap-4 rounded-lg bg-carbon-surface2 p-4">
@@ -419,43 +429,47 @@ export function OffsiteWizard({
           {repoState === "error" && repoErr && <span className="text-xs text-statusFail">{repoErr}</span>}
         </div>
 
-        {/* REST credentials — reuse the cloud-credential endpoints. */}
-        <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface p-3 mt-1">
-          <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
-          <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
-            RESTIC_REST_USERNAME
-            <input
-              value={cloud.restUser}
-              onChange={(e) => setCloudState((p) => ({ ...p, restUser: e.target.value }))}
-              spellCheck={false}
-              className={inputCls}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
-            RESTIC_REST_PASSWORD
-            <input
-              type="password"
-              value={cloud.restPassword}
-              onChange={(e) => setCloudState((p) => ({ ...p, restPassword: e.target.value }))}
-              spellCheck={false}
-              placeholder={restPwSet ? t("cloud.secretSet") : ""}
-              className={inputCls}
-            />
-          </label>
-          {cloudLoadErr && <span className="text-xs text-statusFail">{cloudLoadErr}</span>}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void saveCreds()}
-              disabled={credState === "saving" || !cloudLoaded}
-              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-            >
-              {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
-            </button>
-            {credState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-            {credState === "error" && credErr && <span className="text-xs text-statusFail">{credErr}</span>}
+        {/* REST credentials — reuse the cloud-credential endpoints. Only the REST
+            backend needs a username/password; rclone/s3 carry their own auth in
+            their own config, so this block would be pure noise for them (#131). */}
+        {urlBackend === "rest" && (
+          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface p-3 mt-1">
+            <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
+            <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
+              RESTIC_REST_USERNAME
+              <input
+                value={cloud.restUser}
+                onChange={(e) => setCloudState((p) => ({ ...p, restUser: e.target.value }))}
+                spellCheck={false}
+                className={inputCls}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
+              RESTIC_REST_PASSWORD
+              <input
+                type="password"
+                value={cloud.restPassword}
+                onChange={(e) => setCloudState((p) => ({ ...p, restPassword: e.target.value }))}
+                spellCheck={false}
+                placeholder={restPwSet ? t("cloud.secretSet") : ""}
+                className={inputCls}
+              />
+            </label>
+            {cloudLoadErr && <span className="text-xs text-statusFail">{cloudLoadErr}</span>}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void saveCreds()}
+                disabled={credState === "saving" || !cloudLoaded}
+                className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              >
+                {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
+              </button>
+              {credState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+              {credState === "error" && credErr && <span className="text-xs text-statusFail">{credErr}</span>}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Connection test */}
         <div className="flex items-center gap-3">
@@ -515,26 +529,33 @@ export function OffsiteWizard({
           </div>
         )}
 
-        {/* Verbatim tamper verdict + a manual "test now". */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={() => void runTamper()}
-            disabled={tamperState === "busy" || !immutable}
-            className="rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-          >
-            {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
-          </button>
-          {tamperState === "done" && verdict && (
-            <span className={`text-sm wrap-break-word ${verdictColor}`}>
-              {verdictGlyph && <span aria-hidden="true">{verdictGlyph}&nbsp;</span>}
-              {verdictText}
-            </span>
-          )}
-          {tamperState === "error" && tamperErr && (
-            <span className="text-sm text-statusFail wrap-break-word">{tamperErr}</span>
-          )}
-        </div>
+        {/* Verbatim tamper verdict + a manual "test now" — the backend only ever
+            verifies REST repos (RunTamperTest reports Testable=false otherwise),
+            so a non-REST backend gets the SAME "not verifiable" wording up front
+            instead of an active-looking button that leads nowhere (#131). */}
+        {urlBackend === "rest" ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => void runTamper()}
+              disabled={tamperState === "busy" || !immutable}
+              className="rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            >
+              {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
+            </button>
+            {tamperState === "done" && verdict && (
+              <span className={`text-sm wrap-break-word ${verdictColor}`}>
+                {verdictGlyph && <span aria-hidden="true">{verdictGlyph}&nbsp;</span>}
+                {verdictText}
+              </span>
+            )}
+            {tamperState === "error" && tamperErr && (
+              <span className="text-sm text-statusFail wrap-break-word">{tamperErr}</span>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs text-carbon-textMuted">{t("offsite.tamperUnverifiable")}</span>
+        )}
       </div>
 
       {/* Step 6 — retention strategy chooser */}
@@ -565,8 +586,14 @@ export function OffsiteWizard({
             <CopyBlock text={cronHint} t={t} />
           </div>
         )}
-        {retention === "window" && (
+        {retention === "window" && urlBackend === "rest" && (
           <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowHint")}</p>
+        )}
+        {/* "window" (a temporary second rest-server) is REST-specific — for any
+            other backend the instructions above don't apply, so say so instead
+            of silently showing nothing for a selected option (#131). */}
+        {retention === "window" && urlBackend !== "rest" && (
+          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowRestOnly")}</p>
         )}
         {retention === "grow" && (
           <div className="flex flex-col gap-2">

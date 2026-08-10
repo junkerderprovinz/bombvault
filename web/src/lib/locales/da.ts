@@ -769,6 +769,7 @@ const da: Partial<Translations> = {
   "offsite.retention.grow": "Voks + budgetalarm",
   "offsite.retention.farsideHint": "Kør restic forget --prune på selve storage-boksen (BombVault forbliver append-only). Cron-tip:",
   "offsite.retention.windowHint": "Kør midlertidigt en anden, ikke-append-only rest-server, prune, og luk den så ned — legitimationsoplysninger gemmes aldrig, og en obligatorisk manipulations-gentest følger. Brug kun, når prune på fjernsiden ikke er muligt.",
+  "offsite.retention.windowRestOnly": "Gælder kun for rest-server-destinationer — dette backend kan ikke køre en midlertidig anden server mod det. Brug i stedet prune på fjernsiden eller Vækst + budgetalarm.",
   "offsite.retention.growHint": "Prune aldrig off-site; alarmér i stedet, når repoet vokser ud over et byte-budget. Den ærlige standard, indtil du vælger en prune-strategi.",
   "offsite.retention.budget": "Vækstbudget (GB, 0 = fra)",
   "offsite.retention.saveBudget": "Gem budget",

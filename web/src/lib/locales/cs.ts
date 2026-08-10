@@ -767,6 +767,7 @@ const cs: Partial<Translations> = {
   "offsite.retention.grow": "Růst + alarm rozpočtu",
   "offsite.retention.farsideHint": "Spusťte restic forget --prune přímo na úložném serveru (BombVault zůstává append-only). Tip pro cron:",
   "offsite.retention.windowHint": "Dočasně spusťte druhý rest-server bez append-only, proveďte čištění a poté jej vypněte — přihlašovací údaje se nikdy neukládají a následuje povinný opakovaný test manipulace. Použijte pouze tehdy, když čištění na vzdálené straně není možné.",
+  "offsite.retention.windowRestOnly": "Platí pouze pro cíle typu rest-server — u tohoto backendu nelze proti němu spustit dočasný druhý server. Použijte místo toho čištění na vzdálené straně nebo Růst + rozpočtové upozornění.",
   "offsite.retention.growHint": "Mimo lokalitu nikdy nečistěte; místo toho spusťte alarm, když repozitář překročí bajtový rozpočet. Poctivé výchozí nastavení, dokud si nezvolíte způsob čištění.",
   "offsite.retention.budget": "Rozpočet růstu (GB, 0 = vypnuto)",
   "offsite.retention.saveBudget": "Uložit rozpočet",

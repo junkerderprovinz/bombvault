@@ -772,6 +772,7 @@ const th: Partial<Translations> = {
   "offsite.retention.grow": "เติบโต + แจ้งเตือนงบประมาณ",
   "offsite.retention.farsideHint": "เรียกใช้ restic forget --prune บนกล่องจัดเก็บข้อมูลเอง (BombVault ยังคงเป็น append-only) คำแนะนำ cron:",
   "offsite.retention.windowHint": "เรียกใช้ rest-server ตัวที่สองแบบไม่ใช่ append-only ชั่วคราว พรูน แล้วปิดลง — ข้อมูลรับรองจะไม่ถูกจัดเก็บ และจะมีการทดสอบ append-only ซ้ำแบบบังคับตามมา ใช้เฉพาะเมื่อไม่สามารถพรูนที่ฝั่งปลายทางได้",
+  "offsite.retention.windowRestOnly": "ใช้ได้เฉพาะปลายทางแบบ rest-server เท่านั้น — แบ็กเอนด์นี้ไม่สามารถเรียกใช้เซิร์ฟเวอร์ที่สองชั่วคราวกับมันได้ ใช้การพรูนที่ฝั่งปลายทางหรือการเติบโต + การแจ้งเตือนงบประมาณแทน",
   "offsite.retention.growHint": "อย่าพรูนนอกสถานที่เลย; แต่ให้แจ้งเตือนเมื่อรีพอสิทอรีเติบโตเกินงบประมาณไบต์ เป็นค่าเริ่มต้นที่ตรงไปตรงมาจนกว่าคุณจะเลือกวิธีพรูน",
   "offsite.retention.budget": "งบประมาณการเติบโต (GB, 0 = ปิด)",
   "offsite.retention.saveBudget": "บันทึกงบประมาณ",

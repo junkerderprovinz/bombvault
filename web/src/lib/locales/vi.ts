@@ -761,6 +761,7 @@ const vi: Partial<Translations> = {
   "offsite.retention.grow": "Tăng trưởng + cảnh báo hạn mức",
   "offsite.retention.farsideHint": "Chạy restic forget --prune ngay trên storage box (BombVault vẫn giữ append-only). Gợi ý cron:",
   "offsite.retention.windowHint": "Tạm thời chạy một rest-server thứ hai không phải append-only, dọn bớt, rồi tắt nó đi — thông tin đăng nhập không bao giờ được lưu và một phép thử giả mạo lại bắt buộc sẽ diễn ra sau đó. Chỉ dùng khi không thể dọn bớt ở phía bên kia.",
+  "offsite.retention.windowRestOnly": "Chỉ áp dụng cho đích rest-server — backend này không thể chạy một máy chủ thứ hai tạm thời để đối chiếu. Hãy dùng dọn bớt ở phía bên kia hoặc Tăng trưởng + cảnh báo ngân sách thay thế.",
   "offsite.retention.growHint": "Không bao giờ dọn bớt off-site; thay vào đó cảnh báo khi kho vượt quá một hạn mức byte. Đây là mặc định trung thực cho đến khi bạn chọn một hướng dọn bớt.",
   "offsite.retention.budget": "Hạn mức tăng trưởng (GB, 0 = tắt)",
   "offsite.retention.saveBudget": "Lưu hạn mức",

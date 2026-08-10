@@ -736,6 +736,7 @@ const ja: Partial<Translations> = {
   "offsite.retention.grow": "増加 + 予算アラーム",
   "offsite.retention.farsideHint": "ストレージボックス自体で restic forget --prune を実行します（BombVault は append-only のまま）。cron のヒント:",
   "offsite.retention.windowHint": "非 append-only の 2 つ目の rest-server を一時的に起動して整理し、その後シャットダウンします — 認証情報は保存されず、必須の改ざん再テストが続きます。リモート側での整理が不可能な場合にのみ使用してください。",
+  "offsite.retention.windowRestOnly": "rest-server の宛先にのみ適用されます — このバックエンドでは一時的な2台目のサーバーを対して実行できません。代わりにリモート側での整理、または「増加 + 予算アラート」を使用してください。",
   "offsite.retention.growHint": "オフサイトでは決して整理せず、代わりにリポジトリがバイト予算を超えて増加したらアラームを出します。整理方法を選ぶまでの正直なデフォルトです。",
   "offsite.retention.budget": "増加予算（GB、0 = オフ）",
   "offsite.retention.saveBudget": "予算を保存",

@@ -747,6 +747,7 @@ const hu: Partial<Translations> = {
   "offsite.retention.grow": "Növekedés + keret-riasztás",
   "offsite.retention.farsideHint": "Futtasd a restic forget --prune parancsot magán a tárolószerveren (a BombVault append-only marad). Cron tipp:",
   "offsite.retention.windowHint": "Indíts el ideiglenesen egy második, nem append-only rest-server példányt, nyess, majd állítsd le — a hitelesítő adatok soha nem tárolódnak, és kötelező manipulációs újratesztelés következik. Csak akkor használd, ha a túloldali nyesés nem lehetséges.",
+  "offsite.retention.windowRestOnly": "Csak rest-server célokra vonatkozik — ez a háttérrendszer nem tud ideiglenes második szervert futtatni ellene. Használd inkább a túloldali nyesést vagy a Növekedés + költségvetési riasztást.",
   "offsite.retention.growHint": "Soha ne nyesd a telephelyen kívüli másolatot; helyette riassz, ha a repó túllép egy bájtkereten. Ez az őszinte alapértelmezés, amíg nem választasz nyesési módot.",
   "offsite.retention.budget": "Növekedési keret (GB, 0 = ki)",
   "offsite.retention.saveBudget": "Keret mentése",

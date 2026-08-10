@@ -769,6 +769,7 @@ const sv: Partial<Translations> = {
   "offsite.retention.grow": "Väx + budgetlarm",
   "offsite.retention.farsideHint": "Kör restic forget --prune på själva lagringsservern (BombVault förblir append-only). Cron-tips:",
   "offsite.retention.windowHint": "Kör tillfälligt en andra, icke-append-only rest-server, rensa, och stäng sedan av den — uppgifter sparas aldrig och ett obligatoriskt nytt manipuleringstest följer. Använd bara när rensning på fjärrsidan inte är möjlig.",
+  "offsite.retention.windowRestOnly": "Gäller endast rest-server-mål — detta backend kan inte köra en tillfällig andra server mot det. Använd i stället rensning på fjärrsidan eller Tillväxt + budgetlarm.",
   "offsite.retention.growHint": "Rensa aldrig off-site; larma i stället när repot växer förbi en byte-budget. Det ärliga standardvalet tills du väljer en rensningsstrategi.",
   "offsite.retention.budget": "Tillväxtbudget (GB, 0 = av)",
   "offsite.retention.saveBudget": "Spara budget",

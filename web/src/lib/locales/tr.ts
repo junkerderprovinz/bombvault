@@ -769,6 +769,7 @@ const tr: Partial<Translations> = {
   "offsite.retention.grow": "Büyüme + bütçe alarmı",
   "offsite.retention.farsideHint": "restic forget --prune komutunu doğrudan depolama sunucusunda çalıştırın (BombVault append-only kalır). Cron ipucu:",
   "offsite.retention.windowHint": "Geçici olarak ikinci, append-only olmayan bir rest-server çalıştırın, budayın, ardından kapatın — kimlik bilgileri asla saklanmaz ve zorunlu bir kurcalama yeniden testi izler. Yalnızca karşı tarafta budama mümkün olmadığında kullanın.",
+  "offsite.retention.windowRestOnly": "Yalnızca rest-server hedefleri için geçerlidir — bu arka uç, ona karşı geçici ikinci bir sunucu çalıştıramaz. Bunun yerine karşı tarafta budama veya Büyüme + bütçe alarmını kullanın.",
   "offsite.retention.growHint": "Site dışını asla budamayın; bunun yerine depo bir bayt bütçesini aştığında alarm verin. Bir budama yolu seçene kadar dürüst varsayılan.",
   "offsite.retention.budget": "Büyüme bütçesi (GB, 0 = kapalı)",
   "offsite.retention.saveBudget": "Bütçeyi kaydet",
