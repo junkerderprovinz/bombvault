@@ -3959,11 +3959,16 @@ export function SettingsPage() {
       {tab === "system" && (advanced || settings.vmsEnabled) && <VMSSHCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
-      {/* OFFSITE — Off-site backends (rclone + cloud credentials)            */}
+      {/* OFFSITE — Off-site backends (rclone + cloud credentials). Same     */}
+      {/* "not advanced-only" rule as the off-site repo-path Card above: a   */}
+      {/* user can't actually USE an rclone:/s3:/rest: off-site URL without  */}
+      {/* these credentials, so hiding them behind Advanced silently broke   */}
+      {/* off-site setup for Simple-mode users (they'd only find these two   */}
+      {/* cards by way of the Recovery page, which never gated them either). */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "offsite" && <Advanced><RcloneCard t={t} /></Advanced>}
+      {tab === "offsite" && <RcloneCard t={t} />}
 
-      {tab === "offsite" && <Advanced><CloudCard t={t} /></Advanced>}
+      {tab === "offsite" && <CloudCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}
