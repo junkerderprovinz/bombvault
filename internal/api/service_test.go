@@ -1316,6 +1316,38 @@ func TestTestOffsiteUnreachableSurfacesReason(t *testing.T) {
 	}
 }
 
+// TestTestOffsiteFreshRemoteRepoReportsUninitializedNotFailed: a remote off-site
+// destination that is reachable but has never been replicated to yet (restic's
+// "repository does not exist") must report reachable=true, initialized=false,
+// err=nil — the UI's existing "uninitialized" warning state — not a fatal error.
+// BombVault creates the repository on the first replication; this is the expected
+// lifecycle state for a brand-new destination, not a misconfiguration (issue #130).
+func TestTestOffsiteFreshRemoteRepoReportsUninitializedNotFailed(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersOffsite = "rclone:b2:ark-backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{
+		repoOpensErr: errors.New("Fatal: repository does not exist: unable to open config file"),
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
+	if err != nil {
+		t.Fatalf("TestOffsite: expected nil error for an uninitialized-but-reachable repo, got %v", err)
+	}
+	if !reachable {
+		t.Fatal("expected reachable=true for a valid destination awaiting its first replication")
+	}
+	if initialized {
+		t.Fatal("expected initialized=false: no repository exists there yet")
+	}
+}
+
 // TestDomainStatus drives DomainStatus through a seeded store: a disabled domain
 // is "off", an enabled+scheduled domain with no successful backup is "never", and
 // one with a fresh successful backup is "ok". The time-boundary cases
@@ -3401,6 +3433,9 @@ type fakeResticEngine struct {
 	// matches. When nil, RepoOpens mirrors a local repo and "opens" once restic's
 	// `config` marker exists on disk (mode-agnostic).
 	existingMode *bool
+	// repoOpensErr, when set, is the error RepoOpensErr returns on a failed probe
+	// (e.g. restic's "repository does not exist") instead of the generic fallback.
+	repoOpensErr error
 	// ctx observability for the DR-drill detach/bound tests: restoreCtxErrs records
 	// ctx.Err() at each RestoreInclude entry (proves the restore ran under a
 	// non-cancelled, detached ctx), and snapshotsCtxDeadline records whether each
@@ -3438,6 +3473,9 @@ func (f *fakeResticEngine) RepoOpens(_ context.Context, repo string, m restic.Mo
 func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mode) error {
 	if f.RepoOpens(ctx, repo, m) {
 		return nil
+	}
+	if f.repoOpensErr != nil {
+		return f.repoOpensErr
 	}
 	return errors.New("fake: repo did not open")
 }
