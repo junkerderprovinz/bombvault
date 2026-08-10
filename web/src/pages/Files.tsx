@@ -39,6 +39,7 @@ import { useT } from "../lib/i18n";
 import { Advanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
+import { loadErrorMessage } from "../lib/errors";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -236,8 +237,10 @@ function FileSetFileBrowser({
     setLoading(true);
     listSnapshotFilesFileSet(set.id, snapshotId, source)
       .then((res) => {
+        // #129 — show the server's own reason (e.g. a stale repo lock) when it
+        // sent one; the generic message is only for a plain network failure.
         if (res.ok) setFiles(res.files ?? []);
-        else setError(t("files.loadFailed"));
+        else setError(loadErrorMessage(res, t("files.loadFailed")));
       })
       .catch(() => setError(t("files.loadFailed")))
       .finally(() => setLoading(false));

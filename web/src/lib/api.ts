@@ -89,8 +89,10 @@ export interface FileEntry {
 export interface ListFilesResponse {
   ok: boolean;
   files: FileEntry[];
-  /** Present on {ok:false} (HTTP 200) — e.g. an expired foreign session; the
-   *  local list endpoints never populate it. */
+  /** Present on {ok:false} (HTTP 200): the server's own scrubbed reason (a
+   *  stale repo lock, an unmounted backup path, an expired foreign session,
+   *  etc). Populated by every list-files endpoint, local and foreign alike —
+   *  callers should show it instead of a generic message (#129). */
   error?: string;
 }
 
