@@ -1290,6 +1290,32 @@ func TestTestOffsiteReachableInitialized(t *testing.T) {
 	}
 }
 
+// TestTestOffsiteUnreachableSurfacesReason: when the repo opens in NEITHER
+// encryption mode, TestOffsite must return the probe's actual failure instead
+// of a silent nil error — otherwise the UI can only show a bare "not
+// reachable" with no way for the user to diagnose a bad remote config, wrong
+// credentials, or an unreachable backend (regression: roachman off-site report).
+func TestTestOffsiteUnreachableSurfacesReason(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersOffsite = "rclone:b2:ark-backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{} // no existingMode, no config marker written -> opens in neither mode
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
+	if reachable || initialized {
+		t.Fatalf("expected reachable=false initialized=false, got %v/%v", reachable, initialized)
+	}
+	if err == nil {
+		t.Fatal("expected a non-nil error explaining why the repo did not open, got nil")
+	}
+}
+
 // TestDomainStatus drives DomainStatus through a seeded store: a disabled domain
 // is "off", an enabled+scheduled domain with no successful backup is "never", and
 // one with a fresh successful backup is "ok". The time-boundary cases
@@ -3407,6 +3433,13 @@ func (f *fakeResticEngine) RepoOpens(_ context.Context, repo string, m restic.Mo
 	// exists on disk, regardless of mode. Keeps the idempotency test meaningful.
 	_, err := os.Stat(filepath.Join(repo, "config"))
 	return err == nil
+}
+
+func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mode) error {
+	if f.RepoOpens(ctx, repo, m) {
+		return nil
+	}
+	return errors.New("fake: repo did not open")
 }
 
 func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {

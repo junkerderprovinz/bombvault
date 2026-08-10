@@ -65,6 +65,9 @@ type ResticEngine interface {
 	// a cheap existence + encryption-mode probe (`restic cat config`). Used by
 	// EnsureRepo to reconcile the configured mode against the repo's actual mode.
 	RepoOpens(ctx context.Context, repo string, mode restic.Mode) bool
+	// RepoOpensErr is RepoOpens but returns the probe's actual failure instead of
+	// discarding it, for TestOffsite, which needs to explain why a repo didn't open.
+	RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
 	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
@@ -2383,15 +2386,18 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 // TestOffsite probes a domain's off-site repo without modifying it, so the UI can
 // tell the user whether the configured location is a reachable, initialised restic
 // repository BEFORE relying on it. It uses the SAME probe EnsureRepo uses to detect
-// an existing repo — `restic cat config` (ResticEngine.RepoOpens) — trying both
+// an existing repo — `restic cat config` (ResticEngine.RepoOpensErr) — trying both
 // encryption modes, so a repo created under the opposite Encryption setting still
 // counts as initialised (that mode mismatch is reported by EnsureRepo, not here).
 //
 // reachable reports the repo could be opened at all; initialized that it is a real
 // restic repository. `cat config` cannot distinguish an unreachable backend from a
 // reachable-but-empty location (both simply fail to open), so a repo that opens in
-// neither mode is reported as neither reachable nor initialised. An unconfigured
-// off-site repo for the domain is an error, not a verdict.
+// neither mode is reported as neither reachable nor initialised, and err carries the
+// primary mode's probe failure (a bad rclone remote type, wrong credentials, a
+// backend that refuses the connection, ...) instead of a bare false/false — the
+// handler scrubs it before it reaches the client. An unconfigured off-site repo for
+// the domain is also an error.
 func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, initialized bool, err error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -2411,22 +2417,26 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	// tunnel + host-key pinning) can eat a shared budget on the first try and
 	// leave the second probe zero time — reporting a reachable repo as
 	// unreachable (#93).
-	probe := func(m restic.Mode) bool {
+	probe := func(m restic.Mode) error {
 		pctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
-		return s.engine.RepoOpens(pctx, repo, m)
+		return s.engine.RepoOpensErr(pctx, repo, m)
 	}
 	mode := s.ModeFor(settings)
-	if probe(mode) {
+	primaryErr := probe(mode)
+	if primaryErr == nil {
 		return true, true, nil
 	}
 	// Opens under the opposite encryption mode → the repo exists and is reachable,
 	// just created under the other Encryption setting; still reachable + initialised
 	// for this probe (EnsureRepo surfaces the mismatch on the next backup).
-	if probe(s.oppositeMode(mode)) {
+	if probe(s.oppositeMode(mode)) == nil {
 		return true, true, nil
 	}
-	return false, false, nil
+	// Neither mode opened — surface the primary mode's failure (the user's actual
+	// configured encryption setting) instead of a silent false/false, so the UI can
+	// show the real reason (issue: roachman, off-site "not reachable" with no detail).
+	return false, false, primaryErr
 }
 
 // EnsureRepo makes sure the restic repo at repo is ready to use with the
