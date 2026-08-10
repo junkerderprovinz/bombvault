@@ -342,10 +342,16 @@ const es: Partial<Translations> = {
   "settings.retentionDaily": "Conservar diarias",
   "settings.retentionWeekly": "Conservar semanales",
   "settings.retentionMonthly": "Conservar mensuales",
+  "settings.retentionLastInfo": "Conserva las N copias más recientes, sin importar cuándo se crearon.",
+  "settings.retentionDailyInfo": "Conserva una copia por cada uno de los últimos N días naturales con una copia de seguridad — una al día, no N copias.",
+  "settings.retentionWeeklyInfo": "Conserva una copia por cada una de las últimas N semanas naturales con una copia de seguridad.",
+  "settings.retentionMonthlyInfo": "Conserva una copia por cada uno de los últimos N meses naturales con una copia de seguridad.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
   "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Una política separada para el repo externo, para conservarlo más tiempo como archivo. Todo en 0 = conservar cada copia externa (sin purga externa).",
+  "settings.retentionCombineInfo": "Las cuatro reglas se combinan con O: una copia sobrevive si cualquier regla la conservaría — no se suman a un número fijo. Se aplica por separado a cada elemento respaldado.",
+  "settings.retentionOffsiteImmutableInfo": "Un destino externo inmutable nunca se purga desde aquí, sin importar esta configuración — consulta Externo › Estrategia de retención para saber cómo purgarlo.",
 
   // Off-site (rclone)
   "rclone.title": "Externo (rclone)",

@@ -337,10 +337,16 @@ const nl: Partial<Translations> = {
   "settings.retentionDaily": "Dagelijks bewaren",
   "settings.retentionWeekly": "Wekelijks bewaren",
   "settings.retentionMonthly": "Maandelijks bewaren",
+  "settings.retentionLastInfo": "Bewaart de N meest recente snapshots, ongeacht wanneer ze zijn gemaakt.",
+  "settings.retentionDailyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderdagen met een back-up — één per dag, geen N back-ups.",
+  "settings.retentionWeeklyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderweken met een back-up.",
+  "settings.retentionMonthlyInfo": "Bewaart één snapshot voor elk van de laatste N kalendermaanden met een back-up.",
   "settings.retentionLocal": "Lokale repo",
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteTitle": "Off-site bewaarbeleid",
   "settings.retentionOffsiteHint": "Een apart beleid voor de off-site repo, zodat je die langer als archief kunt bewaren. Alles 0 = elke off-site back-up bewaren (geen off-site opschoning).",
+  "settings.retentionCombineInfo": "De vier regels combineren met OF: een snapshot blijft bestaan als één enkele regel die zou bewaren — ze tellen niet op tot een vast aantal. Geldt apart voor elk geback-upt item.",
+  "settings.retentionOffsiteImmutableInfo": "Een onveranderlijke off-site-bestemming wordt hier nooit opgeschoond, ongeacht deze instellingen — zie Off-site › Bewaarstrategie voor hoe je die wel opschoont.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

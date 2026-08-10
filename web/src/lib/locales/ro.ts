@@ -340,10 +340,16 @@ const ro: Partial<Translations> = {
   "settings.retentionDaily": "Păstrează zilnic",
   "settings.retentionWeekly": "Păstrează săptămânal",
   "settings.retentionMonthly": "Păstrează lunar",
+  "settings.retentionLastInfo": "Păstrează ultimele N instantanee, indiferent de momentul creării lor.",
+  "settings.retentionDailyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimele N zile calendaristice cu o copie de rezervă — una pe zi, nu N copii.",
+  "settings.retentionWeeklyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimele N săptămâni calendaristice cu o copie de rezervă.",
+  "settings.retentionMonthlyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimele N luni calendaristice cu o copie de rezervă.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo off-site",
   "settings.retentionOffsiteTitle": "Retenție off-site",
   "settings.retentionOffsiteHint": "O politică separată pentru repo-ul off-site, ca să-l păstrezi mai mult ca arhivă. Toate 0 = păstrează fiecare backup off-site (fără curățare off-site).",
+  "settings.retentionCombineInfo": "Cele patru reguli se combină prin SAU: un instantaneu supraviețuiește dacă orice regulă l-ar păstra — nu se adună la un număr fix. Se aplică separat fiecărui element salvat.",
+  "settings.retentionOffsiteImmutableInfo": "O destinație off-site imuabilă nu este niciodată curățată de aici, indiferent de aceste setări — vezi Off-site › Strategie de păstrare pentru cum să o cureți.",
 
   // Off-site (rclone)
   "rclone.title": "În afara sitului (rclone)",

@@ -340,10 +340,16 @@ const no: Partial<Translations> = {
   "settings.retentionDaily": "Behold daglige",
   "settings.retentionWeekly": "Behold ukentlige",
   "settings.retentionMonthly": "Behold månedlige",
+  "settings.retentionLastInfo": "Beholder de N nyeste øyeblikksbildene, uansett når de ble laget.",
+  "settings.retentionDailyInfo": "Beholder ett øyeblikksbilde for hver av de siste N kalenderdagene med en sikkerhetskopi — ett per dag, ikke N sikkerhetskopier.",
+  "settings.retentionWeeklyInfo": "Beholder ett øyeblikksbilde for hver av de siste N kalenderukene med en sikkerhetskopi.",
+  "settings.retentionMonthlyInfo": "Beholder ett øyeblikksbilde for hver av de siste N kalendermånedene med en sikkerhetskopi.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-oppbevaring",
   "settings.retentionOffsiteHint": "En egen policy for off-site-repoet, så du kan beholde det lenger som arkiv. Alt 0 = behold hver off-site-sikkerhetskopi (ingen off-site-opprydding).",
+  "settings.retentionCombineInfo": "De fire reglene kombineres med ELLER: et øyeblikksbilde overlever hvis én eneste regel ville beholdt det — de legges ikke sammen til et fast antall. Gjelder separat for hvert sikkerhetskopierte element.",
+  "settings.retentionOffsiteImmutableInfo": "Et uforanderlig off-site-mål blir aldri beskåret herfra, uansett disse innstillingene — se Off-site › Oppbevaringsstrategi for hvordan du beskjærer det.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

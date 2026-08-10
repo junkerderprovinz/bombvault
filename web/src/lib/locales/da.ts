@@ -342,10 +342,16 @@ const da: Partial<Translations> = {
   "settings.retentionDaily": "Behold daglige",
   "settings.retentionWeekly": "Behold ugentlige",
   "settings.retentionMonthly": "Behold månedlige",
+  "settings.retentionLastInfo": "Beholder de N seneste snapshots, uanset hvornår de blev lavet.",
+  "settings.retentionDailyInfo": "Beholder ét snapshot for hver af de sidste N kalenderdage med en sikkerhedskopi — én pr. dag, ikke N sikkerhedskopier.",
+  "settings.retentionWeeklyInfo": "Beholder ét snapshot for hver af de sidste N kalenderuger med en sikkerhedskopi.",
+  "settings.retentionMonthlyInfo": "Beholder ét snapshot for hver af de sidste N kalendermåneder med en sikkerhedskopi.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-opbevaring",
   "settings.retentionOffsiteHint": "En separat politik for off-site-repoet, så du kan beholde det længere som arkiv. Alt 0 = behold hver off-site-sikkerhedskopi (ingen off-site-oprydning).",
+  "settings.retentionCombineInfo": "De fire regler kombineres med ELLER: et snapshot overlever, hvis blot én regel ville beholde det — de lægges ikke sammen til et fast antal. Gælder separat for hvert sikkerhedskopieret element.",
+  "settings.retentionOffsiteImmutableInfo": "Et uforanderligt off-site-mål beskæres aldrig herfra, uanset disse indstillinger — se Off-site › Opbevaringsstrategi for hvordan du beskærer det.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

@@ -396,10 +396,16 @@ export const en = {
   "settings.retentionDaily": "Keep daily",
   "settings.retentionWeekly": "Keep weekly",
   "settings.retentionMonthly": "Keep monthly",
+  "settings.retentionLastInfo": "Keeps the N most recent snapshots, no matter when they were made.",
+  "settings.retentionDailyInfo": "Keeps one snapshot for each of the last N calendar days that has a backup — one per day, not N backups.",
+  "settings.retentionWeeklyInfo": "Keeps one snapshot for each of the last N calendar weeks that has a backup.",
+  "settings.retentionMonthlyInfo": "Keeps one snapshot for each of the last N calendar months that has a backup.",
+  "settings.retentionCombineInfo": "The four rules combine with OR: a snapshot survives if any single rule would keep it — they don't add up to a fixed count. Applied separately to each backed-up item.",
   "settings.retentionLocal": "Local repo",
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteTitle": "Off-site retention",
   "settings.retentionOffsiteHint": "A separate policy for the off-site repo, so you can keep it longer as an archive. All zero = keep every off-site backup (no off-site pruning).",
+  "settings.retentionOffsiteImmutableInfo": "An immutable off-site destination is never pruned from here, no matter these settings — see Off-site › Retention strategy for how to prune it.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site bandwidth",
@@ -1627,10 +1633,16 @@ export const de: Translations = {
   "settings.retentionDaily": "Täglich behalten",
   "settings.retentionWeekly": "Wöchentlich behalten",
   "settings.retentionMonthly": "Monatlich behalten",
+  "settings.retentionLastInfo": "Behält die N neuesten Snapshots, unabhängig davon, wann sie erstellt wurden.",
+  "settings.retentionDailyInfo": "Behält einen Snapshot für jeden der letzten N Kalendertage mit einem Backup — einen pro Tag, nicht N Backups.",
+  "settings.retentionWeeklyInfo": "Behält einen Snapshot für jede der letzten N Kalenderwochen mit einem Backup.",
+  "settings.retentionMonthlyInfo": "Behält einen Snapshot für jeden der letzten N Kalendermonate mit einem Backup.",
+  "settings.retentionCombineInfo": "Die vier Regeln kombinieren sich per ODER: ein Snapshot bleibt erhalten, wenn ihn irgendeine Regel behalten würde — sie addieren sich nicht zu einer festen Anzahl. Gilt separat für jedes gesicherte Objekt.",
   "settings.retentionLocal": "Lokales Repo",
   "settings.retentionOffsite": "Off-site-Repo",
   "settings.retentionOffsiteTitle": "Off-site-Aufbewahrung",
   "settings.retentionOffsiteHint": "Eine separate Regel für das Off-site-Repo, damit du es länger als Archiv behalten kannst. Alles 0 = jedes Off-site-Backup behalten (kein Off-site-Prune).",
+  "settings.retentionOffsiteImmutableInfo": "Ein unveränderliches Off-site-Ziel wird hier nie geprunt, egal was hier eingestellt ist — siehe Off-site › Aufbewahrungsstrategie, wie man es dennoch prunt.",
 
   // Off-site-Bandbreite
   "settings.offsiteLimits": "Off-site-Bandbreite",

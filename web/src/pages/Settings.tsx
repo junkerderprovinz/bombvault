@@ -3,6 +3,7 @@ import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, 
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { InfoBubble } from "../components/InfoBubble";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
@@ -3174,18 +3175,22 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Card title={t("settings.retentionTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
+        <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
           {t("settings.retentionHint")}
+          <InfoBubble text={t("settings.retentionCombineInfo")} />
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
-            ["retentionKeepLast", "settings.retentionLast"],
-            ["retentionKeepDaily", "settings.retentionDaily"],
-            ["retentionKeepWeekly", "settings.retentionWeekly"],
-            ["retentionKeepMonthly", "settings.retentionMonthly"],
-          ] as const).map(([key, label]) => (
+            ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
+            ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
+            ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
+            ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+          ] as const).map(([key, label, info]) => (
             <label key={key} className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t(label)}
+                <InfoBubble text={t(info)} />
+              </span>
               <input
                 type="number"
                 min={0}
@@ -3728,16 +3733,23 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <Card title={t("settings.retentionOffsiteTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.retentionOffsiteHint")}</p>
+        <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
+          {t("settings.retentionOffsiteHint")}
+          <InfoBubble text={t("settings.retentionCombineInfo")} />
+          <InfoBubble text={t("settings.retentionOffsiteImmutableInfo")} />
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
-            ["offsiteRetentionKeepLast", "settings.retentionLast"],
-            ["offsiteRetentionKeepDaily", "settings.retentionDaily"],
-            ["offsiteRetentionKeepWeekly", "settings.retentionWeekly"],
-            ["offsiteRetentionKeepMonthly", "settings.retentionMonthly"],
-          ] as const).map(([key, label]) => (
+            ["offsiteRetentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
+            ["offsiteRetentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
+            ["offsiteRetentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
+            ["offsiteRetentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+          ] as const).map(([key, label, info]) => (
             <label key={key} className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t(label)}
+                <InfoBubble text={t(info)} />
+              </span>
               <input
                 type="number"
                 min={0}
