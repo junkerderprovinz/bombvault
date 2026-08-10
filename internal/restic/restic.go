@@ -1227,8 +1227,16 @@ func (r Restic) Init(ctx context.Context, repo string, m Mode) error {
 // concurrently-locked repo still reports true. Used to reconcile the configured
 // encryption mode against the mode the repo was actually created with.
 func (r Restic) RepoOpens(ctx context.Context, repo string, m Mode) bool {
+	return r.RepoOpensErr(ctx, repo, m) == nil
+}
+
+// RepoOpensErr is RepoOpens but returns the probe's actual failure instead of
+// discarding it, for callers that need to explain WHY a repo did not open
+// (a bad backend config, wrong credentials, an unreachable host) rather than
+// just that it didn't.
+func (r Restic) RepoOpensErr(ctx context.Context, repo string, m Mode) error {
 	_, err := r.run(ctx, CatConfigArgs(repo, m), m)
-	return err == nil
+	return err
 }
 
 // Backup backs up paths into the repo, tagging each snapshot with tags, and

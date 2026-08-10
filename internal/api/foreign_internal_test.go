@@ -130,6 +130,13 @@ func (f *foreignRecordingEngine) RepoOpens(_ context.Context, _ string, m restic
 	return f.opens != nil && f.opens(m)
 }
 
+func (f *foreignRecordingEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mode) error {
+	if f.RepoOpens(ctx, repo, m) {
+		return nil
+	}
+	return errors.New("fake: repo did not open")
+}
+
 func (f *foreignRecordingEngine) Snapshots(_ context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
 	f.record("Snapshots")
 	f.recordMode(m)
