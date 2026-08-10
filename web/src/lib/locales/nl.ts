@@ -738,6 +738,7 @@ const nl: Partial<Translations> = {
   "offsite.retention.grow": "Groeien + budgetalarm",
   "offsite.retention.farsideHint": "Voer restic forget --prune uit op de storage box zelf (BombVault blijft append-only). Cron-hint:",
   "offsite.retention.windowHint": "Draai tijdelijk een tweede, niet-append-only rest-server, prune, en schakel die daarna uit — inloggegevens worden nooit bewaard en er volgt een verplichte tamper-hertest. Gebruik dit alleen als prune aan de andere kant niet mogelijk is.",
+  "offsite.retention.windowRestOnly": "Geldt alleen voor rest-server-bestemmingen — deze backend kan geen tijdelijke tweede server ertegen draaien. Gebruik in plaats daarvan prune aan de andere kant of Groei + budgetwaarschuwing.",
   "offsite.retention.growHint": "Prune off-site nooit; sla in plaats daarvan alarm als de repo een byte-budget overschrijdt. De eerlijke standaard totdat je een prune-pad kiest.",
   "offsite.retention.budget": "Groeibudget (GB, 0 = uit)",
   "offsite.retention.saveBudget": "Budget opslaan",

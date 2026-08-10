@@ -761,6 +761,7 @@ const zh: Partial<Translations> = {
   "offsite.retention.grow": "增长 + 预算告警",
   "offsite.retention.farsideHint": "在存储主机上自行运行 restic forget --prune（BombVault 保持 append-only）。Cron 提示：",
   "offsite.retention.windowHint": "临时启动第二个非 append-only 的 rest-server，执行清理，然后将其关闭 — 凭据绝不会被持久化，之后会强制进行一次篡改重测。仅在无法进行对端清理时使用。",
+  "offsite.retention.windowRestOnly": "仅适用于 rest-server 目标 — 此后端无法针对它运行临时的第二个服务器。请改用对端清理或「增长 + 预算警报」。",
   "offsite.retention.growHint": "绝不清理异地；而是在仓库增长超过字节预算时告警。在你选定清理方式之前，这是最稳妥的默认选择。",
   "offsite.retention.budget": "增长预算（GB，0 = 关闭）",
   "offsite.retention.saveBudget": "保存预算",

@@ -736,6 +736,7 @@ const pl: Partial<Translations> = {
   "offsite.retention.grow": "Wzrost + alarm budżetu",
   "offsite.retention.farsideHint": "Uruchom restic forget --prune bezpośrednio na serwerze magazynu (BombVault pozostaje append-only). Wskazówka cron:",
   "offsite.retention.windowHint": "Tymczasowo uruchom drugi rest-server bez append-only, przytnij, a następnie go wyłącz — poświadczenia nigdy nie są zapisywane, po czym następuje obowiązkowy ponowny test manipulacji. Używaj tylko wtedy, gdy przycinanie po stronie zdalnej nie jest możliwe.",
+  "offsite.retention.windowRestOnly": "Dotyczy tylko celów typu rest-server — ten backend nie może uruchomić tymczasowego drugiego serwera względem niego. Użyj zamiast tego przycinania po stronie zdalnej lub Wzrostu + alarmu budżetowego.",
   "offsite.retention.growHint": "Nigdy nie przycinaj kopii poza siedzibą; zamiast tego alarmuj, gdy repozytorium przekroczy budżet bajtów. Uczciwe ustawienie domyślne, dopóki nie wybierzesz sposobu przycinania.",
   "offsite.retention.budget": "Budżet wzrostu (GB, 0 = wył.)",
   "offsite.retention.saveBudget": "Zapisz budżet",

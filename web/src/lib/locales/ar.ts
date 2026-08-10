@@ -772,6 +772,7 @@ const ar: Partial<Translations> = {
   "offsite.retention.grow": "النمو + تنبيه الميزانية",
   "offsite.retention.farsideHint": "شغّل restic forget --prune على صندوق التخزين نفسه (يبقى BombVault في وضع append-only). تلميح cron:",
   "offsite.retention.windowHint": "شغّل مؤقتاً خادم rest-server ثانياً بدون append-only، وقلّم، ثم أوقفه — لا تُحفظ بيانات الاعتماد أبداً ويتبع ذلك إعادة اختبار عبث إلزامية. استخدم هذا فقط عندما يتعذّر التقليم على الطرف البعيد.",
+  "offsite.retention.windowRestOnly": "ينطبق فقط على وجهات rest-server — لا يمكن لهذا الواجهة الخلفية تشغيل خادم ثانٍ مؤقت ضدها. استخدم بدلاً من ذلك التقليم على الطرف البعيد أو النمو + تنبيه الميزانية.",
   "offsite.retention.growHint": "لا تُقلّم خارج الموقع أبداً؛ بدلاً من ذلك نبّه عندما ينمو المستودع متجاوزاً ميزانية بالبايت. الخيار الافتراضي الصادق حتى تختار مسار تقليم.",
   "offsite.retention.budget": "ميزانية النمو (GB، 0 = إيقاف)",
   "offsite.retention.saveBudget": "حفظ الميزانية",

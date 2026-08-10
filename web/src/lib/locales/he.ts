@@ -744,6 +744,7 @@ const he: Partial<Translations> = {
   "offsite.retention.grow": "גדילה + התראת תקציב",
   "offsite.retention.farsideHint": "הרץ restic forget --prune על מכונת האחסון עצמה (BombVault נשאר append-only). רמז cron:",
   "offsite.retention.windowHint": "הפעל זמנית rest-server שני, שאינו append-only, גזום, ואז כבה אותו — פרטי ההתחברות לעולם אינם נשמרים ובעקבותיו מתבצעת בדיקת חבלה חוזרת מחייבת. השתמש בכך רק כאשר גיזום בצד המרוחק אינו אפשרי.",
+  "offsite.retention.windowRestOnly": "חל רק על יעדי rest-server — קצה עורפי זה אינו יכול להפעיל שרת שני זמני מולו. השתמש במקום זאת בגיזום בצד המרוחק או בגדילה + התראת תקציב.",
   "offsite.retention.growHint": "לעולם אל תגזום מחוץ לאתר; במקום זאת התרע כשהמאגר גדל מעבר לתקציב בתים. ברירת המחדל הכנה עד שתבחר נתיב גיזום.",
   "offsite.retention.budget": "תקציב גדילה (GB, 0 = כבוי)",
   "offsite.retention.saveBudget": "שמור תקציב",
