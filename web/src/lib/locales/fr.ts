@@ -342,10 +342,16 @@ const fr: Partial<Translations> = {
   "settings.retentionDaily": "Conserver quotidiennes",
   "settings.retentionWeekly": "Conserver hebdomadaires",
   "settings.retentionMonthly": "Conserver mensuelles",
+  "settings.retentionLastInfo": "Conserve les N instantanés les plus récents, quelle que soit leur date de création.",
+  "settings.retentionDailyInfo": "Conserve un instantané pour chacun des N derniers jours calendaires ayant une sauvegarde — un par jour, pas N sauvegardes.",
+  "settings.retentionWeeklyInfo": "Conserve un instantané pour chacune des N dernières semaines calendaires ayant une sauvegarde.",
+  "settings.retentionMonthlyInfo": "Conserve un instantané pour chacun des N derniers mois calendaires ayant une sauvegarde.",
   "settings.retentionLocal": "Dépôt local",
   "settings.retentionOffsite": "Dépôt hors-site",
   "settings.retentionOffsiteTitle": "Rétention hors-site",
   "settings.retentionOffsiteHint": "Une politique distincte pour le dépôt hors-site, pour le conserver plus longtemps comme archive. Tout à 0 = conserver chaque sauvegarde hors-site (pas de purge hors-site).",
+  "settings.retentionCombineInfo": "Les quatre règles se combinent avec OU : un instantané survit si une seule règle le conserverait — elles ne s'additionnent pas en un nombre fixe. S'applique séparément à chaque élément sauvegardé.",
+  "settings.retentionOffsiteImmutableInfo": "Une destination hors-site immuable n'est jamais purgée depuis ici, quels que soient ces réglages — voir Hors-site › Stratégie de rétention pour savoir comment la purger.",
 
   // Off-site (rclone)
   "rclone.title": "Hors site (rclone)",

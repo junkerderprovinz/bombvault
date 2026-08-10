@@ -335,10 +335,16 @@ const ru: Partial<Translations> = {
   "settings.retentionDaily": "Хранить ежедневные",
   "settings.retentionWeekly": "Хранить еженедельные",
   "settings.retentionMonthly": "Хранить ежемесячные",
+  "settings.retentionLastInfo": "Хранит N последних снимков, независимо от того, когда они были сделаны.",
+  "settings.retentionDailyInfo": "Хранит один снимок за каждый из последних N календарных дней с резервной копией — один в день, а не N копий.",
+  "settings.retentionWeeklyInfo": "Хранит один снимок за каждую из последних N календарных недель с резервной копией.",
+  "settings.retentionMonthlyInfo": "Хранит один снимок за каждый из последних N календарных месяцев с резервной копией.",
   "settings.retentionLocal": "Локальный репо",
   "settings.retentionOffsite": "Удалённый репо",
   "settings.retentionOffsiteTitle": "Удалённое хранение",
   "settings.retentionOffsiteHint": "Отдельная политика для удалённого репозитория, чтобы хранить его дольше как архив. Всё 0 = хранить все удалённые копии (без очистки удалённого).",
+  "settings.retentionCombineInfo": "Четыре правила комбинируются через ИЛИ: снимок сохраняется, если его сохранило бы хотя бы одно правило — они не суммируются в фиксированное число. Применяется отдельно к каждому резервируемому объекту.",
+  "settings.retentionOffsiteImmutableInfo": "Неизменяемое удалённое назначение никогда не очищается отсюда, независимо от этих настроек — см. Удалённое › Стратегия хранения, как его очистить.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

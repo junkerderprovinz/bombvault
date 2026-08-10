@@ -342,10 +342,16 @@ const tr: Partial<Translations> = {
   "settings.retentionDaily": "Günlük tut",
   "settings.retentionWeekly": "Haftalık tut",
   "settings.retentionMonthly": "Aylık tut",
+  "settings.retentionLastInfo": "Ne zaman oluşturulduklarına bakılmaksızın en son N anlık görüntüyü tutar.",
+  "settings.retentionDailyInfo": "Yedeği olan son N takvim gününün her biri için bir anlık görüntü tutar — günde bir, N yedek değil.",
+  "settings.retentionWeeklyInfo": "Yedeği olan son N takvim haftasının her biri için bir anlık görüntü tutar.",
+  "settings.retentionMonthlyInfo": "Yedeği olan son N takvim ayının her biri için bir anlık görüntü tutar.",
   "settings.retentionLocal": "Yerel repo",
   "settings.retentionOffsite": "Uzak repo",
   "settings.retentionOffsiteTitle": "Uzak saklama",
   "settings.retentionOffsiteHint": "Uzak repo için ayrı bir politika; arşiv olarak daha uzun tutabilirsin. Hepsi 0 = her uzak yedeği sakla (uzak budama yok).",
+  "settings.retentionCombineInfo": "Dört kural VEYA ile birleşir: herhangi bir kural onu tutacaksa anlık görüntü hayatta kalır — sabit bir sayıya toplanmazlar. Yedeklenen her öğeye ayrı ayrı uygulanır.",
+  "settings.retentionOffsiteImmutableInfo": "Değiştirilemez bir uzak hedef, bu ayarlardan bağımsız olarak buradan asla budanmaz — nasıl budanacağını görmek için Uzak › Saklama stratejisine bakın.",
 
   // Off-site (rclone)
   "rclone.title": "Dış konum (rclone)",

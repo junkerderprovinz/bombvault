@@ -335,10 +335,16 @@ const pl: Partial<Translations> = {
   "settings.retentionDaily": "Zachowaj dzienne",
   "settings.retentionWeekly": "Zachowaj tygodniowe",
   "settings.retentionMonthly": "Zachowaj miesięczne",
+  "settings.retentionLastInfo": "Zachowuje N najnowszych migawek, niezależnie od tego, kiedy zostały wykonane.",
+  "settings.retentionDailyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N dni kalendarzowych z kopią zapasową — jedną dziennie, nie N kopii.",
+  "settings.retentionWeeklyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N tygodni kalendarzowych z kopią zapasową.",
+  "settings.retentionMonthlyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N miesięcy kalendarzowych z kopią zapasową.",
   "settings.retentionLocal": "Repo lokalne",
   "settings.retentionOffsite": "Repo zdalne",
   "settings.retentionOffsiteTitle": "Przechowywanie zdalne",
   "settings.retentionOffsiteHint": "Osobna polityka dla repo zdalnego, aby trzymać je dłużej jako archiwum. Wszystko 0 = zachowaj każdą kopię zdalną (bez czyszczenia zdalnego).",
+  "settings.retentionCombineInfo": "Cztery reguły łączą się operatorem LUB: migawka przetrwa, jeśli zachowałaby ją choć jedna reguła — nie sumują się do stałej liczby. Dotyczy osobno każdego kopiowanego elementu.",
+  "settings.retentionOffsiteImmutableInfo": "Niezmienny cel zdalny nigdy nie jest stąd czyszczony, niezależnie od tych ustawień — zobacz Zdalne › Strategia przechowywania, jak go wyczyścić.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

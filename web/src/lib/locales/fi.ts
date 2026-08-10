@@ -342,10 +342,16 @@ const fi: Partial<Translations> = {
   "settings.retentionDaily": "Säilytä päivittäin",
   "settings.retentionWeekly": "Säilytä viikoittain",
   "settings.retentionMonthly": "Säilytä kuukausittain",
+  "settings.retentionLastInfo": "Säilyttää N viimeisintä snapshotia riippumatta siitä, milloin ne on tehty.",
+  "settings.retentionDailyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenteripäivältä, jolla on varmuuskopio — yksi päivässä, ei N varmuuskopiota.",
+  "settings.retentionWeeklyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenteriviikolta, jolla on varmuuskopio.",
+  "settings.retentionMonthlyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenterikuukaudelta, jolla on varmuuskopio.",
   "settings.retentionLocal": "Paikallinen repo",
   "settings.retentionOffsite": "Etärepo",
   "settings.retentionOffsiteTitle": "Etäsäilytys",
   "settings.retentionOffsiteHint": "Erillinen käytäntö etärepolle, jotta voit säilyttää sitä pidempään arkistona. Kaikki 0 = säilytä jokainen etävarmuuskopio (ei etäkarsintaa).",
+  "settings.retentionCombineInfo": "Neljä sääntöä yhdistyvät TAI-logiikalla: snapshot säilyy, jos mikä tahansa yksittäinen sääntö säilyttäisi sen — ne eivät summaudu kiinteäksi määräksi. Koskee jokaista varmuuskopioitua kohdetta erikseen.",
+  "settings.retentionOffsiteImmutableInfo": "Muuttumatonta etäkohdetta ei koskaan karsita täältä, näistä asetuksista riippumatta — katso Etä › Säilytysstrategia, miten se karsitaan.",
 
   // Off-site (rclone)
   "rclone.title": "Etäsijainti (rclone)",

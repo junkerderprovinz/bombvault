@@ -342,10 +342,16 @@ const he: Partial<Translations> = {
   "settings.retentionDaily": "שמור יומיים",
   "settings.retentionWeekly": "שמור שבועיים",
   "settings.retentionMonthly": "שמור חודשיים",
+  "settings.retentionLastInfo": "שומר את N הגיבויים העדכניים ביותר, ללא קשר למועד יצירתם.",
+  "settings.retentionDailyInfo": "שומר גיבוי אחד עבור כל אחד מ-N ימי הקלנדר האחרונים שיש בהם גיבוי — אחד ליום, לא N גיבויים.",
+  "settings.retentionWeeklyInfo": "שומר גיבוי אחד עבור כל אחד מ-N שבועות הקלנדר האחרונים שיש בהם גיבוי.",
+  "settings.retentionMonthlyInfo": "שומר גיבוי אחד עבור כל אחד מ-N חודשי הקלנדר האחרונים שיש בהם גיבוי.",
   "settings.retentionLocal": "מאגר מקומי",
   "settings.retentionOffsite": "מאגר מרוחק",
   "settings.retentionOffsiteTitle": "שמירה מרוחקת",
   "settings.retentionOffsiteHint": "מדיניות נפרדת למאגר המרוחק, כדי לשמור אותו זמן רב יותר כארכיון. הכול 0 = שמור כל גיבוי מרוחק (ללא גיזום מרוחק).",
+  "settings.retentionCombineInfo": "ארבעת הכללים משולבים באו: גיבוי נשמר אם כלל כלשהו היה שומר אותו — הם לא מצטברים למספר קבוע. חל בנפרד על כל פריט מגובה.",
+  "settings.retentionOffsiteImmutableInfo": "יעד מרוחק שאינו ניתן לשינוי לעולם לא נגזם מכאן, ללא קשר להגדרות אלה — ראה מרוחק › אסטרטגיית שמירה כדי לדעת איך לגזום אותו.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

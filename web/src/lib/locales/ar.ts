@@ -342,10 +342,16 @@ const ar: Partial<Translations> = {
   "settings.retentionDaily": "الاحتفاظ اليومي",
   "settings.retentionWeekly": "الاحتفاظ الأسبوعي",
   "settings.retentionMonthly": "الاحتفاظ الشهري",
+  "settings.retentionLastInfo": "يحتفظ بآخر N نسخة، بغض النظر عن وقت إنشائها.",
+  "settings.retentionDailyInfo": "يحتفظ بنسخة واحدة لكل يوم من آخر N يوم تقويمي يحتوي على نسخة احتياطية — نسخة واحدة يومياً، وليس N نسخة.",
+  "settings.retentionWeeklyInfo": "يحتفظ بنسخة واحدة لكل أسبوع من آخر N أسبوع تقويمي يحتوي على نسخة احتياطية.",
+  "settings.retentionMonthlyInfo": "يحتفظ بنسخة واحدة لكل شهر من آخر N شهر تقويمي يحتوي على نسخة احتياطية.",
   "settings.retentionLocal": "المستودع المحلي",
   "settings.retentionOffsite": "المستودع الخارجي",
   "settings.retentionOffsiteTitle": "الاحتفاظ الخارجي",
   "settings.retentionOffsiteHint": "سياسة منفصلة للمستودع الخارجي لتحتفظ به أطول كأرشيف. الكل 0 = الاحتفاظ بكل نسخة خارجية (دون تقليم خارجي).",
+  "settings.retentionCombineInfo": "تتحد القواعد الأربع بمنطق أو (OR): تبقى النسخة إذا احتفظت بها أي قاعدة واحدة — لا تُجمع إلى عدد ثابت. تُطبَّق بشكل منفصل على كل عنصر تم نسخه احتياطياً.",
+  "settings.retentionOffsiteImmutableInfo": "لا يتم تقليم الوجهة الخارجية غير القابلة للتغيير من هنا أبداً، بغض النظر عن هذه الإعدادات — راجع خارجي › استراتيجية الاحتفاظ لمعرفة كيفية تقليمها.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

@@ -340,10 +340,16 @@ const pt: Partial<Translations> = {
   "settings.retentionDaily": "Manter diários",
   "settings.retentionWeekly": "Manter semanais",
   "settings.retentionMonthly": "Manter mensais",
+  "settings.retentionLastInfo": "Mantém os N snapshots mais recentes, independentemente de quando foram criados.",
+  "settings.retentionDailyInfo": "Mantém um snapshot para cada um dos últimos N dias de calendário com um backup — um por dia, não N backups.",
+  "settings.retentionWeeklyInfo": "Mantém um snapshot para cada uma das últimas N semanas de calendário com um backup.",
+  "settings.retentionMonthlyInfo": "Mantém um snapshot para cada um dos últimos N meses de calendário com um backup.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
   "settings.retentionOffsiteTitle": "Retenção externa",
   "settings.retentionOffsiteHint": "Uma política separada para o repo externo, para mantê-lo por mais tempo como arquivo. Tudo 0 = manter cada backup externo (sem limpeza externa).",
+  "settings.retentionCombineInfo": "As quatro regras combinam-se com OU: um snapshot sobrevive se qualquer regra o mantivesse — não se somam a um número fixo. Aplica-se separadamente a cada item com backup.",
+  "settings.retentionOffsiteImmutableInfo": "Um destino externo imutável nunca é limpo a partir daqui, independentemente destas definições — veja Externo › Estratégia de retenção para saber como limpá-lo.",
 
   // Off-site (rclone)
   "rclone.title": "Externo (rclone)",

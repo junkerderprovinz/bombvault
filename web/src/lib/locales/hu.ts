@@ -342,10 +342,16 @@ const hu: Partial<Translations> = {
   "settings.retentionDaily": "Napi megtartása",
   "settings.retentionWeekly": "Heti megtartása",
   "settings.retentionMonthly": "Havi megtartása",
+  "settings.retentionLastInfo": "Az N legutóbbi pillanatképet őrzi meg, függetlenül attól, mikor készültek.",
+  "settings.retentionDailyInfo": "Egy pillanatképet őriz meg az utolsó N naptári nap mindegyikéből, amelyben van mentés — naponta egyet, nem N mentést.",
+  "settings.retentionWeeklyInfo": "Egy pillanatképet őriz meg az utolsó N naptári hét mindegyikéből, amelyben van mentés.",
+  "settings.retentionMonthlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári hónap mindegyikéből, amelyben van mentés.",
   "settings.retentionLocal": "Helyi repó",
   "settings.retentionOffsite": "Távoli repó",
   "settings.retentionOffsiteTitle": "Távoli megőrzés",
   "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli mentés megőrzése (nincs távoli takarítás).",
+  "settings.retentionCombineInfo": "A négy szabály VAGY logikával kombinálódik: egy pillanatkép megmarad, ha bármelyik szabály megőrizné — nem adódnak össze egy rögzített számmá. Külön érvényes minden mentett elemre.",
+  "settings.retentionOffsiteImmutableInfo": "Egy megváltoztathatatlan távoli célt innen sosem takarítunk, függetlenül ezektől a beállításoktól — lásd Távoli › Megőrzési stratégia, hogyan lehet mégis megtisztítani.",
 
   // Off-site (rclone)
   "rclone.title": "Külső helyszín (rclone)",

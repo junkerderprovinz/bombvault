@@ -340,10 +340,16 @@ const cs: Partial<Translations> = {
   "settings.retentionDaily": "Ponechat denní",
   "settings.retentionWeekly": "Ponechat týdenní",
   "settings.retentionMonthly": "Ponechat měsíční",
+  "settings.retentionLastInfo": "Ponechá N nejnovějších snapshotů, bez ohledu na to, kdy byly vytvořeny.",
+  "settings.retentionDailyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních dnů se zálohou — jeden denně, ne N záloh.",
+  "settings.retentionWeeklyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních týdnů se zálohou.",
+  "settings.retentionMonthlyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních měsíců se zálohou.",
   "settings.retentionLocal": "Místní repo",
   "settings.retentionOffsite": "Vzdálené repo",
   "settings.retentionOffsiteTitle": "Vzdálené uchovávání",
   "settings.retentionOffsiteHint": "Samostatná zásada pro vzdálené repo, aby se dalo držet déle jako archiv. Vše 0 = zachovat každou vzdálenou zálohu (bez čištění vzdáleného).",
+  "settings.retentionCombineInfo": "Čtyři pravidla se kombinují pomocí NEBO: snapshot přežije, pokud by ho zachovalo jakékoli jedno pravidlo — nesčítají se do pevného počtu. Platí zvlášť pro každou zálohovanou položku.",
+  "settings.retentionOffsiteImmutableInfo": "Neměnný vzdálený cíl se odsud nikdy nečistí, bez ohledu na tato nastavení — viz Off-site › Strategie uchovávání, jak jej vyčistit.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

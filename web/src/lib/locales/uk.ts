@@ -337,10 +337,16 @@ const uk: Partial<Translations> = {
   "settings.retentionDaily": "Зберігати щоденні",
   "settings.retentionWeekly": "Зберігати щотижневі",
   "settings.retentionMonthly": "Зберігати щомісячні",
+  "settings.retentionLastInfo": "Зберігає N останніх знімків, незалежно від того, коли вони були зроблені.",
+  "settings.retentionDailyInfo": "Зберігає один знімок за кожен із останніх N календарних днів із резервною копією — один на день, а не N копій.",
+  "settings.retentionWeeklyInfo": "Зберігає один знімок за кожен із останніх N календарних тижнів із резервною копією.",
+  "settings.retentionMonthlyInfo": "Зберігає один знімок за кожен із останніх N календарних місяців із резервною копією.",
   "settings.retentionLocal": "Локальний репо",
   "settings.retentionOffsite": "Віддалений репо",
   "settings.retentionOffsiteTitle": "Віддалене зберігання",
   "settings.retentionOffsiteHint": "Окрема політика для віддаленого репозиторію, щоб зберігати його довше як архів. Усе 0 = зберігати всі віддалені копії (без очищення віддаленого).",
+  "settings.retentionCombineInfo": "Чотири правила поєднуються через АБО: знімок зберігається, якщо його зберегло б хоча б одне правило — вони не підсумовуються до фіксованої кількості. Застосовується окремо до кожного резервованого елемента.",
+  "settings.retentionOffsiteImmutableInfo": "Незмінне віддалене призначення ніколи не очищується звідси, незалежно від цих налаштувань — див. Віддалене › Стратегія збереження, як його очистити.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

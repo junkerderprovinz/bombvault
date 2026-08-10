@@ -342,10 +342,16 @@ const th: Partial<Translations> = {
   "settings.retentionDaily": "เก็บรายวัน",
   "settings.retentionWeekly": "เก็บรายสัปดาห์",
   "settings.retentionMonthly": "เก็บรายเดือน",
+  "settings.retentionLastInfo": "เก็บ N สแนปช็อตล่าสุด ไม่ว่าจะสร้างเมื่อใด",
+  "settings.retentionDailyInfo": "เก็บสแนปช็อตหนึ่งรายการสำหรับแต่ละวันตามปฏิทินใน N วันล่าสุดที่มีการสำรองข้อมูล — วันละหนึ่งรายการ ไม่ใช่ N ชุด",
+  "settings.retentionWeeklyInfo": "เก็บสแนปช็อตหนึ่งรายการสำหรับแต่ละสัปดาห์ตามปฏิทินใน N สัปดาห์ล่าสุดที่มีการสำรองข้อมูล",
+  "settings.retentionMonthlyInfo": "เก็บสแนปช็อตหนึ่งรายการสำหรับแต่ละเดือนตามปฏิทินใน N เดือนล่าสุดที่มีการสำรองข้อมูล",
   "settings.retentionLocal": "ที่เก็บในเครื่อง",
   "settings.retentionOffsite": "ที่เก็บนอกสถานที่",
   "settings.retentionOffsiteTitle": "การเก็บรักษานอกสถานที่",
   "settings.retentionOffsiteHint": "นโยบายแยกสำหรับที่เก็บนอกสถานที่ เพื่อเก็บไว้นานขึ้นเป็นคลังเก็บ ตั้งเป็น 0 ทั้งหมด = เก็บข้อมูลสำรองนอกสถานที่ทุกชุด (ไม่พรูนนอกสถานที่)",
+  "settings.retentionCombineInfo": "กฎทั้งสี่รวมกันแบบ OR: สแนปช็อตจะยังอยู่หากมีกฎใดกฎหนึ่งที่จะเก็บมันไว้ — ไม่ได้รวมกันเป็นจำนวนคงที่ ใช้แยกกันสำหรับแต่ละรายการที่สำรองข้อมูล",
+  "settings.retentionOffsiteImmutableInfo": "ปลายทางนอกสถานที่แบบเปลี่ยนแปลงไม่ได้จะไม่ถูกพรูนจากที่นี่เลย ไม่ว่าการตั้งค่านี้จะเป็นอย่างไร — ดูที่นอกสถานที่ › กลยุทธ์การเก็บรักษาเพื่อดูวิธีพรูน",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
