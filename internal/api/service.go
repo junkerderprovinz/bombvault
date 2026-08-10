@@ -2391,13 +2391,18 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 // counts as initialised (that mode mismatch is reported by EnsureRepo, not here).
 //
 // reachable reports the repo could be opened at all; initialized that it is a real
-// restic repository. `cat config` cannot distinguish an unreachable backend from a
-// reachable-but-empty location (both simply fail to open), so a repo that opens in
-// neither mode is reported as neither reachable nor initialised, and err carries the
-// primary mode's probe failure (a bad rclone remote type, wrong credentials, a
-// backend that refuses the connection, ...) instead of a bare false/false — the
-// handler scrubs it before it reaches the client. An unconfigured off-site repo for
-// the domain is also an error.
+// restic repository. A REMOTE repo that is reachable but has never been replicated
+// to yet fails `cat config` with restic's "repository does not exist" — the SAME
+// signal isRepoUninitialized/listSnapshots already treat as "reachable, just empty"
+// (issue #117) rather than a genuine failure, so TestOffsite applies the same check
+// and reports reachable=true, initialized=false, err=nil for it (the UI's existing
+// "uninitialized" warning state — BombVault creates the repo on the first
+// replication, this is expected, not an error; issue #130). Any OTHER probe failure
+// (a bad rclone remote type, wrong credentials, a backend that refuses the
+// connection, ...) is a genuine reachability failure: reported as neither reachable
+// nor initialised, with err carrying the primary mode's probe failure instead of a
+// bare false/false — the handler scrubs it before it reaches the client. An
+// unconfigured off-site repo for the domain is also an error.
 func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, initialized bool, err error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -2433,9 +2438,17 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	if probe(s.oppositeMode(mode)) == nil {
 		return true, true, nil
 	}
-	// Neither mode opened — surface the primary mode's failure (the user's actual
-	// configured encryption setting) instead of a silent false/false, so the UI can
-	// show the real reason (issue: roachman, off-site "not reachable" with no detail).
+	// A reachable REMOTE destination that simply has no repository yet (no
+	// replication has run) is not a failure — same signal listSnapshots already
+	// treats as "empty, not fatal" (#117). Report it as the UI's uninitialized
+	// state instead of a fatal error (#130).
+	if restic.IsRemoteRepo(repo) && isRepoUninitialized(primaryErr) {
+		return true, false, nil
+	}
+	// Neither mode opened and it's not the uninitialized case — surface the primary
+	// mode's failure (the user's actual configured encryption setting) instead of a
+	// silent false/false, so the UI can show the real reason (issue: roachman,
+	// off-site "not reachable" with no detail).
 	return false, false, primaryErr
 }
 
