@@ -11,6 +11,7 @@ import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
 import { SnapshotFileTree } from "./SnapshotFileTree";
+import { loadErrorMessage } from "../lib/errors";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -95,8 +96,10 @@ function SnapshotFileBrowser({
     setLoading(true);
     listSnapshotFiles(containerName, snapshotId, source)
       .then((res) => {
+        // #129 — show the server's own reason (e.g. a stale repo lock) when it
+        // sent one; the generic message is only for a plain network failure.
         if (res.ok) setFiles(res.files ?? []);
-        else setError(t("files.loadFailed"));
+        else setError(loadErrorMessage(res, t("files.loadFailed")));
       })
       .catch(() => setError(t("files.loadFailed")))
       .finally(() => setLoading(false));
