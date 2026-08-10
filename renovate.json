@@ -30,6 +30,13 @@
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "Go modules (non-major)",
       "commitMessagePrefix": "chore(deps):"
+    },
+    {
+      "description": "web/lint-ts's typescript pin is a deliberate TS 6.x side-by-side shim so typescript-eslint (which does not support TS >=7, see typescript-eslint#10940) can keep linting the project's real TS 7 sources. Do not propose bumping it until that upstream issue closes (#128).",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["web/lint-ts/package.json"],
+      "matchDepNames": ["typescript"],
+      "enabled": false
     }
   ]
 }
