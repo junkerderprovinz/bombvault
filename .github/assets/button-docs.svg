@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" width="460" height="120" role="img" aria-label="Documentation">
-  <!-- BombVault docs button: solid sunflower #FCC419 fill, dark Carbon ink, borderless (filled, no outline) -->
-  <rect x="0" y="0" width="460" height="120" rx="20" ry="20" fill="#FCC419"/>
-  <!-- Document glyph (folded corner) in Carbon ink -->
-  <g fill="none" stroke="#161616" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M40,30 h20 l18,18 v36 q0,6 -6,6 h-32 q-6,0 -6,-6 v-48 q0,-6 6,-6 z"/>
-    <path d="M60,30 v18 h18"/>
-    <path d="M44,64 h24"/>
-    <path d="M44,74 h24"/>
-    <path d="M44,84 h14"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Documentation">
+  <!-- BombVault docs button: same box (viewBox) and same colours as the BMAC
+       button (button-buy-me-a-coffee.svg) so both render identically sized
+       and coloured at the README's shared width="220". Content below is the
+       original 460x120 design, uniformly scaled (no distortion) and centred
+       into this box; only the outer rect fills the full canvas. -->
+  <rect x="0" y="0" width="841.9" height="245.3" rx="38.2" ry="38.2" fill="#fd0"/>
+  <g transform="translate(0.05,12.85) scale(1.830217)">
+    <!-- Document glyph (folded corner) -->
+    <g fill="none" stroke="#0d0c23" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M40,30 h20 l18,18 v36 q0,6 -6,6 h-32 q-6,0 -6,-6 v-48 q0,-6 6,-6 z"/>
+      <path d="M60,30 v18 h18"/>
+      <path d="M44,64 h24"/>
+      <path d="M44,74 h24"/>
+      <path d="M44,84 h14"/>
+    </g>
+    <!-- Label -->
+    <text x="278" y="62" text-anchor="middle" dominant-baseline="central"
+          font-family="'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif"
+          font-size="38" font-weight="600" fill="#0d0c23" letter-spacing="0.3">Documentation</text>
   </g>
-  <!-- Label -->
-  <text x="278" y="62" text-anchor="middle" dominant-baseline="central"
-        font-family="'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif"
-        font-size="38" font-weight="600" fill="#161616" letter-spacing="0.3">Documentation</text>
 </svg>
