@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -163,7 +164,8 @@ func TestServiceModeEncryptionOff(t *testing.T) {
 }
 
 func TestDownloadFlashZip(t *testing.T) {
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir(), FlashDir: "/host/boot"}
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: dir, DataDir: dir, FlashDir: "/host/boot"}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.FlashPath = "backups/flash"
@@ -3527,8 +3529,17 @@ func (f *fakeResticEngine) DumpZip(_ context.Context, repo, snapshotID, subfolde
 	if f.dumpErr != nil {
 		return f.dumpErr
 	}
-	_, _ = w.Write([]byte("PK\x03\x04zip")) // minimal zip-magic stand-in
-	return nil
+	// A real, minimal zip (not just magic bytes): DownloadFlashZip runs the
+	// dump through a recompress step that parses it as an actual zip.
+	zw := zip.NewWriter(w)
+	fw, err := zw.CreateHeader(&zip.FileHeader{Name: "f.txt", Method: zip.Store})
+	if err != nil {
+		return err
+	}
+	if _, err := fw.Write([]byte("zip")); err != nil {
+		return err
+	}
+	return zw.Close()
 }
 
 func (f *fakeResticEngine) Snapshots(ctx context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
