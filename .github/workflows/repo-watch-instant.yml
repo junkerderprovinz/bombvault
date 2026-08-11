@@ -1,0 +1,78 @@
+name: Instant Repo-Watch Ping
+
+# Rolled out identically to every one of junkerderprovinz's own repos (see
+# repo-watch's README "Instant notifications" section for the rollout list
+# and how to add it to a new repo). Fires on new issues/PRs and new
+# comments/reviews from anyone else, and dispatches a repository_dispatch
+# event to junkerderprovinz/repo-watch, which does the actual Matrix post
+# (instant.yml + instant_notify.py there) using its own already-configured
+# Matrix credentials — this stub never talks to Matrix directly, and never
+# sees a Matrix secret.
+#
+# Foreign/upstream repos this account doesn't own can't run this (GitHub
+# only fires native issue/PR/comment triggers for a repo's own workflows),
+# so replies on this account's PRs against repos it doesn't own stay on
+# repo-watch's periodic 5-minute poll (replies.yml) — this stub only ever
+# covers this repo's own activity.
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    # Skip the account's own actions and bots (Renovate, etc.) — nobody
+    # needs a push telling them they just did something themselves.
+    if: github.event.sender.login != 'junkerderprovinz' && !endsWith(github.event.sender.login, '[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch to repo-watch
+        env:
+          GH_TOKEN: ${{ secrets.REPOWATCH_PAT }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          COMMENT_URL: ${{ github.event.comment.html_url }}
+          REVIEW_URL: ${{ github.event.review.html_url }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          ACTOR: ${{ github.event.sender.login }}
+        # Every event field above is read from env vars, never interpolated
+        # directly into this script — issue/PR titles are attacker-controlled
+        # on a public repo, and inlining them into a run: block via ${{ }}
+        # would be a shell-injection hole (GitHub's own documented "script
+        # injection" pitfall). Env-var expansion here is plain string
+        # substitution, not re-parsed as shell syntax, so it's safe.
+        run: |
+          kind="issue"
+          number="$ISSUE_NUMBER"
+          title="$ISSUE_TITLE"
+          url="$ISSUE_URL"
+          case "$EVENT_NAME" in
+            pull_request)
+              kind="pr"; number="$PR_NUMBER"; title="$PR_TITLE"; url="$PR_URL" ;;
+            issue_comment)
+              kind="comment"; number="$ISSUE_NUMBER"; title="$ISSUE_TITLE"; url="$COMMENT_URL" ;;
+            pull_request_review)
+              kind="review"; number="$PR_NUMBER"; title="$PR_TITLE"; url="$REVIEW_URL" ;;
+          esac
+          gh api "repos/junkerderprovinz/repo-watch/dispatches" \
+            -f event_type=repo-activity \
+            -f "client_payload[repo]=$REPO_NAME" \
+            -f "client_payload[kind]=$kind" \
+            -f "client_payload[number]=$number" \
+            -f "client_payload[title]=$title" \
+            -f "client_payload[url]=$url" \
+            -f "client_payload[actor]=$ACTOR"
