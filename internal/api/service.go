@@ -1929,6 +1929,12 @@ func (s *Service) CollectStatsOnStartup() {
 // The passed-in mode is superseded by a per-target mode built inside the loop (so
 // each destination carries its own S3 storage class); it is kept in the signature
 // only to keep call-sites compiling.
+//
+// offsiteProgressHeartbeat is how often copyToOffsite re-publishes the
+// indeterminate "replicating" progress event while a copy is in flight (#134).
+// A package var (not a const) so tests can shrink it.
+var offsiteProgressHeartbeat = 5 * time.Second
+
 func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, _ restic.Mode, localRepo string) (err error) {
 	targets := s.offsiteReplicationTargets(domain, settings)
 	if len(targets) == 0 {
@@ -1966,6 +1972,33 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// per-DOMAIN so the OffsiteIndicator + dashboard stay unchanged for N=1.
 	s.progBegin(ctx, "offsite:"+domain, "replicate")
 	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil) }()
+	// #134: restic copy publishes NO incremental progress, so without this the
+	// entry's lastSeen is only ever touched once, at progBegin above. The
+	// frontend's STALE_MS (15s, web/src/lib/progress.ts) then hides the "running"
+	// dashboard line as soon as a replication takes longer than that — which any
+	// real off-site copy does — making the operation look like it silently
+	// vanished, even though it is still actively running (confirmed by the line
+	// reappearing correctly on a manual refresh, since the backend state was fine
+	// all along). Re-publish the SAME indeterminate active event periodically so
+	// lastSeen keeps advancing for the whole replication, not just its two ends.
+	// Stopped via defer BEFORE progEnd (registered after it, so it unwinds
+	// first) so a heartbeat can never race past the terminal event.
+	if s.progress != nil {
+		hbDone := make(chan struct{})
+		defer close(hbDone)
+		go func() {
+			t := time.NewTicker(offsiteProgressHeartbeat)
+			defer t.Stop()
+			for {
+				select {
+				case <-hbDone:
+					return
+				case <-t.C:
+					s.progress.Publish(progress.Event{Key: "offsite:" + domain, Phase: "replicate", Percent: 0, Active: true})
+				}
+			}
+		}()
+	}
 
 	// Replicate to each destination best-effort: one target's failure is recorded
 	// and logged but must NOT abort the others (moot for N=1). The joined error

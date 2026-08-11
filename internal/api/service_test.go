@@ -3423,6 +3423,10 @@ type fakeResticEngine struct {
 	// it — lets a test hold an async restore "in flight" to exercise the shared
 	// single-flight guard and the domain lock deterministically.
 	blockRestore chan struct{}
+	// blockCopy, when non-nil, makes Copy wait on it — lets a test hold an
+	// off-site replication "in flight" deterministically (#134 heartbeat test)
+	// instead of sleeping.
+	blockCopy chan struct{}
 	// restoreEntered, when non-nil, receives one (non-blocking) signal the
 	// moment a blocked restore call is INSIDE the engine — i.e. the restore
 	// execute path has already acquired the domain repo lock — so a test can
@@ -3664,6 +3668,9 @@ func (f *fakeResticEngine) CacheCleanup(context.Context) error {
 func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []string, _ restic.Limits, _ restic.Mode) error {
 	if f.copyPanic {
 		panic("boom during copy")
+	}
+	if f.blockCopy != nil {
+		<-f.blockCopy
 	}
 	f.copied = append(f.copied, srcRepo+"->"+destRepo)
 	return f.copyErr
