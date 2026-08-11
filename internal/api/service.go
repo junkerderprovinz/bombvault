@@ -7548,8 +7548,9 @@ func resolveFlashSnapshot(snaps []restic.Snapshot, selector string) (string, err
 // DownloadFlashZip streams a flash snapshot to w as a zip (restic dump), the
 // non-destructive replacement for the old extract-to-folder restore: the live
 // /boot is never touched, no filesystem metadata is restored (so it can't hit
-// the per-file permission errors a to-disk restore caused on /mnt/user), and the
-// file drops straight into the Unraid USB creator.
+// the per-file permission errors a to-disk restore caused on /mnt/user), and —
+// via dumpFlashZipCompat — the file drops straight into the Unraid USB creator
+// (restic's own zip dump does not: bombvault#136).
 //
 // "latest"/"" resolves to the newest snapshot; an explicit id is validated
 // against the repo. onResolved (optional) is called with the concrete id once it
@@ -7599,7 +7600,7 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 		}
 		dst = ageW
 	}
-	if derr := s.engine.DumpZip(ctx, repo, id, s.cfg.FlashDir, dst, mode); derr != nil {
+	if derr := s.dumpFlashZipCompat(ctx, repo, id, s.cfg.FlashDir, dst, mode); derr != nil {
 		// A client disconnect / user cancel of the download is context.Canceled —
 		// record it as "cancelled", not a failure.
 		status, msg := "failed", derr.Error()

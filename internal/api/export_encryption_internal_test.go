@@ -1,6 +1,7 @@
 package api
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"io"
@@ -209,7 +210,10 @@ func (f *downloadFakeEngine) DumpZip(_ context.Context, _, _, _ string, w io.Wri
 // age blob that decrypts to the DumpZip payload.
 func TestDownloadFlashZipAgeRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	payload := []byte("PK\x03\x04streamed")
+	// A real (all-Store, restic-shaped) zip: DownloadFlashZip now runs the
+	// dump through dumpFlashZipCompat's recompress step, which parses it as
+	// an actual zip — a magic-byte stand-in no longer survives that.
+	payload := buildTestStoredZip(t, map[string][]byte{"f.txt": []byte("hello flash")})
 	fake := &downloadFakeEngine{
 		snaps:     []restic.Snapshot{{ID: "aaaa1111bbbb2222"}},
 		dumpBytes: payload,
@@ -223,7 +227,7 @@ func TestDownloadFlashZipAgeRoundTrip(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	svc := &Service{cfg: config.Config{HostMountRoot: root, FlashDir: "/boot", AppKey: strings.Repeat("a", 64)}, engine: fake, store: st}
+	svc := &Service{cfg: config.Config{HostMountRoot: root, DataDir: root, FlashDir: "/boot", AppKey: strings.Repeat("a", 64)}, engine: fake, store: st}
 
 	var buf bytes.Buffer
 	var resolved string
@@ -236,8 +240,27 @@ func TestDownloadFlashZipAgeRoundTrip(t *testing.T) {
 	if bytes.Equal(buf.Bytes(), payload) {
 		t.Fatal("stream must be ciphertext, not the raw zip payload")
 	}
-	if got := ageRoundTripDecrypt(t, buf.Bytes(), id); !bytes.Equal(got, payload) {
-		t.Fatalf("decrypted stream = %q, want the payload", got)
+	// The recompress step changes the bytes (Store -> Deflate), so compare
+	// logical zip content rather than a raw byte match against payload.
+	got := ageRoundTripDecrypt(t, buf.Bytes(), id)
+	zr, err := zip.NewReader(bytes.NewReader(got), int64(len(got)))
+	if err != nil {
+		t.Fatalf("decrypted stream is not a valid zip: %v", err)
+	}
+	if len(zr.File) != 1 || zr.File[0].Name != "f.txt" {
+		t.Fatalf("decrypted zip entries = %v, want only [f.txt]", zr.File)
+	}
+	rc, err := zr.File[0].Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = rc.Close() }()
+	content, err := io.ReadAll(rc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(content, []byte("hello flash")) {
+		t.Fatalf("decrypted f.txt content = %q, want %q", content, "hello flash")
 	}
 }
 
