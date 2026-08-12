@@ -65,11 +65,15 @@ func TestFlashZipJunkEntry(t *testing.T) {
 		{"FSCK0000.REC", 32768, true},
 		{"FSCK123456.REC", 100, true},
 		{"260325124039.BMP", 0, true},
+		{"previous", 0, true},
+		{"previous/bzimage", 9821184, true},
+		{"previous/bzmodules", 771751936, true},
 		{"config/plugins/gitkeep-note.txt", 12, false}, // merely contains "git" as a substring
 		{"notFSCK.REC", 10, false},                     // does not match the FSCK\d+.REC shape
 		{"syslinux/splash.bmp", 45678, false},          // non-empty .bmp: a real syslinux background must survive
 		{"bzfirmware", 323293184, false},
 		{"EFI/boot/bootx64.efi", 199952, false},
+		{"config/previous-attempt.log", 40, false}, // "previous" only as a prefix of a different name
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -137,8 +141,11 @@ func TestRecompressFlashZipDropsJunkEntries(t *testing.T) {
 		".gitattributes":             []byte("* -text"),
 		"System Volume Information/": nil,
 		"System Volume Information/IndexerVolumeGuid": []byte("guid"),
-		"FSCK0000.REC":     bytes.Repeat([]byte{0}, 100),
-		"260325124039.BMP": nil, // 0 bytes
+		"FSCK0000.REC":       bytes.Repeat([]byte{0}, 100),
+		"260325124039.BMP":   nil, // 0 bytes
+		"previous/":          nil,
+		"previous/bzimage":   []byte("stale prior-version kernel"),
+		"previous/bzmodules": []byte("stale prior-version modules"),
 	})
 
 	var out bytes.Buffer
