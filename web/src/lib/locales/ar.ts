@@ -169,7 +169,6 @@ const ar: Partial<Translations> = {
   "offsite.sectionTitle": "الحماية خارج الموقع",
   "offsite.replicating": "جارٍ النسخ…",
   "offsite.replicateFailed": "فشل النسخ",
-  "flash.downloading": "جارٍ التنزيل…",
   "settings.domains": "النطاقات",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",

@@ -169,7 +169,6 @@ const th: Partial<Translations> = {
   "offsite.sectionTitle": "การป้องกันนอกสถานที่",
   "offsite.replicating": "กำลังจำลอง…",
   "offsite.replicateFailed": "การจำลองล้มเหลว",
-  "flash.downloading": "กำลังดาวน์โหลด…",
   "settings.domains": "โดเมน",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",

@@ -169,7 +169,6 @@ const tr: Partial<Translations> = {
   "offsite.sectionTitle": "Site dışı koruma",
   "offsite.replicating": "Çoğaltılıyor…",
   "offsite.replicateFailed": "Çoğaltma başarısız",
-  "flash.downloading": "İndiriliyor…",
   "settings.domains": "Etki Alanları",
   "settings.containersEnabled": "Konteynerler",
   "settings.vmsEnabled": "VM'ler",

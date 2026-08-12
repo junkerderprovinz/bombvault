@@ -167,7 +167,6 @@ const uk: Partial<Translations> = {
   "offsite.sectionTitle": "Зовнішній захист",
   "offsite.replicating": "Реплікація…",
   "offsite.replicateFailed": "Помилка реплікації",
-  "flash.downloading": "Завантаження…",
   "settings.domains": "Домени",
   "settings.containersEnabled": "Контейнери",
   "settings.vmsEnabled": "Віртуальні машини",

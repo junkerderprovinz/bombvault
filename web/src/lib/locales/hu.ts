@@ -169,7 +169,6 @@ const hu: Partial<Translations> = {
   "offsite.sectionTitle": "Telephelyen kívüli védelem",
   "offsite.replicating": "Replikálás…",
   "offsite.replicateFailed": "A replikálás sikertelen",
-  "flash.downloading": "Letöltés…",
   "settings.domains": "Tartományok",
   "settings.containersEnabled": "Konténerek",
   "settings.vmsEnabled": "VM-ek",

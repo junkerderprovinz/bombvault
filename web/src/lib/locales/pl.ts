@@ -166,7 +166,6 @@ const pl: Partial<Translations> = {
   "offsite.sectionTitle": "Ochrona poza siedzibą",
   "offsite.replicating": "Replikowanie…",
   "offsite.replicateFailed": "Replikacja nie powiodła się",
-  "flash.downloading": "Pobieranie…",
   "settings.domains": "Domeny",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "Maszyny wirtualne",

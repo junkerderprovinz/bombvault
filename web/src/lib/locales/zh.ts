@@ -169,7 +169,6 @@ const zh: Partial<Translations> = {
   "offsite.sectionTitle": "异地保护",
   "offsite.replicating": "复制中…",
   "offsite.replicateFailed": "复制失败",
-  "flash.downloading": "下载中…",
   "settings.domains": "域",
   "settings.containersEnabled": "容器",
   "settings.vmsEnabled": "虚拟机",

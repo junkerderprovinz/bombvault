@@ -166,7 +166,6 @@ const ru: Partial<Translations> = {
   "offsite.sectionTitle": "Внешняя защита",
   "offsite.replicating": "Репликация…",
   "offsite.replicateFailed": "Ошибка репликации",
-  "flash.downloading": "Загрузка…",
   "settings.domains": "Домены",
   "settings.containersEnabled": "Контейнеры",
   "settings.vmsEnabled": "Виртуальные машины",

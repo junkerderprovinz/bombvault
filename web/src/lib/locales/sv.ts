@@ -169,7 +169,6 @@ const sv: Partial<Translations> = {
   "offsite.sectionTitle": "Skydd utanför platsen",
   "offsite.replicating": "Replikerar…",
   "offsite.replicateFailed": "Replikering misslyckades",
-  "flash.downloading": "Laddar ner…",
   "settings.domains": "Domäner",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
