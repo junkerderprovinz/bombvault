@@ -19,15 +19,21 @@ import (
 // Never legitimate boot content.
 var fsckRecPattern = regexp.MustCompile(`^FSCK\d+\.REC$`)
 
-// flashZipJunkEntry reports whether a zip entry is a known non-Unraid
-// artifact that has no place in a flash export: a stray git checkout at the
-// flash root (.git/, .gitattributes — someone's accidental repo, not boot
-// content), Windows' System Volume Information (left behind whenever the
-// FAT32 flash drive is plugged into a Windows PC), fsck recovery dumps, and
-// 0-byte .bmp marker files from that same Windows-mount cause. A real
-// syslinux background image (also .bmp) is never 0 bytes, so only empty ones
-// are dropped — this must never blanket-exclude the extension itself
-// (bombvault#136).
+// flashZipJunkEntry reports whether a zip entry has no place in a flash
+// export, for one of two distinct reasons. Foreign-tool litter that never
+// belonged on the flash drive in the first place: a stray git checkout at
+// the flash root (.git/, .gitattributes — someone's accidental repo), Windows'
+// System Volume Information (left behind whenever the FAT32 flash drive is
+// plugged into a Windows PC), fsck recovery dumps, and 0-byte .bmp marker
+// files from that same Windows-mount cause. A real syslinux background image
+// (also .bmp) is never 0 bytes, so only empty ones are dropped — this must
+// never blanket-exclude the extension itself (bombvault#136). And Unraid's
+// own previous/ folder: the prior OS version's boot files, kept automatically
+// as an upgrade rollback safety net. It is not part of what a flash export
+// promises to restore (OS, license, array config, shares, network, plugins —
+// all under config/ or the top-level bz* files), Unraid recreates it fresh on
+// the next real upgrade regardless, and on real-world boot sticks it can be a
+// third or more of the whole export's size.
 func flashZipJunkEntry(name string, uncompressedSize uint64) bool {
 	name = strings.TrimPrefix(name, "/")
 	base := path.Base(strings.TrimSuffix(name, "/"))
@@ -41,6 +47,8 @@ func flashZipJunkEntry(name string, uncompressedSize uint64) bool {
 	case fsckRecPattern.MatchString(base):
 		return true
 	case uncompressedSize == 0 && strings.EqualFold(path.Ext(base), ".bmp"):
+		return true
+	case name == "previous" || strings.HasPrefix(name, "previous/"):
 		return true
 	}
 	return false
