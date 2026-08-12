@@ -80,9 +80,20 @@ function FlashBackupButton({
 // Snapshot row (zip download restore)
 // ---------------------------------------------------------------------------
 
+// How long the download button shows a "preparing" spinner after a click,
+// bridging the gap before the browser's own download indicator takes over
+// (see handleDownload). Not a real progress signal, just a best-effort
+// window: the server can't send a single byte until it has finished
+// dumping + recompressing the whole snapshot server-side (see
+// dumpFlashZipCompat in the Go backend), which for a multi-GB flash backup
+// routinely takes longer than a moment. A generous fixed timeout beats no
+// feedback at all; there is no browser event to key off instead.
+const DOWNLOAD_PREPARING_MS = 20_000;
+
 function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; source: RepoSource; onDeleted: () => void; t: T }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
   async function handleDelete() {
     if (!window.confirm(t("snapshots.deleteConfirm"))) return;
@@ -107,6 +118,8 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
   // in lib/api.ts — acceptable here since a flash zip is far larger and
   // failures are rare.
   function handleDownload() {
+    setPreparing(true);
+    setTimeout(() => setPreparing(false), DOWNLOAD_PREPARING_MS);
     const a = document.createElement("a");
     a.href = flashDownloadURL(snap.id, source);
     a.download = `flash-${snap.id.slice(0, 8)}.zip`;
@@ -124,13 +137,20 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
         </span>
         <button
           onClick={handleDownload}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          disabled={preparing}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
         >
+          {preparing && (
+            <span
+              className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+          )}
           {t("flash.download")}
         </button>
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting}
+          disabled={deleting || preparing}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
