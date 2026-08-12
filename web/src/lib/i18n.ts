@@ -362,7 +362,6 @@ export const en = {
   "offsite.targets.loadError": "Could not load off-site targets.",
   "offsite.targets.retentionTitle": "Retention (0 = keep all)",
 
-  "flash.downloading": "Downloading…",
   "settings.domains": "Domains",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
@@ -1599,7 +1598,6 @@ export const de: Translations = {
   "offsite.targets.loadError": "Off-site-Ziele konnten nicht geladen werden.",
   "offsite.targets.retentionTitle": "Aufbewahrung (0 = alle behalten)",
 
-  "flash.downloading": "Lade herunter…",
   "settings.domains": "Domänen",
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VMs",

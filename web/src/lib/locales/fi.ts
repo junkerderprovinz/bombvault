@@ -169,7 +169,6 @@ const fi: Partial<Translations> = {
   "offsite.sectionTitle": "Etäsuojaus",
   "offsite.replicating": "Replikoidaan…",
   "offsite.replicateFailed": "Replikointi epäonnistui",
-  "flash.downloading": "Ladataan…",
   "settings.domains": "Toimialueet",
   "settings.containersEnabled": "Kontit",
   "settings.vmsEnabled": "VMs",

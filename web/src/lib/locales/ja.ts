@@ -169,7 +169,6 @@ const ja: Partial<Translations> = {
   "offsite.sectionTitle": "オフサイト保護",
   "offsite.replicating": "複製中…",
   "offsite.replicateFailed": "複製に失敗しました",
-  "flash.downloading": "ダウンロード中…",
   "settings.domains": "ドメイン",
   "settings.containersEnabled": "コンテナ",
   "settings.vmsEnabled": "VM",

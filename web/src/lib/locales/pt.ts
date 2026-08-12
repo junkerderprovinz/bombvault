@@ -168,7 +168,6 @@ const pt: Partial<Translations> = {
   "offsite.sectionTitle": "Proteção externa",
   "offsite.replicating": "Replicando…",
   "offsite.replicateFailed": "Falha na replicação",
-  "flash.downloading": "Baixando…",
   "settings.domains": "Domínios",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",

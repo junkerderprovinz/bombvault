@@ -169,7 +169,6 @@ const el: Partial<Translations> = {
   "offsite.sectionTitle": "Προστασία εκτός τόπου",
   "offsite.replicating": "Αναπαραγωγή…",
   "offsite.replicateFailed": "Η αναπαραγωγή απέτυχε",
-  "flash.downloading": "Λήψη…",
   "settings.domains": "Τομείς",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",

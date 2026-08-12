@@ -166,7 +166,6 @@ const nl: Partial<Translations> = {
   "offsite.sectionTitle": "Offsite-bescherming",
   "offsite.replicating": "Repliceren…",
   "offsite.replicateFailed": "Replicatie mislukt",
-  "flash.downloading": "Downloaden…",
   "settings.domains": "Domeinen",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VM's",

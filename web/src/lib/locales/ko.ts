@@ -169,7 +169,6 @@ const ko: Partial<Translations> = {
   "offsite.sectionTitle": "오프사이트 보호",
   "offsite.replicating": "복제 중…",
   "offsite.replicateFailed": "복제 실패",
-  "flash.downloading": "다운로드 중…",
   "settings.domains": "도메인",
   "settings.containersEnabled": "컨테이너",
   "settings.vmsEnabled": "VM",

@@ -169,7 +169,6 @@ const cs: Partial<Translations> = {
   "offsite.sectionTitle": "Ochrana mimo lokalitu",
   "offsite.replicating": "Replikace…",
   "offsite.replicateFailed": "Replikace selhala",
-  "flash.downloading": "Stahování…",
   "settings.domains": "Domény",
   "settings.containersEnabled": "Kontejnery",
   "settings.vmsEnabled": "VMs",

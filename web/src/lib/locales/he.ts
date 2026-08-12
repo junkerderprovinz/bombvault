@@ -169,7 +169,6 @@ const he: Partial<Translations> = {
   "offsite.sectionTitle": "הגנה מחוץ לאתר",
   "offsite.replicating": "משכפל…",
   "offsite.replicateFailed": "השכפול נכשל",
-  "flash.downloading": "מוריד…",
   "settings.domains": "דומיינים",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",

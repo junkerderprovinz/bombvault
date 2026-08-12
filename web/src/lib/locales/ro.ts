@@ -168,7 +168,6 @@ const ro: Partial<Translations> = {
   "offsite.sectionTitle": "Protecție externă",
   "offsite.replicating": "Se replică…",
   "offsite.replicateFailed": "Replicarea a eșuat",
-  "flash.downloading": "Se descarcă…",
   "settings.domains": "Domenii",
   "settings.containersEnabled": "Containere",
   "settings.vmsEnabled": "VM-uri",

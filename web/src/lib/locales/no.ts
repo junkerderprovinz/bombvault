@@ -168,7 +168,6 @@ const no: Partial<Translations> = {
   "offsite.sectionTitle": "Ekstern beskyttelse",
   "offsite.replicating": "Replikerer…",
   "offsite.replicateFailed": "Replikering mislyktes",
-  "flash.downloading": "Laster ned…",
   "settings.domains": "Domener",
   "settings.containersEnabled": "Kontainere",
   "settings.vmsEnabled": "VM-er",

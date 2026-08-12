@@ -83,12 +83,6 @@ function FlashBackupButton({
 function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; source: RepoSource; onDeleted: () => void; t: T }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
-  type DL =
-    | { phase: "idle" }
-    | { phase: "downloading"; bytes: number }
-    | { phase: "done" }
-    | { phase: "error"; message: string };
-  const [dl, setDl] = useState<DL>({ phase: "idle" });
 
   async function handleDelete() {
     if (!window.confirm(t("snapshots.deleteConfirm"))) return;
@@ -105,54 +99,21 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
     }
   }
 
-  // Stream the zip via fetch so the button shows live progress (restic dump has
-  // no known total size, so we report bytes received, not a percentage) and
-  // can't be triggered twice. A pre-stream failure comes back as a JSON error.
-  async function handleDownload() {
-    setDl({ phase: "downloading", bytes: 0 });
-    try {
-      const res = await fetch(flashDownloadURL(snap.id, source));
-      const ct = res.headers.get("Content-Type") ?? "";
-      if (ct.includes("application/json") || !res.body) {
-        let msg = "Download failed";
-        try {
-          const j = (await res.json()) as { error?: string };
-          if (j.error) msg = j.error;
-        } catch {
-          /* keep default */
-        }
-        setDl({ phase: "error", message: msg });
-        return;
-      }
-      const reader = res.body.getReader();
-      const chunks: Uint8Array[] = [];
-      let received = 0;
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          chunks.push(value);
-          received += value.length;
-          setDl({ phase: "downloading", bytes: received });
-        }
-      }
-      const blob = new Blob(chunks as BlobPart[], { type: "application/zip" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `flash-${snap.id.slice(0, 8)}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      setDl({ phase: "done" });
-      setTimeout(() => setDl({ phase: "idle" }), 4000);
-    } catch (err) {
-      setDl({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
-    }
+  // Native <a download>, not fetch()+Blob: the browser's own download
+  // manager then owns progress/completion, so it survives this row
+  // unmounting on tab switch (React was silently discarding the old fetch
+  // loop's progress state on remount, not the download itself). Trades away
+  // the pre-stream JSON-error surfacing that fetch() gives downloadRecoveryKit
+  // in lib/api.ts — acceptable here since a flash zip is far larger and
+  // failures are rare.
+  function handleDownload() {
+    const a = document.createElement("a");
+    a.href = flashDownloadURL(snap.id, source);
+    a.download = `flash-${snap.id.slice(0, 8)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
-
-  const downloading = dl.phase === "downloading";
 
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
@@ -162,32 +123,20 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           {new Date(snap.time).toLocaleString()}
         </span>
         <button
-          onClick={() => void handleDownload()}
-          disabled={downloading}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
+          onClick={handleDownload}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
         >
-          {downloading ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("flash.downloading")} {(dl.bytes / 1048576).toFixed(0)} MB
-            </>
-          ) : (
-            t("flash.download")
-          )}
+          {t("flash.download")}
         </button>
         <button
           onClick={() => void handleDelete()}
-          disabled={deleting || downloading}
+          disabled={deleting}
           title={t("snapshots.delete")}
           className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {dl.phase === "error" && <p className="text-xs text-statusFail pl-24 wrap-break-word">{dl.message}</p>}
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
     </div>
   );

@@ -169,7 +169,6 @@ const vi: Partial<Translations> = {
   "offsite.sectionTitle": "Bảo vệ ngoài site",
   "offsite.replicating": "Đang sao chép…",
   "offsite.replicateFailed": "Sao chép thất bại",
-  "flash.downloading": "Đang tải xuống…",
   "settings.domains": "Miền",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
