@@ -2056,6 +2056,18 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	if rerr != nil {
 		return fmt.Errorf("resolve off-site repo: %w", rerr)
 	}
+	// Relax the DESTINATION repo tree the same way every local backup already
+	// relaxes the primary repo (makeRepoReadable). restic, run as root, writes a
+	// local repo 0700/0400, so an off-site copy that lands on a mounted share is
+	// root-only on the FAR side too: the share's other clients see the repo
+	// folders but nothing inside them. That is exactly what an NFS→SMB switch
+	// exposes — an Unassigned-Devices NFS mount reads the share as uid 0 and sails
+	// through the 0700 dirs, while a CIFS mount authenticates as an ordinary SMB
+	// user whose access the far side denies (issue #138 follow-up). Deferred, so a
+	// copy that fails half-way, or a retention prune that writes fresh index/pack
+	// files after it, is covered too; makeOffsiteRepoReadable skips remote
+	// destinations and a path that is not there yet.
+	defer makeOffsiteRepoReadable(dest)
 	// Per-target restic mode carrying this destination's S3 storage class (see
 	// offsiteModeForTarget: the global class is preserved for a backfilled N=1
 	// target whose class is "").
@@ -3706,6 +3718,34 @@ func makeRepoReadable(repo string) {
 		}
 		return nil
 	})
+}
+
+// makeOffsiteRepoReadable is makeRepoReadable for an off-site DESTINATION repo:
+// the same relax pass every backup already runs on the primary repo, applied to
+// the replica so the far side of a mounted-share destination is readable by the
+// share's non-root clients too.
+//
+// Why the destination needs it at all: restic derives its modes from the repo's
+// existing `data` directory and otherwise defaults to 0700 dirs / 0400 files, so
+// an off-site repo BombVault creates (EnsureRepo → paths.EnsureDir, 0700) stays
+// root-only forever — every pack, index and snapshot file included. On a local
+// repo that never showed, because the operator reads it through the same root
+// process; on a share it decides whether ANY other client can open the replica.
+// Verified against restic 0.17.3: `init` into a 0755 directory still creates
+// data/ and keys/ at 0700 and files at 0400, so relaxing the repo root alone is
+// not enough — the tree has to be walked. Once the walk has run, restic derives
+// group-readable modes for later writes, but still not other-readable ones, so
+// this must run after EVERY replication, exactly like the primary repo's pass.
+//
+// Remote backends have no local tree to chmod and are skipped outright (a bare
+// WalkDir over "rest:http://…" would merely fail, but the guard says so). The
+// repo is encrypted, so group/other READ exposes nothing — the same reasoning
+// makeRepoReadable already documents. Best-effort throughout.
+func makeOffsiteRepoReadable(dest string) {
+	if restic.IsRemoteRepo(dest) {
+		return
+	}
+	makeRepoReadable(dest)
 }
 
 // readStoredDef reads an encrypted definition, preferring the new in-repo location
