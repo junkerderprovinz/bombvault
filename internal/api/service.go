@@ -517,14 +517,16 @@ func (s *Service) ModeFor(settings store.Settings) restic.Mode {
 // resolveRepo turns a configured repo location into the value passed to restic
 // -r. A restic remote backend (rclone:…, s3:…, sftp:… — off-site) is used
 // verbatim; a local location is resolved as a relative subpath under the host
-// mount root, rejecting traversal.
+// mount root, rejecting traversal. A rejection comes back as operator-facing
+// guidance naming the relative-path convention and the value to enter instead
+// (see repoPathError) rather than the raw paths sentinel (issue #138).
 func (s *Service) resolveRepo(loc string) (string, error) {
 	if restic.IsRemoteRepo(loc) {
 		return loc, nil
 	}
 	repo, err := paths.Resolve(s.cfg.HostMountRoot, loc)
 	if err != nil {
-		return "", fmt.Errorf("resolve repo path: %w", err)
+		return "", s.repoPathError(loc, err)
 	}
 	return repo, nil
 }
@@ -2449,6 +2451,45 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	if err != nil {
 		return false, false, err
 	}
+	return s.probeOffsiteRepo(ctx, repo, s.ModeFor(settings))
+}
+
+// TestOffsiteTarget runs the SAME probe as TestOffsite against ONE off-site
+// destination addressed by id, so every additional target can be verified on its
+// own. TestOffsite only ever probes a domain's PRIMARY target, which let an
+// extra destination stay silently broken behind a green "Test connection"
+// (issue #138). The target's own S3 storage class is applied
+// (offsiteModeForTarget) exactly as replication does.
+//
+// An unknown id is an error rather than a fallback to the primary: a test that
+// silently probed something ELSE is precisely the failure mode being fixed here.
+func (s *Service) TestOffsiteTarget(ctx context.Context, id string) (reachable, initialized bool, err error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return false, false, fmt.Errorf("read settings: %w", err)
+	}
+	target, ok, err := s.store.GetOffsiteTarget(id)
+	if err != nil {
+		return false, false, fmt.Errorf("read off-site target: %w", err)
+	}
+	if !ok {
+		return false, false, errors.New("no such off-site target")
+	}
+	if target.Repo == "" {
+		return false, false, errors.New("this off-site target has no repository configured")
+	}
+	repo, err := s.resolveRepo(target.Repo)
+	if err != nil {
+		return false, false, err
+	}
+	return s.probeOffsiteRepo(ctx, repo, s.offsiteModeForTarget(settings, target))
+}
+
+// probeOffsiteRepo is the shared reachable/initialised probe behind TestOffsite
+// and TestOffsiteTarget: it opens an ALREADY-RESOLVED repo read-only in both
+// encryption modes and classifies the outcome. See TestOffsite for the full
+// contract of the three results.
+func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic.Mode) (reachable, initialized bool, err error) {
 	// Bound each probe so a dead backend fails fast instead of hanging the
 	// request (cat config over an unreachable REST server can otherwise stall).
 	// PER attempt, not shared: a cold sftp connection over a VPN (Tailscale
@@ -2460,7 +2501,6 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 		defer cancel()
 		return s.engine.RepoOpensErr(pctx, repo, m)
 	}
-	mode := s.ModeFor(settings)
 	primaryErr := probe(mode)
 	if primaryErr == nil {
 		return true, true, nil

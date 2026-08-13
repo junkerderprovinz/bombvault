@@ -104,6 +104,10 @@ func scrubError(err error) string {
 	case errors.Is(err, errRestoreDestination):
 		// The destination path IS the message (see errRestoreDestination).
 		return err.Error()
+	case errors.Is(err, errRepoPathGuidance):
+		// Same deal: the rejected location AND the relative form to use instead
+		// are the whole point of the message (see errRepoPathGuidance).
+		return err.Error()
 	}
 	msg := err.Error()
 	// Map restic's password/key mismatch to an actionable hint: the repo was
@@ -2720,7 +2724,9 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, body.Source)
+	// The source rides the BODY here (not ?source=), so normalize it explicitly —
+	// same contract as sourceParam, incl. the "offsite:<id>" per-target form.
+	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, normalizeSource(body.Source))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

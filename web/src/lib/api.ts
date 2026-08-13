@@ -544,9 +544,19 @@ export function backupAll(names: string[]): Promise<OkEnvelope & { started?: num
   });
 }
 
-/** Query suffix selecting the off-site repo when source==="offsite" (else local). */
+/**
+ * Query suffix selecting the off-site repo (else local, which needs no param).
+ * Accepts BOTH off-site forms the backend parses (normalizeSource in
+ * internal/api/handlers.go): bare "offsite" = the domain's primary target, and
+ * "offsite:<id>" = one specific target. Anything else is the local repo.
+ *
+ * The `offsite:` form used to be dropped here, which silently downgraded a
+ * per-target restore to the LOCAL repo — so the picker could not be wired up at
+ * all (issue #138).
+ */
 export function srcParam(source?: string, sep: "?" | "&" = "?"): string {
-  return source === "offsite" ? `${sep}source=offsite` : "";
+  if (source !== "offsite" && !source?.startsWith("offsite:")) return "";
+  return `${sep}source=${encodeURIComponent(source)}`;
 }
 
 export function listSnapshots(name: string, source?: string): Promise<ListSnapshotsResponse> {
@@ -1358,7 +1368,9 @@ export function runDrill(
   kind: "subset" | "dr" = "subset"
 ): Promise<{ ok: boolean; drill?: RestoreDrill; error?: string }> {
   const params = new URLSearchParams();
-  if (source === "offsite") params.set("source", "offsite");
+  // Both off-site forms pass through (see srcParam): bare "offsite" = primary,
+  // "offsite:<id>" = one specific target.
+  if (source === "offsite" || source?.startsWith("offsite:")) params.set("source", source);
   if (kind === "dr") params.set("kind", "dr");
   const qs = params.toString();
   return fetchJSON(
@@ -1406,13 +1418,26 @@ export function replicateOffsite(
 }
 
 /**
- * POST /api/offsite/{domain}/test — probe the off-site repo without modifying it:
- * whether it is reachable and whether it is an initialised restic repository.
+ * POST /api/offsite/{domain}/test — probe the domain's PRIMARY off-site repo
+ * without modifying it: whether it is reachable and whether it is an initialised
+ * restic repository. It says nothing about a domain's ADDITIONAL targets — use
+ * testOffsiteTarget for those (issue #138).
  */
 export function testOffsite(
   domain: "containers" | "vms" | "flash" | "files"
 ): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
   return fetchJSON(`/api/offsite/${domain}/test`, { method: "POST" });
+}
+
+/**
+ * POST /api/offsite/targets/{id}/test — the same probe as testOffsite, against
+ * ONE off-site target. An unknown id answers {ok:false} rather than falling back
+ * to the primary, so a green verdict always belongs to the target you clicked.
+ */
+export function testOffsiteTarget(
+  id: string
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/test`, { method: "POST" });
 }
 
 /**

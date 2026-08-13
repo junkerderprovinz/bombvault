@@ -286,6 +286,9 @@ export const en = {
   "source.label": "Source:",
   "source.local": "Local",
   "source.offsite": "Off-site",
+  // Only rendered when a domain has 2+ off-site targets: the picker choosing
+  // WHICH off-site copy to browse/restore from.
+  "source.offsiteTarget": "Off-site target",
   "source.hint": "Restore and delete act on the selected source only — deleting a local backup never touches the off-site copy, and vice versa.",
   "offsite.sectionTitle": "Off-site protection",
   "offsite.schedulePlaceholder": "blank = after each backup · e.g. weekly Sun 03:00",
@@ -294,10 +297,14 @@ export const en = {
   "offsite.replicating": "Replicating…",
   "offsite.replicateFailed": "Replication failed",
   "offsite.test": "Test connection",
+  // Shown instead of offsite.test once the domain has additional targets: that
+  // button probes the PRIMARY target ONLY, and saying so is the whole point.
+  "offsite.testPrimary": "Test primary",
   "offsite.testing": "Testing…",
   "offsite.testOk": "reachable + initialised",
   "offsite.testUninitialized": "reachable, not initialised",
   "offsite.testFailed": "not reachable",
+  "offsite.repoLocalHint": "Also accepts a plain folder under the \"Host Data\" mount — enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.",
   // Off-site setup wizard (v4 ransomware protection)
   "offsite.wizard.setup": "Set up…",
   "offsite.wizard.close": "Close",
@@ -305,6 +312,7 @@ export const en = {
   "offsite.wizard.backendRest": "rest-server (recommended — append-only capable)",
   "offsite.wizard.backendRclone": "rclone remote",
   "offsite.wizard.backendS3": "Amazon S3 / S3-compatible",
+  "offsite.wizard.backendPath": "Local path / mounted share (no server needed)",
   "offsite.wizard.step2": "2 · Deploy the append-only server",
   "offsite.wizard.step2Hint": "Run this on your storage box to stand up a restic rest-server with --append-only. The generated password is shown only once.",
   "offsite.wizard.generate": "Generate deployment snippet",
@@ -351,6 +359,9 @@ export const en = {
   "offsite.targets.add": "Add target",
   "offsite.targets.none": "No additional targets yet.",
   "offsite.targets.edit": "Edit",
+  // Per-target probe (issue #138): the primary editor's Test button never
+  // covered these, so a broken extra copy could hide behind its green verdict.
+  "offsite.targets.test": "Test",
   "offsite.targets.remove": "Remove",
   "offsite.targets.removing": "Removing…",
   "offsite.targets.confirmRemove": "Confirm remove",
@@ -1524,6 +1535,7 @@ export const de: Translations = {
   "source.label": "Quelle:",
   "source.local": "Lokal",
   "source.offsite": "Offsite",
+  "source.offsiteTarget": "Offsite-Ziel",
   "source.hint": "Restore und Löschen wirken nur auf die gewählte Quelle — ein lokales Backup zu löschen rührt die Offsite-Kopie nie an und umgekehrt.",
   "offsite.sectionTitle": "Offsite-Schutz",
   "offsite.schedulePlaceholder": "leer = nach jedem Backup · z.B. weekly Sun 03:00",
@@ -1532,10 +1544,12 @@ export const de: Translations = {
   "offsite.replicating": "Repliziere…",
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
+  "offsite.testPrimary": "Primäres Ziel testen",
   "offsite.testing": "Teste…",
   "offsite.testOk": "erreichbar + initialisiert",
   "offsite.testUninitialized": "erreichbar, nicht initialisiert",
   "offsite.testFailed": "nicht erreichbar",
+  "offsite.repoLocalHint": "Nimmt auch einen normalen Ordner unter dem \"Host Data\"-Mount — relativ zu diesem Mount eintragen, ohne führendes /mnt: eine Freigabe unter /mnt/remotes/nas/bombvault wird als remotes/nas/bombvault eingetragen.",
   // Off-site-Einrichtungsassistent (v4 Ransomware-Schutz)
   "offsite.wizard.setup": "Einrichten…",
   "offsite.wizard.close": "Schließen",
@@ -1543,6 +1557,7 @@ export const de: Translations = {
   "offsite.wizard.backendRest": "rest-server (empfohlen — append-only-fähig)",
   "offsite.wizard.backendRclone": "rclone-Remote",
   "offsite.wizard.backendS3": "Amazon S3 / S3-kompatibel",
+  "offsite.wizard.backendPath": "Lokaler Pfad / eingebundene Freigabe (kein Server nötig)",
   "offsite.wizard.step2": "2 · Append-only-Server bereitstellen",
   "offsite.wizard.step2Hint": "Auf deiner Storage-Box ausführen, um einen restic rest-server mit --append-only zu starten. Das erzeugte Passwort wird nur einmal angezeigt.",
   "offsite.wizard.generate": "Deployment-Snippet erzeugen",
@@ -1587,6 +1602,7 @@ export const de: Translations = {
   "offsite.targets.add": "Ziel hinzufügen",
   "offsite.targets.none": "Noch keine weiteren Ziele.",
   "offsite.targets.edit": "Bearbeiten",
+  "offsite.targets.test": "Testen",
   "offsite.targets.remove": "Entfernen",
   "offsite.targets.removing": "Entferne…",
   "offsite.targets.confirmRemove": "Entfernen bestätigen",
