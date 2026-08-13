@@ -36,10 +36,13 @@ const IMM_KEY = {
   files: "filesOffsiteImmutable",
 } as const;
 
-// "none" = empty URL (neutral prompt — no REST snippet, no caveat); "other" =
-// a recognized non-REST scheme (sftp/b2/gs/azure) or an unrecognized/bare path
-// that must NOT get the REST deploy-snippet flow.
-type Backend = "rest" | "rclone" | "s3" | "other" | "none";
+// "none" = empty URL (neutral prompt — no REST snippet, no caveat); "path" = a
+// plain folder under the Host Data mount (a mounted NAS share, say — the option
+// nothing in the UI used to mention, issue #138); "other" = a recognized non-REST
+// scheme (sftp/b2/gs/azure) that must NOT get the REST deploy-snippet flow.
+// "path" and "other" behave identically for every caveat below; they differ only
+// in what Step 1 offers to explain.
+type Backend = "rest" | "rclone" | "s3" | "path" | "other" | "none";
 
 function inferBackend(url: string): Backend {
   const u = url.trim();
@@ -47,8 +50,11 @@ function inferBackend(url: string): Backend {
   if (u.startsWith("rclone:")) return "rclone";
   if (u.startsWith("s3:") || u.startsWith("s3://")) return "s3";
   if (u.startsWith("rest:") || u.startsWith("http://") || u.startsWith("https://")) return "rest";
-  // Recognized non-REST schemes (and anything else) are "other": no REST snippet,
-  // no rclone/s3 caveat — the wizard makes no false REST assumption.
+  // No "<scheme>:" prefix at all → a local/mounted path, which restic and
+  // resolveRepo both accept (relative to the Host Data mount).
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) return "path";
+  // Any other recognized scheme (sftp:, b2:, gs:, azure:, …) is "other": no REST
+  // snippet, no rclone/s3 caveat — the wizard makes no false REST assumption.
   return "other";
 }
 
@@ -332,6 +338,7 @@ export function OffsiteWizard({
             ["rest", "offsite.wizard.backendRest"],
             ["rclone", "offsite.wizard.backendRclone"],
             ["s3", "offsite.wizard.backendS3"],
+            ["path", "offsite.wizard.backendPath"],
           ] as const).map(([val, label]) => (
             <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer">
               <input
@@ -345,6 +352,12 @@ export function OffsiteWizard({
             </label>
           ))}
         </div>
+        {/* A mounted share needs no server at all — but it does need the path
+            RELATIVE to the Host Data mount, which is the one thing nothing in
+            this flow used to say (issue #138). */}
+        {backend === "path" && (
+          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.repoLocalHint")}</p>
+        )}
       </div>
 
       {/* Step 2 — rest-server deploy snippet */}
@@ -407,6 +420,7 @@ export function OffsiteWizard({
             placeholder={t("offsite.wizard.repoUrlPlaceholder")}
             className={inputCls}
           />
+          <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
         </label>
         {/* The off-site schedule is edited in Settings › Schedules now; the wizard
             saves only the repo URL so it can never clobber that cadence. */}

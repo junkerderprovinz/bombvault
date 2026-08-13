@@ -198,3 +198,20 @@ func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
+
+// handleTestOffsiteTarget probes ONE off-site target (reachable / initialised)
+// without modifying it. Same response shape as handleTestOffsite, which only
+// ever probes a domain's PRIMARY target — so an additional target could sit
+// broken behind that button's green verdict (issue #138).
+// POST /api/offsite/targets/{id}/test
+func (h *Handler) handleTestOffsiteTarget(w http.ResponseWriter, r *http.Request) {
+	reachable, initialized, err := h.svc.TestOffsiteTarget(r.Context(), r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"reachable":   reachable,
+		"initialized": initialized,
+	}))
+}

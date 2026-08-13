@@ -1336,7 +1336,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
           <div className="flex items-center gap-2">
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-            <SourceToggle source={source} onChange={setSource} disabled={busy} />
+            <SourceToggle source={source} onChange={setSource} disabled={busy} domain="containers" />
           </div>
           <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
             <input
