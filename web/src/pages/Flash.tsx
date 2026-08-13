@@ -237,7 +237,7 @@ export function Flash() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-            <SourceToggle source={source} onChange={setSource} disabled={loading} />
+            <SourceToggle source={source} onChange={setSource} disabled={loading} domain="flash" />
           </div>
           <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
         </div>

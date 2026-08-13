@@ -570,7 +570,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
               <Advanced>
                 <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} />
+                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
               </Advanced>
               {snapshots.length > 0 && (
                 <button

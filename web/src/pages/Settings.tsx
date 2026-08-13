@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
+import { useOffsiteTargets } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { InfoBubble } from "../components/InfoBubble";
@@ -1445,6 +1446,11 @@ function TestConnectionButton({
 }) {
   const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
   const [err, setErr] = useState<string | null>(null);
+  // This button probes the PRIMARY target only. Once a domain has more than one
+  // off-site copy, say so on the label — an unqualified "Test connection" going
+  // green while a second destination was broken is exactly what issue #138
+  // reported. Each additional target has its own button in OffsiteTargetsSection.
+  const multiTarget = useOffsiteTargets(domain).length > 1;
   async function go() {
     setSt("busy");
     setErr(null);
@@ -1471,7 +1477,7 @@ function TestConnectionButton({
         disabled={st === "busy"}
         className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
-        {t("offsite.test")}
+        {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
       </button>
       {st === "ok" && <span className="text-xs text-statusOk">{t("offsite.testOk")}</span>}
       {st === "uninit" && <span className="text-xs text-statusWarn">{t("offsite.testUninitialized")}</span>}
@@ -1844,7 +1850,7 @@ function IntegrityCard({
                       drill ? (
                         <>
                           <span className="text-xs text-carbon-textMuted">
-                            {drill.source === "offsite" && drill.kind === "dr"
+                            {isOffsiteSource(drill.source) && drill.kind === "dr"
                               ? t("drill.checkOffsiteDr")
                               : t("drill.checkLocal")}
                             {" · "}
@@ -3688,15 +3694,21 @@ export function SettingsPage() {
                 t={t}
               />
             ) : (
-              <input
-                value={settings[repoKey]}
-                spellCheck={false}
-                onChange={(e) =>
-                  setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
-                }
-                placeholder="rest:http://host:8000/repo"
-                className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
-              />
+              <>
+                <input
+                  value={settings[repoKey]}
+                  spellCheck={false}
+                  onChange={(e) =>
+                    setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
+                  }
+                  placeholder="rest:http://host:8000/repo"
+                  className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                />
+                {/* A mounted share is a perfectly valid off-site target, but the
+                    placeholder only ever showed a REST URL — so nothing told the
+                    operator a bare relative path works here (issue #138). */}
+                <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+              </>
             )}
             {/* Additional off-site targets (multi-off-site): extra copies of this
                 domain beyond the primary editor above, managed via the CRUD API. */}

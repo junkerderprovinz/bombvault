@@ -5,6 +5,7 @@ import {
   createOffsiteTarget,
   updateOffsiteTarget,
   deleteOffsiteTarget,
+  testOffsiteTarget,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
 
@@ -57,6 +58,54 @@ function emptyDraft(domain: Domain): OffsiteTarget {
     createdAt: 0,
     sortOrder: 0,
   };
+}
+
+// TargetTestButton probes ONE additional target. The primary editor's "Test
+// connection" only ever probes the PRIMARY target, so without this an extra
+// destination could sit broken behind that button's green verdict (issue #138).
+function TargetTestButton({ id, t }: { id: string; t: T }) {
+  const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
+  const [err, setErr] = useState<string | null>(null);
+
+  async function go() {
+    setSt("busy");
+    setErr(null);
+    try {
+      const r = await testOffsiteTarget(id);
+      if (r.ok && r.reachable && r.initialized) setSt("ok");
+      else if (r.ok && r.reachable) setSt("uninit");
+      else {
+        setSt("fail");
+        setErr(r.error ?? null);
+      }
+    } catch (e) {
+      setSt("fail");
+      setErr(e instanceof Error ? e.message : null);
+    }
+  }
+
+  return (
+    <span className="inline-flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => void go()}
+        disabled={st === "busy"}
+        title={t("offsite.test")}
+        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+      >
+        {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
+      </button>
+      {st === "ok" && <span className="text-[11px] text-statusOk">{t("offsite.testOk")}</span>}
+      {st === "uninit" && (
+        <span className="text-[11px] text-statusWarn">{t("offsite.testUninitialized")}</span>
+      )}
+      {st === "fail" && (
+        <span className="text-[11px] text-statusFail wrap-break-word text-right">
+          {err ?? t("offsite.testFailed")}
+        </span>
+      )}
+    </span>
+  );
 }
 
 export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
@@ -211,7 +260,8 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               )}
             </span>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-start gap-2">
+            <TargetTestButton id={tgt.id} t={t} />
             <button
               type="button"
               onClick={() => openEdit(tgt)}
@@ -263,6 +313,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               placeholder={t("offsite.wizard.repoUrlPlaceholder")}
               className={inputCls}
             />
+            <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("cloud.storageClass.label")}</span>
