@@ -645,7 +645,7 @@ function FileSetRestorePanel({
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
               <Advanced>
                 <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} />
+                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" />
               </Advanced>
               {/* Delete-all acts on the LOCAL repo (and forgets the set), so it
                   is only offered while the local source is shown. */}
