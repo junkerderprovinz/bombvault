@@ -1,6 +1,8 @@
 package api
 
 import (
+	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -112,6 +114,38 @@ func TestResolveAppdataPathsVolumeSkippedWhenUnresolved(t *testing.T) {
 	got := s.resolveAppdataPaths("myapp", in)
 	if len(got) != 0 {
 		t.Fatalf("resolveAppdataPaths = %v, want empty (unresolved volume must not produce a phantom path)", got)
+	}
+}
+
+// TestResolveAppdataPathsRealFallbackFolderIncluded exercises the actual
+// last-resort branch end to end: no bind/volume matches anything, but a REAL
+// directory sits at the platform's conventional appdata path (Unraid's fixed
+// "/mnt/user/appdata/<name>" literal, translated through HostSourceRoot/
+// HostMountRoot) and os.Stat finds it. Every other test in this file that
+// reaches the fallback (e.g. "non-appdata bind ... no fallback folder
+// exists" above) only exercises the os.Stat-FAILS side, because their
+// translated candidate never exists on the machine running the test. This is
+// the one that actually creates the folder and confirms the OK side, which
+// is also the branch platform.Platform.AppdataFallback's return value feeds
+// into — the fallback this whole package now goes through.
+func TestResolveAppdataPathsRealFallbackFolderIncluded(t *testing.T) {
+	root := t.TempDir()
+	s := &Service{cfg: config.Config{
+		HostSourceRoot:   "/mnt", // must match Unraid{}'s fixed "/mnt/user/appdata/<name>" literal
+		HostMountRoot:    root,
+		DataRootSegments: []string{"appdata"},
+	}}
+	fallback := path.Join(root, "user/appdata/myapp")
+	if err := os.MkdirAll(fallback, 0o750); err != nil {
+		t.Fatalf("seed fallback dir: %v", err)
+	}
+
+	in := model.Inspect{Mounts: []model.Mount{
+		{Type: "bind", Source: "/mnt/data/media", Destination: "/media"}, // non-matching, dropped
+	}}
+	got := s.resolveAppdataPaths("myapp", in)
+	if len(got) != 1 || got[0] != fallback {
+		t.Fatalf("resolveAppdataPaths = %v, want [%q] (real fallback folder must be included when it actually exists)", got, fallback)
 	}
 }
 
