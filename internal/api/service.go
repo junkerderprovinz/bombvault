@@ -2754,13 +2754,6 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 	mountRoot := path.Clean(s.cfg.HostMountRoot) // its container path, e.g. /host/user
 
 	segments := s.cfg.DataRootSegments
-	if len(segments) == 0 {
-		// Defensive default: a Service built without going through config.Load
-		// (every production path does; some tests construct Service directly)
-		// must still reproduce the historical single-segment Unraid behavior
-		// rather than silently matching nothing.
-		segments = []string{"appdata"}
-	}
 	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
 
 	var out []string

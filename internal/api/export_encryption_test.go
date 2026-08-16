@@ -34,6 +34,7 @@ func exportEncTestSetup(t *testing.T, recipients string, enable bool) *api.Servi
 		HostMountRoot:     root,
 		HostSourceRoot:    root,
 		FlashTemplatesDir: flash,
+		DataRootSegments:  []string{"appdata"}, // config.Load's default; this helper builds Config by hand
 	}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
