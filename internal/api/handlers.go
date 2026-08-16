@@ -1205,6 +1205,20 @@ type settingsView struct {
 	// host, and a host missing from the list is deleted. nil (field absent, an
 	// old client) keeps the stored list unchanged.
 	RegistryAuths []registryAuthView `json:"registryAuths"`
+	// FleetEnabled gates the read-only Fleet view (a list of peer BombVault
+	// instances this box polls for their protection status). Default false
+	// (opt-in), like ReceiverEnabled; the sidebar gates its tab on it.
+	FleetEnabled bool `json:"fleetEnabled"`
+	// InstanceName is this instance's own display name, reported to polling
+	// fleet peers so a peer's Fleet page can label this box. Not a secret.
+	InstanceName string `json:"instanceName"`
+	// Peer status token (GET /api/fleet/status), authorizing OTHER instances'
+	// Fleet views to poll THIS instance. Same secret contract as WidgetToken:
+	// GET always returns FleetToken blank with FleetTokenSet reporting presence;
+	// on PUT a blank FleetToken keeps the stored one. Generated/cleared via
+	// POST/DELETE /api/fleet/token (the Settings card).
+	FleetToken    string `json:"fleetToken"`
+	FleetTokenSet bool   `json:"fleetTokenSet"`
 }
 
 // registryAuthView is one container-registry credential in the settings view
@@ -1292,6 +1306,10 @@ func toView(s store.Settings) settingsView {
 		RestartHealthWait:           s.RestartHealthWait,
 		RestartHealthTimeoutSec:     s.RestartHealthTimeoutSec,
 		PerItemSchedules:            s.PerItemSchedules,
+		FleetEnabled:                s.FleetEnabled,
+		InstanceName:                s.InstanceName,
+		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
+		FleetTokenSet:               s.FleetToken != "",
 	}
 }
 
@@ -1467,6 +1485,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if widgetToken == "" {
 		widgetToken = existing.WidgetToken
 	}
+	// Same contract for the fleet token (normally managed by POST/DELETE
+	// /api/fleet/token; the round-trip here only has to never wipe it).
+	fleetToken := strings.TrimSpace(v.FleetToken)
+	if fleetToken == "" {
+		fleetToken = existing.FleetToken
+	}
 
 	// Registry credentials (#106): nil = field absent (an old client) → keep the
 	// stored encrypted blob unchanged; a present list REPLACES the stored one,
@@ -1563,6 +1587,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		RestartHealthWait:           v.RestartHealthWait,
 		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
 		PerItemSchedules:            v.PerItemSchedules,
+		FleetEnabled:                v.FleetEnabled,
+		InstanceName:                strings.TrimSpace(v.InstanceName),
+		FleetToken:                  fleetToken,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,
@@ -2566,6 +2593,10 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 //     both endpoints gate themselves via the stored widget token instead,
 //     failing closed with 403 when none is set. POST/DELETE /api/widget/token
 //     stay session-protected — only a logged-in admin manages the token.)
+//   - GET  /api/fleet/status  (another BombVault instance's Fleet view polling
+//     this one — same reasoning as the widget, self-gated on the stored fleet
+//     token instead, failing closed with 403 when none is set. POST/DELETE
+//     /api/fleet/token and the /api/fleet/peers CRUD stay session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -2576,7 +2607,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
 			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data":
+			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status":
 				next.ServeHTTP(w, r)
 			default:
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
@@ -2594,10 +2625,11 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		}
 
 		// Always allow the public auth + health endpoints, plus the self-gating
-		// /metrics scrape endpoint (Prometheus can't carry the session cookie)
-		// and the self-gating widget endpoints (an embedding iframe can't either).
+		// /metrics scrape endpoint (Prometheus can't carry the session cookie),
+		// the self-gating widget endpoints (an embedding iframe can't either),
+		// and the self-gating fleet status endpoint (a polling peer can't either).
 		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data":
+		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status":
 			next.ServeHTTP(w, r)
 			return
 		}

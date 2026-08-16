@@ -1245,9 +1245,9 @@ type DomainStatusEntry struct {
 	LastDRDrillOK     bool  `json:"lastDrDrillOK"`
 	// LastOffsiteSubsetAt / LastOffsiteSubsetOK stamp the latest OFF-SITE SUBSET
 	// drill (`restic check --read-data-subset` against the off-site repo) — the
-	// recommended integrity check and the ONLY off-site drill VMs can run (DR
-	// restores are refused for them). They drive the dashboard's "off-site
-	// verified" badge (#63), independent of the DR fields above.
+	// cheaper integrity check every domain (including VMs, since v8.0.0) can run
+	// alongside the real DR sandbox-restore drill. They drive the dashboard's
+	// "off-site verified" badge (#63), independent of the DR fields above.
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
 	// OffsiteDrillScheduled is true only when the scheduler actually runs an
