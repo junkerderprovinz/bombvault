@@ -36,7 +36,12 @@ func TestDockerClientOptsHonorsDockerHost(t *testing.T) {
 		}
 	})
 
-	t.Run("DOCKER_HOST unset defaults to the standard docker.sock", func(t *testing.T) {
+	t.Run("DOCKER_HOST empty (the unset case) defaults to the standard docker.sock", func(t *testing.T) {
+		// t.Setenv(..., "") stands in for "unset": os.Getenv cannot tell an
+		// empty value apart from a missing one, and neither can the SDK's own
+		// WithHostFromEnv (envvars.go: EnvOverrideHost is read "when set to a
+		// non-empty value") — so this exercises the exact code path an
+		// operator with no DOCKER_HOST in their environment hits.
 		t.Setenv("DOCKER_HOST", "")
 
 		c, err := client.NewClientWithOpts(dockerClientOpts()...)
