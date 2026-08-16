@@ -52,7 +52,14 @@ type Platform interface {
 	// producing an empty (config-only) backup selection rather than a guessed
 	// folder that doesn't exist. hostMountRoot is the container-visible mount
 	// root, provided for platforms whose convention needs it; Unraid's
-	// convention is a fixed HOST-side path and does not.
+	// convention is a fixed HOST-side path and does not. An implementation
+	// that DOES use hostMountRoot must still return a value in HOST terms
+	// (translatable back through the caller's configured host-source root) —
+	// e.g. resolving it to the real host path that mount corresponds to.
+	// Simply joining a subpath onto hostMountRoot and returning that verbatim
+	// yields a container-visible path mislabeled as a host one: the caller's
+	// translation will not recognize it, silently discarding this candidate
+	// and falling back to its own hardcoded guess instead.
 	AppdataFallback(hostMountRoot, containerName string) string
 
 	// ForeignContainerDestBase returns the default cross-instance restore
