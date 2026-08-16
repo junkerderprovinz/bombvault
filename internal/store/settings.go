@@ -106,6 +106,16 @@ type Settings struct {
 	// Empty (the default) = widget OFF; both endpoints fail closed with 403.
 	// Unlike MetricsToken it is never optional-open: no token, no widget.
 	WidgetToken string
+	// InstanceName is this instance's own display name, reported to polling
+	// fleet peers in GET /api/fleet/status so a Fleet page can label this box.
+	// Empty is allowed (the Fleet page falls back to the URL it polled).
+	InstanceName string
+	// FleetToken authorizes the session-free peer status endpoint
+	// (GET /api/fleet/status, via ?token= or X-Fleet-Token) that OTHER instances'
+	// Fleet views poll on THIS instance. Empty (the default) = fleet polling of
+	// THIS instance OFF; the endpoint fails closed with 403. Mirrors WidgetToken
+	// exactly (never optional-open, unlike MetricsToken).
+	FleetToken string
 	// DrillsEnabled turns on scheduled restore-verification drills. Off by default
 	// (drills read back real pack data, so they cost I/O), so existing setups are
 	// unchanged until the user opts in.
@@ -188,6 +198,10 @@ type Settings struct {
 	// immutable off-site copies and monitors the received repo). Default false
 	// (opt-in), exactly like the Files/VMs domain tabs.
 	ReceiverEnabled bool
+	// FleetEnabled gates the read-only Fleet view (a list of peer BombVault
+	// instances this box polls for their protection status). Default false
+	// (opt-in), exactly like ReceiverEnabled.
+	FleetEnabled bool
 	// RestartHealthWait gates the health-gated ordered restart of the "stop other
 	// containers during backup" set (#119). The depends_on ORDERING is always
 	// applied; this flag governs only whether the restart also WAITS for each
@@ -250,7 +264,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       restart_health_wait, restart_health_timeout_sec,
 		       reconcile_unraid_update_status,
 		       per_item_schedules,
-		       cloud_cred_sets
+		       cloud_cred_sets,
+		       fleet_enabled, instance_name, fleet_token
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -259,6 +274,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
+	var fleetEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -285,6 +301,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&reconcileUnraidUpdateStatus,
 		&perItemSchedules,
 		&s.CloudCredSets,
+		&fleetEnabled, &s.InstanceName, &s.FleetToken,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -317,6 +334,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 	s.RestartHealthWait = restartHealthWait != 0
 	s.ReconcileUnraidUpdateStatus = reconcileUnraidUpdateStatus != 0
 	s.PerItemSchedules = perItemSchedules != 0
+	s.FleetEnabled = fleetEnabled != 0
 	return s, nil
 }
 
@@ -401,7 +419,10 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  restart_health_timeout_sec   = ?,
 		  reconcile_unraid_update_status = ?,
 		  per_item_schedules           = ?,
-		  cloud_cred_sets              = ?
+		  cloud_cred_sets              = ?,
+		  fleet_enabled                = ?,
+		  instance_name                = ?,
+		  fleet_token                  = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -433,6 +454,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.ReconcileUnraidUpdateStatus),
 		boolInt(s.PerItemSchedules),
 		s.CloudCredSets,
+		boolInt(s.FleetEnabled),
+		s.InstanceName,
+		s.FleetToken,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

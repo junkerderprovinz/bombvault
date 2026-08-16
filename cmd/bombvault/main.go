@@ -311,6 +311,12 @@ func run() error {
 	scheduler.SetReceiverJob(func() error {
 		return svc.RunReceiverChecks(context.Background())
 	})
+	// Fleet peer sweep: the daily poll of every enabled fleet peer's protection
+	// status (read-only, no notifications — each peer's own instance already
+	// alerts on its own overdue backups).
+	scheduler.SetFleetJob(func() error {
+		return svc.RunFleetPolls(context.Background())
+	})
 	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
 	// successful backup within each domain (containers / VMs / flash scoped separately).
 	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)

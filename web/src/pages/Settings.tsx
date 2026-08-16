@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { useOffsiteTargets } from "../lib/useOffsiteTargets";
@@ -889,6 +889,179 @@ function DashboardWidgetCard({
 
       {/* Companion Unraid dashboard-tile plugin (one-click install over SSH). */}
       <UnraidTileSection t={t} />
+    </Card>
+  );
+}
+
+// FleetSettingsCard manages this instance's own identity for the Fleet view:
+// the display name reported to polling peers, and the peer status token (GET
+// /api/fleet/status) that authorizes OTHER instances to poll THIS one. The
+// token follows the exact same show-once secret contract as the widget token
+// (generate/rotate/disable, never echoed back after the fact).
+function FleetSettingsCard({
+  t,
+  settings,
+  setSettings,
+  save,
+  tokenSet,
+  onTokenSet,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  settings: Settings;
+  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>;
+  save: (
+    patch: Partial<Settings>,
+    setSaveState: (s: SaveState) => void,
+    setSaveError: (e: string | null) => void
+  ) => Promise<boolean>;
+  tokenSet: boolean;
+  onTokenSet: (set: boolean) => void;
+}) {
+  const [nameSaveState, setNameSaveState] = useState<SaveState>("idle");
+  const [nameSaveError, setNameSaveError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function handleGenerate() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await generateFleetToken();
+      if (r.ok && r.token) {
+        setToken(r.token);
+        onTokenSet(true);
+      } else {
+        setError(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDisable() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await disableFleetToken();
+      if (r.ok) {
+        setToken(null);
+        onTokenSet(false);
+      } else {
+        setError(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!token) return;
+    if (await copyText(token)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  return (
+    <Card title={t("settings.fleet")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.fleetHint")}</p>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs text-carbon-textSub">{t("settings.instanceName")}</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={settings.instanceName}
+            onChange={(e) => setSettings((prev) => (prev ? { ...prev, instanceName: e.target.value } : prev))}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="tower"
+            className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          />
+        </div>
+        <SaveBar
+          state={nameSaveState}
+          error={nameSaveError}
+          onSave={() => void save({ instanceName: settings.instanceName }, setNameSaveState, setNameSaveError)}
+          t={t}
+        />
+      </div>
+
+      <ul className="list-disc pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+        <li>{t("settings.fleetHow")}</li>
+        <li>{t("settings.fleetAccess")}</li>
+      </ul>
+
+      {tokenSet ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-carbon-textSub">{t("settings.fleetToken")}</span>
+          <div className="flex items-center gap-2">
+            <input
+              type="password"
+              readOnly
+              value={token ?? ""}
+              placeholder={token ? "" : t("cloud.secretSet")}
+              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            />
+            <button
+              type="button"
+              onClick={() => void handleGenerate()}
+              disabled={busy}
+              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            >
+              {t("settings.fleetRegenerate")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDisable()}
+              disabled={busy}
+              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+            >
+              {t("settings.fleetDisable")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => void handleGenerate()}
+          disabled={busy}
+          className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {t("settings.fleetGenerate")}
+        </button>
+      )}
+      {error && <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>}
+
+      {tokenSet && !token && (
+        <p className="text-xs text-carbon-textMuted">{t("settings.fleetTokenOnce")}</p>
+      )}
+      {token && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-carbon-textSub">{t("settings.fleetTokenPasteHint")}</span>
+          <div className="flex items-start gap-2">
+            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+              {token}
+            </code>
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+            >
+              {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+            </button>
+          </div>
+          <p className="text-[11px] text-carbon-textMuted">
+            {t("settings.fleetUrlHint").replace("{url}", window.location.origin)}
+          </p>
+        </div>
+      )}
     </Card>
   );
 }
@@ -4144,6 +4317,7 @@ export function SettingsPage() {
       {/* Advanced: it is an end-user feature, unlike the ops-y metrics card.  */}
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && (
+        <>
         <DashboardWidgetCard
           t={t}
           tokenSet={settings.widgetTokenSet}
@@ -4155,6 +4329,18 @@ export function SettingsPage() {
             setSavedSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
           }}
         />
+        <FleetSettingsCard
+          t={t}
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
+          tokenSet={settings.fleetTokenSet}
+          onTokenSet={(set) => {
+            setSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
+            setSavedSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
+          }}
+        />
+        </>
       )}
 
       {/* ------------------------------------------------------------------ */}

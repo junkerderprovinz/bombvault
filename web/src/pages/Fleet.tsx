@@ -1,0 +1,491 @@
+// ---------------------------------------------------------------------------
+// Fleet page — the READ-ONLY fleet view. Watches a list of PEER BombVault
+// instances and shows each one's cached protection scorecard (same red/amber/
+// green aggregate the local dashboard shows). Nothing here can act on a peer:
+// no remote backup/restore/drill trigger, ever — polling GET /api/fleet/status
+// is the only thing this box ever does to a peer.
+//
+// Gated behind settings.fleetEnabled (the Fleet tab only shows when on).
+// Freshness comes from the daily scheduled sweep + the explicit "Poll now"
+// button, never an implicit poll from opening this page (a peer poll is a
+// real network round-trip to another site). Modeled on Receiver.tsx.
+// ---------------------------------------------------------------------------
+
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import {
+  listFleetPeers,
+  createFleetPeer,
+  updateFleetPeer,
+  deleteFleetPeer,
+  pollFleetPeer,
+} from "../lib/api";
+import type { FleetPeer, FleetPeerInput, DomainStatus } from "../lib/api";
+import { useT, type TranslationKey } from "../lib/i18n";
+import { relativeTime } from "../lib/reltime";
+
+type T = ReturnType<typeof useT>["t"];
+
+// ---------------------------------------------------------------------------
+// Protection chip — mirrors Dashboard's protectionChip mapping (not exported
+// there, so duplicated here: green/amber/red/"" -> ok/warn/fail/muted).
+// ---------------------------------------------------------------------------
+
+function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; children: React.ReactNode }) {
+  const cls =
+    tone === "ok"
+      ? "bg-statusOkBg text-statusOk"
+      : tone === "fail"
+      ? "bg-statusFailBg text-statusFail"
+      : tone === "warn"
+      ? "bg-statusWarnBgStrong text-statusWarn"
+      : "bg-carbon-surface2 text-carbon-textSub";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
+      {children}
+    </span>
+  );
+}
+
+function protectionTone(level: string): "ok" | "fail" | "warn" | "muted" {
+  switch (level) {
+    case "green":
+      return "ok";
+    case "amber":
+      return "warn";
+    case "red":
+      return "fail";
+    default:
+      return "muted";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cached scorecard (one row per domain the peer reported)
+// ---------------------------------------------------------------------------
+
+// Domain -> label key. An explicit map (not a template literal) so every
+// lookup is a real, statically-checked TranslationKey.
+const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
+  containers: "settings.containersEnabled",
+  vms: "settings.vmsEnabled",
+  flash: "settings.flashEnabled",
+  files: "settings.filesEnabled",
+  config: "settings.configEnabled",
+};
+
+function domainLabelKey(domain: string): TranslationKey {
+  return DOMAIN_LABEL_KEYS[domain] ?? "settings.containersEnabled";
+}
+
+function protectionLabelKey(level: string): TranslationKey {
+  switch (level) {
+    case "green":
+      return "fleet.protection.green";
+    case "amber":
+      return "fleet.protection.amber";
+    case "red":
+      return "fleet.protection.red";
+    default:
+      return "fleet.protection.none";
+  }
+}
+
+function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
+  const shown = domains.filter((d) => d.enabled && d.protection !== "");
+  if (shown.length === 0) {
+    return <p className="py-2 text-xs text-carbon-textMuted">{t("fleet.noScorecard")}</p>;
+  }
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      {shown.map((d) => (
+        <div key={d.domain} className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-carbon-textSub w-20 shrink-0">{t(domainLabelKey(d.domain))}</span>
+          <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection))}</Badge>
+          {d.lastSuccess > 0 && (
+            <span className="text-xs text-carbon-textMuted">
+              {t("fleet.lastBackup").replace("{time}", relativeTime(t, d.lastSuccess))}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Peer card
+// ---------------------------------------------------------------------------
+
+function FleetPeerCard({
+  peer,
+  t,
+  onRefresh,
+  onEdit,
+}: {
+  peer: FleetPeer;
+  t: T;
+  onRefresh: () => void;
+  onEdit: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [polling, setPolling] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [removeErr, setRemoveErr] = useState<string | null>(null);
+
+  async function handlePoll() {
+    setPolling(true);
+    try {
+      await pollFleetPeer(peer.id);
+      onRefresh();
+    } finally {
+      setPolling(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (!window.confirm(t("fleet.removeConfirm"))) return;
+    setRemoving(true);
+    setRemoveErr(null);
+    try {
+      const res = await deleteFleetPeer(peer.id);
+      if (res.ok) onRefresh();
+      else setRemoveErr(res.error ?? t("fleet.saveError"));
+    } catch (err) {
+      setRemoveErr(err instanceof Error ? err.message : t("fleet.saveError"));
+    } finally {
+      setRemoving(false);
+    }
+  }
+
+  const pollTone: "ok" | "fail" | "muted" = peer.lastPollOk === null ? "muted" : peer.lastPollOk ? "ok" : "fail";
+  const pollLabel =
+    peer.lastPollOk === null ? t("fleet.pollNever") : peer.lastPollOk ? t("fleet.pollOk") : t("fleet.pollFailed");
+
+  return (
+    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-carbon-text text-sm truncate">
+              {peer.lastPollInstanceName || peer.name}
+            </span>
+            {!peer.enabled && <Badge tone="muted">{t("fleet.monitoringOff")}</Badge>}
+            <Badge tone={pollTone}>{pollLabel}</Badge>
+          </div>
+          <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">{peer.url}</p>
+        </div>
+        {peer.lastPollVersion && (
+          <span className="text-xs text-carbon-textMuted shrink-0">v{peer.lastPollVersion}</span>
+        )}
+      </div>
+
+      {peer.lastPollAt > 0 && (
+        <p className="text-xs text-carbon-textMuted">
+          {t("fleet.lastPolled").replace("{time}", relativeTime(t, peer.lastPollAt))}
+          {peer.lastPollOk === false && peer.lastPollError && (
+            <span className="text-statusFail"> · {peer.lastPollError}</span>
+          )}
+        </p>
+      )}
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={() => void handlePoll()}
+          disabled={polling}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {polling ? (
+            <>
+              <span
+                className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              />
+              {t("fleet.polling")}
+            </>
+          ) : (
+            t("fleet.pollNow")
+          )}
+        </button>
+
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className={`transition-transform ${open ? "rotate-90" : ""}`}
+            >
+              <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {t("fleet.details")}
+          </button>
+          <button
+            onClick={onEdit}
+            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+          >
+            {t("fleet.edit")}
+          </button>
+          <button
+            onClick={() => void handleRemove()}
+            disabled={removing}
+            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+          >
+            {removing ? t("fleet.removing") : t("fleet.remove")}
+          </button>
+        </div>
+      </div>
+      {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}
+
+      {open && (
+        <div className="rounded-lg bg-carbon-background px-3 py-2">
+          <p className="text-xs font-medium text-carbon-textSub">{t("fleet.scorecardTitle")}</p>
+          <PeerScorecard domains={peer.lastPollDomains} t={t} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add / edit dialog
+// ---------------------------------------------------------------------------
+
+function FleetDialog({
+  initial,
+  t,
+  onClose,
+  onSaved,
+}: {
+  /** null = create; a peer = edit that peer. */
+  initial: FleetPeer | null;
+  t: T;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [url, setUrl] = useState(initial?.url ?? "");
+  const [token, setToken] = useState("");
+  const [enabled, setEnabled] = useState(initial?.enabled ?? true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const editing = initial !== null;
+  const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
+
+  async function handleSave() {
+    if (name.trim() === "") {
+      setError(t("fleet.nameRequired"));
+      return;
+    }
+    if (url.trim() === "") {
+      setError(t("fleet.urlRequired"));
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    const input: FleetPeerInput = {
+      name: name.trim(),
+      url: url.trim(),
+      token: token.trim(),
+      enabled,
+      sortOrder: initial?.sortOrder ?? 0,
+    };
+    try {
+      const res = editing ? await updateFleetPeer(initial.id, input) : await createFleetPeer(input);
+      if (res.ok) onSaved();
+      else setError(res.error ?? t("fleet.saveError"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("fleet.saveError"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputCls =
+    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={editing ? t("fleet.editTitle") : t("fleet.addTitle")}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+      >
+        <h2 className="text-lg font-semibold text-carbon-text">
+          {editing ? t("fleet.editTitle") : t("fleet.addTitle")}
+        </h2>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="tower"
+            className={inputCls}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs text-carbon-textSub">{t("fleet.url")}</label>
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="https://192.168.1.50:3443"
+            className={`${inputCls} font-mono`}
+          />
+          <p className="text-[11px] text-carbon-textMuted">{t("fleet.urlHint")}</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
+          <input
+            type="password"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
+            className={`${inputCls} font-mono`}
+          />
+          <p className="text-[11px] text-carbon-textMuted">{t("fleet.tokenHint")}</p>
+        </div>
+
+        <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="h-4 w-4 cursor-pointer"
+            style={{ accentColor: "var(--accent)" }}
+          />
+          {t("fleet.enabledLabel")}
+        </label>
+
+        {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+          >
+            {t("files.cancel")}
+          </button>
+          <button
+            onClick={() => void handleSave()}
+            disabled={!canSave}
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {saving ? t("common.saving") : t("settings.save")}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Fleet page
+// ---------------------------------------------------------------------------
+
+export function Fleet() {
+  const { t } = useT();
+  const [peers, setPeers] = useState<FleetPeer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // null = closed; "new" = create dialog; a row = edit dialog for that peer.
+  const [dialog, setDialog] = useState<"new" | FleetPeer | null>(null);
+
+  function loadPeers() {
+    return listFleetPeers()
+      .then((res) => {
+        if (res.ok) {
+          setPeers(res.peers ?? []);
+          setError(null);
+        } else {
+          setError(res.error ?? t("fleet.loadError"));
+        }
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : t("fleet.loadError")));
+  }
+
+  useEffect(() => {
+    void loadPeers().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-6 max-w-5xl">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>
+          <p className="mt-1 text-sm text-carbon-textSub">{t("fleet.subtitle")}</p>
+        </div>
+        <button
+          onClick={() => setDialog("new")}
+          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+        >
+          {t("fleet.addPeer")}
+        </button>
+      </div>
+
+      {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
+      {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
+
+      {!loading && !error && peers.length === 0 && (
+        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <p className="text-sm text-carbon-textMuted max-w-xl">{t("fleet.empty")}</p>
+          <button
+            onClick={() => setDialog("new")}
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+          >
+            {t("fleet.addPeer")}
+          </button>
+        </div>
+      )}
+
+      {!loading && peers.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {peers.map((p) => (
+            <FleetPeerCard
+              key={p.id}
+              peer={p}
+              t={t}
+              onRefresh={() => void loadPeers()}
+              onEdit={() => setDialog(p)}
+            />
+          ))}
+        </div>
+      )}
+
+      {dialog !== null && (
+        <FleetDialog
+          initial={dialog === "new" ? null : dialog}
+          t={t}
+          onClose={() => setDialog(null)}
+          onSaved={() => {
+            setDialog(null);
+            void loadPeers();
+          }}
+        />
+      )}
+    </div>
+  );
+}

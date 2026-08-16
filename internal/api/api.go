@@ -106,6 +106,15 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/widget/token", h.handleWidgetTokenGenerate)
 	mux.HandleFunc("DELETE /api/widget/token", h.handleWidgetTokenDisable)
 
+	// Fleet view peer status (v8.0.0). Same pattern as the widget: another
+	// BombVault instance polling this one can't carry a session cookie either,
+	// so the endpoint is allow-listed in authGate and self-gated on the stored
+	// fleet token instead — no token stored = 403, fail closed. The token
+	// management + peer-list endpoints stay session-protected.
+	mux.HandleFunc("GET /api/fleet/status", h.handleFleetStatus)
+	mux.HandleFunc("POST /api/fleet/token", h.handleFleetTokenGenerate)
+	mux.HandleFunc("DELETE /api/fleet/token", h.handleFleetTokenDisable)
+
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
 	mux.HandleFunc("POST /api/containers/backup-all", h.handleBackupAll)
@@ -246,6 +255,16 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/receiver/repos/{id}", h.handleDeleteReceiverRepo)
 	mux.HandleFunc("GET /api/receiver/repos/{id}/inventory", h.handleReceiverInventory)
 	mux.HandleFunc("POST /api/receiver/repos/{id}/check", h.handleReceiverCheck)
+
+	// Fleet view (read-only): the list of PEER BombVault instances this box
+	// polls for their protection status. Gated behind the fleetEnabled settings
+	// flag in the SPA; the endpoints stay session-protected like every other
+	// /api route (only GET /api/fleet/status, above, is publicly allow-listed).
+	mux.HandleFunc("GET /api/fleet/peers", h.handleListFleetPeers)
+	mux.HandleFunc("POST /api/fleet/peers", h.handleCreateFleetPeer)
+	mux.HandleFunc("PUT /api/fleet/peers/{id}", h.handleUpdateFleetPeer)
+	mux.HandleFunc("DELETE /api/fleet/peers/{id}", h.handleDeleteFleetPeer)
+	mux.HandleFunc("POST /api/fleet/peers/{id}/poll", h.handleFleetPeerPoll)
 
 	return h.authGate(mux)
 }
