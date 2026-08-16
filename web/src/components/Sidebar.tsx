@@ -168,6 +168,19 @@ function IconReceiver() {
   );
 }
 
+// Connected-nodes glyph for the Fleet tab — "several boxes, watched from one
+// place". Stroked to match the sibling VM/Files/Receiver nav icons.
+function IconFleet() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
+      <circle cx="10" cy="4.5" r="2" />
+      <circle cx="4" cy="15.5" r="2" />
+      <circle cx="16" cy="15.5" r="2" />
+      <path d="M10 6.5v3M8.6 11.2 5.4 13.8M11.4 11.2l3.2 2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
 function IconLayers() {
@@ -342,6 +355,7 @@ export function Sidebar({ settings }: SidebarProps) {
   const configEnabled = settings?.configEnabled ?? false;
   const filesEnabled = settings?.filesEnabled ?? false;
   const receiverEnabled = settings?.receiverEnabled ?? false;
+  const fleetEnabled = settings?.fleetEnabled ?? false;
 
   // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
   // then reappears. A short click still navigates to the Dashboard; once the
@@ -522,6 +536,10 @@ export function Sidebar({ settings }: SidebarProps) {
         {/* Receiver dashboard appears only once its domain is enabled. */}
         {receiverEnabled && (
           <NavItem to="/receiver" label={t("nav.receiver")} icon={<IconReceiver />} />
+        )}
+        {/* Fleet view appears only once its domain is enabled. */}
+        {fleetEnabled && (
+          <NavItem to="/fleet" label={t("nav.fleet")} icon={<IconFleet />} />
         )}
       </nav>
 
