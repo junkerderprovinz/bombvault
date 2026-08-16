@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { useOffsiteTargets } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -1059,6 +1060,209 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
         {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
       </div>
+    </Card>
+  );
+}
+
+// toDraft turns a secret-blanked CloudCredSetInfo (from GET) into an editable
+// CloudCredSet with blank secret fields — sending it back with those fields
+// blank is exactly what makes the backend's keep-prior-if-blank merge (matched
+// by id) preserve the real stored secret, so an untouched set's key/password
+// survives a save that only edited a DIFFERENT set in the same list.
+function toDraft(s: CloudCredSetInfo): CloudCredSet {
+  return { id: s.id, name: s.name, s3KeyId: s.s3KeyId, s3Secret: "", s3Region: s.s3Region, restUser: s.restUser, restPassword: "", s3StorageClass: s.s3StorageClass };
+}
+
+// CloudCredSetsCard manages ADDITIONAL named credential sets (#141 stage 2):
+// lets an off-site target (OffsiteTargetsSection's editor) opt into its OWN
+// S3/restic-REST credentials instead of sharing the single set CloudCard
+// manages above — e.g. two S3 endpoints (Hetzner + a local Garage/MinIO) that
+// need different keys. Same write-only-secret contract as CloudCard; the
+// whole list round-trips through setCloudCredSets (replace-all), which is why
+// every save resends every set (via toDraft — see its own comment for why
+// that is safe for the sets NOT being edited).
+export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [sets, setSets] = useState<CloudCredSetInfo[]>([]);
+  const [editing, setEditing] = useState<CloudCredSet | null>(null);
+  const [state, setState] = useState<SaveState>("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  function refresh() {
+    getCloudCredSets()
+      .then((r) => { if (r.ok) setSets(r.sets ?? []); })
+      .catch(() => undefined);
+  }
+  useEffect(refresh, []);
+
+  function openNew() {
+    setEditing({ id: crypto.randomUUID(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
+    setState("idle");
+    setMsg(null);
+  }
+  function openEdit(s: CloudCredSetInfo) {
+    setEditing(toDraft(s));
+    setState("idle");
+    setMsg(null);
+  }
+  function closeEditor() {
+    setEditing(null);
+    setState("idle");
+    setMsg(null);
+  }
+  function setField<K extends keyof CloudCredSet>(k: K, v: CloudCredSet[K]) {
+    setEditing((p) => (p ? { ...p, [k]: v } : p));
+  }
+
+  async function save() {
+    if (!editing) return;
+    setState("saving");
+    setMsg(null);
+    const isNew = !sets.some((s) => s.id === editing.id);
+    const rest = sets.filter((s) => s.id !== editing.id).map(toDraft);
+    const next = isNew ? [...rest, editing] : [...rest, editing];
+    try {
+      const r = await setCloudCredSets(next);
+      if (r.ok) {
+        setState("saved");
+        closeEditor();
+        refresh();
+      } else {
+        setState("error");
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setState("error");
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    }
+  }
+
+  async function remove(id: string) {
+    setRemovingId(id);
+    try {
+      const next = sets.filter((s) => s.id !== id).map(toDraft);
+      const r = await setCloudCredSets(next);
+      if (r.ok) {
+        refresh();
+      } else {
+        setMsg(r.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : t("settings.error"));
+    } finally {
+      setRemovingId(null);
+      setConfirmRemove(null);
+    }
+  }
+
+  const inputCls =
+    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+  const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
+
+  return (
+    <Card title={t("cloud.credSets.title")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.credSets.hint")}</p>
+
+      {sets.length === 0 && !editing && (
+        <span className="text-xs text-carbon-textMuted">{t("cloud.credSets.none")}</span>
+      )}
+
+      {sets.map((s) => (
+        <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg bg-carbon-surface2 p-3">
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-sm text-carbon-text truncate">{s.name}</span>
+            <span className="text-xs text-carbon-textMuted font-mono break-all">
+              {s.s3KeyId || s.restUser || "—"}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-start gap-2">
+            <button
+              type="button"
+              onClick={() => openEdit(s)}
+              className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+            >
+              {t("offsite.targets.edit")}
+            </button>
+            {confirmRemove === s.id ? (
+              <button
+                type="button"
+                onClick={() => void remove(s.id)}
+                disabled={removingId === s.id}
+                className="rounded-lg bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
+              >
+                {removingId === s.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmRemove(s.id)}
+                className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
+              >
+                {t("offsite.targets.remove")}
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {editing ? (
+        <div className="flex flex-col gap-3 rounded-lg bg-carbon-surface2 p-3">
+          <label className={fieldCls}>{t("cloud.credSets.name")}
+            <input value={editing.name} onChange={(e) => setField("name", e.target.value)} className={inputCls} /></label>
+          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface3/40 p-3">
+            <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
+            <label className={fieldCls}>AWS_ACCESS_KEY_ID
+              <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
+            <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
+              <input type="password" value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
+                placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+            <label className={fieldCls}>AWS_DEFAULT_REGION
+              <input value={editing.s3Region} onChange={(e) => setField("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
+            <label className={fieldCls}>{t("cloud.storageClass.label")}
+              <select value={editing.s3StorageClass} onChange={(e) => setField("s3StorageClass", e.target.value)} className={inputCls}>
+                <option value="">{t("cloud.storageClass.default")}</option>
+                <option value="STANDARD">STANDARD</option>
+                <option value="STANDARD_IA">STANDARD_IA</option>
+                <option value="ONEZONE_IA">ONEZONE_IA</option>
+                <option value="INTELLIGENT_TIERING">INTELLIGENT_TIERING</option>
+                <option value="GLACIER_IR">GLACIER_IR</option>
+              </select></label>
+          </div>
+          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface3/40 p-3">
+            <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
+            <label className={fieldCls}>RESTIC_REST_USERNAME
+              <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
+            <label className={fieldCls}>RESTIC_REST_PASSWORD
+              <input type="password" value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
+                placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => void save()}
+              disabled={state === "saving"}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {state === "saving" ? t("auth.saving") : t("settings.save")}
+            </button>
+            <button
+              onClick={closeEditor}
+              className="rounded-lg bg-carbon-surface3 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+            >
+              {t("common.close")}
+            </button>
+            {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={openNew}
+          className="self-start rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover"
+        >
+          + {t("cloud.credSets.add")}
+        </button>
+      )}
     </Card>
   );
 }
@@ -3108,6 +3312,14 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, receiverEnabled: v } : prev)
           }
         />
+        <ToggleRow
+          label={t("settings.fleetEnabled")}
+          description={t("settings.fleetEnabledHint")}
+          checked={settings.fleetEnabled}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, fleetEnabled: v } : prev)
+          }
+        />
         <SaveBar
           state={domSaveState}
           error={domSaveError}
@@ -3120,6 +3332,7 @@ export function SettingsPage() {
                 filesEnabled: settings.filesEnabled,
                 configEnabled: settings.configEnabled,
                 receiverEnabled: settings.receiverEnabled,
+                fleetEnabled: settings.fleetEnabled,
               },
               setDomSaveState,
               setDomSaveError
@@ -4022,6 +4235,7 @@ export function SettingsPage() {
       {tab === "offsite" && <RcloneCard t={t} />}
 
       {tab === "offsite" && <CloudCard t={t} />}
+      {tab === "offsite" && <CloudCredSetsCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}

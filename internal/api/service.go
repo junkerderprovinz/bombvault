@@ -844,14 +844,28 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 }
 
 // offsiteModeForTarget builds the restic mode for one off-site DESTINATION: it
-// starts from the global mode (ModeFor already sets StorageClass to the global S3
-// class from CloudCreds) and overrides the class ONLY when this destination sets
-// its own. A target with an empty StorageClass — e.g. the stage-1 backfilled N=1
-// target, which the pure-SQL migration could not populate — therefore PRESERVES
-// the global class. The class is never unconditionally overwritten, which would
-// wipe it to empty for existing single-off-site installs.
+// starts from the global mode (ModeFor already sets Env/StorageClass from the
+// shared CloudCreds), then — stage 2 — resolves this target's OWN credential
+// set via CredsRef and overrides Env (and StorageClass, unless the target sets
+// its own) when it names one. A target with an empty CredsRef therefore keeps
+// using the shared credentials exactly as before (every existing install is
+// unaffected); a target with an empty StorageClass — e.g. the stage-1
+// backfilled N=1 target, which the pure-SQL migration could not populate —
+// PRESERVES whichever class its resolved credential set carries. The class is
+// never unconditionally overwritten, which would wipe it to empty for existing
+// single-off-site installs.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
 	mode := s.ModeFor(settings)
+	if strings.TrimSpace(target.CredsRef) != "" {
+		if c, err := s.decodeCloudFor(settings, target.CredsRef); err != nil {
+			log.Printf("api: offsite target %s: cloud creds decode failed (ignoring, falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
+		} else {
+			mode.Env = cloudEnv(c)
+			if c.S3StorageClass != "" {
+				mode.StorageClass = c.S3StorageClass
+			}
+		}
+	}
 	if target.StorageClass != "" {
 		mode.StorageClass = target.StorageClass
 	}
@@ -9439,6 +9453,148 @@ func (s *Service) SetCloudCreds(c CloudCreds) error {
 	}
 	settings.CloudConf = base64.StdEncoding.EncodeToString(enc)
 	return s.store.UpdateSettings(settings)
+}
+
+// ---------------------------------------------------------------------------
+// Named credential sets (#141 stage 2): additional S3/restic-REST credentials
+// an off-site target can opt into via OffsiteTarget.CredsRef, instead of every
+// target sharing the one CloudCreds set above. An empty CredsRef keeps using
+// CloudCreds exactly as before, so this is purely additive.
+// ---------------------------------------------------------------------------
+
+// CloudCredSet is one named, additional credential set. Embeds CloudCreds for
+// the actual key/secret/region/storage-class fields so cloudEnv and the
+// storage-class validation in SetCloudCredSets stay shared with the legacy
+// single-set path.
+type CloudCredSet struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	CloudCreds
+}
+
+// decodeCloudCredSets decrypts the stored additional credential sets from the
+// given settings (an empty/blank cloud_cred_sets yields nil, no error).
+func (s *Service) decodeCloudCredSets(settings store.Settings) ([]CloudCredSet, error) {
+	if strings.TrimSpace(settings.CloudCredSets) == "" {
+		return nil, nil
+	}
+	enc, err := base64.StdEncoding.DecodeString(settings.CloudCredSets)
+	if err != nil {
+		return nil, err
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return nil, err
+	}
+	var sets []CloudCredSet
+	if err := json.Unmarshal(plain, &sets); err != nil {
+		return nil, err
+	}
+	return sets, nil
+}
+
+// CloudCredSets returns the additional named credential sets, with every
+// secret field blanked (callers that need the real secrets, e.g. restic env
+// building, must go through decodeCloudFor — this is for serving the list to
+// the UI, same blank-secrets contract as handleGetCloud).
+func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]CloudCredSet, len(sets))
+	for i, set := range sets {
+		out[i] = set
+		out[i].S3Secret = ""
+		out[i].RESTPassword = ""
+	}
+	return out, nil
+}
+
+// SetCloudCredSets replaces the whole list of additional named credential
+// sets. Each set's secret fields follow the same keep-prior-if-blank rule as
+// SetCloudCreds (matched by ID against the previously stored set), so the UI
+// can rename a set or edit its non-secret fields without re-entering keys. A
+// set with a blank Name or a duplicate ID is rejected — both would make
+// CredsRef resolution ambiguous or the set unreachable from the UI.
+func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	prev, _ := s.decodeCloudCredSets(settings)
+	prevByID := make(map[string]CloudCredSet, len(prev))
+	for _, p := range prev {
+		prevByID[p.ID] = p
+	}
+	seen := make(map[string]bool, len(sets))
+	for i := range sets {
+		sets[i].Name = strings.TrimSpace(sets[i].Name)
+		if sets[i].Name == "" {
+			return fmt.Errorf("credential set name must not be empty")
+		}
+		if sets[i].ID == "" {
+			return fmt.Errorf("credential set %q: missing id", sets[i].Name)
+		}
+		if seen[sets[i].ID] {
+			return fmt.Errorf("duplicate credential set id %q", sets[i].ID)
+		}
+		seen[sets[i].ID] = true
+		sets[i].S3StorageClass = strings.ToUpper(strings.TrimSpace(sets[i].S3StorageClass))
+		if sets[i].S3StorageClass != "" && !restic.StorageClassAllowed(sets[i].S3StorageClass) {
+			return fmt.Errorf("credential set %q: unsupported S3 storage class %q (allowed: %s)", sets[i].Name, sets[i].S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
+		}
+		if old, ok := prevByID[sets[i].ID]; ok {
+			if sets[i].S3Secret == "" {
+				sets[i].S3Secret = old.S3Secret
+			}
+			if sets[i].RESTPassword == "" {
+				sets[i].RESTPassword = old.RESTPassword
+			}
+		}
+	}
+	if len(sets) == 0 {
+		settings.CloudCredSets = ""
+		return s.store.UpdateSettings(settings)
+	}
+	blob, mErr := json.Marshal(sets)
+	if mErr != nil {
+		return fmt.Errorf("marshal cloud cred sets: %w", mErr)
+	}
+	enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
+	if eErr != nil {
+		return fmt.Errorf("encrypt cloud cred sets: %w", eErr)
+	}
+	settings.CloudCredSets = base64.StdEncoding.EncodeToString(enc)
+	return s.store.UpdateSettings(settings)
+}
+
+// decodeCloudFor resolves the credentials an off-site target should use: the
+// shared/legacy CloudCreds when credsRef is empty (every existing install,
+// unchanged), or the matching named CloudCredSet otherwise. A credsRef that no
+// longer resolves (the set was deleted, or storage drifted) falls back to the
+// shared creds rather than failing the caller outright — restic then fails
+// loudly on auth if that fallback genuinely has no usable credentials for this
+// target's endpoint, which is a clearer signal than an opaque config error.
+func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (CloudCreds, error) {
+	if strings.TrimSpace(credsRef) == "" {
+		return s.decodeCloud(settings)
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return CloudCreds{}, err
+	}
+	for _, set := range sets {
+		if set.ID == credsRef {
+			return set.CloudCreds, nil
+		}
+	}
+	log.Printf("api: off-site target references unknown credential set %q, falling back to shared credentials", credsRef)
+	return s.decodeCloud(settings)
 }
 
 // ---------------------------------------------------------------------------

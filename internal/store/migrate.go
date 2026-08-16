@@ -873,6 +873,17 @@ ALTER TABLE vms      ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';`
 		version: 84, name: "settings_dr_drill_target_vm",
 		sql: "ALTER TABLE settings ADD COLUMN dr_drill_target_vm TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// #141: named, per-off-site-target S3/restic-REST credential sets ("stage 2",
+		// see offsite_targets.CredsRef's doc comment from v75/offsite_targets). Every
+		// existing off-site target keeps working unchanged (CredsRef stays empty =
+		// the shared/global cloud_conf creds, today's behavior) — this only adds the
+		// STORAGE for additional named sets a target can opt into. cloud_cred_sets is
+		// an AES-256-GCM-encrypted JSON array (base64), same at-rest treatment as
+		// cloud_conf. Empty (the default) = no additional sets defined yet.
+		version: 85, name: "settings_cloud_cred_sets",
+		sql: "ALTER TABLE settings ADD COLUMN cloud_cred_sets TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

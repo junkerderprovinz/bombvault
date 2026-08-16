@@ -2002,6 +2002,49 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleGetCloudCredSets returns the additional named credential sets (#141
+// stage 2) WITHOUT secrets, same is-set-flag contract as handleGetCloud.
+// GET /api/cloud/creds-sets
+func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request) {
+	sets, err := h.svc.CloudCredSets()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	out := make([]map[string]any, len(sets))
+	for i, c := range sets {
+		out[i] = map[string]any{
+			"id":              c.ID,
+			"name":            c.Name,
+			"s3KeyId":         c.S3KeyID,
+			"s3Region":        c.S3Region,
+			"restUser":        c.RESTUser,
+			"s3StorageClass":  c.S3StorageClass,
+			"s3SecretSet":     c.S3Secret != "",
+			"restPasswordSet": c.RESTPassword != "",
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"sets": out}))
+}
+
+// handleSetCloudCredSets replaces the whole list of additional named
+// credential sets. A blank secret field on a set matched by id (against the
+// previously stored set) keeps the previously stored one, same as
+// handleSetCloud. POST /api/cloud/creds-sets
+func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Sets []CloudCredSet `json:"sets"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.SetCloudCredSets(body.Sets); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleTestNotify sends a test notification using the POSTed config (so the
 // user can test the form before saving). POST /api/notify/test
 func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
