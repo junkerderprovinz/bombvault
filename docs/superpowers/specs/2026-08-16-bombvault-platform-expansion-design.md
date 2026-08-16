@@ -51,9 +51,14 @@ Implementations: `unraid` (existing behavior, unchanged), `generic` (new), `true
 
 ## 5. TrueNAS Scale specifics
 
-- Containers: work via the §3 fixes directly, no TrueNAS-specific code needed beyond the `Platform` detection itself.
-- VMs: `LIBVIRT_URI` override for the TrueNAS libvirt socket path; zvol (block-device) disk handling in the VM backup/restore path; domain-naming handling for TrueNAS 26's UUID-based scheme.
-- **Official catalog listing is in scope for this release**, not deferred: `app.yaml`/`questions.yaml`/Jinja-templated compose for TrueNAS Scale's community app-catalog PR process, mirroring the role the Unraid CA template plays today. This is an ongoing maintenance commitment (catalog PRs, keeping the manifest current across TrueNAS releases) that BombVault is taking on deliberately, the same way the CA template is maintained today.
+- Containers: work via the §3 fixes directly, no TrueNAS-specific code needed beyond the `Platform` detection itself. Confirmed against the current stable release (25.10 "Goldeye"): Apps moved from Kubernetes/k3s to plain Docker + Compose in 24.10, the host `docker.sock` is reachable at the standard path, and the official catalog's own library mounts it (read-write for apps like Dockge) — sibling-container discovery/control works the same way it does on Unraid.
+- VMs: confirmed libvirt + QEMU/KVM on the current stable release (25.04 briefly shipped an Incus-based "Instances" system; 25.04.2 restored libvirt; 25.10 removes Incus from the base system entirely, libvirt now drives both VMs and LXC). This is materially more work than a single connection-string fix:
+  - `LIBVIRT_URI` override for TrueNAS's non-standard libvirt socket (`qemu+ssh://<user>@<host>/system?socket=/run/truenas_libvirt/libvirt-sock`).
+  - **VM disks are zvols (ZFS block devices), not qcow2 files.** BombVault's existing VM backup path assumes file-based disk images that restic can back up directly; a zvol needs a ZFS-snapshot-based backup path instead — a genuinely separate code path, not a config flag.
+  - **UEFI NVRAM and TPM state live outside the zvol**, at fixed paths (`/var/db/system/vm/nvram/{id}_{name}_VARS.fd`, `/var/db/system/vm/tpm/{id}_{name}_tpm_state`) — must be captured and restored alongside the disk for a Secure-Boot/vTPM guest to actually come back up.
+  - **Domain naming differs by version**: `{id}_{name}` on 25.10, VM UUID on the upcoming 26 release — any name-based VM lookup needs to handle both.
+  - TrueNAS's middleware is the idiomatic control path; changes made directly via `virsh` are invisible to it and may be reconciled/overwritten, a sharper version of the same risk Unraid's own VM Manager already poses.
+- **Official catalog listing is in scope for this release**, not deferred: a TrueNAS Apps community-train submission (`app.yaml` + `ix_values.yaml` + `questions.yaml` + a Jinja2-templated `templates/docker-compose.yaml`, per `github.com/truenas/apps`'s contribution process) — the structural equivalent of, and a good deal more work than, the Unraid CA template XML. This is an ongoing maintenance commitment (catalog PRs, keeping the manifest current across TrueNAS releases) that BombVault is taking on deliberately, the same way the CA template is maintained today.
 
 ## 6. Positioning
 
