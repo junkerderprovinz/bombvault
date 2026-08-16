@@ -958,6 +958,8 @@ const ko: Partial<Translations> = {
   "files.backupAll": "지금 모두 백업",
   "files.discoverHint": "세트 목록을 잃어버렸나요? 스토리지의 백업에서 다시 구성하세요.",
   "files.cancel": "취소",
+  "files.addPreset": "프리셋 추가: 호스트 시스템 구성",
+  "files.addPresetHint": "컨테이너 외부의 호스트 수준 구성을 위한 신중한 시작점입니다 — 완전함을 보장하지 않습니다. 저장하기 전에 폴더를 확인하세요.",
   "settings.filesEnabled": "폴더",
   "settings.filesPath": "폴더 경로",
   "jobs.filesSection": "폴더",

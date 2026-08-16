@@ -1348,12 +1348,16 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// Nest under "settings" so the GET response is shape-symmetric with the PUT
 	// body: a client can GET, edit, and PUT back the same settings object without
 	// the envelope's "ok" leaking into the strict PUT decoder.
-	// hostMountRoot is a sibling (not inside settings) so the strict PUT decoder
-	// never sees it and cannot reject it as an unknown field.
+	// hostMountRoot/platform are siblings (not inside settings) so the strict PUT
+	// decoder never sees them and cannot reject them as unknown fields.
+	// platform is the detected/overridden platform.Kind ("unraid"/"generic"/
+	// "truenas", see internal/platform) — read-only host-environment info, not a
+	// setting the UI can change.
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
 		"settings":      view,
 		"hostMountRoot": h.cfg.HostMountRoot,
+		"platform":      string(h.svc.platformFn().Kind()),
 	})
 }
 

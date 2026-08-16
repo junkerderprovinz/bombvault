@@ -966,6 +966,8 @@ const sv: Partial<Translations> = {
   "files.backupAll": "Säkerhetskopiera allt nu",
   "files.discoverHint": "Förlorat listan med uppsättningar? Bygg om den från säkerhetskopiorna i lagringen.",
   "files.cancel": "Avbryt",
+  "files.addPreset": "Lägg till förinställning: Systemkonfiguration",
+  "files.addPresetHint": "En försiktig utgångspunkt för konfiguration på värdnivå utanför dina containrar — inget anspråk på fullständighet. Granska mappen innan du sparar.",
   "settings.filesEnabled": "Mappar",
   "settings.filesPath": "Mappar-sökväg",
   "jobs.filesSection": "Mappar",
