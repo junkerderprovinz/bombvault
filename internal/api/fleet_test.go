@@ -160,3 +160,37 @@ func TestRunFleetPollsSkipsDisabled(t *testing.T) {
 		t.Fatalf("a disabled peer's poll state must stay untouched, got %+v", got)
 	}
 }
+
+// TestRunFleetPollsAcceptsSelfSignedCert pins that a peer served over HTTPS
+// with an untrusted (self-signed) certificate is still polled successfully —
+// discovered live: every BombVault instance's own default cert is self-signed
+// and scoped to loopback names, never valid for the real address a peer would
+// actually be reached at, so strict TLS verification here would make the
+// feature fail against a completely standard BombVault install.
+func TestRunFleetPollsAcceptsSelfSignedCert(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "instanceName": "tower", "version": "8.0.0", "domains": []map[string]any{}})
+	}))
+	defer srv.Close()
+
+	svc, st, appKey := fleetTestService(t)
+	enc, err := secret.Encrypt(appKey, []byte("tok"))
+	if err != nil {
+		t.Fatalf("Encrypt: %v", err)
+	}
+	peer, err := st.CreateFleetPeer(store.FleetPeer{Name: "tower", URL: srv.URL, TokenEnc: enc, Enabled: true})
+	if err != nil {
+		t.Fatalf("CreateFleetPeer: %v", err)
+	}
+
+	if err := svc.RunFleetPolls(context.Background()); err != nil {
+		t.Fatalf("RunFleetPolls: %v", err)
+	}
+	got, ok, err := st.GetFleetPeer(peer.ID)
+	if err != nil || !ok {
+		t.Fatalf("GetFleetPeer: ok=%v err=%v", ok, err)
+	}
+	if !got.LastPollOK.Valid || !got.LastPollOK.Bool {
+		t.Fatalf("a self-signed peer cert must not fail the poll, got LastPollOK=%+v error=%q", got.LastPollOK, got.LastPollError)
+	}
+}

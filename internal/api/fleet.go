@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/subtle"
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -46,11 +47,21 @@ const fleetResponseMax = 1 << 20 // 1 MiB
 
 // fleetHTTPClient is the bounded HTTP client for peer status polls. Redirects
 // are not followed (a redirect is not the peer answering) and the timeout
-// backstops the per-request context, mirroring tamperHTTPClient.
+// backstops the per-request context, mirroring tamperHTTPClient. TLS
+// verification is skipped: every BombVault instance serves HTTPS off a
+// self-signed certificate scoped to loopback names (see the Dockerfile/
+// healthcheckAt), never one valid for its real LAN/WAN address, so a peer at
+// a real IP would otherwise always fail verification. This matches the
+// app's existing LAN-trust posture (the same InsecureSkipVerify choice
+// healthcheckAt already makes, and the "LAN trust model" /metrics already
+// documents) — the fleet token itself is still the real access control.
 var fleetHTTPClient = &http.Client{
 	Timeout: fleetPollTimeout,
 	CheckRedirect: func(*http.Request, []*http.Request) error {
 		return http.ErrUseLastResponse
+	},
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: self-signed peer certs are the norm (see comment above); the fleet token is the real access control
 	},
 }
 
