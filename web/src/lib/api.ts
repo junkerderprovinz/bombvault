@@ -189,6 +189,8 @@ export interface Settings {
   tamperTestSchedule: string;
   /** DR-drill target container ("" = auto: the most recently backed-up container). */
   drDrillTarget: string;
+  /** DR-drill target VM ("" = auto: the most recently backed-up VM). */
+  drDrillTargetVm: string;
   /** #56: after a post-backup container update, remove the superseded old image.
    *  Opt-in (default off) — keeping the old image makes a snapshot rollback cheap. */
   pruneImageAfterUpdate: boolean;

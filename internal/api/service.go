@@ -8324,16 +8324,13 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // restores the newest off-site snapshot of the drill target into a marker-guarded
 // sandbox under the restore folder, verifies the restored file count + bytes
 // against restic's own accounting, deletes the sandbox (marker-guarded), and
-// records a restore_drills(kind='dr', source='offsite') row. VMs are refused —
-// their disk images are too large / not sandbox-safe. It takes the domain repo
-// lock exactly like a real restore, so a scheduled backup can never fire mid-drill
-// and vice-versa; busy → errDomainBusy, recording nothing. A failure records
-// kind='dr' ok=false AND fires the drill-failure notification.
+// records a restore_drills(kind='dr', source='offsite') row. It takes the domain
+// repo lock exactly like a real restore, so a scheduled backup can never fire
+// mid-drill and vice-versa; busy → errDomainBusy, recording nothing. A failure
+// records kind='dr' ok=false AND fires the drill-failure notification.
 func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "flash", "files":
-	case "vms":
-		return store.RestoreDrill{}, errors.New("DR drills are not supported for VMs: their disk images are too large to sandbox-restore — use an integrity check instead")
+	case "containers", "vms", "flash", "files":
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -8465,10 +8462,12 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 
 // pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
 // containers: the DRDrillTarget container (or, when unset, the most recently
-// backed-up container), scoped to its container:<name> tag. flash: the newest
-// snapshot outright (flash is a single whole-USB image, no per-item scoping).
-// files follows the flash path: the newest snapshot in the files repo outright —
-// a file-set restore is sandbox-cheap and any set proves the repo restorable. An
+// backed-up container), scoped to its container:<name> tag. vms: the
+// DRDrillTargetVM VM (or, when unset, the most recently backed-up VM), scoped to
+// its vm:<name> tag — same pattern as containers. flash: the newest snapshot
+// outright (flash is a single whole-USB image, no per-item scoping). files
+// follows the flash path: the newest snapshot in the files repo outright — a
+// file-set restore is sandbox-cheap and any set proves the repo restorable. An
 // empty repo or a target with no off-site snapshot yields a clear error.
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
@@ -8481,15 +8480,26 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	switch domain {
 	case "flash", "files":
 		return newestSnapshot(all).ID, nil
-	case "containers":
-		target := settings.DRDrillTarget
-		if target == "" {
-			target, err = s.newestBackedUpContainer()
-			if err != nil {
-				return "", err
+	case "containers", "vms":
+		var (
+			target string
+			tagPfx string
+		)
+		if domain == "containers" {
+			target, tagPfx = settings.DRDrillTarget, "container:"
+			if target == "" {
+				target, err = s.newestBackedUpContainer()
+			}
+		} else {
+			target, tagPfx = settings.DRDrillTargetVM, "vm:"
+			if target == "" {
+				target, err = s.newestBackedUpVM()
 			}
 		}
-		tag := "container:" + target
+		if err != nil {
+			return "", err
+		}
+		tag := tagPfx + target
 		var scoped []restic.Snapshot
 		for _, snap := range all {
 			for _, t := range snap.Tags {
@@ -8548,6 +8558,36 @@ func (s *Service) newestBackedUpContainer() (string, error) {
 	return best, nil
 }
 
+// newestBackedUpVM returns the VM name with the most recent successful backup
+// run — the default DR-drill target when none is pinned. Mirrors
+// newestBackedUpContainer exactly (VM runs share the same runs table/column,
+// see migration 5 runs_relax_fk).
+func (s *Service) newestBackedUpVM() (string, error) {
+	targets, err := s.store.ListVMTargets()
+	if err != nil {
+		return "", fmt.Errorf("list VM targets: %w", err)
+	}
+	best := ""
+	var bestAt int64
+	for _, t := range targets {
+		run, rErr := s.store.LastSuccessfulBackup(t.ID)
+		if rErr != nil {
+			return "", rErr
+		}
+		if run == nil || run.FinishedAt == nil {
+			continue
+		}
+		if *run.FinishedAt >= bestAt {
+			bestAt = *run.FinishedAt
+			best = t.Name
+		}
+	}
+	if best == "" {
+		return "", errors.New("no backed-up VM to drill")
+	}
+	return best, nil
+}
+
 // sandboxRestoreVerify restores the whole snapshot tree into a fresh
 // marker-guarded sandbox under the restore folder, verifies the restored files +
 // bytes against restic's own accounting, and (always) attempts marker-guarded
@@ -8593,6 +8633,19 @@ func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, setti
 	// caller (runDRDrill), so a browser tab close can't abort a legitimate drill.
 	dctx, cancel := context.WithTimeout(ctx, restoreTimeout)
 	defer cancel()
+
+	// A VM disk image (or any large snapshot) can be hundreds of GB; fail fast with a
+	// clear error if the sandbox filesystem doesn't have room, rather than letting the
+	// restore run the host out of disk mid-way. Same preflight idiom as
+	// guardVMRestoreDestination/guardContainerRestoreDestination: a stats/probe error
+	// (e.g. the unsupported-platform stub in diskfree_other.go) is "cannot prove
+	// insufficient" and never blocks the drill — only a PROVEN shortfall aborts.
+	if _, wantBytes, statErr := s.engine.StatsRestoreSize(dctx, repo, snapID, mode); statErr == nil && wantBytes > 0 {
+		if free, fErr := s.diskFreeFn()(sandbox); fErr == nil && free < uint64(wantBytes) {
+			return fmt.Errorf("not enough free space to sandbox-restore: it needs %d bytes but %q has only %d free. Free up space and retry", wantBytes, settings.RestoreFolder, free)
+		}
+	}
+
 	if err := s.engine.RestoreInclude(dctx, repo, snapID, "/", sandbox, mode); err != nil {
 		return fmt.Errorf("restore into sandbox: %w", err)
 	}

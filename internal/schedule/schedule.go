@@ -1271,12 +1271,12 @@ type drillTask struct {
 
 // drillTasks returns the scheduled drill tasks for the current settings: a local
 // "subset" integrity check for every enabled domain, plus a real off-site "dr"
-// drill for containers, flash and files when their off-site repo is configured
-// (a file-set snapshot is as cheap to sandbox-restore as a flash one). VMs and
-// config are intentionally excluded from DR drills — VM disk images are too large
-// to sandbox-restore, and a sandbox restore of BombVault's own settings DB is
-// meaningless (its real recovery path is the in-place staged restart). Both still
-// get the local subset integrity check.
+// drill for containers, VMs, flash and files when their off-site repo is
+// configured (a file-set snapshot is as cheap to sandbox-restore as a flash one).
+// config is intentionally excluded from DR drills — a sandbox restore of
+// BombVault's own settings DB is meaningless (its real recovery path is the
+// in-place staged restart); it still gets the local subset integrity check like
+// every other domain.
 func drillTasks(settings store.Settings) []drillTask {
 	var out []drillTask
 	for _, d := range enabledDrillDomains(settings) {
@@ -1289,6 +1289,9 @@ func drillTasks(settings store.Settings) []drillTask {
 	if settings.OffsiteDrillsEnabled {
 		if settings.ContainersEnabled && settings.ContainersOffsite != "" {
 			out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
+		}
+		if settings.VMsEnabled && settings.VMsOffsite != "" {
+			out = append(out, drillTask{domain: "vms", source: "offsite", kind: "dr"})
 		}
 		if settings.FlashEnabled && settings.FlashOffsite != "" {
 			out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})

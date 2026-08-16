@@ -3941,14 +3941,15 @@ func drDrillService(t *testing.T, eng *fakeResticEngine, domain, offsite, drillT
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
 	s.DrillsEnabled = true
-	s.DRDrillTarget = drillTarget
 	switch domain {
 	case "containers":
 		s.ContainersOffsite = offsite
+		s.DRDrillTarget = drillTarget
 	case "flash":
 		s.FlashOffsite = offsite
 	case "vms":
 		s.VMsOffsite = offsite
+		s.DRDrillTargetVM = drillTarget
 	}
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
@@ -4066,24 +4067,59 @@ func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
 	}
 }
 
-// TestRunDRDrillVMRefused pins that a DR drill is refused for VMs (their disk
-// images are too large / not sandbox-safe): a clear error, nothing restored, and
-// no drill recorded.
-func TestRunDRDrillVMRefused(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"vm:win11"}}}}
-	svc, _ := drDrillService(t, eng, "vms", "rest:http://192.168.20.9:8000/vms", "")
+// TestRunDRDrillVMsHappyPath pins the real off-site DR drill for VMs: same
+// mechanism as containers (TestRunDRDrillHappyPath) — restore the newest
+// off-site snapshot of the pinned drill target into a marker-guarded sandbox,
+// verify restored files+bytes against restic's own accounting, remove the
+// sandbox, and record a restore_drills(kind='dr', source='offsite'). VMs are no
+// longer refused (v8.0.0): a VM disk image is large but the mechanism is
+// identical to every other domain, just with a bigger restore.
+func TestRunDRDrillVMsHappyPath(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111bbbb2222", Time: "2026-06-01T00:00:00Z", Tags: []string{"vm:win11"}},
+			{ID: "cccc3333dddd4444", Time: "2026-07-01T00:00:00Z", Tags: []string{"vm:win11"}},
+		},
+		lsEntries: []restic.FileEntry{
+			{Path: "/vms/win11/disk.qcow2", Type: "file", Size: 5_000_000},
+		},
+	}
+	svc, st := drDrillService(t, eng, "vms", "rest:http://192.168.20.9:8000/vms", "win11")
 
-	_, err := svc.RunRestoreDrill(context.Background(), "vms", "offsite", "dr", false)
-	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "vm") {
-		t.Fatalf("VM dr drill must be refused with a clear error, got %v", err)
+	drill, err := svc.RunRestoreDrill(context.Background(), "vms", "offsite", "dr", false)
+	if err != nil {
+		t.Fatalf("RunRestoreDrill dr: %v", err)
 	}
-	if len(eng.restored) != 0 {
-		t.Fatalf("a refused VM dr drill must restore nothing, got %v", eng.restored)
+	if !drill.OK || drill.Kind != "dr" || drill.Source != "offsite" || drill.Domain != "vms" {
+		t.Fatalf("want an ok dr/offsite/vms drill, got %+v", drill)
 	}
-	if _, found, fErr := svc.LatestDrill("vms", "offsite"); fErr != nil {
-		t.Fatalf("LatestDrill: %v", fErr)
-	} else if found {
-		t.Fatal("a refused VM dr drill must record no drill")
+	if len(eng.restored) != 1 {
+		t.Fatalf("want exactly one whole-tree sandbox restore, got %v", eng.restored)
+	}
+	// The newest snapshot (by Time) must be the one drilled.
+	if !strings.Contains(eng.restored[0], ":cccc3333dddd4444:/->") {
+		t.Fatalf("must restore the newest off-site snapshot, got %q", eng.restored[0])
+	}
+	sandbox := sandboxTarget(t, eng.restored[0])
+	if !strings.Contains(filepath.Base(sandbox), "bombvault-drill-vms-") {
+		t.Fatalf("restore target is not a drill sandbox: %q", sandbox)
+	}
+	if _, statErr := os.Stat(sandbox); !os.IsNotExist(statErr) {
+		t.Fatalf("drill sandbox must be removed after a successful drill, stat err=%v", statErr)
+	}
+	latest, found, lErr := svc.LatestDrill("vms", "offsite")
+	if lErr != nil || !found {
+		t.Fatalf("dr drill not recorded: found=%v err=%v", found, lErr)
+	}
+	if latest.Kind != "dr" || !latest.OK || latest.At == 0 {
+		t.Fatalf("recorded drill = %+v, want kind=dr ok=true with a timestamp", latest)
+	}
+	runs, rErr := st.ListRuns(10)
+	if rErr != nil {
+		t.Fatal(rErr)
+	}
+	if len(runs) != 1 || runs[0].Kind != "drdrill" || runs[0].TargetID != "vms" || runs[0].Status != "success" {
+		t.Fatalf("runs = %+v, want exactly one Kind=drdrill TargetID=vms Status=success", runs)
 	}
 }
 

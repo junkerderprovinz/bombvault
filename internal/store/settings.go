@@ -143,6 +143,10 @@ type Settings struct {
 	// DRDrillTarget is the container the real-restore DR drill restores. Empty
 	// (the default) = auto: the most recently successfully backed-up container.
 	DRDrillTarget string
+	// DRDrillTargetVM is the VM the real-restore DR drill restores. Empty (the
+	// default) = auto: the most recently successfully backed-up VM. Mirrors
+	// DRDrillTarget exactly, one field per domain that needs a pinned target.
+	DRDrillTargetVM string
 	// PruneImageAfterUpdate removes the superseded (old) image after a post-backup
 	// container update (#52/#56). Opt-in, default off — keeping the old image is what
 	// makes a fresh-snapshot rollback cheap. Best-effort + force=false (a shared base
@@ -230,7 +234,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       drills_enabled, drills_schedule, drills_subset_pct, offsite_drills_enabled,
 		       recovery_kit_ack,
 		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable, files_offsite_immutable,
-		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target,
+		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target, dr_drill_target_vm,
 		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
 		       prune_image_after_update, session_epoch, restic_cache_max_mb,
 		       digest_enabled, digest_schedule,
@@ -263,7 +267,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct, &offsiteDrillsEnabled,
 		&recoveryKitAck,
 		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable, &filesImmutable,
-		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget,
+		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget, &s.DRDrillTargetVM,
 		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
 		&pruneImageAfterUpdate, &s.SessionEpoch, &s.ResticCacheMaxMB,
 		&digestEnabled, &s.DigestSchedule,
@@ -371,6 +375,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  offsite_growth_budget_gb     = ?,
 		  tamper_test_schedule         = ?,
 		  dr_drill_target              = ?,
+		  dr_drill_target_vm           = ?,
 		  flash_zip_export_enabled     = ?,
 		  flash_zip_export_path        = ?,
 		  flash_zip_export_keep        = ?,
@@ -408,7 +413,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct, boolInt(s.OffsiteDrillsEnabled),
 		boolInt(s.RecoveryKitAck),
 		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable), boolInt(s.FilesOffsiteImmutable),
-		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget,
+		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget, s.DRDrillTargetVM,
 		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
 		boolInt(s.PruneImageAfterUpdate), s.SessionEpoch, s.ResticCacheMaxMB,
 		boolInt(s.DigestEnabled), s.DigestSchedule,
