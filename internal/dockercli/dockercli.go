@@ -156,7 +156,7 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	if err != nil {
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
-	c.fillVolumeMountSources(ctx, resp.Mounts)
+	c.fillVolumeMountSources(ctx, name, resp.Mounts)
 	return mapInspect(resp), nil
 }
 
@@ -173,18 +173,22 @@ func needsVolumeMountpoint(m container.MountPoint) bool {
 
 // fillVolumeMountSources resolves the host-side Source for any volume mount
 // needsVolumeMountpoint flags, via VolumeInspect, mutating mounts in place.
-// Best-effort: a volume lookup failure just leaves Source empty — mapInspect
-// then carries an empty Source through like any other unresolvable mount, and
-// resolveAppdataPaths skips it rather than failing the whole container inspect
-// over one volume.
-func (c *Client) fillVolumeMountSources(ctx context.Context, mounts []container.MountPoint) {
+// Best-effort, matching the same pattern as CreateAndStart's secondary-network
+// reconnect: a volume lookup failure just leaves Source empty rather than
+// failing the whole container inspect over one volume, but it is still logged
+// (not silently dropped) — mapInspect then carries the empty Source through
+// like any other unresolvable mount, and resolveAppdataPaths skips it.
+func (c *Client) fillVolumeMountSources(ctx context.Context, name string, mounts []container.MountPoint) {
 	for i := range mounts {
 		if !needsVolumeMountpoint(mounts[i]) {
 			continue
 		}
-		if mp, err := c.VolumeInspect(ctx, mounts[i].Name); err == nil {
-			mounts[i].Source = mp
+		mp, err := c.VolumeInspect(ctx, mounts[i].Name)
+		if err != nil {
+			log.Printf("dockercli: inspect %q: resolve volume %q mountpoint failed (continuing): %v", name, mounts[i].Name, err)
+			continue
 		}
+		mounts[i].Source = mp
 	}
 }
 
