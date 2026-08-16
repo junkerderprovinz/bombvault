@@ -1,8 +1,10 @@
 package api
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
@@ -126,5 +128,124 @@ func TestResolveAppdataPathsVolumeUnreachableHostPathSkipped(t *testing.T) {
 	got := s.resolveAppdataPaths("myapp", in)
 	if len(got) != 0 {
 		t.Fatalf("resolveAppdataPaths = %v, want empty (host path unreachable through the configured mount)", got)
+	}
+}
+
+// --- Task 3: configurable data-root segments + compose-label discovery + ---
+// --- per-container override (#platform-expansion, direction 4/4, Task 3) ---
+
+// TestResolveAppdataPathsConfigurableSegmentMatches: a bind whose host source
+// matches a NON-default configured segment (e.g. "config", for a
+// /srv/plex/config-style layout) must be included even though it has no
+// "appdata" segment at all — proving the single hardcoded literal was
+// replaced by a loop over s.cfg.DataRootSegments, not just widened in place.
+func TestResolveAppdataPathsConfigurableSegmentMatches(t *testing.T) {
+	s := svcWithMount()
+	s.cfg.DataRootSegments = []string{"appdata", "config"}
+	in := model.Inspect{Mounts: []model.Mount{
+		{Type: "bind", Source: "/mnt/srv/plex/config", Destination: "/config"},
+	}}
+	got := s.resolveAppdataPaths("plex", in)
+	want := "/host/user/srv/plex/config"
+	if len(got) != 1 || got[0] != want {
+		t.Fatalf("resolveAppdataPaths = %v, want [%q] (bind matching the configured \"config\" segment must be included)", got, want)
+	}
+}
+
+// TestResolveAppdataPathsComposeWorkingDirLabelAddsCandidate: a container
+// carrying the standard com.docker.compose.project.working_dir label gets that
+// directory added as a data path even when NONE of its bind mounts match any
+// configured segment — the compose-label discovery source is always-on and
+// additive, not gated by the segment filter.
+func TestResolveAppdataPathsComposeWorkingDirLabelAddsCandidate(t *testing.T) {
+	s := svcWithMount()
+	in := model.Inspect{
+		Config: model.Config{Labels: map[string]string{
+			"com.docker.compose.project.working_dir": "/mnt/opt/stacks/myapp",
+		}},
+		Mounts: []model.Mount{
+			// Non-matching bind (no configured segment) — must stay excluded.
+			{Type: "bind", Source: "/mnt/data/media", Destination: "/media"},
+		},
+	}
+	got := s.resolveAppdataPaths("myapp", in)
+	want := "/host/user/opt/stacks/myapp"
+	if len(got) != 1 || got[0] != want {
+		t.Fatalf("resolveAppdataPaths = %v, want [%q] (compose working_dir label must be added regardless of bind matches)", got, want)
+	}
+}
+
+// TestResolveAppdataPathsBombvaultDataLabelOverridesSegmentFilter: a
+// container carrying a truthy "bombvault.data" label gets ALL of its bind
+// mounts included, regardless of segment match — the documented escape hatch
+// for a layout neither the segment filter nor the compose convention catches.
+// An explicit "false" value must NOT trigger the override (falsy pin).
+func TestResolveAppdataPathsBombvaultDataLabelOverridesSegmentFilter(t *testing.T) {
+	in := func(labelVal string, present bool) model.Inspect {
+		labels := map[string]string{}
+		if present {
+			labels["bombvault.data"] = labelVal
+		}
+		return model.Inspect{
+			Config: model.Config{Labels: labels},
+			Mounts: []model.Mount{
+				{Type: "bind", Source: "/mnt/srv/plex/config", Destination: "/config"},
+			},
+		}
+	}
+
+	t.Run("truthy value includes the otherwise-non-matching bind", func(t *testing.T) {
+		s := svcWithMount()
+		got := s.resolveAppdataPaths("plex", in("true", true))
+		want := "/host/user/srv/plex/config"
+		if len(got) != 1 || got[0] != want {
+			t.Fatalf("resolveAppdataPaths = %v, want [%q]", got, want)
+		}
+	})
+
+	t.Run(`label value "false" does not override`, func(t *testing.T) {
+		s := svcWithMount()
+		got := s.resolveAppdataPaths("plex", in("false", true))
+		if len(got) != 0 {
+			t.Fatalf("resolveAppdataPaths = %v, want empty (bombvault.data=false must not override the segment filter)", got)
+		}
+	})
+
+	t.Run("label absent does not override", func(t *testing.T) {
+		s := svcWithMount()
+		got := s.resolveAppdataPaths("plex", in("", false))
+		if len(got) != 0 {
+			t.Fatalf("resolveAppdataPaths = %v, want empty (no bombvault.data label at all)", got)
+		}
+	})
+}
+
+// TestResolveAppdataPathsDefaultSegmentsUnchanged is the regression pin: with
+// DATA_ROOT_SEGMENTS UNSET, config.Load's default DataRootSegments (["appdata"])
+// must reproduce the exact pre-Task-3 Unraid-only-appdata-segment behavior
+// byte-for-byte — an appdata bind is kept, a non-appdata bind is dropped, same
+// as TestResolveAppdataPathsBindMountBehaviorUnchanged pins directly against
+// the (now removed) hardcoded literal.
+func TestResolveAppdataPathsDefaultSegmentsUnchanged(t *testing.T) {
+	cfg, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
+	if err != nil {
+		t.Fatalf("config.Load: %v", err)
+	}
+	if len(cfg.DataRootSegments) != 1 || cfg.DataRootSegments[0] != "appdata" {
+		t.Fatalf("default DataRootSegments = %v, want [\"appdata\"] (unset DATA_ROOT_SEGMENTS regression guard)", cfg.DataRootSegments)
+	}
+	// config.Load's real defaults for HostSourceRoot/HostMountRoot happen to
+	// equal the Unraid-shaped svcWithMount fixture, so this exercises the
+	// production default end to end, not just the test fixture's shortcut.
+	s := &Service{cfg: cfg}
+
+	in := model.Inspect{Mounts: []model.Mount{
+		{Type: "bind", Source: "/mnt/user/appdata/myapp", Destination: "/config"},
+		{Type: "bind", Source: "/mnt/data/media", Destination: "/media"},
+	}}
+	got := s.resolveAppdataPaths("myapp", in)
+	want := "/host/user/user/appdata/myapp"
+	if len(got) != 1 || got[0] != want {
+		t.Fatalf("resolveAppdataPaths = %v, want [%q] (unset DATA_ROOT_SEGMENTS must reproduce pre-Task-3 behavior byte-for-byte)", got, want)
 	}
 }

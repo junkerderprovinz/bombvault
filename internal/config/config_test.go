@@ -33,3 +33,39 @@ func TestLoadLibvirtDefaults(t *testing.T) {
 		t.Errorf("LibvirtSSHUser = %q, want root", c.LibvirtSSHUser)
 	}
 }
+
+// TestLoadDataRootSegmentsDefault pins the regression-safety property: with
+// DATA_ROOT_SEGMENTS unset, DataRootSegments must be exactly ["appdata"] — the
+// single segment Unraid's original hardcoded filter recognized.
+func TestLoadDataRootSegmentsDefault(t *testing.T) {
+	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"appdata"}
+	if len(c.DataRootSegments) != len(want) || c.DataRootSegments[0] != want[0] {
+		t.Fatalf("DataRootSegments = %v, want %v", c.DataRootSegments, want)
+	}
+}
+
+// TestLoadDataRootSegmentsParsesCommaSeparatedList covers trimming,
+// lower-casing, and dropping empty entries (e.g. a stray double comma) in one
+// pass over DATA_ROOT_SEGMENTS.
+func TestLoadDataRootSegmentsParsesCommaSeparatedList(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":            strings.Repeat("a", 64),
+		"DATA_ROOT_SEGMENTS": " Appdata, Config ,,data",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"appdata", "config", "data"}
+	if len(c.DataRootSegments) != len(want) {
+		t.Fatalf("DataRootSegments = %v, want %v", c.DataRootSegments, want)
+	}
+	for i := range want {
+		if c.DataRootSegments[i] != want[i] {
+			t.Fatalf("DataRootSegments = %v, want %v", c.DataRootSegments, want)
+		}
+	}
+}

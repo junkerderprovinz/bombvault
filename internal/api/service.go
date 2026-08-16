@@ -2717,15 +2717,21 @@ func encryptionWord(encrypted bool) string {
 // /mnt/user/appdata/<x>/data); BombVault reaches them only through the broad host
 // mount (HostSourceRoot mounted at HostMountRoot — e.g. host /mnt → container
 // /host/user, so host /mnt/user/appdata/x is reachable at /host/user/user/appdata/x).
-// We TRANSLATE every appdata bind source from the host root to the container mount
-// root and back up the real, correctly cased path — not a guess. Only binds with
-// an "appdata" path segment are kept (container config); media libraries, the
-// flash, /etc/localtime and other shares are skipped.
+// We TRANSLATE every matched bind source from the host root to the container
+// mount root and back up the real, correctly cased path — not a guess. A bind is
+// kept when its host source contains ANY of the configured data-root segments
+// (s.cfg.DataRootSegments, default ["appdata"] — see config.DataRootSegments) as
+// a full path segment, OR the container carries a truthy "bombvault.data" label
+// (see bombvaultDataLabelTruthy), which forces EVERY bind mount in regardless of
+// segment match — the documented escape hatch for a layout neither the segment
+// filter nor the compose convention below catches (e.g. "/srv/plex/config" with
+// no compose project). Media libraries, the flash, /etc/localtime and other
+// non-matching shares are skipped.
 //
-// A named-volume mount (Type=="volume") is kept UNCONDITIONALLY, no "appdata"
-// segment filter — a named volume is persistent-by-construction, with no
-// equivalent of a throwaway bind mount. Its resolved host path (Source, filled
-// in by dockercli's Inspect from the daemon's own report or, failing that, a
+// A named-volume mount (Type=="volume") is kept UNCONDITIONALLY, no segment
+// filter — a named volume is persistent-by-construction, with no equivalent of
+// a throwaway bind mount. Its resolved host path (Source, filled in by
+// dockercli's Inspect from the daemon's own report or, failing that, a
 // VolumeInspect fallback) goes through the SAME translate-and-check as a bind
 // source, so an unreachable volume mountpoint is skipped exactly like an
 // unreachable bind, and a volume that resolves to the same container path as an
@@ -2733,10 +2739,29 @@ func encryptionWord(encrypted bool) string {
 // hosts: a container using only Docker Compose named volumes previously
 // produced zero discovered data paths.
 //
-// Fallback (no appdata bind or volume found): the conventional
-// /mnt/user/appdata/<name>, translated if reachable.
+// The standard Docker Compose "com.docker.compose.project.working_dir" label
+// (see composeProjectDataDir), present on every container Compose creates, is
+// added as an ADDITIONAL candidate independent of whether any bind matched —
+// always-on, not behind a config flag, since it costs nothing when absent.
+//
+// Every candidate (segment-matched binds, the compose working dir, label-
+// override binds, and volumes) is deduplicated against every other by cleaned
+// absolute container path.
+//
+// Fallback (nothing matched above): the conventional /mnt/user/appdata/<name>,
+// translated if reachable.
 func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 	mountRoot := path.Clean(s.cfg.HostMountRoot) // its container path, e.g. /host/user
+
+	segments := s.cfg.DataRootSegments
+	if len(segments) == 0 {
+		// Defensive default: a Service built without going through config.Load
+		// (every production path does; some tests construct Service directly)
+		// must still reproduce the historical single-segment Unraid behavior
+		// rather than silently matching nothing.
+		segments = []string{"appdata"}
+	}
+	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
 
 	var out []string
 	seen := map[string]bool{}
@@ -2751,14 +2776,27 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 			}
 			continue
 		}
-		if m.Source == "" || !hasSegment(path.Clean(m.Source), "appdata") {
-			continue // only appdata binds (container config), not media/other shares
+		if m.Source == "" {
+			continue
+		}
+		if !matchesAnyDataRootSegment(path.Clean(m.Source), segments) && !labelOverride {
+			continue // no configured data-root segment, and no per-container override
 		}
 		if container, ok := s.toContainerPath(m.Source); ok && !seen[container] {
 			out = append(out, container)
 			seen[container] = true
 		}
 	}
+
+	// Docker Compose project working directory: an always-on additional
+	// candidate, independent of whether any bind matched above.
+	if dir, ok := composeProjectDataDir(in.Config.Labels); ok {
+		if container, ok := s.toContainerPath(dir); ok && !seen[container] {
+			out = append(out, container)
+			seen[container] = true
+		}
+	}
+
 	if len(out) == 0 {
 		// Last resort: the conventional appdata dir for this container — but ONLY
 		// if it actually exists. A container with no appdata mount and no such
@@ -2784,6 +2822,53 @@ func hasSegment(p, seg string) bool {
 		}
 	}
 	return false
+}
+
+// matchesAnyDataRootSegment reports whether path p contains ANY of the given
+// data-root segments as a full path segment (hasSegment applied once per
+// configured candidate — see config.DataRootSegments).
+func matchesAnyDataRootSegment(p string, segments []string) bool {
+	for _, seg := range segments {
+		if hasSegment(p, seg) {
+			return true
+		}
+	}
+	return false
+}
+
+// bombvaultDataLabelTruthy reports whether a container opted ALL of its bind
+// mounts into resolveAppdataPaths via the "bombvault.data" label — the
+// documented per-container escape hatch for a data layout neither the
+// configured segment filter nor composeProjectDataDir catches (e.g.
+// "/srv/plex/config" with no compose project). Truthy means the label is
+// PRESENT and its trimmed value is neither empty nor "false"
+// (case-insensitive) — so "true", "1", "yes", or any other non-empty,
+// non-"false" value all opt in; an absent label, or an explicit "false"/""
+// value, opts out. A container that never sets the label is unaffected either
+// way, which is what keeps the Unraid-default behavior unchanged.
+func bombvaultDataLabelTruthy(labels map[string]string) bool {
+	v, ok := labels["bombvault.data"]
+	if !ok {
+		return false
+	}
+	v = strings.TrimSpace(v)
+	return v != "" && !strings.EqualFold(v, "false")
+}
+
+// composeProjectDataDir reads the standard Docker Compose
+// "com.docker.compose.project.working_dir" label — present on every container
+// Compose creates — off a container's Config.Labels and returns it as an
+// additional host-path candidate for resolveAppdataPaths (translated and
+// containment-checked the same way as a bind source), independent of whether
+// any bind mount matched the configured segments. Follows the discovery
+// pattern used by Nautical Backup. Returns ("", false) when the label is
+// absent or its value is empty after trimming.
+func composeProjectDataDir(labels map[string]string) (string, bool) {
+	dir := strings.TrimSpace(labels["com.docker.compose.project.working_dir"])
+	if dir == "" {
+		return "", false
+	}
+	return dir, true
 }
 
 // toHostPath is the inverse of toContainerPath: it maps a container-visible path

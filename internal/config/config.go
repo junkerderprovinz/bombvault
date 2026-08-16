@@ -15,10 +15,16 @@ var appKeyRe = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 // Config holds all process-level configuration for bombvault.
 type Config struct {
-	AppKey            string
-	DataDir           string
-	HostMountRoot     string
-	HostSourceRoot    string
+	AppKey         string
+	DataDir        string
+	HostMountRoot  string
+	HostSourceRoot string
+	// DataRootSegments are the path-segment names that mark a bind-mount host
+	// source as persistent container data (e.g. "appdata", "config"). A bind is
+	// kept when ANY configured segment appears as a full path segment of its
+	// source. Unset (env DATA_ROOT_SEGMENTS) defaults to ["appdata"], which
+	// reproduces Unraid's original, single-segment-only behavior exactly.
+	DataRootSegments  []string
 	LibvirtHost       string
 	LibvirtSSHUser    string
 	LibvirtSSHPort    string
@@ -39,10 +45,11 @@ func Load(env map[string]string) (Config, error) {
 	}
 
 	c := Config{
-		AppKey:         key,
-		DataDir:        stringOr(env["DATA_DIR"], "/config"),
-		HostMountRoot:  stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
-		HostSourceRoot: stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
+		AppKey:           key,
+		DataDir:          stringOr(env["DATA_DIR"], "/config"),
+		HostMountRoot:    stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
+		HostSourceRoot:   stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
+		DataRootSegments: dataRootSegments(env["DATA_ROOT_SEGMENTS"]),
 		// libvirt is reached over SSH (qemu+ssh://) — no filesystem mount.
 		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
 		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),
@@ -86,4 +93,29 @@ func intOr(v string, def int) int {
 		return def
 	}
 	return n
+}
+
+// defaultDataRootSegments is the single segment Unraid's original hardcoded
+// filter recognized. It MUST stay the sole default so an unset
+// DATA_ROOT_SEGMENTS reproduces today's Unraid-only behavior byte-for-byte.
+var defaultDataRootSegments = []string{"appdata"}
+
+// dataRootSegments parses DATA_ROOT_SEGMENTS as a comma-separated list of
+// path-segment names (each trimmed, lower-cased, empty entries dropped).
+// Unset, empty, or all-empty-after-trim input falls back to
+// defaultDataRootSegments.
+func dataRootSegments(raw string) []string {
+	if raw == "" {
+		return defaultDataRootSegments
+	}
+	var out []string
+	for _, part := range strings.Split(raw, ",") {
+		if seg := strings.ToLower(strings.TrimSpace(part)); seg != "" {
+			out = append(out, seg)
+		}
+	}
+	if len(out) == 0 {
+		return defaultDataRootSegments
+	}
+	return out
 }
