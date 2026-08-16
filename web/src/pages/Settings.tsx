@@ -1494,10 +1494,12 @@ function TestConnectionButton({
 //   - "Integrity check" (subset): restic check --read-data-subset on the selected
 //     source repo — proves the backup data is intact + restorable.
 //   - "Real restore (off-site)" (dr): a REAL sandbox restore of the newest
-//     off-site snapshot, then verification + cleanup. Containers + flash only
-//     (VMs are refused server-side — disk images too large to sandbox-restore).
-// The DR-drill target (which container's off-site snapshot to restore) binds to
-// the shared settings.drDrillTarget via the parent's baseline-merging save().
+//     off-site snapshot, then verification + cleanup. All domains except config
+//     (config's real recovery path is the in-place staged restart, not a sandbox
+//     restore of the settings DB).
+// The DR-drill target (which container's/VM's off-site snapshot to restore) binds
+// to the shared settings.drDrillTarget / drDrillTargetVm via the parent's
+// baseline-merging save().
 function IntegrityCard({
   t,
   settings,
@@ -1537,9 +1539,13 @@ function IntegrityCard({
   const [lastTamper, setLastTamper] = useState<Record<string, { at: number; ok: boolean } | null>>({});
   // Container list feeding the DR-drill target dropdown (kind "dr", containers).
   const [containers, setContainers] = useState<Container[]>([]);
-  // Save state for the drill-target dropdown (persisted via the parent save()).
+  // VM list feeding the DR-drill target dropdown (kind "dr", VMs).
+  const [vms, setVMs] = useState<VM[]>([]);
+  // Save state for the drill-target dropdowns (persisted via the parent save()).
   const [tgtState, setTgtState] = useState<SaveState>("idle");
   const [tgtError, setTgtError] = useState<string | null>(null);
+  const [tgtVMState, setTgtVMState] = useState<SaveState>("idle");
+  const [tgtVMError, setTgtVMError] = useState<string | null>(null);
 
   type Domain = "containers" | "vms" | "flash" | "files";
   type Action = "verify" | "unlock" | "prune";
@@ -1558,6 +1564,19 @@ function IntegrityCard({
     listContainers()
       .then((r) => {
         if (active && r.ok) setContainers(r.containers ?? []);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Load the VMs once for the DR-drill target picker, same reasoning as containers.
+  useEffect(() => {
+    let active = true;
+    listVMs()
+      .then((r) => {
+        if (active && r.ok) setVMs(r.vms ?? []);
       })
       .catch(() => undefined);
     return () => {
@@ -1760,10 +1779,11 @@ function IntegrityCard({
         </div>
       </div>
 
-      {/* DR-drill controls: an explainer + the container target picker. The target
-          is a shared setting (settings.drDrillTarget) saved via the parent's
-          baseline-merging save(), so it never clobbers other cards' edits. Flash
-          has no picker (its whole snapshot is restored); VMs are refused below. */}
+      {/* DR-drill controls: an explainer + the container/VM target pickers. Each
+          target is a shared setting (settings.drDrillTarget / drDrillTargetVm)
+          saved via the parent's baseline-merging save(), so it never clobbers
+          other cards' edits. Flash and files have no picker (their whole
+          snapshot is restored). */}
       {kind === "dr" && (
         <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
           <p className="text-xs text-carbon-textMuted">{t("drill.drNote")}</p>
@@ -1786,6 +1806,25 @@ function IntegrityCard({
           </label>
           {tgtState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
           {tgtState === "error" && tgtError && <span className="text-xs text-statusFail">{tgtError}</span>}
+          <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
+            {t("drill.targetVM")}
+            <select
+              value={settings.drDrillTargetVm}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSettings((prev) => (prev ? { ...prev, drDrillTargetVm: v } : prev));
+                void save({ drDrillTargetVm: v }, setTgtVMState, setTgtVMError);
+              }}
+              className={selectCls}
+            >
+              <option value="">{t("drill.targetMostRecent")}</option>
+              {vms.map((v) => (
+                <option key={v.name} value={v.name}>{v.name}</option>
+              ))}
+            </select>
+          </label>
+          {tgtVMState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+          {tgtVMState === "error" && tgtVMError && <span className="text-xs text-statusFail">{tgtVMError}</span>}
         </div>
       )}
 
@@ -1795,9 +1834,6 @@ function IntegrityCard({
           const drill = lastDrill[domain];
           const tRes = tamper[domain];
           const tLast = lastTamper[domain];
-          // A DR drill can't run for VMs (server refuses it) — show a short note
-          // in place of the run button instead of a button that always errors.
-          const drDisabledForVM = kind === "dr" && domain === "vms";
           return (
             <div key={domain} className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1821,52 +1857,45 @@ function IntegrityCard({
               </div>
 
               {/* Restore-verification drill: its own row + inline result + last drill.
-                  The run button + labels follow the selected drill kind; VMs can't
-                  run a DR restore, so their row shows a note instead. */}
+                  The run button + labels follow the selected drill kind. */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="w-24 shrink-0" />
-                {drDisabledForVM ? (
-                  <span className="text-xs text-carbon-textMuted">{t("drill.drVMsNote")}</span>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => void runDrillFor(domain)}
-                      disabled={state[dKey] === "busy"}
-                      title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
-                      className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-                    >
-                      {state[dKey] === "busy"
-                        ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
-                        : kind === "dr" ? t("drill.runDR") : t("verify.now")}
-                    </button>
-                    {state[dKey] === "ok" && <span className="text-sm text-statusOk">✓ {t("verify.ok")}</span>}
-                    {state[dKey] === "fail" && (
-                      <span className="text-sm text-statusFail wrap-break-word">✗ {msg[dKey] || t("verify.failed")}</span>
-                    )}
-                    {/* Last recorded drill for this domain/source (idle state only).
-                        Names WHICH check ran (off-site DR vs local integrity) and,
-                        on a stored failure, the scrubbed reason. */}
-                    {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
-                      drill ? (
-                        <>
-                          <span className="text-xs text-carbon-textMuted">
-                            {isOffsiteSource(drill.source) && drill.kind === "dr"
-                              ? t("drill.checkOffsiteDr")
-                              : t("drill.checkLocal")}
-                            {" · "}
-                            {t("verify.last").replace("{time}", relativeTime(t, drill.at))} {drill.ok ? "✓" : "✗"}
-                          </span>
-                          {!drill.ok && drill.detail && (
-                            <span className="text-xs text-statusFail wrap-break-word" title={drill.detail}>
-                              {t("drill.failReasonPrefix")} {drill.detail}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-xs text-carbon-textMuted">{t("verify.never")}</span>
-                      )
-                    )}
-                  </>
+                <button
+                  onClick={() => void runDrillFor(domain)}
+                  disabled={state[dKey] === "busy"}
+                  title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
+                  className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                >
+                  {state[dKey] === "busy"
+                    ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
+                    : kind === "dr" ? t("drill.runDR") : t("verify.now")}
+                </button>
+                {state[dKey] === "ok" && <span className="text-sm text-statusOk">✓ {t("verify.ok")}</span>}
+                {state[dKey] === "fail" && (
+                  <span className="text-sm text-statusFail wrap-break-word">✗ {msg[dKey] || t("verify.failed")}</span>
+                )}
+                {/* Last recorded drill for this domain/source (idle state only).
+                    Names WHICH check ran (off-site DR vs local integrity) and,
+                    on a stored failure, the scrubbed reason. */}
+                {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
+                  drill ? (
+                    <>
+                      <span className="text-xs text-carbon-textMuted">
+                        {isOffsiteSource(drill.source) && drill.kind === "dr"
+                          ? t("drill.checkOffsiteDr")
+                          : t("drill.checkLocal")}
+                        {" · "}
+                        {t("verify.last").replace("{time}", relativeTime(t, drill.at))} {drill.ok ? "✓" : "✗"}
+                      </span>
+                      {!drill.ok && drill.detail && (
+                        <span className="text-xs text-statusFail wrap-break-word" title={drill.detail}>
+                          {t("drill.failReasonPrefix")} {drill.detail}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-xs text-carbon-textMuted">{t("verify.never")}</span>
+                  )
                 )}
               </div>
 

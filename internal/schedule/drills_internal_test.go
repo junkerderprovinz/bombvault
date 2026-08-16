@@ -7,8 +7,9 @@ import (
 )
 
 // TestDrillTasks pins the scheduled-drill wiring: a local "subset" integrity check
-// per enabled domain, plus a real off-site "dr" drill for containers + flash when
-// off-site is configured — and NEVER a dr drill for VMs.
+// per enabled domain, plus a real off-site "dr" drill for containers, VMs and
+// flash when off-site is configured (v8.0.0: VMs get the same real DR drill as
+// every other domain except config).
 func TestDrillTasks(t *testing.T) {
 	base := store.Settings{
 		ContainersEnabled:    true,
@@ -35,11 +36,11 @@ func TestDrillTasks(t *testing.T) {
 		}
 	})
 
-	t.Run("off-site dr for containers + flash, never vms", func(t *testing.T) {
+	t.Run("off-site dr for containers + vms + flash", func(t *testing.T) {
 		s := base
 		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers"
 		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
-		s.VMsOffsite = "rest:http://192.168.20.9:8000/vms" // even with off-site, VMs get NO dr drill
+		s.VMsOffsite = "rest:http://192.168.20.9:8000/vms"
 		dr := map[string]bool{}
 		for _, tk := range drillTasks(s) {
 			if tk.kind != "dr" {
@@ -50,11 +51,8 @@ func TestDrillTasks(t *testing.T) {
 			}
 			dr[tk.domain] = true
 		}
-		if !dr["containers"] || !dr["flash"] {
-			t.Fatalf("containers + flash must each get an off-site dr drill, got %+v", dr)
-		}
-		if dr["vms"] {
-			t.Fatal("VMs must NEVER get a dr drill")
+		if !dr["containers"] || !dr["flash"] || !dr["vms"] {
+			t.Fatalf("containers + flash + vms must each get an off-site dr drill, got %+v", dr)
 		}
 	})
 

@@ -456,6 +456,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
 		TamperTestSchedule:          v.TamperTestSchedule,
 		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
+		DRDrillTargetVM:             strings.TrimSpace(v.DRDrillTargetVM),
 		PruneImageAfterUpdate:       v.PruneImageAfterUpdate,
 		ResticCacheMaxMB:            max(0, v.ResticCacheMaxMB),
 		DigestEnabled:               v.DigestEnabled,

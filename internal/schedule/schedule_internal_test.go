@@ -89,9 +89,14 @@ func TestScheduledRunNoAggregatorStillRunsEveryItem(t *testing.T) {
 
 // TestConfigJobScheduledAndExcludedFromDrills verifies the config self-backup
 // domain is wired end to end: (a) a config backup job registers when it has a
-// real cadence, and (b) config is excluded from DR (off-site sandbox) drills the
-// same way VMs are — it still gets the local "subset" integrity check, but never
-// a "dr" task (runDRDrill has no config arm, exactly as it refuses VMs).
+// real cadence, and (b) config is excluded from DR (off-site sandbox) drills —
+// a sandbox restore of BombVault's own settings DB is meaningless (its real
+// recovery path is the in-place staged restart, not a folder restore) — it
+// still gets the local "subset" integrity check, but never a "dr" task
+// (runDRDrill has no config arm). VMs are deliberately included in the same
+// drillCfg (with OffsiteDrillsEnabled on) as a live contrast: they DO get a
+// "dr" task now (v8.0.0), proving config's exclusion is config-specific and not
+// a side effect of some other setting being off.
 //
 // This is a white-box (package schedule) test because the observables are the
 // unexported entry list and the drill-task builder; the black-box tests in
@@ -125,24 +130,33 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	}
 
 	// (b) config must NOT appear as a DR ("dr") drill task, even with an off-site
-	// repo configured and drills enabled — a sandbox restore of the settings DB is
-	// meaningless (same exclusion VMs get). It still gets the local subset check.
+	// repo configured, drills enabled, AND off-site drills enabled — a sandbox
+	// restore of the settings DB is meaningless. It still gets the local subset
+	// check. VMsEnabled/VMsOffsite/OffsiteDrillsEnabled are set alongside config so
+	// this asserts config's exclusion is specific to config: VMs DO get a "dr" task
+	// under this exact settings shape (v8.0.0), proving the gate isn't just "no dr
+	// tasks configured at all".
 	drillCfg := store.Settings{
-		ConfigEnabled:  true,
-		ConfigSchedule: "daily 03:30",
-		ConfigOffsite:  "rclone:remote:bombvault-config",
-		VMsEnabled:     true,
-		VMsOffsite:     "rclone:remote:bombvault-vms",
-		DrillsEnabled:  true,
-		DrillsSchedule: "weekly Sun 05:00",
+		ConfigEnabled:        true,
+		ConfigSchedule:       "daily 03:30",
+		ConfigOffsite:        "rclone:remote:bombvault-config",
+		VMsEnabled:           true,
+		VMsOffsite:           "rclone:remote:bombvault-vms",
+		DrillsEnabled:        true,
+		DrillsSchedule:       "weekly Sun 05:00",
+		OffsiteDrillsEnabled: true,
 	}
+	var haveVMDr bool
 	for _, tk := range drillTasks(drillCfg) {
 		if tk.kind == "dr" && tk.domain == "config" {
-			t.Fatal("config must be excluded from DR drills (like VMs)")
+			t.Fatal("config must be excluded from DR drills")
 		}
 		if tk.kind == "dr" && tk.domain == "vms" {
-			t.Fatal("vms must be excluded from DR drills — baseline for the config exclusion")
+			haveVMDr = true
 		}
+	}
+	if !haveVMDr {
+		t.Fatal("expected a {vms, offsite, dr} task under this settings shape — config's exclusion should not depend on vms also being excluded")
 	}
 
 	// config (like VMs) still gets the local subset integrity check, so it must be

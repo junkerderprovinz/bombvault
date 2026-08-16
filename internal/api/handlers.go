@@ -1149,10 +1149,11 @@ type settingsView struct {
 	ConfigOffsiteImmutable     bool `json:"configOffsiteImmutable"`
 	FilesOffsiteImmutable      bool `json:"filesOffsiteImmutable"`
 	// Off-site growth budget in GB (0 = alarm off) + tamper-test cadence +
-	// DR-drill target container ('' = auto).
+	// DR-drill target container/VM ('' = auto).
 	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
 	TamperTestSchedule    string `json:"tamperTestSchedule"`
 	DRDrillTarget         string `json:"drDrillTarget"`
+	DRDrillTargetVM       string `json:"drDrillTargetVm"`
 	PruneImageAfterUpdate bool   `json:"pruneImageAfterUpdate"`
 	// Size cap (MB) for restic's persistent cache under /config; LRU per-repo
 	// eviction after scheduled runs. 0 = no limit (default 4096).
@@ -1277,6 +1278,7 @@ func toView(s store.Settings) settingsView {
 		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
+		DRDrillTargetVM:             s.DRDrillTargetVM,
 		PruneImageAfterUpdate:       s.PruneImageAfterUpdate,
 		ResticCacheMaxMB:            s.ResticCacheMaxMB,
 		DigestEnabled:               s.DigestEnabled,
@@ -1412,11 +1414,17 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// A DR-drill target, when set, is a container name fed by the UI dropdown.
+	// A DR-drill target, when set, is a container/VM name fed by the UI dropdown.
 	// Validate it with the same rule that guards name-keyed handler paths, so a
 	// garbage/injection-shaped value is rejected at save time rather than stored
 	// (parity with the other name validations above).
 	if dt := strings.TrimSpace(v.DRDrillTarget); dt != "" && !validResourceName(dt) {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok": false, "error": "invalid DR-drill target",
+		})
+		return
+	}
+	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validResourceName(dt) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok": false, "error": "invalid DR-drill target",
 		})
@@ -1541,6 +1549,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
 		TamperTestSchedule:          v.TamperTestSchedule,
 		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
+		DRDrillTargetVM:             strings.TrimSpace(v.DRDrillTargetVM),
 		PruneImageAfterUpdate:       v.PruneImageAfterUpdate,
 		ResticCacheMaxMB:            max(0, v.ResticCacheMaxMB),
 		DigestEnabled:               v.DigestEnabled,
