@@ -24,7 +24,15 @@ type Config struct {
 	// kept when ANY configured segment appears as a full path segment of its
 	// source. Unset (env DATA_ROOT_SEGMENTS) defaults to ["appdata"], which
 	// reproduces Unraid's original, single-segment-only behavior exactly.
-	DataRootSegments  []string
+	DataRootSegments []string
+	// PlatformOverride forces which platform.Kind (internal/platform)
+	// BombVault treats itself as running on, instead of auto-detecting.
+	// Empty (env PLATFORM unset, the default) means auto-detect; a recognized
+	// non-empty value ("unraid"/"truenas"/"generic") wins outright.
+	// Validated and mapped by platform.Detect, not here — an unrecognized
+	// value is not a config-load error, it just falls back to generic with a
+	// logged warning at detection time.
+	PlatformOverride  string
 	LibvirtHost       string
 	LibvirtSSHUser    string
 	LibvirtSSHPort    string
@@ -50,6 +58,8 @@ func Load(env map[string]string) (Config, error) {
 		HostMountRoot:    stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
 		HostSourceRoot:   stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
 		DataRootSegments: dataRootSegments(env["DATA_ROOT_SEGMENTS"]),
+		// Empty (unset) means auto-detect; see PlatformOverride's doc comment.
+		PlatformOverride: env["PLATFORM"],
 		// libvirt is reached over SSH (qemu+ssh://) — no filesystem mount.
 		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
 		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),

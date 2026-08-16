@@ -48,6 +48,34 @@ func TestLoadDataRootSegmentsDefault(t *testing.T) {
 	}
 }
 
+// TestLoadPlatformOverrideDefault pins the auto-detect default: with PLATFORM
+// unset, PlatformOverride must be empty so platform.Detect probes for the
+// Unraid marker instead of trusting a forced value.
+func TestLoadPlatformOverrideDefault(t *testing.T) {
+	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.PlatformOverride != "" {
+		t.Fatalf("default PlatformOverride = %q, want \"\" (auto-detect)", c.PlatformOverride)
+	}
+}
+
+// TestLoadPlatformOverridePassthrough: PLATFORM is passed through verbatim,
+// unvalidated — platform.Detect (not config.Load) is what validates/maps it.
+func TestLoadPlatformOverridePassthrough(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":  strings.Repeat("a", 64),
+		"PLATFORM": "truenas",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.PlatformOverride != "truenas" {
+		t.Fatalf("PlatformOverride = %q, want %q", c.PlatformOverride, "truenas")
+	}
+}
+
 // TestLoadDataRootSegmentsParsesCommaSeparatedList covers trimming,
 // lower-casing, and dropping empty entries (e.g. a stray double comma) in one
 // pass over DATA_ROOT_SEGMENTS.
