@@ -2478,6 +2478,77 @@ export function disableFleetToken(): Promise<OkEnvelope> {
 }
 
 // ---------------------------------------------------------------------------
+// Mesh off-site API — a fleet peer OFFERING its own off-site storage (a
+// rest-server it deploys itself), so the two admins don't have to exchange a
+// URL and password out of band. BombVault never hosts storage itself; accept
+// only ever creates a normal named credential set + off-site target, both
+// pre-existing mechanisms.
+// ---------------------------------------------------------------------------
+
+export interface MeshOffer {
+  id: string;
+  /** The offering peer's self-reported instance name. */
+  from: string;
+  /** The offering peer's own guess at which domain this storage suits (informational only). */
+  suggestedDomain: string;
+  /** The restic repo location, already built from the peer's own base URL. */
+  repo: string;
+  restUser: string;
+  /** "pending" | "accepted" | "declined". */
+  status: string;
+  receivedAt: number;
+}
+
+/** GET /api/fleet/mesh-offers — every offer received from a peer (any status). */
+export function listMeshOffers(): Promise<OkEnvelope & { offers?: MeshOffer[] }> {
+  return fetchJSON("/api/fleet/mesh-offers");
+}
+
+/**
+ * POST /api/fleet/mesh-offers/{id}/accept — turns a pending offer into a real
+ * off-site target for the given domain (a new named credential set holding
+ * the peer's REST credentials, plus an off-site target pointing at the
+ * offer's repo). Neither is probed for reachability before creation — use
+ * the existing Test button on the created target for that.
+ */
+export function acceptMeshOffer(
+  id: string,
+  domain: string
+): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+  return fetchJSON(`/api/fleet/mesh-offers/${encodeURIComponent(id)}/accept`, {
+    method: "POST",
+    body: JSON.stringify({ domain }),
+  });
+}
+
+/** POST /api/fleet/mesh-offers/{id}/decline — marks an offer declined. */
+export function declineMeshOffer(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/fleet/mesh-offers/${encodeURIComponent(id)}/decline`, {
+    method: "POST",
+  });
+}
+
+/**
+ * POST /api/fleet/peers/{id}/mesh-offer — sends this instance's own off-site
+ * storage offer to one fleet peer. Generates a fresh one-time rest-server
+ * credential scoped to baseUrl (e.g. "http://192.168.1.50:8000" — wherever
+ * this instance's admin will actually deploy the rest-server; BombVault
+ * cannot know this on its own) and returns the same deploy recipe the
+ * existing deploy-snippet feature would show, plus the exact repo URL that
+ * was just sent to the peer. Nothing here deploys anything.
+ */
+export function proposeMeshOffer(
+  peerId: string,
+  domain: string,
+  baseUrl: string
+): Promise<OkEnvelope & { snippet?: DeploySnippetData & { repo: string } }> {
+  return fetchJSON(`/api/fleet/peers/${encodeURIComponent(peerId)}/mesh-offer`, {
+    method: "POST",
+    body: JSON.stringify({ domain, baseUrl }),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Auth API
 // ---------------------------------------------------------------------------
 
