@@ -866,6 +866,13 @@ ALTER TABLE vms      ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';`
 		version: 83, name: "runs_acknowledged",
 		sql: "ALTER TABLE runs ADD COLUMN acknowledged INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// v8.0.0, VM DR drills: the VM the real-restore DR drill restores, mirroring
+		// dr_drill_target (v39) for containers. Empty (the default) = auto: the most
+		// recently successfully backed-up VM.
+		version: 84, name: "settings_dr_drill_target_vm",
+		sql: "ALTER TABLE settings ADD COLUMN dr_drill_target_vm TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
