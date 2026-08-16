@@ -35,11 +35,12 @@ type Client struct {
 // compile-time interface check.
 var _ Docker = (*Client)(nil)
 
-// New constructs a Client connected to the host docker.sock with API-version
-// negotiation (so it works across Unraid Docker versions).
+// New constructs a Client with API-version negotiation (so it works across
+// Unraid Docker versions), connected to the Docker daemon.
 //
-// DOCKER_HOST is honored when set (rootless Docker, Podman); otherwise defaults
-// to the standard /var/run/docker.sock, matching every prior BombVault release.
+// DOCKER_HOST is honored when set (rootless Docker, Podman); otherwise it
+// defaults to the standard /var/run/docker.sock, matching every prior
+// BombVault release.
 func New() (*Client, error) {
 	api, err := client.NewClientWithOpts(dockerClientOpts()...)
 	if err != nil {
