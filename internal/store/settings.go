@@ -215,6 +215,12 @@ type Settings struct {
 	// non-empty ScheduleCadence is backed up on its OWN cadence; an item with an
 	// empty override still follows its domain schedule exactly as today.
 	PerItemSchedules bool
+	// CloudCredSets holds additional NAMED S3/restic-REST credential sets (#141
+	// stage 2), an AES-256-GCM-encrypted JSON array (base64). An off-site target
+	// opts into one via its CredsRef; empty CredsRef keeps using CloudConf (the
+	// original single/shared credentials), so every existing install is unaffected.
+	// Empty = no additional sets defined.
+	CloudCredSets string
 }
 
 // GetSettings returns the current app settings.
@@ -243,7 +249,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       receiver_enabled,
 		       restart_health_wait, restart_health_timeout_sec,
 		       reconcile_unraid_update_status,
-		       per_item_schedules
+		       per_item_schedules,
+		       cloud_cred_sets
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -277,6 +284,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&restartHealthWait, &s.RestartHealthTimeoutSec,
 		&reconcileUnraidUpdateStatus,
 		&perItemSchedules,
+		&s.CloudCredSets,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -392,7 +400,8 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  restart_health_wait          = ?,
 		  restart_health_timeout_sec   = ?,
 		  reconcile_unraid_update_status = ?,
-		  per_item_schedules           = ?
+		  per_item_schedules           = ?,
+		  cloud_cred_sets              = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -423,6 +432,7 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.RestartHealthWait), s.RestartHealthTimeoutSec,
 		boolInt(s.ReconcileUnraidUpdateStatus),
 		boolInt(s.PerItemSchedules),
+		s.CloudCredSets,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

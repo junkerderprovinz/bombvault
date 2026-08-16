@@ -108,6 +108,9 @@ export interface Settings {
    *  that another BombVault pushes to). Gates the Receiver tab like the other
    *  domain enables. Default false. */
   receiverEnabled: boolean;
+  /** Fleet view (read-only monitoring of peer BombVault instances' protection
+   *  status). Gates the Fleet tab like the other domain enables. Default false. */
+  fleetEnabled: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
@@ -191,6 +194,16 @@ export interface Settings {
   drDrillTarget: string;
   /** DR-drill target VM ("" = auto: the most recently backed-up VM). */
   drDrillTargetVm: string;
+  /** This instance's own display name, reported to polling fleet peers so a
+   *  peer's Fleet page can label this box. Not a secret. */
+  instanceName: string;
+  /** Peer status token (GET /api/fleet/status), authorizing OTHER instances'
+   *  Fleet views to poll THIS instance. Same write-only contract as
+   *  widgetToken: GET always returns "" and a blank save keeps the stored one;
+   *  fleetTokenSet reports presence. Managed via generateFleetToken /
+   *  disableFleetToken (the Settings card), not via this field. */
+  fleetToken: string;
+  fleetTokenSet: boolean;
   /** #56: after a post-backup container update, remove the superseded old image.
    *  Opt-in (default off) — keeping the old image makes a snapshot rollback cheap. */
   pruneImageAfterUpdate: boolean;
@@ -858,6 +871,42 @@ export interface CloudCreds {
 }
 export function setCloud(c: CloudCreds): Promise<OkEnvelope> {
   return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });
+}
+
+/** One additional, named credential set (#141 stage 2) — same shape as
+ *  CloudCreds plus an id/name, so an off-site target can opt into its own
+ *  S3/restic-REST credentials instead of the single shared set above. */
+export interface CloudCredSet {
+  id: string;
+  name: string;
+  s3KeyId: string;
+  s3Secret: string;
+  s3Region: string;
+  restUser: string;
+  restPassword: string;
+  s3StorageClass: string;
+}
+/** GET response shape: secrets replaced with is-set flags, same contract as CloudInfo. */
+export interface CloudCredSetInfo {
+  id: string;
+  name: string;
+  s3KeyId: string;
+  s3Region: string;
+  restUser: string;
+  s3StorageClass: string;
+  s3SecretSet: boolean;
+  restPasswordSet: boolean;
+}
+
+/** GET /api/cloud/creds-sets — additional named credential sets (no secrets returned). */
+export function getCloudCredSets(): Promise<OkEnvelope & { sets?: CloudCredSetInfo[] }> {
+  return fetchJSON("/api/cloud/creds-sets");
+}
+
+/** POST /api/cloud/creds-sets — replace the whole list. A blank secret on a
+ *  set matched by id (against the previously stored set) keeps the stored one. */
+export function setCloudCredSets(sets: CloudCredSet[]): Promise<OkEnvelope> {
+  return fetchJSON("/api/cloud/creds-sets", { method: "POST", body: JSON.stringify({ sets }) });
 }
 
 /** POST /api/notify/test — send a test notification using the given config. */
@@ -2321,6 +2370,111 @@ export function checkReceivedRepo(
   return fetchJSON(`/api/receiver/repos/${encodeURIComponent(id)}/check${qs}`, {
     method: "POST",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Fleet view API — a list of PEER BombVault instances this box polls, read-
+// only, for their protection status. Two distinct tokens per relationship:
+// this instance's OWN fleetToken (on Settings, what OTHER instances present
+// to poll THIS one) vs. each FleetPeer's token (what THIS instance presents
+// to poll THAT peer).
+// ---------------------------------------------------------------------------
+
+export interface FleetPeer {
+  id: string;
+  name: string;
+  /** The peer's base URL, e.g. "https://192.168.1.50:3443". */
+  url: string;
+  enabled: boolean;
+  /** Unix seconds of the last poll attempt; 0 = never. */
+  lastPollAt: number;
+  /** null = never polled, else whether the last poll succeeded. */
+  lastPollOk: boolean | null;
+  lastPollError: string;
+  /** The name/version the peer reported about itself on the last successful poll. */
+  lastPollInstanceName: string;
+  lastPollVersion: string;
+  /** The peer's cached protection scorecard from the last successful poll —
+   *  same shape as StatusResponse.domains, renderable with the same UI. */
+  lastPollDomains: DomainStatus[];
+  createdAt: number;
+  sortOrder: number;
+  /** A peer token is stored; the token itself is NEVER returned. */
+  hasToken: boolean;
+}
+
+/** The create/update request body. On PUT an empty token keeps the stored one. */
+export interface FleetPeerInput {
+  name: string;
+  url: string;
+  token: string;
+  enabled: boolean;
+  sortOrder: number;
+}
+
+/** GET /api/fleet/peers — every registered fleet peer with its cached status. */
+export function listFleetPeers(): Promise<OkEnvelope & { peers?: FleetPeer[] }> {
+  return fetchJSON("/api/fleet/peers");
+}
+
+/** POST /api/fleet/peers — register a fleet peer. The server validates the
+ *  peer actually answers GET /api/fleet/status with the given token before
+ *  saving; an unreachable/wrong-token peer is rejected and nothing is
+ *  persisted. The first poll's result is recorded immediately. */
+export function createFleetPeer(
+  input: FleetPeerInput
+): Promise<OkEnvelope & { peer?: FleetPeer }> {
+  return fetchJSON("/api/fleet/peers", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/** PUT /api/fleet/peers/{id} — update a fleet peer (empty token keeps the
+ *  stored one). Unknown id answers 404 {ok:false}. */
+export function updateFleetPeer(
+  id: string,
+  input: FleetPeerInput
+): Promise<OkEnvelope & { peer?: FleetPeer }> {
+  return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+/** DELETE /api/fleet/peers/{id} — drop the DB row only; the peer instance is
+ *  never contacted for this. */
+export function deleteFleetPeer(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+/** POST /api/fleet/peers/{id}/poll — poll this peer now and return the fresh
+ *  persisted result. Unknown id answers 404 {ok:false}. */
+export function pollFleetPeer(id: string): Promise<OkEnvelope & { peer?: FleetPeer }> {
+  return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}/poll`, {
+    method: "POST",
+  });
+}
+
+/**
+ * POST /api/fleet/token — generate (or rotate) this instance's own fleet
+ * status token (what OTHER instances present to poll THIS one). The server
+ * stores it and returns it ONCE; it is never echoed again (settings GET only
+ * reports fleetTokenSet). Rotating revokes the previous token — every peer
+ * that had this instance configured with the OLD token needs the new one.
+ */
+export function generateFleetToken(): Promise<OkEnvelope & { token?: string }> {
+  return fetchJSON("/api/fleet/token", { method: "POST" });
+}
+
+/**
+ * DELETE /api/fleet/token — clear this instance's own fleet token. GET
+ * /api/fleet/status immediately fails closed with 403 again for every peer.
+ */
+export function disableFleetToken(): Promise<OkEnvelope> {
+  return fetchJSON("/api/fleet/token", { method: "DELETE" });
 }
 
 // ---------------------------------------------------------------------------

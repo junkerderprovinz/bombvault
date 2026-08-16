@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import type { OffsiteTarget } from "../lib/api";
+import type { OffsiteTarget, CloudCredSetInfo } from "../lib/api";
 import {
   listOffsiteTargets,
   createOffsiteTarget,
   updateOffsiteTarget,
   deleteOffsiteTarget,
   testOffsiteTarget,
+  getCloudCredSets,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
 
@@ -118,6 +119,15 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // Additional named credential sets (#141 stage 2) this target's CredsRef can
+  // pick from — loaded once, shared across every domain's section instance
+  // isn't needed here since each mount is cheap and the list rarely changes.
+  const [credSets, setCredSets] = useState<CloudCredSetInfo[]>([]);
+  useEffect(() => {
+    getCloudCredSets()
+      .then((r) => { if (r.ok) setCredSets(r.sets ?? []); })
+      .catch(() => undefined);
+  }, []);
 
   function refresh() {
     listOffsiteTargets(domain)
@@ -314,6 +324,21 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               className={inputCls}
             />
             <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("offsite.targets.credsLabel")}</span>
+            <select
+              value={draft.credsRef}
+              onChange={(e) => setDraft((d) => (d ? { ...d, credsRef: e.target.value } : d))}
+              className={inputCls}
+            >
+              <option value="">{t("offsite.targets.credsDefault")}</option>
+              {credSets.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("cloud.storageClass.label")}</span>
