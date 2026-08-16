@@ -923,6 +923,30 @@ ALTER TABLE settings ADD COLUMN fleet_enabled INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE settings ADD COLUMN instance_name TEXT NOT NULL DEFAULT '';
 ALTER TABLE settings ADD COLUMN fleet_token TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// v8.0.0, Mesh off-site: a peer's OFFER of its own off-site storage (a
+		// rest-server it is deploying), received over the same self-gated fleet
+		// endpoint /api/fleet/status uses. BombVault still never hosts storage
+		// itself (see the deploy-snippet feature) — this only carries the
+		// connection details a peer proposes, for this instance's admin to review
+		// and, on accept, turn into a normal named CloudCredSet + OffsiteTarget
+		// (both already-existing mechanisms). rest_password_enc is the peer-
+		// generated one-time rest-server password, encrypted at rest with THIS
+		// instance's APP_KEY, exactly like fleet_peers.token_enc.
+		version: 87, name: "mesh_offers",
+		sql: `
+CREATE TABLE IF NOT EXISTS mesh_offers (
+  id                TEXT    PRIMARY KEY,
+  from_name         TEXT    NOT NULL DEFAULT '',
+  suggested_domain  TEXT    NOT NULL DEFAULT '',
+  repo              TEXT    NOT NULL DEFAULT '',
+  rest_user         TEXT    NOT NULL DEFAULT '',
+  rest_password_enc BLOB    NOT NULL DEFAULT x'',
+  status            TEXT    NOT NULL DEFAULT 'pending',
+  received_at       INTEGER NOT NULL DEFAULT 0,
+  sort_order        INTEGER NOT NULL DEFAULT 0
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

@@ -1,9 +1,13 @@
 // ---------------------------------------------------------------------------
 // Fleet page — the READ-ONLY fleet view. Watches a list of PEER BombVault
 // instances and shows each one's cached protection scorecard (same red/amber/
-// green aggregate the local dashboard shows). Nothing here can act on a peer:
-// no remote backup/restore/drill trigger, ever — polling GET /api/fleet/status
-// is the only thing this box ever does to a peer.
+// green aggregate the local dashboard shows). Polling GET /api/fleet/status is
+// the only thing this box does TO a peer's protection data — never a remote
+// backup/restore/drill trigger. The one exception is Mesh off-site: this page
+// can also PROPOSE this instance's own off-site storage to a peer (sending
+// connection metadata only, never backup data) and review storage offers a
+// peer has sent here; BombVault still never hosts storage itself, accepting
+// an offer only ever creates a normal named credential set + off-site target.
 //
 // Gated behind settings.fleetEnabled (the Fleet tab only shows when on).
 // Freshness comes from the daily scheduled sweep + the explicit "Poll now"
@@ -19,12 +23,47 @@ import {
   updateFleetPeer,
   deleteFleetPeer,
   pollFleetPeer,
+  listMeshOffers,
+  acceptMeshOffer,
+  declineMeshOffer,
+  proposeMeshOffer,
 } from "../lib/api";
-import type { FleetPeer, FleetPeerInput, DomainStatus } from "../lib/api";
+import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
 
 type T = ReturnType<typeof useT>["t"];
+
+// CopyBlock mirrors OffsiteWizard's copy pattern (module-private there too): a
+// monospace <pre> with a copy button that flips to "copied" for a moment.
+function CopyBlock({ text, t }: { text: string; t: T }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable (non-HTTPS) — the text is selectable in the box */
+    }
+  }
+  return (
+    <div className="flex items-start gap-2">
+      <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+        {text}
+      </pre>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+      >
+        {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+      </button>
+    </div>
+  );
+}
+
+const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
 
 // ---------------------------------------------------------------------------
 // Protection chip — mirrors Dashboard's protectionChip mapping (not exported
@@ -114,6 +153,223 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
 }
 
 // ---------------------------------------------------------------------------
+// Mesh: offers received FROM peers
+// ---------------------------------------------------------------------------
+
+function meshStatusTone(status: string): "ok" | "fail" | "warn" | "muted" {
+  switch (status) {
+    case "accepted":
+      return "ok";
+    case "declined":
+      return "fail";
+    default:
+      return "warn"; // pending
+  }
+}
+
+function meshStatusLabelKey(status: string): TranslationKey {
+  switch (status) {
+    case "accepted":
+      return "fleet.mesh.status.accepted";
+    case "declined":
+      return "fleet.mesh.status.declined";
+    default:
+      return "fleet.mesh.status.pending";
+  }
+}
+
+function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChanged: () => void }) {
+  const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleAccept() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await acceptMeshOffer(offer.id, domain);
+      if (res.ok) onChanged();
+      else setError(res.error ?? t("fleet.mesh.saveError"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("fleet.mesh.saveError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDecline() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await declineMeshOffer(offer.id);
+      if (res.ok) onChanged();
+      else setError(res.error ?? t("fleet.mesh.saveError"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("fleet.mesh.saveError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const pending = offer.status === "pending";
+
+  return (
+    <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
+        <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
+        <span className="text-xs text-carbon-textMuted ml-auto">{relativeTime(t, offer.receivedAt)}</span>
+      </div>
+      <p className="text-xs font-mono text-carbon-textMuted truncate">{offer.repo}</p>
+      {pending && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+            {t("fleet.mesh.applyTo")}
+            <select
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              className="rounded-lg bg-carbon-surface3 text-carbon-text text-xs px-2 py-1"
+            >
+              {MESH_DOMAINS.map((d) => (
+                <option key={d} value={d}>{t(domainLabelKey(d))}</option>
+              ))}
+            </select>
+          </label>
+          <button
+            onClick={() => void handleAccept()}
+            disabled={busy}
+            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {t("fleet.mesh.accept")}
+          </button>
+          <button
+            onClick={() => void handleDecline()}
+            disabled={busy}
+            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+          >
+            {t("fleet.mesh.decline")}
+          </button>
+        </div>
+      )}
+      {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Mesh: propose this instance's own storage TO a peer
+// ---------------------------------------------------------------------------
+
+function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClose: () => void }) {
+  const [domain, setDomain] = useState<string>("containers");
+  const [baseUrl, setBaseUrl] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [snippet, setSnippet] = useState<(DeploySnippetData & { repo: string }) | null>(null);
+
+  async function handleSend() {
+    if (baseUrl.trim() === "") {
+      setError(t("fleet.mesh.baseUrlRequired"));
+      return;
+    }
+    setSending(true);
+    setError(null);
+    try {
+      const res = await proposeMeshOffer(peer.id, domain, baseUrl.trim());
+      if (res.ok && res.snippet) setSnippet(res.snippet);
+      else setError(res.error ?? t("fleet.mesh.saveError"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("fleet.mesh.saveError"));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const inputCls =
+    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("fleet.mesh.proposeTitle")}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+      >
+        <h2 className="text-lg font-semibold text-carbon-text">{t("fleet.mesh.proposeTitle")}</h2>
+        <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
+
+        {!snippet ? (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
+              <select value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls}>
+                {MESH_DOMAINS.map((d) => (
+                  <option key={d} value={d}>{t(domainLabelKey(d))}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>
+              <input
+                type="text"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="http://192.168.1.50:8000"
+                className={`${inputCls} font-mono`}
+              />
+              <p className="text-[11px] text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
+            </div>
+            {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                onClick={onClose}
+                disabled={sending}
+                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+              >
+                {t("files.cancel")}
+              </button>
+              <button
+                onClick={() => void handleSend()}
+                disabled={sending}
+                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {sending ? t("fleet.mesh.sending") : t("fleet.mesh.send")}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-statusOk">{t("fleet.mesh.sent").replace("{peer}", peer.name)}</p>
+            <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>
+              <CopyBlock text={snippet.dockerRun} t={t} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("fleet.mesh.compose")}</span>
+              <CopyBlock text={snippet.compose} t={t} />
+            </div>
+            <div className="flex items-center justify-end pt-1">
+              <button
+                onClick={onClose}
+                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+              >
+                {t("common.close")}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Peer card
 // ---------------------------------------------------------------------------
 
@@ -132,6 +388,7 @@ function FleetPeerCard({
   const [polling, setPolling] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const [showPropose, setShowPropose] = useState(false);
 
   async function handlePoll() {
     setPolling(true);
@@ -210,6 +467,12 @@ function FleetPeerCard({
 
         <div className="ml-auto flex items-center gap-2">
           <button
+            onClick={() => setShowPropose(true)}
+            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+          >
+            {t("fleet.mesh.proposeButton")}
+          </button>
+          <button
             onClick={() => setOpen((v) => !v)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
@@ -247,6 +510,7 @@ function FleetPeerCard({
           <PeerScorecard domains={peer.lastPollDomains} t={t} />
         </div>
       )}
+      {showPropose && <ProposeMeshDialog peer={peer} t={t} onClose={() => setShowPropose(false)} />}
     </div>
   );
 }
@@ -412,6 +676,7 @@ export function Fleet() {
   const [error, setError] = useState<string | null>(null);
   // null = closed; "new" = create dialog; a row = edit dialog for that peer.
   const [dialog, setDialog] = useState<"new" | FleetPeer | null>(null);
+  const [offers, setOffers] = useState<MeshOffer[]>([]);
 
   function loadPeers() {
     return listFleetPeers()
@@ -426,10 +691,20 @@ export function Fleet() {
       .catch((err) => setError(err instanceof Error ? err.message : t("fleet.loadError")));
   }
 
+  function loadOffers() {
+    return listMeshOffers()
+      .then((res) => {
+        if (res.ok) setOffers(res.offers ?? []);
+      })
+      .catch(() => undefined);
+  }
+
   useEffect(() => {
-    void loadPeers().finally(() => setLoading(false));
+    void Promise.all([loadPeers(), loadOffers()]).finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const pendingOffers = offers.filter((o) => o.status === "pending");
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -448,6 +723,20 @@ export function Fleet() {
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
+
+      {!loading && pendingOffers.length > 0 && (
+        <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+          <div>
+            <p className="text-sm font-semibold text-carbon-text">{t("fleet.mesh.offersTitle")}</p>
+            <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.offersHint")}</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {pendingOffers.map((o) => (
+              <MeshOfferRow key={o.id} offer={o} t={t} onChanged={() => void loadOffers()} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {!loading && !error && peers.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
