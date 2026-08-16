@@ -2597,6 +2597,10 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 //     this one — same reasoning as the widget, self-gated on the stored fleet
 //     token instead, failing closed with 403 when none is set. POST/DELETE
 //     /api/fleet/token and the /api/fleet/peers CRUD stay session-protected.)
+//   - POST /api/fleet/mesh-offer  (a peer offering its own off-site storage —
+//     same self-gated fleet token as the status poll above; the ONLY write
+//     endpoint on this allowlist. It only ever stores a pending offer for a
+//     human to review; accept/decline/propose stay session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -2607,7 +2611,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
 			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status":
+			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer":
 				next.ServeHTTP(w, r)
 			default:
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
@@ -2627,9 +2631,11 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		// Always allow the public auth + health endpoints, plus the self-gating
 		// /metrics scrape endpoint (Prometheus can't carry the session cookie),
 		// the self-gating widget endpoints (an embedding iframe can't either),
-		// and the self-gating fleet status endpoint (a polling peer can't either).
+		// the self-gating fleet status endpoint (a polling peer can't either),
+		// and the self-gating mesh-offer inbox (same reasoning, and the same
+		// fleet token — see the doc comment above).
 		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status":
+		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer":
 			next.ServeHTTP(w, r)
 			return
 		}
