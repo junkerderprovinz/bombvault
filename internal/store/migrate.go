@@ -884,6 +884,45 @@ ALTER TABLE vms      ADD COLUMN schedule_cadence   TEXT    NOT NULL DEFAULT '';`
 		version: 85, name: "settings_cloud_cred_sets",
 		sql: "ALTER TABLE settings ADD COLUMN cloud_cred_sets TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// v8.0.0, Fleet view: a registry of peer BombVault instances this instance
+		// polls (read-only) for their protection status. Mirrors received_repos (v76)
+		// in shape: a named row with a location + encrypted credential + last-poll-
+		// verdict columns. token_enc holds the PEER's fleet_token (the credential this
+		// instance presents when polling that peer), encrypted at rest like
+		// received_repos.app_key_enc — never logged, never returned in the clear.
+		// last_poll_domains_json caches the peer's most recent DomainStatusEntry[]
+		// response verbatim, so the Fleet page can render a peer's scorecard without
+		// a live round-trip on every page load.
+		//
+		// fleet_enabled gates the whole feature (default 0 = off), same as
+		// receiver_enabled. instance_name is this instance's own display name,
+		// reported to polling peers. fleet_token is this instance's own credential
+		// that PEERS present to poll THIS instance — mirrors widget_token exactly
+		// (empty = feature off, fails closed). All three land in this migration so
+		// the table and the settings row arrive together.
+		version: 86, name: "fleet_peers",
+		sql: `
+CREATE TABLE IF NOT EXISTS fleet_peers (
+  id                      TEXT    PRIMARY KEY,
+  name                    TEXT    NOT NULL DEFAULT '',
+  url                     TEXT    NOT NULL DEFAULT '',
+  token_enc               BLOB    NOT NULL DEFAULT x'',
+  enabled                 INTEGER NOT NULL DEFAULT 1,
+  last_poll_at            INTEGER NOT NULL DEFAULT 0,
+  last_poll_ok            INTEGER,                       -- nullable: NULL = never polled
+  last_poll_error         TEXT    NOT NULL DEFAULT '',
+  last_poll_instance_name TEXT    NOT NULL DEFAULT '',
+  last_poll_version       TEXT    NOT NULL DEFAULT '',
+  last_poll_domains_json  TEXT    NOT NULL DEFAULT '',
+  created_at              INTEGER NOT NULL DEFAULT 0,
+  sort_order              INTEGER NOT NULL DEFAULT 0
+);
+
+ALTER TABLE settings ADD COLUMN fleet_enabled INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN instance_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE settings ADD COLUMN fleet_token TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

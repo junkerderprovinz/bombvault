@@ -326,6 +326,14 @@ const WatchdogCadence = "daily 09:00"
 // minute.
 const ReceiverCadence = "daily 09:15"
 
+// FleetCadence is the fixed daily cadence of the fleet peer sweep (polling
+// every enabled peer's protection status). Not user-configurable, like the
+// watchdog/receiver: a Fleet page reflects the cached result of the last sweep
+// plus whatever the manual poll-now button fetched, not a live poll on every
+// page load. 09:30 is just after the receiver watch so the three daily
+// currency passes do not fire in the same minute.
+const FleetCadence = "daily 09:30"
+
 // catchUpGrace is the slack applied when deciding whether a scheduled fire was
 // missed: a success within this margin BEFORE the fire still counts as covering
 // it (a manual run moments before the trigger, or clock jitter, must not cause
@@ -463,6 +471,7 @@ type Scheduler struct {
 	digestFn         func() error                            // nil until SetDigestJob wires the weekly digest notification
 	watchdogFn       func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
 	receiverFn       func() error                            // nil until SetReceiverJob wires the receiver watch (dead-mans-switch + integrity checks)
+	fleetFn          func() error                            // nil until SetFleetJob wires the fleet peer sweep
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -692,6 +701,15 @@ func (s *Scheduler) SetWatchdogJob(watchdogFn func() error) {
 // the receiver schedule is a no-op (logged). Call before Reload.
 func (s *Scheduler) SetReceiverJob(receiverFn func() error) {
 	s.receiverFn = receiverFn
+}
+
+// SetFleetJob wires the daily fleet peer sweep so its fixed schedule
+// (FleetCadence) actually runs. fleetFn polls every enabled fleet peer's
+// protection status and records the result (read-only, no notifications — a
+// peer's own instance already alerts on its own overdue backups). Until this
+// is called the fleet schedule is a no-op (logged). Call before Reload.
+func (s *Scheduler) SetFleetJob(fleetFn func() error) {
+	s.fleetFn = fleetFn
 }
 
 // SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
@@ -1011,6 +1029,25 @@ func (s *Scheduler) ReloadWithDueChecks(
 				}
 				if err := s.receiverFn(); err != nil {
 					log.Printf("schedule: receiver job: %v", err)
+				}
+			},
+		})
+	}
+
+	// Fleet peer sweep: ONE app-wide pass per fire on the fixed FleetCadence,
+	// polling every enabled fleet peer's protection status. Gated on
+	// FleetEnabled (default off), exactly like ReceiverEnabled.
+	if settings.FleetEnabled {
+		domains = append(domains, domainSpec{
+			cadence: FleetCadence,
+			name:    "fleet",
+			fn: func() {
+				if s.fleetFn == nil {
+					log.Print("schedule: fleet job skipped — fleet not wired (SetFleetJob)")
+					return
+				}
+				if err := s.fleetFn(); err != nil {
+					log.Printf("schedule: fleet job: %v", err)
 				}
 			},
 		})
