@@ -100,7 +100,7 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
         <span className="text-[11px] text-statusWarn">{t("offsite.testUninitialized")}</span>
       )}
       {st === "fail" && (
-        <span className="text-[11px] text-statusFail wrap-break-word text-right">
+        <span className="text-[11px] text-statusFail max-w-[18rem] wrap-break-word text-right">
           {err ?? t("offsite.testFailed")}
         </span>
       )}
