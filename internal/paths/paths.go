@@ -19,6 +19,15 @@ var ErrAbsoluteSub = errors.New("paths: sub must be a relative path")
 // absolute or that after cleaning resolves outside root
 // (e.g. "../etc" or "a/../../etc").
 //
+// root is always the caller's configured HostMountRoot — Resolve never sees
+// HostSourceRoot, so it works identically regardless of how that root relates
+// to a separate source root. This supports both Unraid's split-root default
+// (HostSourceRoot=/mnt translated to HostMountRoot=/host/user) and the
+// generic/TrueNAS identity-root default (HostSourceRoot == HostMountRoot,
+// e.g. both /data — no path translation, the simpler bind-mount convention
+// used by comparable tools like Nautical Backup and Dockge): an identity root
+// is just another root value, not a special case.
+//
 // Paths here are always Linux paths (container-internal), so the path package
 // (always slash-separated) is correct regardless of the build OS.
 func Resolve(root, sub string) (string, error) {
@@ -43,7 +52,9 @@ func Resolve(root, sub string) (string, error) {
 
 // Within reports whether absPath is an absolute path that lies strictly inside
 // root (after slash-clean). Used to re-validate stored absolute appdata paths
-// before a restore writes to them (defense-in-depth).
+// before a restore writes to them (defense-in-depth). Same root-value note as
+// Resolve above: works identically under Unraid's split root or a
+// generic/TrueNAS identity root, since only the single root value matters.
 func Within(root, absPath string) bool {
 	if !strings.HasPrefix(absPath, "/") {
 		return false
