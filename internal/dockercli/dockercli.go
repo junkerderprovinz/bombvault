@@ -37,16 +37,36 @@ var _ Docker = (*Client)(nil)
 
 // New constructs a Client connected to the host docker.sock with API-version
 // negotiation (so it works across Unraid Docker versions).
+//
+// DOCKER_HOST is honored when set (rootless Docker, Podman); otherwise defaults
+// to the standard /var/run/docker.sock, matching every prior BombVault release.
 func New() (*Client, error) {
-	api, err := client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithHost("unix:///var/run/docker.sock"),
-		client.WithAPIVersionNegotiation(),
-	)
+	api, err := client.NewClientWithOpts(dockerClientOpts()...)
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: new client: %w", err)
 	}
 	return &Client{api: api}, nil
+}
+
+// dockerClientOpts builds the SDK options New() connects with. It is split out
+// from New so the DOCKER_HOST precedence can be asserted directly: client.Opt
+// values are unexported closures with no way to inspect "was WithHost applied"
+// after the fact, other than executing them against a real *client.Client and
+// reading back its DaemonHost(), which this helper's own test does.
+//
+// client.FromEnv already applies DOCKER_HOST (via WithHostFromEnv) when it is
+// set. The unconditional client.WithHost("unix:///var/run/docker.sock") that
+// used to follow it therefore silently clobbered any operator-set DOCKER_HOST —
+// making rootless Docker ($XDG_RUNTIME_DIR/docker.sock) and Podman
+// (/run/podman/podman.sock) unreachable. The fallback host is now only added
+// when DOCKER_HOST is unset, so FromEnv's choice wins whenever the operator set
+// one, and the Unraid default (unset DOCKER_HOST) is unchanged.
+func dockerClientOpts() []client.Opt {
+	opts := []client.Opt{client.FromEnv}
+	if os.Getenv(client.EnvOverrideHost) == "" {
+		opts = append(opts, client.WithHost("unix:///var/run/docker.sock"))
+	}
+	return append(opts, client.WithAPIVersionNegotiation())
 }
 
 // Close releases the underlying SDK client.
