@@ -25,32 +25,49 @@ func TestInitArgs(t *testing.T) {
 func TestCatConfigArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := CatConfigArgs("/repo", Mode{Encrypted: true, Password: "pw"})
-		want := []string{"-r", "/repo", "cat", "config"}
+		want := []string{"-r", "/repo", "cat", "config", "--no-lock"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
 		got := CatConfigArgs("/repo", Mode{Encrypted: false})
-		want := []string{"-r", "/repo", "cat", "config", "--insecure-no-password"}
+		want := []string{"-r", "/repo", "cat", "config", "--insecure-no-password", "--no-lock"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	// #138: cat config is strictly read-only (the config object is written once
+	// at repo creation, never mutated), so it must never write a lock file
+	// regardless of Mode.NoLock — a broken off-site mount's own permission
+	// model can fail a lock-file write even when the actual read would have
+	// succeeded fine. Pin that this holds for BOTH values of the flag.
+	t.Run("always no-lock regardless of Mode.NoLock", func(t *testing.T) {
+		for _, m := range []Mode{
+			{Encrypted: true, Password: "pw", NoLock: false},
+			{Encrypted: true, Password: "pw", NoLock: true},
+		} {
+			got := CatConfigArgs("/repo", m)
+			found := false
+			for _, a := range got {
+				if a == "--no-lock" {
+					found = true
+				}
+			}
+			if !found {
+				t.Fatalf("CatConfigArgs(%+v) = %v, want --no-lock present", m, got)
+			}
 		}
 	})
 }
 
 // TestNoLockArgs pins the #61 read-only threading: a foreign session sets
 // Mode.NoLock so restic never writes a lock file into someone else's repository.
-// It threads into cat config (the open probe) and both restore builders; a
-// default (locking) mode omits it.
+// It threads into both restore builders; a default (locking) mode omits it.
+// Cat config is covered separately by TestCatConfigArgs's "always no-lock"
+// subtest, since it is unconditionally lock-free now (#138), not gated on this
+// flag the way restore still is.
 func TestNoLockArgs(t *testing.T) {
-	t.Run("cat config", func(t *testing.T) {
-		got := CatConfigArgs("/repo", Mode{Encrypted: true, Password: "pw", NoLock: true})
-		want := []string{"-r", "/repo", "cat", "config", "--no-lock"}
-		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("got %v want %v", got, want)
-		}
-	})
 	t.Run("restore path", func(t *testing.T) {
 		got := RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: true, NoLock: true})
 		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/p", "--", "abc123:/p"}
@@ -67,7 +84,6 @@ func TestNoLockArgs(t *testing.T) {
 	})
 	t.Run("default mode does not add --no-lock", func(t *testing.T) {
 		for _, got := range [][]string{
-			CatConfigArgs("/repo", Mode{Encrypted: true}),
 			RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: true}),
 			RestoreIncludeArgs("/repo", "abc123", "/p", "/", Mode{Encrypted: true}),
 		} {

@@ -56,12 +56,15 @@ type Mode struct {
 	// Env is extra environment passed to the restic process ("KEY=VALUE"), used
 	// for backend credentials (S3 AWS_*, REST RESTIC_REST_*). Never in argv.
 	Env []string
-	// NoLock, when true, adds --no-lock to every lock-taking operation built for
-	// this mode (cat config, restore), so the operation NEVER writes a lock file
-	// into the repository. It is set only for a foreign read-only session (open
-	// another instance's repo without mutating it, #61); the settings-driven
-	// backup/restore paths leave it false and lock normally. Snapshot listings are
-	// always lock-free regardless (SnapshotsArgs hard-codes --no-lock).
+	// NoLock, when true, adds --no-lock to the Restore* builders below, so a
+	// restore NEVER writes a lock file into the repository. It is set only for
+	// a foreign read-only session (open another instance's repo without
+	// mutating it, #61); the settings-driven backup/restore paths leave it
+	// false and lock normally, since a local restore coordinating with a
+	// concurrent backup/prune is a real, intentional use of the lock. Cat
+	// config is always lock-free regardless of this flag (CatConfigArgs
+	// hard-codes --no-lock, see its own doc comment, #138), same as snapshot
+	// listings (SnapshotsArgs), stats (StatsArgs) and diff (DiffArgs).
 	NoLock bool
 	// StorageClass is the S3 storage class for restic writes to a NATIVE s3:
 	// backend (empty = the provider default). It is emitted as
@@ -254,15 +257,27 @@ func InitArgs(repo string, m Mode) []string {
 // config is the minimal operation that opens AND decrypts a repository, so it is
 // the cheapest probe for both "does this repo exist?" and "does mode m open it?"
 // (a wrong encryption mode / password fails to decrypt the config).
+//
+// Always carries --no-lock, unconditionally (not gated on m.NoLock, unlike the
+// Restore* builders below): the config object is written once at repo creation
+// and never mutated afterward, so reading it is strictly read-only in the same
+// sense SnapshotsArgs/StatsArgs/DiffArgs already are, and for the same reasons
+// those take --no-lock unconditionally. Before this, only the #61 foreign
+// (cross-instance) probe skipped the lock; the far more common case — testing
+// your OWN configured off-site repo (Settings' "Test connection", EnsureRepo's
+// mode probe) — tried to write a lock file for a read that never needed one.
+// On an off-site mount whose CIFS/SMB client enforces its own restrictive
+// permission model (independent of the real filesystem permissions on the far
+// side, #138), that lock-file write failed with a raw "unable to create lock in
+// backend: ... permission denied", even though the actual config read would
+// have succeeded fine. Removing the write entirely removes the failure mode.
 func CatConfigArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, "cat", "config")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	if m.NoLock {
-		args = append(args, "--no-lock") // read-only foreign probe must not lock the repo
-	}
+	args = append(args, "--no-lock") // strictly read-only probe, never writes a lock (see doc comment above)
 	return args
 }
 
