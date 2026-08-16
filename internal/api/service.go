@@ -1014,7 +1014,7 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 	subject := "Retention prune FAILED for " + tag
 	msg := fmt.Sprintf("Applying the retention policy for %s failed — old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
 	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2282,7 +2282,7 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 	subject := "Off-site backup over budget for " + domain
 	msg := fmt.Sprintf("The off-site repository for %s has grown to %s, over the configured growth budget of %s. Prune the far side or raise the budget.", domain, humanBytes(size), humanBytes(budget))
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2465,7 +2465,7 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 	subject := "Off-site replication FAILED for " + domain
 	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -3391,7 +3391,7 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		msg := fmt.Sprintf("Updated container %q to a newer image. Please verify it still works.", name)
 		notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 			notify.Event{Title: "BombVault", Message: msg, OK: true})
-		if c.Unraid && s.ssh != nil && c.On == "always" {
+		if c.Unraid && s.ssh != nil && c.On == "always" && s.platformFn().Kind() == platform.KindUnraid {
 			if e := s.sendUnraidNotify(ctx, "BombVault: container updated", msg, "normal"); e != nil {
 				log.Printf("notify: unraid: %v", e)
 			}
@@ -8908,7 +8908,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	}
 	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -9944,7 +9944,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
-	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) &&
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
@@ -10010,7 +10010,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	// warning must reach the user even in summary mode (like the update notice).
 	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 		notify.Event{Title: "BombVault: backup target skipped", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backup target skipped", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -10123,7 +10123,7 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	// an all-success summary out under On="failure").
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: summary, OK: ok})
-	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) {
 		level := "normal"
 		if !ok {
 			level = "warning"
@@ -10183,6 +10183,14 @@ func (s *Service) TestNotify(ctx context.Context, c notify.Config) error {
 		}
 	}
 	if c.Unraid {
+		// TestNotify is a request-scoped, user-initiated action (the Settings
+		// "Test" button), not a background best-effort job: silently reporting
+		// success without attempting anything would be dishonest, so a
+		// non-Unraid platform gets a clear, immediate refusal instead of an SSH
+		// attempt that could only fail on the far end.
+		if s.platformFn().Kind() != platform.KindUnraid {
+			return errors.New("unraid: the Unraid notification channel is only available when BombVault detects an Unraid host")
+		}
 		if err := s.sendUnraidNotify(ctx, "BombVault test notification",
 			"If you see this in Unraid, BombVault notifications are working.", "normal"); err != nil {
 			return fmt.Errorf("unraid: %w", err)
