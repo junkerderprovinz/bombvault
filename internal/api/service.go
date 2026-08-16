@@ -2722,14 +2722,35 @@ func encryptionWord(encrypted bool) string {
 // an "appdata" path segment are kept (container config); media libraries, the
 // flash, /etc/localtime and other shares are skipped.
 //
-// Fallback (no appdata bind found): the conventional /mnt/user/appdata/<name>,
-// translated if reachable.
+// A named-volume mount (Type=="volume") is kept UNCONDITIONALLY, no "appdata"
+// segment filter — a named volume is persistent-by-construction, with no
+// equivalent of a throwaway bind mount. Its resolved host path (Source, filled
+// in by dockercli's Inspect from the daemon's own report or, failing that, a
+// VolumeInspect fallback) goes through the SAME translate-and-check as a bind
+// source, so an unreachable volume mountpoint is skipped exactly like an
+// unreachable bind, and a volume that resolves to the same container path as an
+// already-recorded bind is deduped. This fixes the majority case on non-Unraid
+// hosts: a container using only Docker Compose named volumes previously
+// produced zero discovered data paths.
+//
+// Fallback (no appdata bind or volume found): the conventional
+// /mnt/user/appdata/<name>, translated if reachable.
 func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 	mountRoot := path.Clean(s.cfg.HostMountRoot) // its container path, e.g. /host/user
 
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range in.Mounts {
+		if m.Type == "volume" {
+			if m.Source == "" {
+				continue // daemon (and the VolumeInspect fallback) couldn't resolve it
+			}
+			if container, ok := s.toContainerPath(m.Source); ok && !seen[container] {
+				out = append(out, container)
+				seen[container] = true
+			}
+			continue
+		}
 		if m.Source == "" || !hasSegment(path.Clean(m.Source), "appdata") {
 			continue // only appdata binds (container config), not media/other shares
 		}

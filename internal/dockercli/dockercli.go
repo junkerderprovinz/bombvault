@@ -17,6 +17,7 @@ import (
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
@@ -155,7 +156,52 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	if err != nil {
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
+	c.fillVolumeMountSources(ctx, resp.Mounts)
 	return mapInspect(resp), nil
+}
+
+// needsVolumeMountpoint reports whether a Mounts entry is a named-volume mount
+// the daemon reported without a host-side Source. Normally the daemon already
+// populates Source for a volume mount with its real storage location (e.g.
+// /var/lib/docker/volumes/<name>/_data), so this is the rare fallback case —
+// but resolveAppdataPaths (internal/api/service.go) needs a resolved Source to
+// back up a named volume at all, so it is worth the one extra VolumeInspect
+// call when the daemon left it empty.
+func needsVolumeMountpoint(m container.MountPoint) bool {
+	return m.Type == mount.TypeVolume && m.Source == "" && m.Name != ""
+}
+
+// fillVolumeMountSources resolves the host-side Source for any volume mount
+// needsVolumeMountpoint flags, via VolumeInspect, mutating mounts in place.
+// Best-effort: a volume lookup failure just leaves Source empty — mapInspect
+// then carries an empty Source through like any other unresolvable mount, and
+// resolveAppdataPaths skips it rather than failing the whole container inspect
+// over one volume.
+func (c *Client) fillVolumeMountSources(ctx context.Context, mounts []container.MountPoint) {
+	for i := range mounts {
+		if !needsVolumeMountpoint(mounts[i]) {
+			continue
+		}
+		if mp, err := c.VolumeInspect(ctx, mounts[i].Name); err == nil {
+			mounts[i].Source = mp
+		}
+	}
+}
+
+// VolumeInspect returns a named volume's real host-side storage location (its
+// Mountpoint, e.g. /var/lib/docker/volumes/<name>/_data), or "" if the volume
+// does not exist. Mirrors ImageID's not-found-returns-empty-string style so a
+// caller can treat "gone" and "never existed" the same way without special-
+// casing an error type.
+func (c *Client) VolumeInspect(ctx context.Context, name string) (string, error) {
+	vol, err := c.api.VolumeInspect(ctx, name)
+	if err != nil {
+		if cerrdefs.IsNotFound(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("dockercli: volume inspect: %w", err)
+	}
+	return vol.Mountpoint, nil
 }
 
 // Stop stops a container, sending SIGKILL after timeout if it has not exited.
