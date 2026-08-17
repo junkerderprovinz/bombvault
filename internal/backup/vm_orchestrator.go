@@ -333,7 +333,7 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		// zvol mechanism (see backupBlockDisksAndLog) — file-backed disks
 		// above are completely untouched by this. A no-op when d.BlockDisks
 		// is empty (every VM in production today).
-		if zErr := backupBlockDisksAndLog(ctx, d); zErr != nil {
+		if zErr := backupBlockDisksAndLog(ctx, d, "vm backup"); zErr != nil {
 			backupErr = zErr
 		}
 	}()
@@ -438,7 +438,7 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	// SnapshotCreateDiskOnly/BlockCommitActivePivot target) — see
 	// backupBlockDisksAndLog. A no-op when d.BlockDisks is empty (every VM in
 	// production today).
-	if zErr := backupBlockDisksAndLog(ctx, d); zErr != nil {
+	if zErr := backupBlockDisksAndLog(ctx, d, "vm live backup"); zErr != nil {
 		return Summary{}, zErr
 	}
 	return summary, nil
@@ -870,7 +870,13 @@ func zvolBackupSnapshotName(now time.Time) string {
 // bytes) is only LOGGED: nothing yet persists it anywhere a later restore
 // can find it — see VMBackupDeps.BlockDisks's doc comment for that known,
 // intentionally-unsolved gap.
-func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps) error {
+//
+// logPrefix lets each caller's log/error lines carry ITS OWN prefix ("vm
+// backup" for runVMGraceful, "vm live backup" for runVMLive) rather than a
+// hardcoded one, matching every other error this file returns from either
+// method — an operator triaging a live-backup failure should never see a
+// "vm backup:"-prefixed line and wonder whether the graceful path ran.
+func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix string) error {
 	if len(d.BlockDisks) == 0 {
 		return nil
 	}
@@ -888,13 +894,13 @@ func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps) error {
 			Restic:   d.ZvolRestic,
 		})
 		if err != nil {
-			log.Printf("vm backup: zvol disk %q: FAILED (%v)", bd.Dataset, err)
+			log.Printf("%s: zvol disk %q: FAILED (%v)", logPrefix, bd.Dataset, err)
 			if firstErr == nil {
-				firstErr = fmt.Errorf("vm backup: zvol disk %q: %w", bd.Dataset, err)
+				firstErr = fmt.Errorf("%s: zvol disk %q: %w", logPrefix, bd.Dataset, err)
 			}
 			continue
 		}
-		log.Printf("vm backup: zvol disk %q: backed up as restic snapshot %s (%d bytes) — NOT YET tracked by run-recording, see VMBackupDeps.BlockDisks's doc comment", bd.Dataset, sum.SnapshotID, sum.Bytes)
+		log.Printf("%s: zvol disk %q: backed up as restic snapshot %s (%d bytes) — NOT YET tracked by run-recording, see VMBackupDeps.BlockDisks's doc comment", logPrefix, bd.Dataset, sum.SnapshotID, sum.Bytes)
 	}
 	return firstErr
 }
