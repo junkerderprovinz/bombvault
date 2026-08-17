@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -196,6 +197,62 @@ func (c *Conn) WriteFile(ctx context.Context, path string, data []byte) error {
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil { // stdout (tee's echo) is discarded
 		return fmt.Errorf("sshconn: write %q: %s", filepath.Base(path), strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+// StreamCommand starts a command on the host over SSH and returns its stdout
+// as a stream, plus a wait function the caller MUST call exactly once after
+// it is done reading (success or failure) to reap the ssh process and surface
+// any non-zero exit. Unlike Run (which buffers the ENTIRE output in memory
+// via .Output()), this never buffers — it exists for a command whose output
+// can be many gigabytes, which Run would be unsafe for.
+//
+// Used by the zvol VM-disk backup path (internal/backup/vm_orchestrator.go,
+// v8.0.0 TrueNAS platform expansion Task 10) to stream a remote `zfs send`
+// straight into a restic backup with no local staging file. ⚠ This method
+// itself is structurally identical to Run/ReadFile/WriteFile above (same
+// sshExec plumbing, just wired to a pipe instead of .Output()/bytes.Reader)
+// and is not independently tested against a real SSH server here, matching
+// this file's existing convention — see zvol.go's package doc comment for the
+// "reasoned from documentation, unverified against real hardware" caveat that
+// applies to its actual callers.
+func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error) {
+	cmd := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("sshconn: stdout pipe for %q: %w", args[0], err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, nil, fmt.Errorf("sshconn: start %q: %w", args[0], err)
+	}
+	wait := func() error {
+		if err := cmd.Wait(); err != nil {
+			return fmt.Errorf("sshconn: run %q: %s", args[0], strings.TrimSpace(stderr.String()))
+		}
+		return nil
+	}
+	return stdout, wait, nil
+}
+
+// RunWithStdin runs a command on the host over SSH with its stdin fed from rd,
+// streamed (never buffered in memory) — the restore-side counterpart of
+// StreamCommand, for piping a large restore stream (e.g. a restic dump
+// output) into a remote command (e.g. `zfs receive`) without holding the
+// whole stream in memory the way WriteFile's []byte parameter would. Blocks
+// until the remote command exits.
+//
+// Same "reasoned, not independently tested against a real SSH server" note as
+// StreamCommand applies — see zvol.go's package doc comment.
+func (c *Conn) RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error {
+	cmd := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	cmd.Stdin = rd
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil { // stdout (if any) is discarded, mirrors WriteFile
+		return fmt.Errorf("sshconn: run %q: %s", args[0], strings.TrimSpace(stderr.String()))
 	}
 	return nil
 }

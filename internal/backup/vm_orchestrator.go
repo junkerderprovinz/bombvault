@@ -6,6 +6,7 @@ package backup
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -535,4 +536,277 @@ func isFreezeErr(err error) bool {
 		strings.Contains(m, "guest agent") ||
 		strings.Contains(m, "guest-agent") ||
 		strings.Contains(m, "quiesce")
+}
+
+// ---------------------------------------------------------------------------
+// Zvol-aware VM disk backup/restore (v8.0.0 TrueNAS platform expansion,
+// Task 10)
+//
+// ⚠ UNVERIFIED AGAINST REAL HARDWARE. Everything below is REASONED from ZFS's
+// public documentation — `zfs snapshot`/`zfs send`/`zfs receive` as the
+// ZFS-native way to move a stable point-in-time dataset byte stream off/onto
+// a zvol — and exercised only with fakes (vm_zvol_test.go); no TrueNAS Scale
+// test instance was available anywhere in this project's development
+// environment to run it against a real zvol over a real SSH connection. See
+// internal/virshcli/zvol.go's package doc comment for the full caveat, which
+// applies equally here.
+//
+// This mechanism is deliberately SEPARATE from BackupVMGraceful/BackupVMLive/
+// RestoreVM above: a block-device-backed VM disk (detected via
+// virshcli.ParseDomain's DomainInfo.BlockDisks — see that field's doc
+// comment) cannot be backed up by restic-ing a file path the way every disk
+// in DiskPaths/Disks above is; it needs a ZFS snapshot + `zfs send` stream
+// instead, and its restore cannot reuse RestoreVM's restic-restore-to-a-path
+// logic either, since the destination is a raw dataset, not a directory of
+// files. File-backed (Unraid) VM disk backup/restore above is completely
+// UNTOUCHED by this addition — zero shared code, zero shared state.
+//
+// SCOPE: this file provides the tested mechanism for ONE disk at a time. It
+// deliberately does NOT wire itself into BackupVMGraceful/BackupVMLive's
+// shutdown/snapshot/restart state machines, run-recording (Runs/TargetID), or
+// virshcli.ParseDomain's BlockDisks detection — connecting those (deciding
+// how a VM's run is recorded when it mixes file-backed and block-device
+// disks, persisting the dataset/snapshot-name/stdin-path metadata a later
+// restore needs, and actually detecting real block disks from a live TrueNAS
+// domain) is service-layer integration work intentionally left for a
+// follow-up once real TrueNAS hardware is available to validate the
+// end-to-end shape — see Task 10 in
+// docs/superpowers/plans/2026-08-16-bombvault-platform-expansion.md.
+// ---------------------------------------------------------------------------
+
+// ZFSHost is the host-control surface the zvol backup/restore orchestrators
+// need — the SSH-transported ZFS snapshot/send/receive steps. Semantic (not
+// raw argv), mirroring how VM above abstracts virsh commands rather than
+// exposing raw CLI argv, and interface-shaped so this file is unit-testable
+// with fakes, without a real SSH connection or ZFS system. The concrete
+// adapter (internal/sshconn.Conn's Run/StreamCommand/RunWithStdin methods +
+// internal/virshcli's ZFSSnapshotArgs/ZFSSnapshotDestroyArgs/ZFSSendArgs/
+// ZFSReceiveArgs argv builders) is wired at the service layer — this package
+// never imports either concrete package (see the package doc comment at the
+// top of orchestrator.go: "imports ONLY the interfaces defined here... never
+// the concrete dockercli/restic packages").
+type ZFSHost interface {
+	// SnapshotCreate runs `zfs snapshot <dataset>@<snapName>` on the host.
+	SnapshotCreate(ctx context.Context, dataset, snapName string) error
+	// SnapshotDestroy runs `zfs destroy <dataset>@<snapName>` on the host —
+	// cleanup for the snapshot SnapshotCreate took. The snapshot is a live
+	// consistency point for the backup, not the backup artifact itself.
+	SnapshotDestroy(ctx context.Context, dataset, snapName string) error
+	// StreamSend starts `zfs send <dataset>@<snapName>` on the host and
+	// returns its stdout as a stream, plus a wait function the caller MUST
+	// call exactly once after it is done reading (success or failure) to
+	// reap the process and surface any failure (a short/truncated stream can
+	// otherwise look like a clean backup — see BackupZvolDisk).
+	StreamSend(ctx context.Context, dataset, snapName string) (io.ReadCloser, func() error, error)
+	// StreamReceive runs `zfs receive <targetDataset>` on the host with its
+	// stdin fed from rd, streamed (never buffered in memory — a zvol can be
+	// many gigabytes).
+	StreamReceive(ctx context.Context, rd io.Reader, targetDataset string) error
+}
+
+// ZvolRestic is the restic surface the zvol orchestrators need: streaming a
+// backup FROM an io.Reader with no local file (internal/restic.Restic.
+// BackupStdin) and streaming a restore snapshot TO an io.Writer
+// (internal/restic.Restic.DumpRaw). Kept separate from this package's main
+// Restic interface above (which every OTHER orchestrator in this file also
+// implements) since file-backed disk backup/restore never needs stdin
+// streaming — adding it to the shared interface would widen every existing
+// fake/adapter for a capability only the zvol path uses.
+type ZvolRestic interface {
+	// BackupStdin backs up the ENTIRE content of rd as a single synthetic
+	// file recorded under path, tagged with tags, and returns the parsed
+	// summary.
+	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string) (Summary, error)
+	// DumpTo streams the synthetic file at path, from the given snapshot,
+	// into w — raw bytes, byte-identical to what BackupStdin was given.
+	DumpTo(ctx context.Context, repo, snapshotID, path string, w io.Writer) error
+}
+
+// ZvolStdinPath is the fixed, deterministic convention BackupZvolDisk uses as
+// restic's stdin-filename (and RestoreZvolDeps.StdinPath must match) for one
+// disk's backup, derived from the dataset + snapshot name so it never needs
+// separate bookkeeping beyond what the caller already has to track anyway
+// (which snapshot backed up which disk). Exported so a future caller (the
+// service-layer VM target definition, once it persists dataset/snapName
+// metadata alongside a zvol backup) can recompute the same path for a
+// restore.
+func ZvolStdinPath(dataset, snapName string) string {
+	return "/vm-disks/" + dataset + "@" + snapName
+}
+
+// BackupZvolDeps bundles everything BackupZvolDisk needs for ONE
+// block-device-backed VM disk. A VM with multiple such disks calls
+// BackupZvolDisk once per disk — restic's --stdin backs up exactly one
+// synthetic file per invocation (internal/restic.BackupStdinArgs), so there
+// is no multi-disk variant of this function the way VMBackupDeps.DiskPaths
+// batches multiple file-backed disks into one restic call.
+type BackupZvolDeps struct {
+	// Name is the libvirt domain name (used to build the restic tag).
+	Name string
+	// Dataset is the zvol's ZFS dataset, "<pool>/<dataset...>" (from
+	// virshcli.zvolDatasetFromDevPath, applied to the disk's block-device
+	// source path).
+	Dataset string
+	// SnapName is the ZFS snapshot name to create (e.g. from
+	// virshcli.ZvolSnapshotName) — caller-chosen so it is loggable/known
+	// before this function runs.
+	SnapName string
+	// RepoPath is the local restic repository path for the vms domain.
+	RepoPath string
+	// Tags are the restic tags for this disk's backup (e.g. ["vm:<name>"]).
+	Tags []string
+
+	Host   ZFSHost
+	Restic ZvolRestic
+}
+
+// BackupZvolDisk backs up ONE block-device-backed VM disk:
+//
+//	zfs snapshot <dataset>@<snapName>
+//	→ zfs send <dataset>@<snapName>, streamed over SSH straight into
+//	  restic backup --stdin (no local staging file, no local ZFS/zvol access
+//	  needed inside the container — mirrors how virshcli already shells
+//	  virsh commands to the host over SSH instead of requiring libvirt
+//	  locally)
+//	→ ALWAYS zfs destroy <dataset>@<snapName> (deferred — a live consistency
+//	  point for the send, not the backup artifact; cleaned up on EVERY path,
+//	  success or failure — mirroring BackupVMLive's "always commit every
+//	  overlay back" guarantee above)
+//
+// A snapshot-destroy failure is logged, not returned: the data already
+// safely reached the restic repo (or didn't, in which case that IS the
+// returned error) either way; a leftover snapshot is host-hygiene, not data
+// loss — the operator can `zfs destroy` it manually.
+//
+// ⚠ UNVERIFIED AGAINST REAL HARDWARE — see this section's header comment.
+func BackupZvolDisk(ctx context.Context, d BackupZvolDeps) (Summary, error) {
+	if err := d.Host.SnapshotCreate(ctx, d.Dataset, d.SnapName); err != nil {
+		return Summary{}, fmt.Errorf("zvol backup: snapshot create: %w", err)
+	}
+	// ALWAYS destroy the snapshot afterward, success or failure.
+	defer func() {
+		if destroyErr := d.Host.SnapshotDestroy(ctx, d.Dataset, d.SnapName); destroyErr != nil {
+			log.Printf("backup: zvol %q: WARN snapshot destroy failed (%v) — a leftover bombvault ZFS snapshot may need manual cleanup", d.Dataset, destroyErr)
+		}
+	}()
+
+	stream, wait, err := d.Host.StreamSend(ctx, d.Dataset, d.SnapName)
+	if err != nil {
+		return Summary{}, fmt.Errorf("zvol backup: start zfs send: %w", err)
+	}
+	defer func() { _ = stream.Close() }()
+
+	path := ZvolStdinPath(d.Dataset, d.SnapName)
+	sum, backupErr := d.Restic.BackupStdin(ctx, d.RepoPath, stream, path, d.Tags)
+
+	// Reap the SSH/zfs-send process and surface ITS failure too — restic can
+	// otherwise report a clean-looking (short) backup if the remote send died
+	// mid-stream and the pipe simply closed; the wait error catches that.
+	if waitErr := wait(); waitErr != nil {
+		if backupErr != nil {
+			return Summary{}, fmt.Errorf("zvol backup: restic: %w (zfs send also failed: %v)", backupErr, waitErr)
+		}
+		return Summary{}, fmt.Errorf("zvol backup: zfs send: %w", waitErr)
+	}
+	if backupErr != nil {
+		return Summary{}, fmt.Errorf("zvol backup: restic: %w", backupErr)
+	}
+	return sum, nil
+}
+
+// zvolRestoreSuffix marks a dataset zvolRestoreTargetDataset created — never
+// an operator's own naming, so it is unambiguous which datasets are BombVault
+// restore landing zones awaiting the operator's manual rename/promote step.
+const zvolRestoreSuffix = "-bombvault-restore-"
+
+// zvolRestoreTargetDataset returns a freshly-named target dataset for a zvol
+// restore's `zfs receive`, derived from the source dataset and the current
+// instant: "<dataset>-bombvault-restore-<unix-nanoseconds>".
+//
+// SAFETY PROPERTY (structural, not just documented): the returned name is
+// NEVER equal to dataset — it always carries a non-empty suffix — and
+// RestoreZvolDisk is structured so the SOURCE dataset can never reach
+// ZFSHost.StreamReceive directly, only this function's output does (see
+// RestoreZvolDisk below; TestRestoreZvolDiskNeverTargetsSourceDataset proves
+// this by inspecting what the fake host actually received).
+//
+// This mirrors internal/virshcli.RestoreZvolTargetDataset's IDENTICAL
+// contract; the two are independently defined (not shared code) because this
+// package deliberately never imports the concrete virshcli adapter package
+// (see this section's header comment) — each is independently unit-tested in
+// its own package, and a future caller building RestoreZvolDeps can use
+// either (virshcli's version if it needs the name before calling this
+// orchestrator, e.g. to show the operator where the restore will land).
+func zvolRestoreTargetDataset(dataset string, now time.Time) string {
+	return fmt.Sprintf("%s%s%d", dataset, zvolRestoreSuffix, now.UnixNano())
+}
+
+// RestoreZvolDeps bundles everything RestoreZvolDisk needs to restore ONE
+// block-device-backed VM disk's backup.
+type RestoreZvolDeps struct {
+	// SourceDataset is the ORIGINAL zvol dataset the disk was backed up from.
+	// RestoreZvolDisk NEVER issues a `zfs receive` against this value
+	// directly — see zvolRestoreTargetDataset's safety property.
+	SourceDataset string
+	// RepoPath is the local restic repository path for the vms domain.
+	RepoPath string
+	// SnapshotID is the restic snapshot to restore from.
+	SnapshotID string
+	// StdinPath is the exact path string the original BackupZvolDisk call
+	// used (see ZvolStdinPath) — required to retrieve the right synthetic
+	// file out of the snapshot.
+	StdinPath string
+
+	Host   ZFSHost
+	Restic ZvolRestic
+}
+
+// RestoreZvolDisk restores ONE block-device-backed VM disk's backup into a
+// FRESH, never-before-existing dataset — NEVER the original source dataset:
+//
+//	restic dump <snapshotID> <stdinPath>, streamed straight into
+//	→ zfs receive <freshly-named target dataset>
+//
+// This is a deliberately NEW, SEPARATE path from RestoreVM above (which
+// restores FILE-backed disks back to their own original location) — reusing
+// that path here would risk exactly what this function is built to prevent:
+// `zfs receive` into an EXISTING dataset can destroy live data, so every
+// restore lands on a fresh dataset via zvolRestoreTargetDataset, structurally
+// (not just by convention — see that function's doc comment).
+//
+// Returns the fresh target dataset's name. Renaming/promoting it over the
+// live original zvol is a deliberate, DOCUMENTED MANUAL follow-up step for
+// the operator (see docs/vm-backup-ssh-setup.md's TrueNAS section) — this
+// function never automates that step.
+//
+// ⚠ UNVERIFIED AGAINST REAL HARDWARE — see this section's header comment.
+func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
+	target := zvolRestoreTargetDataset(d.SourceDataset, time.Now())
+
+	// Bridge Restic.DumpTo (writes to an io.Writer) into Host.StreamReceive
+	// (reads from an io.Reader) via an in-process pipe — never buffers the
+	// whole disk image in memory.
+	pr, pw := io.Pipe()
+	dumpDone := make(chan error, 1)
+	go func() {
+		dumpErr := d.Restic.DumpTo(ctx, d.RepoPath, d.SnapshotID, d.StdinPath, pw)
+		_ = pw.CloseWithError(dumpErr) // CloseWithError(nil) behaves like Close() (clean EOF)
+		dumpDone <- dumpErr
+	}()
+
+	recvErr := d.Host.StreamReceive(ctx, pr, target)
+	// Unblock a pending/future Write on pw if StreamReceive returned WITHOUT
+	// fully draining pr (e.g. an early SSH failure before any data was
+	// accepted) — otherwise the goroutine above could block forever on
+	// pw.Write and dumpDone would never receive.
+	_ = pr.CloseWithError(recvErr)
+	dumpErr := <-dumpDone
+
+	if dumpErr != nil {
+		return "", fmt.Errorf("zvol restore: restic dump: %w", dumpErr)
+	}
+	if recvErr != nil {
+		return "", fmt.Errorf("zvol restore: zfs receive: %w", recvErr)
+	}
+	return target, nil
 }

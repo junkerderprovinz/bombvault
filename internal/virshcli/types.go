@@ -11,12 +11,23 @@ type VMInfo struct {
 	State string // "running", "shut off", "paused", ...
 }
 
-// DiskRef pairs a writable disk's target device with its current source file.
-// It lets the service spot (and target) a leftover BombVault snapshot overlay
+// DiskRef pairs a writable disk's target device with its current source. It
+// lets the service spot (and target) a leftover BombVault snapshot overlay
 // precisely — i.e. the exact device whose source is "*.bombvault-tmp".
+//
+// IsBlockDevice reports whether Source is a raw block device path
+// (libvirt <source dev="...">, e.g. a TrueNAS Scale zvol at
+// /dev/zvol/<pool>/<dataset>) rather than a regular file
+// (<source file="...">). It is always false for entries in DomainInfo.Disks
+// (file-backed disks only, unchanged since before Task 10) and always true
+// for entries in DomainInfo.BlockDisks (see that field's doc comment) — the
+// two lists are never mixed, so a caller can tell which backup mechanism
+// applies purely from which list an entry came from; the field itself exists
+// so a single DiskRef value remains self-describing.
 type DiskRef struct {
-	Dev    string // target dev, e.g. "hdc"
-	Source string // current source file path
+	Dev           string // target dev, e.g. "hdc"
+	Source        string // current source file path OR block device path
+	IsBlockDevice bool
 }
 
 // DomainInfo contains the artifacts parsed from a libvirt domain XML:
@@ -24,15 +35,29 @@ type DiskRef struct {
 // disk's target device (e.g. "vda") used as the live-backup blockcommit target.
 type DomainInfo struct {
 	DiskPaths []string
-	// Disks pairs each writable disk's target dev with its source (parallels
-	// DiskPaths). Used to detect/commit a leftover live-snapshot overlay.
+	// Disks pairs each writable FILE-backed disk's target dev with its source
+	// (parallels DiskPaths). Used to detect/commit a leftover live-snapshot
+	// overlay. NEVER includes a block-device disk — see BlockDisks.
 	Disks      []DiskRef
 	NVRAMPath  string
 	DiskDevice string
 	// SkipSnapshotDevs are target devices that must NOT be snapshotted in a live
-	// backup (cdrom / read-only / source-less disks) — snapshotting them fails
-	// with "external snapshot file ... already exists and is not a block device".
+	// backup (cdrom / read-only / source-less disks, AND block-device disks —
+	// see BlockDisks) — snapshotting them fails with "external snapshot file
+	// ... already exists and is not a block device".
 	SkipSnapshotDevs []string
+	// BlockDisks are writable disks whose backing store is a raw block device
+	// (libvirt <source dev="...">, e.g. a TrueNAS Scale zvol at
+	// /dev/zvol/<pool>/<dataset> — see internal/virshcli/zvol.go) rather than a
+	// regular file. Populated ADDITIVELY to (never overlapping with) DiskPaths/
+	// Disks/DiskDevice, which stay file-backed-only and byte-identical to their
+	// pre-Task-10 behavior. A block-device disk needs a fundamentally different
+	// backup mechanism (ZFS snapshot + `zfs send` streamed into restic, see
+	// internal/backup/vm_orchestrator.go's BackupZvolDisk/RestoreZvolDisk) since
+	// restic cannot back up a block device by path the way it backs up a file.
+	//
+	// ⚠ UNVERIFIED AGAINST REAL HARDWARE — see zvol.go's package doc comment.
+	BlockDisks []DiskRef
 }
 
 // Virsh is the host-control surface the VM backup orchestrator depends on.

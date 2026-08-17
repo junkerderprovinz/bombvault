@@ -159,6 +159,54 @@ available to verify it against real hardware.** Treat it as a documented
 starting point, not a confirmed-working configuration, until it has been
 exercised on an actual TrueNAS Scale box.
 
+### 3. VM disks backed by zvols (raw block devices)
+
+TrueNAS Scale VM disks are commonly **zvols** — ZFS-backed block devices
+(`/dev/zvol/<pool>/<dataset>`), not qcow2 files. BombVault's existing VM disk
+backup (the mechanism described above and throughout this document) assumes
+file-based disk images that restic can back up directly by path; a zvol needs
+a fundamentally different mechanism, since restic cannot back up a raw block
+device the way it backs up a file.
+
+BombVault detects a block-device-backed disk from the domain XML itself
+(libvirt's own `<source dev="...">` vs `<source file="...">` distinction —
+no guessing) and, for such a disk, uses ZFS's own tools instead of a plain
+file backup:
+
+1. `zfs snapshot <dataset>@<name>` — a point-in-time consistency point, taken
+   over the same SSH connection as every other command on this page (no local
+   ZFS/zvol access inside the BombVault container).
+2. `zfs send <dataset>@<name>`, streamed over that SSH connection straight
+   into the restic backup (no local staging file, however large the zvol).
+3. `zfs destroy <dataset>@<name>` — always run afterward, success or failure;
+   the snapshot is a consistency point, not the backup artifact.
+
+Restoring a zvol is a **separate, defensive path** from restoring a
+file-based disk: `zfs receive` into an EXISTING dataset can destroy live
+data, so a restore always lands on a **freshly-named dataset**
+(`<pool>/<dataset>-bombvault-restore-<timestamp>`) — **never** the original.
+Promoting that fresh dataset over the live original (so the VM actually boots
+from the restored data) is a **deliberate, manual, documented follow-up step
+for the operator** — BombVault never automates renaming/overwriting a live
+zvol. After a restore completes, decide independently (per your own ZFS
+layout and running state of the original VM) whether/how to `zfs rename` the
+restored dataset into place, generally after shutting the VM down and
+pointing its domain XML at the new dataset (or renaming the restored dataset
+to the original's name once the original has been renamed aside).
+
+**⚠ This entire mechanism is REASONED from ZFS's and TrueNAS's public
+documentation — the `/dev/zvol/<pool>/<dataset>` device-node convention and
+`zfs send`/`zfs receive` as the ZFS-native way to move a point-in-time
+dataset byte stream — and is UNIT-TESTED ONLY (argv construction, domain-XML
+detection, and the snapshot/stream/cleanup control flow, all exercised with
+fakes).** It has **never been exercised against a real TrueNAS Scale box with
+a real zvol-backed VM** — no test hardware was available anywhere in this
+project's development environment. Treat it as a documented, unit-tested
+starting point, not a confirmed-working backup path, until it has had a real
+backup → restore-to-a-fresh-dataset → boot-check pass on actual TrueNAS Scale
+hardware. File-backed (Unraid) VM disk backup/restore is completely
+unaffected by this mechanism — it is a wholly separate code path.
+
 ---
 
 ## Troubleshooting

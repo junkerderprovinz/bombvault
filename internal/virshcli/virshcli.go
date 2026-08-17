@@ -245,6 +245,13 @@ type domainXML struct {
 			Device string `xml:"device,attr"`
 			Source struct {
 				File string `xml:"file,attr"`
+				// Dev is libvirt's own signal that the backing store is a raw
+				// block device (type="block") rather than a regular file
+				// (type="file", which uses Source.File instead) — e.g. a
+				// TrueNAS Scale zvol at /dev/zvol/<pool>/<dataset>. See
+				// zvol.go's package doc comment for the "reasoned from
+				// documentation, unverified against real hardware" caveat.
+				Dev string `xml:"dev,attr"`
 			} `xml:"source"`
 			Target struct {
 				Dev string `xml:"dev,attr"`
@@ -268,10 +275,15 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 	}
 	var disks []string
 	var diskRefs []DiskRef
+	var blockDisks []DiskRef
 	device := ""
 	var skip []string
 	for _, disk := range d.Devices.Disks {
 		writable := disk.Type == "file" && disk.Device == "disk" && disk.Source.File != "" && disk.ReadOnly == nil
+		// blockWritable: libvirt's own signal (<source dev="..."> under
+		// type="block") that this disk's backing store is a raw block device —
+		// e.g. a TrueNAS Scale zvol — not a regular file. See zvol.go.
+		blockWritable := disk.Type == "block" && disk.Device == "disk" && disk.Source.Dev != "" && disk.ReadOnly == nil
 		switch {
 		case writable:
 			disks = append(disks, disk.Source.File)
@@ -279,11 +291,29 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 			if device == "" {
 				device = disk.Target.Dev // first writable disk's target dev = blockcommit target
 			}
+		case blockWritable:
+			// Recorded ADDITIVELY in BlockDisks (see its doc comment) — never in
+			// DiskPaths/Disks/DiskDevice, which stay file-backed-only. PRESERVES
+			// pre-Task-10 behavior for SkipSnapshotDevs: before BlockDisks existed,
+			// this disk already fell through to the skip branch below (it failed
+			// the file-only `writable` check), since qemu's external-file live
+			// snapshot cannot target a raw block device the way it does a qcow2.
+			blockDisks = append(blockDisks, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.Dev, IsBlockDevice: true})
+			if disk.Target.Dev != "" {
+				skip = append(skip, disk.Target.Dev)
+			}
 		case disk.Target.Dev != "":
 			// cdrom, read-only, or source-less disk → exclude from the live snapshot.
 			skip = append(skip, disk.Target.Dev)
 		}
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
-	return DomainInfo{DiskPaths: disks, Disks: diskRefs, NVRAMPath: nvram, DiskDevice: device, SkipSnapshotDevs: skip}, nil
+	return DomainInfo{
+		DiskPaths:        disks,
+		Disks:            diskRefs,
+		NVRAMPath:        nvram,
+		DiskDevice:       device,
+		SkipSnapshotDevs: skip,
+		BlockDisks:       blockDisks,
+	}, nil
 }

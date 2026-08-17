@@ -99,3 +99,86 @@ func TestParseDomainExposesDiskDevSource(t *testing.T) {
 		t.Fatalf("the writable disk hdc must not be skipped: %v", d.SkipSnapshotDevs)
 	}
 }
+
+// TestParseDomainDetectsBlockDeviceDisk pins Task 10's detection signal: a
+// <disk> whose <source dev="..."> (not <source file="...">) is libvirt's OWN
+// signal that the backing store is a raw block device — e.g. a TrueNAS Scale
+// zvol, /dev/zvol/<pool>/<dataset>. It must surface in the new BlockDisks
+// field (IsBlockDevice=true) WITHOUT appearing in DiskPaths/Disks/DiskDevice
+// (those feed the existing file-copy backup path, which cannot handle a block
+// device path) — this is the regression guard: file-backed (Unraid) disk
+// parsing must stay byte-identical, so a block-device disk must be invisible
+// to every field a pre-existing caller already reads. It IS added to
+// SkipSnapshotDevs, preserving today's (pre-Task-10) behavior — before this
+// field existed, a block-device disk already fell through to the
+// "cdrom/read-only/source-less" skip branch below because it failed the
+// file-only `writable` check; that side effect must be unchanged.
+func TestParseDomainDetectsBlockDeviceDisk(t *testing.T) {
+	const xmlStr = `
+<domain type='kvm'>
+  <devices>
+    <disk type='block' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <source dev='/dev/zvol/tank/vms/truenasvm/disk0'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+  </devices>
+</domain>`
+
+	d, err := virshcli.ParseDomain(xmlStr)
+	if err != nil {
+		t.Fatalf("ParseDomain: %v", err)
+	}
+	if len(d.DiskPaths) != 0 {
+		t.Fatalf("DiskPaths = %v, want empty — a block-device disk must not enter the file-copy path", d.DiskPaths)
+	}
+	if len(d.Disks) != 0 {
+		t.Fatalf("Disks = %v, want empty — a block-device disk must not enter the file-based live-snapshot bookkeeping", d.Disks)
+	}
+	if d.DiskDevice != "" {
+		t.Fatalf("DiskDevice = %q, want empty (no file-backed writable disk in this fixture)", d.DiskDevice)
+	}
+	if len(d.BlockDisks) != 1 {
+		t.Fatalf("BlockDisks = %v, want exactly one block-device disk", d.BlockDisks)
+	}
+	bd := d.BlockDisks[0]
+	if !bd.IsBlockDevice {
+		t.Fatalf("BlockDisks[0].IsBlockDevice = false, want true")
+	}
+	if bd.Dev != "vda" {
+		t.Fatalf("BlockDisks[0].Dev = %q, want vda", bd.Dev)
+	}
+	if bd.Source != "/dev/zvol/tank/vms/truenasvm/disk0" {
+		t.Fatalf("BlockDisks[0].Source = %q, want the zvol dev path", bd.Source)
+	}
+	// Pre-existing behavior preserved: excluded from the live-snapshot overlay
+	// (qemu's external-file snapshot cannot target a raw block device the same
+	// way it does a qcow2 file).
+	if !slices.Contains(d.SkipSnapshotDevs, "vda") {
+		t.Fatalf("SkipSnapshotDevs = %v, want vda included", d.SkipSnapshotDevs)
+	}
+}
+
+// TestParseDomainFileBackedDiskHasNoBlockDisks is the explicit regression pin:
+// the existing file-backed fixtures (Unraid's own shape) must produce an
+// EMPTY BlockDisks — the new field must never spuriously populate for a
+// perfectly ordinary qcow2-backed VM.
+func TestParseDomainFileBackedDiskHasNoBlockDisks(t *testing.T) {
+	const xmlStr = `
+<domain type='kvm'>
+  <devices>
+    <disk type='file' device='disk'>
+      <source file='/mnt/cache/vms/Win/vdisk1.img'/>
+      <target dev='vda'/>
+    </disk>
+  </devices>
+</domain>`
+
+	d, err := virshcli.ParseDomain(xmlStr)
+	if err != nil {
+		t.Fatalf("ParseDomain: %v", err)
+	}
+	if len(d.BlockDisks) != 0 {
+		t.Fatalf("BlockDisks = %v, want empty for an all-file-backed domain", d.BlockDisks)
+	}
+}
