@@ -102,9 +102,50 @@ type VMBackupDeps struct {
 	// Set to 1 in tests for instant timeout.
 	ShutdownTimeout int
 
+	// BlockDisks are the domain's block-device-backed (zvol) disks — additive
+	// to DiskPaths above (see virshcli.DomainInfo.BlockDisks's doc comment) —
+	// each backed up via BackupZvolDisk (snapshot → zfs send → restic --stdin
+	// → destroy-snapshot, see backupBlockDisksAndLog below) INSTEAD of the
+	// file-copy d.Restic.Backup call above, since restic cannot back up a raw
+	// block device by path the way it backs up a file. The caller resolves
+	// each entry's Dataset from the domain's block-device disk source path
+	// (this package never imports virshcli — see the DI-seam comment at the
+	// top of this file). Empty for a VM with only file-backed disks (every VM
+	// in production today) — in that case this field, ZFSHost and ZvolRestic
+	// below are never touched and backup behavior is BYTE-IDENTICAL to before
+	// this field existed.
+	//
+	// ⚠ KNOWN GAP — see this file's "Zvol-aware VM disk backup/restore"
+	// section header comment below: a mixed file+block VM backup produces
+	// MULTIPLE restic snapshots (one for the file disks, recorded as
+	// summary.SnapshotID below; one PER block disk, from its own
+	// BackupZvolDisk call), because restic's --stdin mode cannot be combined
+	// with a normal path-list backup in one invocation. This package's
+	// run-recording call (Runs.Finish takes exactly one snapshotID per run)
+	// only records the file-portion's snapshot id; each block disk's
+	// snapshot id is logged (see backupBlockDisksAndLog) but NOT otherwise
+	// persisted anywhere a later restore can find it. A caller wiring this up
+	// for a REAL, restorable backup must solve that (e.g. a disk-unique tag +
+	// its own snapshot lookup) — this package does not.
+	BlockDisks []VMBlockDisk
+	// ZFSHost / ZvolRestic are BackupZvolDisk's own dependencies (see their
+	// doc comments below) — required only when BlockDisks is non-empty.
+	ZFSHost    ZFSHost
+	ZvolRestic ZvolRestic
+
 	VM     VM
 	Restic Restic
 	Runs   Runs
+}
+
+// VMBlockDisk names ONE block-device-backed VM disk (a zvol) for
+// VMBackupDeps.BlockDisks to back up via BackupZvolDisk.
+type VMBlockDisk struct {
+	// Dataset is the zvol's ZFS dataset ("<pool>/<dataset...>"), already
+	// resolved by the caller from the domain's block-device disk source path
+	// (e.g. via virshcli's zvol dataset parsing — this package never imports
+	// virshcli, see the DI-seam comment at the top of this file).
+	Dataset string
 }
 
 // VMRestoreDir pairs a snapshot subtree (Subtree, a dir the backup recorded)
@@ -157,9 +198,43 @@ type VMRestoreDeps struct {
 	// DataDir is used to write temp files (the domain XML before virsh define).
 	DataDir string
 
+	// BlockDisks are the domain's block-device-backed (zvol) disks to restore
+	// via RestoreZvolDisk instead of the file-based restic restore above —
+	// each restored into a FRESH dataset (see RestoreZvolDisk's doc comment;
+	// the live original dataset is NEVER touched — renaming/promoting the
+	// fresh one over it is a documented manual operator step, see
+	// docs/vm-backup-ssh-setup.md's TrueNAS section). The caller resolves,
+	// for EACH entry, the restic snapshot id that actually holds THAT disk's
+	// backup — NOT necessarily SnapshotID above (see VMBackupDeps.BlockDisks's
+	// doc comment for why a mixed file+block VM backup produces multiple
+	// distinct restic snapshots). Empty for a VM with only file-backed disks
+	// — in that case restore behavior is BYTE-IDENTICAL to before this field
+	// existed.
+	BlockDisks []VMRestoreBlockDisk
+	// ZFSHost / ZvolRestic are RestoreZvolDisk's own dependencies — required
+	// only when BlockDisks is non-empty.
+	ZFSHost    ZFSHost
+	ZvolRestic ZvolRestic
+
 	VM     VM
 	Restic Restic
 	Runs   Runs
+}
+
+// VMRestoreBlockDisk names ONE block-device-backed VM disk for
+// VMRestoreDeps.BlockDisks to restore via RestoreZvolDisk.
+type VMRestoreBlockDisk struct {
+	// SourceDataset is the ORIGINAL zvol dataset this disk was backed up from
+	// (see RestoreZvolDeps.SourceDataset — RestoreZvolDisk never issues a
+	// `zfs receive` against this value directly, see its doc comment).
+	SourceDataset string
+	// SnapshotID is the restic snapshot holding THIS disk's backup — resolved
+	// by the caller (see VMRestoreDeps.BlockDisks's doc comment above).
+	SnapshotID string
+	// StdinPath is the exact path string the original BackupZvolDisk call
+	// used (see ZvolStdinPath) — required to retrieve the right synthetic
+	// file out of the snapshot.
+	StdinPath string
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +326,15 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 		if backupErr != nil {
 			backupErr = fmt.Errorf("vm backup: restic: %w", backupErr)
+			return
+		}
+
+		// Block-device-backed (zvol) disks, if any, go through the SEPARATE
+		// zvol mechanism (see backupBlockDisksAndLog) — file-backed disks
+		// above are completely untouched by this. A no-op when d.BlockDisks
+		// is empty (every VM in production today).
+		if zErr := backupBlockDisksAndLog(ctx, d); zErr != nil {
+			backupErr = zErr
 		}
 	}()
 
@@ -346,6 +430,16 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	}
 	if backupErr != nil {
 		return Summary{}, fmt.Errorf("vm live backup: restic: %w", backupErr)
+	}
+
+	// Block-device-backed (zvol) disks, if any, are entirely separate from
+	// the qemu external-snapshot/blockcommit dance above (ParseDomain already
+	// excludes them via SkipSnapshotDevs — they can never be a
+	// SnapshotCreateDiskOnly/BlockCommitActivePivot target) — see
+	// backupBlockDisksAndLog. A no-op when d.BlockDisks is empty (every VM in
+	// production today).
+	if zErr := backupBlockDisksAndLog(ctx, d); zErr != nil {
+		return Summary{}, zErr
 	}
 	return summary, nil
 }
@@ -487,6 +581,16 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 
+	// Block-device-backed (zvol) disks, if any, go through the SEPARATE
+	// RestoreZvolDisk mechanism (see restoreBlockDisksAndLog) — restored into
+	// a FRESH dataset, never overwriting the live original. Abort BEFORE
+	// defining the domain below if any failed (a VM with an incomplete/
+	// missing disk restore must not be defined/started). A no-op when
+	// d.BlockDisks is empty (every VM in production today).
+	if err := restoreBlockDisksAndLog(ctx, d); err != nil {
+		return err
+	}
+
 	// Write the captured NVRAM back to the host (over SSH) now that the old
 	// domain is undefined (its nvram removed) and before define, so libvirt picks
 	// up the real var store. Best-effort — never blocks the restore.
@@ -545,33 +649,52 @@ func isFreezeErr(err error) bool {
 // ⚠ UNVERIFIED AGAINST REAL HARDWARE. Everything below is REASONED from ZFS's
 // public documentation — `zfs snapshot`/`zfs send`/`zfs receive` as the
 // ZFS-native way to move a stable point-in-time dataset byte stream off/onto
-// a zvol — and exercised only with fakes (vm_zvol_test.go); no TrueNAS Scale
-// test instance was available anywhere in this project's development
-// environment to run it against a real zvol over a real SSH connection. See
-// internal/virshcli/zvol.go's package doc comment for the full caveat, which
-// applies equally here.
+// a zvol — and exercised only with fakes (vm_zvol_test.go and
+// vm_zvol_wiring_test.go); no TrueNAS Scale test instance was available
+// anywhere in this project's development environment to run it against a
+// real zvol over a real SSH connection. See internal/virshcli/zvol.go's
+// package doc comment for the full caveat, which applies equally here.
 //
-// This mechanism is deliberately SEPARATE from BackupVMGraceful/BackupVMLive/
-// RestoreVM above: a block-device-backed VM disk (detected via
-// virshcli.ParseDomain's DomainInfo.BlockDisks — see that field's doc
-// comment) cannot be backed up by restic-ing a file path the way every disk
-// in DiskPaths/Disks above is; it needs a ZFS snapshot + `zfs send` stream
-// instead, and its restore cannot reuse RestoreVM's restic-restore-to-a-path
-// logic either, since the destination is a raw dataset, not a directory of
-// files. File-backed (Unraid) VM disk backup/restore above is completely
-// UNTOUCHED by this addition — zero shared code, zero shared state.
+// WIRED IN (Task 10 Step 5): BackupZvolDisk/RestoreZvolDisk below ARE called
+// from BackupVMGraceful/BackupVMLive/RestoreVM above, via the
+// VMBackupDeps.BlockDisks / VMRestoreDeps.BlockDisks fields and the
+// backupBlockDisksAndLog/restoreBlockDisksAndLog helpers — when a domain's
+// disk is block-device-backed, it goes through the
+// snapshot→stream→restic-backup→destroy-snapshot path here INSTEAD of the
+// file-copy path, exactly as planned. File-backed (Unraid) VM disk
+// backup/restore is completely UNTOUCHED: BlockDisks defaults to nil (no
+// caller populates it today), so this is a dormant, zero-behavior-change
+// no-op for every VM in production — proven by the regression tests in
+// vm_zvol_wiring_test.go that pin file-only backup/restore as byte-identical
+// to before this wiring existed.
 //
-// SCOPE: this file provides the tested mechanism for ONE disk at a time. It
-// deliberately does NOT wire itself into BackupVMGraceful/BackupVMLive's
-// shutdown/snapshot/restart state machines, run-recording (Runs/TargetID), or
-// virshcli.ParseDomain's BlockDisks detection — connecting those (deciding
-// how a VM's run is recorded when it mixes file-backed and block-device
-// disks, persisting the dataset/snapshot-name/stdin-path metadata a later
-// restore needs, and actually detecting real block disks from a live TrueNAS
-// domain) is service-layer integration work intentionally left for a
-// follow-up once real TrueNAS hardware is available to validate the
-// end-to-end shape — see Task 10 in
-// docs/superpowers/plans/2026-08-16-bombvault-platform-expansion.md.
+// ⚠ NOT YET DONE — a real, code-verified gap, not a hand-wave: nothing calls
+// this from a live backup/restore today. internal/api/service.go (the actual
+// caller BackupVM/RestoreVM's HTTP handlers reach) never reads
+// virshcli.DomainInfo.BlockDisks and never populates VMBackupDeps.BlockDisks/
+// VMRestoreDeps.BlockDisks/ZFSHost/ZvolRestic — that requires a real
+// SSH-backed ZFSHost/ZvolRestic adapter (none exists yet) and resolving each
+// BlockDisks entry's Dataset (virshcli.zvolDatasetFromDevPath, already
+// unit-tested but currently called nowhere outside its own test). More
+// fundamentally: restic's `--stdin` backup mode cannot be combined with a
+// normal path-list `restic backup` in one invocation (see
+// internal/restic/restic.go's BackupStdinArgs/BackupArgs), so a VM with BOTH
+// file-backed and block-device disks necessarily produces MULTIPLE distinct
+// restic snapshots per backup — one for the file disks, one PER block disk.
+// This package's run-recording model (the Runs interface's
+// Finish(runID, status, snapshotID string, ...) — exactly one snapshot id per
+// run) and the service layer's restore resolution (prepareRestoreVMForTarget
+// lists snapshots by the single tag "vm:<name>" and picks the newest as
+// "latest") both assume ONE snapshot represents a VM's backup; tagging a
+// block disk's separate snapshot with that same "vm:<name>" tag would make
+// "latest" resolve ambiguously between the file snapshot and a block disk's
+// snapshot. Solving this (a disk-unique tag + its own lookup, or persisting
+// per-disk snapshot ids in the VM target definition, or something else) is a
+// real design decision for whoever does the service-layer integration — it
+// is OUT OF SCOPE here and intentionally NOT decided by this file; see Task
+// 10 in docs/superpowers/plans/2026-08-16-bombvault-platform-expansion.md
+// and docs/vm-backup-ssh-setup.md's TrueNAS section for the operator-facing
+// version of this same status.
 // ---------------------------------------------------------------------------
 
 // ZFSHost is the host-control surface the zvol backup/restore orchestrators
@@ -714,6 +837,68 @@ func BackupZvolDisk(ctx context.Context, d BackupZvolDeps) (Summary, error) {
 	return sum, nil
 }
 
+// zvolBackupSnapshotPrefix mirrors internal/virshcli.zvolSnapshotPrefix's
+// IDENTICAL contract — independently defined (not shared code) for the same
+// reason zvolRestoreTargetDataset below independently mirrors
+// internal/virshcli.RestoreZvolTargetDataset: this package deliberately never
+// imports the concrete virshcli adapter package (see this section's header
+// comment above).
+const zvolBackupSnapshotPrefix = "bombvault-"
+
+// zvolBackupSnapshotName returns the ZFS snapshot name
+// backupBlockDisksAndLog uses for a block-device disk's BackupZvolDisk call,
+// taken at instant now — mirrors internal/virshcli.ZvolSnapshotName's
+// IDENTICAL contract (see zvolBackupSnapshotPrefix's doc comment for why this
+// package independently defines it). Pure function of its input (same now →
+// same name), so a test can reason about it deterministically.
+func zvolBackupSnapshotName(now time.Time) string {
+	return zvolBackupSnapshotPrefix + now.UTC().Format("20060102150405")
+}
+
+// backupBlockDisksAndLog runs BackupZvolDisk for every entry in
+// d.BlockDisks, shared by runVMGraceful and runVMLive (the file-backed
+// d.Restic.Backup call in each stays completely untouched either way — this
+// is purely additive and a no-op when d.BlockDisks is empty). All disk
+// datasets share one snapshot name (taken once, at the start of this call) —
+// distinct ZFS datasets never collide on the same snapshot name.
+//
+// Every entry is attempted even after an earlier one fails (mirrors this
+// file's "commit every overlay" pattern in runVMLive above: a later disk's
+// data should still reach the backup repo even if an earlier disk's did
+// not) — the FIRST failure is returned to the caller, which fails the whole
+// VM backup run. A successful disk's outcome (dataset, restic snapshot id,
+// bytes) is only LOGGED: nothing yet persists it anywhere a later restore
+// can find it — see VMBackupDeps.BlockDisks's doc comment for that known,
+// intentionally-unsolved gap.
+func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps) error {
+	if len(d.BlockDisks) == 0 {
+		return nil
+	}
+	snapName := zvolBackupSnapshotName(time.Now())
+	tags := []string{"vm:" + d.Name, "p2"}
+	var firstErr error
+	for _, bd := range d.BlockDisks {
+		sum, err := BackupZvolDisk(ctx, BackupZvolDeps{
+			Name:     d.Name,
+			Dataset:  bd.Dataset,
+			SnapName: snapName,
+			RepoPath: d.RepoPath,
+			Tags:     tags,
+			Host:     d.ZFSHost,
+			Restic:   d.ZvolRestic,
+		})
+		if err != nil {
+			log.Printf("vm backup: zvol disk %q: FAILED (%v)", bd.Dataset, err)
+			if firstErr == nil {
+				firstErr = fmt.Errorf("vm backup: zvol disk %q: %w", bd.Dataset, err)
+			}
+			continue
+		}
+		log.Printf("vm backup: zvol disk %q: backed up as restic snapshot %s (%d bytes) — NOT YET tracked by run-recording, see VMBackupDeps.BlockDisks's doc comment", bd.Dataset, sum.SnapshotID, sum.Bytes)
+	}
+	return firstErr
+}
+
 // zvolRestoreSuffix marks a dataset zvolRestoreTargetDataset created — never
 // an operator's own naming, so it is unambiguous which datasets are BombVault
 // restore landing zones awaiting the operator's manual rename/promote step.
@@ -809,4 +994,43 @@ func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
 		return "", fmt.Errorf("zvol restore: zfs receive: %w", recvErr)
 	}
 	return target, nil
+}
+
+// restoreBlockDisksAndLog runs RestoreZvolDisk for every entry in
+// d.BlockDisks, called from runVMRestore above (the file-based restic
+// restore above stays completely untouched either way — this is purely
+// additive and a no-op when d.BlockDisks is empty). Each disk restores into
+// its OWN fresh dataset (RestoreZvolDisk never touches the live original —
+// see its doc comment).
+//
+// Every entry is attempted even after an earlier one fails (same "attempt
+// everything" reasoning as backupBlockDisksAndLog above) — the FIRST failure
+// is returned, and the caller (runVMRestore) aborts BEFORE defining the
+// domain when this returns non-nil (defining/starting a VM whose disk
+// restore is incomplete is unsafe). A successful restore is only LOGGED with
+// its fresh target dataset name — renaming/promoting it over the live
+// original is a documented MANUAL operator follow-up (see RestoreZvolDisk's
+// doc comment and docs/vm-backup-ssh-setup.md's TrueNAS section), never
+// automated here.
+func restoreBlockDisksAndLog(ctx context.Context, d VMRestoreDeps) error {
+	var firstErr error
+	for _, bd := range d.BlockDisks {
+		target, err := RestoreZvolDisk(ctx, RestoreZvolDeps{
+			SourceDataset: bd.SourceDataset,
+			RepoPath:      d.RepoPath,
+			SnapshotID:    bd.SnapshotID,
+			StdinPath:     bd.StdinPath,
+			Host:          d.ZFSHost,
+			Restic:        d.ZvolRestic,
+		})
+		if err != nil {
+			log.Printf("vm restore: zvol disk %q: FAILED (%v)", bd.SourceDataset, err)
+			if firstErr == nil {
+				firstErr = fmt.Errorf("vm restore: zvol disk %q: %w", bd.SourceDataset, err)
+			}
+			continue
+		}
+		log.Printf("vm restore: zvol disk %q: restored into fresh dataset %q — rename/promote it over the original manually (see docs/vm-backup-ssh-setup.md)", bd.SourceDataset, target)
+	}
+	return firstErr
 }
