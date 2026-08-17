@@ -961,6 +961,8 @@ const pl: Partial<Translations> = {
   "files.backupAll": "Utwórz kopię wszystkiego teraz",
   "files.discoverHint": "Utracono listę zestawów? Odbuduj ją z kopii zapasowych w magazynie.",
   "files.cancel": "Anuluj",
+  "files.addPreset": "Dodaj ustawienie: Konfiguracja systemu",
+  "files.addPresetHint": "Ostrożny punkt wyjścia dla konfiguracji na poziomie hosta poza kontenerami — nie jest to gwarancja kompletności. Sprawdź folder przed zapisaniem.",
   "settings.filesEnabled": "Foldery",
   "settings.filesPath": "Ścieżka folderów",
   "jobs.filesSection": "Foldery",

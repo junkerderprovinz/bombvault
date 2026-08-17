@@ -263,6 +263,12 @@ export interface GetSettingsResponse {
   settings: Settings;
   /** The resolved host mount root (e.g. "/host/user"), sourced from cfg.HostMountRoot. */
   hostMountRoot: string;
+  /** The detected/overridden platform BombVault is running on ("unraid" |
+   *  "generic" | "truenas"), sourced from internal/platform's Platform.Kind().
+   *  Read-only host-environment info, not a setting the UI can change — used
+   *  e.g. to gate the Files page's "Host system config" preset (offered only
+   *  off Unraid, which already has the dedicated flash domain for this). */
+  platform: string;
   /** Present only on the graceful failure envelope ({ok:false} at HTTP 200). */
   error?: string;
 }
@@ -1973,6 +1979,29 @@ export interface ListFileSetsResponse {
 /** GET /api/files — list all configured file sets. */
 export function listFileSets(): Promise<ListFileSetsResponse> {
   return fetchJSON("/api/files");
+}
+
+/**
+ * Suggested "Host system config" file set for the current platform — the
+ * files domain's practical analogue of Unraid's flash-USB backup on generic
+ * Docker hosts and TrueNAS Scale, which have no boot device to capture.
+ * `offered` is false on Unraid, which already has the dedicated flash domain
+ * for this purpose. Read-only: this is a reviewable STARTING POINT for the
+ * existing Add-set dialog, not a discovery result or a claim of completeness
+ * — `path` is relative to hostMountRoot like every other file set's path.
+ */
+export interface FileSetPresetResponse {
+  ok: boolean;
+  offered: boolean;
+  name: string;
+  path: string;
+  excludes: string[];
+  error?: string;
+}
+
+/** GET /api/files/sets/preset */
+export function getFileSetPreset(): Promise<FileSetPresetResponse> {
+  return fetchJSON("/api/files/sets/preset");
 }
 
 /** POST /api/files/sets — create a file set (path required; validated server-side). */

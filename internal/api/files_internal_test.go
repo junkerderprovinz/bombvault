@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -48,6 +49,38 @@ func TestValidateFileSet(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestDefaultHostConfigFileSet pins the "Host system config" preset (Task 7
+// of the platform-expansion plan, the files domain's flash-domain analogue
+// on generic/TrueNAS hosts): offered on generic/truenas with a sensible,
+// clearly-editable starting point; never offered on Unraid, which already
+// has the dedicated flash domain for this purpose.
+func TestDefaultHostConfigFileSet(t *testing.T) {
+	if name, path, excludes, ok := defaultHostConfigFileSet(platform.KindGeneric); !ok || name == "" || path == "" || excludes != nil {
+		t.Fatalf("KindGeneric: got name=%q path=%q excludes=%v ok=%v, want a non-empty name/path, nil excludes, ok=true", name, path, excludes, ok)
+	}
+	if name, path, excludes, ok := defaultHostConfigFileSet(platform.KindTrueNAS); !ok || name == "" || path == "" || excludes != nil {
+		t.Fatalf("KindTrueNAS: got name=%q path=%q excludes=%v ok=%v, want a non-empty name/path, nil excludes, ok=true", name, path, excludes, ok)
+	}
+	if name, path, excludes, ok := defaultHostConfigFileSet(platform.KindUnraid); ok || name != "" || path != "" || excludes != nil {
+		t.Fatalf("KindUnraid: got name=%q path=%q excludes=%v ok=%v, want all-zero, ok=false (flash domain already covers this)", name, path, excludes, ok)
+	}
+	// The suggested path must be a RELATIVE subpath (paths.Resolve rejects an
+	// absolute sub), matching every other file set's Path convention — this is
+	// the exact spot the plan's paraphrase ("/etc") would have broken save-time
+	// validation had it been taken literally.
+	if _, path, _, _ := defaultHostConfigFileSet(platform.KindGeneric); filepathIsAbs(path) {
+		t.Fatalf("preset path %q must be relative to HostMountRoot, not absolute", path)
+	}
+}
+
+// filepathIsAbs reports whether p looks like an absolute POSIX path (a
+// leading "/") — the file sets domain always deals in Linux container paths
+// (see internal/paths' doc comment), so this avoids pulling in path/filepath's
+// OS-dependent IsAbs for a one-line check in a single test.
+func filepathIsAbs(p string) bool {
+	return len(p) > 0 && p[0] == '/'
 }
 
 // TestBeginRestoreRunForTarget pins the generalized restore bookkeeping the

@@ -969,6 +969,8 @@ const ro: Partial<Translations> = {
   "files.backupAll": "Copiază tot acum",
   "files.discoverHint": "Ați pierdut lista de seturi? Reconstruiți-o din copiile de rezervă din stocare.",
   "files.cancel": "Anulare",
+  "files.addPreset": "Adaugă presetare: Configurația sistemului",
+  "files.addPresetHint": "Un punct de plecare prudent pentru configurația la nivel de host, în afara containerelor tale — nu este o garanție de completitudine. Verifică folderul înainte de salvare.",
   "settings.filesEnabled": "Foldere",
   "settings.filesPath": "Cale foldere",
   "jobs.filesSection": "Foldere",

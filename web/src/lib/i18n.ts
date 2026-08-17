@@ -1189,6 +1189,10 @@ export const en = {
   "files.backupAll": "Back up all now",
   "files.discoverHint": "Lost the set list? Rebuild it from the backups in storage.",
   "files.cancel": "Cancel",
+  // "Host system config" preset (generic/TrueNAS only — Unraid already has the
+  // flash domain for this). Platform-expansion plan Task 7.
+  "files.addPreset": "Add preset: Host system config",
+  "files.addPresetHint": "A conservative starting point for host-level configuration outside your containers — not a claim of completeness. Review the folder before saving.",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Folders",
   "settings.filesPath": "Folders path",
@@ -2506,6 +2510,8 @@ export const de: Translations = {
   "files.backupAll": "Alle jetzt sichern",
   "files.discoverHint": "Set-Liste verloren? Baue sie aus den Backups im Speicher neu auf.",
   "files.cancel": "Abbrechen",
+  "files.addPreset": "Preset hinzufügen: Systemkonfiguration",
+  "files.addPresetHint": "Ein vorsichtiger Ausgangspunkt für die Konfiguration auf Host-Ebene außerhalb deiner Container — kein Anspruch auf Vollständigkeit. Ordner vor dem Speichern prüfen.",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Ordner",
   "settings.filesPath": "Ordner-Pfad",

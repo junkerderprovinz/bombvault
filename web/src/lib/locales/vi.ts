@@ -958,6 +958,8 @@ const vi: Partial<Translations> = {
   "files.backupAll": "Sao lưu tất cả ngay",
   "files.discoverHint": "Mất danh sách bộ? Dựng lại nó từ các bản sao lưu trong bộ lưu trữ.",
   "files.cancel": "Hủy",
+  "files.addPreset": "Thêm cấu hình sẵn: Cấu hình hệ thống",
+  "files.addPresetHint": "Một điểm khởi đầu thận trọng cho cấu hình cấp máy chủ bên ngoài các container của bạn — không phải là tuyên bố về tính đầy đủ. Hãy xem lại thư mục trước khi lưu.",
   "settings.filesEnabled": "Thư mục",
   "settings.filesPath": "Đường dẫn thư mục",
   "jobs.filesSection": "Thư mục",

@@ -108,6 +108,52 @@ func TestDestinationMountedDiscriminator(t *testing.T) {
 	}
 }
 
+// TestDestinationMountedDiscriminatorIdentityRoot mirrors
+// TestDestinationMountedDiscriminator above but under a generic/TrueNAS
+// "identity bind" config: HostSourceRoot == HostMountRoot (both "/data"),
+// the intended default off Unraid (no /mnt → /host/user translation, per the
+// design spec's platform-expansion doc). The discriminator (destinationMounted
+// in mountinfo.go) keys off cfg.HostMountRoot alone — it never reads
+// HostSourceRoot at all — so an identity root is not a special case for it,
+// but this test proves that rather than leaving it implicit. The design spec
+// flagged a DIFFERENT, more extreme case as a real collision risk:
+// HostSourceRoot=="/" (root itself), which is out of scope here — this test
+// stays scoped to an identity root at a real, non-root path ("/data"), which
+// is what Task 4 actually ships as the generic/TrueNAS default.
+func TestDestinationMountedDiscriminatorIdentityRoot(t *testing.T) {
+	const identityRoot = "/data" // HostSourceRoot == HostMountRoot == /data
+	cfg := config.Config{
+		AppKey:         strings.Repeat("a", 64),
+		DataDir:        t.TempDir(),
+		HostMountRoot:  identityRoot,
+		HostSourceRoot: identityRoot,
+	}
+	svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+	// Genuinely-unmounted: only "/" and the broad identity bind present → NOT mounted.
+	writeMountinfo(t, "/", identityRoot)
+	if svc.DestinationMounted(identityRoot + "/disks/X/container") {
+		t.Error("an unmounted share under an identity root must NOT count as mounted")
+	}
+	if svc.DestinationMounted(identityRoot) {
+		t.Error("the identity root itself must NOT count as a backing mount")
+	}
+
+	// A per-disk mount below the identity root IS mounted (self-heal case).
+	writeMountinfo(t, "/", identityRoot, identityRoot+"/disks/X")
+	if !svc.DestinationMounted(identityRoot + "/disks/X/container") {
+		t.Error("a subdir of a mounted per-disk share below the identity root must count as mounted")
+	}
+	if !svc.DestinationMounted(identityRoot + "/disks/X") {
+		t.Error("the per-disk mount point itself must count as mounted")
+	}
+	// A sibling path with no per-disk mount is still unmounted even though the
+	// disks/X mount is present in the same table.
+	if svc.DestinationMounted(identityRoot + "/disks/Y/container") {
+		t.Error("a sibling share with no per-disk mount must NOT count as mounted")
+	}
+}
+
 // TestDestinationMountedReadErrorIsNotMounted checks the conservative fallback:
 // if the mount table cannot be read, the destination is treated as NOT mounted
 // so the #55 protection still fires.

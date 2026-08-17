@@ -33,6 +33,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
@@ -170,6 +171,14 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// platform is the detected/injected Platform adapter (Unraid/generic/…)
+	// for the appdata-fallback convention, cross-instance restore-destination
+	// defaults, and the Unraid update-status reconcile step. Optional; nil
+	// defaults to platform.Unraid{} via platformFn() — this is what every
+	// Service built as a bare &Service{...} literal (the vast majority of
+	// this package's existing tests) gets, reproducing bombvault's original
+	// Unraid-only behavior exactly rather than panicking on a nil interface.
+	platform platform.Platform
 	// resticCacheDir is the on-disk location of restic's persistent cache — the
 	// same path main.go exports to the engine as RESTIC_CACHE_DIR (set via
 	// SetResticCacheDir). Empty means the cache lives at restic's default
@@ -456,6 +465,25 @@ func (s *Service) SetHostSSH(ssh HostSSH) { s.ssh = ssh }
 // SetProgress wires the live-progress store that backup/restore operations
 // publish to (and the SSE endpoint subscribes to). Called from main.
 func (s *Service) SetProgress(p *progress.Store) { s.progress = p }
+
+// SetPlatform wires the detected Platform adapter (platform.Detect + main's
+// Kind->Platform mapping): the appdata-fallback convention, cross-instance
+// restore-destination defaults, and the Unraid update-status reconcile step.
+// Called from main after detection. Unset (nil) defaults to platform.Unraid{}
+// via platformFn — bombvault's original, pre-Platform-seam behavior.
+func (s *Service) SetPlatform(p platform.Platform) { s.platform = p }
+
+// platformFn returns the configured Platform adapter, defaulting to
+// platform.Unraid{} when unset (nil) — matching bombvault's historical
+// Unraid-only behavior so every Service built without an explicit
+// SetPlatform (including the many existing tests that construct a bare
+// &Service{...}) keeps exercising exactly the literals it always has.
+func (s *Service) platformFn() platform.Platform {
+	if s.platform != nil {
+		return s.platform
+	}
+	return platform.Unraid{}
+}
 
 // progBegin marks a backup/restore as started for key/phase and returns a
 // context carrying a restic sink that republishes each percentage. Percent
@@ -986,7 +1014,7 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 	subject := "Retention prune FAILED for " + tag
 	msg := fmt.Sprintf("Applying the retention policy for %s failed — old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
 	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2254,7 +2282,7 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 	subject := "Off-site backup over budget for " + domain
 	msg := fmt.Sprintf("The off-site repository for %s has grown to %s, over the configured growth budget of %s. Prune the far side or raise the budget.", domain, humanBytes(size), humanBytes(budget))
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2437,7 +2465,7 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 	subject := "Off-site replication FAILED for " + domain
 	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2717,38 +2745,95 @@ func encryptionWord(encrypted bool) string {
 // /mnt/user/appdata/<x>/data); BombVault reaches them only through the broad host
 // mount (HostSourceRoot mounted at HostMountRoot — e.g. host /mnt → container
 // /host/user, so host /mnt/user/appdata/x is reachable at /host/user/user/appdata/x).
-// We TRANSLATE every appdata bind source from the host root to the container mount
-// root and back up the real, correctly cased path — not a guess. Only binds with
-// an "appdata" path segment are kept (container config); media libraries, the
-// flash, /etc/localtime and other shares are skipped.
+// We TRANSLATE every matched bind source from the host root to the container
+// mount root and back up the real, correctly cased path — not a guess. A bind is
+// kept when its host source contains ANY of the configured data-root segments
+// (s.cfg.DataRootSegments, default ["appdata"] — see config.DataRootSegments) as
+// a full path segment, OR the container carries a truthy "bombvault.data" label
+// (see bombvaultDataLabelTruthy), which forces EVERY bind mount in regardless of
+// segment match — the documented escape hatch for a layout neither the segment
+// filter nor the compose convention below catches (e.g. "/srv/plex/config" with
+// no compose project). Media libraries, the flash, /etc/localtime and other
+// non-matching shares are skipped.
 //
-// Fallback (no appdata bind found): the conventional /mnt/user/appdata/<name>,
-// translated if reachable.
+// A named-volume mount (Type=="volume") is kept UNCONDITIONALLY, no segment
+// filter — a named volume is persistent-by-construction, with no equivalent of
+// a throwaway bind mount. Its resolved host path (Source, filled in by
+// dockercli's Inspect from the daemon's own report or, failing that, a
+// VolumeInspect fallback) goes through the SAME translate-and-check as a bind
+// source, so an unreachable volume mountpoint is skipped exactly like an
+// unreachable bind, and a volume that resolves to the same container path as an
+// already-recorded bind is deduped. This fixes the majority case on non-Unraid
+// hosts: a container using only Docker Compose named volumes previously
+// produced zero discovered data paths.
+//
+// The standard Docker Compose "com.docker.compose.project.working_dir" label
+// (see composeProjectDataDir), present on every container Compose creates, is
+// added as an ADDITIONAL candidate independent of whether any bind matched —
+// always-on, not behind a config flag, since it costs nothing when absent.
+//
+// Every candidate (segment-matched binds, the compose working dir, label-
+// override binds, and volumes) is deduplicated against every other by cleaned
+// absolute container path.
+//
+// Fallback (nothing matched above): the platform's conventional appdata path
+// for <name> (Unraid: /mnt/user/appdata/<name>; generic: none), translated if
+// reachable — see platform.Platform.AppdataFallback.
 func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 	mountRoot := path.Clean(s.cfg.HostMountRoot) // its container path, e.g. /host/user
+
+	segments := s.cfg.DataRootSegments
+	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
 
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range in.Mounts {
-		if m.Source == "" || !hasSegment(path.Clean(m.Source), "appdata") {
-			continue // only appdata binds (container config), not media/other shares
+		if m.Type == "volume" {
+			if m.Source == "" {
+				continue // daemon (and the VolumeInspect fallback) couldn't resolve it
+			}
+			if container, ok := s.toContainerPath(m.Source); ok && !seen[container] {
+				out = append(out, container)
+				seen[container] = true
+			}
+			continue
+		}
+		if m.Source == "" {
+			continue
+		}
+		if !matchesAnyDataRootSegment(path.Clean(m.Source), segments) && !labelOverride {
+			continue // no configured data-root segment, and no per-container override
 		}
 		if container, ok := s.toContainerPath(m.Source); ok && !seen[container] {
 			out = append(out, container)
 			seen[container] = true
 		}
 	}
-	if len(out) == 0 {
-		// Last resort: the conventional appdata dir for this container — but ONLY
-		// if it actually exists. A container with no appdata mount and no such
-		// folder is stateless: default to an empty selection (config-only backup)
-		// rather than a phantom folder that shows as selected yet backs up nothing.
-		cand, ok := s.toContainerPath(path.Join("/mnt/user/appdata", name))
-		if !ok {
-			cand = path.Join(mountRoot, "appdata", name)
+
+	// Docker Compose project working directory: an always-on additional
+	// candidate, independent of whether any bind matched above.
+	if dir, ok := composeProjectDataDir(in.Config.Labels); ok {
+		if container, ok := s.toContainerPath(dir); ok && !seen[container] {
+			out = append(out, container)
+			seen[container] = true
 		}
-		if _, err := os.Stat(cand); err == nil { //nolint:gosec // G703: cand is HostMountRoot + "appdata" + a validated container name, not raw user input
-			out = append(out, cand)
+	}
+
+	if len(out) == 0 {
+		// Last resort: the platform's conventional appdata dir for this
+		// container — but ONLY if it actually exists. A container with no
+		// appdata mount, no such folder, and no platform convention (empty
+		// AppdataFallback, e.g. on generic) is stateless: default to an empty
+		// selection (config-only backup) rather than a phantom folder that
+		// shows as selected yet backs up nothing.
+		if hostCand := s.platformFn().AppdataFallback(mountRoot, name); hostCand != "" {
+			cand, ok := s.toContainerPath(hostCand)
+			if !ok {
+				cand = path.Join(mountRoot, "appdata", name)
+			}
+			if _, err := os.Stat(cand); err == nil { //nolint:gosec // G703: cand is HostMountRoot + "appdata" + a validated container name, not raw user input
+				out = append(out, cand)
+			}
 		}
 	}
 	return out
@@ -2763,6 +2848,53 @@ func hasSegment(p, seg string) bool {
 		}
 	}
 	return false
+}
+
+// matchesAnyDataRootSegment reports whether path p contains ANY of the given
+// data-root segments as a full path segment (hasSegment applied once per
+// configured candidate — see config.DataRootSegments).
+func matchesAnyDataRootSegment(p string, segments []string) bool {
+	for _, seg := range segments {
+		if hasSegment(p, seg) {
+			return true
+		}
+	}
+	return false
+}
+
+// bombvaultDataLabelTruthy reports whether a container opted ALL of its bind
+// mounts into resolveAppdataPaths via the "bombvault.data" label — the
+// documented per-container escape hatch for a data layout neither the
+// configured segment filter nor composeProjectDataDir catches (e.g.
+// "/srv/plex/config" with no compose project). Truthy means the label is
+// PRESENT and its trimmed value is neither empty nor "false"
+// (case-insensitive) — so "true", "1", "yes", or any other non-empty,
+// non-"false" value all opt in; an absent label, or an explicit "false"/""
+// value, opts out. A container that never sets the label is unaffected either
+// way, which is what keeps the Unraid-default behavior unchanged.
+func bombvaultDataLabelTruthy(labels map[string]string) bool {
+	v, ok := labels["bombvault.data"]
+	if !ok {
+		return false
+	}
+	v = strings.TrimSpace(v)
+	return v != "" && !strings.EqualFold(v, "false")
+}
+
+// composeProjectDataDir reads the standard Docker Compose
+// "com.docker.compose.project.working_dir" label — present on every container
+// Compose creates — off a container's Config.Labels and returns it as an
+// additional host-path candidate for resolveAppdataPaths (translated and
+// containment-checked the same way as a bind source), independent of whether
+// any bind mount matched the configured segments. Follows the discovery
+// pattern used by Nautical Backup. Returns ("", false) when the label is
+// absent or its value is empty after trimming.
+func composeProjectDataDir(labels map[string]string) (string, bool) {
+	dir := strings.TrimSpace(labels["com.docker.compose.project.working_dir"])
+	if dir == "" {
+		return "", false
+	}
+	return dir, true
 }
 
 // toHostPath is the inverse of toContainerPath: it maps a container-visible path
@@ -3259,7 +3391,7 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		msg := fmt.Sprintf("Updated container %q to a newer image. Please verify it still works.", name)
 		notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 			notify.Event{Title: "BombVault", Message: msg, OK: true})
-		if c.Unraid && s.ssh != nil && c.On == "always" {
+		if c.Unraid && s.ssh != nil && c.On == "always" && s.platformFn().Kind() == platform.KindUnraid {
 			if e := s.sendUnraidNotify(ctx, "BombVault: container updated", msg, "normal"); e != nil {
 				log.Printf("notify: unraid: %v", e)
 			}
@@ -3285,34 +3417,17 @@ func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.I
 	return nil
 }
 
-// unraidReconcileUpdateStatusPHP is the one-liner run on the Unraid host to make
-// Unraid refresh its OWN cached "update available" status for a single container
-// image (#116). It require_once's DockerClient.php (which also defines the
-// $dockerManPaths used for the status file), invalidates the image's cached entry
-// via DockerUtil so the stale local digest is dropped, then reloadUpdateStatus
-// re-inspects the now-current local image and rewrites the status file through
-// Unraid's own locked DockerUtil::saveJSON writer. The image tag is passed as a
-// separate argv token (never interpolated into this source) to avoid injection and
-// quoting problems. The leading unset is required: on Unraid 7.0.1 a bare
-// reloadUpdateStatus trusts the cached local digest and would keep the flag set.
-const unraidReconcileUpdateStatusPHP = `require_once "/usr/local/emhttp/plugins/dynamix.docker.manager/include/DockerClient.php"; global $dockerManPaths; $img=DockerUtil::ensureImageTag($argv[1]); $s=DockerUtil::loadJSON($dockerManPaths["update-status"]); unset($s[$img]); DockerUtil::saveJSON($dockerManPaths["update-status"],$s); (new DockerUpdate())->reloadUpdateStatus($img);`
-
-// reconcileUnraidUpdateStatus asks Unraid to refresh its own cached update status
-// for a container BombVault just recreated (#116), so the Docker tab's stale
-// "update available" banner clears. It runs Unraid's own update-status recheck
-// over the existing host SSH link (the same mechanism as sendUnraidNotify), which
-// means Unraid rewrites its status file itself rather than BombVault hand-writing
-// the JSON (which would race Unraid's writer). Best-effort and non-fatal: a nil
-// SSH link, a host that is not Unraid, or a command error is only logged and never
-// affects the backup or update outcome. The recheck does a registry round-trip, so
-// it gets a generous timeout.
+// reconcileUnraidUpdateStatus asks the platform to refresh its own cached
+// update status for a container BombVault just recreated (#116), so (on
+// Unraid) the Docker tab's stale "update available" banner clears. The actual
+// host-side step lives behind s.platformFn() (see
+// platform.Platform.ReconcileContainerUpdateStatus — Unraid's PHP-over-SSH
+// recheck; a no-op on any platform without an equivalent). This wrapper is
+// the non-fatal/best-effort boundary, unchanged from before the Platform
+// seam: a nil SSH link, a non-Unraid platform, or a command error is only
+// logged and never affects the backup or update outcome.
 func (s *Service) reconcileUnraidUpdateStatus(ctx context.Context, ref string) {
-	if s.ssh == nil || ref == "" {
-		return
-	}
-	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-	if _, err := s.ssh.Run(ctx, "php", "-r", unraidReconcileUpdateStatusPHP, "--", ref); err != nil {
+	if err := s.platformFn().ReconcileContainerUpdateStatus(ctx, s.ssh, ref); err != nil {
 		log.Printf("api: update-after-backup: unraid update-status reconcile for %q failed (harmless): %v", ref, err) //nolint:gosec // G706: ref is %q-quoted
 	}
 }
@@ -6379,10 +6494,12 @@ func (s *Service) dirNonEmptyFn() func(string) bool {
 // foreignVMDestBase resolves the destination base directory (a container path)
 // for a cross-instance VM restore's disks. Resolution order, NEVER the source
 // pool: an explicit target subpath (the request Target) wins; else the configured
-// RestoreFolder (the settings default restore location); else the Unraid-conventional
-// local VM domains share under the host mount. Target/RestoreFolder are relative
-// subpaths validated by paths.Resolve (no absolute path, no traversal), exactly
-// like the file-set to-folder restore.
+// RestoreFolder (the settings default restore location); else the platform's
+// conventional local VM domains location under the host mount (see
+// platform.Platform.ForeignVMDestBase — Unraid's "user/domains" share;
+// generic's identity default). Target/RestoreFolder are relative subpaths
+// validated by paths.Resolve (no absolute path, no traversal), exactly like
+// the file-set to-folder restore.
 func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -6394,16 +6511,17 @@ func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
-	return path.Join(path.Clean(s.cfg.HostMountRoot), "user/domains"), nil
+	return s.platformFn().ForeignVMDestBase(path.Clean(s.cfg.HostMountRoot)), nil
 }
 
 // foreignContainerDestBase resolves the destination base directory (a container
 // path) a cross-instance container restore remaps appdata INTO — the container
 // counterpart of foreignVMDestBase (#125). Resolution order, NEVER the source
 // pool: an explicit request Target wins; else the configured RestoreFolder; else
-// the Unraid-conventional local appdata share under the host mount. Target /
-// RestoreFolder are relative subpaths validated by paths.Resolve (no absolute
-// path, no traversal).
+// the platform's conventional local appdata location under the host mount (see
+// platform.Platform.ForeignContainerDestBase — Unraid's "user/appdata" share;
+// generic's identity default). Target / RestoreFolder are relative subpaths
+// validated by paths.Resolve (no absolute path, no traversal).
 func (s *Service) foreignContainerDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -6415,7 +6533,7 @@ func (s *Service) foreignContainerDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
-	return path.Join(path.Clean(s.cfg.HostMountRoot), "user/appdata"), nil
+	return s.platformFn().ForeignContainerDestBase(path.Clean(s.cfg.HostMountRoot)), nil
 }
 
 // nearestExistingDir walks up from p until it finds a directory that exists, so
@@ -8790,7 +8908,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	}
 	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -9826,7 +9944,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
-	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) &&
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
@@ -9892,7 +10010,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	// warning must reach the user even in summary mode (like the update notice).
 	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 		notify.Event{Title: "BombVault: backup target skipped", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backup target skipped", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -10005,7 +10123,7 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	// an all-success summary out under On="failure").
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: summary, OK: ok})
-	if c.Unraid && s.ssh != nil && (c.On == "always" || !ok) {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) {
 		level := "normal"
 		if !ok {
 			level = "warning"
@@ -10065,6 +10183,14 @@ func (s *Service) TestNotify(ctx context.Context, c notify.Config) error {
 		}
 	}
 	if c.Unraid {
+		// TestNotify is a request-scoped, user-initiated action (the Settings
+		// "Test" button), not a background best-effort job: silently reporting
+		// success without attempting anything would be dishonest, so a
+		// non-Unraid platform gets a clear, immediate refusal instead of an SSH
+		// attempt that could only fail on the far end.
+		if s.platformFn().Kind() != platform.KindUnraid {
+			return errors.New("unraid: the Unraid notification channel is only available when BombVault detects an Unraid host")
+		}
 		if err := s.sendUnraidNotify(ctx, "BombVault test notification",
 			"If you see this in Unraid, BombVault notifications are working.", "normal"); err != nil {
 			return fmt.Errorf("unraid: %w", err)

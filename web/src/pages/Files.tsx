@@ -25,8 +25,9 @@ import {
   discoverFiles,
   deleteSnapshot,
   getSettings,
+  getFileSetPreset,
 } from "../lib/api";
-import type { FileSetView, Snapshot, FileEntry } from "../lib/api";
+import type { FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -694,6 +695,7 @@ function FileSetRestorePanel({
 
 function FileSetDialog({
   initial,
+  presetSeed,
   hostMountRoot,
   t,
   onClose,
@@ -701,14 +703,22 @@ function FileSetDialog({
 }: {
   /** null = create a new set; a view = edit that set. */
   initial: FileSetView | null;
+  /** Pre-fill values for a NEW set opened via "Add preset: Host system
+   *  config" (#134 — the files domain's flash-domain analogue on
+   *  generic/TrueNAS). Ignored when `initial` is set (editing an existing
+   *  set never seeds from a preset). Still just a starting point — every
+   *  field stays fully editable before Save, same as a blank create. */
+  presetSeed: { name: string; path: string; excludes: string[] } | null;
   hostMountRoot: string;
   t: T;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [path, setPath] = useState(initial?.path ?? "");
-  const [excludesText, setExcludesText] = useState((initial?.excludes ?? []).join("\n"));
+  const [name, setName] = useState(initial?.name ?? presetSeed?.name ?? "");
+  const [path, setPath] = useState(initial?.path ?? presetSeed?.path ?? "");
+  const [excludesText, setExcludesText] = useState(
+    (initial?.excludes ?? presetSeed?.excludes ?? []).join("\n")
+  );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -988,6 +998,19 @@ export function Files() {
   const [error, setError] = useState<string | null>(null);
   // null = closed; "new" = create dialog; a view = edit dialog for that set.
   const [dialog, setDialog] = useState<"new" | FileSetView | null>(null);
+  // Pre-fill values for the create dialog when opened via "Add preset: Host
+  // system config" (null for a plain "Add folder set"). Only meaningful while
+  // dialog === "new"; cleared alongside it.
+  const [presetSeed, setPresetSeed] = useState<{
+    name: string;
+    path: string;
+    excludes: string[];
+  } | null>(null);
+  // The "Host system config" preset suggestion for the current platform
+  // (#134, files domain's flash-domain analogue). null until loaded or on a
+  // failed fetch — either way the preset button stays hidden, never a
+  // half-working affordance.
+  const [preset, setPreset] = useState<FileSetPresetResponse | null>(null);
   const [discovering, setDiscovering] = useState(false);
   const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
   const [backupAllBusy, setBackupAllBusy] = useState(false);
@@ -1020,8 +1043,33 @@ export function Files() {
         if (res.settings?.restoreFolder) setRestoreFolder(res.settings.restoreFolder);
       })
       .catch(() => undefined);
+    // Independent of the two fetches above: a failed/slow preset lookup must
+    // never block the page (loading gate stays on sets+settings only) — the
+    // preset button just stays hidden until it resolves.
+    void getFileSetPreset()
+      .then((res) => {
+        if (res.ok) setPreset(res);
+      })
+      .catch(() => undefined);
     void Promise.all([sets, settings]).finally(() => setLoading(false));
   }, []);
+
+  /** Opens the create dialog pre-filled with the "Host system config" preset
+   *  (still fully editable — Save persists through the SAME create-file-set
+   *  endpoint as a blank "Add folder set"). No-op until the preset has
+   *  loaded and is offered for this platform. */
+  function handleAddPreset() {
+    if (!preset?.offered) return;
+    setPresetSeed({ name: preset.name, path: preset.path, excludes: preset.excludes });
+    setDialog("new");
+  }
+
+  /** Opens a blank create dialog — used by both "Add folder set" entry
+   *  points so a stale preset seed from a previous open can never leak in. */
+  function handleAddBlank() {
+    setPresetSeed(null);
+    setDialog("new");
+  }
 
   async function handleDiscover() {
     setDiscovering(true);
@@ -1079,8 +1127,20 @@ export function Files() {
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
+          {/* Generic/TrueNAS-only one-click starting point (#134): Unraid
+              already has the dedicated flash domain for host-level config, so
+              preset stays null (never offered) there. */}
+          {preset?.offered && (
+            <button
+              onClick={handleAddPreset}
+              title={t("files.addPresetHint")}
+              className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+            >
+              {t("files.addPreset")}
+            </button>
+          )}
           <button
-            onClick={() => setDialog("new")}
+            onClick={handleAddBlank}
             className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
           >
             {t("files.addSet")}
@@ -1097,12 +1157,23 @@ export function Files() {
       {!loading && !error && sets.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("files.empty")}</p>
-          <button
-            onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
-          >
-            {t("files.addSet")}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            {preset?.offered && (
+              <button
+                onClick={handleAddPreset}
+                title={t("files.addPresetHint")}
+                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+              >
+                {t("files.addPreset")}
+              </button>
+            )}
+            <button
+              onClick={handleAddBlank}
+              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            >
+              {t("files.addSet")}
+            </button>
+          </div>
         </div>
       )}
 
@@ -1148,11 +1219,16 @@ export function Files() {
       {dialog !== null && (
         <FileSetDialog
           initial={dialog === "new" ? null : dialog}
+          presetSeed={dialog === "new" ? presetSeed : null}
           hostMountRoot={hostMountRoot}
           t={t}
-          onClose={() => setDialog(null)}
+          onClose={() => {
+            setDialog(null);
+            setPresetSeed(null);
+          }}
           onSaved={() => {
             setDialog(null);
+            setPresetSeed(null);
             void loadSets();
           }}
         />

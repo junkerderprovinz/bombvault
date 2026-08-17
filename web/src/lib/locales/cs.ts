@@ -964,6 +964,8 @@ const cs: Partial<Translations> = {
   "files.backupAll": "Zálohovat vše nyní",
   "files.discoverHint": "Ztratili jste seznam sad? Znovu jej sestavte ze záloh v úložišti.",
   "files.cancel": "Zrušit",
+  "files.addPreset": "Přidat předvolbu: Systémová konfigurace",
+  "files.addPresetHint": "Konzervativní výchozí bod pro konfiguraci na úrovni hostitele mimo kontejnery — nejde o tvrzení úplnosti. Před uložením zkontrolujte složku.",
   "settings.filesEnabled": "Složky",
   "settings.filesPath": "Cesta ke složkám",
   "jobs.filesSection": "Složky",

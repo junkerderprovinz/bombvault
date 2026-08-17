@@ -2000,10 +2000,11 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
 	cfg := config.Config{
-		AppKey:         strings.Repeat("a", 64),
-		DataDir:        dir,
-		HostMountRoot:  root,   // container side; the whole host /mnt is mounted here
-		HostSourceRoot: "/mnt", // the full /mnt is mounted (covers /mnt/user + cache pools)
+		AppKey:           strings.Repeat("a", 64),
+		DataDir:          dir,
+		HostMountRoot:    root,                // container side; the whole host /mnt is mounted here
+		HostSourceRoot:   "/mnt",              // the full /mnt is mounted (covers /mnt/user + cache pools)
+		DataRootSegments: []string{"appdata"}, // config.Load's default; this test builds Config by hand
 	}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
@@ -2058,7 +2059,7 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 func TestServiceSetIncludeFindOrCreate(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, HostSourceRoot: "/mnt"}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, HostSourceRoot: "/mnt", DataRootSegments: []string{"appdata"}}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.ContainersPath = "backups/containers"

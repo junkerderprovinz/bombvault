@@ -106,3 +106,50 @@ func TestResolveRejectsDotSub(t *testing.T) {
 		t.Fatal("must reject sub='.' (resolves to root, not a strict child)")
 	}
 }
+
+// TestResolveAndWithinIdentityRoot proves Resolve/Within behave identically
+// under a generic/TrueNAS "identity bind" config (HostSourceRoot ==
+// HostMountRoot, e.g. both "/data" — no path translation) as they do under
+// Unraid's split-root config (HostSourceRoot=/mnt, HostMountRoot=/host/user).
+// Both configs ultimately feed the SAME single "root" value into
+// Resolve/Within — neither function ever reads HostSourceRoot, only the
+// caller's chosen root string — so an identity root is not a special case,
+// just another root value. This test exists to prove that property rather
+// than leave it implicit, per the design spec's platform-expansion audit.
+func TestResolveAndWithinIdentityRoot(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		root string
+	}{
+		{"split-root (Unraid default: HostSourceRoot=/mnt, HostMountRoot=/host/user)", "/host/user"},
+		{"identity-root (generic/TrueNAS default: HostSourceRoot==HostMountRoot)", "/data"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := paths.Resolve(tc.root, "backups/bombvault/containers")
+			if err != nil {
+				t.Fatalf("Resolve: unexpected error: %v", err)
+			}
+			want := tc.root + "/backups/bombvault/containers"
+			if got != want {
+				t.Fatalf("Resolve: expected %s, got %s", want, got)
+			}
+
+			if _, err := paths.Resolve(tc.root, "../etc"); err == nil {
+				t.Fatal("Resolve: must still reject traversal under this root")
+			}
+			if _, err := paths.Resolve(tc.root, "/etc/passwd"); err == nil {
+				t.Fatal("Resolve: must still reject an absolute sub path under this root")
+			}
+
+			if !paths.Within(tc.root, want) {
+				t.Fatalf("Within: expected %s to be contained within %s", want, tc.root)
+			}
+			if paths.Within(tc.root, tc.root) {
+				t.Fatal("Within: root itself must not be considered a strict child of root")
+			}
+			if paths.Within(tc.root, tc.root+"2/other") {
+				t.Fatal("Within: a sibling path sharing the root as a string prefix must not count as contained")
+			}
+		})
+	}
+}

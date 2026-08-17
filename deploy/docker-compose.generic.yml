@@ -1,0 +1,140 @@
+# BombVault — generic Docker host deployment
+#
+# Ready-to-edit compose file for running BombVault on a plain Docker host
+# (not Unraid; not TrueNAS Scale's own app system — see the truenas-apps/
+# catalog submission planned for Phase B of the platform-expansion work).
+# It mounts the same things and uses the same image as the official Unraid
+# Community Applications template (templates/my-BombVault.xml), except for
+# the Host Data volume, which uses the simpler identity-bind convention
+# described below instead of Unraid's split /mnt -> /host/user scheme.
+#
+# For the full variable reference see docs/configuration.md. For what does
+# NOT apply on this platform (the flash/USB domain, Unraid-specific
+# notifications) see the "Generic Docker host" section of
+# docs/getting-started.md.
+#
+# Quick start:
+#   1. cp deploy/docker-compose.generic.yml docker-compose.yml
+#   2. Generate APP_KEY (openssl rand -hex 32) and paste it in below.
+#   3. Point the Host Data volume at your real data root — see its comment.
+#   4. docker compose up -d
+#   5. Open https://<this-host-ip>:3443/ (self-signed certificate out of the box).
+
+services:
+  bombvault:
+    # Same image the Unraid CA template installs (templates/my-BombVault.xml's
+    # <Repository>) — Docker Hub is the canonical tag; GHCR mirrors it 1:1.
+    image: junkerderprovinz/bombvault:latest
+    restart: unless-stopped
+
+    # Pinned, not left at Docker's random per-container default, for stable
+    # restic repo locks: restic's own lock files record the hostname of the
+    # process holding them, and BombVault's stale-lock check (unlockStale,
+    # see internal/api/service.go) can only safely recognize a lock left by
+    # ITS OWN prior incarnation as dead (rather than waiting out restic's
+    # ~30-minute lock-age fallback) when that prior incarnation reported the
+    # SAME hostname. Since Docker gives every recreated container (e.g. on
+    # an image update) a new random hostname by default, a fixed hostname
+    # closes that gap. container_name matches it so self-container detection
+    # (BombVault refuses to back up or stop itself) resolves correctly by
+    # hostname without needing the Unraid template's BOMBVAULT_SELF_CONTAINER
+    # override.
+    hostname: bombvault
+    container_name: bombvault
+
+    volumes:
+      # BombVault's own state: SQLite DB, TLS certificate, restic cache.
+      - ./config:/config
+
+      # Root-equivalent host control: stop/start/recreate containers around
+      # backup/restore. Same mount as the Unraid template's Docker Socket
+      # field. Run this stack only on a trusted, non-exposed network.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Host Data: where the OTHER containers you want backed up keep their
+      # persistent data, and BombVault's default local backup/restore
+      # destination root.
+      #
+      # Unraid has one universal top-level convention (/mnt) to point at, so
+      # its template mounts /mnt whole and translates paths via
+      # HOST_SOURCE_ROOT=/mnt -> HOST_MOUNT_ROOT=/host/user. A generic host
+      # has no such convention, so the default here is the simpler IDENTITY
+      # bind instead (HOST_SOURCE_ROOT == HOST_MOUNT_ROOT, i.e. no path
+      # translation at all) — the generic/TrueNAS default established when
+      # multi-root support was added to internal/paths and internal/config.
+      #
+      # To use it: replace "./data" below with the ABSOLUTE host path under
+      # which you already keep (or are willing to move) every other
+      # container's persistent data, e.g. /srv/appdata, mounted here
+      # UNCHANGED (same path on both sides — no rename), and set
+      # HOST_SOURCE_ROOT to that identical value in the environment block.
+      # If you'd rather keep a renamed mount (like Unraid's split-root
+      # style, just with your own path instead of /mnt), that also works —
+      # set HOST_SOURCE_ROOT to whatever REAL host path you put on the left
+      # below; HOST_MOUNT_ROOT stays at its built-in default (/host/user,
+      # matching the container path here) either way.
+      #
+      # Reachability caveat: Docker named-volume backup and the Files page's
+      # "Host system config" preset both read paths OUTSIDE whatever narrow
+      # directory you point this at — a named volume's real storage normally
+      # lives under the Docker daemon's own data root (/var/lib/docker/volumes
+      # by default; check yours with `docker info -f '{{.DockerRootDir}}'`),
+      # and the preset guesses "/etc". Neither is reachable through a mount
+      # that only covers e.g. /srv/appdata, and BombVault silently skips what
+      # it cannot reach rather than erroring — it will look like those
+      # containers/paths were never even considered. If you want either
+      # feature, point this mount (and HOST_SOURCE_ROOT) at a common ancestor
+      # that also covers the Docker data root, the same reason Unraid's own
+      # template mounts all of /mnt instead of a narrower share. See "Backup
+      # source detection" in docs/configuration.md for the full detail.
+      - ./data:/host/user
+
+    environment:
+      # REQUIRED. 64 lowercase hex characters — generate with:
+      #   openssl rand -hex 32
+      # Master key for secrets and the derived restic repository password.
+      # Losing it makes encrypted backups unrecoverable.
+      APP_KEY: ""
+
+      # Declares the platform explicitly instead of relying on
+      # auto-detection. internal/platform/detect.go's auto-detect only
+      # recognizes Unraid (by probing for an Unraid-only marker file) and
+      # otherwise falls back to generic — but a plain compose deployment
+      # should be unambiguous about which platform it's declaring itself as,
+      # rather than depending on the absence of a marker.
+      PLATFORM: generic
+
+      # See the Host Data volume's comment above. Set to the REAL absolute
+      # host-side path of that mount. Left at /host/user here to match
+      # HOST_MOUNT_ROOT's built-in default (also /host/user, unset below) —
+      # true identity — but change this if you mounted a differently-named
+      # host directory there.
+      HOST_SOURCE_ROOT: /host/user
+
+      # --- VM backup (optional, opt-in) --------------------------------
+      # Uncomment to back up VMs on a libvirtd host reachable over SSH (a
+      # separate hypervisor, or this same Docker host if it also runs
+      # libvirtd). Needs a libvirtd host with SSH access; mirrors the
+      # Unraid template's "VM Backup" fields.
+      # LIBVIRT_HOST already defaults to host.docker.internal (see
+      # internal/config/config.go), so if your libvirt host IS this same
+      # Docker host, uncomment extra_hosts below and LIBVIRT_SSH_USER/PORT
+      # only; only set LIBVIRT_HOST explicitly when libvirtd runs on a
+      # DIFFERENT machine.
+      # LIBVIRT_HOST: 192.168.x.x       # only if libvirtd is on another host
+      # LIBVIRT_SSH_USER: root
+      # LIBVIRT_SSH_PORT: "22"
+
+    # Only needed for the VM backup block above when LIBVIRT_HOST is left at
+    # its host.docker.internal default (i.e. libvirtd runs on this same
+    # Docker host) — resolves that name to the host's gateway IP.
+    # extra_hosts:
+    #   - host.docker.internal:host-gateway
+
+    ports:
+      # WebUI (HTTPS, self-signed certificate out of the box). This is the
+      # port you open.
+      - "3443:3443"
+      # WebUI (HTTP) — only needed if you set HTTP_ONLY=true above (i.e.
+      # behind a TLS-terminating reverse proxy). Leave commented otherwise.
+      # - "3000:3000"

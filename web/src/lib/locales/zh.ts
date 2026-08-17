@@ -958,6 +958,8 @@ const zh: Partial<Translations> = {
   "files.backupAll": "立即备份全部",
   "files.discoverHint": "丢失了文件集列表？从存储中的备份重建它。",
   "files.cancel": "取消",
+  "files.addPreset": "添加预设：主机系统配置",
+  "files.addPresetHint": "这是容器之外主机级配置的保守起点——并不代表完整性。保存前请检查文件夹。",
   "settings.filesEnabled": "文件夹",
   "settings.filesPath": "文件夹路径",
   "jobs.filesSection": "文件夹",

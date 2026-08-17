@@ -966,6 +966,8 @@ const it: Partial<Translations> = {
   "files.backupAll": "Esegui il backup di tutto ora",
   "files.discoverHint": "Elenco dei set perso? Ricostruiscilo dai backup nello storage.",
   "files.cancel": "Annulla",
+  "files.addPreset": "Aggiungi preset: Configurazione di sistema",
+  "files.addPresetHint": "Un punto di partenza prudente per la configurazione a livello host al di fuori dei container — non è una garanzia di completezza. Controlla la cartella prima di salvare.",
   "settings.filesEnabled": "Cartelle",
   "settings.filesPath": "Percorso delle cartelle",
   "jobs.filesSection": "Cartelle",
