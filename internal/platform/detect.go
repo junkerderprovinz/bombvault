@@ -23,12 +23,11 @@ import (
 // Deliberately NOT attempted: automatic TrueNAS detection. There is no
 // reliable filesystem marker visible from inside a Docker-socket-only
 // container — TrueNAS's ix-apps dataset and libvirt socket are not
-// guaranteed mounted, especially with VMs disabled. TrueNAS selection is
-// explicit-only (PLATFORM=truenas) until a real TrueNAS Platform
-// implementation exists to select (a later phase — see main.go's Kind→
-// Platform mapping for what happens if that value is set before then: it
-// falls back to Generic{} with a logged warning, since KindTrueNAS is a
-// legitimate Kind today but has no implementation yet).
+// guaranteed mounted, especially with VMs disabled. TrueNAS selection stays
+// explicit-only (PLATFORM=truenas) even now that platform.TrueNAS{} is a
+// real implementation (see main.go's Kind→Platform mapping) — only the
+// selection mechanism was ever the open question, not whether TrueNAS has an
+// implementation to select.
 func Detect(_ context.Context, override, flashDir string) Kind {
 	if override != "" {
 		switch Kind(override) {

@@ -98,19 +98,18 @@ func healthcheckAt(port, httpsPort string) int {
 const catchUpStartupDelay = 2 * time.Minute
 
 // platformFor maps a detected/overridden platform.Kind to a concrete
-// platform.Platform adapter. KindTrueNAS is a legitimate Kind today (an
-// operator can already set PLATFORM=truenas) but has no implementation until
-// a later phase ships platform.TrueNAS — until then it falls back to
-// platform.Generic{} with a logged warning, the same fail-soft posture the
-// rest of BombVault's Unraid-only extras already use off Unraid.
+// platform.Platform adapter. Every Kind BombVault knows about (Unraid,
+// TrueNAS, generic) has a real implementation; only a genuinely unrecognized
+// Kind (which platform.Detect should already have turned into KindGeneric —
+// this default case exists as a defense-in-depth backstop, not an expected
+// path) falls back to platform.Generic{} with a logged warning.
 func platformFor(kind platform.Kind) platform.Platform {
 	switch kind {
 	case platform.KindUnraid:
 		return platform.Unraid{}
-	case platform.KindGeneric:
-		return platform.Generic{}
 	case platform.KindTrueNAS:
-		log.Printf("platform: PLATFORM=truenas has no implementation yet — falling back to generic")
+		return platform.TrueNAS{}
+	case platform.KindGeneric:
 		return platform.Generic{}
 	default:
 		log.Printf("platform: unknown Kind %q — falling back to generic", kind) //nolint:gosec // G706: kind is %q-quoted
@@ -190,7 +189,7 @@ func run() error {
 	// never interfere with the host VM Manager. Generate the SSH key on first run;
 	// the user authorizes the public key on the host (shown in Settings). virsh
 	// then runs ON the host over SSH.
-	sc := sshconn.New(cfg.LibvirtHost, cfg.LibvirtSSHUser, cfg.LibvirtSSHPort, cfg.DataDir)
+	sc := sshconn.New(cfg.LibvirtHost, cfg.LibvirtSSHUser, cfg.LibvirtSSHPort, cfg.DataDir, cfg.LibvirtURI)
 	if err := sc.EnsureKey(); err != nil {
 		log.Printf("sshconn: ensure key: %v", err) // non-fatal: VM backup stays unavailable until fixed
 	}
@@ -219,9 +218,9 @@ func run() error {
 	// host BombVault is running on, and map it to a concrete Platform adapter
 	// (internal/platform): the appdata-fallback convention, cross-instance
 	// restore-destination defaults, and the Unraid update-status reconcile
-	// step. KindTrueNAS has no implementation yet (a later phase) — an
-	// explicit PLATFORM=truenas today falls back to Generic{} with a logged
-	// warning rather than silently misbehaving.
+	// step. Unraid, TrueNAS and generic all have real implementations; only a
+	// genuinely unrecognized override value falls back to Generic{} with a
+	// logged warning rather than silently misbehaving.
 	svc.SetPlatform(platformFor(platform.Detect(context.Background(), cfg.PlatformOverride, cfg.FlashDir)))
 	// Tell the service where the persistent cache lives so the post-run cache
 	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty

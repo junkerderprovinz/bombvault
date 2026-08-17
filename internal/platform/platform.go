@@ -1,8 +1,8 @@
 // Package platform is the seam between BombVault's core (the Docker Engine
 // API, restic, and the compose/data-root discovery in internal/api — all of
 // which are already platform-neutral) and the small set of behaviors that
-// differ by the host BombVault runs on: Unraid's array/share conventions
-// today, a plain generic Docker host, and — a later phase — TrueNAS Scale.
+// differ by the host BombVault runs on: Unraid's array/share conventions,
+// a plain generic Docker host, and TrueNAS Scale.
 //
 // See docs/superpowers/specs/2026-08-16-bombvault-platform-expansion-design.md
 // §4 for the design rationale and docs/superpowers/plans/2026-08-16-bombvault-

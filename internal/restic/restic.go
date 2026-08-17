@@ -325,6 +325,58 @@ func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
 	return args
 }
 
+// BackupStdinArgs returns the argv slice for `restic backup --stdin
+// --stdin-filename <path>`, which reads the ENTIRE backup content from
+// stdin instead of local files and records it in the snapshot under path
+// (verified against restic 0.17.3: an ABSOLUTE --stdin-filename is stored
+// VERBATIM as the snapshot's recorded path — there is no extra "/stdin/"
+// prefix restic adds; the same string must be passed to DumpRawArgs to
+// retrieve it later). Mirrors BackupArgs' flag ordering/host-pinning/tag
+// handling exactly; the only difference is --stdin[-filename] replacing the
+// "-- <paths>" positional list, since stdin content has no path of its own.
+//
+// Used for content with no on-disk path to hand restic — e.g. a zvol's
+// `zfs send` stream (internal/backup/vm_orchestrator.go's zvol-aware VM disk
+// backup path, v8.0.0 TrueNAS platform expansion Task 10). path should be a
+// stable, collision-free absolute identifier for the content (e.g. derived
+// from the zvol's dataset + snapshot name), NOT a real filesystem path — it
+// is never read from disk, only recorded as the snapshot's path metadata.
+func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, storageClassFlags(repo, m.StorageClass)...)
+	args = append(args, retryLockFlags()...)
+	args = append(args, "backup")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--json")
+	args = append(args, "--host", backupHost)
+	for _, tag := range tags {
+		args = append(args, "--tag", tag)
+	}
+	args = append(args, "--stdin", "--stdin-filename", path)
+	return args
+}
+
+// DumpRawArgs returns the argv slice for `restic dump <snapshotID> <path>` —
+// no -a/--archive flag, which streams a single MATCHED file's raw bytes to
+// stdout unmodified (restic's dump only wraps output in a tar/zip archive
+// when the target is a folder; a single-file match streams raw — verified
+// against restic 0.17.3). This is the exact restore-side counterpart of
+// BackupStdinArgs: path must be the same string a BackupStdin call used as
+// --stdin-filename, so the bytes streamed back are byte-identical to what was
+// piped in (see the zvol VM-disk restore path). The snapshot id + path go
+// after -- (arg-injection guard); callers validate the id as hex.
+func DumpRawArgs(repo, snapshotID, path string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "dump")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--", snapshotID, path)
+	return args
+}
+
 // CopyArgs returns the argv for replicating snapshots from srcRepo into destRepo:
 // `restic -r <dest> copy --from-repo <src>`. With no ids it copies every source
 // snapshot not already in dest (idempotent — restic skips ones already copied).
@@ -795,6 +847,27 @@ func ctxCancelErr(ctx context.Context, args []string, err error) error {
 // runBuffered runs restic capturing all stdout into a buffer.
 func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
+			return stdout.Bytes(), werr
+		}
+		return nil, runError(args, stderr.String())
+	}
+	return stdout.Bytes(), nil
+}
+
+// runWithStdin runs restic with its stdin wired to rd (for `backup --stdin`,
+// e.g. Task 10's zvol `zfs send` stream), capturing stdout into a buffer.
+// Mirrors runBuffered exactly, except the command's INPUT is a stream rather
+// than local files reachable by path — there was no prior "stream INTO
+// restic" execution helper in this file to reuse (runToWriter/DumpZip only
+// stream OUT of restic); this is new plumbing modeled on runBuffered's
+// buffered-stdout shape and Backup's exit-3 handling (see BackupStdin).
+func runWithStdin(cmd *exec.Cmd, args []string, rd io.Reader) ([]byte, error) {
+	var stdout, stderr bytes.Buffer
+	cmd.Stdin = rd
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -1286,6 +1359,58 @@ func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string,
 	// A client disconnect / user cancel of the download cancels ctx and kills the
 	// child; re-wrap so DownloadFlashZip's errors.Is(err, context.Canceled) holds
 	// and records "cancelled" instead of "failed" (same root cause as run()).
+	return ctxCancelErr(ctx, args, runToWriter(cmd, args, w))
+}
+
+// BackupStdin runs `restic backup --stdin`, reading the ENTIRE backup content
+// from rd instead of local files, and returns the parsed summary. Mirrors
+// Backup's summary-parsing + exit-3 handling and DumpZip's direct-io-wiring
+// style (cmd wired straight to a reader, no local staging file), but in the
+// opposite direction of DumpZip (streams INTO restic, not out of it).
+//
+// Used by the zvol VM-disk backup path (internal/backup/vm_orchestrator.go,
+// v8.0.0 TrueNAS platform expansion Task 10) to pipe a `zfs send` stream
+// straight into a backup with no local staging file.
+//
+// ⚠ This method's OWN mechanism (restic reading a backup from stdin, and
+// DumpRaw reading it back byte-identically) is verified locally against a
+// real restic 0.17.3 binary — see TestBackupStdinRoundtrip. What remains
+// UNVERIFIED is everything upstream of it: a real `zfs send` stream piped
+// over a real SSH connection from a real TrueNAS Scale host has never been
+// exercised end-to-end (no test hardware available) — see
+// internal/virshcli/zvol.go's package doc comment.
+func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, m Mode) (Summary, error) {
+	args := BackupStdinArgs(repo, path, tags, m)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
+	configureProcGroup(cmd)
+	cmd.Env = r.authEnv(m)
+	out, err := runWithStdin(cmd, args, rd)
+	err = ctxCancelErr(ctx, args, err)
+	if err != nil {
+		// A single stdin stream can still trip restic's exit-3 ("source could not
+		// be read") path in principle (e.g. a mid-stream read error surfaced that
+		// way) — handle it exactly like Backup does for consistency.
+		if errors.Is(err, ErrBackupSourceUnreadable) {
+			if sum, perr := ParseBackupSummary(out); perr == nil {
+				return sum, nil
+			}
+		}
+		return Summary{}, err
+	}
+	return ParseBackupSummary(out)
+}
+
+// DumpRaw streams a single backed-up path's raw bytes (no zip/tar wrapping)
+// from a snapshot into w (`restic dump <snapshotID> <path>`, no -a flag) —
+// DumpZip's shape (direct cmd→writer wiring, no local temp file) but for a
+// single file whose content must come back byte-identical. This is the
+// restore-side counterpart of BackupStdin; path must be exactly the same
+// string BackupStdin was given as its stdin-filename.
+func (r Restic) DumpRaw(ctx context.Context, repo, snapshotID, path string, w io.Writer, m Mode) error {
+	args := DumpRawArgs(repo, snapshotID, path, m)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated by caller against the repo, path is an internal value
+	configureProcGroup(cmd)
+	cmd.Env = r.authEnv(m)
 	return ctxCancelErr(ctx, args, runToWriter(cmd, args, w))
 }
 

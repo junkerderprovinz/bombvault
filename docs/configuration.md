@@ -10,6 +10,7 @@ This page covers the container's environment variables, the mounts the template 
 | `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; the template pre-fills a LAN-IP placeholder). Use your Unraid LAN IP, required on a custom `br0.x` network. |
 | `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
 | `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
+| `LIBVIRT_URI` | No | Full libvirt connection URI, used **verbatim** instead of building one from the three `LIBVIRT_*` variables above (which are then ignored for the connection string). Default unset. Needed on TrueNAS Scale, whose libvirtd listens on a non-standard socket the built-string form cannot express: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. See [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'s TrueNAS Scale section. |
 | `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
