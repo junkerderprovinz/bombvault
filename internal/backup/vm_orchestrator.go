@@ -33,6 +33,23 @@ func parentDirs(paths []string) []string {
 	return dirs
 }
 
+// withRunTag returns tags with runTag appended when runTag is non-empty,
+// ALWAYS as a fresh slice (never mutates tags' backing array — every call
+// site below passes a freshly-built literal, but this stays safe even if
+// that ever changes). Returns tags completely UNCHANGED when runTag is
+// empty — the default/zero value every existing caller/test uses today — so
+// every tagged restic call in this file stays byte-identical to before
+// VMBackupDeps.RunTag existed. See that field's doc comment for the full
+// design context.
+func withRunTag(tags []string, runTag string) []string {
+	if runTag == "" {
+		return tags
+	}
+	out := make([]string, len(tags), len(tags)+1)
+	copy(out, tags)
+	return append(out, runTag)
+}
+
 // ---------------------------------------------------------------------------
 // VM DI interface (the seam — no concrete virshcli imported here)
 // ---------------------------------------------------------------------------
@@ -76,6 +93,34 @@ const (
 type VMBackupDeps struct {
 	// Name is the libvirt domain name (used for tags + run recording).
 	Name string
+	// RunTag, when non-empty, is a shared per-run correlation tag (e.g.
+	// "vmrun:<runID>") added ADDITIONALLY — never replacing — to every restic
+	// backup call this struct drives: the main file-backed-disk backup below
+	// (runVMGraceful/runVMLive's own d.Restic.Backup call, tagged
+	// "vm:<name>") AND each of BlockDisks' per-zvol-disk backups
+	// (backupBlockDisksAndLog's own call per disk, tagged identically to the
+	// file backup today — "vm:<name>"; it does NOT yet give each zvol disk
+	// its own distinct "vm:<name>:zvol:<dev>" identity tag, despite the
+	// design doc's description of that scheme, because VMBlockDisk carries no
+	// per-disk device name to build one from today — that is a separate,
+	// not-yet-built piece of work, not something this field does).
+	//
+	// Lets a caller correlate every restic snapshot ONE backup invocation
+	// produced, since restic's --stdin mode forces a mixed file+zvol VM
+	// backup into multiple distinct invocations/snapshots (see this file's
+	// "Zvol-aware VM disk backup/restore" section header comment below for
+	// why, and see withRunTag for the exact append-not-replace mechanics).
+	// This field is the plumbing the KNOWN GAP in BlockDisks' own doc comment
+	// below anticipated ("e.g. a disk-unique tag + its own snapshot lookup")
+	// — actually persisting a run's tag and querying restic by it at restore
+	// time is still a real caller's job (internal/api/service.go, out of
+	// this file's scope; see docs/superpowers/plans/
+	// 2026-08-18-vm-service-layer-integration.md's Task 2/3).
+	//
+	// Empty (the default, and what every existing caller/test uses today) is
+	// a byte-identical no-op: every tags slice this file builds stays EXACTLY
+	// what it was before this field existed.
+	RunTag string
 	// DiskPaths are the container-visible absolute paths to the disk images.
 	DiskPaths []string
 	// DiskDevice is the first disk's target dev (e.g. "vda", "hdc"). Used as the
@@ -149,6 +194,16 @@ type VMBackupDeps struct {
 	// persisted anywhere a later restore can find it. A caller wiring this up
 	// for a REAL, restorable backup must solve that (e.g. a disk-unique tag +
 	// its own snapshot lookup) — this package does not.
+	//
+	// UPDATE (Task 1 of the plan cited on RunTag's own doc comment above):
+	// RunTag is the tag-append PLUMBING this gap anticipated — it lets every
+	// snapshot ONE backup invocation produces (this one + each BlockDisks
+	// entry's own) share a caller-chosen correlation tag. It does NOT close
+	// this gap by itself: nothing in this package yet PERSISTS a run's tag
+	// value anywhere, and — exactly like BlockDisks/ZFSHost/ZvolRestic
+	// themselves — no real caller populates RunTag today either. Closing the
+	// gap for real (persisting the tag, querying restic by it at restore
+	// time) is a later task's job, not this field's.
 	BlockDisks []VMBlockDisk
 	// ZFSHost / ZvolRestic are BackupZvolDisk's own dependencies (see their
 	// doc comments below) — required only when BlockDisks is non-empty.
@@ -185,6 +240,19 @@ type VMRestoreDeps struct {
 	Confirmed bool
 	// Name is the libvirt domain name.
 	Name string
+	// RunTag mirrors VMBackupDeps.RunTag's field for API symmetry (a caller
+	// building both structs for one VM can set it in one place conceptually)
+	// and so a future restore-side use has an obvious place to live. UNLIKE
+	// the backup side, it drives NO restic call in this file today — verified
+	// by reading the real signatures, not assumed: every restic method the
+	// restore path calls takes a snapshot id, never tags
+	// (Restic.VerifySnapshot/RestorePaths/RestoreSubtreeTo in
+	// orchestrator.go, ZvolRestic.DumpTo below) — restic tags are written
+	// only at backup time, and a restore reads an already-tagged snapshot by
+	// id, so there is nothing here for a tag to attach to. Set or left empty,
+	// restore behavior — including a multi-disk BlockDisks restore via
+	// restoreBlockDisksAndLog — is IDENTICAL either way.
+	RunTag string
 	// SnapshotID is the restic snapshot to restore (validated hex).
 	SnapshotID string
 	// DiskPaths are the absolute container-visible paths the restored disks END UP
@@ -360,7 +428,7 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			paths = append(paths, d.TPMPath)
 		}
 
-		tags := []string{"vm:" + d.Name, "p2"}
+		tags := withRunTag([]string{"vm:" + d.Name, "p2"}, d.RunTag)
 		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 		if backupErr != nil {
 			backupErr = fmt.Errorf("vm backup: restic: %w", backupErr)
@@ -454,7 +522,7 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if d.TPMPath != "" {
 		paths = append(paths, d.TPMPath)
 	}
-	tags := []string{"vm:" + d.Name, "p2", "live"}
+	tags := withRunTag([]string{"vm:" + d.Name, "p2", "live"}, d.RunTag)
 	summary, backupErr := d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 
 	// ALWAYS commit EVERY overlay back, even if the backup failed, so no disk keeps
@@ -740,6 +808,16 @@ func isFreezeErr(err error) bool {
 // 10 in docs/superpowers/plans/2026-08-16-bombvault-platform-expansion.md
 // and docs/vm-backup-ssh-setup.md's TrueNAS section for the operator-facing
 // version of this same status.
+//
+// UPDATE: the design decision above HAS now been made — see
+// docs/superpowers/plans/2026-08-18-vm-service-layer-integration.md's "Design
+// decision" section: a shared "vmrun:<runID>" correlation tag, additive to
+// each snapshot's own identity tag, resolved at restore time by querying
+// restic directly (no DB migration). VMBackupDeps.RunTag/VMRestoreDeps.RunTag
+// above are that scheme's first piece — the tag-append plumbing itself — but
+// STILL nobody's actual caller (internal/api/service.go) populates it yet,
+// and nothing queries restic by "vmrun:" tag yet either; both remain real,
+// code-verified gaps for the service-layer integration work that follows.
 // ---------------------------------------------------------------------------
 
 // ZFSHost is the host-control surface the zvol backup/restore orchestrators
@@ -926,7 +1004,7 @@ func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix strin
 		return nil
 	}
 	snapName := zvolBackupSnapshotName(time.Now())
-	tags := []string{"vm:" + d.Name, "p2"}
+	tags := withRunTag([]string{"vm:" + d.Name, "p2"}, d.RunTag)
 	var firstErr error
 	for _, bd := range d.BlockDisks {
 		sum, err := BackupZvolDisk(ctx, BackupZvolDeps{
