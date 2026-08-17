@@ -104,6 +104,63 @@ In the **VMs** tab each VM has a method:
 
 ---
 
+## TrueNAS Scale
+
+The steps above (SSH enable, key authorization, networking, per-VM method)
+are written for Unraid, but the same `qemu+ssh://` mechanism works against
+any reachable libvirtd — including TrueNAS Scale, which has shipped libvirt-
+based VMs again since 25.04.2. Two things are different on TrueNAS and need
+an explicit override.
+
+### 1. TrueNAS's libvirtd socket is non-standard
+
+TrueNAS Scale's libvirtd does not listen where the default `qemu+ssh://`
+connection string built from `VM Backup: Host`/`User`/`Port` expects. Set
+`LIBVIRT_URI` directly instead, with the extra `?socket=...` query parameter
+the built-string form has no way to express:
+
+```sh
+LIBVIRT_URI=qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock
+```
+
+When `LIBVIRT_URI` is set, BombVault uses it **verbatim** — `LIBVIRT_HOST`,
+`LIBVIRT_SSH_USER`, and `LIBVIRT_SSH_PORT` are ignored for the connection
+string itself (they still don't need to be set at all for VM backup to work,
+since the URI already carries the user/host).
+
+### 2. Root SSH is disabled by default since TrueNAS 24.10
+
+Step 2 above (authorizing BombVault's public key for `root`) requires root
+SSH login, which TrueNAS Scale turns off out of the box starting with 24.10.
+Either:
+
+- **System Settings → General → Login As Root with Password** — enable it,
+  then authorize BombVault's public key the same way Step 2 describes, using
+  `<user>` = `root` in the `LIBVIRT_URI` above; or
+- create a sudo-capable admin account (with an API key, per TrueNAS's own
+  account setup) and authorize BombVault's key for that account instead,
+  using its username in place of `root` in `LIBVIRT_URI`.
+
+### Caveat: direct `virsh` changes are invisible to TrueNAS's middleware
+
+TrueNAS's own middleware (the layer behind its VM UI) is the intended control
+path for its VMs. A `virsh` command run directly over this SSH link — which
+is exactly what BombVault's VM backup/restore does — bypasses that
+middleware, and TrueNAS may reconcile or overwrite state it didn't originate
+(sourced from TrueNAS's publicly documented middleware behavior, not
+independently verified against a running instance). This is the same risk
+class as Unraid's own VM Manager reconciling changes made outside it, only
+sharper on TrueNAS since its middleware is more actively involved in VM
+lifecycle management.
+
+**This whole section is reasoned from TrueNAS Scale's public documentation
+and the shape of its libvirt setup — there is no TrueNAS Scale test instance
+available to verify it against real hardware.** Treat it as a documented
+starting point, not a confirmed-working configuration, until it has been
+exercised on an actual TrueNAS Scale box.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |
