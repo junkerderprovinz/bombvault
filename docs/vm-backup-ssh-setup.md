@@ -109,8 +109,11 @@ In the **VMs** tab each VM has a method:
 The steps above (SSH enable, key authorization, networking, per-VM method)
 are written for Unraid, but the same `qemu+ssh://` mechanism works against
 any reachable libvirtd — including TrueNAS Scale, which has shipped libvirt-
-based VMs again since 25.04.2. Two things are different on TrueNAS and need
-an explicit override.
+based VMs again since 25.04.2. Five things differ on TrueNAS: the connection
+string needs an explicit override (1) and root SSH needs enabling (2) before
+anything works at all, and three further differences affect what a backup
+actually captures — zvol-backed disks (3), vTPM state (4), and how TrueNAS
+names its libvirt domains (5).
 
 ### 1. TrueNAS's libvirtd socket is non-standard
 
@@ -265,9 +268,8 @@ document — read over SSH into the VM's stored definition at backup time,
 written back over SSH just before `virsh define` at restore time, both
 best-effort and non-fatal (a failed read/write only logs a warning; the
 backup/restore itself never fails because of it). That mechanism lives
-entirely in `internal/api/service.go`, which is **outside this task's file
-scope** (`internal/virshcli` + `internal/backup/vm_orchestrator.go`). Inside
-that scope, `internal/backup/vm_orchestrator.go` *also* carries a second,
+entirely in the service layer (`internal/api/service.go`). One layer below
+it, `internal/backup/vm_orchestrator.go` *also* carries a second,
 separate, path-list-based NVRAM mechanism (`VMBackupDeps.NVRAMPath` /
 `VMRestoreDeps.NVRAMPath` — the path is simply added to the same restic
 backup/restore call as the disk images) — but reading the real
@@ -283,8 +285,8 @@ the exact same real call sites the existing `NVRAMPath` field already uses
 included in the same restic path list, validated by the same restore
 path-safety guard), proven by unit tests that assert the actual paths restic
 receives. Extending the *real*, SSH-based, best-effort NVRAM mechanism to
-also carry TPM bytes is a `service.go` change and is **not done by this
-task** — the restore-side write-back hook it would plug into
+also carry TPM bytes is a service-layer change that has **not been made
+yet** — the restore-side write-back hook it would plug into
 (`VMRestoreDeps.PreDefine`, a generic caller-supplied closure) needs no
 change to support this once that integration happens.
 
@@ -294,6 +296,53 @@ exercised against a real TrueNAS Scale box with a real vTPM-enabled guest.
 NVRAM-only (Unraid) VM backup/restore is completely unaffected: TPM handling
 is purely additive, and a domain with no `<tpm>` element parses and
 backs up/restores byte-identically to before this feature existed.
+
+### 5. TrueNAS names its libvirt domains differently — VMs may show up under an unfamiliar name
+
+Unraid's libvirt domain name is simply the VM's name, so the name you see in
+BombVault's **VMs** tab is the name you chose. TrueNAS derives the domain
+name instead, and has changed how twice:
+
+| TrueNAS version | libvirt domain name | Where the name you chose lives |
+|---|---|---|
+| 25.10 "Goldeye" | `{id}_{name}` — e.g. `1_debian` | in the domain name, behind an `{id}_` prefix |
+| 26 | the VM's bare **UUID** — e.g. `550e8400-e29b-41d4-a716-446655440000` | only in the domain XML's `<title>` element |
+
+BombVault's libvirt wrapper (`internal/virshcli`) recognizes both shapes and
+resolves a friendly name for each: it strips the `{id}_` prefix on 25.10, and
+on 26 it makes one extra `virsh dumpxml` call per UUID-named domain to read
+`<title>`, falling back to the UUID itself if there is no `<title>` or the
+call fails.
+
+**What you will actually see today:** that friendly name is **not yet used by
+the UI**. BombVault's VM list still displays — and matches your saved per-VM
+settings against — the **raw libvirt domain name**. So on TrueNAS 25.10 your
+VMs appear as `1_debian` rather than `debian`, and on TrueNAS 26 they appear
+as **bare UUIDs** rather than the names you gave them. Identify a VM by its
+UUID (TrueNAS's own VM UI shows it) until this is wired up.
+
+This is a **display and matching** limitation only, not a correctness one:
+the raw domain name is the identifier every `virsh` command legitimately
+takes, so backup and restore operate on the right VM either way. The one
+practical consequence beyond cosmetics is on TrueNAS 26, where a VM's saved
+BombVault settings (backup method, schedule membership) are keyed to that
+UUID — if TrueNAS ever re-creates the VM and issues a new UUID, the saved
+settings will not follow it and the VM will reappear as a new, unconfigured
+entry. Wiring the friendly name through to the UI and to that matching is a
+separate, not-yet-done follow-up.
+
+A related note for anyone doing that wiring: the classifier works purely on
+the **shape** of the domain name and is deliberately not platform-gated, so
+an ordinary Unraid VM named literally `10_Windows` is classified exactly like
+a real TrueNAS 25.10 domain. This is inert today precisely because nothing
+consumes the friendly name yet, but a future caller must gate on the detected
+platform before preferring it over the raw name.
+
+**⚠ Like the two mechanisms above, this is REASONED from TrueNAS's public
+documentation and is UNIT-TESTED ONLY** — the naming schemes have not been
+confirmed against a real TrueNAS 25.10 or 26 box. Unraid is unaffected:
+an ordinary hand-chosen domain name matches neither shape and passes through
+unchanged.
 
 ---
 
