@@ -223,6 +223,11 @@ questions:
             attrs:
               - variable: bind_mode
                 label: Port Bind Mode
+                description: |
+                  The port bind mode.</br>
+                  - Publish: The port will be published on the host for external access.</br>
+                  - Expose: The port will be exposed for inter-container communication.</br>
+                  - None: The port will not be exposed or published.
                 schema:
                   type: string
                   default: "published"

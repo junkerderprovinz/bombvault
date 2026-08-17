@@ -100,6 +100,10 @@
    name to the host's gateway IP. Harmless to always add. #}
 {% do c1.add_extra_host("host.docker.internal", "host-gateway") %}
 
+{# Must be read-write, not read-only: BombVault's whole reason for needing
+   the socket is to STOP, RECREATE and START other containers around backup
+   and restore, not just inspect them — a read_only=True bind would leave
+   the socket reachable but reject exactly those write calls. #}
 {% do c1.add_docker_socket(read_only=False) %}
 
 {% do c1.add_storage(values.consts.config_path, values.storage.config) %}
