@@ -9,6 +9,32 @@ import "context"
 type VMInfo struct {
 	Name  string
 	State string // "running", "shut off", "paused", ...
+	// FriendlyName is Name normalized for DISPLAY/MATCHING purposes only —
+	// see normalizeDomainName (virshcli.go) for the classifier, and
+	// vmInfoFromNames/Client.titleFromXML for how List resolves it. On
+	// Unraid and a plain libvirt host it is always identical to Name (both
+	// TrueNAS patterns are no-ops there). On TrueNAS 25.10 "Goldeye" it
+	// strips the "{id}_" prefix TrueNAS's own libvirt naming convention
+	// adds (e.g. Name "1_debian" → FriendlyName "debian"). On TrueNAS 26,
+	// where Name becomes the VM's bare UUID, FriendlyName is the domain
+	// XML's <title> when List could recover one (one extra DumpXML call per
+	// UUID-named domain), or the UUID itself as a fallback when it
+	// couldn't. Name — never FriendlyName — stays the identifier every
+	// virsh command in this package/interface takes; nothing in this
+	// package uses FriendlyName for that.
+	//
+	// NOT YET CONSUMED by internal/api/service.go's ListVMs today (confirmed
+	// by reading the real code, not assumed): it builds VMView{Name:
+	// vm.Name, ...} and matches DB targets via byName[vm.Name], never
+	// touching FriendlyName. Wiring it into that layer — so a TrueNAS 26 VM
+	// shows its real name instead of a bare UUID in the UI, and matches its
+	// stored VM record by friendly name instead of the volatile UUID — is a
+	// deliberately separate, not-yet-done follow-up; this task's scope is
+	// internal/virshcli only. Mirrors VMBackupDeps.TPMPath's doc comment
+	// (internal/backup/vm_orchestrator.go) and the zvol section of
+	// docs/vm-backup-ssh-setup.md, which flag the exact same "wired at this
+	// layer only, one layer up is a separate task" gap for Tasks 10/11.
+	FriendlyName string
 }
 
 // DiskRef pairs a writable disk's target device with its current source. It
@@ -49,7 +75,20 @@ type DomainInfo struct {
 	// capture" — mirrors NVRAMPath's own "empty = nothing to do" contract
 	// exactly, so a caller checking `if domain.TPMPath != ""` behaves
 	// correctly without needing to know which of the two cases it was.
-	TPMPath    string
+	TPMPath string
+	// Title is the domain XML's <title> element, trimmed — libvirt's own
+	// free-form display-name field, a direct child of <domain> (NOT nested
+	// under <devices> or <os>). Empty when the domain has no <title>
+	// element — the common case on Unraid and TrueNAS 25.10, where the
+	// friendly name lives in the domain NAME itself, not this element.
+	// TrueNAS 26 is the one platform BombVault knows of that relies on this:
+	// its libvirt domain name becomes the VM's bare UUID, with the
+	// user-chosen name moved here instead — see normalizeDomainName
+	// (virshcli.go) for the classifier that decides when a caller should
+	// bother reading this field, and Client.titleFromXML for the one caller
+	// that does. Mirrors NVRAMPath/TPMPath's own "empty = nothing to
+	// report" convention exactly.
+	Title      string
 	DiskDevice string
 	// SkipSnapshotDevs are target devices that must NOT be snapshotted in a live
 	// backup (cdrom / read-only / source-less disks, AND block-device disks —

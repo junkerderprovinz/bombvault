@@ -159,6 +159,64 @@ func TestParseDomainDetectsBlockDeviceDisk(t *testing.T) {
 	}
 }
 
+// TestParseDomainExtractsTitle pins the TrueNAS 26 support ParseDomain adds
+// for Task 12: a domain XML carrying a <title> element (libvirt's own
+// free-form display-name field, a direct child of <domain>) must surface it
+// in DomainInfo.Title — the field Client.titleFromXML (virshcli.go) reads
+// when a UUID-style domain name needs its friendly name resolved.
+func TestParseDomainExtractsTitle(t *testing.T) {
+	const xml = `
+<domain type='kvm'>
+  <title>my-debian-vm</title>
+  <devices>
+    <disk type='file' device='disk'>
+      <source file='/mnt/cache/vms/Win/vdisk1.img'/>
+      <target dev='vda'/>
+    </disk>
+  </devices>
+</domain>`
+
+	d, err := virshcli.ParseDomain(xml)
+	if err != nil {
+		t.Fatalf("ParseDomain: %v", err)
+	}
+	if d.Title != "my-debian-vm" {
+		t.Fatalf("Title = %q, want my-debian-vm", d.Title)
+	}
+}
+
+// TestParseDomainNoTitleElement is the explicit regression pin: a domain XML
+// with no <title> element (every VM in production today, including TrueNAS
+// 25.10's own id_name-named domains) must parse with Title empty — matching
+// NVRAMPath/TPMPath's own "empty = nothing to report" convention — and every
+// other field must stay unaffected by <title> parsing being added.
+func TestParseDomainNoTitleElement(t *testing.T) {
+	const xml = `
+<domain type='kvm'>
+  <devices>
+    <disk type='file' device='disk'>
+      <source file='/mnt/cache/vms/Win/vdisk1.img'/>
+      <target dev='vda'/>
+    </disk>
+  </devices>
+  <os><nvram>/etc/libvirt/qemu/nvram/Win_VARS.fd</nvram></os>
+</domain>`
+
+	d, err := virshcli.ParseDomain(xml)
+	if err != nil {
+		t.Fatalf("ParseDomain: %v", err)
+	}
+	if d.Title != "" {
+		t.Fatalf("Title = %q, want empty for a domain with no <title> element", d.Title)
+	}
+	if d.NVRAMPath != "/etc/libvirt/qemu/nvram/Win_VARS.fd" {
+		t.Fatalf("NVRAMPath = %q (must be unaffected by <title> parsing)", d.NVRAMPath)
+	}
+	if len(d.DiskPaths) != 1 || d.DiskPaths[0] != "/mnt/cache/vms/Win/vdisk1.img" {
+		t.Fatalf("DiskPaths = %v (must be unaffected)", d.DiskPaths)
+	}
+}
+
 // TestParseDomainFileBackedDiskHasNoBlockDisks is the explicit regression pin:
 // the existing file-backed fixtures (Unraid's own shape) must produce an
 // EMPTY BlockDisks — the new field must never spuriously populate for a

@@ -73,19 +73,111 @@ func (c *Client) List(ctx context.Context) ([]VMInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	var vms []VMInfo
+	var names []string
 	for _, line := range strings.Split(out, "\n") {
-		name := strings.TrimSpace(line)
-		if name == "" {
-			continue
+		if name := strings.TrimSpace(line); name != "" {
+			names = append(names, name)
 		}
-		state, stErr := c.State(ctx, name)
-		if stErr != nil {
+	}
+	return vmInfoFromNames(ctx, names, c.State, c.titleFromXML), nil
+}
+
+// titleFromXML fetches a domain's <title> via DumpXML + ParseDomain — the
+// one extra virsh call vmInfoFromNames makes per UUID-style (TrueNAS 26)
+// domain name, to try to recover a friendly name. Wrapping DumpXML+
+// ParseDomain here (rather than passing both separately) keeps
+// vmInfoFromNames's fake surface down to a single func value, matching
+// stateFn (c.State).
+func (c *Client) titleFromXML(ctx context.Context, name string) (string, error) {
+	x, err := c.DumpXML(ctx, name)
+	if err != nil {
+		return "", err
+	}
+	d, err := ParseDomain(x)
+	if err != nil {
+		return "", err
+	}
+	return d.Title, nil
+}
+
+// truenas2510DomainNameRe matches TrueNAS 25.10 "Goldeye"'s libvirt
+// domain-naming convention: "{id}_{name}" (id = TrueNAS's own numeric VM id,
+// name = the user-chosen VM name), e.g. "1_debian". Anchored at both ends so
+// a name that merely CONTAINS a digits-then-underscore run somewhere (e.g.
+// "my_2_vm", an ordinary Unraid-style name) never false-positives — the run
+// must be the very start of the string.
+var truenas2510DomainNameRe = regexp.MustCompile(`^\d+_(.+)$`)
+
+// uuidDomainNameRe matches a standard 8-4-4-4-12 hex UUID — TrueNAS 26's
+// libvirt domain-naming convention, where the domain name IS the VM's UUID
+// and the user-friendly name moves to the domain XML's <title> element
+// instead (see normalizeDomainName's doc comment).
+var uuidDomainNameRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// normalizeDomainName is a cheap, pure, XML-free classifier for TrueNAS
+// Scale's version-dependent libvirt domain-naming schemes. It never talks to
+// virsh or reads a domain XML — it only pattern-matches the raw string
+// already in hand. Three outcomes:
+//
+//   - TrueNAS 25.10 "Goldeye" style, "{id}_{name}" (e.g. "1_debian"): fully
+//     resolved from the string alone — friendlyName is the part after the
+//     first underscore ("debian"), isVersioned26Style is false.
+//   - TrueNAS 26 style, a bare UUID (e.g.
+//     "550e8400-e29b-41d4-a716-446655440000"): the raw string carries NO
+//     friendly-name information — the user-chosen name lives only in the
+//     domain XML's <title> element, which requires a separate `virsh
+//     dumpxml` call this function deliberately does not make (it stays pure
+//     and XML-free). friendlyName falls back to the UUID itself, and
+//     isVersioned26Style is true — the caller's signal to try to resolve a
+//     better name from <title> if it has (or is willing to fetch) the
+//     domain XML. See Client.List/vmInfoFromNames below for the one caller
+//     that does this.
+//   - Anything else (an ordinary Unraid-style name, or an empty string):
+//     passed through unchanged, isVersioned26Style false. This is the no-op
+//     path — Unraid domain names never match either TrueNAS pattern, so
+//     Unraid behavior is byte-identical to before this function existed.
+func normalizeDomainName(raw string) (friendlyName string, isVersioned26Style bool) {
+	if m := truenas2510DomainNameRe.FindStringSubmatch(raw); m != nil {
+		return m[1], false
+	}
+	if uuidDomainNameRe.MatchString(raw) {
+		return raw, true
+	}
+	return raw, false
+}
+
+// vmInfoFromNames builds List's result from already-split raw domain names,
+// given the state and (versioned-domain) title lookups to use. Split out of
+// List so the friendly-name resolution logic — including the one extra
+// virsh call a TrueNAS 26 (UUID-named) domain needs — is unit-testable with
+// plain fake func values, without a real virsh binary.
+func vmInfoFromNames(
+	ctx context.Context,
+	names []string,
+	stateFn func(ctx context.Context, name string) (string, error),
+	titleFn func(ctx context.Context, name string) (string, error),
+) []VMInfo {
+	var vms []VMInfo
+	for _, name := range names {
+		state, stErr := stateFn(ctx, name)
+		if stErr != nil { // mirrors List's own pre-existing State-failure tolerance
 			state = "unknown"
 		}
-		vms = append(vms, VMInfo{Name: name, State: state})
+		friendly, versioned26 := normalizeDomainName(name)
+		if versioned26 {
+			// One extra virsh call, only for a UUID-style name, to try to
+			// recover the friendly name from <title>. A failure here (or an
+			// absent/empty <title>) must not fail List — fall back to the
+			// UUID normalizeDomainName already returned, the same way a
+			// failed State lookup falls back to "unknown" above rather than
+			// failing the whole call.
+			if title, tErr := titleFn(ctx, name); tErr == nil && title != "" {
+				friendly = title
+			}
+		}
+		vms = append(vms, VMInfo{Name: name, State: state, FriendlyName: friendly})
 	}
-	return vms, nil
+	return vms
 }
 
 // IsNotFound reports whether a virsh error means the domain does not exist on the
@@ -239,6 +331,11 @@ func (c *Client) GuestAgentPing(ctx context.Context, name string) bool {
 // is discarded (xml.Unmarshal ignores unknown elements by default).
 type domainXML struct {
 	XMLName xml.Name `xml:"domain"`
+	// Title is libvirt's own free-form display-name element — a direct
+	// child of <domain>, not nested under <devices> or <os>. See
+	// DomainInfo.Title's doc comment (types.go) for what it's used for
+	// (TrueNAS 26's friendly-name recovery).
+	Title   string `xml:"title"`
 	Devices struct {
 		Disks []struct {
 			Type   string `xml:"type,attr"`
@@ -316,11 +413,13 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
 	tpm := tpmPathFromXML(d.Devices.TPM)
+	title := strings.TrimSpace(d.Title)
 	return DomainInfo{
 		DiskPaths:        disks,
 		Disks:            diskRefs,
 		NVRAMPath:        nvram,
 		TPMPath:          tpm,
+		Title:            title,
 		DiskDevice:       device,
 		SkipSnapshotDevs: skip,
 		BlockDisks:       blockDisks,
