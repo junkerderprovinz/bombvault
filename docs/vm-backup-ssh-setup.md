@@ -170,8 +170,9 @@ device the way it backs up a file.
 
 BombVault detects a block-device-backed disk from the domain XML itself
 (libvirt's own `<source dev="...">` vs `<source file="...">` distinction —
-no guessing) and, for such a disk, uses ZFS's own tools instead of a plain
-file backup:
+no guessing), and the backup/restore orchestrators (`BackupVMGraceful`,
+`BackupVMLive`, `RestoreVM`) ARE wired to invoke, for such a disk, ZFS's own
+tools instead of a plain file backup:
 
 1. `zfs snapshot <dataset>@<name>` — a point-in-time consistency point, taken
    over the same SSH connection as every other command on this page (no local
@@ -198,14 +199,31 @@ to the original's name once the original has been renamed aside).
 documentation — the `/dev/zvol/<pool>/<dataset>` device-node convention and
 `zfs send`/`zfs receive` as the ZFS-native way to move a point-in-time
 dataset byte stream — and is UNIT-TESTED ONLY (argv construction, domain-XML
-detection, and the snapshot/stream/cleanup control flow, all exercised with
-fakes).** It has **never been exercised against a real TrueNAS Scale box with
-a real zvol-backed VM** — no test hardware was available anywhere in this
-project's development environment. Treat it as a documented, unit-tested
-starting point, not a confirmed-working backup path, until it has had a real
-backup → restore-to-a-fresh-dataset → boot-check pass on actual TrueNAS Scale
-hardware. File-backed (Unraid) VM disk backup/restore is completely
-unaffected by this mechanism — it is a wholly separate code path.
+detection, the snapshot/stream/cleanup control flow, AND the wiring into the
+real `BackupVMGraceful`/`BackupVMLive`/`RestoreVM` orchestrators, all
+exercised with fakes).** It has **never been exercised against a real
+TrueNAS Scale box with a real zvol-backed VM** — no test hardware was
+available anywhere in this project's development environment. Treat it as a
+documented, unit-tested starting point, not a confirmed-working backup path,
+until it has had a real backup → restore-to-a-fresh-dataset → boot-check pass
+on actual TrueNAS Scale hardware. File-backed (Unraid) VM disk backup/restore
+is completely unaffected by this mechanism — it is a wholly separate code
+path.
+
+**Remaining gap beyond hardware verification:** the orchestrator-level wiring
+above is real and tested, but BombVault's service layer does not yet call
+into it from a live backup/restore — it never reads a domain's block-device
+disks or constructs the ZFS-over-SSH adapter this mechanism needs. Closing
+that also requires a design decision this project hasn't made yet: because a
+VM with both file-backed and block-device disks always produces *multiple*
+separate restic snapshots (one per block disk, since restic's stdin-backup
+mode can't be combined with a normal file-path backup in one run), and
+BombVault's run history and restore-by-"latest" today assume one snapshot per
+VM backup, there needs to be an explicit way to track and re-find each block
+disk's own snapshot before a restore can rely on it. Until that is decided
+and the service layer is wired up, this mechanism cannot be reached from the
+BombVault UI at all — track this as a follow-up alongside the hardware
+verification pass above.
 
 ---
 
