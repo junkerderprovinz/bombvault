@@ -27,7 +27,7 @@ RUN npm --prefix web run build
 
 # ---- Stage 2: build (cross-compile the static Go binary) --------------------
 # Runs natively on BUILDPLATFORM and cross-compiles via GOOS/GOARCH (set below).
-FROM --platform=$BUILDPLATFORM golang:1.26-bookworm@sha256:6c5605ab3a9a9fb3c4eafe5b3d63cdbf3881caf113262b67862547b54a9db599 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm@sha256:116d58cbd88c1297624acc6e967a060012422bacf9930927e23fb719189c6f36 AS build
 WORKDIR /src
 
 # Module graph first so `go mod download` is cached across source changes.
