@@ -258,6 +258,10 @@ type domainXML struct {
 			} `xml:"target"`
 			ReadOnly *struct{} `xml:"readonly"`
 		} `xml:"disk"`
+		// TPM is nil when the domain has no <tpm> element at all — see
+		// tpmPathFromXML (tpm.go) for how its presence/shape is turned into
+		// DomainInfo.TPMPath.
+		TPM *tpmXML `xml:"tpm"`
 	} `xml:"devices"`
 	OS struct {
 		NVRAM string `xml:"nvram"`
@@ -265,8 +269,11 @@ type domainXML struct {
 }
 
 // ParseDomain parses a libvirt domain XML string and extracts the disk file
-// paths (type="file", device="disk") and NVRAM path (empty for BIOS VMs).
-// It is exported so the service layer can call it without importing virshcli
+// paths (type="file", device="disk"), the NVRAM path (empty for BIOS VMs),
+// and the vTPM device path (empty for a domain with no <tpm> element, or one
+// whose shape doesn't carry a path this package trusts — see tpm.go's
+// package doc comment for exactly which <tpm> shapes are recognized). It is
+// exported so the service layer can call it without importing virshcli
 // internals (the result is plain strings; no libvirt types cross the boundary).
 func ParseDomain(xmlStr string) (DomainInfo, error) {
 	var d domainXML
@@ -308,10 +315,12 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		}
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
+	tpm := tpmPathFromXML(d.Devices.TPM)
 	return DomainInfo{
 		DiskPaths:        disks,
 		Disks:            diskRefs,
 		NVRAMPath:        nvram,
+		TPMPath:          tpm,
 		DiskDevice:       device,
 		SkipSnapshotDevs: skip,
 		BlockDisks:       blockDisks,

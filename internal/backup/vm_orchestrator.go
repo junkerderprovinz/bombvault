@@ -91,6 +91,28 @@ type VMBackupDeps struct {
 	SkipSnapshotDevs []string
 	// NVRAMPath is the container-visible NVRAM path (empty for BIOS VMs).
 	NVRAMPath string
+	// TPMPath is the container-visible vTPM device/state path (empty for a
+	// VM with no vTPM — see virshcli.DomainInfo.TPMPath's doc comment for
+	// how that's determined). Populated ADDITIVELY alongside NVRAMPath and
+	// given the EXACT SAME treatment in runVMGraceful/runVMLive below: when
+	// non-empty it is appended to the restic backup path list right after
+	// NVRAMPath, so it rides along with the disks/NVRAM in the same restic
+	// snapshot — no separate best-effort/non-fatal handling exists AT THIS
+	// LAYER, because NVRAMPath doesn't get any either; that degrade (a
+	// failed capture logs a warning and continues rather than failing the
+	// whole backup) is entirely a property of internal/api/service.go's
+	// SEPARATE SSH-based NVRAM read/write mechanism (bytes captured over SSH
+	// and stored inline in the VM's definition, never touching this
+	// path-list field) — see docs/vm-backup-ssh-setup.md's TrueNAS section
+	// for the precise, honest statement of which mechanism is real. ⚠ LIKE
+	// NVRAMPath, THIS FIELD IS NOT POPULATED BY internal/api/service.go's
+	// ACTUAL BackupVM CALLER TODAY (confirmed by reading the real code, not
+	// assumed) — service.go's BackupVM builds VMBackupDeps without ever
+	// setting NVRAMPath, so both fields are exercised only by this package's
+	// own direct unit tests until a caller wires them up. TPM introduces NO
+	// gap beyond that PRE-EXISTING one; it does not make anything less
+	// wired than NVRAM already is.
+	TPMPath string
 	// RepoPath is the local restic repository path for the vms domain.
 	RepoPath string
 	// TargetID is the run-recording target id.
@@ -178,6 +200,19 @@ type VMRestoreDeps struct {
 	RestoreDirs []VMRestoreDir
 	// NVRAMPath is the absolute container-visible NVRAM path (may be empty).
 	NVRAMPath string
+	// TPMPath is the absolute container-visible vTPM device/state path (may
+	// be empty). Mirrors NVRAMPath's exact treatment in runVMRestore below —
+	// included in the same path-safety validation and the same restic
+	// restore-directory list as DiskPaths/NVRAMPath — and mirrors NVRAMPath's
+	// own real-world wiring status too: see VMBackupDeps.TPMPath's doc
+	// comment above for the full, precise statement of what is and is not
+	// wired today. The SEPARATE, actually-live NVRAM write-back mechanism
+	// (internal/api/service.go's SSH WriteFile, best-effort/non-fatal) is
+	// invoked through PreDefine below, NOT through this field — PreDefine is
+	// already a generic caller-supplied hook, so it needs no change here to
+	// carry TPM state too once a caller (service.go, out of this task's
+	// file scope) builds a closure that does so.
+	TPMPath string
 	// DomainXML is the captured libvirt domain XML, written to a temp file and
 	// passed to virsh define so the VM reappears in the VM Manager.
 	DomainXML string
@@ -266,7 +301,7 @@ func finishVMRun(d VMBackupDeps, runID string, summary Summary, backupErr error)
 //	recordRunStart
 //	→ IsActive (capture wasRunning)
 //	→ Shutdown → poll State until "shut off" (timeout → Destroy)
-//	→ restic Backup (diskPaths + nvram, tags ["vm:<name>", "p2"])
+//	→ restic Backup (diskPaths + nvram + tpm, tags ["vm:<name>", "p2"])
 //	→ FINALLY Start (only if wasRunning — mirrors BackupContainer's always-start)
 //	→ recordRunFinish(success|failed)
 //	→ re-throw on failure
@@ -316,10 +351,13 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			}
 		}
 
-		// Build path list: disks + nvram (if present).
+		// Build path list: disks + nvram + tpm (if present).
 		paths := append([]string(nil), d.DiskPaths...)
 		if d.NVRAMPath != "" {
 			paths = append(paths, d.NVRAMPath)
+		}
+		if d.TPMPath != "" {
+			paths = append(paths, d.TPMPath)
 		}
 
 		tags := []string{"vm:" + d.Name, "p2"}
@@ -413,6 +451,9 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if d.NVRAMPath != "" {
 		paths = append(paths, d.NVRAMPath)
 	}
+	if d.TPMPath != "" {
+		paths = append(paths, d.TPMPath)
+	}
 	tags := []string{"vm:" + d.Name, "p2", "live"}
 	summary, backupErr := d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 
@@ -486,7 +527,7 @@ func waitShutOff(ctx context.Context, vm VM, name string, maxPolls int) error {
 //	guard Confirmed + validate snapshotID (hex) + validate paths
 //	→ recordRunStart
 //	→ if VM exists: Destroy (if running) + Undefine
-//	→ restic RestorePaths (diskPaths + nvram, per-path back to origin)
+//	→ restic RestorePaths (diskPaths + nvram + tpm, per-path back to origin)
 //	→ write DomainXML to DataDir/vm-define/<name>.xml → Define
 //	→ Autostart(wasAutostart) → Start (if StartAfter)
 //	→ recordRunFinish(success|failed)
@@ -524,6 +565,9 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	if d.NVRAMPath != "" {
 		allPaths = append(allPaths, d.NVRAMPath)
 	}
+	if d.TPMPath != "" {
+		allPaths = append(allPaths, d.TPMPath)
+	}
 	if len(allPaths) == 0 {
 		return fmt.Errorf("vm restore: no paths to restore (unsafe)")
 	}
@@ -557,8 +601,9 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 
-	// VM disk images and NVRAM are FILES; restic's <id>:<subpath> subtree form
-	// needs a DIRECTORY (a file path fails with "not a directory").
+	// VM disk images, NVRAM, and TPM state are all FILES; restic's
+	// <id>:<subpath> subtree form needs a DIRECTORY (a file path fails with
+	// "not a directory").
 	if len(d.RestoreDirs) > 0 {
 		// REMAPPED restore (cross-instance): each source subtree is restored INTO a
 		// chosen destination dir, so the disks land on the destination host's pool

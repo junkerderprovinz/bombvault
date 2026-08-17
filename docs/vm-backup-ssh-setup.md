@@ -225,6 +225,76 @@ and the service layer is wired up, this mechanism cannot be reached from the
 BombVault UI at all — track this as a follow-up alongside the hardware
 verification pass above.
 
+### 4. vTPM state (Secure-Boot/Windows-11-class guests)
+
+A TrueNAS Scale VM can also have a **vTPM** (virtual TPM) device — required
+for Secure Boot and for Windows 11 guests. Its state lives **outside** the
+domain's disk and NVRAM, so a backup that only captures those two would leave
+a restored Secure-Boot/vTPM guest unable to boot correctly (a fresh, empty
+TPM identity, not the guest's real one).
+
+BombVault parses a domain's `<tpm>` element (`internal/virshcli`) the same
+way it already parses `<os><nvram>`. libvirt's schema supports several `<tpm>`
+backend types, but only the **passthrough** shape
+(`<backend type='passthrough'><device path='...'/></backend>`) is documented
+to carry an explicit path directly in the domain XML — and that shape is a
+real hardware TPM chip, not the kind of vTPM TrueNAS actually provisions. The
+**emulated** (software) vTPM TrueNAS uses for Secure Boot/Windows 11 guests
+does not, per libvirt's public documentation, expose its swtpm state
+directory as a domain-XML attribute; a newer `external`-backend shape can
+carry a UNIX socket path and is plausibly how TrueNAS's middleware wires its
+vTPM, but its exact attribute layout as rendered by TrueNAS is **not
+confirmed against real hardware**. Rather than guess at either shape,
+BombVault's parser recognizes only the well-documented passthrough case and
+otherwise reports "no TPM path found" — the same clean, non-erroring degrade
+a BIOS domain (no `<nvram>`) already gets. TrueNAS's own documented,
+fixed-path convention for vTPM state
+(`/var/db/system/vm/tpm/{id}_{name}_tpm_state`, mirroring its NVRAM
+convention at `/var/db/system/vm/nvram/{id}_{name}_VARS.fd`) exists in code
+(`virshcli.TPMFixedPath`) as an explicit, documented fallback — but it is
+**not called anywhere automatically**, deliberately: reconstructing it is
+only ever correct once a caller has confirmed it's actually talking to
+TrueNAS Scale and knows the VM's real numeric id, neither of which the parser
+itself can know, and this project would rather degrade to "TPM not captured"
+than silently guess a possibly-wrong path.
+
+**Exactly how deep this is wired today (verified by reading the real code,
+not assumed):** NVRAM's own *real*, production-reachable capture/restore
+mechanism is entirely the SSH-based one described at the top of this
+document — read over SSH into the VM's stored definition at backup time,
+written back over SSH just before `virsh define` at restore time, both
+best-effort and non-fatal (a failed read/write only logs a warning; the
+backup/restore itself never fails because of it). That mechanism lives
+entirely in `internal/api/service.go`, which is **outside this task's file
+scope** (`internal/virshcli` + `internal/backup/vm_orchestrator.go`). Inside
+that scope, `internal/backup/vm_orchestrator.go` *also* carries a second,
+separate, path-list-based NVRAM mechanism (`VMBackupDeps.NVRAMPath` /
+`VMRestoreDeps.NVRAMPath` — the path is simply added to the same restic
+backup/restore call as the disk images) — but reading the real
+`BackupVM`/`RestoreVM` code in `service.go` shows it **never populates
+that field**; it is exercised only by `vm_orchestrator.go`'s own direct unit
+tests, not by a real backup/restore today. This is a pre-existing situation,
+not something introduced for TPM.
+
+TPM support matches that same layer precisely, introducing no new gap and no
+new looseness: `VMBackupDeps.TPMPath` / `VMRestoreDeps.TPMPath` are wired into
+the exact same real call sites the existing `NVRAMPath` field already uses
+(`runVMGraceful`, `runVMLive`, `runVMRestore` in `vm_orchestrator.go` —
+included in the same restic path list, validated by the same restore
+path-safety guard), proven by unit tests that assert the actual paths restic
+receives. Extending the *real*, SSH-based, best-effort NVRAM mechanism to
+also carry TPM bytes is a `service.go` change and is **not done by this
+task** — the restore-side write-back hook it would plug into
+(`VMRestoreDeps.PreDefine`, a generic caller-supplied closure) needs no
+change to support this once that integration happens.
+
+**⚠ Like the zvol mechanism above, this is REASONED from libvirt's and
+TrueNAS's public documentation and is UNIT-TESTED ONLY** — it has never been
+exercised against a real TrueNAS Scale box with a real vTPM-enabled guest.
+NVRAM-only (Unraid) VM backup/restore is completely unaffected: TPM handling
+is purely additive, and a domain with no `<tpm>` element parses and
+backs up/restores byte-identically to before this feature existed.
+
 ---
 
 ## Troubleshooting

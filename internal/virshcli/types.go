@@ -38,8 +38,18 @@ type DomainInfo struct {
 	// Disks pairs each writable FILE-backed disk's target dev with its source
 	// (parallels DiskPaths). Used to detect/commit a leftover live-snapshot
 	// overlay. NEVER includes a block-device disk — see BlockDisks.
-	Disks      []DiskRef
-	NVRAMPath  string
+	Disks     []DiskRef
+	NVRAMPath string
+	// TPMPath is the vTPM device's discoverable state/device path, parsed
+	// from the domain XML's <tpm> element — empty in exactly two cases that
+	// are deliberately indistinguishable to a caller: no <tpm> element at
+	// all, or a <tpm> element present whose shape doesn't carry a path
+	// BombVault recognizes as safe to trust (see ParseDomain's doc comment
+	// for exactly which shapes are recognized). Both degrade to "nothing to
+	// capture" — mirrors NVRAMPath's own "empty = nothing to do" contract
+	// exactly, so a caller checking `if domain.TPMPath != ""` behaves
+	// correctly without needing to know which of the two cases it was.
+	TPMPath    string
 	DiskDevice string
 	// SkipSnapshotDevs are target devices that must NOT be snapshotted in a live
 	// backup (cdrom / read-only / source-less disks, AND block-device disks —
