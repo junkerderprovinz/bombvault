@@ -4,11 +4,33 @@
    Dockerfile) and always runs as root: it needs unrestricted read/write
    access to arbitrary host paths (other containers' appdata, owned by many
    different users/groups) and root-equivalent control of the Docker socket.
-   Deliberately NOT calling set_user() here — the container runs as whatever
-   the image itself defaults to (root), matching app.yaml's run_as_context.
    No permissions/perms container either: root needs none of the chown-style
    fixups that container needs to perform. #}
 {% set c1 = tpl.add_container(values.consts.bombvault_container_name, "image") %}
+
+{# Explicit, matching the image's actual default (no USER directive = root)
+   and app.yaml's run_as_context — same as the urbackup community app
+   (c1.set_user(0,0)). Functionally identical to leaving this unset (the
+   image already defaults to root either way), but the render's own
+   generated x-notes security summary otherwise shows "User: unknown /
+   Group: unknown" instead of clearly stating root, which is worse for a
+   TrueNAS user reviewing that notice before installing a root-equivalent
+   app. #}
+{% do c1.set_user(0, 0) %}
+
+{# The library drops ALL capabilities by default regardless of which user
+   the container runs as (cap_drop: [ALL], unconditional) — running as root
+   (uid 0, see above) does NOT get any of them back implicitly. BombVault
+   genuinely needs some of them back: restic backup/restore reads and
+   restores original ownership/permissions on arbitrary host files it does
+   not own (CHOWN to restore original uid/gid, FOWNER + DAC_OVERRIDE to
+   read/write those files and change their mode regardless of owner).
+   Baseline matches the urbackup community app (another root-only backup
+   tool under this same library): CHOWN, DAC_OVERRIDE, FOWNER, SETGID,
+   SETUID. Deliberately NOT adding SETFCAP/SYS_CHROOT (rsyncd's larger set)
+   — BombVault does not set file capabilities or chroot, so that would be
+   over-granting. #}
+{% do c1.add_caps(["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]) %}
 
 {# Fixed, predictable hostname — same reasoning as this app's generic-Docker-
    host compose file (deploy/docker-compose.generic.yml in the source repo):
@@ -27,6 +49,16 @@
    instead needs no extra tool, exactly like the netbird/tailscale community
    apps use their own CLI as the health probe. #}
 {% do c1.healthcheck.set_custom_test(["CMD", "/usr/local/bin/bombvault", "healthcheck"]) %}
+{# set_custom_test() only overrides the command — interval/timeout/retries/
+   start_period keep the library's own defaults (30s/5s/5/15s) unless
+   overridden separately. The Dockerfile's own HEALTHCHECK deliberately
+   uses --start-period=40s ("covers the cold start: store open + first
+   sweep") and --retries=3; interval (30s) and timeout (5s) already match
+   the library defaults, so only these two need an explicit override to
+   preserve the image's real intent instead of silently reverting to the
+   library's generic default. #}
+{% do c1.healthcheck.set_start_period(40) %}
+{% do c1.healthcheck.set_retries(3) %}
 
 {% do c1.environment.add_env("APP_KEY", values.bombvault.app_key) %}
 {# Declares the platform explicitly instead of relying on auto-detection —

@@ -13,8 +13,10 @@ resources:
 TZ: Etc/UTC
 
 bombvault:
-  # Not a real secret — 64 lowercase hex chars for schema/CI validation only.
-  app_key: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd"
+  # Not a real secret — 64 lowercase hex chars for schema/CI validation only
+  # (length verified with `python3 -c "print(len(k))"`, not eyeballed — a
+  # too-short value here previously slipped past review once already).
+  app_key: "ecc786b571f536ebb075da4bfe0ff40f6218631903a7af98722f81d78ee20e28"
   http_only: false
   backup_max_hours: null
   self_container_name: ""

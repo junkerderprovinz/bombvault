@@ -351,13 +351,18 @@ questions:
             persistent data. Backup sources AND destinations both live
             here by default (the exact subpaths are picked later in the
             BombVault WebUI). Deliberately NOT offered as an ixVolume
-            here (unlike Config Storage above): BombVault translates the
-            bind-mount sources Docker reports for OTHER containers into
-            paths under this SAME mount to find their appdata, so a fresh,
-            empty, auto-created dataset cannot reach anything — this must
-            be a real, pre-existing directory (e.g. the dataset/pool root
-            your apps already live under), mounted here UNCHANGED
-            (identity bind: same path on both sides).
+            here (unlike Config Storage above): a fresh, empty,
+            auto-created dataset would not contain any of your other
+            apps' existing data. This path is mounted into the container
+            at a fixed internal location, and BombVault is told the REAL
+            host-side path you enter here (via HOST_SOURCE_ROOT) so it can
+            translate the bind-mount sources Docker reports for OTHER
+            containers (which are expressed in terms of THIS real host
+            path) into that fixed internal location — the same
+            fixed-target/real-source split-root scheme the Unraid
+            template uses (there /mnt -> /host/user), not a literal
+            identity bind. Point it at a real, pre-existing directory —
+            e.g. the dataset/pool root your apps already live under.
           schema:
             type: hostpath
             required: true
