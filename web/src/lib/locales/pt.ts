@@ -966,6 +966,8 @@ const pt: Partial<Translations> = {
   "files.backupAll": "Fazer backup de tudo agora",
   "files.discoverHint": "Perdeu a lista de conjuntos? Reconstrua-a a partir dos backups no armazenamento.",
   "files.cancel": "Cancelar",
+  "files.addPreset": "Adicionar predefinição: Configuração do sistema",
+  "files.addPresetHint": "Um ponto de partida conservador para a configuração ao nível do host fora dos seus contêineres — não é uma garantia de integralidade. Revise a pasta antes de salvar.",
   "settings.filesEnabled": "Pastas",
   "settings.filesPath": "Caminho das pastas",
   "jobs.filesSection": "Pastas",

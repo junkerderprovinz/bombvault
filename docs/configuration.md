@@ -14,6 +14,8 @@ This page covers the container's environment variables, the mounts the template 
 | `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
 | `HOST_SOURCE_ROOT` | No | The host path mounted as **Host Data** (default `/mnt`). BombVault translates the bind-mount sources Docker reports into paths under this mount. Change only if you mounted a different host root. |
+| `DATA_ROOT_SEGMENTS` | No | Comma-separated path-segment names that mark a bind-mount source as backup data (default `appdata`, matching Unraid's `/mnt/user/appdata/<container>` convention). A container's bind mount is auto-selected for backup when ANY listed segment appears as a full path segment of its host source — for example `DATA_ROOT_SEGMENTS=appdata,config` also picks up a `.../config` bind. See [Backup source detection](#backup-source-detection) for the other, always-on ways a container's data folder is found. |
+| `PLATFORM` | No | Forces which platform BombVault treats itself as running on, instead of auto-detecting: `unraid`, `generic`, or `truenas` (default unset — auto-detects Unraid by probing for its `dockerMan` marker under the flash mount, otherwise `generic`; an unrecognized value also falls back to `generic`, logged). Set it explicitly on a generic Docker host or TrueNAS Scale rather than relying on the Unraid-only auto-probe — the generic compose file does this. Changes the appdata-fallback convention, the cross-instance restore-destination defaults, and whether the Unraid-only notification/companion-plugin steps are attempted at all (see `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | No | The name of the BombVault container itself, so it never backs up (and thus stops) itself (default `BombVault`; auto-detected via the hostname on bridge networking). |
 | `BACKUP_MAX_HOURS` | No | Maximum wall-clock hours a single backup run may hold its domain lock before it is force-cancelled (a guard so a wedged run cannot block the domain forever). Empty (the default) uses `48`. Raise it for very large or slow cloud backups (a run cancelled at the cap fails with `context deadline exceeded`). Set `0` to disable the cap entirely. |
 | `TZ` | No | Timezone for the scheduler (for example `Europe/Berlin`). |
@@ -26,6 +28,15 @@ Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,con
 
 !!! note "Host integration check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
+
+## Backup source detection {#backup-source-detection}
+
+For each container, BombVault auto-selects which bind mounts and named volumes to back up. A path is picked up when any of the following applies (you can always override the result per container in the container's **Backup paths**):
+
+- **Data-root segment match:** the bind's host source contains one of the `DATA_ROOT_SEGMENTS` segments as a full path component (default `appdata` only).
+- **Docker named volumes** are always included — they have no throwaway equivalent, so there is nothing to filter — **but only when the volume's real host storage path is itself reachable through the Host Data mount**, exactly like any other host path BombVault backs up. Docker's default local-volume driver stores a volume under the daemon's own data root — `/var/lib/docker/volumes/<name>/_data` unless you've customized it (check with `docker info -f '{{.DockerRootDir}}'`) — which is NOT covered by the narrow, single-directory Host Data mount the generic `docker-compose.yml` uses by default. An unreachable volume is silently skipped, not an error. To actually back up named volumes on a generic host, point Host Data (and `HOST_SOURCE_ROOT`) at a common ancestor that also covers the Docker data root — see the compose file's Host Data comment for the tradeoff (Unraid sidesteps this by mounting all of `/mnt`, its own universal top-level convention, for the same reason).
+- **Docker Compose project directory:** if the container carries the standard `com.docker.compose.project.working_dir` label (set automatically by `docker compose up`), that directory is added too, regardless of whether any bind matched a data-root segment.
+- **`bombvault.data` label override:** set the label `bombvault.data=true` on a container to include ALL of its bind mounts, for a layout neither convention above catches (for example a single `/srv/plex/config` bind with no Compose project). Any non-empty value other than `false` counts as truthy; an absent label or `bombvault.data=false` changes nothing.
 
 ## Security model
 

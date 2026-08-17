@@ -966,6 +966,8 @@ const da: Partial<Translations> = {
   "files.backupAll": "Sikkerhedskopiér alt nu",
   "files.discoverHint": "Mistet sætlisten? Genopbyg den fra sikkerhedskopierne i lageret.",
   "files.cancel": "Annuller",
+  "files.addPreset": "Tilføj forudindstilling: Systemkonfiguration",
+  "files.addPresetHint": "Et forsigtigt udgangspunkt for konfiguration på værtsniveau uden for dine containere — ikke en påstand om fuldstændighed. Gennemgå mappen før du gemmer.",
   "settings.filesEnabled": "Mapper",
   "settings.filesPath": "Mapper-sti",
   "jobs.filesSection": "Mapper",

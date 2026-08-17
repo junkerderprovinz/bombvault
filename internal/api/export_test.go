@@ -31,6 +31,7 @@ func TestServiceExportContainer(t *testing.T) {
 		HostMountRoot:     root,
 		HostSourceRoot:    root, // identity translation: bind source == container path
 		FlashTemplatesDir: flash,
+		DataRootSegments:  []string{"appdata"}, // config.Load's default; this test builds Config by hand
 	}
 	st := newMemStore(t)
 	s := mustSettings(t, st)

@@ -40,6 +40,16 @@ var mountinfoPath = "/proc/self/mountinfo"
 //
 // Remote repos have no local backing store and are never gated on a mount.
 //
+// This discriminator keys off s.cfg.HostMountRoot ALONE — it never reads
+// HostSourceRoot, and makes no assumption about how the two relate. That
+// makes it correct under both Unraid's split-root default (HostSourceRoot=/mnt
+// translated to HostMountRoot=/host/user) and the generic/TrueNAS identity-root
+// default (HostSourceRoot == HostMountRoot at a real path, e.g. both /data —
+// no path translation): either way it excludes "/" and HostMountRoot itself
+// exactly as documented above. This is scoped to an identity root at a real,
+// non-root path; HostMountRoot=="/" itself is a distinct, more extreme case
+// (it would collide with the exclude-root rule) and is not handled here.
+//
 // On ANY error reading or parsing the mount table it is CONSERVATIVE and returns
 // false (destination treated as NOT mounted), so the #55 protection still holds:
 // a marker is never cleared on uncertainty.

@@ -966,6 +966,8 @@ const tr: Partial<Translations> = {
   "files.backupAll": "Şimdi tümünü yedekle",
   "files.discoverHint": "Set listesi mi kayboldu? Depolamadaki yedeklerden yeniden oluşturun.",
   "files.cancel": "İptal",
+  "files.addPreset": "Ön ayar ekle: Sistem yapılandırması",
+  "files.addPresetHint": "Konteynerlerinizin dışındaki host düzeyi yapılandırma için temkinli bir başlangıç noktası — eksiksizlik iddiası değildir. Kaydetmeden önce klasörü gözden geçirin.",
   "settings.filesEnabled": "Klasörler",
   "settings.filesPath": "Klasörler yolu",
   "jobs.filesSection": "Klasörler",

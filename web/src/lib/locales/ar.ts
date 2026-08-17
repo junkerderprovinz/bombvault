@@ -969,6 +969,8 @@ const ar: Partial<Translations> = {
   "files.backupAll": "نسخ الكل احتياطياً الآن",
   "files.discoverHint": "فقدت قائمة المجموعات؟ أعد بناءها من النسخ الاحتياطية في التخزين.",
   "files.cancel": "إلغاء",
+  "files.addPreset": "إضافة قالب جاهز: تهيئة النظام",
+  "files.addPresetHint": "نقطة بداية متحفظة لتهيئة النظام على مستوى المضيف خارج الحاويات — وليست ادعاءً بالاكتمال. راجع المجلد قبل الحفظ.",
   "settings.filesEnabled": "المجلدات",
   "settings.filesPath": "مسار المجلدات",
   "jobs.filesSection": "المجلدات",

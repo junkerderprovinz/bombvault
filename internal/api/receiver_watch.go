@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -232,7 +233,7 @@ func (s *Service) notifyReceiverDeadMan(ctx context.Context, c notify.Config, re
 	msg := fmt.Sprintf("No backup received from %s on %s in %dh", source, repo, hours)
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "receiver",
 		notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: no backup received", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -247,7 +248,7 @@ func (s *Service) notifyReceiverIntegrity(ctx context.Context, c notify.Config, 
 	msg := fmt.Sprintf("Integrity check FAILED on %s: %s", repo, detail)
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "receiver",
 		notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil {
+	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: integrity check failed", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}

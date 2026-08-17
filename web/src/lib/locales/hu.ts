@@ -969,6 +969,8 @@ const hu: Partial<Translations> = {
   "files.backupAll": "Összes mentése most",
   "files.discoverHint": "Elveszett a készletlista? Építsd újra a tárhely mentéseiből.",
   "files.cancel": "Mégse",
+  "files.addPreset": "Előbeállítás hozzáadása: Rendszerkonfiguráció",
+  "files.addPresetHint": "Óvatos kiindulópont a konténereken kívüli, host-szintű konfigurációhoz — nem teljességi igény. Mentés előtt ellenőrizd a mappát.",
   "settings.filesEnabled": "Mappák",
   "settings.filesPath": "Mappák útvonala",
   "jobs.filesSection": "Mappák",

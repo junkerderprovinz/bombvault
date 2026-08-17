@@ -958,6 +958,8 @@ const ja: Partial<Translations> = {
   "files.backupAll": "今すぐすべてバックアップ",
   "files.discoverHint": "セット一覧を失いましたか？ストレージ内のバックアップから再構築できます。",
   "files.cancel": "キャンセル",
+  "files.addPreset": "プリセットを追加: ホストのシステム構成",
+  "files.addPresetHint": "コンテナの外側にあるホストレベルの構成のための、控えめな出発点です — 網羅性を保証するものではありません。保存前にフォルダを確認してください。",
   "settings.filesEnabled": "フォルダー",
   "settings.filesPath": "フォルダーパス",
   "jobs.filesSection": "フォルダー",

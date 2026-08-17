@@ -966,6 +966,8 @@ const fr: Partial<Translations> = {
   "files.backupAll": "Tout sauvegarder maintenant",
   "files.discoverHint": "Liste des jeux perdue ? Reconstruisez-la depuis les sauvegardes du stockage.",
   "files.cancel": "Annuler",
+  "files.addPreset": "Ajouter un préréglage : Configuration système",
+  "files.addPresetHint": "Un point de départ prudent pour la configuration au niveau de l'hôte, en dehors de vos conteneurs — ce n'est pas une garantie d'exhaustivité. Vérifiez le dossier avant d'enregistrer.",
   "settings.filesEnabled": "Dossiers",
   "settings.filesPath": "Chemin des dossiers",
   "jobs.filesSection": "Dossiers",

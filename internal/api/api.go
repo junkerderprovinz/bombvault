@@ -229,6 +229,12 @@ func (h *Handler) Router() http.Handler {
 	// Files endpoints (the files domain — named host folders backed up as file
 	// sets, #62).
 	mux.HandleFunc("GET /api/files", h.handleListFileSets)
+	// Read-only "Host system config" preset suggestion (Task 7 of the
+	// platform-expansion plan; the files domain's flash-domain analogue on
+	// generic/TrueNAS hosts). "preset" is a literal segment, not a {id}
+	// value, so it never collides with the PATCH/DELETE
+	// /api/files/sets/{id} routes below.
+	mux.HandleFunc("GET /api/files/sets/preset", h.handleFileSetPreset)
 	mux.HandleFunc("POST /api/files/sets", h.handleCreateFileSet)
 	mux.HandleFunc("PATCH /api/files/sets/{id}", h.handlePatchFileSet)
 	mux.HandleFunc("DELETE /api/files/sets/{id}", h.handleDeleteFileSet)

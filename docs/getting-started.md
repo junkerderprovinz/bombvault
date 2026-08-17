@@ -30,6 +30,20 @@ The easiest path is **Community Applications**.
     2. Search for **BombVault** in Templates.
     3. Set the required variables and click **Apply**.
 
+## Generic Docker host
+
+Not on Unraid? BombVault also runs as a plain container on any Docker host (this is also what powers containers-only support on TrueNAS Scale, ahead of its own app-catalog entry).
+
+1. Grab the ready-to-edit [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) from the repo.
+2. Set `APP_KEY` (see below) and point the Host Data volume at your real data root — the file's comments walk through both.
+3. `docker compose up -d`, then open `https://<host-ip>:3443/`.
+
+What's different from Unraid:
+
+- **No flash/USB domain.** There is no boot USB to capture or restore, so the Flash domain in Settings has nothing to do here. Instead, the Files domain offers a one-click **Add preset: Host system config** suggestion (a starting `/etc` file set you review and edit before saving) as a practical, generic equivalent.
+- **No Unraid-native notifications.** BombVault's own in-app notification channels (webhook, off-site failure alerts, etc.) work as normal; only the Unraid-specific push to its native notification system is skipped, since there is no such system to push to.
+- **VM backup is opt-in and needs a separate libvirtd host reachable over SSH** — see the commented-out block in the compose file. There is no VM manager built into a generic Docker host itself.
+
 ## The one required setting
 
 The only variable you must set is `APP_KEY`, a 32-byte hex secret (64 hex characters) used to derive the restic repository password.
@@ -40,7 +54,7 @@ Generate one on any machine:
 openssl rand -hex 32
 ```
 
-Paste the result into the `APP_KEY` field of the template.
+Paste the result into the `APP_KEY` field of the template (Unraid), or the `APP_KEY` environment variable in `docker-compose.yml` (generic Docker host).
 
 !!! danger "Do not lose your APP_KEY"
     Losing `APP_KEY` makes your encrypted backups unrecoverable. Store it somewhere safe and separate from the server. Once BombVault is running, use its one-click **encryption-key recovery kit** (see [Off-site & recovery](offsite-recovery.md)) to save the full recovery bundle.

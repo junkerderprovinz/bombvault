@@ -17,6 +17,7 @@ import (
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
@@ -35,18 +36,39 @@ type Client struct {
 // compile-time interface check.
 var _ Docker = (*Client)(nil)
 
-// New constructs a Client connected to the host docker.sock with API-version
-// negotiation (so it works across Unraid Docker versions).
+// New constructs a Client with API-version negotiation (so it works across
+// Unraid Docker versions), connected to the Docker daemon.
+//
+// DOCKER_HOST is honored when set (rootless Docker, Podman); otherwise it
+// defaults to the standard /var/run/docker.sock, matching every prior
+// BombVault release.
 func New() (*Client, error) {
-	api, err := client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithHost("unix:///var/run/docker.sock"),
-		client.WithAPIVersionNegotiation(),
-	)
+	api, err := client.NewClientWithOpts(dockerClientOpts()...)
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: new client: %w", err)
 	}
 	return &Client{api: api}, nil
+}
+
+// dockerClientOpts builds the SDK options New() connects with. It is split out
+// from New so the DOCKER_HOST precedence can be asserted directly: client.Opt
+// values are unexported closures with no way to inspect "was WithHost applied"
+// after the fact, other than executing them against a real *client.Client and
+// reading back its DaemonHost(), which this helper's own test does.
+//
+// client.FromEnv already applies DOCKER_HOST (via WithHostFromEnv) when it is
+// set. The unconditional client.WithHost("unix:///var/run/docker.sock") that
+// used to follow it therefore silently clobbered any operator-set DOCKER_HOST —
+// making rootless Docker ($XDG_RUNTIME_DIR/docker.sock) and Podman
+// (/run/podman/podman.sock) unreachable. The fallback host is now only added
+// when DOCKER_HOST is unset, so FromEnv's choice wins whenever the operator set
+// one, and the Unraid default (unset DOCKER_HOST) is unchanged.
+func dockerClientOpts() []client.Opt {
+	opts := []client.Opt{client.FromEnv}
+	if os.Getenv(client.EnvOverrideHost) == "" {
+		opts = append(opts, client.WithHost("unix:///var/run/docker.sock"))
+	}
+	return append(opts, client.WithAPIVersionNegotiation())
 }
 
 // Close releases the underlying SDK client.
@@ -134,7 +156,56 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	if err != nil {
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
+	c.fillVolumeMountSources(ctx, name, resp.Mounts)
 	return mapInspect(resp), nil
+}
+
+// needsVolumeMountpoint reports whether a Mounts entry is a named-volume mount
+// the daemon reported without a host-side Source. Normally the daemon already
+// populates Source for a volume mount with its real storage location (e.g.
+// /var/lib/docker/volumes/<name>/_data), so this is the rare fallback case —
+// but resolveAppdataPaths (internal/api/service.go) needs a resolved Source to
+// back up a named volume at all, so it is worth the one extra VolumeInspect
+// call when the daemon left it empty.
+func needsVolumeMountpoint(m container.MountPoint) bool {
+	return m.Type == mount.TypeVolume && m.Source == "" && m.Name != ""
+}
+
+// fillVolumeMountSources resolves the host-side Source for any volume mount
+// needsVolumeMountpoint flags, via VolumeInspect, mutating mounts in place.
+// Best-effort, matching the same pattern as CreateAndStart's secondary-network
+// reconnect: a volume lookup failure just leaves Source empty rather than
+// failing the whole container inspect over one volume, but it is still logged
+// (not silently dropped) — mapInspect then carries the empty Source through
+// like any other unresolvable mount, and resolveAppdataPaths skips it.
+func (c *Client) fillVolumeMountSources(ctx context.Context, name string, mounts []container.MountPoint) {
+	for i := range mounts {
+		if !needsVolumeMountpoint(mounts[i]) {
+			continue
+		}
+		mp, err := c.VolumeInspect(ctx, mounts[i].Name)
+		if err != nil {
+			log.Printf("dockercli: inspect %q: resolve volume %q mountpoint failed (continuing): %v", name, mounts[i].Name, err)
+			continue
+		}
+		mounts[i].Source = mp
+	}
+}
+
+// VolumeInspect returns a named volume's real host-side storage location (its
+// Mountpoint, e.g. /var/lib/docker/volumes/<name>/_data), or "" if the volume
+// does not exist. Mirrors ImageID's not-found-returns-empty-string style so a
+// caller can treat "gone" and "never existed" the same way without special-
+// casing an error type.
+func (c *Client) VolumeInspect(ctx context.Context, name string) (string, error) {
+	vol, err := c.api.VolumeInspect(ctx, name)
+	if err != nil {
+		if cerrdefs.IsNotFound(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("dockercli: volume inspect: %w", err)
+	}
+	return vol.Mountpoint, nil
 }
 
 // Stop stops a container, sending SIGKILL after timeout if it has not exited.

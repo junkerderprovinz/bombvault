@@ -13,6 +13,10 @@ func svcWithMount() *Service {
 	return &Service{cfg: config.Config{
 		HostSourceRoot: "/mnt",
 		HostMountRoot:  "/host/user",
+		// Explicit, not relying on any in-function default: config.Load always
+		// populates this in production, so tests that bypass Load must set it
+		// themselves to exercise the real (non-empty-segments) code path.
+		DataRootSegments: []string{"appdata"},
 	}}
 }
 

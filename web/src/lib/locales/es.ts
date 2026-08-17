@@ -964,6 +964,8 @@ const es: Partial<Translations> = {
   "files.backupAll": "Copiar todo ahora",
   "files.discoverHint": "¿Perdiste la lista de conjuntos? Reconstrúyela desde las copias del almacenamiento.",
   "files.cancel": "Cancelar",
+  "files.addPreset": "Añadir preset: Configuración del sistema",
+  "files.addPresetHint": "Un punto de partida conservador para la configuración a nivel de host fuera de tus contenedores — no es una afirmación de completitud. Revisa la carpeta antes de guardar.",
   "settings.filesEnabled": "Carpetas",
   "settings.filesPath": "Ruta de carpetas",
   "jobs.filesSection": "Carpetas",

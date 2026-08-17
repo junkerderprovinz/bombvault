@@ -963,6 +963,8 @@ const nl: Partial<Translations> = {
   "files.backupAll": "Nu alles back-uppen",
   "files.discoverHint": "Setlijst kwijt? Bouw hem opnieuw op vanuit de back-ups in de opslag.",
   "files.cancel": "Annuleren",
+  "files.addPreset": "Preset toevoegen: Systeemconfiguratie",
+  "files.addPresetHint": "Een voorzichtig startpunt voor configuratie op hostniveau buiten je containers — geen claim van volledigheid. Controleer de map voordat je opslaat.",
   "settings.filesEnabled": "Mappen",
   "settings.filesPath": "Mappen-pad",
   "jobs.filesSection": "Mappen",

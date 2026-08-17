@@ -966,6 +966,8 @@ const he: Partial<Translations> = {
   "files.backupAll": "גבה הכול עכשיו",
   "files.discoverHint": "אבדה רשימת הערכות? בנה אותה מחדש מהגיבויים באחסון.",
   "files.cancel": "ביטול",
+  "files.addPreset": "הוספת תבנית מוכנה: תצורת המערכת",
+  "files.addPresetHint": "נקודת התחלה שמרנית לתצורה ברמת המארח מחוץ למכולות שלך — לא טענה לשלמות. בדקו את התיקייה לפני השמירה.",
   "settings.filesEnabled": "תיקיות",
   "settings.filesPath": "נתיב תיקיות",
   "jobs.filesSection": "תיקיות",

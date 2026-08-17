@@ -966,6 +966,8 @@ const fi: Partial<Translations> = {
   "files.backupAll": "Varmuuskopioi kaikki nyt",
   "files.discoverHint": "Katosiko joukkoluettelo? Rakenna se uudelleen tallennustilan varmuuskopioista.",
   "files.cancel": "Peruuta",
+  "files.addPreset": "Lisää esiasetus: Järjestelmäasetukset",
+  "files.addPresetHint": "Varovainen lähtökohta isäntätason asetuksille konttiesi ulkopuolella — ei täydellisyysväite. Tarkista kansio ennen tallennusta.",
   "settings.filesEnabled": "Kansiot",
   "settings.filesPath": "Kansioiden polku",
   "jobs.filesSection": "Kansiot",

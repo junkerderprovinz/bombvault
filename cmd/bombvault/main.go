@@ -19,6 +19,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -95,6 +96,27 @@ func healthcheckAt(port, httpsPort string) int {
 // missed overnight backup lands promptly. Fixed on purpose — a knob would
 // mostly invite foot-guns; revisit only if real setups need longer.
 const catchUpStartupDelay = 2 * time.Minute
+
+// platformFor maps a detected/overridden platform.Kind to a concrete
+// platform.Platform adapter. KindTrueNAS is a legitimate Kind today (an
+// operator can already set PLATFORM=truenas) but has no implementation until
+// a later phase ships platform.TrueNAS — until then it falls back to
+// platform.Generic{} with a logged warning, the same fail-soft posture the
+// rest of BombVault's Unraid-only extras already use off Unraid.
+func platformFor(kind platform.Kind) platform.Platform {
+	switch kind {
+	case platform.KindUnraid:
+		return platform.Unraid{}
+	case platform.KindGeneric:
+		return platform.Generic{}
+	case platform.KindTrueNAS:
+		log.Printf("platform: PLATFORM=truenas has no implementation yet — falling back to generic")
+		return platform.Generic{}
+	default:
+		log.Printf("platform: unknown Kind %q — falling back to generic", kind) //nolint:gosec // G706: kind is %q-quoted
+		return platform.Generic{}
+	}
+}
 
 // ensureDataDirWritable verifies the data dir exists and is writable before the
 // store is opened, so a missing/read-only /config mount fails loudly instead of
@@ -193,6 +215,14 @@ func run() error {
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
+	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which
+	// host BombVault is running on, and map it to a concrete Platform adapter
+	// (internal/platform): the appdata-fallback convention, cross-instance
+	// restore-destination defaults, and the Unraid update-status reconcile
+	// step. KindTrueNAS has no implementation yet (a later phase) — an
+	// explicit PLATFORM=truenas today falls back to Generic{} with a logged
+	// warning rather than silently misbehaving.
+	svc.SetPlatform(platformFor(platform.Detect(context.Background(), cfg.PlatformOverride, cfg.FlashDir)))
 	// Tell the service where the persistent cache lives so the post-run cache
 	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty
 	// (the mkdir-failed fallback above) disables the size-based trim.

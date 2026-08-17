@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
@@ -410,6 +412,28 @@ func TestPatchExcludesAndPreview(t *testing.T) {
 	first, _ := preview[0].(map[string]any)
 	if first["raw"] != "/config/Cache" || first["status"] == nil {
 		t.Fatalf("unexpected first preview entry: %v", preview[0])
+	}
+}
+
+// TestSettingsGetPlatformField pins the platform.Kind exposure added for
+// Task 7 of the platform-expansion plan (the "Host system config" preset
+// needs a way to know it shouldn't be offered on Unraid): "platform" is a
+// sibling of "settings" (like hostMountRoot), defaults to "unraid" when no
+// Platform is injected (platformFn()'s documented nil-safe fallback), and
+// reflects whatever Platform IS injected.
+func TestSettingsGetPlatformField(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _, svc := newTestRouterSvc(t, d, &fakeResticEngine{})
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if m["platform"] != "unraid" {
+		t.Fatalf(`platform = %v, want "unraid" (the default with no Platform injected)`, m["platform"])
+	}
+
+	svc.SetPlatform(platform.Generic{})
+	_, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if m["platform"] != "generic" {
+		t.Fatalf(`platform = %v, want "generic" after SetPlatform(Generic{})`, m["platform"])
 	}
 }
 
@@ -1415,6 +1439,69 @@ func TestFileSetCRUDRoundTrip(t *testing.T) {
 	}
 	if left := fileSetsOf(t, h); len(left) != 0 {
 		t.Fatalf("expected no sets after delete, got %+v", left)
+	}
+}
+
+// TestFileSetPresetHostConfig pins the "Host system config" preset endpoint
+// (Task 7 of the platform-expansion plan): it is offered — with a sensible,
+// relative-to-HostMountRoot path — on a generic platform, and never offered
+// on Unraid (the default when no Platform is injected), which already has
+// the dedicated flash domain for this purpose.
+func TestFileSetPresetHostConfig(t *testing.T) {
+	h, _, svc, _ := newFilesTestRouter(t, &fakeResticEngine{})
+
+	// Default (no SetPlatform call) is Unraid — matches platformFn()'s documented
+	// nil-safe fallback, so the preset must not be offered.
+	w, m := doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("preset (default/unraid) request failed: %d %v", w.Code, m)
+	}
+	if m["offered"] != false {
+		t.Fatalf("preset must not be offered on Unraid, got %v", m)
+	}
+
+	svc.SetPlatform(platform.Generic{})
+	w, m = doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("preset (generic) request failed: %d %v", w.Code, m)
+	}
+	if m["offered"] != true {
+		t.Fatalf("preset must be offered on generic, got %v", m)
+	}
+	name, _ := m["name"].(string)
+	path, _ := m["path"].(string)
+	if name == "" || path == "" {
+		t.Fatalf("preset must carry a non-empty name/path, got %v", m)
+	}
+	if strings.HasPrefix(path, "/") {
+		t.Fatalf("preset path %q must be relative to hostMountRoot, not absolute", path)
+	}
+}
+
+// TestFileSetPresetHostConfigCreatable exercises the full loop: the preset's
+// suggested values, once the corresponding folder exists under the host
+// mount (exactly as documented — an identity-bind deployment reaching /etc),
+// successfully create a file set through the EXISTING POST /api/files/sets
+// endpoint with no special-casing.
+func TestFileSetPresetHostConfigCreatable(t *testing.T) {
+	h, _, svc, dir := newFilesTestRouter(t, &fakeResticEngine{})
+	svc.SetPlatform(platform.Generic{})
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
+	if w.Code != http.StatusOK || m["offered"] != true {
+		t.Fatalf("preset request: %d %v", w.Code, m)
+	}
+	name, _ := m["name"].(string)
+	path, _ := m["path"].(string)
+
+	if err := os.MkdirAll(filepath.Join(dir, path), 0o750); err != nil {
+		t.Fatalf("seed preset source dir: %v", err)
+	}
+
+	body := fmt.Sprintf(`{"name":%q,"path":%q,"excludes":[]}`, name, path)
+	w, m = doJSON(t, h, http.MethodPost, "/api/files/sets", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create from preset failed: %d %v", w.Code, m)
 	}
 }
 
