@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -3454,6 +3455,15 @@ type fakeResticEngine struct {
 	// subsequent RepoOpens/localRepoMissing reflects a real, freshly-created repo
 	// (used by the #120 re-establish-on-live-disk test).
 	initWritesConfig bool
+	// stdinBackups records each BackupStdin call ("path:tags") — the zvol VM
+	// disk backup path (v8.0.0 VM service-layer integration, Task 2).
+	stdinBackups   []string
+	stdinBackupErr error
+	// dumpRawCalls records each DumpRaw call ("snapshotID:path") — the zvol VM
+	// disk restore path's restic-side counterpart.
+	dumpRawCalls []string
+	dumpRawErr   error
+	dumpRawData  []byte
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -3499,6 +3509,29 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 		return restic.Summary{}, f.backupErr
 	}
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
+}
+
+// BackupStdin records each zvol disk's stdin backup call — the zvol VM disk
+// backup path (v8.0.0 VM service-layer integration, Task 2). Each call gets
+// its own distinct snapshot id (zvolSnap1, zvolSnap2, ...) so a test can tell
+// which disk's snapshot id ended up where.
+func (f *fakeResticEngine) BackupStdin(_ context.Context, _ string, rd io.Reader, path string, tags []string, _ restic.Mode) (restic.Summary, error) {
+	_, _ = io.Copy(io.Discard, rd)
+	f.stdinBackups = append(f.stdinBackups, path+":"+strings.Join(tags, ","))
+	if f.stdinBackupErr != nil {
+		return restic.Summary{}, f.stdinBackupErr
+	}
+	return restic.Summary{SnapshotID: fmt.Sprintf("zvolSnap%d", len(f.stdinBackups)), BytesAdded: 1024}, nil
+}
+
+// DumpRaw records each zvol disk's restore-side dump call.
+func (f *fakeResticEngine) DumpRaw(_ context.Context, _, snapshotID, path string, w io.Writer, _ restic.Mode) error {
+	f.dumpRawCalls = append(f.dumpRawCalls, snapshotID+":"+path)
+	if f.dumpRawErr != nil {
+		return f.dumpRawErr
+	}
+	_, err := w.Write(f.dumpRawData)
+	return err
 }
 
 // blockIfArmed signals restoreEntered (non-blocking) and waits on blockRestore

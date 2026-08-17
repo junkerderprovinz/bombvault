@@ -924,6 +924,49 @@ func TestRunTagSetAppearsOnAllBackupCalls(t *testing.T) {
 	}
 }
 
+// TestVMBlockDiskDevGivesDistinctIdentityTag proves that when a BlockDisks
+// entry carries a Dev (v8.0.0 VM service-layer integration, Task 2 — see
+// VMBlockDisk.Dev's doc comment), its restic backup call is tagged with its
+// OWN "vm:<name>:zvol:<dev>" identity — never the file-backed backup's
+// "vm:<name>" tag — alongside RunTag, so a caller (internal/api/service.go)
+// can apply retention to each disk's history as its own group.
+func TestVMBlockDiskDevGivesDistinctIdentityTag(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap"}}
+
+	d := sampleVMBackupDeps(t, vm, r, runs)
+	d.RunTag = "vmrun:run-42"
+	d.BlockDisks = []backup.VMBlockDisk{
+		{Dataset: "tank/vms/win10/disk1", Dev: "vdb"},
+		{Dataset: "tank/vms/win10/disk2", Dev: "vdc"},
+	}
+	d.ZFSHost = host
+	d.ZvolRestic = zr
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(zr.log) != 2 {
+		t.Fatalf("expected exactly 2 zvol backup calls (1 per disk), got %v", zr.log)
+	}
+	if !strings.HasSuffix(zr.log[0], ":vm:win10:zvol:vdb,p2,vmrun:run-42") {
+		t.Fatalf("disk1 backup call %q missing its own zvol identity tag", zr.log[0])
+	}
+	if !strings.HasSuffix(zr.log[1], ":vm:win10:zvol:vdc,p2,vmrun:run-42") {
+		t.Fatalf("disk2 backup call %q missing its own zvol identity tag", zr.log[1])
+	}
+	// Never the shared "vm:win10" tag the file-backed backup uses — each disk
+	// is its own retention group once it carries a Dev.
+	for _, entry := range zr.log {
+		if strings.Contains(entry, ":vm:win10,") {
+			t.Fatalf("zvol backup call %q wrongly carries the shared vm:win10 tag instead of its own zvol:<dev> tag", entry)
+		}
+	}
+}
+
 // TestRunTagSetHasNoEffectOnRestoreCalls is case (3): RunTag set on
 // VMRestoreDeps alongside a matching multi-disk BlockDisks set (1 file disk
 // + 2 zvol disks) restores all 3 correctly, and — since restic's

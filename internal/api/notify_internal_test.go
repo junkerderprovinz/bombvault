@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -36,6 +37,13 @@ func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return
 func (f *fakeHostSSH) Run(_ context.Context, args ...string) (string, error) {
 	f.runs = append(f.runs, args)
 	return f.runOut, f.runErr
+}
+func (f *fakeHostSSH) StreamCommand(context.Context, ...string) (io.ReadCloser, func() error, error) {
+	return io.NopCloser(strings.NewReader("")), func() error { return nil }, nil
+}
+func (f *fakeHostSSH) RunWithStdin(_ context.Context, rd io.Reader, _ ...string) error {
+	_, err := io.Copy(io.Discard, rd)
+	return err
 }
 
 func unraidNotifyService(t *testing.T, ssh HostSSH) *Service {

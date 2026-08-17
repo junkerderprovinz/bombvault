@@ -33,7 +33,7 @@ import (
 // attempt to recognize; see zvolDatasetFromDevPath's doc comment).
 const zvolDevPrefix = "/dev/zvol/"
 
-// zvolDatasetFromDevPath extracts the "<pool>/<dataset>" ZFS dataset path
+// ZvolDatasetFromDevPath extracts the "<pool>/<dataset>" ZFS dataset path
 // from a block-device disk's source dev path, following ZFS/TrueNAS's
 // documented /dev/zvol/<pool>/<dataset> device-node convention.
 //
@@ -45,7 +45,12 @@ const zvolDevPrefix = "/dev/zvol/"
 // ok=false rather than an invented dataset name. A caller MUST treat
 // ok=false as "this disk cannot be handled by the zvol backup path", never
 // as a signal to fall back to a best-effort guess.
-func zvolDatasetFromDevPath(devPath string) (string, bool) {
+//
+// Exported (v8.0.0 VM service-layer integration, Task 2) so
+// internal/api/service.go can resolve DomainInfo.BlockDisks entries into
+// backup.VMBlockDisk.Dataset without duplicating this parser — previously
+// unexported and called nowhere outside this package's own test.
+func ZvolDatasetFromDevPath(devPath string) (string, bool) {
 	if !strings.HasPrefix(devPath, zvolDevPrefix) {
 		return "", false
 	}
