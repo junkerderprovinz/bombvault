@@ -154,6 +154,50 @@ func TestGenericReconcileContainerUpdateStatusIsNoop(t *testing.T) {
 	}
 }
 
+// --- TrueNAS{} ---
+//
+// TrueNAS{} embeds Generic{}: containers behave identically to generic (no
+// TrueNAS-specific appdata/restore-dest logic needed — see truenas.go), so
+// every method below except Kind() must match Generic{}'s outputs exactly.
+// Kind() is the one deliberate override — it must report KindTrueNAS, not the
+// embedded Generic{}'s KindGeneric, otherwise Detect/platformFor's whole
+// point (PLATFORM=truenas resolving to a REAL, distinguishable platform)
+// would be defeated.
+
+func TestTrueNASKind(t *testing.T) {
+	if got := (platform.TrueNAS{}).Kind(); got != platform.KindTrueNAS {
+		t.Fatalf("TrueNAS{}.Kind() = %q, want %q", got, platform.KindTrueNAS)
+	}
+}
+
+func TestTrueNASAppdataFallbackMatchesGeneric(t *testing.T) {
+	if got := (platform.TrueNAS{}).AppdataFallback(testHostMountRoot, "myapp"); got != "" {
+		t.Fatalf("TrueNAS{}.AppdataFallback = %q, want \"\" (same as Generic{}: no convention)", got)
+	}
+}
+
+func TestTrueNASForeignContainerDestBaseMatchesGeneric(t *testing.T) {
+	if got := (platform.TrueNAS{}).ForeignContainerDestBase(testHostMountRoot); got != testHostMountRoot {
+		t.Fatalf("TrueNAS{}.ForeignContainerDestBase = %q, want %q (identity, same as Generic{})", got, testHostMountRoot)
+	}
+}
+
+func TestTrueNASForeignVMDestBaseMatchesGeneric(t *testing.T) {
+	if got := (platform.TrueNAS{}).ForeignVMDestBase(testHostMountRoot); got != testHostMountRoot {
+		t.Fatalf("TrueNAS{}.ForeignVMDestBase = %q, want %q (identity, same as Generic{})", got, testHostMountRoot)
+	}
+}
+
+func TestTrueNASReconcileContainerUpdateStatusIsNoop(t *testing.T) {
+	ssh := &fakeSSH{}
+	if err := (platform.TrueNAS{}).ReconcileContainerUpdateStatus(context.Background(), ssh, "plex:latest"); err != nil {
+		t.Fatalf("TrueNAS{}.ReconcileContainerUpdateStatus must always be a no-op (same as Generic{}), got err: %v", err)
+	}
+	if ssh.called {
+		t.Fatalf("TrueNAS{}.ReconcileContainerUpdateStatus must never touch SSH, args=%v", ssh.args)
+	}
+}
+
 // --- Detect ---
 
 func TestDetectFindsUnraidMarker(t *testing.T) {

@@ -76,6 +76,35 @@ func TestLoadPlatformOverridePassthrough(t *testing.T) {
 	}
 }
 
+// TestLoadLibvirtURIDefault pins the empty default: with LIBVIRT_URI unset,
+// LibvirtURI must be "" so sshconn builds the qemu+ssh:// string from
+// LibvirtHost/LibvirtSSHUser/LibvirtSSHPort exactly as it does today.
+func TestLoadLibvirtURIDefault(t *testing.T) {
+	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtURI != "" {
+		t.Fatalf("default LibvirtURI = %q, want \"\" (build from LIBVIRT_HOST/USER/PORT)", c.LibvirtURI)
+	}
+}
+
+// TestLoadLibvirtURIPassthrough: LIBVIRT_URI is passed through verbatim,
+// unvalidated — sshconn.Conn.VirshURI is what uses it, not config.Load.
+func TestLoadLibvirtURIPassthrough(t *testing.T) {
+	const uri = "qemu+ssh://root@truenas.local/system?socket=/run/truenas_libvirt/libvirt-sock"
+	c, err := config.Load(map[string]string{
+		"APP_KEY":     strings.Repeat("a", 64),
+		"LIBVIRT_URI": uri,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtURI != uri {
+		t.Fatalf("LibvirtURI = %q, want %q", c.LibvirtURI, uri)
+	}
+}
+
 // TestLoadDataRootSegmentsParsesCommaSeparatedList covers trimming,
 // lower-casing, and dropping empty entries (e.g. a stray double comma) in one
 // pass over DATA_ROOT_SEGMENTS.

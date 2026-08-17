@@ -32,10 +32,21 @@ type Config struct {
 	// Validated and mapped by platform.Detect, not here — an unrecognized
 	// value is not a config-load error, it just falls back to generic with a
 	// logged warning at detection time.
-	PlatformOverride  string
-	LibvirtHost       string
-	LibvirtSSHUser    string
-	LibvirtSSHPort    string
+	PlatformOverride string
+	LibvirtHost      string
+	LibvirtSSHUser   string
+	LibvirtSSHPort   string
+	// LibvirtURI, when non-empty (env LIBVIRT_URI), is used verbatim as the
+	// libvirt connection URI (sshconn.Conn.VirshURI) instead of building
+	// qemu+ssh://LibvirtSSHUser@LibvirtHost:LibvirtSSHPort/system?... from
+	// LibvirtHost/LibvirtSSHUser/LibvirtSSHPort. Empty (the default) means
+	// "build it as today" — every existing Unraid/generic deployment is
+	// unaffected. Exists for TrueNAS Scale, whose libvirtd runs on a
+	// non-standard socket needing an extra ?socket=... query param the
+	// built-string form has no way to express — see
+	// docs/vm-backup-ssh-setup.md's "TrueNAS Scale" section for the exact
+	// value to set.
+	LibvirtURI        string
 	Port              int
 	HTTPSPort         int
 	HTTPOnly          bool
@@ -61,9 +72,12 @@ func Load(env map[string]string) (Config, error) {
 		// Empty (unset) means auto-detect; see PlatformOverride's doc comment.
 		PlatformOverride: env["PLATFORM"],
 		// libvirt is reached over SSH (qemu+ssh://) — no filesystem mount.
-		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
-		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),
-		LibvirtSSHPort:    stringOr(env["LIBVIRT_SSH_PORT"], "22"),
+		LibvirtHost:    stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
+		LibvirtSSHUser: stringOr(env["LIBVIRT_SSH_USER"], "root"),
+		LibvirtSSHPort: stringOr(env["LIBVIRT_SSH_PORT"], "22"),
+		// Empty (unset) means "build the qemu+ssh URI from the three fields
+		// above, as today"; see LibvirtURI's doc comment on Config.
+		LibvirtURI:        env["LIBVIRT_URI"],
 		Port:              intOr(env["PORT"], 3000),
 		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),

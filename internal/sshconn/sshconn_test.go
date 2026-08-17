@@ -33,6 +33,9 @@ func TestEnsureKeyGeneratesAndReuses(t *testing.T) {
 	}
 }
 
+// TestVirshURI pins TODAY'S built qemu+ssh:// string byte-for-byte (an
+// explicitURI-unset Conn, the Unraid/generic default) — a regression test
+// that must keep passing unchanged after the explicitURI override was added.
 func TestVirshURI(t *testing.T) {
 	c := &Conn{Host: "1.2.3.4", User: "root", Port: "1004", dir: "/config/ssh"}
 	got := c.VirshURI()
@@ -42,10 +45,42 @@ func TestVirshURI(t *testing.T) {
 	}
 }
 
+// TestVirshURI_ExplicitOverrideReturnsVerbatim: TrueNAS Scale's libvirtd runs
+// on a non-standard socket, so a real deployment needs
+// LIBVIRT_URI=qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_
+// libvirt/libvirt-sock — the override exists specifically so this extra
+// ?socket=... query param (which the built qemu+ssh:// string above has no
+// way to express) can be supplied verbatim.
+func TestVirshURI_ExplicitOverrideReturnsVerbatim(t *testing.T) {
+	override := "qemu+ssh://root@truenas.local/system?socket=/run/truenas_libvirt/libvirt-sock"
+	c := &Conn{Host: "1.2.3.4", User: "root", Port: "1004", dir: "/config/ssh", explicitURI: override}
+	if got := c.VirshURI(); got != override {
+		t.Fatalf("VirshURI = %q, want the configured override %q verbatim", got, override)
+	}
+}
+
 func TestNewDerivesSSHDir(t *testing.T) {
-	c := New("h", "root", "22", "/config")
+	c := New("h", "root", "22", "/config", "")
 	if c.dir != filepath.Join("/config", "ssh") {
 		t.Fatalf("dir = %q, want /config/ssh", c.dir)
+	}
+}
+
+// TestNewPlumbsExplicitURI confirms New's explicitURI parameter reaches
+// VirshURI (verbatim, overriding the built string) and that an empty
+// explicitURI falls back to today's built string exactly as before this
+// parameter existed.
+func TestNewPlumbsExplicitURI(t *testing.T) {
+	override := "qemu+ssh://root@truenas.local/system?socket=/run/truenas_libvirt/libvirt-sock"
+	withOverride := New("truenas.local", "root", "22", "/config", override)
+	if got := withOverride.VirshURI(); got != override {
+		t.Fatalf("VirshURI() = %q, want override %q verbatim", got, override)
+	}
+
+	withoutOverride := New("host.docker.internal", "root", "22", "/config", "")
+	wantDefault := "qemu+ssh://root@host.docker.internal:22/system?keyfile=/config/ssh/id_ed25519&known_hosts=/config/ssh/known_hosts&known_hosts_verify=auto"
+	if got := withoutOverride.VirshURI(); got != wantDefault {
+		t.Fatalf("VirshURI() = %q, want %q (today's built string, unset override)", got, wantDefault)
 	}
 }
 

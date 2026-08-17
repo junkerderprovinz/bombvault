@@ -1,7 +1,8 @@
-// Package sshconn manages BombVault's SSH access to the Unraid host for libvirt
-// control (qemu+ssh://) and NVRAM file transfer. No libvirt path is ever
-// bind-mounted; the container runs virsh ON the host over SSH, so it can never
-// interfere with the host VM Manager's lifecycle.
+// Package sshconn manages BombVault's SSH access to the libvirt host (Unraid,
+// TrueNAS Scale, or a generic Docker host with a reachable libvirtd) for
+// libvirt control (qemu+ssh://) and NVRAM file transfer. No libvirt path is
+// ever bind-mounted; the container runs virsh ON the host over SSH, so it can
+// never interfere with the host's own VM Manager's lifecycle.
 package sshconn
 
 import (
@@ -20,15 +21,21 @@ type Conn struct {
 	User string // e.g. "root"
 	Port string // SSH port on the host, e.g. "22" or "1004"
 	dir  string // <dataDir>/ssh
+
+	// explicitURI, when non-empty, is returned verbatim by VirshURI instead
+	// of the built qemu+ssh://... string. See VirshURI's doc comment.
+	explicitURI string
 }
 
 // New returns a Conn storing its key material under dataDir/ssh. An empty port
-// defaults to 22.
-func New(host, user, port, dataDir string) *Conn {
+// defaults to 22. explicitURI, when non-empty (config.Config.LibvirtURI, the
+// LIBVIRT_URI env var), is returned verbatim by VirshURI instead of building
+// the qemu+ssh://... string from host/user/port — see VirshURI's doc comment.
+func New(host, user, port, dataDir, explicitURI string) *Conn {
 	if port == "" {
 		port = "22"
 	}
-	return &Conn{Host: host, User: user, Port: port, dir: filepath.Join(dataDir, "ssh")}
+	return &Conn{Host: host, User: user, Port: port, dir: filepath.Join(dataDir, "ssh"), explicitURI: explicitURI}
 }
 
 func (c *Conn) keyPath() string        { return filepath.Join(c.dir, "id_ed25519") }
@@ -58,13 +65,28 @@ func (c *Conn) PublicKey() (string, error) {
 	return strings.TrimSpace(string(b)), nil
 }
 
-// VirshURI is the libvirt connection URI for `virsh -c`. The keyfile/known_hosts
-// are container (Linux) paths, so they are always forward-slash (ToSlash is a
-// no-op on the Linux runtime target; it only matters for tests on Windows).
-// known_hosts_verify=auto accepts + pins the host key on first connect WITHOUT
-// an interactive prompt — `normal` would hang the (non-interactive) virsh call
-// the first time the host key is unknown.
+// VirshURI is the libvirt connection URI for `virsh -c`. When explicitURI is
+// set (config.Config.LibvirtURI, the LIBVIRT_URI env var), it is returned
+// VERBATIM instead of the built string below — this exists for TrueNAS
+// Scale, whose libvirtd runs on a non-standard socket
+// (/run/truenas_libvirt/libvirt-sock), needing an extra ?socket=... query
+// param the built qemu+ssh:// form below has no way to express (see
+// docs/superpowers/specs/2026-08-16-bombvault-platform-expansion-design.md
+// §5 and docs/vm-backup-ssh-setup.md's "TrueNAS Scale" section for the exact
+// value to set: qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_
+// libvirt/libvirt-sock). Unset (the default) reproduces today's Unraid/
+// generic behavior exactly.
+//
+// The built form's keyfile/known_hosts are container (Linux) paths, so they
+// are always forward-slash (ToSlash is a no-op on the Linux runtime target;
+// it only matters for tests on Windows). known_hosts_verify=auto accepts +
+// pins the host key on first connect WITHOUT an interactive prompt — `normal`
+// would hang the (non-interactive) virsh call the first time the host key is
+// unknown.
 func (c *Conn) VirshURI() string {
+	if c.explicitURI != "" {
+		return c.explicitURI
+	}
 	return fmt.Sprintf("qemu+ssh://%s@%s:%s/system?keyfile=%s&known_hosts=%s&known_hosts_verify=auto",
 		c.User, c.Host, c.Port, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
 }
