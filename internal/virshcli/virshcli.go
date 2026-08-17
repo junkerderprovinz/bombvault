@@ -136,6 +136,14 @@ var uuidDomainNameRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-
 //     passed through unchanged, isVersioned26Style false. This is the no-op
 //     path — Unraid domain names never match either TrueNAS pattern, so
 //     Unraid behavior is byte-identical to before this function existed.
+//
+// This classification is purely SHAPE-based (regex on raw) — it is not, and
+// cannot be, platform-gated in here, since it never sees which platform it's
+// running on. A domain name that merely happens to look like one of the two
+// TrueNAS shapes (e.g. an Unraid VM literally named "10_Windows") is
+// misclassified exactly like a real TrueNAS domain would be. See
+// VMInfo.FriendlyName's doc comment (types.go) for the exact scenario and
+// the mitigation a future caller must apply before trusting the result.
 func normalizeDomainName(raw string) (friendlyName string, isVersioned26Style bool) {
 	if m := truenas2510DomainNameRe.FindStringSubmatch(raw); m != nil {
 		return m[1], false

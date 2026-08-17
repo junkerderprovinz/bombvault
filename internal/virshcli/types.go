@@ -11,17 +11,29 @@ type VMInfo struct {
 	State string // "running", "shut off", "paused", ...
 	// FriendlyName is Name normalized for DISPLAY/MATCHING purposes only —
 	// see normalizeDomainName (virshcli.go) for the classifier, and
-	// vmInfoFromNames/Client.titleFromXML for how List resolves it. On
-	// Unraid and a plain libvirt host it is always identical to Name (both
-	// TrueNAS patterns are no-ops there). On TrueNAS 25.10 "Goldeye" it
-	// strips the "{id}_" prefix TrueNAS's own libvirt naming convention
-	// adds (e.g. Name "1_debian" → FriendlyName "debian"). On TrueNAS 26,
-	// where Name becomes the VM's bare UUID, FriendlyName is the domain
-	// XML's <title> when List could recover one (one extra DumpXML call per
-	// UUID-named domain), or the UUID itself as a fallback when it
+	// vmInfoFromNames/Client.titleFromXML for how List resolves it. On a
+	// plain libvirt host it is always identical to Name (neither TrueNAS
+	// pattern matches an ordinary hand-chosen domain name). On TrueNAS 25.10
+	// "Goldeye" it strips the "{id}_" prefix TrueNAS's own libvirt naming
+	// convention adds (e.g. Name "1_debian" → FriendlyName "debian"). On
+	// TrueNAS 26, where Name becomes the VM's bare UUID, FriendlyName is the
+	// domain XML's <title> when List could recover one (one extra DumpXML
+	// call per UUID-named domain), or the UUID itself as a fallback when it
 	// couldn't. Name — never FriendlyName — stays the identifier every
 	// virsh command in this package/interface takes; nothing in this
 	// package uses FriendlyName for that.
+	//
+	// ⚠ On Unraid, "always identical to Name" is true in PRACTICE, not by
+	// CONSTRUCTION: normalizeDomainName classifies by shape alone (regex on
+	// the raw string), with no platform check. A hand-named Unraid VM that
+	// happens to collide with the TrueNAS 25.10 shape — e.g. literally named
+	// "10_Windows" — gets misclassified the same way a real TrueNAS domain
+	// would, and FriendlyName comes back "Windows", not "10_Windows". This
+	// is inert today because nothing consumes FriendlyName yet (see below),
+	// but a future caller MUST NOT trust it unconditionally: gate on the
+	// detected platform (platform.KindTrueNAS) before relying on
+	// FriendlyName over Name, rather than assuming the shape match alone
+	// means "this is TrueNAS".
 	//
 	// NOT YET CONSUMED by internal/api/service.go's ListVMs today (confirmed
 	// by reading the real code, not assumed): it builds VMView{Name:
