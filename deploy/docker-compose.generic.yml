@@ -73,6 +73,20 @@ services:
       # set HOST_SOURCE_ROOT to whatever REAL host path you put on the left
       # below; HOST_MOUNT_ROOT stays at its built-in default (/host/user,
       # matching the container path here) either way.
+      #
+      # Reachability caveat: Docker named-volume backup and the Files page's
+      # "Host system config" preset both read paths OUTSIDE whatever narrow
+      # directory you point this at — a named volume's real storage normally
+      # lives under the Docker daemon's own data root (/var/lib/docker/volumes
+      # by default; check yours with `docker info -f '{{.DockerRootDir}}'`),
+      # and the preset guesses "/etc". Neither is reachable through a mount
+      # that only covers e.g. /srv/appdata, and BombVault silently skips what
+      # it cannot reach rather than erroring — it will look like those
+      # containers/paths were never even considered. If you want either
+      # feature, point this mount (and HOST_SOURCE_ROOT) at a common ancestor
+      # that also covers the Docker data root, the same reason Unraid's own
+      # template mounts all of /mnt instead of a narrower share. See "Backup
+      # source detection" in docs/configuration.md for the full detail.
       - ./data:/host/user
 
     environment:
