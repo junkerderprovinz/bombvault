@@ -84,21 +84,21 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ### How it compares
 
-Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup) (the community-maintained successor to the old Appdata Backup/Restore plugin) — a native CA plugin, but a file-level one: it archives the appdata folder (and optionally VM disks + Unraid flash), with no awareness of what a Docker container or a libvirt VM *is*, so a restore is copying files back, not the container reappearing in the Docker tab on its own. The other well-known route is a generic dedup/encrypted engine — [Duplicati](https://duplicati.com), [Kopia](https://kopia.io), [Duplicacy](https://duplicacy.com) or [BorgBackup](https://borgbackup.readthedocs.io) — run by hand or via a community Docker template; all are solid, actively developed engines (restic's own closest siblings, in Kopia's, Duplicacy's and Borg's case), but none of them know what a container or a VM is either, and none ship as a native Unraid plugin. The closest thing to a genuine peer is **[Proxmox Backup Server](https://pbs.proxmox.com)** — it *does* redefine a guest on restore, with its own dedup and encryption — but only for LXC/QEMU guests **inside Proxmox VE**; its generic Linux client backs up a Docker host the same file-level way as everything else here. (Kubernetes' [Velero](https://velero.io) isn't in the table below — it backs up cluster resources and persistent volumes, a different orchestration layer than Docker/VMs entirely, so it isn't really a fair comparison for this audience.)
+Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup) (the community-maintained successor to the old Appdata Backup/Restore plugin) — a native CA plugin, but a file-level one: it archives the appdata folder (and optionally VM disks + Unraid flash), with no awareness of what a Docker container or a libvirt VM *is*, so a restore is copying files back, not the container reappearing in the Docker tab on its own. The other well-known route is a generic dedup/encrypted engine — [Duplicati](https://duplicati.com), [Kopia](https://kopia.io), [Duplicacy](https://duplicacy.com) or [BorgBackup](https://borgbackup.readthedocs.io) — run by hand or via a community Docker template; all are solid, actively developed engines (restic's own closest siblings, in Kopia's, Duplicacy's and Borg's case), but none of them know what a container or a VM is either, and none ship as a native Unraid plugin.
 
-| | **BombVault** | Appdata.Backup (CA) | Proxmox Backup Server | Duplicati | Kopia | BorgBackup |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Docker restore reinstalls the container (image, env, ports, labels) | ✅ | ❌ files only | ❌ Proxmox VE guests only, Docker hosts are file-level | ❌ | ❌ | ❌ |
-| VM/guest restore re-defines it (not just a disk copy) | ✅ via libvirt | ⚠️ backs up disk+XML, restore is file-level | ✅ for LXC/QEMU, Proxmox VE only | ❌ | ❌ | ❌ |
-| Deduplication | ✅ content-defined | ❓ undocumented | ✅ content-defined | ⚠️ fixed-block only | ✅ content-defined | ✅ content-defined |
-| Client-side encryption | ✅ | ❓ undocumented | ✅ | ✅ | ✅ | ✅ |
-| Immutable / append-only off-site | ✅ + an active tamper test proves it | ❌ | ❌ no S3 Object Lock yet | ⚠️ depends on backend config | ✅ Object Lock | ✅ append-only SSH mode |
-| Automated restore-verification drills | ✅ local + off-site sandbox restore | ❌ | ⚠️ checksum verify only, no boot-level drill | ⚠️ sample-file check only | ✅ opt-in full test-restore | ❌ manual convention only |
-| Multiple off-site targets, independent credentials | ✅ | ❌ | ✅ | ✅ | ⚠️ mirrors to N, one active repo | ❌ needs manual scripting |
-| Native pre/post-backup hooks | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ core has none — Borgmatic adds it |
-| Live restore progress + cancel | ✅ | ❓ | ✅ | ✅ | ❌ [confirmed gap](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI progress, no true cancel |
-| Native platform packaging | ✅ Unraid CA | ✅ Unraid CA | ✅ official .deb/ISO (Proxmox VE only) | ❌ generic Docker template | ❌ generic Docker template | ❌ generic Docker template |
-| Web UI | ✅ | ✅ | ✅ | ✅ | ⚠️ separate project (KopiaUI) | ❌ CLI/config-file only |
+| | **BombVault** | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Docker restore reinstalls the container (image, env, ports, labels) | ✅ | ❌ files only | ❌ | ❌ | ❌ |
+| VM/guest restore re-defines it (not just a disk copy) | ✅ via libvirt | ⚠️ backs up disk+XML, restore is file-level | ❌ | ❌ | ❌ |
+| Deduplication | ✅ content-defined | ❓ undocumented | ⚠️ fixed-block only | ✅ content-defined | ✅ content-defined |
+| Client-side encryption | ✅ | ❓ undocumented | ✅ | ✅ | ✅ |
+| Immutable / append-only off-site | ✅ + an active tamper test proves it | ❌ | ⚠️ depends on backend config | ✅ Object Lock | ✅ append-only SSH mode |
+| Automated restore-verification drills | ✅ local + off-site sandbox restore | ❌ | ⚠️ sample-file check only | ✅ opt-in full test-restore | ❌ manual convention only |
+| Multiple off-site targets, independent credentials | ✅ | ❌ | ✅ | ⚠️ mirrors to N, one active repo | ❌ needs manual scripting |
+| Native pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ❌ core has none — Borgmatic adds it |
+| Live restore progress + cancel | ✅ | ❓ | ✅ | ❌ [confirmed gap](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI progress, no true cancel |
+| Native platform packaging | ✅ Unraid CA | ✅ Unraid CA | ❌ generic Docker template | ❌ generic Docker template | ❌ generic Docker template |
+| Web UI | ✅ | ✅ | ✅ | ⚠️ separate project (KopiaUI) | ❌ CLI/config-file only |
 
 ✅ yes · ❌ no · ⚠️ present but limited · ❓ undocumented
 
