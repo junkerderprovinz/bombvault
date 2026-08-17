@@ -32,7 +32,6 @@
 package virshcli
 
 import (
-	"regexp"
 	"strings"
 )
 
@@ -51,20 +50,17 @@ type tpmXML struct {
 	} `xml:"backend"`
 }
 
-// tpmSafePathRe mirrors nvram.go's safeFirmwarePathRe discipline exactly: a
-// clean absolute path only. A <tpm> device path this package parses may later
-// reach an SSH file read/write (mirroring how NVRAM's path is used) or get
-// spliced into a rewritten domain XML, so a path carrying quotes, angle
-// brackets, or whitespace is never trusted — it degrades to "no usable path"
-// exactly like an unrecognized backend shape, never a guess at what the
-// attacker (or a malformed/hostile XML) meant.
-var tpmSafePathRe = regexp.MustCompile(`^/[A-Za-z0-9._/-]+$`)
-
 // tpmPathFromXML extracts a usable TPM device path from a parsed <tpm>
 // element, or "" if there is no element, the backend isn't the recognized
-// "passthrough" shape, or the device path isn't a clean absolute path. Never
-// errors and never guesses — see this file's package doc comment for exactly
-// which shapes are recognized and why the rest degrade cleanly.
+// "passthrough" shape, or the device path isn't a clean absolute path (see
+// nvram.go's safeAbsolutePathRe — shared with this file: a <tpm> device path
+// this package parses may later reach an SSH file read/write (mirroring how
+// NVRAM's path is used) or get spliced into a rewritten domain XML, so a path
+// carrying quotes, angle brackets, or whitespace is never trusted — it
+// degrades to "no usable path" exactly like an unrecognized backend shape,
+// never a guess at what the attacker (or a malformed/hostile XML) meant).
+// Never errors and never guesses — see this file's package doc comment for
+// exactly which shapes are recognized and why the rest degrade cleanly.
 func tpmPathFromXML(tpm *tpmXML) string {
 	if tpm == nil {
 		return "" // no <tpm> element at all — no vTPM on this domain
@@ -76,7 +72,7 @@ func tpmPathFromXML(tpm *tpmXML) string {
 		return ""
 	}
 	p := strings.TrimSpace(tpm.Backend.Device.Path)
-	if p == "" || !tpmSafePathRe.MatchString(p) {
+	if p == "" || !safeAbsolutePathRe.MatchString(p) {
 		return ""
 	}
 	return p

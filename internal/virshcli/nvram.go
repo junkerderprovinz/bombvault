@@ -11,12 +11,16 @@ var (
 	nvramOpenRe = regexp.MustCompile(`<nvram(\s[^>]*)?>`)
 	// loaderRe captures the firmware loader (CODE) path from <loader ...>PATH</loader>.
 	loaderRe = regexp.MustCompile(`<loader\b[^>]*>([^<]+)</loader>`)
-	// safeFirmwarePathRe matches a clean absolute firmware path. The derived
-	// template is spliced into a template='…' XML attribute, so it must contain
-	// no quote, angle bracket or whitespace that could break out of (or inject
-	// into) the attribute (CWE-91). Any loader path that does not map to such a
-	// clean path falls back to the trusted defaultOVMFVars constant.
-	safeFirmwarePathRe = regexp.MustCompile(`^/[A-Za-z0-9._/-]+$`)
+	// safeAbsolutePathRe matches a clean absolute path with no quote, angle
+	// bracket or whitespace — the shared discipline for any host path this
+	// package later splices into an XML attribute or hands to a caller as
+	// trusted. Two callers today: deriveVarsTemplate below (the derived NVRAM
+	// template is spliced into a template='…' XML attribute, so an unclean
+	// candidate falls back to the trusted defaultOVMFVars constant — CWE-91),
+	// and tpm.go's tpmPathFromXML (an unclean <tpm> device path degrades to
+	// "" rather than being trusted). Kept as ONE definition so the two never
+	// drift apart.
+	safeAbsolutePathRe = regexp.MustCompile(`^/[A-Za-z0-9._/-]+$`)
 )
 
 // defaultOVMFVars is the Unraid stock OVMF master var store, used when the
@@ -68,7 +72,7 @@ func deriveVarsTemplate(domainXML string) string {
 	cand := path.Dir(loader) + "/" + strings.Replace(base, "CODE", "VARS", 1)
 	// Never splice an unclean path into the template='…' attribute — fall back
 	// to the trusted master if the loader carried quotes/brackets/whitespace.
-	if !safeFirmwarePathRe.MatchString(cand) {
+	if !safeAbsolutePathRe.MatchString(cand) {
 		return defaultOVMFVars
 	}
 	return cand
