@@ -347,6 +347,50 @@ func TestDumpZipArgsNoPassword(t *testing.T) {
 	}
 }
 
+// TestBackupStdinArgs pins the flag shape for Task 10's zvol-aware VM disk
+// backup path (v8.0.0 TrueNAS platform expansion): a `zfs send` stream piped
+// into `restic backup --stdin` instead of a local file path. Mirrors
+// BackupArgs' flag ordering (repo, storage-class, retry-lock, backup,
+// insecure, --json, --host, --tag per tag) — the only structural difference
+// is --stdin/--stdin-filename replacing the "-- <paths>" positional.
+func TestBackupStdinArgs(t *testing.T) {
+	got := BackupStdinArgs("/repo", "/vm-disks/tank/vm-disk1@bombvault-snap", []string{"vm:truenasvm"}, Mode{Encrypted: true})
+	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "vm:truenasvm",
+		"--stdin", "--stdin-filename", "/vm-disks/tank/vm-disk1@bombvault-snap"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
+func TestBackupStdinArgsUnencrypted(t *testing.T) {
+	got := BackupStdinArgs("/repo", "/vm-disks/tank/vm-disk1@snap", []string{"t"}, Mode{Encrypted: false})
+	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json", "--host", "bombvault", "--tag", "t",
+		"--stdin", "--stdin-filename", "/vm-disks/tank/vm-disk1@snap"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
+// TestDumpRawArgs pins the restore-side counterpart of BackupStdinArgs: no
+// -a/--archive flag (unlike DumpZipArgs), which streams a single matched
+// file's raw bytes unmodified — the exact bytes BackupStdin wrote — verified
+// against a real restic binary in TestBackupStdinRoundtrip.
+func TestDumpRawArgs(t *testing.T) {
+	got := DumpRawArgs("/repo", "abc123", "/vm-disks/tank/vm-disk1@snap", Mode{Encrypted: true})
+	want := []string{"-r", "/repo", "dump", "--", "abc123", "/vm-disks/tank/vm-disk1@snap"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
+func TestDumpRawArgsUnencrypted(t *testing.T) {
+	got := DumpRawArgs("/repo", "abc123", "/vm-disks/tank/vm-disk1@snap", Mode{Encrypted: false})
+	want := []string{"-r", "/repo", "dump", "--insecure-no-password", "--", "abc123", "/vm-disks/tank/vm-disk1@snap"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestCopyArgsEncrypted(t *testing.T) {
 	got := CopyArgs("/dest", "/src", nil, Limits{}, Mode{Encrypted: true})
 	want := []string{"-r", "/dest", "--retry-lock", "5m", "copy", "--from-repo", "/src"}

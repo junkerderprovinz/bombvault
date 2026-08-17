@@ -1,0 +1,57 @@
+# CI test values for `.github/scripts/ci.py` in the real truenas/apps repo
+# (--app bombvault --train community --test-file basic-values.yaml).
+#
+# Filename matches the real repo's convention (CONTRIBUTIONS.md: "basic-
+# values.yaml # Basic test scenario (required)") rather than the
+# "default.yaml" name guessed before this file existed.
+
+resources:
+  limits:
+    cpus: 2
+    memory: 4096
+
+TZ: Etc/UTC
+
+bombvault:
+  # Not a real secret — 64 lowercase hex chars for schema/CI validation only
+  # (length verified with `python3 -c "print(len(k))"`, not eyeballed — a
+  # too-short value here previously slipped past review once already).
+  app_key: "ecc786b571f536ebb075da4bfe0ff40f6218631903a7af98722f81d78ee20e28"
+  http_only: false
+  backup_max_hours: null
+  self_container_name: ""
+  additional_envs: []
+
+vm_backup:
+  libvirt_uri: ""
+  libvirt_host: host.docker.internal
+  libvirt_ssh_user: root
+  libvirt_ssh_port: 22
+
+network:
+  host_network: false
+  web_port:
+    bind_mode: published
+    port_number: 30443 # non-default port for testing, catches issues early
+    host_ips: []
+  http_port:
+    bind_mode: published
+    port_number: 30300
+    host_ips: []
+
+ix_volumes:
+  config: /opt/tests/mnt/bombvault/config
+
+storage:
+  config:
+    type: ix_volume
+    ix_volume_config:
+      dataset_name: config
+      create_host_path: true
+  # Plain required host path (see questions.yaml's comment) — not an
+  # ix_volume, so no ix_volumes: mapping needed for it, same as rsyncd's
+  # per-module host_path test values.
+  host_data: /opt/tests/mnt/bombvault/hostdata
+  additional_storage: []
+
+labels: []

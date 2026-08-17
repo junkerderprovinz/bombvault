@@ -104,6 +104,248 @@ In the **VMs** tab each VM has a method:
 
 ---
 
+## TrueNAS Scale
+
+The steps above (SSH enable, key authorization, networking, per-VM method)
+are written for Unraid, but the same `qemu+ssh://` mechanism works against
+any reachable libvirtd — including TrueNAS Scale, which has shipped libvirt-
+based VMs again since 25.04.2. Five things differ on TrueNAS: the connection
+string needs an explicit override (1) and root SSH needs enabling (2) before
+anything works at all, and three further differences affect what a backup
+actually captures — zvol-backed disks (3), vTPM state (4), and how TrueNAS
+names its libvirt domains (5).
+
+### 1. TrueNAS's libvirtd socket is non-standard
+
+TrueNAS Scale's libvirtd does not listen where the default `qemu+ssh://`
+connection string built from `VM Backup: Host`/`User`/`Port` expects. Set
+`LIBVIRT_URI` directly instead, with the extra `?socket=...` query parameter
+the built-string form has no way to express:
+
+```sh
+LIBVIRT_URI=qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock
+```
+
+When `LIBVIRT_URI` is set, BombVault uses it **verbatim** — `LIBVIRT_HOST`,
+`LIBVIRT_SSH_USER`, and `LIBVIRT_SSH_PORT` are ignored for the connection
+string itself (they still don't need to be set at all for VM backup to work,
+since the URI already carries the user/host).
+
+### 2. Root SSH is disabled by default since TrueNAS 24.10
+
+Step 2 above (authorizing BombVault's public key for `root`) requires root
+SSH login, which TrueNAS Scale turns off out of the box starting with 24.10.
+Either:
+
+- **System Settings → General → Login As Root with Password** — enable it,
+  then authorize BombVault's public key the same way Step 2 describes, using
+  `<user>` = `root` in the `LIBVIRT_URI` above; or
+- create a sudo-capable admin account (with an API key, per TrueNAS's own
+  account setup) and authorize BombVault's key for that account instead,
+  using its username in place of `root` in `LIBVIRT_URI`.
+
+### Caveat: direct `virsh` changes are invisible to TrueNAS's middleware
+
+TrueNAS's own middleware (the layer behind its VM UI) is the intended control
+path for its VMs. A `virsh` command run directly over this SSH link — which
+is exactly what BombVault's VM backup/restore does — bypasses that
+middleware, and TrueNAS may reconcile or overwrite state it didn't originate
+(sourced from TrueNAS's publicly documented middleware behavior, not
+independently verified against a running instance). This is the same risk
+class as Unraid's own VM Manager reconciling changes made outside it, only
+sharper on TrueNAS since its middleware is more actively involved in VM
+lifecycle management.
+
+**This whole section is reasoned from TrueNAS Scale's public documentation
+and the shape of its libvirt setup — there is no TrueNAS Scale test instance
+available to verify it against real hardware.** Treat it as a documented
+starting point, not a confirmed-working configuration, until it has been
+exercised on an actual TrueNAS Scale box.
+
+### 3. VM disks backed by zvols (raw block devices)
+
+TrueNAS Scale VM disks are commonly **zvols** — ZFS-backed block devices
+(`/dev/zvol/<pool>/<dataset>`), not qcow2 files. BombVault's existing VM disk
+backup (the mechanism described above and throughout this document) assumes
+file-based disk images that restic can back up directly by path; a zvol needs
+a fundamentally different mechanism, since restic cannot back up a raw block
+device the way it backs up a file.
+
+BombVault detects a block-device-backed disk from the domain XML itself
+(libvirt's own `<source dev="...">` vs `<source file="...">` distinction —
+no guessing), and the backup/restore orchestrators (`BackupVMGraceful`,
+`BackupVMLive`, `RestoreVM`) ARE wired to invoke, for such a disk, ZFS's own
+tools instead of a plain file backup:
+
+1. `zfs snapshot <dataset>@<name>` — a point-in-time consistency point, taken
+   over the same SSH connection as every other command on this page (no local
+   ZFS/zvol access inside the BombVault container).
+2. `zfs send <dataset>@<name>`, streamed over that SSH connection straight
+   into the restic backup (no local staging file, however large the zvol).
+3. `zfs destroy <dataset>@<name>` — always run afterward, success or failure;
+   the snapshot is a consistency point, not the backup artifact.
+
+Restoring a zvol is a **separate, defensive path** from restoring a
+file-based disk: `zfs receive` into an EXISTING dataset can destroy live
+data, so a restore always lands on a **freshly-named dataset**
+(`<pool>/<dataset>-bombvault-restore-<timestamp>`) — **never** the original.
+Promoting that fresh dataset over the live original (so the VM actually boots
+from the restored data) is a **deliberate, manual, documented follow-up step
+for the operator** — BombVault never automates renaming/overwriting a live
+zvol. After a restore completes, decide independently (per your own ZFS
+layout and running state of the original VM) whether/how to `zfs rename` the
+restored dataset into place, generally after shutting the VM down and
+pointing its domain XML at the new dataset (or renaming the restored dataset
+to the original's name once the original has been renamed aside).
+
+**⚠ This entire mechanism is REASONED from ZFS's and TrueNAS's public
+documentation — the `/dev/zvol/<pool>/<dataset>` device-node convention and
+`zfs send`/`zfs receive` as the ZFS-native way to move a point-in-time
+dataset byte stream — and is UNIT-TESTED ONLY (argv construction, domain-XML
+detection, the snapshot/stream/cleanup control flow, AND the wiring into the
+real `BackupVMGraceful`/`BackupVMLive`/`RestoreVM` orchestrators, all
+exercised with fakes).** It has **never been exercised against a real
+TrueNAS Scale box with a real zvol-backed VM** — no test hardware was
+available anywhere in this project's development environment. Treat it as a
+documented, unit-tested starting point, not a confirmed-working backup path,
+until it has had a real backup → restore-to-a-fresh-dataset → boot-check pass
+on actual TrueNAS Scale hardware. File-backed (Unraid) VM disk backup/restore
+is completely unaffected by this mechanism — it is a wholly separate code
+path.
+
+**Remaining gap beyond hardware verification:** the orchestrator-level wiring
+above is real and tested, but BombVault's service layer does not yet call
+into it from a live backup/restore — it never reads a domain's block-device
+disks or constructs the ZFS-over-SSH adapter this mechanism needs. Closing
+that also requires a design decision this project hasn't made yet: because a
+VM with both file-backed and block-device disks always produces *multiple*
+separate restic snapshots (one per block disk, since restic's stdin-backup
+mode can't be combined with a normal file-path backup in one run), and
+BombVault's run history and restore-by-"latest" today assume one snapshot per
+VM backup, there needs to be an explicit way to track and re-find each block
+disk's own snapshot before a restore can rely on it. Until that is decided
+and the service layer is wired up, this mechanism cannot be reached from the
+BombVault UI at all — track this as a follow-up alongside the hardware
+verification pass above.
+
+### 4. vTPM state (Secure-Boot/Windows-11-class guests)
+
+A TrueNAS Scale VM can also have a **vTPM** (virtual TPM) device — required
+for Secure Boot and for Windows 11 guests. Its state lives **outside** the
+domain's disk and NVRAM, so a backup that only captures those two would leave
+a restored Secure-Boot/vTPM guest unable to boot correctly (a fresh, empty
+TPM identity, not the guest's real one).
+
+BombVault parses a domain's `<tpm>` element (`internal/virshcli`) the same
+way it already parses `<os><nvram>`. libvirt's schema supports several `<tpm>`
+backend types, but only the **passthrough** shape
+(`<backend type='passthrough'><device path='...'/></backend>`) is documented
+to carry an explicit path directly in the domain XML — and that shape is a
+real hardware TPM chip, not the kind of vTPM TrueNAS actually provisions. The
+**emulated** (software) vTPM TrueNAS uses for Secure Boot/Windows 11 guests
+does not, per libvirt's public documentation, expose its swtpm state
+directory as a domain-XML attribute; a newer `external`-backend shape can
+carry a UNIX socket path and is plausibly how TrueNAS's middleware wires its
+vTPM, but its exact attribute layout as rendered by TrueNAS is **not
+confirmed against real hardware**. Rather than guess at either shape,
+BombVault's parser recognizes only the well-documented passthrough case and
+otherwise reports "no TPM path found" — the same clean, non-erroring degrade
+a BIOS domain (no `<nvram>`) already gets. TrueNAS's own documented,
+fixed-path convention for vTPM state
+(`/var/db/system/vm/tpm/{id}_{name}_tpm_state`, mirroring its NVRAM
+convention at `/var/db/system/vm/nvram/{id}_{name}_VARS.fd`) exists in code
+(`virshcli.TPMFixedPath`) as an explicit, documented fallback — but it is
+**not called anywhere automatically**, deliberately: reconstructing it is
+only ever correct once a caller has confirmed it's actually talking to
+TrueNAS Scale and knows the VM's real numeric id, neither of which the parser
+itself can know, and this project would rather degrade to "TPM not captured"
+than silently guess a possibly-wrong path.
+
+**Exactly how deep this is wired today (verified by reading the real code,
+not assumed):** NVRAM's own *real*, production-reachable capture/restore
+mechanism is entirely the SSH-based one described at the top of this
+document — read over SSH into the VM's stored definition at backup time,
+written back over SSH just before `virsh define` at restore time, both
+best-effort and non-fatal (a failed read/write only logs a warning; the
+backup/restore itself never fails because of it). That mechanism lives
+entirely in the service layer (`internal/api/service.go`). One layer below
+it, `internal/backup/vm_orchestrator.go` *also* carries a second,
+separate, path-list-based NVRAM mechanism (`VMBackupDeps.NVRAMPath` /
+`VMRestoreDeps.NVRAMPath` — the path is simply added to the same restic
+backup/restore call as the disk images) — but reading the real
+`BackupVM`/`RestoreVM` code in `service.go` shows it **never populates
+that field**; it is exercised only by `vm_orchestrator.go`'s own direct unit
+tests, not by a real backup/restore today. This is a pre-existing situation,
+not something introduced for TPM.
+
+TPM support matches that same layer precisely, introducing no new gap and no
+new looseness: `VMBackupDeps.TPMPath` / `VMRestoreDeps.TPMPath` are wired into
+the exact same real call sites the existing `NVRAMPath` field already uses
+(`runVMGraceful`, `runVMLive`, `runVMRestore` in `vm_orchestrator.go` —
+included in the same restic path list, validated by the same restore
+path-safety guard), proven by unit tests that assert the actual paths restic
+receives. Extending the *real*, SSH-based, best-effort NVRAM mechanism to
+also carry TPM bytes is a service-layer change that has **not been made
+yet** — the restore-side write-back hook it would plug into
+(`VMRestoreDeps.PreDefine`, a generic caller-supplied closure) needs no
+change to support this once that integration happens.
+
+**⚠ Like the zvol mechanism above, this is REASONED from libvirt's and
+TrueNAS's public documentation and is UNIT-TESTED ONLY** — it has never been
+exercised against a real TrueNAS Scale box with a real vTPM-enabled guest.
+NVRAM-only (Unraid) VM backup/restore is completely unaffected: TPM handling
+is purely additive, and a domain with no `<tpm>` element parses and
+backs up/restores byte-identically to before this feature existed.
+
+### 5. TrueNAS names its libvirt domains differently — VMs may show up under an unfamiliar name
+
+Unraid's libvirt domain name is simply the VM's name, so the name you see in
+BombVault's **VMs** tab is the name you chose. TrueNAS derives the domain
+name instead, and has changed how twice:
+
+| TrueNAS version | libvirt domain name | Where the name you chose lives |
+|---|---|---|
+| 25.10 "Goldeye" | `{id}_{name}` — e.g. `1_debian` | in the domain name, behind an `{id}_` prefix |
+| 26 | the VM's bare **UUID** — e.g. `550e8400-e29b-41d4-a716-446655440000` | only in the domain XML's `<title>` element |
+
+BombVault's libvirt wrapper (`internal/virshcli`) recognizes both shapes and
+resolves a friendly name for each: it strips the `{id}_` prefix on 25.10, and
+on 26 it makes one extra `virsh dumpxml` call per UUID-named domain to read
+`<title>`, falling back to the UUID itself if there is no `<title>` or the
+call fails.
+
+**What you will actually see today:** that friendly name is **not yet used by
+the UI**. BombVault's VM list still displays — and matches your saved per-VM
+settings against — the **raw libvirt domain name**. So on TrueNAS 25.10 your
+VMs appear as `1_debian` rather than `debian`, and on TrueNAS 26 they appear
+as **bare UUIDs** rather than the names you gave them. Identify a VM by its
+UUID (TrueNAS's own VM UI shows it) until this is wired up.
+
+This is a **display and matching** limitation only, not a correctness one:
+the raw domain name is the identifier every `virsh` command legitimately
+takes, so backup and restore operate on the right VM either way. The one
+practical consequence beyond cosmetics is on TrueNAS 26, where a VM's saved
+BombVault settings (backup method, schedule membership) are keyed to that
+UUID — if TrueNAS ever re-creates the VM and issues a new UUID, the saved
+settings will not follow it and the VM will reappear as a new, unconfigured
+entry. Wiring the friendly name through to the UI and to that matching is a
+separate, not-yet-done follow-up.
+
+A related note for anyone doing that wiring: the classifier works purely on
+the **shape** of the domain name and is deliberately not platform-gated, so
+an ordinary Unraid VM named literally `10_Windows` is classified exactly like
+a real TrueNAS 25.10 domain. This is inert today precisely because nothing
+consumes the friendly name yet, but a future caller must gate on the detected
+platform before preferring it over the raw name.
+
+**⚠ Like the two mechanisms above, this is REASONED from TrueNAS's public
+documentation and is UNIT-TESTED ONLY** — the naming schemes have not been
+confirmed against a real TrueNAS 25.10 or 26 box. Unraid is unaffected:
+an ordinary hand-chosen domain name matches neither shape and passes through
+unchanged.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |

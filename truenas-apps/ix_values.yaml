@@ -1,0 +1,27 @@
+# Static values for BombVault — not exposed to the user, always applied.
+# Prefer ghcr over docker.io per CONTRIBUTIONS.md; ghcr.io/junkerderprovinz/bombvault
+# mirrors docker.io/junkerderprovinz/bombvault 1:1 (see the source repo's Dockerfile
+# header and README badges).
+#
+# NOTE (maintenance): `tag` here must track the container image tag actually
+# published to the registry, NOT the git release tag. This repo's git/GitHub
+# release tags carry a "v" prefix (e.g. v7.11.1), but .github/workflows/build.yml's
+# docker/metadata-action `type=semver,pattern={{version}}` rule strips it, so the
+# published image tag is the bare "7.11.1". Bump this file's `tag` (and app.yaml's
+# `app_version`, and app.yaml's `version`) on every BombVault release meant to reach
+# this catalog listing — this is an ongoing commitment, not a one-time value.
+images:
+  image:
+    repository: ghcr.io/junkerderprovinz/bombvault
+    tag: 7.11.1
+
+consts:
+  bombvault_container_name: bombvault
+  config_path: /config
+  host_data_path: /host/user
+  # Fixed container-internal ports (match the Dockerfile's ENV PORT/HTTPS_PORT
+  # defaults, which this template never overrides) — only the HOST-side
+  # published port is user-configurable, via templates/docker-compose.yaml's
+  # container_port overrides.
+  internal_https_port: 3443
+  internal_http_port: 3000

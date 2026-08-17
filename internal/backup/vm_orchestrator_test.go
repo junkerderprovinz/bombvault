@@ -642,3 +642,140 @@ func TestBackupVMLiveFallsBackWithoutQuiesceOnFreeze(t *testing.T) {
 		t.Fatalf("restic backup must run after the fallback snapshot: %v", r.log)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// TPM (vTPM state) tests — Task 11. Mirror the NVRAM path-list tests above:
+// TPMPath is given the EXACT SAME treatment as NVRAMPath (appended to the
+// restic path list when non-empty, nothing extra when empty), proven by
+// asserting the actual paths restic receives — not just that no error occurs.
+// ---------------------------------------------------------------------------
+
+const sampleTPMPath = "/var/db/system/vm/tpm/1_win10_tpm_state"
+
+// TestBackupVMGracefulIncludesTPMPathWhenPresent proves TPMPath is wired into
+// the SAME real call site NVRAMPath already uses in runVMGraceful: when set,
+// it rides along in the same restic Backup call as the disk(s) and NVRAM.
+func TestBackupVMGracefulIncludesTPMPathWhenPresent(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := sampleVMBackupDeps(t, vm, r, runs)
+	d.TPMPath = sampleTPMPath
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if !vmContains(r.log, "backup:") || !strings.Contains(r.log[0], sampleTPMPath) {
+		t.Fatalf("expected TPM path %q in the restic backup call, got %v", sampleTPMPath, r.log)
+	}
+}
+
+// TestBackupVMGracefulOmitsTPMPathWhenAbsent is the explicit regression pin:
+// a VM with no vTPM (TPMPath empty, every VM in production today) must
+// produce EXACTLY the same restic backup call as before TPM support existed
+// — not merely "no error", an exact match on what restic receives.
+func TestBackupVMGracefulOmitsTPMPathWhenAbsent(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := sampleVMBackupDeps(t, vm, r, runs) // TPMPath left unset (zero value)
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	want := "backup:/repo/vms:/host/domains/win10/win10.qcow2,/host/domains/win10/win10_VARS.fd:vm:win10,p2"
+	if len(r.log) != 1 || r.log[0] != want {
+		t.Fatalf("restic backup call = %v, want [%q] (byte-identical to pre-TPM behavior)", r.log, want)
+	}
+}
+
+// TestBackupVMLiveIncludesTPMPathWhenPresent mirrors the graceful-path test
+// above for BackupVMLive's own separate restic Backup call.
+func TestBackupVMLiveIncludesTPMPathWhenPresent(t *testing.T) {
+	vm := &fakeVM{guestAgent: true}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := liveDeps(t, vm, r, runs)
+	d.TPMPath = sampleTPMPath
+
+	if _, err := backup.BackupVMLive(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if !vmContains(r.log, "backup:") || !strings.Contains(r.log[0], sampleTPMPath) {
+		t.Fatalf("expected TPM path %q in the live restic backup call, got %v", sampleTPMPath, r.log)
+	}
+}
+
+// TestBackupVMLiveOmitsTPMPathWhenAbsent is BackupVMLive's regression pin,
+// mirroring TestBackupVMGracefulOmitsTPMPathWhenAbsent.
+func TestBackupVMLiveOmitsTPMPathWhenAbsent(t *testing.T) {
+	vm := &fakeVM{guestAgent: true}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := liveDeps(t, vm, r, runs) // TPMPath left unset
+
+	if _, err := backup.BackupVMLive(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	want := "backup:/repo/vms:/host/domains/win10/win10.qcow2,/host/domains/win10/win10_VARS.fd:vm:win10,p2,live"
+	if len(r.log) != 1 || r.log[0] != want {
+		t.Fatalf("restic backup call = %v, want [%q] (byte-identical to pre-TPM behavior)", r.log, want)
+	}
+}
+
+// TestRestoreVMIncludesTPMPathWhenPresent proves TPMPath is wired into
+// runVMRestore's SAME real call site NVRAMPath already uses: it is validated
+// by the same path-safety guard and its parent directory is included in the
+// restic restore-directory list alongside the disk(s)' and NVRAM's.
+func TestRestoreVMIncludesTPMPathWhenPresent(t *testing.T) {
+	vm := &fakeVM{stateVal: ""}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	d := sampleVMRestoreDeps(t, vm, r, runs)
+	d.TPMPath = sampleTPMPath
+
+	if err := backup.RestoreVM(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	found := false
+	for _, p := range r.capturedPaths {
+		if p == "/var/db/system/vm/tpm" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected the TPM path's parent dir in the restic restore call, got %v", r.capturedPaths)
+	}
+}
+
+// TestRestoreVMOmitsTPMPathWhenAbsent is the restore-side regression pin.
+func TestRestoreVMOmitsTPMPathWhenAbsent(t *testing.T) {
+	vm := &fakeVM{stateVal: ""}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	d := sampleVMRestoreDeps(t, vm, r, runs) // TPMPath left unset
+
+	if err := backup.RestoreVM(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	want := []string{"/host/domains/win10"}
+	if len(r.capturedPaths) != len(want) || r.capturedPaths[0] != want[0] {
+		t.Fatalf("restic restore dirs = %v, want %v (byte-identical to pre-TPM behavior)", r.capturedPaths, want)
+	}
+}
+
+// TestRestoreVMRejectsUnsafeTPMPath proves TPMPath goes through the SAME
+// path-safety validation as DiskPaths/NVRAMPath (allPaths in runVMRestore) —
+// not a separately-trusted field.
+func TestRestoreVMRejectsUnsafeTPMPath(t *testing.T) {
+	vm := &fakeVM{stateVal: ""}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	d := sampleVMRestoreDeps(t, vm, r, runs)
+	d.TPMPath = "../../../etc/passwd"
+
+	err := backup.RestoreVM(t.Context(), d)
+	if err == nil || !strings.Contains(err.Error(), "unsafe") {
+		t.Fatalf("expected unsafe path rejection for TPMPath, got %v", err)
+	}
+}
