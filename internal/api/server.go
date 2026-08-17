@@ -229,32 +229,27 @@ func versionTag() string {
 //	<blank>
 //	<brand ASCII art>
 //	<blank>
-//	  bombvault
-//	  Backup & disaster recovery for Docker containers and KVM/libvirt VMs
+//	  bombvault vX.Y.Z · Backup & disaster recovery for Docker containers and KVM/libvirt VMs
 //	<blank>
 //
-// A leading blank, the brand art, ONE blank line, then a clean name/subtitle
-// block with no rules. TrimRight makes the spacing deterministic regardless of
+// A leading blank, the brand art, ONE blank line, then a clean name+subtitle
+// line (no rules). TrimRight makes the spacing deterministic regardless of
 // the embedded file's trailing newline.
 func printBanner() {
 	art := strings.TrimRight(brandArt, "\n")
 	fmt.Println()
 	fmt.Println(art)
 	fmt.Println()
-	fmt.Println("  " + bannerName + versionTag())
-	fmt.Println("  " + bannerSubtitle)
+	fmt.Println("  " + bannerName + versionTag() + " · " + bannerSubtitle)
 	fmt.Println()
 }
 
-// readyHashes is the 60-char '#' rule used by the house "<APP> IS READY" box
-// (matches the jdownloader/krusader/matrix init banners).
-const readyHashes = "############################################################"
-
-// printReady prints the loud READY box once the server is about to listen, in the
-// shared house format ('#' box). Writes to stdout (via fmt) so it shares the
-// banner's stream and always appears after the ASCII art.
+// printReady prints the loud "<APP> IS READY" line once the server is about
+// to listen, in the shared house one-line format (matches
+// jdownloader/krusader/matrix/handbrake/featherdrop). Writes to stdout (via
+// fmt) so it shares the banner's stream; this is always the LAST thing this
+// process prints before it blocks on ListenAndServe.
 func printReady(scheme string, port int) {
-	fmt.Println("  " + readyHashes)
-	fmt.Printf("   BOMBVAULT%s IS READY  ->  open the WebUI now (%s %d)\n", versionTag(), scheme, port)
-	fmt.Println("  " + readyHashes)
+	fmt.Printf("  \033[0;32m✓ BOMBVAULT%s IS READY\033[0m - Open the WebUI now (%s %d)\n", versionTag(), scheme, port)
+	fmt.Println()
 }
