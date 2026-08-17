@@ -1150,13 +1150,25 @@ func offsiteRepoFromSettings(domain string, settings store.Settings) string {
 
 // offsiteScheduleFor returns the per-domain off-site replication schedule. Empty
 // means "replicate after every local backup"; a non-empty cadence means
-// replication is driven by the scheduler instead (decoupled from backups). Thin
-// wrapper over the first enabled off-site target, falling back to the legacy
-// Settings column when no target row exists.
+// replication is driven by the scheduler instead (decoupled from backups).
+//
+// The cadence is read from the per-domain Settings column and NOTHING else. That
+// column is the single source of truth: Settings › Schedules edits it, and the
+// scheduler registers each "<domain>-offsite" cron entry from it (see the offsite()
+// block in internal/schedule/schedule.go). Reading the cadence from anywhere else
+// lets the two disagree, and one direction of that disagreement loses the off-site
+// copy outright (issue #150): when some other source says "decoupled" while the Settings
+// column is blank, the coupled after-backup copy stands down AND no cron entry was
+// ever registered to replace it, so the domain silently stops replicating — no
+// error, no log line, no run row, for as long as it takes someone to notice.
+//
+// Concretely: an off-site TARGET ROW can carry a schedule value (the CRUD API
+// accepts the field, and a settings import restores whatever was exported), and
+// this used to be preferred over the Settings column. Per-target schedules are
+// deliberately not a feature — every target of a domain replicates on that domain's
+// off-site schedule (see OffsiteTargetsSection, which exposes no such control) — so
+// a stray row value is ignored here rather than allowed to silence a domain.
 func (s *Service) offsiteScheduleFor(domain string, settings store.Settings) string {
-	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
-		return ts[0].Schedule
-	}
 	return offsiteScheduleFromSettings(domain, settings)
 }
 
@@ -2319,8 +2331,14 @@ func (s *Service) ReplicateOffsiteAfterBulk(ctx context.Context, domain string) 
 	if s.offsiteRepoFor(domain, settings) == "" {
 		return // no off-site configured for this domain
 	}
-	if s.offsiteReplicatesOnOwnSchedule(domain, settings) {
-		return // replicated on its own schedule (a separate cron entry drives it)
+	if cadence := s.offsiteScheduleFor(domain, settings); s.offsiteReplicatesOnOwnSchedule(domain, settings) {
+		// Replicated by the domain's OWN "<domain>-offsite" cron entry instead, which
+		// the scheduler registers from this very cadence. Say so: a scheduled run that
+		// backs up and prunes but never replicates looks identical to a broken one from
+		// the activity log, and the whole point of this skip is that something ELSE is
+		// doing the copy (issue #150).
+		log.Printf("api: offsite %s: batched replicate skipped — this domain replicates on its own off-site schedule (%q)", domain, cadence) //nolint:gosec // G706: domain is a fixed literal, cadence is %q-quoted
+		return
 	}
 	if err := s.ScheduledReplicateOffsite(ctx, domain); err != nil {
 		log.Printf("api: offsite %s: batched replicate failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
