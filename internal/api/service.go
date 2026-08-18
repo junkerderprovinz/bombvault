@@ -5824,7 +5824,19 @@ type vmDefinition struct {
 
 // VMView is the per-VM row returned by ListVMs.
 type VMView struct {
-	Name              string `json:"name"`
+	Name string `json:"name"`
+	// LibvirtName is the raw libvirt domain name — vm.Name, NEVER
+	// vm.FriendlyName — on every platform. It equals Name everywhere except
+	// TrueNAS, where Name is instead the presentation-only friendly name (see
+	// the isTrueNAS block in ListVMs). This is the ONLY field the frontend may
+	// send back on a VM action call (backup/restore/snapshots/forget/method/
+	// include/scheduleCadence/backup-order/DR-drill-target) — every such route
+	// (see vmNameParam, internal/api/handlers.go) takes the path segment
+	// literally and hands it straight to virsh, with zero resolution. Name is
+	// display-only; sending it as an identifier is exactly the bug this field
+	// fixes (a TrueNAS user's Backup Now / Restore / Forget / etc. silently
+	// targeting a domain name virsh has never heard of).
+	LibvirtName       string `json:"libvirtName"`
 	State             string `json:"state"`
 	Method            string `json:"method"`
 	IncludeInSchedule bool   `json:"includeInSchedule"`
@@ -5881,7 +5893,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		if isTrueNAS {
 			displayName = vm.FriendlyName
 		}
-		v := VMView{Name: displayName, State: vm.State, Method: "graceful"}
+		v := VMView{Name: displayName, LibvirtName: vm.Name, State: vm.State, Method: "graceful"}
 		if t, ok := byName[vm.Name]; ok {
 			v.Method = t.Method
 			v.IncludeInSchedule = t.IncludeInSchedule
@@ -5898,7 +5910,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		if live[t.Name] {
 			continue
 		}
-		v := VMView{Name: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
+		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
 		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
 			v.LastBackupStarted = &run.StartedAt

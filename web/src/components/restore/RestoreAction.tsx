@@ -36,8 +36,17 @@ interface RestoreActionProps {
    *  domain string (SINGULAR: a plural typo makes the watch never resolve), and
    *  the choice of restore() vs restoreVM(). */
   domain: "container" | "vm";
-  /** Target container/VM name. */
+  /** Target container/VM identifier — the ONLY value restore()/restoreVM()
+   *  and the progressKey/matchRun below may use. For containers this is
+   *  always the container name (no display/identifier split there). For VMs
+   *  the caller MUST pass the raw libvirt name (VM.libvirtName), never the
+   *  display VM.name — see VM.libvirtName's doc comment (lib/api.ts). */
   name: string;
+  /** Human-readable name substituted into the in-place cancel warning.
+   *  Defaults to `name`. Callers whose domain has a display/identifier split
+   *  (VMs on TrueNAS) should pass the display name here while `name` above
+   *  stays the raw identifier. */
+  displayName?: string;
   /** Snapshot to restore — a snapshot id or the literal "latest". */
   snapshotId: string;
   /** Repo to restore from; undefined => the backend-default repo (Recovery). */
@@ -70,6 +79,7 @@ interface RestoreActionProps {
 export function RestoreAction({
   domain,
   name,
+  displayName,
   snapshotId,
   source,
   otherActive,
@@ -169,7 +179,7 @@ export function RestoreAction({
         prog={prog}
         cancelKey={progressKey}
         inPlace={true}
-        name={name}
+        name={displayName ?? name}
         cancelledRef={cancelledRef}
         successMessage={successMessage}
         showStartedHint={showStartedHint}

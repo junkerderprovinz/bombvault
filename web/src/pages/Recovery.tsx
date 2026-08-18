@@ -69,12 +69,19 @@ const offsiteInput =
 function RestoreRow({
   domain,
   name,
+  displayName,
   lastBackup,
   t,
   otherActive,
 }: {
   domain: "container" | "vm";
+  /** Raw identifier — the ONLY value the restore action below may send to the
+   *  backend. For VMs this MUST be VM.libvirtName, never VM.name (which is
+   *  display-only on TrueNAS). Containers have no such split. */
   name: string;
+  /** Display name shown in the row + the cancel-confirm text; falls back to
+   *  name. */
+  displayName?: string;
   lastBackup: number | null;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
@@ -88,7 +95,7 @@ function RestoreRow({
   return (
     <div className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-carbon-text font-medium flex-1 truncate">{name}</span>
+        <span className="text-carbon-text font-medium flex-1 truncate">{displayName ?? name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
           {snapLabel || t("containers.never")}
         </span>
@@ -99,6 +106,7 @@ function RestoreRow({
       <RestoreAction
         domain={domain}
         name={name}
+        displayName={displayName}
         snapshotId="latest"
         otherActive={{ active: otherActive }}
         successMessage={t("common.done")}
@@ -653,7 +661,13 @@ function ForeignRestoreCard({
           known = false;
         } else {
           for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
-          for (const v of vs.vms ?? []) names.add(`vm:${v.name}`);
+          // ForeignItem.Name (below, item.name) is always the raw libvirt name
+          // — it comes from parsing the foreign repo's restic tags
+          // ("vm:"+rawName at backup time), never a friendly display name. The
+          // local side of this collision check must match on the same raw
+          // identifier (VM.libvirtName), not the display VM.name, or a
+          // TrueNAS VM's real collision would go undetected.
+          for (const v of vs.vms ?? []) names.add(`vm:${v.libvirtName}`);
         }
       } catch {
         known = false;
@@ -1123,10 +1137,13 @@ export default function Recovery() {
         else fail++;
       }
       for (const v of vms) {
+        // libvirtName, not name: on TrueNAS `name` is the display-only
+        // friendly name, and both the recorded run's target and virsh itself
+        // only ever know the VM by its raw libvirt name.
         const res = await fireAndWaitRun({
           kind: "restore",
-          matchRun: (r) => r.domain === "vm" && r.target === v.name,
-          start: () => restoreVM(v.name, "latest", true, undefined, true),
+          matchRun: (r) => r.domain === "vm" && r.target === v.libvirtName,
+          start: () => restoreVM(v.libvirtName, "latest", true, undefined, true),
         });
         if (res.ok) ok++;
         else fail++;
@@ -1526,9 +1543,10 @@ export default function Recovery() {
                 </span>
                 {vms.map((v) => (
                   <RestoreRow
-                    key={`vm:${v.name}`}
+                    key={`vm:${v.libvirtName}`}
                     domain="vm"
-                    name={v.name}
+                    name={v.libvirtName}
+                    displayName={v.name}
                     lastBackup={v.lastBackup}
                     t={t}
                     otherActive={rowOtherActive}

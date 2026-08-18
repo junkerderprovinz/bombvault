@@ -1027,6 +1027,12 @@ func TestListVMsWithEntry(t *testing.T) {
 	if vm["name"] != "win11" {
 		t.Fatalf("unexpected vm name: %v", vm)
 	}
+	// libvirtName must be present in the JSON contract and equal to name here
+	// (no friendly-name platform in play) — the frontend action call sites key
+	// off this field, never off the display "name".
+	if vm["libvirtName"] != "win11" {
+		t.Fatalf("unexpected vm libvirtName: %v", vm)
+	}
 }
 
 func TestBackupVMHandlerReturnsOK(t *testing.T) {

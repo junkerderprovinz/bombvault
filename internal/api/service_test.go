@@ -2272,6 +2272,15 @@ func TestServiceSetVMIncludeAll(t *testing.T) {
 // service.go's other call sites) every virsh/backup/restore call elsewhere —
 // keeps using vm.Name (the raw libvirt/UUID name). FriendlyName must never
 // leak into an identifier role.
+//
+// It also pins the fix for the bug Task 4's own review deferred: VMView must
+// carry the raw libvirt name in a SEPARATE field (LibvirtName) so the frontend
+// can send that — not the display Name — back on every action call
+// (backup/restore/forget/etc). Before this fix, VMView had no field but Name,
+// so the UI had no choice but to POST the friendly name to
+// /api/vms/{name}/..., which virsh always rejects as "domain not found" on
+// TrueNAS. See internal/api/handlers.go's vmNameParam: it does zero
+// resolution and passes the path segment straight to virsh.
 func TestListVMsTrueNASDisplaysFriendlyName(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -2309,6 +2318,17 @@ func TestListVMsTrueNASDisplaysFriendlyName(t *testing.T) {
 	// this view, not the target-lookup default ("graceful").
 	if got.Method != "live" {
 		t.Fatalf("Method = %q, want %q — byName lookup must key on the raw name (%q), not the friendly name", got.Method, "live", rawName)
+	}
+	// VMView.LibvirtName must carry the RAW name — never FriendlyName — so the
+	// frontend has a stable identifier to send back on every action call
+	// (backup/restore/snapshots/forget/method/include), distinct from the
+	// display-only Name above. The two fields must differ here (that's the
+	// whole point of TrueNAS's friendly-name display).
+	if got.LibvirtName != rawName {
+		t.Fatalf("VMView.LibvirtName = %q, want the raw libvirt name %q (the frontend needs this — not the display Name — for every backend action call)", got.LibvirtName, rawName)
+	}
+	if got.LibvirtName == got.Name {
+		t.Fatalf("VMView.LibvirtName (%q) must differ from the display Name (%q) on TrueNAS when a friendly name was resolved", got.LibvirtName, got.Name)
 	}
 }
 
@@ -2348,6 +2368,59 @@ func TestListVMsUnraidUnaffectedByFriendlyName(t *testing.T) {
 	}
 	if got := views[0].Name; got != rawName {
 		t.Fatalf("VMView.Name = %q, want the raw name %q unchanged on Unraid (FriendlyName must be ignored off TrueNAS)", got, rawName)
+	}
+	// Off TrueNAS, LibvirtName must equal Name exactly — both are the raw
+	// name, so an Unraid user's action calls (which always used vm.Name, since
+	// this platform never had a display/identifier split) are byte-for-byte
+	// unaffected by this fix.
+	if got := views[0].LibvirtName; got != rawName {
+		t.Fatalf("VMView.LibvirtName = %q, want the raw name %q on Unraid", got, rawName)
+	}
+	if views[0].LibvirtName != views[0].Name {
+		t.Fatalf("VMView.LibvirtName (%q) must equal Name (%q) off TrueNAS — no regression for platforms with no friendly-name distinction", views[0].LibvirtName, views[0].Name)
+	}
+}
+
+// TestListVMsOrphanLibvirtNameEqualsName pins the orphan branch of ListVMs
+// (a VMTarget whose domain is no longer defined on the host, state
+// "not-installed"): it has no live virshcli.VMInfo to resolve a friendly name
+// from, so LibvirtName must equal Name there too — both the stored target's
+// raw name. Without this, a TrueNAS VM that goes orphaned would get an EMPTY
+// LibvirtName (the zero value), breaking "Forget" for exactly the row that
+// most needs it.
+func TestListVMsOrphanLibvirtNameEqualsName(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	const rawName = "550e8400-e29b-41d4-a716-446655440000"
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: rawName, Method: "graceful"}); err != nil {
+		t.Fatal(err)
+	}
+	settings := mustSettings(t, st)
+	settings.VMsEnabled = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	// No live domains at all — the target above is an orphan.
+	v := listVMsVirsh{vms: []virshcli.VMInfo{}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	svc.SetPlatform(platform.TrueNAS{})
+
+	views, err := svc.ListVMs(context.Background())
+	if err != nil {
+		t.Fatalf("ListVMs: %v", err)
+	}
+	if len(views) != 1 {
+		t.Fatalf("expected 1 orphan view, got %d: %+v", len(views), views)
+	}
+	got := views[0]
+	if got.State != "not-installed" {
+		t.Fatalf("State = %q, want %q", got.State, "not-installed")
+	}
+	if got.Name != rawName || got.LibvirtName != rawName {
+		t.Fatalf("orphan VMView = {Name:%q LibvirtName:%q}, want both %q", got.Name, got.LibvirtName, rawName)
 	}
 }
 
