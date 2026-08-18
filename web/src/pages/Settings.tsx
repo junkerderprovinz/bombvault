@@ -2502,7 +2502,7 @@ function VMsSection({
           }
         />
       </div>
-      <div className={`rounded-card bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.vmsSection")}
           value={schedule}
@@ -2573,7 +2573,7 @@ function FlashSection({
           }
         />
       </div>
-      <div className={`rounded-card bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.flashSection")}
           value={schedule}
@@ -2711,21 +2711,22 @@ function RestoreChecksSection({
     <Card title={t("verify.auto")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
       <ToggleRow
+        hideLabel
         label={t("verify.auto")}
         checked={settings.drillsEnabled}
         onChange={(v) => update({ drillsEnabled: v })}
       />
-      {/* Sub-toggle: only meaningful while scheduled drills are on. */}
-      <div className={settings.drillsEnabled ? "" : "opacity-50"}>
-        <ToggleRow
-          label={t("settings.offsiteDrills")}
-          description={t("settings.offsiteDrillsHelp")}
-          checked={settings.offsiteDrillsEnabled}
-          disabled={!settings.drillsEnabled}
-          onChange={(v) => update({ offsiteDrillsEnabled: v })}
-        />
-      </div>
-      <div className={`rounded-card bg-carbon-surface2 p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
+      {/* Sub-toggle: only meaningful while scheduled drills are on. The
+          switch dims itself via its own disabled:opacity-50 (Toggle.tsx) —
+          no wrapping container opacity needed on top of that. */}
+      <ToggleRow
+        label={t("settings.offsiteDrills")}
+        description={t("settings.offsiteDrillsHelp")}
+        checked={settings.offsiteDrillsEnabled}
+        disabled={!settings.drillsEnabled}
+        onChange={(v) => update({ offsiteDrillsEnabled: v })}
+      />
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("settings.schedule")}
           value={settings.drillsSchedule}
@@ -4258,10 +4259,12 @@ export function SettingsPage() {
       <Advanced>
       <Card title={t("settings.metrics")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
+        {/* No description here: the Card's own hint paragraph above already
+            states the /metrics path — a hardcoded "GET /metrics" description
+            would just orphan itself once hideLabel hides the row's caption. */}
         <ToggleRow
           hideLabel
           label={t("settings.metricsEnable")}
-          description="GET /metrics"
           checked={settings.metricsEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, metricsEnabled: v } : prev)
@@ -4424,7 +4427,8 @@ export function SettingsPage() {
 
       {/* NOTIFICATIONS — Weekly digest: one summary message per week through
           the channels configured above. Schedule input mirrors the drills/
-          tamper cadence editors (CadenceBuilder + opacity gate). */}
+          tamper cadence editors (CadenceBuilder's own <fieldset disabled>
+          handles the dimming — no opacity gate on the wrapping container). */}
       {tab === "notifications" && (
         <Card title={t("settings.digestTitle")}>
           <p className="text-xs text-carbon-textMuted -mt-1">
@@ -4438,7 +4442,7 @@ export function SettingsPage() {
               setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
             }
           />
-          <div className={`rounded-card bg-carbon-surface2 p-4 ${settings.digestEnabled ? "" : "opacity-50"}`}>
+          <div className="rounded-card bg-carbon-surface2 p-4">
             <CadenceBuilder
               label={t("settings.schedule")}
               value={settings.digestSchedule}
