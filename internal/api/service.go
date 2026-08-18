@@ -5332,6 +5332,52 @@ func snapshotSubtree(snaps []restic.Snapshot, id string) string {
 	return ""
 }
 
+// vmRunTag returns the "vmrun:<runID>" correlation tag (v8.0.0 VM
+// service-layer integration, Task 1/2 — internal/backup/vm_orchestrator.go's
+// VMBackupDeps.RunTag) carried by the snapshot in snaps matching id (exact or
+// unambiguous prefix, like snapshotBelongs/snapshotSubtree above), or "" when
+// there is no match, or the matching snapshot carries no such tag.
+//
+// A "" result is the PERMANENT restore fallback, not a transitional one:
+// BackupVM only ever sets RunTag when the VM has zvol disks (a file-only VM's
+// single snapshot is already unambiguously identified by its plain
+// "vm:<name>" tag alone, so tagging it would just be permanent, purposeless
+// noise — see BackupVM's own RunTag-setting comment, internal/api/service.go).
+// So "" covers both a Run predating this tag's existence AND, forever
+// afterwards, every file-only VM's backup — which is most VMs in production.
+// Callers treat "" as "resolve via id alone", exactly how VM restore worked
+// before Task 3 (v8.0.0 VM service-layer integration — restore resolution via
+// the "vmrun:" tag group).
+func vmRunTag(snaps []restic.Snapshot, id string) string {
+	for _, sn := range snaps {
+		if sn.ID != id && !strings.HasPrefix(sn.ID, id) {
+			continue
+		}
+		for _, t := range sn.Tags {
+			if strings.HasPrefix(t, "vmrun:") {
+				return t
+			}
+		}
+		return ""
+	}
+	return ""
+}
+
+// vmrunGroupSnapshot returns the snapshot in group (a vmRunTag-keyed
+// snapshotsForTag listing) carrying tag EXACTLY — a zvol disk's own
+// "vm:<name>:zvol:<dev>" identity tag (see VMBlockDisk.Dev's doc comment,
+// internal/backup/vm_orchestrator.go) — or false when no member does.
+func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, bool) {
+	for _, sn := range group {
+		for _, t := range sn.Tags {
+			if t == tag {
+				return sn, true
+			}
+		}
+	}
+	return restic.Snapshot{}, false
+}
+
 // sanitizeTags trims each tag, drops empties, and rejects any tag containing a
 // comma or a control character. restic stores tags as a comma-separated list, so
 // a comma would split one tag into two; control characters could corrupt argv or
@@ -6382,6 +6428,29 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		snapshotID = snaps[len(snaps)-1].ID
 	}
 
+	// Resolve this run's "vmrun:<runID>" correlation group (v8.0.0 VM
+	// service-layer integration, Task 3): every restic snapshot ONE backup
+	// invocation produced — the main file-backed snapshot at snapshotID
+	// above plus one per zvol disk (see VMBackupDeps.RunTag's doc comment,
+	// internal/backup/vm_orchestrator.go). The tag is read straight off the
+	// already-resolved snapshot (found in snaps, the exact "vm:"+name-tagged
+	// list snapshotID above came from — explicit or latest, so no extra
+	// restic listing is needed just to find it), then ONE more
+	// snapshotsForTag call, over the SAME repo ref, keyed on that tag.
+	//
+	// vmrunGroup stays nil — the PERMANENT fallback (see vmRunTag's doc
+	// comment) — when the resolved snapshot carries no "vmrun:" tag at all.
+	// In that case vmRestoreBlockDisks below leaves every entry's
+	// SnapshotID/StdinPath at zero value, EXACTLY the pre-Task-3 behavior.
+	var vmrunGroup []restic.Snapshot
+	if runTag := vmRunTag(snaps, snapshotID); runTag != "" {
+		group, gErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, runTag)
+		if gErr != nil {
+			return vmRestorePlan{}, gErr
+		}
+		vmrunGroup = group
+	}
+
 	if tg.Definition == "" {
 		return vmRestorePlan{}, errors.New("no stored definition for this vm — run a backup once first")
 	}
@@ -6466,14 +6535,32 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 				log.Printf("api: RestoreVM: WARN block-device disk %q (%s) is not a recognizable ZFS zvol for %q — it will not be restored", bd.Dev, bd.Source, name) //nolint:gosec // G706: name is %q-quoted
 				continue
 			}
-			// SnapshotID/StdinPath are deliberately left at their zero value:
-			// resolving which restic snapshot holds THIS disk's data (via the
-			// "vmrun:<runID>" run-correlation tag) is Task 3's job, not this
-			// one's — see VMRestoreDeps.BlockDisks's doc comment
-			// (internal/backup/vm_orchestrator.go). A restore of a VM with
-			// zvol disks today fails loudly at RestoreZvolDisk's restic dump
-			// (empty snapshot id) rather than silently skipping the disk.
-			vmRestoreBlockDisks = append(vmRestoreBlockDisks, backup.VMRestoreBlockDisk{SourceDataset: dataset})
+			rbd := backup.VMRestoreBlockDisk{SourceDataset: dataset}
+			// Resolve THIS disk's own restic snapshot from the vmrun: group
+			// above (v8.0.0 VM service-layer integration, Task 3): its
+			// identity tag is "vm:"+name+":zvol:"+bd.Dev (see
+			// VMBlockDisk.Dev's doc comment, internal/backup/
+			// vm_orchestrator.go) — find the group member carrying that
+			// EXACT tag and take its snapshot id plus the one path it
+			// recorded, which IS the exact StdinPath BackupZvolDisk gave
+			// restic (BackupStdin backs up exactly one synthetic file per
+			// invocation — see ZvolStdinPath — so Paths always has exactly
+			// one entry when set at all).
+			//
+			// Left at zero value — the PERMANENT fallback (see vmRunTag's
+			// doc comment above), not just "old backups" — when there is no
+			// group at all, or no member carries this disk's tag (bd.Dev
+			// empty never happens from the real BackupVM caller, see
+			// VMBlockDisk.Dev's doc comment): RestoreZvolDisk then fails
+			// loudly on the empty snapshot id rather than silently skipping
+			// the disk, EXACTLY as it did before this task.
+			if bd.Dev != "" {
+				if gs, ok := vmrunGroupSnapshot(vmrunGroup, "vm:"+name+":zvol:"+bd.Dev); ok && len(gs.Paths) > 0 {
+					rbd.SnapshotID = gs.ID
+					rbd.StdinPath = gs.Paths[0]
+				}
+			}
+			vmRestoreBlockDisks = append(vmRestoreBlockDisks, rbd)
 		}
 	} else {
 		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v) — TPM state and any zvol disks will not be restored", name, perr) //nolint:gosec // G706: name is %q-quoted

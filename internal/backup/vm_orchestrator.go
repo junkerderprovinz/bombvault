@@ -193,10 +193,13 @@ type VMBackupDeps struct {
 	// from the parsed domain, sets RunTag so every snapshot this backup
 	// produces is correlatable, and applies retention once per identity tag
 	// actually present (the main "vm:<name>" plus one per distinct
-	// "vm:<name>:zvol:<dev>"). What is STILL a real, not-yet-built gap:
-	// RESTORE resolving which snapshot id belongs to which disk via the
-	// "vmrun:<runID>" tag — that is Task 3's job, not this field's or Task
-	// 2's; see VMRestoreDeps.BlockDisks's own doc comment.
+	// "vm:<name>:zvol:<dev>").
+	//
+	// UPDATE (Task 3): RESTORE resolving which snapshot id belongs to which
+	// disk via the "vmrun:<runID>" tag is ALSO now closed —
+	// internal/api/service.go's prepareRestoreVMForTarget queries restic for
+	// the resolved snapshot's own "vmrun:" tag and groups by it; see
+	// VMRestoreDeps.BlockDisks's own doc comment.
 	BlockDisks []VMBlockDisk
 	// ZFSHost / ZvolRestic are BackupZvolDisk's own dependencies (see their
 	// doc comments below) — required only when BlockDisks is non-empty.
@@ -319,16 +322,20 @@ type VMRestoreDeps struct {
 	// — in that case restore behavior is BYTE-IDENTICAL to before this field
 	// existed.
 	//
-	// ⚠ PARTIALLY WIRED (v8.0.0 VM service-layer integration, Task 2): the
-	// real caller (internal/api/service.go's prepareRestoreVMForTarget) DOES
-	// populate SourceDataset for every entry (resolved from the stored domain
-	// XML, same as backup time), but deliberately leaves SnapshotID/StdinPath
-	// at their zero value on every entry — actually finding the right
-	// snapshot per disk by querying restic for the "vmrun:<runID>" tag is a
-	// real, not-yet-built gap (Task 3's job, not Task 2's). A restore of a VM
-	// with block-device disks TODAY reaches RestoreZvolDisk with an empty
-	// SnapshotID and fails loudly there (restic rejects it) rather than
-	// silently skipping the disk — see docs/superpowers/plans/
+	// WIRED (v8.0.0 VM service-layer integration, Task 2 + 3): the real
+	// caller (internal/api/service.go's prepareRestoreVMForTarget) populates
+	// SourceDataset for every entry (resolved from the stored domain XML,
+	// same as backup time) AND, since Task 3, resolves SnapshotID/StdinPath
+	// too — it reads the resolved main snapshot's own "vmrun:<runID>" tag
+	// (set by BackupVM only when the VM has zvol disks) and queries restic
+	// for every other snapshot sharing that tag, matching each entry by its
+	// "vm:<name>:zvol:<dev>" identity tag. When the resolved snapshot
+	// carries no "vmrun:" tag — a Run predating this plan, or (the common,
+	// PERMANENT case) a file-only VM's snapshot, which never gets one —
+	// SnapshotID/StdinPath stay at zero value on every entry, EXACTLY the
+	// pre-Task-3 fallback: RestoreZvolDisk then reaches restic with an empty
+	// SnapshotID and fails loudly there rather than silently skipping the
+	// disk. See docs/superpowers/plans/
 	// 2026-08-18-vm-service-layer-integration.md's Task 3.
 	BlockDisks []VMRestoreBlockDisk
 	// ZFSHost / ZvolRestic are RestoreZvolDisk's own dependencies — required
@@ -817,14 +824,17 @@ func isFreezeErr(err error) bool {
 // snapshot's, and applies that retention once per identity tag actually
 // produced.
 //
-// STILL a real, code-verified gap: RESTORE resolving which specific restic
-// snapshot id belongs to which disk via the "vmrun:<runID>" tag.
-// internal/api/service.go's RestoreVM/prepareRestoreVMForTarget populate
-// VMRestoreDeps.BlockDisks/ZFSHost/ZvolRestic (SourceDataset resolved the
-// same way as backup) but deliberately leave each entry's SnapshotID/
-// StdinPath at their zero value — actually finding the right snapshot per
-// disk by querying restic for the "vmrun:" tag is Task 3's job, not Task 2's;
-// see VMRestoreDeps.BlockDisks's own doc comment.
+// UPDATE (Task 3): the RESTORE side of that same gap — resolving which
+// specific restic snapshot id belongs to which disk via the "vmrun:<runID>"
+// tag — is now ALSO closed. internal/api/service.go's RestoreVM/
+// prepareRestoreVMForTarget populate VMRestoreDeps.BlockDisks/ZFSHost/
+// ZvolRestic (SourceDataset resolved the same way as backup) AND resolve
+// each entry's SnapshotID/StdinPath by reading the resolved main snapshot's
+// own "vmrun:" tag and querying restic for every other snapshot sharing it,
+// matched by each disk's "vm:<name>:zvol:<dev>" identity tag. See
+// VMRestoreDeps.BlockDisks's own doc comment for the permanent fallback (no
+// "vmrun:" tag at all) that keeps every pre-existing single-snapshot VM
+// backup's restore byte-identical to before this task.
 // ---------------------------------------------------------------------------
 
 // ZFSHost is the host-control surface the zvol backup/restore orchestrators

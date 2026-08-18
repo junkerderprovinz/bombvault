@@ -123,8 +123,12 @@ const tpmVMDomainXML = `<domain type='kvm'>
 // vmZvolTestService builds a Service wired for these tests: a temp store with
 // retention configured (RetentionKeepLast > 0, so applyRetention's early
 // "policy has nothing to do" return doesn't swallow every ForgetPolicy call),
-// the given domain XML served by virsh, and the given SSH fake.
-func vmZvolTestService(t *testing.T, domainXML string, ssh *zvolTPMSSH) (*api.Service, *fakeResticEngine, *store.Repo) {
+// the given domain XML served by virsh, and the given SSH fake. The returned
+// root is the HostMountRoot temp dir — restore-side tests (Task 3) need it to
+// seed the vms repo's "config" marker file directly (snapshotsForTag's
+// localRepoMissing check requires it on disk; BackupVM never needs it since
+// the fake engine's Backup/BackupStdin calls don't touch the filesystem).
+func vmZvolTestService(t *testing.T, domainXML string, ssh *zvolTPMSSH) (*api.Service, *fakeResticEngine, *store.Repo, string) {
 	t.Helper()
 	dir := t.TempDir()
 	root := t.TempDir()
@@ -141,7 +145,7 @@ func vmZvolTestService(t *testing.T, domainXML string, ssh *zvolTPMSSH) (*api.Se
 	if ssh != nil {
 		svc.SetHostSSH(ssh)
 	}
-	return svc, eng, st
+	return svc, eng, st, root
 }
 
 // TestBackupVMFileOnlyIsByteIdenticalToBeforeZvolTPMWiring is the critical
@@ -151,7 +155,7 @@ func vmZvolTestService(t *testing.T, domainXML string, ssh *zvolTPMSSH) (*api.Se
 // Backup call with its historical tags, no zvol stdin calls, and exactly one
 // retention call for the plain "vm:<name>" tag.
 func TestBackupVMFileOnlyIsByteIdenticalToBeforeZvolTPMWiring(t *testing.T) {
-	svc, eng, _ := vmZvolTestService(t, fileOnlyVMDomainXML, &zvolTPMSSH{})
+	svc, eng, _, _ := vmZvolTestService(t, fileOnlyVMDomainXML, &zvolTPMSSH{})
 
 	if _, err := svc.BackupVM(context.Background(), "plainvm"); err != nil {
 		t.Fatalf("BackupVM: %v", err)
@@ -179,7 +183,7 @@ func TestBackupVMFileOnlyIsByteIdenticalToBeforeZvolTPMWiring(t *testing.T) {
 // "vm:<name>:zvol:<dev>" identity tag, and retention is applied exactly once
 // per identity tag actually produced (not once, not per-call).
 func TestBackupVMMixedFileAndZvolDisksTagsAndRetainsPerDisk(t *testing.T) {
-	svc, eng, _ := vmZvolTestService(t, mixedVMDomainXML, &zvolTPMSSH{})
+	svc, eng, _, _ := vmZvolTestService(t, mixedVMDomainXML, &zvolTPMSSH{})
 
 	if _, err := svc.BackupVM(context.Background(), "mixedvm"); err != nil {
 		t.Fatalf("BackupVM: %v", err)
@@ -232,7 +236,7 @@ func TestBackupVMCapturesTPMStateWhenPresent(t *testing.T) {
 		"/dev/tpm0":                             []byte("captured-tpm-state"),
 		"/etc/libvirt/qemu/nvram/tpmvm_VARS.fd": []byte("captured-nvram"),
 	}}
-	svc, _, st := vmZvolTestService(t, tpmVMDomainXML, ssh)
+	svc, _, st, _ := vmZvolTestService(t, tpmVMDomainXML, ssh)
 
 	if _, err := svc.BackupVM(context.Background(), "tpmvm"); err != nil {
 		t.Fatalf("BackupVM: %v", err)
@@ -252,7 +256,7 @@ func TestBackupVMCapturesTPMStateWhenPresent(t *testing.T) {
 // "") never even attempts an SSH read — proven here by an SSH fake with NO
 // files configured, so any unexpected ReadFile call would fail the backup.
 func TestBackupVMSkipsTPMWhenDomainHasNoTPMElement(t *testing.T) {
-	svc, _, st := vmZvolTestService(t, fileOnlyVMDomainXML, &zvolTPMSSH{}) // no files configured at all
+	svc, _, st, _ := vmZvolTestService(t, fileOnlyVMDomainXML, &zvolTPMSSH{}) // no files configured at all
 
 	if _, err := svc.BackupVM(context.Background(), "plainvm"); err != nil {
 		t.Fatalf("BackupVM: %v", err)
