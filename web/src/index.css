@@ -53,27 +53,49 @@
   --color-statusNeutralSolid: var(--status-neutral-solid);
 
   /* Shape tokens (GlimStone form-engine #1) — pointing the Tailwind theme key
-     AT the real custom property (defined per-theme below) rather than a
-     literal, so `rounded-card`/`rounded-control`/`rounded-pill` stay
-     reactive instead of freezing the value at build time. Tailwind's
+     AT the real custom property (declared once, theme-invariant, below)
+     rather than a literal, so `rounded-card`/`rounded-control`/`rounded-pill`
+     stay reactive instead of freezing the value at build time. Tailwind's
      `--radius-*` namespace forces the theme key name to equal the runtime
      var name, unlike `--color-*` above (which aliases a differently-named
-     var), so this "points at itself" on purpose — the plain :root /
-     [data-theme] declarations further down in this file always win the
-     cascade for :root, since they come later in source order at equal
-     specificity; @theme's own declared value here is never actually used. */
+     var), so this "points at itself" on purpose — @theme compiles into a
+     low-priority "theme" cascade layer, so the plain, unlayered :root
+     declaration further down in this file always wins regardless of source
+     order; @theme's own declared value here is never actually used. */
   --radius-card: var(--radius-card);
   --radius-control: var(--radius-control);
   --radius-pill: var(--radius-pill);
 
   /* Type scale (GlimStone form-engine #1) — same self-pointing trick so
-     `text-heading`/`text-body`/`text-dense`/`text-caption` stay reactive.
-     Theme-invariant (same size in dark/light) but declared in the
-     [data-theme] blocks anyway per this project's own token convention. */
+     `text-heading`/`text-body`/`text-dense`/`text-caption` stay reactive. */
   --text-heading: var(--text-heading);
   --text-body: var(--text-body);
   --text-dense: var(--text-dense);
   --text-caption: var(--text-caption);
+}
+
+/* Shape and type scale (GlimStone form-engine #1) — theme-invariant: radius
+   and font size don't change between dark and light, only colors do, so
+   these are declared ONCE on a bare :root rather than duplicated identically
+   into both [data-theme="dark"] and [data-theme="light"] below. That
+   duplication was a real hazard, not just noise: a future Task 2
+   [data-shape="..."] selector has the same (0,1,0) specificity as
+   [data-theme="..."], so two copies of the same value sitting in the theme
+   blocks would compete with a shape override on source order alone. One
+   copy here removes the interaction entirely — a later [data-shape] rule
+   just needs to come after this block in the file, with no theme selector
+   to out-run.
+   No [data-shape] axis yet (that's Task 2), so these are the reference's
+   "round" values without any variant. */
+:root {
+  --radius-card:      1rem;
+  --radius-control:   0.625rem;
+  --radius-pill:      9999px;
+
+  --text-heading: 1.25rem;  /* 20px */
+  --text-body:    0.875rem; /* 14px */
+  --text-dense:   0.75rem;  /* 12px */
+  --text-caption: 0.6875rem; /* 11px */
 }
 
 /*
@@ -137,20 +159,8 @@
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
-  /* Shape (GlimStone form-engine #1) — "round" values; no [data-shape] axis
-     yet (that sweep is a later task), so both theme blocks carry the same
-     numbers for now. */
-  --radius-card:      1rem;
-  --radius-control:   0.625rem;
-  --radius-pill:      9999px;
-
-  /* Type scale — theme-invariant; see reference/tokens.css's own :root-only
-     block. Duplicated into both [data-theme] blocks per this task's token
-     convention rather than split into a third selector. */
-  --text-heading: 1.25rem;  /* 20px */
-  --text-body:    0.875rem; /* 14px */
-  --text-dense:   0.75rem;  /* 12px */
-  --text-caption: 0.6875rem; /* 11px */
+  /* Shape and type scale live once, on a bare :root above (theme-invariant —
+     see the comment there). */
 
   /* One elevation, one hairline, one focus-ring colour (GlimStone form-engine
      #1). Elevation/hairline are neutral (theme-dependent, copied verbatim
@@ -242,14 +252,8 @@
   --accent-soft:      rgba(252, 196, 25, 0.14);
   --focus-ring: rgba(252, 196, 25, .55);
 
-  /* Shape and type scale — theme-invariant, same as the dark block. */
-  --radius-card:      1rem;
-  --radius-control:   0.625rem;
-  --radius-pill:      9999px;
-  --text-heading: 1.25rem;
-  --text-body:    0.875rem;
-  --text-dense:   0.75rem;
-  --text-caption: 0.6875rem;
+  /* Shape and type scale live once, on a bare :root above (theme-invariant —
+     see the comment there). */
 
   /* Elevation/hairline — neutral, copied verbatim from reference/tokens.css. */
   --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);

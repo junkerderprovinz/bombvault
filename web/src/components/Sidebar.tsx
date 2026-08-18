@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { getResolvedTheme, toggleTheme } from "../lib/theme";
+import { getResolvedTheme, getTheme, toggleTheme } from "../lib/theme";
 import { useAdvanced } from "../lib/advanced";
 
 interface SidebarProps {
@@ -247,6 +247,27 @@ function SidebarControls() {
     const next = toggleTheme();
     setThemeState(next);
   }
+
+  // Keep the displayed label live-accurate on "system": lib/theme.ts's own
+  // matchMedia listener repaints data-theme (and every colour token)
+  // immediately on an OS-level flip, but this component's `theme` state was
+  // only ever set at mount and on an explicit toggle — without this, the
+  // sidebar's Light/Dark label goes stale the moment the OS changes out from
+  // under a "system" user, even though the rest of the UI has already
+  // repainted correctly.
+  useEffect(() => {
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    function onChange() {
+      if (getTheme() === "system") setThemeState(getResolvedTheme());
+    }
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    }
+    // Safari < 14 fallback — deprecated but still the only API there.
+    mql.addListener(onChange);
+    return () => mql.removeListener(onChange);
+  }, []);
 
   // Close on outside click
   useEffect(() => {

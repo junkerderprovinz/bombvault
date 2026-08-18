@@ -49,10 +49,21 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 // securityHeaders is a middleware that sets baseline HTTP security headers on
 // every response served by the handler (both API and SPA).
 //
-// CSP notes: the SPA has no inline scripts (bundled JS/CSS only) but uses React
-// inline style= props and CSS variables → style-src needs 'unsafe-inline'.
-// 'unsafe-eval' is intentionally absent.  img-src and font-src allow data: for
-// flag-icons and any inline SVG/font the SPA embeds.
+// CSP notes: the SPA is bundled JS/CSS only, with ONE deliberate inline
+// script — web/index.html's theme-boot script. It stamps data-theme on
+// <html> synchronously before first paint (GlimStone form-engine #1's
+// "system" default reads prefers-color-scheme, so without this the page
+// flashes the wrong theme while the module bundle is still loading). It's
+// allowed by a CSP hash source below, not 'unsafe-inline' — that would let
+// ANY inline script run, not just this one. TestThemeBootScriptCSPHashMatches
+// (widget_internal_test.go) recomputes the script's actual sha256 from
+// web/index.html and fails the build if it no longer matches the hash
+// configured here, so an edited script can't silently start failing CSP in
+// production while dev/preview (which send no CSP at all) stay green.
+// React inline style= props and CSS variables → style-src needs
+// 'unsafe-inline'. 'unsafe-eval' is intentionally absent. img-src and
+// font-src allow data: for flag-icons and any inline SVG/font the SPA
+// embeds.
 //
 // GET /widget is the ONE deliberate exception: the embeddable dashboard-widget
 // page exists to be framed by OTHER dashboards (Homepage/Organizr/…), so it
@@ -61,8 +72,13 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 // bundles. Every other path (the SPA and all /api routes, including the
 // widget's own /api/widget/data feed) keeps the strict DENY/'none' posture.
 func securityHeaders(next http.Handler) http.Handler {
+	// The hash source below is the theme-boot script — see the securityHeaders
+	// doc comment. TestThemeBootScriptCSPHashMatches pins it to the script's
+	// actual current content; if you edit web/index.html's inline script
+	// (including its whitespace), recompute the hash and update it here, or
+	// that test fails on purpose.
 	const csp = "default-src 'self'; " +
-		"script-src 'self'; " +
+		"script-src 'self' 'sha256-OyogNhfMmFOmnpKoxuucDcL3wuNp1ArXH1kHMlcPetY='; " +
 		"style-src 'self' 'unsafe-inline'; " +
 		"img-src 'self' data:; " +
 		"font-src 'self' data:; " +

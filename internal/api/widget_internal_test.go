@@ -1,8 +1,13 @@
 package api
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -93,5 +98,59 @@ func TestSecurityHeadersWidgetFraming(t *testing.T) {
 		if csp := hh.Get("Content-Security-Policy"); !strings.Contains(csp, "frame-ancestors 'none'") {
 			t.Fatalf("%s CSP must keep frame-ancestors 'none', got %q", path, csp)
 		}
+	}
+}
+
+// TestThemeBootScriptCSPHashMatches pins the CSP script-src hash in
+// securityHeaders to the ACTUAL current content of web/index.html's inline
+// theme-boot script (GlimStone form-engine #1). That script exists so
+// data-theme is stamped on <html> before first paint — without it, a
+// "system" theme user gets a flash of the wrong theme while the module
+// bundle loads. `script-src` has no 'unsafe-inline' (deliberately — that
+// would allow ANY inline script, not just this one), so the script only
+// runs at all because its hash is explicitly allow-listed. vite dev/preview
+// send no CSP header, so a mismatch here is invisible in local dev and only
+// breaks in the real, CSP-enforcing production server — this test is what
+// catches it instead. If you touch the script (even its whitespace),
+// recompute the sha256 and update the const in server.go, or this test
+// fails on purpose.
+func TestThemeBootScriptCSPHashMatches(t *testing.T) {
+	html, err := os.ReadFile(filepath.Join("..", "..", "web", "index.html"))
+	if err != nil {
+		t.Fatalf("reading web/index.html: %v", err)
+	}
+
+	// The theme-boot script is the one bare <script> tag (no type= or src=
+	// attribute) in the document — everything else is either the CSP-exempt
+	// bundled module script or a <link>.
+	const openTag = "<script>"
+	start := bytes.Index(html, []byte(openTag))
+	if start == -1 {
+		t.Fatal("web/index.html: no bare <script> tag found — did the theme-boot script move or gain an attribute?")
+	}
+	contentStart := start + len(openTag)
+	end := bytes.Index(html[contentStart:], []byte("</script>"))
+	if end == -1 {
+		t.Fatal("web/index.html: found an opening <script> tag with no matching </script>")
+	}
+	content := html[contentStart : contentStart+end]
+
+	sum := sha256.Sum256(content)
+	wantSource := "'sha256-" + base64.StdEncoding.EncodeToString(sum[:]) + "'"
+
+	h := securityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+	csp := w.Header().Get("Content-Security-Policy")
+
+	if !strings.Contains(csp, wantSource) {
+		t.Fatalf("CSP script-src does not contain the theme-boot script's current hash.\n"+
+			"web/index.html's inline script hashes to: %s\n"+
+			"CSP header script-src was: %s\n"+
+			"The script changed (even whitespace changes the hash) — recompute it and update "+
+			"the script-src hash source in server.go's securityHeaders, or the theme-boot "+
+			"script will be silently blocked by CSP in production.", wantSource, csp)
 	}
 }

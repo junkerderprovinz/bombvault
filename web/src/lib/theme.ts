@@ -51,7 +51,16 @@ export function setTheme(theme: Theme): void {
 }
 
 /** Explicit dark<->light toggle — lands on a real choice, never "system",
- * matching the existing two-state sidebar control. */
+ * matching the existing two-state sidebar control.
+ *
+ * KNOWN GAP, left deliberately: once a user's first toggle click moves them
+ * off "system" (the default), there is currently no UI path back to it —
+ * only clearing localStorage does. Giving the sidebar control a real third
+ * state needs a new icon, a new i18n key across all locales (this project's
+ * own established per-key-across-every-locale discipline), and a decision on
+ * cycle order — real UI design work, not a mechanical follow-on to this
+ * token/theme-foundation task. Flagged as explicit deferred scope, not an
+ * oversight. */
 export function toggleTheme(): ResolvedTheme {
   const next: ResolvedTheme = getResolvedTheme() === "dark" ? "light" : "dark";
   setTheme(next);
