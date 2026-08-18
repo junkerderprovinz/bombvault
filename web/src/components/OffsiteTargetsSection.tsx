@@ -274,11 +274,24 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">{tgt.repo}</span>
+            {/* `wrap` on BOTH chips, for the same reason the Dashboard
+                protection badges carry it: they sit in a min-w-0 column that a
+                long `repo` string (rendered break-all above) lets collapse to a
+                fraction of the chip's natural width, so as flex items they get
+                squeezed and their multi-word labels ("Immutable (append-only)",
+                "(provider default)", longer still in most locales) wrap to two
+                or three lines. Without `wrap` the stage's fixed h-* keeps the
+                tinted background one line tall and the extra lines paint
+                outside it. */}
             <span className="flex flex-wrap gap-2">
-              <Badge tone="neutral" size={ROW_BADGE_SIZE}>
+              <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap>
                 {tgt.storageClass || t("cloud.storageClass.default")}
               </Badge>
-              {tgt.immutable && <Badge tone="ok" size={ROW_BADGE_SIZE}>{t("offsite.immutable")}</Badge>}
+              {tgt.immutable && (
+                <Badge tone="ok" size={ROW_BADGE_SIZE} wrap>
+                  {t("offsite.immutable")}
+                </Badge>
+              )}
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">

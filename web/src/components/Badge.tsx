@@ -56,6 +56,16 @@
 // unchanged), drops `leading-none` for readable multi-line spacing, and adds
 // real vertical padding, so the box grows to contain however many lines the
 // content needs instead of clipping at the stage's one-line floor.
+//
+// One consequence worth knowing: a fixed `h-*` is a DEFINITE cross size, which
+// is what actually makes a stretch-aligned flex/grid parent leave the box at
+// the stage's own height (`min-h-0` above is belt-and-braces). `wrap` trades
+// that definite height for `min-h-*`, so a wrap badge sharing a flex line with
+// a taller sibling WILL stretch to that line's height. Harmless where it is
+// used today (a Dashboard wrap badge is the only thing in its grid cell, and
+// OffsiteTargetsSection's two chips wrap onto separate flex lines before either
+// grows), but a new call site that wants a short wrap badge to stay short next
+// to a tall one needs `className="self-start"`.
 // ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";
