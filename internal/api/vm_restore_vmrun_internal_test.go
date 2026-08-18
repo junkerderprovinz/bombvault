@@ -203,3 +203,52 @@ func TestPrepareRestoreVMFallsBackWhenNoVmrunTag(t *testing.T) {
 		}
 	}
 }
+
+// TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks pins a
+// DIFFERENT shape of requirement (b) than TestPrepareRestoreVMFallsBackWhenNoVmrunTag
+// above: here the resolved snapshot DOES carry a real "vmrun:" tag (this was
+// a mixed-disk run, not one predating the tag), but the group that tag
+// resolves to contains ONLY the main snapshot itself — e.g. every zvol disk's
+// own backup failed AFTER the main file-backed restic Backup call had already
+// succeeded and been tagged (backupBlockDisksAndLog, internal/backup/
+// vm_orchestrator.go, continues past each failed disk and only surfaces the
+// first error once every disk has been attempted, by which point the main
+// snapshot already exists with the "vmrun:" tag — deps.RunTag is set purely
+// from the domain XML's block-disk COUNT, before any zvol backup runs).
+//
+// A single-snapshot vmrun: group must resolve IDENTICALLY to having no
+// vmrun: tag at all: every disk's SnapshotID/StdinPath stays at zero value
+// (RestoreZvolDisk fails loudly, nothing is invented). The presence of A
+// "vmrun:" tag/group must never be conflated with the presence of a MATCHING
+// group member for a given disk — vmrunGroupSnapshot's per-tag lookup must
+// still correctly report "not found" for a group that only contains the
+// main snapshot's own "vm:<name>" tag.
+func TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks(t *testing.T) {
+	const runTag = "vmrun:run-partial"
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{
+		// Only the main snapshot exists in the whole repo — it carries the
+		// real runTag (so vmRunTag finds it and a group lookup DOES fire),
+		// but neither zvol disk's own snapshot was ever created.
+		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}},
+	}}
+	s, ref, tg := vmrunRestoreTarget(t, eng)
+
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "")
+	if err != nil {
+		t.Fatalf("prepareRestoreVMForTarget: %v", err)
+	}
+	if plan.snapshotID != "deadbeef12345678" {
+		t.Fatalf("main snapshotID = %q, want the file-backed snapshot's id", plan.snapshotID)
+	}
+	if len(plan.blockDisks) != 2 {
+		t.Fatalf("blockDisks = %+v, want 2 entries (SourceDataset still resolved from the domain XML)", plan.blockDisks)
+	}
+	for _, bd := range plan.blockDisks {
+		if bd.SourceDataset == "" {
+			t.Fatalf("blockDisk %+v: SourceDataset must still be resolved from the domain XML", bd)
+		}
+		if bd.SnapshotID != "" || bd.StdinPath != "" {
+			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value when the vmrun: group has no matching zvol member (single-snapshot group) — behaving EXACTLY like the no-tag-at-all fallback, not silently inventing or misattributing a snapshot", bd)
+		}
+	}
+}
