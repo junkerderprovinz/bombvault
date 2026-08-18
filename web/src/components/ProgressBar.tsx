@@ -40,7 +40,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
     <div
       className={
         inline
-          ? "relative h-1 w-full overflow-hidden rounded-[min(var(--radius-pill),50%)]"
+          ? "relative h-1 w-full overflow-hidden rounded-pill"
           : "absolute bottom-0 left-0 right-0 h-1 overflow-hidden"
       }
       style={{ background: "var(--carbon-border)" }}
@@ -51,7 +51,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
     >
       {isIndeterminate ? (
         <div
-          className="absolute inset-y-0 w-1/3 rounded-[min(var(--radius-pill),50%)]"
+          className="absolute inset-y-0 w-1/3 rounded-pill"
           style={{
             background: "var(--accent)",
             animation: "bv-indeterminate 1.2s ease-in-out infinite",

@@ -518,7 +518,7 @@ export function OffsiteWizard({
             aria-labelledby={`imm-label-${domain}`}
             disabled={immState === "saving"}
             onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
               immutable ? "bg-accent" : "bg-carbon-surface3"
             }`}
           >

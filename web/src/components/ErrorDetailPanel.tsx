@@ -245,7 +245,7 @@ export function ErrorDetailPanel({
                       <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-[min(var(--radius-pill),50%)] bg-statusFailBg px-2 py-0.5 text-xs font-medium tabular-nums text-statusFail">
+                      <span className="rounded-pill bg-statusFailBg px-2 py-0.5 text-xs font-medium tabular-nums text-statusFail">
                         {countLabel(g.count)}
                       </span>
                       <button

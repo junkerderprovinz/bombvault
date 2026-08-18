@@ -370,7 +370,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               aria-checked={draft.immutable}
               aria-labelledby={`tgt-imm-${domain}`}
               onClick={() => setDraft((d) => (d ? { ...d, immutable: !d.immutable } : d))}
-              className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid ${
+              className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid ${
                 draft.immutable ? "bg-accent" : "bg-carbon-surface3"
               }`}
             >

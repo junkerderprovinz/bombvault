@@ -327,7 +327,7 @@ function ColumnsIcon() {
 }
 
 const iconBtn =
-  "rounded-sm p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
+  "rounded-control p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
 
 // ---------------------------------------------------------------------------
@@ -428,13 +428,13 @@ export function CustomizableBlock({
       {/* Drop-target indicator — absolute so it never shifts layout. */}
       {over && (
         <div
-          className="pointer-events-none absolute -top-3 left-0 right-0 h-0.5 rounded-sm bg-carbon-text"
+          className="pointer-events-none absolute -top-3 left-0 right-0 h-0.5 rounded-control bg-carbon-text"
           aria-hidden="true"
         />
       )}
 
       {/* Control bar */}
-      <div className="mb-2 flex items-center gap-2 rounded-md bg-carbon-surface2 px-2 py-1.5">
+      <div className="mb-2 flex items-center gap-2 rounded-card bg-carbon-surface2 px-2 py-1.5">
         <span className="shrink-0 cursor-move select-none text-carbon-textMuted" aria-hidden="true">
           <GripIcon />
         </span>

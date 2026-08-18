@@ -271,7 +271,7 @@ function VMIncludeToggle({
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -1321,7 +1321,7 @@ export function VMs() {
 
       {/* Bulk action bar */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-control bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>

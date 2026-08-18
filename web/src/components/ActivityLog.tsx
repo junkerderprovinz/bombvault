@@ -255,7 +255,7 @@ export function ActivityLog({
             back to the owner. The ISO day is parsed as LOCAL midnight so the
             label always names the same calendar day the cell was. */}
         {dayFilter && (
-          <span className="inline-flex items-center gap-1 rounded-[min(var(--radius-pill),50%)] bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
+          <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
             {resolveName("activityLog.dayFilterChip", {
               date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
             })}
@@ -295,7 +295,7 @@ export function ActivityLog({
           <button
             type="button"
             onClick={jumpToLatest}
-            className="absolute bottom-3 right-3 rounded-[min(var(--radius-pill),50%)] bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
+            className="absolute bottom-3 right-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
           >
             ↓ {t("activityLog.jumpToLatest")}
           </button>

@@ -456,7 +456,7 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
         aria-checked={enabled}
         disabled={busy}
         onClick={() => void handle(!enabled)}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -1893,7 +1893,7 @@ export function Containers() {
       {/* Server-side batch-backup banner — visible while a "back up all" run is in
           flight, even if it was started from another tab/session. */}
       {batchActive && (
-        <div className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 rounded-card bg-carbon-surface2 px-3 py-2">
           <span
             className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
             style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
@@ -1976,7 +1976,7 @@ export function Containers() {
 
       {/* Bulk action bar — appears when one or more containers are selected. */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-control bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>
