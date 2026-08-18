@@ -1053,7 +1053,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && containers.length === 0 && (
-        <p className="text-sm text-carbon-textMuted">No containers found.</p>
+        <p className="text-sm text-carbon-textMuted">{t("dashboard.noContainers")}</p>
       )}
 
       {withBackups.length > 0 && (

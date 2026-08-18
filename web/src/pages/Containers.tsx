@@ -12,6 +12,7 @@ import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -1912,7 +1913,15 @@ export function Containers() {
         <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && containers.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center">
+        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          {/* No "Add" action here (unlike Receiver/Fleet/Files): this list is a
+              live enumeration of what Docker actually reports, not a
+              BombVault-managed list to add to. The page's own Discover button
+              above (disaster-recovery re-scan) is already the relevant action
+              for an empty result, so a second button here would be redundant. */}
+          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
+            <IconContainers />
+          </div>
           <p className="text-sm text-carbon-textMuted">
             {t("containers.emptyDocker")}
           </p>

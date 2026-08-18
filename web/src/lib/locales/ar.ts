@@ -34,6 +34,7 @@ const ar: Partial<Translations> = {
   "dashboard.allOk": "جميع الأنظمة تعمل بشكل جيد",
   "dashboard.degraded": "متدهور",
   "dashboard.checking": "جارٍ الفحص…",
+  "dashboard.noContainers": "لم يتم العثور على أي حاويات.",
   // Dashboard customize (#46)
   "dashboard.customize": "تخصيص",
   "dashboard.customizeDone": "تم",

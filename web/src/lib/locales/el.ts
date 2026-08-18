@@ -34,6 +34,7 @@ const el: Partial<Translations> = {
   "dashboard.allOk": "Όλα τα συστήματα ΟΚ",
   "dashboard.degraded": "Υποβαθμισμένο",
   "dashboard.checking": "Έλεγχος…",
+  "dashboard.noContainers": "Δεν βρέθηκαν κοντέινερ.",
   // Dashboard customize (#46)
   "dashboard.customize": "Προσαρμογή",
   "dashboard.customizeDone": "Τέλος",

@@ -33,6 +33,7 @@ const ro: Partial<Translations> = {
   "dashboard.allOk": "Toate sistemele funcționează",
   "dashboard.degraded": "Degradat",
   "dashboard.checking": "Verificare…",
+  "dashboard.noContainers": "Niciun container găsit.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personalizează",
   "dashboard.customizeDone": "Gata",

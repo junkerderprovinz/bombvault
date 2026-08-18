@@ -34,6 +34,7 @@ const fi: Partial<Translations> = {
   "dashboard.allOk": "Kaikki järjestelmät kunnossa",
   "dashboard.degraded": "Heikentynyt",
   "dashboard.checking": "Tarkistetaan…",
+  "dashboard.noContainers": "Kontteja ei löytynyt.",
   // Dashboard customize (#46)
   "dashboard.customize": "Mukauta",
   "dashboard.customizeDone": "Valmis",

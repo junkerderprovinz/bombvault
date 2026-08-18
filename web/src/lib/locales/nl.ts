@@ -33,6 +33,7 @@ const nl: Partial<Translations> = {
   "dashboard.allOk": "Alle systemen OK",
   "dashboard.degraded": "Verslechterd",
   "dashboard.checking": "Controleren…",
+  "dashboard.noContainers": "Geen containers gevonden.",
   // Dashboard customize (#46)
   "dashboard.customize": "Aanpassen",
   "dashboard.customizeDone": "Klaar",

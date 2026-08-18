@@ -10,6 +10,7 @@ import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { IconVM } from "../components/Sidebar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
@@ -1251,7 +1252,15 @@ export function VMs() {
         <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && vms.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center">
+        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          {/* No "Add" action here (unlike Receiver/Fleet/Files): this list is a
+              live enumeration of what libvirt/KVM actually reports, not a
+              BombVault-managed list to add to. The page's own Discover button
+              above (disaster-recovery re-scan) is already the relevant action
+              for an empty result, so a second button here would be redundant. */}
+          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
+            <IconVM />
+          </div>
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
       )}

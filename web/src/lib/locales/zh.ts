@@ -34,6 +34,7 @@ const zh: Partial<Translations> = {
   "dashboard.allOk": "所有系统正常",
   "dashboard.degraded": "性能下降",
   "dashboard.checking": "检查中…",
+  "dashboard.noContainers": "未找到容器。",
   // Dashboard customize (#46)
   "dashboard.customize": "自定义",
   "dashboard.customizeDone": "完成",

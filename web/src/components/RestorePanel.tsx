@@ -531,7 +531,7 @@ function SnapshotTags({
       {tags.map((tg) => (
         <span
           key={tg}
-          className="inline-flex items-center rounded-control bg-carbon-surface3 px-1.5 py-0.5 text-[10px] text-carbon-textSub"
+          className="inline-flex items-center rounded-control bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
         >
           {tg}
         </span>
@@ -553,18 +553,18 @@ function SnapshotTags({
           onBlur={() => void submit()}
           placeholder={t("snapshot.addTag")}
           spellCheck={false}
-          className="w-24 rounded-control bg-carbon-surface2 text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="w-24 rounded-control bg-carbon-surface2 text-carbon-text text-caption px-1.5 py-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
       ) : (
         <button
           onClick={() => setAdding(true)}
           title={t("snapshot.addTag")}
-          className="inline-flex items-center rounded-control px-1.5 py-0.5 text-[10px] text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="inline-flex items-center rounded-control px-1.5 py-0.5 text-caption text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           + {t("snapshot.tags")}
         </button>
       )}
-      {err && <span className="text-[10px] text-statusFail">{err}</span>}
+      {err && <span className="text-caption text-statusFail">{err}</span>}
     </div>
   );
 }

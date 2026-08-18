@@ -33,6 +33,7 @@ const ru: Partial<Translations> = {
   "dashboard.allOk": "Все системы в норме",
   "dashboard.degraded": "Сбой",
   "dashboard.checking": "Проверка…",
+  "dashboard.noContainers": "Контейнеры не найдены.",
   // Dashboard customize (#46)
   "dashboard.customize": "Настроить",
   "dashboard.customizeDone": "Готово",

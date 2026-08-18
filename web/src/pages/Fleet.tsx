@@ -31,6 +31,7 @@ import {
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
+import { IconFleet } from "../components/Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -740,6 +741,9 @@ export function Fleet() {
 
       {!loading && !error && peers.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
+            <IconFleet />
+          </div>
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("fleet.empty")}</p>
           <button
             onClick={() => setDialog("new")}

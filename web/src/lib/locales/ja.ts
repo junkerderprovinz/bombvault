@@ -34,6 +34,7 @@ const ja: Partial<Translations> = {
   "dashboard.allOk": "すべて正常",
   "dashboard.degraded": "低下",
   "dashboard.checking": "確認中…",
+  "dashboard.noContainers": "コンテナが見つかりません。",
   // Dashboard customize (#46)
   "dashboard.customize": "カスタマイズ",
   "dashboard.customizeDone": "完了",

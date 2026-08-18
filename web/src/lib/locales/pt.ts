@@ -33,6 +33,7 @@ const pt: Partial<Translations> = {
   "dashboard.allOk": "Todos os sistemas OK",
   "dashboard.degraded": "Degradado",
   "dashboard.checking": "A verificar…",
+  "dashboard.noContainers": "Nenhum contêiner encontrado.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personalizar",
   "dashboard.customizeDone": "Concluído",

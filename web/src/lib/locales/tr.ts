@@ -34,6 +34,7 @@ const tr: Partial<Translations> = {
   "dashboard.allOk": "Tüm sistemler normal",
   "dashboard.degraded": "Bozulmuş",
   "dashboard.checking": "Denetleniyor…",
+  "dashboard.noContainers": "Konteyner bulunamadı.",
   // Dashboard customize (#46)
   "dashboard.customize": "Özelleştir",
   "dashboard.customizeDone": "Bitti",

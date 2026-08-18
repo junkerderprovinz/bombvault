@@ -34,6 +34,7 @@ const ko: Partial<Translations> = {
   "dashboard.allOk": "모든 시스템 정상",
   "dashboard.degraded": "성능 저하",
   "dashboard.checking": "확인 중…",
+  "dashboard.noContainers": "컨테이너를 찾을 수 없습니다.",
   // Dashboard customize (#46)
   "dashboard.customize": "사용자 지정",
   "dashboard.customizeDone": "완료",

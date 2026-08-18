@@ -34,6 +34,7 @@ const fr: Partial<Translations> = {
   "dashboard.allOk": "Tous les systèmes OK",
   "dashboard.degraded": "Dégradé",
   "dashboard.checking": "Vérification…",
+  "dashboard.noContainers": "Aucun conteneur trouvé.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personnaliser",
   "dashboard.customizeDone": "Terminé",

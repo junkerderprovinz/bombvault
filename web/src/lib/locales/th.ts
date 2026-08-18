@@ -34,6 +34,7 @@ const th: Partial<Translations> = {
   "dashboard.allOk": "ระบบทั้งหมดปกติ",
   "dashboard.degraded": "ประสิทธิภาพลดลง",
   "dashboard.checking": "กำลังตรวจสอบ…",
+  "dashboard.noContainers": "ไม่พบคอนเทนเนอร์",
   // Dashboard customize (#46)
   "dashboard.customize": "ปรับแต่ง",
   "dashboard.customizeDone": "เสร็จ",

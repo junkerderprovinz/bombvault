@@ -34,6 +34,7 @@ const sv: Partial<Translations> = {
   "dashboard.allOk": "Alla system OK",
   "dashboard.degraded": "Försämrat",
   "dashboard.checking": "Kontrollerar…",
+  "dashboard.noContainers": "Inga containrar hittades.",
   // Dashboard customize (#46)
   "dashboard.customize": "Anpassa",
   "dashboard.customizeDone": "Klar",

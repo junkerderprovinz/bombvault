@@ -34,6 +34,7 @@ const cs: Partial<Translations> = {
   "dashboard.allOk": "Vše v pořádku",
   "dashboard.degraded": "Degradováno",
   "dashboard.checking": "Kontroluji…",
+  "dashboard.noContainers": "Nenalezeny žádné kontejnery.",
   // Dashboard customize (#46)
   "dashboard.customize": "Přizpůsobit",
   "dashboard.customizeDone": "Hotovo",

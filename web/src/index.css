@@ -365,6 +365,32 @@ body {
   box-sizing: border-box;
 }
 
+/* Info bubble chrome (GlimStone form-engine #3, design-language.md "The info
+   bubble") — verbatim from reference/tokens.css's .glim-bubble: portal-rendered
+   at body level (position measured off the trigger icon in InfoBubble.tsx) so
+   no card/table/scroll-container overflow:hidden can clip it, and
+   pointer-events:none so it never swallows a click meant for whatever is
+   underneath it. */
+.glim-bubble {
+  position: fixed;
+  z-index: 60;
+  transform: translateX(-50%);
+  max-width: 280px;
+  pointer-events: none;
+  background-color: var(--carbon-surface);
+  color: var(--carbon-text);
+  border-radius: var(--radius-control);
+  box-shadow: var(--elevation), var(--hairline);
+  padding: 7px 10px;
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
    variant (dark mark on the light surface, light mark on the dark surface), so the
    logo always reads on --carbon-sidebar without any frame, glow or tile. */
@@ -451,6 +477,17 @@ body {
   to   { opacity: 1; transform: none; }
 }
 @keyframes bv-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Info bubble entrance (GlimStone form-engine #3) — reference/tokens.css's
+   glim-fade-in, verbatim: short on purpose, since a bubble that fades in
+   slowly reads as lag, not polish, because the pointer already got there
+   first. Deliberately has no prefers-reduced-motion override (the reference
+   doesn't give it one either) — a one-shot 110ms entrance is too short to be
+   what reduced-motion exists to prevent. */
+@keyframes glim-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
@@ -564,6 +601,9 @@ body {
   }
 
   .bv-page-enter { animation: bv-page-in 320ms cubic-bezier(.2, .6, .2, 1) both; }
+
+  /* Info bubble entrance (GlimStone form-engine #3). */
+  .glim-fade { animation: glim-fade-in 110ms ease both; }
 
   /* What's-new modal enter (#48). */
   .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }

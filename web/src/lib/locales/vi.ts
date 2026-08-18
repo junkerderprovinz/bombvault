@@ -34,6 +34,7 @@ const vi: Partial<Translations> = {
   "dashboard.allOk": "Mọi hệ thống đều ổn",
   "dashboard.degraded": "Suy giảm",
   "dashboard.checking": "Đang kiểm tra…",
+  "dashboard.noContainers": "Không tìm thấy container.",
   // Dashboard customize (#46)
   "dashboard.customize": "Tùy chỉnh",
   "dashboard.customizeDone": "Xong",

@@ -307,10 +307,10 @@ chmod 600 /root/.ssh/authorized_keys`
             {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
           </button>
           {testState === "ok" && (
-            <span className="text-sm text-green-500">{t("vm.ssh.testOk")}</span>
+            <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
           )}
           {testState === "fail" && (
-            <span className="text-sm text-red-400">{testMsg ?? t("vm.ssh.testFail")}</span>
+            <span className="text-sm text-statusFail">{testMsg ?? t("vm.ssh.testFail")}</span>
           )}
         </div>
       </div>
@@ -3598,7 +3598,7 @@ export function SettingsPage() {
       <Card title={t("settings.retentionTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
           {t("settings.retentionHint")}
-          <InfoBubble text={t("settings.retentionCombineInfo")} />
+          <InfoBubble tip={t("settings.retentionCombineInfo")} />
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -3610,7 +3610,7 @@ export function SettingsPage() {
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(label)}
-                <InfoBubble text={t(info)} />
+                <InfoBubble tip={t(info)} />
               </span>
               <input
                 type="number"
@@ -4162,8 +4162,8 @@ export function SettingsPage() {
       <Card title={t("settings.retentionOffsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
           {t("settings.retentionOffsiteHint")}
-          <InfoBubble text={t("settings.retentionCombineInfo")} />
-          <InfoBubble text={t("settings.retentionOffsiteImmutableInfo")} />
+          <InfoBubble tip={t("settings.retentionCombineInfo")} />
+          <InfoBubble tip={t("settings.retentionOffsiteImmutableInfo")} />
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -4175,7 +4175,7 @@ export function SettingsPage() {
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(label)}
-                <InfoBubble text={t(info)} />
+                <InfoBubble tip={t(info)} />
               </span>
               <input
                 type="number"

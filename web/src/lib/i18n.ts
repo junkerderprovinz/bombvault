@@ -74,6 +74,7 @@ export const en = {
   "dashboard.allOk": "All systems OK",
   "dashboard.degraded": "Degraded",
   "dashboard.checking": "Checking…",
+  "dashboard.noContainers": "No containers found.",
 
   // Dashboard customization (#46) — reorder + hide cards, persisted per-browser
   "dashboard.customize": "Customize",
@@ -1415,6 +1416,7 @@ export const de: Translations = {
   "dashboard.allOk": "Alle Systeme OK",
   "dashboard.degraded": "Eingeschränkt",
   "dashboard.checking": "Prüfe…",
+  "dashboard.noContainers": "Keine Container gefunden.",
 
   "dashboard.customize": "Anpassen",
   "dashboard.customizeDone": "Fertig",

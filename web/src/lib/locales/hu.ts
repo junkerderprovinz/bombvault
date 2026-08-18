@@ -34,6 +34,7 @@ const hu: Partial<Translations> = {
   "dashboard.allOk": "Minden rendszer rendben",
   "dashboard.degraded": "Leromlott",
   "dashboard.checking": "Ellenőrzés…",
+  "dashboard.noContainers": "Nem található konténer.",
   // Dashboard customize (#46)
   "dashboard.customize": "Testreszabás",
   "dashboard.customizeDone": "Kész",
