@@ -599,6 +599,7 @@ function ProtectionCard({
                         <div className="col-start-5 min-w-0">
                           <Badge
                             tone={d.lastVerifiedOK ? "ok" : "fail"}
+                            wrap
                             className="max-w-full"
                             title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
                           >
@@ -617,6 +618,7 @@ function ProtectionCard({
                         <div className="col-start-6 min-w-0">
                           <Badge
                             tone={d.lastOffsiteSubsetOK ? "ok" : "fail"}
+                            wrap
                             className="max-w-full"
                             title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
                           >
@@ -637,6 +639,7 @@ function ProtectionCard({
                           // scheduled DR drill is opted out.
                           <Badge
                             tone="ok"
+                            wrap
                             className="max-w-full"
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
                           >
@@ -648,6 +651,7 @@ function ProtectionCard({
                           // failure — only "never drilled" goes neutral below.
                           <Badge
                             tone="fail"
+                            wrap
                             className="max-w-full"
                             title={
                               d.drillDetail
@@ -660,7 +664,7 @@ function ProtectionCard({
                         ) : drUnscheduled ? (
                           // NEUTRAL — off-site DR not scheduled (manual only) and nothing
                           // failing to show: muted, never red. File's no-claim styling.
-                          <Badge tone="neutral" className="max-w-full" title={t("drill.manualOnlyTitle")}>
+                          <Badge tone="neutral" wrap className="max-w-full" title={t("drill.manualOnlyTitle")}>
                             {t("drill.manualOnly")}
                           </Badge>
                         ) : null}

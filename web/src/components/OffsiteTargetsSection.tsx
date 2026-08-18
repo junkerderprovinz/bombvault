@@ -10,7 +10,19 @@ import {
 } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
-import { Badge } from "./Badge";
+import { Badge, type BadgeSize } from "./Badge";
+
+// The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
+// target row render through Badge at this ONE shared stage, so their heights
+// stay pixel-identical regardless of the <span> vs <button> element
+// underneath — the same mechanism (and the same audit finding class) as
+// ErrorDetailPanel's count-badge + "Resolve"-button pair. "medium" (20px),
+// not "small" (18px, the badges' pre-fix stage) or "large" (24px, the
+// buttons' pre-fix stage): it's the dominant weight everywhere else in the
+// app (see Badge.tsx's file header), so fixing the parity here lands both
+// elements on the app's normal chip size instead of introducing a
+// one-off-large row in an otherwise compact settings panel.
+const ROW_BADGE_SIZE: BadgeSize = "medium";
 
 // ---------------------------------------------------------------------------
 // OffsiteTargetsSection — per-domain "Additional off-site targets" editor
@@ -89,15 +101,16 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
 
   return (
     <span className="inline-flex flex-col items-end gap-1">
-      <button
-        type="button"
+      <Badge
+        as="button"
+        tone="neutral"
+        size={ROW_BADGE_SIZE}
         onClick={() => void go()}
         disabled={st === "busy"}
         title={t("offsite.test")}
-        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
-      </button>
+      </Badge>
       {st === "ok" && <span className="text-[11px] text-statusOk">{t("offsite.testOk")}</span>}
       {st === "uninit" && (
         <span className="text-[11px] text-statusWarn">{t("offsite.testUninitialized")}</span>
@@ -262,38 +275,36 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">{tgt.repo}</span>
             <span className="flex flex-wrap gap-2">
-              <Badge tone="neutral" size="small">
+              <Badge tone="neutral" size={ROW_BADGE_SIZE}>
                 {tgt.storageClass || t("cloud.storageClass.default")}
               </Badge>
-              {tgt.immutable && <Badge tone="ok" size="small">{t("offsite.immutable")}</Badge>}
+              {tgt.immutable && <Badge tone="ok" size={ROW_BADGE_SIZE}>{t("offsite.immutable")}</Badge>}
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">
             <TargetTestButton id={tgt.id} t={t} />
-            <button
-              type="button"
-              onClick={() => openEdit(tgt)}
-              className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
-            >
+            <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)}>
               {t("offsite.targets.edit")}
-            </button>
+            </Badge>
             {confirmRemove === tgt.id ? (
-              <button
-                type="button"
+              <Badge
+                as="button"
+                tone="fail"
+                size={ROW_BADGE_SIZE}
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
-                className="rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
               >
                 {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
-              </button>
+              </Badge>
             ) : (
-              <button
-                type="button"
+              <Badge
+                as="button"
+                tone="fail"
+                size={ROW_BADGE_SIZE}
                 onClick={() => setConfirmRemove(tgt.id)}
-                className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
               >
                 {t("offsite.targets.remove")}
-              </button>
+              </Badge>
             )}
           </div>
         </div>

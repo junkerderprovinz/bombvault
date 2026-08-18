@@ -158,7 +158,11 @@ describe("Badge — tone/status-color mapping", () => {
   const cases: Array<[BadgeTone, string, string]> = [
     ["ok", "bg-statusOkBg", "text-statusOk"],
     ["fail", "bg-statusFailBg", "text-statusFail"],
-    ["warn", "bg-statusWarnBg", "text-statusWarn"],
+    // warn uses the STRONG token (-bg-strong), not the plain one: index.css
+    // labels -strong "emphasised warn chip" — matching Receiver/Fleet's old
+    // local Badge and Files.tsx/Containers.tsx's still-inline warn chips,
+    // not the softer tone full-width warning panels use.
+    ["warn", "bg-statusWarnBgStrong", "text-statusWarn"],
     ["info", "bg-statusInfoBg", "text-statusInfo"],
     ["neutral", "bg-carbon-surface2", "text-carbon-textSub"],
   ];
@@ -196,5 +200,56 @@ describe("Badge — content and extension", () => {
     const button = root(Badge({ children: "x", as: "button", title: "hint" }));
     expect(span.props!.title).toBe("hint");
     expect(button.props!.title).toBe("hint");
+  });
+});
+
+describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
+  it("without wrap, a stage renders a fixed h-* height with leading-none and no min-h floor", () => {
+    const el = root(Badge({ children: "x", size: "medium" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("h-5");
+    expect(cls).toContain("leading-none");
+    expect(cls).not.toContain("min-h-5");
+  });
+
+  it.each<[BadgeSize, string]>([
+    ["small", "min-h-[18px]"],
+    ["medium", "min-h-5"],
+    ["large", "min-h-6"],
+  ])("wrap swaps the %s stage's fixed height for a %s floor", (size, minHeight) => {
+    const el = root(Badge({ children: "x", size, wrap: true }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain(minHeight);
+  });
+
+  it("wrap drops leading-none and gains readable multi-line spacing + word wrapping", () => {
+    const el = root(Badge({ children: "x", wrap: true }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("leading-none");
+    expect(cls).toContain("leading-tight");
+    expect(cls).toContain("wrap-break-word");
+  });
+
+  it("wrap never emits the stage's fixed h-* class alongside its min-h-* floor", () => {
+    const el = root(Badge({ children: "x", size: "large", wrap: true }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("min-h-6");
+    // "h-6" would also match as a substring of "min-h-6", so check for the
+    // exact standalone class token instead of a naive .toContain("h-6").
+    const tokens = cls.split(/\s+/);
+    expect(tokens).not.toContain("h-6");
+  });
+
+  it("wrap works on the button variant too, at the same stage's min-h-* floor", () => {
+    const button = root(Badge({ children: "x", as: "button", size: "large", wrap: true }));
+    const cls = button.props!.className as string;
+    expect(cls).toContain("min-h-6");
+  });
+
+  it("wrap still keeps the stage's own horizontal padding and text size", () => {
+    const el = root(Badge({ children: "x", size: "small", wrap: true }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("px-1.5");
+    expect(cls).toContain("text-caption");
   });
 });

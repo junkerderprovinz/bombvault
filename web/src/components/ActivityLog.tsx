@@ -44,7 +44,7 @@ function glyphFor(status: LogStatus): string {
   }
 }
 
-// Reuses the exact hex values Dashboard's StatusChip uses for success/failed/
+// Reuses the exact hex values Dashboard's Badge uses for success/failed/
 // running so a log line reads as the same colour language as the rest of the
 // app (#66-style shared vocabulary), not a new palette.
 function colorFor(status: LogStatus): string {

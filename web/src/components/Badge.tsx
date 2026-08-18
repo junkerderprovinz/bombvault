@@ -43,6 +43,19 @@
 // ErrorDetailPanel span-vs-button height mismatch: both render through this
 // one component at the same stage, so nothing downstream can drift them
 // apart independently again.
+//
+// `wrap` — a stage's height is a fixed pixel floor for the common one-line
+// case, but some call sites (the Dashboard protection-card badges: local
+// verify shield / off-site subset / off-site DR, all icon+label+relative-
+// time strings inside a narrow grid column) genuinely wrap to two lines in
+// normal use, in the default locale, not just a translated-string edge case.
+// A fixed `h-*` + `leading-none` painted the tinted background at exactly
+// one line tall and let the wrapped second line spill outside it — the
+// background box didn't grow with the content. `wrap` swaps the stage's
+// `h-*` for `min-h-*` at the same px floor (so a single-line badge is
+// unchanged), drops `leading-none` for readable multi-line spacing, and adds
+// real vertical padding, so the box grows to contain however many lines the
+// content needs instead of clipping at the stage's one-line floor.
 // ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";
@@ -62,10 +75,20 @@ export type BadgeSize = "small" | "medium" | "large";
 // as-is, with zero cap needed.
 export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 
+// warn uses --status-warn-bg-STRONG, not the plain --status-warn-bg: the
+// token file (index.css) labels -strong verbatim "emphasised warn chip
+// (Files)" — it exists FOR small high-contrast chips like this one, while
+// plain --status-warn-bg is the softer tone used by full-width warning
+// panels/callouts (Settings.tsx, OffsiteWizard.tsx) that hold paragraph
+// text, a different UI role that can afford to be quieter. Receiver.tsx and
+// Fleet.tsx's old local Badge both used -strong for warn; using the plain
+// tone here would have silently weakened their warn chips (invisible in
+// light mode today, where the two tokens happen to share one value, but a
+// real regression in dark mode).
 const TONE_CLASSES: Record<BadgeTone, string> = {
   ok: "bg-statusOkBg text-statusOk",
   fail: "bg-statusFailBg text-statusFail",
-  warn: "bg-statusWarnBg text-statusWarn",
+  warn: "bg-statusWarnBgStrong text-statusWarn",
   info: "bg-statusInfoBg text-statusInfo",
   neutral: "bg-carbon-surface2 text-carbon-textSub",
 };
@@ -82,11 +105,14 @@ const RADIUS_CLASSES: Record<BadgeShape, string> = {
 // circle shape can zero it out below without ever needing two conflicting
 // px-* utilities to coexist in one className (Tailwind's cascade order
 // between two same-specificity utility classes isn't something a component
-// file can pin down on its own).
-const SIZE_TOKENS: Record<BadgeSize, { height: string; text: string; padding: string }> = {
-  small: { height: "h-[18px]", text: "text-caption", padding: "px-1.5" },
-  medium: { height: "h-5", text: "text-dense", padding: "px-2" },
-  large: { height: "h-6", text: "text-dense", padding: "px-2.5" },
+// file can pin down on its own). minHeight is the same px floor as height,
+// spelled as `min-h-*` instead of `h-*` for `wrap` mode (see the file
+// header) — never emitted alongside `height` in the same className for the
+// same cascade-order reason padding is kept separate from the circle override.
+const SIZE_TOKENS: Record<BadgeSize, { height: string; minHeight: string; text: string; padding: string }> = {
+  small: { height: "h-[18px]", minHeight: "min-h-[18px]", text: "text-caption", padding: "px-1.5" },
+  medium: { height: "h-5", minHeight: "min-h-5", text: "text-dense", padding: "px-2" },
+  large: { height: "h-6", minHeight: "min-h-6", text: "text-dense", padding: "px-2.5" },
 };
 
 export interface BadgeProps {
@@ -105,8 +131,15 @@ export interface BadgeProps {
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
+  /** Grow-to-fit instead of clipping: the stage's height becomes a floor
+   *  (`min-h-*`) rather than a fixed `h-*`, so content that wraps to more
+   *  than one line grows the box instead of overflowing it. For a badge
+   *  whose content is known to sometimes wrap (e.g. inside a narrow column
+   *  with `max-w-full`) — see the file header. */
+  wrap?: boolean;
   /** Extra classes (e.g. `tabular-nums` for a count badge, `max-w-full` for
-   *  a narrow-column badge that needs to wrap rather than overflow). */
+   *  a narrow-column badge that needs to wrap rather than overflow — pair
+   *  with `wrap` so the box grows instead of clipping). */
   className?: string;
 }
 
@@ -119,16 +152,26 @@ export function Badge({
   onClick,
   disabled,
   title,
+  wrap,
   className,
 }: BadgeProps) {
-  const { height, text, padding } = SIZE_TOKENS[size];
+  const { height, minHeight, text, padding } = SIZE_TOKENS[size];
   // circle is icon/glyph-only: zero horizontal padding + a locked 1:1 aspect
   // ratio against the stage's own height turns it into a true circle rather
   // than an oval widened by the stage's normal text padding.
   const isCircle = shape === "circle";
+  // wrap swaps the fixed one-line `h-*`+`leading-none`+`min-h-0` sizing for a
+  // `min-h-*` floor + real vertical padding + normal line-height, so a
+  // second wrapped line grows the box instead of overflowing it — see the
+  // file header. Never emit both `height` and `minHeight` (same CSS
+  // property, same specificity — exactly the two-conflicting-utilities
+  // hazard the padding/circle split above already guards against).
+  const sizing = wrap
+    ? `${minHeight} py-0.5 leading-tight wrap-break-word`
+    : `${height} min-h-0 leading-none`;
   const shared = [
-    "inline-flex box-border min-h-0 items-center justify-center gap-1 font-medium leading-none",
-    height,
+    "inline-flex box-border items-center justify-center gap-1 font-medium",
+    sizing,
     text,
     isCircle ? "px-0 aspect-square" : padding,
     RADIUS_CLASSES[shape],

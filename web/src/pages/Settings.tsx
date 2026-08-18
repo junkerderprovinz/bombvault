@@ -10,6 +10,7 @@ import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
+import { Badge, type BadgeTone } from "../components/Badge";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
@@ -2375,6 +2376,18 @@ function scheduleStatus(schedule: string): ScheduleStatus {
   return "active";
 }
 
+// ScheduleBadge → Badge tone mapping (GlimStone form-engine Task 5 follow-up):
+// this was its own hand-rolled `px-2 py-0.5 rounded-control text-xs
+// font-medium` + tone-lookup pair, byte-for-byte the same shape the shared
+// Badge component now owns — a 6th duplicate the migration's audit found
+// alongside the five named in the plan. active/paused/off map onto Badge's
+// ok/warn/neutral tones (the only three a schedule status ever needs).
+const SCHEDULE_BADGE_TONE: Record<ScheduleStatus, BadgeTone> = {
+  active: "ok",
+  paused: "warn",
+  off: "neutral",
+};
+
 function ScheduleBadge({
   status,
   label,
@@ -2382,18 +2395,7 @@ function ScheduleBadge({
   status: ScheduleStatus;
   label: string;
 }) {
-  const cls: Record<ScheduleStatus, string> = {
-    active: "bg-statusOkBg text-statusOk",
-    paused: "bg-statusWarnBg text-statusWarn",
-    off:    "bg-carbon-surface2 text-carbon-textSub",
-  };
-  return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls[status]}`}
-    >
-      {label}
-    </span>
-  );
+  return <Badge tone={SCHEDULE_BADGE_TONE[status]}>{label}</Badge>;
 }
 
 // Domain section — Containers (editable schedule + included-containers list)
