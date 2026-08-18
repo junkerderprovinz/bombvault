@@ -458,6 +458,8 @@ const cs: Partial<Translations> = {
   "common.restoreRunning": "Probíhá obnova…",
   "common.backupRunning": "Probíhá zálohování…",
   "common.replicateRunning": "Probíhá replikace…",
+  "common.showValue": "Zobrazit hodnotu",
+  "common.hideValue": "Skrýt hodnotu",
   "common.close": "Zavřít",
 
   // Backup folders selector

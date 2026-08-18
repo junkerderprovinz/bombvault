@@ -458,6 +458,8 @@ const ro: Partial<Translations> = {
   "common.restoreRunning": "O restaurare este în curs…",
   "common.backupRunning": "O copie de rezervă este în curs…",
   "common.replicateRunning": "O replicare este în curs…",
+  "common.showValue": "Afișează valoarea",
+  "common.hideValue": "Ascunde valoarea",
   "common.close": "Închide",
 
   // Backup folders selector

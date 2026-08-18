@@ -460,6 +460,8 @@ const es: Partial<Translations> = {
   "common.restoreRunning": "Hay una restauración en curso…",
   "common.backupRunning": "Hay una copia de seguridad en curso…",
   "common.replicateRunning": "Hay una replicación en curso…",
+  "common.showValue": "Mostrar valor",
+  "common.hideValue": "Ocultar valor",
   "common.close": "Cerrar",
 
   // Backup folders selector

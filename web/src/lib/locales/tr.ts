@@ -460,6 +460,8 @@ const tr: Partial<Translations> = {
   "common.restoreRunning": "Bir geri yükleme çalışıyor…",
   "common.backupRunning": "Bir yedekleme çalışıyor…",
   "common.replicateRunning": "Bir çoğaltma çalışıyor…",
+  "common.showValue": "Değeri göster",
+  "common.hideValue": "Değeri gizle",
   "common.close": "Kapat",
 
   // Backup folders selector

@@ -455,6 +455,8 @@ const nl: Partial<Translations> = {
   "common.restoreRunning": "Er wordt een herstel uitgevoerd…",
   "common.backupRunning": "Er wordt een back-up uitgevoerd…",
   "common.replicateRunning": "Er wordt een replicatie uitgevoerd…",
+  "common.showValue": "Waarde tonen",
+  "common.hideValue": "Waarde verbergen",
   "common.close": "Sluiten",
 
   // Backup folders selector

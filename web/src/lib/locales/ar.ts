@@ -460,6 +460,8 @@ const ar: Partial<Translations> = {
   "common.restoreRunning": "جارٍ تنفيذ استعادة…",
   "common.backupRunning": "جارٍ تنفيذ نسخ احتياطي…",
   "common.replicateRunning": "جارٍ تنفيذ نسخ متماثل…",
+  "common.showValue": "إظهار القيمة",
+  "common.hideValue": "إخفاء القيمة",
   "common.close": "إغلاق",
 
   // Backup folders selector

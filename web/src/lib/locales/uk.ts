@@ -455,6 +455,8 @@ const uk: Partial<Translations> = {
   "common.restoreRunning": "Виконується відновлення…",
   "common.backupRunning": "Виконується резервне копіювання…",
   "common.replicateRunning": "Виконується реплікація…",
+  "common.showValue": "Показати значення",
+  "common.hideValue": "Приховати значення",
   "common.close": "Закрити",
 
   // Backup folders selector

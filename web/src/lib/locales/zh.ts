@@ -452,6 +452,8 @@ const zh: Partial<Translations> = {
   "common.restoreRunning": "正在进行还原…",
   "common.backupRunning": "正在进行备份…",
   "common.replicateRunning": "正在进行复制…",
+  "common.showValue": "显示值",
+  "common.hideValue": "隐藏值",
   "common.close": "关闭",
 
   // Backup folders selector

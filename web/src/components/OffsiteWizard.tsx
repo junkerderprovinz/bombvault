@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { Settings, DeploySnippetData } from "../lib/api";
 import { deploySnippet, tamperTest, testOffsite, getCloud, setCloud } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { RevealInput } from "./RevealInput";
+import { useReveal } from "../lib/useReveal";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -121,6 +123,7 @@ export function OffsiteWizard({
   // are loaded + preserved on save so this flow never clobbers them.
   const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [restPwSet, setRestPwSet] = useState(false);
+  const revealRestPassword = useReveal();
   const [credState, setCredState] = useState<SaveState>("idle");
   const [credErr, setCredErr] = useState<string | null>(null);
   // cloudLoaded gates the "Save credentials" button: we must never POST a cloud
@@ -460,12 +463,13 @@ export function OffsiteWizard({
             </label>
             <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
               RESTIC_REST_PASSWORD
-              <input
-                type="password"
+              <RevealInput
+                {...revealRestPassword}
                 value={cloud.restPassword}
                 onChange={(e) => setCloudState((p) => ({ ...p, restPassword: e.target.value }))}
                 spellCheck={false}
                 placeholder={restPwSet ? t("cloud.secretSet") : ""}
+                wrapperClassName="w-full"
                 className={inputCls}
               />
             </label>

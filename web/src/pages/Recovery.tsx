@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
@@ -580,6 +582,7 @@ function ForeignRestoreCard({
   // holding the other server's backups) — no remote-URL / off-site option here.
   const [localPath, setLocalPath] = useState("");
   const [key, setKey] = useState("");
+  const revealKey = useReveal();
 
   const [phase, setPhase] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -722,12 +725,13 @@ function ForeignRestoreCard({
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-carbon-textSub">{t("recovery.foreignKey")}</label>
-          <input
-            type="password"
+          <RevealInput
+            {...revealKey}
             value={key}
             spellCheck={false}
             autoComplete="off"
             onChange={(e) => setKey(e.target.value)}
+            wrapperClassName="w-full"
             className={offsiteInput}
           />
           <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.foreignKeyHint")}</p>

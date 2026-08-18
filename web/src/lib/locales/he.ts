@@ -460,6 +460,8 @@ const he: Partial<Translations> = {
   "common.restoreRunning": "מתבצע שחזור…",
   "common.backupRunning": "מתבצע גיבוי…",
   "common.replicateRunning": "מתבצע שכפול…",
+  "common.showValue": "הצג ערך",
+  "common.hideValue": "הסתר ערך",
   "common.close": "סגור",
 
   // Backup folders selector

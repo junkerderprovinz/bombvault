@@ -460,6 +460,8 @@ const da: Partial<Translations> = {
   "common.restoreRunning": "En gendannelse kører…",
   "common.backupRunning": "En sikkerhedskopiering kører…",
   "common.replicateRunning": "En replikering kører…",
+  "common.showValue": "Vis værdi",
+  "common.hideValue": "Skjul værdi",
   "common.close": "Luk",
 
   // Backup folders selector

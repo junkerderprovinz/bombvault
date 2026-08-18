@@ -452,6 +452,8 @@ const ko: Partial<Translations> = {
   "common.restoreRunning": "복원이 실행 중입니다…",
   "common.backupRunning": "백업이 실행 중입니다…",
   "common.replicateRunning": "복제가 실행 중입니다…",
+  "common.showValue": "값 표시",
+  "common.hideValue": "값 숨기기",
   "common.close": "닫기",
 
   // Backup folders selector

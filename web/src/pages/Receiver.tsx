@@ -32,6 +32,8 @@ import { humanBytes } from "../lib/forecast";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -325,6 +327,7 @@ function ReceiverDialog({
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [appKey, setAppKey] = useState("");
+  const revealAppKey = useReveal();
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
   const [checkCadence, setCheckCadence] = useState(initial?.checkCadence ?? "");
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
@@ -426,13 +429,14 @@ function ReceiverDialog({
         {/* Sending APP_KEY */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
-          <input
-            type="password"
+          <RevealInput
+            {...revealAppKey}
             value={appKey}
             onChange={(e) => setAppKey(e.target.value)}
             spellCheck={false}
             autoComplete="off"
             placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
+            wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
           <p className="text-[11px] text-carbon-textMuted">{t("receiver.appKeyHint")}</p>

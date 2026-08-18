@@ -458,6 +458,8 @@ const pt: Partial<Translations> = {
   "common.restoreRunning": "Está a decorrer um restauro…",
   "common.backupRunning": "Está a decorrer um backup…",
   "common.replicateRunning": "Está a decorrer uma replicação…",
+  "common.showValue": "Mostrar valor",
+  "common.hideValue": "Ocultar valor",
   "common.close": "Fechar",
 
   // Backup folders selector

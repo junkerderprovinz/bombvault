@@ -11,6 +11,8 @@ import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
@@ -764,6 +766,7 @@ function DashboardWidgetCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const reveal = useReveal();
 
   const widgetUrl = token ? `${window.location.origin}/widget?token=${token}` : null;
 
@@ -824,16 +827,20 @@ function DashboardWidgetCard({
       {tokenSet ? (
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.widgetToken")}</span>
+          {/* Show-once secret: value is only the freshly generated token; a
+              stored-but-unknown one renders the cloud.secretSet placeholder.
+              The verify/regenerate/disable actions sit on their OWN line
+              below the field (design-language.md's reveal-eye rule), not
+              beside it in the same row. */}
+          <RevealInput
+            {...reveal}
+            readOnly
+            value={token ?? ""}
+            placeholder={token ? "" : t("cloud.secretSet")}
+            wrapperClassName="w-full"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          />
           <div className="flex items-center gap-2">
-            {/* Show-once secret: value is only the freshly generated token; a
-                stored-but-unknown one renders the cloud.secretSet placeholder. */}
-            <input
-              type="password"
-              readOnly
-              value={token ?? ""}
-              placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
-            />
             <button
               type="button"
               onClick={() => void handleGenerate()}
@@ -931,6 +938,7 @@ function FleetSettingsCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const reveal = useReveal();
 
   async function handleGenerate() {
     setBusy(true);
@@ -1009,14 +1017,17 @@ function FleetSettingsCard({
       {tokenSet ? (
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.fleetToken")}</span>
+          {/* Actions on their own line below the field, not beside it —
+              same reveal-eye layout rule as DashboardWidgetCard above. */}
+          <RevealInput
+            {...reveal}
+            readOnly
+            value={token ?? ""}
+            placeholder={token ? "" : t("cloud.secretSet")}
+            wrapperClassName="w-full"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          />
           <div className="flex items-center gap-2">
-            <input
-              type="password"
-              readOnly
-              value={token ?? ""}
-              placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
-            />
             <button
               type="button"
               onClick={() => void handleGenerate()}
@@ -1154,6 +1165,8 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [pwSet, setPwSet] = useState(false);
   const [state, setState] = useState<SaveState>("idle");
   const [msg, setMsg] = useState<string | null>(null);
+  const revealS3Secret = useReveal();
+  const revealRestPassword = useReveal();
 
   function refresh() {
     getCloud()
@@ -1205,8 +1218,8 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={fieldCls}>AWS_ACCESS_KEY_ID
           <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
         <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
-          <input type="password" value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
-            placeholder={secretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+          <RevealInput {...revealS3Secret} value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
+            placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
         <label className={fieldCls}>AWS_DEFAULT_REGION
           <input value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
         <label className={fieldCls}>{t("cloud.storageClass.label")}
@@ -1226,8 +1239,8 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={fieldCls}>RESTIC_REST_USERNAME
           <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
         <label className={fieldCls}>RESTIC_REST_PASSWORD
-          <input type="password" value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
-            placeholder={pwSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+          <RevealInput {...revealRestPassword} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
+            placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
       </div>
 
       <div className="flex items-center gap-3 pt-1">
@@ -1269,6 +1282,8 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const revealS3Secret = useReveal();
+  const revealRestPassword = useReveal();
 
   function refresh() {
     getCloudCredSets()
@@ -1396,8 +1411,8 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={fieldCls}>AWS_ACCESS_KEY_ID
               <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
             <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
-              <input type="password" value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
-                placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+              <RevealInput {...revealS3Secret} value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
+                placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
             <label className={fieldCls}>AWS_DEFAULT_REGION
               <input value={editing.s3Region} onChange={(e) => setField("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
             <label className={fieldCls}>{t("cloud.storageClass.label")}
@@ -1415,8 +1430,8 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={fieldCls}>RESTIC_REST_USERNAME
               <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
             <label className={fieldCls}>RESTIC_REST_PASSWORD
-              <input type="password" value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
-                placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+              <RevealInput {...revealRestPassword} value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
+                placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -1486,6 +1501,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // The SMTP password / Matrix token are never sent to the browser; track whether
   // one is stored so the field shows "configured" and a blank submit keeps it.
   const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
+  const revealMatrixToken = useReveal();
+  const revealSmtpPassword = useReveal();
 
   useEffect(() => {
     getNotify()
@@ -1652,8 +1669,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         </label>
         <label className={labelCls}>
           {t("notify.matrixToken")}
-          <input value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-            type="password" placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} className={inputCls} />
+          <RevealInput {...revealMatrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
+            placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
         </label>
         <label className={labelCls}>
           {t("notify.matrixRoom")}
@@ -1739,8 +1756,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </label>
             <label className={labelCls}>
               {t("notify.smtpPass")}
-              <input value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
-                type="password" placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} className={inputCls} />
+              <RevealInput {...revealSmtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
+                placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpFrom")}
@@ -2802,6 +2819,15 @@ export function SettingsPage() {
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
   const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
+  const revealPwNew = useReveal();
+  const revealPwConfirm = useReveal();
+  const revealMetricsToken = useReveal();
+  // Registry credentials are a per-row list (settings.registryAuths), and a
+  // hook can't be called inside that row's own .map() callback (Rules of
+  // Hooks — the call count would vary with the list length), so this is a
+  // plain keyed-by-index record here at the top level instead of a useReveal()
+  // per row.
+  const [registryTokenVisible, setRegistryTokenVisible] = useState<Record<number, boolean>>({});
 
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
@@ -3792,8 +3818,13 @@ export function SettingsPage() {
               <span className="text-xs text-carbon-textSub">
                 {t("settings.registryToken")}
               </span>
-              <input
-                type="password"
+              <RevealInput
+                visible={!!registryTokenVisible[i]}
+                onToggleVisible={() =>
+                  setRegistryTokenVisible((p) => ({ ...p, [i]: !p[i] }))
+                }
+                showLabel={t("common.showValue")}
+                hideLabel={t("common.hideValue")}
                 value={entry.token}
                 autoComplete="new-password"
                 placeholder={
@@ -3814,7 +3845,8 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                wrapperClassName="w-full"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <button
@@ -4291,8 +4323,8 @@ export function SettingsPage() {
             to keep" placeholder the cloud-credential secrets use. */}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.metricsToken")}</span>
-          <input
-            type="password"
+          <RevealInput
+            {...revealMetricsToken}
             value={settings.metricsToken}
             spellCheck={false}
             autoComplete="off"
@@ -4300,6 +4332,7 @@ export function SettingsPage() {
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
+            wrapperClassName="w-full"
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </label>
@@ -4561,12 +4594,13 @@ export function SettingsPage() {
             <label className="text-xs text-carbon-textSub">
               {authEnabled ? t("auth.changePassword") : t("auth.setPassword")}
             </label>
-            <input
-              type="password"
+            <RevealInput
+              {...revealPwNew}
               value={pwNew}
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
+              wrapperClassName="w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>
@@ -4574,12 +4608,13 @@ export function SettingsPage() {
             <label className="text-xs text-carbon-textSub">
               {t("auth.confirmPassword")}
             </label>
-            <input
-              type="password"
+            <RevealInput
+              {...revealPwConfirm}
               value={pwConfirm}
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
+              wrapperClassName="w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>

@@ -34,6 +34,8 @@ import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -524,6 +526,7 @@ function FleetDialog({
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const revealToken = useReveal();
 
   const editing = initial !== null;
   const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
@@ -605,13 +608,14 @@ function FleetDialog({
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
-          <input
-            type="password"
+          <RevealInput
+            {...revealToken}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             spellCheck={false}
             autoComplete="off"
             placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
+            wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
           <p className="text-[11px] text-carbon-textMuted">{t("fleet.tokenHint")}</p>

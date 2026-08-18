@@ -460,6 +460,8 @@ const th: Partial<Translations> = {
   "common.restoreRunning": "กำลังกู้คืนข้อมูลอยู่…",
   "common.backupRunning": "กำลังสำรองข้อมูลอยู่…",
   "common.replicateRunning": "กำลังจำลองข้อมูลอยู่…",
+  "common.showValue": "แสดงค่า",
+  "common.hideValue": "ซ่อนค่า",
   "common.close": "ปิด",
 
   // Backup folders selector

@@ -460,6 +460,8 @@ const hu: Partial<Translations> = {
   "common.restoreRunning": "Visszaállítás van folyamatban…",
   "common.backupRunning": "Biztonsági mentés van folyamatban…",
   "common.replicateRunning": "Replikálás van folyamatban…",
+  "common.showValue": "Érték megjelenítése",
+  "common.hideValue": "Érték elrejtése",
   "common.close": "Bezárás",
 
   // Backup folders selector

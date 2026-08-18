@@ -458,6 +458,8 @@ const no: Partial<Translations> = {
   "common.restoreRunning": "En gjenoppretting kjører…",
   "common.backupRunning": "En sikkerhetskopiering kjører…",
   "common.replicateRunning": "En replikering kjører…",
+  "common.showValue": "Vis verdi",
+  "common.hideValue": "Skjul verdi",
   "common.close": "Lukk",
 
   // Backup folders selector

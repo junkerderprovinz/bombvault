@@ -460,6 +460,8 @@ const el: Partial<Translations> = {
   "common.restoreRunning": "Εκτελείται μια επαναφορά…",
   "common.backupRunning": "Εκτελείται ένα αντίγραφο ασφαλείας…",
   "common.replicateRunning": "Εκτελείται μια αναπαραγωγή…",
+  "common.showValue": "Εμφάνιση τιμής",
+  "common.hideValue": "Απόκρυψη τιμής",
   "common.close": "Κλείσιμο",
 
   // Backup folders selector

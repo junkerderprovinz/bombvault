@@ -452,6 +452,8 @@ const vi: Partial<Translations> = {
   "common.restoreRunning": "Một tiến trình khôi phục đang chạy…",
   "common.backupRunning": "Một tiến trình sao lưu đang chạy…",
   "common.replicateRunning": "Một tiến trình sao chép đang chạy…",
+  "common.showValue": "Hiện giá trị",
+  "common.hideValue": "Ẩn giá trị",
   "common.close": "Đóng",
 
   // Backup folders selector

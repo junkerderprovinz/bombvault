@@ -460,6 +460,8 @@ const sv: Partial<Translations> = {
   "common.restoreRunning": "En återställning pågår…",
   "common.backupRunning": "En säkerhetskopiering pågår…",
   "common.replicateRunning": "En replikering pågår…",
+  "common.showValue": "Visa värde",
+  "common.hideValue": "Dölj värde",
   "common.close": "Stäng",
 
   // Backup folders selector
