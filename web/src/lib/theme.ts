@@ -67,25 +67,37 @@ export function toggleTheme(): ResolvedTheme {
   return next;
 }
 
+/** Subscribes `onChange` to OS-level dark/light flips (fires on every flip,
+ * regardless of the stored preference — callers that only care while on
+ * "system" check `getTheme()` inside their own callback, as both call sites
+ * below do). Returns an unsubscribe function. Isolates the Safari < 14
+ * `addListener`/`removeListener` fallback in one place instead of it being
+ * copied at every call site. */
+export function onSystemThemeChange(onChange: () => void): () => void {
+  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  if (typeof mql.addEventListener === "function") {
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }
+  // Safari < 14 fallback — deprecated but still the only API there.
+  mql.addListener(onChange);
+  return () => mql.removeListener(onChange);
+}
+
 let liveListenerAttached = false;
 
 /** Called at boot in main.tsx before first render. Also wires a live
  * listener so an OS-level theme change repaints immediately for anyone
- * still on "system" (attached once; safe to call repeatedly). */
+ * still on "system" (attached once; safe to call repeatedly — the
+ * subscription is intentionally never torn down for the lifetime of the
+ * page, unlike Sidebar.tsx's own use of onSystemThemeChange). */
 export function applyStoredTheme(): void {
   paint(getTheme());
 
   if (liveListenerAttached) return;
   liveListenerAttached = true;
 
-  const mql = window.matchMedia("(prefers-color-scheme: dark)");
-  const onChange = () => {
+  onSystemThemeChange(() => {
     if (getTheme() === "system") paint("system");
-  };
-  if (typeof mql.addEventListener === "function") {
-    mql.addEventListener("change", onChange);
-  } else {
-    // Safari < 14 fallback — deprecated but still the only API there.
-    mql.addListener(onChange);
-  }
+  });
 }

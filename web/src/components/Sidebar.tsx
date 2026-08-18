@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { getResolvedTheme, getTheme, toggleTheme } from "../lib/theme";
+import { getResolvedTheme, getTheme, onSystemThemeChange, toggleTheme } from "../lib/theme";
 import { useAdvanced } from "../lib/advanced";
 
 interface SidebarProps {
@@ -256,17 +256,9 @@ function SidebarControls() {
   // under a "system" user, even though the rest of the UI has already
   // repainted correctly.
   useEffect(() => {
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    function onChange() {
+    return onSystemThemeChange(() => {
       if (getTheme() === "system") setThemeState(getResolvedTheme());
-    }
-    if (typeof mql.addEventListener === "function") {
-      mql.addEventListener("change", onChange);
-      return () => mql.removeEventListener("change", onChange);
-    }
-    // Safari < 14 fallback — deprecated but still the only API there.
-    mql.addListener(onChange);
-    return () => mql.removeListener(onChange);
+    });
   }, []);
 
   // Close on outside click
