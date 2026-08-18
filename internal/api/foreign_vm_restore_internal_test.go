@@ -236,6 +236,44 @@ func TestPrepareRestoreVMSameInstanceUnchanged(t *testing.T) {
 	}
 }
 
+// vmZvolDomainXML is vmDomainXML plus one block-device (zvol) disk — enough
+// for virshcli.ParseDomain to populate DomainInfo.BlockDisks.
+const vmZvolDomainXML = `<domain type='kvm'><name>zvolvm</name>` +
+	`<os><nvram>/etc/libvirt/qemu/nvram/zvolvm_VARS.fd</nvram></os>` +
+	`<devices><disk type='file' device='disk'><source file='/mnt/pool/domains/zvolvm/zvolvm.qcow2'/><target dev='vda'/></disk>` +
+	`<disk type='block' device='disk'><source dev='/dev/zvol/tank/vms/zvolvm/disk1'/><target dev='vdb'/></disk></devices></domain>`
+
+// TestPrepareRestoreVMRefusesBlockDisksWithoutSSH is a regression test (v8.0.0
+// VM service-layer integration, Task 2 code-quality fixup): a stored domain
+// whose XML carries a block-device (zvol) disk must refuse the restore with a
+// clean error when SSH is not configured, exactly like BackupVM's own
+// "zvol backup requires SSH" guard — NOT silently build a plan that panics
+// later. Without this guard, prepareRestoreVMForTarget builds a plan whose
+// ZFSHost the caller wires as sshZFSHost{ssh: nil}; RestoreZvolDisk calls
+// ZFSHost.StreamReceive, which is a nil-interface method call — an unrecovered
+// panic on StartRestoreVM's background goroutine, crashing the whole process
+// rather than just failing this one restore. s.ssh is nil here because
+// vmRestoreSvc never sets it (mirrors a fresh/DR instance, or SSH removed
+// from Settings after the original backup).
+func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+
+	disks := []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}
+	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
+
+	_, err := s.prepareRestoreVMForTarget(context.Background(),
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "")
+	if err == nil {
+		t.Fatal("want a clean error for block-device disks with no SSH configured, got nil (plan would panic later in RestoreZvolDisk)")
+	}
+	if !strings.Contains(err.Error(), "SSH") {
+		t.Fatalf("error = %v, want it to mention SSH", err)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Foreign VM restore round trip (requirement 3): remap + leave stopped + no
 // autostart, end to end through StartForeignRestore. Linux-only: it seeds the

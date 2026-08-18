@@ -6479,6 +6479,17 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v) — TPM state and any zvol disks will not be restored", name, perr) //nolint:gosec // G706: name is %q-quoted
 	}
 
+	// Mirrors BackupVM's own "zvol backup requires SSH" guard: RestoreZvolDisk
+	// calls ZFSHost.StreamReceive, which sshZFSHost forwards straight onto
+	// s.ssh — a nil HostSSH there is a nil interface method call, i.e. an
+	// unrecovered PANIC (not a clean error) deep inside the async restore
+	// goroutine (StartRestoreVM), which crashes the whole process rather than
+	// just failing this one restore. Caught here, before a plan is ever
+	// returned, exactly like the backup-side check in BackupVM.
+	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
+		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol restore requires SSH", name)
+	}
+
 	// preDefine writes the captured NVRAM/TPM state back to the host over SSH
 	// AFTER the old domain is undefined (which removes its nvram) and BEFORE
 	// `virsh define`, so the restored VM boots with its original UEFI
