@@ -122,7 +122,7 @@ describe("RevealInput", () => {
     expect(cls).not.toContain("accent");
   });
 
-  it("reserves trailing padding with an important pr-8 so a shared inputCls's px-* can't win the cascade", () => {
+  it("reserves trailing padding with an important, LOGICAL pe-8 so a shared inputCls's px-* can't win the cascade", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -134,11 +134,30 @@ describe("RevealInput", () => {
     });
     const input = findOne(tree, "input");
     const cls = input.props.className as string;
-    expect(cls).toContain("pr-8!");
+    // pe-8 (logical "padding-end"), not pr-8 — the eye sits on the field's
+    // TRAILING edge, which flips sides between LTR and RTL, so a PHYSICAL
+    // pr-8 would reserve the wrong side's room once dir="rtl" is active.
+    expect(cls).toContain("pe-8!");
+    expect(cls).not.toMatch(/(?:^|\s)pr-8!/);
     expect(cls).toContain("w-full");
     // The caller's own visual classes (background, vertical padding) still
     // pass through untouched — only the trailing padding is pinned.
     expect(cls).toContain("bg-carbon-surface2");
+  });
+
+  it("positions the eye on the LOGICAL trailing edge (end-2), not the physical right, so it flips correctly under dir=\"rtl\"", () => {
+    const tree = RevealInput({
+      visible: false,
+      onToggleVisible: noop,
+      showLabel: "Show value",
+      hideLabel: "Hide value",
+      value: "",
+      onChange: noop,
+    });
+    const btn = findOne(tree, "button");
+    const cls = btn.props.className as string;
+    expect(cls).toContain("end-2");
+    expect(cls).not.toMatch(/(?:^|\s)right-2(?:\s|$)/);
   });
 
   it("wrapperClassName carries the field's layout footprint on the outer box, not the input", () => {

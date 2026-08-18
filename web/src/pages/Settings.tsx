@@ -2825,9 +2825,28 @@ export function SettingsPage() {
   // Registry credentials are a per-row list (settings.registryAuths), and a
   // hook can't be called inside that row's own .map() callback (Rules of
   // Hooks — the call count would vary with the list length), so this is a
-  // plain keyed-by-index record here at the top level instead of a useReveal()
-  // per row.
-  const [registryTokenVisible, setRegistryTokenVisible] = useState<Record<number, boolean>>({});
+  // plain record here at the top level instead of a useReveal() per row.
+  //
+  // Keyed by a STABLE per-row id (registryRowIds below), NOT by array index.
+  // Rows are removed/added by splicing settings.registryAuths, which shifts
+  // every later row's index — an index-keyed record would then misattribute
+  // a shifted-in row's slot to whatever reveal state the OLD occupant of that
+  // index left behind (reveal row 0, remove row 0 → the row that slides into
+  // index 0 renders already-revealed), and a freshly added row would inherit
+  // whatever stale flag already lived at its new index. That's a real
+  // secret-becomes-visible-without-being-asked-for bug, not just a cosmetic
+  // one, so this is worth the extra bookkeeping below to get right.
+  const [registryTokenVisible, setRegistryTokenVisible] = useState<Record<string, boolean>>({});
+  // registryRowIds pairs 1:1 by index with settings.registryAuths, giving
+  // each row a client-only stable identity to key registryTokenVisible (and
+  // the row's React `key`) by — kept in lockstep at every place that changes
+  // the array's length/order (load, add, remove, and the Save handler's
+  // untouched-blank-row filter below). Deliberately NOT a field on the row
+  // objects themselves: Settings PUT uses a strict decoder
+  // (DisallowUnknownFields — internal/api/handlers.go) that must accept a
+  // round-tripped GET body, so an extra client-only field riding along on a
+  // spread entry would break every settings save, not just this card.
+  const [registryRowIds, setRegistryRowIds] = useState<string[]>([]);
 
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
@@ -2916,6 +2935,10 @@ export function SettingsPage() {
         if (res.ok) {
           setSettings(res.settings);
           setSavedSettings(res.settings);
+          // Give every loaded registry row a stable client-only id (see
+          // registryRowIds' declaration above) — a fresh GET never carries
+          // one of its own, so one is minted here, once, per row.
+          setRegistryRowIds(res.settings.registryAuths.map(() => crypto.randomUUID()));
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           // Detect whether the domain schedules are already in sync (Containers ==
           // VMs == Flash, and not off), so the Schedules tab's sync checkbox
@@ -3761,9 +3784,14 @@ export function SettingsPage() {
             {t("settings.registriesEmpty")}
           </p>
         )}
-        {settings.registryAuths.map((entry, i) => (
+        {settings.registryAuths.map((entry, i) => {
+          // Fallback only guards a transient/impossible index mismatch (see
+          // registryRowIds' declaration) — every mutation site below keeps
+          // the two arrays in lockstep, so this should never actually miss.
+          const rowId = registryRowIds[i] ?? `registry-row-fallback-${i}`;
+          return (
           <div
-            key={i}
+            key={rowId}
             className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end"
           >
             <label className="flex flex-col gap-1">
@@ -3819,9 +3847,9 @@ export function SettingsPage() {
                 {t("settings.registryToken")}
               </span>
               <RevealInput
-                visible={!!registryTokenVisible[i]}
+                visible={!!registryTokenVisible[rowId]}
                 onToggleVisible={() =>
-                  setRegistryTokenVisible((p) => ({ ...p, [i]: !p[i] }))
+                  setRegistryTokenVisible((p) => ({ ...p, [rowId]: !p[rowId] }))
                 }
                 showLabel={t("common.showValue")}
                 hideLabel={t("common.hideValue")}
@@ -3851,7 +3879,7 @@ export function SettingsPage() {
             </label>
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
                 setSettings((prev) =>
                   prev
                     ? {
@@ -3859,18 +3887,29 @@ export function SettingsPage() {
                         registryAuths: prev.registryAuths.filter((_, j) => j !== i),
                       }
                     : prev
-                )
-              }
+                );
+                // Drop this row's id AND its reveal-state entry together, so
+                // neither an id nor a stray "revealed" flag survives to be
+                // picked up by whatever row slides into this index next.
+                setRegistryRowIds((prev) => prev.filter((_, j) => j !== i));
+                setRegistryTokenVisible((prev) => {
+                  if (!(rowId in prev)) return prev;
+                  const next = { ...prev };
+                  delete next[rowId];
+                  return next;
+                });
+              }}
               className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("settings.registryRemove")}
             </button>
           </div>
-        ))}
+          );
+        })}
         <div>
           <button
             type="button"
-            onClick={() =>
+            onClick={() => {
               setSettings((prev) => {
                 if (!prev) return prev;
                 const blank: RegistryAuthEntry = {
@@ -3880,8 +3919,12 @@ export function SettingsPage() {
                   tokenSet: false,
                 };
                 return { ...prev, registryAuths: [...prev.registryAuths, blank] };
-              })
-            }
+              });
+              // A brand-new row always starts with its OWN fresh id — never
+              // reusing one, so it can't inherit a stale "revealed" flag left
+              // behind by a since-removed row that used to sit at this index.
+              setRegistryRowIds((prev) => [...prev, crypto.randomUUID()]);
+            }}
             className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("settings.registryAdd")}
@@ -3890,28 +3933,37 @@ export function SettingsPage() {
         <SaveBar
           state={registrySaveState}
           error={registrySaveError}
-          onSave={() =>
+          onSave={() => {
+            // Save drops untouched blank rows (below) — reproduce that SAME
+            // filter over registryRowIds so ids stay aligned with the rows
+            // that actually survive. Only committed once the save actually
+            // succeeds, matching save()'s own settings/savedSettings update
+            // (its `res.ok` branch) — an in-flight or failed save leaves
+            // registryRowIds exactly as it was.
+            const kept = settings.registryAuths
+              .map((a, idx) => ({ a, idx }))
+              .filter(
+                ({ a }) =>
+                  a.host.trim() !== "" ||
+                  a.username.trim() !== "" ||
+                  a.token.trim() !== ""
+              );
             void save(
               {
                 // Drop untouched blank rows; mark a freshly typed token as
                 // stored so its input shows the kept-placeholder after saving
                 // (mirrors the metricsTokenSet handling).
-                registryAuths: settings.registryAuths
-                  .filter(
-                    (a) =>
-                      a.host.trim() !== "" ||
-                      a.username.trim() !== "" ||
-                      a.token.trim() !== ""
-                  )
-                  .map((a) => ({
-                    ...a,
-                    tokenSet: a.tokenSet || a.token.trim() !== "",
-                  })),
+                registryAuths: kept.map(({ a }) => ({
+                  ...a,
+                  tokenSet: a.tokenSet || a.token.trim() !== "",
+                })),
               },
               setRegistrySaveState,
               setRegistrySaveError
-            )
-          }
+            ).then((ok) => {
+              if (ok) setRegistryRowIds(kept.map(({ idx }) => registryRowIds[idx]));
+            });
+          }}
           t={t}
         />
       </Card>

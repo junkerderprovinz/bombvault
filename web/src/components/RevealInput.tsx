@@ -37,14 +37,22 @@ import type { InputHTMLAttributes } from "react";
 //     an unconditional `w-full` so it fills that wrapper exactly like the
 //     original bare input filled ITS parent — swapping <input> for
 //     <RevealInput> never shrinks or grows the field's own footprint.
-//   - Reserves trailing room with `pr-8!`. Several call sites build their
+//   - Reserves trailing room with `pe-8!`. Several call sites build their
 //     className from a shared `inputCls`/`offsiteInput` const also reused by
 //     OTHER, non-secret fields in the same file/function; appending a plain
-//     `pr-8` after that constant in the className string is NOT guaranteed
+//     `pe-8` after that constant in the className string is NOT guaranteed
 //     to win the cascade against the constant's own `px-*` (Tailwind's
 //     generated utility order is not the order classes appear in the
 //     `class` attribute). The `!` important modifier pins the override
 //     without having to fork or string-edit the shared constant.
+//   - `pe-8`/`end-2` (LOGICAL, writing-mode-aware Tailwind utilities), not
+//     `pr-8`/`right-2` — the eye sits on the field's TRAILING edge, which is
+//     the right in LTR (English, German, ...) but the LEFT in RTL (Arabic,
+//     Hebrew — both shipped locales here, see lib/i18n.ts's isRtl). Physical
+//     `right-*` would pin the eye to the same visual side in both directions,
+//     landing on the RTL reader's leading edge instead. `dir` flips on
+//     document.documentElement per the active locale (lib/i18n.ts), so the
+//     logical utilities resolve correctly with no JS/conditional needed.
 // ---------------------------------------------------------------------------
 
 export interface RevealInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -79,14 +87,14 @@ export function RevealInput({
       <input
         {...rest}
         type={visible ? "text" : "password"}
-        className={`w-full pr-8!${className ? ` ${className}` : ""}`}
+        className={`w-full pe-8!${className ? ` ${className}` : ""}`}
       />
       <button
         type="button"
         onClick={onToggleVisible}
         aria-label={visible ? hideLabel : showLabel}
         aria-pressed={visible}
-        className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="absolute end-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         {visible ? (
           // Slashed eye: the same open-eye glyph, dimmed, struck through —
