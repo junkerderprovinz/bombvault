@@ -61,6 +61,7 @@ const ar: Partial<Translations> = {
   "spike.colDetail": "التفاصيل",
   "spike.ok": "OK",
   "spike.fail": "فشل",
+  "spike.info": "معلومة",
   "spike.bestEffort": "اختياري",
   "spike.checkNow": "فحص الآن",
   "spike.probeFailed": "فشل الاستطلاع (راجع سجلات الخادم)",

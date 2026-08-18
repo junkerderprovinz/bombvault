@@ -31,6 +31,7 @@ import { relativeTime } from "../lib/reltime";
 import { humanBytes } from "../lib/forecast";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconReceiver } from "../components/Sidebar";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -47,26 +48,6 @@ function fmtReceived(iso: string, t: T): string {
   if (!iso) return t("receiver.never");
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
-
-// ---------------------------------------------------------------------------
-// Status badge
-// ---------------------------------------------------------------------------
-
-function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; children: React.ReactNode }) {
-  const cls =
-    tone === "ok"
-      ? "bg-statusOkBg text-statusOk"
-      : tone === "fail"
-      ? "bg-statusFailBg text-statusFail"
-      : tone === "warn"
-      ? "bg-statusWarnBgStrong text-statusWarn"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
-      {children}
-    </span>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -202,7 +183,7 @@ function ReceivedRepoCard({
   }
 
   // Check-result badge tone: never checked / passed / failed.
-  const checkTone = repo.lastCheckOk === null ? "muted" : repo.lastCheckOk ? "ok" : "fail";
+  const checkTone = repo.lastCheckOk === null ? "neutral" : repo.lastCheckOk ? "ok" : "fail";
   const checkLabel =
     repo.lastCheckOk === null
       ? t("receiver.checkNever")
@@ -217,7 +198,7 @@ function ReceivedRepoCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-carbon-text text-sm truncate">{repo.name}</span>
-            {!repo.enabled && <Badge tone="muted">{t("receiver.monitoringOff")}</Badge>}
+            {!repo.enabled && <Badge tone="neutral">{t("receiver.monitoringOff")}</Badge>}
             {repo.enabled &&
               (repo.reachable ? (
                 <Badge tone="ok">{t("receiver.reachable")}</Badge>

@@ -61,6 +61,7 @@ const el: Partial<Translations> = {
   "spike.colDetail": "Λεπτομέρεια",
   "spike.ok": "ΟΚ",
   "spike.fail": "ΣΦΑΛΜΑ",
+  "spike.info": "ΙΝΦΟ",
   "spike.bestEffort": "προαιρετικό",
   "spike.checkNow": "Έλεγχος τώρα",
   "spike.probeFailed": "αποτυχία ανίχνευσης (δείτε τα αρχεία καταγραφής)",

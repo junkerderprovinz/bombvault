@@ -61,6 +61,7 @@ const th: Partial<Translations> = {
   "spike.colDetail": "รายละเอียด",
   "spike.ok": "OK",
   "spike.fail": "ล้มเหลว",
+  "spike.info": "ข้อมูล",
   "spike.bestEffort": "ไม่บังคับ",
   "spike.checkNow": "ตรวจสอบเดี๋ยวนี้",
   "spike.probeFailed": "การตรวจสอบล้มเหลว (ดูบันทึกเซิร์ฟเวอร์)",

@@ -61,6 +61,7 @@ const uk: Partial<Translations> = {
   "spike.colDetail": "Деталі",
   "spike.ok": "OK",
   "spike.fail": "ПОМИЛКА",
+  "spike.info": "ІНФО",
   "spike.bestEffort": "необов'язково",
   "spike.checkNow": "Перевірити зараз",
   "spike.probeFailed": "тест не пройдено (дивіться журнали сервера)",

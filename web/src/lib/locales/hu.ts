@@ -61,6 +61,7 @@ const hu: Partial<Translations> = {
   "spike.colDetail": "Részletek",
   "spike.ok": "RENDBEN",
   "spike.fail": "HIBA",
+  "spike.info": "INFÓ",
   "spike.bestEffort": "nem kötelező",
   "spike.checkNow": "Ellenőrzés most",
   "spike.probeFailed": "a próba sikertelen volt (lásd a szerver naplóit)",

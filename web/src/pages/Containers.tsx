@@ -15,6 +15,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
+import { Badge, type BadgeTone } from "../components/Badge";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
@@ -32,23 +33,15 @@ function formatTs(unix: number | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// State chip
+// State chip — stateTone maps a raw container state to the shared Badge's
+// tone; stateLabel (lib/i18n) still does the actual state->text translation.
 // ---------------------------------------------------------------------------
 
-function StateChip({ state }: { state: string }) {
-  const { t } = useT();
+function stateTone(state: string): BadgeTone {
   const lower = state.toLowerCase();
-  const cls =
-    lower === "running"
-      ? "bg-statusOkBg text-statusOk"
-      : lower === "exited" || lower === "stopped"
-      ? "bg-statusFailBg text-statusFail"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
-      {stateLabel(t, state)}
-    </span>
-  );
+  if (lower === "running") return "ok";
+  if (lower === "exited" || lower === "stopped") return "fail";
+  return "neutral";
 }
 
 // ---------------------------------------------------------------------------
@@ -1051,11 +1044,9 @@ function ContainerRow({
               {container.name}
             </span>
             {installed ? (
-              <StateChip state={container.state} />
+              <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
-                {t("containers.notInstalled")}
-              </span>
+              <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
             {container.ip && (
               <span className="text-xs text-carbon-textMuted font-mono">{container.ip}</span>

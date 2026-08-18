@@ -61,6 +61,7 @@ const vi: Partial<Translations> = {
   "spike.colDetail": "Chi tiết",
   "spike.ok": "OK",
   "spike.fail": "LỖI",
+  "spike.info": "INFO",
   "spike.bestEffort": "tùy chọn",
   "spike.checkNow": "Kiểm tra ngay",
   "spike.probeFailed": "kiểm thử thất bại (xem nhật ký máy chủ)",

@@ -10,6 +10,7 @@ import {
 } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
+import { Badge } from "./Badge";
 
 // ---------------------------------------------------------------------------
 // OffsiteTargetsSection — per-domain "Additional off-site targets" editor
@@ -260,15 +261,11 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">{tgt.repo}</span>
-            <span className="flex flex-wrap gap-2 text-[11px] text-carbon-textSub">
-              <span className="rounded-control bg-carbon-surface2 px-1.5 py-0.5">
+            <span className="flex flex-wrap gap-2">
+              <Badge tone="neutral" size="small">
                 {tgt.storageClass || t("cloud.storageClass.default")}
-              </span>
-              {tgt.immutable && (
-                <span className="rounded-control bg-carbon-surface2 px-1.5 py-0.5 text-statusOk">
-                  {t("offsite.immutable")}
-                </span>
-              )}
+              </Badge>
+              {tgt.immutable && <Badge tone="ok" size="small">{t("offsite.immutable")}</Badge>}
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">

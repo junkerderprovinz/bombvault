@@ -60,6 +60,7 @@ const ru: Partial<Translations> = {
   "spike.colDetail": "Детали",
   "spike.ok": "OK",
   "spike.fail": "ОШИБКА",
+  "spike.info": "ИНФО",
   "spike.bestEffort": "необязательно",
   "spike.checkNow": "Проверить сейчас",
   "spike.probeFailed": "тест не пройден (см. журналы сервера)",

@@ -33,6 +33,7 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -69,26 +70,10 @@ const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
 
 // ---------------------------------------------------------------------------
 // Protection chip — mirrors Dashboard's protectionChip mapping (not exported
-// there, so duplicated here: green/amber/red/"" -> ok/warn/fail/muted).
+// there, so duplicated here: green/amber/red/"" -> ok/warn/fail/neutral).
 // ---------------------------------------------------------------------------
 
-function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; children: React.ReactNode }) {
-  const cls =
-    tone === "ok"
-      ? "bg-statusOkBg text-statusOk"
-      : tone === "fail"
-      ? "bg-statusFailBg text-statusFail"
-      : tone === "warn"
-      ? "bg-statusWarnBgStrong text-statusWarn"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
-      {children}
-    </span>
-  );
-}
-
-function protectionTone(level: string): "ok" | "fail" | "warn" | "muted" {
+function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
   switch (level) {
     case "green":
       return "ok";
@@ -97,7 +82,7 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "muted" {
     case "red":
       return "fail";
     default:
-      return "muted";
+      return "neutral";
   }
 }
 
@@ -158,7 +143,7 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
 // Mesh: offers received FROM peers
 // ---------------------------------------------------------------------------
 
-function meshStatusTone(status: string): "ok" | "fail" | "warn" | "muted" {
+function meshStatusTone(status: string): "ok" | "fail" | "warn" | "neutral" {
   switch (status) {
     case "accepted":
       return "ok";
@@ -417,7 +402,7 @@ function FleetPeerCard({
     }
   }
 
-  const pollTone: "ok" | "fail" | "muted" = peer.lastPollOk === null ? "muted" : peer.lastPollOk ? "ok" : "fail";
+  const pollTone: "ok" | "fail" | "neutral" = peer.lastPollOk === null ? "neutral" : peer.lastPollOk ? "ok" : "fail";
   const pollLabel =
     peer.lastPollOk === null ? t("fleet.pollNever") : peer.lastPollOk ? t("fleet.pollOk") : t("fleet.pollFailed");
 
@@ -429,7 +414,7 @@ function FleetPeerCard({
             <span className="font-semibold text-carbon-text text-sm truncate">
               {peer.lastPollInstanceName || peer.name}
             </span>
-            {!peer.enabled && <Badge tone="muted">{t("fleet.monitoringOff")}</Badge>}
+            {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
             <Badge tone={pollTone}>{pollLabel}</Badge>
           </div>
           <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">{peer.url}</p>

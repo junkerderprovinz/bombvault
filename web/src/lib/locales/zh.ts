@@ -61,6 +61,7 @@ const zh: Partial<Translations> = {
   "spike.colDetail": "详情",
   "spike.ok": "正常",
   "spike.fail": "失败",
+  "spike.info": "信息",
   "spike.bestEffort": "可选",
   "spike.checkNow": "立即检查",
   "spike.probeFailed": "探测失败（请查看服务器日志）",

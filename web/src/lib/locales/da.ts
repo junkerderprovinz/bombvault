@@ -61,6 +61,7 @@ const da: Partial<Translations> = {
   "spike.colDetail": "Detalje",
   "spike.ok": "OK",
   "spike.fail": "FEJL",
+  "spike.info": "INFO",
   "spike.bestEffort": "valgfrit",
   "spike.checkNow": "Tjek nu",
   "spike.probeFailed": "probe mislykkedes (se serverlogge)",

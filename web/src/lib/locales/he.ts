@@ -61,6 +61,7 @@ const he: Partial<Translations> = {
   "spike.colDetail": "פרטים",
   "spike.ok": "OK",
   "spike.fail": "כשל",
+  "spike.info": "מידע",
   "spike.bestEffort": "אופציונלי",
   "spike.checkNow": "בדוק עכשיו",
   "spike.probeFailed": "הבדיקה נכשלה (ראה לוגי שרת)",

@@ -12,6 +12,7 @@ import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM } from "../components/Sidebar";
+import { Badge, type BadgeTone } from "../components/Badge";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 
@@ -27,23 +28,16 @@ function formatTs(unix: number | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// State chip (mirrors Containers.tsx)
+// State chip (mirrors Containers.tsx) — stateTone maps a raw VM state to the
+// shared Badge's tone; stateLabel (lib/i18n) still does the actual
+// state->text translation.
 // ---------------------------------------------------------------------------
 
-function StateChip({ state }: { state: string }) {
-  const { t } = useT();
+function stateTone(state: string): BadgeTone {
   const lower = state.toLowerCase();
-  const cls =
-    lower === "running"
-      ? "bg-statusOkBg text-statusOk"
-      : lower === "shut off" || lower === "shutoff" || lower === "stopped"
-      ? "bg-statusFailBg text-statusFail"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
-      {stateLabel(t, state)}
-    </span>
-  );
+  if (lower === "running") return "ok";
+  if (lower === "shut off" || lower === "shutoff" || lower === "stopped") return "fail";
+  return "neutral";
 }
 
 // ---------------------------------------------------------------------------
@@ -658,11 +652,9 @@ function VMRow({
               {vm.name}
             </span>
             {installed ? (
-              <StateChip state={vm.state} />
+              <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
-                {t("containers.notInstalled")}
-              </span>
+              <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
           </div>
         </div>

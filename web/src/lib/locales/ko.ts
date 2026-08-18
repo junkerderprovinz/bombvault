@@ -61,6 +61,7 @@ const ko: Partial<Translations> = {
   "spike.colDetail": "세부 정보",
   "spike.ok": "정상",
   "spike.fail": "실패",
+  "spike.info": "정보",
   "spike.bestEffort": "선택 사항",
   "spike.checkNow": "지금 확인",
   "spike.probeFailed": "프로브 실패(서버 로그를 확인하세요)",

@@ -15,6 +15,7 @@ import { listRuns, ackRuns } from "../lib/api";
 import type { Run } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { formatTs, relativeTime } from "../lib/reltime";
+import { Badge } from "./Badge";
 
 // The domain <select> reuses ActivityLog's PLURAL vocabulary
 // (containers/vms/…), but a Run carries the SINGULAR domain tag
@@ -244,18 +245,23 @@ export function ErrorDetailPanel({
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />
                       <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
                     </div>
+                    {/* Count badge + Resolve button share one stage (size="large")
+                        so their heights are pixel-identical regardless of the
+                        <span> vs <button> element underneath — see Badge.tsx's
+                        file header for why that isn't automatic. */}
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-pill bg-statusFailBg px-2 py-0.5 text-xs font-medium tabular-nums text-statusFail">
+                      <Badge tone="fail" shape="pill" size="large" className="tabular-nums">
                         {countLabel(g.count)}
-                      </span>
-                      <button
-                        type="button"
+                      </Badge>
+                      <Badge
+                        as="button"
+                        tone="neutral"
+                        size="large"
                         onClick={() => acknowledge({ ids: g.ids })}
                         disabled={busy}
-                        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {t("errorPanel.resolve")}
-                      </button>
+                      </Badge>
                     </div>
                   </div>
                   <div className="flex flex-col gap-0.5 pl-4 text-xs text-carbon-textMuted">

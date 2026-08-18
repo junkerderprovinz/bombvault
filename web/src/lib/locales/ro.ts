@@ -60,6 +60,7 @@ const ro: Partial<Translations> = {
   "spike.colDetail": "Detaliu",
   "spike.ok": "OK",
   "spike.fail": "EȘUAT",
+  "spike.info": "INFO",
   "spike.bestEffort": "opțional",
   "spike.checkNow": "Verifică acum",
   "spike.probeFailed": "sondarea a eșuat (vezi jurnalele serverului)",

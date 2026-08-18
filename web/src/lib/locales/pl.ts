@@ -60,6 +60,7 @@ const pl: Partial<Translations> = {
   "spike.colDetail": "Szczegóły",
   "spike.ok": "OK",
   "spike.fail": "BŁĄD",
+  "spike.info": "INFO",
   "spike.bestEffort": "opcjonalnie",
   "spike.checkNow": "Sprawdź teraz",
   "spike.probeFailed": "test nieudany (sprawdź logi serwera)",

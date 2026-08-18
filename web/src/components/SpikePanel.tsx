@@ -2,29 +2,20 @@ import { useState } from "react";
 import { runSpike } from "../lib/api";
 import type { SpikeCheck } from "../lib/api";
 import type { useT } from "../lib/i18n";
+import { Badge } from "./Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
-function StatusChip({ ok, bestEffort }: { ok: boolean; bestEffort?: boolean }) {
-  if (bestEffort && !ok) {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusWarnBg text-statusWarn">
-        INFO
-      </span>
-    );
-  }
-  if (ok) {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusOkBg text-statusOk">
-        OK
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusFailBg text-statusFail">
-      FAIL
-    </span>
-  );
+// A best-effort (optional) check that failed is informational, not a hard
+// failure — distinct WARN-tone "INFO" label, matching Dashboard's own
+// chipFor/statusTone mapping for the exact same case. Previously hard-coded,
+// untranslated English "OK"/"FAIL"/"INFO" text (GlimStone form-engine Task
+// 5) — spike.ok/spike.fail already existed as translated keys (reused
+// as-is); spike.info is new, propagated to all 26 locales alongside them.
+function StatusChip({ ok, bestEffort, t }: { ok: boolean; bestEffort?: boolean; t: T }) {
+  if (bestEffort && !ok) return <Badge tone="warn">{t("spike.info")}</Badge>;
+  if (ok) return <Badge tone="ok">{t("spike.ok")}</Badge>;
+  return <Badge tone="fail">{t("spike.fail")}</Badge>;
 }
 
 interface SpikePanelProps {
@@ -119,7 +110,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
               className="grid grid-cols-[8rem_5rem_1fr_5rem] gap-x-3 items-center px-3 py-2.5 border-t border-carbon-border text-sm"
             >
               <span className="font-mono text-carbon-text text-xs">{c.Name}</span>
-              <StatusChip ok={c.OK} bestEffort={c.BestEffort} />
+              <StatusChip ok={c.OK} bestEffort={c.BestEffort} t={t} />
               <span className="text-carbon-textMuted text-xs wrap-break-word">
                 {c.Detail || "—"}
               </span>

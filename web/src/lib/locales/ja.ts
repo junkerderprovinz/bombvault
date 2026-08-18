@@ -61,6 +61,7 @@ const ja: Partial<Translations> = {
   "spike.colDetail": "詳細",
   "spike.ok": "OK",
   "spike.fail": "失敗",
+  "spike.info": "情報",
   "spike.bestEffort": "任意",
   "spike.checkNow": "今すぐ確認",
   "spike.probeFailed": "プローブ失敗（サーバーログを確認してください）",

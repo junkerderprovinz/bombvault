@@ -61,6 +61,7 @@ const tr: Partial<Translations> = {
   "spike.colDetail": "Ayrıntı",
   "spike.ok": "NORMAL",
   "spike.fail": "HATA",
+  "spike.info": "BİLGİ",
   "spike.bestEffort": "isteğe bağlı",
   "spike.checkNow": "Şimdi denetle",
   "spike.probeFailed": "yoklama başarısız oldu (sunucu günlüklerine bakın)",

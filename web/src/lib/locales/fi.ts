@@ -61,6 +61,7 @@ const fi: Partial<Translations> = {
   "spike.colDetail": "Tiedot",
   "spike.ok": "OK",
   "spike.fail": "VIRHE",
+  "spike.info": "INFO",
   "spike.bestEffort": "valinnainen",
   "spike.checkNow": "Tarkista nyt",
   "spike.probeFailed": "koettimen suoritus epäonnistui (katso palvelinlokit)",
