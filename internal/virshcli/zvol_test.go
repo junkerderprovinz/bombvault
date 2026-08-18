@@ -40,12 +40,12 @@ func TestZvolDatasetFromDevPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, ok := zvolDatasetFromDevPath(c.devPath)
+			got, ok := ZvolDatasetFromDevPath(c.devPath)
 			if ok != c.wantOK {
-				t.Fatalf("zvolDatasetFromDevPath(%q) ok = %v, want %v (got dataset %q)", c.devPath, ok, c.wantOK, got)
+				t.Fatalf("ZvolDatasetFromDevPath(%q) ok = %v, want %v (got dataset %q)", c.devPath, ok, c.wantOK, got)
 			}
 			if ok && got != c.want {
-				t.Fatalf("zvolDatasetFromDevPath(%q) = %q, want %q", c.devPath, got, c.want)
+				t.Fatalf("ZvolDatasetFromDevPath(%q) = %q, want %q", c.devPath, got, c.want)
 			}
 		})
 	}

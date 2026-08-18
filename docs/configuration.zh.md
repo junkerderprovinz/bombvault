@@ -10,10 +10,13 @@
 | `LIBVIRT_HOST` | 虚拟机需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用您的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 |
 | `LIBVIRT_SSH_PORT` | 否 | 用于虚拟机备份的主机 SSH 端口（默认 `22`）。 |
 | `LIBVIRT_SSH_USER` | 否 | 用于虚拟机备份的主机上的 SSH 用户（默认 `root`）。 |
+| `LIBVIRT_URI` | 否 | 完整的 libvirt 连接 URI，将**原样**使用，而不再由上方三个 `LIBVIRT_*` 变量拼接而成（此时这三个变量对连接字符串不再生效）。默认未设置。TrueNAS Scale 上需要用到它，因为其 libvirtd 监听在拼接形式无法表达的非标准套接字上：`qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。参见 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) 的 TrueNAS Scale 部分。 |
 | `PORT` | 否 | HTTP 端口（默认 `3000`；仅在 `HTTP_ONLY=true` 时使用）。 |
 | `HTTPS_PORT` | 否 | HTTPS 端口（默认 `3443`；模板以 1:1 发布它，因此 WebUI 在 `https://<ip>:3443` 上应答）。 |
 | `HTTP_ONLY` | 否 | 设为 `true` 以禁用自签名 HTTPS 监听器，仅提供纯 HTTP 服务（用于在一个终止 TLS 的反向代理之后）。 |
 | `HOST_SOURCE_ROOT` | 否 | 挂载为 **Host Data** 的主机路径（默认 `/mnt`）。BombVault 会将 Docker 报告的绑定挂载来源转换为此挂载下的路径。仅在您挂载了不同的主机根目录时才更改。 |
+| `DATA_ROOT_SEGMENTS` | 否 | 以逗号分隔的路径片段名称，用于将绑定挂载来源标记为备份数据（默认为 `appdata`，对应 Unraid 的 `/mnt/user/appdata/<container>` 约定）。当所列片段中的任意一个作为完整路径片段出现在某容器绑定挂载的主机来源中时，该挂载就会被自动选中用于备份，例如 `DATA_ROOT_SEGMENTS=appdata,config` 也会选中类似 `.../config` 的绑定挂载。关于查找容器数据文件夹的其他常驻方式，参见[备份来源检测](#backup-source-detection)。 |
+| `PLATFORM` | 否 | 强制指定 BombVault 认为自己运行在哪个平台上，而不进行自动检测：`unraid`、`generic` 或 `truenas`（默认未设置，会通过在闪存挂载下探测 `dockerMan` 标记来自动检测 Unraid，否则为 `generic`；无法识别的值同样回退为 `generic`，并记录到日志）。请在通用 Docker 主机或 TrueNAS Scale 上显式设置它，而不要依赖仅适用于 Unraid 的自动探测；通用 compose 文件正是这样做的。它会改变 appdata 回退约定、跨实例还原目标的默认值，以及是否会尝试仅适用于 Unraid 的通知/配套插件步骤（参见 `internal/platform`）。 |
 | `BOMBVAULT_SELF_CONTAINER` | 否 | BombVault 容器自身的名称，以便它绝不会备份（从而停止）自己（默认 `BombVault`；在桥接网络上通过主机名自动检测）。 |
 | `BACKUP_MAX_HOURS` | 否 | 单次备份运行在被强制取消前可持有其域锁的最长挂钟小时数（一道防护，防止卡死的运行永久阻塞该域）。留空（默认）使用 `48`。对于非常大或缓慢的云备份可调高它（在上限处被取消的运行会以 `context deadline exceeded` 失败）。设为 `0` 可完全禁用该上限。 |
 | `TZ` | 否 | 计划任务的时区（例如 `Europe/Berlin`）。 |
