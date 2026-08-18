@@ -1,13 +1,40 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- FOUC prevention (GlimStone form-engine #1): data-theme is no longer
+         hard-coded above, so the theme now genuinely defaults to the OS via
+         prefers-color-scheme (design-language.md's "Default is system, not
+         a hard-coded light or dark"). This script stamps the resolved
+         data-theme attribute synchronously — before any CSS paints — so
+         there's no flash of the wrong theme while lib/theme.ts's module
+         script (deferred by `type="module"`) is still loading. It ONLY sets
+         an attribute, it never hides content, matching this project's
+         established FOUC-killer convention (additive gating, never a blank
+         page). Duplicates lib/theme.ts's storage key/resolution logic since
+         it can't import that module here — keep the two in sync. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("bv-theme");
+          var resolved =
+            stored === "dark" || stored === "light"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.setAttribute("data-theme", resolved);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BombVault</title>
-    <script type="module" crossorigin src="/assets/index-DmFxhXO5.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-o1z7yvcl.css">
+    <script type="module" crossorigin src="/assets/index-BRH22R_C.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-ExAvEeVE.css">
   </head>
   <body>
     <div id="root"></div>

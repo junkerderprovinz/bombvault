@@ -16,6 +16,7 @@
 
   --color-accent: var(--accent);
   --color-accentContrast: var(--accent-contrast);
+  --color-accentSoft: var(--accent-soft);
 
   /* Status tokens (#105) — semantic ok/fail/warn/info/neutral colors that flip
      with the theme. text = plain colored text, Bg/Border = tinted chip surfaces,
@@ -51,7 +52,28 @@
   --color-statusNeutralBorder: var(--status-neutral-border);
   --color-statusNeutralSolid: var(--status-neutral-solid);
 
-  --radius-card: 0.75rem;
+  /* Shape tokens (GlimStone form-engine #1) — pointing the Tailwind theme key
+     AT the real custom property (defined per-theme below) rather than a
+     literal, so `rounded-card`/`rounded-control`/`rounded-pill` stay
+     reactive instead of freezing the value at build time. Tailwind's
+     `--radius-*` namespace forces the theme key name to equal the runtime
+     var name, unlike `--color-*` above (which aliases a differently-named
+     var), so this "points at itself" on purpose — the plain :root /
+     [data-theme] declarations further down in this file always win the
+     cascade for :root, since they come later in source order at equal
+     specificity; @theme's own declared value here is never actually used. */
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+  --radius-pill: var(--radius-pill);
+
+  /* Type scale (GlimStone form-engine #1) — same self-pointing trick so
+     `text-heading`/`text-body`/`text-dense`/`text-caption` stay reactive.
+     Theme-invariant (same size in dark/light) but declared in the
+     [data-theme] blocks anyway per this project's own token convention. */
+  --text-heading: var(--text-heading);
+  --text-body: var(--text-body);
+  --text-dense: var(--text-dense);
+  --text-caption: var(--text-caption);
 }
 
 /*
@@ -102,9 +124,42 @@
      navigation reads clearly against the dark sidebar surface. */
   --sidebar-text:     #e0e0e0;
 
-  /* Accent — default sunflower yellow; overridden at runtime via accent.ts */
+  /* Accent — default sunflower yellow; overridden at runtime via accent.ts,
+     which also computes --accent-contrast (sRGB luminance) and --accent-soft
+     for whatever hex is actually active. These are the pre-hydration/no-JS
+     fallback values for the DEFAULT accent above — BombVault (unlike
+     GlimStone's own reference) keeps the same accent hex in both themes
+     rather than darkening it for light mode, so --accent-soft/--focus-ring
+     below are derived from THIS colour in both theme blocks, not copied
+     verbatim from reference/tokens.css's light block (which is tuned for
+     its own theme-specific #8E6A00 default). */
   --accent:           #FCC419;
   --accent-contrast:  #161616;
+  --accent-soft:      rgba(252, 196, 25, 0.14);
+
+  /* Shape (GlimStone form-engine #1) — "round" values; no [data-shape] axis
+     yet (that sweep is a later task), so both theme blocks carry the same
+     numbers for now. */
+  --radius-card:      1rem;
+  --radius-control:   0.625rem;
+  --radius-pill:      9999px;
+
+  /* Type scale — theme-invariant; see reference/tokens.css's own :root-only
+     block. Duplicated into both [data-theme] blocks per this task's token
+     convention rather than split into a third selector. */
+  --text-heading: 1.25rem;  /* 20px */
+  --text-body:    0.875rem; /* 14px */
+  --text-dense:   0.75rem;  /* 12px */
+  --text-caption: 0.6875rem; /* 11px */
+
+  /* One elevation, one hairline, one focus-ring colour (GlimStone form-engine
+     #1). Elevation/hairline are neutral (theme-dependent, copied verbatim
+     from reference/tokens.css); focus-ring is accent-derived, so see the
+     comment on --accent-soft above for why its value isn't copied verbatim
+     from reference's light block. */
+  --elevation: 0 1px 2px rgba(0, 0, 0, .40), 0 18px 40px -24px rgba(0, 0, 0, .85);
+  --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
+  --focus-ring: rgba(252, 196, 25, .55);
 
   /* Status colors (#105) — the exact hexes the UI has always used in dark mode
      (Carbon dark support tones); the light block swaps them for Carbon light
@@ -149,25 +204,56 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --carbon-bg:        #ffffff;
-  --carbon-surface:   #f4f4f4;
-  --carbon-surface2:  #e0e0e0;
-  --carbon-surface3:  #c6c6c6;
+  /* GlimStone form-engine #1 — corrected against reference/tokens.css's
+     light block (verified value-by-value; every --carbon- and --sidebar-text
+     token below except --carbon-text and --carbon-text-muted had drifted):
+       --carbon-bg          #ffffff -> #f4f4f4
+       --carbon-sidebar     #f4f4f4 -> #ffffff
+       --carbon-surface     #f4f4f4 -> #ffffff
+       --carbon-surface2    #e0e0e0 -> #e8e8e8
+       --carbon-surface3    #c6c6c6 -> #d1d1d1
+       --carbon-hover       #e8e8e8 -> #e0e0e0  (was literally swapped with surface2)
+       --carbon-border      #e0e0e0 -> #d1d1d1
+       --carbon-text-sub    #393939 -> #525252
+       --sidebar-text       #21272a -> #393939 */
+  --carbon-bg:        #f4f4f4;
+  --carbon-surface:   #ffffff;
+  --carbon-surface2:  #e8e8e8;
+  --carbon-surface3:  #d1d1d1;
   --carbon-text:      #161616;
-  --carbon-text-sub:  #393939;
+  --carbon-text-sub:  #525252;
   --carbon-text-muted:#6f6f6f;
-  --carbon-border:    #e0e0e0;
-  --carbon-hover:     #e8e8e8;
+  --carbon-border:    #d1d1d1;
+  --carbon-hover:     #e0e0e0;
 
-  /* Sidebar background (light theme) — keep it the soft surface tone. */
-  --carbon-sidebar:   #f4f4f4;
+  /* Sidebar background (light theme) — the raised surface tone, matching
+     reference/tokens.css (was incorrectly the page-ground tone). */
+  --carbon-sidebar:   #ffffff;
 
-  /* Sidebar nav text — darker than --carbon-text-sub for stronger contrast
-     on the light sidebar surface. */
-  --sidebar-text:     #21272a;
+  /* Sidebar nav text — corrected to reference/tokens.css's light value. */
+  --sidebar-text:     #393939;
 
-  /* Accent inherits from :root; override here only if light theme needs adjustment */
+  /* Accent inherits --accent from :root (BombVault keeps one accent hex
+     across both themes; see the comment on the dark block's --accent-soft).
+     --accent-contrast/--accent-soft/--focus-ring are therefore the SAME
+     values as the dark block, not reference's light-specific #8E6A00-based
+     numbers — see that comment for why. */
   --accent-contrast:  #161616;
+  --accent-soft:      rgba(252, 196, 25, 0.14);
+  --focus-ring: rgba(252, 196, 25, .55);
+
+  /* Shape and type scale — theme-invariant, same as the dark block. */
+  --radius-card:      1rem;
+  --radius-control:   0.625rem;
+  --radius-pill:      9999px;
+  --text-heading: 1.25rem;
+  --text-body:    0.875rem;
+  --text-dense:   0.75rem;
+  --text-caption: 0.6875rem;
+
+  /* Elevation/hairline — neutral, copied verbatim from reference/tokens.css. */
+  --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
+  --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
 
   /* Status colors (#105) — Carbon light-theme counterparts. Text tones keep
      ≥4.5:1 on white/#f4f4f4 and on their own chip tints; solids keep ≥3:1 as
@@ -208,6 +294,52 @@
   --heat-ok-1:                #a7f0ba;  /* green-20 */
   --heat-ok-2:                #42be65;  /* green-40 */
   --heat-ok-3:                #198038;  /* green-60 */
+}
+
+/* ---------------------------------------------------------------------------
+   prefers-color-scheme fallback (GlimStone form-engine #1).
+
+   Note this is NOT copied from reference/tokens.css — that file has no
+   @media (prefers-color-scheme) block at all (verified directly); GlimStone
+   resolves "system" entirely in JS, always stamping an explicit data-theme
+   before first paint (see index.html's inline head script + theme.ts's
+   matchMedia listener). Those two already cover every case where JS runs.
+
+   This pair of blocks is BombVault's own addition for the one case JS can't
+   reach at all: JavaScript disabled outright (not just localStorage), where
+   neither the inline script nor theme.ts ever executes and <html> keeps no
+   data-theme attribute. :not([data-theme]) keeps this scoped so an explicit
+   attribute — from the script, or a stored user choice — always wins; this
+   only fires when nothing else set the theme.
+   --------------------------------------------------------------------------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+
+    --carbon-bg:        #f4f4f4;
+    --carbon-sidebar:   #ffffff;
+    --carbon-surface:   #ffffff;
+    --carbon-surface2:  #e8e8e8;
+    --carbon-surface3:  #d1d1d1;
+    --carbon-hover:     #e0e0e0;
+    --carbon-border:    #d1d1d1;
+    --carbon-text:      #161616;
+    --carbon-text-sub:  #525252;
+    --carbon-text-muted:#6f6f6f;
+    --sidebar-text:     #393939;
+
+    --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
+    --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Already the bare :root default above (dark is the fallback of
+       fallbacks) — restated explicitly so this rule's existence doesn't
+       depend on a reader remembering that. */
+    color-scheme: dark;
+  }
 }
 
 /* Easter-egg shatter uses whichever logo is currently on screen: the dark sidebar

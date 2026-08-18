@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { getTheme, toggleTheme } from "../lib/theme";
+import { getResolvedTheme, toggleTheme } from "../lib/theme";
 import { useAdvanced } from "../lib/advanced";
 
 interface SidebarProps {
@@ -233,7 +233,11 @@ function Flag({ code }: { code: string }) {
 function SidebarControls() {
   const { t, lang, setLanguage, languages } = useT();
   const { advanced, setAdvanced } = useAdvanced();
-  const [theme, setThemeState] = useState(getTheme);
+  // getResolvedTheme(), not the raw stored preference: the default is now
+  // "system" (GlimStone form-engine #1), and this toggle only ever shows/
+  // sets an explicit dark or light state, so it must reflect what's
+  // actually painted rather than the unresolved "system" value.
+  const [theme, setThemeState] = useState(getResolvedTheme);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
