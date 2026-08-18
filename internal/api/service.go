@@ -70,7 +70,17 @@ type ResticEngine interface {
 	// discarding it, for TestOffsite, which needs to explain why a repo didn't open.
 	RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
+	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
+	// recorded under path, tagged with tags — the zvol VM disk backup path
+	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
+	// straight into `restic backup --stdin`, no local staging file. See
+	// backup.ZvolRestic's doc comment (resticZvolAdapter below satisfies it).
+	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
+	// DumpRaw streams the synthetic file at path, from the given snapshot, into
+	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
+	// over SSH (see backup.ZvolRestic's doc comment).
+	DumpRaw(ctx context.Context, repo, snapshotID, path string, w io.Writer, mode restic.Mode) error
 	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
 	// (flash restore — a non-destructive zip download; the live /boot is never
 	// touched and no filesystem metadata is restored).
@@ -144,10 +154,10 @@ type ResticEngine interface {
 // compile-time check: the real adapter satisfies the seam.
 var _ ResticEngine = (*restic.Restic)(nil)
 
-// HostSSH is the subset of sshconn the service uses: NVRAM transfer for VM
+// HostSSH is the subset of sshconn the service uses: NVRAM/TPM transfer for VM
 // backup/restore plus the public key and reachability test for the UI. A nil
-// HostSSH means VM-over-SSH features degrade gracefully (NVRAM is skipped; the
-// UEFI restore falls back to EnsureNVRAMTemplate).
+// HostSSH means VM-over-SSH features degrade gracefully (NVRAM/TPM capture is
+// skipped; the UEFI restore falls back to EnsureNVRAMTemplate).
 type HostSSH interface {
 	ReadFile(ctx context.Context, path string) ([]byte, error)
 	WriteFile(ctx context.Context, path string, data []byte) error
@@ -160,6 +170,13 @@ type HostSSH interface {
 	// qemu+ssh transport verifies it, so virsh doesn't fail on an empty
 	// known_hosts. Also confirms key auth.
 	EnsureKnownHost(ctx context.Context) error
+	// StreamCommand starts a command on the host over SSH and streams its
+	// stdout (never buffered) — the zvol VM disk backup path's `zfs send`
+	// (v8.0.0 VM service-layer integration, Task 2; see sshZFSHost below).
+	StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error)
+	// RunWithStdin runs a command on the host over SSH with its stdin fed from
+	// rd, streamed — the zvol VM disk restore path's `zfs receive`.
+	RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error
 }
 
 // Service bridges the real adapters to the backup orchestrator's interfaces.
@@ -5315,6 +5332,52 @@ func snapshotSubtree(snaps []restic.Snapshot, id string) string {
 	return ""
 }
 
+// vmRunTag returns the "vmrun:<runID>" correlation tag (v8.0.0 VM
+// service-layer integration, Task 1/2 — internal/backup/vm_orchestrator.go's
+// VMBackupDeps.RunTag) carried by the snapshot in snaps matching id (exact or
+// unambiguous prefix, like snapshotBelongs/snapshotSubtree above), or "" when
+// there is no match, or the matching snapshot carries no such tag.
+//
+// A "" result is the PERMANENT restore fallback, not a transitional one:
+// BackupVM only ever sets RunTag when the VM has zvol disks (a file-only VM's
+// single snapshot is already unambiguously identified by its plain
+// "vm:<name>" tag alone, so tagging it would just be permanent, purposeless
+// noise — see BackupVM's own RunTag-setting comment, internal/api/service.go).
+// So "" covers both a Run predating this tag's existence AND, forever
+// afterwards, every file-only VM's backup — which is most VMs in production.
+// Callers treat "" as "resolve via id alone", exactly how VM restore worked
+// before Task 3 (v8.0.0 VM service-layer integration — restore resolution via
+// the "vmrun:" tag group).
+func vmRunTag(snaps []restic.Snapshot, id string) string {
+	for _, sn := range snaps {
+		if sn.ID != id && !strings.HasPrefix(sn.ID, id) {
+			continue
+		}
+		for _, t := range sn.Tags {
+			if strings.HasPrefix(t, "vmrun:") {
+				return t
+			}
+		}
+		return ""
+	}
+	return ""
+}
+
+// vmrunGroupSnapshot returns the snapshot in group (a vmRunTag-keyed
+// snapshotsForTag listing) carrying tag EXACTLY — a zvol disk's own
+// "vm:<name>:zvol:<dev>" identity tag (see VMBlockDisk.Dev's doc comment,
+// internal/backup/vm_orchestrator.go) — or false when no member does.
+func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, bool) {
+	for _, sn := range group {
+		for _, t := range sn.Tags {
+			if t == tag {
+				return sn, true
+			}
+		}
+	}
+	return restic.Snapshot{}, false
+}
+
 // sanitizeTags trims each tag, drops empties, and rejects any tag containing a
 // comma or a control character. restic stores tags as a comma-separated list, so
 // a comma would split one tag into two; control characters could corrupt argv or
@@ -5644,6 +5707,83 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
 }
 
+// startedRunsAdapter satisfies backup.Runs exactly like runsAdapter, except
+// Start returns an ALREADY-obtained run id instead of starting a fresh run.
+// Used by BackupVM (v8.0.0 VM service-layer integration, Task 2): the run id
+// must be known BEFORE VMBackupDeps is built, to set RunTag =
+// "vmrun:<runID>" (RunTag drives every restic tag the orchestrator builds —
+// see VMBackupDeps.RunTag's doc comment — so it cannot be filled in only
+// AFTER the orchestrator's own Runs.Start call, which is where the run id was
+// generated before this adapter existed). BackupVM calls store.StartRun
+// itself up front and wraps the result in this adapter so the orchestrator's
+// internal Start call is a no-op read rather than a second, orphaned run row;
+// Finish still delegates to the real store, exactly like runsAdapter.
+type startedRunsAdapter struct {
+	st    *store.Repo
+	runID string
+}
+
+var _ backup.Runs = startedRunsAdapter{}
+
+func (r startedRunsAdapter) Start(string, string) (string, error) { return r.runID, nil }
+
+func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+}
+
+// sshZFSHost adapts HostSSH's semantic Run/StreamCommand/RunWithStdin SSH
+// surface into backup.ZFSHost by shelling the zfs command lines
+// virshcli.ZFSSnapshotArgs/ZFSSnapshotDestroyArgs/ZFSSendArgs/ZFSReceiveArgs
+// build — mirrors how virshcli itself shells virsh commands over the same
+// transport rather than requiring a local ZFS toolchain in the container
+// (v8.0.0 VM service-layer integration, Task 2).
+type sshZFSHost struct{ ssh HostSSH }
+
+var _ backup.ZFSHost = sshZFSHost{}
+
+func (h sshZFSHost) SnapshotCreate(ctx context.Context, dataset, snapName string) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotArgs(dataset, snapName)...)
+	return err
+}
+
+func (h sshZFSHost) SnapshotDestroy(ctx context.Context, dataset, snapName string) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotDestroyArgs(dataset, snapName)...)
+	return err
+}
+
+func (h sshZFSHost) StreamSend(ctx context.Context, dataset, snapName string) (io.ReadCloser, func() error, error) {
+	return h.ssh.StreamCommand(ctx, virshcli.ZFSSendArgs(dataset, snapName)...)
+}
+
+func (h sshZFSHost) StreamReceive(ctx context.Context, rd io.Reader, targetDataset string) error {
+	return h.ssh.RunWithStdin(ctx, rd, virshcli.ZFSReceiveArgs(targetDataset)...)
+}
+
+// resticZvolAdapter wraps a ResticEngine + Mode to satisfy backup.ZvolRestic
+// for the zvol stdin backup/restore path, mirroring resticAdapter's exact
+// float64-BytesAdded -> int64-Bytes conversion. Kept as its own small type
+// since backup.ZvolRestic is deliberately separate from backup.Restic (see
+// its doc comment: file-backed disk backup/restore never needs stdin
+// streaming) — v8.0.0 VM service-layer integration, Task 2.
+type resticZvolAdapter struct {
+	engine ResticEngine
+	mode   restic.Mode
+}
+
+var _ backup.ZvolRestic = (*resticZvolAdapter)(nil)
+
+func (a *resticZvolAdapter) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string) (backup.Summary, error) {
+	sum, err := a.engine.BackupStdin(ctx, repo, rd, path, tags, a.mode)
+	if err != nil {
+		return backup.Summary{}, err
+	}
+	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+}
+
+func (a *resticZvolAdapter) DumpTo(ctx context.Context, repo, snapshotID, path string, w io.Writer) error {
+	return a.engine.DumpRaw(ctx, repo, snapshotID, path, w, a.mode)
+}
+
 // ---------------------------------------------------------------------------
 // VM service methods
 // ---------------------------------------------------------------------------
@@ -5661,8 +5801,20 @@ type vmDefinition struct {
 	// failed — EnsureNVRAMTemplate then regenerates on restore.
 	NVRAMHostPath string `json:"nvram_host_path"`
 	NVRAMBytes    []byte `json:"nvram_bytes,omitempty"`
-	Method        string `json:"method"`
-	WasAutostart  bool   `json:"was_autostart"`
+	// TPMBytes is the captured vTPM state, read/written over SSH the SAME way
+	// as NVRAMBytes above (v8.0.0 VM service-layer integration, Task 2) — see
+	// BackupVM's inline TPM read and prepareRestoreVMForTarget's PreDefine
+	// write-back. Unlike NVRAM, the TPM's host path is NOT persisted here — it
+	// is re-derived from DomainXML (virshcli.ParseDomain's TPMPath) at both
+	// backup and restore time, since it is a stable property of the domain
+	// definition itself, not something restore ever remaps (destBase's
+	// cross-instance remap only rewrites file-disk sources and NVRAM — see
+	// virshcli.RewriteDiskSources/RewriteNVRAM). Empty for a VM with no vTPM
+	// (DomainInfo.TPMPath == "") or when SSH capture failed — a read failure
+	// is non-fatal, exactly like NVRAM's.
+	TPMBytes     []byte `json:"tpm_bytes,omitempty"`
+	Method       string `json:"method"`
+	WasAutostart bool   `json:"was_autostart"`
 	// WasRunning is the VM's run state at backup time. A pointer so an OLD backup
 	// (taken before this field existed) reads as nil = unknown, and restore then
 	// falls back to booting the VM (the historical behaviour). A non-nil value is
@@ -5672,7 +5824,19 @@ type vmDefinition struct {
 
 // VMView is the per-VM row returned by ListVMs.
 type VMView struct {
-	Name              string `json:"name"`
+	Name string `json:"name"`
+	// LibvirtName is the raw libvirt domain name — vm.Name, NEVER
+	// vm.FriendlyName — on every platform. It equals Name everywhere except
+	// TrueNAS, where Name is instead the presentation-only friendly name (see
+	// the isTrueNAS block in ListVMs). This is the ONLY field the frontend may
+	// send back on a VM action call (backup/restore/snapshots/forget/method/
+	// include/scheduleCadence/backup-order/DR-drill-target) — every such route
+	// (see vmNameParam, internal/api/handlers.go) takes the path segment
+	// literally and hands it straight to virsh, with zero resolution. Name is
+	// display-only; sending it as an identifier is exactly the bug this field
+	// fixes (a TrueNAS user's Backup Now / Restore / Forget / etc. silently
+	// targeting a domain name virsh has never heard of).
+	LibvirtName       string `json:"libvirtName"`
 	State             string `json:"state"`
 	Method            string `json:"method"`
 	IncludeInSchedule bool   `json:"includeInSchedule"`
@@ -5710,11 +5874,26 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		byName[t.Name] = t
 	}
 
+	// displayName is the raw libvirt name for every platform except TrueNAS,
+	// where it is the presentation-only virshcli.VMInfo.FriendlyName
+	// (resolves the bare UUID libvirt uses for domain names on TrueNAS 26 to
+	// something readable). Gated explicitly on Kind() per the gotcha
+	// documented on FriendlyName (internal/virshcli/types.go): the
+	// classifier that populates it is shape-based, not platform-gated, so a
+	// non-TrueNAS host must never trust it even when it happens to differ
+	// from Name. vm.Name — never FriendlyName — is still used below for the
+	// byName lookup and stays the identifier everywhere else in this file.
+	isTrueNAS := s.platformFn().Kind() == platform.KindTrueNAS
+
 	live := make(map[string]bool, len(infos))
 	views := make([]VMView, 0, len(infos)+len(targets))
 	for _, vm := range infos {
 		live[vm.Name] = true
-		v := VMView{Name: vm.Name, State: vm.State, Method: "graceful"}
+		displayName := vm.Name
+		if isTrueNAS {
+			displayName = vm.FriendlyName
+		}
+		v := VMView{Name: displayName, LibvirtName: vm.Name, State: vm.State, Method: "graceful"}
 		if t, ok := byName[vm.Name]; ok {
 			v.Method = t.Method
 			v.IncludeInSchedule = t.IncludeInSchedule
@@ -5731,7 +5910,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		if live[t.Name] {
 			continue
 		}
-		v := VMView{Name: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
+		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
 		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
 			v.LastBackupStarted = &run.StartedAt
@@ -5960,6 +6139,41 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		}
 	}
 
+	// TPM (vTPM) state is captured the SAME way as NVRAM above — read over SSH
+	// from domain.TPMPath (already parsed by ParseDomain) and kept IN the
+	// definition. Empty-safe: skipped entirely when TPMPath is "" (no vTPM on
+	// this domain, or an unrecognized <tpm> backend shape — see
+	// virshcli.DomainInfo.TPMPath's doc comment), exactly like NVRAM. A read
+	// failure is non-fatal (v8.0.0 VM service-layer integration, Task 2).
+	var tpmBytes []byte
+	if domain.TPMPath != "" && s.ssh != nil {
+		if b, rerr := s.ssh.ReadFile(ctx, domain.TPMPath); rerr == nil {
+			tpmBytes = b
+		} else {
+			log.Printf("api: BackupVM: WARN TPM state read over SSH failed for %q (%v) — the disks are backed up, but on restore the vTPM will start fresh/empty, not restore its captured state", name, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
+
+	// Block-device-backed (zvol) disks go through a SEPARATE backup mechanism
+	// (BackupZvolDisk, wired via deps.BlockDisks/ZFSHost/ZvolRestic below)
+	// since restic cannot back up a raw block device by path. Each entry's ZFS
+	// dataset is resolved from its /dev/zvol/<pool>/<dataset> source path —
+	// exactly like the disk-outside-the-host-mount check above, a block
+	// device this mechanism cannot reach fails the whole backup rather than
+	// silently producing an incomplete one (v8.0.0 VM service-layer
+	// integration, Task 2).
+	var vmBlockDisks []backup.VMBlockDisk
+	for _, bd := range domain.BlockDisks {
+		dataset, ok := virshcli.ZvolDatasetFromDevPath(bd.Source)
+		if !ok {
+			return backup.Summary{}, fmt.Errorf("backup vm: block-device disk %q (%s) is not a recognizable ZFS zvol and can't be reached for backup", bd.Dev, bd.Source)
+		}
+		vmBlockDisks = append(vmBlockDisks, backup.VMBlockDisk{Dataset: dataset, Dev: bd.Dev})
+	}
+	if len(vmBlockDisks) > 0 && s.ssh == nil {
+		return backup.Summary{}, fmt.Errorf("backup vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol backup requires SSH", name)
+	}
+
 	// Default autostart to true (safe: most Unraid-managed VMs have autostart on).
 	// TODO: parse virsh dominfo output to capture the real flag in a future wave.
 	wasAutostart := true
@@ -5991,6 +6205,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		DiskPaths:     diskPaths,
 		NVRAMHostPath: domain.NVRAMPath,
 		NVRAMBytes:    nvramBytes,
+		TPMBytes:      tpmBytes,
 		Method:        method,
 		WasAutostart:  wasAutostart,
 		WasRunning:    wasRunning,
@@ -6022,7 +6237,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
 		Restic:           &resticAdapter{engine: s.engine, mode: mode},
-		Runs:             runsAdapter{s.store},
+		BlockDisks:       vmBlockDisks,
+		ZFSHost:          sshZFSHost{ssh: s.ssh},
+		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode},
 	}
 	live := false
 	if method == "live" {
@@ -6043,6 +6260,29 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 			log.Printf("api: BackupVM: %q is not running; using graceful backup instead of live", name) //nolint:gosec // G706: %q-quoted
 		}
 	}
+
+	// Start the run HERE (rather than let the orchestrator's own Runs.Start
+	// call do it, as before) so the run id is known BEFORE the orchestrator
+	// runs — RunTag must be set on deps before it is passed in (v8.0.0 VM
+	// service-layer integration, Task 2; see startedRunsAdapter's doc
+	// comment). Wrapping it in startedRunsAdapter means the orchestrator's own
+	// Runs.Start call is a no-op read of this same id, not a second run row.
+	runID, err := s.store.StartRun(tg.ID, "backup")
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
+	}
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID}
+	// RunTag correlates every snapshot ONE backup invocation produces — only
+	// meaningful (and only set) when this backup will actually produce MORE
+	// than one restic snapshot (a file-only VM's single snapshot is already
+	// unambiguously identified by its "vm:<name>" tag; adding a "vmrun:" tag
+	// to it would just be permanent, purposeless noise on every VM snapshot
+	// in the repo). Leaving it empty for a file-only VM also keeps that VM's
+	// restic Backup call BYTE-IDENTICAL to before this task.
+	if len(vmBlockDisks) > 0 {
+		deps.RunTag = "vmrun:" + runID
+	}
+
 	vkey := "vm:" + name
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return
 	// (incl. the ErrVMNotInstalled skip), so the paired done/fail notifyBackup below
@@ -6072,7 +6312,21 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if wErr := s.writeVMDefToStorage(settings, name, defBytes); wErr != nil {
 		log.Printf("api: backup vm: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
+	// Apply retention once per identity tag this backup actually produced: the
+	// main file-backed "vm:<name>" always, plus one call per distinct
+	// "vm:<name>:zvol:<dev>" tag (one per BlockDisks entry — see
+	// VMBlockDisk.Dev's doc comment) — reusing restic's own native per-tag
+	// forget so each disk's history is retained/pruned as its own group
+	// instead of being lumped in with the file-backed snapshot's (v8.0.0 VM
+	// service-layer integration, Task 2). A file-only VM (vmBlockDisks empty)
+	// makes exactly the one call it always has.
 	s.applyRetention(ctx, repo, settings, mode, "vm:"+name)
+	for _, bd := range vmBlockDisks {
+		if bd.Dev == "" {
+			continue // no distinct identity tag without a target dev — lumped into "vm:<name>" above
+		}
+		s.applyRetention(ctx, repo, settings, mode, "vm:"+name+":zvol:"+bd.Dev)
+	}
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
 	s.maybeCollectStats(ctx, "vms")
@@ -6107,6 +6361,12 @@ type vmRestorePlan struct {
 	// state → boot after restore, the historical behaviour).
 	wasRunning *bool
 	preDefine  func(context.Context) error
+	// blockDisks are the domain's block-device-backed (zvol) disks to restore,
+	// each entry's SourceDataset resolved from the domain XML — SnapshotID/
+	// StdinPath are left unset here; see prepareRestoreVMForTarget's own
+	// comment for why (Task 3's job). Empty for a VM with only file-backed
+	// disks (v8.0.0 VM service-layer integration, Task 2).
+	blockDisks []backup.VMRestoreBlockDisk
 }
 
 // prepareRestoreVM performs ALL of a VM restore's validation and resolution
@@ -6195,6 +6455,29 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		snapshotID = snaps[len(snaps)-1].ID
 	}
 
+	// Resolve this run's "vmrun:<runID>" correlation group (v8.0.0 VM
+	// service-layer integration, Task 3): every restic snapshot ONE backup
+	// invocation produced — the main file-backed snapshot at snapshotID
+	// above plus one per zvol disk (see VMBackupDeps.RunTag's doc comment,
+	// internal/backup/vm_orchestrator.go). The tag is read straight off the
+	// already-resolved snapshot (found in snaps, the exact "vm:"+name-tagged
+	// list snapshotID above came from — explicit or latest, so no extra
+	// restic listing is needed just to find it), then ONE more
+	// snapshotsForTag call, over the SAME repo ref, keyed on that tag.
+	//
+	// vmrunGroup stays nil — the PERMANENT fallback (see vmRunTag's doc
+	// comment) — when the resolved snapshot carries no "vmrun:" tag at all.
+	// In that case vmRestoreBlockDisks below leaves every entry's
+	// SnapshotID/StdinPath at zero value, EXACTLY the pre-Task-3 behavior.
+	var vmrunGroup []restic.Snapshot
+	if runTag := vmRunTag(snaps, snapshotID); runTag != "" {
+		group, gErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, runTag)
+		if gErr != nil {
+			return vmRestorePlan{}, gErr
+		}
+		vmrunGroup = group
+	}
+
 	if tg.Definition == "" {
 		return vmRestorePlan{}, errors.New("no stored definition for this vm — run a backup once first")
 	}
@@ -6261,19 +6544,88 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// libvirt uses the real var store (boot entries preserved).
 	domainXML = virshcli.EnsureNVRAMTemplate(domainXML)
 
-	// preDefine writes the captured NVRAM back to the host over SSH AFTER the old
-	// domain is undefined (which removes its nvram) and BEFORE `virsh define`, so
-	// the restored VM boots with its original UEFI variables. It writes to the
-	// (possibly remapped) destination nvram path. No-op when there is nothing to
-	// write or SSH is unavailable.
-	var preDefine func(context.Context) error
-	if len(def.NVRAMBytes) > 0 && nvramHostPath != "" && s.ssh != nil {
-		writeNVRAMPath := nvramHostPath
-		preDefine = func(ctx context.Context) error {
-			if err := s.ssh.WriteFile(ctx, writeNVRAMPath, def.NVRAMBytes); err != nil {
-				log.Printf("api: RestoreVM: WARN NVRAM write over SSH failed for %q (%v) — the VM is restored and will boot, but libvirt regenerates the UEFI variables from the firmware template, so boot entries may need to be re-added", name, err) //nolint:gosec // G706: name is %q-quoted
+	// Re-derive the TPM path and block-device (zvol) disk list from the
+	// (possibly remapped) domain XML — NOT persisted separately in
+	// vmDefinition (see its TPMBytes field's doc comment) — mirroring how
+	// BackupVM derives them at backup time via the same virshcli.ParseDomain
+	// call. Neither is affected by the destBase remap above: RewriteDiskSources
+	// only rewrites <source file=...> (file-backed disks); a <tpm> element and
+	// a <source dev=...> (block-device disk) are left untouched either way
+	// (v8.0.0 VM service-layer integration, Task 2).
+	var tpmPath string
+	var vmRestoreBlockDisks []backup.VMRestoreBlockDisk
+	if parsed, perr := virshcli.ParseDomain(domainXML); perr == nil {
+		tpmPath = parsed.TPMPath
+		for _, bd := range parsed.BlockDisks {
+			dataset, ok := virshcli.ZvolDatasetFromDevPath(bd.Source)
+			if !ok {
+				log.Printf("api: RestoreVM: WARN block-device disk %q (%s) is not a recognizable ZFS zvol for %q — it will not be restored", bd.Dev, bd.Source, name) //nolint:gosec // G706: name is %q-quoted
+				continue
 			}
-			return nil // never block the restore on NVRAM — the firmware-template fallback keeps the VM bootable
+			rbd := backup.VMRestoreBlockDisk{SourceDataset: dataset}
+			// Resolve THIS disk's own restic snapshot from the vmrun: group
+			// above (v8.0.0 VM service-layer integration, Task 3): its
+			// identity tag is "vm:"+name+":zvol:"+bd.Dev (see
+			// VMBlockDisk.Dev's doc comment, internal/backup/
+			// vm_orchestrator.go) — find the group member carrying that
+			// EXACT tag and take its snapshot id plus the one path it
+			// recorded, which IS the exact StdinPath BackupZvolDisk gave
+			// restic (BackupStdin backs up exactly one synthetic file per
+			// invocation — see ZvolStdinPath — so Paths always has exactly
+			// one entry when set at all).
+			//
+			// Left at zero value — the PERMANENT fallback (see vmRunTag's
+			// doc comment above), not just "old backups" — when there is no
+			// group at all, or no member carries this disk's tag (bd.Dev
+			// empty never happens from the real BackupVM caller, see
+			// VMBlockDisk.Dev's doc comment): RestoreZvolDisk then fails
+			// loudly on the empty snapshot id rather than silently skipping
+			// the disk, EXACTLY as it did before this task.
+			if bd.Dev != "" {
+				if gs, ok := vmrunGroupSnapshot(vmrunGroup, "vm:"+name+":zvol:"+bd.Dev); ok && len(gs.Paths) > 0 {
+					rbd.SnapshotID = gs.ID
+					rbd.StdinPath = gs.Paths[0]
+				}
+			}
+			vmRestoreBlockDisks = append(vmRestoreBlockDisks, rbd)
+		}
+	} else {
+		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v) — TPM state and any zvol disks will not be restored", name, perr) //nolint:gosec // G706: name is %q-quoted
+	}
+
+	// Mirrors BackupVM's own "zvol backup requires SSH" guard: RestoreZvolDisk
+	// calls ZFSHost.StreamReceive, which sshZFSHost forwards straight onto
+	// s.ssh — a nil HostSSH there is a nil interface method call, i.e. an
+	// unrecovered PANIC (not a clean error) deep inside the async restore
+	// goroutine (StartRestoreVM), which crashes the whole process rather than
+	// just failing this one restore. Caught here, before a plan is ever
+	// returned, exactly like the backup-side check in BackupVM.
+	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
+		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol restore requires SSH", name)
+	}
+
+	// preDefine writes the captured NVRAM/TPM state back to the host over SSH
+	// AFTER the old domain is undefined (which removes its nvram) and BEFORE
+	// `virsh define`, so the restored VM boots with its original UEFI
+	// variables and vTPM state. It writes to the (possibly remapped)
+	// destination nvram path plus the re-derived TPM path. No-op for either
+	// when there is nothing to write or SSH is unavailable.
+	var preDefine func(context.Context) error
+	if s.ssh != nil && ((len(def.NVRAMBytes) > 0 && nvramHostPath != "") || (len(def.TPMBytes) > 0 && tpmPath != "")) {
+		writeNVRAMPath := nvramHostPath
+		writeTPMPath := tpmPath
+		preDefine = func(ctx context.Context) error {
+			if len(def.NVRAMBytes) > 0 && writeNVRAMPath != "" {
+				if err := s.ssh.WriteFile(ctx, writeNVRAMPath, def.NVRAMBytes); err != nil {
+					log.Printf("api: RestoreVM: WARN NVRAM write over SSH failed for %q (%v) — the VM is restored and will boot, but libvirt regenerates the UEFI variables from the firmware template, so boot entries may need to be re-added", name, err) //nolint:gosec // G706: name is %q-quoted
+				}
+			}
+			if len(def.TPMBytes) > 0 && writeTPMPath != "" {
+				if err := s.ssh.WriteFile(ctx, writeTPMPath, def.TPMBytes); err != nil {
+					log.Printf("api: RestoreVM: WARN TPM state write over SSH failed for %q (%v) — the VM is restored and will boot, but the vTPM starts fresh/empty instead of restoring its captured state", name, err) //nolint:gosec // G706: name is %q-quoted
+				}
+			}
+			return nil // never block the restore on NVRAM/TPM — the firmware-template fallback keeps the VM bootable
 		}
 	}
 
@@ -6295,6 +6647,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		restoreDirs:  restoreDirs,
 		wasRunning:   def.WasRunning,
 		preDefine:    preDefine,
+		blockDisks:   vmRestoreBlockDisks,
 	}, nil
 }
 
@@ -6612,6 +6965,9 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		VM:         s.virsh,
 		Restic:     &resticAdapter{engine: s.engine, mode: plan.mode},
 		Runs:       runsAdapter{s.store},
+		BlockDisks: plan.blockDisks,
+		ZFSHost:    sshZFSHost{ssh: s.ssh},
+		ZvolRestic: &resticZvolAdapter{engine: s.engine, mode: plan.mode},
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)

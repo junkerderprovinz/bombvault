@@ -1775,7 +1775,17 @@ export function createFolder(path: string, name: string): Promise<MkdirResponse>
 
 /** A VM row from GET /api/vms */
 export interface VM {
+  /** DISPLAY-ONLY. On TrueNAS this is the resolved friendly name, not the raw
+   *  libvirt domain name — never send this back on an action call (backup,
+   *  restore, snapshots, forget, method, include, scheduleCadence,
+   *  backup-order, DR-drill-target). Use libvirtName for all of those. */
   name: string;
+  /** The raw libvirt domain name — the ONLY identifier every /api/vms/{name}/...
+   *  route accepts (see vmNameParam, internal/api/handlers.go: it takes the
+   *  path segment literally, with zero resolution). Equal to `name` on every
+   *  platform except TrueNAS, where `name` is instead a display-only friendly
+   *  name. Every action call site must use this field, never `name`. */
+  libvirtName: string;
   state: string;
   /** Backup method — currently always "graceful". */
   method: string;

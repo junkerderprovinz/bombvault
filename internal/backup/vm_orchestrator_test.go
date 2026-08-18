@@ -779,3 +779,245 @@ func TestRestoreVMRejectsUnsafeTPMPath(t *testing.T) {
 		t.Fatalf("expected unsafe path rejection for TPMPath, got %v", err)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// RunTag (per-run correlation tag) tests — Task 1 of
+// docs/superpowers/plans/2026-08-18-vm-service-layer-integration.md. See
+// VMBackupDeps.RunTag's doc comment for the full design context: when set,
+// it is appended ADDITIONALLY to every restic backup call this file makes
+// for one VM backup (the main file-backed backup + each zvol disk's own
+// backup via backupBlockDisksAndLog), alongside — never replacing — that
+// call's own identity tag. Empty (the default, and what every OTHER test in
+// this file leaves it at) must be a byte-identical no-op, pinned explicitly
+// below by exact-match assertions on the fakes' recorded call arguments —
+// not merely "no error returned".
+//
+// The restore-side tests below establish a DIFFERENT, equally real finding
+// from reading the actual code (see VMRestoreDeps.RunTag's doc comment):
+// none of restic's restore-side methods (VerifySnapshot/RestorePaths/
+// RestoreSubtreeTo/DumpTo/StreamReceive) take a tags parameter at all, so
+// RunTag has NO restic call site to attach to on the restore path — setting
+// it is proven to leave every restore call's recorded arguments unchanged.
+// ---------------------------------------------------------------------------
+
+// TestRunTagEmptyIsByteIdenticalGraceful is case (1) for runVMGraceful: with
+// RunTag left at its zero value, the restic backup call must be an EXACT
+// match for what it was before RunTag existed.
+func TestRunTagEmptyIsByteIdenticalGraceful(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := sampleVMBackupDeps(t, vm, r, runs) // RunTag left unset (zero value)
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	want := "backup:/repo/vms:/host/domains/win10/win10.qcow2,/host/domains/win10/win10_VARS.fd:vm:win10,p2"
+	if len(r.log) != 1 || r.log[0] != want {
+		t.Fatalf("restic backup call = %v, want [%q] (byte-identical to pre-RunTag behavior)", r.log, want)
+	}
+}
+
+// TestRunTagEmptyIsByteIdenticalLive mirrors the above for runVMLive's own
+// separate restic Backup call.
+func TestRunTagEmptyIsByteIdenticalLive(t *testing.T) {
+	vm := &fakeVM{guestAgent: true}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+	d := liveDeps(t, vm, r, runs) // RunTag left unset
+
+	if _, err := backup.BackupVMLive(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	want := "backup:/repo/vms:/host/domains/win10/win10.qcow2,/host/domains/win10/win10_VARS.fd:vm:win10,p2,live"
+	if len(r.log) != 1 || r.log[0] != want {
+		t.Fatalf("restic backup call = %v, want [%q] (byte-identical to pre-RunTag behavior)", r.log, want)
+	}
+}
+
+// TestRunTagEmptyIsByteIdenticalZvolBackup pins backupBlockDisksAndLog's
+// per-zvol-disk tags exactly as they were before RunTag existed.
+func TestRunTagEmptyIsByteIdenticalZvolBackup(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap5678"}}
+
+	d := sampleVMBackupDeps(t, vm, r, runs) // RunTag left unset
+	d.BlockDisks = []backup.VMBlockDisk{{Dataset: "tank/vms/win10/disk1"}}
+	d.ZFSHost = host
+	d.ZvolRestic = zr
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(zr.log) != 1 {
+		t.Fatalf("expected exactly one zvol backup call, got %v", zr.log)
+	}
+	if !strings.HasSuffix(zr.log[0], ":vm:win10,p2") {
+		t.Fatalf("zvol backup call = %q, want tags suffix %q (byte-identical to pre-RunTag behavior)", zr.log[0], ":vm:win10,p2")
+	}
+}
+
+// TestRunTagEmptyIsByteIdenticalRestore proves RunTag has no effect on the
+// restore side at all when left empty — the regression pin that matters
+// most given every existing VMRestoreDeps-constructing test in this package
+// leaves the field unset.
+func TestRunTagEmptyIsByteIdenticalRestore(t *testing.T) {
+	vm := &fakeVM{stateVal: ""}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	d := sampleVMRestoreDeps(t, vm, r, runs) // RunTag left unset
+
+	if err := backup.RestoreVM(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	want := "restore:/repo/vms:deadbeef12345678:/host/domains/win10"
+	if !vmContains(r.log, want) {
+		t.Fatalf("restic restore call = %v, want a call starting %q (byte-identical to pre-RunTag behavior)", r.log, want)
+	}
+}
+
+// TestRunTagSetAppearsOnAllBackupCalls is case (2): RunTag set on a VM with
+// 1 file disk + 2 zvol disks — proves ALL 3 resulting restic backup calls
+// (the main file-backed backup + each zvol disk's own backup) carry BOTH
+// their own identity tag AND the shared RunTag, verified by inspecting the
+// fakes' actual recorded call arguments, not merely "no error returned".
+func TestRunTagSetAppearsOnAllBackupCalls(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap"}}
+
+	d := sampleVMBackupDeps(t, vm, r, runs)
+	d.RunTag = "vmrun:run-42"
+	d.BlockDisks = []backup.VMBlockDisk{
+		{Dataset: "tank/vms/win10/disk1"},
+		{Dataset: "tank/vms/win10/disk2"},
+	}
+	d.ZFSHost = host
+	d.ZvolRestic = zr
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	// The main file-backed backup: its own "vm:win10" identity tag PLUS RunTag.
+	if len(r.log) != 1 {
+		t.Fatalf("expected exactly one file-backed restic backup call, got %v", r.log)
+	}
+	want := "backup:/repo/vms:/host/domains/win10/win10.qcow2,/host/domains/win10/win10_VARS.fd:vm:win10,p2,vmrun:run-42"
+	if r.log[0] != want {
+		t.Fatalf("file-backed backup call = %q, want %q", r.log[0], want)
+	}
+
+	// Each of the 2 zvol disk backups: same "vm:win10" identity tag PLUS RunTag.
+	if len(zr.log) != 2 {
+		t.Fatalf("expected exactly 2 zvol backup calls (1 per disk), got %v", zr.log)
+	}
+	for _, entry := range zr.log {
+		if !strings.HasSuffix(entry, ":vm:win10,p2,vmrun:run-42") {
+			t.Fatalf("zvol backup call %q missing identity tag + RunTag suffix %q", entry, ":vm:win10,p2,vmrun:run-42")
+		}
+	}
+}
+
+// TestVMBlockDiskDevGivesDistinctIdentityTag proves that when a BlockDisks
+// entry carries a Dev (v8.0.0 VM service-layer integration, Task 2 — see
+// VMBlockDisk.Dev's doc comment), its restic backup call is tagged with its
+// OWN "vm:<name>:zvol:<dev>" identity — never the file-backed backup's
+// "vm:<name>" tag — alongside RunTag, so a caller (internal/api/service.go)
+// can apply retention to each disk's history as its own group.
+func TestVMBlockDiskDevGivesDistinctIdentityTag(t *testing.T) {
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap"}}
+
+	d := sampleVMBackupDeps(t, vm, r, runs)
+	d.RunTag = "vmrun:run-42"
+	d.BlockDisks = []backup.VMBlockDisk{
+		{Dataset: "tank/vms/win10/disk1", Dev: "vdb"},
+		{Dataset: "tank/vms/win10/disk2", Dev: "vdc"},
+	}
+	d.ZFSHost = host
+	d.ZvolRestic = zr
+
+	if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(zr.log) != 2 {
+		t.Fatalf("expected exactly 2 zvol backup calls (1 per disk), got %v", zr.log)
+	}
+	if !strings.HasSuffix(zr.log[0], ":vm:win10:zvol:vdb,p2,vmrun:run-42") {
+		t.Fatalf("disk1 backup call %q missing its own zvol identity tag", zr.log[0])
+	}
+	if !strings.HasSuffix(zr.log[1], ":vm:win10:zvol:vdc,p2,vmrun:run-42") {
+		t.Fatalf("disk2 backup call %q missing its own zvol identity tag", zr.log[1])
+	}
+	// Never the shared "vm:win10" tag the file-backed backup uses — each disk
+	// is its own retention group once it carries a Dev.
+	for _, entry := range zr.log {
+		if strings.Contains(entry, ":vm:win10,") {
+			t.Fatalf("zvol backup call %q wrongly carries the shared vm:win10 tag instead of its own zvol:<dev> tag", entry)
+		}
+	}
+}
+
+// TestRunTagSetHasNoEffectOnRestoreCalls is case (3): RunTag set on
+// VMRestoreDeps alongside a matching multi-disk BlockDisks set (1 file disk
+// + 2 zvol disks) restores all 3 correctly, and — since restic's
+// restore-side methods take a snapshot id, never tags (confirmed by reading
+// their real signatures; see VMRestoreDeps.RunTag's doc comment) — RunTag
+// has NO effect on any restic call's recorded arguments, verified directly
+// against the fakes rather than merely checking for no error.
+func TestRunTagSetHasNoEffectOnRestoreCalls(t *testing.T) {
+	vm := &fakeVM{stateVal: "running"}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{}
+	zr := &fakeZvolRestic{dumpData: []byte("restored zvol bytes")}
+
+	d := sampleVMRestoreDeps(t, vm, r, runs)
+	d.RunTag = "vmrun:run-42"
+	d.BlockDisks = []backup.VMRestoreBlockDisk{
+		{
+			SourceDataset: "tank/vms/win10/disk1",
+			SnapshotID:    "zvolsnapid1",
+			StdinPath:     "/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000",
+		},
+		{
+			SourceDataset: "tank/vms/win10/disk2",
+			SnapshotID:    "zvolsnapid2",
+			StdinPath:     "/vm-disks/tank/vms/win10/disk2@bombvault-20260816120000",
+		},
+	}
+	d.ZFSHost = host
+	d.ZvolRestic = zr
+
+	if err := backup.RestoreVM(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	// The file-based restic restore call — untouched by RunTag (RestorePaths
+	// takes no tags parameter).
+	want := "restore:/repo/vms:deadbeef12345678:/host/domains/win10"
+	if !vmContains(r.log, want) {
+		t.Fatalf("restic restore call = %v, want a call starting %q", r.log, want)
+	}
+
+	// Both zvol disk restores must have happened, each dumping ITS OWN
+	// snapshot id/path — untouched by RunTag (DumpTo takes no tags either).
+	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid1:/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000") {
+		t.Fatalf("disk1 restic dump not invoked: %v", zr.log)
+	}
+	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid2:/vm-disks/tank/vms/win10/disk2@bombvault-20260816120000") {
+		t.Fatalf("disk2 restic dump not invoked: %v", zr.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
+		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
+	}
+}

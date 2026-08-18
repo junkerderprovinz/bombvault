@@ -213,20 +213,23 @@ on actual TrueNAS Scale hardware. File-backed (Unraid) VM disk backup/restore
 is completely unaffected by this mechanism — it is a wholly separate code
 path.
 
-**Remaining gap beyond hardware verification:** the orchestrator-level wiring
-above is real and tested, but BombVault's service layer does not yet call
-into it from a live backup/restore — it never reads a domain's block-device
-disks or constructs the ZFS-over-SSH adapter this mechanism needs. Closing
-that also requires a design decision this project hasn't made yet: because a
-VM with both file-backed and block-device disks always produces *multiple*
-separate restic snapshots (one per block disk, since restic's stdin-backup
-mode can't be combined with a normal file-path backup in one run), and
-BombVault's run history and restore-by-"latest" today assume one snapshot per
-VM backup, there needs to be an explicit way to track and re-find each block
-disk's own snapshot before a restore can rely on it. Until that is decided
-and the service layer is wired up, this mechanism cannot be reached from the
-BombVault UI at all — track this as a follow-up alongside the hardware
-verification pass above.
+**Now reachable from the real UI/API:** BombVault's service layer
+(`internal/api/service.go`) calls into this mechanism from a live
+backup/restore. `BackupVM` reads a domain's block-device disks and
+constructs the ZFS-over-SSH adapter this mechanism needs; the design gap
+around multiple restic snapshots per VM backup is closed by a shared
+`vmrun:<runID>` correlation tag added to every snapshot ONE backup
+invocation produces (the file-backed snapshot's existing `vm:<name>` tag,
+plus one `vm:<name>:zvol:<dev>` tag per block disk) — restore resolves a
+target `Run` row and then asks restic for every snapshot sharing that run's
+`vmrun:` tag, restoring the file-backed snapshot as before and each zvol
+snapshot to its corresponding dataset. Retention is applied once per
+identity tag actually present, reusing restic's existing per-tag `--keep-*`
+policy engine unchanged. A Run predating this tag (or a file-only VM's
+backup, which never gets a `vmrun:` tag since its single snapshot is already
+unambiguous) falls back to exactly the pre-existing single-tag resolution.
+This closes the gap the previous revision of this document described —
+still unit-tested only, see the hardware-verification caveat above.
 
 ### 4. vTPM state (Secure-Boot/Windows-11-class guests)
 
@@ -284,11 +287,18 @@ the exact same real call sites the existing `NVRAMPath` field already uses
 (`runVMGraceful`, `runVMLive`, `runVMRestore` in `vm_orchestrator.go` —
 included in the same restic path list, validated by the same restore
 path-safety guard), proven by unit tests that assert the actual paths restic
-receives. Extending the *real*, SSH-based, best-effort NVRAM mechanism to
-also carry TPM bytes is a service-layer change that has **not been made
-yet** — the restore-side write-back hook it would plug into
-(`VMRestoreDeps.PreDefine`, a generic caller-supplied closure) needs no
-change to support this once that integration happens.
+receives — though, same as NVRAM's own path-list mechanism, this
+orchestrator-level field is exercised only by that package's own tests, not
+by a real backup/restore.
+
+**The *real*, SSH-based, best-effort NVRAM mechanism now also carries TPM
+bytes:** `service.go`'s existing inline SSH read/write, described at the top
+of this document, reads `domain.TPMPath` into a `TPMBytes []byte` field on
+the VM's stored definition alongside `NVRAMBytes`, and writes it back over
+SSH just before `virsh define` at restore time — the same best-effort,
+non-fatal treatment NVRAM already gets (a failed read/write only logs a
+warning). Empty-safe: skipped entirely when the domain has no `<tpm>`
+element (`TPMPath == ""`) or SSH capture failed, exactly like NVRAM.
 
 **⚠ Like the zvol mechanism above, this is REASONED from libvirt's and
 TrueNAS's public documentation and is UNIT-TESTED ONLY** — it has never been
@@ -314,29 +324,34 @@ on 26 it makes one extra `virsh dumpxml` call per UUID-named domain to read
 `<title>`, falling back to the UUID itself if there is no `<title>` or the
 call fails.
 
-**What you will actually see today:** that friendly name is **not yet used by
-the UI**. BombVault's VM list still displays — and matches your saved per-VM
-settings against — the **raw libvirt domain name**. So on TrueNAS 25.10 your
-VMs appear as `1_debian` rather than `debian`, and on TrueNAS 26 they appear
-as **bare UUIDs** rather than the names you gave them. Identify a VM by its
-UUID (TrueNAS's own VM UI shows it) until this is wired up.
+**What you will actually see today:** on a host BombVault detects (or is
+configured, via `PLATFORM=truenas`) as TrueNAS, the VM list **displays** the
+resolved friendly name — so on TrueNAS 25.10 your VMs show as `debian`
+rather than `1_debian`, and on TrueNAS 26 they show their domain XML
+`<title>` rather than the bare UUID (falling back to the UUID itself if
+there is no `<title>`). This is presentation-only: internally, every lookup
+(matching your saved per-VM settings, every `virsh` call site) still keys on
+the **raw libvirt domain name**, never the friendly name. On any other
+platform, display is unchanged (the raw name is shown, as before).
 
-This is a **display and matching** limitation only, not a correctness one:
+This was, and remains, a **display** feature only, not a correctness one:
 the raw domain name is the identifier every `virsh` command legitimately
 takes, so backup and restore operate on the right VM either way. The one
 practical consequence beyond cosmetics is on TrueNAS 26, where a VM's saved
-BombVault settings (backup method, schedule membership) are keyed to that
-UUID — if TrueNAS ever re-creates the VM and issues a new UUID, the saved
-settings will not follow it and the VM will reappear as a new, unconfigured
-entry. Wiring the friendly name through to the UI and to that matching is a
-separate, not-yet-done follow-up.
+BombVault settings (backup method, schedule membership) are still keyed to
+the raw UUID — if TrueNAS ever re-creates the VM and issues a new UUID, the
+saved settings will not follow it and the VM will reappear as a new,
+unconfigured entry, even though its displayed name looks unchanged. That
+matching gap is unaffected by this display feature and remains open.
 
-A related note for anyone doing that wiring: the classifier works purely on
-the **shape** of the domain name and is deliberately not platform-gated, so
-an ordinary Unraid VM named literally `10_Windows` is classified exactly like
-a real TrueNAS 25.10 domain. This is inert today precisely because nothing
-consumes the friendly name yet, but a future caller must gate on the detected
-platform before preferring it over the raw name.
+A related note on how the UI wiring above stays safe: the classifier works
+purely on the **shape** of the domain name and is deliberately not
+platform-gated, so an ordinary Unraid VM named literally `10_Windows` is
+classified exactly like a real TrueNAS 25.10 domain. `ListVMs` guards against
+that by checking the detected platform explicitly (`Kind() ==
+platform.KindTrueNAS`) before ever preferring the resolved friendly name over
+the raw one — on Unraid the shape-classifier's output is never consulted, so
+a coincidentally-TrueNAS-shaped Unraid VM name displays unchanged.
 
 **⚠ Like the two mechanisms above, this is REASONED from TrueNAS's public
 documentation and is UNIT-TESTED ONLY** — the naming schemes have not been

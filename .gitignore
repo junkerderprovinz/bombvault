@@ -31,6 +31,9 @@ web/dist/*
 # Brainstorm / tooling
 .superpowers/
 
+# Agent worktree scratch space (isolated Agent-tool dispatches)
+.claude/worktrees/
+
 # OS / editor
 .DS_Store
 Thumbs.db

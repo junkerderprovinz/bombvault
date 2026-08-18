@@ -10,10 +10,13 @@
 | `LIBVIRT_HOST` | VM に必要 | VM バックアップのために SSH で到達する Unraid ホスト（デフォルト `host.docker.internal`。テンプレートは LAN-IP のプレースホルダーをあらかじめ入力します）。Unraid の LAN IP を使ってください。カスタムの `br0.x` ネットワークでは必須です。 |
 | `LIBVIRT_SSH_PORT` | いいえ | VM バックアップのためのホスト SSH ポート（デフォルト `22`）。 |
 | `LIBVIRT_SSH_USER` | いいえ | VM バックアップのためのホスト上の SSH ユーザー（デフォルト `root`）。 |
+| `LIBVIRT_URI` | いいえ | 完全な libvirt 接続 URI。上記 3 つの `LIBVIRT_*` 変数から組み立てる代わりに、これを**そのまま**使用します（設定するとそれらは接続文字列には使われなくなります）。デフォルトは未設定です。TrueNAS Scale では必須です。TrueNAS の libvirtd は非標準のソケットで待ち受けており、組み立て式の URI ではそれを表現できません: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。詳細は [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) の TrueNAS Scale の節を参照してください。 |
 | `PORT` | いいえ | HTTP ポート（デフォルト `3000`。`HTTP_ONLY=true` の場合にのみ使用）。 |
 | `HTTPS_PORT` | いいえ | HTTPS ポート（デフォルト `3443`。テンプレートは 1:1 で公開するため、WebUI は `https://<ip>:3443` で応答します）。 |
 | `HTTP_ONLY` | いいえ | `true` に設定すると、自己署名 HTTPS リスナーを無効にし、プレーン HTTP のみを提供します（TLS を終端するリバースプロキシの背後での使用向け）。 |
 | `HOST_SOURCE_ROOT` | いいえ | **Host Data** としてマウントされるホストパス（デフォルト `/mnt`）。BombVault は Docker が報告するバインドマウントのソースを、このマウント配下のパスに変換します。別のホストルートをマウントした場合のみ変更してください。 |
+| `DATA_ROOT_SEGMENTS` | いいえ | バインドマウントのソースをバックアップ対象データとして扱うためのパスセグメント名のカンマ区切りリスト（デフォルト `appdata`。Unraid の `/mnt/user/appdata/<container>` という慣習に一致します）。列挙したセグメントのいずれかが、コンテナのバインドマウントのホストソースの完全なパスセグメントとして現れる場合、そのバインドマウントは自動的にバックアップ対象として選択されます。たとえば `DATA_ROOT_SEGMENTS=appdata,config` と設定すると、`.../config` のバインドも対象になります。コンテナのデータフォルダーを見つけるための、その他の常時有効な方法については[バックアップソースの検出](#backup-source-detection)を参照してください。 |
+| `PLATFORM` | いいえ | BombVault が自動検出する代わりに、自身がどのプラットフォームで動作しているとみなすかを強制します: `unraid`、`generic`、`truenas` のいずれか（デフォルトは未設定。フラッシュマウント配下の `dockerMan` マーカーを探して Unraid を自動検出し、見つからなければ `generic` になります。認識できない値を指定した場合も `generic` にフォールバックし、ログに記録されます）。汎用の Docker ホストや TrueNAS Scale では、Unraid 専用の自動検出に頼らず明示的に設定してください（汎用の compose ファイルはこれを行っています）。appdata フォールバックの慣習、インスタンス間の復元先のデフォルト、そして Unraid 専用の通知・コンパニオンプラグイン処理を試みるかどうかが変わります（`internal/platform` を参照）。 |
 | `BOMBVAULT_SELF_CONTAINER` | いいえ | BombVault コンテナ自身の名前。これにより自分自身をバックアップ（したがって停止）しません（デフォルト `BombVault`。ブリッジネットワークではホスト名から自動検出）。 |
 | `BACKUP_MAX_HOURS` | いいえ | 単一のバックアップ実行が強制キャンセルされる前に、そのドメインロックを保持できる最大の実時間（実行が動かなくなってもドメインを永遠にブロックできないようにするガード）。空（デフォルト）は `48` を使います。非常に大きい、または遅いクラウドバックアップでは引き上げてください（上限でキャンセルされた実行は `context deadline exceeded` で失敗します）。`0` に設定すると上限を完全に無効にします。 |
 | `TZ` | いいえ | スケジューラーのタイムゾーン（たとえば `Europe/Berlin`）。 |

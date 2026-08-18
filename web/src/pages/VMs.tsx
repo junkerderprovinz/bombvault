@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
@@ -406,12 +406,16 @@ function VMBackupButton({
 function VMSnapshotRow({
   snap,
   vmName,
+  vmDisplayName,
   source,
   onDeleted,
   t,
 }: {
   snap: Snapshot;
+  /** Raw libvirt name — drives the progress key and the restore action. */
   vmName: string;
+  /** Display name for the cancel-confirm text; falls back to vmName. */
+  vmDisplayName?: string;
   source: RepoSource;
   onDeleted: () => void;
   t: T;
@@ -488,6 +492,7 @@ function VMSnapshotRow({
           <RestoreAction
             domain="vm"
             name={vmName}
+            displayName={vmDisplayName}
             snapshotId={snap.id}
             source={source}
             otherActive={running}
@@ -501,7 +506,19 @@ function VMSnapshotRow({
   );
 }
 
-function VMRestorePanel({ name, t }: { name: string; t: T }) {
+function VMRestorePanel({
+  name,
+  displayName,
+  t,
+}: {
+  /** Raw libvirt name — every call in this panel (snapshots, delete-all,
+   *  recent runs, restore) MUST use this, never displayName. */
+  name: string;
+  /** Display name shown in the restore cancel-confirm text; falls back to
+   *  name. */
+  displayName?: string;
+  t: T;
+}) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -600,6 +617,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
                 key={snap.id}
                 snap={snap}
                 vmName={name}
+                vmDisplayName={displayName}
                 source={source}
                 onDeleted={() => setReloadTick((n) => n + 1)}
                 t={t}
@@ -615,7 +633,10 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
 // VM row
 // ---------------------------------------------------------------------------
 
-function VMRow({
+// Exported (only) so VMs.test.tsx can render one row directly and assert its
+// action buttons wire up VM.libvirtName — never the display-only VM.name — to
+// the backend calls. See that test's header comment for the bug it pins.
+export function VMRow({
   vm,
   t,
   onRefresh,
@@ -630,7 +651,9 @@ function VMRow({
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
-  const progress = progressMap[`vm:${vm.name}`];
+  // Progress keys are published server-side off the raw libvirt name (see
+  // "vm:"+name in internal/api/service.go) — never the display vm.name.
+  const progress = progressMap[`vm:${vm.libvirtName}`];
   // "Something is running" across any domain — busy-guards this row's own VM
   // backup (its OWN in-flight backup is handled by isPending inside the button).
   const running = anyActive(progressMap);
@@ -679,7 +702,7 @@ function VMRow({
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 cursor-pointer">
-              <VMIncludeToggle name={vm.name} initial={vm.includeInSchedule} />
+              <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
               <span className="text-xs text-carbon-textSub">
                 {t("containers.includeInSchedule")}
               </span>
@@ -687,11 +710,11 @@ function VMRow({
             {/* Backup method (graceful / live) — always visible; it decides VM downtime. */}
             <label className="flex items-center gap-2">
               <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
-              <VMMethodSelect name={vm.name} initial={vm.method} t={t} />
+              <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </label>
           </div>
           <div className="ml-auto flex flex-col items-end">
-            <VMBackupButton name={vm.name} t={t} onBackedUp={onRefresh} running={running} />
+            <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
           </div>
         </div>
       )}
@@ -700,12 +723,12 @@ function VMRow({
           retrying a deleted VM). Deleting actual backups stays in the panel below. */}
       {!installed && (
         <div className="flex justify-end">
-          <VMForgetButton name={vm.name} t={t} onForgotten={onRefresh} />
+          <VMForgetButton name={vm.libvirtName} t={t} onForgotten={onRefresh} />
         </div>
       )}
 
       {/* Backups / Restore disclosure */}
-      <VMRestorePanel name={vm.name} t={t} />
+      <VMRestorePanel name={vm.libvirtName} displayName={vm.name} t={t} />
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (
@@ -823,6 +846,13 @@ const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
 // discarding an in-progress reorder. Save PUTs the whole displayed sequence
 // (authoritative); Reset PUTs an empty list, returning every VM to the name-order
 // tiebreak.
+//
+// `names` (despite the name, kept for minimal diff against the container
+// sibling) holds each VM's raw libvirtName — the value the backend persists
+// and matches on (store.VMTarget rows are keyed by the raw name) — never the
+// display vm.name. `displayByLibvirtName` resolves a row's libvirtName back
+// to its friendly name for rendering and for the tiebreak sort, so a TrueNAS
+// user still sees and alphabetizes by the readable name.
 function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
   const [savedOrder, setSavedOrder] = useState<VmOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
@@ -836,6 +866,10 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
       return false;
     }
   });
+  const displayByLibvirtName = useMemo(
+    () => new Map(vms.map((v) => [v.libvirtName, v.name])),
+    [vms]
+  );
 
   useEffect(() => {
     getVmBackupOrder()
@@ -845,29 +879,31 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
   useEffect(() => {
     if (savedOrder === null) return;
-    const orderable = vms.filter((v) => v.includeInSchedule).map((v) => v.name);
+    const orderable = vms.filter((v) => v.includeInSchedule).map((v) => v.libvirtName);
     const set = new Set(orderable);
-    const byName = (a: string, b: string) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" });
+    const byDisplayName = (a: string, b: string) =>
+      (displayByLibvirtName.get(a) ?? a).localeCompare(displayByLibvirtName.get(b) ?? b, undefined, {
+        sensitivity: "base",
+      });
     if (!hydrated.current) {
       hydrated.current = true;
       const ranked = savedOrder
         .filter((o) => set.has(o.vm))
         .sort((a, b) => a.order - b.order)
         .map((o) => o.vm);
-      const rest = orderable.filter((n) => !ranked.includes(n)).sort(byName);
+      const rest = orderable.filter((n) => !ranked.includes(n)).sort(byDisplayName);
       setNames([...ranked, ...rest]);
       return;
     }
     setNames((prev) => {
       const kept = prev.filter((n) => set.has(n));
-      const added = orderable.filter((n) => !kept.includes(n)).sort(byName);
+      const added = orderable.filter((n) => !kept.includes(n)).sort(byDisplayName);
       const next = [...kept, ...added];
       return next.length === prev.length && next.every((n, i) => n === prev[i])
         ? prev
         : next;
     });
-  }, [vms, savedOrder]);
+  }, [vms, savedOrder, displayByLibvirtName]);
 
   function move(index: number, dir: -1 | 1) {
     setNames((prev) => {
@@ -926,7 +962,9 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
   function clearOrder() {
     const sorted = [...names].sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" })
+      (displayByLibvirtName.get(a) ?? a).localeCompare(displayByLibvirtName.get(b) ?? b, undefined, {
+        sensitivity: "base",
+      })
     );
     setNames(sorted);
     void persist([]);
@@ -991,7 +1029,9 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                     </svg>
                   </span>
                   <span className="w-6 text-xs text-carbon-textMuted tabular-nums">{i + 1}.</span>
-                  <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">{name}</span>
+                  <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
+                    {displayByLibvirtName.get(name) ?? name}
+                  </span>
                   <button
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
@@ -1146,9 +1186,11 @@ export function VMs() {
     });
   }
 
-  const allLiveSelected = live.length > 0 && live.every((v) => selected.has(v.name));
+  // Selection is keyed by libvirtName (the raw identifier every bulk action
+  // below sends to the backend), never the display name.
+  const allLiveSelected = live.length > 0 && live.every((v) => selected.has(v.libvirtName));
   function toggleSelectAll() {
-    setSelected(allLiveSelected ? new Set() : new Set(live.map((v) => v.name)));
+    setSelected(allLiveSelected ? new Set() : new Set(live.map((v) => v.libvirtName)));
   }
 
   // Keep the selection in sync with what's actually visible: when a search or
@@ -1158,7 +1200,7 @@ export function VMs() {
   useEffect(() => {
     setSelected((prev) => {
       if (prev.size === 0) return prev;
-      const visible = new Set(live.map((v) => v.name));
+      const visible = new Set(live.map((v) => v.libvirtName));
       let changed = false;
       const next = new Set<string>();
       for (const n of prev) {
@@ -1368,12 +1410,12 @@ export function VMs() {
         <div className="flex flex-col gap-3">
           {live.map((v) => (
             <VMRow
-              key={v.name}
+              key={v.libvirtName}
               vm={v}
               t={t}
               onRefresh={() => void loadVMs()}
-              selected={selected.has(v.name)}
-              onToggleSelect={() => toggleSelect(v.name)}
+              selected={selected.has(v.libvirtName)}
+              onToggleSelect={() => toggleSelect(v.libvirtName)}
             />
           ))}
         </div>
@@ -1391,7 +1433,7 @@ export function VMs() {
             </p>
           </div>
           {orphans.map((v) => (
-            <VMRow key={v.name} vm={v} t={t} onRefresh={() => void loadVMs()} />
+            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} />
           ))}
         </div>
       )}

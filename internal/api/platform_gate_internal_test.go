@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
@@ -43,6 +44,14 @@ func (f failIfCalledSSH) Run(context.Context, ...string) (string, error) {
 	return "", nil
 }
 func (f failIfCalledSSH) EnsureKnownHost(context.Context) error { return nil }
+func (f failIfCalledSSH) StreamCommand(context.Context, ...string) (io.ReadCloser, func() error, error) {
+	f.fail("StreamCommand")
+	return nil, nil, nil
+}
+func (f failIfCalledSSH) RunWithStdin(context.Context, io.Reader, ...string) error {
+	f.fail("RunWithStdin")
+	return nil
+}
 
 // TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform pins Task 6's contract
 // for every background/best-effort sendUnraidNotify call site across

@@ -2196,7 +2196,10 @@ function IntegrityCard({
             >
               <option value="">{t("drill.targetMostRecent")}</option>
               {vms.map((v) => (
-                <option key={v.name} value={v.name}>{v.name}</option>
+                // value must be the raw libvirt name: pickDRSnapshot (service.go)
+                // matches it against the "vm:"+name backup tag, never the
+                // display-only friendly name a TrueNAS VM shows here.
+                <option key={v.libvirtName} value={v.libvirtName}>{v.name}</option>
               ))}
             </select>
           </label>
@@ -2529,7 +2532,7 @@ function VMsSection({
         ) : (
           <div className="flex flex-col gap-1 divide-y divide-carbon-border">
             {included.map((v) => (
-              <div key={v.name} className="flex flex-col gap-2 py-2 text-sm">
+              <div key={v.libvirtName} className="flex flex-col gap-2 py-2 text-sm">
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-2 h-2 rounded-full shrink-0 ${
@@ -2541,7 +2544,10 @@ function VMsSection({
                 <ItemScheduleOverride
                   name={v.name}
                   initial={v.scheduleCadence ?? ""}
-                  onSave={(cadence) => setVMScheduleCadence(v.name, cadence)}
+                  // libvirtName, not name: PATCH /api/vms/{name} resolves the
+                  // path segment against the raw name (see vmNameParam),
+                  // never the TrueNAS display-only friendly name.
+                  onSave={(cadence) => setVMScheduleCadence(v.libvirtName, cadence)}
                 />
               </div>
             ))}
