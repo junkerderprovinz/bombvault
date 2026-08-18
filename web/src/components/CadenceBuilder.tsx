@@ -231,8 +231,13 @@ export function CadenceBuilder({
     // `disabled` prop through that child.
     <fieldset disabled={disabled} className="group flex min-w-0 flex-col gap-3 border-0 m-0 p-0">
       {/* The label doubles as the fieldset's accessible name via <legend> —
-          a bare leading <span> left the group unnamed in the a11y tree. */}
-      <legend className="p-0 text-xs text-carbon-textSub font-medium group-disabled:opacity-50">
+          a bare leading <span> left the group unnamed in the a11y tree.
+          A <legend> renders in its own out-of-flow legend box, never as a
+          flex item, so the fieldset's `gap-3` never reaches it — mb-3
+          (0.75rem, the same value gap-3 resolves to between the rows below)
+          puts the lost 12px back explicitly. Measured live: 0px without
+          this, 12px with it, matching the pre-<legend> <span> spacing. */}
+      <legend className="p-0 mb-3 text-xs text-carbon-textSub font-medium group-disabled:opacity-50">
         {label}
       </legend>
 

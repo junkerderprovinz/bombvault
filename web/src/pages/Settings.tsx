@@ -100,15 +100,25 @@ export function ToggleRow({
   hideLabel?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    // A <fieldset> — the same mechanism CadenceBuilder's fieldset/legend fix
+    // uses — carries the disabled state instead of a plain <div>: the switch
+    // already dims itself via its own `disabled:opacity-50` (Toggle.tsx), but
+    // that left the caption and description text next to it at full opacity,
+    // so a disabled row misleadingly still read as enabled. `group` +
+    // `group-disabled:opacity-50` on the text spans dims them together with
+    // the switch as one coherent unit. `min-w-0` counters the fieldset UA
+    // default of `min-width: min-content`, matching CadenceBuilder's fieldset.
+    <fieldset disabled={disabled} className="group flex min-w-0 items-start justify-between gap-4 border-0 m-0 p-0">
       <div className="flex flex-col gap-0.5">
-        {!hideLabel && <span className="text-sm text-carbon-text">{label}</span>}
+        {!hideLabel && (
+          <span className="text-sm text-carbon-text group-disabled:opacity-50">{label}</span>
+        )}
         {description && (
-          <span className="text-xs text-carbon-textMuted">{description}</span>
+          <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{description}</span>
         )}
       </div>
       <Toggle hideLabel label={label} checked={checked} onChange={onChange} disabled={disabled} className="mt-0.5" />
-    </div>
+    </fieldset>
   );
 }
 
@@ -2716,9 +2726,10 @@ function RestoreChecksSection({
         checked={settings.drillsEnabled}
         onChange={(v) => update({ drillsEnabled: v })}
       />
-      {/* Sub-toggle: only meaningful while scheduled drills are on. The
-          switch dims itself via its own disabled:opacity-50 (Toggle.tsx) —
-          no wrapping container opacity needed on top of that. */}
+      {/* Sub-toggle: only meaningful while scheduled drills are on. ToggleRow
+          itself now dims its switch AND its caption/description together
+          (its own fieldset/group-disabled mechanism) — no wrapping container
+          opacity needed here. */}
       <ToggleRow
         label={t("settings.offsiteDrills")}
         description={t("settings.offsiteDrillsHelp")}
