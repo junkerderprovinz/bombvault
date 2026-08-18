@@ -38,7 +38,7 @@ function StateChip({ state }: { state: string }) {
       ? "bg-statusFailBg text-statusFail"
       : "bg-carbon-surface2 text-carbon-textSub";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
       {stateLabel(t, state)}
     </span>
   );
@@ -97,7 +97,7 @@ function SortControl({
         <button
           key={k}
           onClick={() => onChange(k)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === k
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -155,7 +155,7 @@ function ChipFilter<K extends string>({
         <button
           key={o.key}
           onClick={() => onChange(o.key)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === o.key
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -214,7 +214,7 @@ function VMMethodSelect({
         disabled={busy}
         onChange={(e) => void handleChange(e.target.value)}
         title={t("vm.method.hint")}
-        className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50"
       >
         <option value="graceful">{t("vm.method.graceful")}</option>
         <option value="live">{t("vm.method.live")}</option>
@@ -271,7 +271,7 @@ function VMIncludeToggle({
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -319,7 +319,7 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
       <button
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -360,7 +360,7 @@ function VMBackupButton({
       <button
         onClick={() => void fire()}
         disabled={isPending || blockedByOther}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>
@@ -465,7 +465,7 @@ function VMSnapshotRow({
             (mirrors Containers' SnapshotRow) instead of always rendering it. */}
         <button
           onClick={() => setShowRestore((p) => !p)}
-          className={`shrink-0 rounded-lg px-2.5 py-1 text-xs transition-colors ${
+          className={`shrink-0 rounded-control px-2.5 py-1 text-xs transition-colors ${
             showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
@@ -475,7 +475,7 @@ function VMSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -564,7 +564,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
       </button>
 
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background px-3 py-1">
+        <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
@@ -658,7 +658,7 @@ function VMRow({
             {installed ? (
               <StateChip state={vm.state} />
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
                 {t("containers.notInstalled")}
               </span>
             )}
@@ -753,7 +753,7 @@ function VMForgetButton({
       <button
         onClick={() => void handleForget()}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
       >
         {pending ? t("dashboard.checking") : t("vms.removeEntry")}
       </button>
@@ -794,14 +794,14 @@ function ScheduleIncludeAllControl({
       <button
         onClick={() => void run(true)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {t("schedule.includeAll")}
       </button>
       <button
         onClick={() => void run(false)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+        className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
       >
         {t("schedule.excludeAll")}
       </button>
@@ -976,7 +976,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                 <li
                   key={name}
                   {...rowProps(i)}
-                  className={`flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5 ${
+                  className={`flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${
                     dragIndex === i ? "opacity-40" : ""
                   }`}
                 >
@@ -997,7 +997,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                     disabled={i === 0 || saveState === "saving"}
                     aria-label={t("backupOrder.moveUp")}
                     title={t("backupOrder.moveUp")}
-                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1008,7 +1008,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                     disabled={i === names.length - 1 || saveState === "saving"}
                     aria-label={t("backupOrder.moveDown")}
                     title={t("backupOrder.moveDown")}
-                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1021,14 +1021,14 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
               <button
                 onClick={() => void persist(names)}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {t("backupOrder.save")}
               </button>
               <button
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("backupOrder.reset")}
               </button>
@@ -1237,7 +1237,7 @@ export function VMs() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("vms.discoverHint")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -1275,7 +1275,7 @@ export function VMs() {
               placeholder={t("vms.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <ChipFilter<ScheduleFilterKey>
               label={t("filter.schedule")}
@@ -1321,14 +1321,14 @@ export function VMs() {
 
       {/* Bulk action bar */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-lg bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-control bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>
           <button
             onClick={backupSelected}
             disabled={bulkBusy || running.active}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("vms.backupSelected")}
           </button>
@@ -1337,7 +1337,7 @@ export function VMs() {
             <button
               onClick={restoreSelected}
               disabled={bulkBusy || running.active}
-              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {t("vms.restoreSelected")}
             </button>

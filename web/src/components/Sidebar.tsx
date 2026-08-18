@@ -197,7 +197,7 @@ function IconLayers() {
 // micro-interactions below animate too; all transforms are motion-safe-gated so
 // reduced-motion users get colour-only feedback (Item 7a/7d).
 const navBase =
-  "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
+  "flex items-center gap-3 px-3.5 py-2.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
 const navActive =
   "bg-accent text-accentContrast";
 const navInactive =
@@ -300,7 +300,7 @@ function SidebarControls() {
           <div
             role="listbox"
             aria-label={t("language.label")}
-            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-xl bg-carbon-surface shadow-xl"
+            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
             style={{ scrollbarColor: "var(--carbon-border) transparent" }}
           >
             {languages.map((l) => (

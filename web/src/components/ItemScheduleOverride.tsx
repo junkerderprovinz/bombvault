@@ -77,7 +77,7 @@ export function ItemScheduleOverride({
       </div>
 
       {open && (
-        <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-3">
+        <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3">
           <CadenceBuilder
             label={`${t("schedule.overrideTitle")}: ${name}`}
             value={value}
@@ -91,7 +91,7 @@ export function ItemScheduleOverride({
             <button
               onClick={() => void handleSave()}
               disabled={busy}
-              className="rounded-lg bg-accent text-accentContrast px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+              className="rounded-control bg-accent text-accentContrast px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
             >
               {busy ? t("common.saving") : t("schedule.overrideSave")}
             </button>

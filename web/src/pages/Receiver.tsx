@@ -61,7 +61,7 @@ function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; chi
       ? "bg-statusWarnBgStrong text-statusWarn"
       : "bg-carbon-surface2 text-carbon-textSub";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
       {children}
     </span>
   );
@@ -252,7 +252,7 @@ function ReceivedRepoCard({
         <button
           onClick={() => void handleCheck()}
           disabled={checking}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {checking ? (
             <>
@@ -282,7 +282,7 @@ function ReceivedRepoCard({
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             <svg
               width="12"
@@ -297,14 +297,14 @@ function ReceivedRepoCard({
           </button>
           <button
             onClick={onEdit}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("receiver.edit")}
           </button>
           <button
             onClick={() => void handleRemove()}
             disabled={removing}
-            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
           >
             {removing ? t("receiver.removing") : t("receiver.remove")}
           </button>
@@ -314,7 +314,7 @@ function ReceivedRepoCard({
 
       {/* Inventory disclosure */}
       {open && (
-        <div className="rounded-lg bg-carbon-background px-3 py-2">
+        <div className="rounded-card bg-carbon-background px-3 py-2">
           <p className="text-xs font-medium text-carbon-textSub">{t("receiver.inventoryTitle")}</p>
           <InventoryPanel repo={repo} t={t} />
         </div>
@@ -393,7 +393,7 @@ function ReceiverDialog({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return createPortal(
     <div
@@ -517,14 +517,14 @@ function ReceiverDialog({
           <button
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {t("files.cancel")}
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>
@@ -575,7 +575,7 @@ export function Receiver() {
         </div>
         <button
           onClick={() => setDialog("new")}
-          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
         >
           {t("receiver.addRepo")}
         </button>
@@ -590,7 +590,7 @@ export function Receiver() {
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("receiver.empty")}</p>
           <button
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
           >
             {t("receiver.addRepo")}
           </button>

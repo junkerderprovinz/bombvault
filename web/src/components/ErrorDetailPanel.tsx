@@ -171,7 +171,7 @@ export function ErrorDetailPanel({
               type="button"
               onClick={() => acknowledge({ all: true })}
               disabled={busy || groups.length === 0}
-              className="rounded-md bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("errorPanel.resolveAll")}
             </button>
@@ -180,7 +180,7 @@ export function ErrorDetailPanel({
               type="button"
               onClick={onClose}
               aria-label={t("common.close")}
-              className="shrink-0 rounded-sm p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
+              className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -197,12 +197,12 @@ export function ErrorDetailPanel({
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={t("errorPanel.filterPlaceholder")}
             aria-label={t("errorPanel.filterPlaceholder")}
-            className="flex-1 min-w-[10rem] rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
           <select
             value={filterDomain}
             onChange={(e) => setFilterDomain(e.target.value)}
-            className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           >
             <option value="all">{t("activityLog.filterAllDomains")}</option>
             <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -214,7 +214,7 @@ export function ErrorDetailPanel({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           >
             <option value="all">{t("activityLog.filterAllTypes")}</option>
             <option value="backup">{t("activityLog.typeBackup")}</option>
@@ -245,14 +245,14 @@ export function ErrorDetailPanel({
                       <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-full bg-statusFailBg px-2 py-0.5 text-xs font-medium tabular-nums text-statusFail">
+                      <span className="rounded-[min(var(--radius-pill),50%)] bg-statusFailBg px-2 py-0.5 text-xs font-medium tabular-nums text-statusFail">
                         {countLabel(g.count)}
                       </span>
                       <button
                         type="button"
                         onClick={() => acknowledge({ ids: g.ids })}
                         disabled={busy}
-                        className="rounded-md bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {t("errorPanel.resolve")}
                       </button>

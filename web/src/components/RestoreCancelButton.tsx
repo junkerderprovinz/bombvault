@@ -64,7 +64,7 @@ export function RestoreCancelButton({
       type="button"
       onClick={() => void handle()}
       disabled={cancelling}
-      className="self-start inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="self-start inline-flex items-center rounded-control px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {cancelling ? t("restore.cancelling") : t("restore.cancel")}
     </button>

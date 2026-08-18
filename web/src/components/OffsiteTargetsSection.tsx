@@ -92,7 +92,7 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
         onClick={() => void go()}
         disabled={st === "busy"}
         title={t("offsite.test")}
-        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
       </button>
@@ -230,12 +230,12 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const numCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
-    <div className="mt-2 flex flex-col gap-3 rounded-lg bg-carbon-surface2 p-3">
+    <div className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       <div className="flex flex-col gap-0.5">
         <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("offsite.targets.title")}
@@ -254,17 +254,17 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
       {targets.map((tgt) => (
         <div
           key={tgt.id}
-          className="flex items-start justify-between gap-3 rounded-lg bg-carbon-surface p-3"
+          className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface p-3"
         >
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">{tgt.repo}</span>
             <span className="flex flex-wrap gap-2 text-[11px] text-carbon-textSub">
-              <span className="rounded-sm bg-carbon-surface2 px-1.5 py-0.5">
+              <span className="rounded-control bg-carbon-surface2 px-1.5 py-0.5">
                 {tgt.storageClass || t("cloud.storageClass.default")}
               </span>
               {tgt.immutable && (
-                <span className="rounded-sm bg-carbon-surface2 px-1.5 py-0.5 text-statusOk">
+                <span className="rounded-control bg-carbon-surface2 px-1.5 py-0.5 text-statusOk">
                   {t("offsite.immutable")}
                 </span>
               )}
@@ -275,7 +275,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
             <button
               type="button"
               onClick={() => openEdit(tgt)}
-              className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
             >
               {t("offsite.targets.edit")}
             </button>
@@ -284,7 +284,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
                 type="button"
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
-                className="rounded-lg bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
+                className="rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
               >
                 {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </button>
@@ -292,7 +292,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               <button
                 type="button"
                 onClick={() => setConfirmRemove(tgt.id)}
-                className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
+                className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
               >
                 {t("offsite.targets.remove")}
               </button>
@@ -303,7 +303,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
 
       {/* Editor form (new or edit) */}
       {draft && (
-        <div className="flex flex-col gap-3 rounded-lg bg-carbon-surface p-3">
+        <div className="flex flex-col gap-3 rounded-card bg-carbon-surface p-3">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.name")}</span>
             <input
@@ -370,7 +370,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               aria-checked={draft.immutable}
               aria-labelledby={`tgt-imm-${domain}`}
               onClick={() => setDraft((d) => (d ? { ...d, immutable: !d.immutable } : d))}
-              className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid ${
+              className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid ${
                 draft.immutable ? "bg-accent" : "bg-carbon-surface3"
               }`}
             >
@@ -429,14 +429,14 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               type="button"
               onClick={() => void saveDraft()}
               disabled={saveState === "saving"}
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+              className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
             >
               {saveState === "saving" ? t("common.saving") : t("offsite.targets.save")}
             </button>
             <button
               type="button"
               onClick={closeEditor}
-              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
             >
               {t("offsite.targets.cancel")}
             </button>
@@ -452,7 +452,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
         <button
           type="button"
           onClick={openNew}
-          className="self-start rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+          className="self-start rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
         >
           {t("offsite.targets.add")}
         </button>

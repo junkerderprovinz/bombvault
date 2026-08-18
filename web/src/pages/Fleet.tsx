@@ -49,13 +49,13 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
         type="button"
         onClick={() => void copy()}
-        className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+        className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
       >
         {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
       </button>
@@ -80,7 +80,7 @@ function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; chi
       ? "bg-statusWarnBgStrong text-statusWarn"
       : "bg-carbon-surface2 text-carbon-textSub";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
       {children}
     </span>
   );
@@ -214,7 +214,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const pending = offer.status === "pending";
 
   return (
-    <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-2">
+    <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
         <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
@@ -228,7 +228,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="rounded-lg bg-carbon-surface3 text-carbon-text text-xs px-2 py-1"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1"
             >
               {MESH_DOMAINS.map((d) => (
                 <option key={d} value={d}>{t(domainLabelKey(d))}</option>
@@ -238,14 +238,14 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
           <button
             onClick={() => void handleAccept()}
             disabled={busy}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("fleet.mesh.accept")}
           </button>
           <button
             onClick={() => void handleDecline()}
             disabled={busy}
-            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {t("fleet.mesh.decline")}
           </button>
@@ -286,7 +286,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
@@ -328,14 +328,14 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
               <button
                 onClick={onClose}
                 disabled={sending}
-                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("files.cancel")}
               </button>
               <button
                 onClick={() => void handleSend()}
                 disabled={sending}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {sending ? t("fleet.mesh.sending") : t("fleet.mesh.send")}
               </button>
@@ -356,7 +356,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <div className="flex items-center justify-end pt-1">
               <button
                 onClick={onClose}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
               >
                 {t("common.close")}
               </button>
@@ -450,7 +450,7 @@ function FleetPeerCard({
         <button
           onClick={() => void handlePoll()}
           disabled={polling}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {polling ? (
             <>
@@ -468,13 +468,13 @@ function FleetPeerCard({
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => setShowPropose(true)}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("fleet.mesh.proposeButton")}
           </button>
           <button
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             <svg
               width="12"
@@ -489,14 +489,14 @@ function FleetPeerCard({
           </button>
           <button
             onClick={onEdit}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("fleet.edit")}
           </button>
           <button
             onClick={() => void handleRemove()}
             disabled={removing}
-            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
           >
             {removing ? t("fleet.removing") : t("fleet.remove")}
           </button>
@@ -505,7 +505,7 @@ function FleetPeerCard({
       {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}
 
       {open && (
-        <div className="rounded-lg bg-carbon-background px-3 py-2">
+        <div className="rounded-card bg-carbon-background px-3 py-2">
           <p className="text-xs font-medium text-carbon-textSub">{t("fleet.scorecardTitle")}</p>
           <PeerScorecard domains={peer.lastPollDomains} t={t} />
         </div>
@@ -571,7 +571,7 @@ function FleetDialog({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return createPortal(
     <div
@@ -647,14 +647,14 @@ function FleetDialog({
           <button
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {t("files.cancel")}
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>
@@ -715,7 +715,7 @@ export function Fleet() {
         </div>
         <button
           onClick={() => setDialog("new")}
-          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
         >
           {t("fleet.addPeer")}
         </button>
@@ -743,7 +743,7 @@ export function Fleet() {
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("fleet.empty")}</p>
           <button
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
           >
             {t("fleet.addPeer")}
           </button>

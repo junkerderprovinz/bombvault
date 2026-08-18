@@ -210,7 +210,7 @@ export function CadenceBuilder({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50";
 
   return (
     <div className={`flex flex-col gap-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
@@ -222,7 +222,7 @@ export function CadenceBuilder({
           <button
             key={m}
             onClick={() => update({ mode: m })}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-control px-3 py-1.5 text-xs font-medium transition-colors ${
               state.mode === m
                 ? "bg-accent text-accentContrast"
                 : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"

@@ -77,7 +77,7 @@ export function InfoBubble({ text }: { text: string }) {
               transform: "translateX(-50%)",
               pointerEvents: "none",
             }}
-            className="z-50 w-64 max-w-[80vw] rounded-lg bg-carbon-surface3 px-2.5 py-1.5 text-xs leading-relaxed text-carbon-text shadow-lg"
+            className="z-50 w-64 max-w-[80vw] rounded-card bg-carbon-surface3 px-2.5 py-1.5 text-xs leading-relaxed text-carbon-text shadow-lg"
           >
             {text}
           </div>,

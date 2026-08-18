@@ -58,7 +58,7 @@ function isKeyMismatch(err: string | undefined): boolean {
 
 // Shared mono text-input styling (off-site URLs, foreign location/key fields).
 const offsiteInput =
-  "rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+  "rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
 // RestoreRow — a single discovered target (container or VM) with its latest
 // snapshot and a per-item Restore button. The restore mechanics are the shared
@@ -187,7 +187,7 @@ function FileSetRecoveryRow({
         <button
           onClick={() => void handleRestore()}
           disabled={state === "busy" || otherActive || target.trim() === ""}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {state === "busy" && (
             <span
@@ -426,7 +426,7 @@ function ForeignItemRow({
           value={snapshot}
           onChange={(e) => setSnapshot(e.target.value)}
           disabled={state === "busy"}
-          className="rounded-lg bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         >
           <option value="latest">{t("recovery.foreignLatest")}</option>
           {snaps.map((s) => (
@@ -523,7 +523,7 @@ function ForeignItemRow({
             <span className="text-carbon-text">{t("recovery.foreignOverwrite")}</span>
           </label>
           {warnings.length > 0 && (
-            <div className="rounded-lg bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
+            <div className="rounded-card bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
               <p className="text-statusWarn">{t("recovery.foreignBindWarning")}</p>
               <ul className="mt-1 flex flex-col gap-0.5">
                 {warnings.map((wn) => (
@@ -545,7 +545,7 @@ function ForeignItemRow({
             (needsTarget && target.trim() === "") ||
             (subsetActive && selected.size === 0)
           }
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {state === "busy" && (
             <span
@@ -737,7 +737,7 @@ function ForeignRestoreCard({
           <button
             onClick={() => void connect()}
             disabled={!canConnect}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {phase === "connecting" && (
               <span
@@ -761,7 +761,7 @@ function ForeignRestoreCard({
           )}
         </div>
         {phase === "error" && connectError && (
-          <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
+          <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
             {connectError}
           </div>
         )}
@@ -775,12 +775,12 @@ function ForeignRestoreCard({
           <>
             {/* Session lapsed mid-browse (30-min TTL) — offer the reconnect. */}
             {sessionGone && (
-              <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
+              <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
                 <span className="flex-1">{t("recovery.foreignExpired")}</span>
                 <button
                   type="button"
                   onClick={() => void connect()}
-                  className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-xs text-carbon-text transition-colors"
+                  className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-xs text-carbon-text transition-colors"
                 >
                   {t("recovery.foreignReconnect")}
                 </button>
@@ -1162,7 +1162,7 @@ export default function Recovery() {
           <button
             onClick={() => void checkReadable()}
             disabled={checking}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {checking && (
               <span
@@ -1183,7 +1183,7 @@ export default function Recovery() {
 
         {/* Exact remedy when the key doesn't match the repo. */}
         {readableState === "bad" && (
-          <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed">
+          <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed">
             {t("recovery.appKeyRemedy")}
           </div>
         )}
@@ -1244,7 +1244,7 @@ export default function Recovery() {
                   <button
                     onClick={() => void restoreOwnConfig()}
                     disabled={configPhase === "saving" || configPhase === "restarting"}
-                    className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {(configPhase === "saving" || configPhase === "restarting") && (
                       <span
@@ -1282,7 +1282,7 @@ export default function Recovery() {
                 )}
                 {/* Manual restart needed (Docker socket unreachable). */}
                 {configPhase === "manual" && (
-                  <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                  <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                     {t("recovery.configManualRestart")}
                   </div>
                 )}
@@ -1293,14 +1293,14 @@ export default function Recovery() {
                     <button
                       type="button"
                       onClick={() => window.location.reload()}
-                      className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+                      className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
                     >
                       {t("recovery.configReload")}
                     </button>
                   </div>
                 )}
                 {configPhase === "error" && configError && (
-                  <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
+                  <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
                     {configError}
                   </div>
                 )}
@@ -1391,7 +1391,7 @@ export default function Recovery() {
               <button
                 onClick={() => void connectPreview()}
                 disabled={attachState === "saving"}
-                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {attachState === "saving" && (
                   <span
@@ -1420,7 +1420,7 @@ export default function Recovery() {
           <button
             onClick={() => void runDiscover()}
             disabled={discovering}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {discovering && (
               <span
@@ -1448,7 +1448,7 @@ export default function Recovery() {
           <p className="text-sm text-statusWarn">{t("recovery.foundNone")}</p>
         )}
         {discoverError && (
-          <div className="rounded-lg bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
+          <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">
             {discoverError}
           </div>
         )}
@@ -1469,7 +1469,7 @@ export default function Recovery() {
               <button
                 onClick={() => void restoreAll()}
                 disabled={restoreAllBusy || running.active}
-                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {restoreAllBusy && (
                   <span
@@ -1496,7 +1496,7 @@ export default function Recovery() {
 
             {/* VM restore needs the libvirt SSH link — advisory note, not a block. */}
             {vms.length > 0 && vmSshConfigured === false && (
-              <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+              <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                 {t("recovery.vmSshNote")}
               </div>
             )}
@@ -1571,7 +1571,7 @@ export default function Recovery() {
             setKitError(null);
             void downloadRecoveryKit().then(setKitError);
           }}
-          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.kitDownload")}
         </button>

@@ -293,7 +293,7 @@ function StatusChip({
   };
   const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls}`}>
       {status}
     </span>
   );
@@ -642,7 +642,7 @@ function ProtectionCard({
                           // scheduled DR drill is opted out.
                           <span
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusOkBg text-statusOk"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-control text-xs font-medium break-normal bg-statusOkBg text-statusOk"
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -656,7 +656,7 @@ function ProtectionCard({
                                 ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                                 : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                             }
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusFailBg text-statusFail"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-control text-xs font-medium break-normal bg-statusFailBg text-statusFail"
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </span>
@@ -665,7 +665,7 @@ function ProtectionCard({
                           // failing to show: muted, never red. File's no-claim styling.
                           <span
                             title={t("drill.manualOnlyTitle")}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted"
+                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-control text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted"
                           >
                             {t("drill.manualOnly")}
                           </span>
@@ -692,7 +692,7 @@ function ProtectionCard({
                         type="button"
                         onClick={() => runOffsiteDr(d.domain)}
                         disabled={drRunning === d.domain}
-                        className="rounded-md bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {drRunning === d.domain
                           ? t("drill.runningOffsiteDr")
@@ -971,7 +971,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             >
               <option value="all">{t("run.allDays")}</option>
               {days.map((d) => (
@@ -1537,7 +1537,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         <button
           type="button"
           onClick={() => void downloadRecoveryKit().then(setKitError)}
-          className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.download")}
         </button>
@@ -1548,7 +1548,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
           type="button"
           onClick={dismiss}
           disabled={dismissing}
-          className="rounded-md px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
+          className="rounded-control px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
         >
           {t("recovery.stored")}
         </button>
@@ -1602,7 +1602,7 @@ function FreshInstallNudge({
         type="button"
         onClick={onDismiss}
         aria-label={t("common.close")}
-        className="shrink-0 rounded-md px-2 py-1 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+        className="shrink-0 rounded-control px-2 py-1 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
       >
         ✕
       </button>
@@ -2009,7 +2009,7 @@ export function Dashboard() {
           aria-label={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           aria-pressed={editing}
           title={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
-          className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
+          className={`shrink-0 rounded-control p-2 motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -2055,7 +2055,7 @@ export function Dashboard() {
           <button
             type="button"
             onClick={reset}
-            className="self-start rounded-md bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
+            className="self-start rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
           >
             {t("dashboard.resetLayout")}
           </button>
@@ -2118,7 +2118,7 @@ export function Dashboard() {
             {hiddenBlocks.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-2 rounded-md bg-carbon-surface2 px-2.5 py-1.5"
+                className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2.5 py-1.5"
               >
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}
@@ -2127,7 +2127,7 @@ export function Dashboard() {
                   type="button"
                   onClick={() => toggleHidden(b.id)}
                   aria-label={`${t("dashboard.showCard")} ${b.label}`}
-                  className="rounded-sm px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
+                  className="rounded-control px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
                 >
                   {t("dashboard.showCard")}
                 </button>

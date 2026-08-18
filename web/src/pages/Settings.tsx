@@ -105,7 +105,7 @@ export function ToggleRow({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
           checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -143,7 +143,7 @@ function SaveBar({
       <button
         onClick={onSave}
         disabled={disabled || state === "saving"}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {state === "saving" ? (
           <>
@@ -255,13 +255,13 @@ chmod 600 /root/.ssh/authorized_keys`
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {pub || "—"}
             </code>
             <button
               onClick={handleCopy}
               disabled={!pub}
-              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
+              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
             >
               {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
@@ -269,7 +269,7 @@ chmod 600 /root/.ssh/authorized_keys`
         </div>
 
         {/* One-time setup instructions */}
-        <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-2">
+        <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
           <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("vm.ssh.setupTitle")}
           </span>
@@ -279,11 +279,11 @@ chmod 600 /root/.ssh/authorized_keys`
             <li>{t("vm.ssh.step3")}</li>
           </ol>
           <div className="flex items-start gap-2">
-            <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
             <button
               onClick={handleCopyCmd}
               disabled={!pub}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {cmdCopied ? t("vm.ssh.copied") : t("vm.ssh.copyCmd")}
             </button>
@@ -302,7 +302,7 @@ chmod 600 /root/.ssh/authorized_keys`
           <button
             onClick={handleTest}
             disabled={testState === "testing"}
-            className="rounded-sm bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
           </button>
@@ -440,7 +440,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <span className="text-sm text-carbon-text">{t("settingsIO.includeCreds")}</span>
         </label>
         {includeCreds && (
-          <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+          <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
             {t("settingsIO.credsWarning")}
           </div>
         )}
@@ -448,7 +448,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           type="button"
           onClick={() => void handleExport()}
           disabled={busy}
-          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
         >
           {exporting ? t("settingsIO.exporting") : t("settingsIO.exportButton")}
         </button>
@@ -478,14 +478,14 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
-          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
         >
           {importBusy === "reading" ? t("settingsIO.reading") : t("settingsIO.chooseFile")}
         </button>
 
         {/* Preview + confirmation before anything is written. */}
         {preview && (
-          <div className="rounded-lg bg-carbon-surface2 p-4 flex flex-col gap-3">
+          <div className="rounded-card bg-carbon-surface2 p-4 flex flex-col gap-3">
             <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
               {t("settingsIO.previewTitle")}
             </span>
@@ -521,7 +521,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 </dd>
               </div>
             </dl>
-            <div className="rounded-md bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("settingsIO.confirmWarning")}
             </div>
             <div className="flex items-center gap-3">
@@ -529,7 +529,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 type="button"
                 onClick={() => void handleConfirmImport()}
                 disabled={busy}
-                className="rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
               </button>
@@ -537,7 +537,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 type="button"
                 onClick={resetImport}
                 disabled={busy}
-                className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+                className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("settingsIO.cancel")}
               </button>
@@ -651,13 +651,13 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="flex flex-col gap-2">
           <p className="text-xs text-carbon-textSub">{t("settings.dashTileNoSsh")}</p>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {DASH_PLUGIN_PLG_URL}
             </code>
             <button
               type="button"
               onClick={() => void handleCopyUrl()}
-              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
             >
               {urlCopied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
@@ -683,7 +683,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             type="button"
             onClick={() => void run("install")}
             disabled={busy !== "idle"}
-            className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {busy === "install" ? t("settings.dashTileInstalling") : t("settings.dashTileInstall")}
           </button>
@@ -706,7 +706,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             type="button"
             onClick={() => void run("remove")}
             disabled={busy !== "idle"}
-            className="self-start rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+            className="self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
           >
             {busy === "remove" ? t("settings.dashTileRemoving") : t("settings.dashTileRemove")}
           </button>
@@ -717,7 +717,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="flex flex-col gap-2">
           <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
           {status.output && (
-            <pre className="overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
+            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
               {status.output}
             </pre>
           )}
@@ -727,7 +727,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className="self-start rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+            className="self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
           >
             {t("whatsnew.retry")}
           </button>
@@ -824,13 +824,13 @@ function DashboardWidgetCard({
               readOnly
               value={token ?? ""}
               placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <button
               type="button"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.widgetRegenerate")}
             </button>
@@ -838,7 +838,7 @@ function DashboardWidgetCard({
               type="button"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.widgetDisable")}
             </button>
@@ -849,7 +849,7 @@ function DashboardWidgetCard({
           type="button"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {t("settings.widgetGenerate")}
         </button>
@@ -864,13 +864,13 @@ function DashboardWidgetCard({
           <div className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("settings.widgetUrl")}</span>
             <div className="flex items-start gap-2">
-              <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+              <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
                 {widgetUrl}
               </code>
               <button
                 type="button"
                 onClick={() => void handleCopy()}
-                className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+                className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
               >
                 {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
               </button>
@@ -982,7 +982,7 @@ function FleetSettingsCard({
             spellCheck={false}
             autoComplete="off"
             placeholder="tower"
-            className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </div>
         <SaveBar
@@ -1007,13 +1007,13 @@ function FleetSettingsCard({
               readOnly
               value={token ?? ""}
               placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <button
               type="button"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.fleetRegenerate")}
             </button>
@@ -1021,7 +1021,7 @@ function FleetSettingsCard({
               type="button"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.fleetDisable")}
             </button>
@@ -1032,7 +1032,7 @@ function FleetSettingsCard({
           type="button"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {t("settings.fleetGenerate")}
         </button>
@@ -1046,13 +1046,13 @@ function FleetSettingsCard({
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textSub">{t("settings.fleetTokenPasteHint")}</span>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {token}
             </code>
             <button
               type="button"
               onClick={() => void handleCopy()}
-              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
             >
               {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
@@ -1119,14 +1119,14 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-lg bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
         <button
           onClick={() => void handleSave()}
           disabled={state === "saving" || conf.trim() === ""}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {state === "saving" ? t("auth.saving") : t("rclone.save")}
         </button>
@@ -1185,14 +1185,14 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
     <Card title={t("cloud.title")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
 
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
         <label className={fieldCls}>AWS_ACCESS_KEY_ID
           <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
@@ -1213,7 +1213,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-xs text-carbon-textMuted normal-case font-sans">{t("cloud.storageClass.hint")}</p>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
         <label className={fieldCls}>RESTIC_REST_USERNAME
           <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
@@ -1226,7 +1226,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <button
           onClick={() => void handleSave()}
           disabled={state === "saving"}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {state === "saving" ? t("auth.saving") : t("settings.save")}
         </button>
@@ -1330,7 +1330,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -1342,7 +1342,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       )}
 
       {sets.map((s) => (
-        <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg bg-carbon-surface2 p-3">
+        <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">
@@ -1353,7 +1353,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <button
               type="button"
               onClick={() => openEdit(s)}
-              className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
             >
               {t("offsite.targets.edit")}
             </button>
@@ -1362,7 +1362,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 type="button"
                 onClick={() => void remove(s.id)}
                 disabled={removingId === s.id}
-                className="rounded-lg bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
+                className="rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
               >
                 {removingId === s.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </button>
@@ -1370,7 +1370,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               <button
                 type="button"
                 onClick={() => setConfirmRemove(s.id)}
-                className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
+                className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
               >
                 {t("offsite.targets.remove")}
               </button>
@@ -1380,10 +1380,10 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       ))}
 
       {editing ? (
-        <div className="flex flex-col gap-3 rounded-lg bg-carbon-surface2 p-3">
+        <div className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
           <label className={fieldCls}>{t("cloud.credSets.name")}
             <input value={editing.name} onChange={(e) => setField("name", e.target.value)} className={inputCls} /></label>
-          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface3/40 p-3">
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
             <label className={fieldCls}>AWS_ACCESS_KEY_ID
               <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
@@ -1402,7 +1402,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 <option value="GLACIER_IR">GLACIER_IR</option>
               </select></label>
           </div>
-          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface3/40 p-3">
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
             <label className={fieldCls}>RESTIC_REST_USERNAME
               <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
@@ -1414,13 +1414,13 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <button
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {state === "saving" ? t("auth.saving") : t("settings.save")}
             </button>
             <button
               onClick={closeEditor}
-              className="rounded-lg bg-carbon-surface3 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface3 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
             >
               {t("common.close")}
             </button>
@@ -1431,7 +1431,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <button
           type="button"
           onClick={openNew}
-          className="self-start rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover"
+          className="self-start rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover"
         >
           + {t("cloud.credSets.add")}
         </button>
@@ -1529,14 +1529,14 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const selectCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   // Card-level sibling of selectCls: same styling, but this one sits directly on
   // the Card (bg-carbon-surface), so its fill is surface2 — the panel-level
   // fields above use surface3 because they sit ON a surface2 panel.
   const selectCardCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
@@ -1553,7 +1553,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
 
       {/* #56: one summary per scheduled run instead of one message per container. */}
-      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 p-3 cursor-pointer">
+      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
           checked={cfg.scheduledSummary}
@@ -1568,7 +1568,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
 
       {/* #56: notify when a container is updated by the post-backup image update. */}
-      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 p-3 cursor-pointer">
+      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
           checked={cfg.notifyOnUpdate}
@@ -1583,7 +1583,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
 
       {/* Unraid native notifications (delivered over the host SSH connection). */}
-      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 p-3 cursor-pointer">
+      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
           checked={cfg.unraid}
@@ -1599,7 +1599,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       {advanced && (
         <>
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <label className={labelCls}>
           {t("notify.webhook")}
           <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
@@ -1620,7 +1620,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {/* Apprise API: posts to a user-run apprise-api server, unlocking Apprise's
           100+ services without bundling Python. Shares the card's Save + Test bar
           like the other channels. */}
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-medium text-carbon-textSub">{t("notify.apprise")}</span>
         <label className={labelCls}>
           {t("notify.appriseUrl")}
@@ -1635,7 +1635,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-xs text-carbon-textMuted">{t("notify.appriseHint")}</p>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-medium text-carbon-textSub">{t("notify.matrix")}</span>
         <label className={labelCls}>
           {t("notify.matrixHomeserver")}
@@ -1662,7 +1662,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
 
       {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-medium text-carbon-textSub">{t("notify.hcPerDomain")}</span>
         {(
           [
@@ -1693,7 +1693,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </div>
 
       {/* Email (SMTP), sent via the configured mail server. */}
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <label className="flex items-start gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -1752,11 +1752,11 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       <div className="flex items-center gap-3 pt-1 flex-wrap">
         <button onClick={() => void handleSave()} disabled={state === "saving"}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
           {state === "saving" ? t("auth.saving") : t("notify.save")}
         </button>
         <button onClick={() => void handleTest()}
-          className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
+          className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
           {t("notify.test")}
         </button>
         {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
@@ -1801,7 +1801,7 @@ function ReplicateNowButton({
         type="button"
         onClick={() => void go()}
         disabled={st === "busy"}
-        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
       </button>
@@ -1852,7 +1852,7 @@ function TestConnectionButton({
         type="button"
         onClick={() => void go()}
         disabled={st === "busy"}
-        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
       </button>
@@ -2102,7 +2102,7 @@ function IntegrityCard({
   };
 
   const selectCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
 
   return (
     <Card title={t("integrity.title")}>
@@ -2128,7 +2128,7 @@ function IntegrityCard({
       {/* Drill-type toggle: subset integrity check vs a real off-site DR restore. */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
-        <div className="inline-flex rounded-lg bg-carbon-surface2 overflow-hidden">
+        <div className="inline-flex rounded-control bg-carbon-surface2 overflow-hidden">
           {([
             ["subset", t("drill.kindSubset")],
             ["dr", t("drill.kindDR")],
@@ -2162,7 +2162,7 @@ function IntegrityCard({
           other cards' edits. Flash and files have no picker (their whole
           snapshot is restored). */}
       {kind === "dr" && (
-        <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+        <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
           <p className="text-xs text-carbon-textMuted">{t("drill.drNote")}</p>
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
             {t("drill.target")}
@@ -2223,7 +2223,7 @@ function IntegrityCard({
                         onClick={() => void run(domain, a.key)}
                         disabled={state[k] === "busy"}
                         title={t(`integrity.${a.key}Hint`)}
-                        className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {state[k] === "busy" ? a.busy : a.label}
                       </button>
@@ -2241,7 +2241,7 @@ function IntegrityCard({
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
                   title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
-                  className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                  className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                 >
                   {state[dKey] === "busy"
                     ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
@@ -2288,7 +2288,7 @@ function IntegrityCard({
                     onClick={() => void runTamperFor(domain)}
                     disabled={tRes?.kind === "busy"}
                     title={t("integrity.appendOnlyHint")}
-                    className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                    className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                   >
                     {tRes?.kind === "busy" ? t("integrity.checking") : t("integrity.appendOnly")}
                   </button>
@@ -2382,7 +2382,7 @@ function ScheduleBadge({
   };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls[status]}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium ${cls[status]}`}
     >
       {label}
     </span>
@@ -2426,7 +2426,7 @@ function ContainersSection({
       </div>
 
       {/* Editable cadence builder */}
-      <div className="rounded-lg bg-carbon-surface2 p-4">
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.containersSection")}
           value={schedule}
@@ -2509,7 +2509,7 @@ function VMsSection({
           }
         />
       </div>
-      <div className={`rounded-lg bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+      <div className={`rounded-card bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
         <CadenceBuilder
           label={t("jobs.vmsSection")}
           value={schedule}
@@ -2580,7 +2580,7 @@ function FlashSection({
           }
         />
       </div>
-      <div className={`rounded-lg bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+      <div className={`rounded-card bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
         <CadenceBuilder
           label={t("jobs.flashSection")}
           value={schedule}
@@ -2651,7 +2651,7 @@ function FilesSection({
           }
         />
       </div>
-      <div className="rounded-lg bg-carbon-surface2 p-4">
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.filesSection")}
           value={schedule}
@@ -2684,7 +2684,7 @@ function FilesSection({
                 aria-label={`${t("files.enabled")}: ${s.name}`}
                 disabled={!!busy[s.id]}
                 onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-[min(var(--radius-pill),50%)] transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
                   s.enabled ? "bg-accent" : "bg-carbon-surface3"
                 }`}
               >
@@ -2732,7 +2732,7 @@ function RestoreChecksSection({
           onChange={(v) => update({ offsiteDrillsEnabled: v })}
         />
       </div>
-      <div className={`rounded-lg bg-carbon-surface2 p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
+      <div className={`rounded-card bg-carbon-surface2 p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
         <CadenceBuilder
           label={t("settings.schedule")}
           value={settings.drillsSchedule}
@@ -2752,7 +2752,7 @@ function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
       </label>
     </Card>
@@ -3185,7 +3185,7 @@ export function SettingsPage() {
                 /* history unavailable — tab state still switches */
               }
             }}
-            className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            className={`rounded-control px-3 py-1.5 text-sm transition-colors ${
               tab === key
                 ? "bg-accent text-accentContrast"
                 : "text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover"
@@ -3219,7 +3219,7 @@ export function SettingsPage() {
               onChange={(e) =>
                 setSettings((prev) => (prev ? { ...prev, perItemSchedules: e.target.checked } : prev))
               }
-              className="mt-0.5 h-4 w-4 rounded-sm border-carbon-border bg-carbon-surface2 accent-(--accent)"
+              className="mt-0.5 h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
             />
             <span className="flex flex-col">
               <span className="text-sm text-carbon-text">{t("settings.perItemSchedules")}</span>
@@ -3241,7 +3241,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={syncSchedules}
               onChange={(e) => setSyncSchedules(e.target.checked)}
-              className="h-4 w-4 rounded-sm border-carbon-border bg-carbon-surface2 accent-(--accent)"
+              className="h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
             />
             <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
           </label>
@@ -3293,7 +3293,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 />
               </div>
             ))}
@@ -3310,7 +3310,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -3373,7 +3373,7 @@ export function SettingsPage() {
                       prev ? { ...prev, restartHealthTimeoutSec: n } : prev
                     );
                   }}
-                  className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 />
                 <span className="text-xs text-carbon-textMuted">
                   {t("settings.restartHealthTimeoutHint")}
@@ -3400,7 +3400,7 @@ export function SettingsPage() {
           {/* Restore-check schedule (schedulesChecks): the scheduled off-site
               append-only tamper test. Previously had no UI editor at all. */}
           <Card title={t("settings.schedulesChecks")}>
-            <div className="rounded-lg bg-carbon-surface2 p-4">
+            <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
                 label={t("settings.tamperTestSchedule")}
                 value={settings.tamperTestSchedule}
@@ -3411,7 +3411,7 @@ export function SettingsPage() {
               {/* #109: the scheduler stays inert without a qualifying domain — this
                   is the only place that told manilx why Sun 08:00 never ran. */}
               {!tamperScheduleActive && (
-                <div className="mt-3 rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                   {t("settings.tamperScheduleInactive")}
                 </div>
               )}
@@ -3620,7 +3620,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
           ))}
@@ -3751,7 +3751,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -3775,7 +3775,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -3804,7 +3804,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
             <button
@@ -3819,7 +3819,7 @@ export function SettingsPage() {
                     : prev
                 )
               }
-              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("settings.registryRemove")}
             </button>
@@ -3840,7 +3840,7 @@ export function SettingsPage() {
                 return { ...prev, registryAuths: [...prev.registryAuths, blank] };
               })
             }
-            className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("settings.registryAdd")}
           </button>
@@ -3899,7 +3899,7 @@ export function SettingsPage() {
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
             }}
-            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </label>
         <SaveBar
@@ -3935,7 +3935,7 @@ export function SettingsPage() {
         />
         {settings.flashZipExportEnabled && (
           <>
-            <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("flash.zipExport.plaintextWarn")}
             </div>
             <FolderBrowser
@@ -3977,7 +3977,7 @@ export function SettingsPage() {
                     setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
-                  className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 />
                 <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
@@ -4033,7 +4033,7 @@ export function SettingsPage() {
                 setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
               }
               placeholder={t("export.encrypt.recipientsPlaceholder")}
-              className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
             <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
             {!settings.exportAgeRecipients.trim() && (
@@ -4094,7 +4094,7 @@ export function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
-                  className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+                  className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
                 >
                   {wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
                 </button>
@@ -4117,7 +4117,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                   }
                   placeholder="rest:http://host:8000/repo"
-                  className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
@@ -4185,7 +4185,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
           ))}
@@ -4234,7 +4234,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
             </label>
           ))}
@@ -4287,7 +4287,7 @@ export function SettingsPage() {
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
-            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
           />
         </label>
         <SaveBar
@@ -4359,7 +4359,7 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, encryptionEnabled: v } : prev)
           }
         />
-        <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+        <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
           {t("settings.encryptionWarning")}
         </div>
         {settings.encryptionEnabled && (
@@ -4376,7 +4376,7 @@ export function SettingsPage() {
                 setKitError(null);
                 void downloadRecoveryKit().then(setKitError);
               }}
-              className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+              className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
             >
               {t("recovery.download")}
             </button>
@@ -4443,7 +4443,7 @@ export function SettingsPage() {
               setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
             }
           />
-          <div className={`rounded-lg bg-carbon-surface2 p-4 ${settings.digestEnabled ? "" : "opacity-50"}`}>
+          <div className={`rounded-card bg-carbon-surface2 p-4 ${settings.digestEnabled ? "" : "opacity-50"}`}>
             <CadenceBuilder
               label={t("settings.schedule")}
               value={settings.digestSchedule}
@@ -4552,7 +4552,7 @@ export function SettingsPage() {
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -4565,7 +4565,7 @@ export function SettingsPage() {
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
             />
           </div>
 
@@ -4574,7 +4574,7 @@ export function SettingsPage() {
             <button
               onClick={() => void handleSetPassword()}
               disabled={pwSaveState === "saving"}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {pwSaveState === "saving" ? (
                 <>
@@ -4604,13 +4604,13 @@ export function SettingsPage() {
           <div className="pt-2 border-t border-carbon-border flex items-center gap-3">
             <button
               onClick={() => void handleLogout()}
-              className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("auth.logout")}
             </button>
             <button
               onClick={() => void handleLogoutAll()}
-              className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("settings.logoutAll")}
             </button>
@@ -4636,7 +4636,7 @@ export function SettingsPage() {
                   setAccentHex(e.target.value);
                   setAccent(e.target.value);
                 }}
-                className="h-8 w-14 cursor-pointer rounded-sm bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 title={t("settings.accentColor")}
               />
               {/* Preset swatches */}

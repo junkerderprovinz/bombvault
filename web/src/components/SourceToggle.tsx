@@ -66,7 +66,7 @@ export function SourceToggle({
 
   return (
     <span className="inline-flex items-center gap-2 flex-wrap">
-      <span className="inline-flex rounded-lg bg-carbon-surface2 overflow-hidden">
+      <span className="inline-flex rounded-control bg-carbon-surface2 overflow-hidden">
         {opt("local", t("source.local"), source === "local")}
         {/* Switching to off-site always lands on the PRIMARY target first; the
             picker below then narrows it down. */}
@@ -78,7 +78,7 @@ export function SourceToggle({
           value={source}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value as RepoSource)}
-          className="rounded-lg bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 disabled:opacity-50 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 disabled:opacity-50 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         >
           {targets.map((target, i) => (
             <option key={target.id} value={offsiteTargetSource(target, i)}>

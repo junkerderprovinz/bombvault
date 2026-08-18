@@ -46,7 +46,7 @@ function ConfigBackupButton({
       <button
         onClick={() => void fire()}
         disabled={isPending || externallyBusy}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? (
           <>
@@ -105,7 +105,7 @@ function labelledInput(
         spellCheck={false}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
       />
       {hint && <p className="text-xs text-carbon-textMuted">{hint}</p>}
     </div>
@@ -208,7 +208,7 @@ function ConfigSettingsCard({
         <button
           onClick={() => void handleSave()}
           disabled={saveState === "saving"}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {saveState === "saving" ? (
             <>
@@ -280,7 +280,7 @@ function ConfigSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -372,7 +372,7 @@ export function Config() {
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("config.snapshotsTitle")}
         </h2>
-        <div className="rounded-lg bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("config.snapshotsHint")}
         </div>
 
@@ -390,7 +390,7 @@ export function Config() {
           <p className="text-xs text-carbon-textMuted">{t("config.none")}</p>
         )}
         {!loading && snapshots.length > 0 && (
-          <div className="rounded-lg bg-carbon-background px-3 py-1">
+          <div className="rounded-card bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
               <ConfigSnapshotRow
                 key={snap.id}

@@ -117,12 +117,12 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
-          className="flex-1 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
         />
         <button
           onClick={handleOpen}
           title={t("folder.browseTitle")}
-          className="shrink-0 rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           {t("folder.browse")}
         </button>
@@ -140,7 +140,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
 
       {/* Browser panel */}
       {open && (
-        <div className="mt-1 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           {/* Header: current path + close */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-mono text-carbon-textSub min-w-0 truncate">
@@ -174,7 +174,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               {browsePath !== "" && (
                 <button
                   onClick={handleUp}
-                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-sm hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
                 >
                   ..
                 </button>
@@ -186,7 +186,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 <button
                   key={d.path}
                   onClick={() => doFetch(d.path)}
-                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-sm hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
                 >
                   {d.name}/
                 </button>
@@ -209,12 +209,12 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 }}
                 spellCheck={false}
                 placeholder={t("folder.newFolderPlaceholder")}
-                className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
               />
               <button
                 onClick={handleCreate}
                 disabled={creating || newName.trim() === ""}
-                className="shrink-0 rounded-lg bg-carbon-surface3 px-3 py-1 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-1 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {creating ? t("folder.creating") : t("folder.newFolder")}
               </button>
@@ -227,7 +227,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             <div className="flex items-center gap-2 pt-1 border-t border-carbon-border">
               <button
                 onClick={handleSelect}
-                className="text-xs rounded-lg bg-carbon-surface3 px-3 py-1 text-carbon-text hover:bg-carbon-hover transition-colors"
+                className="text-xs rounded-control bg-carbon-surface3 px-3 py-1 text-carbon-text hover:bg-carbon-hover transition-colors"
               >
                 {t("folder.use")}
               </button>
