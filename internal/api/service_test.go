@@ -19,6 +19,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
@@ -2260,6 +2261,93 @@ func TestServiceSetVMIncludeAll(t *testing.T) {
 		if tg.IncludeInSchedule {
 			t.Fatalf("include flag must be false for vm %q", name)
 		}
+	}
+}
+
+// TestListVMsTrueNASDisplaysFriendlyName pins Task 4 of the VM
+// service-layer-integration plan: on TrueNAS, ListVMs must display
+// virshcli.VMInfo.FriendlyName in VMView.Name (so the UI shows a real name
+// instead of the bare UUID libvirt uses on TrueNAS 26), while every internal
+// lookup — the store.VMTarget match via byName[vm.Name] here, and (per
+// service.go's other call sites) every virsh/backup/restore call elsewhere —
+// keeps using vm.Name (the raw libvirt/UUID name). FriendlyName must never
+// leak into an identifier role.
+func TestListVMsTrueNASDisplaysFriendlyName(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	const rawName = "550e8400-e29b-41d4-a716-446655440000"
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: rawName, Method: "live"}); err != nil {
+		t.Fatal(err)
+	}
+	settings := mustSettings(t, st)
+	settings.VMsEnabled = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	v := listVMsVirsh{vms: []virshcli.VMInfo{
+		{Name: rawName, State: "running", FriendlyName: "debian"},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	svc.SetPlatform(platform.TrueNAS{})
+
+	views, err := svc.ListVMs(context.Background())
+	if err != nil {
+		t.Fatalf("ListVMs: %v", err)
+	}
+	if len(views) != 1 {
+		t.Fatalf("expected 1 view, got %d: %+v", len(views), views)
+	}
+	got := views[0]
+	if got.Name != "debian" {
+		t.Fatalf("VMView.Name = %q, want the resolved friendly name %q (raw name %q must not leak into the display value)", got.Name, "debian", rawName)
+	}
+	// The byName[vm.Name] target lookup must still have matched via the RAW
+	// name — proven by the target's Method ("live") having been applied to
+	// this view, not the target-lookup default ("graceful").
+	if got.Method != "live" {
+		t.Fatalf("Method = %q, want %q — byName lookup must key on the raw name (%q), not the friendly name", got.Method, "live", rawName)
+	}
+}
+
+// TestListVMsUnraidUnaffectedByFriendlyName pins the other half of Task 4:
+// on any non-TrueNAS platform (Unraid here), FriendlyName must never be
+// consulted — VMView.Name must equal the raw virsh name exactly as before
+// this task, even when a VM's List entry happens to carry a different
+// FriendlyName value (proving the gate is on platform.Kind(), never on
+// FriendlyName happening to differ from Name).
+func TestListVMsUnraidUnaffectedByFriendlyName(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	settings := mustSettings(t, st)
+	settings.VMsEnabled = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	const rawName = "10_Windows"
+	v := listVMsVirsh{vms: []virshcli.VMInfo{
+		// A misleading FriendlyName the shape-based classifier could produce
+		// (see the gotcha documented on virshcli.VMInfo.FriendlyName) — must
+		// be ignored entirely off TrueNAS.
+		{Name: rawName, State: "shut off", FriendlyName: "Windows"},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	svc.SetPlatform(platform.Unraid{})
+
+	views, err := svc.ListVMs(context.Background())
+	if err != nil {
+		t.Fatalf("ListVMs: %v", err)
+	}
+	if len(views) != 1 {
+		t.Fatalf("expected 1 view, got %d: %+v", len(views), views)
+	}
+	if got := views[0].Name; got != rawName {
+		t.Fatalf("VMView.Name = %q, want the raw name %q unchanged on Unraid (FriendlyName must be ignored off TrueNAS)", got, rawName)
 	}
 }
 

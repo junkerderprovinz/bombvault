@@ -5862,11 +5862,26 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		byName[t.Name] = t
 	}
 
+	// displayName is the raw libvirt name for every platform except TrueNAS,
+	// where it is the presentation-only virshcli.VMInfo.FriendlyName
+	// (resolves the bare UUID libvirt uses for domain names on TrueNAS 26 to
+	// something readable). Gated explicitly on Kind() per the gotcha
+	// documented on FriendlyName (internal/virshcli/types.go): the
+	// classifier that populates it is shape-based, not platform-gated, so a
+	// non-TrueNAS host must never trust it even when it happens to differ
+	// from Name. vm.Name — never FriendlyName — is still used below for the
+	// byName lookup and stays the identifier everywhere else in this file.
+	isTrueNAS := s.platformFn().Kind() == platform.KindTrueNAS
+
 	live := make(map[string]bool, len(infos))
 	views := make([]VMView, 0, len(infos)+len(targets))
 	for _, vm := range infos {
 		live[vm.Name] = true
-		v := VMView{Name: vm.Name, State: vm.State, Method: "graceful"}
+		displayName := vm.Name
+		if isTrueNAS {
+			displayName = vm.FriendlyName
+		}
+		v := VMView{Name: displayName, State: vm.State, Method: "graceful"}
 		if t, ok := byName[vm.Name]; ok {
 			v.Method = t.Method
 			v.IncludeInSchedule = t.IncludeInSchedule
