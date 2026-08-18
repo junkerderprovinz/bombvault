@@ -36,6 +36,7 @@ import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFiles } from "../components/Sidebar";
 import { useT } from "../lib/i18n";
 import { Advanced } from "../lib/advanced";
@@ -1157,9 +1158,7 @@ export function Files() {
       {/* Empty state — the "no separate file-backup tool needed" pitch */}
       {!loading && !error && sets.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
-          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
-            <IconFiles />
-          </div>
+          <EmptyStateIcon icon={IconFiles} />
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("files.empty")}</p>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {preset?.offered && (

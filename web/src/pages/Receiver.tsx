@@ -29,6 +29,7 @@ import type {
 import { useT } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
 import { humanBytes } from "../lib/forecast";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconReceiver } from "../components/Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
@@ -588,9 +589,7 @@ export function Receiver() {
       {/* Empty state */}
       {!loading && !error && repos.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
-          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
-            <IconReceiver />
-          </div>
+          <EmptyStateIcon icon={IconReceiver} />
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("receiver.empty")}</p>
           <button
             onClick={() => setDialog("new")}

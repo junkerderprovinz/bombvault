@@ -12,6 +12,7 @@ import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { ProgressBar } from "../components/ProgressBar";
@@ -1919,9 +1920,7 @@ export function Containers() {
               BombVault-managed list to add to. The page's own Discover button
               above (disaster-recovery re-scan) is already the relevant action
               for an empty result, so a second button here would be redundant. */}
-          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
-            <IconContainers />
-          </div>
+          <EmptyStateIcon icon={IconContainers} />
           <p className="text-sm text-carbon-textMuted">
             {t("containers.emptyDocker")}
           </p>

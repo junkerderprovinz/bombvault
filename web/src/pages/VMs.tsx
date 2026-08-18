@@ -10,6 +10,7 @@ import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM } from "../components/Sidebar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
@@ -1258,9 +1259,7 @@ export function VMs() {
               BombVault-managed list to add to. The page's own Discover button
               above (disaster-recovery re-scan) is already the relevant action
               for an empty result, so a second button here would be redundant. */}
-          <div className="text-carbon-textMuted opacity-40 [&_svg]:h-10 [&_svg]:w-10">
-            <IconVM />
-          </div>
+          <EmptyStateIcon icon={IconVM} />
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
       )}
