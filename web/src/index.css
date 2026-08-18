@@ -245,12 +245,24 @@
 
   /* Accent inherits --accent from :root (BombVault keeps one accent hex
      across both themes; see the comment on the dark block's --accent-soft).
-     --accent-contrast/--accent-soft/--focus-ring are therefore the SAME
-     values as the dark block, not reference's light-specific #8E6A00-based
-     numbers — see that comment for why. */
+     --accent-contrast/--accent-soft are therefore the SAME values as the
+     dark block, not reference's light-specific #8E6A00-based numbers —
+     see that comment for why. */
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
-  --focus-ring: rgba(252, 196, 25, .55);
+
+  /* --focus-ring, unlike --accent-soft above, does NOT inherit the dark
+     block's value — measured live against this theme's real Card surface
+     (--carbon-surface #ffffff) the dark rgba(252,196,25,.55) composites to
+     only ~1.3:1, well under WCAG 2.2 SC 1.4.11's 3:1 minimum for non-text UI
+     indicators. rgba(142,106,0,.85) is Carbon yellow-60 (the same hex already
+     used as --status-warn-text below, so it stays in the accent's amber/gold
+     hue family) at a higher opacity than the dark ring's .55, chosen because
+     that hue needs to be both darker AND more opaque to read on a light
+     surface. Computed via the standard WCAG relative-luminance formula:
+     composites to ~#9f8026 on #ffffff (3.75:1) and ~#9d7f25 on #f4f4f4, the
+     page background (3.48:1) — both clear 3:1 with real margin. */
+  --focus-ring: rgba(142, 106, 0, .85);
 
   /* Shape and type scale live once, on a bare :root above (theme-invariant —
      see the comment there). */
@@ -334,6 +346,14 @@
 
     --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
     --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
+
+    /* Same WCAG-driven light-theme value as [data-theme="light"] above —
+       needs restating here too, since :root:not([data-theme]) doesn't
+       inherit from that selector and would otherwise fall back to the bare
+       :root/[data-theme="dark"] block's --focus-ring, which fails contrast
+       on a light surface. See the comment on [data-theme="light"]'s
+       --focus-ring for the measured numbers. */
+    --focus-ring: rgba(142, 106, 0, .85);
   }
 }
 
