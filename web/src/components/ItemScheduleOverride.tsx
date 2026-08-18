@@ -62,7 +62,7 @@ export function ItemScheduleOverride({
   }
 
   return (
-    <div className="flex flex-col gap-2 pl-5">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("schedule.overrideTitle")}:</span>
         <span className={`text-xs ${active ? "text-carbon-textSub" : "text-carbon-textMuted italic"}`}>

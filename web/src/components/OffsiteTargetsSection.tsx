@@ -9,6 +9,7 @@ import {
   getCloudCredSets,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { Toggle } from "./Toggle";
 
 // ---------------------------------------------------------------------------
 // OffsiteTargetsSection — per-domain "Additional off-site targets" editor
@@ -359,27 +360,16 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
           {/* Append-only (immutable) toggle */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-0.5">
-              <span id={`tgt-imm-${domain}`} className="text-sm text-carbon-text">
-                {t("offsite.immutable")}
-              </span>
+              <span className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
               <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={draft.immutable}
-              aria-labelledby={`tgt-imm-${domain}`}
-              onClick={() => setDraft((d) => (d ? { ...d, immutable: !d.immutable } : d))}
-              className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid ${
-                draft.immutable ? "bg-accent" : "bg-carbon-surface3"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                  draft.immutable ? "translate-x-[18px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
+            <Toggle
+              hideLabel
+              label={t("offsite.immutable")}
+              checked={draft.immutable}
+              onChange={(v) => setDraft((d) => (d ? { ...d, immutable: v } : d))}
+              className="mt-0.5"
+            />
           </div>
 
           {/* Retention */}

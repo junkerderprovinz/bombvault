@@ -9,6 +9,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
+import { Toggle } from "../components/Toggle";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
@@ -85,36 +86,28 @@ export function ToggleRow({
   checked,
   onChange,
   disabled,
+  hideLabel = false,
 }: {
   label: string;
   description?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  /** Suppress the row's own visible caption when a Card title directly above
+   *  already says the same thing (e.g. a single-purpose Card whose title IS
+   *  the decision this switch makes) — the label still reaches screen readers
+   *  via the underlying Toggle's aria-label. Any `description` still renders. */
+  hideLabel?: boolean;
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm text-carbon-text">{label}</span>
+        {!hideLabel && <span className="text-sm text-carbon-text">{label}</span>}
         {description && (
           <span className="text-xs text-carbon-textMuted">{description}</span>
         )}
       </div>
-      <button
-        role="switch"
-        aria-checked={checked}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
-          checked ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            checked ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      <Toggle hideLabel label={label} checked={checked} onChange={onChange} disabled={disabled} className="mt-0.5" />
     </div>
   );
 }
@@ -4266,6 +4259,7 @@ export function SettingsPage() {
       <Card title={t("settings.metrics")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
         <ToggleRow
+          hideLabel
           label={t("settings.metricsEnable")}
           description="GET /metrics"
           checked={settings.metricsEnabled}
@@ -4437,6 +4431,7 @@ export function SettingsPage() {
             {t("settings.digestHint")}
           </p>
           <ToggleRow
+            hideLabel
             label={t("settings.digestToggle")}
             checked={settings.digestEnabled}
             onChange={(v) =>

@@ -213,7 +213,15 @@ export function CadenceBuilder({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50";
 
   return (
-    <div className={`flex flex-col gap-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+    // A <fieldset> — not opacity — carries the disabled state: it natively
+    // disables every nested button/input (they match the :disabled CSS
+    // pseudo-class without each one needing its own `disabled` prop wired
+    // through), so no pointer-events-none hack is needed either. Rule 15
+    // rules out opacity on a CONTAINER (it composites the whole subtree);
+    // each interactive element below dims itself individually instead via
+    // its own `disabled:opacity-50` — the same per-control pattern the
+    // switch/button controls elsewhere in this app already use.
+    <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-3 border-0 m-0 p-0">
       <span className="text-xs text-carbon-textSub font-medium">{label}</span>
 
       {/* Mode pills */}
@@ -222,7 +230,7 @@ export function CadenceBuilder({
           <button
             key={m}
             onClick={() => update({ mode: m })}
-            className={`rounded-control px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-control px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
               state.mode === m
                 ? "bg-accent text-accentContrast"
                 : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -263,7 +271,7 @@ export function CadenceBuilder({
               <button
                 key={d}
                 onClick={() => toggleWeekday(d)}
-                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                   state.weekdays.includes(d)
                     ? "bg-accent text-accentContrast"
                     : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -314,7 +322,7 @@ export function CadenceBuilder({
           {formatCadence(buildCadenceString(state), t, lang)}
         </p>
       )}
-    </div>
+    </fieldset>
   );
 }
 
@@ -386,7 +394,7 @@ function CronEditor({
           <button
             key={ex.expr}
             onClick={() => onChange(ex.expr)}
-            className="self-start rounded px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+            className="self-start rounded px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             <code className="font-mono text-carbon-text">{ex.expr}</code>
             <span className="ml-2">{t(ex.key)}</span>
