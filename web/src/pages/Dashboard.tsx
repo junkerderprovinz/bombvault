@@ -1548,6 +1548,20 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
 
   return (
     <div className="rounded-card bg-statusWarnBg px-4 py-3 flex flex-col gap-2">
+      {/* Task 5 (rule 11): deliberately NOT a heading badge, and the one
+          outermost <h2> on this page that isn't — see Badge.tsx's file header
+          for the shared reasoning. Short version: this panel's own surface is
+          already a filled status wash (bg-statusWarnBg), so a "filled" badge
+          on top of it has nothing to fill against. Measured on the live page,
+          badge-fill vs. this panel: accent-soft 1.06:1 light / 1.39:1 dark,
+          warn-strong 1.00:1 light (the two warn-bg tokens share one value in
+          light mode) / 1.11:1 dark. Either way the fill reads as invisible,
+          so the badge would look like plain text wearing extra padding while
+          also throwing away the text-statusWarn colour that currently carries
+          the alert's meaning (8.62:1 against the panel). Rule 11's filled
+          badge presumes a neutral card surface underneath; this alert isn't
+          one. Revisit only if a genuine "badge on a status surface" token
+          pair ever exists. */}
       <h2 className="text-sm font-semibold text-statusWarn">
         {t("recovery.nagTitle")}
       </h2>
