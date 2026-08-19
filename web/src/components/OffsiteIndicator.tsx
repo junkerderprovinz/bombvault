@@ -12,9 +12,17 @@ const MIN_VISIBLE_MS = 2500;
 
 /**
  * Active (indeterminate) "off-site replication running" indicator for a domain.
- * `restic copy` exposes no machine-readable progress, so this shows an animated
- * pill while a replication is in flight (which domain is running) rather than a
- * filling percentage bar. Renders nothing when no replication is active.
+ * `restic copy` exposes no machine-readable progress (see internal/api/service.go's
+ * copyToOffsite), so this shows an indeterminate sliding segment while a
+ * replication is in flight (which domain is running) rather than a fabricated
+ * percentage. Renders nothing when no replication is active.
+ *
+ * The segment reuses ProgressBar's own `bv-indeterminate` keyframe/accent color
+ * so it reads as the same "progress bar" motif as the determinate bars
+ * elsewhere in the app (Containers/VMs/Files/Flash cards, the restore panel) -
+ * a small inline shape rather than the full ProgressBar component, since
+ * that component's two layouts (card-pinned track, or inline track with a
+ * caption above it) don't fit a compact single status line like this one.
  *
  * withLabel prefixes the domain name (used on the dashboard, where several
  * domains share one view); on a domain's own page the label is omitted.
@@ -41,9 +49,14 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-carbon-textSub">
       <span
-        className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-        style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
-      />
+        className="relative h-1 w-5 overflow-hidden rounded-pill inline-block"
+        style={{ background: "var(--carbon-border)" }}
+      >
+        <span
+          className="absolute inset-y-0 w-1/3 rounded-pill"
+          style={{ background: "var(--accent)", animation: "bv-indeterminate 1.2s ease-in-out infinite" }}
+        />
+      </span>
       ↗ {label}{t("offsite.replicating")}
     </span>
   );
