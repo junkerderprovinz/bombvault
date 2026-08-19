@@ -2,7 +2,7 @@
 
 **Dina Unraid-data, förseglade i ett valv. Släpp en säkerhetskopia. Detonera en återställning.**
 
-BombVault är en självhostad, Unraid-nativ webbapp för **säkerhetskopiering och fullständig katastrofåterställning** av dina Docker-containrar och KVM/libvirt-VM:ar. Den körs som en enda multi-arch Docker-container, ger dig ett modernt mörkt webbgränssnitt och sköter hela livscykeln: säkerhetskopiera, schemalägg, verifiera och återställ.
+BombVault är en självhostad, Unraid-nativ webbapp för **säkerhetskopiering och fullständig katastrofåterställning** av dina Docker-containrar och KVM/libvirt-VM:ar. Den körs som en enda multi-arch Docker-container, ger dig ett modernt webbgränssnitt som följer systemets ljusa/mörka temainställning, och sköter hela livscykeln: säkerhetskopiera, schemalägg, verifiera och återställ.
 
 Återställningar är automatiska. Containrar dyker upp igen i Unraids Docker-flik precis som förut, och VM:ar återdefinieras i VM Manager med sina diskar och UEFI NVRAM återkopplade. Ingen manuell ominstallation, ingen omkonfiguration, inget krångel.
 

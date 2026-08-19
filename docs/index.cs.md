@@ -2,7 +2,7 @@
 
 **Vaše data z Unraidu, zapečetěná v trezoru. Vhoďte zálohu. Odpalte obnovu.**
 
-BombVault je self-hostovaná webová aplikace nativní pro Unraid pro **zálohování a plné zotavení po havárii** vašich Docker kontejnerů a KVM/libvirt VM. Běží jako jediný multi-arch Docker kontejner, nabízí moderní tmavé webové rozhraní a zvládá celý životní cyklus: zálohovat, plánovat, ověřovat a obnovovat.
+BombVault je self-hostovaná webová aplikace nativní pro Unraid pro **zálohování a plné zotavení po havárii** vašich Docker kontejnerů a KVM/libvirt VM. Běží jako jediný multi-arch Docker kontejner, nabízí moderní webové rozhraní, které se řídí preferencí světlého/tmavého režimu vašeho systému, a zvládá celý životní cyklus: zálohovat, plánovat, ověřovat a obnovovat.
 
 Obnovy jsou automatické. Kontejnery se znovu objeví v záložce Docker v Unraidu přesně jako předtím a VM jsou znovu definovány ve VM Manageru se svými disky a UEFI NVRAM opět připojenými. Žádná ruční reinstalace, žádná rekonfigurace, žádné drama.
 

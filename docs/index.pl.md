@@ -2,7 +2,7 @@
 
 **Twoje dane z Unraid, zapieczętowane w skarbcu. Zrzuć kopię zapasową. Odpal przywracanie.**
 
-BombVault to self-hostowana, natywna dla Unraid aplikacja webowa do **tworzenia kopii zapasowych i pełnego odzyskiwania po awarii** Twoich kontenerów Docker oraz maszyn wirtualnych KVM/libvirt. Działa jako pojedynczy, wieloarchitekturowy kontener Docker, daje Ci nowoczesny, ciemny interfejs webowy i obsługuje cały cykl życia: tworzenie kopii, harmonogramowanie, weryfikację i przywracanie.
+BombVault to self-hostowana, natywna dla Unraid aplikacja webowa do **tworzenia kopii zapasowych i pełnego odzyskiwania po awarii** Twoich kontenerów Docker oraz maszyn wirtualnych KVM/libvirt. Działa jako pojedynczy, wieloarchitekturowy kontener Docker, daje Ci nowoczesny interfejs webowy dopasowujący się do preferencji jasnego/ciemnego motywu Twojego systemu, i obsługuje cały cykl życia: tworzenie kopii, harmonogramowanie, weryfikację i przywracanie.
 
 Przywracanie jest automatyczne. Kontenery pojawiają się ponownie w zakładce Docker w Unraid dokładnie tak jak wcześniej, a maszyny wirtualne są na nowo definiowane w VM Manager z ponownie podpiętymi dyskami i pamięcią UEFI NVRAM. Bez ręcznej reinstalacji, bez rekonfiguracji, bez dramatów.
 

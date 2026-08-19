@@ -24,7 +24,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 ## What is this?
 
-BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery**. One container, a modern dark web UI, and the whole lifecycle:
+BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery**. One container, a modern web UI that follows your system's light/dark preference, and the whole lifecycle:
 
 - **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), and its own `/config`.
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before; VMs are re-defined in the VM Manager with their disks + NVRAM reattached.

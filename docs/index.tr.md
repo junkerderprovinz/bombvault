@@ -2,7 +2,7 @@
 
 **Unraid verileriniz, bir kasada mühürlü. Bir yedek bırakın. Bir geri yüklemeyi patlatın.**
 
-BombVault, Docker konteynerlerinizin ve KVM/libvirt VM'lerinizin **yedeklenmesi ve tam felaket kurtarması** için kendinizin barındırdığı, Unraid'e özgü bir web uygulamasıdır. Tek bir çok mimarili Docker konteyneri olarak çalışır, size modern bir koyu web arayüzü sunar ve tüm yaşam döngüsünü yönetir: yedekle, zamanla, doğrula ve geri yükle.
+BombVault, Docker konteynerlerinizin ve KVM/libvirt VM'lerinizin **yedeklenmesi ve tam felaket kurtarması** için kendinizin barındırdığı, Unraid'e özgü bir web uygulamasıdır. Tek bir çok mimarili Docker konteyneri olarak çalışır, size sisteminizin açık/koyu tema tercihini izleyen modern bir web arayüzü sunar ve tüm yaşam döngüsünü yönetir: yedekle, zamanla, doğrula ve geri yükle.
 
 Geri yüklemeler otomatiktir. Konteynerler, Unraid Docker sekmesinde tam olarak eskisi gibi yeniden görünür ve VM'ler, diskleri ve UEFI NVRAM'i yeniden bağlanmış olarak VM Manager'da yeniden tanımlanır. Elle yeniden kurulum yok, yeniden yapılandırma yok, dram yok.
 
