@@ -2,12 +2,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createPortal } from "react-dom";
 import { ToastViewport } from "../components/Toast";
 import {
+  NO_ENGAGEMENT,
   TOAST_DURATION_MS,
   addToast,
+  applyEngagement,
   pauseToast,
   removeToast,
   resumeToast,
   shouldShowToast,
+  type ToastEngagement,
+  type ToastEngagementKind,
   type ToastEntry,
   type ToastSeverity,
 } from "./toastEngine";
@@ -36,16 +40,12 @@ import { useT } from "./i18n";
 //     box instead of covering the real viewport.
 //   - quiet-mode persistence (localStorage), read once at mount exactly
 //     like AdvancedProvider's own `advanced` flag.
-//   - hover/focus ENGAGEMENT tracking, kept as two independent booleans per
-//     toast id (the `engagement` ref map below) rather than collapsing both
-//     into a single pause/resume call. "Hover OR focus pauses" only holds
-//     together if resume asks "are BOTH now disengaged?" instead of "did
-//     THIS ONE event just end?" — otherwise Tab-ing into a hovered toast
-//     then moving the mouse away (focus is still very much inside it) fires
-//     onMouseLeave, which would resume and auto-dismiss the toast out from
-//     under a keyboard user's focus, snapping `document.activeElement` back
-//     to <body>. The mirror order (focus first, then hover-then-unhover)
-//     has the same root cause. See handleMouseEnter/Leave/Focus/Blur below.
+//   - the per-toast-id hover/focus ENGAGEMENT map (`engagement` below), which
+//     is bookkeeping a pure function can't hold. The RULE that map feeds —
+//     "pause on either edge, resume only once BOTH are disengaged" — is
+//     toastEngine.applyEngagement's, so the one rule this task's first
+//     implementation actually got wrong is unit-tested rather than stranded
+//     in this deliberately-untested file. See setEngagement below.
 // This hook itself is NOT unit tested for the same reason useConfirm.tsx
 // isn't (see that file's header comment): real timers + `document` are
 // exactly what a node-environment test can't exercise directly. Covered by
@@ -112,8 +112,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   // toast id — see this file's header comment for the bug this exists to
   // fix. A ref, not React state: this bookkeeping never needs to trigger a
   // re-render on its own — only the actual pause/resume (which does live in
-  // `toasts` state, below) does.
-  const engagement = useRef(new Map<string, { hover: boolean; focus: boolean }>());
+  // `toasts` state, below) does. Absent from the map == fully disengaged
+  // (setEngagement deletes rather than storing an all-false entry).
+  const engagement = useRef(new Map<string, ToastEngagement>());
 
   const clearTimer = useCallback((id: string) => {
     const handle = timers.current.get(id);
@@ -146,15 +147,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const id = `toast-${++nextId.current}`;
       setToasts((list) => {
         const next = addToast(list, { id, message, severity }, Date.now());
-        // addToast caps the stack at MAX_VISIBLE_TOASTS, dropping the OLDEST
-        // entries once the cap is exceeded (toastEngine.ts — the fix for the
-        // unbounded-stack bug: rapid repeated triggers, e.g. holding Enter
-        // on a focused button at keyboard auto-repeat rate, used to grow the
-        // stack without limit). A dropped toast still has a live setTimeout
-        // scheduled from its own earlier push (and may be mid-hover/focus),
-        // so clean both up now — otherwise a stray timer fires a pointless
-        // dismiss(id) later against an id that's already gone, and the
-        // engagement map would grow unbounded across a long session.
+        // addToast caps the stack at MAX_VISIBLE_TOASTS, dropping the oldest
+        // un-engaged entries once the cap is exceeded (toastEngine.ts — the
+        // fix for the unbounded-stack bug: rapid repeated triggers, e.g.
+        // holding Enter on a focused button at keyboard auto-repeat rate,
+        // used to grow the stack without limit). A dropped toast still has a
+        // live setTimeout scheduled from its own earlier push, so clear it
+        // now — otherwise it fires a pointless dismiss(id) later against an
+        // id that's already gone. Its engagement entry goes too, for the
+        // fallback case where the cap had to drop a paused toast after all.
         for (const dropped of list) {
           if (!next.some((t) => t.id === dropped.id)) {
             clearTimer(dropped.id);
@@ -184,8 +185,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   // Restart the timer from whatever pauseToast froze — NOT the full
   // TOAST_DURATION_MS again (that would be the exact "resets to full
   // duration" bug the spec calls out by name). Only ever invoked once BOTH
-  // engagement flags read false — see handleMouseLeave/handleBlur below,
-  // never called directly from DOM event wiring.
+  // engagement flags read false — that decision is applyEngagement's, routed
+  // through setEngagement below; never called directly from DOM event wiring.
   const resume = useCallback(
     (id: string) => {
       setToasts((list) => {
@@ -200,55 +201,29 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [scheduleTimer]
   );
 
-  // The four DOM-facing handlers actually wired to ToastViewport (below).
-  // pause() fires on either engagement edge unconditionally — harmless,
-  // since pauseToast is itself a no-op once already paused. resume() is the
-  // one that needs the combined check: it only fires once BOTH `hover` and
-  // `focus` read false for this id, which is the actual fix for "hover away
-  // while still Tab-focused inside the toast (or the mirror order) must NOT
-  // resume the countdown out from under the user."
-  const engagementFor = useCallback((id: string) => {
-    let e = engagement.current.get(id);
-    if (!e) {
-      e = { hover: false, focus: false };
-      engagement.current.set(id, e);
-    }
-    return e;
-  }, []);
-
-  const handleMouseEnter = useCallback(
-    (id: string) => {
-      engagementFor(id).hover = true;
-      pause(id);
+  // The one place the four DOM-facing engagement events are handled. Whether
+  // an edge should pause or resume is toastEngine.applyEngagement's call (see
+  // that function for the bug the combined rule exists to fix, and for why
+  // the rule lives in the unit-tested pure engine rather than inline here).
+  // This function only does the two things a pure function can't: keep the
+  // per-id map, and drive the real timers.
+  const setEngagement = useCallback(
+    (id: string, kind: ToastEngagementKind, active: boolean) => {
+      const { next, engaged } = applyEngagement(engagement.current.get(id) ?? NO_ENGAGEMENT, kind, active);
+      // The map holds ONLY currently-engaged toasts, so it self-prunes rather
+      // than accumulating a dead entry per toast id for the life of the tab.
+      if (engaged) engagement.current.set(id, next);
+      else engagement.current.delete(id);
+      if (active) pause(id);
+      else if (!engaged) resume(id);
     },
-    [engagementFor, pause]
+    [pause, resume]
   );
 
-  const handleMouseLeave = useCallback(
-    (id: string) => {
-      const e = engagementFor(id);
-      e.hover = false;
-      if (!e.focus) resume(id);
-    },
-    [engagementFor, resume]
-  );
-
-  const handleFocus = useCallback(
-    (id: string) => {
-      engagementFor(id).focus = true;
-      pause(id);
-    },
-    [engagementFor, pause]
-  );
-
-  const handleBlur = useCallback(
-    (id: string) => {
-      const e = engagementFor(id);
-      e.focus = false;
-      if (!e.hover) resume(id);
-    },
-    [engagementFor, resume]
-  );
+  const handleMouseEnter = useCallback((id: string) => setEngagement(id, "hover", true), [setEngagement]);
+  const handleMouseLeave = useCallback((id: string) => setEngagement(id, "hover", false), [setEngagement]);
+  const handleFocus = useCallback((id: string) => setEngagement(id, "focus", true), [setEngagement]);
+  const handleBlur = useCallback((id: string) => setEngagement(id, "focus", false), [setEngagement]);
 
   const setQuiet = useCallback((next: boolean) => {
     setQuietState(next);

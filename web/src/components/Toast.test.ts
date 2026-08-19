@@ -178,8 +178,24 @@ describe("ToastViewport", () => {
 
   it("caps the viewport height and scrolls as a defensive backstop, so a stack can never spill fully off-screen unreachable", () => {
     const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
-    expect(tree.props?.className).toContain("max-h-[calc(100vh-2rem)]");
+    expect(tree.props?.className).toContain("max-h-screen");
     expect(tree.props?.className).toContain("overflow-y-auto");
+  });
+
+  it("insets the corner with padding, not with a flush offset — the scroll backstop must not clip what paints outside each card", () => {
+    const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
+    const className = String(tree.props?.className ?? "");
+    // overflow-y-auto forces overflow-x to compute to auto as well, so the clip
+    // boundary is the padding box. p-4 keeps each card's --elevation drop shadow
+    // AND the translateX(12px) start of its entrance animation inside it; a
+    // flush bottom-4/end-4 box with no padding sliced both off (live-measured:
+    // scrollWidth 332 vs clientWidth 320 mid-entrance). Same 1rem corner gap
+    // either way — see ToastViewport's comment in Toast.tsx.
+    expect(className).toContain("p-4");
+    expect(className).toContain("bottom-0");
+    expect(className).toContain("end-0");
+    expect(className).not.toMatch(/\bbottom-4\b/);
+    expect(className).not.toMatch(/\bend-4\b/);
   });
 
   it("stacks multiple toasts — all render simultaneously, not one replacing another", () => {

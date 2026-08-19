@@ -173,9 +173,19 @@ export interface ToastViewportProps {
 // backstop only (the cap should make it a no-op on any normal viewport): on
 // a very short viewport it keeps the stack scrollable instead of spilling
 // cards above y=0 with no way to reach them.
+//
+// The corner inset is `p-4` on a `bottom-0 end-0` box rather than `bottom-4
+// end-4` on a padding-less one — same 1rem gap, but the cards now sit 1rem
+// inside the clip boundary instead of flush against it. `overflow-y: auto`
+// forces `overflow-x` to compute to `auto` too, so a flush box clips
+// everything that paints outside the cards: each card's `--elevation` drop
+// shadow, and — visibly — the first ~100ms of the `glim-toast-in` entrance,
+// which starts at `translateX(12px)` and so got its trailing edge sliced
+// square against the boundary on every single toast. max-h-screen minus that
+// 2rem of padding leaves exactly the same content height as before.
 export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur }: ToastViewportProps) {
   return (
-    <div className="pointer-events-none fixed bottom-4 end-4 z-[70] flex max-h-[calc(100vh-2rem)] flex-col gap-2 overflow-y-auto">
+    <div className="pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">
       {toasts.map((t) => (
         <ToastCard
           key={t.id}

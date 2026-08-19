@@ -62,11 +62,22 @@ export interface ToastEntry {
 /** Stacks a new toast onto the END of the list — never replaces an existing
  *  one (design-language.md: "Stacked, not replaced. Multiple toasts queue in
  *  a fixed corner rather than one overwriting the next"). Bounded at
- *  `maxVisible`: once the stack would exceed the cap, the OLDEST toast(s)
- *  are dropped from the FRONT — never the newest. A user who just triggered
- *  an action expects to see feedback for THAT action, so the brand-new push
- *  always survives; it's the stalest, already-half-read toast that gives up
- *  its spot. */
+ *  `maxVisible` (which must be >= 1): once the stack would exceed the cap,
+ *  the OLDEST toast(s) are dropped from the FRONT — never the newest. A user
+ *  who just triggered an action expects to see feedback for THAT action, so
+ *  the brand-new push always survives; it's the stalest, already-half-read
+ *  toast that gives up its spot.
+ *
+ *  One exception to "oldest first": a PAUSED toast (expiresAt === null) is
+ *  one the user is actively hovering or tabbed into, and evicting it does
+ *  the exact damage the hover/focus pause exists to prevent — yanking away
+ *  something being read, or destroying a keyboard user's focus position
+ *  (React unmounts the focused dismiss button and `document.activeElement`
+ *  snaps back to <body>). Since a paused toast never expires on its own, it
+ *  is also permanently the oldest entry, so a naive drop-oldest would target
+ *  it FIRST. So the cap skips paused toasts while it has running ones left
+ *  to drop, and only falls back to dropping the plain oldest if every older
+ *  toast is paused. */
 export function addToast(
   list: ToastEntry[],
   toast: { id: string; message: string; severity: ToastSeverity },
@@ -74,17 +85,28 @@ export function addToast(
   durationMs: number = TOAST_DURATION_MS,
   maxVisible: number = MAX_VISIBLE_TOASTS
 ): ToastEntry[] {
-  const next = [
-    ...list,
-    {
-      id: toast.id,
-      message: toast.message,
-      severity: toast.severity,
-      remainingMs: durationMs,
-      expiresAt: now + durationMs,
-    },
-  ];
-  return next.length > maxVisible ? next.slice(next.length - maxVisible) : next;
+  const newest: ToastEntry = {
+    id: toast.id,
+    message: toast.message,
+    severity: toast.severity,
+    remainingMs: durationMs,
+    expiresAt: now + durationMs,
+  };
+  let toDrop = list.length + 1 - maxVisible;
+  if (toDrop <= 0) return [...list, newest];
+  // Pass 1, oldest first: give up the running (un-engaged) toasts.
+  const kept: ToastEntry[] = [];
+  for (const t of list) {
+    if (toDrop > 0 && t.expiresAt != null) {
+      toDrop--;
+      continue;
+    }
+    kept.push(t);
+  }
+  // Pass 2: still over the cap, so every remaining older toast is paused —
+  // drop the plain oldest of those rather than the user's newest feedback.
+  if (toDrop > 0) kept.splice(0, toDrop);
+  return [...kept, newest];
 }
 
 /** Removes exactly the targeted toast — every other toast in the stack is
@@ -115,6 +137,47 @@ export function resumeToast(list: ToastEntry[], id: string, now: number): ToastE
     if (t.id !== id || t.expiresAt != null) return t;
     return { ...t, expiresAt: now + t.remainingMs };
   });
+}
+
+/** The two independent ways a user can be engaged with a toast. Kept as two
+ *  named flags rather than one boolean because they end and begin
+ *  independently: the mouse can leave while the keyboard is still inside. */
+export interface ToastEngagement {
+  hover: boolean;
+  focus: boolean;
+}
+
+export type ToastEngagementKind = keyof ToastEngagement;
+
+/** Shared "neither hovered nor focused" starting point. Readonly because it is
+ *  one object handed to every caller — applyEngagement always returns a fresh
+ *  object rather than editing what it was given. */
+export const NO_ENGAGEMENT: Readonly<ToastEngagement> = { hover: false, focus: false };
+
+/** Folds one hover/focus edge into a toast's engagement state and answers the
+ *  only question the caller actually has: may the countdown run again now?
+ *
+ *  This is the rule the first implementation of the toast system got wrong:
+ *  onMouseLeave and onBlur each resumed the countdown on their own, so Tab-ing
+ *  into a hovered toast and then moving the mouse away — with focus still very
+ *  much inside the toast — resumed it and auto-dismissed it out from under the
+ *  keyboard user, snapping `document.activeElement` back to <body>. "Hover OR
+ *  focus pauses" only holds together if resuming asks "are BOTH disengaged?"
+ *  rather than "did THIS one just end?".
+ *
+ *  It lives here, in the pure engine, rather than inline in lib/toast.tsx's
+ *  DOM handlers, for the same reason every other timing rule does: this file
+ *  is unit-testable as plain function calls, and that file (real timers +
+ *  `document`) deliberately isn't. A false `engaged` doubles as "nothing left
+ *  to remember about this toast", so the caller can drop it from its per-id
+ *  bookkeeping instead of accumulating an entry per toast id forever. */
+export function applyEngagement(
+  prev: Readonly<ToastEngagement>,
+  kind: ToastEngagementKind,
+  active: boolean
+): { next: ToastEngagement; engaged: boolean } {
+  const next = { ...prev, [kind]: active };
+  return { next, engaged: next.hover || next.focus };
 }
 
 /** Severity-based quiet mode (design-language.md: "A quiet mode filters by

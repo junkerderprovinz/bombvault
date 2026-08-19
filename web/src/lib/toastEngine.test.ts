@@ -9,12 +9,15 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_VISIBLE_TOASTS,
+  NO_ENGAGEMENT,
   TOAST_DURATION_MS,
   addToast,
+  applyEngagement,
   pauseToast,
   removeToast,
   resumeToast,
   shouldShowToast,
+  type ToastEngagement,
   type ToastEntry,
 } from "./toastEngine";
 
@@ -101,6 +104,94 @@ describe("addToast", () => {
     }
     expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
     expect(list.map((t) => t.id)).toEqual(Array.from({ length: MAX_VISIBLE_TOASTS }, (_, i) => `t${i}`));
+  });
+
+  it("skips a PAUSED toast when making room — evicting the one being hovered/tabbed into is the very damage the pause prevents", () => {
+    let list: ToastEntry[] = [];
+    for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
+    }
+    // The user hovers (or Tabs into) the OLDEST toast, which pauses it — and a
+    // paused toast never expires, so plain drop-oldest would target it first.
+    list = pauseToast(list, "t0", 10);
+    list = addToast(list, { id: "new", message: "New", severity: "success" }, 20);
+    expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
+    expect(list.map((t) => t.id)).toEqual(["t0", "t2", "t3", "new"]);
+    // t0 is still paused and still holding its frozen remainder.
+    expect(list[0].expiresAt).toBeNull();
+  });
+
+  it("falls back to dropping the oldest when EVERY older toast is paused — the newest still always survives", () => {
+    let list: ToastEntry[] = [];
+    for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
+    }
+    for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) list = pauseToast(list, `t${i}`, 10);
+    list = addToast(list, { id: "new", message: "New", severity: "success" }, 20);
+    expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
+    expect(list.map((t) => t.id)).toEqual(["t1", "t2", "t3", "new"]);
+  });
+
+  it("drops several at once past the cap, still preferring running toasts over paused ones", () => {
+    let list: ToastEntry[] = [];
+    for (let i = 0; i < 6; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i, TOAST_DURATION_MS, 6);
+    }
+    list = pauseToast(list, "t1", 10);
+    // Back down to the real cap of 4: 3 must go, and t1 must not be one of them.
+    list = addToast(list, { id: "new", message: "New", severity: "success" }, 20);
+    expect(list.map((t) => t.id)).toEqual(["t1", "t4", "t5", "new"]);
+  });
+});
+
+describe("applyEngagement", () => {
+  it("reports engaged while either hover OR focus is active", () => {
+    expect(applyEngagement(NO_ENGAGEMENT, "hover", true)).toEqual({ next: { hover: true, focus: false }, engaged: true });
+    expect(applyEngagement(NO_ENGAGEMENT, "focus", true)).toEqual({ next: { hover: false, focus: true }, engaged: true });
+  });
+
+  it("stays ENGAGED when the mouse leaves a toast the keyboard is still inside — the bug this rule exists to fix", () => {
+    // hover -> Tab in -> mouse away. The countdown must NOT resume: focus is
+    // still on the dismiss button, and resuming would auto-dismiss the toast
+    // out from under the user, snapping activeElement back to <body>.
+    let e = applyEngagement(NO_ENGAGEMENT, "hover", true);
+    e = applyEngagement(e.next, "focus", true);
+    e = applyEngagement(e.next, "hover", false);
+    expect(e).toEqual({ next: { hover: false, focus: true }, engaged: true });
+  });
+
+  it("stays ENGAGED in the mirror order too — focus first, then hover, then un-hover", () => {
+    let e = applyEngagement(NO_ENGAGEMENT, "focus", true);
+    e = applyEngagement(e.next, "hover", true);
+    e = applyEngagement(e.next, "hover", false);
+    expect(e.engaged).toBe(true);
+  });
+
+  it("disengages only once BOTH have ended, whichever ends last", () => {
+    let e = applyEngagement(NO_ENGAGEMENT, "hover", true);
+    e = applyEngagement(e.next, "focus", true);
+    e = applyEngagement(e.next, "hover", false);
+    e = applyEngagement(e.next, "focus", false);
+    expect(e).toEqual({ next: { hover: false, focus: false }, engaged: false });
+  });
+
+  it("still disengages on a plain hover-in/hover-out with no focus involved — the ordinary case must not regress", () => {
+    const inn = applyEngagement(NO_ENGAGEMENT, "hover", true);
+    expect(inn.engaged).toBe(true);
+    const out = applyEngagement(inn.next, "hover", false);
+    expect(out).toEqual({ next: { hover: false, focus: false }, engaged: false });
+  });
+
+  it("is idempotent for a repeated edge (e.g. moving the mouse onto the card's own dismiss button)", () => {
+    const once = applyEngagement(NO_ENGAGEMENT, "hover", true);
+    const twice = applyEngagement(once.next, "hover", true);
+    expect(twice).toEqual(once);
+  });
+
+  it("never mutates the state it was handed — each toast id's entry is replaced, not edited in place", () => {
+    const prev: ToastEngagement = { hover: true, focus: false };
+    applyEngagement(prev, "focus", true);
+    expect(prev).toEqual({ hover: true, focus: false });
   });
 });
 
