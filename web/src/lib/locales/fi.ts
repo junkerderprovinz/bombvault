@@ -188,6 +188,12 @@ const fi: Partial<Translations> = {
   "settings.appearance": "Ulkoasu",
   "settings.accentColor": "Korostusväri",
   "settings.accentPresets": "Esiasetukset",
+  "settings.rainbow": "Sateenkaari",
+  "settings.rainbowHint": "Yhden korostuksen sijaan kahdeksan värin paletti sijainnin mukaan, jolloin pitkä lista lukeutuu erillisinä riveinä.",
+  "settings.rainbowOn": "Käytä palettia",
+  "settings.rainbowReactive": "Rauhallinen kunnes kosketat: väri osoittaessa ja käynnissä olevassa",
+  "settings.rainbowRotate": "Sekoita, mistä paletti alkaa",
+  "settings.rainbowPalette": "Paletin väri",
   "settings.quietToasts": "Hiljaiset ilmoitukset",
   "settings.quietToastsHint": "Näytä ponnahdusilmoitukset vain virheistä. Rutiininomaiset tallennus- ja kopiointivahvistukset pysyvät hiljaisina.",
 

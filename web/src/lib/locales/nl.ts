@@ -184,6 +184,12 @@ const nl: Partial<Translations> = {
   "settings.appearance": "Uiterlijk",
   "settings.accentColor": "Accentkleur",
   "settings.accentPresets": "Voorinstellingen",
+  "settings.rainbow": "Regenboog",
+  "settings.rainbowHint": "In plaats van één accent een palet van acht, verdeeld op positie, zodat een lange lijst als losse rijen leest.",
+  "settings.rainbowOn": "Palet gebruiken",
+  "settings.rainbowReactive": "Rustig tot je erover gaat: kleur bij hover en bij wat er loopt",
+  "settings.rainbowRotate": "Startpunt van het palet schudden",
+  "settings.rainbowPalette": "Paletkleur",
   "settings.quietToasts": "Stille meldingen",
   "settings.quietToastsHint": "Toon pop-upmeldingen alleen bij fouten. Routinematige opslaan- en kopieerbevestigingen blijven stil.",
 

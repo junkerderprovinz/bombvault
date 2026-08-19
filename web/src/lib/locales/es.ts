@@ -188,6 +188,12 @@ const es: Partial<Translations> = {
   "settings.appearance": "Apariencia",
   "settings.accentColor": "Color de acento",
   "settings.accentPresets": "Predeterminados",
+  "settings.rainbow": "Arcoíris",
+  "settings.rainbowHint": "En lugar de un solo acento, una paleta de ocho repartida por posición, así una lista larga se lee como filas distintas.",
+  "settings.rainbowOn": "Usar la paleta",
+  "settings.rainbowReactive": "En calma hasta tocarlo: color al pasar por encima y en lo que está en marcha",
+  "settings.rainbowRotate": "Mezclar por dónde empieza la paleta",
+  "settings.rainbowPalette": "Color de la paleta",
   "settings.quietToasts": "Notificaciones silenciosas",
   "settings.quietToastsHint": "Mostrar avisos emergentes solo para fallos. Las confirmaciones rutinarias de guardado y copia permanecen silenciosas.",
 

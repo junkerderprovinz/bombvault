@@ -184,6 +184,12 @@ const ru: Partial<Translations> = {
   "settings.appearance": "Внешний вид",
   "settings.accentColor": "Акцентный цвет",
   "settings.accentPresets": "Предустановки",
+  "settings.rainbow": "Радуга",
+  "settings.rainbowHint": "Вместо одного акцента палитра из восьми цветов по позиции, чтобы длинный список читался как отдельные строки.",
+  "settings.rainbowOn": "Использовать палитру",
+  "settings.rainbowReactive": "Тихо, пока не тронешь: цвет при наведении и у того, что работает",
+  "settings.rainbowRotate": "Перемешать, с какого цвета начинается палитра",
+  "settings.rainbowPalette": "Цвет палитры",
   "settings.quietToasts": "Тихие уведомления",
   "settings.quietToastsHint": "Показывать всплывающие уведомления только при ошибках. Обычные подтверждения сохранения и копирования остаются беззвучными.",
 

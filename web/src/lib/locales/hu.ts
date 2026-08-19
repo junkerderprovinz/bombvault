@@ -188,6 +188,12 @@ const hu: Partial<Translations> = {
   "settings.appearance": "Megjelenés",
   "settings.accentColor": "Kiemelőszín",
   "settings.accentPresets": "Előbeállítások",
+  "settings.rainbow": "Szivárvány",
+  "settings.rainbowHint": "Egy kiemelőszín helyett nyolcból álló paletta pozíció szerint, így a hosszú lista külön sorokként olvasható.",
+  "settings.rainbowOn": "Paletta használata",
+  "settings.rainbowReactive": "Csendes, amíg hozzá nem érsz: szín rámutatáskor és azon, ami fut",
+  "settings.rainbowRotate": "A paletta kezdőszínének keverése",
+  "settings.rainbowPalette": "Palettaszín",
   "settings.quietToasts": "Csendes értesítések",
   "settings.quietToastsHint": "Csak hibák esetén jelenjenek meg felugró értesítések. A rutin mentési és másolási visszaigazolások csendben maradnak.",
 

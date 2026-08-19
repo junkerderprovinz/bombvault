@@ -186,6 +186,12 @@ const uk: Partial<Translations> = {
   "settings.appearance": "Зовнішній вигляд",
   "settings.accentColor": "Акцентний колір",
   "settings.accentPresets": "Передустановки",
+  "settings.rainbow": "Райдуга",
+  "settings.rainbowHint": "Замість одного акценту палітра з восьми кольорів за позицією, щоб довгий список читався як окремі рядки.",
+  "settings.rainbowOn": "Використовувати палітру",
+  "settings.rainbowReactive": "Тихо, доки не торкнешся: колір при наведенні та в того, що працює",
+  "settings.rainbowRotate": "Перемішати, з якого кольору починається палітра",
+  "settings.rainbowPalette": "Колір палітри",
   "settings.quietToasts": "Тихі сповіщення",
   "settings.quietToastsHint": "Показувати спливаючі сповіщення лише про помилки. Звичайні підтвердження збереження й копіювання лишаються без сповіщень.",
 

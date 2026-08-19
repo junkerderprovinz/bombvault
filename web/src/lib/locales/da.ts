@@ -188,6 +188,12 @@ const da: Partial<Translations> = {
   "settings.appearance": "Udseende",
   "settings.accentColor": "Accentfarve",
   "settings.accentPresets": "Forudindstillinger",
+  "settings.rainbow": "Regnbue",
+  "settings.rainbowHint": "I stedet for én accent en palet med otte farver efter position, så en lang liste læses som enkelte rækker.",
+  "settings.rainbowOn": "Brug paletten",
+  "settings.rainbowReactive": "Roligt indtil du rører det: farve ved hover og på det, der kører",
+  "settings.rainbowRotate": "Bland hvor paletten starter",
+  "settings.rainbowPalette": "Paletfarve",
   "settings.quietToasts": "Stille notifikationer",
   "settings.quietToastsHint": "Vis kun pop op-beskeder ved fejl. Rutinemæssige gem- og kopibekræftelser forbliver stille.",
 

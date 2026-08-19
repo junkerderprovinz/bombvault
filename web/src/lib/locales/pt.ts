@@ -186,6 +186,12 @@ const pt: Partial<Translations> = {
   "settings.appearance": "Aparência",
   "settings.accentColor": "Cor de destaque",
   "settings.accentPresets": "Predefinições",
+  "settings.rainbow": "Arco-íris",
+  "settings.rainbowHint": "Em vez de um só destaque, uma paleta de oito distribuída por posição, para uma lista longa se ler como linhas distintas.",
+  "settings.rainbowOn": "Usar a paleta",
+  "settings.rainbowReactive": "Discreto até ser tocado: cor ao passar o rato e no que está a correr",
+  "settings.rainbowRotate": "Baralhar onde a paleta começa",
+  "settings.rainbowPalette": "Cor da paleta",
   "settings.quietToasts": "Notificações silenciosas",
   "settings.quietToastsHint": "Mostrar avisos pop-up apenas para falhas. As confirmações de rotina de salvar e copiar permanecem silenciosas.",
 

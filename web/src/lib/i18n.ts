@@ -649,6 +649,17 @@ export const en = {
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
+  // Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent, plural:
+  // an eight-colour palette handed out by list position instead of one
+  // accent everywhere. Wording matches the same keys in KnightLoader, the
+  // other shipped app using this exact mechanism, so the family reads as
+  // one product in every language, not just in English.
+  "settings.rainbow": "Rainbow",
+  "settings.rainbowHint": "Instead of one accent, a palette of eight handed out by position, so a long list reads as separate rows.",
+  "settings.rainbowOn": "Use the palette",
+  "settings.rainbowReactive": "Quiet until touched: colour on hover and on what is running",
+  "settings.rainbowRotate": "Shuffle where the palette starts",
+  "settings.rainbowPalette": "Palette colour",
   // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
   // toast system; "success"/routine toasts are suppressed, failures never are.
   "settings.quietToasts": "Quiet toasts",
@@ -1999,6 +2010,12 @@ export const de: Translations = {
   "settings.appearance": "Erscheinungsbild",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
+  "settings.rainbow": "Regenbogen",
+  "settings.rainbowHint": "Statt einer Akzentfarbe acht, nach Position vergeben — eine lange Liste liest sich dann als einzelne Zeilen.",
+  "settings.rainbowOn": "Palette verwenden",
+  "settings.rainbowReactive": "Ruhig bis berührt: Farbe beim Überfahren und bei dem, was läuft",
+  "settings.rainbowRotate": "Startfarbe der Palette durchmischen",
+  "settings.rainbowPalette": "Palettenfarbe",
   "settings.quietToasts": "Leise Benachrichtigungen",
   "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
 

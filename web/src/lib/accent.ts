@@ -62,7 +62,11 @@ export function softTint(hex: string): string {
   return `rgba(${parsed.r}, ${parsed.g}, ${parsed.b}, 0.14)`;
 }
 
-function parseHex(hex: string): { r: number; g: number; b: number } | undefined {
+/** Exported so lib/appearance.ts (the rainbow engine, GlimStone form-engine
+ * Phase 2 Task 1) can reuse the same hex validation + parsing rather than
+ * re-deriving it a second time in the same app — rainbow's palette entries
+ * and this module's single accent are the same kind of value. */
+export function parseHex(hex: string): { r: number; g: number; b: number } | undefined {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return undefined;
   const n = parseInt(hex.slice(1), 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };

@@ -184,6 +184,12 @@ const pl: Partial<Translations> = {
   "settings.appearance": "Wygląd",
   "settings.accentColor": "Kolor akcentu",
   "settings.accentPresets": "Ustawienia wstępne",
+  "settings.rainbow": "Tęcza",
+  "settings.rainbowHint": "Zamiast jednego akcentu paleta ośmiu barw przydzielanych według pozycji, więc długa lista czyta się jako osobne wiersze.",
+  "settings.rainbowOn": "Użyj palety",
+  "settings.rainbowReactive": "Spokojnie, dopóki nie dotkniesz: kolor po najechaniu i na tym, co działa",
+  "settings.rainbowRotate": "Przetasuj początek palety",
+  "settings.rainbowPalette": "Kolor palety",
   "settings.quietToasts": "Ciche powiadomienia",
   "settings.quietToastsHint": "Pokazuj powiadomienia tylko przy błędach. Rutynowe potwierdzenia zapisu i kopiowania pozostają wyciszone.",
 

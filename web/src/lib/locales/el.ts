@@ -188,6 +188,12 @@ const el: Partial<Translations> = {
   "settings.appearance": "Εμφάνιση",
   "settings.accentColor": "Χρώμα επισήμανσης",
   "settings.accentPresets": "Προεπιλογές",
+  "settings.rainbow": "Ουράνιο τόξο",
+  "settings.rainbowHint": "Αντί για ένα χρώμα τονισμού, μια παλέτα οκτώ χρωμάτων ανά θέση, ώστε μια μεγάλη λίστα να διαβάζεται ως ξεχωριστές γραμμές.",
+  "settings.rainbowOn": "Χρήση παλέτας",
+  "settings.rainbowReactive": "Ήσυχο μέχρι να το αγγίξεις: χρώμα στο πέρασμα και σε ό,τι τρέχει",
+  "settings.rainbowRotate": "Ανακάτεμα του σημείου εκκίνησης της παλέτας",
+  "settings.rainbowPalette": "Χρώμα παλέτας",
   "settings.quietToasts": "Σιωπηλές ειδοποιήσεις",
   "settings.quietToastsHint": "Εμφάνιση αναδυόμενων ειδοποιήσεων μόνο για αποτυχίες. Οι συνήθεις επιβεβαιώσεις αποθήκευσης και αντιγραφής παραμένουν σιωπηλές.",
 

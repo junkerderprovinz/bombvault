@@ -188,6 +188,12 @@ const th: Partial<Translations> = {
   "settings.appearance": "รูปลักษณ์",
   "settings.accentColor": "สีเน้น",
   "settings.accentPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.rainbow": "สายรุ้ง",
+  "settings.rainbowHint": "แทนที่จะใช้สีเน้นเดียว ใช้จานแปดสีแจกตามตำแหน่ง รายการยาวจึงอ่านแยกเป็นแถวได้",
+  "settings.rainbowOn": "ใช้จานสี",
+  "settings.rainbowReactive": "เงียบจนกว่าจะแตะ: มีสีเมื่อชี้และในรายการที่กำลังทำงาน",
+  "settings.rainbowRotate": "สลับตำแหน่งเริ่มต้นของจานสี",
+  "settings.rainbowPalette": "สีในจานสี",
   "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
   "settings.quietToastsHint": "แสดงการแจ้งเตือนแบบป๊อปอัปเฉพาะเมื่อล้มเหลวเท่านั้น การยืนยันการบันทึกและคัดลอกตามปกติจะไม่แสดง",
 

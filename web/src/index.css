@@ -605,6 +605,108 @@ body {
   box-shadow: var(--elevation), var(--hairline);
 }
 
+/* ---------------------------------------------------------------------------
+   Rainbow — the accent, plural (GlimStone form-engine Phase 2, Task 1;
+   design-language.md, "The colour engine" / "Rainbow"). Ported from
+   reference/tokens.css + reference/tailwind-theme.css's matching
+   [data-rainbow] blocks, merged into one section here since this file (unlike
+   the reference, which splits framework-free tokens from the optional
+   Tailwind @theme layer into two files) already keeps both in one place —
+   see lib/appearance.ts for the JS half (hueVars, applyRainbow).
+
+   An element that owns a palette position sets --item-hue on itself (via
+   hueVars()) and carries .glim-hue. The block below redefines BOTH the plain
+   custom properties (--accent etc., read directly by components) AND the
+   Tailwind theme-mapped ones (--color-accent etc., which is what
+   bg-accent/text-accent utility classes actually compile against) for that
+   subtree. Skipping the --color-* half is TRAP #3 from design-language.md's
+   "three traps, all hit in production": the @theme block at the top of this
+   file resolves `--color-accent: var(--accent)` ONCE at :root and freezes it
+   there, so a .glim-hue subtree redefining only --accent would colour
+   anything reading var(--accent) directly and NOTHING that went through a
+   bg-accent/text-accent utility class — this second half is not redundant,
+   it is the fix.
+
+   WHAT MAY OWN A POSITION: anything that is one member of a SET whose
+   members are all equal — a nav item, a list row, a tab, a filter chip, a
+   segment of a segmented control. Anything that is the only one of its kind
+   on the page keeps the single accent. The four state hues (rule 4) are
+   never rainbowed — green still means finished; see .glim-tint below for
+   trap #2, why a rainbowed row needs its own wash rather than relying on
+   that fill.
+
+   Nothing in the app sets .glim-hue/.glim-tint yet (that's Task 2) — these
+   rules exist now so Task 1's own live-verification step ("turn rainbow on,
+   confirm data-rainbow appears on <html>, confirm --rb-0..--rb-7 resolve")
+   can pass, and so Task 2 has a working stylesheet to attach to. */
+[data-rainbow] .glim-hue {
+  --accent: var(--item-hue);
+  --accent-contrast: var(--item-hue-ink);
+  --accent-soft: var(--item-hue-soft);
+  --color-accent: var(--item-hue);
+  --color-accentContrast: var(--item-hue-ink);
+  --color-accentSoft: var(--item-hue-soft);
+  /* The focus ring is part of the position, not the theme — drawn directly
+     around the element that owns the colour. Reactive mode deliberately does
+     not reset this: the ring only ever paints while the element has focus,
+     and [data-rainbow="reactive"] .glim-hue:focus-within below already
+     brings the hue back for reactive mode regardless. This token only
+     actually reaches a visible ring once Task 8 adopts the base
+     `:focus-visible { outline: 2px solid var(--focus-ring) }` rule (see the
+     .bv-field-focus comment above for why that adoption is deliberately not
+     done here) — written now so it is already correct once that rule lands. */
+  --focus-ring: var(--item-hue-ring);
+}
+
+/* Opt-in: the element's glyph takes the hue too. A list row owns a colour
+   but its action icons must stay quiet, hence the second class. The active
+   item is excluded via :not(.glim-active): it's FILLED with the hue already,
+   so an icon painted the same colour would vanish into its own background. */
+[data-rainbow] .glim-hue-icon:not(.glim-active) svg {
+  color: var(--accent);
+}
+
+/* Opt-in: the row is WASHED with its hue rather than ruled with an edge line.
+   TRAP #2 from design-language.md: without this, a list row only shows
+   colour through its progress fill or status badge, which turns green on
+   completion (rule 4) — on a list of finished items the palette would show
+   nothing at all. The wash is an inset shadow, not a background, so the
+   row's own hover tint still reads through it at 7% alpha. */
+[data-rainbow] .glim-tint {
+  box-shadow: inset 0 0 0 999px var(--item-hue-wash);
+}
+[data-rainbow="reactive"] .glim-tint {
+  box-shadow: none;
+}
+[data-rainbow="reactive"] .glim-tint:hover,
+[data-rainbow="reactive"] .glim-tint.glim-active {
+  box-shadow: inset 0 0 0 999px var(--item-hue-wash);
+}
+
+/* Reactive: the palette rests. Everything stays quiet until hovered or
+   active — the reading that still obeys "colour marks activity" (rule 3)
+   when a whole list would otherwise light up at once. Comes after the base
+   [data-rainbow] .glim-hue block above on purpose: equal (0,2,0) specificity,
+   so source order is what lets this win for reactive mode. */
+[data-rainbow="reactive"] .glim-hue {
+  --accent: var(--carbon-text-muted);
+  --accent-contrast: var(--carbon-bg);
+  --accent-soft: transparent;
+  --color-accent: var(--carbon-text-muted);
+  --color-accentContrast: var(--carbon-bg);
+  --color-accentSoft: transparent;
+}
+[data-rainbow="reactive"] .glim-hue:hover,
+[data-rainbow="reactive"] .glim-hue:focus-within,
+[data-rainbow="reactive"] .glim-hue.glim-active {
+  --accent: var(--item-hue);
+  --accent-contrast: var(--item-hue-ink);
+  --accent-soft: var(--item-hue-soft);
+  --color-accent: var(--item-hue);
+  --color-accentContrast: var(--item-hue-ink);
+  --color-accentSoft: var(--item-hue-soft);
+}
+
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
    variant (dark mark on the light surface, light mark on the dark surface), so the
    logo always reads on --carbon-sidebar without any frame, glow or tile. */

@@ -22,6 +22,7 @@ import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
+import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
 import { relativeTime } from "../lib/reltime";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -206,6 +207,54 @@ const ACCENT_PRESETS = [
   { hex: "#FF8389", label: "Red" },
   { hex: "#BE95FF", label: "Purple" },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Palette swatch — one editable colour in the rainbow palette editor
+// (GlimStone form-engine Phase 2, Task 1). Deliberately matches the existing
+// accent-preset swatches' own visual language above (a rounded-full circle
+// showing the colour, a border) rather than introducing a new component
+// family: a native <input type="color"> is a real, always-valid-hex colour
+// picker, layered transparently over the circle so a click opens the OS
+// picker directly on the swatch itself. `disabled` dims the control on its
+// OWN element (native `disabled` + `disabled:opacity-50`), never via a
+// wrapping container's opacity (rule 15 / this branch's own established
+// "dimmed via disabled, not opacity-on-container" fix from Phase 1 Task 4).
+// ---------------------------------------------------------------------------
+function PaletteSwatch({
+  hex,
+  index,
+  disabled,
+  onChange,
+  t,
+}: {
+  hex: string;
+  index: number;
+  disabled?: boolean;
+  onChange: (hex: string) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const label = `${t("settings.rainbowPalette")} ${index + 1}`;
+  return (
+    // A plain <label> has no :disabled pseudo-class of its own (only the
+    // form control it wraps does), so the dimming is an inline style keyed
+    // off the same `disabled` prop passed to the real control below it,
+    // not a Tailwind disabled: utility that would silently never match here.
+    <label
+      title={label}
+      className="relative h-7 w-7 shrink-0 rounded-full border-2 border-carbon-border overflow-hidden"
+      style={{ backgroundColor: hex, opacity: disabled ? 0.5 : undefined }}
+    >
+      <input
+        type="color"
+        value={hex}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+      />
+    </label>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Settings page
@@ -2889,6 +2938,16 @@ export function SettingsPage() {
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
 
+  // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
+  // localStorage via appearance.ts, the same pattern as accentHex above.
+  // setRainbow() persists + applies + returns the new (validated) state in
+  // one call, so this only ever needs updating from that return value, never
+  // a second localStorage read.
+  const [rainbow, setRainbowLocal] = useState<RainbowState>(() => getRainbow());
+  function updateRainbow(patch: Partial<RainbowState>) {
+    setRainbowLocal(setRainbow(patch));
+  }
+
   // Per-section save state
   const [encSaveState, setEncSaveState] = useState<SaveState>("idle");
   const [encSaveError, setEncSaveError] = useState<string | null>(null);
@@ -4825,6 +4884,99 @@ export function SettingsPage() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent,
+              plural: an eight-colour palette handed out by list position
+              instead of one accent everywhere (design-language.md, "The
+              colour engine" / "Rainbow"). Lives right below the single
+              accent above, the same section, since both are the same kind
+              of setting (client-only, applied at the app root — see
+              lib/appearance.ts's header comment for why this stays
+              localStorage like every other appearance preference in this
+              app rather than round-tripping through the server). Nothing in
+              the app CONSUMES a rainbow position yet (that's Task 2), so
+              turning this on only sets data-rainbow + --rb-0..--rb-7 on
+              <html> — verified live for this task, not "the app looks
+              rainbow" yet. */}
+          <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+              {t("settings.rainbow")}
+              <InfoBubble tip={t("settings.rainbowHint")} />
+            </span>
+
+            {/* No visible caption: the heading right above already says
+                "Rainbow" — a switch captioned "use the palette" under it
+                would say the same decision twice (design language's
+                Switches section). The label survives as the accessible
+                name via Toggle's own aria-label. */}
+            <Toggle
+              checked={rainbow.on}
+              onChange={(v) => updateRainbow({ on: v })}
+              label={t("settings.rainbowOn")}
+              hideLabel
+            />
+
+            {/* Dimmed via each control's OWN `disabled`, never a wrapping
+                container's opacity — rule 15, and the exact fix this
+                branch's own Toggle.tsx/ToggleRow already carry from Phase 1
+                Task 4 (see their own header comments). "Switched off, not
+                hidden": these stay visible and reachable even while off, so
+                nobody has to guess what the mode does. */}
+            <Toggle
+              checked={rainbow.reactive}
+              onChange={(v) => updateRainbow({ reactive: v })}
+              label={t("settings.rainbowReactive")}
+              disabled={!rainbow.on}
+            />
+            <Toggle
+              checked={rainbow.rotate}
+              onChange={(v) =>
+                // Turning rotation on draws a fresh offset immediately, so
+                // the switch does something visible instead of silently
+                // re-applying whatever rotation the palette already had.
+                updateRainbow({
+                  rotate: v,
+                  seed: v ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0,
+                })
+              }
+              label={t("settings.rainbowRotate")}
+              disabled={!rainbow.on}
+            />
+
+            {/* The very same row shape as the accent swatches above it,
+                because it is the very same job: pick colours. Each of the 8
+                is independently editable; setRainbow()/isValidPalette()
+                enforce all-or-nothing validation on the resulting palette
+                before it ever reaches document.documentElement.style — see
+                lib/appearance.ts. */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs text-carbon-textMuted${rainbow.on ? "" : " opacity-50"}`}>
+                {t("settings.rainbowPalette")}:
+              </span>
+              {rainbow.palette.map((hex, i) => (
+                <PaletteSwatch
+                  key={i}
+                  hex={hex}
+                  index={i}
+                  disabled={!rainbow.on}
+                  t={t}
+                  onChange={(v) => {
+                    const next = rainbow.palette.slice();
+                    next[i] = v;
+                    updateRainbow({ palette: next });
+                  }}
+                />
+              ))}
+              <button
+                type="button"
+                disabled={!rainbow.on}
+                onClick={() => updateRainbow({ palette: RAINBOW })}
+                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {t("common.reset")}
+              </button>
             </div>
           </div>
 
