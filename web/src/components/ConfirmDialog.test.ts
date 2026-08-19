@@ -5,12 +5,12 @@
 // Same test approach as Toggle.test.ts/RevealInput.test.ts: ConfirmDialog is
 // a pure, hookless function component, so it's invoked directly as a plain
 // function and its returned element tree inspected as plain objects — no
-// jsdom/renderer. Escape is verified here too (unlike WhatsNewDialog's
-// document-level useEffect listener, which the same header comment on
-// Toggle.test.ts would rule out of this style of test): ConfirmDialog wires
-// Escape as a plain `onKeyDown` prop on its own root, so calling that prop
-// directly with a synthetic {key: "Escape"} event is exactly as real a test
-// as clicking the Cancel button's onClick prop directly below.
+// jsdom/renderer. Escape, the Tab focus-trap, the createPortal(...,
+// document.body) call, and returning focus to the trigger on close all live
+// in the companion hook (lib/useConfirm.tsx) instead of here, precisely
+// because they need `document`/a real hook lifecycle that this node-
+// environment, call-it-directly test style cannot provide — see that file's
+// header comment. They're covered by live Playwright verification instead.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -54,6 +54,7 @@ const baseProps = {
   message: "Delete this backup? This cannot be undone.",
   confirmLabel: "Confirm",
   cancelLabel: "Cancel",
+  closeLabel: "Close",
   onConfirm: noop,
   onCancel: noop,
 };
@@ -100,10 +101,18 @@ describe("ConfirmDialog", () => {
     const buttons = findAllButtons(tree);
     // The header close button is the only one with an aria-label but no
     // visible text of its own (an SVG glyph child, not a text label).
-    const closeBtn = buttons.find((b) => b.props?.["aria-label"] === "Cancel" && visibleText(b) === "");
+    const closeBtn = buttons.find((b) => b.props?.["aria-label"] === "Close" && visibleText(b) === "");
     expect(closeBtn).toBeDefined();
     closeBtn!.props!.onClick();
     expect(calls).toBe(1);
+  });
+
+  it("gives the header close (X) button its OWN accessible name, distinct from the footer Cancel button", () => {
+    const tree = ConfirmDialog(baseProps);
+    const buttons = findAllButtons(tree);
+    const closeBtn = buttons.find((b) => visibleText(b) === "" && b.props?.["aria-label"] !== undefined);
+    expect(closeBtn?.props?.["aria-label"]).toBe("Close");
+    expect(closeBtn?.props?.["aria-label"]).not.toBe(baseProps.cancelLabel);
   });
 
   it("calls onCancel when the backdrop itself is clicked (not a click inside the card)", () => {
@@ -118,23 +127,6 @@ describe("ConfirmDialog", () => {
     let calls = 0;
     const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ }) as ElementNode;
     tree.props!.onClick({ target: {}, currentTarget: {} });
-    expect(calls).toBe(0);
-  });
-
-  it("Escape closes the dialog (onKeyDown on the dialog root calls onCancel)", () => {
-    let calls = 0;
-    const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ });
-    const dialogs = findAll(tree, (n) => n.props?.role === "dialog");
-    expect(dialogs.length).toBe(1);
-    dialogs[0].props!.onKeyDown({ key: "Escape" });
-    expect(calls).toBe(1);
-  });
-
-  it("a non-Escape key does not close the dialog", () => {
-    let calls = 0;
-    const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ });
-    const dialogs = findAll(tree, (n) => n.props?.role === "dialog");
-    dialogs[0].props!.onKeyDown({ key: "Enter" });
     expect(calls).toBe(0);
   });
 
@@ -173,5 +165,15 @@ describe("ConfirmDialog", () => {
     const tree = ConfirmDialog(baseProps) as ElementNode;
     const dialogs = findAll(tree, (n) => n.props?.role === "dialog");
     expect(dialogs[0].props?.["aria-modal"]).toBe("true");
+  });
+
+  it("describes the dialog via aria-describedby pointing at the message paragraph's id (the stake-bearing text is announced, not just shown)", () => {
+    const tree = ConfirmDialog(baseProps) as ElementNode;
+    const dialogs = findAll(tree, (n) => n.props?.role === "dialog");
+    const describedby = dialogs[0].props?.["aria-describedby"] as string;
+    expect(describedby).toBeTruthy();
+    const described = findAll(tree, (n) => n.type === "p" && n.props?.id === describedby);
+    expect(described.length).toBe(1);
+    expect(visibleText(described[0])).toBe(baseProps.message);
   });
 });

@@ -42,6 +42,7 @@ import {
   type ForeignItem,
 } from "../lib/api";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
+import { useConfirm } from "../lib/useConfirm";
 
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
 // (they read the mirrored, restic-encrypted definitions), so they are the
@@ -275,6 +276,7 @@ function ForeignItemRow({
   const needsTarget = domain === "files" || domain === "vms";
   const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   // Files domain only: restore the WHOLE set (default) or PICK a subfolder/file
   // subset of it (#123 — pull one stack out of a whole-appdata set). The subset
@@ -379,7 +381,7 @@ function ForeignItemRow({
     // could not verify (it is not claiming the item exists).
     if (existsLocally) {
       const key = collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm";
-      if (!window.confirm(t(key).replace("{name}", item.name))) return;
+      if (!(await confirm(t(key).replace("{name}", item.name)))) return;
     }
     setState("busy");
     setError(null);
@@ -562,6 +564,7 @@ function ForeignItemRow({
           <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }
@@ -841,6 +844,7 @@ function ForeignRestoreCard({
 
 export default function Recovery() {
   const { t } = useT();
+  const { confirm, confirmDialog } = useConfirm();
 
   // Step 1 — repo-readable / APP_KEY state, shared with later steps.
   const [readableState, setReadableState] = useState<StepState>("idle");
@@ -1109,7 +1113,7 @@ export default function Recovery() {
   const restoreAll = useCallback(async () => {
     if (restoreAllBusy) return;
     if (containers.length === 0 && vms.length === 0) return;
-    if (!window.confirm(t("containers.restoreSelectedConfirm"))) return;
+    if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
     setRestoreAllBusy(true);
     setRestoreAllResult(null);
     let ok = 0;
@@ -1139,7 +1143,7 @@ export default function Recovery() {
     } finally {
       setRestoreAllBusy(false);
     }
-  }, [restoreAllBusy, containers, vms, t]);
+  }, [restoreAllBusy, containers, vms, t, confirm]);
 
   const anyDiscovered = containers.length > 0 || vms.length > 0 || fileSets.length > 0;
   const restoreStepState: StepState = restoreAllResult
@@ -1590,6 +1594,7 @@ export default function Recovery() {
       {/* Restore from ANOTHER BombVault repo (#61) — visually separate from the
           attach steps above; read-only session, nothing persisted. */}
       <ForeignRestoreCard hostMountRoot={hostMountRoot} t={t} otherActive={rowOtherActive} />
+      {confirmDialog}
     </div>
   );
 }

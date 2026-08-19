@@ -7,24 +7,34 @@
 // (title + close X), a scrolling middle (the actual per-call-site message —
 // same copy every call site already passed to window.confirm(), this task
 // swaps the MECHANISM only, never the copy), an anchored footer (Cancel +
-// Confirm). Escape/backdrop-click/the header X/the footer Cancel button all
-// resolve to the same onCancel — four independent ways out, matching
-// WhatsNewDialog's own close-affordance count.
+// Confirm). Backdrop-click/the header X/the footer Cancel button all resolve
+// to the same onCancel. Escape and the Tab focus-trap are NOT handled here —
+// see lib/useConfirm.tsx's header comment for why (a real modal needs both to
+// work even when focus has left the dialog's own DOM subtree, which a React
+// `onKeyDown` on this root can never observe).
 //
 // Pure, hookless function component on purpose — same shape as Toggle.tsx/
 // Badge.tsx/RevealInput.tsx (props in, an element tree out) — so it stays
 // unit-testable by calling it directly with props, no renderer/jsdom needed
 // (see Toggle.test.ts's header comment: this repo's test suite is
-// `environment: "node"` with zero DOM-rendering infrastructure). That is
-// exactly why Escape is wired as a React `onKeyDown` on the dialog's own root
-// (bubles up from the auto-focused Cancel button) instead of a
-// document-level `useEffect` listener the way WhatsNewDialog/ErrorDetailPanel
-// do it: a `useEffect` here would need a dispatcher that only exists while
-// React is actually rendering, which calling this function directly in a
-// test does not provide. The STATEFUL half (the pending-request queue, the
-// promise plumbing) lives in the companion hook, lib/useConfirm.tsx —
-// mirrors useReveal.ts/RevealInput.tsx's exact split for the same reason.
+// `environment: "node"` with zero DOM-rendering infrastructure — `document`
+// itself is undefined there, which is also why the createPortal(...,
+// document.body) call that makes this dialog genuinely modal lives in
+// useConfirm.tsx instead of here: this component never touches `document`).
+// The STATEFUL half (the pending-request queue, the promise plumbing, the
+// portal, Escape, the focus trap, and returning focus to the trigger on
+// close) lives in the companion hook, lib/useConfirm.tsx — mirrors
+// useReveal.ts/RevealInput.tsx's split, extended to cover real modality.
+//
+// `ref` is a plain prop here (React 19 — function components accept `ref`
+// without forwardRef): useConfirm.tsx attaches it to the dialog card so it
+// can find the card's focusable elements for the Tab trap and query
+// `document.activeElement` against it. Passing it through a plain function
+// call in a test (as this file's own tests do) is inert — React only treats
+// `ref` specially on a JSX-created host element, not on the props object a
+// hand-written test builds, and no test here exercises it.
 // ---------------------------------------------------------------------------
+import type { Ref } from "react";
 
 export type ConfirmTone = "fail" | "warn";
 
@@ -38,6 +48,12 @@ export interface ConfirmDialogProps {
   message: string;
   confirmLabel: string;
   cancelLabel: string;
+  /** Accessible name for the header close (X) button — DELIBERATELY separate
+   *  from cancelLabel: they are two distinct controls that both cancel, and
+   *  sharing one label gave them the same accessible name (a screen-reader
+   *  user would hear two identically-named controls; it also broke
+   *  Playwright's own strict-mode selector matching in review). */
+  closeLabel: string;
   /** Fault-red for a genuinely irreversible action (the default — every
    *  migrated call site but one is exactly this), warn-amber for
    *  RestoreCancelButton's "light" (non-destructive, restore-to-folder)
@@ -46,6 +62,8 @@ export interface ConfirmDialogProps {
   tone?: ConfirmTone;
   onConfirm: () => void;
   onCancel: () => void;
+  /** The dialog card's root DOM node, for useConfirm.tsx's focus trap. */
+  ref?: Ref<HTMLDivElement>;
 }
 
 const CONFIRM_BUTTON_TONE: Record<ConfirmTone, string> = {
@@ -66,9 +84,11 @@ export function ConfirmDialog({
   message,
   confirmLabel,
   cancelLabel,
+  closeLabel,
   tone = "fail",
   onConfirm,
   onCancel,
+  ref,
 }: ConfirmDialogProps) {
   return (
     <div
@@ -78,12 +98,11 @@ export function ConfirmDialog({
       }}
     >
       <div
+        ref={ref}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirmdialog-title"
-        onKeyDown={(e) => {
-          if (e.key === "Escape") onCancel();
-        }}
+        aria-describedby="confirmdialog-message"
         className="bv-modal-card flex max-h-[85vh] w-full max-w-md flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
@@ -94,7 +113,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            aria-label={cancelLabel}
+            aria-label={closeLabel}
             className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -103,9 +122,13 @@ export function ConfirmDialog({
           </button>
         </div>
 
-        {/* Body (scrolls) — the real per-call-site question/explanation. */}
+        {/* Body (scrolls) — the real per-call-site question/explanation. Also
+            the dialog's accessible description (aria-describedby above), so
+            the stake-bearing confirmation text is announced, not just shown. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          <p className="text-sm leading-relaxed text-carbon-textSub wrap-break-word">{message}</p>
+          <p id="confirmdialog-message" className="text-sm leading-relaxed text-carbon-textSub wrap-break-word">
+            {message}
+          </p>
         </div>
 
         {/* Footer */}
