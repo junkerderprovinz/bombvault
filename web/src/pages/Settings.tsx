@@ -4901,40 +4901,57 @@ export function SettingsPage() {
               <html> — verified live for this task, not "the app looks
               rainbow" yet. */}
           <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("settings.rainbow")}
-              <InfoBubble tip={t("settings.rainbowHint")} />
-            </span>
+            {/* The master switch shares the section heading's own row rather
+                than sitting on a row of its own.
+                  - Tracks flush right, never label-then-track: BombVault's
+                    Toggle renders label-then-track (the GlimStone reference/
+                    KnightLoader render track-then-label), so a bare Toggle's
+                    track x-position drifts with that switch's own label
+                    length — three different x-positions for three different
+                    label lengths, the exact trap the design language's
+                    Switches rule and KnightLoader's own code comment call
+                    out. `justify-between` (what ToggleRow uses for the two
+                    sub-switches below and "Quiet toasts" further down) pins
+                    every track to the same right edge regardless of label
+                    length.
+                  - No caption of its OWN: the heading beside it already says
+                    "Rainbow" — a switch captioned "use the palette" next to
+                    it would say the same decision twice (design language's
+                    Switches section). The words survive as the accessible
+                    name via Toggle's unconditional aria-label.
+                But a `hideLabel` ToggleRow would then leave this row's left
+                half empty, stranding a caption-less track ~900px from the
+                heading that names it (that IS the pattern for a single-
+                purpose Card whose TITLE is the decision — see the metrics
+                ToggleRow — but this heading is a plain in-card sub-heading,
+                not a Card title, so the association has to survive being
+                read across one row). Hence ToggleRow's exact markup inlined
+                here with the heading (plus its InfoBubble, a node ToggleRow's
+                string `label` cannot carry) as the row's left half: same
+                shape, same track x-position, one row instead of two, and the
+                switch sits next to the words it belongs to. */}
+            <div className="flex items-start justify-between gap-4">
+              <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+                {t("settings.rainbow")}
+                <InfoBubble tip={t("settings.rainbowHint")} />
+              </span>
+              <Toggle
+                hideLabel
+                label={t("settings.rainbowOn")}
+                checked={rainbow.on}
+                onChange={(v) => updateRainbow({ on: v })}
+                className="mt-0.5"
+              />
+            </div>
 
-            {/* ToggleRow, not a bare Toggle: BombVault's Toggle renders
-                label-then-track (the GlimStone reference/KnightLoader render
-                track-then-label), so a bare Toggle's track x-position drifts
-                with that switch's own label length — three different
-                x-positions for three different label lengths, the exact
-                trap the design language's Switches rule and KnightLoader's
-                own code comment call out. ToggleRow's `justify-between`
-                pins every track flush to the row's right edge regardless of
-                label length, matching the "Quiet toasts" ToggleRow below in
-                this same card. No visible caption on the master: the
-                heading right above already says "Rainbow" — a switch
-                captioned "use the palette" under it would say the same
-                decision twice (design language's Switches section). The
-                label survives as the accessible name via ToggleRow's own
-                hideLabel contract (same pattern as RestoreChecksSection's
-                master ToggleRow above). */}
-            <ToggleRow
-              hideLabel
-              label={t("settings.rainbowOn")}
-              checked={rainbow.on}
-              onChange={(v) => updateRainbow({ on: v })}
-            />
-
-            {/* Dimmed via each control's OWN `disabled` — ToggleRow already
-                dims its switch AND its caption together (rule 15, and the
-                exact fix this branch's own ToggleRow carries from Phase 1
-                Task 4 — see its own header comment above). "Switched off,
-                not hidden": these stay visible and reachable even while
-                off, so nobody has to guess what the mode does. */}
+            {/* ToggleRow, so these two land on the same track column as the
+                master above and "Quiet toasts" below. Dimmed via each
+                control's OWN `disabled` — ToggleRow dims its switch AND its
+                caption together (rule 15, and the exact fix this branch's own
+                ToggleRow carries from Phase 1 Task 4 — see its own header
+                comment above). "Switched off, not hidden": these stay visible
+                and reachable even while off, so nobody has to guess what the
+                mode does. */}
             <ToggleRow
               label={t("settings.rainbowReactive")}
               checked={rainbow.reactive}
