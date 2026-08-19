@@ -3369,11 +3369,11 @@ export function SettingsPage() {
                 /* history unavailable — tab state still switches */
               }
             }}
-            // glim-active travels with the fill, same composition as
-            // Sidebar.tsx's navActive: it's what keeps a filled active tab
-            // from painting its own colour over itself, and (in reactive
-            // mode) is what keeps the SELECTED tab showing its hue without
-            // needing hover.
+            // glim-active travels with the fill: it's what keeps a filled
+            // active tab from painting its own colour over itself (index.css's
+            // .glim-hue-icon rule excludes it for the same reason), and in
+            // reactive mode it's what keeps the SELECTED tab showing its hue
+            // without needing hover.
             className={`glim-hue rounded-control px-3 py-1.5 text-sm transition-colors ${
               tab === key
                 ? "glim-active bg-accent text-accentContrast"
@@ -4921,10 +4921,9 @@ export function SettingsPage() {
               rainbow position now, so turning this on sets data-rainbow +
               --rb-0..--rb-7 on <html> AND immediately recolours those real
               call sites — not just the CSS variables Task 1 verified. The
-              sidebar nav was deliberately NOT wired to this (see
-              Sidebar.tsx's comment): with every domain toggle on there are
-              more destinations than palette colours, so flipping this switch
-              never touches the sidebar's colours. */}
+              sidebar nav is deliberately NOT a consumer (Sidebar.tsx carries
+              the reasoning), so flipping this switch never changes the
+              rail's own colours. */}
           <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
             {/* The master switch shares the section heading's own row rather
                 than sitting on a row of its own.

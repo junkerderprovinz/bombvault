@@ -15,25 +15,32 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-// Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 — reverted
-// after spec-compliance review). The list of destinations here is NOT reliably
-// ≤8: with every domain toggle on, there are 9 destinations plus Settings = 10
-// against RAINBOW's 8-colour palette (lib/appearance.ts), so indexing by
-// position wraps and genuinely different destinations end up sharing a hue —
-// live-confirmed: /fleet landed on the same hue as /dashboard, /settings the
-// same as /recovery. That is exactly the "two neighbours share a colour"
-// failure rainbow-by-position exists to prevent (design-language.md's trap
-// #1), just triggered by list length instead of hashing. A prior version of
-// this file rainbowed the nav anyway on the theory that indexing over the
-// domain-gated array "never collides" — that reasoning only holds for a list
-// that never exceeds the palette size, which this one does. Unlike a
-// container/VM/file-set row (Task 2's actual strongest case — a variable,
-// user-tracked list), every sidebar destination already has a durable,
-// always-visible identity via its label + icon regardless of colour, so
-// rainbow's real purpose ("help tell apart several similar items") was never
-// doing work here anyway — see KnightLoader's Sidebar.tsx, which gets away
-// with hueing every item only because it hard-codes 6 destinations, safely
-// under the palette size, not because the pattern is inherently collision-free.
+// Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 — decided
+// in the spec-compliance review of the first attempt, which had wired every
+// NavItem to a palette position). Task 2's brief is explicitly "decide which
+// candidates genuinely benefit"; the nav rail does not, on two counts:
+//
+//  1. Colour buys nothing here. Every destination already carries a
+//     permanent, always-visible identity in its label + icon, so rainbow's
+//     actual job ("tell apart several members of a set that otherwise look
+//     alike") has nothing to do on a rail where no two entries look alike in
+//     the first place.
+//  2. Colour could not be stable here even if it were wanted. The visible set
+//     is user-configured — 4 to 10 entries, depending on which domains are on
+//     (vmsEnabled etc.) — so a destination's position, and with it its
+//     colour, moves whenever a domain is toggled in Settings; at full config
+//     the 10 entries also wrap RAINBOW's 8 colours (lib/appearance.ts) and
+//     two of them repeat. A nav rail is the one surface where a colour would
+//     have to be LEARNED to be worth anything, and a learned colour that
+//     moves is worse than no colour at all.
+//
+// The wrap on its own is NOT the disqualifier: a container/VM list wraps the
+// same way past its eighth row and keeps rainbow on purpose (see
+// Containers.tsx/VMs.tsx) — there the colour only has to separate rows that
+// are on screen together, and a repeat lands a full palette apart, never
+// beside its twin. KnightLoader's Sidebar.tsx does hue its nav, but off 6
+// hard-coded destinations, so neither point above applies to it; that
+// precedent doesn't transfer to a rail whose length changes.
 
 // Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
 type EggState = "idle" | "wobble" | "boom";
