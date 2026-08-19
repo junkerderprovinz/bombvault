@@ -454,6 +454,9 @@ const zh: Partial<Translations> = {
   "common.replicateRunning": "正在进行复制…",
   "common.showValue": "显示值",
   "common.hideValue": "隐藏值",
+  "confirmDialog.title": "确认",
+  "common.confirm": "确认",
+  "common.cancel": "取消",
   "common.close": "关闭",
 
   // Backup folders selector
@@ -1167,6 +1170,7 @@ const zh: Partial<Translations> = {
   "receiver.edit": "编辑",
   "receiver.remove": "移除",
   "receiver.removing": "正在移除…",
+  "receiver.confirmRemove": "确认移除",
   "receiver.removeConfirm": "将此接收仓库从监控中移除吗？磁盘上的仓库绝不会被触碰，仅移除监控条目。",
   "receiver.inventoryTitle": "按来源分类的清单",
   "receiver.inventoryLoading": "正在加载清单…",
@@ -1213,6 +1217,7 @@ const zh: Partial<Translations> = {
   "fleet.edit": "编辑",
   "fleet.remove": "移除",
   "fleet.removing": "正在移除…",
+  "fleet.confirmRemove": "确认移除",
   "fleet.removeConfirm": "将此实例从监控中移除？系统不会联系该实例本身，只会移除监控条目。",
   "fleet.scorecardTitle": "保护评分卡",
   "fleet.noScorecard": "尚无缓存的评分卡——查询该实例以获取。",

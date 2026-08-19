@@ -462,6 +462,9 @@ const he: Partial<Translations> = {
   "common.replicateRunning": "מתבצע שכפול…",
   "common.showValue": "הצג ערך",
   "common.hideValue": "הסתר ערך",
+  "confirmDialog.title": "אשר",
+  "common.confirm": "אשר",
+  "common.cancel": "ביטול",
   "common.close": "סגור",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const he: Partial<Translations> = {
   "receiver.edit": "ערוך",
   "receiver.remove": "הסר",
   "receiver.removing": "מסיר…",
+  "receiver.confirmRemove": "אישור הסרה",
   "receiver.removeConfirm": "להסיר את המאגר שהתקבל מהניטור? המאגר בדיסק לעולם אינו נוגע, רק רשומת הניטור מוסרת.",
   "receiver.inventoryTitle": "מלאי לפי מקור",
   "receiver.inventoryLoading": "טוען מלאי…",
@@ -1221,6 +1225,7 @@ const he: Partial<Translations> = {
   "fleet.edit": "עריכה",
   "fleet.remove": "הסרה",
   "fleet.removing": "מסיר…",
+  "fleet.confirmRemove": "אישור הסרה",
   "fleet.removeConfirm": "להסיר מופע זה מהניטור? המופע עצמו לעולם לא נוצר איתו קשר לצורך זה, רק רשומת הניטור מוסרת.",
   "fleet.scorecardTitle": "כרטיס הגנה",
   "fleet.noScorecard": "עדיין אין כרטיס שמור במטמון — שאל את המופע הזה כדי לקבל אחד.",

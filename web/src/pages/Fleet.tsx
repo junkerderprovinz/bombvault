@@ -378,6 +378,14 @@ function FleetPeerCard({
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
   const [showPropose, setShowPropose] = useState(false);
+  // Reversible action: removing a monitoring entry never contacts the peer
+  // instance (re-addable in one step), so per the design-language's
+  // "reversible actions don't ask" rule this gets the LIGHTER two-click
+  // inline-confirm — click "Remove" → button becomes "Confirm remove" —
+  // matching OffsiteTargetsSection's / Receiver.tsx's `confirmRemove`
+  // pattern exactly, not a full window.confirm()/ConfirmDialog (form-engine
+  // Task 7).
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   async function handlePoll() {
     setPolling(true);
@@ -390,7 +398,6 @@ function FleetPeerCard({
   }
 
   async function handleRemove() {
-    if (!window.confirm(t("fleet.removeConfirm"))) return;
     setRemoving(true);
     setRemoveErr(null);
     try {
@@ -401,6 +408,7 @@ function FleetPeerCard({
       setRemoveErr(err instanceof Error ? err.message : t("fleet.saveError"));
     } finally {
       setRemoving(false);
+      setConfirmRemove(false);
     }
   }
 
@@ -482,13 +490,22 @@ function FleetPeerCard({
           >
             {t("fleet.edit")}
           </button>
-          <button
-            onClick={() => void handleRemove()}
-            disabled={removing}
-            className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
-          >
-            {removing ? t("fleet.removing") : t("fleet.remove")}
-          </button>
+          {confirmRemove ? (
+            <button
+              onClick={() => void handleRemove()}
+              disabled={removing}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {removing ? t("fleet.removing") : t("fleet.confirmRemove")}
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmRemove(true)}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {t("fleet.remove")}
+            </button>
+          )}
         </div>
       </div>
       {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}

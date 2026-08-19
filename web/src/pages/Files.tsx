@@ -43,6 +43,7 @@ import { Advanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -376,13 +377,14 @@ function FileSetRestoreControl({
   });
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
+  const { confirm, confirmDialog } = useConfirm();
 
   // A stale success/error banner would misdescribe a different destination —
   // clear it when the choice changes (no-op while a restore is in flight).
   useEffect(() => reset(), [dest, targetPath, reset]);
 
-  function handleRestore() {
-    if (dest === "original" && !window.confirm(t("files.restoreOriginalConfirm"))) return;
+  async function handleRestore() {
+    if (dest === "original" && !(await confirm(t("files.restoreOriginalConfirm")))) return;
     if (dest === "folder" && targetPath.trim() === "") return;
     void fire();
   }
@@ -414,7 +416,7 @@ function FileSetRestoreControl({
             mode renders its own controls below (FileSetFileBrowser). */}
         {dest !== "select" && (
           <button
-            onClick={handleRestore}
+            onClick={() => void handleRestore()}
             disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
             className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
@@ -471,6 +473,7 @@ function FileSetRestoreControl({
           t={t}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -503,9 +506,10 @@ function FileSetSnapshotRow({
   const busy = progressMap[`files:${set.name}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -555,6 +559,7 @@ function FileSetSnapshotRow({
         />
       </div>
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -581,6 +586,7 @@ function FileSetRestorePanel({
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (!open) return;
@@ -595,8 +601,15 @@ function FileSetRestorePanel({
       .finally(() => setLoading(false));
   }, [open, set.id, source, reloadTick]);
 
-  function handleDeleteAll() {
-    if (!window.confirm(t("files.deleteBackupsConfirm"))) return;
+  async function handleDeleteAll() {
+    // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
+    // here once it ships (deferred — new interpolated i18n keys across all 25
+    // non-English locales, out of scope for this window.confirm() → dialog
+    // mechanism swap, form-engine Task 7). This is the highest-value site for
+    // it: an irreversible bulk delete of every backup this set has. Same
+    // flagged follow-up as Containers.tsx's deleteBackupsConfirm and
+    // VMs.tsx's deleteAllConfirm.
+    if (!(await confirm(t("files.deleteBackupsConfirm")))) return;
     setDeletingAll(true);
     setError(null);
     deleteFileSetBackups(set.id)
@@ -654,7 +667,7 @@ function FileSetRestorePanel({
                   is only offered while the local source is shown. */}
               {source === "local" && snapshots.length > 0 && (
                 <button
-                  onClick={handleDeleteAll}
+                  onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
                   className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
                 >
@@ -687,6 +700,7 @@ function FileSetRestorePanel({
             ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -868,12 +882,13 @@ function FileSetRow({
   const running = anyActive(progressMap);
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const noPath = set.path === "";
   const pathMissing = !noPath && !set.pathExists;
 
   async function handleRemove() {
-    if (!window.confirm(t("files.deleteSetConfirm"))) return;
+    if (!(await confirm(t("files.deleteSetConfirm")))) return;
     setRemoving(true);
     setRemoveErr(null);
     try {
@@ -980,6 +995,7 @@ function FileSetRow({
           label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }

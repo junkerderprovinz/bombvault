@@ -13,6 +13,7 @@ import { Toggle } from "../components/Toggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
+import { useConfirm } from "../lib/useConfirm";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
@@ -1924,6 +1925,7 @@ function IntegrityCard({
   // Prune deletes snapshots, so it stays advanced-only even though the rest of
   // this card (verify, unlock, DR drill) is a first-class default-mode feature.
   const { advanced } = useAdvanced();
+  const { confirm, confirmDialog } = useConfirm();
   type ActState = "idle" | "busy" | "ok" | "fail";
   type DrillKind = "subset" | "dr";
   const [state, setState] = useState<Record<string, ActState>>({});
@@ -2061,7 +2063,7 @@ function IntegrityCard({
   }
 
   async function run(domain: Domain, action: Action) {
-    if (action === "prune" && !window.confirm(t("integrity.pruneConfirm"))) return;
+    if (action === "prune" && !(await confirm(t("integrity.pruneConfirm")))) return;
     const key = `${domain}:${action}`;
     setState((s) => ({ ...s, [key]: "busy" }));
     setMsg((m) => ({ ...m, [key]: "" }));
@@ -2087,7 +2089,7 @@ function IntegrityCard({
   // A "dr" drill does a REAL off-site restore into a sandbox — it always targets
   // the off-site repo (source is ignored) and asks for confirmation first.
   async function runDrillFor(domain: Domain) {
-    if (kind === "dr" && !window.confirm(t("drill.confirmDR"))) return;
+    if (kind === "dr" && !(await confirm(t("drill.confirmDR")))) return;
     const key = `${domain}:drill`;
     setState((s) => ({ ...s, [key]: "busy" }));
     setMsg((m) => ({ ...m, [key]: "" }));
@@ -2362,6 +2364,7 @@ function IntegrityCard({
           );
         })}
       </div>
+      {confirmDialog}
     </Card>
   );
 }

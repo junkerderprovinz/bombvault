@@ -460,6 +460,9 @@ const pt: Partial<Translations> = {
   "common.replicateRunning": "Está a decorrer uma replicação…",
   "common.showValue": "Mostrar valor",
   "common.hideValue": "Ocultar valor",
+  "confirmDialog.title": "Confirmar",
+  "common.confirm": "Confirmar",
+  "common.cancel": "Cancelar",
   "common.close": "Fechar",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const pt: Partial<Translations> = {
   "receiver.edit": "Editar",
   "receiver.remove": "Remover",
   "receiver.removing": "A remover…",
+  "receiver.confirmRemove": "Confirmar remoção",
   "receiver.removeConfirm": "Remover este repositório recebido da monitorização? O repositório em disco nunca é tocado, apenas a entrada de monitorização é removida.",
   "receiver.inventoryTitle": "Inventário por origem",
   "receiver.inventoryLoading": "A carregar inventário…",
@@ -1221,6 +1225,7 @@ const pt: Partial<Translations> = {
   "fleet.edit": "Editar",
   "fleet.remove": "Remover",
   "fleet.removing": "A remover…",
+  "fleet.confirmRemove": "Confirmar remoção",
   "fleet.removeConfirm": "Remover esta instância da monitorização? A instância em si nunca é contactada para isto, apenas a entrada de monitorização é removida.",
   "fleet.scorecardTitle": "Cartão de proteção",
   "fleet.noScorecard": "Ainda sem cartão em cache — consulte esta instância para obter um.",

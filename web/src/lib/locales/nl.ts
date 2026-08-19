@@ -457,6 +457,9 @@ const nl: Partial<Translations> = {
   "common.replicateRunning": "Er wordt een replicatie uitgevoerd…",
   "common.showValue": "Waarde tonen",
   "common.hideValue": "Waarde verbergen",
+  "confirmDialog.title": "Bevestigen",
+  "common.confirm": "Bevestigen",
+  "common.cancel": "Annuleren",
   "common.close": "Sluiten",
 
   // Backup folders selector
@@ -1172,6 +1175,7 @@ const nl: Partial<Translations> = {
   "receiver.edit": "Bewerken",
   "receiver.remove": "Verwijderen",
   "receiver.removing": "Verwijderen…",
+  "receiver.confirmRemove": "Verwijderen bevestigen",
   "receiver.removeConfirm": "Deze ontvangen repo uit de bewaking verwijderen? De repository op schijf wordt nooit aangeraakt, alleen de bewakingsvermelding wordt verwijderd.",
   "receiver.inventoryTitle": "Inventaris per bron",
   "receiver.inventoryLoading": "Inventaris laden…",
@@ -1218,6 +1222,7 @@ const nl: Partial<Translations> = {
   "fleet.edit": "Bewerken",
   "fleet.remove": "Verwijderen",
   "fleet.removing": "Verwijderen…",
+  "fleet.confirmRemove": "Verwijderen bevestigen",
   "fleet.removeConfirm": "Deze instantie uit bewaking verwijderen? De instantie zelf wordt hiervoor nooit benaderd, alleen het bewakingsitem wordt verwijderd.",
   "fleet.scorecardTitle": "Beschermingskaart",
   "fleet.noScorecard": "Nog geen gecachte kaart — bevraag deze instantie om er een op te halen.",

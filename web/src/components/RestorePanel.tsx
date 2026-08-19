@@ -12,6 +12,7 @@ import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
 import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -91,6 +92,7 @@ function SnapshotFileBrowser({
   // runs (this item's own in-flight op is covered by isPending, never blocked).
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     setLoading(true);
@@ -128,11 +130,11 @@ function SnapshotFileBrowser({
     reset();
   }
 
-  function handleRestoreSelected() {
+  async function handleRestoreSelected() {
     if (selected.size === 0) return;
     if (dest === "toFolder" && !folder.trim()) return;
     // In place overwrites the live files, so keep the explicit confirm.
-    if (dest === "inPlace" && !window.confirm(t("files.restoreConfirm"))) return;
+    if (dest === "inPlace" && !(await confirm(t("files.restoreConfirm")))) return;
     void fire();
   }
 
@@ -187,7 +189,7 @@ function SnapshotFileBrowser({
           )}
           <div className="flex items-center gap-2">
             <button
-              onClick={handleRestoreSelected}
+              onClick={() => void handleRestoreSelected()}
               disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim())}
               className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -214,6 +216,7 @@ function SnapshotFileBrowser({
           />
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -246,14 +249,15 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
   const prog = progressMap[`container:${name}`];
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
-  function handle() {
-    if (!window.confirm(t("snapshots.recreateConfirm"))) return;
+  const { confirm, confirmDialog } = useConfirm();
+  async function handle() {
+    if (!(await confirm(t("snapshots.recreateConfirm")))) return;
     void fire();
   }
   return (
     <div className="flex flex-col gap-1 py-2">
       <button
-        onClick={handle}
+        onClick={() => void handle()}
         disabled={isPending || blockedByOther || state.phase === "success"}
         className="self-start inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
@@ -273,6 +277,7 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
         successMessage={t("restore.recreateComplete")}
         t={t}
       />
+      {confirmDialog}
     </div>
   );
 }
@@ -610,9 +615,10 @@ function SnapshotRow({
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -754,6 +760,7 @@ function SnapshotRow({
           )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

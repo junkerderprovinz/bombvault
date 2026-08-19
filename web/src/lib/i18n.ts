@@ -850,6 +850,12 @@ export const en = {
   // every secret/token field.
   "common.showValue": "Show value",
   "common.hideValue": "Hide value",
+  // ConfirmDialog (form-engine Task 7): the generic, reusable dialog chrome
+  // labels — NOT per-call-site copy. Every confirm() call site keeps its own
+  // existing message string; only these three boilerplate labels are new.
+  "confirmDialog.title": "Confirm",
+  "common.confirm": "Confirm",
+  "common.cancel": "Cancel",
 
   // VMs page
   "vms.title": "Virtual Machines",
@@ -945,6 +951,11 @@ export const en = {
   "receiver.edit": "Edit",
   "receiver.remove": "Remove",
   "receiver.removing": "Removing…",
+  // Downgraded from window.confirm() to the two-click inline-confirm pattern
+  // (form-engine Task 7) — removing a monitoring entry is reversible (the
+  // repo is never touched, only re-added later), so it no longer gets a full
+  // dialog. Matches OffsiteTargetsSection's "offsite.targets.confirmRemove".
+  "receiver.confirmRemove": "Confirm remove",
   "receiver.removeConfirm": "Remove this received repo from monitoring? The repository on disk is never touched, only the monitoring entry is removed.",
   "receiver.inventoryTitle": "Inventory by source",
   "receiver.inventoryLoading": "Loading inventory…",
@@ -991,6 +1002,9 @@ export const en = {
   "fleet.edit": "Edit",
   "fleet.remove": "Remove",
   "fleet.removing": "Removing…",
+  // Downgraded from window.confirm() to the two-click inline-confirm pattern
+  // (form-engine Task 7) — same rationale as receiver.confirmRemove above.
+  "fleet.confirmRemove": "Confirm remove",
   "fleet.removeConfirm": "Remove this peer from monitoring? The peer instance is never contacted for this, only the monitoring entry is removed.",
   "fleet.scorecardTitle": "Protection scorecard",
   "fleet.noScorecard": "No cached scorecard yet — poll this peer to fetch one.",
@@ -2178,6 +2192,9 @@ export const de: Translations = {
   "common.replicateRunning": "Eine Replikation läuft…",
   "common.showValue": "Wert anzeigen",
   "common.hideValue": "Wert verbergen",
+  "confirmDialog.title": "Bestätigen",
+  "common.confirm": "Bestätigen",
+  "common.cancel": "Abbrechen",
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",
@@ -2273,6 +2290,7 @@ export const de: Translations = {
   "receiver.edit": "Bearbeiten",
   "receiver.remove": "Entfernen",
   "receiver.removing": "Wird entfernt…",
+  "receiver.confirmRemove": "Entfernen bestätigen",
   "receiver.removeConfirm": "Dieses empfangene Repo aus der Überwachung entfernen? Das Repository auf der Platte wird nie angetastet, nur der Überwachungseintrag wird entfernt.",
   "receiver.inventoryTitle": "Bestand nach Quelle",
   "receiver.inventoryLoading": "Bestand wird geladen…",
@@ -2319,6 +2337,7 @@ export const de: Translations = {
   "fleet.edit": "Bearbeiten",
   "fleet.remove": "Entfernen",
   "fleet.removing": "Wird entfernt…",
+  "fleet.confirmRemove": "Entfernen bestätigen",
   "fleet.removeConfirm": "Diese Instanz aus der Überwachung entfernen? Die Instanz selbst wird dabei nie kontaktiert, nur der Überwachungseintrag wird entfernt.",
   "fleet.scorecardTitle": "Schutz-Scorecard",
   "fleet.noScorecard": "Noch keine gecachte Scorecard — diese Instanz abfragen, um eine zu holen.",

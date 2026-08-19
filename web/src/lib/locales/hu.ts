@@ -462,6 +462,9 @@ const hu: Partial<Translations> = {
   "common.replicateRunning": "Replikálás van folyamatban…",
   "common.showValue": "Érték megjelenítése",
   "common.hideValue": "Érték elrejtése",
+  "confirmDialog.title": "Megerősítés",
+  "common.confirm": "Megerősítés",
+  "common.cancel": "Mégse",
   "common.close": "Bezárás",
 
   // Backup folders selector
@@ -1178,6 +1181,7 @@ const hu: Partial<Translations> = {
   "receiver.edit": "Szerkesztés",
   "receiver.remove": "Eltávolítás",
   "receiver.removing": "Eltávolítás…",
+  "receiver.confirmRemove": "Eltávolítás megerősítése",
   "receiver.removeConfirm": "Eltávolítja ezt a fogadott tárolót a figyelésből? A lemezen lévő tárolót soha nem érinti, csak a figyelési bejegyzés törlődik.",
   "receiver.inventoryTitle": "Leltár forrás szerint",
   "receiver.inventoryLoading": "Leltár betöltése…",
@@ -1224,6 +1228,7 @@ const hu: Partial<Translations> = {
   "fleet.edit": "Szerkesztés",
   "fleet.remove": "Eltávolítás",
   "fleet.removing": "Eltávolítás…",
+  "fleet.confirmRemove": "Eltávolítás megerősítése",
   "fleet.removeConfirm": "Eltávolítod ezt a példányt a figyelésből? A példányt ehhez sosem keressük meg, csak a figyelési bejegyzés kerül eltávolításra.",
   "fleet.scorecardTitle": "Védelmi eredményjelző",
   "fleet.noScorecard": "Még nincs gyorsítótárazott eredményjelző — kérdezd le ezt a példányt egy lekéréséhez.",

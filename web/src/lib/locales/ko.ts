@@ -454,6 +454,9 @@ const ko: Partial<Translations> = {
   "common.replicateRunning": "복제가 실행 중입니다…",
   "common.showValue": "값 표시",
   "common.hideValue": "값 숨기기",
+  "confirmDialog.title": "확인",
+  "common.confirm": "확인",
+  "common.cancel": "취소",
   "common.close": "닫기",
 
   // Backup folders selector
@@ -1167,6 +1170,7 @@ const ko: Partial<Translations> = {
   "receiver.edit": "편집",
   "receiver.remove": "제거",
   "receiver.removing": "제거 중…",
+  "receiver.confirmRemove": "제거 확인",
   "receiver.removeConfirm": "이 수신 저장소를 모니터링에서 제거하시겠습니까? 디스크의 저장소는 절대 건드리지 않으며 모니터링 항목만 제거됩니다.",
   "receiver.inventoryTitle": "소스별 인벤토리",
   "receiver.inventoryLoading": "인벤토리 불러오는 중…",
@@ -1213,6 +1217,7 @@ const ko: Partial<Translations> = {
   "fleet.edit": "편집",
   "fleet.remove": "제거",
   "fleet.removing": "제거 중…",
+  "fleet.confirmRemove": "제거 확인",
   "fleet.removeConfirm": "이 인스턴스를 모니터링에서 제거하시겠습니까? 해당 인스턴스에는 연락하지 않으며, 모니터링 항목만 제거됩니다.",
   "fleet.scorecardTitle": "보호 스코어카드",
   "fleet.noScorecard": "아직 캐시된 스코어카드가 없습니다 — 이 인스턴스를 조회해 가져오세요.",

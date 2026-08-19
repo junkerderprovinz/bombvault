@@ -20,6 +20,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -259,9 +260,16 @@ function DeleteBackupsButton({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("containers.deleteBackupsConfirm"))) return;
+    // TODO(#follow-up): once richer stake-detail copy ("N snapshots, X GB")
+    // ships (deferred — needs new interpolated i18n keys across all 25
+    // non-English locales, out of scope for the window.confirm() → dialog
+    // mechanism swap, form-engine Task 7), it renders here as extra body
+    // content passed to confirm(), same as the two other flagged sites in
+    // VMs.tsx's deleteAllConfirm and Files.tsx's deleteBackupsConfirm.
+    if (!(await confirm(t("containers.deleteBackupsConfirm")))) return;
     setPending(true);
     setError(null);
     try {
@@ -285,6 +293,7 @@ function DeleteBackupsButton({
         {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
       </button>
       {error && <p className="text-xs text-statusFail">{error}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -1260,6 +1269,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   // grace window longer than that gap — otherwise the cancel button flickered out
   // between members and the "runs in background" banner stayed sticky forever.
   const sawActive = useRef(false);
+  const { confirm, confirmDialog } = useConfirm();
   useEffect(() => {
     if (!started) return;
     if (anyMemberActive) {
@@ -1276,7 +1286,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   }, [started, anyMemberActive]);
 
   async function run() {
-    if (!window.confirm(t("stack.restoreConfirm"))) return;
+    if (!(await confirm(t("stack.restoreConfirm")))) return;
     setBusy(true);
     setError(null);
     setStarted(false);
@@ -1370,6 +1380,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -1651,6 +1662,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
 
 export function Containers() {
   const { t } = useT();
+  const { confirm, confirmDialog } = useConfirm();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1826,8 +1838,8 @@ export function Containers() {
   // loop must fire one restore and WAIT for its recorded run before the next
   // (firing them in a tight loop would make every call after the first hit
   // "already running"). fireAndWaitRun handles the fire/retry/wait cycle.
-  function restoreSelected() {
-    if (!window.confirm(t("containers.restoreSelectedConfirm"))) return;
+  async function restoreSelected() {
+    if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
     void runBulk((name) =>
       fireAndWaitRun({
         kind: "restore",
@@ -1989,7 +2001,7 @@ export function Containers() {
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
             <button
-              onClick={restoreSelected}
+              onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
               className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
@@ -2066,6 +2078,7 @@ export function Containers() {
       {!loading && !error && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
+      {confirmDialog}
     </div>
   );
 }

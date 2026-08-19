@@ -457,6 +457,9 @@ const uk: Partial<Translations> = {
   "common.replicateRunning": "Виконується реплікація…",
   "common.showValue": "Показати значення",
   "common.hideValue": "Приховати значення",
+  "confirmDialog.title": "Підтвердити",
+  "common.confirm": "Підтвердити",
+  "common.cancel": "Скасувати",
   "common.close": "Закрити",
 
   // Backup folders selector
@@ -1170,6 +1173,7 @@ const uk: Partial<Translations> = {
   "receiver.edit": "Редагувати",
   "receiver.remove": "Видалити",
   "receiver.removing": "Видалення…",
+  "receiver.confirmRemove": "Підтвердити видалення",
   "receiver.removeConfirm": "Прибрати цей отриманий репозиторій з моніторингу? Репозиторій на диску ніколи не чіпається, видаляється лише запис моніторингу.",
   "receiver.inventoryTitle": "Опис за джерелами",
   "receiver.inventoryLoading": "Завантаження опису…",
@@ -1216,6 +1220,7 @@ const uk: Partial<Translations> = {
   "fleet.edit": "Редагувати",
   "fleet.remove": "Видалити",
   "fleet.removing": "Видалення…",
+  "fleet.confirmRemove": "Підтвердити видалення",
   "fleet.removeConfirm": "Видалити цей екземпляр з моніторингу? До самого екземпляра ніколи не звертаються з цієї причини, видаляється лише запис моніторингу.",
   "fleet.scorecardTitle": "Зведення захисту",
   "fleet.noScorecard": "Кешованого зведення ще немає — опитайте цей екземпляр, щоб отримати його.",

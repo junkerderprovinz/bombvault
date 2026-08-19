@@ -462,6 +462,9 @@ const tr: Partial<Translations> = {
   "common.replicateRunning": "Bir çoğaltma çalışıyor…",
   "common.showValue": "Değeri göster",
   "common.hideValue": "Değeri gizle",
+  "confirmDialog.title": "Onayla",
+  "common.confirm": "Onayla",
+  "common.cancel": "İptal",
   "common.close": "Kapat",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const tr: Partial<Translations> = {
   "receiver.edit": "Düzenle",
   "receiver.remove": "Kaldır",
   "receiver.removing": "Kaldırılıyor…",
+  "receiver.confirmRemove": "Kaldırmayı onayla",
   "receiver.removeConfirm": "Bu alınan depo izlemeden kaldırılsın mı? Diskteki depoya asla dokunulmaz, yalnızca izleme kaydı kaldırılır.",
   "receiver.inventoryTitle": "Kaynağa göre envanter",
   "receiver.inventoryLoading": "Envanter yükleniyor…",
@@ -1221,6 +1225,7 @@ const tr: Partial<Translations> = {
   "fleet.edit": "Düzenle",
   "fleet.remove": "Kaldır",
   "fleet.removing": "Kaldırılıyor…",
+  "fleet.confirmRemove": "Kaldırmayı onayla",
   "fleet.removeConfirm": "Bu örnek izlemeden kaldırılsın mı? Bunun için örnekle asla iletişime geçilmez, yalnızca izleme kaydı kaldırılır.",
   "fleet.scorecardTitle": "Koruma karnesi",
   "fleet.noScorecard": "Henüz önbelleğe alınmış bir karne yok — almak için bu örneği sorgulayın.",

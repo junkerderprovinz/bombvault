@@ -454,6 +454,9 @@ const ja: Partial<Translations> = {
   "common.replicateRunning": "複製を実行中です…",
   "common.showValue": "値を表示",
   "common.hideValue": "値を非表示",
+  "confirmDialog.title": "確認",
+  "common.confirm": "確認",
+  "common.cancel": "キャンセル",
   "common.close": "閉じる",
 
   // Backup folders selector
@@ -1167,6 +1170,7 @@ const ja: Partial<Translations> = {
   "receiver.edit": "編集",
   "receiver.remove": "削除",
   "receiver.removing": "削除中…",
+  "receiver.confirmRemove": "削除を確認",
   "receiver.removeConfirm": "この受信リポジトリを監視から外しますか？ ディスク上のリポジトリには一切触れず、監視エントリのみを削除します。",
   "receiver.inventoryTitle": "ソース別インベントリ",
   "receiver.inventoryLoading": "インベントリを読み込み中…",
@@ -1213,6 +1217,7 @@ const ja: Partial<Translations> = {
   "fleet.edit": "編集",
   "fleet.remove": "削除",
   "fleet.removing": "削除中…",
+  "fleet.confirmRemove": "削除を確認",
   "fleet.removeConfirm": "このインスタンスを監視から削除しますか？この操作でインスタンス自体に接続することはなく、監視エントリのみが削除されます。",
   "fleet.scorecardTitle": "保護スコアカード",
   "fleet.noScorecard": "まだキャッシュされたスコアカードはありません — このインスタンスを照会して取得してください。",

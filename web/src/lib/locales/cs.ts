@@ -460,6 +460,9 @@ const cs: Partial<Translations> = {
   "common.replicateRunning": "Probíhá replikace…",
   "common.showValue": "Zobrazit hodnotu",
   "common.hideValue": "Skrýt hodnotu",
+  "confirmDialog.title": "Potvrdit",
+  "common.confirm": "Potvrdit",
+  "common.cancel": "Zrušit",
   "common.close": "Zavřít",
 
   // Backup folders selector
@@ -1173,6 +1176,7 @@ const cs: Partial<Translations> = {
   "receiver.edit": "Upravit",
   "receiver.remove": "Odebrat",
   "receiver.removing": "Odebírání…",
+  "receiver.confirmRemove": "Potvrdit odebrání",
   "receiver.removeConfirm": "Odebrat tento přijatý repozitář ze sledování? Repozitář na disku se nikdy nedotkne, odebere se pouze záznam sledování.",
   "receiver.inventoryTitle": "Inventář podle zdroje",
   "receiver.inventoryLoading": "Načítání inventáře…",
@@ -1219,6 +1223,7 @@ const cs: Partial<Translations> = {
   "fleet.edit": "Upravit",
   "fleet.remove": "Odebrat",
   "fleet.removing": "Odebírání…",
+  "fleet.confirmRemove": "Potvrdit odebrání",
   "fleet.removeConfirm": "Odebrat tuto instanci ze sledování? Instance samotná se kvůli tomu nikdy nekontaktuje, odebere se pouze záznam sledování.",
   "fleet.scorecardTitle": "Karta ochrany",
   "fleet.noScorecard": "Zatím žádná uložená karta — dotažte se na tuto instanci a získejte ji.",

@@ -16,6 +16,7 @@
 import { useState, type MutableRefObject } from "react";
 import { cancelRestore } from "../lib/api";
 import type { useT } from "../lib/i18n";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -39,12 +40,19 @@ export function RestoreCancelButton({
   cancelledRef?: MutableRefObject<boolean>;
 }) {
   const [cancelling, setCancelling] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handle() {
     const msg = inPlace
       ? t("restore.cancelConfirmInPlace").replace(/\{name\}/g, name)
       : t("restore.cancelConfirmSafe");
-    if (!window.confirm(msg)) return;
+    // inPlace keeps the hard (fault-red) tone — the target is left partially
+    // restored and must be restored again; the light warning (restore-to-a-
+    // folder, non-destructive) downgrades to warn (amber) so the dialog's
+    // own visual weight still tracks the same hard/light distinction the
+    // message copy already carries, unchanged, from before this mechanism
+    // swap (GlimStone form-engine Task 7).
+    if (!(await confirm(msg, { tone: inPlace ? "fail" : "warn" }))) return;
     setCancelling(true);
     try {
       await cancelRestore(cancelKey);
@@ -60,13 +68,16 @@ export function RestoreCancelButton({
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void handle()}
-      disabled={cancelling}
-      className="self-start inline-flex items-center rounded-control px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {cancelling ? t("restore.cancelling") : t("restore.cancel")}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => void handle()}
+        disabled={cancelling}
+        className="self-start inline-flex items-center rounded-control px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {cancelling ? t("restore.cancelling") : t("restore.cancel")}
+      </button>
+      {confirmDialog}
+    </>
   );
 }

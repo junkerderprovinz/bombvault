@@ -462,6 +462,9 @@ const es: Partial<Translations> = {
   "common.replicateRunning": "Hay una replicación en curso…",
   "common.showValue": "Mostrar valor",
   "common.hideValue": "Ocultar valor",
+  "confirmDialog.title": "Confirmar",
+  "common.confirm": "Confirmar",
+  "common.cancel": "Cancelar",
   "common.close": "Cerrar",
 
   // Backup folders selector
@@ -1173,6 +1176,7 @@ const es: Partial<Translations> = {
   "receiver.edit": "Editar",
   "receiver.remove": "Eliminar",
   "receiver.removing": "Eliminando…",
+  "receiver.confirmRemove": "Confirmar eliminación",
   "receiver.removeConfirm": "¿Quitar este repositorio recibido de la supervisión? El repositorio en disco nunca se toca, solo se elimina la entrada de supervisión.",
   "receiver.inventoryTitle": "Inventario por origen",
   "receiver.inventoryLoading": "Cargando inventario…",
@@ -1219,6 +1223,7 @@ const es: Partial<Translations> = {
   "fleet.edit": "Editar",
   "fleet.remove": "Eliminar",
   "fleet.removing": "Eliminando…",
+  "fleet.confirmRemove": "Confirmar eliminación",
   "fleet.removeConfirm": "¿Eliminar esta instancia de la supervisión? Nunca se contacta con la instancia en sí para esto, solo se elimina la entrada de supervisión.",
   "fleet.scorecardTitle": "Ficha de protección",
   "fleet.noScorecard": "Aún no hay una ficha en caché — consulta esta instancia para obtener una.",

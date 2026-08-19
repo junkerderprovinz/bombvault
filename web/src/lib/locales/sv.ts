@@ -462,6 +462,9 @@ const sv: Partial<Translations> = {
   "common.replicateRunning": "En replikering pågår…",
   "common.showValue": "Visa värde",
   "common.hideValue": "Dölj värde",
+  "confirmDialog.title": "Bekräfta",
+  "common.confirm": "Bekräfta",
+  "common.cancel": "Avbryt",
   "common.close": "Stäng",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const sv: Partial<Translations> = {
   "receiver.edit": "Redigera",
   "receiver.remove": "Ta bort",
   "receiver.removing": "Tar bort…",
+  "receiver.confirmRemove": "Bekräfta borttagning",
   "receiver.removeConfirm": "Ta bort det här mottagna arkivet från övervakning? Arkivet på disk rörs aldrig, endast övervakningsposten tas bort.",
   "receiver.inventoryTitle": "Inventering per källa",
   "receiver.inventoryLoading": "Läser in inventering…",
@@ -1221,6 +1225,7 @@ const sv: Partial<Translations> = {
   "fleet.edit": "Redigera",
   "fleet.remove": "Ta bort",
   "fleet.removing": "Tar bort…",
+  "fleet.confirmRemove": "Bekräfta borttagning",
   "fleet.removeConfirm": "Ta bort den här instansen från övervakning? Instansen kontaktas aldrig för detta, endast övervakningsposten tas bort.",
   "fleet.scorecardTitle": "Skyddspoängkort",
   "fleet.noScorecard": "Inget cachat poängkort än — fråga av den här instansen för att hämta ett.",

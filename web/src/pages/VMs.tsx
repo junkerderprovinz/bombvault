@@ -15,6 +15,7 @@ import { IconVM } from "../components/Sidebar";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -427,9 +428,10 @@ function VMSnapshotRow({
   // SnapshotRow) — the restore controls (confirm + leave-stopped + progress
   // banner) only render once the user opts in.
   const [showRestore, setShowRestore] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -493,6 +495,7 @@ function VMSnapshotRow({
         </div>
       )}
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -506,6 +509,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (!open) return;
@@ -520,8 +524,13 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
       .finally(() => setLoading(false));
   }, [open, name, source, reloadTick]);
 
-  function handleDeleteAll() {
-    if (!window.confirm(t("snapshots.deleteAllConfirm"))) return;
+  async function handleDeleteAll() {
+    // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
+    // here once it ships (deferred — new interpolated i18n keys across all 25
+    // non-English locales, out of scope for this window.confirm() → dialog
+    // mechanism swap). Same flagged follow-up as Containers.tsx's
+    // deleteBackupsConfirm and Files.tsx's deleteBackupsConfirm.
+    if (!(await confirm(t("snapshots.deleteAllConfirm")))) return;
     setDeletingAll(true);
     setError(null);
     deleteBackupsVM(name, source)
@@ -570,7 +579,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
               </Advanced>
               {snapshots.length > 0 && (
                 <button
-                  onClick={handleDeleteAll}
+                  onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
                   className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
                 >
@@ -603,6 +612,7 @@ function VMRestorePanel({ name, t }: { name: string; t: T }) {
             ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -726,9 +736,10 @@ function VMForgetButton({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleForget() {
-    if (!window.confirm(t("vms.removeEntryConfirm"))) return;
+    if (!(await confirm(t("vms.removeEntryConfirm")))) return;
     setPending(true);
     setError(null);
     try {
@@ -752,6 +763,7 @@ function VMForgetButton({
         {pending ? t("dashboard.checking") : t("vms.removeEntry")}
       </button>
       {error && <p className="text-xs text-statusFail">{error}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -1041,6 +1053,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
 export function VMs() {
   const { t } = useT();
+  const { confirm, confirmDialog } = useConfirm();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
   const running = anyActive(useProgress());
@@ -1199,8 +1212,8 @@ export function VMs() {
     );
   }
 
-  function restoreSelected() {
-    if (!window.confirm(t("vms.restoreSelectedConfirm"))) return;
+  async function restoreSelected() {
+    if (!(await confirm(t("vms.restoreSelectedConfirm")))) return;
     void runBulk((name) =>
       fireAndWaitRun({
         kind: "restore",
@@ -1335,7 +1348,7 @@ export function VMs() {
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
             <button
-              onClick={restoreSelected}
+              onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
               className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
@@ -1400,6 +1413,7 @@ export function VMs() {
       {!loading && !error && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
+      {confirmDialog}
     </div>
   );
 }

@@ -462,6 +462,9 @@ const fr: Partial<Translations> = {
   "common.replicateRunning": "Une réplication est en cours…",
   "common.showValue": "Afficher la valeur",
   "common.hideValue": "Masquer la valeur",
+  "confirmDialog.title": "Confirmer",
+  "common.confirm": "Confirmer",
+  "common.cancel": "Annuler",
   "common.close": "Fermer",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const fr: Partial<Translations> = {
   "receiver.edit": "Modifier",
   "receiver.remove": "Supprimer",
   "receiver.removing": "Suppression…",
+  "receiver.confirmRemove": "Confirmer la suppression",
   "receiver.removeConfirm": "Retirer ce dépôt reçu de la surveillance ? Le dépôt sur le disque n'est jamais touché, seule l'entrée de surveillance est supprimée.",
   "receiver.inventoryTitle": "Inventaire par source",
   "receiver.inventoryLoading": "Chargement de l'inventaire…",
@@ -1221,6 +1225,7 @@ const fr: Partial<Translations> = {
   "fleet.edit": "Modifier",
   "fleet.remove": "Supprimer",
   "fleet.removing": "Suppression…",
+  "fleet.confirmRemove": "Confirmer la suppression",
   "fleet.removeConfirm": "Supprimer cette instance de la surveillance ? L'instance elle-même n'est jamais contactée pour cela, seule l'entrée de surveillance est supprimée.",
   "fleet.scorecardTitle": "Fiche de protection",
   "fleet.noScorecard": "Aucune fiche mise en cache pour le moment — interrogez cette instance pour en obtenir une.",

@@ -150,6 +150,13 @@ function ReceivedRepoCard({
   const [checkMsg, setCheckMsg] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
+  // Reversible action: removing a monitoring entry never touches the repo on
+  // disk (re-addable in one step), so per the design-language's "reversible
+  // actions don't ask" rule this gets the LIGHTER two-click inline-confirm —
+  // click "Remove" → button becomes "Confirm remove" — matching
+  // OffsiteTargetsSection's `confirmRemove` pattern exactly, not a full
+  // window.confirm()/ConfirmDialog (form-engine Task 7).
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   async function handleCheck() {
     setChecking(true);
@@ -170,7 +177,6 @@ function ReceivedRepoCard({
   }
 
   async function handleRemove() {
-    if (!window.confirm(t("receiver.removeConfirm"))) return;
     setRemoving(true);
     setRemoveErr(null);
     try {
@@ -181,6 +187,7 @@ function ReceivedRepoCard({
       setRemoveErr(err instanceof Error ? err.message : t("receiver.saveError"));
     } finally {
       setRemoving(false);
+      setConfirmRemove(false);
     }
   }
 
@@ -286,13 +293,22 @@ function ReceivedRepoCard({
           >
             {t("receiver.edit")}
           </button>
-          <button
-            onClick={() => void handleRemove()}
-            disabled={removing}
-            className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
-          >
-            {removing ? t("receiver.removing") : t("receiver.remove")}
-          </button>
+          {confirmRemove ? (
+            <button
+              onClick={() => void handleRemove()}
+              disabled={removing}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {removing ? t("receiver.removing") : t("receiver.confirmRemove")}
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmRemove(true)}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {t("receiver.remove")}
+            </button>
+          )}
         </div>
       </div>
       {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}

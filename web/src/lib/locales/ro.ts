@@ -460,6 +460,9 @@ const ro: Partial<Translations> = {
   "common.replicateRunning": "O replicare este în curs…",
   "common.showValue": "Afișează valoarea",
   "common.hideValue": "Ascunde valoarea",
+  "confirmDialog.title": "Confirmare",
+  "common.confirm": "Confirmare",
+  "common.cancel": "Anulare",
   "common.close": "Închide",
 
   // Backup folders selector
@@ -1178,6 +1181,7 @@ const ro: Partial<Translations> = {
   "receiver.edit": "Editează",
   "receiver.remove": "Elimină",
   "receiver.removing": "Se elimină…",
+  "receiver.confirmRemove": "Confirmă eliminarea",
   "receiver.removeConfirm": "Elimini acest depozit primit din monitorizare? Depozitul de pe disc nu este atins niciodată, se elimină doar intrarea de monitorizare.",
   "receiver.inventoryTitle": "Inventar după sursă",
   "receiver.inventoryLoading": "Se încarcă inventarul…",
@@ -1224,6 +1228,7 @@ const ro: Partial<Translations> = {
   "fleet.edit": "Editează",
   "fleet.remove": "Elimină",
   "fleet.removing": "Se elimină…",
+  "fleet.confirmRemove": "Confirmă eliminarea",
   "fleet.removeConfirm": "Elimini această instanță din monitorizare? Instanța nu este niciodată contactată în acest scop, se elimină doar înregistrarea de monitorizare.",
   "fleet.scorecardTitle": "Fișă de protecție",
   "fleet.noScorecard": "Nicio fișă memorată încă — interoghează această instanță pentru a obține una.",

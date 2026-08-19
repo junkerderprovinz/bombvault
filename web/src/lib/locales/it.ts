@@ -462,6 +462,9 @@ const it: Partial<Translations> = {
   "common.replicateRunning": "È in corso una replica…",
   "common.showValue": "Mostra valore",
   "common.hideValue": "Nascondi valore",
+  "confirmDialog.title": "Conferma",
+  "common.confirm": "Conferma",
+  "common.cancel": "Annulla",
   "common.close": "Chiudi",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const it: Partial<Translations> = {
   "receiver.edit": "Modifica",
   "receiver.remove": "Rimuovi",
   "receiver.removing": "Rimozione…",
+  "receiver.confirmRemove": "Conferma rimozione",
   "receiver.removeConfirm": "Rimuovere questo repository ricevuto dal monitoraggio? Il repository su disco non viene mai toccato, viene rimossa solo la voce di monitoraggio.",
   "receiver.inventoryTitle": "Inventario per sorgente",
   "receiver.inventoryLoading": "Caricamento inventario…",
@@ -1221,6 +1225,7 @@ const it: Partial<Translations> = {
   "fleet.edit": "Modifica",
   "fleet.remove": "Rimuovi",
   "fleet.removing": "Rimozione…",
+  "fleet.confirmRemove": "Conferma rimozione",
   "fleet.removeConfirm": "Rimuovere questa istanza dal monitoraggio? L'istanza stessa non viene mai contattata per questo, viene rimossa solo la voce di monitoraggio.",
   "fleet.scorecardTitle": "Scheda di protezione",
   "fleet.noScorecard": "Nessuna scheda memorizzata ancora — interroga questa istanza per ottenerne una.",

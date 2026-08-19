@@ -455,6 +455,9 @@ const ru: Partial<Translations> = {
   "common.replicateRunning": "Выполняется репликация…",
   "common.showValue": "Показать значение",
   "common.hideValue": "Скрыть значение",
+  "confirmDialog.title": "Подтвердить",
+  "common.confirm": "Подтвердить",
+  "common.cancel": "Отмена",
   "common.close": "Закрыть",
 
   // Backup folders selector
@@ -1170,6 +1173,7 @@ const ru: Partial<Translations> = {
   "receiver.edit": "Изменить",
   "receiver.remove": "Удалить",
   "receiver.removing": "Удаление…",
+  "receiver.confirmRemove": "Подтвердить удаление",
   "receiver.removeConfirm": "Убрать этот принятый репозиторий из мониторинга? Репозиторий на диске никогда не затрагивается, удаляется только запись мониторинга.",
   "receiver.inventoryTitle": "Опись по источникам",
   "receiver.inventoryLoading": "Загрузка описи…",
@@ -1216,6 +1220,7 @@ const ru: Partial<Translations> = {
   "fleet.edit": "Изменить",
   "fleet.remove": "Удалить",
   "fleet.removing": "Удаление…",
+  "fleet.confirmRemove": "Подтвердить удаление",
   "fleet.removeConfirm": "Удалить этот экземпляр из мониторинга? Сам экземпляр при этом никогда не затрагивается, удаляется только запись мониторинга.",
   "fleet.scorecardTitle": "Сводка защиты",
   "fleet.noScorecard": "Кэшированной сводки пока нет — опросите этот экземпляр, чтобы получить её.",

@@ -454,6 +454,9 @@ const vi: Partial<Translations> = {
   "common.replicateRunning": "Một tiến trình sao chép đang chạy…",
   "common.showValue": "Hiện giá trị",
   "common.hideValue": "Ẩn giá trị",
+  "confirmDialog.title": "Xác nhận",
+  "common.confirm": "Xác nhận",
+  "common.cancel": "Hủy",
   "common.close": "Đóng",
 
   // Backup folders selector
@@ -1167,6 +1170,7 @@ const vi: Partial<Translations> = {
   "receiver.edit": "Sửa",
   "receiver.remove": "Xóa",
   "receiver.removing": "Đang xóa…",
+  "receiver.confirmRemove": "Xác nhận xóa",
   "receiver.removeConfirm": "Xóa kho đã nhận này khỏi giám sát? Kho trên đĩa không bao giờ bị đụng tới, chỉ mục giám sát bị xóa.",
   "receiver.inventoryTitle": "Kiểm kê theo nguồn",
   "receiver.inventoryLoading": "Đang tải kiểm kê…",
@@ -1213,6 +1217,7 @@ const vi: Partial<Translations> = {
   "fleet.edit": "Sửa",
   "fleet.remove": "Xóa",
   "fleet.removing": "Đang xóa…",
+  "fleet.confirmRemove": "Xác nhận xóa",
   "fleet.removeConfirm": "Xóa phiên bản này khỏi giám sát? Phiên bản đó không bao giờ bị liên hệ vì việc này, chỉ mục giám sát bị xóa.",
   "fleet.scorecardTitle": "Thẻ điểm bảo vệ",
   "fleet.noScorecard": "Chưa có thẻ điểm được lưu — truy vấn phiên bản này để lấy.",

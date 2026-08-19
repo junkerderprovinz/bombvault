@@ -460,6 +460,9 @@ const no: Partial<Translations> = {
   "common.replicateRunning": "En replikering kjører…",
   "common.showValue": "Vis verdi",
   "common.hideValue": "Skjul verdi",
+  "confirmDialog.title": "Bekreft",
+  "common.confirm": "Bekreft",
+  "common.cancel": "Avbryt",
   "common.close": "Lukk",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const no: Partial<Translations> = {
   "receiver.edit": "Rediger",
   "receiver.remove": "Fjern",
   "receiver.removing": "Fjerner…",
+  "receiver.confirmRemove": "Bekreft fjerning",
   "receiver.removeConfirm": "Fjerne dette mottatte arkivet fra overvåking? Arkivet på disken røres aldri, kun overvåkingsoppføringen fjernes.",
   "receiver.inventoryTitle": "Oversikt etter kilde",
   "receiver.inventoryLoading": "Laster oversikt…",
@@ -1221,6 +1225,7 @@ const no: Partial<Translations> = {
   "fleet.edit": "Rediger",
   "fleet.remove": "Fjern",
   "fleet.removing": "Fjerner…",
+  "fleet.confirmRemove": "Bekreft fjerning",
   "fleet.removeConfirm": "Fjerne denne instansen fra overvåking? Instansen blir aldri kontaktet for dette, kun overvåkingsoppføringen fjernes.",
   "fleet.scorecardTitle": "Beskyttelsesoversikt",
   "fleet.noScorecard": "Ingen bufret oversikt ennå — spør ut denne instansen for å hente en.",

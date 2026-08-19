@@ -455,6 +455,9 @@ const pl: Partial<Translations> = {
   "common.replicateRunning": "Trwa replikacja…",
   "common.showValue": "Pokaż wartość",
   "common.hideValue": "Ukryj wartość",
+  "confirmDialog.title": "Potwierdź",
+  "common.confirm": "Potwierdź",
+  "common.cancel": "Anuluj",
   "common.close": "Zamknij",
 
   // Backup folders selector
@@ -1170,6 +1173,7 @@ const pl: Partial<Translations> = {
   "receiver.edit": "Edytuj",
   "receiver.remove": "Usuń",
   "receiver.removing": "Usuwanie…",
+  "receiver.confirmRemove": "Potwierdź usunięcie",
   "receiver.removeConfirm": "Usunąć to odebrane repozytorium z monitorowania? Repozytorium na dysku nigdy nie jest naruszane, usuwany jest tylko wpis monitorowania.",
   "receiver.inventoryTitle": "Inwentarz według źródła",
   "receiver.inventoryLoading": "Ładowanie inwentarza…",
@@ -1216,6 +1220,7 @@ const pl: Partial<Translations> = {
   "fleet.edit": "Edytuj",
   "fleet.remove": "Usuń",
   "fleet.removing": "Usuwanie…",
+  "fleet.confirmRemove": "Potwierdź usunięcie",
   "fleet.removeConfirm": "Usunąć tę instancję z monitorowania? Instancja nigdy nie jest w tym celu kontaktowana, usuwany jest tylko wpis monitorowania.",
   "fleet.scorecardTitle": "Karta ochrony",
   "fleet.noScorecard": "Brak zapisanej karty ochrony — odpytaj tę instancję, aby ją pobrać.",

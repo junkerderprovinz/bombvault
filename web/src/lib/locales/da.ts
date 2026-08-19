@@ -462,6 +462,9 @@ const da: Partial<Translations> = {
   "common.replicateRunning": "En replikering kører…",
   "common.showValue": "Vis værdi",
   "common.hideValue": "Skjul værdi",
+  "confirmDialog.title": "Bekræft",
+  "common.confirm": "Bekræft",
+  "common.cancel": "Annuller",
   "common.close": "Luk",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const da: Partial<Translations> = {
   "receiver.edit": "Rediger",
   "receiver.remove": "Fjern",
   "receiver.removing": "Fjerner…",
+  "receiver.confirmRemove": "Bekræft fjernelse",
   "receiver.removeConfirm": "Fjern dette modtagne arkiv fra overvågning? Arkivet på disken røres aldrig, kun overvågningsposten fjernes.",
   "receiver.inventoryTitle": "Oversigt efter kilde",
   "receiver.inventoryLoading": "Indlæser oversigt…",
@@ -1221,6 +1225,7 @@ const da: Partial<Translations> = {
   "fleet.edit": "Rediger",
   "fleet.remove": "Fjern",
   "fleet.removing": "Fjerner…",
+  "fleet.confirmRemove": "Bekræft fjernelse",
   "fleet.removeConfirm": "Fjern denne instans fra overvågning? Instansen kontaktes aldrig i den forbindelse, kun overvågningsposten fjernes.",
   "fleet.scorecardTitle": "Beskyttelsesoversigt",
   "fleet.noScorecard": "Ingen cachet oversigt endnu — forespørg denne instans for at hente en.",

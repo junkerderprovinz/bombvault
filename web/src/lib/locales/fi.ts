@@ -462,6 +462,9 @@ const fi: Partial<Translations> = {
   "common.replicateRunning": "Replikointi on käynnissä…",
   "common.showValue": "Näytä arvo",
   "common.hideValue": "Piilota arvo",
+  "confirmDialog.title": "Vahvista",
+  "common.confirm": "Vahvista",
+  "common.cancel": "Peruuta",
   "common.close": "Sulje",
 
   // Backup folders selector
@@ -1175,6 +1178,7 @@ const fi: Partial<Translations> = {
   "receiver.edit": "Muokkaa",
   "receiver.remove": "Poista",
   "receiver.removing": "Poistetaan…",
+  "receiver.confirmRemove": "Vahvista poisto",
   "receiver.removeConfirm": "Poistetaanko tämä vastaanotettu varasto valvonnasta? Levyllä olevaan varastoon ei koskaan kosketa, vain valvontamerkintä poistetaan.",
   "receiver.inventoryTitle": "Sisältö lähteittäin",
   "receiver.inventoryLoading": "Ladataan sisältöä…",
@@ -1221,6 +1225,7 @@ const fi: Partial<Translations> = {
   "fleet.edit": "Muokkaa",
   "fleet.remove": "Poista",
   "fleet.removing": "Poistetaan…",
+  "fleet.confirmRemove": "Vahvista poisto",
   "fleet.removeConfirm": "Poistetaanko tämä instanssi valvonnasta? Instanssiin ei koskaan olla yhteydessä tätä varten, vain valvontamerkintä poistetaan.",
   "fleet.scorecardTitle": "Suojaustulostaulu",
   "fleet.noScorecard": "Ei vielä välimuistoitettua tulostaulua — kysy tätä instanssia hakeaksesi sen.",

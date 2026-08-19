@@ -462,6 +462,9 @@ const th: Partial<Translations> = {
   "common.replicateRunning": "กำลังจำลองข้อมูลอยู่…",
   "common.showValue": "แสดงค่า",
   "common.hideValue": "ซ่อนค่า",
+  "confirmDialog.title": "ยืนยัน",
+  "common.confirm": "ยืนยัน",
+  "common.cancel": "ยกเลิก",
   "common.close": "ปิด",
 
   // Backup folders selector
@@ -1178,6 +1181,7 @@ const th: Partial<Translations> = {
   "receiver.edit": "แก้ไข",
   "receiver.remove": "นำออก",
   "receiver.removing": "กำลังนำออก…",
+  "receiver.confirmRemove": "ยืนยันการลบ",
   "receiver.removeConfirm": "นำที่เก็บที่รับนี้ออกจากการตรวจสอบหรือไม่ ที่เก็บบนดิสก์จะไม่ถูกแตะต้อง มีเพียงรายการตรวจสอบเท่านั้นที่ถูกนำออก",
   "receiver.inventoryTitle": "รายการตามแหล่งที่มา",
   "receiver.inventoryLoading": "กำลังโหลดรายการ…",
@@ -1224,6 +1228,7 @@ const th: Partial<Translations> = {
   "fleet.edit": "แก้ไข",
   "fleet.remove": "ลบ",
   "fleet.removing": "กำลังลบ…",
+  "fleet.confirmRemove": "ยืนยันการลบ",
   "fleet.removeConfirm": "ลบอินสแตนซ์นี้ออกจากการตรวจสอบหรือไม่? ระบบจะไม่ติดต่ออินสแตนซ์นั้นเพื่อการนี้เลย จะลบเฉพาะรายการตรวจสอบเท่านั้น",
   "fleet.scorecardTitle": "การ์ดคะแนนการป้องกัน",
   "fleet.noScorecard": "ยังไม่มีการ์ดคะแนนที่แคชไว้ — สอบถามอินสแตนซ์นี้เพื่อดึงข้อมูล",

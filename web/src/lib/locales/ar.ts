@@ -462,6 +462,9 @@ const ar: Partial<Translations> = {
   "common.replicateRunning": "جارٍ تنفيذ نسخ متماثل…",
   "common.showValue": "إظهار القيمة",
   "common.hideValue": "إخفاء القيمة",
+  "confirmDialog.title": "تأكيد",
+  "common.confirm": "تأكيد",
+  "common.cancel": "إلغاء",
   "common.close": "إغلاق",
 
   // Backup folders selector
@@ -1178,6 +1181,7 @@ const ar: Partial<Translations> = {
   "receiver.edit": "تعديل",
   "receiver.remove": "إزالة",
   "receiver.removing": "جارٍ الإزالة…",
+  "receiver.confirmRemove": "تأكيد الإزالة",
   "receiver.removeConfirm": "إزالة هذا المستودع المستلَم من المراقبة؟ لا يُمَس المستودع على القرص أبدًا، تُزال فقط مدخلة المراقبة.",
   "receiver.inventoryTitle": "الجرد حسب المصدر",
   "receiver.inventoryLoading": "جارٍ تحميل الجرد…",
@@ -1224,6 +1228,7 @@ const ar: Partial<Translations> = {
   "fleet.edit": "تعديل",
   "fleet.remove": "إزالة",
   "fleet.removing": "جارٍ الإزالة…",
+  "fleet.confirmRemove": "تأكيد الإزالة",
   "fleet.removeConfirm": "هل تريد إزالة هذه النسخة من المراقبة؟ لا يتم الاتصال بالنسخة نفسها أبدًا لهذا الغرض، تُزال فقط مدخلة المراقبة.",
   "fleet.scorecardTitle": "بطاقة الحماية",
   "fleet.noScorecard": "لا توجد بطاقة مخزَّنة مؤقتًا بعد — استعلِم عن هذه النسخة للحصول على واحدة.",
