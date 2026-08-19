@@ -1218,6 +1218,16 @@ function HealthHeatmapCard({
   // strip competing for attention directly next to a red/green heatmap would
   // hurt legibility for no tracking benefit nobody needs help telling
   // "Containers" apart from "VMs" by label alone.
+  //
+  // WARNING FOR TASK 3 (the unified one-horizontal-selector, same plan): this
+  // toggle is on Task 3's own migration list — it will move onto the shared
+  // Selector component modeled on knightloader/web/src/components/Tabs.tsx.
+  // That reference hues every item UNCONDITIONALLY, no opt-out. Migrating
+  // this toggle as-is will silently revert this deliberate exclusion the
+  // moment it lands on the shared component. Before migrating THIS toggle,
+  // either give Selector an opt-out (e.g. a `hue={false}` prop) or keep this
+  // one instance hand-rolled and only migrate the other selectors on the
+  // list. Don't just drop it onto Selector and move on.
   const toggle = (
     <div className="flex items-center gap-1">
       {(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => (

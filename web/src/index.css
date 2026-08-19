@@ -635,10 +635,14 @@ body {
    trap #2, why a rainbowed row needs its own wash rather than relying on
    that fill.
 
-   Nothing in the app sets .glim-hue/.glim-tint yet (that's Task 2) — these
-   rules exist now so Task 1's own live-verification step ("turn rainbow on,
-   confirm data-rainbow appears on <html>, confirm --rb-0..--rb-7 resolve")
-   can pass, and so Task 2 has a working stylesheet to attach to. */
+   As of Task 2, .glim-hue/.glim-tint are consumed by the Settings tab strip
+   and the container/VM/file-set list rows (ContainerRow/VMRow/FileSetRow) —
+   see lib/appearance.ts's hueVars()/rainbowAt() and each of those
+   components' own root element. The sidebar NavItems were deliberately
+   evaluated and rejected as a consumer (Sidebar.tsx has the reasoning): with
+   every domain toggle on there are more destinations than palette colours,
+   so indexing by position there collides two different destinations onto
+   the same hue instead of preventing it. */
 [data-rainbow] .glim-hue {
   --accent: var(--item-hue);
   --accent-contrast: var(--item-hue-ink);
