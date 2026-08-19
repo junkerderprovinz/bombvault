@@ -395,7 +395,7 @@ function ReceiverDialog({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
   return createPortal(
     <div

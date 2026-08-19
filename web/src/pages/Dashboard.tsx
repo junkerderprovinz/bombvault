@@ -969,7 +969,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
             >
               <option value="all">{t("run.allDays")}</option>
               {days.map((d) => (

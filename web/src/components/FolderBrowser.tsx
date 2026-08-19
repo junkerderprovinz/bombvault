@@ -117,7 +117,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
-          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
         />
         <button
           onClick={handleOpen}
@@ -209,7 +209,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 }}
                 spellCheck={false}
                 placeholder={t("folder.newFolderPlaceholder")}
-                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 bv-field-focus"
               />
               <button
                 onClick={handleCreate}

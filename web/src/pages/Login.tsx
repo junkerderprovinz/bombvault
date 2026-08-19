@@ -64,7 +64,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               autoFocus
               autoComplete="current-password"
               wrapperClassName="w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 bv-field-focus"
             />
           </div>
 

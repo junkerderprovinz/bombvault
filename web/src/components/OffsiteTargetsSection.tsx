@@ -245,9 +245,9 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const numCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well";
 
   return (
     <div className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">

@@ -210,12 +210,12 @@ export function ErrorDetailPanel({
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={t("errorPanel.filterPlaceholder")}
             aria-label={t("errorPanel.filterPlaceholder")}
-            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
           />
           <select
             value={filterDomain}
             onChange={(e) => setFilterDomain(e.target.value)}
-            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
           >
             <option value="all">{t("activityLog.filterAllDomains")}</option>
             <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -227,7 +227,7 @@ export function ErrorDetailPanel({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
           >
             <option value="all">{t("activityLog.filterAllTypes")}</option>
             <option value="backup">{t("activityLog.typeBackup")}</option>

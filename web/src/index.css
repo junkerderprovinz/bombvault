@@ -171,6 +171,14 @@
   --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
   --focus-ring: rgba(252, 196, 25, .55);
 
+  /* Field focus, the "well" variant only (GlimStone form-engine #8) — see the
+     .bv-field-focus-well comment further down in this file for what this is
+     and why it exists. #8e8e8e on this theme's --carbon-surface2 (#393939,
+     the well's own background) is 3.53:1 by the standard WCAG relative-
+     luminance formula, clearing SC 1.4.11's 3:1 non-text-UI minimum with the
+     same kind of margin --focus-ring's own per-theme values above use. */
+  --field-focus-well: #8e8e8e;
+
   /* Status colors (#105) — the exact hexes the UI has always used in dark mode
      (Carbon dark support tones); the light block swaps them for Carbon light
      counterparts so status text/chips stay readable on light surfaces. */
@@ -264,6 +272,15 @@
      page background (3.48:1) — both clear 3:1 with real margin. */
   --focus-ring: rgba(142, 106, 0, .85);
 
+  /* Field focus, "well" variant (GlimStone form-engine #8) — see the
+     .bv-field-focus-well comment further down for what this is. Needs its
+     OWN value here, not the dark block's #8e8e8e: this theme's well
+     background (--carbon-surface2 #e8e8e8) is light, so the same direction
+     of step (further from the well, same as dark) lands on a DARKER grey,
+     not a lighter one. #787878 on #e8e8e8 is 3.60:1 by the same WCAG
+     relative-luminance formula used for --focus-ring above. */
+  --field-focus-well: #787878;
+
   /* Shape and type scale live once, on a bare :root above (theme-invariant —
      see the comment there). */
 
@@ -354,6 +371,8 @@
        on a light surface. See the comment on [data-theme="light"]'s
        --focus-ring for the measured numbers. */
     --focus-ring: rgba(142, 106, 0, .85);
+    /* Same reasoning as [data-theme="light"]'s --field-focus-well above. */
+    --field-focus-well: #787878;
   }
 }
 
@@ -409,6 +428,51 @@ body {
   font-weight: 400;
   text-align: start;
   white-space: normal;
+}
+
+/* Field focus (GlimStone form-engine #8, design-language.md rule 14): "form
+   fields are borderless and filled, focus is a brightness step rather than a
+   ring." Every text input/select/textarea used to focus with the same
+   `outline-solid outline-2 outline-statusInfoSolid` ring every OTHER
+   focusable element in the app also used (buttons, links, Toggle's switch
+   track, RevealInput's eye, InfoBubble's icon) — which read fine on a
+   button, but drew a hard blue box around what rule 14 wants to be a
+   borderless filled field. This swaps the field's OWN fill one surface tier
+   brighter instead: no ring, no border added, matching the filled/borderless
+   look the rest of the field already has. --focus-ring itself is untouched
+   and still used by every non-field element listed above — this class is
+   additive, not a replacement for that token.
+
+   Two variants, chosen by what the field already rests on:
+   - .bv-field-focus — the common case (most fields in the app): resting
+     directly on a card/page surface (bg-carbon-surface2), steps to
+     bg-carbon-surface3 on focus — literally the token pair the design
+     language names for this.
+   - .bv-field-focus-well — a field nested inside an already-surface2 "well"
+     (CloudCard, CadenceBuilder, the off-site wizard/targets forms, the
+     notify/integrity selects) rests on bg-carbon-surface3 instead, so
+     stepping to that SAME surface3 on focus would be invisible — no step at
+     all is worse than the ring it replaces (design-language.md promises
+     "SOME clear focus indicator" implicitly by replacing one, not removing
+     it). The token set has no fourth surface tier for this, so
+     --field-focus-well (declared per-theme above, next to --focus-ring) is a
+     literal value verified against WCAG 1.4.11's 3:1 minimum the same way
+     --focus-ring's per-theme values were, not a color-mix() guess.
+
+     Both rules also set `outline: none`: removing the old
+     `focus:outline-*` utility classes was not enough on its own — with NO
+     outline declared at all, the browser's own native default focus
+     outline (Chromium resolves `outline-style: auto` to a real, visible
+     1px ring; verified live) fills the gap and paints a ring right back
+     on top of the brightness step, silently reintroducing the exact ring
+     rule 14 says a field shouldn't have. */
+.bv-field-focus:focus {
+  background-color: var(--carbon-surface3);
+  outline: none;
+}
+.bv-field-focus-well:focus {
+  background-color: var(--field-focus-well);
+  outline: none;
 }
 
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`

@@ -78,7 +78,7 @@ export function SourceToggle({
           value={source}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value as RepoSource)}
-          className="rounded-control bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 disabled:opacity-50 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 disabled:opacity-50 bv-field-focus"
         >
           {targets.map((target, i) => (
             <option key={target.id} value={offsiteTargetSource(target, i)}>

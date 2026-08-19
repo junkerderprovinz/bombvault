@@ -840,7 +840,7 @@ function DashboardWidgetCard({
             value={token ?? ""}
             placeholder={token ? "" : t("cloud.secretSet")}
             wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
           <div className="flex items-center gap-2">
             <button
@@ -1000,7 +1000,7 @@ function FleetSettingsCard({
             spellCheck={false}
             autoComplete="off"
             placeholder="tower"
-            className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
           />
         </div>
         <SaveBar
@@ -1027,7 +1027,7 @@ function FleetSettingsCard({
             value={token ?? ""}
             placeholder={token ? "" : t("cloud.secretSet")}
             wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
           <div className="flex items-center gap-2">
             <button
@@ -1140,7 +1140,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
@@ -1208,7 +1208,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -1358,7 +1358,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -1559,14 +1559,14 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const selectCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
   // Card-level sibling of selectCls: same styling, but this one sits directly on
   // the Card (bg-carbon-surface), so its fill is surface2 — the panel-level
   // fields above use surface3 because they sit ON a surface2 panel.
   const selectCardCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
@@ -2133,7 +2133,7 @@ function IntegrityCard({
   };
 
   const selectCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
 
   return (
     <Card title={t("integrity.title")}>
@@ -2786,7 +2786,7 @@ function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
         />
       </label>
     </Card>
@@ -3363,7 +3363,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
                 />
               </div>
             ))}
@@ -3380,7 +3380,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -3443,7 +3443,7 @@ export function SettingsPage() {
                       prev ? { ...prev, restartHealthTimeoutSec: n } : prev
                     );
                   }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
                 <span className="text-xs text-carbon-textMuted">
                   {t("settings.restartHealthTimeoutHint")}
@@ -3690,7 +3690,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
@@ -3826,7 +3826,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -3850,7 +3850,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -3885,7 +3885,7 @@ export function SettingsPage() {
                   );
                 }}
                 wrapperClassName="w-full"
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
               />
             </label>
             <button
@@ -4004,7 +4004,7 @@ export function SettingsPage() {
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
             }}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
           />
         </label>
         <SaveBar
@@ -4082,7 +4082,7 @@ export function SettingsPage() {
                     setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
                 <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
@@ -4138,7 +4138,7 @@ export function SettingsPage() {
                 setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
               }
               placeholder={t("export.encrypt.recipientsPlaceholder")}
-              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
             />
             <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
             {!settings.exportAgeRecipients.trim() && (
@@ -4222,7 +4222,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                   }
                   placeholder="rest:http://host:8000/repo"
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
@@ -4290,7 +4290,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
@@ -4339,7 +4339,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
@@ -4396,7 +4396,7 @@ export function SettingsPage() {
             }
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
             wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
         </label>
         <SaveBar
@@ -4664,7 +4664,7 @@ export function SettingsPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               wrapperClassName="w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -4678,7 +4678,7 @@ export function SettingsPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               wrapperClassName="w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
           </div>
 

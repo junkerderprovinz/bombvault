@@ -379,7 +379,7 @@ function HooksEditor({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
   return (
     <div className="mt-1">
@@ -670,7 +670,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
   return (
     <div className="mt-1">
@@ -834,7 +834,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   const openSuggestions = (suggestions ?? []).filter((sg) => !currentLines.includes(sg.line));
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
   return (
     <div className="mt-1">
@@ -1940,7 +1940,7 @@ export function Containers() {
               placeholder={t("containers.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
             <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
             <ChipFilter<ScheduleFilterKey>

@@ -210,7 +210,7 @@ export function CadenceBuilder({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well disabled:opacity-50";
 
   return (
     // A <fieldset> — not opacity — carries the disabled state: it natively

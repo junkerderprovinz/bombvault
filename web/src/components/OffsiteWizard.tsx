@@ -289,7 +289,7 @@ export function OffsiteWizard({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
   // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
@@ -626,7 +626,7 @@ export function OffsiteWizard({
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
                 }}
-                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
               />
             </label>
             <div className="flex items-center gap-3">

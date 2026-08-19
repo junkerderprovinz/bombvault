@@ -793,7 +793,7 @@ function FileSetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
           />
         </div>
 
@@ -817,7 +817,7 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
           <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
