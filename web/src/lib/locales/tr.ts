@@ -444,6 +444,7 @@ const tr: Partial<Translations> = {
   "vm.ssh.publicKey": "Genel anahtar — Unraid /root/.ssh/authorized_keys dosyasına ekleyin",
   "vm.ssh.copy": "Kopyala",
   "vm.ssh.copied": "Kopyalandı",
+  "vm.ssh.copyFailed": "Kopyalama başarısız",
   "vm.ssh.test": "Bağlantıyı test et",
   "vm.ssh.testing": "Test ediliyor…",
   "vm.ssh.testOk": "Bağlandı — libvirt erişilebilir",

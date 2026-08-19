@@ -444,6 +444,7 @@ const el: Partial<Translations> = {
   "vm.ssh.publicKey": "Δημόσιο κλειδί — προσθέστε στο /root/.ssh/authorized_keys του Unraid",
   "vm.ssh.copy": "Αντιγραφή",
   "vm.ssh.copied": "Αντιγράφηκε",
+  "vm.ssh.copyFailed": "Η αντιγραφή απέτυχε",
   "vm.ssh.test": "Δοκιμή σύνδεσης",
   "vm.ssh.testing": "Δοκιμή…",
   "vm.ssh.testOk": "Συνδέθηκε — το libvirt είναι προσβάσιμο",

@@ -444,6 +444,7 @@ const fi: Partial<Translations> = {
   "vm.ssh.publicKey": "Julkinen avain — lisää Unraidin tiedostoon /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopioi",
   "vm.ssh.copied": "Kopioitu",
+  "vm.ssh.copyFailed": "Kopiointi epäonnistui",
   "vm.ssh.test": "Testaa yhteys",
   "vm.ssh.testing": "Testataan…",
   "vm.ssh.testOk": "Yhdistetty — libvirt tavoitettavissa",

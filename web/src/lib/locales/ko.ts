@@ -436,6 +436,7 @@ const ko: Partial<Translations> = {
   "vm.ssh.publicKey": "공개 키 — Unraid의 /root/.ssh/authorized_keys에 추가",
   "vm.ssh.copy": "복사",
   "vm.ssh.copied": "복사됨",
+  "vm.ssh.copyFailed": "복사 실패",
   "vm.ssh.test": "연결 테스트",
   "vm.ssh.testing": "테스트 중…",
   "vm.ssh.testOk": "연결됨 — libvirt 도달 가능",

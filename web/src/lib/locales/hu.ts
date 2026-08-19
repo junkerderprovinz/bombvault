@@ -444,6 +444,7 @@ const hu: Partial<Translations> = {
   "vm.ssh.publicKey": "Nyilvános kulcs — fűzze hozzá az Unraid /root/.ssh/authorized_keys fájljához",
   "vm.ssh.copy": "Másolás",
   "vm.ssh.copied": "Másolva",
+  "vm.ssh.copyFailed": "A másolás sikertelen",
   "vm.ssh.test": "Kapcsolat tesztelése",
   "vm.ssh.testing": "Tesztelés…",
   "vm.ssh.testOk": "Csatlakozva — libvirt elérhető",

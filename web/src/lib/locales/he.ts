@@ -444,6 +444,7 @@ const he: Partial<Translations> = {
   "vm.ssh.publicKey": "מפתח ציבורי — הוסף ל-‎/root/.ssh/authorized_keys של Unraid",
   "vm.ssh.copy": "העתק",
   "vm.ssh.copied": "הועתק",
+  "vm.ssh.copyFailed": "ההעתקה נכשלה",
   "vm.ssh.test": "בדוק חיבור",
   "vm.ssh.testing": "בודק…",
   "vm.ssh.testOk": "מחובר — libvirt נגיש",

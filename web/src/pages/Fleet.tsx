@@ -56,6 +56,12 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   async function copy() {
     if (await copyText(text)) {
       push(t("vm.ssh.copied"), "success");
+    } else {
+      // "failures always surface" (design-language.md) — copyText() only
+      // returns false when BOTH the Clipboard API and the execCommand
+      // fallback failed, so this is a real, user-actionable failure, not
+      // routine noise a quiet-mode user would want suppressed.
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
   return (

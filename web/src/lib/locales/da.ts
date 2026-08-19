@@ -444,6 +444,7 @@ const da: Partial<Translations> = {
   "vm.ssh.publicKey": "Offentlig nøgle — tilføj til Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopier",
   "vm.ssh.copied": "Kopieret",
+  "vm.ssh.copyFailed": "Kopiering mislykkedes",
   "vm.ssh.test": "Test forbindelse",
   "vm.ssh.testing": "Tester…",
   "vm.ssh.testOk": "Forbundet — libvirt tilgængelig",

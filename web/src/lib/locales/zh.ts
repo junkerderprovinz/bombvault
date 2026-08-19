@@ -436,6 +436,7 @@ const zh: Partial<Translations> = {
   "vm.ssh.publicKey": "公钥——追加到 Unraid 的 /root/.ssh/authorized_keys",
   "vm.ssh.copy": "复制",
   "vm.ssh.copied": "已复制",
+  "vm.ssh.copyFailed": "复制失败",
   "vm.ssh.test": "测试连接",
   "vm.ssh.testing": "测试中…",
   "vm.ssh.testOk": "已连接——libvirt 可达",

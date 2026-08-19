@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import {
+  MAX_VISIBLE_TOASTS,
   TOAST_DURATION_MS,
   addToast,
   pauseToast,
@@ -47,6 +48,59 @@ describe("addToast", () => {
     list = addToast(list, { id: "c", message: "Three", severity: "fail" }, 200);
     expect(list).toHaveLength(3);
     expect(list.map((t) => t.message)).toEqual(["One", "Two", "Three"]);
+  });
+
+  it("never grows past MAX_VISIBLE_TOASTS — the default cap this app actually renders with", () => {
+    let list: ToastEntry[] = [];
+    // One more push than the cap allows.
+    for (let i = 0; i < MAX_VISIBLE_TOASTS + 1; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
+    }
+    expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
+  });
+
+  it("drops the OLDEST toast(s) to make room, never the brand-new one just pushed", () => {
+    let list: ToastEntry[] = [];
+    for (let i = 0; i < MAX_VISIBLE_TOASTS + 1; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
+    }
+    // t0 (the very first, oldest) is gone; every toast from t1 onward — most
+    // recent included — survived.
+    expect(list.map((t) => t.id)).toEqual(
+      Array.from({ length: MAX_VISIBLE_TOASTS }, (_, i) => `t${i + 1}`)
+    );
+    expect(list.some((t) => t.id === "t0")).toBe(false);
+    expect(list.some((t) => t.id === `t${MAX_VISIBLE_TOASTS}`)).toBe(true);
+  });
+
+  it("keeps dropping the oldest as pushes keep coming, well past a single overflow", () => {
+    let list: ToastEntry[] = [];
+    const total = MAX_VISIBLE_TOASTS * 3;
+    for (let i = 0; i < total; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
+    }
+    expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
+    // Only the tail end (the most recent MAX_VISIBLE_TOASTS pushes) remains.
+    expect(list.map((t) => t.id)).toEqual(
+      Array.from({ length: MAX_VISIBLE_TOASTS }, (_, i) => `t${total - MAX_VISIBLE_TOASTS + i}`)
+    );
+  });
+
+  it("respects a custom maxVisible override without touching the exported default", () => {
+    let list: ToastEntry[] = [];
+    list = addToast(list, { id: "a", message: "A", severity: "success" }, 0, TOAST_DURATION_MS, 2);
+    list = addToast(list, { id: "b", message: "B", severity: "success" }, 0, TOAST_DURATION_MS, 2);
+    list = addToast(list, { id: "c", message: "C", severity: "success" }, 0, TOAST_DURATION_MS, 2);
+    expect(list.map((t) => t.id)).toEqual(["b", "c"]);
+  });
+
+  it("under the cap, behaves exactly as before — no toast is dropped", () => {
+    let list: ToastEntry[] = [];
+    for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) {
+      list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
+    }
+    expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
+    expect(list.map((t) => t.id)).toEqual(Array.from({ length: MAX_VISIBLE_TOASTS }, (_, i) => `t${i}`));
   });
 });
 

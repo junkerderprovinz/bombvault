@@ -264,12 +264,20 @@ chmod 600 /root/.ssh/authorized_keys`
   async function handleCopy() {
     if (await copyText(pub)) {
       push(t("vm.ssh.copied"), "success");
+    } else {
+      // "failures always surface" (design-language.md) — copyText() only
+      // returns false when BOTH the Clipboard API and the execCommand
+      // fallback failed, so this is a real, user-actionable failure, not
+      // routine noise a quiet-mode user would want suppressed.
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 
   async function handleCopyCmd() {
     if (await copyText(authorizeCmd)) {
       push(t("vm.ssh.copied"), "success");
+    } else {
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 

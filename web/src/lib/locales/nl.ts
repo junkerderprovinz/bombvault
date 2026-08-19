@@ -439,6 +439,7 @@ const nl: Partial<Translations> = {
   "vm.ssh.publicKey": "Publieke sleutel — toevoegen aan Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopiëren",
   "vm.ssh.copied": "Gekopieerd",
+  "vm.ssh.copyFailed": "Kopiëren mislukt",
   "vm.ssh.test": "Verbinding testen",
   "vm.ssh.testing": "Testen…",
   "vm.ssh.testOk": "Verbonden — libvirt bereikbaar",

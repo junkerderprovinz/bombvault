@@ -444,6 +444,7 @@ const th: Partial<Translations> = {
   "vm.ssh.publicKey": "คีย์สาธารณะ — เพิ่มต่อท้าย ‎/root/.ssh/authorized_keys ของ Unraid",
   "vm.ssh.copy": "คัดลอก",
   "vm.ssh.copied": "คัดลอกแล้ว",
+  "vm.ssh.copyFailed": "การคัดลอกล้มเหลว",
   "vm.ssh.test": "ทดสอบการเชื่อมต่อ",
   "vm.ssh.testing": "กำลังทดสอบ…",
   "vm.ssh.testOk": "เชื่อมต่อแล้ว — เข้าถึง libvirt ได้",

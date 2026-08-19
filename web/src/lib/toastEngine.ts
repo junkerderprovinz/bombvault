@@ -29,6 +29,23 @@ export type ToastSeverity = "success" | "warn" | "fail";
  *  short enough not to pile up — a toast is a notice, not a to-do list."). */
 export const TOAST_DURATION_MS = 4000;
 
+/** Hard cap on simultaneously-visible toasts. Nothing in the spec pins an
+ *  exact number, but "not a to-do list" implies a small corner stack, not
+ *  an unbounded one — live-measured against this app's actual bottom-end
+ *  viewport corner (see toastEngine.test.ts / Toast.test.ts for the math):
+ *  4 cards is the largest count that still comfortably fits above the fold
+ *  on a short (~720px) viewport without needing scroll, while still showing
+ *  more than a single toast at a time when several actions land in quick
+ *  succession. Without a cap, rapid repeated triggers (holding Enter on a
+ *  focused button fires at keyboard auto-repeat rate) grow the stack
+ *  unbounded — live-reproduced pre-fix: 30+ toasts produced a 1580px-tall
+ *  stack in a 720px viewport, 18 cards permanently off-screen with no
+ *  scroll affordance, and ~86% of the right-hand column unclickable
+ *  (pointer-events:auto on every card intercepting clicks meant for the
+ *  page behind it) — directly contradicting the toast system's own
+ *  non-blocking design (see components/Toast.tsx's header comment). */
+export const MAX_VISIBLE_TOASTS = 4;
+
 export interface ToastEntry {
   id: string;
   message: string;
@@ -44,14 +61,20 @@ export interface ToastEntry {
 
 /** Stacks a new toast onto the END of the list — never replaces an existing
  *  one (design-language.md: "Stacked, not replaced. Multiple toasts queue in
- *  a fixed corner rather than one overwriting the next"). */
+ *  a fixed corner rather than one overwriting the next"). Bounded at
+ *  `maxVisible`: once the stack would exceed the cap, the OLDEST toast(s)
+ *  are dropped from the FRONT — never the newest. A user who just triggered
+ *  an action expects to see feedback for THAT action, so the brand-new push
+ *  always survives; it's the stalest, already-half-read toast that gives up
+ *  its spot. */
 export function addToast(
   list: ToastEntry[],
   toast: { id: string; message: string; severity: ToastSeverity },
   now: number,
-  durationMs: number = TOAST_DURATION_MS
+  durationMs: number = TOAST_DURATION_MS,
+  maxVisible: number = MAX_VISIBLE_TOASTS
 ): ToastEntry[] {
-  return [
+  const next = [
     ...list,
     {
       id: toast.id,
@@ -61,6 +84,7 @@ export function addToast(
       expiresAt: now + durationMs,
     },
   ];
+  return next.length > maxVisible ? next.slice(next.length - maxVisible) : next;
 }
 
 /** Removes exactly the targeted toast — every other toast in the stack is

@@ -442,6 +442,7 @@ const ro: Partial<Translations> = {
   "vm.ssh.publicKey": "Cheie publică — adăugați în /root/.ssh/authorized_keys de pe Unraid",
   "vm.ssh.copy": "Copiază",
   "vm.ssh.copied": "Copiat",
+  "vm.ssh.copyFailed": "Copiere eșuată",
   "vm.ssh.test": "Testează conexiunea",
   "vm.ssh.testing": "Se testează…",
   "vm.ssh.testOk": "Conectat — libvirt accesibil",

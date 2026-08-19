@@ -167,11 +167,19 @@ describe("ToastCard", () => {
 describe("ToastViewport", () => {
   const dismissLabel = "Dismiss notification";
 
+  const noopHandlers = { onMouseEnter: noop, onMouseLeave: noop, onFocus: noop, onBlur: noop };
+
   it("renders nothing but the (pointer-events-none) wrapper when there are no toasts", () => {
-    const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, onPause: noop, onResume: noop }) as ElementNode;
+    const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
     expect(tree.props?.className).toContain("pointer-events-none");
     const cards = findAll(tree, (n) => typeof n.props?.role === "string");
     expect(cards).toHaveLength(0);
+  });
+
+  it("caps the viewport height and scrolls as a defensive backstop, so a stack can never spill fully off-screen unreachable", () => {
+    const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
+    expect(tree.props?.className).toContain("max-h-[calc(100vh-2rem)]");
+    expect(tree.props?.className).toContain("overflow-y-auto");
   });
 
   it("stacks multiple toasts — all render simultaneously, not one replacing another", () => {
@@ -183,8 +191,7 @@ describe("ToastViewport", () => {
       ],
       dismissLabel,
       onDismiss: noop,
-      onPause: noop,
-      onResume: noop,
+      ...noopHandlers,
     });
     const text = visibleText(tree);
     expect(text).toContain("First");
@@ -201,8 +208,7 @@ describe("ToastViewport", () => {
       ],
       dismissLabel,
       onDismiss: (id) => calls.push(id),
-      onPause: noop,
-      onResume: noop,
+      ...noopHandlers,
     });
     const buttons = findAllButtons(tree);
     expect(buttons).toHaveLength(2);
@@ -210,13 +216,34 @@ describe("ToastViewport", () => {
     expect(calls).toEqual(["b"]);
   });
 
+  it("passes the four hover/focus events through to each card independently — NOT collapsed into a single pause/resume pair", () => {
+    const seen: string[] = [];
+    const tree = ToastViewport({
+      toasts: [{ id: "a", message: "A", severity: "success" }],
+      dismissLabel,
+      onDismiss: noop,
+      onMouseEnter: (id) => seen.push(`enter:${id}`),
+      onMouseLeave: (id) => seen.push(`leave:${id}`),
+      onFocus: (id) => seen.push(`focus:${id}`),
+      onBlur: (id) => seen.push(`blur:${id}`),
+    });
+    const [card] = findAll(tree, (n) => typeof n.props?.role === "string");
+    card.props!.onMouseEnter();
+    card.props!.onFocus();
+    card.props!.onMouseLeave();
+    card.props!.onBlur();
+    // All four are distinct callbacks reaching the caller — a caller can
+    // track hover/focus as two independent flags and decide for itself
+    // whether "leave" or "blur" should actually resume the countdown.
+    expect(seen).toEqual(["enter:a", "focus:a", "leave:a", "blur:a"]);
+  });
+
   it("the viewport wrapper itself never carries an onClick/backdrop handler (never modal, unlike ConfirmDialog)", () => {
     const tree = ToastViewport({
       toasts: [{ id: "a", message: "A", severity: "success" }],
       dismissLabel,
       onDismiss: noop,
-      onPause: noop,
-      onResume: noop,
+      ...noopHandlers,
     }) as ElementNode;
     expect(tree.props?.onClick).toBeUndefined();
   });

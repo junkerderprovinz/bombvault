@@ -436,6 +436,7 @@ const vi: Partial<Translations> = {
   "vm.ssh.publicKey": "Khóa công khai — thêm vào /root/.ssh/authorized_keys của Unraid",
   "vm.ssh.copy": "Sao chép",
   "vm.ssh.copied": "Đã sao chép",
+  "vm.ssh.copyFailed": "Sao chép thất bại",
   "vm.ssh.test": "Kiểm tra kết nối",
   "vm.ssh.testing": "Đang kiểm tra…",
   "vm.ssh.testOk": "Đã kết nối — libvirt có thể truy cập",

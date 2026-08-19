@@ -90,7 +90,11 @@ function ConfigBackupButton({
 // mechanism the rest of the app uses; no new persistence is invented.
 // ---------------------------------------------------------------------------
 
-type SaveState = "idle" | "saving" | "saved" | "error";
+// "saved"/"error" were removed from this type — the toast migration below
+// (GlimStone form-engine Task 9) replaced that 3000ms inline-flash outcome
+// with a real toast (push(), further down), so setSaveState now only ever
+// sets "idle"/"saving" — see the comment on the state declaration itself.
+type SaveState = "idle" | "saving";
 
 function labelledInput(
   label: string,

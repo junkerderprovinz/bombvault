@@ -146,20 +146,36 @@ export interface ToastViewportProps {
   toasts: ToastViewportEntry[];
   dismissLabel: string;
   onDismiss: (id: string) => void;
-  onPause: (id: string) => void;
-  onResume: (id: string) => void;
+  // Four DISCRETE events, passed straight through to each ToastCard rather
+  // than pre-collapsed into a single onPause/onResume pair. Collapsing them
+  // here would force whoever wires this viewport up to treat "mouse left"
+  // and "focus left" as interchangeable triggers for resuming the countdown
+  // — which is exactly the bug this shape exists to prevent: hover and focus
+  // are tracked as two INDEPENDENT engagement flags by the caller (see
+  // lib/toast.tsx), which only actually resumes once BOTH have disengaged
+  // (Tab into a hovered toast, then move the mouse away, must NOT resume —
+  // the user is still tabbed into it).
+  onMouseEnter: (id: string) => void;
+  onMouseLeave: (id: string) => void;
+  onFocus: (id: string) => void;
+  onBlur: (id: string) => void;
 }
 
 // Fixed bottom-end corner (inset-inline-end via Tailwind's logical `end-*`,
 // per design-language.md's RTL section: the corner itself must follow
 // writing direction, same as the reveal eye's `end-2`). New toasts are
-// appended to the END of the array (toastEngine.addToast) and rendered in
-// plain DOM order, so the newest toast lands closest to the anchored bottom
-// edge (where it visually "enters" from) and older ones get pushed upward —
-// no flex-reverse needed.
-export function ToastViewport({ toasts, dismissLabel, onDismiss, onPause, onResume }: ToastViewportProps) {
+// appended to the END of the array (toastEngine.addToast, itself capped at
+// MAX_VISIBLE_TOASTS so this corner can never grow into an unreachable,
+// off-screen, page-blocking wall of cards — see toastEngine.ts) and rendered
+// in plain DOM order, so the newest toast lands closest to the anchored
+// bottom edge (where it visually "enters" from) and older ones get pushed
+// upward — no flex-reverse needed. `max-h`+`overflow-y-auto` is a defensive
+// backstop only (the cap should make it a no-op on any normal viewport): on
+// a very short viewport it keeps the stack scrollable instead of spilling
+// cards above y=0 with no way to reach them.
+export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur }: ToastViewportProps) {
   return (
-    <div className="pointer-events-none fixed bottom-4 end-4 z-[70] flex flex-col gap-2">
+    <div className="pointer-events-none fixed bottom-4 end-4 z-[70] flex max-h-[calc(100vh-2rem)] flex-col gap-2 overflow-y-auto">
       {toasts.map((t) => (
         <ToastCard
           key={t.id}
@@ -168,10 +184,10 @@ export function ToastViewport({ toasts, dismissLabel, onDismiss, onPause, onResu
           severity={t.severity}
           dismissLabel={dismissLabel}
           onDismiss={onDismiss}
-          onMouseEnter={onPause}
-          onMouseLeave={onResume}
-          onFocus={onPause}
-          onBlur={onResume}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
       ))}
     </div>

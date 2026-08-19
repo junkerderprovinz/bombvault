@@ -436,6 +436,7 @@ const ja: Partial<Translations> = {
   "vm.ssh.publicKey": "公開鍵 — Unraid の /root/.ssh/authorized_keys に追記",
   "vm.ssh.copy": "コピー",
   "vm.ssh.copied": "コピーしました",
+  "vm.ssh.copyFailed": "コピーに失敗しました",
   "vm.ssh.test": "接続をテスト",
   "vm.ssh.testing": "テスト中…",
   "vm.ssh.testOk": "接続成功 — libvirt に到達可能",

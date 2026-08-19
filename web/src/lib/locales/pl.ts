@@ -437,6 +437,7 @@ const pl: Partial<Translations> = {
   "vm.ssh.publicKey": "Klucz publiczny — dopisz do Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopiuj",
   "vm.ssh.copied": "Skopiowano",
+  "vm.ssh.copyFailed": "Kopiowanie nieudane",
   "vm.ssh.test": "Testuj połączenie",
   "vm.ssh.testing": "Testowanie…",
   "vm.ssh.testOk": "Połączono — libvirt dostępny",
