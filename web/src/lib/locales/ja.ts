@@ -188,6 +188,12 @@ const ja: Partial<Translations> = {
   "settings.appearance": "外観",
   "settings.accentColor": "アクセントカラー",
   "settings.accentPresets": "プリセット",
+  "settings.rainbow": "レインボー",
+  "settings.rainbowHint": "アクセント1色ではなく、位置ごとに割り当てる8色のパレット。長い一覧が行ごとに読み分けられます。",
+  "settings.rainbowOn": "パレットを使う",
+  "settings.rainbowReactive": "触れるまでは静か。ポインタを重ねたときと実行中のものだけ色がつきます",
+  "settings.rainbowRotate": "パレットの開始位置をシャッフルする",
+  "settings.rainbowPalette": "パレットの色",
   "settings.quietToasts": "通知を控えめにする",
   "settings.quietToastsHint": "失敗時のみポップアップ通知を表示します。保存やコピーの通常の確認通知は表示されません。",
 

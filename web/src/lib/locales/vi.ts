@@ -188,6 +188,12 @@ const vi: Partial<Translations> = {
   "settings.appearance": "Giao diện",
   "settings.accentColor": "Màu nhấn",
   "settings.accentPresets": "Cài đặt sẵn",
+  "settings.rainbow": "Cầu vồng",
+  "settings.rainbowHint": "Thay vì một màu nhấn, một bảng tám màu chia theo vị trí, để danh sách dài đọc ra từng dòng riêng.",
+  "settings.rainbowOn": "Dùng bảng màu",
+  "settings.rainbowReactive": "Yên cho tới khi chạm: có màu khi rê chuột và ở mục đang chạy",
+  "settings.rainbowRotate": "Xáo vị trí bắt đầu của bảng màu",
+  "settings.rainbowPalette": "Màu trong bảng",
   "settings.quietToasts": "Thông báo im lặng",
   "settings.quietToastsHint": "Chỉ hiển thị thông báo bật lên khi có lỗi. Các xác nhận lưu và sao chép thông thường sẽ không hiển thị.",
 

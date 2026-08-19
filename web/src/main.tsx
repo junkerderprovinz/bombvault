@@ -7,11 +7,13 @@ import { AdvancedProvider } from "./lib/advanced";
 import { applyStoredTheme } from "./lib/theme";
 import { applyStoredLanguage } from "./lib/i18n";
 import { applyStoredAccent } from "./lib/accent";
+import { applyStoredRainbow } from "./lib/appearance";
 
 // Apply persisted preferences before first paint (flash prevention).
 applyStoredTheme();
 applyStoredLanguage();
 applyStoredAccent();
+applyStoredRainbow();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -188,6 +188,12 @@ const cs: Partial<Translations> = {
   "settings.appearance": "Vzhled",
   "settings.accentColor": "Barva zvýraznění",
   "settings.accentPresets": "Předvolby",
+  "settings.rainbow": "Duha",
+  "settings.rainbowHint": "Místo jednoho akcentu paleta osmi barev podle pozice, aby se dlouhý seznam četl jako jednotlivé řádky.",
+  "settings.rainbowOn": "Použít paletu",
+  "settings.rainbowReactive": "Klid, dokud se toho nedotkneš: barva při najetí a u toho, co běží",
+  "settings.rainbowRotate": "Zamíchat, kde paleta začíná",
+  "settings.rainbowPalette": "Barva palety",
   "settings.quietToasts": "Tichá oznámení",
   "settings.quietToastsHint": "Zobrazovat vyskakovací oznámení jen při chybách. Běžná potvrzení uložení a kopírování zůstanou bez oznámení.",
 

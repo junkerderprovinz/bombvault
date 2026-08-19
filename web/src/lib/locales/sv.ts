@@ -188,6 +188,12 @@ const sv: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Accentfärg",
   "settings.accentPresets": "Förinställningar",
+  "settings.rainbow": "Regnbåge",
+  "settings.rainbowHint": "I stället för en accent en palett med åtta färger efter position, så att en lång lista läses som skilda rader.",
+  "settings.rainbowOn": "Använd paletten",
+  "settings.rainbowReactive": "Stilla tills du rör vid det: färg vid hovring och på det som körs",
+  "settings.rainbowRotate": "Blanda var paletten börjar",
+  "settings.rainbowPalette": "Palettfärg",
   "settings.quietToasts": "Tysta aviseringar",
   "settings.quietToastsHint": "Visa popup-aviseringar endast vid fel. Rutinmässiga bekräftelser för sparande och kopiering förblir tysta.",
 

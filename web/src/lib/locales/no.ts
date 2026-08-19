@@ -186,6 +186,12 @@ const no: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Aksentfarge",
   "settings.accentPresets": "Forhåndsinnstillinger",
+  "settings.rainbow": "Regnbue",
+  "settings.rainbowHint": "I stedet for én aksent en palett med åtte farger etter posisjon, så en lang liste leses som enkeltrader.",
+  "settings.rainbowOn": "Bruk paletten",
+  "settings.rainbowReactive": "Rolig til du tar på det: farge ved peking og på det som kjører",
+  "settings.rainbowRotate": "Stokk hvor paletten starter",
+  "settings.rainbowPalette": "Palettfarge",
   "settings.quietToasts": "Stille varsler",
   "settings.quietToastsHint": "Vis kun sprettoppvarsler ved feil. Rutinemessige lagre- og kopieringsbekreftelser forblir stille.",
 

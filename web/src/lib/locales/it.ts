@@ -188,6 +188,12 @@ const it: Partial<Translations> = {
   "settings.appearance": "Aspetto",
   "settings.accentColor": "Colore di accento",
   "settings.accentPresets": "Predefiniti",
+  "settings.rainbow": "Arcobaleno",
+  "settings.rainbowHint": "Invece di un solo accento, una tavolozza di otto assegnata per posizione: un elenco lungo si legge come righe distinte.",
+  "settings.rainbowOn": "Usa la tavolozza",
+  "settings.rainbowReactive": "Silenzioso finché non lo tocchi: colore al passaggio e su ciò che è in corso",
+  "settings.rainbowRotate": "Mescola da dove parte la tavolozza",
+  "settings.rainbowPalette": "Colore della tavolozza",
   "settings.quietToasts": "Notifiche silenziose",
   "settings.quietToastsHint": "Mostra gli avvisi pop-up solo per gli errori. Le conferme di routine di salvataggio e copia restano silenziose.",
 

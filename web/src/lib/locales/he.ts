@@ -188,6 +188,12 @@ const he: Partial<Translations> = {
   "settings.appearance": "מראה",
   "settings.accentColor": "צבע הדגשה",
   "settings.accentPresets": "ערכות מוגדרות מראש",
+  "settings.rainbow": "קשת",
+  "settings.rainbowHint": "במקום צבע הדגשה אחד, לוח של שמונה צבעים לפי מיקום, כך שרשימה ארוכה נקראת כשורות נפרדות.",
+  "settings.rainbowOn": "להשתמש בלוח",
+  "settings.rainbowReactive": "שקט עד שנוגעים: צבע במעבר עכבר ועל מה שרץ",
+  "settings.rainbowRotate": "ערבוב נקודת ההתחלה של הלוח",
+  "settings.rainbowPalette": "צבע בלוח",
   "settings.quietToasts": "התראות שקטות",
   "settings.quietToastsHint": "הצג הודעות קופצות רק בעת כשלים. אישורי שמירה והעתקה שגרתיים יישארו שקטים.",
 

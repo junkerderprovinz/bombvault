@@ -188,6 +188,12 @@ const tr: Partial<Translations> = {
   "settings.appearance": "Görünüm",
   "settings.accentColor": "Vurgu rengi",
   "settings.accentPresets": "Ön ayarlar",
+  "settings.rainbow": "Gökkuşağı",
+  "settings.rainbowHint": "Tek vurgu yerine konuma göre dağıtılan sekiz renklik bir palet; uzun bir liste ayrı satırlar olarak okunur.",
+  "settings.rainbowOn": "Paleti kullan",
+  "settings.rainbowReactive": "Dokunulana kadar sakin: üzerine gelince ve çalışanda renk",
+  "settings.rainbowRotate": "Paletin nereden başladığını karıştır",
+  "settings.rainbowPalette": "Palet rengi",
   "settings.quietToasts": "Sessiz bildirimler",
   "settings.quietToastsHint": "Açılır bildirimleri yalnızca hatalarda göster. Rutin kaydetme ve kopyalama onayları sessiz kalır.",
 
