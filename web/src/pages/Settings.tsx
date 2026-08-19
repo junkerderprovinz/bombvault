@@ -77,13 +77,26 @@ function Card({
    *  a neutral (i) beside the title (design-language.md rule 8, "explanations
    *  live in a bubble, not on the page") instead of a permanent grey <p>
    *  under it — GlimStone form-engine Phase 2 Task 4's hint→bubble content
-   *  migration. Optional and additive: every Card that doesn't pass it is
-   *  byte-for-byte unchanged. */
+   *  migration. Optional, but not byte-for-byte additive: the <h2> below
+   *  changed className for EVERY Card, hint or not (block → `flex items-
+   *  center gap-1.5`, so a bubble can sit inline next to the title when one
+   *  is passed). That's visually inert for the 35+ Cards that don't pass a
+   *  hint — a flex row with a single text child lays out identically to a
+   *  block element, confirmed with no pixel difference across several
+   *  viewport widths — but it is a real className change, not a no-op. */
   hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      {/* Note for whoever picks up Task 5 (section headings as filled,
+          coloured badges — design-language.md rule 11): that task turns
+          this <h2> itself into a colour-filled badge, which will put this
+          neutral InfoBubble icon inside a coloured background. Rule 8 says
+          the icon stays neutral, never the accent — that's going to visually
+          compete with a filled badge fill, and is a real open question for
+          Task 5 to resolve (bubble outside the badge? recolour it? something
+          else?), not something pre-decided here. */}
       <h2 className="flex items-center gap-1.5 text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
         {title}
         {hint && <InfoBubble tip={hint} />}
@@ -1583,10 +1596,12 @@ const emptyNotify: NotifyConfig = {
 // (the whole "notifications" tab — the only complete, self-contained tab
 // migrated by this task; every OTHER Settings tab's permanent hint <p>s are
 // untouched, deliberately, same scope discipline as Phase 1 Task 9's toast
-// adoption), moved 7 disposable-after-first-read hints into InfoBubble:
-// the card-level intro (now Card's own `hint` prop), the "scheduled summary"
-// and "notify on update" checkbox captions, the Apprise section intro, and
-// the per-domain-Healthchecks section intro.
+// adoption), moved these 7 disposable-after-first-read hints into
+// InfoBubble: three card-level intros — NotifyCard's own, the Weekly-digest
+// Card's, and the Overdue-watchdog Card's (all three now Card's own `hint`
+// prop) — plus four inline ones: the "scheduled summary" and "notify on
+// update" checkbox captions, the Apprise section intro, and the
+// per-domain-Healthchecks section intro.
 //
 // Two hints in THIS card were deliberately left as permanent text, not
 // bubbled, because they read as reference a user consults again later
