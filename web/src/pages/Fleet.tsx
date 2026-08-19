@@ -217,7 +217,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 bv-field-focus-well"
             >
               {MESH_DOMAINS.map((d) => (
                 <option key={d} value={d}>{t(domainLabelKey(d))}</option>
