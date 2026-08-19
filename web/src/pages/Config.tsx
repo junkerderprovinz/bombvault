@@ -13,6 +13,8 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { ToggleRow } from "./Settings";
+import { useConfirm } from "../lib/useConfirm";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -46,7 +48,7 @@ function ConfigBackupButton({
       <button
         onClick={() => void fire()}
         disabled={isPending || externallyBusy}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? (
           <>
@@ -88,7 +90,11 @@ function ConfigBackupButton({
 // mechanism the rest of the app uses; no new persistence is invented.
 // ---------------------------------------------------------------------------
 
-type SaveState = "idle" | "saving" | "saved" | "error";
+// "saved"/"error" were removed from this type — the toast migration below
+// (GlimStone form-engine Task 9) replaced that 3000ms inline-flash outcome
+// with a real toast (push(), further down), so setSaveState now only ever
+// sets "idle"/"saving" — see the comment on the state declaration itself.
+type SaveState = "idle" | "saving";
 
 function labelledInput(
   label: string,
@@ -105,7 +111,7 @@ function labelledInput(
         spellCheck={false}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
       />
       {hint && <p className="text-xs text-carbon-textMuted">{hint}</p>}
     </div>
@@ -121,12 +127,16 @@ function ConfigSettingsCard({
   settings: Settings;
   setSettings: (updater: (prev: Settings) => Settings) => void;
 }) {
+  const { push } = useToast();
+  // Only "idle"/"saving" are ever set now — the SaveBar success/error pattern
+  // (GlimStone form-engine Task 9's other toast candidate, alongside the
+  // copy-feedback sites) used to hold "saved"/"error" here for a 3000ms
+  // inline-text flash; that completion notice is now a toast instead (push
+  // below), so there's no lingering render state left to revert from.
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaveState("saving");
-    setSaveError(null);
     try {
       // Re-fetch the latest settings and merge only the fields THIS card owns,
       // then PUT. Since the self-backup + off-site cadences moved to Settings ›
@@ -140,8 +150,8 @@ function ConfigSettingsCard({
       // now owned by Settings › Schedules, silently reverting a schedule set
       // elsewhere. Abort the save instead.
       if (!latest.ok) {
-        setSaveState("error");
-        setSaveError(latest.error ?? "Could not load current settings");
+        setSaveState("idle");
+        push(latest.error ?? "Could not load current settings", "fail");
         return;
       }
       const merged: Settings = {
@@ -153,15 +163,17 @@ function ConfigSettingsCard({
       };
       const res = await putSettings(merged);
       if (res.ok) {
-        setSaveState("saved");
-        setTimeout(() => setSaveState("idle"), 3000);
+        setSaveState("idle");
+        // "fail"/"warn" toasts always surface even in quiet mode; "success"
+        // is the routine, suppressible case (design-language.md "Toasts").
+        push(t("settings.saved"), "success");
       } else {
-        setSaveState("error");
-        setSaveError(res.error ?? "Save failed");
+        setSaveState("idle");
+        push(res.error ?? "Save failed", "fail");
       }
     } catch (err) {
-      setSaveState("error");
-      setSaveError(err instanceof Error ? err.message : "Save failed");
+      setSaveState("idle");
+      push(err instanceof Error ? err.message : "Save failed", "fail");
     }
   }
 
@@ -208,7 +220,7 @@ function ConfigSettingsCard({
         <button
           onClick={() => void handleSave()}
           disabled={saveState === "saving"}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {saveState === "saving" ? (
             <>
@@ -222,12 +234,6 @@ function ConfigSettingsCard({
             t("settings.save")
           )}
         </button>
-        {saveState === "saved" && (
-          <span className="text-sm text-statusOk">{t("settings.saved")}</span>
-        )}
-        {saveState === "error" && saveError && (
-          <span className="text-sm text-statusFail">{saveError}</span>
-        )}
       </div>
     </div>
   );
@@ -253,9 +259,10 @@ function ConfigSnapshotRow({
 }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -280,12 +287,13 @@ function ConfigSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -372,7 +380,7 @@ export function Config() {
         <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("config.snapshotsTitle")}
         </h2>
-        <div className="rounded-lg bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("config.snapshotsHint")}
         </div>
 
@@ -390,7 +398,7 @@ export function Config() {
           <p className="text-xs text-carbon-textMuted">{t("config.none")}</p>
         )}
         {!loading && snapshots.length > 0 && (
-          <div className="rounded-lg bg-carbon-background px-3 py-1">
+          <div className="rounded-card bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
               <ConfigSnapshotRow
                 key={snap.id}

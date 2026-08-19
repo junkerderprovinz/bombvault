@@ -33,6 +33,7 @@ const pt: Partial<Translations> = {
   "dashboard.allOk": "Todos os sistemas OK",
   "dashboard.degraded": "Degradado",
   "dashboard.checking": "A verificar…",
+  "dashboard.noContainers": "Nenhum contêiner encontrado.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personalizar",
   "dashboard.customizeDone": "Concluído",
@@ -59,6 +60,7 @@ const pt: Partial<Translations> = {
   "spike.colDetail": "Detalhe",
   "spike.ok": "OK",
   "spike.fail": "FALHA",
+  "spike.info": "INFO",
   "spike.bestEffort": "opcional",
   "spike.checkNow": "Verificar agora",
   "spike.probeFailed": "sonda falhou (ver registos do servidor)",
@@ -184,6 +186,8 @@ const pt: Partial<Translations> = {
   "settings.appearance": "Aparência",
   "settings.accentColor": "Cor de destaque",
   "settings.accentPresets": "Predefinições",
+  "settings.quietToasts": "Notificações silenciosas",
+  "settings.quietToastsHint": "Mostrar avisos pop-up apenas para falhas. As confirmações de rotina de salvar e copiar permanecem silenciosas.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -438,6 +442,7 @@ const pt: Partial<Translations> = {
   "vm.ssh.publicKey": "Chave pública — adicione a /root/.ssh/authorized_keys do Unraid",
   "vm.ssh.copy": "Copiar",
   "vm.ssh.copied": "Copiado",
+  "vm.ssh.copyFailed": "Cópia falhou",
   "vm.ssh.test": "Testar ligação",
   "vm.ssh.testing": "A testar…",
   "vm.ssh.testOk": "Ligado — libvirt acessível",
@@ -456,6 +461,12 @@ const pt: Partial<Translations> = {
   "common.restoreRunning": "Está a decorrer um restauro…",
   "common.backupRunning": "Está a decorrer um backup…",
   "common.replicateRunning": "Está a decorrer uma replicação…",
+  "common.showValue": "Mostrar valor",
+  "common.hideValue": "Ocultar valor",
+  "confirmDialog.title": "Confirmar",
+  "toast.dismiss": "Dispensar notificação",
+  "common.confirm": "Confirmar",
+  "common.cancel": "Cancelar",
   "common.close": "Fechar",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const pt: Partial<Translations> = {
   "receiver.edit": "Editar",
   "receiver.remove": "Remover",
   "receiver.removing": "A remover…",
-  "receiver.removeConfirm": "Remover este repositório recebido da monitorização? O repositório em disco nunca é tocado, apenas a entrada de monitorização é removida.",
+  "receiver.confirmRemove": "Confirmar remoção",
   "receiver.inventoryTitle": "Inventário por origem",
   "receiver.inventoryLoading": "A carregar inventário…",
   "receiver.inventoryError": "Não foi possível carregar o inventário.",
@@ -1217,7 +1228,7 @@ const pt: Partial<Translations> = {
   "fleet.edit": "Editar",
   "fleet.remove": "Remover",
   "fleet.removing": "A remover…",
-  "fleet.removeConfirm": "Remover esta instância da monitorização? A instância em si nunca é contactada para isto, apenas a entrada de monitorização é removida.",
+  "fleet.confirmRemove": "Confirmar remoção",
   "fleet.scorecardTitle": "Cartão de proteção",
   "fleet.noScorecard": "Ainda sem cartão em cache — consulte esta instância para obter um.",
   "fleet.lastBackup": "última cópia de segurança {time}",

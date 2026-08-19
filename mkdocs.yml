@@ -23,8 +23,10 @@ theme:
   palette:
     # Dark scheme listed FIRST, with no media query, so it is the unconditional
     # default: with plain (media-less) palettes Material uses the first as the
-    # default and does not follow the OS preference. BombVault is dark-first (Carbon
-    # #161616, sunflower-yellow accent), so the site opens dark for every visitor.
+    # default and does not follow the OS preference. This documentation site
+    # (Carbon #161616, sunflower-yellow accent) opens dark for every visitor by
+    # design — a separate choice from the BombVault app itself, which follows
+    # the visitor's system theme.
     - scheme: slate
       primary: black
       accent: yellow

@@ -34,6 +34,7 @@ const th: Partial<Translations> = {
   "dashboard.allOk": "ระบบทั้งหมดปกติ",
   "dashboard.degraded": "ประสิทธิภาพลดลง",
   "dashboard.checking": "กำลังตรวจสอบ…",
+  "dashboard.noContainers": "ไม่พบคอนเทนเนอร์",
   // Dashboard customize (#46)
   "dashboard.customize": "ปรับแต่ง",
   "dashboard.customizeDone": "เสร็จ",
@@ -60,6 +61,7 @@ const th: Partial<Translations> = {
   "spike.colDetail": "รายละเอียด",
   "spike.ok": "OK",
   "spike.fail": "ล้มเหลว",
+  "spike.info": "ข้อมูล",
   "spike.bestEffort": "ไม่บังคับ",
   "spike.checkNow": "ตรวจสอบเดี๋ยวนี้",
   "spike.probeFailed": "การตรวจสอบล้มเหลว (ดูบันทึกเซิร์ฟเวอร์)",
@@ -186,6 +188,8 @@ const th: Partial<Translations> = {
   "settings.appearance": "รูปลักษณ์",
   "settings.accentColor": "สีเน้น",
   "settings.accentPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
+  "settings.quietToastsHint": "แสดงการแจ้งเตือนแบบป๊อปอัปเฉพาะเมื่อล้มเหลวเท่านั้น การยืนยันการบันทึกและคัดลอกตามปกติจะไม่แสดง",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -440,6 +444,7 @@ const th: Partial<Translations> = {
   "vm.ssh.publicKey": "คีย์สาธารณะ — เพิ่มต่อท้าย ‎/root/.ssh/authorized_keys ของ Unraid",
   "vm.ssh.copy": "คัดลอก",
   "vm.ssh.copied": "คัดลอกแล้ว",
+  "vm.ssh.copyFailed": "การคัดลอกล้มเหลว",
   "vm.ssh.test": "ทดสอบการเชื่อมต่อ",
   "vm.ssh.testing": "กำลังทดสอบ…",
   "vm.ssh.testOk": "เชื่อมต่อแล้ว — เข้าถึง libvirt ได้",
@@ -458,6 +463,12 @@ const th: Partial<Translations> = {
   "common.restoreRunning": "กำลังกู้คืนข้อมูลอยู่…",
   "common.backupRunning": "กำลังสำรองข้อมูลอยู่…",
   "common.replicateRunning": "กำลังจำลองข้อมูลอยู่…",
+  "common.showValue": "แสดงค่า",
+  "common.hideValue": "ซ่อนค่า",
+  "confirmDialog.title": "ยืนยัน",
+  "toast.dismiss": "ปิดการแจ้งเตือน",
+  "common.confirm": "ยืนยัน",
+  "common.cancel": "ยกเลิก",
   "common.close": "ปิด",
 
   // Backup folders selector
@@ -1174,7 +1185,7 @@ const th: Partial<Translations> = {
   "receiver.edit": "แก้ไข",
   "receiver.remove": "นำออก",
   "receiver.removing": "กำลังนำออก…",
-  "receiver.removeConfirm": "นำที่เก็บที่รับนี้ออกจากการตรวจสอบหรือไม่ ที่เก็บบนดิสก์จะไม่ถูกแตะต้อง มีเพียงรายการตรวจสอบเท่านั้นที่ถูกนำออก",
+  "receiver.confirmRemove": "ยืนยันการลบ",
   "receiver.inventoryTitle": "รายการตามแหล่งที่มา",
   "receiver.inventoryLoading": "กำลังโหลดรายการ…",
   "receiver.inventoryError": "ไม่สามารถโหลดรายการได้",
@@ -1220,7 +1231,7 @@ const th: Partial<Translations> = {
   "fleet.edit": "แก้ไข",
   "fleet.remove": "ลบ",
   "fleet.removing": "กำลังลบ…",
-  "fleet.removeConfirm": "ลบอินสแตนซ์นี้ออกจากการตรวจสอบหรือไม่? ระบบจะไม่ติดต่ออินสแตนซ์นั้นเพื่อการนี้เลย จะลบเฉพาะรายการตรวจสอบเท่านั้น",
+  "fleet.confirmRemove": "ยืนยันการลบ",
   "fleet.scorecardTitle": "การ์ดคะแนนการป้องกัน",
   "fleet.noScorecard": "ยังไม่มีการ์ดคะแนนที่แคชไว้ — สอบถามอินสแตนซ์นี้เพื่อดึงข้อมูล",
   "fleet.lastBackup": "การสำรองข้อมูลล่าสุด {time}",

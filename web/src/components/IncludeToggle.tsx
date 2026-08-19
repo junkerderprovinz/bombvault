@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { setInclude } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { Toggle } from "./Toggle";
 
 interface IncludeToggleProps {
   name: string;
@@ -39,23 +40,13 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        role="switch"
-        aria-label={t("containers.includeInSchedule")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("containers.includeInSchedule")}
+        checked={enabled}
+        onChange={(next) => void handleChange(next)}
         disabled={busy}
-        onClick={() => void handleChange(!enabled)}
-        title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      />
       {error && (
         <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
           {error}

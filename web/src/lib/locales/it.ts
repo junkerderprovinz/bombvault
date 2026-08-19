@@ -34,6 +34,7 @@ const it: Partial<Translations> = {
   "dashboard.allOk": "Tutti i sistemi OK",
   "dashboard.degraded": "Degradato",
   "dashboard.checking": "Verifica…",
+  "dashboard.noContainers": "Nessun container trovato.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personalizza",
   "dashboard.customizeDone": "Fatto",
@@ -60,6 +61,7 @@ const it: Partial<Translations> = {
   "spike.colDetail": "Dettaglio",
   "spike.ok": "OK",
   "spike.fail": "ERRORE",
+  "spike.info": "INFO",
   "spike.bestEffort": "opzionale",
   "spike.checkNow": "Controlla ora",
   "spike.probeFailed": "sonda fallita (vedi i log del server)",
@@ -186,6 +188,8 @@ const it: Partial<Translations> = {
   "settings.appearance": "Aspetto",
   "settings.accentColor": "Colore di accento",
   "settings.accentPresets": "Predefiniti",
+  "settings.quietToasts": "Notifiche silenziose",
+  "settings.quietToastsHint": "Mostra gli avvisi pop-up solo per gli errori. Le conferme di routine di salvataggio e copia restano silenziose.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",
@@ -440,6 +444,7 @@ const it: Partial<Translations> = {
   "vm.ssh.publicKey": "Chiave pubblica — aggiungila a /root/.ssh/authorized_keys di Unraid",
   "vm.ssh.copy": "Copia",
   "vm.ssh.copied": "Copiato",
+  "vm.ssh.copyFailed": "Copia non riuscita",
   "vm.ssh.test": "Prova connessione",
   "vm.ssh.testing": "Prova in corso…",
   "vm.ssh.testOk": "Connesso — libvirt raggiungibile",
@@ -458,6 +463,12 @@ const it: Partial<Translations> = {
   "common.restoreRunning": "È in corso un ripristino…",
   "common.backupRunning": "È in corso un backup…",
   "common.replicateRunning": "È in corso una replica…",
+  "common.showValue": "Mostra valore",
+  "common.hideValue": "Nascondi valore",
+  "confirmDialog.title": "Conferma",
+  "toast.dismiss": "Ignora notifica",
+  "common.confirm": "Conferma",
+  "common.cancel": "Annulla",
   "common.close": "Chiudi",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const it: Partial<Translations> = {
   "receiver.edit": "Modifica",
   "receiver.remove": "Rimuovi",
   "receiver.removing": "Rimozione…",
-  "receiver.removeConfirm": "Rimuovere questo repository ricevuto dal monitoraggio? Il repository su disco non viene mai toccato, viene rimossa solo la voce di monitoraggio.",
+  "receiver.confirmRemove": "Conferma rimozione",
   "receiver.inventoryTitle": "Inventario per sorgente",
   "receiver.inventoryLoading": "Caricamento inventario…",
   "receiver.inventoryError": "Impossibile caricare l'inventario.",
@@ -1217,7 +1228,7 @@ const it: Partial<Translations> = {
   "fleet.edit": "Modifica",
   "fleet.remove": "Rimuovi",
   "fleet.removing": "Rimozione…",
-  "fleet.removeConfirm": "Rimuovere questa istanza dal monitoraggio? L'istanza stessa non viene mai contattata per questo, viene rimossa solo la voce di monitoraggio.",
+  "fleet.confirmRemove": "Conferma rimozione",
   "fleet.scorecardTitle": "Scheda di protezione",
   "fleet.noScorecard": "Nessuna scheda memorizzata ancora — interroga questa istanza per ottenerne una.",
   "fleet.lastBackup": "ultimo backup {time}",

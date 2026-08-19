@@ -34,6 +34,7 @@ const cs: Partial<Translations> = {
   "dashboard.allOk": "Vše v pořádku",
   "dashboard.degraded": "Degradováno",
   "dashboard.checking": "Kontroluji…",
+  "dashboard.noContainers": "Nenalezeny žádné kontejnery.",
   // Dashboard customize (#46)
   "dashboard.customize": "Přizpůsobit",
   "dashboard.customizeDone": "Hotovo",
@@ -60,6 +61,7 @@ const cs: Partial<Translations> = {
   "spike.colDetail": "Detail",
   "spike.ok": "OK",
   "spike.fail": "CHYBA",
+  "spike.info": "INFO",
   "spike.bestEffort": "volitelné",
   "spike.checkNow": "Zkontrolovat nyní",
   "spike.probeFailed": "sonda selhala (viz logy serveru)",
@@ -186,6 +188,8 @@ const cs: Partial<Translations> = {
   "settings.appearance": "Vzhled",
   "settings.accentColor": "Barva zvýraznění",
   "settings.accentPresets": "Předvolby",
+  "settings.quietToasts": "Tichá oznámení",
+  "settings.quietToastsHint": "Zobrazovat vyskakovací oznámení jen při chybách. Běžná potvrzení uložení a kopírování zůstanou bez oznámení.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontejnery",
@@ -438,6 +442,7 @@ const cs: Partial<Translations> = {
   "vm.ssh.publicKey": "Veřejný klíč — připojte do Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopírovat",
   "vm.ssh.copied": "Zkopírováno",
+  "vm.ssh.copyFailed": "Kopírování selhalo",
   "vm.ssh.test": "Otestovat připojení",
   "vm.ssh.testing": "Testuji…",
   "vm.ssh.testOk": "Připojeno — libvirt dostupný",
@@ -456,6 +461,12 @@ const cs: Partial<Translations> = {
   "common.restoreRunning": "Probíhá obnova…",
   "common.backupRunning": "Probíhá zálohování…",
   "common.replicateRunning": "Probíhá replikace…",
+  "common.showValue": "Zobrazit hodnotu",
+  "common.hideValue": "Skrýt hodnotu",
+  "confirmDialog.title": "Potvrdit",
+  "toast.dismiss": "Zavřít oznámení",
+  "common.confirm": "Potvrdit",
+  "common.cancel": "Zrušit",
   "common.close": "Zavřít",
 
   // Backup folders selector
@@ -1169,7 +1180,7 @@ const cs: Partial<Translations> = {
   "receiver.edit": "Upravit",
   "receiver.remove": "Odebrat",
   "receiver.removing": "Odebírání…",
-  "receiver.removeConfirm": "Odebrat tento přijatý repozitář ze sledování? Repozitář na disku se nikdy nedotkne, odebere se pouze záznam sledování.",
+  "receiver.confirmRemove": "Potvrdit odebrání",
   "receiver.inventoryTitle": "Inventář podle zdroje",
   "receiver.inventoryLoading": "Načítání inventáře…",
   "receiver.inventoryError": "Nepodařilo se načíst inventář.",
@@ -1215,7 +1226,7 @@ const cs: Partial<Translations> = {
   "fleet.edit": "Upravit",
   "fleet.remove": "Odebrat",
   "fleet.removing": "Odebírání…",
-  "fleet.removeConfirm": "Odebrat tuto instanci ze sledování? Instance samotná se kvůli tomu nikdy nekontaktuje, odebere se pouze záznam sledování.",
+  "fleet.confirmRemove": "Potvrdit odebrání",
   "fleet.scorecardTitle": "Karta ochrany",
   "fleet.noScorecard": "Zatím žádná uložená karta — dotažte se na tuto instanci a získejte ji.",
   "fleet.lastBackup": "poslední záloha {time}",

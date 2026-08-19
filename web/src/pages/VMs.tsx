@@ -10,8 +10,12 @@ import { Advanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
+import { IconVM } from "../components/Sidebar";
+import { Badge, type BadgeTone } from "../components/Badge";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -25,23 +29,16 @@ function formatTs(unix: number | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// State chip (mirrors Containers.tsx)
+// State chip (mirrors Containers.tsx) — stateTone maps a raw VM state to the
+// shared Badge's tone; stateLabel (lib/i18n) still does the actual
+// state->text translation.
 // ---------------------------------------------------------------------------
 
-function StateChip({ state }: { state: string }) {
-  const { t } = useT();
+function stateTone(state: string): BadgeTone {
   const lower = state.toLowerCase();
-  const cls =
-    lower === "running"
-      ? "bg-statusOkBg text-statusOk"
-      : lower === "shut off" || lower === "shutoff" || lower === "stopped"
-      ? "bg-statusFailBg text-statusFail"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
-      {stateLabel(t, state)}
-    </span>
-  );
+  if (lower === "running") return "ok";
+  if (lower === "shut off" || lower === "shutoff" || lower === "stopped") return "fail";
+  return "neutral";
 }
 
 // ---------------------------------------------------------------------------
@@ -97,7 +94,7 @@ function SortControl({
         <button
           key={k}
           onClick={() => onChange(k)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === k
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -155,7 +152,7 @@ function ChipFilter<K extends string>({
         <button
           key={o.key}
           onClick={() => onChange(o.key)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === o.key
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -214,7 +211,7 @@ function VMMethodSelect({
         disabled={busy}
         onChange={(e) => void handleChange(e.target.value)}
         title={t("vm.method.hint")}
-        className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus disabled:opacity-50"
       >
         <option value="graceful">{t("vm.method.graceful")}</option>
         <option value="live">{t("vm.method.live")}</option>
@@ -271,7 +268,7 @@ function VMIncludeToggle({
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -319,7 +316,7 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
       <button
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -360,7 +357,7 @@ function VMBackupButton({
       <button
         onClick={() => void fire()}
         disabled={isPending || blockedByOther}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>
@@ -435,9 +432,10 @@ function VMSnapshotRow({
   // SnapshotRow) — the restore controls (confirm + leave-stopped + progress
   // banner) only render once the user opts in.
   const [showRestore, setShowRestore] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -469,7 +467,7 @@ function VMSnapshotRow({
             (mirrors Containers' SnapshotRow) instead of always rendering it. */}
         <button
           onClick={() => setShowRestore((p) => !p)}
-          className={`shrink-0 rounded-lg px-2.5 py-1 text-xs transition-colors ${
+          className={`shrink-0 rounded-control px-2.5 py-1 text-xs transition-colors ${
             showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
@@ -479,7 +477,7 @@ function VMSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -502,6 +500,7 @@ function VMSnapshotRow({
         </div>
       )}
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -527,6 +526,7 @@ function VMRestorePanel({
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (!open) return;
@@ -541,8 +541,13 @@ function VMRestorePanel({
       .finally(() => setLoading(false));
   }, [open, name, source, reloadTick]);
 
-  function handleDeleteAll() {
-    if (!window.confirm(t("snapshots.deleteAllConfirm"))) return;
+  async function handleDeleteAll() {
+    // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
+    // here once it ships (deferred — new interpolated i18n keys across all 25
+    // non-English locales, out of scope for this window.confirm() → dialog
+    // mechanism swap). Same flagged follow-up as Containers.tsx's
+    // deleteBackupsConfirm and Files.tsx's deleteBackupsConfirm.
+    if (!(await confirm(t("snapshots.deleteAllConfirm")))) return;
     setDeletingAll(true);
     setError(null);
     deleteBackupsVM(name, source)
@@ -581,7 +586,7 @@ function VMRestorePanel({
       </button>
 
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background px-3 py-1">
+        <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
@@ -591,7 +596,7 @@ function VMRestorePanel({
               </Advanced>
               {snapshots.length > 0 && (
                 <button
-                  onClick={handleDeleteAll}
+                  onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
                   className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
                 >
@@ -625,6 +630,7 @@ function VMRestorePanel({
             ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -679,11 +685,9 @@ export function VMRow({
               {vm.name}
             </span>
             {installed ? (
-              <StateChip state={vm.state} />
+              <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
-                {t("containers.notInstalled")}
-              </span>
+              <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
           </div>
         </div>
@@ -755,9 +759,10 @@ function VMForgetButton({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleForget() {
-    if (!window.confirm(t("vms.removeEntryConfirm"))) return;
+    if (!(await confirm(t("vms.removeEntryConfirm")))) return;
     setPending(true);
     setError(null);
     try {
@@ -776,11 +781,12 @@ function VMForgetButton({
       <button
         onClick={() => void handleForget()}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
       >
         {pending ? t("dashboard.checking") : t("vms.removeEntry")}
       </button>
       {error && <p className="text-xs text-statusFail">{error}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -817,14 +823,14 @@ function ScheduleIncludeAllControl({
       <button
         onClick={() => void run(true)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {t("schedule.includeAll")}
       </button>
       <button
         onClick={() => void run(false)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+        className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
       >
         {t("schedule.excludeAll")}
       </button>
@@ -1014,7 +1020,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                 <li
                   key={name}
                   {...rowProps(i)}
-                  className={`flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5 ${
+                  className={`flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${
                     dragIndex === i ? "opacity-40" : ""
                   }`}
                 >
@@ -1037,7 +1043,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                     disabled={i === 0 || saveState === "saving"}
                     aria-label={t("backupOrder.moveUp")}
                     title={t("backupOrder.moveUp")}
-                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1048,7 +1054,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
                     disabled={i === names.length - 1 || saveState === "saving"}
                     aria-label={t("backupOrder.moveDown")}
                     title={t("backupOrder.moveDown")}
-                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1061,14 +1067,14 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
               <button
                 onClick={() => void persist(names)}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {t("backupOrder.save")}
               </button>
               <button
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("backupOrder.reset")}
               </button>
@@ -1087,6 +1093,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
 export function VMs() {
   const { t } = useT();
+  const { confirm, confirmDialog } = useConfirm();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
   const running = anyActive(useProgress());
@@ -1247,8 +1254,8 @@ export function VMs() {
     );
   }
 
-  function restoreSelected() {
-    if (!window.confirm(t("vms.restoreSelectedConfirm"))) return;
+  async function restoreSelected() {
+    if (!(await confirm(t("vms.restoreSelectedConfirm")))) return;
     void runBulk((name) =>
       fireAndWaitRun({
         kind: "restore",
@@ -1279,7 +1286,7 @@ export function VMs() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("vms.discoverHint")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -1293,7 +1300,13 @@ export function VMs() {
         <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && vms.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center">
+        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          {/* No "Add" action here (unlike Receiver/Fleet/Files): this list is a
+              live enumeration of what libvirt/KVM actually reports, not a
+              BombVault-managed list to add to. The page's own Discover button
+              above (disaster-recovery re-scan) is already the relevant action
+              for an empty result, so a second button here would be redundant. */}
+          <EmptyStateIcon icon={IconVM} />
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
       )}
@@ -1317,7 +1330,7 @@ export function VMs() {
               placeholder={t("vms.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
             <ChipFilter<ScheduleFilterKey>
               label={t("filter.schedule")}
@@ -1363,23 +1376,23 @@ export function VMs() {
 
       {/* Bulk action bar */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-lg bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>
           <button
             onClick={backupSelected}
             disabled={bulkBusy || running.active}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("vms.backupSelected")}
           </button>
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
             <button
-              onClick={restoreSelected}
+              onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
-              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {t("vms.restoreSelected")}
             </button>
@@ -1442,6 +1455,7 @@ export function VMs() {
       {!loading && !error && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
+      {confirmDialog}
     </div>
   );
 }

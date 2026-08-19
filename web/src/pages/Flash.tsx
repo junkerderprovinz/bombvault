@@ -7,6 +7,7 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -41,7 +42,7 @@ function FlashBackupButton({
       <button
         onClick={() => void fire()}
         disabled={isPending || externallyBusy}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? (
           <>
@@ -94,9 +95,10 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -138,7 +140,7 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
         <button
           onClick={handleDownload}
           disabled={preparing}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
         >
           {preparing && (
             <span
@@ -152,12 +154,13 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           onClick={() => void handleDelete()}
           disabled={deleting || preparing}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -230,7 +233,7 @@ export function Flash() {
           {t("snapshots.title")}
         </h2>
         {/* Safe-restore explainer */}
-        <div className="rounded-lg bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("flash.restoreNote")}
         </div>
 
@@ -248,7 +251,7 @@ export function Flash() {
           <p className="text-xs text-carbon-textMuted">{t("flash.none")}</p>
         )}
         {!loading && snapshots.length > 0 && (
-          <div className="rounded-lg bg-carbon-background px-3 py-1">
+          <div className="rounded-card bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
               <FlashSnapshotRow key={snap.id} snap={snap} source={source} onDeleted={() => void load()} t={t} />
             ))}

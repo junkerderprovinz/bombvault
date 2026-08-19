@@ -34,6 +34,7 @@ const hu: Partial<Translations> = {
   "dashboard.allOk": "Minden rendszer rendben",
   "dashboard.degraded": "Leromlott",
   "dashboard.checking": "Ellenőrzés…",
+  "dashboard.noContainers": "Nem található konténer.",
   // Dashboard customize (#46)
   "dashboard.customize": "Testreszabás",
   "dashboard.customizeDone": "Kész",
@@ -60,6 +61,7 @@ const hu: Partial<Translations> = {
   "spike.colDetail": "Részletek",
   "spike.ok": "RENDBEN",
   "spike.fail": "HIBA",
+  "spike.info": "INFÓ",
   "spike.bestEffort": "nem kötelező",
   "spike.checkNow": "Ellenőrzés most",
   "spike.probeFailed": "a próba sikertelen volt (lásd a szerver naplóit)",
@@ -186,6 +188,8 @@ const hu: Partial<Translations> = {
   "settings.appearance": "Megjelenés",
   "settings.accentColor": "Kiemelőszín",
   "settings.accentPresets": "Előbeállítások",
+  "settings.quietToasts": "Csendes értesítések",
+  "settings.quietToastsHint": "Csak hibák esetén jelenjenek meg felugró értesítések. A rutin mentési és másolási visszaigazolások csendben maradnak.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konténerek",
@@ -440,6 +444,7 @@ const hu: Partial<Translations> = {
   "vm.ssh.publicKey": "Nyilvános kulcs — fűzze hozzá az Unraid /root/.ssh/authorized_keys fájljához",
   "vm.ssh.copy": "Másolás",
   "vm.ssh.copied": "Másolva",
+  "vm.ssh.copyFailed": "A másolás sikertelen",
   "vm.ssh.test": "Kapcsolat tesztelése",
   "vm.ssh.testing": "Tesztelés…",
   "vm.ssh.testOk": "Csatlakozva — libvirt elérhető",
@@ -458,6 +463,12 @@ const hu: Partial<Translations> = {
   "common.restoreRunning": "Visszaállítás van folyamatban…",
   "common.backupRunning": "Biztonsági mentés van folyamatban…",
   "common.replicateRunning": "Replikálás van folyamatban…",
+  "common.showValue": "Érték megjelenítése",
+  "common.hideValue": "Érték elrejtése",
+  "confirmDialog.title": "Megerősítés",
+  "toast.dismiss": "Értesítés elvetése",
+  "common.confirm": "Megerősítés",
+  "common.cancel": "Mégse",
   "common.close": "Bezárás",
 
   // Backup folders selector
@@ -1174,7 +1185,7 @@ const hu: Partial<Translations> = {
   "receiver.edit": "Szerkesztés",
   "receiver.remove": "Eltávolítás",
   "receiver.removing": "Eltávolítás…",
-  "receiver.removeConfirm": "Eltávolítja ezt a fogadott tárolót a figyelésből? A lemezen lévő tárolót soha nem érinti, csak a figyelési bejegyzés törlődik.",
+  "receiver.confirmRemove": "Eltávolítás megerősítése",
   "receiver.inventoryTitle": "Leltár forrás szerint",
   "receiver.inventoryLoading": "Leltár betöltése…",
   "receiver.inventoryError": "A leltár betöltése nem sikerült.",
@@ -1220,7 +1231,7 @@ const hu: Partial<Translations> = {
   "fleet.edit": "Szerkesztés",
   "fleet.remove": "Eltávolítás",
   "fleet.removing": "Eltávolítás…",
-  "fleet.removeConfirm": "Eltávolítod ezt a példányt a figyelésből? A példányt ehhez sosem keressük meg, csak a figyelési bejegyzés kerül eltávolításra.",
+  "fleet.confirmRemove": "Eltávolítás megerősítése",
   "fleet.scorecardTitle": "Védelmi eredményjelző",
   "fleet.noScorecard": "Még nincs gyorsítótárazott eredményjelző — kérdezd le ezt a példányt egy lekéréséhez.",
   "fleet.lastBackup": "utolsó biztonsági mentés: {time}",

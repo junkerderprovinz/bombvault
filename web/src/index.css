@@ -16,6 +16,7 @@
 
   --color-accent: var(--accent);
   --color-accentContrast: var(--accent-contrast);
+  --color-accentSoft: var(--accent-soft);
 
   /* Status tokens (#105) — semantic ok/fail/warn/info/neutral colors that flip
      with the theme. text = plain colored text, Bg/Border = tinted chip surfaces,
@@ -51,7 +52,50 @@
   --color-statusNeutralBorder: var(--status-neutral-border);
   --color-statusNeutralSolid: var(--status-neutral-solid);
 
-  --radius-card: 0.75rem;
+  /* Shape tokens (GlimStone form-engine #1) — pointing the Tailwind theme key
+     AT the real custom property (declared once, theme-invariant, below)
+     rather than a literal, so `rounded-card`/`rounded-control`/`rounded-pill`
+     stay reactive instead of freezing the value at build time. Tailwind's
+     `--radius-*` namespace forces the theme key name to equal the runtime
+     var name, unlike `--color-*` above (which aliases a differently-named
+     var), so this "points at itself" on purpose — @theme compiles into a
+     low-priority "theme" cascade layer, so the plain, unlayered :root
+     declaration further down in this file always wins regardless of source
+     order; @theme's own declared value here is never actually used. */
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+  --radius-pill: var(--radius-pill);
+
+  /* Type scale (GlimStone form-engine #1) — same self-pointing trick so
+     `text-heading`/`text-body`/`text-dense`/`text-caption` stay reactive. */
+  --text-heading: var(--text-heading);
+  --text-body: var(--text-body);
+  --text-dense: var(--text-dense);
+  --text-caption: var(--text-caption);
+}
+
+/* Shape and type scale (GlimStone form-engine #1) — theme-invariant: radius
+   and font size don't change between dark and light, only colors do, so
+   these are declared ONCE on a bare :root rather than duplicated identically
+   into both [data-theme="dark"] and [data-theme="light"] below. That
+   duplication was a real hazard, not just noise: a future Task 2
+   [data-shape="..."] selector has the same (0,1,0) specificity as
+   [data-theme="..."], so two copies of the same value sitting in the theme
+   blocks would compete with a shape override on source order alone. One
+   copy here removes the interaction entirely — a later [data-shape] rule
+   just needs to come after this block in the file, with no theme selector
+   to out-run.
+   No [data-shape] axis yet (that's Task 2), so these are the reference's
+   "round" values without any variant. */
+:root {
+  --radius-card:      1rem;
+  --radius-control:   0.625rem;
+  --radius-pill:      9999px;
+
+  --text-heading: 1.25rem;  /* 20px */
+  --text-body:    0.875rem; /* 14px */
+  --text-dense:   0.75rem;  /* 12px */
+  --text-caption: 0.6875rem; /* 11px */
 }
 
 /*
@@ -102,9 +146,80 @@
      navigation reads clearly against the dark sidebar surface. */
   --sidebar-text:     #e0e0e0;
 
-  /* Accent — default sunflower yellow; overridden at runtime via accent.ts */
+  /* Accent — default sunflower yellow; overridden at runtime via accent.ts,
+     which also computes --accent-contrast (sRGB luminance) and --accent-soft
+     for whatever hex is actually active. These are the pre-hydration/no-JS
+     fallback values for the DEFAULT accent above — BombVault (unlike
+     GlimStone's own reference) keeps the same accent hex in both themes
+     rather than darkening it for light mode, so --accent-soft/--focus-ring
+     below are derived from THIS colour in both theme blocks, not copied
+     verbatim from reference/tokens.css's light block (which is tuned for
+     its own theme-specific #8E6A00 default). */
   --accent:           #FCC419;
   --accent-contrast:  #161616;
+  --accent-soft:      rgba(252, 196, 25, 0.14);
+
+  /* Shape and type scale live once, on a bare :root above (theme-invariant —
+     see the comment there). */
+
+  /* One elevation, one hairline, one focus-ring colour (GlimStone form-engine
+     #1). Elevation/hairline are neutral (theme-dependent, copied verbatim
+     from reference/tokens.css); focus-ring is accent-derived, so see the
+     comment on --accent-soft above for why its value isn't copied verbatim
+     from reference's light block. */
+  --elevation: 0 1px 2px rgba(0, 0, 0, .40), 0 18px 40px -24px rgba(0, 0, 0, .85);
+  --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
+  --focus-ring: rgba(252, 196, 25, .55);
+
+  /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
+     see the .bv-field-focus/.bv-field-focus-well comment further down for
+     what this is. A spec-compliance review found the brightness-step-only
+     treatment below (--field-focus-well) could not be both visible enough
+     for SC 1.4.11 AND keep the field's own text readable, so a hairline
+     outline is now the REAL accessibility mechanism — the fill step is a
+     secondary, nice-to-have visual touch, not the sole indicator anymore.
+     This is a SEPARATE token from --focus-ring above, not that token reused
+     verbatim: --focus-ring's rgba(252,196,25,.55) was verified against
+     --carbon-surface/--carbon-bg (#262626/#161616), much darker than what
+     this outline actually renders against — a field's OWN background at
+     focus (--carbon-surface3 #525252 for .bv-field-focus, or
+     --field-focus-well below for the well variant) — where it only manages
+     2.58:1 / 2.37:1, under the 3:1 minimum. The higher .8 opacity here (same
+     accent hue, same amber family, nothing new) composites to ~3.71:1 on
+     --carbon-surface3 and ~3.35:1 on --field-focus-well below — both clear
+     3:1 with real margin, by the standard WCAG relative-luminance formula.
+     The rule that uses this sets a NEGATIVE outline-offset (inset), so the
+     outline reads against the field's own fill, not the page/card behind
+     it — that's the background this value is tuned for. */
+  --field-focus-ring: rgba(252, 196, 25, .8);
+
+  /* Field focus, the "well" variant only (GlimStone form-engine #8) — see the
+     .bv-field-focus-well comment further down in this file for what this is
+     and why it exists. The ORIGINAL value here was #8e8e8e, verified only
+     against --carbon-surface2 (#393939, the WELL's own OUTER background) at
+     3.53:1 — never checked against what the fill actually sits under
+     text-wise: the field's OWN content. On #8e8e8e, --carbon-text (#f4f4f4)
+     dropped to 2.98:1, failing the 4.5:1 body-text minimum on exactly the
+     fields most likely to hold sensitive credentials (S3 keys, repo
+     passwords); placeholder text fell with it, to 2.83:1 as those fields
+     actually render (they set no placeholder colour, so Chromium's UA
+     default applies), or 1.01:1 for the two fields that DO pin it to
+     --carbon-textMuted #8d8d8d (ActivityLog/ErrorDetailPanel — both the
+     .bv-field-focus variant, so that worst case is hypothetical here).
+     Now that --field-focus-ring above is doing the real SC 1.4.11 work,
+     this only needs to be a modest, genuine brightness step off
+     --carbon-surface3 (#525252) that does NOT break text contrast: #5a5a5a
+     keeps --carbon-text at 6.27:1 and textMuted-pinned placeholder at
+     2.08:1 — both far closer to their un-focused values on --carbon-surface3
+     (7.10:1 / 2.35:1) than the old value ever was.
+
+     DO NOT brighten this back toward the old value to get a punchier step:
+     --field-focus-ring is composited against THIS fill, so the two are
+     coupled. It clears 3:1 here (3.35:1), but on the old #8e8e8e it would
+     collapse to 1.77:1 — the hairline outline, i.e. the only real SC 1.4.11
+     mechanism these rules have, would go invisible. Re-measure the outline
+     against any new value before changing it. */
+  --field-focus-well: #5a5a5a;
 
   /* Status colors (#105) — the exact hexes the UI has always used in dark mode
      (Carbon dark support tones); the light block swaps them for Carbon light
@@ -149,25 +264,99 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --carbon-bg:        #ffffff;
-  --carbon-surface:   #f4f4f4;
-  --carbon-surface2:  #e0e0e0;
-  --carbon-surface3:  #c6c6c6;
+  /* GlimStone form-engine #1 — corrected against reference/tokens.css's
+     light block (verified value-by-value; every --carbon- and --sidebar-text
+     token below except --carbon-text and --carbon-text-muted had drifted):
+       --carbon-bg          #ffffff -> #f4f4f4
+       --carbon-sidebar     #f4f4f4 -> #ffffff
+       --carbon-surface     #f4f4f4 -> #ffffff
+       --carbon-surface2    #e0e0e0 -> #e8e8e8
+       --carbon-surface3    #c6c6c6 -> #d1d1d1
+       --carbon-hover       #e8e8e8 -> #e0e0e0  (was literally swapped with surface2)
+       --carbon-border      #e0e0e0 -> #d1d1d1
+       --carbon-text-sub    #393939 -> #525252
+       --sidebar-text       #21272a -> #393939 */
+  --carbon-bg:        #f4f4f4;
+  --carbon-surface:   #ffffff;
+  --carbon-surface2:  #e8e8e8;
+  --carbon-surface3:  #d1d1d1;
   --carbon-text:      #161616;
-  --carbon-text-sub:  #393939;
+  --carbon-text-sub:  #525252;
   --carbon-text-muted:#6f6f6f;
-  --carbon-border:    #e0e0e0;
-  --carbon-hover:     #e8e8e8;
+  --carbon-border:    #d1d1d1;
+  --carbon-hover:     #e0e0e0;
 
-  /* Sidebar background (light theme) — keep it the soft surface tone. */
-  --carbon-sidebar:   #f4f4f4;
+  /* Sidebar background (light theme) — the raised surface tone, matching
+     reference/tokens.css (was incorrectly the page-ground tone). */
+  --carbon-sidebar:   #ffffff;
 
-  /* Sidebar nav text — darker than --carbon-text-sub for stronger contrast
-     on the light sidebar surface. */
-  --sidebar-text:     #21272a;
+  /* Sidebar nav text — corrected to reference/tokens.css's light value. */
+  --sidebar-text:     #393939;
 
-  /* Accent inherits from :root; override here only if light theme needs adjustment */
+  /* Accent inherits --accent from :root (BombVault keeps one accent hex
+     across both themes; see the comment on the dark block's --accent-soft).
+     --accent-contrast/--accent-soft are therefore the SAME values as the
+     dark block, not reference's light-specific #8E6A00-based numbers —
+     see that comment for why. */
   --accent-contrast:  #161616;
+  --accent-soft:      rgba(252, 196, 25, 0.14);
+
+  /* --focus-ring, unlike --accent-soft above, does NOT inherit the dark
+     block's value — measured live against this theme's real Card surface
+     (--carbon-surface #ffffff) the dark rgba(252,196,25,.55) composites to
+     only ~1.3:1, well under WCAG 2.2 SC 1.4.11's 3:1 minimum for non-text UI
+     indicators. rgba(142,106,0,.85) is Carbon yellow-60 (the same hex already
+     used as --status-warn-text below, so it stays in the accent's amber/gold
+     hue family) at a higher opacity than the dark ring's .55, chosen because
+     that hue needs to be both darker AND more opaque to read on a light
+     surface. Computed via the standard WCAG relative-luminance formula:
+     composites to ~#9f8026 on #ffffff (3.75:1) and ~#9d7f25 on #f4f4f4, the
+     page background (3.48:1) — both clear 3:1 with real margin. */
+  --focus-ring: rgba(142, 106, 0, .85);
+
+  /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
+     same reasoning as the dark block's --field-focus-ring above. --focus-ring
+     itself (rgba(142,106,0,.85), composited to ~#98791f on --carbon-surface3
+     #d1d1d1) only reaches 2.70:1 there, and worse still once
+     --field-focus-well below is pulled back — under the 3:1 minimum. This
+     theme's --focus-ring has no opacity budget left to spend (already at
+     .85, tuned to its own ceiling for buttons/links), so this reuses the
+     SAME amber hex (#8e6a00, Carbon yellow-60 — the hue --focus-ring itself
+     already uses) at full opacity instead of raising alpha further: solid
+     #8e6a00 is 3.27:1 on --carbon-surface3 and 3.14:1 on --field-focus-well
+     below — both clear 3:1, by the standard WCAG relative-luminance formula.
+     See the dark block's --field-focus-ring comment for what renders behind
+     this (the field's own fill, via a negative/inset outline-offset). */
+  --field-focus-ring: rgba(142, 106, 0, 1);
+
+  /* Field focus, "well" variant (GlimStone form-engine #8) — see the
+     .bv-field-focus-well comment further down for what this is. The
+     ORIGINAL value here was #787878, verified only against --carbon-surface2
+     (#e8e8e8, the WELL's own OUTER background) at 3.60:1 — never checked
+     against the field's OWN content sitting on that fill. On #787878,
+     --carbon-text (#161616) dropped to 4.10:1, failing the 4.5:1 body-text
+     minimum; placeholder text fell with it, to 2.50:1 as these fields
+     actually render (Chromium's UA default, since they set no placeholder
+     colour) or 1.14:1 where it's pinned to --carbon-textMuted #6f6f6f — see
+     the dark block's note for which fields those are. Now that
+     --field-focus-ring above is doing the real SC 1.4.11 work, this only
+     needs to be a modest step off --carbon-surface3 (#d1d1d1) that does NOT
+     break text contrast: #cdcdcd keeps --carbon-text at 11.38:1 and
+     textMuted-pinned placeholder at 3.16:1 — both close to their un-focused
+     values on --carbon-surface3 (11.85:1 / 3.29:1).
+
+     Same coupling warning as the dark block: --field-focus-ring is
+     composited against THIS fill. It clears 3:1 here (3.14:1), but on the
+     old #787878 it would collapse to 1.13:1 and the hairline would vanish.
+     Re-measure the outline against any new value before changing it. */
+  --field-focus-well: #cdcdcd;
+
+  /* Shape and type scale live once, on a bare :root above (theme-invariant —
+     see the comment there). */
+
+  /* Elevation/hairline — neutral, copied verbatim from reference/tokens.css. */
+  --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
+  --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
 
   /* Status colors (#105) — Carbon light-theme counterparts. Text tones keep
      ≥4.5:1 on white/#f4f4f4 and on their own chip tints; solids keep ≥3:1 as
@@ -210,6 +399,64 @@
   --heat-ok-3:                #198038;  /* green-60 */
 }
 
+/* ---------------------------------------------------------------------------
+   prefers-color-scheme fallback (GlimStone form-engine #1).
+
+   Note this is NOT copied from reference/tokens.css — that file has no
+   @media (prefers-color-scheme) block at all (verified directly); GlimStone
+   resolves "system" entirely in JS, always stamping an explicit data-theme
+   before first paint (see index.html's inline head script + theme.ts's
+   matchMedia listener). Those two already cover every case where JS runs.
+
+   This pair of blocks is BombVault's own addition for the one case JS can't
+   reach at all: JavaScript disabled outright (not just localStorage), where
+   neither the inline script nor theme.ts ever executes and <html> keeps no
+   data-theme attribute. :not([data-theme]) keeps this scoped so an explicit
+   attribute — from the script, or a stored user choice — always wins; this
+   only fires when nothing else set the theme.
+   --------------------------------------------------------------------------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+
+    --carbon-bg:        #f4f4f4;
+    --carbon-sidebar:   #ffffff;
+    --carbon-surface:   #ffffff;
+    --carbon-surface2:  #e8e8e8;
+    --carbon-surface3:  #d1d1d1;
+    --carbon-hover:     #e0e0e0;
+    --carbon-border:    #d1d1d1;
+    --carbon-text:      #161616;
+    --carbon-text-sub:  #525252;
+    --carbon-text-muted:#6f6f6f;
+    --sidebar-text:     #393939;
+
+    --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
+    --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
+
+    /* Same WCAG-driven light-theme value as [data-theme="light"] above —
+       needs restating here too, since :root:not([data-theme]) doesn't
+       inherit from that selector and would otherwise fall back to the bare
+       :root/[data-theme="dark"] block's --focus-ring, which fails contrast
+       on a light surface. See the comment on [data-theme="light"]'s
+       --focus-ring for the measured numbers. */
+    --focus-ring: rgba(142, 106, 0, .85);
+    /* Same reasoning as [data-theme="light"]'s --field-focus-ring/
+       --field-focus-well above. */
+    --field-focus-ring: rgba(142, 106, 0, 1);
+    --field-focus-well: #cdcdcd;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Already the bare :root default above (dark is the fallback of
+       fallbacks) — restated explicitly so this rule's existence doesn't
+       depend on a reader remembering that. */
+    color-scheme: dark;
+  }
+}
+
 /* Easter-egg shatter uses whichever logo is currently on screen: the dark sidebar
    surface shows the light mark, the light surface shows the dark mark. Mirror the
    <img> swap so the fragments reassemble into the visible logo. Equal-specificity
@@ -227,6 +474,135 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+/* Info bubble chrome (GlimStone form-engine #3, design-language.md "The info
+   bubble") — verbatim from reference/tokens.css's .glim-bubble: portal-rendered
+   at body level (position measured off the trigger icon in InfoBubble.tsx) so
+   no card/table/scroll-container overflow:hidden can clip it, and
+   pointer-events:none so it never swallows a click meant for whatever is
+   underneath it. */
+.glim-bubble {
+  position: fixed;
+  z-index: 60;
+  transform: translateX(-50%);
+  max-width: 280px;
+  pointer-events: none;
+  background-color: var(--carbon-surface);
+  color: var(--carbon-text);
+  border-radius: var(--radius-control);
+  box-shadow: var(--elevation), var(--hairline);
+  padding: 7px 10px;
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+
+/* Field focus (GlimStone form-engine #8, design-language.md rule 14): "form
+   fields are borderless and filled, focus is a brightness step rather than a
+   ring." Every text input/select/textarea used to focus with the same
+   `outline-solid outline-2 outline-statusInfoSolid` ring every OTHER
+   focusable element in the app also used (buttons, links, Toggle's switch
+   track, RevealInput's eye, InfoBubble's icon) — which read fine on a
+   button, but drew a hard blue box around what rule 14 wants to be a
+   borderless filled field. This swaps the field's OWN fill one surface tier
+   brighter instead: no border added, matching the filled/borderless look
+   the rest of the field already has. --focus-ring itself is untouched —
+   this class is additive, not a replacement for that token.
+
+   WHERE --focus-ring ACTUALLY REACHES TODAY (stated precisely, because an
+   earlier draft of this comment over-claimed it): every shared control this
+   branch added or reworked opts into it by hand — Toggle's switch track,
+   RevealInput's eye, InfoBubble's icon, Toast's dismiss X. It does NOT yet
+   reach ordinary buttons and links: ~215 of them declare no focus utility at
+   all and fall through to the browser's native ring, and 8 pre-existing sites
+   (Containers' bulk-action row, Dashboard's card button + heatmap cell,
+   Settings' colour swatch) still paint the old outline-statusInfoSolid blue.
+   So the app currently has THREE focus appearances, not one.
+
+   Closing that gap is deliberately NOT done here. The reference
+   (glimstone/reference/tokens.css) resolves it with a single base rule —
+   `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px }`
+   — and its adoption checklist says to copy it. Adopting it is Phase 2 work,
+   not a Phase 1 tail: in the reference that same rule is what the rainbow/
+   reactive colour mode reaches through, rebinding --focus-ring per item via
+   `[data-rainbow] .glim-hue`, so the base rule and the rainbow axis want to
+   land together. It also unblocks audit item 19 (resolving the fifth hue),
+   which is what those 8 remaining blue sites are waiting on.
+
+   Two variants, chosen by what the field already rests on:
+   - .bv-field-focus — the common case (most fields in the app): resting
+     directly on a card/page surface (bg-carbon-surface2), steps to
+     bg-carbon-surface3 on focus — literally the token pair the design
+     language names for this.
+   - .bv-field-focus-well — a field nested inside an already-surface2 "well"
+     (CloudCard, CadenceBuilder, the off-site wizard/targets forms, the
+     notify/integrity selects, Fleet's mesh "apply to" domain picker) rests
+     on bg-carbon-surface3 instead, so stepping to that SAME surface3 on
+     focus would be invisible. --field-focus-well (declared per-theme above,
+     next to --focus-ring) fills the fourth-tier gap the token set doesn't
+     otherwise have.
+
+   SPEC-COMPLIANCE FIX: a later review proved the brightness step ALONE
+   can't do both jobs rule 14 implicitly needs — be visible enough for SC
+   1.4.11's 3:1 non-text-UI minimum, AND keep the field's own text readable
+   — at once, in this palette. The common case only ever reached 1.25:1–
+   1.48:1 as a step (nowhere near 3:1 on its own), and the well case's
+   original --field-focus-well (#8e8e8e / #787878) WAS verified to 3:1+ as a
+   fill, but only against the well's outer background, not against the
+   field's own text sitting on that fill — which dropped body text to
+   2.98:1/4.10:1, under the 4.5:1 minimum, on exactly the fields most likely
+   to hold sensitive credentials (and their placeholders with it, to
+   2.83:1/2.50:1 as rendered — see the --field-focus-well comments above for
+   the per-theme breakdown). Both rules below now add a thin, inset
+   --field-focus-ring outline as the REAL SC 1.4.11 mechanism (see that
+   token's per-theme comments above for its own measured numbers); the
+   background step is demoted to a secondary, nice-to-have
+   visual touch and --field-focus-well's own value was pulled back
+   to something modest that doesn't fight text contrast anymore (see that
+   token's comments above too). outline-offset is negative (inset) on
+   purpose — sits inside the field's own edge instead of adding a pixel of
+   layout weight, and reads as a hairline, not the old style's thick 2px
+   solid status-info-blue box.
+
+   Both rules still need an explicit `outline` declared (not `outline: none`
+   anymore, now that there's a real one) for the same reason as before:
+   removing the old `focus:outline-*` utility classes on their own isn't
+   enough — with NO outline declared at all, the browser's own native
+   default focus outline (Chromium resolves `outline-style: auto` to a real,
+   visible ring; verified live) fills the gap. Declaring our own 1px outline
+   here overrides that native default the same way `outline: none` used to. */
+.bv-field-focus:focus {
+  background-color: var(--carbon-surface3);
+  outline: 1px solid var(--field-focus-ring);
+  outline-offset: -1px;
+}
+.bv-field-focus-well:focus {
+  background-color: var(--field-focus-well);
+  outline: 1px solid var(--field-focus-ring);
+  outline-offset: -1px;
+}
+
+/* Toast chrome (GlimStone form-engine #9, design-language.md "Toasts") —
+   the class NAME and its entrance-animation binding are copied verbatim
+   from reference/tokens.css's `.glim-toast`/`glim-toast-in` (see the
+   @keyframes + @media bindings further down, matching `.glim-fade`'s own
+   established split). The reference deliberately has no visual chrome of
+   its own for this class ("the other half is behavioral and framework-
+   specific, so it's spec here rather than a copyable file") — layout
+   (flex/gap/padding/radius/surface colour/pointer-events) is Tailwind
+   utility classes on the element itself (components/Toast.tsx, using
+   `rounded-card`/`bg-carbon-surface` — the same tokens `.glim-bubble`
+   above uses). The one thing Tailwind can't express is this box-shadow:
+   --elevation/--hairline aren't mapped into Tailwind's shadow scale (see
+   `.glim-bubble`'s identical raw box-shadow above), so `.glim-toast` still
+   earns its own rule just for that. */
+.glim-toast {
+  box-shadow: var(--elevation), var(--hairline);
 }
 
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
@@ -317,6 +693,26 @@ body {
 @keyframes bv-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* Info bubble entrance (GlimStone form-engine #3) — reference/tokens.css's
+   glim-fade-in, verbatim: short on purpose, since a bubble that fades in
+   slowly reads as lag, not polish, because the pointer already got there
+   first. Deliberately has no prefers-reduced-motion override (the reference
+   doesn't give it one either) — a one-shot 110ms entrance is too short to be
+   what reduced-motion exists to prevent. */
+@keyframes glim-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Toast entrance (GlimStone form-engine #9) — reference/tokens.css's
+   glim-toast-in, verbatim. The reduced-motion fallback reuses glim-fade-in
+   above rather than defining a second identical opacity-only keyframe (see
+   the @media (prefers-reduced-motion: reduce) block further down). */
+@keyframes glim-toast-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* What's-new modal (#48) — gentle enter; reduced-motion users get just a fade. */
@@ -429,6 +825,13 @@ body {
 
   .bv-page-enter { animation: bv-page-in 320ms cubic-bezier(.2, .6, .2, 1) both; }
 
+  /* Info bubble entrance (GlimStone form-engine #3). */
+  .glim-fade { animation: glim-fade-in 110ms ease both; }
+
+  /* Toast entrance (GlimStone form-engine #9) — slides in from the trailing
+     edge (translateX) + fades. */
+  .glim-toast { animation: glim-toast-in 220ms cubic-bezier(.2, .6, .2, 1) both; }
+
   /* What's-new modal enter (#48). */
   .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }
   .bv-modal-card { animation: bv-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
@@ -446,4 +849,10 @@ body {
   /* Reduced motion: the modal only fades — no slide or scale. */
   .bv-modal-backdrop { animation: bv-fade-in 150ms ease both; }
   .bv-modal-card { animation: bv-fade-in 150ms ease both; }
+
+  /* Reduced motion: the toast drops its translateX slide and just fades in
+     (reusing glim-fade-in, per reference/tokens.css's own reduced-motion
+     pairing) — it still needs to arrive legibly, just without the motion
+     component (design-language.md's motion engine section). */
+  .glim-toast { animation: glim-fade-in 160ms ease both; }
 }

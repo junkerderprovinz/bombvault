@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { Settings, DeploySnippetData } from "../lib/api";
 import { deploySnippet, tamperTest, testOffsite, getCloud, setCloud } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { RevealInput } from "./RevealInput";
+import { useReveal } from "../lib/useReveal";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -74,13 +76,13 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
         type="button"
         onClick={() => void copy()}
-        className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+        className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
       >
         {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
       </button>
@@ -121,6 +123,7 @@ export function OffsiteWizard({
   // are loaded + preserved on save so this flow never clobbers them.
   const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [restPwSet, setRestPwSet] = useState(false);
+  const revealRestPassword = useReveal();
   const [credState, setCredState] = useState<SaveState>("idle");
   const [credErr, setCredErr] = useState<string | null>(null);
   // cloudLoaded gates the "Save credentials" button: we must never POST a cloud
@@ -286,7 +289,7 @@ export function OffsiteWizard({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
   // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
@@ -329,7 +332,7 @@ export function OffsiteWizard({
     : "";
 
   return (
-    <div className="mt-2 flex flex-col gap-4 rounded-lg bg-carbon-surface2 p-4">
+    <div className="mt-2 flex flex-col gap-4 rounded-card bg-carbon-surface2 p-4">
       {/* Step 1 — backend choice */}
       <div className="flex flex-col gap-2">
         <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
@@ -370,7 +373,7 @@ export function OffsiteWizard({
               type="button"
               onClick={() => void genSnippet()}
               disabled={snipState === "busy"}
-              className="self-start rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+              className="self-start rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
             >
               {snipState === "busy" ? t("common.saving") : t("offsite.wizard.generate")}
             </button>
@@ -378,7 +381,7 @@ export function OffsiteWizard({
           {snipState === "error" && snipErr && <span className="text-xs text-statusFail">{snipErr}</span>}
           {snippet && (
             <div className="flex flex-col gap-2">
-              <div className="rounded-lg bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
+              <div className="rounded-card bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
                 {t("offsite.wizard.passwordWarning")}
               </div>
               <div className="flex flex-col gap-1">
@@ -393,7 +396,7 @@ export function OffsiteWizard({
                 <span className="text-xs text-carbon-textMuted">docker-compose</span>
                 <CopyBlock text={snippet.compose} t={t} />
               </div>
-              <div className="rounded-lg bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
+              <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
               </div>
               <button
@@ -435,7 +438,7 @@ export function OffsiteWizard({
               )
             }
             disabled={repoState === "saving"}
-            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+            className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
           >
             {repoState === "saving" ? t("common.saving") : t("offsite.wizard.saveRepo")}
           </button>
@@ -447,7 +450,7 @@ export function OffsiteWizard({
             backend needs a username/password; rclone/s3 carry their own auth in
             their own config, so this block would be pure noise for them (#131). */}
         {urlBackend === "rest" && (
-          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface p-3 mt-1">
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-3 mt-1">
             <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
             <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
               RESTIC_REST_USERNAME
@@ -460,12 +463,13 @@ export function OffsiteWizard({
             </label>
             <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
               RESTIC_REST_PASSWORD
-              <input
-                type="password"
+              <RevealInput
+                {...revealRestPassword}
                 value={cloud.restPassword}
                 onChange={(e) => setCloudState((p) => ({ ...p, restPassword: e.target.value }))}
                 spellCheck={false}
                 placeholder={restPwSet ? t("cloud.secretSet") : ""}
+                wrapperClassName="w-full"
                 className={inputCls}
               />
             </label>
@@ -475,7 +479,7 @@ export function OffsiteWizard({
                 type="button"
                 onClick={() => void saveCreds()}
                 disabled={credState === "saving" || !cloudLoaded}
-                className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
               >
                 {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
               </button>
@@ -491,7 +495,7 @@ export function OffsiteWizard({
             type="button"
             onClick={() => void runTest()}
             disabled={testState === "busy"}
-            className="rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {testState === "busy" ? t("offsite.testing") : t("offsite.test")}
           </button>
@@ -518,7 +522,7 @@ export function OffsiteWizard({
             aria-labelledby={`imm-label-${domain}`}
             disabled={immState === "saving"}
             onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
               immutable ? "bg-accent" : "bg-carbon-surface3"
             }`}
           >
@@ -533,12 +537,12 @@ export function OffsiteWizard({
 
         {/* Backend-specific caveats (Step 5) — driven by the live repo URL. */}
         {urlBackend === "rclone" && (
-          <div className="rounded-lg bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
+          <div className="rounded-card bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
             {t("offsite.rcloneWarning")}
           </div>
         )}
         {urlBackend === "s3" && (
-          <div className="rounded-lg bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
+          <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
             {t("offsite.s3Unverified")}
           </div>
         )}
@@ -553,7 +557,7 @@ export function OffsiteWizard({
               type="button"
               onClick={() => void runTamper()}
               disabled={tamperState === "busy" || !immutable}
-              className="rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
             </button>
@@ -622,7 +626,7 @@ export function OffsiteWizard({
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
               />
             </label>
             <div className="flex items-center gap-3">
@@ -636,7 +640,7 @@ export function OffsiteWizard({
                   )
                 }
                 disabled={budgetState === "saving"}
-                className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+                className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
               >
                 {budgetState === "saving" ? t("common.saving") : t("offsite.retention.saveBudget")}
               </button>

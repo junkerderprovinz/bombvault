@@ -34,6 +34,7 @@ const zh: Partial<Translations> = {
   "dashboard.allOk": "所有系统正常",
   "dashboard.degraded": "性能下降",
   "dashboard.checking": "检查中…",
+  "dashboard.noContainers": "未找到容器。",
   // Dashboard customize (#46)
   "dashboard.customize": "自定义",
   "dashboard.customizeDone": "完成",
@@ -60,6 +61,7 @@ const zh: Partial<Translations> = {
   "spike.colDetail": "详情",
   "spike.ok": "正常",
   "spike.fail": "失败",
+  "spike.info": "信息",
   "spike.bestEffort": "可选",
   "spike.checkNow": "立即检查",
   "spike.probeFailed": "探测失败（请查看服务器日志）",
@@ -186,6 +188,8 @@ const zh: Partial<Translations> = {
   "settings.appearance": "外观",
   "settings.accentColor": "强调色",
   "settings.accentPresets": "预设",
+  "settings.quietToasts": "安静通知",
+  "settings.quietToastsHint": "仅在失败时显示弹出通知。常规的保存和复制确认将保持静默。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "容器",
@@ -432,6 +436,7 @@ const zh: Partial<Translations> = {
   "vm.ssh.publicKey": "公钥——追加到 Unraid 的 /root/.ssh/authorized_keys",
   "vm.ssh.copy": "复制",
   "vm.ssh.copied": "已复制",
+  "vm.ssh.copyFailed": "复制失败",
   "vm.ssh.test": "测试连接",
   "vm.ssh.testing": "测试中…",
   "vm.ssh.testOk": "已连接——libvirt 可达",
@@ -450,6 +455,12 @@ const zh: Partial<Translations> = {
   "common.restoreRunning": "正在进行还原…",
   "common.backupRunning": "正在进行备份…",
   "common.replicateRunning": "正在进行复制…",
+  "common.showValue": "显示值",
+  "common.hideValue": "隐藏值",
+  "confirmDialog.title": "确认",
+  "toast.dismiss": "关闭通知",
+  "common.confirm": "确认",
+  "common.cancel": "取消",
   "common.close": "关闭",
 
   // Backup folders selector
@@ -1163,7 +1174,7 @@ const zh: Partial<Translations> = {
   "receiver.edit": "编辑",
   "receiver.remove": "移除",
   "receiver.removing": "正在移除…",
-  "receiver.removeConfirm": "将此接收仓库从监控中移除吗？磁盘上的仓库绝不会被触碰，仅移除监控条目。",
+  "receiver.confirmRemove": "确认移除",
   "receiver.inventoryTitle": "按来源分类的清单",
   "receiver.inventoryLoading": "正在加载清单…",
   "receiver.inventoryError": "无法加载清单。",
@@ -1209,7 +1220,7 @@ const zh: Partial<Translations> = {
   "fleet.edit": "编辑",
   "fleet.remove": "移除",
   "fleet.removing": "正在移除…",
-  "fleet.removeConfirm": "将此实例从监控中移除？系统不会联系该实例本身，只会移除监控条目。",
+  "fleet.confirmRemove": "确认移除",
   "fleet.scorecardTitle": "保护评分卡",
   "fleet.noScorecard": "尚无缓存的评分卡——查询该实例以获取。",
   "fleet.lastBackup": "上次备份 {time}",

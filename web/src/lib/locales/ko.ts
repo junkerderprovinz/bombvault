@@ -34,6 +34,7 @@ const ko: Partial<Translations> = {
   "dashboard.allOk": "모든 시스템 정상",
   "dashboard.degraded": "성능 저하",
   "dashboard.checking": "확인 중…",
+  "dashboard.noContainers": "컨테이너를 찾을 수 없습니다.",
   // Dashboard customize (#46)
   "dashboard.customize": "사용자 지정",
   "dashboard.customizeDone": "완료",
@@ -60,6 +61,7 @@ const ko: Partial<Translations> = {
   "spike.colDetail": "세부 정보",
   "spike.ok": "정상",
   "spike.fail": "실패",
+  "spike.info": "정보",
   "spike.bestEffort": "선택 사항",
   "spike.checkNow": "지금 확인",
   "spike.probeFailed": "프로브 실패(서버 로그를 확인하세요)",
@@ -186,6 +188,8 @@ const ko: Partial<Translations> = {
   "settings.appearance": "외관",
   "settings.accentColor": "강조 색상",
   "settings.accentPresets": "프리셋",
+  "settings.quietToasts": "알림 최소화",
+  "settings.quietToastsHint": "실패 시에만 팝업 알림을 표시합니다. 저장 및 복사에 대한 일반적인 확인 알림은 표시되지 않습니다.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "컨테이너",
@@ -432,6 +436,7 @@ const ko: Partial<Translations> = {
   "vm.ssh.publicKey": "공개 키 — Unraid의 /root/.ssh/authorized_keys에 추가",
   "vm.ssh.copy": "복사",
   "vm.ssh.copied": "복사됨",
+  "vm.ssh.copyFailed": "복사 실패",
   "vm.ssh.test": "연결 테스트",
   "vm.ssh.testing": "테스트 중…",
   "vm.ssh.testOk": "연결됨 — libvirt 도달 가능",
@@ -450,6 +455,12 @@ const ko: Partial<Translations> = {
   "common.restoreRunning": "복원이 실행 중입니다…",
   "common.backupRunning": "백업이 실행 중입니다…",
   "common.replicateRunning": "복제가 실행 중입니다…",
+  "common.showValue": "값 표시",
+  "common.hideValue": "값 숨기기",
+  "confirmDialog.title": "확인",
+  "toast.dismiss": "알림 닫기",
+  "common.confirm": "확인",
+  "common.cancel": "취소",
   "common.close": "닫기",
 
   // Backup folders selector
@@ -1163,7 +1174,7 @@ const ko: Partial<Translations> = {
   "receiver.edit": "편집",
   "receiver.remove": "제거",
   "receiver.removing": "제거 중…",
-  "receiver.removeConfirm": "이 수신 저장소를 모니터링에서 제거하시겠습니까? 디스크의 저장소는 절대 건드리지 않으며 모니터링 항목만 제거됩니다.",
+  "receiver.confirmRemove": "제거 확인",
   "receiver.inventoryTitle": "소스별 인벤토리",
   "receiver.inventoryLoading": "인벤토리 불러오는 중…",
   "receiver.inventoryError": "인벤토리를 불러오지 못했습니다.",
@@ -1209,7 +1220,7 @@ const ko: Partial<Translations> = {
   "fleet.edit": "편집",
   "fleet.remove": "제거",
   "fleet.removing": "제거 중…",
-  "fleet.removeConfirm": "이 인스턴스를 모니터링에서 제거하시겠습니까? 해당 인스턴스에는 연락하지 않으며, 모니터링 항목만 제거됩니다.",
+  "fleet.confirmRemove": "제거 확인",
   "fleet.scorecardTitle": "보호 스코어카드",
   "fleet.noScorecard": "아직 캐시된 스코어카드가 없습니다 — 이 인스턴스를 조회해 가져오세요.",
   "fleet.lastBackup": "마지막 백업 {time}",

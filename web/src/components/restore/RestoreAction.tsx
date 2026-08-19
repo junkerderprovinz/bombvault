@@ -132,7 +132,7 @@ export function RestoreAction({
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
               disabled={isPending || done}
-              className="rounded-sm border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+              className="rounded-control border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
               style={{ accentColor: "var(--accent)" }}
             />
             {t("restore.confirm")}
@@ -141,7 +141,7 @@ export function RestoreAction({
         <button
           onClick={handleRestore}
           disabled={(requireConfirm && !confirmed) || isPending || blockedByOther || done}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
           {isPending ? (
             <>
@@ -167,7 +167,7 @@ export function RestoreAction({
             checked={leaveStopped}
             onChange={(e) => setLeaveStopped(e.target.checked)}
             disabled={isPending || done}
-            className="rounded-sm border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
+            className="rounded-control border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
             style={{ accentColor: "var(--accent)" }}
           />
           {t("restore.leaveStopped")}

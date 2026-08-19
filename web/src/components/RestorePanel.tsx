@@ -12,6 +12,7 @@ import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
 import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -91,6 +92,7 @@ function SnapshotFileBrowser({
   // runs (this item's own in-flight op is covered by isPending, never blocked).
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     setLoading(true);
@@ -128,18 +130,18 @@ function SnapshotFileBrowser({
     reset();
   }
 
-  function handleRestoreSelected() {
+  async function handleRestoreSelected() {
     if (selected.size === 0) return;
     if (dest === "toFolder" && !folder.trim()) return;
     // In place overwrites the live files, so keep the explicit confirm.
-    if (dest === "inPlace" && !window.confirm(t("files.restoreConfirm"))) return;
+    if (dest === "inPlace" && !(await confirm(t("files.restoreConfirm")))) return;
     void fire();
   }
 
   const count = selected.size;
 
   return (
-    <div className="mt-1 rounded-lg bg-carbon-background p-2 flex flex-col gap-2">
+    <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-2">
       <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
@@ -187,9 +189,9 @@ function SnapshotFileBrowser({
           )}
           <div className="flex items-center gap-2">
             <button
-              onClick={handleRestoreSelected}
+              onClick={() => void handleRestoreSelected()}
               disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim())}
-              className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
@@ -214,6 +216,7 @@ function SnapshotFileBrowser({
           />
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -246,16 +249,17 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
   const prog = progressMap[`container:${name}`];
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
-  function handle() {
-    if (!window.confirm(t("snapshots.recreateConfirm"))) return;
+  const { confirm, confirmDialog } = useConfirm();
+  async function handle() {
+    if (!(await confirm(t("snapshots.recreateConfirm")))) return;
     void fire();
   }
   return (
     <div className="flex flex-col gap-1 py-2">
       <button
-        onClick={handle}
+        onClick={() => void handle()}
         disabled={isPending || blockedByOther || state.phase === "success"}
-        className="self-start inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="self-start inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isPending ? t("common.restoring") : t("snapshots.recreate")}
       </button>
@@ -273,6 +277,7 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
         successMessage={t("restore.recreateComplete")}
         t={t}
       />
+      {confirmDialog}
     </div>
   );
 }
@@ -330,7 +335,7 @@ function RestoreToFolder({
 
   const done = state.phase === "success";
   return (
-    <div className="mt-1 rounded-lg bg-carbon-background p-2 flex flex-col gap-1.5">
+    <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-1.5">
       <p className="text-[11px] text-carbon-textMuted">{t("restore.toFolderHint")}</p>
       <FolderBrowser
         label={t("restore.targetPath")}
@@ -342,7 +347,7 @@ function RestoreToFolder({
         <button
           onClick={() => void fire()}
           disabled={!path.trim() || isPending || blockedByOther || done}
-          className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPending ? t("common.restoring") : t("restore.confirm")}
         </button>
@@ -430,7 +435,7 @@ function CompareSnapshots({
     : "";
 
   const selectCls =
-    "rounded-sm bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid max-w-[16rem] truncate";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 bv-field-focus-well max-w-[16rem] truncate";
 
   return (
     <div className="py-2 border-b border-carbon-border">
@@ -444,7 +449,7 @@ function CompareSnapshots({
         {t("snapshot.compare")}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-surface2 p-2 flex flex-col gap-2">
+        <div className="mt-2 rounded-card bg-carbon-surface2 p-2 flex flex-col gap-2">
           <p className="text-[11px] text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
           <div className="flex items-center gap-2 flex-wrap">
             <select value={from} onChange={(e) => setFrom(e.target.value)} disabled={loading} className={selectCls}>
@@ -461,7 +466,7 @@ function CompareSnapshots({
             <button
               onClick={() => void run()}
               disabled={loading || !from || !to || from === to}
-              className="inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? "…" : t("snapshot.compare")}
             </button>
@@ -531,7 +536,7 @@ function SnapshotTags({
       {tags.map((tg) => (
         <span
           key={tg}
-          className="inline-flex items-center rounded-sm bg-carbon-surface3 px-1.5 py-0.5 text-[10px] text-carbon-textSub"
+          className="inline-flex items-center rounded-control bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
         >
           {tg}
         </span>
@@ -553,18 +558,18 @@ function SnapshotTags({
           onBlur={() => void submit()}
           placeholder={t("snapshot.addTag")}
           spellCheck={false}
-          className="w-24 rounded-sm bg-carbon-surface2 text-carbon-text text-[10px] px-1.5 py-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="w-24 rounded-control bg-carbon-surface2 text-carbon-text text-caption px-1.5 py-0.5 bv-field-focus"
         />
       ) : (
         <button
           onClick={() => setAdding(true)}
           title={t("snapshot.addTag")}
-          className="inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="inline-flex items-center rounded-control px-1.5 py-0.5 text-caption text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           + {t("snapshot.tags")}
         </button>
       )}
-      {err && <span className="text-[10px] text-statusFail">{err}</span>}
+      {err && <span className="text-caption text-statusFail">{err}</span>}
     </div>
   );
 }
@@ -610,9 +615,10 @@ function SnapshotRow({
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -650,7 +656,7 @@ function SnapshotRow({
         {/* Consolidated restore toggle: opens the inline panel with 3 modes */}
         <button
           onClick={() => setShowRestore((p) => !p)}
-          className={`shrink-0 rounded-lg px-2.5 py-1 text-xs transition-colors ${
+          className={`shrink-0 rounded-control px-2.5 py-1 text-xs transition-colors ${
             showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
@@ -662,7 +668,7 @@ function SnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -671,7 +677,7 @@ function SnapshotRow({
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
       {showRestore && (
-        <div className="mt-1 rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
+        <div className="mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
           {/* Mode radios (Individual files / To a folder) are advanced; in basic
               mode only the in-place restore below is shown. */}
           <Advanced>
@@ -754,6 +760,7 @@ function SnapshotRow({
           )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -833,7 +840,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
       </button>
 
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background px-3 py-1">
+        <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
           {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
           <Advanced>
             <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">

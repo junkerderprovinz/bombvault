@@ -9,6 +9,20 @@ import {
   getCloudCredSets,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { Toggle } from "./Toggle";
+import { Badge, type BadgeSize } from "./Badge";
+
+// The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
+// target row render through Badge at this ONE shared stage, so their heights
+// stay pixel-identical regardless of the <span> vs <button> element
+// underneath — the same mechanism (and the same audit finding class) as
+// ErrorDetailPanel's count-badge + "Resolve"-button pair. "medium" (20px),
+// not "small" (18px, the badges' pre-fix stage) or "large" (24px, the
+// buttons' pre-fix stage): it's the dominant weight everywhere else in the
+// app (see Badge.tsx's file header), so fixing the parity here lands both
+// elements on the app's normal chip size instead of introducing a
+// one-off-large row in an otherwise compact settings panel.
+const ROW_BADGE_SIZE: BadgeSize = "medium";
 
 // ---------------------------------------------------------------------------
 // OffsiteTargetsSection — per-domain "Additional off-site targets" editor
@@ -87,15 +101,16 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
 
   return (
     <span className="inline-flex flex-col items-end gap-1">
-      <button
-        type="button"
+      <Badge
+        as="button"
+        tone="neutral"
+        size={ROW_BADGE_SIZE}
         onClick={() => void go()}
         disabled={st === "busy"}
         title={t("offsite.test")}
-        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
-      </button>
+      </Badge>
       {st === "ok" && <span className="text-[11px] text-statusOk">{t("offsite.testOk")}</span>}
       {st === "uninit" && (
         <span className="text-[11px] text-statusWarn">{t("offsite.testUninitialized")}</span>
@@ -230,12 +245,12 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const numCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well";
 
   return (
-    <div className="mt-2 flex flex-col gap-3 rounded-lg bg-carbon-surface2 p-3">
+    <div className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       <div className="flex flex-col gap-0.5">
         <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("offsite.targets.title")}
@@ -254,48 +269,55 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
       {targets.map((tgt) => (
         <div
           key={tgt.id}
-          className="flex items-start justify-between gap-3 rounded-lg bg-carbon-surface p-3"
+          className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface p-3"
         >
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">{tgt.repo}</span>
-            <span className="flex flex-wrap gap-2 text-[11px] text-carbon-textSub">
-              <span className="rounded-sm bg-carbon-surface2 px-1.5 py-0.5">
+            {/* `wrap` on BOTH chips, for the same reason the Dashboard
+                protection badges carry it: they sit in a min-w-0 column that a
+                long `repo` string (rendered break-all above) lets collapse to a
+                fraction of the chip's natural width, so as flex items they get
+                squeezed and their multi-word labels ("Immutable (append-only)",
+                "(provider default)", longer still in most locales) wrap to two
+                or three lines. Without `wrap` the stage's fixed h-* keeps the
+                tinted background one line tall and the extra lines paint
+                outside it. */}
+            <span className="flex flex-wrap gap-2">
+              <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap>
                 {tgt.storageClass || t("cloud.storageClass.default")}
-              </span>
+              </Badge>
               {tgt.immutable && (
-                <span className="rounded-sm bg-carbon-surface2 px-1.5 py-0.5 text-statusOk">
+                <Badge tone="ok" size={ROW_BADGE_SIZE} wrap>
                   {t("offsite.immutable")}
-                </span>
+                </Badge>
               )}
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">
             <TargetTestButton id={tgt.id} t={t} />
-            <button
-              type="button"
-              onClick={() => openEdit(tgt)}
-              className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
-            >
+            <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)}>
               {t("offsite.targets.edit")}
-            </button>
+            </Badge>
             {confirmRemove === tgt.id ? (
-              <button
-                type="button"
+              <Badge
+                as="button"
+                tone="fail"
+                size={ROW_BADGE_SIZE}
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
-                className="rounded-lg bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
               >
                 {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
-              </button>
+              </Badge>
             ) : (
-              <button
-                type="button"
+              <Badge
+                as="button"
+                tone="fail"
+                size={ROW_BADGE_SIZE}
                 onClick={() => setConfirmRemove(tgt.id)}
-                className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
               >
                 {t("offsite.targets.remove")}
-              </button>
+              </Badge>
             )}
           </div>
         </div>
@@ -303,7 +325,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
 
       {/* Editor form (new or edit) */}
       {draft && (
-        <div className="flex flex-col gap-3 rounded-lg bg-carbon-surface p-3">
+        <div className="flex flex-col gap-3 rounded-card bg-carbon-surface p-3">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.name")}</span>
             <input
@@ -359,27 +381,16 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
           {/* Append-only (immutable) toggle */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-0.5">
-              <span id={`tgt-imm-${domain}`} className="text-sm text-carbon-text">
-                {t("offsite.immutable")}
-              </span>
+              <span className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
               <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={draft.immutable}
-              aria-labelledby={`tgt-imm-${domain}`}
-              onClick={() => setDraft((d) => (d ? { ...d, immutable: !d.immutable } : d))}
-              className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid ${
-                draft.immutable ? "bg-accent" : "bg-carbon-surface3"
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                  draft.immutable ? "translate-x-[18px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
+            <Toggle
+              hideLabel
+              label={t("offsite.immutable")}
+              checked={draft.immutable}
+              onChange={(v) => setDraft((d) => (d ? { ...d, immutable: v } : d))}
+              className="mt-0.5"
+            />
           </div>
 
           {/* Retention */}
@@ -429,14 +440,14 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               type="button"
               onClick={() => void saveDraft()}
               disabled={saveState === "saving"}
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+              className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
             >
               {saveState === "saving" ? t("common.saving") : t("offsite.targets.save")}
             </button>
             <button
               type="button"
               onClick={closeEditor}
-              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
             >
               {t("offsite.targets.cancel")}
             </button>
@@ -452,7 +463,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
         <button
           type="button"
           onClick={openNew}
-          className="self-start rounded-lg bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+          className="self-start rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
         >
           {t("offsite.targets.add")}
         </button>

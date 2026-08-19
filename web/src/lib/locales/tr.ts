@@ -34,6 +34,7 @@ const tr: Partial<Translations> = {
   "dashboard.allOk": "Tüm sistemler normal",
   "dashboard.degraded": "Bozulmuş",
   "dashboard.checking": "Denetleniyor…",
+  "dashboard.noContainers": "Konteyner bulunamadı.",
   // Dashboard customize (#46)
   "dashboard.customize": "Özelleştir",
   "dashboard.customizeDone": "Bitti",
@@ -60,6 +61,7 @@ const tr: Partial<Translations> = {
   "spike.colDetail": "Ayrıntı",
   "spike.ok": "NORMAL",
   "spike.fail": "HATA",
+  "spike.info": "BİLGİ",
   "spike.bestEffort": "isteğe bağlı",
   "spike.checkNow": "Şimdi denetle",
   "spike.probeFailed": "yoklama başarısız oldu (sunucu günlüklerine bakın)",
@@ -186,6 +188,8 @@ const tr: Partial<Translations> = {
   "settings.appearance": "Görünüm",
   "settings.accentColor": "Vurgu rengi",
   "settings.accentPresets": "Ön ayarlar",
+  "settings.quietToasts": "Sessiz bildirimler",
+  "settings.quietToastsHint": "Açılır bildirimleri yalnızca hatalarda göster. Rutin kaydetme ve kopyalama onayları sessiz kalır.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteynerler",
@@ -440,6 +444,7 @@ const tr: Partial<Translations> = {
   "vm.ssh.publicKey": "Genel anahtar — Unraid /root/.ssh/authorized_keys dosyasına ekleyin",
   "vm.ssh.copy": "Kopyala",
   "vm.ssh.copied": "Kopyalandı",
+  "vm.ssh.copyFailed": "Kopyalama başarısız",
   "vm.ssh.test": "Bağlantıyı test et",
   "vm.ssh.testing": "Test ediliyor…",
   "vm.ssh.testOk": "Bağlandı — libvirt erişilebilir",
@@ -458,6 +463,12 @@ const tr: Partial<Translations> = {
   "common.restoreRunning": "Bir geri yükleme çalışıyor…",
   "common.backupRunning": "Bir yedekleme çalışıyor…",
   "common.replicateRunning": "Bir çoğaltma çalışıyor…",
+  "common.showValue": "Değeri göster",
+  "common.hideValue": "Değeri gizle",
+  "confirmDialog.title": "Onayla",
+  "toast.dismiss": "Bildirimi kapat",
+  "common.confirm": "Onayla",
+  "common.cancel": "İptal",
   "common.close": "Kapat",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const tr: Partial<Translations> = {
   "receiver.edit": "Düzenle",
   "receiver.remove": "Kaldır",
   "receiver.removing": "Kaldırılıyor…",
-  "receiver.removeConfirm": "Bu alınan depo izlemeden kaldırılsın mı? Diskteki depoya asla dokunulmaz, yalnızca izleme kaydı kaldırılır.",
+  "receiver.confirmRemove": "Kaldırmayı onayla",
   "receiver.inventoryTitle": "Kaynağa göre envanter",
   "receiver.inventoryLoading": "Envanter yükleniyor…",
   "receiver.inventoryError": "Envanter yüklenemedi.",
@@ -1217,7 +1228,7 @@ const tr: Partial<Translations> = {
   "fleet.edit": "Düzenle",
   "fleet.remove": "Kaldır",
   "fleet.removing": "Kaldırılıyor…",
-  "fleet.removeConfirm": "Bu örnek izlemeden kaldırılsın mı? Bunun için örnekle asla iletişime geçilmez, yalnızca izleme kaydı kaldırılır.",
+  "fleet.confirmRemove": "Kaldırmayı onayla",
   "fleet.scorecardTitle": "Koruma karnesi",
   "fleet.noScorecard": "Henüz önbelleğe alınmış bir karne yok — almak için bu örneği sorgulayın.",
   "fleet.lastBackup": "son yedekleme {time}",

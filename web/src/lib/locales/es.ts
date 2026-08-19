@@ -34,6 +34,7 @@ const es: Partial<Translations> = {
   "dashboard.allOk": "Todos los sistemas OK",
   "dashboard.degraded": "Degradado",
   "dashboard.checking": "Comprobando…",
+  "dashboard.noContainers": "No se encontraron contenedores.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personalizar",
   "dashboard.customizeDone": "Listo",
@@ -60,6 +61,7 @@ const es: Partial<Translations> = {
   "spike.colDetail": "Detalle",
   "spike.ok": "OK",
   "spike.fail": "FALLO",
+  "spike.info": "INFO",
   "spike.bestEffort": "opcional",
   "spike.checkNow": "Comprobar ahora",
   "spike.probeFailed": "sonda fallida (ver registros del servidor)",
@@ -186,6 +188,8 @@ const es: Partial<Translations> = {
   "settings.appearance": "Apariencia",
   "settings.accentColor": "Color de acento",
   "settings.accentPresets": "Predeterminados",
+  "settings.quietToasts": "Notificaciones silenciosas",
+  "settings.quietToastsHint": "Mostrar avisos emergentes solo para fallos. Las confirmaciones rutinarias de guardado y copia permanecen silenciosas.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Contenedores",
@@ -440,6 +444,7 @@ const es: Partial<Translations> = {
   "vm.ssh.publicKey": "Clave pública — añádela a /root/.ssh/authorized_keys de Unraid",
   "vm.ssh.copy": "Copiar",
   "vm.ssh.copied": "Copiado",
+  "vm.ssh.copyFailed": "Copia fallida",
   "vm.ssh.test": "Probar conexión",
   "vm.ssh.testing": "Probando…",
   "vm.ssh.testOk": "Conectado — libvirt accesible",
@@ -458,6 +463,12 @@ const es: Partial<Translations> = {
   "common.restoreRunning": "Hay una restauración en curso…",
   "common.backupRunning": "Hay una copia de seguridad en curso…",
   "common.replicateRunning": "Hay una replicación en curso…",
+  "common.showValue": "Mostrar valor",
+  "common.hideValue": "Ocultar valor",
+  "confirmDialog.title": "Confirmar",
+  "toast.dismiss": "Descartar notificación",
+  "common.confirm": "Confirmar",
+  "common.cancel": "Cancelar",
   "common.close": "Cerrar",
 
   // Backup folders selector
@@ -1169,7 +1180,7 @@ const es: Partial<Translations> = {
   "receiver.edit": "Editar",
   "receiver.remove": "Eliminar",
   "receiver.removing": "Eliminando…",
-  "receiver.removeConfirm": "¿Quitar este repositorio recibido de la supervisión? El repositorio en disco nunca se toca, solo se elimina la entrada de supervisión.",
+  "receiver.confirmRemove": "Confirmar eliminación",
   "receiver.inventoryTitle": "Inventario por origen",
   "receiver.inventoryLoading": "Cargando inventario…",
   "receiver.inventoryError": "No se pudo cargar el inventario.",
@@ -1215,7 +1226,7 @@ const es: Partial<Translations> = {
   "fleet.edit": "Editar",
   "fleet.remove": "Eliminar",
   "fleet.removing": "Eliminando…",
-  "fleet.removeConfirm": "¿Eliminar esta instancia de la supervisión? Nunca se contacta con la instancia en sí para esto, solo se elimina la entrada de supervisión.",
+  "fleet.confirmRemove": "Confirmar eliminación",
   "fleet.scorecardTitle": "Ficha de protección",
   "fleet.noScorecard": "Aún no hay una ficha en caché — consulta esta instancia para obtener una.",
   "fleet.lastBackup": "última copia de seguridad {time}",

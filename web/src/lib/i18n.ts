@@ -74,6 +74,7 @@ export const en = {
   "dashboard.allOk": "All systems OK",
   "dashboard.degraded": "Degraded",
   "dashboard.checking": "Checking…",
+  "dashboard.noContainers": "No containers found.",
 
   // Dashboard customization (#46) — reorder + hide cards, persisted per-browser
   "dashboard.customize": "Customize",
@@ -101,6 +102,7 @@ export const en = {
   "spike.colDetail": "Detail",
   "spike.ok": "OK",
   "spike.fail": "FAIL",
+  "spike.info": "INFO",
   "spike.bestEffort": "optional",
   "spike.checkNow": "Check now",
   "spike.probeFailed": "probe failed (see server logs)",
@@ -647,6 +649,10 @@ export const en = {
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
+  // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
+  // toast system; "success"/routine toasts are suppressed, failures never are.
+  "settings.quietToasts": "Quiet toasts",
+  "settings.quietToastsHint": "Only show pop-up notices for failures. Routine save and copy confirmations stay silent.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -844,6 +850,19 @@ export const en = {
   "common.restoreRunning": "A restore is running…",
   "common.backupRunning": "A backup is running…",
   "common.replicateRunning": "A replication is running…",
+  // Reveal eye (form-engine Task 6): aria-label for the show/hide toggle on
+  // every secret/token field.
+  "common.showValue": "Show value",
+  "common.hideValue": "Hide value",
+  // ConfirmDialog (form-engine Task 7): the generic, reusable dialog chrome
+  // labels — NOT per-call-site copy. Every confirm() call site keeps its own
+  // existing message string; only these three boilerplate labels are new.
+  "confirmDialog.title": "Confirm",
+  "common.confirm": "Confirm",
+  "common.cancel": "Cancel",
+  // Toast (form-engine Task 9): generic dismiss label for every toast's
+  // close button — not per-message copy.
+  "toast.dismiss": "Dismiss notification",
 
   // VMs page
   "vms.title": "Virtual Machines",
@@ -939,7 +958,11 @@ export const en = {
   "receiver.edit": "Edit",
   "receiver.remove": "Remove",
   "receiver.removing": "Removing…",
-  "receiver.removeConfirm": "Remove this received repo from monitoring? The repository on disk is never touched, only the monitoring entry is removed.",
+  // Downgraded from window.confirm() to the two-click inline-confirm pattern
+  // (form-engine Task 7) — removing a monitoring entry is reversible (the
+  // repo is never touched, only re-added later), so it no longer gets a full
+  // dialog. Matches OffsiteTargetsSection's "offsite.targets.confirmRemove".
+  "receiver.confirmRemove": "Confirm remove",
   "receiver.inventoryTitle": "Inventory by source",
   "receiver.inventoryLoading": "Loading inventory…",
   "receiver.inventoryError": "Could not load the inventory.",
@@ -985,7 +1008,9 @@ export const en = {
   "fleet.edit": "Edit",
   "fleet.remove": "Remove",
   "fleet.removing": "Removing…",
-  "fleet.removeConfirm": "Remove this peer from monitoring? The peer instance is never contacted for this, only the monitoring entry is removed.",
+  // Downgraded from window.confirm() to the two-click inline-confirm pattern
+  // (form-engine Task 7) — same rationale as receiver.confirmRemove above.
+  "fleet.confirmRemove": "Confirm remove",
   "fleet.scorecardTitle": "Protection scorecard",
   "fleet.noScorecard": "No cached scorecard yet — poll this peer to fetch one.",
   "fleet.lastBackup": "last backup {time}",
@@ -1054,6 +1079,7 @@ export const en = {
   "vm.ssh.publicKey": "Public key — append to Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Copy",
   "vm.ssh.copied": "Copied",
+  "vm.ssh.copyFailed": "Copy failed",
   "vm.ssh.test": "Test connection",
   "vm.ssh.testing": "Testing…",
   "vm.ssh.testOk": "Connected — libvirt reachable",
@@ -1415,6 +1441,7 @@ export const de: Translations = {
   "dashboard.allOk": "Alle Systeme OK",
   "dashboard.degraded": "Eingeschränkt",
   "dashboard.checking": "Prüfe…",
+  "dashboard.noContainers": "Keine Container gefunden.",
 
   "dashboard.customize": "Anpassen",
   "dashboard.customizeDone": "Fertig",
@@ -1440,6 +1467,7 @@ export const de: Translations = {
   "spike.colDetail": "Detail",
   "spike.ok": "OK",
   "spike.fail": "FEHLER",
+  "spike.info": "Info",
   "spike.bestEffort": "optional",
   "spike.checkNow": "Jetzt prüfen",
   "spike.probeFailed": "Prüfung fehlgeschlagen (siehe Server-Logs)",
@@ -1971,6 +1999,8 @@ export const de: Translations = {
   "settings.appearance": "Erscheinungsbild",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
+  "settings.quietToasts": "Leise Benachrichtigungen",
+  "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",
@@ -2168,6 +2198,12 @@ export const de: Translations = {
   "common.restoreRunning": "Eine Wiederherstellung läuft…",
   "common.backupRunning": "Eine Sicherung läuft…",
   "common.replicateRunning": "Eine Replikation läuft…",
+  "common.showValue": "Wert anzeigen",
+  "common.hideValue": "Wert verbergen",
+  "confirmDialog.title": "Bestätigen",
+  "toast.dismiss": "Benachrichtigung schließen",
+  "common.confirm": "Bestätigen",
+  "common.cancel": "Abbrechen",
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",
@@ -2263,7 +2299,7 @@ export const de: Translations = {
   "receiver.edit": "Bearbeiten",
   "receiver.remove": "Entfernen",
   "receiver.removing": "Wird entfernt…",
-  "receiver.removeConfirm": "Dieses empfangene Repo aus der Überwachung entfernen? Das Repository auf der Platte wird nie angetastet, nur der Überwachungseintrag wird entfernt.",
+  "receiver.confirmRemove": "Entfernen bestätigen",
   "receiver.inventoryTitle": "Bestand nach Quelle",
   "receiver.inventoryLoading": "Bestand wird geladen…",
   "receiver.inventoryError": "Der Bestand konnte nicht geladen werden.",
@@ -2309,7 +2345,7 @@ export const de: Translations = {
   "fleet.edit": "Bearbeiten",
   "fleet.remove": "Entfernen",
   "fleet.removing": "Wird entfernt…",
-  "fleet.removeConfirm": "Diese Instanz aus der Überwachung entfernen? Die Instanz selbst wird dabei nie kontaktiert, nur der Überwachungseintrag wird entfernt.",
+  "fleet.confirmRemove": "Entfernen bestätigen",
   "fleet.scorecardTitle": "Schutz-Scorecard",
   "fleet.noScorecard": "Noch keine gecachte Scorecard — diese Instanz abfragen, um eine zu holen.",
   "fleet.lastBackup": "letztes Backup {time}",
@@ -2378,6 +2414,7 @@ export const de: Translations = {
   "vm.ssh.publicKey": "Public Key — an Unraids /root/.ssh/authorized_keys anhängen",
   "vm.ssh.copy": "Kopieren",
   "vm.ssh.copied": "Kopiert",
+  "vm.ssh.copyFailed": "Kopieren fehlgeschlagen",
   "vm.ssh.test": "Verbindung testen",
   "vm.ssh.testing": "Teste…",
   "vm.ssh.testOk": "Verbunden — libvirt erreichbar",

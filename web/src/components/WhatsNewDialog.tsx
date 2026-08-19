@@ -238,7 +238,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             type="button"
             onClick={onClose}
             aria-label={t("whatsnew.close")}
-            className="shrink-0 rounded-sm p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
+            className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -263,7 +263,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
                   autoTriesRef.current = 0;
                   setReloadKey((k) => k + 1);
                 }}
-                className="mt-3 rounded-lg bg-carbon-surface3 px-3 py-1.5 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
+                className="mt-3 rounded-control bg-carbon-surface3 px-3 py-1.5 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
               >
                 {t("whatsnew.retry")}
               </button>
@@ -290,7 +290,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
+            className="rounded-control bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
           >
             {t("whatsnew.close")}
           </button>

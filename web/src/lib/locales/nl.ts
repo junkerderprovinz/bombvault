@@ -33,6 +33,7 @@ const nl: Partial<Translations> = {
   "dashboard.allOk": "Alle systemen OK",
   "dashboard.degraded": "Verslechterd",
   "dashboard.checking": "Controleren…",
+  "dashboard.noContainers": "Geen containers gevonden.",
   // Dashboard customize (#46)
   "dashboard.customize": "Aanpassen",
   "dashboard.customizeDone": "Klaar",
@@ -59,6 +60,7 @@ const nl: Partial<Translations> = {
   "spike.colDetail": "Detail",
   "spike.ok": "OK",
   "spike.fail": "MISLUKT",
+  "spike.info": "INFO",
   "spike.bestEffort": "optioneel",
   "spike.checkNow": "Nu controleren",
   "spike.probeFailed": "test mislukt (zie serverlogboeken)",
@@ -182,6 +184,8 @@ const nl: Partial<Translations> = {
   "settings.appearance": "Uiterlijk",
   "settings.accentColor": "Accentkleur",
   "settings.accentPresets": "Voorinstellingen",
+  "settings.quietToasts": "Stille meldingen",
+  "settings.quietToastsHint": "Toon pop-upmeldingen alleen bij fouten. Routinematige opslaan- en kopieerbevestigingen blijven stil.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -435,6 +439,7 @@ const nl: Partial<Translations> = {
   "vm.ssh.publicKey": "Publieke sleutel — toevoegen aan Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopiëren",
   "vm.ssh.copied": "Gekopieerd",
+  "vm.ssh.copyFailed": "Kopiëren mislukt",
   "vm.ssh.test": "Verbinding testen",
   "vm.ssh.testing": "Testen…",
   "vm.ssh.testOk": "Verbonden — libvirt bereikbaar",
@@ -453,6 +458,12 @@ const nl: Partial<Translations> = {
   "common.restoreRunning": "Er wordt een herstel uitgevoerd…",
   "common.backupRunning": "Er wordt een back-up uitgevoerd…",
   "common.replicateRunning": "Er wordt een replicatie uitgevoerd…",
+  "common.showValue": "Waarde tonen",
+  "common.hideValue": "Waarde verbergen",
+  "confirmDialog.title": "Bevestigen",
+  "toast.dismiss": "Melding sluiten",
+  "common.confirm": "Bevestigen",
+  "common.cancel": "Annuleren",
   "common.close": "Sluiten",
 
   // Backup folders selector
@@ -1168,7 +1179,7 @@ const nl: Partial<Translations> = {
   "receiver.edit": "Bewerken",
   "receiver.remove": "Verwijderen",
   "receiver.removing": "Verwijderen…",
-  "receiver.removeConfirm": "Deze ontvangen repo uit de bewaking verwijderen? De repository op schijf wordt nooit aangeraakt, alleen de bewakingsvermelding wordt verwijderd.",
+  "receiver.confirmRemove": "Verwijderen bevestigen",
   "receiver.inventoryTitle": "Inventaris per bron",
   "receiver.inventoryLoading": "Inventaris laden…",
   "receiver.inventoryError": "Kon de inventaris niet laden.",
@@ -1214,7 +1225,7 @@ const nl: Partial<Translations> = {
   "fleet.edit": "Bewerken",
   "fleet.remove": "Verwijderen",
   "fleet.removing": "Verwijderen…",
-  "fleet.removeConfirm": "Deze instantie uit bewaking verwijderen? De instantie zelf wordt hiervoor nooit benaderd, alleen het bewakingsitem wordt verwijderd.",
+  "fleet.confirmRemove": "Verwijderen bevestigen",
   "fleet.scorecardTitle": "Beschermingskaart",
   "fleet.noScorecard": "Nog geen gecachte kaart — bevraag deze instantie om er een op te halen.",
   "fleet.lastBackup": "laatste back-up {time}",

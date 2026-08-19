@@ -9,9 +9,16 @@ import { InfoBubble } from "../components/InfoBubble";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
+import { Toggle } from "../components/Toggle";
+import { Badge, type BadgeTone } from "../components/Badge";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
+import { useConfirm } from "../lib/useConfirm";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
+import { useToast } from "../lib/toast";
+import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
@@ -85,42 +92,63 @@ export function ToggleRow({
   checked,
   onChange,
   disabled,
+  hideLabel = false,
 }: {
   label: string;
   description?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  /** Suppress the row's own visible caption when a Card title directly above
+   *  already says the same thing (e.g. a single-purpose Card whose title IS
+   *  the decision this switch makes) — the label still reaches screen readers
+   *  via the underlying Toggle's aria-label. Any `description` still renders. */
+  hideLabel?: boolean;
 }) {
+  // The switch dims itself via its own `disabled:opacity-50` (Toggle.tsx), but
+  // that left the caption and description next to it at full opacity, so a
+  // disabled row misleadingly still read as enabled. Rule 15 rules out opacity
+  // on the CONTAINER (it composites the whole subtree), so each text node
+  // carries its own — the same per-element dimming the controls use.
+  //
+  // Deliberately a plain <div>, NOT the <fieldset disabled> + `group-disabled:`
+  // mechanism CadenceBuilder uses: that fieldset earns its keep (it really does
+  // group many controls, natively disables all of them without threading a prop
+  // into CronEditor, and names itself with a <legend>). A row holds exactly ONE
+  // control, which already receives `disabled` directly — wrapping it in a
+  // fieldset would only add an unnamed `group` to the accessibility tree at
+  // every call site, the very defect the <legend> was added to fix.
+  const dim = disabled ? " opacity-50" : "";
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm text-carbon-text">{label}</span>
+        {!hideLabel && <span className={`text-sm text-carbon-text${dim}`}>{label}</span>}
         {description && (
-          <span className="text-xs text-carbon-textMuted">{description}</span>
+          <span className={`text-xs text-carbon-textMuted${dim}`}>{description}</span>
         )}
       </div>
-      <button
-        role="switch"
-        aria-checked={checked}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
-          checked ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            checked ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      <Toggle hideLabel label={label} checked={checked} onChange={onChange} disabled={disabled} className="mt-0.5" />
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Save bar shared component
+//
+// GlimStone form-engine Task 9 (lib/toast.tsx) formalized this exact
+// pattern — a save button whose "saved"/"error" outcome flashes inline for
+// a few seconds — into a real toast at TWO self-contained sites that don't
+// route through this shared component (ConfigSettingsCard in Config.tsx,
+// and SettingsPage's own handleSetPassword), as a deliberate proof of
+// adoption, not a full migration. This SaveBar component itself, and the
+// ~30 call sites across this file that render it (all sharing the single
+// generic `save()` helper further down), are DELIBERATELY left on the
+// original "saved"/"error" inline-flash behaviour below — migrating a
+// helper this widely shared would silently convert every one of those
+// call sites in one pass, which is explicitly out of this task's scope
+// (per the audit: per-site triage for the remaining ~35 inline-status
+// sites is separate, deliberate follow-up work, not something to fold into
+// a single generic-helper edit). See lib/toast.tsx's own header comment.
 // ---------------------------------------------------------------------------
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -143,7 +171,7 @@ function SaveBar({
       <button
         onClick={onSave}
         disabled={disabled || state === "saving"}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {state === "saving" ? (
           <>
@@ -187,10 +215,9 @@ const ACCENT_PRESETS = [
 // and a connection test. Self-contained: fetches its own data so the large
 // SettingsPage doesn't need extra state.
 function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [cmdCopied, setCmdCopied] = useState(false);
   const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
@@ -230,18 +257,27 @@ chmod 600 /root/.ssh/authorized_keys`
     }
   }
 
+  // copyText falls back to execCommand in non-secure contexts (#112). The
+  // "Copied" flash used to be a local 2000ms button-label swap
+  // (GlimStone form-engine Task 9's copy-feedback candidate); it's now a
+  // routine (quiet-mode-suppressible) toast instead — see lib/toast.tsx.
   async function handleCopy() {
-    // copyText falls back to execCommand in non-secure contexts (#112).
     if (await copyText(pub)) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
+    } else {
+      // "failures always surface" (design-language.md) — copyText() only
+      // returns false when BOTH the Clipboard API and the execCommand
+      // fallback failed, so this is a real, user-actionable failure, not
+      // routine noise a quiet-mode user would want suppressed.
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 
   async function handleCopyCmd() {
     if (await copyText(authorizeCmd)) {
-      setCmdCopied(true);
-      setTimeout(() => setCmdCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
+    } else {
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 
@@ -255,21 +291,21 @@ chmod 600 /root/.ssh/authorized_keys`
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {pub || "—"}
             </code>
             <button
               onClick={handleCopy}
               disabled={!pub}
-              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
+              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
             >
-              {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+              {t("vm.ssh.copy")}
             </button>
           </div>
         </div>
 
         {/* One-time setup instructions */}
-        <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-2">
+        <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
           <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("vm.ssh.setupTitle")}
           </span>
@@ -279,13 +315,13 @@ chmod 600 /root/.ssh/authorized_keys`
             <li>{t("vm.ssh.step3")}</li>
           </ol>
           <div className="flex items-start gap-2">
-            <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
             <button
               onClick={handleCopyCmd}
               disabled={!pub}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
-              {cmdCopied ? t("vm.ssh.copied") : t("vm.ssh.copyCmd")}
+              {t("vm.ssh.copyCmd")}
             </button>
           </div>
           <a
@@ -302,15 +338,15 @@ chmod 600 /root/.ssh/authorized_keys`
           <button
             onClick={handleTest}
             disabled={testState === "testing"}
-            className="rounded-sm bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
           </button>
           {testState === "ok" && (
-            <span className="text-sm text-green-500">{t("vm.ssh.testOk")}</span>
+            <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
           )}
           {testState === "fail" && (
-            <span className="text-sm text-red-400">{testMsg ?? t("vm.ssh.testFail")}</span>
+            <span className="text-sm text-statusFail">{testMsg ?? t("vm.ssh.testFail")}</span>
           )}
         </div>
       </div>
@@ -440,7 +476,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <span className="text-sm text-carbon-text">{t("settingsIO.includeCreds")}</span>
         </label>
         {includeCreds && (
-          <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+          <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
             {t("settingsIO.credsWarning")}
           </div>
         )}
@@ -448,7 +484,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           type="button"
           onClick={() => void handleExport()}
           disabled={busy}
-          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
         >
           {exporting ? t("settingsIO.exporting") : t("settingsIO.exportButton")}
         </button>
@@ -478,14 +514,14 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
-          className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
         >
           {importBusy === "reading" ? t("settingsIO.reading") : t("settingsIO.chooseFile")}
         </button>
 
         {/* Preview + confirmation before anything is written. */}
         {preview && (
-          <div className="rounded-lg bg-carbon-surface2 p-4 flex flex-col gap-3">
+          <div className="rounded-card bg-carbon-surface2 p-4 flex flex-col gap-3">
             <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
               {t("settingsIO.previewTitle")}
             </span>
@@ -521,7 +557,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 </dd>
               </div>
             </dl>
-            <div className="rounded-md bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("settingsIO.confirmWarning")}
             </div>
             <div className="flex items-center gap-3">
@@ -529,7 +565,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 type="button"
                 onClick={() => void handleConfirmImport()}
                 disabled={busy}
-                className="rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
               </button>
@@ -537,7 +573,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 type="button"
                 onClick={resetImport}
                 disabled={busy}
-                className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+                className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("settingsIO.cancel")}
               </button>
@@ -651,13 +687,13 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="flex flex-col gap-2">
           <p className="text-xs text-carbon-textSub">{t("settings.dashTileNoSsh")}</p>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {DASH_PLUGIN_PLG_URL}
             </code>
             <button
               type="button"
               onClick={() => void handleCopyUrl()}
-              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
             >
               {urlCopied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
@@ -683,7 +719,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             type="button"
             onClick={() => void run("install")}
             disabled={busy !== "idle"}
-            className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {busy === "install" ? t("settings.dashTileInstalling") : t("settings.dashTileInstall")}
           </button>
@@ -706,7 +742,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             type="button"
             onClick={() => void run("remove")}
             disabled={busy !== "idle"}
-            className="self-start rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+            className="self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
           >
             {busy === "remove" ? t("settings.dashTileRemoving") : t("settings.dashTileRemove")}
           </button>
@@ -717,7 +753,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="flex flex-col gap-2">
           <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
           {status.output && (
-            <pre className="overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
+            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
               {status.output}
             </pre>
           )}
@@ -727,7 +763,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className="self-start rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+            className="self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
           >
             {t("whatsnew.retry")}
           </button>
@@ -756,6 +792,7 @@ function DashboardWidgetCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const reveal = useReveal();
 
   const widgetUrl = token ? `${window.location.origin}/widget?token=${token}` : null;
 
@@ -816,21 +853,25 @@ function DashboardWidgetCard({
       {tokenSet ? (
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.widgetToken")}</span>
+          {/* Show-once secret: value is only the freshly generated token; a
+              stored-but-unknown one renders the cloud.secretSet placeholder.
+              The verify/regenerate/disable actions sit on their OWN line
+              below the field (design-language.md's reveal-eye rule), not
+              beside it in the same row. */}
+          <RevealInput
+            {...reveal}
+            readOnly
+            value={token ?? ""}
+            placeholder={token ? "" : t("cloud.secretSet")}
+            wrapperClassName="w-full"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+          />
           <div className="flex items-center gap-2">
-            {/* Show-once secret: value is only the freshly generated token; a
-                stored-but-unknown one renders the cloud.secretSet placeholder. */}
-            <input
-              type="password"
-              readOnly
-              value={token ?? ""}
-              placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
-            />
             <button
               type="button"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.widgetRegenerate")}
             </button>
@@ -838,7 +879,7 @@ function DashboardWidgetCard({
               type="button"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.widgetDisable")}
             </button>
@@ -849,7 +890,7 @@ function DashboardWidgetCard({
           type="button"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {t("settings.widgetGenerate")}
         </button>
@@ -864,13 +905,13 @@ function DashboardWidgetCard({
           <div className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("settings.widgetUrl")}</span>
             <div className="flex items-start gap-2">
-              <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+              <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
                 {widgetUrl}
               </code>
               <button
                 type="button"
                 onClick={() => void handleCopy()}
-                className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+                className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
               >
                 {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
               </button>
@@ -923,6 +964,7 @@ function FleetSettingsCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const reveal = useReveal();
 
   async function handleGenerate() {
     setBusy(true);
@@ -982,7 +1024,7 @@ function FleetSettingsCard({
             spellCheck={false}
             autoComplete="off"
             placeholder="tower"
-            className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
           />
         </div>
         <SaveBar
@@ -1001,19 +1043,22 @@ function FleetSettingsCard({
       {tokenSet ? (
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.fleetToken")}</span>
+          {/* Actions on their own line below the field, not beside it —
+              same reveal-eye layout rule as DashboardWidgetCard above. */}
+          <RevealInput
+            {...reveal}
+            readOnly
+            value={token ?? ""}
+            placeholder={token ? "" : t("cloud.secretSet")}
+            wrapperClassName="w-full"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+          />
           <div className="flex items-center gap-2">
-            <input
-              type="password"
-              readOnly
-              value={token ?? ""}
-              placeholder={token ? "" : t("cloud.secretSet")}
-              className="flex-1 min-w-0 rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
-            />
             <button
               type="button"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.fleetRegenerate")}
             </button>
@@ -1021,7 +1066,7 @@ function FleetSettingsCard({
               type="button"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("settings.fleetDisable")}
             </button>
@@ -1032,7 +1077,7 @@ function FleetSettingsCard({
           type="button"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className="self-start rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {t("settings.fleetGenerate")}
         </button>
@@ -1046,13 +1091,13 @@ function FleetSettingsCard({
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textSub">{t("settings.fleetTokenPasteHint")}</span>
           <div className="flex items-start gap-2">
-            <code className="flex-1 break-all rounded-sm bg-carbon-surface2 p-2 text-xs text-carbon-text">
+            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {token}
             </code>
             <button
               type="button"
               onClick={() => void handleCopy()}
-              className="shrink-0 rounded-sm bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
             >
               {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
@@ -1119,14 +1164,14 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-lg bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
         <button
           onClick={() => void handleSave()}
           disabled={state === "saving" || conf.trim() === ""}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {state === "saving" ? t("auth.saving") : t("rclone.save")}
         </button>
@@ -1146,6 +1191,8 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [pwSet, setPwSet] = useState(false);
   const [state, setState] = useState<SaveState>("idle");
   const [msg, setMsg] = useState<string | null>(null);
+  const revealS3Secret = useReveal();
+  const revealRestPassword = useReveal();
 
   function refresh() {
     getCloud()
@@ -1185,20 +1232,20 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
     <Card title={t("cloud.title")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
 
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
         <label className={fieldCls}>AWS_ACCESS_KEY_ID
           <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
         <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
-          <input type="password" value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
-            placeholder={secretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+          <RevealInput {...revealS3Secret} value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
+            placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
         <label className={fieldCls}>AWS_DEFAULT_REGION
           <input value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
         <label className={fieldCls}>{t("cloud.storageClass.label")}
@@ -1213,20 +1260,20 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-xs text-carbon-textMuted normal-case font-sans">{t("cloud.storageClass.hint")}</p>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
         <label className={fieldCls}>RESTIC_REST_USERNAME
           <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
         <label className={fieldCls}>RESTIC_REST_PASSWORD
-          <input type="password" value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
-            placeholder={pwSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+          <RevealInput {...revealRestPassword} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
+            placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
       </div>
 
       <div className="flex items-center gap-3 pt-1">
         <button
           onClick={() => void handleSave()}
           disabled={state === "saving"}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {state === "saving" ? t("auth.saving") : t("settings.save")}
         </button>
@@ -1261,6 +1308,8 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const revealS3Secret = useReveal();
+  const revealRestPassword = useReveal();
 
   function refresh() {
     getCloudCredSets()
@@ -1270,7 +1319,10 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   useEffect(refresh, []);
 
   function openNew() {
-    setEditing({ id: crypto.randomUUID(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
+    // randomId(), not crypto.randomUUID() — the latter is secure-context-only
+    // and BombVault ships a documented plain-HTTP mode, where it is undefined
+    // and this click would throw instead of opening the editor (see lib/uuid.ts).
+    setEditing({ id: randomId(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
     setState("idle");
     setMsg(null);
   }
@@ -1330,7 +1382,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
@@ -1342,7 +1394,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       )}
 
       {sets.map((s) => (
-        <div key={s.id} className="flex items-start justify-between gap-3 rounded-lg bg-carbon-surface2 p-3">
+        <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
             <span className="text-xs text-carbon-textMuted font-mono break-all">
@@ -1353,7 +1405,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <button
               type="button"
               onClick={() => openEdit(s)}
-              className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
             >
               {t("offsite.targets.edit")}
             </button>
@@ -1362,7 +1414,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 type="button"
                 onClick={() => void remove(s.id)}
                 disabled={removingId === s.id}
-                className="rounded-lg bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
+                className="rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
               >
                 {removingId === s.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </button>
@@ -1370,7 +1422,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               <button
                 type="button"
                 onClick={() => setConfirmRemove(s.id)}
-                className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
+                className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
               >
                 {t("offsite.targets.remove")}
               </button>
@@ -1380,16 +1432,16 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       ))}
 
       {editing ? (
-        <div className="flex flex-col gap-3 rounded-lg bg-carbon-surface2 p-3">
+        <div className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
           <label className={fieldCls}>{t("cloud.credSets.name")}
             <input value={editing.name} onChange={(e) => setField("name", e.target.value)} className={inputCls} /></label>
-          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface3/40 p-3">
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
             <label className={fieldCls}>AWS_ACCESS_KEY_ID
               <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
             <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
-              <input type="password" value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
-                placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+              <RevealInput {...revealS3Secret} value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
+                placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
             <label className={fieldCls}>AWS_DEFAULT_REGION
               <input value={editing.s3Region} onChange={(e) => setField("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
             <label className={fieldCls}>{t("cloud.storageClass.label")}
@@ -1402,25 +1454,25 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 <option value="GLACIER_IR">GLACIER_IR</option>
               </select></label>
           </div>
-          <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface3/40 p-3">
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
             <label className={fieldCls}>RESTIC_REST_USERNAME
               <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
             <label className={fieldCls}>RESTIC_REST_PASSWORD
-              <input type="password" value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
-                placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} className={inputCls} /></label>
+              <RevealInput {...revealRestPassword} value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
+                placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {state === "saving" ? t("auth.saving") : t("settings.save")}
             </button>
             <button
               onClick={closeEditor}
-              className="rounded-lg bg-carbon-surface3 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+              className="rounded-control bg-carbon-surface3 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
             >
               {t("common.close")}
             </button>
@@ -1431,7 +1483,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <button
           type="button"
           onClick={openNew}
-          className="self-start rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover"
+          className="self-start rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover"
         >
           + {t("cloud.credSets.add")}
         </button>
@@ -1478,6 +1530,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // The SMTP password / Matrix token are never sent to the browser; track whether
   // one is stored so the field shows "configured" and a blank submit keeps it.
   const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
+  const revealMatrixToken = useReveal();
+  const revealSmtpPassword = useReveal();
 
   useEffect(() => {
     getNotify()
@@ -1529,14 +1583,14 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const selectCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
   // Card-level sibling of selectCls: same styling, but this one sits directly on
   // the Card (bg-carbon-surface), so its fill is surface2 — the panel-level
   // fields above use surface3 because they sit ON a surface2 panel.
   const selectCardCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
@@ -1553,7 +1607,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
 
       {/* #56: one summary per scheduled run instead of one message per container. */}
-      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 p-3 cursor-pointer">
+      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
           checked={cfg.scheduledSummary}
@@ -1568,7 +1622,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
 
       {/* #56: notify when a container is updated by the post-backup image update. */}
-      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 p-3 cursor-pointer">
+      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
           checked={cfg.notifyOnUpdate}
@@ -1583,7 +1637,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </label>
 
       {/* Unraid native notifications (delivered over the host SSH connection). */}
-      <label className="flex items-start gap-2 rounded-lg bg-carbon-surface2 p-3 cursor-pointer">
+      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
           checked={cfg.unraid}
@@ -1599,7 +1653,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       {advanced && (
         <>
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <label className={labelCls}>
           {t("notify.webhook")}
           <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
@@ -1620,7 +1674,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {/* Apprise API: posts to a user-run apprise-api server, unlocking Apprise's
           100+ services without bundling Python. Shares the card's Save + Test bar
           like the other channels. */}
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-medium text-carbon-textSub">{t("notify.apprise")}</span>
         <label className={labelCls}>
           {t("notify.appriseUrl")}
@@ -1635,7 +1689,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-xs text-carbon-textMuted">{t("notify.appriseHint")}</p>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-medium text-carbon-textSub">{t("notify.matrix")}</span>
         <label className={labelCls}>
           {t("notify.matrixHomeserver")}
@@ -1644,8 +1698,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         </label>
         <label className={labelCls}>
           {t("notify.matrixToken")}
-          <input value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-            type="password" placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} className={inputCls} />
+          <RevealInput {...revealMatrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
+            placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
         </label>
         <label className={labelCls}>
           {t("notify.matrixRoom")}
@@ -1662,7 +1716,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
 
       {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-medium text-carbon-textSub">{t("notify.hcPerDomain")}</span>
         {(
           [
@@ -1693,7 +1747,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       </div>
 
       {/* Email (SMTP), sent via the configured mail server. */}
-      <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <label className="flex items-start gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -1731,8 +1785,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </label>
             <label className={labelCls}>
               {t("notify.smtpPass")}
-              <input value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
-                type="password" placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} className={inputCls} />
+              <RevealInput {...revealSmtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
+                placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpFrom")}
@@ -1752,11 +1806,11 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       <div className="flex items-center gap-3 pt-1 flex-wrap">
         <button onClick={() => void handleSave()} disabled={state === "saving"}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
+          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
           {state === "saving" ? t("auth.saving") : t("notify.save")}
         </button>
         <button onClick={() => void handleTest()}
-          className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
+          className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
           {t("notify.test")}
         </button>
         {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
@@ -1801,7 +1855,7 @@ function ReplicateNowButton({
         type="button"
         onClick={() => void go()}
         disabled={st === "busy"}
-        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
       </button>
@@ -1852,7 +1906,7 @@ function TestConnectionButton({
         type="button"
         onClick={() => void go()}
         disabled={st === "busy"}
-        className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
       >
         {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
       </button>
@@ -1895,6 +1949,7 @@ function IntegrityCard({
   // Prune deletes snapshots, so it stays advanced-only even though the rest of
   // this card (verify, unlock, DR drill) is a first-class default-mode feature.
   const { advanced } = useAdvanced();
+  const { confirm, confirmDialog } = useConfirm();
   type ActState = "idle" | "busy" | "ok" | "fail";
   type DrillKind = "subset" | "dr";
   const [state, setState] = useState<Record<string, ActState>>({});
@@ -2032,7 +2087,7 @@ function IntegrityCard({
   }
 
   async function run(domain: Domain, action: Action) {
-    if (action === "prune" && !window.confirm(t("integrity.pruneConfirm"))) return;
+    if (action === "prune" && !(await confirm(t("integrity.pruneConfirm")))) return;
     const key = `${domain}:${action}`;
     setState((s) => ({ ...s, [key]: "busy" }));
     setMsg((m) => ({ ...m, [key]: "" }));
@@ -2058,7 +2113,7 @@ function IntegrityCard({
   // A "dr" drill does a REAL off-site restore into a sandbox — it always targets
   // the off-site repo (source is ignored) and asks for confirmation first.
   async function runDrillFor(domain: Domain) {
-    if (kind === "dr" && !window.confirm(t("drill.confirmDR"))) return;
+    if (kind === "dr" && !(await confirm(t("drill.confirmDR")))) return;
     const key = `${domain}:drill`;
     setState((s) => ({ ...s, [key]: "busy" }));
     setMsg((m) => ({ ...m, [key]: "" }));
@@ -2102,7 +2157,7 @@ function IntegrityCard({
   };
 
   const selectCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
 
   return (
     <Card title={t("integrity.title")}>
@@ -2128,7 +2183,7 @@ function IntegrityCard({
       {/* Drill-type toggle: subset integrity check vs a real off-site DR restore. */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
-        <div className="inline-flex rounded-lg bg-carbon-surface2 overflow-hidden">
+        <div className="inline-flex rounded-control bg-carbon-surface2 overflow-hidden">
           {([
             ["subset", t("drill.kindSubset")],
             ["dr", t("drill.kindDR")],
@@ -2162,7 +2217,7 @@ function IntegrityCard({
           other cards' edits. Flash and files have no picker (their whole
           snapshot is restored). */}
       {kind === "dr" && (
-        <div className="flex flex-col gap-2 rounded-lg bg-carbon-surface2 p-3">
+        <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
           <p className="text-xs text-carbon-textMuted">{t("drill.drNote")}</p>
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
             {t("drill.target")}
@@ -2226,7 +2281,7 @@ function IntegrityCard({
                         onClick={() => void run(domain, a.key)}
                         disabled={state[k] === "busy"}
                         title={t(`integrity.${a.key}Hint`)}
-                        className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {state[k] === "busy" ? a.busy : a.label}
                       </button>
@@ -2244,7 +2299,7 @@ function IntegrityCard({
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
                   title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
-                  className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                  className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                 >
                   {state[dKey] === "busy"
                     ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
@@ -2291,7 +2346,7 @@ function IntegrityCard({
                     onClick={() => void runTamperFor(domain)}
                     disabled={tRes?.kind === "busy"}
                     title={t("integrity.appendOnlyHint")}
-                    className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                    className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                   >
                     {tRes?.kind === "busy" ? t("integrity.checking") : t("integrity.appendOnly")}
                   </button>
@@ -2336,6 +2391,7 @@ function IntegrityCard({
           );
         })}
       </div>
+      {confirmDialog}
     </Card>
   );
 }
@@ -2371,6 +2427,18 @@ function scheduleStatus(schedule: string): ScheduleStatus {
   return "active";
 }
 
+// ScheduleBadge → Badge tone mapping (GlimStone form-engine Task 5 follow-up):
+// this was its own hand-rolled `px-2 py-0.5 rounded-control text-xs
+// font-medium` + tone-lookup pair, byte-for-byte the same shape the shared
+// Badge component now owns — a 6th duplicate the migration's audit found
+// alongside the five named in the plan. active/paused/off map onto Badge's
+// ok/warn/neutral tones (the only three a schedule status ever needs).
+const SCHEDULE_BADGE_TONE: Record<ScheduleStatus, BadgeTone> = {
+  active: "ok",
+  paused: "warn",
+  off: "neutral",
+};
+
 function ScheduleBadge({
   status,
   label,
@@ -2378,18 +2446,7 @@ function ScheduleBadge({
   status: ScheduleStatus;
   label: string;
 }) {
-  const cls: Record<ScheduleStatus, string> = {
-    active: "bg-statusOkBg text-statusOk",
-    paused: "bg-statusWarnBg text-statusWarn",
-    off:    "bg-carbon-surface2 text-carbon-textSub",
-  };
-  return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls[status]}`}
-    >
-      {label}
-    </span>
-  );
+  return <Badge tone={SCHEDULE_BADGE_TONE[status]}>{label}</Badge>;
 }
 
 // Domain section — Containers (editable schedule + included-containers list)
@@ -2429,7 +2486,7 @@ function ContainersSection({
       </div>
 
       {/* Editable cadence builder */}
-      <div className="rounded-lg bg-carbon-surface2 p-4">
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.containersSection")}
           value={schedule}
@@ -2512,7 +2569,7 @@ function VMsSection({
           }
         />
       </div>
-      <div className={`rounded-lg bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.vmsSection")}
           value={schedule}
@@ -2586,7 +2643,7 @@ function FlashSection({
           }
         />
       </div>
-      <div className={`rounded-lg bg-carbon-surface2 p-4 ${syncSchedules ? "opacity-50" : ""}`}>
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.flashSection")}
           value={schedule}
@@ -2657,7 +2714,7 @@ function FilesSection({
           }
         />
       </div>
-      <div className="rounded-lg bg-carbon-surface2 p-4">
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.filesSection")}
           value={schedule}
@@ -2690,7 +2747,7 @@ function FilesSection({
                 aria-label={`${t("files.enabled")}: ${s.name}`}
                 disabled={!!busy[s.id]}
                 onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
                   s.enabled ? "bg-accent" : "bg-carbon-surface3"
                 }`}
               >
@@ -2724,21 +2781,22 @@ function RestoreChecksSection({
     <Card title={t("verify.auto")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
       <ToggleRow
+        hideLabel
         label={t("verify.auto")}
         checked={settings.drillsEnabled}
         onChange={(v) => update({ drillsEnabled: v })}
       />
-      {/* Sub-toggle: only meaningful while scheduled drills are on. */}
-      <div className={settings.drillsEnabled ? "" : "opacity-50"}>
-        <ToggleRow
-          label={t("settings.offsiteDrills")}
-          description={t("settings.offsiteDrillsHelp")}
-          checked={settings.offsiteDrillsEnabled}
-          disabled={!settings.drillsEnabled}
-          onChange={(v) => update({ offsiteDrillsEnabled: v })}
-        />
-      </div>
-      <div className={`rounded-lg bg-carbon-surface2 p-4 ${settings.drillsEnabled ? "" : "opacity-50"}`}>
+      {/* Sub-toggle: only meaningful while scheduled drills are on. ToggleRow
+          itself dims its switch AND its caption/description together — no
+          wrapping container opacity needed here. */}
+      <ToggleRow
+        label={t("settings.offsiteDrills")}
+        description={t("settings.offsiteDrillsHelp")}
+        checked={settings.offsiteDrillsEnabled}
+        disabled={!settings.drillsEnabled}
+        onChange={(v) => update({ offsiteDrillsEnabled: v })}
+      />
+      <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("settings.schedule")}
           value={settings.drillsSchedule}
@@ -2758,7 +2816,7 @@ function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
         />
       </label>
     </Card>
@@ -2780,6 +2838,7 @@ type TabKey =
 export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
+  const { push, quiet, setQuiet } = useToast();
 
   const [tab, setTab] = useState<TabKey>("general");
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -2798,6 +2857,34 @@ export function SettingsPage() {
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
   const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
+  const revealPwNew = useReveal();
+  const revealPwConfirm = useReveal();
+  const revealMetricsToken = useReveal();
+  // Registry credentials are a per-row list (settings.registryAuths), and a
+  // hook can't be called inside that row's own .map() callback (Rules of
+  // Hooks — the call count would vary with the list length), so this is a
+  // plain record here at the top level instead of a useReveal() per row.
+  //
+  // Keyed by a STABLE per-row id (registryRowIds below), NOT by array index.
+  // Rows are removed/added by splicing settings.registryAuths, which shifts
+  // every later row's index — an index-keyed record would then misattribute
+  // a shifted-in row's slot to whatever reveal state the OLD occupant of that
+  // index left behind (reveal row 0, remove row 0 → the row that slides into
+  // index 0 renders already-revealed), and a freshly added row would inherit
+  // whatever stale flag already lived at its new index. That's a real
+  // secret-becomes-visible-without-being-asked-for bug, not just a cosmetic
+  // one, so this is worth the extra bookkeeping below to get right.
+  const [registryTokenVisible, setRegistryTokenVisible] = useState<Record<string, boolean>>({});
+  // registryRowIds pairs 1:1 by index with settings.registryAuths, giving
+  // each row a client-only stable identity to key registryTokenVisible (and
+  // the row's React `key`) by — kept in lockstep at every place that changes
+  // the array's length/order (load, add, remove, and the Save handler's
+  // untouched-blank-row filter below). Deliberately NOT a field on the row
+  // objects themselves: Settings PUT uses a strict decoder
+  // (DisallowUnknownFields — internal/api/handlers.go) that must accept a
+  // round-tripped GET body, so an extra client-only field riding along on a
+  // spread entry would break every settings save, not just this card.
+  const [registryRowIds, setRegistryRowIds] = useState<string[]>([]);
 
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
@@ -2886,6 +2973,14 @@ export function SettingsPage() {
         if (res.ok) {
           setSettings(res.settings);
           setSavedSettings(res.settings);
+          // Give every loaded registry row a stable client-only id (see
+          // registryRowIds' declaration above) — a fresh GET never carries
+          // one of its own, so one is minted here, once, per row. randomId()
+          // rather than crypto.randomUUID(): the latter is secure-context-only
+          // and would throw on BombVault's documented plain-HTTP origin, and a
+          // throw HERE lands in this promise's .catch below — killing the whole
+          // Settings page, not just this card (see lib/uuid.ts).
+          setRegistryRowIds(res.settings.registryAuths.map(() => randomId()));
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           // Detect whether the domain schedules are already in sync (Containers ==
           // VMs == Flash, and not off), so the Schedules tab's sync checkbox
@@ -3095,6 +3190,16 @@ export function SettingsPage() {
   // Auth / Security helpers
   // ---------------------------------------------------------------------------
 
+  // GlimStone form-engine Task 9 (toasts): the SaveBar success/error pattern
+  // here used to hold "saved"/"error" in pwSaveState for a 3000ms inline-text
+  // flash. The two ASYNC completion notices (did setAuthPassword succeed)
+  // now go through a toast instead — but the pre-flight mismatch check below
+  // deliberately stays exactly as it was: it's a field-validation error the
+  // user is actively looking at (both password fields, mid-edit), not a
+  // "did the save finish" notice, so it keeps its own persistent inline
+  // surface rather than a 4-second toast that could vanish while they're
+  // still typing (design-language.md: a toast duplicating a surface that
+  // already exists and is meant to persist is the wrong tool here).
   async function handleSetPassword() {
     if (pwNew !== pwConfirm) {
       setPwSaveMsg(t("auth.passwordMismatch"));
@@ -3107,18 +3212,17 @@ export function SettingsPage() {
       const res = await setAuthPassword(pwNew);
       if (res.ok) {
         setAuthEnabled(res.enabled ?? false);
-        setPwSaveState("saved");
-        setPwSaveMsg(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"));
+        setPwSaveState("idle");
+        push(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"), "success");
         setPwNew("");
         setPwConfirm("");
-        setTimeout(() => { setPwSaveState("idle"); setPwSaveMsg(null); }, 3000);
       } else {
-        setPwSaveMsg(res.error ?? t("auth.saveError"));
-        setPwSaveState("error");
+        setPwSaveState("idle");
+        push(res.error ?? t("auth.saveError"), "fail");
       }
     } catch {
-      setPwSaveMsg(t("auth.saveError"));
-      setPwSaveState("error");
+      setPwSaveState("idle");
+      push(t("auth.saveError"), "fail");
     }
   }
 
@@ -3191,7 +3295,7 @@ export function SettingsPage() {
                 /* history unavailable — tab state still switches */
               }
             }}
-            className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            className={`rounded-control px-3 py-1.5 text-sm transition-colors ${
               tab === key
                 ? "bg-accent text-accentContrast"
                 : "text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover"
@@ -3225,7 +3329,7 @@ export function SettingsPage() {
               onChange={(e) =>
                 setSettings((prev) => (prev ? { ...prev, perItemSchedules: e.target.checked } : prev))
               }
-              className="mt-0.5 h-4 w-4 rounded-sm border-carbon-border bg-carbon-surface2 accent-(--accent)"
+              className="mt-0.5 h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
             />
             <span className="flex flex-col">
               <span className="text-sm text-carbon-text">{t("settings.perItemSchedules")}</span>
@@ -3247,7 +3351,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={syncSchedules}
               onChange={(e) => setSyncSchedules(e.target.checked)}
-              className="h-4 w-4 rounded-sm border-carbon-border bg-carbon-surface2 accent-(--accent)"
+              className="h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
             />
             <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
           </label>
@@ -3299,7 +3403,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
                 />
               </div>
             ))}
@@ -3316,7 +3420,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -3379,7 +3483,7 @@ export function SettingsPage() {
                       prev ? { ...prev, restartHealthTimeoutSec: n } : prev
                     );
                   }}
-                  className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
                 <span className="text-xs text-carbon-textMuted">
                   {t("settings.restartHealthTimeoutHint")}
@@ -3406,7 +3510,7 @@ export function SettingsPage() {
           {/* Restore-check schedule (schedulesChecks): the scheduled off-site
               append-only tamper test. Previously had no UI editor at all. */}
           <Card title={t("settings.schedulesChecks")}>
-            <div className="rounded-lg bg-carbon-surface2 p-4">
+            <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
                 label={t("settings.tamperTestSchedule")}
                 value={settings.tamperTestSchedule}
@@ -3417,7 +3521,7 @@ export function SettingsPage() {
               {/* #109: the scheduler stays inert without a qualifying domain — this
                   is the only place that told manilx why Sun 08:00 never ran. */}
               {!tamperScheduleActive && (
-                <div className="mt-3 rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                   {t("settings.tamperScheduleInactive")}
                 </div>
               )}
@@ -3604,7 +3708,7 @@ export function SettingsPage() {
       <Card title={t("settings.retentionTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
           {t("settings.retentionHint")}
-          <InfoBubble text={t("settings.retentionCombineInfo")} />
+          <InfoBubble tip={t("settings.retentionCombineInfo")} />
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -3616,7 +3720,7 @@ export function SettingsPage() {
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(label)}
-                <InfoBubble text={t(info)} />
+                <InfoBubble tip={t(info)} />
               </span>
               <input
                 type="number"
@@ -3626,7 +3730,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
@@ -3731,9 +3835,14 @@ export function SettingsPage() {
             {t("settings.registriesEmpty")}
           </p>
         )}
-        {settings.registryAuths.map((entry, i) => (
+        {settings.registryAuths.map((entry, i) => {
+          // Fallback only guards a transient/impossible index mismatch (see
+          // registryRowIds' declaration) — every mutation site below keeps
+          // the two arrays in lockstep, so this should never actually miss.
+          const rowId = registryRowIds[i] ?? `registry-row-fallback-${i}`;
+          return (
           <div
-            key={i}
+            key={rowId}
             className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end"
           >
             <label className="flex flex-col gap-1">
@@ -3757,7 +3866,7 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -3781,15 +3890,20 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">
                 {t("settings.registryToken")}
               </span>
-              <input
-                type="password"
+              <RevealInput
+                visible={!!registryTokenVisible[rowId]}
+                onToggleVisible={() =>
+                  setRegistryTokenVisible((p) => ({ ...p, [rowId]: !p[rowId] }))
+                }
+                showLabel={t("common.showValue")}
+                hideLabel={t("common.hideValue")}
                 value={entry.token}
                 autoComplete="new-password"
                 placeholder={
@@ -3810,12 +3924,13 @@ export function SettingsPage() {
                       : prev
                   );
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                wrapperClassName="w-full"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
               />
             </label>
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
                 setSettings((prev) =>
                   prev
                     ? {
@@ -3823,18 +3938,29 @@ export function SettingsPage() {
                         registryAuths: prev.registryAuths.filter((_, j) => j !== i),
                       }
                     : prev
-                )
-              }
-              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+                );
+                // Drop this row's id AND its reveal-state entry together, so
+                // neither an id nor a stray "revealed" flag survives to be
+                // picked up by whatever row slides into this index next.
+                setRegistryRowIds((prev) => prev.filter((_, j) => j !== i));
+                setRegistryTokenVisible((prev) => {
+                  if (!(rowId in prev)) return prev;
+                  const next = { ...prev };
+                  delete next[rowId];
+                  return next;
+                });
+              }}
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("settings.registryRemove")}
             </button>
           </div>
-        ))}
+          );
+        })}
         <div>
           <button
             type="button"
-            onClick={() =>
+            onClick={() => {
               setSettings((prev) => {
                 if (!prev) return prev;
                 const blank: RegistryAuthEntry = {
@@ -3844,9 +3970,13 @@ export function SettingsPage() {
                   tokenSet: false,
                 };
                 return { ...prev, registryAuths: [...prev.registryAuths, blank] };
-              })
-            }
-            className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              });
+              // A brand-new row always starts with its OWN fresh id — never
+              // reusing one, so it can't inherit a stale "revealed" flag left
+              // behind by a since-removed row that used to sit at this index.
+              setRegistryRowIds((prev) => [...prev, randomId()]);
+            }}
+            className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("settings.registryAdd")}
           </button>
@@ -3854,28 +3984,37 @@ export function SettingsPage() {
         <SaveBar
           state={registrySaveState}
           error={registrySaveError}
-          onSave={() =>
+          onSave={() => {
+            // Save drops untouched blank rows (below) — reproduce that SAME
+            // filter over registryRowIds so ids stay aligned with the rows
+            // that actually survive. Only committed once the save actually
+            // succeeds, matching save()'s own settings/savedSettings update
+            // (its `res.ok` branch) — an in-flight or failed save leaves
+            // registryRowIds exactly as it was.
+            const kept = settings.registryAuths
+              .map((a, idx) => ({ a, idx }))
+              .filter(
+                ({ a }) =>
+                  a.host.trim() !== "" ||
+                  a.username.trim() !== "" ||
+                  a.token.trim() !== ""
+              );
             void save(
               {
                 // Drop untouched blank rows; mark a freshly typed token as
                 // stored so its input shows the kept-placeholder after saving
                 // (mirrors the metricsTokenSet handling).
-                registryAuths: settings.registryAuths
-                  .filter(
-                    (a) =>
-                      a.host.trim() !== "" ||
-                      a.username.trim() !== "" ||
-                      a.token.trim() !== ""
-                  )
-                  .map((a) => ({
-                    ...a,
-                    tokenSet: a.tokenSet || a.token.trim() !== "",
-                  })),
+                registryAuths: kept.map(({ a }) => ({
+                  ...a,
+                  tokenSet: a.tokenSet || a.token.trim() !== "",
+                })),
               },
               setRegistrySaveState,
               setRegistrySaveError
-            )
-          }
+            ).then((ok) => {
+              if (ok) setRegistryRowIds(kept.map(({ idx }) => registryRowIds[idx]));
+            });
+          }}
           t={t}
         />
       </Card>
@@ -3905,7 +4044,7 @@ export function SettingsPage() {
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
             }}
-            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
           />
         </label>
         <SaveBar
@@ -3941,7 +4080,7 @@ export function SettingsPage() {
         />
         {settings.flashZipExportEnabled && (
           <>
-            <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("flash.zipExport.plaintextWarn")}
             </div>
             <FolderBrowser
@@ -3983,7 +4122,7 @@ export function SettingsPage() {
                     setRememberedKeep(n);
                     setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
                   }}
-                  className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
                 <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
@@ -4039,7 +4178,7 @@ export function SettingsPage() {
                 setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
               }
               placeholder={t("export.encrypt.recipientsPlaceholder")}
-              className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
             />
             <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
             {!settings.exportAgeRecipients.trim() && (
@@ -4100,7 +4239,7 @@ export function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
-                  className="rounded-lg bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
+                  className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
                 >
                   {wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
                 </button>
@@ -4123,7 +4262,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                   }
                   placeholder="rest:http://host:8000/repo"
-                  className="rounded-lg bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
@@ -4168,8 +4307,8 @@ export function SettingsPage() {
       <Card title={t("settings.retentionOffsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
           {t("settings.retentionOffsiteHint")}
-          <InfoBubble text={t("settings.retentionCombineInfo")} />
-          <InfoBubble text={t("settings.retentionOffsiteImmutableInfo")} />
+          <InfoBubble tip={t("settings.retentionCombineInfo")} />
+          <InfoBubble tip={t("settings.retentionOffsiteImmutableInfo")} />
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -4181,7 +4320,7 @@ export function SettingsPage() {
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(label)}
-                <InfoBubble text={t(info)} />
+                <InfoBubble tip={t(info)} />
               </span>
               <input
                 type="number"
@@ -4191,7 +4330,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
@@ -4240,7 +4379,7 @@ export function SettingsPage() {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                 }}
-                className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
@@ -4271,9 +4410,12 @@ export function SettingsPage() {
       <Advanced>
       <Card title={t("settings.metrics")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
+        {/* No description here: the Card's own hint paragraph above already
+            states the /metrics path — a hardcoded "GET /metrics" description
+            would just orphan itself once hideLabel hides the row's caption. */}
         <ToggleRow
+          hideLabel
           label={t("settings.metricsEnable")}
-          description="GET /metrics"
           checked={settings.metricsEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, metricsEnabled: v } : prev)
@@ -4284,8 +4426,8 @@ export function SettingsPage() {
             to keep" placeholder the cloud-credential secrets use. */}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.metricsToken")}</span>
-          <input
-            type="password"
+          <RevealInput
+            {...revealMetricsToken}
             value={settings.metricsToken}
             spellCheck={false}
             autoComplete="off"
@@ -4293,7 +4435,8 @@ export function SettingsPage() {
               setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
             }
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
-            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            wrapperClassName="w-full"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
         </label>
         <SaveBar
@@ -4365,7 +4508,7 @@ export function SettingsPage() {
             setSettings((prev) => prev ? { ...prev, encryptionEnabled: v } : prev)
           }
         />
-        <div className="rounded-lg bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+        <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
           {t("settings.encryptionWarning")}
         </div>
         {settings.encryptionEnabled && (
@@ -4382,7 +4525,7 @@ export function SettingsPage() {
                 setKitError(null);
                 void downloadRecoveryKit().then(setKitError);
               }}
-              className="self-start rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+              className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
             >
               {t("recovery.download")}
             </button>
@@ -4436,20 +4579,22 @@ export function SettingsPage() {
 
       {/* NOTIFICATIONS — Weekly digest: one summary message per week through
           the channels configured above. Schedule input mirrors the drills/
-          tamper cadence editors (CadenceBuilder + opacity gate). */}
+          tamper cadence editors (CadenceBuilder's own <fieldset disabled>
+          handles the dimming — no opacity gate on the wrapping container). */}
       {tab === "notifications" && (
         <Card title={t("settings.digestTitle")}>
           <p className="text-xs text-carbon-textMuted -mt-1">
             {t("settings.digestHint")}
           </p>
           <ToggleRow
+            hideLabel
             label={t("settings.digestToggle")}
             checked={settings.digestEnabled}
             onChange={(v) =>
               setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
             }
           />
-          <div className={`rounded-lg bg-carbon-surface2 p-4 ${settings.digestEnabled ? "" : "opacity-50"}`}>
+          <div className="rounded-card bg-carbon-surface2 p-4">
             <CadenceBuilder
               label={t("settings.schedule")}
               value={settings.digestSchedule}
@@ -4552,26 +4697,28 @@ export function SettingsPage() {
             <label className="text-xs text-carbon-textSub">
               {authEnabled ? t("auth.changePassword") : t("auth.setPassword")}
             </label>
-            <input
-              type="password"
+            <RevealInput
+              {...revealPwNew}
               value={pwNew}
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              wrapperClassName="w-full"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">
               {t("auth.confirmPassword")}
             </label>
-            <input
-              type="password"
+            <RevealInput
+              {...revealPwConfirm}
               value={pwConfirm}
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              wrapperClassName="w-full"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
           </div>
 
@@ -4580,7 +4727,7 @@ export function SettingsPage() {
             <button
               onClick={() => void handleSetPassword()}
               disabled={pwSaveState === "saving"}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {pwSaveState === "saving" ? (
                 <>
@@ -4594,9 +4741,9 @@ export function SettingsPage() {
                 t("settings.save")
               )}
             </button>
-            {pwSaveState === "saved" && pwSaveMsg && (
-              <span className="text-sm text-statusOk">{pwSaveMsg}</span>
-            )}
+            {/* Only the pre-flight mismatch validation error renders here now
+                (GlimStone form-engine Task 9) — the post-save success/failure
+                notice is a toast instead; see handleSetPassword's own comment. */}
             {pwSaveState === "error" && pwSaveMsg && (
               <span className="text-sm text-statusFail">{pwSaveMsg}</span>
             )}
@@ -4610,13 +4757,13 @@ export function SettingsPage() {
           <div className="pt-2 border-t border-carbon-border flex items-center gap-3">
             <button
               onClick={() => void handleLogout()}
-              className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("auth.logout")}
             </button>
             <button
               onClick={() => void handleLogoutAll()}
-              className="rounded-lg bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("settings.logoutAll")}
             </button>
@@ -4642,7 +4789,7 @@ export function SettingsPage() {
                   setAccentHex(e.target.value);
                   setAccent(e.target.value);
                 }}
-                className="h-8 w-14 cursor-pointer rounded-sm bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
                 title={t("settings.accentColor")}
               />
               {/* Preset swatches */}
@@ -4680,6 +4827,21 @@ export function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Quiet toasts (GlimStone form-engine Task 9) — the toast system's
+              severity-based quiet mode. Lives here, next to the other purely
+              client-side display preferences (accent), rather than as a new
+              standalone setting with nothing else around it, and rather than
+              being bolted onto NotifyConfig's server-side "on" field above
+              (that one gates external webhook/Matrix/email notifications —
+              a different axis entirely; muting a toast in THIS browser must
+              never silently change what a webhook receives elsewhere). */}
+          <ToggleRow
+            label={t("settings.quietToasts")}
+            description={t("settings.quietToastsHint")}
+            checked={quiet}
+            onChange={setQuiet}
+          />
         </div>
       </Card>
       )}

@@ -44,7 +44,7 @@ function glyphFor(status: LogStatus): string {
   }
 }
 
-// Reuses the exact hex values Dashboard's StatusChip uses for success/failed/
+// Reuses the exact hex values Dashboard's Badge uses for success/failed/
 // running so a log line reads as the same colour language as the rest of the
 // app (#66-style shared vocabulary), not a new palette.
 function colorFor(status: LogStatus): string {
@@ -216,12 +216,12 @@ export function ActivityLog({
           onChange={(e) => setFilterText(e.target.value)}
           placeholder={t("activityLog.filterPlaceholder")}
           aria-label={t("activityLog.filterPlaceholder")}
-          className="flex-1 min-w-[10rem] rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
         />
         <select
           value={filterDomain}
           onChange={(e) => setFilterDomain(e.target.value as LogFilterDomain)}
-          className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
         >
           <option value="all">{t("activityLog.filterAllDomains")}</option>
           <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -233,7 +233,7 @@ export function ActivityLog({
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as LogFilterKind)}
-          className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
         >
           <option value="all">{t("activityLog.filterAllTypes")}</option>
           <option value="backup">{t("activityLog.typeBackup")}</option>
@@ -255,7 +255,7 @@ export function ActivityLog({
             back to the owner. The ISO day is parsed as LOCAL midnight so the
             label always names the same calendar day the cell was. */}
         {dayFilter && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
+          <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
             {resolveName("activityLog.dayFilterChip", {
               date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
             })}
@@ -277,7 +277,7 @@ export function ActivityLog({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="max-h-96 overflow-y-auto rounded-sm bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
+          className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
         >
           {filteredLines.map((l) => (
             <div key={l.id} className="flex items-start gap-2">
@@ -295,7 +295,7 @@ export function ActivityLog({
           <button
             type="button"
             onClick={jumpToLatest}
-            className="absolute bottom-3 right-3 rounded-full bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
+            className="absolute bottom-3 right-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
           >
             ↓ {t("activityLog.jumpToLatest")}
           </button>

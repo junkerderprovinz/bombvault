@@ -11,10 +11,12 @@
 // ---------------------------------------------------------------------------
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { listRuns, ackRuns } from "../lib/api";
 import type { Run } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { formatTs, relativeTime } from "../lib/reltime";
+import { Badge } from "./Badge";
 
 // The domain <select> reuses ActivityLog's PLURAL vocabulary
 // (containers/vms/…), but a Run carries the SINGULAR domain tag
@@ -148,7 +150,18 @@ export function ErrorDetailPanel({
       .finally(() => setBusy(false));
   };
 
-  return (
+  // Portalled to <body> — this panel is rendered from inside Dashboard, which
+  // Layout wraps in .bv-page-enter, and that wrapper's animation leaves a
+  // computed `transform: matrix(1, 0, 0, 1, 0, 0)` behind. An identity matrix is
+  // still a transform, so it makes the wrapper a containing block for
+  // `position: fixed` descendants: measured inline, this backdrop covered
+  // 248,24 1113x1594 instead of the real 0,0 1400x1000 viewport — the sidebar
+  // stayed uncovered and clickable behind an "aria-modal" dialog, and the
+  // bottom 594px hung below the fold. Same fix, same reason, as InfoBubble.tsx
+  // and lib/useConfirm.tsx (the @keyframes bv-page-in comment in index.css tries
+  // to avoid this by ending at `transform: none`, but the computed value is the
+  // identity matrix regardless, so the portal is what actually cures it).
+  return createPortal(
     <div
       className="bv-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
@@ -171,7 +184,7 @@ export function ErrorDetailPanel({
               type="button"
               onClick={() => acknowledge({ all: true })}
               disabled={busy || groups.length === 0}
-              className="rounded-md bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
               {t("errorPanel.resolveAll")}
             </button>
@@ -180,7 +193,7 @@ export function ErrorDetailPanel({
               type="button"
               onClick={onClose}
               aria-label={t("common.close")}
-              className="shrink-0 rounded-sm p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
+              className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -197,12 +210,12 @@ export function ErrorDetailPanel({
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={t("errorPanel.filterPlaceholder")}
             aria-label={t("errorPanel.filterPlaceholder")}
-            className="flex-1 min-w-[10rem] rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
           />
           <select
             value={filterDomain}
             onChange={(e) => setFilterDomain(e.target.value)}
-            className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
           >
             <option value="all">{t("activityLog.filterAllDomains")}</option>
             <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -214,7 +227,7 @@ export function ErrorDetailPanel({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
           >
             <option value="all">{t("activityLog.filterAllTypes")}</option>
             <option value="backup">{t("activityLog.typeBackup")}</option>
@@ -244,18 +257,23 @@ export function ErrorDetailPanel({
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />
                       <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
                     </div>
+                    {/* Count badge + Resolve button share one stage (size="large")
+                        so their heights are pixel-identical regardless of the
+                        <span> vs <button> element underneath — see Badge.tsx's
+                        file header for why that isn't automatic. */}
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-full bg-statusFailBg px-2 py-0.5 text-xs font-medium tabular-nums text-statusFail">
+                      <Badge tone="fail" shape="pill" size="large" className="tabular-nums">
                         {countLabel(g.count)}
-                      </span>
-                      <button
-                        type="button"
+                      </Badge>
+                      <Badge
+                        as="button"
+                        tone="neutral"
+                        size="large"
                         onClick={() => acknowledge({ ids: g.ids })}
                         disabled={busy}
-                        className="rounded-md bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {t("errorPanel.resolve")}
-                      </button>
+                      </Badge>
                     </div>
                   </div>
                   <div className="flex flex-col gap-0.5 pl-4 text-xs text-carbon-textMuted">
@@ -272,6 +290,7 @@ export function ErrorDetailPanel({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
