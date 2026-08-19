@@ -74,6 +74,19 @@ type Mode struct {
 	// rclone.conf, and for a non-whitelisted value. Not a secret (a class name), so
 	// it may travel in argv unlike the credentials in Env.
 	StorageClass string
+	// Limits caps restic's transfer bandwidth (KiB/s each way) for a BACKUP run
+	// against this repo — the primary-repo counterpart of CopyArgs' separate `lim
+	// Limits` parameter. It travels on Mode (rather than as its own BackupArgs
+	// parameter, CopyArgs' shape) because Mode is already threaded through every
+	// Backup/BackupStdin call site via the per-domain adapter (internal/api's
+	// resticAdapter/resticZvolAdapter); adding a new positional parameter would
+	// mean touching the backup.Restic interface and every Domain struct in
+	// internal/backup for a knob that is zero (unlimited, the default) unless a
+	// domain's PRIMARY repo is both remote and has bandwidth limits configured
+	// (see internal/api's primaryRemoteTarget). A zero Limits is a no-op, so every
+	// local-primary and unconfigured-remote-primary backup is byte-identical to
+	// before this field existed.
+	Limits Limits
 }
 
 // AllowedStorageClasses is the whitelist of S3 storage classes BombVault will emit
@@ -289,6 +302,7 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -345,6 +359,7 @@ func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)

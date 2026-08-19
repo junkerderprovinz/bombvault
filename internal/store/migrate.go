@@ -947,6 +947,25 @@ CREATE TABLE IF NOT EXISTS mesh_offers (
   sort_order        INTEGER NOT NULL DEFAULT 0
 );`,
 	},
+	{
+		// v8.1.0, issue #152: "use S3/restic (etc) as primary repo". A domain's
+		// primary Backup Path (Settings.<Domain>Path) already accepts a raw restic
+		// remote URL (s3:/rest:/sftp:/b2:/rclone:...) and restic backs up to it
+		// directly — nothing about resolveRepo changes. What was missing is a place
+		// to store the SAFETY settings (bandwidth limits, append-only/tamper-test
+		// protection, growth-budget alarm) off-site destinations already get, for
+		// when a domain's primary happens to be remote.
+		//
+		// Rather than a parallel table, this generalizes offsite_targets itself: a
+		// new role column distinguishes a replication DESTINATION (role='offsite',
+		// every existing row backfilled to it — the only role that existed before
+		// this migration) from a domain's own remote-PRIMARY safety config
+		// (role='primary', at most one row per domain, never a replication target).
+		// See store.OffsiteTarget.Role's doc comment for the full contract and
+		// internal/api's primaryRemoteTarget for how it is consumed.
+		version: 88, name: "offsite_targets_role",
+		sql: `ALTER TABLE offsite_targets ADD COLUMN role TEXT NOT NULL DEFAULT 'offsite';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

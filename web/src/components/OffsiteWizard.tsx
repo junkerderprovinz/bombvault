@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
-import type { Settings, DeploySnippetData } from "../lib/api";
-import { deploySnippet, tamperTest, testOffsite, getCloud, setCloud } from "../lib/api";
+import type { Settings, DeploySnippetData, PrimaryRemoteConfig, PrimaryRemoteDomain } from "../lib/api";
+import {
+  deploySnippet,
+  tamperTest,
+  testOffsite,
+  getCloud,
+  setCloud,
+  getPrimaryRemote,
+  setPrimaryRemote,
+  testPrimaryRemote,
+  primaryRemoteTamperTest,
+} from "../lib/api";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "./RevealInput";
 import { useReveal } from "../lib/useReveal";
@@ -17,11 +27,15 @@ import { useReveal } from "../lib/useReveal";
 // append-only tamper verdict, and a retention-strategy chooser.
 // ---------------------------------------------------------------------------
 
-type Domain = "containers" | "vms" | "flash" | "files";
+// "config" is a valid domain for REMOTE-PRIMARY mode (primary=true) below —
+// off-site mode (primary=false, the original behaviour) never receives it:
+// Settings.tsx's off-site tab only ever lists containers/vms/flash/files.
+type OffsiteDomain = "containers" | "vms" | "flash" | "files";
+type Domain = OffsiteDomain | "config";
 type T = ReturnType<typeof useT>["t"];
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-// Per-domain Settings keys — the wizard binds to the exact same fields the
+// Per-domain Settings keys — off-site MODE binds to the exact same fields the
 // off-site card and immutable flags already persist (no parallel state).
 const REPO_KEY = {
   containers: "containersOffsite",
@@ -37,6 +51,16 @@ const IMM_KEY = {
   flash: "flashOffsiteImmutable",
   files: "filesOffsiteImmutable",
 } as const;
+// Every domain's backup PATH field — used only by remote-primary mode to read
+// the LIVE path for display + backend inference; never written here (editing
+// a domain's path happens on the Storage tab's FolderBrowser field itself).
+const PATH_KEY: Record<Domain, keyof Settings> = {
+  containers: "containersPath",
+  vms: "vmsPath",
+  flash: "flashPath",
+  config: "configPath",
+  files: "filesPath",
+};
 
 // "none" = empty URL (neutral prompt — no REST snippet, no caveat); "path" = a
 // plain folder under the Host Data mount (a mounted NAS share, say — the option
@@ -96,6 +120,7 @@ export function OffsiteWizard({
   setSettings,
   save,
   t,
+  primary = false,
 }: {
   domain: Domain;
   settings: Settings;
@@ -106,12 +131,75 @@ export function OffsiteWizard({
     setError: (e: string | null) => void
   ) => Promise<boolean>;
   t: T;
+  /**
+   * false (default) — the original off-site DESTINATION wizard: repo,
+   * immutable flag and growth budget bind straight to the domain's off-site
+   * Settings columns, exactly as before this prop existed.
+   * true — remote-PRIMARY safety settings (issue #152): the domain's own
+   * backup path (Settings.*Path, edited on the Storage tab) is itself a
+   * restic remote, and this reuses the SAME dialog for its bandwidth limits/
+   * append-only/growth-budget instead of duplicating the UI. The repo-URL
+   * step becomes read-only (editing happens on the path field itself), the
+   * retention-strategy chooser (far-side prune / maintenance window — both
+   * assume a SEPARATE off-site copy standing behind the local one) is
+   * replaced by a plain bandwidth+budget form, and repo/immutable/budget are
+   * backed by the primary-remote-target API instead of Settings.
+   */
+  primary?: boolean;
 }) {
-  const repoKey = REPO_KEY[domain];
-  const immKey = IMM_KEY[domain];
+  // Off-site mode never receives "config" (see the Domain/OffsiteDomain
+  // comment above) — this narrows once so REPO_KEY/IMM_KEY lookups below
+  // don't need a repeated undefined-guard. Never read in primary mode.
+  const offsiteDomain = domain as OffsiteDomain;
+  const repoKey = REPO_KEY[offsiteDomain];
+  const immKey = IMM_KEY[offsiteDomain];
 
-  const repoURL = settings[repoKey];
-  const immutable = settings[immKey];
+  // Remote-primary mode: load the saved safety settings once (mirrors the
+  // cloud-creds self-load below). primaryLoaded gates saves exactly like
+  // cloudLoaded does and for the same reason — never PUT a config that was
+  // not actually read from the server first (a blank round-trip would wipe
+  // the stored limits/budget).
+  const [primaryConfig, setPrimaryConfig] = useState<PrimaryRemoteConfig | null>(null);
+  const [primaryLoaded, setPrimaryLoaded] = useState(false);
+  const [primaryLoadErr, setPrimaryLoadErr] = useState<string | null>(null);
+  const [pLimitUpload, setPLimitUpload] = useState(0);
+  const [pLimitDownload, setPLimitDownload] = useState(0);
+  const [pBudget, setPBudget] = useState(0);
+
+  useEffect(() => {
+    if (!primary) return;
+    let active = true;
+    getPrimaryRemote(domain as PrimaryRemoteDomain)
+      .then((r) => {
+        if (!active) return;
+        if (!r.ok || !r.config) {
+          setPrimaryLoadErr(t("offsite.wizard.credLoadError"));
+          return;
+        }
+        setPrimaryConfig(r.config);
+        setPLimitUpload(r.config.limitUpload);
+        setPLimitDownload(r.config.limitDownload);
+        setPBudget(r.config.growthBudgetGb);
+        setPrimaryLoaded(true);
+      })
+      .catch(() => {
+        if (active) setPrimaryLoadErr(t("offsite.wizard.credLoadError"));
+      });
+    return () => {
+      active = false;
+    };
+    // domain/primary are stable for a mounted dialog; t is stable for a given
+    // language — the load runs once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primary, domain]);
+
+  // The LIVE backup path (primary mode, read-only here) vs. the persisted
+  // off-site repo (off-site mode, editable in Step 3 below) — the shared
+  // "repoURL" every step below reasons about (backend inference, caveats,
+  // the connection test, the tamper-test's REST-only gate).
+  const livePath = String(settings[PATH_KEY[domain]] ?? "");
+  const repoURL = primary ? livePath : settings[repoKey];
+  const immutable = primary ? (primaryConfig?.immutable ?? false) : settings[immKey];
   const [backend, setBackend] = useState<Backend>(() => inferBackend(repoURL));
 
   // Step 2 — rest-server deploy snippet (generated on demand, never persisted).
@@ -152,6 +240,7 @@ export function OffsiteWizard({
     settings.offsiteGrowthBudgetGB > 0 ? "grow" : "farside"
   );
   const [budgetState, setBudgetState] = useState<SaveState>("idle");
+  const [budgetErr, setBudgetErr] = useState<string | null>(null);
 
   // Load the stored cloud creds once (mirrors the Cloud card) so a save can keep
   // the S3 fields + treat a blank REST password as "keep the stored one".
@@ -194,7 +283,9 @@ export function OffsiteWizard({
     setSnipState("busy");
     setSnipErr(null);
     try {
-      const r = await deploySnippet(domain);
+      // Never called for domain "config" — deploySnippet's backend route does
+      // not accept it (see the Step 2 render gate below), so this cast is safe.
+      const r = await deploySnippet(domain as OffsiteDomain);
       if (r.ok && r.snippet) {
         setSnippet(r.snippet);
         setSnipState("idle");
@@ -238,7 +329,7 @@ export function OffsiteWizard({
     setTestState("busy");
     setTestErr(null);
     try {
-      const r = await testOffsite(domain);
+      const r = primary ? await testPrimaryRemote(domain as PrimaryRemoteDomain) : await testOffsite(domain as OffsiteDomain);
       if (r.ok && r.reachable && r.initialized) setTestState("ok");
       else if (r.ok && r.reachable) setTestState("uninit");
       else {
@@ -255,7 +346,9 @@ export function OffsiteWizard({
     setTamperState("busy");
     setTamperErr(null);
     try {
-      const r = await tamperTest(domain);
+      const r = primary
+        ? await primaryRemoteTamperTest(domain as PrimaryRemoteDomain)
+        : await tamperTest(domain as OffsiteDomain);
       if (r.ok) {
         setVerdict({ testable: !!r.testable, protected: !!r.protected, detail: r.detail ?? "" });
         setTamperState("done");
@@ -269,11 +362,53 @@ export function OffsiteWizard({
     }
   }
 
+  // savePrimarySafety PUTs the FULL remote-primary safety config (the API has
+  // no partial-patch form, unlike the off-site path's Settings-column save) —
+  // used by both toggleImmutable (immutable + the CURRENT limits/budget) and
+  // the bandwidth/budget form's own Save button (limits/budget + the CURRENT
+  // immutable flag), so neither one clobbers the field the other owns.
+  async function savePrimarySafety(patch: { immutable?: boolean; limitUpload?: number; limitDownload?: number; growthBudgetGb?: number }) {
+    return setPrimaryRemote(domain as PrimaryRemoteDomain, {
+      immutable: patch.immutable ?? immutable,
+      limitUpload: patch.limitUpload ?? pLimitUpload,
+      limitDownload: patch.limitDownload ?? pLimitDownload,
+      growthBudgetGb: patch.growthBudgetGb ?? pBudget,
+    });
+  }
+
   // Toggling immutable ON persists the flag AND — only after a CONFIRMED save —
   // proves it with a tamper test (the verdict is shown verbatim). A failed save
   // rolls the optimistic flip back and surfaces the error, so a green "protected"
   // verdict can never appear while the server flag actually stayed OFF.
   async function toggleImmutable(next: boolean) {
+    if (primary) {
+      if (!primaryLoaded) return; // never save before the config was actually read (mirrors cloudLoaded)
+      setPrimaryConfig((prev) => (prev ? { ...prev, immutable: next } : prev));
+      setImmState("saving");
+      setImmErr(null);
+      try {
+        const r = await savePrimarySafety({ immutable: next });
+        if (!r.ok) {
+          setPrimaryConfig((prev) => (prev ? { ...prev, immutable: !next } : prev));
+          setImmState("error");
+          setImmErr(r.error ?? t("settings.error"));
+          return;
+        }
+        setImmState("saved");
+        setTimeout(() => setImmState("idle"), 3000);
+      } catch (e) {
+        setPrimaryConfig((prev) => (prev ? { ...prev, immutable: !next } : prev));
+        setImmState("error");
+        setImmErr(e instanceof Error ? e.message : t("settings.error"));
+        return;
+      }
+      if (next) void runTamper();
+      else {
+        setVerdict(null);
+        setTamperState("idle");
+      }
+      return;
+    }
     setSettings((prev) => (prev ? { ...prev, [immKey]: next } : prev));
     const ok = await save({ [immKey]: next } as Partial<Settings>, setImmState, setImmErr);
     if (!ok) {
@@ -363,8 +498,11 @@ export function OffsiteWizard({
         )}
       </div>
 
-      {/* Step 2 — rest-server deploy snippet */}
-      {backend === "rest" && (
+      {/* Step 2 — rest-server deploy snippet. Not offered for "config" — the
+          backend's deploy-snippet route only covers containers/vms/flash/files
+          (only reachable here in remote-primary mode; off-site mode never
+          receives domain="config" to begin with). */}
+      {backend === "rest" && domain !== "config" && (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
           <span className={stepTitle}>{t("offsite.wizard.step2")}</span>
           <p className="text-xs text-carbon-textMuted">{t("offsite.wizard.step2Hint")}</p>
@@ -414,37 +552,54 @@ export function OffsiteWizard({
       {/* Step 3 — repo URL + schedule + credentials + connection test */}
       <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
         <span className={stepTitle}>{t("offsite.wizard.step3")}</span>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
-          <input
-            value={repoURL}
-            spellCheck={false}
-            onChange={(e) => patchRepo(e.target.value)}
-            placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-            className={inputCls}
-          />
-          <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
-        </label>
-        {/* The off-site schedule is edited in Settings › Schedules now; the wizard
-            saves only the repo URL so it can never clobber that cadence. */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() =>
-              void save(
-                { [repoKey]: settings[repoKey] } as Partial<Settings>,
-                setRepoState,
-                setRepoErr
-              )
-            }
-            disabled={repoState === "saving"}
-            className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
-          >
-            {repoState === "saving" ? t("common.saving") : t("offsite.wizard.saveRepo")}
-          </button>
-          {repoState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-          {repoState === "error" && repoErr && <span className="text-xs text-statusFail">{repoErr}</span>}
-        </div>
+        {primary ? (
+          // Remote-primary mode: the path is edited on the Storage tab's field
+          // itself (switching it back to Local there is how you leave this
+          // mode) — shown here read-only so Steps 1/4-6 below still reason
+          // about the right URL.
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
+            <p className="rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 break-all">
+              {repoURL || "—"}
+            </p>
+            <span className="text-xs text-carbon-textMuted">{t("settings.primaryRemote.hint")}</span>
+            {primaryLoadErr && <span className="text-xs text-statusFail">{primaryLoadErr}</span>}
+          </div>
+        ) : (
+          <>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
+              <input
+                value={repoURL}
+                spellCheck={false}
+                onChange={(e) => patchRepo(e.target.value)}
+                placeholder={t("offsite.wizard.repoUrlPlaceholder")}
+                className={inputCls}
+              />
+              <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+            </label>
+            {/* The off-site schedule is edited in Settings › Schedules now; the wizard
+                saves only the repo URL so it can never clobber that cadence. */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  void save(
+                    { [repoKey]: settings[repoKey] } as Partial<Settings>,
+                    setRepoState,
+                    setRepoErr
+                  )
+                }
+                disabled={repoState === "saving"}
+                className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+              >
+                {repoState === "saving" ? t("common.saving") : t("offsite.wizard.saveRepo")}
+              </button>
+              {repoState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+              {repoState === "error" && repoErr && <span className="text-xs text-statusFail">{repoErr}</span>}
+            </div>
+          </>
+        )}
 
         {/* REST credentials — reuse the cloud-credential endpoints. Only the REST
             backend needs a username/password; rclone/s3 carry their own auth in
@@ -576,79 +731,151 @@ export function OffsiteWizard({
         )}
       </div>
 
-      {/* Step 6 — retention strategy chooser */}
-      <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
-        <span className={stepTitle}>{t("offsite.retention.title")}</span>
-        <div className="flex flex-col gap-1.5">
-          {([
-            ["farside", "offsite.retention.farside"],
-            ["window", "offsite.retention.window"],
-            ["grow", "offsite.retention.grow"],
-          ] as const).map(([val, label]) => (
-            <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer">
-              <input
-                type="radio"
-                name={`retention-${domain}`}
-                checked={retention === val}
-                onChange={() => setRetention(val)}
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t(label)}
-            </label>
-          ))}
-        </div>
-
-        {retention === "farside" && (
-          <div className="flex flex-col gap-1">
-            <p className="text-xs text-carbon-textMuted">{t("offsite.retention.farsideHint")}</p>
-            <CopyBlock text={cronHint} t={t} />
-          </div>
-        )}
-        {retention === "window" && urlBackend === "rest" && (
-          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowHint")}</p>
-        )}
-        {/* "window" (a temporary second rest-server) is REST-specific — for any
-            other backend the instructions above don't apply, so say so instead
-            of silently showing nothing for a selected option (#131). */}
-        {retention === "window" && urlBackend !== "rest" && (
-          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowRestOnly")}</p>
-        )}
-        {retention === "grow" && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.growHint")}</p>
-            <label className="flex flex-col gap-1 max-w-48">
-              <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
+      {/* Step 6 — remote-primary mode: bandwidth limits + growth-budget alarm
+          (there is no separate off-site copy to prune independently, so the
+          far-side-prune / maintenance-window strategies below don't apply);
+          off-site mode: the original retention-strategy chooser, unchanged. */}
+      {primary ? (
+        <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
+          <span className={stepTitle}>{t("settings.offsiteLimits")}</span>
+          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.limitHint")}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("settings.limitUpload")}</span>
               <input
                 type="number"
                 min={0}
-                value={settings.offsiteGrowthBudgetGB}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
-                }}
+                value={pLimitUpload}
+                onChange={(e) => setPLimitUpload(Math.max(0, parseInt(e.target.value, 10) || 0))}
                 className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
               />
             </label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  void save(
-                    { offsiteGrowthBudgetGB: settings.offsiteGrowthBudgetGB },
-                    setBudgetState,
-                    () => undefined
-                  )
-                }
-                disabled={budgetState === "saving"}
-                className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
-              >
-                {budgetState === "saving" ? t("common.saving") : t("offsite.retention.saveBudget")}
-              </button>
-              {budgetState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-            </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("settings.limitDownload")}</span>
+              <input
+                type="number"
+                min={0}
+                value={pLimitDownload}
+                onChange={(e) => setPLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+              />
+            </label>
           </div>
-        )}
-      </div>
+          <label className="flex flex-col gap-1 max-w-48">
+            <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
+            <input
+              type="number"
+              min={0}
+              value={pBudget}
+              onChange={(e) => setPBudget(Math.max(0, parseInt(e.target.value, 10) || 0))}
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+            />
+          </label>
+          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.primaryRemote.budgetHint")}</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                void (async () => {
+                  setBudgetState("saving");
+                  try {
+                    const r = await savePrimarySafety({ limitUpload: pLimitUpload, limitDownload: pLimitDownload, growthBudgetGb: pBudget });
+                    if (r.ok) {
+                      setBudgetState("saved");
+                      setTimeout(() => setBudgetState("idle"), 3000);
+                    } else {
+                      setBudgetState("error");
+                      setBudgetErr(r.error ?? t("settings.error"));
+                    }
+                  } catch (e) {
+                    setBudgetState("error");
+                    setBudgetErr(e instanceof Error ? e.message : t("settings.error"));
+                  }
+                })()
+              }
+              disabled={budgetState === "saving" || !primaryLoaded}
+              className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+            >
+              {budgetState === "saving" ? t("common.saving") : t("settings.save")}
+            </button>
+            {budgetState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+            {budgetState === "error" && budgetErr && <span className="text-xs text-statusFail">{budgetErr}</span>}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
+          <span className={stepTitle}>{t("offsite.retention.title")}</span>
+          <div className="flex flex-col gap-1.5">
+            {([
+              ["farside", "offsite.retention.farside"],
+              ["window", "offsite.retention.window"],
+              ["grow", "offsite.retention.grow"],
+            ] as const).map(([val, label]) => (
+              <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer">
+                <input
+                  type="radio"
+                  name={`retention-${domain}`}
+                  checked={retention === val}
+                  onChange={() => setRetention(val)}
+                  style={{ accentColor: "var(--accent)" }}
+                />
+                {t(label)}
+              </label>
+            ))}
+          </div>
+
+          {retention === "farside" && (
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-carbon-textMuted">{t("offsite.retention.farsideHint")}</p>
+              <CopyBlock text={cronHint} t={t} />
+            </div>
+          )}
+          {retention === "window" && urlBackend === "rest" && (
+            <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowHint")}</p>
+          )}
+          {/* "window" (a temporary second rest-server) is REST-specific — for any
+              other backend the instructions above don't apply, so say so instead
+              of silently showing nothing for a selected option (#131). */}
+          {retention === "window" && urlBackend !== "rest" && (
+            <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowRestOnly")}</p>
+          )}
+          {retention === "grow" && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.growHint")}</p>
+              <label className="flex flex-col gap-1 max-w-48">
+                <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={settings.offsiteGrowthBudgetGB}
+                  onChange={(e) => {
+                    const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                    setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
+                  }}
+                  className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+                />
+              </label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    void save(
+                      { offsiteGrowthBudgetGB: settings.offsiteGrowthBudgetGB },
+                      setBudgetState,
+                      () => undefined
+                    )
+                  }
+                  disabled={budgetState === "saving"}
+                  className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+                >
+                  {budgetState === "saving" ? t("common.saving") : t("offsite.retention.saveBudget")}
+                </button>
+                {budgetState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

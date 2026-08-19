@@ -4,7 +4,7 @@ Local backups protect you from a lost container or a bad update. Off-site replic
 
 ## Off-site replication
 
-Keep the fast local backup and add one or more off-site replicas. Set a repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. The local repo stays primary.
+Keep the fast local backup and add one or more off-site replicas. Set a repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. In this shape the local repo stays primary and the off-site repo is a replica — but a domain's primary repo does not have to be local at all; see [Remote primary repositories](#remote-primary-repositories) below for backing up straight to S3/rest-server/etc. instead of replicating to it.
 
 - **Multiple off-site targets per domain.** Each domain (containers, VMs, flash, config and file sets) can replicate to several off-site destinations at once, not just one, so you can keep, for example, a rest-server on a friend's box and an S3 bucket in parallel. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget. An existing single off-site setup is carried over untouched as the first target, and every target of a domain replicates on that domain's off-site schedule.
 - **Per-domain off-site schedule** (edited alongside every other schedule on Settings, Schedules): leave it blank to replicate after every local backup, or set a cadence (for example `weekly Sun 03:00`) to ship off-site less often than you back up locally. A **Replicate now** button covers on-demand runs.
@@ -14,6 +14,24 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 
 !!! note "Restore straight from off-site"
     Every backup browser has a **Local / Off-site** switch, so if a local repo is lost or corrupt you can list and restore directly from the off-site replica. Delete is per-source: removing a backup only affects the copy you are viewing.
+
+## Remote primary repositories {#remote-primary-repositories}
+
+A domain's Backup Path (Settings, Paths & Storage) is not limited to a local folder — point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
+
+Each of the five path fields (Containers, VMs, Flash, Config, Files) has an inline **Local / Remote** switch right next to it:
+
+- **Local** shows the familiar folder browser.
+- **Remote** swaps it for a plain URL field, plus a button that opens the same connection-test/credentials dialog off-site destinations use, configured for this primary instead. From there you get:
+    - **A connection test** against the live path, before you rely on it.
+    - **Bandwidth limits** (upload/download) so a scheduled backup to a remote primary does not saturate your WAN — the same `--limit-upload`/`--limit-download` restic flags off-site replication uses, applied to the backup itself.
+    - **Append-only (immutable) protection**, verified with the same active tamper test (a real DELETE probe against the far side) off-site destinations get. With it on, BombVault refuses to prune the repo itself — since there is no separate local copy behind it, the credentials on this box must not be able to delete the only copy of the backup.
+    - **A growth-budget alarm**, sampled from the same repo-size trend the Storage card already tracks.
+
+None of this is required: a hand-typed remote path with no saved safety settings backs up exactly as it always has (unlimited bandwidth, prunable, no budget alarm) — the safety dialog is there for when you want the same protections an off-site copy gets, without needing a separate off-site destination just to get them.
+
+!!! note "Cloud/REST credentials are shared"
+    A remote primary authenticates with the same S3/REST credentials configured under Settings, Off-site, Cloud credentials — there is no separate credential store for primary repos.
 
 ## Immutable (append-only) off-site
 

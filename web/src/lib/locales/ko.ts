@@ -725,6 +725,12 @@ const ko: Partial<Translations> = {
   "stack.memberStarted": "시작됨",
   "settings.restoreFolder": "기본 복원 폴더",
   "settings.restoreFolderHint": "‘폴더로 복원’이 기본적으로 스냅샷을 추출하는 위치입니다.",
+  "settings.configPath": "셀프 백업 경로",
+  "settings.pathMode.local": "로컬",
+  "settings.pathMode.remote": "원격",
+  "settings.primaryRemote.title": "원격 기본 저장소 안전 설정",
+  "settings.primaryRemote.hint": "이 백업 경로는 원격 restic 저장소입니다 — 복제본이 아니라 기본 사본입니다. 오프사이트 사본과 동일한 보호 기능인 대역폭 제한, 추가 전용 보호, 증가 예산 알람을 여기서 설정하세요.",
+  "settings.primaryRemote.budgetHint": "이 저장소가 바이트 예산을 초과하면 경고합니다(0 = 꺼짐).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "연결 테스트",

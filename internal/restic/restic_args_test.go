@@ -331,6 +331,52 @@ func TestBackupArgsContainerExcludes(t *testing.T) {
 	}
 }
 
+// TestBackupArgsLimits pins the flag shape a remote PRIMARY backup carries when
+// Mode.Limits is set (a domain whose backup path is itself a restic remote —
+// s3:/rest:/sftp:/… — with bandwidth limits configured via the primary-remote
+// safety settings, internal/api's primaryRemoteTarget). The global
+// --limit-upload/--limit-download flags land in the SAME slot CopyArgs already
+// uses (right after --retry-lock, before the subcommand — restic requires
+// global flags before the verb), so the two builders share flag placement.
+func TestBackupArgsLimits(t *testing.T) {
+	t.Run("both limits set prepend global flags before the subcommand", func(t *testing.T) {
+		got := BackupArgs("s3:bucket/repo", []string{"/src"}, []string{"container:plex"}, Mode{Encrypted: true, Limits: Limits{UploadKBps: 1024, DownloadKBps: 512}})
+		want := []string{"-r", "s3:bucket/repo", "--retry-lock", "5m", "--limit-upload", "1024", "--limit-download", "512",
+			"backup", "--json", "--host", "bombvault", "--tag", "container:plex", "--", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("zero Limits (local primary, or a remote primary with no limits configured) omits the flags — byte-identical to before Limits existed", func(t *testing.T) {
+		got := BackupArgs("/repo", []string{"/src"}, []string{"container:plex"}, Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex", "--", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("upload only", func(t *testing.T) {
+		got := BackupArgs("s3:bucket/repo", []string{"/src"}, []string{"flash"}, Mode{Encrypted: true, Limits: Limits{UploadKBps: 2048}})
+		want := []string{"-r", "s3:bucket/repo", "--retry-lock", "5m", "--limit-upload", "2048",
+			"backup", "--json", "--host", "bombvault", "--tag", "flash", "--", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+// TestBackupStdinArgsLimits mirrors TestBackupArgsLimits for the stdin-backup
+// builder (the zvol VM-disk path), so a remote primary's bandwidth limits apply
+// there too — a VM domain backed up to a remote primary is not exempt.
+func TestBackupStdinArgsLimits(t *testing.T) {
+	got := BackupStdinArgs("rest:http://host:8000/repo", "/vm-disks/tank/vm-disk1@snap", []string{"vm:truenasvm"}, Mode{Encrypted: true, Limits: Limits{UploadKBps: 500, DownloadKBps: 500}})
+	want := []string{"-r", "rest:http://host:8000/repo", "--retry-lock", "5m", "--limit-upload", "500", "--limit-download", "500",
+		"backup", "--json", "--host", "bombvault", "--tag", "vm:truenasvm",
+		"--stdin", "--stdin-filename", "/vm-disks/tank/vm-disk1@snap"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
