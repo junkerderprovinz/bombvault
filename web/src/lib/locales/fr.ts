@@ -188,6 +188,8 @@ const fr: Partial<Translations> = {
   "settings.appearance": "Apparence",
   "settings.accentColor": "Couleur d'accentuation",
   "settings.accentPresets": "Préréglages",
+  "settings.quietToasts": "Notifications discrètes",
+  "settings.quietToastsHint": "N'afficher les notifications que pour les échecs. Les confirmations habituelles d'enregistrement et de copie restent silencieuses.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Conteneurs",
@@ -463,6 +465,7 @@ const fr: Partial<Translations> = {
   "common.showValue": "Afficher la valeur",
   "common.hideValue": "Masquer la valeur",
   "confirmDialog.title": "Confirmer",
+  "toast.dismiss": "Ignorer la notification",
   "common.confirm": "Confirmer",
   "common.cancel": "Annuler",
   "common.close": "Fermer",

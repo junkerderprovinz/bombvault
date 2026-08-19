@@ -568,6 +568,24 @@ body {
   outline-offset: -1px;
 }
 
+/* Toast chrome (GlimStone form-engine #9, design-language.md "Toasts") —
+   the class NAME and its entrance-animation binding are copied verbatim
+   from reference/tokens.css's `.glim-toast`/`glim-toast-in` (see the
+   @keyframes + @media bindings further down, matching `.glim-fade`'s own
+   established split). The reference deliberately has no visual chrome of
+   its own for this class ("the other half is behavioral and framework-
+   specific, so it's spec here rather than a copyable file") — layout
+   (flex/gap/padding/radius/surface colour/pointer-events) is Tailwind
+   utility classes on the element itself (components/Toast.tsx, using
+   `rounded-card`/`bg-carbon-surface` — the same tokens `.glim-bubble`
+   above uses). The one thing Tailwind can't express is this box-shadow:
+   --elevation/--hairline aren't mapped into Tailwind's shadow scale (see
+   `.glim-bubble`'s identical raw box-shadow above), so `.glim-toast` still
+   earns its own rule just for that. */
+.glim-toast {
+  box-shadow: var(--elevation), var(--hairline);
+}
+
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
    variant (dark mark on the light surface, light mark on the dark surface), so the
    logo always reads on --carbon-sidebar without any frame, glow or tile. */
@@ -667,6 +685,15 @@ body {
 @keyframes glim-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* Toast entrance (GlimStone form-engine #9) — reference/tokens.css's
+   glim-toast-in, verbatim. The reduced-motion fallback reuses glim-fade-in
+   above rather than defining a second identical opacity-only keyframe (see
+   the @media (prefers-reduced-motion: reduce) block further down). */
+@keyframes glim-toast-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* What's-new modal (#48) — gentle enter; reduced-motion users get just a fade. */
@@ -782,6 +809,10 @@ body {
   /* Info bubble entrance (GlimStone form-engine #3). */
   .glim-fade { animation: glim-fade-in 110ms ease both; }
 
+  /* Toast entrance (GlimStone form-engine #9) — slides in from the trailing
+     edge (translateX) + fades. */
+  .glim-toast { animation: glim-toast-in 220ms cubic-bezier(.2, .6, .2, 1) both; }
+
   /* What's-new modal enter (#48). */
   .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }
   .bv-modal-card { animation: bv-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
@@ -799,4 +830,10 @@ body {
   /* Reduced motion: the modal only fades — no slide or scale. */
   .bv-modal-backdrop { animation: bv-fade-in 150ms ease both; }
   .bv-modal-card { animation: bv-fade-in 150ms ease both; }
+
+  /* Reduced motion: the toast drops its translateX slide and just fades in
+     (reusing glim-fade-in, per reference/tokens.css's own reduced-motion
+     pairing) — it still needs to arrive legibly, just without the motion
+     component (design-language.md's motion engine section). */
+  .glim-toast { animation: glim-fade-in 160ms ease both; }
 }

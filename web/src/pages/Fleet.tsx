@@ -36,20 +36,26 @@ import { IconFleet } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
+import { copyText } from "../lib/clipboard";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
 // CopyBlock mirrors OffsiteWizard's copy pattern (module-private there too): a
-// monospace <pre> with a copy button that flips to "copied" for a moment.
+// monospace <pre> with a copy button. GlimStone form-engine Task 9 (toasts):
+// this was one of the ad-hoc 2000ms-inline-text-swap "copied" patterns the
+// audit flagged as a natural toast candidate — the "Copied" feedback now
+// surfaces as a routine (quiet-mode-suppressible) toast instead of the
+// button's own label flipping for two seconds. While here: switched the raw
+// `navigator.clipboard.writeText` call to this repo's shared `copyText()`
+// helper (lib/clipboard.ts), which already exists specifically because a
+// direct call silently does nothing on a non-secure (plain HTTP) origin —
+// this was the one remaining call site still bypassing it (#112).
 function CopyBlock({ text, t }: { text: string; t: T }) {
-  const [copied, setCopied] = useState(false);
+  const { push } = useToast();
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable (non-HTTPS) — the text is selectable in the box */
+    if (await copyText(text)) {
+      push(t("vm.ssh.copied"), "success");
     }
   }
   return (
@@ -62,7 +68,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         onClick={() => void copy()}
         className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
       >
-        {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+        {t("vm.ssh.copy")}
       </button>
     </div>
   );

@@ -186,6 +186,8 @@ const ro: Partial<Translations> = {
   "settings.appearance": "Aspect",
   "settings.accentColor": "Culoare de accent",
   "settings.accentPresets": "Presetări",
+  "settings.quietToasts": "Notificări discrete",
+  "settings.quietToastsHint": "Afișează notificările pop-up doar pentru erori. Confirmările de rutină de salvare și copiere rămân silențioase.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containere",
@@ -461,6 +463,7 @@ const ro: Partial<Translations> = {
   "common.showValue": "Afișează valoarea",
   "common.hideValue": "Ascunde valoarea",
   "confirmDialog.title": "Confirmare",
+  "toast.dismiss": "Închide notificarea",
   "common.confirm": "Confirmare",
   "common.cancel": "Anulare",
   "common.close": "Închide",

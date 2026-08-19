@@ -188,6 +188,8 @@ const sv: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Accentfärg",
   "settings.accentPresets": "Förinställningar",
+  "settings.quietToasts": "Tysta aviseringar",
+  "settings.quietToastsHint": "Visa popup-aviseringar endast vid fel. Rutinmässiga bekräftelser för sparande och kopiering förblir tysta.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -463,6 +465,7 @@ const sv: Partial<Translations> = {
   "common.showValue": "Visa värde",
   "common.hideValue": "Dölj värde",
   "confirmDialog.title": "Bekräfta",
+  "toast.dismiss": "Stäng avisering",
   "common.confirm": "Bekräfta",
   "common.cancel": "Avbryt",
   "common.close": "Stäng",

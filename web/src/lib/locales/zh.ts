@@ -188,6 +188,8 @@ const zh: Partial<Translations> = {
   "settings.appearance": "外观",
   "settings.accentColor": "强调色",
   "settings.accentPresets": "预设",
+  "settings.quietToasts": "安静通知",
+  "settings.quietToastsHint": "仅在失败时显示弹出通知。常规的保存和复制确认将保持静默。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "容器",
@@ -455,6 +457,7 @@ const zh: Partial<Translations> = {
   "common.showValue": "显示值",
   "common.hideValue": "隐藏值",
   "confirmDialog.title": "确认",
+  "toast.dismiss": "关闭通知",
   "common.confirm": "确认",
   "common.cancel": "取消",
   "common.close": "关闭",

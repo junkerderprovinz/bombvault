@@ -186,6 +186,8 @@ const uk: Partial<Translations> = {
   "settings.appearance": "Зовнішній вигляд",
   "settings.accentColor": "Акцентний колір",
   "settings.accentPresets": "Передустановки",
+  "settings.quietToasts": "Тихі сповіщення",
+  "settings.quietToastsHint": "Показувати спливаючі сповіщення лише про помилки. Звичайні підтвердження збереження й копіювання лишаються без сповіщень.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнери",
@@ -458,6 +460,7 @@ const uk: Partial<Translations> = {
   "common.showValue": "Показати значення",
   "common.hideValue": "Приховати значення",
   "confirmDialog.title": "Підтвердити",
+  "toast.dismiss": "Закрити сповіщення",
   "common.confirm": "Підтвердити",
   "common.cancel": "Скасувати",
   "common.close": "Закрити",

@@ -188,6 +188,8 @@ const cs: Partial<Translations> = {
   "settings.appearance": "Vzhled",
   "settings.accentColor": "Barva zvýraznění",
   "settings.accentPresets": "Předvolby",
+  "settings.quietToasts": "Tichá oznámení",
+  "settings.quietToastsHint": "Zobrazovat vyskakovací oznámení jen při chybách. Běžná potvrzení uložení a kopírování zůstanou bez oznámení.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontejnery",
@@ -461,6 +463,7 @@ const cs: Partial<Translations> = {
   "common.showValue": "Zobrazit hodnotu",
   "common.hideValue": "Skrýt hodnotu",
   "confirmDialog.title": "Potvrdit",
+  "toast.dismiss": "Zavřít oznámení",
   "common.confirm": "Potvrdit",
   "common.cancel": "Zrušit",
   "common.close": "Zavřít",

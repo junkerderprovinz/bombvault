@@ -649,6 +649,10 @@ export const en = {
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
+  // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
+  // toast system; "success"/routine toasts are suppressed, failures never are.
+  "settings.quietToasts": "Quiet toasts",
+  "settings.quietToastsHint": "Only show pop-up notices for failures. Routine save and copy confirmations stay silent.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -856,6 +860,9 @@ export const en = {
   "confirmDialog.title": "Confirm",
   "common.confirm": "Confirm",
   "common.cancel": "Cancel",
+  // Toast (form-engine Task 9): generic dismiss label for every toast's
+  // close button — not per-message copy.
+  "toast.dismiss": "Dismiss notification",
 
   // VMs page
   "vms.title": "Virtual Machines",
@@ -1991,6 +1998,8 @@ export const de: Translations = {
   "settings.appearance": "Erscheinungsbild",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
+  "settings.quietToasts": "Leise Benachrichtigungen",
+  "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",
@@ -2191,6 +2200,7 @@ export const de: Translations = {
   "common.showValue": "Wert anzeigen",
   "common.hideValue": "Wert verbergen",
   "confirmDialog.title": "Bestätigen",
+  "toast.dismiss": "Benachrichtigung schließen",
   "common.confirm": "Bestätigen",
   "common.cancel": "Abbrechen",
 

@@ -188,6 +188,8 @@ const he: Partial<Translations> = {
   "settings.appearance": "מראה",
   "settings.accentColor": "צבע הדגשה",
   "settings.accentPresets": "ערכות מוגדרות מראש",
+  "settings.quietToasts": "התראות שקטות",
+  "settings.quietToastsHint": "הצג הודעות קופצות רק בעת כשלים. אישורי שמירה והעתקה שגרתיים יישארו שקטים.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -463,6 +465,7 @@ const he: Partial<Translations> = {
   "common.showValue": "הצג ערך",
   "common.hideValue": "הסתר ערך",
   "confirmDialog.title": "אשר",
+  "toast.dismiss": "סגור התראה",
   "common.confirm": "אשר",
   "common.cancel": "ביטול",
   "common.close": "סגור",

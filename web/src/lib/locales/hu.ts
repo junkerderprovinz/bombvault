@@ -188,6 +188,8 @@ const hu: Partial<Translations> = {
   "settings.appearance": "Megjelenés",
   "settings.accentColor": "Kiemelőszín",
   "settings.accentPresets": "Előbeállítások",
+  "settings.quietToasts": "Csendes értesítések",
+  "settings.quietToastsHint": "Csak hibák esetén jelenjenek meg felugró értesítések. A rutin mentési és másolási visszaigazolások csendben maradnak.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konténerek",
@@ -463,6 +465,7 @@ const hu: Partial<Translations> = {
   "common.showValue": "Érték megjelenítése",
   "common.hideValue": "Érték elrejtése",
   "confirmDialog.title": "Megerősítés",
+  "toast.dismiss": "Értesítés elvetése",
   "common.confirm": "Megerősítés",
   "common.cancel": "Mégse",
   "common.close": "Bezárás",

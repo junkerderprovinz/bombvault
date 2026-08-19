@@ -188,6 +188,8 @@ const ko: Partial<Translations> = {
   "settings.appearance": "외관",
   "settings.accentColor": "강조 색상",
   "settings.accentPresets": "프리셋",
+  "settings.quietToasts": "알림 최소화",
+  "settings.quietToastsHint": "실패 시에만 팝업 알림을 표시합니다. 저장 및 복사에 대한 일반적인 확인 알림은 표시되지 않습니다.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "컨테이너",
@@ -455,6 +457,7 @@ const ko: Partial<Translations> = {
   "common.showValue": "값 표시",
   "common.hideValue": "값 숨기기",
   "confirmDialog.title": "확인",
+  "toast.dismiss": "알림 닫기",
   "common.confirm": "확인",
   "common.cancel": "취소",
   "common.close": "닫기",

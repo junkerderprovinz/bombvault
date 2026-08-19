@@ -188,6 +188,8 @@ const el: Partial<Translations> = {
   "settings.appearance": "Εμφάνιση",
   "settings.accentColor": "Χρώμα επισήμανσης",
   "settings.accentPresets": "Προεπιλογές",
+  "settings.quietToasts": "Σιωπηλές ειδοποιήσεις",
+  "settings.quietToastsHint": "Εμφάνιση αναδυόμενων ειδοποιήσεων μόνο για αποτυχίες. Οι συνήθεις επιβεβαιώσεις αποθήκευσης και αντιγραφής παραμένουν σιωπηλές.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -463,6 +465,7 @@ const el: Partial<Translations> = {
   "common.showValue": "Εμφάνιση τιμής",
   "common.hideValue": "Απόκρυψη τιμής",
   "confirmDialog.title": "Επιβεβαίωση",
+  "toast.dismiss": "Απόρριψη ειδοποίησης",
   "common.confirm": "Επιβεβαίωση",
   "common.cancel": "Άκυρο",
   "common.close": "Κλείσιμο",

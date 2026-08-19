@@ -188,6 +188,8 @@ const it: Partial<Translations> = {
   "settings.appearance": "Aspetto",
   "settings.accentColor": "Colore di accento",
   "settings.accentPresets": "Predefiniti",
+  "settings.quietToasts": "Notifiche silenziose",
+  "settings.quietToastsHint": "Mostra gli avvisi pop-up solo per gli errori. Le conferme di routine di salvataggio e copia restano silenziose.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",
@@ -463,6 +465,7 @@ const it: Partial<Translations> = {
   "common.showValue": "Mostra valore",
   "common.hideValue": "Nascondi valore",
   "confirmDialog.title": "Conferma",
+  "toast.dismiss": "Ignora notifica",
   "common.confirm": "Conferma",
   "common.cancel": "Annulla",
   "common.close": "Chiudi",

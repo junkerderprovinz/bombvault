@@ -188,6 +188,8 @@ const vi: Partial<Translations> = {
   "settings.appearance": "Giao diện",
   "settings.accentColor": "Màu nhấn",
   "settings.accentPresets": "Cài đặt sẵn",
+  "settings.quietToasts": "Thông báo im lặng",
+  "settings.quietToastsHint": "Chỉ hiển thị thông báo bật lên khi có lỗi. Các xác nhận lưu và sao chép thông thường sẽ không hiển thị.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -455,6 +457,7 @@ const vi: Partial<Translations> = {
   "common.showValue": "Hiện giá trị",
   "common.hideValue": "Ẩn giá trị",
   "confirmDialog.title": "Xác nhận",
+  "toast.dismiss": "Bỏ qua thông báo",
   "common.confirm": "Xác nhận",
   "common.cancel": "Hủy",
   "common.close": "Đóng",

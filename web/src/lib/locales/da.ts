@@ -188,6 +188,8 @@ const da: Partial<Translations> = {
   "settings.appearance": "Udseende",
   "settings.accentColor": "Accentfarve",
   "settings.accentPresets": "Forudindstillinger",
+  "settings.quietToasts": "Stille notifikationer",
+  "settings.quietToastsHint": "Vis kun pop op-beskeder ved fejl. Rutinemæssige gem- og kopibekræftelser forbliver stille.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -463,6 +465,7 @@ const da: Partial<Translations> = {
   "common.showValue": "Vis værdi",
   "common.hideValue": "Skjul værdi",
   "confirmDialog.title": "Bekræft",
+  "toast.dismiss": "Afvis notifikation",
   "common.confirm": "Bekræft",
   "common.cancel": "Annuller",
   "common.close": "Luk",

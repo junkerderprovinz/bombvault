@@ -188,6 +188,8 @@ const tr: Partial<Translations> = {
   "settings.appearance": "Görünüm",
   "settings.accentColor": "Vurgu rengi",
   "settings.accentPresets": "Ön ayarlar",
+  "settings.quietToasts": "Sessiz bildirimler",
+  "settings.quietToastsHint": "Açılır bildirimleri yalnızca hatalarda göster. Rutin kaydetme ve kopyalama onayları sessiz kalır.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteynerler",
@@ -463,6 +465,7 @@ const tr: Partial<Translations> = {
   "common.showValue": "Değeri göster",
   "common.hideValue": "Değeri gizle",
   "confirmDialog.title": "Onayla",
+  "toast.dismiss": "Bildirimi kapat",
   "common.confirm": "Onayla",
   "common.cancel": "İptal",
   "common.close": "Kapat",

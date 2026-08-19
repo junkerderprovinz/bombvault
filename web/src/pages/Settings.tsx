@@ -17,6 +17,7 @@ import { useConfirm } from "../lib/useConfirm";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
+import { useToast } from "../lib/toast";
 import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -133,6 +134,21 @@ export function ToggleRow({
 
 // ---------------------------------------------------------------------------
 // Save bar shared component
+//
+// GlimStone form-engine Task 9 (lib/toast.tsx) formalized this exact
+// pattern — a save button whose "saved"/"error" outcome flashes inline for
+// a few seconds — into a real toast at TWO self-contained sites that don't
+// route through this shared component (ConfigSettingsCard in Config.tsx,
+// and SettingsPage's own handleSetPassword), as a deliberate proof of
+// adoption, not a full migration. This SaveBar component itself, and the
+// ~30 call sites across this file that render it (all sharing the single
+// generic `save()` helper further down), are DELIBERATELY left on the
+// original "saved"/"error" inline-flash behaviour below — migrating a
+// helper this widely shared would silently convert every one of those
+// call sites in one pass, which is explicitly out of this task's scope
+// (per the audit: per-site triage for the remaining ~35 inline-status
+// sites is separate, deliberate follow-up work, not something to fold into
+// a single generic-helper edit). See lib/toast.tsx's own header comment.
 // ---------------------------------------------------------------------------
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -199,10 +215,9 @@ const ACCENT_PRESETS = [
 // and a connection test. Self-contained: fetches its own data so the large
 // SettingsPage doesn't need extra state.
 function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [cmdCopied, setCmdCopied] = useState(false);
   const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
@@ -242,18 +257,19 @@ chmod 600 /root/.ssh/authorized_keys`
     }
   }
 
+  // copyText falls back to execCommand in non-secure contexts (#112). The
+  // "Copied" flash used to be a local 2000ms button-label swap
+  // (GlimStone form-engine Task 9's copy-feedback candidate); it's now a
+  // routine (quiet-mode-suppressible) toast instead — see lib/toast.tsx.
   async function handleCopy() {
-    // copyText falls back to execCommand in non-secure contexts (#112).
     if (await copyText(pub)) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
     }
   }
 
   async function handleCopyCmd() {
     if (await copyText(authorizeCmd)) {
-      setCmdCopied(true);
-      setTimeout(() => setCmdCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
     }
   }
 
@@ -275,7 +291,7 @@ chmod 600 /root/.ssh/authorized_keys`
               disabled={!pub}
               className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
             >
-              {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+              {t("vm.ssh.copy")}
             </button>
           </div>
         </div>
@@ -297,7 +313,7 @@ chmod 600 /root/.ssh/authorized_keys`
               disabled={!pub}
               className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
             >
-              {cmdCopied ? t("vm.ssh.copied") : t("vm.ssh.copyCmd")}
+              {t("vm.ssh.copyCmd")}
             </button>
           </div>
           <a
@@ -2808,6 +2824,7 @@ type TabKey =
 export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
+  const { push, quiet, setQuiet } = useToast();
 
   const [tab, setTab] = useState<TabKey>("general");
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -3159,6 +3176,16 @@ export function SettingsPage() {
   // Auth / Security helpers
   // ---------------------------------------------------------------------------
 
+  // GlimStone form-engine Task 9 (toasts): the SaveBar success/error pattern
+  // here used to hold "saved"/"error" in pwSaveState for a 3000ms inline-text
+  // flash. The two ASYNC completion notices (did setAuthPassword succeed)
+  // now go through a toast instead — but the pre-flight mismatch check below
+  // deliberately stays exactly as it was: it's a field-validation error the
+  // user is actively looking at (both password fields, mid-edit), not a
+  // "did the save finish" notice, so it keeps its own persistent inline
+  // surface rather than a 4-second toast that could vanish while they're
+  // still typing (design-language.md: a toast duplicating a surface that
+  // already exists and is meant to persist is the wrong tool here).
   async function handleSetPassword() {
     if (pwNew !== pwConfirm) {
       setPwSaveMsg(t("auth.passwordMismatch"));
@@ -3171,18 +3198,17 @@ export function SettingsPage() {
       const res = await setAuthPassword(pwNew);
       if (res.ok) {
         setAuthEnabled(res.enabled ?? false);
-        setPwSaveState("saved");
-        setPwSaveMsg(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"));
+        setPwSaveState("idle");
+        push(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"), "success");
         setPwNew("");
         setPwConfirm("");
-        setTimeout(() => { setPwSaveState("idle"); setPwSaveMsg(null); }, 3000);
       } else {
-        setPwSaveMsg(res.error ?? t("auth.saveError"));
-        setPwSaveState("error");
+        setPwSaveState("idle");
+        push(res.error ?? t("auth.saveError"), "fail");
       }
     } catch {
-      setPwSaveMsg(t("auth.saveError"));
-      setPwSaveState("error");
+      setPwSaveState("idle");
+      push(t("auth.saveError"), "fail");
     }
   }
 
@@ -4701,9 +4727,9 @@ export function SettingsPage() {
                 t("settings.save")
               )}
             </button>
-            {pwSaveState === "saved" && pwSaveMsg && (
-              <span className="text-sm text-statusOk">{pwSaveMsg}</span>
-            )}
+            {/* Only the pre-flight mismatch validation error renders here now
+                (GlimStone form-engine Task 9) — the post-save success/failure
+                notice is a toast instead; see handleSetPassword's own comment. */}
             {pwSaveState === "error" && pwSaveMsg && (
               <span className="text-sm text-statusFail">{pwSaveMsg}</span>
             )}
@@ -4787,6 +4813,21 @@ export function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Quiet toasts (GlimStone form-engine Task 9) — the toast system's
+              severity-based quiet mode. Lives here, next to the other purely
+              client-side display preferences (accent), rather than as a new
+              standalone setting with nothing else around it, and rather than
+              being bolted onto NotifyConfig's server-side "on" field above
+              (that one gates external webhook/Matrix/email notifications —
+              a different axis entirely; muting a toast in THIS browser must
+              never silently change what a webhook receives elsewhere). */}
+          <ToggleRow
+            label={t("settings.quietToasts")}
+            description={t("settings.quietToastsHint")}
+            checked={quiet}
+            onChange={setQuiet}
+          />
         </div>
       </Card>
       )}

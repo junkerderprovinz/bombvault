@@ -186,6 +186,8 @@ const pt: Partial<Translations> = {
   "settings.appearance": "Aparência",
   "settings.accentColor": "Cor de destaque",
   "settings.accentPresets": "Predefinições",
+  "settings.quietToasts": "Notificações silenciosas",
+  "settings.quietToastsHint": "Mostrar avisos pop-up apenas para falhas. As confirmações de rotina de salvar e copiar permanecem silenciosas.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -461,6 +463,7 @@ const pt: Partial<Translations> = {
   "common.showValue": "Mostrar valor",
   "common.hideValue": "Ocultar valor",
   "confirmDialog.title": "Confirmar",
+  "toast.dismiss": "Dispensar notificação",
   "common.confirm": "Confirmar",
   "common.cancel": "Cancelar",
   "common.close": "Fechar",

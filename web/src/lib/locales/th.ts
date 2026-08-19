@@ -188,6 +188,8 @@ const th: Partial<Translations> = {
   "settings.appearance": "รูปลักษณ์",
   "settings.accentColor": "สีเน้น",
   "settings.accentPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
+  "settings.quietToastsHint": "แสดงการแจ้งเตือนแบบป๊อปอัปเฉพาะเมื่อล้มเหลวเท่านั้น การยืนยันการบันทึกและคัดลอกตามปกติจะไม่แสดง",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -463,6 +465,7 @@ const th: Partial<Translations> = {
   "common.showValue": "แสดงค่า",
   "common.hideValue": "ซ่อนค่า",
   "confirmDialog.title": "ยืนยัน",
+  "toast.dismiss": "ปิดการแจ้งเตือน",
   "common.confirm": "ยืนยัน",
   "common.cancel": "ยกเลิก",
   "common.close": "ปิด",

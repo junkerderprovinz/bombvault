@@ -188,6 +188,8 @@ const fi: Partial<Translations> = {
   "settings.appearance": "Ulkoasu",
   "settings.accentColor": "Korostusväri",
   "settings.accentPresets": "Esiasetukset",
+  "settings.quietToasts": "Hiljaiset ilmoitukset",
+  "settings.quietToastsHint": "Näytä ponnahdusilmoitukset vain virheistä. Rutiininomaiset tallennus- ja kopiointivahvistukset pysyvät hiljaisina.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontit",
@@ -463,6 +465,7 @@ const fi: Partial<Translations> = {
   "common.showValue": "Näytä arvo",
   "common.hideValue": "Piilota arvo",
   "confirmDialog.title": "Vahvista",
+  "toast.dismiss": "Hylkää ilmoitus",
   "common.confirm": "Vahvista",
   "common.cancel": "Peruuta",
   "common.close": "Sulje",

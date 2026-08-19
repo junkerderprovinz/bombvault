@@ -14,6 +14,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { ToggleRow } from "./Settings";
 import { useConfirm } from "../lib/useConfirm";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -122,12 +123,16 @@ function ConfigSettingsCard({
   settings: Settings;
   setSettings: (updater: (prev: Settings) => Settings) => void;
 }) {
+  const { push } = useToast();
+  // Only "idle"/"saving" are ever set now — the SaveBar success/error pattern
+  // (GlimStone form-engine Task 9's other toast candidate, alongside the
+  // copy-feedback sites) used to hold "saved"/"error" here for a 3000ms
+  // inline-text flash; that completion notice is now a toast instead (push
+  // below), so there's no lingering render state left to revert from.
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaveState("saving");
-    setSaveError(null);
     try {
       // Re-fetch the latest settings and merge only the fields THIS card owns,
       // then PUT. Since the self-backup + off-site cadences moved to Settings ›
@@ -141,8 +146,8 @@ function ConfigSettingsCard({
       // now owned by Settings › Schedules, silently reverting a schedule set
       // elsewhere. Abort the save instead.
       if (!latest.ok) {
-        setSaveState("error");
-        setSaveError(latest.error ?? "Could not load current settings");
+        setSaveState("idle");
+        push(latest.error ?? "Could not load current settings", "fail");
         return;
       }
       const merged: Settings = {
@@ -154,15 +159,17 @@ function ConfigSettingsCard({
       };
       const res = await putSettings(merged);
       if (res.ok) {
-        setSaveState("saved");
-        setTimeout(() => setSaveState("idle"), 3000);
+        setSaveState("idle");
+        // "fail"/"warn" toasts always surface even in quiet mode; "success"
+        // is the routine, suppressible case (design-language.md "Toasts").
+        push(t("settings.saved"), "success");
       } else {
-        setSaveState("error");
-        setSaveError(res.error ?? "Save failed");
+        setSaveState("idle");
+        push(res.error ?? "Save failed", "fail");
       }
     } catch (err) {
-      setSaveState("error");
-      setSaveError(err instanceof Error ? err.message : "Save failed");
+      setSaveState("idle");
+      push(err instanceof Error ? err.message : "Save failed", "fail");
     }
   }
 
@@ -223,12 +230,6 @@ function ConfigSettingsCard({
             t("settings.save")
           )}
         </button>
-        {saveState === "saved" && (
-          <span className="text-sm text-statusOk">{t("settings.saved")}</span>
-        )}
-        {saveState === "error" && saveError && (
-          <span className="text-sm text-statusFail">{saveError}</span>
-        )}
       </div>
     </div>
   );

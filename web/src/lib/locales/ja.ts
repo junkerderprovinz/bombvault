@@ -188,6 +188,8 @@ const ja: Partial<Translations> = {
   "settings.appearance": "外観",
   "settings.accentColor": "アクセントカラー",
   "settings.accentPresets": "プリセット",
+  "settings.quietToasts": "通知を控えめにする",
+  "settings.quietToastsHint": "失敗時のみポップアップ通知を表示します。保存やコピーの通常の確認通知は表示されません。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "コンテナ",
@@ -455,6 +457,7 @@ const ja: Partial<Translations> = {
   "common.showValue": "値を表示",
   "common.hideValue": "値を非表示",
   "confirmDialog.title": "確認",
+  "toast.dismiss": "通知を閉じる",
   "common.confirm": "確認",
   "common.cancel": "キャンセル",
   "common.close": "閉じる",

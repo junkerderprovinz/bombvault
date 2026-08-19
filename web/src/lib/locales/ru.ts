@@ -184,6 +184,8 @@ const ru: Partial<Translations> = {
   "settings.appearance": "Внешний вид",
   "settings.accentColor": "Акцентный цвет",
   "settings.accentPresets": "Предустановки",
+  "settings.quietToasts": "Тихие уведомления",
+  "settings.quietToastsHint": "Показывать всплывающие уведомления только при ошибках. Обычные подтверждения сохранения и копирования остаются беззвучными.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнеры",
@@ -456,6 +458,7 @@ const ru: Partial<Translations> = {
   "common.showValue": "Показать значение",
   "common.hideValue": "Скрыть значение",
   "confirmDialog.title": "Подтвердить",
+  "toast.dismiss": "Скрыть уведомление",
   "common.confirm": "Подтвердить",
   "common.cancel": "Отмена",
   "common.close": "Закрыть",

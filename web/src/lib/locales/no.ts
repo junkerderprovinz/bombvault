@@ -186,6 +186,8 @@ const no: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Aksentfarge",
   "settings.accentPresets": "Forhåndsinnstillinger",
+  "settings.quietToasts": "Stille varsler",
+  "settings.quietToastsHint": "Vis kun sprettoppvarsler ved feil. Rutinemessige lagre- og kopieringsbekreftelser forblir stille.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontainere",
@@ -461,6 +463,7 @@ const no: Partial<Translations> = {
   "common.showValue": "Vis verdi",
   "common.hideValue": "Skjul verdi",
   "confirmDialog.title": "Bekreft",
+  "toast.dismiss": "Lukk varsel",
   "common.confirm": "Bekreft",
   "common.cancel": "Avbryt",
   "common.close": "Lukk",

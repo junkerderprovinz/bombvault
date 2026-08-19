@@ -188,6 +188,8 @@ const ar: Partial<Translations> = {
   "settings.appearance": "المظهر",
   "settings.accentColor": "لون التمييز",
   "settings.accentPresets": "إعدادات مسبقة",
+  "settings.quietToasts": "إشعارات هادئة",
+  "settings.quietToastsHint": "إظهار الإشعارات المنبثقة عند حدوث أخطاء فقط. تبقى تأكيدات الحفظ والنسخ الروتينية صامتة.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -463,6 +465,7 @@ const ar: Partial<Translations> = {
   "common.showValue": "إظهار القيمة",
   "common.hideValue": "إخفاء القيمة",
   "confirmDialog.title": "تأكيد",
+  "toast.dismiss": "إغلاق الإشعار",
   "common.confirm": "تأكيد",
   "common.cancel": "إلغاء",
   "common.close": "إغلاق",

@@ -184,6 +184,8 @@ const nl: Partial<Translations> = {
   "settings.appearance": "Uiterlijk",
   "settings.accentColor": "Accentkleur",
   "settings.accentPresets": "Voorinstellingen",
+  "settings.quietToasts": "Stille meldingen",
+  "settings.quietToastsHint": "Toon pop-upmeldingen alleen bij fouten. Routinematige opslaan- en kopieerbevestigingen blijven stil.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -458,6 +460,7 @@ const nl: Partial<Translations> = {
   "common.showValue": "Waarde tonen",
   "common.hideValue": "Waarde verbergen",
   "confirmDialog.title": "Bevestigen",
+  "toast.dismiss": "Melding sluiten",
   "common.confirm": "Bevestigen",
   "common.cancel": "Annuleren",
   "common.close": "Sluiten",
