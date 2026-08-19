@@ -1684,7 +1684,15 @@ function minutesOfDay(hhmm: string): number {
 function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
-      <span className="text-xs text-carbon-textMuted uppercase tracking-widest truncate">{label}</span>
+      {/* Task 5 (rule 11): each SummaryCell is its own standalone
+          bg-carbon-surface rounded-card box — not nested inside an
+          already-badged heading — so it gets the same Badge-in-<h2>
+          treatment as every other outermost Card heading on this page (see
+          Card just above and Badge.tsx's file header). `wrap` + max-w-full
+          because this sits in a narrow sm:grid-cols-3 cell. */}
+      <h2 className="flex items-center min-w-0">
+        <Badge tone="heading" size="heading" wrap className="max-w-full">{label}</Badge>
+      </h2>
       {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
           relative time in a narrow half-width cell) drops to a second line and stays
           fully readable, instead of being hard-clipped by overflow-hidden (#98). */}

@@ -150,12 +150,30 @@
 // (an <h3>/<span> sub-label already living inside a Card/panel this stage
 // already gave its own badge — e.g. Settings.tsx's "Export"/"Import"
 // sub-headings inside the Settings I/O Card, OffsiteWizard's per-step
-// labels inside its one wizard card, Dashboard's per-tile stat captions).
-// Badging every nesting level would stack multiple equally-loud badges
-// inside one another and read as a wall of chips, not a hierarchy — rule 5
-// ("hierarchy from type and colour step") still applies one level down even
-// though rule 11 exempts the outer heading from rule 9. Those sub-labels
-// keep the plain eyebrow-style treatment on purpose; see each call site.
+// labels inside its one wizard card). Badging every nesting level would
+// stack multiple equally-loud badges inside one another and read as a wall
+// of chips, not a hierarchy — rule 5 ("hierarchy from type and colour step")
+// still applies one level down even though rule 11 exempts the outer
+// heading from rule 9. Those sub-labels keep the plain eyebrow-style
+// treatment on purpose; see each call site.
+//
+// (An earlier pass of this task filed Dashboard.tsx's SummaryCell labels
+// here too — that was wrong. Each SummaryCell is its own standalone
+// bg-carbon-surface rounded-card box, not nested inside anything already
+// badged; it was actually a missed OUTERMOST heading and is now converted
+// at its own call site, same as every other Card heading on that page.)
+//
+// Also deliberately NOT converted: the ~7 modal dialog titles (Files.tsx,
+// Fleet.tsx x2, Receiver.tsx, WhatsNewDialog.tsx, ConfirmDialog.tsx,
+// ErrorDetailPanel.tsx — all `text-lg font-semibold`). A dialog's <h2> is a
+// different element class from a page's section heading: it names the
+// MODAL WINDOW itself (rule 15 territory, "title as a badge" for a window
+// chrome), not a content section inside a page (rule 11). Several of these
+// also wire their `id` to the dialog's own `aria-labelledby` for the
+// accessible name (ConfirmDialog, WhatsNewDialog, ErrorDetailPanel) — Badge
+// has no `id` prop today, so converting them would mean either dropping
+// that wiring or growing Badge's public API in the same pass, neither of
+// which belongs in a section-heading fix. Left for a dedicated rule-15 pass.
 // ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";

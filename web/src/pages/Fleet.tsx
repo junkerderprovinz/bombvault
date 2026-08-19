@@ -747,7 +747,13 @@ export function Fleet() {
       {!loading && pendingOffers.length > 0 && (
         <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
           <div>
-            <p className="text-sm font-semibold text-carbon-text">{t("fleet.mesh.offersTitle")}</p>
+            {/* Task 5 (rule 11): outermost heading of this rounded-card p-4
+                panel — not nested inside anything already badged — same
+                Badge-in-<h2> treatment as every other converted Card
+                heading. */}
+            <h2 className="flex items-center">
+              <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.offersTitle")}</Badge>
+            </h2>
             <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.offersHint")}</p>
           </div>
           <div className="flex flex-col gap-2">
