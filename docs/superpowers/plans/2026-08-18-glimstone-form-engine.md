@@ -117,7 +117,58 @@ Verify: `npm run build`, `npx tsc --noEmit`, `npx vitest run`, interaction check
 
 ## Final Live Verification & Ship
 
-- [ ] Whole-branch review (mirroring this project's own established pattern) after all 9 tasks land, looking specifically for: token-name drift between tasks, any place Task 2's radius sweep and Task 8's focus sweep produced conflicting edits on the same line, and overall visual coherence.
-- [ ] `npm run build`, `npx tsc --noEmit`, `npm run lint`, `npx vitest run` — full clean run.
-- [ ] Live verification: `npm run dev`, open in a real browser (Playwright), walk every page in BOTH dark and light theme (and ideally the new "system" state), confirm no visual regressions, confirm the new components (Toggle, Badge, reveal eye, confirm dialog, toast) actually work end-to-end, not just build.
-- [ ] Open a PR from this branch, flag Phase 2 (rainbow/reactive colour mode, unified selector, hint→bubble migration, headings-as-badges, RTL, remaining fifth-hue resolution, remaining toast-site migration) as explicit, deliberately deferred follow-up work, not silently dropped scope.
+- [x] Whole-branch review (mirroring this project's own established pattern) after all 9 tasks land, looking specifically for: token-name drift between tasks, any place Task 2's radius sweep and Task 8's focus sweep produced conflicting edits on the same line, and overall visual coherence. **No token-name drift and no sweep collisions found.** Three cross-task issues found and fixed — see "Whole-branch review findings" below.
+- [x] `npm run build`, `npx tsc --noEmit`, `npm run lint`, `npx vitest run` — full clean run. tsc clean; 297 tests in 16 files pass; lint 0 errors (2 pre-existing `react-hooks/exhaustive-deps` warnings in ActivityLog.tsx and Sidebar.tsx, both present on `main`); build clean. Go side: `TestThemeBootScriptCSPHashMatches` still passes, so the rebuilt bundle didn't invalidate the CSP hash.
+- [x] Live verification: real `cmd/bombvault` binary built from the branch tip and driven in a real browser. Walked Dashboard, Containers, VMs, Files, Flash, Config, Fleet, Receiver, Recovery, Login and all 7 Settings tabs in BOTH themes plus the new "system" state (no stored preference → follows the OS, no flash of wrong theme). Verified end-to-end: unified Toggle (`aria-label` present on every switch incl. `hideLabel` ones), Badge, reveal eye (show/hide, width-stable, correct in both themes), ConfirmDialog (opens, Tab-trap holds, Escape closes AND returns focus to the trigger), toast (fires, hover-pause survives past the 4s duration, `pointer-events:none` viewport at z-70). Zero console errors from the app. Rule 15 spot-check: every `<fieldset>` in the Schedules tab computes `opacity: 1` — no container-level opacity anywhere.
+- [ ] Open a PR from this branch, flag Phase 2 (rainbow/reactive colour mode, unified selector, hint→bubble migration, headings-as-badges, RTL, remaining fifth-hue resolution, remaining toast-site migration) as explicit, deliberately deferred follow-up work, not silently dropped scope. **Use the consolidated list below verbatim.**
+
+---
+
+## Whole-branch review findings
+
+Fixed in this review (see the review commit):
+
+1. **A raw NUL byte in `web/src/pages/Recovery.tsx` made the whole file invisible to every grep-driven sweep.** A React `key` used a literal `0x00` as its separator instead of the `\u0000` escape, so ripgrep/grep/git classified the file as binary and returned zero content lines for it. This is not theoretical: Task 7's own commit (`45fdcbf`) had to hand-find this file's two "grep-invisible" call sites after the sweep missed them. Replaced with the escape (identical runtime value) and left a comment explaining why it must stay an escape. Pre-existing on `main`, but fixed here because Phase 2's RTL logical-property sweep and the remaining toast-adoption sweep are both grep-driven and would have hit it again.
+2. **The new shared `Toggle` depended on the deliberately-unresolved `--status-info-solid` hue.** Task 1's plan note says of that token "just don't add MORE dependencies on it", yet the new unified switch was authored with `focus-visible:outline-statusInfoSolid` while its three sibling shared controls (RevealInput's eye, InfoBubble's icon, Toast's dismiss X) all use `--focus-ring`. Switched to `--focus-ring`, and aligned the 5 not-yet-migrated switch copies (`OffsiteWizard`, `Containers`, `Files`, `Settings`, `VMs`) to match so Settings doesn't show amber-focus and blue-focus switches side by side. Contrast re-derived before the change: ≥3:1 on both `--carbon-surface` and `--carbon-surface2` in both themes.
+3. **`index.css`'s Task-8 comment over-claimed `--focus-ring`'s reach.** It stated the token was "still used by every non-field element", which was never true. Corrected to state the measured reality and to explain why closing the gap is Phase 2 work (see follow-up 1).
+
+Verified clean, no action needed: no duplicate or contradictory CSS rules and no orphaned pre-unification classes in `index.css`; no leftover hard-coded `rounded-lg/md/sm/xl` anywhere (the 40 remaining `rounded-full` are all genuine circles — spinners, status dots, switch thumbs, the step-number badge — correctly left alone); `window.confirm()` fully eliminated; z-index layering is ordered and intentional (overlays 50 → bubble 60 → toast 70); the shared component set follows one consistent convention (pure hookless component + companion hook for state/DOM, `describe("Component — aspect")` tests callable as plain functions in the node-environment suite).
+
+---
+
+## Consolidated deferred / follow-up list (for the PR description)
+
+Everything below is deliberate, disclosed scope — not dropped work. Gathered from the 28 commit messages and in-code `TODO(#follow-up)` markers so a PR reader doesn't have to reconstruct it.
+
+**Blocking the PR — needs a decision, not code:**
+
+0. **Docs still say BombVault opens dark, and it no longer does.** Task 1 made "system" the default (`theme.ts` `DEFAULT = "system"`, hard-coded `data-theme="dark"` removed from `web/index.html`), so a first-time visitor on a light-mode OS now gets a light UI. "a modern dark web UI" appears in `README.md:76`, `.github/DOCKERHUB.md:27`, `.github/SUPPORT_THREAD.html:57`, and `docs/index.md:5` **plus all 25 translations at the same line** (29 places). `mkdocs.yml:26-27`'s "BombVault is dark-first … so the site opens dark for every visitor" states the same now-false premise. Also soft-stale: "Dark/light UI in 26 languages" (`README.md:242`, `.github/DOCKERHUB.md:51`, `docs/features.md:91` + 25 translations) doesn't mention the third state. **Deliberately not fixed in this review** — it is a positioning call (keep the dark-first identity and revert the default, or keep "system" and rewrite the tagline in 26 languages), and `SUPPORT_THREAD.html` is support copy that needs sign-off.
+
+**Named Phase 2 scope (from the plan's own goal statement):**
+
+1. **Rainbow / reactive colour mode** (`[data-rainbow]`, `.glim-hue`) — the largest deferred item.
+2. **The unified one-horizontal-selector rebuild.**
+3. **The hint→bubble content migration** — moving existing grey `<p>` hint prose behind `InfoBubble`. The component and its chrome are done; the content move is not.
+4. **Section-headings-as-badges.**
+5. **RTL logical-property sweep** — `RevealInput` already uses logical `pe-*`/`end-*`, and `ToastViewport`'s corner uses `end-0`; the rest of the app is still physical.
+6. **Audit item 19 — resolve the fifth hue** (`--status-info-solid`). Sequenced deliberately after Task 8, which is now done, so this is unblocked.
+
+**Focus system, completing Task 8:**
+
+7. **Adopt the reference's base `:focus-visible` rule.** `glimstone/reference/tokens.css` ends with `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px }` and its adoption checklist says to copy it; BombVault took the token but not the rule. Measured live: ~215 buttons/links declare no focus utility and fall through to Chromium's native ring, 8 pre-existing sites still paint the old `outline-statusInfoSolid` blue (`Containers.tsx:909/923/959/983`, `Dashboard.tsx:144/1260`, `Settings.tsx:4786`), and only the 4 shared controls opt into `--focus-ring` by hand. Pair this with item 6 — the same base rule is what rainbow mode rebinds per item, so items 1, 6 and 7 want to land together.
+
+**Per-task disclosed deferrals:**
+
+8. **Task 4 — 5 unmigrated `role="switch"` copies** (`OffsiteWizard.tsx:518`, `Containers.tsx:456`, `Files.tsx:92`, `Settings.tsx:2737`, `VMs.tsx:264`). Their focus ring was harmonised to `--focus-ring` in this review, but they are still hand-rolled switches rather than `<Toggle>`. Also: `Toggle.test.ts` does not exercise `ToggleRow` directly.
+9. **Task 7 — richer "stake detail" confirmation copy** ("N snapshots, X GB"). Needs new interpolated i18n keys across all 25 non-English locales. Marked in code at the three highest-value sites: `Containers.tsx:266`, `Files.tsx:605` (flagged as the highest-value one), `VMs.tsx:528`.
+10. **Task 9 — ~35 remaining inline-status sites.** Four proof-of-adoption sites are live (Fleet's `CopyBlock`, Settings' `VMSSHCard` and `handleSetPassword`, Config's `ConfigSettingsCard`). The bulk is `SaveBar`'s ~30 call sites in `Settings.tsx`, which all share one generic `save()` helper — converting the helper would silently migrate all of them at once, so per-site triage is separate work. See the `SaveBar` header comment in `Settings.tsx` and `lib/toast.tsx`'s header.
+11. **Task 1 — no UI path back to "system".** `theme.ts:53-63` documents it: once a user's first toggle click moves them off the default, only clearing `localStorage` returns them. Needs a third icon, a new i18n key across every locale, and a cycle-order decision. Note there is also no `theme.system` i18n key yet.
+
+**Found by this review, not previously tracked:**
+
+12. **Finish the type scale.** Task 1 added `--text-heading`/`--text-body`/`--text-dense`/`--text-caption`, but there was never a type sweep to match Task 2's radius sweep. Current adoption: `text-caption` 6 uses, `text-dense` 4, `text-body` 0, `text-heading` 0 — against **47 hard-coded `text-[11px]`**, which is exactly `--text-caption`'s value. Mechanical and visually identical today (and a small a11y win, since the token is `rem` and scales with user font size), but it is a 47-site sweep across ~20 files and deserves its own commit rather than riding along on a review.
+13. **Dashboard badges render raw, untranslated status strings.** `Dashboard.tsx:379/392/580/872/987/1720/1741` pass values like `"failed"`, `"ok"`, `"neutral"` straight through as badge text (visible live as a red `failed` chip on a German UI). Pre-existing on `main` and not a regression — but note Task 5 fixed exactly this defect class for `SpikePanel`'s hard-coded `OK`/`FAIL`/`INFO` while migrating it, so the same fix was applied to one migrated call site and not the other.
+14. **Document the new "Quiet toasts" setting.** `Settings.tsx:4833` adds the only new user-visible option on the branch (strings at `i18n.ts:654-655`, persisted as `bombvault.quietToasts`). It appears in no README, `docs/configuration.md`, `docs/features.md`, or `DOCKERHUB.md`.
+15. **Regenerate the README screenshots.** No asset changed on this branch, so `.github/assets/dashboard.png`, `recovery.png`, `containers.png`, `settings.png` and `restore-demo.gif` (`README.md:112-139`) all predate the radius sweep, the unified Badge/Toggle, the focus change and the corrected light-theme tokens.
+16. **Minor i18n tidy-ups.** `common.confirm`/`common.cancel` were added as the canonical generic pair, but the older `restore.confirm`, `files.cancel`, `settingsIO.cancel` and `offsite.targets.cancel` still duplicate them. `confirmDialog.title` and `common.confirm` are also identical in both shipped locales ("Confirm" / "Bestätigen"), kept separate on purpose so a locale can diverge. Three different namespaces were invented for the three new components' generic chrome labels (`common.*` for the eye, `confirmDialog.*` for the dialog, `toast.*` for the toast).
+17. **`docs/superpowers/specs/2026-07-07-v5-redesign-spec.md` is archivally stale.** It still prescribes `rounded-lg` chrome (`:161`), `StatusChip` (`:237`, `:239`) and cites Settings line ranges that have moved. It is a completed v5.0.0 spec in a repo now at v7.11.x, so this is history rather than live guidance — flagged only so nobody follows it as current.
