@@ -1,11 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState, useRef, useEffect, type CSSProperties } from "react";
+import { useState, useRef, useEffect } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { getResolvedTheme, getTheme, onSystemThemeChange, toggleTheme } from "../lib/theme";
 import { useAdvanced } from "../lib/advanced";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
 
 interface SidebarProps {
   settings: Settings | null;
@@ -15,22 +13,27 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
-  /**
-   * Position in the rendered destination list — the rainbow palette position
-   * (GlimStone form-engine Phase 2, Task 2). The sidebar is a small, fixed,
-   * always-visible set (per-destination, not per-download), so this is more
-   * about family identity with sibling apps that already do this — KnightLoader's
-   * own Sidebar.tsx hues every nav item the same way — than about helping
-   * anyone tell entries apart (a label + icon already does that). Assigned by
-   * the item's LIST INDEX among the destinations actually rendered this pass
-   * (never a hash of `to`/label): see the Sidebar() component below, which
-   * builds the visible destination array first and hands out indices from it,
-   * so toggling a domain on/off in Settings never collides two destinations
-   * onto the same hue — it just shifts positions, same as removing a row from
-   * any other rainbowed list.
-   */
-  hue: number;
 }
+
+// Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 — reverted
+// after spec-compliance review). The list of destinations here is NOT reliably
+// ≤8: with every domain toggle on, there are 9 destinations plus Settings = 10
+// against RAINBOW's 8-colour palette (lib/appearance.ts), so indexing by
+// position wraps and genuinely different destinations end up sharing a hue —
+// live-confirmed: /fleet landed on the same hue as /dashboard, /settings the
+// same as /recovery. That is exactly the "two neighbours share a colour"
+// failure rainbow-by-position exists to prevent (design-language.md's trap
+// #1), just triggered by list length instead of hashing. A prior version of
+// this file rainbowed the nav anyway on the theory that indexing over the
+// domain-gated array "never collides" — that reasoning only holds for a list
+// that never exceeds the palette size, which this one does. Unlike a
+// container/VM/file-set row (Task 2's actual strongest case — a variable,
+// user-tracked list), every sidebar destination already has a durable,
+// always-visible identity via its label + icon regardless of colour, so
+// rainbow's real purpose ("help tell apart several similar items") was never
+// doing work here anyway — see KnightLoader's Sidebar.tsx, which gets away
+// with hueing every item only because it hard-codes 6 destinations, safely
+// under the palette size, not because the pattern is inherently collision-free.
 
 // Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
 type EggState = "idle" | "wobble" | "boom";
@@ -215,26 +218,17 @@ function IconLayers() {
 // reduced-motion users get colour-only feedback (Item 7a/7d).
 const navBase =
   "flex items-center gap-3 px-3.5 py-2.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
-// glim-active travels WITH the fill: [data-rainbow] .glim-hue-icon:not(.glim-active)
-// is what keeps a filled active item's icon from painting the same hue as its own
-// background (index.css) — matching knightloader/web/src/components/Sidebar.tsx's
-// identical `navActive = 'glim-active bg-accent text-accentContrast'`.
 const navActive =
-  "glim-active bg-accent text-accentContrast";
+  "bg-accent text-accentContrast";
 const navInactive =
   "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5";
-// In rainbow mode the icon carries the item's own hue, so the rail and the glyph
-// agree and the nav reads as a set rather than as one gold item and the rest grey.
-// Without the mode, [data-rainbow] never matches and this is inert.
-const navHued = "glim-hue glim-hue-icon";
 
-function NavItem({ to, label, icon, hue }: NavItem) {
+function NavItem({ to, label, icon }: NavItem) {
   return (
     <NavLink
       to={to}
-      style={hueVars(rainbowAt(hue)) as CSSProperties}
       className={({ isActive }) =>
-        `${navHued} ${navBase} ${isActive ? navActive : navInactive}`
+        `${navBase} ${isActive ? navActive : navInactive}`
       }
     >
       {icon}
@@ -399,30 +393,6 @@ export function Sidebar({ settings }: SidebarProps) {
   const filesEnabled = settings?.filesEnabled ?? false;
   const receiverEnabled = settings?.receiverEnabled ?? false;
   const fleetEnabled = settings?.fleetEnabled ?? false;
-  // Subscribed, not read: the rail re-renders when the palette or the mode
-  // changes, so editing a swatch (or flipping rainbow on/off/reactive) in
-  // Settings is visible here at once, with no page reload.
-  useRainbow();
-
-  // The destination list, built once so hue can be handed out by each item's
-  // LIST INDEX among what is actually rendered this pass — never a hash of
-  // `to`/label. Several of these are gated behind a per-domain Settings
-  // toggle (vmsEnabled etc.), so the visible set is not always the same 8;
-  // filtering BEFORE indexing is what keeps two destinations from ever
-  // landing on the same position — flipping a domain on/off just shifts
-  // everything after it, the same as removing a row from any other
-  // rainbowed list.
-  const destinations: { to: string; label: string; icon: React.ReactNode; show: boolean }[] = [
-    { to: "/dashboard", label: t("nav.dashboard"), icon: <IconDashboard />, show: true },
-    { to: "/recovery", label: t("nav.recovery"), icon: <IconRecovery />, show: true },
-    { to: "/containers", label: t("nav.containers"), icon: <IconContainers />, show: true },
-    { to: "/vms", label: t("nav.vms"), icon: <IconVM />, show: vmsEnabled },
-    { to: "/flash", label: t("nav.flash"), icon: <IconFlash />, show: flashEnabled },
-    { to: "/files", label: t("nav.files"), icon: <IconFiles />, show: filesEnabled },
-    { to: "/config", label: t("nav.config"), icon: <IconConfig />, show: configEnabled },
-    { to: "/receiver", label: t("nav.receiver"), icon: <IconReceiver />, show: receiverEnabled },
-    { to: "/fleet", label: t("nav.fleet"), icon: <IconFleet />, show: fleetEnabled },
-  ].filter((d) => d.show);
 
   // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
   // then reappears. A short click still navigates to the Dashboard; once the
@@ -570,24 +540,54 @@ export function Sidebar({ settings }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1 p-3 flex-1">
-        {destinations.map((d, i) => (
-          <NavItem key={d.to} to={d.to} label={d.label} icon={d.icon} hue={i} />
-        ))}
+        <NavItem
+          to="/dashboard"
+          label={t("nav.dashboard")}
+          icon={<IconDashboard />}
+        />
+        {/* Always visible: disaster recovery is a core, non-expert flow. */}
+        <NavItem
+          to="/recovery"
+          label={t("nav.recovery")}
+          icon={<IconRecovery />}
+        />
+        <NavItem
+          to="/containers"
+          label={t("nav.containers")}
+          icon={<IconContainers />}
+        />
+        {/* VMs / Flash / Files tabs appear only once their domain is enabled. */}
+        {vmsEnabled && (
+          <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} />
+        )}
+        {flashEnabled && (
+          <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} />
+        )}
+        {filesEnabled && (
+          <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} />
+        )}
+        {/* Config self-backup tab appears only once its domain is enabled. */}
+        {configEnabled && (
+          <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} />
+        )}
+        {/* Receiver dashboard appears only once its domain is enabled. */}
+        {receiverEnabled && (
+          <NavItem to="/receiver" label={t("nav.receiver")} icon={<IconReceiver />} />
+        )}
+        {/* Fleet view appears only once its domain is enabled. */}
+        {fleetEnabled && (
+          <NavItem to="/fleet" label={t("nav.fleet")} icon={<IconFleet />} />
+        )}
       </nav>
 
       {/* Bottom group: language, dark/light and the Simple/Advanced view toggle
-          (all in SidebarControls), then Settings. Settings continues the SAME
-          position sequence rather than restarting at 0 — "two groups, one
-          state" (design-language.md's sidebar section): it's still one list of
-          destinations split across two visual groups by the flex spacer, not
-          two independent lists that could collide on the same hue. */}
+          (all in SidebarControls), then Settings. */}
       <div className="flex flex-col gap-1 p-3">
         <SidebarControls />
         <NavItem
           to="/settings"
           label={t("nav.settings")}
           icon={<IconSettings />}
-          hue={destinations.length}
         />
       </div>
     </aside>

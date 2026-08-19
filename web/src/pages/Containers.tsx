@@ -2094,8 +2094,16 @@ export function Containers() {
               {t("containers.notInstalledHint")}
             </p>
           </div>
+          {/* Continues the live list's own index sequence rather than
+              restarting at 0 — the live section above renders simultaneously
+              on the same page, so restarting here would collide the first
+              orphan's hue with the first live row's (rainbowColorAt in
+              lib/appearance.ts only avoids collisions within ONE index
+              sequence; two independently-zeroed sequences rendered together
+              are exactly the "two neighbours share a colour" case
+              design-language.md's trap #1 warns about). */}
           {orphans.map((c, i) => (
-            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} index={i} />
+            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} index={live.length + i} />
           ))}
         </div>
       )}

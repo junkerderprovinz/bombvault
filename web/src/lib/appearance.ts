@@ -72,13 +72,14 @@ export const RAINBOW_OFF: RainbowState = {
 // Live state
 //
 // Module-level, not component state: an element's rainbow position is a
-// property of the document, not of any one component tree — the sidebar and
-// a container list must agree on which colour position three is, and
-// (per design-language.md's own reasoning for this pattern) they never meet
-// in the same component tree. Readers subscribe instead of a prop threaded
-// through every intermediate component. This is unused within Task 1 itself
-// (nothing in the app reads a rainbow position yet — see Task 2), but is
-// part of the ported contract so Task 2's row-consumers have it ready.
+// property of the document, not of any one component tree — two independent
+// consumers (e.g. the Settings tab strip and a container list) must agree on
+// which colour position three is, and they never meet in the same component
+// tree. Readers subscribe instead of a prop threaded through every
+// intermediate component. As of Task 2, rainbowAt()/rainbowColor() are read
+// by the Settings tab strip and the container/VM/file-set list rows
+// (ContainerRow/VMRow/FileSetRow via hueVars()), each via lib/useRainbow.ts's
+// subscription so they re-render live on any change here.
 // ---------------------------------------------------------------------------
 
 let state: RainbowState = RAINBOW_OFF;

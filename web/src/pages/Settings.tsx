@@ -4915,11 +4915,16 @@ export function SettingsPage() {
               of setting (client-only, applied at the app root — see
               lib/appearance.ts's header comment for why this stays
               localStorage like every other appearance preference in this
-              app rather than round-tripping through the server). Nothing in
-              the app CONSUMES a rainbow position yet (that's Task 2), so
-              turning this on only sets data-rainbow + --rb-0..--rb-7 on
-              <html> — verified live for this task, not "the app looks
-              rainbow" yet. */}
+              app rather than round-tripping through the server). As of
+              Task 2 this switch genuinely repaints the app: the Settings tab
+              strip above and the container/VM/file-set list rows all read a
+              rainbow position now, so turning this on sets data-rainbow +
+              --rb-0..--rb-7 on <html> AND immediately recolours those real
+              call sites — not just the CSS variables Task 1 verified. The
+              sidebar nav was deliberately NOT wired to this (see
+              Sidebar.tsx's comment): with every domain toggle on there are
+              more destinations than palette colours, so flipping this switch
+              never touches the sidebar's colours. */}
           <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
             {/* The master switch shares the section heading's own row rather
                 than sitting on a row of its own.
