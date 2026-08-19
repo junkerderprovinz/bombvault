@@ -750,6 +750,12 @@ const vi: Partial<Translations> = {
   "stack.memberStarted": "đã khởi động",
   "settings.restoreFolder": "Thư mục khôi phục mặc định",
   "settings.restoreFolderHint": "Nơi \"khôi phục vào một thư mục\" giải nén snapshot theo mặc định.",
+  "settings.configPath": "Đường dẫn Tự sao lưu",
+  "settings.pathMode.local": "Cục bộ",
+  "settings.pathMode.remote": "Từ xa",
+  "settings.primaryRemote.title": "Cài đặt an toàn cho kho chính từ xa",
+  "settings.primaryRemote.hint": "Đường dẫn sao lưu này là một kho restic từ xa — đây CHÍNH LÀ bản sao chính, không phải bản sao lưu trữ. Cấu hình giới hạn băng thông, bảo vệ chỉ-thêm và cảnh báo ngân sách tăng trưởng tại đây, cùng mức bảo vệ mà một bản sao ngoài trang nhận được.",
+  "settings.primaryRemote.budgetHint": "Cảnh báo khi kho này vượt quá ngân sách byte (0 = tắt).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Kiểm tra kết nối",

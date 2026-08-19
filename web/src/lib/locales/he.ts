@@ -733,6 +733,12 @@ const he: Partial<Translations> = {
   "stack.memberStarted": "הופעל",
   "settings.restoreFolder": "תיקיית שחזור ברירת מחדל",
   "settings.restoreFolderHint": "היכן „שחזור לתיקייה‟ מחלץ snapshots כברירת מחדל.",
+  "settings.configPath": "נתיב גיבוי עצמי",
+  "settings.pathMode.local": "מקומי",
+  "settings.pathMode.remote": "מרוחק",
+  "settings.primaryRemote.title": "הגדרות אבטחה למאגר ראשי מרוחק",
+  "settings.primaryRemote.hint": "נתיב הגיבוי הזה הוא מאגר restic מרוחק — זהו העותק הראשי עצמו, לא שכפול. הגדר כאן מגבלות רוחב פס, הגנת append-only והתראת תקציב גדילה, אותה הגנה שמקבל עותק חוץ-אתרי.",
+  "settings.primaryRemote.budgetHint": "התראה כאשר המאגר הזה חורג מתקציב בייטים (0 = כבוי).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "בדוק חיבור",

@@ -943,9 +943,22 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // ONCE after the whole loop — a 44-container night used to pay 44 full local
 // prunes. Single/manual backups (and flash/config, which never set the flag)
 // keep the immediate inline prune, byte-identical to before.
-func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tag string) {
+//
+// domain identifies which domain repo belongs to, so this can check whether
+// repo is a remote PRIMARY flagged append-only in its saved safety settings
+// (issue #152, primaryIsImmutable) — when it is, retention is skipped
+// entirely, exactly like copyToOffsiteTarget skips its off-site retention pass
+// for an immutable off-site destination: an immutable primary has no separate
+// off-site copy standing behind it, so this box's own credentials must not be
+// able to prune its sole backup. A local primary, or a remote one with no
+// saved safety settings (or saved but not flagged immutable), is unaffected.
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tag, domain string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() {
+		return
+	}
+	if s.primaryIsImmutable(domain, repo) {
+		log.Printf("api: %s: retention skipped — primary repo is remote and flagged append-only", domain) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
 	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
@@ -2236,32 +2249,7 @@ func offsiteBudgetLatchKey(domain, targetID string) string {
 // Used only for multi-destination domains; a single-destination domain stays on
 // the byte-identical checkOffsiteBudget path.
 func (s *Service) checkOffsiteBudgetForTarget(ctx context.Context, domain string, target store.OffsiteTarget) {
-	if target.GrowthBudgetGB <= 0 {
-		return // budget disabled for this destination
-	}
-	stat, found, err := s.store.LatestRepoStat(domain, offsiteStatSource(target.ID))
-	if err != nil {
-		log.Printf("api: offsite %s: budget check could not read latest sample: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
-		return
-	}
-	if !found {
-		return // no sample yet for this destination — nothing to compare
-	}
-	budgetBytes := int64(target.GrowthBudgetGB) * 1024 * 1024 * 1024
-	over := stat.RawSize > budgetBytes
-
-	key := offsiteBudgetLatchKey(domain, target.ID)
-	s.budgetMu.Lock()
-	if s.offsiteOverBudget == nil {
-		s.offsiteOverBudget = map[string]bool{}
-	}
-	prev := s.offsiteOverBudget[key]
-	s.offsiteOverBudget[key] = over
-	s.budgetMu.Unlock()
-
-	if over && !prev {
-		s.notifyOverBudget(ctx, domain, stat.RawSize, budgetBytes)
-	}
+	s.checkGrowthBudget(ctx, domain, offsiteStatSource(target.ID), offsiteBudgetLatchKey(domain, target.ID), target.GrowthBudgetGB, "off-site")
 }
 
 // checkOffsiteBudget compares the latest sampled off-site repo size for a domain
@@ -2271,45 +2259,95 @@ func (s *Service) checkOffsiteBudgetForTarget(ctx context.Context, domain string
 // the newest repo_stats row for domain+source="offsite"; if none exists yet (the
 // async sample hasn't landed on the very first replication) it simply skips.
 func (s *Service) checkOffsiteBudget(ctx context.Context, domain string, settings store.Settings) {
-	if settings.OffsiteGrowthBudgetGB <= 0 {
-		return // budget disabled for this install
+	s.checkGrowthBudget(ctx, domain, "offsite", domain, settings.OffsiteGrowthBudgetGB, "off-site")
+}
+
+// checkPrimaryRemoteBudget is checkOffsiteBudget's counterpart for a domain's
+// remote PRIMARY (issue #152): when repo is remote and the domain has a saved
+// primary-remote safety config (primaryRemoteTarget) with a growth budget set,
+// it samples the LOCAL repo_stats source fresh (repo IS the local/primary
+// path — there is no separate off-site copy to sample, unlike the off-site
+// budget checks above, so "local" is the only meaningful source) and compares
+// against that config's OWN GrowthBudgetGB, latched independently of the
+// off-site budget (a "primary:"-prefixed key, so a domain that ALSO has an
+// off-site budget alarms for each independently). A local primary, or a remote
+// one with no saved safety config, is a silent no-op — exactly like every
+// other primary-remote safety feature when unconfigured.
+func (s *Service) checkPrimaryRemoteBudget(ctx context.Context, domain, repo string, settings store.Settings) {
+	if !restic.IsRemoteRepo(repo) {
+		return
 	}
-	stat, found, err := s.store.LatestRepoStat(domain, "offsite")
+	t, ok := s.primaryRemoteTarget(domain)
+	if !ok || !t.Enabled || t.GrowthBudgetGB <= 0 {
+		return
+	}
+	// Sample synchronously (mirroring copyToOffsiteTarget's budget-set path) so
+	// the very first remote-primary backup after the safety settings are saved
+	// is judged against a fresh size, not a stale/missing sample.
+	if serr := s.CollectStats(ctx, domain, "local"); serr != nil {
+		log.Printf("api: primary-remote %s: budget size sample failed (backup is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
+	}
+	s.checkGrowthBudget(ctx, domain, "local", "primary:"+domain, t.GrowthBudgetGB, "primary")
+}
+
+// checkGrowthBudget is the shared compare-latch-notify core behind
+// checkOffsiteBudget, checkOffsiteBudgetForTarget and checkPrimaryRemoteBudget:
+// it reads the newest repo_stats sample for domain+source, compares it against
+// budgetGB (a <=0 budget is "off", a no-op), and fires notifyOverBudget exactly
+// once per false→true crossing of the per-latchKey latch (offsiteOverBudget;
+// the map is shared across all three callers, so each passes its own
+// collision-free key — offsiteBudgetLatchKey for a multi-target off-site
+// destination, the bare domain for the single-off-site-budget path, and a
+// "primary:"-prefixed key for a remote primary — so a domain's off-site and
+// primary budgets alarm independently). kind ("off-site" | "primary") only
+// selects notifyOverBudget's wording; a missing sample (async collection has
+// not landed yet, or the domain has never been backed up) is silently skipped.
+func (s *Service) checkGrowthBudget(ctx context.Context, domain, source, latchKey string, budgetGB int, kind string) {
+	if budgetGB <= 0 {
+		return // budget disabled
+	}
+	stat, found, err := s.store.LatestRepoStat(domain, source)
 	if err != nil {
-		log.Printf("api: offsite %s: budget check could not read latest sample: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: %s %s: budget check could not read latest sample: %v", kind, domain, err) //nolint:gosec // G706: kind/domain are fixed-whitelist values
 		return
 	}
 	if !found {
-		return // no off-site sample yet — nothing to compare
+		return // no sample yet — nothing to compare
 	}
-	budgetBytes := int64(settings.OffsiteGrowthBudgetGB) * 1024 * 1024 * 1024
+	budgetBytes := int64(budgetGB) * 1024 * 1024 * 1024
 	over := stat.RawSize > budgetBytes
 
 	// Latch the state under the mutex and detect the false→true crossing so the
-	// alarm fires exactly once per breach (not on every replication while over).
+	// alarm fires exactly once per breach (not on every backup/replication while
+	// over).
 	s.budgetMu.Lock()
 	if s.offsiteOverBudget == nil {
 		s.offsiteOverBudget = map[string]bool{}
 	}
-	prev := s.offsiteOverBudget[domain]
-	s.offsiteOverBudget[domain] = over
+	prev := s.offsiteOverBudget[latchKey]
+	s.offsiteOverBudget[latchKey] = over
 	s.budgetMu.Unlock()
 
 	if over && !prev {
-		s.notifyOverBudget(ctx, domain, stat.RawSize, budgetBytes)
+		s.notifyOverBudget(ctx, domain, stat.RawSize, budgetBytes, kind)
 	}
 }
 
-// notifyOverBudget sends a best-effort alert when a domain's off-site repo first
-// crosses its growth budget. It mirrors notifyProtectionLost/notifyDrillFailure's
-// policy gate + Unraid fan-out; a no-op when notifications are off.
-func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64) {
+// notifyOverBudget sends a best-effort alert when a domain's off-site repo OR
+// remote primary (kind: "off-site" | "primary") first crosses its growth
+// budget. It mirrors notifyProtectionLost/notifyDrillFailure's policy gate +
+// Unraid fan-out; a no-op when notifications are off.
+func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64, kind string) {
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
 		return
 	}
-	subject := "Off-site backup over budget for " + domain
-	msg := fmt.Sprintf("The off-site repository for %s has grown to %s, over the configured growth budget of %s. Prune the far side or raise the budget.", domain, humanBytes(size), humanBytes(budget))
+	subject := strings.ToUpper(kind[:1]) + kind[1:] + " backup over budget for " + domain
+	action := "Prune the far side or raise the budget."
+	if kind == "primary" {
+		action = "Adjust the retention policy, prune it, or raise the budget."
+	}
+	msg := fmt.Sprintf("The %s repository for %s has grown to %s, over the configured growth budget of %s. %s", kind, domain, humanBytes(size), humanBytes(budget), action)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
 	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
@@ -3207,6 +3245,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		return backup.Summary{}, err
 	}
 	mode := s.ModeFor(settings)
+	mode.Limits = s.primaryLimitsFor("containers", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -3340,10 +3379,11 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// so a recreate of the target completes BEFORE its dependents are restarted
 	// (#119). The backup + fresh snapshot are its safety net; any failure there is
 	// logged + recorded as a failed "update" run, but never fails the backup.
-	s.applyRetention(ctx, repo, settings, mode, "container:"+name)
+	s.applyRetention(ctx, repo, settings, mode, "container:"+name, "containers")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	s.maybeCollectStats(ctx, "containers")
+	s.checkPrimaryRemoteBudget(ctx, "containers", repo, settings)
 	return sum, nil
 }
 
@@ -6058,6 +6098,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		return backup.Summary{}, err
 	}
 	mode := s.ModeFor(settings)
+	mode.Limits = s.primaryLimitsFor("vms", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -6320,16 +6361,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// instead of being lumped in with the file-backed snapshot's (v8.0.0 VM
 	// service-layer integration, Task 2). A file-only VM (vmBlockDisks empty)
 	// makes exactly the one call it always has.
-	s.applyRetention(ctx, repo, settings, mode, "vm:"+name)
+	s.applyRetention(ctx, repo, settings, mode, "vm:"+name, "vms")
 	for _, bd := range vmBlockDisks {
 		if bd.Dev == "" {
 			continue // no distinct identity tag without a target dev — lumped into "vm:<name>" above
 		}
-		s.applyRetention(ctx, repo, settings, mode, "vm:"+name+":zvol:"+bd.Dev)
+		s.applyRetention(ctx, repo, settings, mode, "vm:"+name+":zvol:"+bd.Dev, "vms")
 	}
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
 	s.maybeCollectStats(ctx, "vms")
+	s.checkPrimaryRemoteBudget(ctx, "vms", repo, settings)
 	return sum, nil
 }
 
@@ -7099,6 +7141,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		return backup.Summary{}, err
 	}
 	mode := s.ModeFor(settings)
+	mode.Limits = s.primaryLimitsFor("flash", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -7121,10 +7164,11 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, "flash")
+	s.applyRetention(ctx, repo, settings, mode, "flash", "flash")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
 	s.maybeCollectStats(ctx, "flash")
+	s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
 		log.Printf("flash zip export failed (backup is still valid): %v", err)
 	}
@@ -7302,6 +7346,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		return backup.Summary{}, err
 	}
 	mode := s.ModeFor(settings)
+	mode.Limits = s.primaryLimitsFor("files", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -7327,10 +7372,11 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, "fileset:"+set.Name)
+	s.applyRetention(ctx, repo, settings, mode, "fileset:"+set.Name, "files")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
 	s.maybeCollectStats(ctx, "files")
+	s.checkPrimaryRemoteBudget(ctx, "files", repo, settings)
 	return sum, nil
 }
 
@@ -8070,6 +8116,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		return backup.Summary{}, err
 	}
 	mode := s.ModeFor(settings)
+	mode.Limits = s.primaryLimitsFor("config", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -8092,9 +8139,10 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, "config")
+	s.applyRetention(ctx, repo, settings, mode, "config", "config")
 	s.replicateOffsite(ctx, "config", settings, mode, repo)
 	s.maybeCollectStats(ctx, "config")
+	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
 	return sum, nil
 }
 
@@ -9561,6 +9609,13 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	// repo stays fully maintainable. Per-target: bare "offsite" uses the primary
 	// target's flag (== today), "offsite:<id>" that specific target's.
 	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, domain, source) {
+		return errOffsiteAppendOnly
+	}
+	// Issue #152: the SAME refusal applies when the "local" source IS actually a
+	// remote primary flagged append-only in its saved safety settings — there is
+	// no separate off-site copy in that shape, so refusing here is the only thing
+	// standing between an on-box credential and deleting the sole backup.
+	if !isOffsiteSource(source) && s.primaryIsImmutable(domain, repo) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to prune yet"); err != nil {

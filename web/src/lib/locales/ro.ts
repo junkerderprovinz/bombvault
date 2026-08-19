@@ -733,6 +733,12 @@ const ro: Partial<Translations> = {
   "stack.memberStarted": "pornit",
   "settings.restoreFolder": "Folder de restaurare implicit",
   "settings.restoreFolderHint": "Unde extrage implicit „restaurează într-un folder” instantaneele.",
+  "settings.configPath": "Cale Auto-backup",
+  "settings.pathMode.local": "Local",
+  "settings.pathMode.remote": "La distanță",
+  "settings.primaryRemote.title": "Setări de securitate pentru repozitoriul primar la distanță",
+  "settings.primaryRemote.hint": "Această cale de backup este un repozitoriu restic la distanță — ESTE copia primară, nu o replică. Configurează aici limitele de bandă, protecția append-only și o alarmă de buget de creștere, aceleași protecții pe care le primește o copie off-site.",
+  "settings.primaryRemote.budgetHint": "Alarmă când acest repozitoriu depășește un buget de octeți (0 = dezactivat).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testează conexiunea",
