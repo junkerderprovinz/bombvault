@@ -53,8 +53,6 @@ const POLL_INTERVAL_MS = 2000;
  * just beyond the matching server-side hard cap (12h backups, 48h restores). */
 const WATCH_TIMEOUT_BACKUP_MS = 13 * 60 * 60 * 1000;
 const WATCH_TIMEOUT_RESTORE_MS = 49 * 60 * 60 * 1000;
-/** Retry a busy fire (shared single-flight guard still releasing) this long. */
-const BUSY_RETRY_MS = 30 * 1000;
 /** Once the live progress entry has vanished, allow this many successful run
  * polls to still surface the recorded run before falling back to a generic
  * success (some flows record no run — see the fallback in fire()'s poll). */
@@ -305,11 +303,25 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
 // Bulk "back up / restore selected" actions run their targets one after
 // another. The starts are async and share the server's single-flight guard, so
 // firing them in a tight loop would make every call after the first hit
-// "already running". This helper fires ONE run (retrying briefly while the
-// previous target's guard is still releasing — the guard clears just after the
-// run goes terminal, not the instant we observe it), then waits for the NEW
-// recorded run to reach a terminal state before returning. Correlates by a new
-// run id, never by the client clock (skew matched the wrong or last run).
+// "already running". This helper fires ONE run (retrying while the previous
+// target's guard is still releasing — the guard clears only once the previous
+// target's ENTIRE backup call returns, which on the server includes that
+// target's own inline off-site replication, run synchronously AFTER its run
+// is already marked terminal but BEFORE the guard is released), then waits
+// for the NEW recorded run to reach a terminal state before returning.
+// Correlates by a new run id, never by the client clock (skew matched the
+// wrong or last run).
+//
+// #154: the fire-retry used to give up after a fixed, much shorter budget
+// (30s) than a real inline off-site replication can take (the reported
+// activity log shows 20-40s copies) — so a batch item queued right after a
+// slow-replicating one got silently abandoned: its start() never succeeded,
+// so no run was ever recorded for it, so it vanished from the batch with no
+// success line, no failure line, nothing. The fire-retry and the terminal-
+// wait below now share ONE deadline (watchTimeoutMs) — the same generous
+// ceiling already used to wait out a real in-progress backup/restore — so a
+// transient "still releasing" busy signal is retried for as long as a batch
+// item is allowed to run at all, never abandoned on an arbitrary shorter one.
 // ---------------------------------------------------------------------------
 
 export async function fireAndWaitRun(opts: {
@@ -325,8 +337,10 @@ export async function fireAndWaitRun(opts: {
   } catch {
     // ignore — fall back to the first terminal run for this target.
   }
-  // Fire, retrying only while the guard is still busy from the previous target.
-  const fireDeadline = Date.now() + BUSY_RETRY_MS;
+  // ONE deadline covers both the fire-retry below and the terminal-wait that
+  // follows a successful start (see the header comment for why the two must
+  // not have separate, shorter-than-necessary budgets).
+  const deadline = Date.now() + watchTimeoutMs(opts.kind);
   for (;;) {
     let res: Awaited<ReturnType<StartBackupFn>>;
     try {
@@ -336,11 +350,10 @@ export async function fireAndWaitRun(opts: {
     }
     if (res.ok) break;
     const busy = (res.error ?? "").toLowerCase().includes("already running");
-    if (!busy || Date.now() > fireDeadline) return { ok: false, error: res.error };
+    if (!busy || Date.now() > deadline) return { ok: false, error: res.error };
     await new Promise((r) => setTimeout(r, 1000));
   }
   // Poll the recorded runs until this target's NEW run reaches a terminal state.
-  const deadline = Date.now() + watchTimeoutMs(opts.kind);
   for (;;) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     try {
