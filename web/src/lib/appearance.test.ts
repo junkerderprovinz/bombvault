@@ -1,10 +1,13 @@
 // GlimStone form-engine Phase 2, Task 1 — rainbow/reactive colour engine.
 //
 // Covers the pure logic only (rainbowColorAt's position/rotation math,
-// hueVars, isValidPalette's all-or-nothing rule), matching this branch's
-// established no-jsdom pattern (see accent.test.ts): applyRainbow/getRainbow/
-// setRainbow touch `document`/`localStorage` and are exercised live instead
-// (see this task's report for the live-verification steps), not here.
+// hueVars, isValidPalette's all-or-nothing rule) — no `document`/
+// `localStorage` needed, so this file stays on the default node environment.
+// applyRainbow/getRainbow/setRainbow (the DOM/localStorage-touching half,
+// including the security-relevant all-or-nothing palette rejection and the
+// persist-before-validate regression) have their own jsdom-backed coverage
+// in appearance.dom.test.tsx — see that file's header comment for why a
+// jsdom opt-in is available and used here despite this file staying node.
 import { describe, expect, it } from "vitest";
 import { RAINBOW, hueVars, isValidPalette, rainbowColorAt } from "./appearance";
 import { contrastOn } from "./accent";

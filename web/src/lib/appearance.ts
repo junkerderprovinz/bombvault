@@ -257,20 +257,29 @@ export function getRainbow(): RainbowState {
   }
 }
 
-/** setRainbow merges `patch` onto the current persisted state, persists the
- * result, applies it to the document immediately (no separate "Save" step,
- * matching accent.ts's setAccent()) and returns the new state so a caller
- * can sync its own component state from the return value instead of a
- * second localStorage round-trip. */
+/** setRainbow merges `patch` onto the current persisted state, applies it to
+ * the document immediately (no separate "Save" step, matching accent.ts's
+ * setAccent()), persists the VALIDATED result — never the raw merged input —
+ * and returns the new state so a caller can sync its own component state
+ * from the return value instead of a second localStorage round-trip.
+ *
+ * Persisting `state` (applyRainbow's own sanitized output) rather than
+ * `merged` matters: applyRainbow() clamps an out-of-range seed and rejects a
+ * bad palette all-or-nothing, but that validation happened on a LOCAL copy —
+ * without this ordering, an invalid `merged` would still hit localStorage
+ * first, and because getRainbow() re-validates on every read, the DOM would
+ * keep showing the clamped value while the stored JSON quietly stayed
+ * poisoned forever (each subsequent setRainbow() re-merges from that same
+ * still-invalid stored value, never converging). See appearance.dom.test.tsx. */
 export function setRainbow(patch: Partial<RainbowState>): RainbowState {
   const merged: RainbowState = { ...getRainbow(), ...patch };
+  applyRainbow(merged);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     // A browser with storage disabled simply pays one flash per load; the
-    // in-memory apply below still makes this load correct.
+    // in-memory apply above still makes this load correct.
   }
-  applyRainbow(merged);
   return state;
 }
 
