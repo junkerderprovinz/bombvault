@@ -4906,32 +4906,45 @@ export function SettingsPage() {
               <InfoBubble tip={t("settings.rainbowHint")} />
             </span>
 
-            {/* No visible caption: the heading right above already says
-                "Rainbow" — a switch captioned "use the palette" under it
-                would say the same decision twice (design language's
-                Switches section). The label survives as the accessible
-                name via Toggle's own aria-label. */}
-            <Toggle
+            {/* ToggleRow, not a bare Toggle: BombVault's Toggle renders
+                label-then-track (the GlimStone reference/KnightLoader render
+                track-then-label), so a bare Toggle's track x-position drifts
+                with that switch's own label length — three different
+                x-positions for three different label lengths, the exact
+                trap the design language's Switches rule and KnightLoader's
+                own code comment call out. ToggleRow's `justify-between`
+                pins every track flush to the row's right edge regardless of
+                label length, matching the "Quiet toasts" ToggleRow below in
+                this same card. No visible caption on the master: the
+                heading right above already says "Rainbow" — a switch
+                captioned "use the palette" under it would say the same
+                decision twice (design language's Switches section). The
+                label survives as the accessible name via ToggleRow's own
+                hideLabel contract (same pattern as RestoreChecksSection's
+                master ToggleRow above). */}
+            <ToggleRow
+              hideLabel
+              label={t("settings.rainbowOn")}
               checked={rainbow.on}
               onChange={(v) => updateRainbow({ on: v })}
-              label={t("settings.rainbowOn")}
-              hideLabel
             />
 
-            {/* Dimmed via each control's OWN `disabled`, never a wrapping
-                container's opacity — rule 15, and the exact fix this
-                branch's own Toggle.tsx/ToggleRow already carry from Phase 1
-                Task 4 (see their own header comments). "Switched off, not
-                hidden": these stay visible and reachable even while off, so
-                nobody has to guess what the mode does. */}
-            <Toggle
-              checked={rainbow.reactive}
-              onChange={(v) => updateRainbow({ reactive: v })}
+            {/* Dimmed via each control's OWN `disabled` — ToggleRow already
+                dims its switch AND its caption together (rule 15, and the
+                exact fix this branch's own ToggleRow carries from Phase 1
+                Task 4 — see its own header comment above). "Switched off,
+                not hidden": these stay visible and reachable even while
+                off, so nobody has to guess what the mode does. */}
+            <ToggleRow
               label={t("settings.rainbowReactive")}
+              checked={rainbow.reactive}
               disabled={!rainbow.on}
+              onChange={(v) => updateRainbow({ reactive: v })}
             />
-            <Toggle
+            <ToggleRow
+              label={t("settings.rainbowRotate")}
               checked={rainbow.rotate}
+              disabled={!rainbow.on}
               onChange={(v) =>
                 // Turning rotation on draws a fresh offset immediately, so
                 // the switch does something visible instead of silently
@@ -4941,8 +4954,6 @@ export function SettingsPage() {
                   seed: v ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0,
                 })
               }
-              label={t("settings.rainbowRotate")}
-              disabled={!rainbow.on}
             />
 
             {/* The very same row shape as the accent swatches above it,
