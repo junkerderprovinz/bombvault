@@ -69,15 +69,24 @@ function AboutFooter() {
 
 function Card({
   title,
+  hint,
   children,
 }: {
   title: string;
+  /** Optional one-line explanation of what this whole Card does, rendered as
+   *  a neutral (i) beside the title (design-language.md rule 8, "explanations
+   *  live in a bubble, not on the page") instead of a permanent grey <p>
+   *  under it — GlimStone form-engine Phase 2 Task 4's hint→bubble content
+   *  migration. Optional and additive: every Card that doesn't pass it is
+   *  byte-for-byte unchanged. */
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
+      <h2 className="flex items-center gap-1.5 text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
         {title}
+        {hint && <InfoBubble tip={hint} />}
       </h2>
       {children}
     </div>
@@ -1569,6 +1578,27 @@ const emptyNotify: NotifyConfig = {
 // NotifyCard configures backup notifications (webhook / Matrix / Healthchecks).
 // Stored encrypted at rest; the form pre-fills from the saved config and Test
 // sends to the CURRENT form values (no save needed).
+// NotifyCard's own hint→bubble pass (GlimStone form-engine Phase 2, Task 4):
+// this Card, plus the Weekly-digest and Overdue-watchdog Cards further down
+// (the whole "notifications" tab — the only complete, self-contained tab
+// migrated by this task; every OTHER Settings tab's permanent hint <p>s are
+// untouched, deliberately, same scope discipline as Phase 1 Task 9's toast
+// adoption), moved 7 disposable-after-first-read hints into InfoBubble:
+// the card-level intro (now Card's own `hint` prop), the "scheduled summary"
+// and "notify on update" checkbox captions, the Apprise section intro, and
+// the per-domain-Healthchecks section intro.
+//
+// Two hints in THIS card were deliberately left as permanent text, not
+// bubbled, because they read as reference a user consults again later
+// rather than a one-time "what does this do" explainer (the spec's own
+// test): notify.unraidHint names the EXACT error string ("libvirt not
+// reachable") to ignore when VMs aren't backed up — someone hitting that
+// message while debugging needs it findable on the page, not behind a hover
+// target they have to already know exists; notify.healthchecksLifecycle
+// documents a non-obvious cross-setting interaction (Healthchecks pings
+// regardless of the "notify on" policy above it) that's exactly the kind of
+// "why is this behaving unexpectedly" answer someone comes back to, not
+// something read once and never needed again. Both stay as-is below.
 function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
   // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
@@ -1644,9 +1674,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
-    <Card title={t("notify.title")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.hint")}</p>
-
+    <Card title={t("notify.title")} hint={t("notify.hint")}>
       <label className={labelCls}>
         {t("notify.on")}
         <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCardCls}>
@@ -1666,8 +1694,10 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           style={{ accentColor: "var(--accent)" }}
         />
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm text-carbon-text">{t("notify.scheduledSummary")}</span>
-          <span className="text-xs text-carbon-textMuted">{t("notify.scheduledSummaryHint")}</span>
+          <span className="flex items-center gap-1 text-sm text-carbon-text">
+            {t("notify.scheduledSummary")}
+            <InfoBubble tip={t("notify.scheduledSummaryHint")} />
+          </span>
         </span>
       </label>
 
@@ -1681,12 +1711,19 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           style={{ accentColor: "var(--accent)" }}
         />
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm text-carbon-text">{t("notify.notifyOnUpdate")}</span>
-          <span className="text-xs text-carbon-textMuted">{t("notify.notifyOnUpdateHint")}</span>
+          <span className="flex items-center gap-1 text-sm text-carbon-text">
+            {t("notify.notifyOnUpdate")}
+            <InfoBubble tip={t("notify.notifyOnUpdateHint")} />
+          </span>
         </span>
       </label>
 
-      {/* Unraid native notifications (delivered over the host SSH connection). */}
+      {/* Unraid native notifications (delivered over the host SSH connection).
+          notify.unraidHint stays permanent text, NOT a bubble — see this
+          Card's own header comment above for why (it names the exact
+          "libvirt not reachable" error string to ignore, which needs to stay
+          findable on the page for someone debugging that message, not
+          hidden behind a hover target). */}
       <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
@@ -1725,7 +1762,10 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           100+ services without bundling Python. Shares the card's Save + Test bar
           like the other channels. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-medium text-carbon-textSub">{t("notify.apprise")}</span>
+        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
+          {t("notify.apprise")}
+          <InfoBubble tip={t("notify.appriseHint")} />
+        </span>
         <label className={labelCls}>
           {t("notify.appriseUrl")}
           <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
@@ -1736,7 +1776,6 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <input value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
             placeholder="backups,homelab" className={inputCls} />
         </label>
-        <p className="text-xs text-carbon-textMuted">{t("notify.appriseHint")}</p>
       </div>
 
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
@@ -1763,11 +1802,18 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
           placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
       </label>
+      {/* notify.healthchecksLifecycle stays permanent text, NOT a bubble —
+          see this Card's own header comment above for why (it documents a
+          non-obvious cross-setting interaction someone comes back to when
+          debugging an unexpected check status, not a one-time explainer). */}
       <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
 
       {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-medium text-carbon-textSub">{t("notify.hcPerDomain")}</span>
+        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
+          {t("notify.hcPerDomain")}
+          <InfoBubble tip={t("notify.hcPerDomainHint")} />
+        </span>
         {(
           [
             ["container", t("nav.containers")],
@@ -1793,7 +1839,6 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             />
           </label>
         ))}
-        <p className="text-xs text-carbon-textMuted">{t("notify.hcPerDomainHint")}</p>
       </div>
 
       {/* Email (SMTP), sent via the configured mail server. */}
@@ -4737,10 +4782,7 @@ export function SettingsPage() {
           tamper cadence editors (CadenceBuilder's own <fieldset disabled>
           handles the dimming — no opacity gate on the wrapping container). */}
       {tab === "notifications" && (
-        <Card title={t("settings.digestTitle")}>
-          <p className="text-xs text-carbon-textMuted -mt-1">
-            {t("settings.digestHint")}
-          </p>
+        <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")}>
           <ToggleRow
             hideLabel
             label={t("settings.digestToggle")}
@@ -4781,8 +4823,7 @@ export function SettingsPage() {
           that pushes ONE notification per overdue episode through the channels
           configured above; a new successful backup re-arms it. */}
       {tab === "notifications" && (
-        <Card title={t("settings.watchdogTitle")}>
-          <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.watchdogHint")}</p>
+        <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")}>
           <ToggleRow
             label={t("settings.watchdogToggle")}
             checked={settings.watchdogEnabled}
