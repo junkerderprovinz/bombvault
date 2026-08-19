@@ -15,6 +15,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { ToggleRow } from "./Settings";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -179,8 +180,11 @@ function ConfigSettingsCard({
 
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("config.settingsTitle")}
+      {/* Task 5 (rule 11): same Badge-in-<h2> pattern as Settings.tsx's own
+          Card component — this hand-rolled Card equivalent never shared
+          Card's component, so it needed its own copy of the conversion. */}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("config.settingsTitle")}</Badge>
       </h2>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("config.settingsHint")}</p>
 
@@ -358,8 +362,8 @@ export function Config() {
 
       {/* Backup card */}
       <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("config.backupTitle")}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("config.backupTitle")}</Badge>
         </h2>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("config.backupHint")}</p>
         <ConfigBackupButton
@@ -377,8 +381,8 @@ export function Config() {
 
       {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("config.snapshotsTitle")}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("config.snapshotsTitle")}</Badge>
         </h2>
         <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
           {t("config.snapshotsHint")}

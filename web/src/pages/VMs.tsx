@@ -591,13 +591,19 @@ function VMRestorePanel({
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
               </Advanced>
               {snapshots.length > 0 && (
-                <button
+                // Task 5 (rule 13): was a plain underline-on-hover text
+                // button; already correctly fault-red per "the destructive
+                // control is always the fault colour" (Destructive actions).
+                <Badge
+                  as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
+                  tone="fail"
+                  size="small"
+                  className="ml-auto"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
-                </button>
+                </Badge>
               )}
             </div>
             <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
@@ -1452,8 +1458,8 @@ export function VMs() {
       {!loading && orphans.length > 0 && (
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("containers.notInstalledTitle")}
+            <h2 className="flex items-center">
+              <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("vms.notInstalledHint")}

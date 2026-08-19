@@ -39,26 +39,35 @@ function AboutFooter() {
     return () => { active = false; };
   }, []);
   return (
-    <div className="pt-6 pb-4 flex flex-col items-center gap-1 text-xs text-carbon-textMuted">
+    // Task 5 (rule 13, "everything clickable is a badge — including links"):
+    // both footer links were plain underline-on-hover text. `as="a"` (not
+    // "button") keeps real anchor semantics — right-click "copy link",
+    // middle-click to open in a new tab, the browser's own status-bar URL
+    // preview — none of which a synthetic onClick reproduces.
+    <div className="pt-6 pb-4 flex flex-col items-center gap-1.5 text-xs text-carbon-textMuted">
       {version && (
-        <a
+        <Badge
+          as="a"
           href="https://github.com/junkerderprovinz/bombvault/releases"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-carbon-text transition-colors"
+          tone="neutral"
+          size="small"
           title={`BombVault ${version}`}
         >
           BombVault {version}
-        </a>
+        </Badge>
       )}
-      <a
+      <Badge
+        as="a"
         href="https://github.com/junkerderprovinz/bombvault/issues"
         target="_blank"
         rel="noopener noreferrer"
-        className="hover:text-carbon-text transition-colors"
+        tone="neutral"
+        size="small"
       >
         {t("nav.reportBug")}
-      </a>
+      </Badge>
     </div>
   );
 }
@@ -89,16 +98,21 @@ function Card({
 }) {
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-      {/* Note for whoever picks up Task 5 (section headings as filled,
-          coloured badges — design-language.md rule 11): that task turns
-          this <h2> itself into a colour-filled badge, which will put this
-          neutral InfoBubble icon inside a coloured background. Rule 8 says
-          the icon stays neutral, never the accent — that's going to visually
-          compete with a filled badge fill, and is a real open question for
-          Task 5 to resolve (bubble outside the badge? recolour it? something
-          else?), not something pre-decided here. */}
-      <h2 className="flex items-center gap-1.5 text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {title}
+      {/* Task 5 (design-language.md rule 11, "every heading is a filled
+          section badge") resolution, for whoever finds this next: the <h2>
+          tag stays (screen readers still get a real heading, e.g. "heading
+          level 2: Off-site Copy"), but its VISIBLE content is now a Badge
+          (tone="heading" size="heading" — see Badge.tsx's file header for
+          the full colour/size reasoning). The InfoBubble, when present, sits
+          as a SIBLING outside the badge, not nested inside its coloured
+          fill — the option this comment used to leave open. Chosen over
+          computing a contrast-aware icon colour per badge fill because it
+          keeps InfoBubble's rule-8 contract ("neutral, never the accent")
+          true with zero per-instance exceptions: the icon still sits on the
+          Card's own plain bg-carbon-surface, never on the badge's
+          accent-soft wash, so no contrast math is needed at all. */}
+      <h2 className="flex items-center gap-1.5">
+        <Badge tone="heading" size="heading" wrap>{title}</Badge>
         {hint && <InfoBubble tip={hint} />}
       </h2>
       {children}
@@ -396,14 +410,18 @@ chmod 600 /root/.ssh/authorized_keys`
               {t("vm.ssh.copyCmd")}
             </button>
           </div>
-          <a
+          {/* Task 5 (rule 13): was a plain underline-on-hover text link. */}
+          <Badge
+            as="a"
             href="https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md"
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-statusInfo hover:underline"
+            tone="info"
+            size="small"
+            className="self-start"
           >
             {t("vm.ssh.guide")} →
-          </a>
+          </Badge>
         </div>
 
         <div className="flex items-center gap-3">
@@ -779,14 +797,18 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <span className="text-sm text-carbon-text">{t("settings.dashTileNotInstalled")}</span>
           {/* Transparency BEFORE the call: what Install does, and where the code lives. */}
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileConfirm")}</p>
-          <a
+          {/* Task 5 (rule 13): was a plain underline-on-hover text link. */}
+          <Badge
+            as="a"
             href={DASH_PLUGIN_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-statusInfo hover:underline self-start"
+            tone="info"
+            size="small"
+            className="self-start"
           >
             {t("settings.dashTileRepo")} →
-          </a>
+          </Badge>
           <button
             type="button"
             onClick={() => void run("install")}
@@ -3531,9 +3553,12 @@ export function SettingsPage() {
         <>
           {/* Backup schedules (schedulesBackup): Containers + sync + VMs + Flash.
               A group heading (Card-title style) labels the three domain cards,
-              matching the single-Card off-site / self-backup / checks groups. */}
-          <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-            {t("settings.schedulesBackup")}
+              matching the single-Card off-site / self-backup / checks groups.
+              Task 5 (rule 11): same Badge treatment as Card's own <h2> above,
+              since this IS a Card-title-equivalent heading, just labelling
+              three sibling Cards instead of sitting inside one. */}
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{t("settings.schedulesBackup")}</Badge>
           </h2>
           {/* Per-item schedules toggle (#121): opt in to per-container/VM overrides.
               Off by default — while off, the member lists below are unchanged. */}
@@ -4428,8 +4453,8 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <div id="offsite">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("offsite.sectionTitle")}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("offsite.sectionTitle")}</Badge>
       </h2>
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>

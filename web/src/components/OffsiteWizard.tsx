@@ -4,6 +4,7 @@ import { deploySnippet, tamperTest, testOffsite, getCloud, setCloud } from "../l
 import { useT } from "../lib/i18n";
 import { RevealInput } from "./RevealInput";
 import { useReveal } from "../lib/useReveal";
+import { Badge } from "./Badge";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -399,13 +400,16 @@ export function OffsiteWizard({
               <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
               </div>
-              <button
-                type="button"
+              {/* Task 5 (rule 13): was a plain underline-on-hover text button. */}
+              <Badge
+                as="button"
                 onClick={() => void genSnippet()}
-                className="self-start text-xs text-statusInfo hover:underline"
+                tone="info"
+                size="small"
+                className="self-start"
               >
                 {t("offsite.wizard.regenerate")}
-              </button>
+              </Badge>
             </div>
           )}
         </div>

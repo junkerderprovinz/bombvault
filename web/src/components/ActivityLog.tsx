@@ -18,6 +18,7 @@ import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
 import { buildLogLines, filterLogLines, formatLogDate } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
+import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
 
 const POLL_RUNS_MS = 10000;
@@ -204,8 +205,8 @@ export function ActivityLog({
 
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("activityLog.title")}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("activityLog.title")}</Badge>
       </h2>
 
       {/* Filter bar — narrows the ONE list below; never a second zone. */}

@@ -63,28 +63,53 @@ describe("Badge — size stages", () => {
     const cls = el.props!.className as string;
     expect(cls).toContain("h-5");
   });
+
+  it("heading stage is a 22px-tall, 12px-text, uppercase+tracked chip (rule 11)", () => {
+    const el = root(Badge({ children: "x", size: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("h-[22px]");
+    expect(cls).toContain("text-dense");
+    expect(cls).toContain("uppercase");
+    expect(cls).toContain("tracking-widest");
+    expect(cls).toContain("px-3");
+  });
+
+  it("heading stage is a distinct height from every status-chip stage, so a heading never has the exact footprint of a real status/activity chip", () => {
+    const heading = root(Badge({ children: "x", size: "heading" })).props!.className as string;
+    for (const size of ["small", "medium", "large"] as BadgeSize[]) {
+      const statusCls = root(Badge({ children: "x", size })).props!.className as string;
+      const statusHeight = statusCls.split(/\s+/).find((c) => /^h-/.test(c));
+      expect(statusHeight).toBeTruthy();
+      expect(heading.split(/\s+/)).not.toContain(statusHeight);
+    }
+  });
 });
 
-describe("Badge — pixel-identical height between <span> and <button> at the same stage", () => {
-  const sizes: BadgeSize[] = ["small", "medium", "large"];
+describe("Badge — pixel-identical height between <span>, <button> and <a> at the same stage", () => {
+  const sizes: BadgeSize[] = ["small", "medium", "large", "heading"];
 
-  it.each(sizes)("the %s stage's height/padding/font classes match for as=span and as=button", (size) => {
+  it.each(sizes)("the %s stage's height/padding/font classes match across span/button/a", (size) => {
     const span = root(Badge({ children: "x", size, as: "span" }));
     const button = root(Badge({ children: "x", size, as: "button" }));
+    const anchor = root(Badge({ children: "x", size, as: "a", href: "https://example.test" }));
     expect(span.type).toBe("span");
     expect(button.type).toBe("button");
+    expect(anchor.type).toBe("a");
 
     const spanCls = span.props!.className as string;
     const buttonCls = button.props!.className as string;
+    const anchorCls = anchor.props!.className as string;
     const { height, text, padding } = {
       small: { height: "h-[18px]", text: "text-caption", padding: "px-1.5" },
       medium: { height: "h-5", text: "text-dense", padding: "px-2" },
       large: { height: "h-6", text: "text-dense", padding: "px-2.5" },
+      heading: { height: "h-[22px]", text: "text-dense", padding: "px-3" },
     }[size];
 
     for (const token of [height, text, padding]) {
       expect(spanCls).toContain(token);
       expect(buttonCls).toContain(token);
+      expect(anchorCls).toContain(token);
     }
   });
 
@@ -103,6 +128,14 @@ describe("Badge — pixel-identical height between <span> and <button> at the sa
     expect(cls).toContain("min-h-0");
   });
 
+  it("the a variant also claims box-sizing and min-height:0 (same box model contract), with no appearance-none (anchors have no native chrome to strip)", () => {
+    const anchor = root(Badge({ children: "x", as: "a", href: "https://example.test" }));
+    const cls = anchor.props!.className as string;
+    expect(cls).toContain("box-border");
+    expect(cls).toContain("min-h-0");
+    expect(cls).not.toContain("appearance-none");
+  });
+
   it("sets type=button and propagates onClick/disabled only on the button variant", () => {
     let clicked = false;
     const button = root(
@@ -112,6 +145,15 @@ describe("Badge — pixel-identical height between <span> and <button> at the sa
     expect(button.props!.disabled).toBe(true);
     (button.props!.onClick as () => void)();
     expect(clicked).toBe(true);
+  });
+
+  it("the a variant passes href/target/rel straight through, for real anchor semantics (rule 13)", () => {
+    const anchor = root(
+      Badge({ children: "x", as: "a", href: "https://example.test", target: "_blank", rel: "noopener noreferrer" })
+    );
+    expect(anchor.props!.href).toBe("https://example.test");
+    expect(anchor.props!.target).toBe("_blank");
+    expect(anchor.props!.rel).toBe("noopener noreferrer");
   });
 });
 
@@ -165,6 +207,11 @@ describe("Badge — tone/status-color mapping", () => {
     ["warn", "bg-statusWarnBgStrong", "text-statusWarn"],
     ["info", "bg-statusInfoBg", "text-statusInfo"],
     ["neutral", "bg-carbon-surface2", "text-carbon-textSub"],
+    // heading (rule 11): accent-soft WASH, never solid accent (rule 3 is
+    // activity-only) and never one of the four state hues (rule 4 — see the
+    // file header's full reasoning). Text stays the same quiet
+    // text-carbon-textSub the eyebrow treatment always used.
+    ["heading", "bg-accentSoft", "text-carbon-textSub"],
   ];
 
   it.each(cases)("tone=%s renders %s / %s", (tone, bg, text) => {
@@ -172,6 +219,13 @@ describe("Badge — tone/status-color mapping", () => {
     const cls = el.props!.className as string;
     expect(cls).toContain(bg);
     expect(cls).toContain(text);
+  });
+
+  it("heading tone never renders the solid bg-accent fill (rule 3: accent means activity, not furniture)", () => {
+    const el = root(Badge({ children: "x", tone: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("bg-accent ");
+    expect(cls.split(/\s+/)).not.toContain("bg-accent");
   });
 
   it("defaults to the neutral tone when omitted", () => {
