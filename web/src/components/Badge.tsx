@@ -174,6 +174,29 @@
 // has no `id` prop today, so converting them would mean either dropping
 // that wiring or growing Badge's public API in the same pass, neither of
 // which belongs in a section-heading fix. Left for a dedicated rule-15 pass.
+//
+// Also deliberately NOT converted, and the only outermost <h2> in the app
+// that stays bare text: an ALERT/CALLOUT heading whose panel is itself a
+// filled status surface — today exactly one site, Dashboard.tsx's
+// RecoveryNag (`bg-statusWarnBg` + `recovery.nagTitle`). Rule 11's "filled
+// section badge" silently assumes a neutral card surface underneath for the
+// fill to register against; a status callout has already spent that budget
+// on its own background. Measured live at that site, badge-fill vs. the
+// panel it would sit on: accent-soft 1.06:1 light / 1.39:1 dark, and
+// warn-strong 1.00:1 light (index.css gives --status-warn-bg and
+// --status-warn-bg-strong the same value in light mode) / 1.11:1 dark. So
+// the badge would read as plain text with extra padding, while also
+// discarding the text-statusWarn colour that currently carries the alert's
+// meaning at 8.62:1. Left plain on purpose — this is a token gap, not an
+// oversight, and the call site says so too. Every OTHER outermost heading
+// in the app is a badge; if a future pass adds a real "badge on a status
+// surface" tone pair, this is the one site waiting for it.
+//
+// Page titles (the `<h1 text-2xl font-semibold>` at the top of each page,
+// plus Recovery.tsx's `text-lg` one) are out of rule 11's scope for the same
+// reason the dialog titles above are: an <h1> names the WHOLE VIEW, it is
+// not a section inside one. All 11 are consistently left plain today; they
+// belong to the same future rule-15 "title as a badge" pass as the dialogs.
 // ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";
