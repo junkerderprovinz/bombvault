@@ -189,6 +189,11 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// hostShell runs the "Backup Everything" global pre/post hook commands in
+	// BombVault's OWN container (see hostshell.go). Defaulted to the real
+	// execHostShell adapter in NewService, so it is never nil in production;
+	// SetHostShell overrides it for tests.
+	hostShell HostShell
 	// platform is the detected/injected Platform adapter (Unraid/generic/…)
 	// for the appdata-fallback convention, cross-instance restore-destination
 	// defaults, and the Unraid update-status reconcile step. Optional; nil
@@ -307,6 +312,7 @@ func (s *Service) lockTamper(domain string) func() {
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
 	return &Service{
 		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
+		hostShell: execHostShell{},
 		repoMu: map[string]*sync.Mutex{
 			"containers": {},
 			"vms":        {},
@@ -489,6 +495,12 @@ func (s *Service) SetHostSSH(ssh HostSSH) { s.ssh = ssh }
 // SetProgress wires the live-progress store that backup/restore operations
 // publish to (and the SSE endpoint subscribes to). Called from main.
 func (s *Service) SetProgress(p *progress.Store) { s.progress = p }
+
+// SetHostShell overrides the "Backup Everything" global hook's shell-exec
+// adapter (see hostshell.go). NewService already defaults it to the real
+// execHostShell adapter, so production callers never need this; it exists for
+// test injection of a fake HostShell.
+func (s *Service) SetHostShell(h HostShell) { s.hostShell = h }
 
 // SetPlatform wires the detected Platform adapter (platform.Detect + main's
 // Kind->Platform mapping): the appdata-fallback convention, cross-instance
