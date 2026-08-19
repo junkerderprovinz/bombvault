@@ -27,8 +27,10 @@ import { useT } from "./i18n";
 //     somewhere inside the dialog, so clicking the (unfocusable) message text
 //     or tabbing out moved focus to <body> and silently killed Escape for
 //     good. Matches WhatsNewDialog.tsx/ErrorDetailPanel.tsx/FilterPopover.tsx/
-//     InfoBubble.tsx/RestorePanel.tsx/Sidebar.tsx's own document-listener
-//     pattern.
+//     InfoBubble.tsx/Sidebar.tsx's own document-listener pattern. (RestorePanel
+//     .tsx is deliberately NOT in that list: its only Escape handling is a React
+//     onKeyDown on the inline tag-entry <input>, which is correct there — that
+//     Escape must fire only while the input itself has focus.)
 //   - A Tab/Shift+Tab focus trap over the dialog card's own focusable
 //     elements (header close-X, Cancel, Confirm), so focus can never land on
 //     the page behind a dialog that is now ACTUALLY covering it (a portal +

@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { listRuns, ackRuns } from "../lib/api";
 import type { Run } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -149,7 +150,18 @@ export function ErrorDetailPanel({
       .finally(() => setBusy(false));
   };
 
-  return (
+  // Portalled to <body> — this panel is rendered from inside Dashboard, which
+  // Layout wraps in .bv-page-enter, and that wrapper's animation leaves a
+  // computed `transform: matrix(1, 0, 0, 1, 0, 0)` behind. An identity matrix is
+  // still a transform, so it makes the wrapper a containing block for
+  // `position: fixed` descendants: measured inline, this backdrop covered
+  // 248,24 1113x1594 instead of the real 0,0 1400x1000 viewport — the sidebar
+  // stayed uncovered and clickable behind an "aria-modal" dialog, and the
+  // bottom 594px hung below the fold. Same fix, same reason, as InfoBubble.tsx
+  // and lib/useConfirm.tsx (the @keyframes bv-page-in comment in index.css tries
+  // to avoid this by ending at `transform: none`, but the computed value is the
+  // identity matrix regardless, so the portal is what actually cures it).
+  return createPortal(
     <div
       className="bv-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
@@ -278,6 +290,7 @@ export function ErrorDetailPanel({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
