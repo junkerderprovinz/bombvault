@@ -1210,6 +1210,14 @@ function HealthHeatmapCard({
     }
   };
 
+  // Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 audit):
+  // this is a small, fixed set of 5 where each entry already has its own
+  // durable identity (a domain name, not "one of several similar rows"), and
+  // the cells it filters sit right beside it painted in the four FIXED state
+  // hues (cellColor() above — red/green shades, rule 4). A 5-way rainbow
+  // strip competing for attention directly next to a red/green heatmap would
+  // hurt legibility for no tracking benefit nobody needs help telling
+  // "Containers" apart from "VMs" by label alone.
   const toggle = (
     <div className="flex items-center gap-1">
       {(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => (

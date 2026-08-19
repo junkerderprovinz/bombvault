@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
 import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder } from "../lib/api";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -21,6 +21,8 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
 import { useConfirm } from "../lib/useConfirm";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -1018,12 +1020,19 @@ function ContainerRow({
   onDeleted,
   selected,
   onToggleSelect,
+  index,
 }: {
   container: Container;
   t: T;
   onDeleted: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  form-engine Phase 2, Task 2). A container list is exactly the case the
+   *  mode exists for: a variable, user-configured set a person tracks several
+   *  of at once. Assigned by LIST INDEX, never a hash of `container.name` —
+   *  see the callers below. */
+  index: number;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -1032,7 +1041,19 @@ function ContainerRow({
   // own backup button (its OWN in-flight backup is handled by isPending inside).
   const running = anyActive(progressMap);
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-hue owns the position; glim-tint washes the WHOLE card with it
+      // (trap #2, design-language.md's "Rainbow" section) — without the wash
+      // this card shows almost no colour at rest, since nothing else on it
+      // reads --accent except the checkbox and the (usually hidden) backup
+      // button. glim-active while a backup/restore is actively running on
+      // THIS row: reactive mode then shows the hue without needing hover,
+      // same as knightloader's TaskRow keying off task.status === 'running'.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+        progress?.active ? "glim-active" : ""
+      }`}
+    >
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed containers only) */}
@@ -1662,6 +1683,10 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
 
 export function Containers() {
   const { t } = useT();
+  // One subscription for the whole list rather than one per row: the palette
+  // changes for every row at once anyway, so this alone is what makes rainbow
+  // on/off/reactive/rotate/palette edits repaint the list live, no reload.
+  useRainbow();
   const { confirm, confirmDialog } = useConfirm();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2044,7 +2069,7 @@ export function Containers() {
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3">
-          {live.map((c) => (
+          {live.map((c, i) => (
             <ContainerRow
               key={c.name}
               container={c}
@@ -2052,6 +2077,7 @@ export function Containers() {
               onDeleted={() => void loadContainers()}
               selected={selected.has(c.name)}
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
+              index={i}
             />
           ))}
         </div>
@@ -2068,8 +2094,8 @@ export function Containers() {
               {t("containers.notInstalledHint")}
             </p>
           </div>
-          {orphans.map((c) => (
-            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
+          {orphans.map((c, i) => (
+            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} index={i} />
           ))}
         </div>
       )}
