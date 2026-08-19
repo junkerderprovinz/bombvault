@@ -16,6 +16,7 @@ import { useReveal } from "../lib/useReveal";
 import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
+import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
@@ -1293,7 +1294,10 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   useEffect(refresh, []);
 
   function openNew() {
-    setEditing({ id: crypto.randomUUID(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
+    // randomId(), not crypto.randomUUID() — the latter is secure-context-only
+    // and BombVault ships a documented plain-HTTP mode, where it is undefined
+    // and this click would throw instead of opening the editor (see lib/uuid.ts).
+    setEditing({ id: randomId(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
     setState("idle");
     setMsg(null);
   }
@@ -2937,8 +2941,12 @@ export function SettingsPage() {
           setSavedSettings(res.settings);
           // Give every loaded registry row a stable client-only id (see
           // registryRowIds' declaration above) — a fresh GET never carries
-          // one of its own, so one is minted here, once, per row.
-          setRegistryRowIds(res.settings.registryAuths.map(() => crypto.randomUUID()));
+          // one of its own, so one is minted here, once, per row. randomId()
+          // rather than crypto.randomUUID(): the latter is secure-context-only
+          // and would throw on BombVault's documented plain-HTTP origin, and a
+          // throw HERE lands in this promise's .catch below — killing the whole
+          // Settings page, not just this card (see lib/uuid.ts).
+          setRegistryRowIds(res.settings.registryAuths.map(() => randomId()));
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           // Detect whether the domain schedules are already in sync (Containers ==
           // VMs == Flash, and not off), so the Schedules tab's sync checkbox
@@ -3923,7 +3931,7 @@ export function SettingsPage() {
               // A brand-new row always starts with its OWN fresh id — never
               // reusing one, so it can't inherit a stale "revealed" flag left
               // behind by a since-removed row that used to sit at this index.
-              setRegistryRowIds((prev) => [...prev, crypto.randomUUID()]);
+              setRegistryRowIds((prev) => [...prev, randomId()]);
             }}
             className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
           >
