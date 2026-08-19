@@ -184,7 +184,7 @@
      this outline actually renders against — a field's OWN background at
      focus (--carbon-surface3 #525252 for .bv-field-focus, or
      --field-focus-well below for the well variant) — where it only manages
-     2.58:1 / 2.39:1, under the 3:1 minimum. The higher .8 opacity here (same
+     2.58:1 / 2.37:1, under the 3:1 minimum. The higher .8 opacity here (same
      accent hue, same amber family, nothing new) composites to ~3.71:1 on
      --carbon-surface3 and ~3.35:1 on --field-focus-well below — both clear
      3:1 with real margin, by the standard WCAG relative-luminance formula.
@@ -199,17 +199,26 @@
      against --carbon-surface2 (#393939, the WELL's own OUTER background) at
      3.53:1 — never checked against what the fill actually sits under
      text-wise: the field's OWN content. On #8e8e8e, --carbon-text (#f4f4f4)
-     dropped to 2.98:1 (fails the 4.5:1 body-text minimum) and placeholder
-     text (--carbon-textMuted #8d8d8d) dropped to ~1.01:1 — effectively
-     invisible, on exactly the fields most likely to hold sensitive
-     credentials (S3 keys, repo passwords). Now that --field-focus-ring above
-     is doing the real SC 1.4.11 work, this only needs to be a modest,
-     genuine brightness step off --carbon-surface3 (#525252) that does NOT
-     break text contrast: #5a5a5a keeps --carbon-text at 6.27:1 and
-     placeholder at 2.08:1 — both far closer to their un-focused values on
-     --carbon-surface3 (7.10:1 / 2.35:1) than the old value ever was, and
-     --field-focus-ring above still clears 3:1 against this specific value
-     (3.35:1). */
+     dropped to 2.98:1, failing the 4.5:1 body-text minimum on exactly the
+     fields most likely to hold sensitive credentials (S3 keys, repo
+     passwords); placeholder text fell with it, to 2.83:1 as those fields
+     actually render (they set no placeholder colour, so Chromium's UA
+     default applies), or 1.01:1 for the two fields that DO pin it to
+     --carbon-textMuted #8d8d8d (ActivityLog/ErrorDetailPanel — both the
+     .bv-field-focus variant, so that worst case is hypothetical here).
+     Now that --field-focus-ring above is doing the real SC 1.4.11 work,
+     this only needs to be a modest, genuine brightness step off
+     --carbon-surface3 (#525252) that does NOT break text contrast: #5a5a5a
+     keeps --carbon-text at 6.27:1 and textMuted-pinned placeholder at
+     2.08:1 — both far closer to their un-focused values on --carbon-surface3
+     (7.10:1 / 2.35:1) than the old value ever was.
+
+     DO NOT brighten this back toward the old value to get a punchier step:
+     --field-focus-ring is composited against THIS fill, so the two are
+     coupled. It clears 3:1 here (3.35:1), but on the old #8e8e8e it would
+     collapse to 1.77:1 — the hairline outline, i.e. the only real SC 1.4.11
+     mechanism these rules have, would go invisible. Re-measure the outline
+     against any new value before changing it. */
   --field-focus-well: #5a5a5a;
 
   /* Status colors (#105) — the exact hexes the UI has always used in dark mode
@@ -325,15 +334,21 @@
      ORIGINAL value here was #787878, verified only against --carbon-surface2
      (#e8e8e8, the WELL's own OUTER background) at 3.60:1 — never checked
      against the field's OWN content sitting on that fill. On #787878,
-     --carbon-text (#161616) dropped to 4.10:1 (fails the 4.5:1 body-text
-     minimum) and placeholder text (--carbon-textMuted #6f6f6f) dropped to
-     ~1.14:1 — effectively invisible. Now that --field-focus-ring above is
-     doing the real SC 1.4.11 work, this only needs to be a modest step off
-     --carbon-surface3 (#d1d1d1) that does NOT break text contrast: #cdcdcd
-     keeps --carbon-text at 11.38:1 and placeholder at 3.16:1 — both close to
-     their un-focused values on --carbon-surface3 (11.85:1 / 3.29:1), and
-     --field-focus-ring above still clears 3:1 against this specific value
-     (3.14:1). */
+     --carbon-text (#161616) dropped to 4.10:1, failing the 4.5:1 body-text
+     minimum; placeholder text fell with it, to 2.50:1 as these fields
+     actually render (Chromium's UA default, since they set no placeholder
+     colour) or 1.14:1 where it's pinned to --carbon-textMuted #6f6f6f — see
+     the dark block's note for which fields those are. Now that
+     --field-focus-ring above is doing the real SC 1.4.11 work, this only
+     needs to be a modest step off --carbon-surface3 (#d1d1d1) that does NOT
+     break text contrast: #cdcdcd keeps --carbon-text at 11.38:1 and
+     textMuted-pinned placeholder at 3.16:1 — both close to their un-focused
+     values on --carbon-surface3 (11.85:1 / 3.29:1).
+
+     Same coupling warning as the dark block: --field-focus-ring is
+     composited against THIS fill. It clears 3:1 here (3.14:1), but on the
+     old #787878 it would collapse to 1.13:1 and the hairline would vanish.
+     Re-measure the outline against any new value before changing it. */
   --field-focus-well: #cdcdcd;
 
   /* Shape and type scale live once, on a bare :root above (theme-invariant —
@@ -521,12 +536,14 @@ body {
    original --field-focus-well (#8e8e8e / #787878) WAS verified to 3:1+ as a
    fill, but only against the well's outer background, not against the
    field's own text sitting on that fill — which dropped body text to
-   2.98:1/4.10:1 and placeholder text to ~1:1 (effectively invisible) on
-   exactly the fields most likely to hold sensitive credentials. Both rules
-   below now add a thin, inset --field-focus-ring outline as the REAL SC
-   1.4.11 mechanism (see that token's per-theme comments above for its own
-   measured numbers); the background step is demoted to a secondary, nice-
-   to-have visual touch and --field-focus-well's own value was pulled back
+   2.98:1/4.10:1, under the 4.5:1 minimum, on exactly the fields most likely
+   to hold sensitive credentials (and their placeholders with it, to
+   2.83:1/2.50:1 as rendered — see the --field-focus-well comments above for
+   the per-theme breakdown). Both rules below now add a thin, inset
+   --field-focus-ring outline as the REAL SC 1.4.11 mechanism (see that
+   token's per-theme comments above for its own measured numbers); the
+   background step is demoted to a secondary, nice-to-have
+   visual touch and --field-focus-well's own value was pulled back
    to something modest that doesn't fight text contrast anymore (see that
    token's comments above too). outline-offset is negative (inset) on
    purpose — sits inside the field's own edge instead of adding a pixel of
