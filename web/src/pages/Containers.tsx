@@ -1405,8 +1405,8 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
   if (stacks.length === 0) return null;
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("stack.title")}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("stack.title")}</Badge>
       </h2>
       {stacks.map((g) => (
         <StackCard key={g.project} group={g} onRestored={onRestored} t={t} />
@@ -2079,8 +2079,8 @@ export function Containers() {
       {!loading && filterKey !== "installed" && orphans.length > 0 && (
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("containers.notInstalledTitle")}
+            <h2 className="flex items-center">
+              <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("containers.notInstalledHint")}

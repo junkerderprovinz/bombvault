@@ -8,6 +8,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useConfirm } from "../lib/useConfirm";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -210,8 +211,9 @@ export function Flash() {
 
       {/* Backup card */}
       <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("flash.backupTitle")}
+        {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("flash.backupTitle")}</Badge>
         </h2>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
         <FlashBackupButton
@@ -229,8 +231,8 @@ export function Flash() {
 
       {/* Restore card */}
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("snapshots.title")}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("snapshots.title")}</Badge>
         </h2>
         {/* Safe-restore explainer */}
         <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">

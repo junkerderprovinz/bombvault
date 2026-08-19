@@ -316,9 +316,12 @@ function Card({
 }) {
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
+      {/* Task 5 (rule 11): this is Dashboard's own equivalent of Settings.tsx's
+          Card — same Badge-in-<h2> treatment, see Badge.tsx's file header for
+          the tone/size reasoning shared across every converted heading. */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {title}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{title}</Badge>
         </h2>
         {action}
       </div>
@@ -896,6 +899,22 @@ function RansomwareCard({
                       <div className="flex items-center gap-2 text-sm">
                         <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
                         {row.state === "bad" ? (
+                          // Task 5 (rule 13) deliberate exception, documented
+                          // rather than converted: this is a status-LIST-ROW
+                          // label that only sometimes (state === "bad") also
+                          // navigates — its non-clickable siblings above/below
+                          // render at the SAME plain text-sm size (the `else`
+                          // branch right below). Forcing only the clickable
+                          // state into a fixed-height Badge chip would make
+                          // row height/typography jump depending on which
+                          // domain is currently faulted — a worse, more
+                          // visible inconsistency than the plain-link issue
+                          // rule 13 targets (which is about a link sitting
+                          // among ALREADY-badge-styled siblings; nothing else
+                          // in this row is a badge). The semantic fault-red
+                          // colour + hover underline already signals both
+                          // "this is wrong" and "this is clickable" without
+                          // breaking row alignment.
                           <Link to="/settings#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0">
                             {row.label}
                           </Link>
@@ -1595,10 +1614,19 @@ function FreshInstallNudge({
     <div className="bg-carbon-surface rounded-card p-5 flex items-center gap-4">
       <div className="flex-1 flex flex-col gap-1.5">
         <p className="text-sm text-carbon-text">{t("recovery.freshNudge")}</p>
+        {/* Task 5 (rule 13): was a plain underline-on-hover text link, styled
+            with the raw accent colour and no fill at all. This card's own one
+            call-to-action functions as a primary action (rule 3 allows
+            exactly one solid-accent primary action per page/card), so it
+            takes the SAME filled rounded-control/bg-accent/text-accentContrast
+            treatment every other primary button in this app already uses
+            (e.g. Config.tsx's Save button) — matching an established idiom
+            rather than routing through Badge's tone system, which has no
+            "primary CTA" tone of its own and isn't the right place to invent
+            one for a single call site. */}
         <Link
           to="/recovery"
-          className="self-start text-sm font-medium hover:underline"
-          style={{ color: "var(--accent)" }}
+          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
           {t("recovery.freshNudgeCta")} →
         </Link>
@@ -2116,8 +2144,8 @@ export function Dashboard() {
       {/* Hidden-cards tray — only while editing and something is hidden. */}
       {editing && hiddenBlocks.length > 0 && (
         <div className="flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-carbon-textSub">
-            {t("dashboard.hiddenCards")}
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
           </h2>
           <div className="flex flex-wrap gap-2">
             {hiddenBlocks.map((b) => (

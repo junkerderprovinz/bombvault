@@ -47,6 +47,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -681,13 +682,19 @@ function FileSetRestorePanel({
               {/* Delete-all acts on the LOCAL repo (and forgets the set), so it
                   is only offered while the local source is shown. */}
               {source === "local" && snapshots.length > 0 && (
-                <button
+                // Task 5 (rule 13): was a plain underline-on-hover text
+                // button; already correctly fault-red per "the destructive
+                // control is always the fault colour" (Destructive actions).
+                <Badge
+                  as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
+                  tone="fail"
+                  size="small"
+                  className="ml-auto"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
-                </button>
+                </Badge>
               )}
             </div>
             <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
