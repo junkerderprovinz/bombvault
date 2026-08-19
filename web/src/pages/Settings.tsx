@@ -4992,14 +4992,16 @@ export function SettingsPage() {
               lib/appearance.ts's header comment for why this stays
               localStorage like every other appearance preference in this
               app rather than round-tripping through the server). As of
-              Task 2 this switch genuinely repaints the app: the Settings tab
-              strip above and the container/VM/file-set list rows all read a
-              rainbow position now, so turning this on sets data-rainbow +
-              --rb-0..--rb-7 on <html> AND immediately recolours those real
-              call sites — not just the CSS variables Task 1 verified. The
-              sidebar nav is deliberately NOT a consumer (Sidebar.tsx carries
-              the reasoning), so flipping this switch never changes the
-              rail's own colours. */}
+              Task 3 this switch genuinely repaints the app: every hue-enabled
+              Selector segment (components/Selector.tsx, its own default —
+              twelve call sites across seven files, including the Settings
+              tab strip above and the drill-type toggle further down) and the
+              container/VM/file-set list rows all read a rainbow position
+              now, so turning this on sets data-rainbow + --rb-0..--rb-7 on
+              <html> AND immediately recolours those real call sites — not
+              just the CSS variables Task 1 verified. The sidebar nav is
+              deliberately NOT a consumer (Sidebar.tsx carries the reasoning),
+              so flipping this switch never changes the rail's own colours. */}
           <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
             {/* The master switch shares the section heading's own row rather
                 than sitting on a row of its own.

@@ -5,15 +5,17 @@
 // it as ONE component, not a bespoke set of buttons per picker — a second,
 // hand-rolled selector drifts from the first one the moment either changes.")
 //
-// Replaces eleven hand-rolled copies of the same filled/unfilled segment row
+// Replaces twelve hand-rolled copies of the same filled/unfilled segment row
 // that had already drifted apart in small ways (radius token, padding,
-// idle-text tone) across four files: Settings.tsx's 7-tab strip,
-// Containers.tsx's SortControl/FilterControl/ChipFilter(x2), VMs.tsx's
-// duplicate SortControl/ChipFilter(x2), Files.tsx's destChip,
+// idle-text tone) across seven files: Settings.tsx's 7-tab strip and its
+// drill-type toggle, Containers.tsx's SortControl/FilterControl/ChipFilter(x2),
+// VMs.tsx's duplicate SortControl/ChipFilter(x2), Files.tsx's destChip,
 // Dashboard.tsx's heatmap domain toggle, CadenceBuilder.tsx's cadence-mode
-// pills + weekday pills, and SourceToggle.tsx. NONE of the eleven had any
-// keyboard behaviour at all — a mouse was the only way to move through any of
-// them — which this component fixes once, for all eleven at once.
+// pills + weekday pills, and SourceToggle.tsx. All twelve were native
+// `<button>` elements, so Enter/Space already worked through ordinary browser
+// button semantics; what none of them had was arrow-key/Home/End
+// roving-tabindex navigation, which this component adds once, for all twelve
+// at once.
 //
 // Modeled directly on knightloader/web/src/components/Tabs.tsx, a real,
 // shipped app's own copy of this exact component (roving tabindex, arrow-key/
@@ -30,8 +32,8 @@
 //      `.glim-hue`/`.glim-hue-icon` classes and the `hueVars()` inline style
 //      entirely, so that one strip never enters a rainbow subtree no matter
 //      what the global rainbow setting is doing elsewhere on the page.
-//   2. `plain` (default false). None of BombVault's eleven call sites are
-//      visually identical at rest: nine are toolbar "chips" that carry a
+//   2. `plain` (default false). None of BombVault's twelve call sites are
+//      visually identical at rest: ten are toolbar "chips" that carry a
 //      visible `bg-carbon-surface2` pill even when unselected (so they read
 //      as clickable controls sitting among plain page content); the Settings
 //      top tab strip and the Dashboard heatmap toggle are page-level/card-
@@ -53,7 +55,7 @@
 //      disabled mid-restore, so this is a genuine BombVault addition rather
 //      than something dropped from the reference.
 //   4. No `href`/anchor variant, no `badge` slot, no `after` slot, no
-//      `activateOnFocus` override. None of BombVault's eleven call sites are
+//      `activateOnFocus` override. None of BombVault's twelve call sites are
 //      real links, show a count, need trailing content inside the strip, or
 //      want arrow-key movement without selecting — carrying that surface
 //      area over unused would just be dead code with no exerciser, so `auto`
@@ -70,7 +72,7 @@
 // spec's own documented trap: a `<label>` around several tabs hands its
 // click to the first one, and announces that tab's name as the label's own
 // name to a screen reader). Selector itself never renders inside a `<label>`
-// and grepping every one of its eleven call sites confirms none of them do
+// and grepping every one of its twelve call sites confirms none of them do
 // either (see the migration commit).
 // ---------------------------------------------------------------------------
 import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
@@ -97,7 +99,7 @@ interface SelectorCommon {
   items: SelectorItem[];
   /** Accessible name for the strip, e.g. "Sort", "Settings sections". */
   label: string;
-  /** `md` (default) is the dominant chip weight nine of the eleven migrated
+  /** `md` (default) is the dominant chip weight ten of the twelve migrated
    *  call sites share; `sm` is the tighter Dashboard heatmap toggle /
    *  CadenceBuilder weekday-pill weight; `lg` is the page-level Settings tab
    *  strip. Three named stages, one canonical source per instance — see
@@ -109,7 +111,7 @@ interface SelectorCommon {
   hue?: boolean;
   /** Page-tab treatment (no idle background) instead of the default
    *  toolbar-chip treatment (idle `bg-carbon-surface2` pill). See the file
-   *  header for which of the eleven call sites uses which. */
+   *  header for which of the twelve call sites uses which. */
   plain?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
