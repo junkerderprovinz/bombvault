@@ -635,15 +635,22 @@ body {
    trap #2, why a rainbowed row needs its own wash rather than relying on
    that fill.
 
-   Consumers as of Task 2: .glim-hue is carried by the Settings tab strip
-   (Settings.tsx) and by the container/VM/file-set row cards
-   (ContainerRow/VMRow/FileSetRow), which add .glim-tint as well — the tab
-   strip does not, a tab is too small to wash. Each of them sets --item-hue
-   on its own root via lib/appearance.ts's hueVars(rainbowAt(index)).
-   .glim-hue-icon has NO consumer today: the sidebar was its only one and is
-   deliberately not rainbowed (Sidebar.tsx carries that reasoning), so the
-   rule below is held for Task 3's icon-bearing selector rather than being
-   live right now. */
+   Consumers as of Task 3: .glim-hue is carried by every Selector segment
+   (components/Selector.tsx) with hue enabled — the default, opted out of
+   only by Dashboard.tsx's heatmap domain toggle (`hue={false}`) — across
+   twelve call sites in seven files (Settings.tsx's tab strip and drill-type
+   toggle, Containers.tsx, VMs.tsx, Files.tsx, Dashboard.tsx,
+   CadenceBuilder.tsx, SourceToggle.tsx; Settings.tsx no longer sets the class
+   directly, it goes through Selector like everything else now) and by the
+   container/VM/file-set row cards (ContainerRow/VMRow/FileSetRow), which add
+   .glim-tint as well — Selector segments don't, a segment is too small to
+   wash. Each of them sets --item-hue on its own root via
+   lib/appearance.ts's hueVars(rainbowAt(index)).
+   .glim-hue-icon rides along on those same hue-enabled Selector segments but
+   only visibly matters where an item actually carries an icon: today that is
+   just the Settings tab strip (see SelectorItem.icon's own comment). The
+   sidebar remains deliberately not rainbowed (Sidebar.tsx carries that
+   reasoning) and so is still not a consumer. */
 [data-rainbow] .glim-hue {
   --accent: var(--item-hue);
   --accent-contrast: var(--item-hue-ink);
