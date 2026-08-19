@@ -39,12 +39,13 @@ import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFiles } from "../components/Sidebar";
 import { useT } from "../lib/i18n";
-import { Advanced } from "../lib/advanced";
+import { Advanced, useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
+import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 
 type T = ReturnType<typeof useT>["t"];
@@ -359,6 +360,13 @@ function FileSetRestoreControl({
   // server refuses an in-place restore when it doesn't know the original path.
   const noPath = set.path === "";
   const [dest, setDest] = useState<RestoreDest>(noPath ? "folder" : "original");
+  // "Select files" (the #65 selective restore) is an advanced option; basic
+  // mode keeps the whole-set original / to-folder pair. Read directly (rather
+  // than staying inside an <Advanced> JSX wrapper) because the destination
+  // Selector below needs to decide, in JS, whether "select" belongs in its
+  // items array at all — Selector renders a flat items list, not children a
+  // wrapper component could conditionally swallow.
+  const { advanced } = useAdvanced();
   // Seeded from the operator's global "Default restore folder" setting, exactly
   // like the container restore panel — was hardcoded to "" (#69), which left the
   // FolderBrowser showing only its generic placeholder example text instead of
@@ -391,29 +399,34 @@ function FileSetRestoreControl({
     void fire();
   }
 
-  const destChip = (key: RestoreDest, label: string, disabled = false) => (
-    <button
-      onClick={() => setDest(key)}
-      disabled={disabled || isPending}
-      title={disabled ? t("files.noPathHint") : undefined}
-      className={`rounded-control px-3 py-1 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-        dest === key
-          ? "bg-accent text-accentContrast"
-          : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-      }`}
-    >
-      {label}
-    </button>
-  );
+  // Destination choice, on the shared Selector component (GlimStone
+  // form-engine Phase 2, Task 3). "select" only enters the items array in
+  // advanced mode — see the `advanced` comment above.
+  const destItems: SelectorItem[] = [
+    { id: "original", label: t("files.restoreOriginal"), disabled: noPath, title: noPath ? t("files.noPathHint") : undefined },
+    { id: "folder", label: t("files.restoreToFolder") },
+    ...(advanced ? [{ id: "select", label: t("files.restoreSelectFiles") }] : []),
+  ];
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Destination choice. "Select files" (the #65 selective restore) is an
-          advanced option; basic mode keeps the whole-set original / to-folder pair. */}
       <div className="flex items-center gap-2 flex-wrap">
-        {destChip("original", t("files.restoreOriginal"), noPath)}
-        {destChip("folder", t("files.restoreToFolder"))}
-        <Advanced>{destChip("select", t("files.restoreSelectFiles"))}</Advanced>
+        {/* label reuses the existing "Restore" string rather than a new
+            aria-only i18n key: this strip's own three item labels already
+            describe the actual choice ("Restore to original location" /
+            "Restore to a folder" / "Select files"), and this repo's i18n
+            convention (see lib/i18n.ts's 26-locale parity test) requires a
+            brand-new key to land in every locale in the same pass — not
+            worth doing for a screen-reader-only group name that "Restore"
+            already names clearly enough in context. */}
+        <Selector
+          items={destItems}
+          label={t("snapshots.restore")}
+          select="one"
+          active={dest}
+          onChange={(id) => setDest(id as RestoreDest)}
+          disabled={isPending}
+        />
         {/* The whole-set restore button + its own picker/progress; the selective
             mode renders its own controls below (FileSetFileBrowser). */}
         {dest !== "select" && (

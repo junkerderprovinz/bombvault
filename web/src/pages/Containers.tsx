@@ -23,6 +23,7 @@ import { useDragReorder } from "../lib/useDragReorder";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
+import { Selector } from "../components/Selector";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -112,6 +113,15 @@ const SORT_KEYS = {
   ip: "sort.ip",
 } as const;
 
+// SortControl/FilterControl/ChipFilter below are thin, page-specific adapters
+// onto the shared Selector component (GlimStone form-engine Phase 2, Task 3):
+// each maps this page's own domain data (a sort key, a filter key, a
+// generic option list) onto Selector's generic items/active/onChange shape.
+// The actual button rendering, keyboard nav (roving tabindex, arrow keys/
+// Home/End, RTL) and rainbow hueing all now live in Selector itself, not
+// copy-pasted here — that duplicated rendering (with zero keyboard support)
+// was exactly what had drifted apart between this file and VMs.tsx's own
+// near-identical copies.
 function SortControl({
   value,
   onChange,
@@ -124,19 +134,13 @@ function SortControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{t("sort.label")}</span>
-      {(["name", "status", "ip"] as SortKey[]).map((k) => (
-        <button
-          key={k}
-          onClick={() => onChange(k)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === k
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {t(SORT_KEYS[k])}
-        </button>
-      ))}
+      <Selector
+        items={(["name", "status", "ip"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
+        label={t("sort.label")}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as SortKey)}
+      />
     </div>
   );
 }
@@ -172,19 +176,13 @@ function FilterControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{t("containers.filter")}</span>
-      {(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => (
-        <button
-          key={k}
-          onClick={() => onChange(k)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === k
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {labels[k]}
-        </button>
-      ))}
+      <Selector
+        items={(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => ({ id: k, label: labels[k] }))}
+        label={t("containers.filter")}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as FilterKey)}
+      />
     </div>
   );
 }
@@ -228,19 +226,13 @@ function ChipFilter<K extends string>({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{label}</span>
-      {options.map((o) => (
-        <button
-          key={o.key}
-          onClick={() => onChange(o.key)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === o.key
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
+      <Selector
+        items={options.map((o) => ({ id: o.key, label: o.label }))}
+        label={label}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as K)}
+      />
     </div>
   );
 }

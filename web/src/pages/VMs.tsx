@@ -18,6 +18,7 @@ import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
+import { Selector } from "../components/Selector";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -80,6 +81,11 @@ const SORT_KEYS = {
   status: "sort.status",
 } as const;
 
+// SortControl/ChipFilter below are thin, page-specific adapters onto the
+// shared Selector component (GlimStone form-engine Phase 2, Task 3) — the
+// actual button rendering, keyboard nav (roving tabindex, arrow keys/Home/
+// End, RTL) and rainbow hueing all live in Selector now, mirroring
+// Containers.tsx's own identical adapter pair.
 function SortControl({
   value,
   onChange,
@@ -92,19 +98,13 @@ function SortControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{t("sort.label")}</span>
-      {(["name", "status"] as SortKey[]).map((k) => (
-        <button
-          key={k}
-          onClick={() => onChange(k)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === k
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {t(SORT_KEYS[k])}
-        </button>
-      ))}
+      <Selector
+        items={(["name", "status"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
+        label={t("sort.label")}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as SortKey)}
+      />
     </div>
   );
 }
@@ -150,19 +150,13 @@ function ChipFilter<K extends string>({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{label}</span>
-      {options.map((o) => (
-        <button
-          key={o.key}
-          onClick={() => onChange(o.key)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === o.key
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
+      <Selector
+        items={options.map((o) => ({ id: o.key, label: o.label }))}
+        label={label}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as K)}
+      />
     </div>
   );
 }
