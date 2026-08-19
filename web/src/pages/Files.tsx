@@ -8,7 +8,7 @@
 // FolderBrowser path picker and an excludes textarea (one pattern per line).
 // ---------------------------------------------------------------------------
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   listFileSets,
@@ -44,6 +44,8 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -869,6 +871,7 @@ function FileSetRow({
   t,
   onRefresh,
   onEdit,
+  index,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -876,6 +879,10 @@ function FileSetRow({
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
+   *  `set.id`/name — see the caller below. */
+  index: number;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`files:${set.name}`];
@@ -903,7 +910,15 @@ function FileSetRow({
   }
 
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-tint washes the card (trap #2 — without it this card shows
+      // almost no colour at rest); glim-active while THIS set's own
+      // backup/restore is actively running — mirrors ContainerRow/VMRow.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+        progress?.active ? "glim-active" : ""
+      }`}
+    >
       {/* Top row: name + chips, path, last backup */}
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -1006,6 +1021,9 @@ function FileSetRow({
 
 export function Files() {
   const { t } = useT();
+  // One subscription for the whole list rather than one per row — see
+  // Containers.tsx's identical call for the same reasoning.
+  useRainbow();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
   const running = anyActive(useProgress());
@@ -1220,7 +1238,7 @@ export function Files() {
       {/* File-set cards */}
       {!loading && sets.length > 0 && (
         <div className="flex flex-col gap-3">
-          {sets.map((s) => (
+          {sets.map((s, i) => (
             <FileSetRow
               key={s.id}
               set={s}
@@ -1229,6 +1247,7 @@ export function Files() {
               t={t}
               onRefresh={() => void loadSets()}
               onEdit={() => setDialog(s)}
+              index={i}
             />
           ))}
         </div>

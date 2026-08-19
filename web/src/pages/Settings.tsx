@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -22,7 +22,8 @@ import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
-import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
+import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 import { relativeTime } from "../lib/reltime";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -2888,6 +2889,17 @@ export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
+  // Subscribed, not read: the tab strip re-renders on rainbow on/off/reactive/
+  // rotate/palette changes made through THIS page's own controls below (see
+  // `rainbow`/`setRainbowLocal` further down) with no page reload. The strip
+  // is a small, fixed, always-the-same 7 (unlike a container/VM/file-set
+  // list), so this is about matching knightloader/web/src/components/Tabs.tsx
+  // — the reference's OWN unified selector hues every tab unconditionally —
+  // rather than helping anyone tell tabs apart (their labels already do
+  // that). Task 3 (the unified one-horizontal-selector) will absorb this into
+  // a shared Selector component the same way the reference does; until then
+  // it lives on this hand-rolled strip directly.
+  useRainbow();
 
   const [tab, setTab] = useState<TabKey>("general");
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -3330,6 +3342,8 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Segmented tab bar (7 tabs). `tab` is the single owner of which card  */}
       {/* group renders; it wraps/scrolls gracefully for narrow widths.        */}
+      {/* Each tab owns a rainbow position by its LIST INDEX in this fixed    */}
+      {/* array (never a hash of `key`) — see the useRainbow() call above.    */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex flex-wrap gap-1">
         {([
@@ -3340,10 +3354,11 @@ export function SettingsPage() {
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
           ["system", t("settings.tab.system")],
-        ] as const).map(([key, label]) => (
+        ] as const).map(([key, label], i) => (
           <button
             key={key}
             type="button"
+            style={hueVars(rainbowAt(i)) as CSSProperties}
             onClick={() => {
               setTab(key);
               // Keep the URL hash in sync so reload/bookmark restores the tab
@@ -3354,9 +3369,14 @@ export function SettingsPage() {
                 /* history unavailable — tab state still switches */
               }
             }}
-            className={`rounded-control px-3 py-1.5 text-sm transition-colors ${
+            // glim-active travels with the fill, same composition as
+            // Sidebar.tsx's navActive: it's what keeps a filled active tab
+            // from painting its own colour over itself, and (in reactive
+            // mode) is what keeps the SELECTED tab showing its hue without
+            // needing hover.
+            className={`glim-hue rounded-control px-3 py-1.5 text-sm transition-colors ${
               tab === key
-                ? "bg-accent text-accentContrast"
+                ? "glim-active bg-accent text-accentContrast"
                 : "text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover"
             }`}
           >

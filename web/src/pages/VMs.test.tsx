@@ -75,7 +75,7 @@ describe("VMRow action wiring", () => {
   });
 
   it("sends VM.libvirtName to backupVMNow, never the display VM.name", async () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
     fireEvent.click(screen.getByText("containers.backupNow"));
 
@@ -85,7 +85,7 @@ describe("VMRow action wiring", () => {
   });
 
   it("still shows the display name to the user, not the raw identifier", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
     expect(screen.getByText(trueNasVM.name)).toBeTruthy();
     expect(screen.queryByText(trueNasVM.libvirtName)).toBeNull();
   });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
@@ -16,6 +16,8 @@ import { Badge, type BadgeTone } from "../components/Badge";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -648,12 +650,17 @@ export function VMRow({
   onRefresh,
   selected,
   onToggleSelect,
+  index,
 }: {
   vm: VM;
   t: T;
   onRefresh: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
+   *  `vm.libvirtName` — see the callers below. */
+  index: number;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
@@ -664,7 +671,16 @@ export function VMRow({
   // backup (its OWN in-flight backup is handled by isPending inside the button).
   const running = anyActive(progressMap);
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-tint washes the card (trap #2 — without it this card shows
+      // almost no colour at rest); glim-active while THIS row's own
+      // backup/restore is actively running, so reactive mode shows the hue
+      // without needing hover — mirrors ContainerRow's identical treatment.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+        progress?.active ? "glim-active" : ""
+      }`}
+    >
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed VMs only) */}
@@ -1093,6 +1109,9 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
 export function VMs() {
   const { t } = useT();
+  // One subscription for the whole list rather than one per row — see
+  // Containers.tsx's identical call for the same reasoning.
+  useRainbow();
   const { confirm, confirmDialog } = useConfirm();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
@@ -1421,7 +1440,7 @@ export function VMs() {
       {/* Live VMs */}
       {!loading && live.length > 0 && (
         <div className="flex flex-col gap-3">
-          {live.map((v) => (
+          {live.map((v, i) => (
             <VMRow
               key={v.libvirtName}
               vm={v}
@@ -1429,6 +1448,7 @@ export function VMs() {
               onRefresh={() => void loadVMs()}
               selected={selected.has(v.libvirtName)}
               onToggleSelect={() => toggleSelect(v.libvirtName)}
+              index={i}
             />
           ))}
         </div>
@@ -1445,8 +1465,8 @@ export function VMs() {
               {t("vms.notInstalledHint")}
             </p>
           </div>
-          {orphans.map((v) => (
-            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} />
+          {orphans.map((v, i) => (
+            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} index={i} />
           ))}
         </div>
       )}
