@@ -19,6 +19,11 @@ import { Badge, type BadgeTone } from "../components/Badge";
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
 import type { TranslationKey } from "../lib/i18n";
 
+// Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
+// so the summary tier's "Last result" cell and the Activity Log never disagree
+// about which domain is currently running.
+const SUMMARY_RUNS_POLL_MS = 10000;
+
 // ---------------------------------------------------------------------------
 // Run kind/target label helpers — shared by every dashboard card that renders
 // a Run's kind and target (RunsCard, SummaryTier's "Last result" cell). A
@@ -1771,18 +1776,26 @@ export function Dashboard() {
   const [statusLoading, setStatusLoading] = useState(true);
 
   // Newest run for the summary tier's "Last result" cell. listRuns returns
-  // newest-first, so runs[0] is the latest. Fetched once here (the detail-tier
-  // RunsCard keeps its own fetch for the filtered list).
+  // newest-first, so runs[0] is the latest. Polled (not fetched once) so the
+  // cell doesn't freeze on whatever domain happened to be running at page
+  // load — mirrors ActivityLog's own listRuns polling (same cadence) so both
+  // widgets stay in sync (#158: card stuck on a finished run while the
+  // Activity Log had already moved on to the next domain).
   const [runs, setRuns] = useState<Run[]>([]);
   useEffect(() => {
     let active = true;
-    listRuns()
-      .then((res) => {
-        if (active && res.ok) setRuns(res.runs ?? []);
-      })
-      .catch(() => {/* non-fatal — summary "Last result" falls back to empty */});
+    const load = () => {
+      listRuns()
+        .then((res) => {
+          if (active && res.ok) setRuns(res.runs ?? []);
+        })
+        .catch(() => {/* non-fatal — summary "Last result" falls back to empty */});
+    };
+    load();
+    const id = setInterval(load, SUMMARY_RUNS_POLL_MS);
     return () => {
       active = false;
+      clearInterval(id);
     };
   }, []);
 
