@@ -21,6 +21,18 @@ import (
 // can't wedge a "Backup Everything" pass indefinitely.
 const hostShellTimeout = 5 * time.Minute
 
+// hostShellWaitDelay bounds how long CombinedOutput's underlying cmd.Wait may
+// block AFTER hostShellTimeout kills the direct "sh" child, before Go force-
+// closes the stdout/stderr pipes and returns anyway. Without this, a hook
+// command that backgrounds a grandchild (e.g. `some-daemon &`) which inherits
+// the pipe would keep Wait() blocked past hostShellTimeout even though "sh"
+// itself was already killed — silently defeating the "can't wedge a pass
+// indefinitely" contract above. Mirrors internal/restic/proc_unix.go and
+// proc_windows.go's identical resticWaitDelay guard, which exists for the
+// same reason (see also the Dockerfile's tini comment: this container has
+// already hit orphaned-grandchild-process issues with restic's rclone child).
+const hostShellWaitDelay = 10 * time.Second
+
 // HostShell is the DI seam a global hook command runs through. Run is
 // BEST-EFFORT by contract: unlike the per-container pre-hook (which aborts
 // the backup on failure, protecting snapshot consistency), a global hook has
@@ -45,6 +57,7 @@ func (execHostShell) Run(ctx context.Context, cmd string) error {
 	defer cancel()
 
 	c := exec.CommandContext(ctx, "sh", "-c", cmd) //nolint:gosec // G204: cmd is operator-configured via Settings (EverythingPreHook/EverythingPostHook), not request/user input — same trust model as the existing per-container hook's Docker.Exec(ctx, ref, []string{"sh", "-c", d.PreHook}) in internal/backup/orchestrator.go; see also internal/restic/restic.go:823's identical justification for restic's own argv construction.
+	c.WaitDelay = hostShellWaitDelay
 	out, err := c.CombinedOutput()
 	if err != nil {
 		log.Printf("api: host shell hook failed (best-effort, backup continues): %v; output: %s", err, out)
