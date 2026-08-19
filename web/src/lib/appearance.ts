@@ -76,10 +76,13 @@ export const RAINBOW_OFF: RainbowState = {
 // consumers (e.g. the Settings tab strip and a container list) must agree on
 // which colour position three is, and they never meet in the same component
 // tree. Readers subscribe instead of a prop threaded through every
-// intermediate component. As of Task 2, rainbowAt()/rainbowColor() are read
-// by the Settings tab strip and the container/VM/file-set list rows
-// (ContainerRow/VMRow/FileSetRow via hueVars()), each via lib/useRainbow.ts's
-// subscription so they re-render live on any change here.
+// intermediate component. As of Task 2 the live read path is
+// hueVars(rainbowAt(index)), used by the Settings tab strip and by the
+// container/VM/file-set row cards (ContainerRow/VMRow/FileSetRow), each under
+// a lib/useRainbow.ts subscription so they re-render on any change here.
+// rainbowColor() has no call site yet: it is part of the ported contract,
+// kept for a consumer that wants "undefined when the mode is off" rather than
+// a colour it would have to gate itself.
 // ---------------------------------------------------------------------------
 
 let state: RainbowState = RAINBOW_OFF;

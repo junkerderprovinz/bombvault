@@ -1465,14 +1465,17 @@ export function VMs() {
               {t("vms.notInstalledHint")}
             </p>
           </div>
-          {/* Continues the live list's own index sequence rather than
-              restarting at 0 — the live section above renders simultaneously
-              on the same page, so restarting here would collide the first
-              orphan's hue with the first live row's (rainbowColorAt in
-              lib/appearance.ts only avoids collisions within ONE index
-              sequence; two independently-zeroed sequences rendered together
-              are exactly the "two neighbours share a colour" case
-              design-language.md's trap #1 warns about). */}
+          {/* Continues the live list's index sequence (live.length + i)
+              instead of restarting at 0. Both sections render on the same
+              page at once, so a second sequence starting at 0 would hand the
+              first orphan the first live row's colour, the second orphan the
+              second live row's, and so on down the overlap — a colour
+              repeating inside what a reader takes for one list. Offsetting
+              makes the two sections one continuous sequence instead. Past the
+              eighth row the 8-colour palette still cycles, here as in any
+              long list (rainbowColorAt in lib/appearance.ts is
+              i % palette.length); that is intended, because a repeat then
+              lands a full palette apart rather than adjacent. */}
           {orphans.map((v, i) => (
             <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} index={live.length + i} />
           ))}
