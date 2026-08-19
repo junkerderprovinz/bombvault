@@ -6,6 +6,22 @@
 // Config.tsx and Recovery.tsx), and OffsiteTargetsSection's inline fourth
 // copy. All three drift risk is now in one place.
 //
+// The focus ring is `--focus-ring`, NOT the `outline-statusInfoSolid` blue every
+// one of those three copies carried. Two reasons, both only visible ACROSS tasks:
+//   - Task 1's own plan note about `--status-info-solid` — whose hue is still
+//     deliberately unresolved (audit item 19, deferred to Phase 2) — is "just
+//     don't add MORE dependencies on it." A new shared component is precisely a
+//     new dependency, and the single point through which a later hue change
+//     would reach every switch in the app at once.
+//   - `--focus-ring` is already what the other shared controls this branch added
+//     or reworked use: RevealInput's eye, InfoBubble's icon, Toast's dismiss X.
+//     A switch focusing blue while the reveal eye in the same form focuses amber
+//     reads as two unrelated systems rather than one.
+// `outline-offset-2` keeps the ring on the surrounding card surface rather than
+// on the track's own fill — that surface is the background `--focus-ring`'s
+// contrast was actually measured against (see index.css; ≥3:1 on both
+// --carbon-surface and --carbon-surface2, in both themes).
+//
 // `hideLabel` is the GlimStone "Switches" contract verbatim: the text always
 // survives as the control's accessible name (`aria-label`, set unconditionally
 // so a switch is never nameless) — hideLabel only decides whether the eye
@@ -43,7 +59,7 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
         disabled={disabled}
         onClick={() => onChange(!checked)}
         title={label}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
           checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >

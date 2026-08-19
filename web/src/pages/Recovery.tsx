@@ -530,8 +530,17 @@ function ForeignItemRow({
             <div className="rounded-card bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
               <p className="text-statusWarn">{t("recovery.foreignBindWarning")}</p>
               <ul className="mt-1 flex flex-col gap-0.5">
+                {/* The key joins two free-form strings with a separator neither can
+                    contain, so "a" + "b|c" and "a|b" + "c" can't collide. It MUST stay
+                    the "\u0000" ESCAPE and never be re-typed as a literal NUL byte: a
+                    raw 0x00 anywhere in this file makes ripgrep/grep/git classify the
+                    WHOLE file as binary and return zero content lines for it, so every
+                    repo-wide sweep silently skips Recovery.tsx. That already happened
+                    once — the GlimStone form-engine confirm-dialog migration had to
+                    hand-find this file's two "grep-invisible" call sites after the
+                    sweep missed them. */}
                 {warnings.map((wn) => (
-                  <li key={wn.host + " " + wn.container} className="font-mono wrap-break-word" dir="ltr">
+                  <li key={wn.host + "\u0000" + wn.container} className="font-mono wrap-break-word" dir="ltr">
                     {wn.host} → {wn.container}
                   </li>
                 ))}

@@ -511,9 +511,28 @@ body {
    button, but drew a hard blue box around what rule 14 wants to be a
    borderless filled field. This swaps the field's OWN fill one surface tier
    brighter instead: no border added, matching the filled/borderless look
-   the rest of the field already has. --focus-ring itself is untouched and
-   still used by every non-field element listed above — this class is
-   additive, not a replacement for that token.
+   the rest of the field already has. --focus-ring itself is untouched —
+   this class is additive, not a replacement for that token.
+
+   WHERE --focus-ring ACTUALLY REACHES TODAY (stated precisely, because an
+   earlier draft of this comment over-claimed it): every shared control this
+   branch added or reworked opts into it by hand — Toggle's switch track,
+   RevealInput's eye, InfoBubble's icon, Toast's dismiss X. It does NOT yet
+   reach ordinary buttons and links: ~215 of them declare no focus utility at
+   all and fall through to the browser's native ring, and 8 pre-existing sites
+   (Containers' bulk-action row, Dashboard's card button + heatmap cell,
+   Settings' colour swatch) still paint the old outline-statusInfoSolid blue.
+   So the app currently has THREE focus appearances, not one.
+
+   Closing that gap is deliberately NOT done here. The reference
+   (glimstone/reference/tokens.css) resolves it with a single base rule —
+   `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px }`
+   — and its adoption checklist says to copy it. Adopting it is Phase 2 work,
+   not a Phase 1 tail: in the reference that same rule is what the rainbow/
+   reactive colour mode reaches through, rebinding --focus-ring per item via
+   `[data-rainbow] .glim-hue`, so the base rule and the rainbow axis want to
+   land together. It also unblocks audit item 19 (resolving the fifth hue),
+   which is what those 8 remaining blue sites are waiting on.
 
    Two variants, chosen by what the field already rests on:
    - .bv-field-focus — the common case (most fields in the app): resting

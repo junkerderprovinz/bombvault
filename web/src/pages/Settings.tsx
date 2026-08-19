@@ -2741,7 +2741,7 @@ function FilesSection({
                 aria-label={`${t("files.enabled")}: ${s.name}`}
                 disabled={!!busy[s.id]}
                 onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
                   s.enabled ? "bg-accent" : "bg-carbon-surface3"
                 }`}
               >
