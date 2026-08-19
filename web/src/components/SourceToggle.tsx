@@ -5,6 +5,7 @@ import {
   offsiteTargetSource,
   useOffsiteTargets,
 } from "../lib/useOffsiteTargets";
+import { Selector } from "./Selector";
 
 /**
  * A repo source: the local repo, the domain's PRIMARY off-site target ("offsite"),
@@ -48,30 +49,38 @@ export function SourceToggle({
   const { t } = useT();
   const targets = useOffsiteTargets(domain);
   const multi = targets.length > 1;
-
-  const opt = (val: RepoSource, label: string, active: boolean) => (
-    <button
-      type="button"
-      onClick={() => onChange(val)}
-      disabled={disabled}
-      className={`px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
-        active
-          ? "bg-accent text-accentContrast"
-          : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-      }`}
-    >
-      {label}
-    </button>
-  );
+  const offsite = isOffsiteSource(source);
 
   return (
     <span className="inline-flex items-center gap-2 flex-wrap">
-      <span className="inline-flex rounded-control bg-carbon-surface2 overflow-hidden">
-        {opt("local", t("source.local"), source === "local")}
-        {/* Switching to off-site always lands on the PRIMARY target first; the
-            picker below then narrows it down. */}
-        {opt("offsite", t("source.offsite"), isOffsiteSource(source))}
-      </span>
+      {/*
+        Local | Off-site, on the shared Selector component (GlimStone
+        form-engine Phase 2, Task 3). `active` is normalized to a plain
+        "local"|"offsite" pair rather than the raw `source` string: a
+        multi-target off-site source is stored as "offsite:<id>" (issue
+        #138), which would never strictly equal either item's id and leave
+        BOTH chips reading as unselected. Selecting "offsite" always lands
+        on the PRIMARY target first (onChange("offsite")); the target
+        picker below then narrows it down to a specific one.
+
+        The two segments no longer share ONE bg-carbon-surface2 pill behind
+        them (the "no wrapping bar" rule removes that wrapper) — Selector's
+        default `plain={false}` chip treatment puts that same background on
+        each segment individually instead, so removing the shared box
+        doesn't wash the pair out to plain unstyled text.
+      */}
+      <Selector
+        items={[
+          { id: "local", label: t("source.local") },
+          { id: "offsite", label: t("source.offsite") },
+        ]}
+        label={t("source.label")}
+        select="one"
+        active={offsite ? "offsite" : "local"}
+        onChange={(id) => onChange(id as RepoSource)}
+        disabled={disabled}
+        size="md"
+      />
       {multi && isOffsiteSource(source) && (
         <select
           aria-label={t("source.offsiteTarget")}

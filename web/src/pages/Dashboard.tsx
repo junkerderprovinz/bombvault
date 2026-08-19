@@ -14,6 +14,7 @@ import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { Selector } from "../components/Selector";
 // humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
 // storage forecast line shares the exact formatter of the size column.
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
@@ -1210,41 +1211,29 @@ function HealthHeatmapCard({
     }
   };
 
-  // Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 audit):
-  // this is a small, fixed set of 5 where each entry already has its own
-  // durable identity (a domain name, not "one of several similar rows"), and
-  // the cells it filters sit right beside it painted in the four FIXED state
+  // Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 audit,
+  // carried into Task 3's migration to Selector via hue={false}): this is a
+  // small, fixed set of 5 where each entry already has its own durable
+  // identity (a domain name, not "one of several similar rows"), and the
+  // cells it filters sit right beside it painted in the four FIXED state
   // hues (cellColor() above — red/green shades, rule 4). A 5-way rainbow
   // strip competing for attention directly next to a red/green heatmap would
   // hurt legibility for no tracking benefit nobody needs help telling
   // "Containers" apart from "VMs" by label alone.
-  //
-  // WARNING FOR TASK 3 (the unified one-horizontal-selector, same plan): this
-  // toggle is on Task 3's own migration list — it will move onto the shared
-  // Selector component modeled on knightloader/web/src/components/Tabs.tsx.
-  // That reference hues every item UNCONDITIONALLY, no opt-out. Migrating
-  // this toggle as-is will silently revert this deliberate exclusion the
-  // moment it lands on the shared component. Before migrating THIS toggle,
-  // either give Selector an opt-out (e.g. a `hue={false}` prop) or keep this
-  // one instance hand-rolled and only migrate the other selectors on the
-  // list. Don't just drop it onto Selector and move on.
   const toggle = (
-    <div className="flex items-center gap-1">
-      {(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => (
-        <button
-          key={d}
-          type="button"
-          onClick={() => setDomain(d)}
-          className={`px-2 py-0.5 rounded text-xs font-medium ${
-            domain === d
-              ? "bg-accent text-accentContrast"
-              : "text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {domainLabel(d)}
-        </button>
-      ))}
-    </div>
+    <Selector
+      items={(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => ({
+        id: d,
+        label: domainLabel(d),
+      }))}
+      label={t("dashboard.healthTitle")}
+      select="one"
+      active={domain}
+      onChange={(id) => setDomain(id as HeatDomain)}
+      size="sm"
+      plain
+      hue={false}
+    />
   );
 
   return (

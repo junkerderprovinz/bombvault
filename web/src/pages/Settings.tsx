@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -22,8 +22,8 @@ import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
-import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
+import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -2230,35 +2230,29 @@ function IntegrityCard({
         />
       </div>
 
-      {/* Drill-type toggle: subset integrity check vs a real off-site DR restore. */}
+      {/* Drill-type toggle: subset integrity check vs a real off-site DR
+          restore — on the shared Selector component (GlimStone form-engine
+          Phase 2, Task 3; found only by re-grepping the current codebase,
+          not on the original Phase 1 audit's own 11-site list). */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
-        <div className="inline-flex rounded-control bg-carbon-surface2 overflow-hidden">
-          {([
-            ["subset", t("drill.kindSubset")],
-            ["dr", t("drill.kindDR")],
-          ] as const).map(([val, label]) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => {
-                // Clear any lingering per-domain result so a subset "healthy"
-                // doesn't read as a DR pass (or vice versa) after switching kind.
-                setKind(val);
-                setState({});
-                setMsg({});
-              }}
-              disabled={Object.values(state).some((v) => v === "busy")}
-              className={`px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
-                kind === val
-                  ? "bg-accent text-accentContrast"
-                  : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Selector
+          items={[
+            { id: "subset", label: t("drill.kindSubset") },
+            { id: "dr", label: t("drill.kindDR") },
+          ]}
+          label={t("drill.kindLabel")}
+          select="one"
+          active={kind}
+          onChange={(val) => {
+            // Clear any lingering per-domain result so a subset "healthy"
+            // doesn't read as a DR pass (or vice versa) after switching kind.
+            setKind(val as DrillKind);
+            setState({});
+            setMsg({});
+          }}
+          disabled={Object.values(state).some((v) => v === "busy")}
+        />
       </div>
 
       {/* DR-drill controls: an explainer + the container/VM target pickers. Each
@@ -2885,21 +2879,108 @@ type TabKey =
   | "integrity"
   | "system";
 
+// ---------------------------------------------------------------------------
+// Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
+// "top, with an icon": "Settings pages line their tabs up horizontally at the
+// top, each with a glyph. A tab with no label is a gap; a tab with the wrong
+// glyph is a lie — no icon beats the wrong one."). 16×16, stroke-based,
+// matching Sidebar.tsx's own icon weight/style but at the tab strip's smaller
+// scale. Local to Settings.tsx, not Sidebar.tsx's exported icon set: these
+// name Settings' own SECTIONS (domain toggles, storage paths, cadences,
+// off-site targets, alerts, integrity checks, system/SSH), which is a
+// different taxonomy than the sidebar's page destinations, and none of the
+// seven map onto an existing sidebar glyph without lying about what it is.
+// ---------------------------------------------------------------------------
+function IconTabGeneral() {
+  // Two stacked switches — the domain on/off toggles this tab actually holds.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden="true">
+      <rect x="1" y="3" width="10" height="4" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="8" cy="5" r="1.15" fill="currentColor" />
+      <rect x="5" y="9" width="10" height="4" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="8" cy="11" r="1.15" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconTabStorage() {
+  // A drive/disk stack — backup storage paths.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <ellipse cx="8" cy="4" rx="6" ry="2.2" />
+      <path d="M2 4v8c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V4" strokeLinecap="round" />
+      <path d="M2 8c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTabSchedules() {
+  // A clock — cadence/timing.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.2" />
+      <path d="M8 4.5V8l3 1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTabOffsite() {
+  // A cloud — the remote/off-site replica target.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTabNotifications() {
+  // A bell — alerts.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" strokeLinejoin="round" />
+      <path d="M6.6 12.5a1.5 1.5 0 0 0 2.8 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTabIntegrity() {
+  // A checked shield — repo/backup integrity checks.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z" strokeLinejoin="round" />
+      <path d="M5.8 8 7.3 9.5l3-3.1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTabSystem() {
+  // Sliders — system/advanced/SSH knobs. Distinct from IconTabGeneral's
+  // rounded toggle switches (a discrete on/off pair) — these are inline
+  // continuous sliders, matching Sidebar.tsx's own IconConfig-vs-IconSettings
+  // "deliberately distinct so the two never read alike" precedent.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M2 5h5.5M10 5h4M2 11h2.5M7 11h7" strokeLinecap="round" />
+      <circle cx="8.5" cy="5" r="1.4" fill="var(--carbon-surface, transparent)" />
+      <circle cx="5" cy="11" r="1.4" fill="var(--carbon-surface, transparent)" />
+    </svg>
+  );
+}
+
+const TAB_ICON: Record<TabKey, ReactNode> = {
+  general: <IconTabGeneral />,
+  storage: <IconTabStorage />,
+  schedules: <IconTabSchedules />,
+  offsite: <IconTabOffsite />,
+  notifications: <IconTabNotifications />,
+  integrity: <IconTabIntegrity />,
+  system: <IconTabSystem />,
+};
+
 export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
-  // Subscribed, not read: the tab strip re-renders on rainbow on/off/reactive/
-  // rotate/palette changes made through THIS page's own controls below (see
-  // `rainbow`/`setRainbowLocal` further down) with no page reload. The strip
-  // is a small, fixed, always-the-same 7 (unlike a container/VM/file-set
-  // list), so this is about matching knightloader/web/src/components/Tabs.tsx
-  // — the reference's OWN unified selector hues every tab unconditionally —
-  // rather than helping anyone tell tabs apart (their labels already do
-  // that). Task 3 (the unified one-horizontal-selector) will absorb this into
-  // a shared Selector component the same way the reference does; until then
-  // it lives on this hand-rolled strip directly.
-  useRainbow();
 
   const [tab, setTab] = useState<TabKey>("general");
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -3340,13 +3421,21 @@ export function SettingsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Segmented tab bar (7 tabs). `tab` is the single owner of which card  */}
-      {/* group renders; it wraps/scrolls gracefully for narrow widths.        */}
-      {/* Each tab owns a rainbow position by its LIST INDEX in this fixed    */}
-      {/* array (never a hash of `key`) — see the useRainbow() call above.    */}
+      {/* Tab strip (7 tabs), on the shared Selector component (GlimStone     */}
+      {/* form-engine Phase 2, Task 3 — design-language's "top, with an       */}
+      {/* icon" rule for a settings-style tab row). `tab` is the single owner */}
+      {/* of which card group renders. Each tab still owns a rainbow         */}
+      {/* position by its LIST INDEX (never a hash of `key`) — Selector's     */}
+      {/* default hue=true carries over exactly the rainbow wiring this strip */}
+      {/* had before the migration (see Task 2's own audit comment, now      */}
+      {/* removed from here since Selector owns the useRainbow() subscription */}
+      {/* itself). Icons are new: the pre-migration hand-rolled strip had     */}
+      {/* none — TAB_ICON above is this task's own addition, satisfying the   */}
+      {/* "no icon beats the wrong one" rule with a per-section glyph rather  */}
+      {/* than a placeholder.                                                */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-wrap gap-1">
-        {([
+      <Selector
+        items={([
           ["general", t("settings.tab.general")],
           ["storage", t("settings.tab.storage")],
           ["schedules", t("settings.tab.schedules")],
@@ -3354,36 +3443,23 @@ export function SettingsPage() {
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
           ["system", t("settings.tab.system")],
-        ] as const).map(([key, label], i) => (
-          <button
-            key={key}
-            type="button"
-            style={hueVars(rainbowAt(i)) as CSSProperties}
-            onClick={() => {
-              setTab(key);
-              // Keep the URL hash in sync so reload/bookmark restores the tab
-              // (replaceState avoids polluting history and won't re-fire applyHash).
-              try {
-                window.history.replaceState(null, "", `#${key}`);
-              } catch {
-                /* history unavailable — tab state still switches */
-              }
-            }}
-            // glim-active travels with the fill: it's what keeps a filled
-            // active tab from painting its own colour over itself (index.css's
-            // .glim-hue-icon rule excludes it for the same reason), and in
-            // reactive mode it's what keeps the SELECTED tab showing its hue
-            // without needing hover.
-            className={`glim-hue rounded-control px-3 py-1.5 text-sm transition-colors ${
-              tab === key
-                ? "glim-active bg-accent text-accentContrast"
-                : "text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key] }))}
+        label={t("settings.title")}
+        select="one"
+        active={tab}
+        onChange={(key) => {
+          setTab(key as TabKey);
+          // Keep the URL hash in sync so reload/bookmark restores the tab
+          // (replaceState avoids polluting history and won't re-fire applyHash).
+          try {
+            window.history.replaceState(null, "", `#${key}`);
+          } catch {
+            /* history unavailable — tab state still switches */
+          }
+        }}
+        size="lg"
+        plain
+      />
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
