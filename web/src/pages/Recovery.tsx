@@ -3,6 +3,7 @@ import { useT } from "../lib/i18n";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
+import { Badge } from "../components/Badge";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
@@ -732,7 +733,12 @@ function ForeignRestoreCard({
   return (
     <div className="flex flex-col gap-5 border-t border-carbon-border pt-5 mt-2">
       <div>
-        <h2 className="text-lg font-semibold text-carbon-text">{t("recovery.foreignTitle")}</h2>
+        {/* Task 5 (rule 11): page-level group heading, direct analogue of
+            Settings.tsx's schedulesBackup heading (see that call site) —
+            same Badge-in-<h2> treatment. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("recovery.foreignTitle")}</Badge>
+        </h2>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.foreignIntro")}</p>
       </div>
 
@@ -1305,13 +1311,11 @@ export default function Recovery() {
                 {configPhase === "restarting" && (
                   <div className="flex flex-col gap-1">
                     <p className="text-sm text-statusInfo">{t("recovery.configRestarting")}</p>
-                    <button
-                      type="button"
-                      onClick={() => window.location.reload()}
-                      className="self-start text-xs text-carbon-textSub hover:text-carbon-text transition-colors underline"
-                    >
+                    {/* Task 5 (rule 13): same shape as ItemScheduleOverride's
+                        converted button — a plain underlined text link. */}
+                    <Badge as="button" onClick={() => window.location.reload()} tone="neutral" size="small" className="self-start">
                       {t("recovery.configReload")}
-                    </button>
+                    </Badge>
                   </div>
                 )}
                 {/* Manual restart needed (Docker socket unreachable). */}
