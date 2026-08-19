@@ -758,6 +758,12 @@ const sv: Partial<Translations> = {
   "stack.memberStarted": "startad",
   "settings.restoreFolder": "Standardmapp för återställning",
   "settings.restoreFolderHint": "Vart ”återställ till en mapp” packar upp ögonblicksbilder som standard.",
+  "settings.configPath": "Sökväg för auto-säkerhetskopia",
+  "settings.pathMode.local": "Lokal",
+  "settings.pathMode.remote": "Fjärran",
+  "settings.primaryRemote.title": "Säkerhetsinställningar för fjärransluten primärrepo",
+  "settings.primaryRemote.hint": "Denna säkerhetskopieringssökväg är ett fjärranslutet restic-repo — det ÄR primärkopian, inte en replik. Konfigurera bandbreddsgränser, append-only-skydd och ett tillväxtbudgetlarm här, samma skydd som en extern kopia får.",
+  "settings.primaryRemote.budgetHint": "Larma när detta repo överskrider en bytebudget (0 = av).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testa anslutning",

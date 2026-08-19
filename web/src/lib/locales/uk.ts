@@ -753,6 +753,12 @@ const uk: Partial<Translations> = {
   "stack.memberStarted": "запущено",
   "settings.restoreFolder": "Стандартна папка відновлення",
   "settings.restoreFolderHint": "Куди «відновлення до папки» за замовчуванням розпаковує знімки.",
+  "settings.configPath": "Шлях автобекапу",
+  "settings.pathMode.local": "Локально",
+  "settings.pathMode.remote": "Віддалено",
+  "settings.primaryRemote.title": "Налаштування безпеки віддаленого основного репозиторію",
+  "settings.primaryRemote.hint": "Цей шлях резервного копіювання є віддаленим репозиторієм restic — це ОСНОВНА копія, а не репліка. Налаштуйте тут обмеження пропускної здатності, захист append-only та сповіщення про бюджет росту — той самий захист, що й для позамайданчикової копії.",
+  "settings.primaryRemote.budgetHint": "Сповіщати, коли цей репозиторій перевищує бюджет у байтах (0 = вимкнено).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Перевірити з'єднання",

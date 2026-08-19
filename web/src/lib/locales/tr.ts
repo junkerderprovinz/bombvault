@@ -758,6 +758,12 @@ const tr: Partial<Translations> = {
   "stack.memberStarted": "başlatıldı",
   "settings.restoreFolder": "Varsayılan geri yükleme klasörü",
   "settings.restoreFolderHint": "“Klasöre geri yükle” işleminin anlık görüntüleri varsayılan olarak nereye çıkaracağı.",
+  "settings.configPath": "Öz yedek yolu",
+  "settings.pathMode.local": "Yerel",
+  "settings.pathMode.remote": "Uzak",
+  "settings.primaryRemote.title": "Uzak birincil depo güvenlik ayarları",
+  "settings.primaryRemote.hint": "Bu yedekleme yolu uzak bir restic deposudur — bu, bir kopya değil BİRİNCİL kopyadır. Bant genişliği sınırlarını, yalnızca-ekleme korumasını ve büyüme bütçesi alarmını burada yapılandırın; site dışı bir kopyanın aldığı aynı korumalar.",
+  "settings.primaryRemote.budgetHint": "Bu depo bayt bütçesini aştığında uyar (0 = kapalı).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Bağlantıyı test et",
