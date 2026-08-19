@@ -23,6 +23,12 @@ type Run struct {
 	// dashboard error panel (#126); an acknowledged run no longer counts toward
 	// the dashboard's failure badge.
 	Acknowledged bool `json:"acknowledged"`
+	// GroupID ties this run to the parent run of a multi-domain pass (e.g.
+	// "Backup Everything"): every child run a pass produces carries
+	// group_id = the parent run's id, so it can be traced back to the pass that
+	// triggered it. '' (the default) means this run is not part of any group —
+	// true for every run outside such a pass. Owned by SetRunGroup.
+	GroupID string `json:"groupId"`
 }
 
 // StartRun records the beginning of a run and returns its ID.
@@ -100,6 +106,23 @@ func (r *Repo) FailRunningRun(targetID, errMsg string) (int64, error) {
 	return n, nil
 }
 
+// SetRunGroup stamps runID with groupID, tying it to the parent run of a
+// multi-domain pass (e.g. "Backup Everything") so every child run it produces
+// can later be traced back to it via a group_id-scoped query. Called through
+// the same backup.Runs.Start choke point every domain orchestrator already
+// uses (runsAdapter/startedRunsAdapter) when the pass's context carries a
+// group id — every other caller today carries none, so this is never invoked
+// outside a grouped pass. Best-effort bookkeeping: a runID that matches no row
+// (e.g. already deleted) is NOT an error, since the caller treats this as
+// fire-and-forget and must never fail a backup over it.
+func (r *Repo) SetRunGroup(runID, groupID string) error {
+	_, err := r.db.Exec(`UPDATE runs SET group_id = ? WHERE id = ?`, groupID, runID)
+	if err != nil {
+		return fmt.Errorf("SetRunGroup: %w", err)
+	}
+	return nil
+}
+
 // ReapInterruptedRuns marks any run still in 'running' as failed. It is meant to
 // be called once at startup: BombVault is a single process, so a run left in
 // 'running' is necessarily an orphan from a previous lifetime (the process
@@ -121,7 +144,7 @@ func (r *Repo) ReapInterruptedRuns() (int64, error) {
 // LastSuccessfulBackup returns the most recent successful backup run for targetID, or nil.
 func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND status = 'success'
 		ORDER BY started_at DESC
@@ -142,7 +165,7 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 // stay quiet while the target keeps being skipped.
 func (r *Repo) LastRunForTarget(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup'
 		ORDER BY started_at DESC
@@ -236,6 +259,26 @@ func (r *Repo) LastSuccessfulConfigBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulConfigBackup")
 }
 
+// EverythingTargetID is the reserved runs.target_id for the singleton
+// "Backup Everything" pass (a 6th, independent pseudo-domain that runs
+// containers/vms/flash/files/config in sequence). Like FlashTargetID and
+// ConfigTargetID it is a fixed literal, distinct from the hex/UUID ids of
+// container and VM targets, so it never collides with or pollutes the other
+// domains' gates.
+const EverythingTargetID = "everything"
+
+// LastSuccessfulEverythingBackup drives the "Backup Everything" pass's everyN
+// due-gate, scoped to the reserved everything target id.
+func (r *Repo) LastSuccessfulEverythingBackup() (time.Time, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?
+		ORDER BY finished_at DESC
+		LIMIT 1`, EverythingTargetID)
+	return scanLastBackupTime(row, "LastSuccessfulEverythingBackup")
+}
+
 // scanLastBackupTime reads the single nullable finished_at column from a
 // last-successful-backup query, mapping no-rows / NULL to a zero time.
 func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {
@@ -255,7 +298,7 @@ func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {
 // ListRuns returns up to limit recent runs across all targets, newest first.
 func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
 		FROM runs
 		ORDER BY started_at DESC
 		LIMIT ?`, limit)
@@ -280,7 +323,7 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 // runs by day and domain.
 func (r *Repo) RunsSince(since int64) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
 		FROM runs
 		WHERE started_at >= ?
 		ORDER BY started_at DESC`, since)
@@ -390,7 +433,7 @@ func scanRun(s scanner) (Run, error) {
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
-		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged,
+		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
 	)
 	if err != nil {
 		return Run{}, err

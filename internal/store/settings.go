@@ -235,6 +235,23 @@ type Settings struct {
 	// original single/shared credentials), so every existing install is unaffected.
 	// Empty = no additional sets defined.
 	CloudCredSets string
+	// EverythingSchedule is the cadence for the "Backup Everything" pass: a 6th,
+	// independent pseudo-domain that runs containers, vms, flash, files, and
+	// config in sequence, then fires EverythingPostHook exactly once. 'off' (the
+	// default) leaves it fully inert — it does not replace or gate the five
+	// domains' own schedules; a user can run both, and the Settings UI carries an
+	// explicit overlap warning.
+	EverythingSchedule string
+	// EverythingPreHook / EverythingPostHook are optional shell commands run in
+	// BombVault's OWN container (via `sh -c`, HostShell) before/after the whole
+	// "Backup Everything" pass — unlike the per-container Target.PreHook/PostHook,
+	// which exec INSIDE the target container, a whole-pass hook has no single
+	// container to run in. The pre-hook is best-effort (logged on failure, never
+	// aborts the pass); the post-hook fires unconditionally exactly once, after
+	// every domain step has been attempted, regardless of outcome — the explicit
+	// dead-man's-switch requirement. Empty (the default) = no hook configured.
+	EverythingPreHook  string
+	EverythingPostHook string
 }
 
 // GetSettings returns the current app settings.
@@ -265,7 +282,8 @@ func (r *Repo) GetSettings() (Settings, error) {
 		       reconcile_unraid_update_status,
 		       per_item_schedules,
 		       cloud_cred_sets,
-		       fleet_enabled, instance_name, fleet_token
+		       fleet_enabled, instance_name, fleet_token,
+		       everything_schedule, everything_pre_hook, everything_post_hook
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -302,6 +320,7 @@ func (r *Repo) GetSettings() (Settings, error) {
 		&perItemSchedules,
 		&s.CloudCredSets,
 		&fleetEnabled, &s.InstanceName, &s.FleetToken,
+		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
@@ -422,7 +441,10 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		  cloud_cred_sets              = ?,
 		  fleet_enabled                = ?,
 		  instance_name                = ?,
-		  fleet_token                  = ?
+		  fleet_token                  = ?,
+		  everything_schedule          = ?,
+		  everything_pre_hook          = ?,
+		  everything_post_hook         = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -457,6 +479,9 @@ func (r *Repo) UpdateSettings(s Settings) error {
 		boolInt(s.FleetEnabled),
 		s.InstanceName,
 		s.FleetToken,
+		s.EverythingSchedule,
+		s.EverythingPreHook,
+		s.EverythingPostHook,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
