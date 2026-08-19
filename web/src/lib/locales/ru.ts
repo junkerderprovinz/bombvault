@@ -725,6 +725,12 @@ const ru: Partial<Translations> = {
   "stack.memberStarted": "запущен",
   "settings.restoreFolder": "Папка восстановления по умолчанию",
   "settings.restoreFolderHint": "Куда «восстановление в папку» по умолчанию распаковывает снимки.",
+  "settings.configPath": "Путь автобэкапа",
+  "settings.pathMode.local": "Локально",
+  "settings.pathMode.remote": "Удалённо",
+  "settings.primaryRemote.title": "Настройки безопасности удалённого основного репозитория",
+  "settings.primaryRemote.hint": "Этот путь резервного копирования — удалённый репозиторий restic: это ОСНОВНАЯ копия, а не реплика. Настройте здесь ограничения пропускной способности, защиту append-only и оповещение о бюджете роста — те же меры защиты, что и у внешней копии.",
+  "settings.primaryRemote.budgetHint": "Оповещать, когда этот репозиторий превышает бюджет в байтах (0 = выключено).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Проверить соединение",

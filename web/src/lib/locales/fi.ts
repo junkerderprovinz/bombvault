@@ -758,6 +758,12 @@ const fi: Partial<Translations> = {
   "stack.memberStarted": "käynnistetty",
   "settings.restoreFolder": "Palautuksen oletuskansio",
   "settings.restoreFolderHint": "Mihin „palauta kansioon” purkaa tilannevedokset oletuksena.",
+  "settings.configPath": "Itsevarmuuskopion polku",
+  "settings.pathMode.local": "Paikallinen",
+  "settings.pathMode.remote": "Etä",
+  "settings.primaryRemote.title": "Etäisen ensisijaisen tietovaraston turva-asetukset",
+  "settings.primaryRemote.hint": "Tämä varmuuskopiopolku on etäinen restic-tietovarasto — se ON ensisijainen kopio, ei replika. Määritä täällä kaistanleveysrajat, append-only-suojaus ja kasvubudjettihälytys, samat suojat kuin etäkopio saa.",
+  "settings.primaryRemote.budgetHint": "Hälytä, kun tämä tietovarasto ylittää tavubudjetin (0 = pois).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testaa yhteys",

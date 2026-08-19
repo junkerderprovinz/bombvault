@@ -1536,6 +1536,89 @@ export function tamperTest(
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
 
+// ---------------------------------------------------------------------------
+// Remote primary repositories (issue #152)
+//
+// A domain's primary Backup Path (Settings.*Path, edited on the Storage tab
+// via FolderBrowser) already accepts a raw restic remote URL and backs up to
+// it directly — the mode switch next to each path field is purely a UI framing
+// (Local shows the folder browser; Remote shows a URL field + this safety
+// dialog) over the SAME `*Path` setting. What lives here is ONLY the safety
+// settings a replication destination already gets (bandwidth limits, append-
+// only/tamper-test protection, a growth-budget alarm), for when that path
+// happens to be remote. Matches primaryRemoteView in
+// internal/api/primary_remote.go exactly.
+// ---------------------------------------------------------------------------
+
+/** Domains whose primary backup path can be a remote repository. */
+export type PrimaryRemoteDomain = "containers" | "vms" | "flash" | "config" | "files";
+
+export interface PrimaryRemoteConfig {
+  /** Whether safety settings have ever been saved for this domain — false is
+   *  the common/default case (a local primary, or a remote one nobody has
+   *  opened the dialog for yet), not an error. */
+  configured: boolean;
+  /** The backup path AT THE TIME the settings were last saved (informational
+   *  only — the live value is always Settings.*Path, never this field). */
+  repo: string;
+  immutable: boolean;
+  limitUpload: number;
+  limitDownload: number;
+  growthBudgetGb: number;
+}
+
+/** GET /api/settings/primary-remote/{domain} */
+export function getPrimaryRemote(
+  domain: PrimaryRemoteDomain
+): Promise<OkEnvelope & { config?: PrimaryRemoteConfig }> {
+  return fetchJSON(`/api/settings/primary-remote/${domain}`);
+}
+
+/**
+ * PUT /api/settings/primary-remote/{domain} — save a domain's remote-primary
+ * safety settings. Rejected (ok:false, with a reason) when the domain's
+ * CURRENT backup path is not actually a remote repository — set the path
+ * field to a remote URL first.
+ */
+export function setPrimaryRemote(
+  domain: PrimaryRemoteDomain,
+  patch: { immutable: boolean; limitUpload: number; limitDownload: number; growthBudgetGb: number }
+): Promise<OkEnvelope & { config?: PrimaryRemoteConfig }> {
+  return fetchJSON(`/api/settings/primary-remote/${domain}`, {
+    method: "PUT",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** DELETE /api/settings/primary-remote/{domain} — clear the saved safety settings. */
+export function deletePrimaryRemote(domain: PrimaryRemoteDomain): Promise<OkEnvelope> {
+  return fetchJSON(`/api/settings/primary-remote/${domain}`, { method: "DELETE" });
+}
+
+/**
+ * POST /api/settings/primary-remote/{domain}/test — probe the domain's
+ * CURRENT (live) backup path: reachable / initialised, exactly like
+ * testOffsite but for the primary path instead of an off-site destination.
+ */
+export function testPrimaryRemote(
+  domain: PrimaryRemoteDomain
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+  return fetchJSON(`/api/settings/primary-remote/${domain}/test`, { method: "POST" });
+}
+
+/**
+ * POST /api/settings/primary-remote/{domain}/tamper-test — the same active
+ * append-only probe tamperTest runs for an off-site destination, against a
+ * domain's remote primary instead. Requires the safety settings to have been
+ * saved first (with append-only on) — an unsaved config answers ok:false with
+ * a "save first" reason rather than probing under a synthetic id.
+ */
+export function primaryRemoteTamperTest(
+  domain: PrimaryRemoteDomain
+): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
+  return fetchJSON(`/api/settings/primary-remote/${domain}/tamper-test`, { method: "POST" });
+}
+
 /**
  * An off-site replication target row from the offsite_targets table (multi-off-site).
  * Matches OffsiteTargetView in internal/api/offsite_targets_crud.go exactly. Carries

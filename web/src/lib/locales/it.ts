@@ -733,6 +733,12 @@ const it: Partial<Translations> = {
   "stack.memberStarted": "avviato",
   "settings.restoreFolder": "Cartella di ripristino predefinita",
   "settings.restoreFolderHint": "Dove «ripristina in una cartella» estrae gli snapshot per impostazione predefinita.",
+  "settings.configPath": "Percorso Auto-backup",
+  "settings.pathMode.local": "Locale",
+  "settings.pathMode.remote": "Remoto",
+  "settings.primaryRemote.title": "Impostazioni di sicurezza del repository primario remoto",
+  "settings.primaryRemote.hint": "Questo percorso di backup è un repository restic remoto: È la copia primaria, non una replica. Configura qui i limiti di banda, la protezione append-only e un allarme di budget di crescita, le stesse protezioni di una copia off-site.",
+  "settings.primaryRemote.budgetHint": "Avvisa quando questo repository supera un budget in byte (0 = disattivato).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Prova connessione",

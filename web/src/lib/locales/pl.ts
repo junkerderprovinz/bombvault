@@ -725,6 +725,12 @@ const pl: Partial<Translations> = {
   "stack.memberStarted": "uruchomiono",
   "settings.restoreFolder": "Domyślny folder przywracania",
   "settings.restoreFolderHint": "Gdzie „przywróć do folderu” domyślnie wypakowuje migawki.",
+  "settings.configPath": "Ścieżka autokopii",
+  "settings.pathMode.local": "Lokalne",
+  "settings.pathMode.remote": "Zdalne",
+  "settings.primaryRemote.title": "Ustawienia bezpieczeństwa zdalnego repozytorium podstawowego",
+  "settings.primaryRemote.hint": "Ta ścieżka kopii zapasowej to zdalne repozytorium restic — JEST kopią podstawową, a nie repliką. Skonfiguruj tutaj limity przepustowości, ochronę append-only i alarm budżetu wzrostu — taką samą ochronę, jaką otrzymuje kopia zewnętrzna.",
+  "settings.primaryRemote.budgetHint": "Alarmuj, gdy to repozytorium przekroczy budżet bajtów (0 = wyłączone).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testuj połączenie",

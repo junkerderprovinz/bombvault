@@ -727,6 +727,12 @@ const nl: Partial<Translations> = {
   "stack.memberStarted": "gestart",
   "settings.restoreFolder": "Standaard herstelmap",
   "settings.restoreFolderHint": "Waar „naar een map herstellen” snapshots standaard uitpakt.",
+  "settings.configPath": "Zelf-back-up-pad",
+  "settings.pathMode.local": "Lokaal",
+  "settings.pathMode.remote": "Extern",
+  "settings.primaryRemote.title": "Beveiligingsinstellingen voor extern primair repository",
+  "settings.primaryRemote.hint": "Dit back-uppad is een extern restic-repository — het IS de primaire kopie, geen replica. Configureer hier bandbreedtelimieten, append-only-bescherming en een groeibudgetalarm, dezelfde bescherming die een externe kopie krijgt.",
+  "settings.primaryRemote.budgetHint": "Alarmeren wanneer dit repository een bytebudget overschrijdt (0 = uit).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Verbinding testen",
