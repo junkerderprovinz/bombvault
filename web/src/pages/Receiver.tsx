@@ -29,6 +29,11 @@ import type {
 import { useT } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
 import { humanBytes } from "../lib/forecast";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
+import { IconReceiver } from "../components/Sidebar";
+import { Badge } from "../components/Badge";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -45,26 +50,6 @@ function fmtReceived(iso: string, t: T): string {
   if (!iso) return t("receiver.never");
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
-
-// ---------------------------------------------------------------------------
-// Status badge
-// ---------------------------------------------------------------------------
-
-function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; children: React.ReactNode }) {
-  const cls =
-    tone === "ok"
-      ? "bg-statusOkBg text-statusOk"
-      : tone === "fail"
-      ? "bg-statusFailBg text-statusFail"
-      : tone === "warn"
-      ? "bg-statusWarnBgStrong text-statusWarn"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
-      {children}
-    </span>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +150,13 @@ function ReceivedRepoCard({
   const [checkMsg, setCheckMsg] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
+  // Reversible action: removing a monitoring entry never touches the repo on
+  // disk (re-addable in one step), so per the design-language's "reversible
+  // actions don't ask" rule this gets the LIGHTER two-click inline-confirm —
+  // click "Remove" → button becomes "Confirm remove" — matching
+  // OffsiteTargetsSection's `confirmRemove` pattern exactly, not a full
+  // window.confirm()/ConfirmDialog (form-engine Task 7).
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   async function handleCheck() {
     setChecking(true);
@@ -185,7 +177,6 @@ function ReceivedRepoCard({
   }
 
   async function handleRemove() {
-    if (!window.confirm(t("receiver.removeConfirm"))) return;
     setRemoving(true);
     setRemoveErr(null);
     try {
@@ -196,11 +187,12 @@ function ReceivedRepoCard({
       setRemoveErr(err instanceof Error ? err.message : t("receiver.saveError"));
     } finally {
       setRemoving(false);
+      setConfirmRemove(false);
     }
   }
 
   // Check-result badge tone: never checked / passed / failed.
-  const checkTone = repo.lastCheckOk === null ? "muted" : repo.lastCheckOk ? "ok" : "fail";
+  const checkTone = repo.lastCheckOk === null ? "neutral" : repo.lastCheckOk ? "ok" : "fail";
   const checkLabel =
     repo.lastCheckOk === null
       ? t("receiver.checkNever")
@@ -215,7 +207,7 @@ function ReceivedRepoCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-carbon-text text-sm truncate">{repo.name}</span>
-            {!repo.enabled && <Badge tone="muted">{t("receiver.monitoringOff")}</Badge>}
+            {!repo.enabled && <Badge tone="neutral">{t("receiver.monitoringOff")}</Badge>}
             {repo.enabled &&
               (repo.reachable ? (
                 <Badge tone="ok">{t("receiver.reachable")}</Badge>
@@ -252,7 +244,7 @@ function ReceivedRepoCard({
         <button
           onClick={() => void handleCheck()}
           disabled={checking}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {checking ? (
             <>
@@ -282,7 +274,7 @@ function ReceivedRepoCard({
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             <svg
               width="12"
@@ -297,24 +289,33 @@ function ReceivedRepoCard({
           </button>
           <button
             onClick={onEdit}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("receiver.edit")}
           </button>
-          <button
-            onClick={() => void handleRemove()}
-            disabled={removing}
-            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
-          >
-            {removing ? t("receiver.removing") : t("receiver.remove")}
-          </button>
+          {confirmRemove ? (
+            <button
+              onClick={() => void handleRemove()}
+              disabled={removing}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {removing ? t("receiver.removing") : t("receiver.confirmRemove")}
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmRemove(true)}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {t("receiver.remove")}
+            </button>
+          )}
         </div>
       </div>
       {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}
 
       {/* Inventory disclosure */}
       {open && (
-        <div className="rounded-lg bg-carbon-background px-3 py-2">
+        <div className="rounded-card bg-carbon-background px-3 py-2">
           <p className="text-xs font-medium text-carbon-textSub">{t("receiver.inventoryTitle")}</p>
           <InventoryPanel repo={repo} t={t} />
         </div>
@@ -342,6 +343,7 @@ function ReceiverDialog({
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [appKey, setAppKey] = useState("");
+  const revealAppKey = useReveal();
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
   const [checkCadence, setCheckCadence] = useState(initial?.checkCadence ?? "");
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
@@ -393,7 +395,7 @@ function ReceiverDialog({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
   return createPortal(
     <div
@@ -443,13 +445,14 @@ function ReceiverDialog({
         {/* Sending APP_KEY */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
-          <input
-            type="password"
+          <RevealInput
+            {...revealAppKey}
             value={appKey}
             onChange={(e) => setAppKey(e.target.value)}
             spellCheck={false}
             autoComplete="off"
             placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
+            wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
           <p className="text-[11px] text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
@@ -517,14 +520,14 @@ function ReceiverDialog({
           <button
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {t("files.cancel")}
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>
@@ -575,7 +578,7 @@ export function Receiver() {
         </div>
         <button
           onClick={() => setDialog("new")}
-          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
         >
           {t("receiver.addRepo")}
         </button>
@@ -587,10 +590,11 @@ export function Receiver() {
       {/* Empty state */}
       {!loading && !error && repos.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <EmptyStateIcon icon={IconReceiver} />
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("receiver.empty")}</p>
           <button
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
           >
             {t("receiver.addRepo")}
           </button>

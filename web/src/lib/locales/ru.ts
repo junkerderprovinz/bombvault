@@ -33,6 +33,7 @@ const ru: Partial<Translations> = {
   "dashboard.allOk": "Все системы в норме",
   "dashboard.degraded": "Сбой",
   "dashboard.checking": "Проверка…",
+  "dashboard.noContainers": "Контейнеры не найдены.",
   // Dashboard customize (#46)
   "dashboard.customize": "Настроить",
   "dashboard.customizeDone": "Готово",
@@ -59,6 +60,7 @@ const ru: Partial<Translations> = {
   "spike.colDetail": "Детали",
   "spike.ok": "OK",
   "spike.fail": "ОШИБКА",
+  "spike.info": "ИНФО",
   "spike.bestEffort": "необязательно",
   "spike.checkNow": "Проверить сейчас",
   "spike.probeFailed": "тест не пройден (см. журналы сервера)",
@@ -182,6 +184,8 @@ const ru: Partial<Translations> = {
   "settings.appearance": "Внешний вид",
   "settings.accentColor": "Акцентный цвет",
   "settings.accentPresets": "Предустановки",
+  "settings.quietToasts": "Тихие уведомления",
+  "settings.quietToastsHint": "Показывать всплывающие уведомления только при ошибках. Обычные подтверждения сохранения и копирования остаются беззвучными.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнеры",
@@ -433,6 +437,7 @@ const ru: Partial<Translations> = {
   "vm.ssh.publicKey": "Публичный ключ — добавьте в Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Копировать",
   "vm.ssh.copied": "Скопировано",
+  "vm.ssh.copyFailed": "Не удалось скопировать",
   "vm.ssh.test": "Проверить соединение",
   "vm.ssh.testing": "Проверка…",
   "vm.ssh.testOk": "Подключено — libvirt доступен",
@@ -451,6 +456,12 @@ const ru: Partial<Translations> = {
   "common.restoreRunning": "Выполняется восстановление…",
   "common.backupRunning": "Выполняется резервное копирование…",
   "common.replicateRunning": "Выполняется репликация…",
+  "common.showValue": "Показать значение",
+  "common.hideValue": "Скрыть значение",
+  "confirmDialog.title": "Подтвердить",
+  "toast.dismiss": "Скрыть уведомление",
+  "common.confirm": "Подтвердить",
+  "common.cancel": "Отмена",
   "common.close": "Закрыть",
 
   // Backup folders selector
@@ -1166,7 +1177,7 @@ const ru: Partial<Translations> = {
   "receiver.edit": "Изменить",
   "receiver.remove": "Удалить",
   "receiver.removing": "Удаление…",
-  "receiver.removeConfirm": "Убрать этот принятый репозиторий из мониторинга? Репозиторий на диске никогда не затрагивается, удаляется только запись мониторинга.",
+  "receiver.confirmRemove": "Подтвердить удаление",
   "receiver.inventoryTitle": "Опись по источникам",
   "receiver.inventoryLoading": "Загрузка описи…",
   "receiver.inventoryError": "Не удалось загрузить опись.",
@@ -1212,7 +1223,7 @@ const ru: Partial<Translations> = {
   "fleet.edit": "Изменить",
   "fleet.remove": "Удалить",
   "fleet.removing": "Удаление…",
-  "fleet.removeConfirm": "Удалить этот экземпляр из мониторинга? Сам экземпляр при этом никогда не затрагивается, удаляется только запись мониторинга.",
+  "fleet.confirmRemove": "Подтвердить удаление",
   "fleet.scorecardTitle": "Сводка защиты",
   "fleet.noScorecard": "Кэшированной сводки пока нет — опросите этот экземпляр, чтобы получить её.",
   "fleet.lastBackup": "последнее резервное копирование {time}",

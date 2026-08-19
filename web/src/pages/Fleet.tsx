@@ -31,33 +31,50 @@ import {
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
+import { IconFleet } from "../components/Sidebar";
+import { Badge } from "../components/Badge";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
+import { copyText } from "../lib/clipboard";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
 // CopyBlock mirrors OffsiteWizard's copy pattern (module-private there too): a
-// monospace <pre> with a copy button that flips to "copied" for a moment.
+// monospace <pre> with a copy button. GlimStone form-engine Task 9 (toasts):
+// this was one of the ad-hoc 2000ms-inline-text-swap "copied" patterns the
+// audit flagged as a natural toast candidate — the "Copied" feedback now
+// surfaces as a routine (quiet-mode-suppressible) toast instead of the
+// button's own label flipping for two seconds. While here: switched the raw
+// `navigator.clipboard.writeText` call to this repo's shared `copyText()`
+// helper (lib/clipboard.ts), which already exists specifically because a
+// direct call silently does nothing on a non-secure (plain HTTP) origin —
+// this was the one remaining call site still bypassing it (#112).
 function CopyBlock({ text, t }: { text: string; t: T }) {
-  const [copied, setCopied] = useState(false);
+  const { push } = useToast();
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable (non-HTTPS) — the text is selectable in the box */
+    if (await copyText(text)) {
+      push(t("vm.ssh.copied"), "success");
+    } else {
+      // "failures always surface" (design-language.md) — copyText() only
+      // returns false when BOTH the Clipboard API and the execCommand
+      // fallback failed, so this is a real, user-actionable failure, not
+      // routine noise a quiet-mode user would want suppressed.
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-sm bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
         type="button"
         onClick={() => void copy()}
-        className="shrink-0 rounded-sm bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+        className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
       >
-        {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+        {t("vm.ssh.copy")}
       </button>
     </div>
   );
@@ -67,26 +84,10 @@ const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
 
 // ---------------------------------------------------------------------------
 // Protection chip — mirrors Dashboard's protectionChip mapping (not exported
-// there, so duplicated here: green/amber/red/"" -> ok/warn/fail/muted).
+// there, so duplicated here: green/amber/red/"" -> ok/warn/fail/neutral).
 // ---------------------------------------------------------------------------
 
-function Badge({ tone, children }: { tone: "ok" | "fail" | "warn" | "muted"; children: React.ReactNode }) {
-  const cls =
-    tone === "ok"
-      ? "bg-statusOkBg text-statusOk"
-      : tone === "fail"
-      ? "bg-statusFailBg text-statusFail"
-      : tone === "warn"
-      ? "bg-statusWarnBgStrong text-statusWarn"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
-      {children}
-    </span>
-  );
-}
-
-function protectionTone(level: string): "ok" | "fail" | "warn" | "muted" {
+function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
   switch (level) {
     case "green":
       return "ok";
@@ -95,7 +96,7 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "muted" {
     case "red":
       return "fail";
     default:
-      return "muted";
+      return "neutral";
   }
 }
 
@@ -156,7 +157,7 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
 // Mesh: offers received FROM peers
 // ---------------------------------------------------------------------------
 
-function meshStatusTone(status: string): "ok" | "fail" | "warn" | "muted" {
+function meshStatusTone(status: string): "ok" | "fail" | "warn" | "neutral" {
   switch (status) {
     case "accepted":
       return "ok";
@@ -214,7 +215,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const pending = offer.status === "pending";
 
   return (
-    <div className="rounded-lg bg-carbon-surface2 p-3 flex flex-col gap-2">
+    <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
         <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
@@ -228,7 +229,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="rounded-lg bg-carbon-surface3 text-carbon-text text-xs px-2 py-1"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 bv-field-focus-well"
             >
               {MESH_DOMAINS.map((d) => (
                 <option key={d} value={d}>{t(domainLabelKey(d))}</option>
@@ -238,14 +239,14 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
           <button
             onClick={() => void handleAccept()}
             disabled={busy}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("fleet.mesh.accept")}
           </button>
           <button
             onClick={() => void handleDecline()}
             disabled={busy}
-            className="inline-flex items-center rounded-lg bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {t("fleet.mesh.decline")}
           </button>
@@ -286,7 +287,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
@@ -328,14 +329,14 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
               <button
                 onClick={onClose}
                 disabled={sending}
-                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("files.cancel")}
               </button>
               <button
                 onClick={() => void handleSend()}
                 disabled={sending}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {sending ? t("fleet.mesh.sending") : t("fleet.mesh.send")}
               </button>
@@ -356,7 +357,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <div className="flex items-center justify-end pt-1">
               <button
                 onClick={onClose}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
               >
                 {t("common.close")}
               </button>
@@ -389,6 +390,14 @@ function FleetPeerCard({
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
   const [showPropose, setShowPropose] = useState(false);
+  // Reversible action: removing a monitoring entry never contacts the peer
+  // instance (re-addable in one step), so per the design-language's
+  // "reversible actions don't ask" rule this gets the LIGHTER two-click
+  // inline-confirm — click "Remove" → button becomes "Confirm remove" —
+  // matching OffsiteTargetsSection's / Receiver.tsx's `confirmRemove`
+  // pattern exactly, not a full window.confirm()/ConfirmDialog (form-engine
+  // Task 7).
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   async function handlePoll() {
     setPolling(true);
@@ -401,7 +410,6 @@ function FleetPeerCard({
   }
 
   async function handleRemove() {
-    if (!window.confirm(t("fleet.removeConfirm"))) return;
     setRemoving(true);
     setRemoveErr(null);
     try {
@@ -412,10 +420,11 @@ function FleetPeerCard({
       setRemoveErr(err instanceof Error ? err.message : t("fleet.saveError"));
     } finally {
       setRemoving(false);
+      setConfirmRemove(false);
     }
   }
 
-  const pollTone: "ok" | "fail" | "muted" = peer.lastPollOk === null ? "muted" : peer.lastPollOk ? "ok" : "fail";
+  const pollTone: "ok" | "fail" | "neutral" = peer.lastPollOk === null ? "neutral" : peer.lastPollOk ? "ok" : "fail";
   const pollLabel =
     peer.lastPollOk === null ? t("fleet.pollNever") : peer.lastPollOk ? t("fleet.pollOk") : t("fleet.pollFailed");
 
@@ -427,7 +436,7 @@ function FleetPeerCard({
             <span className="font-semibold text-carbon-text text-sm truncate">
               {peer.lastPollInstanceName || peer.name}
             </span>
-            {!peer.enabled && <Badge tone="muted">{t("fleet.monitoringOff")}</Badge>}
+            {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
             <Badge tone={pollTone}>{pollLabel}</Badge>
           </div>
           <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">{peer.url}</p>
@@ -450,7 +459,7 @@ function FleetPeerCard({
         <button
           onClick={() => void handlePoll()}
           disabled={polling}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {polling ? (
             <>
@@ -468,13 +477,13 @@ function FleetPeerCard({
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => setShowPropose(true)}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("fleet.mesh.proposeButton")}
           </button>
           <button
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             <svg
               width="12"
@@ -489,23 +498,32 @@ function FleetPeerCard({
           </button>
           <button
             onClick={onEdit}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("fleet.edit")}
           </button>
-          <button
-            onClick={() => void handleRemove()}
-            disabled={removing}
-            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
-          >
-            {removing ? t("fleet.removing") : t("fleet.remove")}
-          </button>
+          {confirmRemove ? (
+            <button
+              onClick={() => void handleRemove()}
+              disabled={removing}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {removing ? t("fleet.removing") : t("fleet.confirmRemove")}
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmRemove(true)}
+              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            >
+              {t("fleet.remove")}
+            </button>
+          )}
         </div>
       </div>
       {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}
 
       {open && (
-        <div className="rounded-lg bg-carbon-background px-3 py-2">
+        <div className="rounded-card bg-carbon-background px-3 py-2">
           <p className="text-xs font-medium text-carbon-textSub">{t("fleet.scorecardTitle")}</p>
           <PeerScorecard domains={peer.lastPollDomains} t={t} />
         </div>
@@ -537,6 +555,7 @@ function FleetDialog({
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const revealToken = useReveal();
 
   const editing = initial !== null;
   const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
@@ -571,7 +590,7 @@ function FleetDialog({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
   return createPortal(
     <div
@@ -618,13 +637,14 @@ function FleetDialog({
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
-          <input
-            type="password"
+          <RevealInput
+            {...revealToken}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             spellCheck={false}
             autoComplete="off"
             placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
+            wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
           <p className="text-[11px] text-carbon-textMuted">{t("fleet.tokenHint")}</p>
@@ -647,14 +667,14 @@ function FleetDialog({
           <button
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {t("files.cancel")}
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>
@@ -715,7 +735,7 @@ export function Fleet() {
         </div>
         <button
           onClick={() => setDialog("new")}
-          className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
         >
           {t("fleet.addPeer")}
         </button>
@@ -740,10 +760,11 @@ export function Fleet() {
 
       {!loading && !error && peers.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <EmptyStateIcon icon={IconFleet} />
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("fleet.empty")}</p>
           <button
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
           >
             {t("fleet.addPeer")}
           </button>

@@ -33,6 +33,7 @@ const ro: Partial<Translations> = {
   "dashboard.allOk": "Toate sistemele funcționează",
   "dashboard.degraded": "Degradat",
   "dashboard.checking": "Verificare…",
+  "dashboard.noContainers": "Niciun container găsit.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personalizează",
   "dashboard.customizeDone": "Gata",
@@ -59,6 +60,7 @@ const ro: Partial<Translations> = {
   "spike.colDetail": "Detaliu",
   "spike.ok": "OK",
   "spike.fail": "EȘUAT",
+  "spike.info": "INFO",
   "spike.bestEffort": "opțional",
   "spike.checkNow": "Verifică acum",
   "spike.probeFailed": "sondarea a eșuat (vezi jurnalele serverului)",
@@ -184,6 +186,8 @@ const ro: Partial<Translations> = {
   "settings.appearance": "Aspect",
   "settings.accentColor": "Culoare de accent",
   "settings.accentPresets": "Presetări",
+  "settings.quietToasts": "Notificări discrete",
+  "settings.quietToastsHint": "Afișează notificările pop-up doar pentru erori. Confirmările de rutină de salvare și copiere rămân silențioase.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containere",
@@ -438,6 +442,7 @@ const ro: Partial<Translations> = {
   "vm.ssh.publicKey": "Cheie publică — adăugați în /root/.ssh/authorized_keys de pe Unraid",
   "vm.ssh.copy": "Copiază",
   "vm.ssh.copied": "Copiat",
+  "vm.ssh.copyFailed": "Copiere eșuată",
   "vm.ssh.test": "Testează conexiunea",
   "vm.ssh.testing": "Se testează…",
   "vm.ssh.testOk": "Conectat — libvirt accesibil",
@@ -456,6 +461,12 @@ const ro: Partial<Translations> = {
   "common.restoreRunning": "O restaurare este în curs…",
   "common.backupRunning": "O copie de rezervă este în curs…",
   "common.replicateRunning": "O replicare este în curs…",
+  "common.showValue": "Afișează valoarea",
+  "common.hideValue": "Ascunde valoarea",
+  "confirmDialog.title": "Confirmare",
+  "toast.dismiss": "Închide notificarea",
+  "common.confirm": "Confirmare",
+  "common.cancel": "Anulare",
   "common.close": "Închide",
 
   // Backup folders selector
@@ -1174,7 +1185,7 @@ const ro: Partial<Translations> = {
   "receiver.edit": "Editează",
   "receiver.remove": "Elimină",
   "receiver.removing": "Se elimină…",
-  "receiver.removeConfirm": "Elimini acest depozit primit din monitorizare? Depozitul de pe disc nu este atins niciodată, se elimină doar intrarea de monitorizare.",
+  "receiver.confirmRemove": "Confirmă eliminarea",
   "receiver.inventoryTitle": "Inventar după sursă",
   "receiver.inventoryLoading": "Se încarcă inventarul…",
   "receiver.inventoryError": "Nu s-a putut încărca inventarul.",
@@ -1220,7 +1231,7 @@ const ro: Partial<Translations> = {
   "fleet.edit": "Editează",
   "fleet.remove": "Elimină",
   "fleet.removing": "Se elimină…",
-  "fleet.removeConfirm": "Elimini această instanță din monitorizare? Instanța nu este niciodată contactată în acest scop, se elimină doar înregistrarea de monitorizare.",
+  "fleet.confirmRemove": "Confirmă eliminarea",
   "fleet.scorecardTitle": "Fișă de protecție",
   "fleet.noScorecard": "Nicio fișă memorată încă — interoghează această instanță pentru a obține una.",
   "fleet.lastBackup": "ultima copie de rezervă {time}",

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { login } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { RevealInput } from "../components/RevealInput";
+import { useReveal } from "../lib/useReveal";
 
 interface LoginPageProps {
   /** Called after a successful login so the parent can re-check auth state. */
@@ -13,6 +15,7 @@ interface LoginPageProps {
 
 export function LoginPage({ onLogin }: LoginPageProps) {
   const { t } = useT();
+  const reveal = useReveal();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,14 +56,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             >
               {t("auth.passwordLabel")}
             </label>
-            <input
+            <RevealInput
+              {...reveal}
               id="bv-password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
               autoComplete="current-password"
-              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              wrapperClassName="w-full"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 bv-field-focus"
             />
           </div>
 
@@ -75,7 +79,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <button
             type="submit"
             disabled={busy || password === ""}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {busy ? (
               <>

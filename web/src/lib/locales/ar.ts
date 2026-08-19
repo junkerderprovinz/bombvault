@@ -34,6 +34,7 @@ const ar: Partial<Translations> = {
   "dashboard.allOk": "جميع الأنظمة تعمل بشكل جيد",
   "dashboard.degraded": "متدهور",
   "dashboard.checking": "جارٍ الفحص…",
+  "dashboard.noContainers": "لم يتم العثور على أي حاويات.",
   // Dashboard customize (#46)
   "dashboard.customize": "تخصيص",
   "dashboard.customizeDone": "تم",
@@ -60,6 +61,7 @@ const ar: Partial<Translations> = {
   "spike.colDetail": "التفاصيل",
   "spike.ok": "OK",
   "spike.fail": "فشل",
+  "spike.info": "معلومة",
   "spike.bestEffort": "اختياري",
   "spike.checkNow": "فحص الآن",
   "spike.probeFailed": "فشل الاستطلاع (راجع سجلات الخادم)",
@@ -186,6 +188,8 @@ const ar: Partial<Translations> = {
   "settings.appearance": "المظهر",
   "settings.accentColor": "لون التمييز",
   "settings.accentPresets": "إعدادات مسبقة",
+  "settings.quietToasts": "إشعارات هادئة",
+  "settings.quietToastsHint": "إظهار الإشعارات المنبثقة عند حدوث أخطاء فقط. تبقى تأكيدات الحفظ والنسخ الروتينية صامتة.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -440,6 +444,7 @@ const ar: Partial<Translations> = {
   "vm.ssh.publicKey": "المفتاح العام — أضِفه إلى ‎/root/.ssh/authorized_keys في Unraid",
   "vm.ssh.copy": "نسخ",
   "vm.ssh.copied": "تم النسخ",
+  "vm.ssh.copyFailed": "فشل النسخ",
   "vm.ssh.test": "اختبار الاتصال",
   "vm.ssh.testing": "جارٍ الاختبار…",
   "vm.ssh.testOk": "متصل — libvirt متاح",
@@ -458,6 +463,12 @@ const ar: Partial<Translations> = {
   "common.restoreRunning": "جارٍ تنفيذ استعادة…",
   "common.backupRunning": "جارٍ تنفيذ نسخ احتياطي…",
   "common.replicateRunning": "جارٍ تنفيذ نسخ متماثل…",
+  "common.showValue": "إظهار القيمة",
+  "common.hideValue": "إخفاء القيمة",
+  "confirmDialog.title": "تأكيد",
+  "toast.dismiss": "إغلاق الإشعار",
+  "common.confirm": "تأكيد",
+  "common.cancel": "إلغاء",
   "common.close": "إغلاق",
 
   // Backup folders selector
@@ -1174,7 +1185,7 @@ const ar: Partial<Translations> = {
   "receiver.edit": "تعديل",
   "receiver.remove": "إزالة",
   "receiver.removing": "جارٍ الإزالة…",
-  "receiver.removeConfirm": "إزالة هذا المستودع المستلَم من المراقبة؟ لا يُمَس المستودع على القرص أبدًا، تُزال فقط مدخلة المراقبة.",
+  "receiver.confirmRemove": "تأكيد الإزالة",
   "receiver.inventoryTitle": "الجرد حسب المصدر",
   "receiver.inventoryLoading": "جارٍ تحميل الجرد…",
   "receiver.inventoryError": "تعذّر تحميل الجرد.",
@@ -1220,7 +1231,7 @@ const ar: Partial<Translations> = {
   "fleet.edit": "تعديل",
   "fleet.remove": "إزالة",
   "fleet.removing": "جارٍ الإزالة…",
-  "fleet.removeConfirm": "هل تريد إزالة هذه النسخة من المراقبة؟ لا يتم الاتصال بالنسخة نفسها أبدًا لهذا الغرض، تُزال فقط مدخلة المراقبة.",
+  "fleet.confirmRemove": "تأكيد الإزالة",
   "fleet.scorecardTitle": "بطاقة الحماية",
   "fleet.noScorecard": "لا توجد بطاقة مخزَّنة مؤقتًا بعد — استعلِم عن هذه النسخة للحصول على واحدة.",
   "fleet.lastBackup": "آخر نسخة احتياطية {time}",

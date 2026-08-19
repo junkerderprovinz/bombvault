@@ -34,6 +34,7 @@ const uk: Partial<Translations> = {
   "dashboard.allOk": "Всі системи в нормі",
   "dashboard.degraded": "Збій",
   "dashboard.checking": "Перевірка…",
+  "dashboard.noContainers": "Контейнери не знайдено.",
   // Dashboard customize (#46)
   "dashboard.customize": "Налаштувати",
   "dashboard.customizeDone": "Готово",
@@ -60,6 +61,7 @@ const uk: Partial<Translations> = {
   "spike.colDetail": "Деталі",
   "spike.ok": "OK",
   "spike.fail": "ПОМИЛКА",
+  "spike.info": "ІНФО",
   "spike.bestEffort": "необов'язково",
   "spike.checkNow": "Перевірити зараз",
   "spike.probeFailed": "тест не пройдено (дивіться журнали сервера)",
@@ -184,6 +186,8 @@ const uk: Partial<Translations> = {
   "settings.appearance": "Зовнішній вигляд",
   "settings.accentColor": "Акцентний колір",
   "settings.accentPresets": "Передустановки",
+  "settings.quietToasts": "Тихі сповіщення",
+  "settings.quietToastsHint": "Показувати спливаючі сповіщення лише про помилки. Звичайні підтвердження збереження й копіювання лишаються без сповіщень.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнери",
@@ -435,6 +439,7 @@ const uk: Partial<Translations> = {
   "vm.ssh.publicKey": "Публічний ключ — додайте до Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Копіювати",
   "vm.ssh.copied": "Скопійовано",
+  "vm.ssh.copyFailed": "Копіювання не вдалося",
   "vm.ssh.test": "Перевірити з'єднання",
   "vm.ssh.testing": "Перевірка…",
   "vm.ssh.testOk": "З'єднано — libvirt доступний",
@@ -453,6 +458,12 @@ const uk: Partial<Translations> = {
   "common.restoreRunning": "Виконується відновлення…",
   "common.backupRunning": "Виконується резервне копіювання…",
   "common.replicateRunning": "Виконується реплікація…",
+  "common.showValue": "Показати значення",
+  "common.hideValue": "Приховати значення",
+  "confirmDialog.title": "Підтвердити",
+  "toast.dismiss": "Закрити сповіщення",
+  "common.confirm": "Підтвердити",
+  "common.cancel": "Скасувати",
   "common.close": "Закрити",
 
   // Backup folders selector
@@ -1166,7 +1177,7 @@ const uk: Partial<Translations> = {
   "receiver.edit": "Редагувати",
   "receiver.remove": "Видалити",
   "receiver.removing": "Видалення…",
-  "receiver.removeConfirm": "Прибрати цей отриманий репозиторій з моніторингу? Репозиторій на диску ніколи не чіпається, видаляється лише запис моніторингу.",
+  "receiver.confirmRemove": "Підтвердити видалення",
   "receiver.inventoryTitle": "Опис за джерелами",
   "receiver.inventoryLoading": "Завантаження опису…",
   "receiver.inventoryError": "Не вдалося завантажити опис.",
@@ -1212,7 +1223,7 @@ const uk: Partial<Translations> = {
   "fleet.edit": "Редагувати",
   "fleet.remove": "Видалити",
   "fleet.removing": "Видалення…",
-  "fleet.removeConfirm": "Видалити цей екземпляр з моніторингу? До самого екземпляра ніколи не звертаються з цієї причини, видаляється лише запис моніторингу.",
+  "fleet.confirmRemove": "Підтвердити видалення",
   "fleet.scorecardTitle": "Зведення захисту",
   "fleet.noScorecard": "Кешованого зведення ще немає — опитайте цей екземпляр, щоб отримати його.",
   "fleet.lastBackup": "останнє резервне копіювання {time}",

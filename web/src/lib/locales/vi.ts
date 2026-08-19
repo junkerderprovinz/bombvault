@@ -34,6 +34,7 @@ const vi: Partial<Translations> = {
   "dashboard.allOk": "Mọi hệ thống đều ổn",
   "dashboard.degraded": "Suy giảm",
   "dashboard.checking": "Đang kiểm tra…",
+  "dashboard.noContainers": "Không tìm thấy container.",
   // Dashboard customize (#46)
   "dashboard.customize": "Tùy chỉnh",
   "dashboard.customizeDone": "Xong",
@@ -60,6 +61,7 @@ const vi: Partial<Translations> = {
   "spike.colDetail": "Chi tiết",
   "spike.ok": "OK",
   "spike.fail": "LỖI",
+  "spike.info": "INFO",
   "spike.bestEffort": "tùy chọn",
   "spike.checkNow": "Kiểm tra ngay",
   "spike.probeFailed": "kiểm thử thất bại (xem nhật ký máy chủ)",
@@ -186,6 +188,8 @@ const vi: Partial<Translations> = {
   "settings.appearance": "Giao diện",
   "settings.accentColor": "Màu nhấn",
   "settings.accentPresets": "Cài đặt sẵn",
+  "settings.quietToasts": "Thông báo im lặng",
+  "settings.quietToastsHint": "Chỉ hiển thị thông báo bật lên khi có lỗi. Các xác nhận lưu và sao chép thông thường sẽ không hiển thị.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -432,6 +436,7 @@ const vi: Partial<Translations> = {
   "vm.ssh.publicKey": "Khóa công khai — thêm vào /root/.ssh/authorized_keys của Unraid",
   "vm.ssh.copy": "Sao chép",
   "vm.ssh.copied": "Đã sao chép",
+  "vm.ssh.copyFailed": "Sao chép thất bại",
   "vm.ssh.test": "Kiểm tra kết nối",
   "vm.ssh.testing": "Đang kiểm tra…",
   "vm.ssh.testOk": "Đã kết nối — libvirt có thể truy cập",
@@ -450,6 +455,12 @@ const vi: Partial<Translations> = {
   "common.restoreRunning": "Một tiến trình khôi phục đang chạy…",
   "common.backupRunning": "Một tiến trình sao lưu đang chạy…",
   "common.replicateRunning": "Một tiến trình sao chép đang chạy…",
+  "common.showValue": "Hiện giá trị",
+  "common.hideValue": "Ẩn giá trị",
+  "confirmDialog.title": "Xác nhận",
+  "toast.dismiss": "Bỏ qua thông báo",
+  "common.confirm": "Xác nhận",
+  "common.cancel": "Hủy",
   "common.close": "Đóng",
 
   // Backup folders selector
@@ -1163,7 +1174,7 @@ const vi: Partial<Translations> = {
   "receiver.edit": "Sửa",
   "receiver.remove": "Xóa",
   "receiver.removing": "Đang xóa…",
-  "receiver.removeConfirm": "Xóa kho đã nhận này khỏi giám sát? Kho trên đĩa không bao giờ bị đụng tới, chỉ mục giám sát bị xóa.",
+  "receiver.confirmRemove": "Xác nhận xóa",
   "receiver.inventoryTitle": "Kiểm kê theo nguồn",
   "receiver.inventoryLoading": "Đang tải kiểm kê…",
   "receiver.inventoryError": "Không thể tải kiểm kê.",
@@ -1209,7 +1220,7 @@ const vi: Partial<Translations> = {
   "fleet.edit": "Sửa",
   "fleet.remove": "Xóa",
   "fleet.removing": "Đang xóa…",
-  "fleet.removeConfirm": "Xóa phiên bản này khỏi giám sát? Phiên bản đó không bao giờ bị liên hệ vì việc này, chỉ mục giám sát bị xóa.",
+  "fleet.confirmRemove": "Xác nhận xóa",
   "fleet.scorecardTitle": "Thẻ điểm bảo vệ",
   "fleet.noScorecard": "Chưa có thẻ điểm được lưu — truy vấn phiên bản này để lấy.",
   "fleet.lastBackup": "bản sao lưu gần nhất {time}",

@@ -34,6 +34,7 @@ const sv: Partial<Translations> = {
   "dashboard.allOk": "Alla system OK",
   "dashboard.degraded": "Försämrat",
   "dashboard.checking": "Kontrollerar…",
+  "dashboard.noContainers": "Inga containrar hittades.",
   // Dashboard customize (#46)
   "dashboard.customize": "Anpassa",
   "dashboard.customizeDone": "Klar",
@@ -60,6 +61,7 @@ const sv: Partial<Translations> = {
   "spike.colDetail": "Detalj",
   "spike.ok": "OK",
   "spike.fail": "FEL",
+  "spike.info": "INFO",
   "spike.bestEffort": "valfritt",
   "spike.checkNow": "Kontrollera nu",
   "spike.probeFailed": "sökning misslyckades (se serverloggar)",
@@ -186,6 +188,8 @@ const sv: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Accentfärg",
   "settings.accentPresets": "Förinställningar",
+  "settings.quietToasts": "Tysta aviseringar",
+  "settings.quietToastsHint": "Visa popup-aviseringar endast vid fel. Rutinmässiga bekräftelser för sparande och kopiering förblir tysta.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -440,6 +444,7 @@ const sv: Partial<Translations> = {
   "vm.ssh.publicKey": "Publik nyckel — lägg till i Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopiera",
   "vm.ssh.copied": "Kopierad",
+  "vm.ssh.copyFailed": "Kopieringen misslyckades",
   "vm.ssh.test": "Testa anslutning",
   "vm.ssh.testing": "Testar…",
   "vm.ssh.testOk": "Ansluten — libvirt nåbar",
@@ -458,6 +463,12 @@ const sv: Partial<Translations> = {
   "common.restoreRunning": "En återställning pågår…",
   "common.backupRunning": "En säkerhetskopiering pågår…",
   "common.replicateRunning": "En replikering pågår…",
+  "common.showValue": "Visa värde",
+  "common.hideValue": "Dölj värde",
+  "confirmDialog.title": "Bekräfta",
+  "toast.dismiss": "Stäng avisering",
+  "common.confirm": "Bekräfta",
+  "common.cancel": "Avbryt",
   "common.close": "Stäng",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const sv: Partial<Translations> = {
   "receiver.edit": "Redigera",
   "receiver.remove": "Ta bort",
   "receiver.removing": "Tar bort…",
-  "receiver.removeConfirm": "Ta bort det här mottagna arkivet från övervakning? Arkivet på disk rörs aldrig, endast övervakningsposten tas bort.",
+  "receiver.confirmRemove": "Bekräfta borttagning",
   "receiver.inventoryTitle": "Inventering per källa",
   "receiver.inventoryLoading": "Läser in inventering…",
   "receiver.inventoryError": "Kunde inte läsa in inventeringen.",
@@ -1217,7 +1228,7 @@ const sv: Partial<Translations> = {
   "fleet.edit": "Redigera",
   "fleet.remove": "Ta bort",
   "fleet.removing": "Tar bort…",
-  "fleet.removeConfirm": "Ta bort den här instansen från övervakning? Instansen kontaktas aldrig för detta, endast övervakningsposten tas bort.",
+  "fleet.confirmRemove": "Bekräfta borttagning",
   "fleet.scorecardTitle": "Skyddspoängkort",
   "fleet.noScorecard": "Inget cachat poängkort än — fråga av den här instansen för att hämta ett.",
   "fleet.lastBackup": "senaste säkerhetskopian {time}",

@@ -34,6 +34,7 @@ const fr: Partial<Translations> = {
   "dashboard.allOk": "Tous les systèmes OK",
   "dashboard.degraded": "Dégradé",
   "dashboard.checking": "Vérification…",
+  "dashboard.noContainers": "Aucun conteneur trouvé.",
   // Dashboard customize (#46)
   "dashboard.customize": "Personnaliser",
   "dashboard.customizeDone": "Terminé",
@@ -60,6 +61,7 @@ const fr: Partial<Translations> = {
   "spike.colDetail": "Détail",
   "spike.ok": "OK",
   "spike.fail": "ÉCHEC",
+  "spike.info": "INFO",
   "spike.bestEffort": "optionnel",
   "spike.checkNow": "Vérifier maintenant",
   "spike.probeFailed": "sonde échouée (voir les journaux serveur)",
@@ -186,6 +188,8 @@ const fr: Partial<Translations> = {
   "settings.appearance": "Apparence",
   "settings.accentColor": "Couleur d'accentuation",
   "settings.accentPresets": "Préréglages",
+  "settings.quietToasts": "Notifications discrètes",
+  "settings.quietToastsHint": "N'afficher les notifications que pour les échecs. Les confirmations habituelles d'enregistrement et de copie restent silencieuses.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Conteneurs",
@@ -440,6 +444,7 @@ const fr: Partial<Translations> = {
   "vm.ssh.publicKey": "Clé publique — à ajouter dans /root/.ssh/authorized_keys d'Unraid",
   "vm.ssh.copy": "Copier",
   "vm.ssh.copied": "Copié",
+  "vm.ssh.copyFailed": "Échec de la copie",
   "vm.ssh.test": "Tester la connexion",
   "vm.ssh.testing": "Test…",
   "vm.ssh.testOk": "Connecté — libvirt joignable",
@@ -458,6 +463,12 @@ const fr: Partial<Translations> = {
   "common.restoreRunning": "Une restauration est en cours…",
   "common.backupRunning": "Une sauvegarde est en cours…",
   "common.replicateRunning": "Une réplication est en cours…",
+  "common.showValue": "Afficher la valeur",
+  "common.hideValue": "Masquer la valeur",
+  "confirmDialog.title": "Confirmer",
+  "toast.dismiss": "Ignorer la notification",
+  "common.confirm": "Confirmer",
+  "common.cancel": "Annuler",
   "common.close": "Fermer",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const fr: Partial<Translations> = {
   "receiver.edit": "Modifier",
   "receiver.remove": "Supprimer",
   "receiver.removing": "Suppression…",
-  "receiver.removeConfirm": "Retirer ce dépôt reçu de la surveillance ? Le dépôt sur le disque n'est jamais touché, seule l'entrée de surveillance est supprimée.",
+  "receiver.confirmRemove": "Confirmer la suppression",
   "receiver.inventoryTitle": "Inventaire par source",
   "receiver.inventoryLoading": "Chargement de l'inventaire…",
   "receiver.inventoryError": "Impossible de charger l'inventaire.",
@@ -1217,7 +1228,7 @@ const fr: Partial<Translations> = {
   "fleet.edit": "Modifier",
   "fleet.remove": "Supprimer",
   "fleet.removing": "Suppression…",
-  "fleet.removeConfirm": "Supprimer cette instance de la surveillance ? L'instance elle-même n'est jamais contactée pour cela, seule l'entrée de surveillance est supprimée.",
+  "fleet.confirmRemove": "Confirmer la suppression",
   "fleet.scorecardTitle": "Fiche de protection",
   "fleet.noScorecard": "Aucune fiche mise en cache pour le moment — interrogez cette instance pour en obtenir une.",
   "fleet.lastBackup": "dernière sauvegarde {time}",

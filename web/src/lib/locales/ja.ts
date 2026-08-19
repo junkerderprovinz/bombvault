@@ -34,6 +34,7 @@ const ja: Partial<Translations> = {
   "dashboard.allOk": "すべて正常",
   "dashboard.degraded": "低下",
   "dashboard.checking": "確認中…",
+  "dashboard.noContainers": "コンテナが見つかりません。",
   // Dashboard customize (#46)
   "dashboard.customize": "カスタマイズ",
   "dashboard.customizeDone": "完了",
@@ -60,6 +61,7 @@ const ja: Partial<Translations> = {
   "spike.colDetail": "詳細",
   "spike.ok": "OK",
   "spike.fail": "失敗",
+  "spike.info": "情報",
   "spike.bestEffort": "任意",
   "spike.checkNow": "今すぐ確認",
   "spike.probeFailed": "プローブ失敗（サーバーログを確認してください）",
@@ -186,6 +188,8 @@ const ja: Partial<Translations> = {
   "settings.appearance": "外観",
   "settings.accentColor": "アクセントカラー",
   "settings.accentPresets": "プリセット",
+  "settings.quietToasts": "通知を控えめにする",
+  "settings.quietToastsHint": "失敗時のみポップアップ通知を表示します。保存やコピーの通常の確認通知は表示されません。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "コンテナ",
@@ -432,6 +436,7 @@ const ja: Partial<Translations> = {
   "vm.ssh.publicKey": "公開鍵 — Unraid の /root/.ssh/authorized_keys に追記",
   "vm.ssh.copy": "コピー",
   "vm.ssh.copied": "コピーしました",
+  "vm.ssh.copyFailed": "コピーに失敗しました",
   "vm.ssh.test": "接続をテスト",
   "vm.ssh.testing": "テスト中…",
   "vm.ssh.testOk": "接続成功 — libvirt に到達可能",
@@ -450,6 +455,12 @@ const ja: Partial<Translations> = {
   "common.restoreRunning": "復元を実行中です…",
   "common.backupRunning": "バックアップを実行中です…",
   "common.replicateRunning": "複製を実行中です…",
+  "common.showValue": "値を表示",
+  "common.hideValue": "値を非表示",
+  "confirmDialog.title": "確認",
+  "toast.dismiss": "通知を閉じる",
+  "common.confirm": "確認",
+  "common.cancel": "キャンセル",
   "common.close": "閉じる",
 
   // Backup folders selector
@@ -1163,7 +1174,7 @@ const ja: Partial<Translations> = {
   "receiver.edit": "編集",
   "receiver.remove": "削除",
   "receiver.removing": "削除中…",
-  "receiver.removeConfirm": "この受信リポジトリを監視から外しますか？ ディスク上のリポジトリには一切触れず、監視エントリのみを削除します。",
+  "receiver.confirmRemove": "削除を確認",
   "receiver.inventoryTitle": "ソース別インベントリ",
   "receiver.inventoryLoading": "インベントリを読み込み中…",
   "receiver.inventoryError": "インベントリを読み込めませんでした。",
@@ -1209,7 +1220,7 @@ const ja: Partial<Translations> = {
   "fleet.edit": "編集",
   "fleet.remove": "削除",
   "fleet.removing": "削除中…",
-  "fleet.removeConfirm": "このインスタンスを監視から削除しますか？この操作でインスタンス自体に接続することはなく、監視エントリのみが削除されます。",
+  "fleet.confirmRemove": "削除を確認",
   "fleet.scorecardTitle": "保護スコアカード",
   "fleet.noScorecard": "まだキャッシュされたスコアカードはありません — このインスタンスを照会して取得してください。",
   "fleet.lastBackup": "最終バックアップ {time}",

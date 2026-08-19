@@ -34,6 +34,7 @@ const fi: Partial<Translations> = {
   "dashboard.allOk": "Kaikki järjestelmät kunnossa",
   "dashboard.degraded": "Heikentynyt",
   "dashboard.checking": "Tarkistetaan…",
+  "dashboard.noContainers": "Kontteja ei löytynyt.",
   // Dashboard customize (#46)
   "dashboard.customize": "Mukauta",
   "dashboard.customizeDone": "Valmis",
@@ -60,6 +61,7 @@ const fi: Partial<Translations> = {
   "spike.colDetail": "Tiedot",
   "spike.ok": "OK",
   "spike.fail": "VIRHE",
+  "spike.info": "INFO",
   "spike.bestEffort": "valinnainen",
   "spike.checkNow": "Tarkista nyt",
   "spike.probeFailed": "koettimen suoritus epäonnistui (katso palvelinlokit)",
@@ -186,6 +188,8 @@ const fi: Partial<Translations> = {
   "settings.appearance": "Ulkoasu",
   "settings.accentColor": "Korostusväri",
   "settings.accentPresets": "Esiasetukset",
+  "settings.quietToasts": "Hiljaiset ilmoitukset",
+  "settings.quietToastsHint": "Näytä ponnahdusilmoitukset vain virheistä. Rutiininomaiset tallennus- ja kopiointivahvistukset pysyvät hiljaisina.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontit",
@@ -440,6 +444,7 @@ const fi: Partial<Translations> = {
   "vm.ssh.publicKey": "Julkinen avain — lisää Unraidin tiedostoon /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopioi",
   "vm.ssh.copied": "Kopioitu",
+  "vm.ssh.copyFailed": "Kopiointi epäonnistui",
   "vm.ssh.test": "Testaa yhteys",
   "vm.ssh.testing": "Testataan…",
   "vm.ssh.testOk": "Yhdistetty — libvirt tavoitettavissa",
@@ -458,6 +463,12 @@ const fi: Partial<Translations> = {
   "common.restoreRunning": "Palautus on käynnissä…",
   "common.backupRunning": "Varmuuskopiointi on käynnissä…",
   "common.replicateRunning": "Replikointi on käynnissä…",
+  "common.showValue": "Näytä arvo",
+  "common.hideValue": "Piilota arvo",
+  "confirmDialog.title": "Vahvista",
+  "toast.dismiss": "Hylkää ilmoitus",
+  "common.confirm": "Vahvista",
+  "common.cancel": "Peruuta",
   "common.close": "Sulje",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const fi: Partial<Translations> = {
   "receiver.edit": "Muokkaa",
   "receiver.remove": "Poista",
   "receiver.removing": "Poistetaan…",
-  "receiver.removeConfirm": "Poistetaanko tämä vastaanotettu varasto valvonnasta? Levyllä olevaan varastoon ei koskaan kosketa, vain valvontamerkintä poistetaan.",
+  "receiver.confirmRemove": "Vahvista poisto",
   "receiver.inventoryTitle": "Sisältö lähteittäin",
   "receiver.inventoryLoading": "Ladataan sisältöä…",
   "receiver.inventoryError": "Sisältöä ei voitu ladata.",
@@ -1217,7 +1228,7 @@ const fi: Partial<Translations> = {
   "fleet.edit": "Muokkaa",
   "fleet.remove": "Poista",
   "fleet.removing": "Poistetaan…",
-  "fleet.removeConfirm": "Poistetaanko tämä instanssi valvonnasta? Instanssiin ei koskaan olla yhteydessä tätä varten, vain valvontamerkintä poistetaan.",
+  "fleet.confirmRemove": "Vahvista poisto",
   "fleet.scorecardTitle": "Suojaustulostaulu",
   "fleet.noScorecard": "Ei vielä välimuistoitettua tulostaulua — kysy tätä instanssia hakeaksesi sen.",
   "fleet.lastBackup": "viimeisin varmuuskopio {time}",

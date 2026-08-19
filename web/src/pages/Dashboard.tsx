@@ -13,6 +13,7 @@ import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
+import { Badge, type BadgeTone } from "../components/Badge";
 // humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
 // storage forecast line shares the exact formatter of the size column.
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
@@ -270,33 +271,33 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 }
 
 // ---------------------------------------------------------------------------
-// Status chip
+// Status chip — statusTone maps a raw status string to the shared Badge's
+// tone; the raw string itself is still shown verbatim (these are backend-
+// sourced run-status words, not prose to translate here — see StatusChip's
+// former inline comment on the #57 "skipped" case, preserved in the map below).
 // ---------------------------------------------------------------------------
 
-function StatusChip({
-  status,
-}: {
-  status: "success" | "failed" | "running" | "ok" | "degraded" | "checking" | "skipped" | string;
-}) {
-  const map: Record<string, string> = {
-    success: "bg-statusOkBg text-statusOk",
-    ok:      "bg-statusOkBg text-statusOk",
-    failed:  "bg-statusFailBg text-statusFail",
-    degraded:"bg-statusFailBg text-statusFail",
-    running: "bg-statusInfoBg text-statusInfo",
-    checking:"bg-statusInfoBg text-statusInfo",
-    info:    "bg-statusWarnBg text-statusWarn",
+function statusTone(status: string): BadgeTone {
+  switch (status.toLowerCase()) {
+    case "success":
+    case "ok":
+      return "ok";
+    case "failed":
+    case "degraded":
+      return "fail";
+    case "running":
+    case "checking":
+      return "info";
+    case "info":
+      return "warn";
     // A skip is neither success nor failure: a muted, neutral chip so a removed
     // container's scheduled target reads as "intentionally not run", distinct
     // from green success and red failure (#57).
-    skipped: "bg-statusNeutralBg text-statusNeutral",
-  };
-  const cls = map[status.toLowerCase()] ?? "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
-      {status}
-    </span>
-  );
+    case "skipped":
+      return "neutral";
+    default:
+      return "neutral";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -375,7 +376,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {hasRun && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>
-          <StatusChip status={overallStatus} />
+          <Badge tone={statusTone(overallStatus)}>{overallStatus}</Badge>
           <span className="text-sm text-carbon-text">{overallLabel}</span>
         </div>
       )}
@@ -388,7 +389,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="divide-y divide-carbon-border">
           {checks.map((c) => (
             <div key={c.Name} className="flex items-center gap-3 py-2 text-sm">
-              <StatusChip status={chipFor(c)} />
+              <Badge tone={statusTone(chipFor(c))}>{chipFor(c)}</Badge>
               <span className="font-mono text-carbon-text w-32 shrink-0">{c.Name}</span>
               <span className="text-carbon-textMuted truncate flex-1">{c.Detail}</span>
               {c.BestEffort && (
@@ -408,7 +409,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // Protection (RPO) status card
 // ---------------------------------------------------------------------------
 
-// chipForRpo maps an RPO status to a StatusChip color variant.
+// chipForRpo maps an RPO status to a statusTone/Badge color variant.
 function chipForRpo(status: string): string {
   switch (status) {
     case "ok":
@@ -576,7 +577,7 @@ function ProtectionCard({
                           pill never drifts from the words it qualifies. */}
                       <div className="col-start-2 flex min-w-0 items-center gap-2">
                         <span className="shrink-0">
-                          <StatusChip status={chipForRpo(d.status)} />
+                          <Badge tone={statusTone(chipForRpo(d.status))}>{chipForRpo(d.status)}</Badge>
                         </span>
                         <span className="min-w-0 truncate text-carbon-text">
                           {rpoLabel(d.status)}
@@ -596,16 +597,14 @@ function ProtectionCard({
                       {/* Col 5 — local-verify shield badge. */}
                       {d.lastVerified ? (
                         <div className="col-start-5 min-w-0">
-                          <span
+                          <Badge
+                            tone={d.lastVerifiedOK ? "ok" : "fail"}
+                            wrap
+                            className="max-w-full"
                             title={`${t("verify.shield")} · ${formatTs(d.lastVerified)}`}
-                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
-                              d.lastVerifiedOK
-                                ? "bg-statusOkBg text-statusOk"
-                                : "bg-statusFailBg text-statusFail"
-                            }`}
                           >
                             {d.lastVerifiedOK ? "✓" : "✗"} {t("verify.shield")} {relativeTime(t, d.lastVerified)}
-                          </span>
+                          </Badge>
                         </div>
                       ) : null}
                       {/* Col 6 — Off-site SUBSET badge (#63) — the off-site integrity
@@ -617,16 +616,14 @@ function ProtectionCard({
                           below. */}
                       {d.lastOffsiteSubsetAt ? (
                         <div className="col-start-6 min-w-0">
-                          <span
+                          <Badge
+                            tone={d.lastOffsiteSubsetOK ? "ok" : "fail"}
+                            wrap
+                            className="max-w-full"
                             title={`${t("drill.offsiteVerified")} · ${formatTs(d.lastOffsiteSubsetAt)}`}
-                            className={`inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium break-normal ${
-                              d.lastOffsiteSubsetOK
-                                ? "bg-statusOkBg text-statusOk"
-                                : "bg-statusFailBg text-statusFail"
-                            }`}
                           >
                             {d.lastOffsiteSubsetOK ? "✓" : "✗"} {t("drill.offsiteVerified")} {relativeTime(t, d.lastOffsiteSubsetAt)}
-                          </span>
+                          </Badge>
                         </div>
                       ) : null}
                       {/* Col 7 — Off-site restorability (DR) badge — mirrors the
@@ -640,35 +637,36 @@ function ProtectionCard({
                           // GREEN — proven restorable off-site. A real passed run (even
                           // a MANUAL one) is honest proof, so it's kept even when the
                           // scheduled DR drill is opted out.
-                          <span
+                          <Badge
+                            tone="ok"
+                            wrap
+                            className="max-w-full"
                             title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusOkBg text-statusOk"
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
-                          </span>
+                          </Badge>
                         ) : drFailed ? (
                           // RED — a recorded off-site DR drill FAILED (scheduled or a
                           // manual run). Always shown; the opt-out never masks a real
                           // failure — only "never drilled" goes neutral below.
-                          <span
+                          <Badge
+                            tone="fail"
+                            wrap
+                            className="max-w-full"
                             title={
                               d.drillDetail
                                 ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
                                 : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
                             }
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-statusFailBg text-statusFail"
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
-                          </span>
+                          </Badge>
                         ) : drUnscheduled ? (
                           // NEUTRAL — off-site DR not scheduled (manual only) and nothing
                           // failing to show: muted, never red. File's no-claim styling.
-                          <span
-                            title={t("drill.manualOnlyTitle")}
-                            className="inline-flex max-w-full items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs font-medium break-normal bg-carbon-surface2 text-carbon-textMuted"
-                          >
+                          <Badge tone="neutral" wrap className="max-w-full" title={t("drill.manualOnlyTitle")}>
                             {t("drill.manualOnly")}
-                          </span>
+                          </Badge>
                         ) : null}
                       </div>
                     </>
@@ -692,7 +690,7 @@ function ProtectionCard({
                         type="button"
                         onClick={() => runOffsiteDr(d.domain)}
                         disabled={drRunning === d.domain}
-                        className="rounded-md bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
                       >
                         {drRunning === d.domain
                           ? t("drill.runningOffsiteDr")
@@ -719,7 +717,7 @@ function ProtectionCard({
 // Ransomware protection card
 // ---------------------------------------------------------------------------
 
-// protectionChip maps the red/amber/green aggregate to a StatusChip variant.
+// protectionChip maps the red/amber/green aggregate to a statusTone/Badge variant.
 function protectionChip(level: string): string {
   switch (level) {
     case "green":
@@ -871,7 +869,7 @@ function RansomwareCard({
                 <span className="font-medium text-carbon-text w-28 shrink-0 truncate">
                   {domainLabel(d.domain)}
                 </span>
-                <StatusChip status={protectionChip(d.protection)} />
+                <Badge tone={statusTone(protectionChip(d.protection))}>{protectionChip(d.protection)}</Badge>
                 <span className="text-sm text-carbon-textSub">{protLabel(d.protection)}</span>
               </div>
               <div className="flex flex-col gap-0.5 pl-1">
@@ -971,7 +969,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="rounded-sm bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
             >
               <option value="all">{t("run.allDays")}</option>
               {days.map((d) => (
@@ -986,7 +984,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               return (
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
-                  <StatusChip status={run.status} />
+                  <Badge tone={statusTone(run.status)}>{run.status}</Badge>
                   <span className="text-carbon-text font-medium w-16 shrink-0 truncate">
                     {runKindLabel(t, run.kind)}
                   </span>
@@ -1053,7 +1051,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && containers.length === 0 && (
-        <p className="text-sm text-carbon-textMuted">No containers found.</p>
+        <p className="text-sm text-carbon-textMuted">{t("dashboard.noContainers")}</p>
       )}
 
       {withBackups.length > 0 && (
@@ -1537,7 +1535,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         <button
           type="button"
           onClick={() => void downloadRecoveryKit().then(setKitError)}
-          className="rounded-md bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.download")}
         </button>
@@ -1548,7 +1546,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
           type="button"
           onClick={dismiss}
           disabled={dismissing}
-          className="rounded-md px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
+          className="rounded-control px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
         >
           {t("recovery.stored")}
         </button>
@@ -1602,7 +1600,7 @@ function FreshInstallNudge({
         type="button"
         onClick={onDismiss}
         aria-label={t("common.close")}
-        className="shrink-0 rounded-md px-2 py-1 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+        className="shrink-0 rounded-control px-2 py-1 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
       >
         ✕
       </button>
@@ -1612,7 +1610,7 @@ function FreshInstallNudge({
 
 // ---------------------------------------------------------------------------
 // Summary tier — a compact three-cell overview above the detail cards. It
-// reuses the same Card/StatCard surface + StatusChip visual language as the
+// reuses the same Card/StatCard surface + Badge visual language as the
 // detail tier below, reading the shared /api/status domains and the newest
 // listRuns entry (no extra round-trips beyond the one runs fetch in the parent).
 // ---------------------------------------------------------------------------
@@ -1719,7 +1717,7 @@ function SummaryTier({
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
           <>
-            {health !== "off" && <StatusChip status={chipForRpo(health)} />}
+            {health !== "off" && <Badge tone={statusTone(chipForRpo(health))}>{chipForRpo(health)}</Badge>}
             <span className="text-sm text-carbon-text truncate min-w-0">{healthLabel}</span>
           </>
         )}
@@ -1740,7 +1738,7 @@ function SummaryTier({
       <SummaryCell label={t("dashboard.summaryLastResult")}>
         {newestRun ? (
           <>
-            <StatusChip status={newestRun.status} />
+            <Badge tone={statusTone(newestRun.status)}>{newestRun.status}</Badge>
             <span className="text-sm text-carbon-text flex-1 truncate min-w-0">
               {runTargetText(t, newestRun)}
             </span>
@@ -2009,7 +2007,7 @@ export function Dashboard() {
           aria-label={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           aria-pressed={editing}
           title={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
-          className={`shrink-0 rounded-md p-2 motion-safe:transition-colors ${
+          className={`shrink-0 rounded-control p-2 motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -2055,7 +2053,7 @@ export function Dashboard() {
           <button
             type="button"
             onClick={reset}
-            className="self-start rounded-md bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
+            className="self-start rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
           >
             {t("dashboard.resetLayout")}
           </button>
@@ -2118,7 +2116,7 @@ export function Dashboard() {
             {hiddenBlocks.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-2 rounded-md bg-carbon-surface2 px-2.5 py-1.5"
+                className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2.5 py-1.5"
               >
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}
@@ -2127,7 +2125,7 @@ export function Dashboard() {
                   type="button"
                   onClick={() => toggleHidden(b.id)}
                   aria-label={`${t("dashboard.showCard")} ${b.label}`}
-                  className="rounded-sm px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
+                  className="rounded-control px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
                 >
                   {t("dashboard.showCard")}
                 </button>

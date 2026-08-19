@@ -2,7 +2,7 @@
 
 **Az Unraid-adataid széfbe zárva. Dobj be egy mentést. Robbantsd be a visszaállítást.**
 
-A BombVault egy saját üzemeltetésű, Unraid-natív webalkalmazás a Docker-konténereid és KVM/libvirt VM-jeid **biztonsági mentéséhez és teljes vészhelyreállításához**. Egyetlen többarchitektúrás Docker-konténerként fut, modern sötét webes felületet ad, és kezeli a teljes életciklust: mentés, ütemezés, ellenőrzés és visszaállítás.
+A BombVault egy saját üzemeltetésű, Unraid-natív webalkalmazás a Docker-konténereid és KVM/libvirt VM-jeid **biztonsági mentéséhez és teljes vészhelyreállításához**. Egyetlen többarchitektúrás Docker-konténerként fut, modern webes felületet ad, amely követi a rendszered világos/sötét témabeállítását, és kezeli a teljes életciklust: mentés, ütemezés, ellenőrzés és visszaállítás.
 
 A visszaállítás automatikus. A konténerek pontosan úgy jelennek meg újra az Unraid Docker fülén, mint korábban, a VM-ek pedig újradefiniálódnak a VM Managerben, a lemezeikkel és az UEFI NVRAM-jukkal újracsatolva. Nincs kézi újratelepítés, nincs újrakonfigurálás, nincs dráma.
 

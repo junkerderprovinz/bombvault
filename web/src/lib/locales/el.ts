@@ -34,6 +34,7 @@ const el: Partial<Translations> = {
   "dashboard.allOk": "Όλα τα συστήματα ΟΚ",
   "dashboard.degraded": "Υποβαθμισμένο",
   "dashboard.checking": "Έλεγχος…",
+  "dashboard.noContainers": "Δεν βρέθηκαν κοντέινερ.",
   // Dashboard customize (#46)
   "dashboard.customize": "Προσαρμογή",
   "dashboard.customizeDone": "Τέλος",
@@ -60,6 +61,7 @@ const el: Partial<Translations> = {
   "spike.colDetail": "Λεπτομέρεια",
   "spike.ok": "ΟΚ",
   "spike.fail": "ΣΦΑΛΜΑ",
+  "spike.info": "ΙΝΦΟ",
   "spike.bestEffort": "προαιρετικό",
   "spike.checkNow": "Έλεγχος τώρα",
   "spike.probeFailed": "αποτυχία ανίχνευσης (δείτε τα αρχεία καταγραφής)",
@@ -186,6 +188,8 @@ const el: Partial<Translations> = {
   "settings.appearance": "Εμφάνιση",
   "settings.accentColor": "Χρώμα επισήμανσης",
   "settings.accentPresets": "Προεπιλογές",
+  "settings.quietToasts": "Σιωπηλές ειδοποιήσεις",
+  "settings.quietToastsHint": "Εμφάνιση αναδυόμενων ειδοποιήσεων μόνο για αποτυχίες. Οι συνήθεις επιβεβαιώσεις αποθήκευσης και αντιγραφής παραμένουν σιωπηλές.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -440,6 +444,7 @@ const el: Partial<Translations> = {
   "vm.ssh.publicKey": "Δημόσιο κλειδί — προσθέστε στο /root/.ssh/authorized_keys του Unraid",
   "vm.ssh.copy": "Αντιγραφή",
   "vm.ssh.copied": "Αντιγράφηκε",
+  "vm.ssh.copyFailed": "Η αντιγραφή απέτυχε",
   "vm.ssh.test": "Δοκιμή σύνδεσης",
   "vm.ssh.testing": "Δοκιμή…",
   "vm.ssh.testOk": "Συνδέθηκε — το libvirt είναι προσβάσιμο",
@@ -458,6 +463,12 @@ const el: Partial<Translations> = {
   "common.restoreRunning": "Εκτελείται μια επαναφορά…",
   "common.backupRunning": "Εκτελείται ένα αντίγραφο ασφαλείας…",
   "common.replicateRunning": "Εκτελείται μια αναπαραγωγή…",
+  "common.showValue": "Εμφάνιση τιμής",
+  "common.hideValue": "Απόκρυψη τιμής",
+  "confirmDialog.title": "Επιβεβαίωση",
+  "toast.dismiss": "Απόρριψη ειδοποίησης",
+  "common.confirm": "Επιβεβαίωση",
+  "common.cancel": "Άκυρο",
   "common.close": "Κλείσιμο",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const el: Partial<Translations> = {
   "receiver.edit": "Επεξεργασία",
   "receiver.remove": "Αφαίρεση",
   "receiver.removing": "Αφαίρεση…",
-  "receiver.removeConfirm": "Αφαίρεση αυτού του ληφθέντος αποθετηρίου από την παρακολούθηση; Το αποθετήριο στον δίσκο δεν αγγίζεται ποτέ, αφαιρείται μόνο η καταχώριση παρακολούθησης.",
+  "receiver.confirmRemove": "Επιβεβαίωση αφαίρεσης",
   "receiver.inventoryTitle": "Απόθεμα ανά πηγή",
   "receiver.inventoryLoading": "Φόρτωση αποθέματος…",
   "receiver.inventoryError": "Δεν ήταν δυνατή η φόρτωση του αποθέματος.",
@@ -1217,7 +1228,7 @@ const el: Partial<Translations> = {
   "fleet.edit": "Επεξεργασία",
   "fleet.remove": "Αφαίρεση",
   "fleet.removing": "Αφαίρεση…",
-  "fleet.removeConfirm": "Αφαίρεση αυτής της εγκατάστασης από την παρακολούθηση; Η εγκατάσταση δεν επικοινωνείται ποτέ γι' αυτόν τον σκοπό, αφαιρείται μόνο η καταχώριση παρακολούθησης.",
+  "fleet.confirmRemove": "Επιβεβαίωση αφαίρεσης",
   "fleet.scorecardTitle": "Κάρτα προστασίας",
   "fleet.noScorecard": "Δεν υπάρχει ακόμη αποθηκευμένη κάρτα — κάντε ερώτημα σε αυτήν την εγκατάσταση για να τη λάβετε.",
   "fleet.lastBackup": "τελευταίο αντίγραφο ασφαλείας {time}",

@@ -2,7 +2,7 @@
 
 **Dữ liệu Unraid của bạn, niêm phong trong một két sắt. Thả một bản sao lưu vào. Kích nổ một lần khôi phục.**
 
-BombVault là một ứng dụng web tự lưu trữ, thiết kế riêng cho Unraid, dùng để **sao lưu và khôi phục toàn diện sau thảm họa** cho các Docker container và KVM/libvirt VM của bạn. Nó chạy dưới dạng một Docker container đa kiến trúc duy nhất, cung cấp một giao diện web tối hiện đại, và xử lý toàn bộ vòng đời: sao lưu, lên lịch, xác minh và khôi phục.
+BombVault là một ứng dụng web tự lưu trữ, thiết kế riêng cho Unraid, dùng để **sao lưu và khôi phục toàn diện sau thảm họa** cho các Docker container và KVM/libvirt VM của bạn. Nó chạy dưới dạng một Docker container đa kiến trúc duy nhất, cung cấp một giao diện web hiện đại tự động theo giao diện sáng/tối của hệ thống, và xử lý toàn bộ vòng đời: sao lưu, lên lịch, xác minh và khôi phục.
 
 Việc khôi phục diễn ra tự động. Các container xuất hiện lại trong tab Docker của Unraid y hệt như trước, và các VM được định nghĩa lại trong VM Manager cùng với đĩa và UEFI NVRAM được gắn lại. Không cần cài đặt lại thủ công, không cấu hình lại, không rắc rối.
 

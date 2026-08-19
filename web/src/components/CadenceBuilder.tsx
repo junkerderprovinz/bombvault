@@ -210,11 +210,36 @@ export function CadenceBuilder({
   }
 
   const inputCls =
-    "rounded-lg bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid disabled:opacity-50";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well disabled:opacity-50";
 
   return (
-    <div className={`flex flex-col gap-3 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
-      <span className="text-xs text-carbon-textSub font-medium">{label}</span>
+    // A <fieldset> — not opacity — carries the disabled state: it natively
+    // disables every nested button/input (they match the :disabled CSS
+    // pseudo-class without each one needing its own `disabled` prop wired
+    // through), so no pointer-events-none hack is needed either. Rule 15
+    // rules out opacity on a CONTAINER (it composites the whole subtree);
+    // each interactive element below dims itself individually instead via
+    // its own `disabled:opacity-50` — the same per-control pattern the
+    // switch/button controls elsewhere in this app already use.
+    //
+    // `group` + `group-disabled:opacity-50` extends that same per-element
+    // dimming to the plain text nodes here (the <legend>, sub-labels, and
+    // preview/error text) — they are not "listed" form elements, so
+    // fieldset[disabled] alone leaves them at full brightness next to the
+    // now-dimmed controls. The selector is a plain CSS descendant match, so
+    // it also reaches CronEditor's own text below without threading a
+    // `disabled` prop through that child.
+    <fieldset disabled={disabled} className="group flex min-w-0 flex-col gap-3 border-0 m-0 p-0">
+      {/* The label doubles as the fieldset's accessible name via <legend> —
+          a bare leading <span> left the group unnamed in the a11y tree.
+          A <legend> renders in its own out-of-flow legend box, never as a
+          flex item, so the fieldset's `gap-3` never reaches it — mb-3
+          (0.75rem, the same value gap-3 resolves to between the rows below)
+          puts the lost 12px back explicitly. Measured live: 0px without
+          this, 12px with it, matching the pre-<legend> <span> spacing. */}
+      <legend className="p-0 mb-3 text-xs text-carbon-textSub font-medium group-disabled:opacity-50">
+        {label}
+      </legend>
 
       {/* Mode pills */}
       <div className="flex flex-wrap gap-2">
@@ -222,7 +247,7 @@ export function CadenceBuilder({
           <button
             key={m}
             onClick={() => update({ mode: m })}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-control px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
               state.mode === m
                 ? "bg-accent text-accentContrast"
                 : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -244,7 +269,7 @@ export function CadenceBuilder({
       {/* Time picker — shown for all non-off modes except cron (the expression carries its own times) */}
       {state.mode !== "off" && state.mode !== "cron" && (
         <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.time")}</label>
+          <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.time")}</label>
           <input
             type="time"
             value={state.time}
@@ -257,13 +282,13 @@ export function CadenceBuilder({
       {/* Weekly: weekday checkboxes */}
       {state.mode === "weekly" && (
         <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.days")}</label>
+          <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.days")}</label>
           <div className="flex flex-wrap gap-1.5">
             {WEEKDAYS.map((d) => (
               <button
                 key={d}
                 onClick={() => toggleWeekday(d)}
-                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                   state.weekdays.includes(d)
                     ? "bg-accent text-accentContrast"
                     : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -279,7 +304,7 @@ export function CadenceBuilder({
       {/* Every N days: number input */}
       {state.mode === "everyN" && (
         <div className="flex items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16">{t("cadence.every")}</label>
+          <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.every")}</label>
           <input
             type="number"
             min={1}
@@ -290,7 +315,7 @@ export function CadenceBuilder({
             }}
             className={`${inputCls} w-20`}
           />
-          <span className="text-xs text-carbon-textMuted">{t("cadence.daysUnit")}</span>
+          <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.daysUnit")}</span>
         </div>
       )}
 
@@ -310,11 +335,11 @@ export function CadenceBuilder({
       {/* Preview — human-readable, localized (e.g. "jeden 3. Tag um 4:00 Uhr").
           Cron renders its own richer preview inside CronEditor. */}
       {state.mode !== "off" && state.mode !== "cron" && (
-        <p className="text-xs text-carbon-textSub">
+        <p className="text-xs text-carbon-textSub group-disabled:opacity-50">
           {formatCadence(buildCadenceString(state), t, lang)}
         </p>
       )}
-    </div>
+    </fieldset>
   );
 }
 
@@ -354,7 +379,7 @@ function CronEditor({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
-        <label className="text-xs text-carbon-textMuted w-16">{t("cadence.cronExpr")}</label>
+        <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.cronExpr")}</label>
         <input
           type="text"
           value={value}
@@ -368,25 +393,25 @@ function CronEditor({
       </div>
 
       {!valid ? (
-        <p className="text-xs text-statusFail">{t("cadence.cronInvalid")}</p>
+        <p className="text-xs text-statusFail group-disabled:opacity-50">{t("cadence.cronInvalid")}</p>
       ) : fires && fires.length >= 2 ? (
-        <p className="text-xs text-carbon-textSub">
+        <p className="text-xs text-carbon-textSub group-disabled:opacity-50">
           {t("cadence.cronNext")
             .replace("{first}", formatFireTime(fires[0], lang))
             .replace("{rest}", fires.slice(1).map((d) => formatFireTime(d, lang)).join(", "))}
         </p>
       ) : (
-        <p className="text-xs text-carbon-textSub">{t("cadence.cronValid")}</p>
+        <p className="text-xs text-carbon-textSub group-disabled:opacity-50">{t("cadence.cronValid")}</p>
       )}
 
       {/* Quick help — clickable examples that fill the input. */}
       <div className="flex flex-col gap-1">
-        <span className="text-xs text-carbon-textMuted">{t("cadence.cronExamples")}</span>
+        <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.cronExamples")}</span>
         {CRON_EXAMPLES.map((ex) => (
           <button
             key={ex.expr}
             onClick={() => onChange(ex.expr)}
-            className="self-start rounded px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+            className="self-start rounded px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             <code className="font-mono text-carbon-text">{ex.expr}</code>
             <span className="ml-2">{t(ex.key)}</span>

@@ -34,6 +34,7 @@ const da: Partial<Translations> = {
   "dashboard.allOk": "Alle systemer OK",
   "dashboard.degraded": "Forringet",
   "dashboard.checking": "Tjekker…",
+  "dashboard.noContainers": "Ingen containere fundet.",
   // Dashboard customize (#46)
   "dashboard.customize": "Tilpas",
   "dashboard.customizeDone": "Færdig",
@@ -60,6 +61,7 @@ const da: Partial<Translations> = {
   "spike.colDetail": "Detalje",
   "spike.ok": "OK",
   "spike.fail": "FEJL",
+  "spike.info": "INFO",
   "spike.bestEffort": "valgfrit",
   "spike.checkNow": "Tjek nu",
   "spike.probeFailed": "probe mislykkedes (se serverlogge)",
@@ -186,6 +188,8 @@ const da: Partial<Translations> = {
   "settings.appearance": "Udseende",
   "settings.accentColor": "Accentfarve",
   "settings.accentPresets": "Forudindstillinger",
+  "settings.quietToasts": "Stille notifikationer",
+  "settings.quietToastsHint": "Vis kun pop op-beskeder ved fejl. Rutinemæssige gem- og kopibekræftelser forbliver stille.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -440,6 +444,7 @@ const da: Partial<Translations> = {
   "vm.ssh.publicKey": "Offentlig nøgle — tilføj til Unraid /root/.ssh/authorized_keys",
   "vm.ssh.copy": "Kopier",
   "vm.ssh.copied": "Kopieret",
+  "vm.ssh.copyFailed": "Kopiering mislykkedes",
   "vm.ssh.test": "Test forbindelse",
   "vm.ssh.testing": "Tester…",
   "vm.ssh.testOk": "Forbundet — libvirt tilgængelig",
@@ -458,6 +463,12 @@ const da: Partial<Translations> = {
   "common.restoreRunning": "En gendannelse kører…",
   "common.backupRunning": "En sikkerhedskopiering kører…",
   "common.replicateRunning": "En replikering kører…",
+  "common.showValue": "Vis værdi",
+  "common.hideValue": "Skjul værdi",
+  "confirmDialog.title": "Bekræft",
+  "toast.dismiss": "Afvis notifikation",
+  "common.confirm": "Bekræft",
+  "common.cancel": "Annuller",
   "common.close": "Luk",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const da: Partial<Translations> = {
   "receiver.edit": "Rediger",
   "receiver.remove": "Fjern",
   "receiver.removing": "Fjerner…",
-  "receiver.removeConfirm": "Fjern dette modtagne arkiv fra overvågning? Arkivet på disken røres aldrig, kun overvågningsposten fjernes.",
+  "receiver.confirmRemove": "Bekræft fjernelse",
   "receiver.inventoryTitle": "Oversigt efter kilde",
   "receiver.inventoryLoading": "Indlæser oversigt…",
   "receiver.inventoryError": "Kunne ikke indlæse oversigten.",
@@ -1217,7 +1228,7 @@ const da: Partial<Translations> = {
   "fleet.edit": "Rediger",
   "fleet.remove": "Fjern",
   "fleet.removing": "Fjerner…",
-  "fleet.removeConfirm": "Fjern denne instans fra overvågning? Instansen kontaktes aldrig i den forbindelse, kun overvågningsposten fjernes.",
+  "fleet.confirmRemove": "Bekræft fjernelse",
   "fleet.scorecardTitle": "Beskyttelsesoversigt",
   "fleet.noScorecard": "Ingen cachet oversigt endnu — forespørg denne instans for at hente en.",
   "fleet.lastBackup": "seneste backup {time}",

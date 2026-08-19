@@ -36,11 +36,14 @@ import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
+import { IconFiles } from "../components/Sidebar";
 import { useT } from "../lib/i18n";
 import { Advanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -93,7 +96,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         disabled={busy}
         onClick={() => void handleChange(!enabled)}
         title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -146,7 +149,7 @@ function FileSetBackupButton({
         onClick={() => void fire()}
         disabled={isPending || blockedByOther || noPath}
         title={noPath ? t("files.noPathHint") : undefined}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>
@@ -271,7 +274,7 @@ function FileSetFileBrowser({
   const count = selected.size;
 
   return (
-    <div className="mt-1 rounded-lg bg-carbon-background p-2 flex flex-col gap-2">
+    <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-2">
       <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
@@ -297,7 +300,7 @@ function FileSetFileBrowser({
             <button
               onClick={handleRestoreSelected}
               disabled={isPending || blockedByOther || !folder.trim()}
-              className="shrink-0 inline-flex items-center rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
@@ -374,13 +377,14 @@ function FileSetRestoreControl({
   });
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
+  const { confirm, confirmDialog } = useConfirm();
 
   // A stale success/error banner would misdescribe a different destination —
   // clear it when the choice changes (no-op while a restore is in flight).
   useEffect(() => reset(), [dest, targetPath, reset]);
 
-  function handleRestore() {
-    if (dest === "original" && !window.confirm(t("files.restoreOriginalConfirm"))) return;
+  async function handleRestore() {
+    if (dest === "original" && !(await confirm(t("files.restoreOriginalConfirm")))) return;
     if (dest === "folder" && targetPath.trim() === "") return;
     void fire();
   }
@@ -390,7 +394,7 @@ function FileSetRestoreControl({
       onClick={() => setDest(key)}
       disabled={disabled || isPending}
       title={disabled ? t("files.noPathHint") : undefined}
-      className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+      className={`rounded-control px-3 py-1 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
         dest === key
           ? "bg-accent text-accentContrast"
           : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -412,9 +416,9 @@ function FileSetRestoreControl({
             mode renders its own controls below (FileSetFileBrowser). */}
         {dest !== "select" && (
           <button
-            onClick={handleRestore}
+            onClick={() => void handleRestore()}
             disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
             {isPending ? (
               <>
@@ -469,6 +473,7 @@ function FileSetRestoreControl({
           t={t}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -501,9 +506,10 @@ function FileSetSnapshotRow({
   const busy = progressMap[`files:${set.name}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("snapshots.deleteConfirm"))) return;
+    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
     setDeleteErr(null);
     try {
@@ -535,7 +541,7 @@ function FileSetSnapshotRow({
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-lg px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -553,6 +559,7 @@ function FileSetSnapshotRow({
         />
       </div>
       {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -579,6 +586,7 @@ function FileSetRestorePanel({
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (!open) return;
@@ -593,8 +601,15 @@ function FileSetRestorePanel({
       .finally(() => setLoading(false));
   }, [open, set.id, source, reloadTick]);
 
-  function handleDeleteAll() {
-    if (!window.confirm(t("files.deleteBackupsConfirm"))) return;
+  async function handleDeleteAll() {
+    // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
+    // here once it ships (deferred — new interpolated i18n keys across all 25
+    // non-English locales, out of scope for this window.confirm() → dialog
+    // mechanism swap, form-engine Task 7). This is the highest-value site for
+    // it: an irreversible bulk delete of every backup this set has. Same
+    // flagged follow-up as Containers.tsx's deleteBackupsConfirm and
+    // VMs.tsx's deleteAllConfirm.
+    if (!(await confirm(t("files.deleteBackupsConfirm")))) return;
     setDeletingAll(true);
     setError(null);
     deleteFileSetBackups(set.id)
@@ -640,7 +655,7 @@ function FileSetRestorePanel({
       </button>
 
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background px-3 py-1">
+        <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
           <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
             <div className="flex items-center gap-2">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
@@ -652,7 +667,7 @@ function FileSetRestorePanel({
                   is only offered while the local source is shown. */}
               {source === "local" && snapshots.length > 0 && (
                 <button
-                  onClick={handleDeleteAll}
+                  onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
                   className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
                 >
@@ -685,6 +700,7 @@ function FileSetRestorePanel({
             ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -777,7 +793,7 @@ function FileSetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
           />
         </div>
 
@@ -801,7 +817,7 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
           <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
@@ -824,14 +840,14 @@ function FileSetDialog({
           <button
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {t("files.cancel")}
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>
@@ -866,12 +882,13 @@ function FileSetRow({
   const running = anyActive(progressMap);
   const [removing, setRemoving] = useState(false);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const noPath = set.path === "";
   const pathMissing = !noPath && !set.pathExists;
 
   async function handleRemove() {
-    if (!window.confirm(t("files.deleteSetConfirm"))) return;
+    if (!(await confirm(t("files.deleteSetConfirm")))) return;
     setRemoving(true);
     setRemoveErr(null);
     try {
@@ -895,7 +912,7 @@ function FileSetRow({
               {set.name}
             </span>
             {set.excludes.length > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
               </span>
             )}
@@ -904,13 +921,13 @@ function FileSetRow({
             {noPath && (
               <span
                 title={t("files.noPathHint")}
-                className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusWarnBgStrong text-statusWarn"
+                className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusWarnBgStrong text-statusWarn"
               >
                 {t("files.noPath")}
               </span>
             )}
             {pathMissing && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-statusFailBg text-statusFail">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusFailBg text-statusFail">
                 {t("files.pathMissing")}
               </span>
             )}
@@ -943,14 +960,14 @@ function FileSetRow({
           </label>
           <button
             onClick={onEdit}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             {t("files.editSet")}
           </button>
           <button
             onClick={() => void handleRemove()}
             disabled={removing}
-            className="inline-flex items-center rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
           >
             {removing ? t("dashboard.checking") : t("files.deleteSet")}
           </button>
@@ -978,6 +995,7 @@ function FileSetRow({
           label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -1123,7 +1141,7 @@ export function Files() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("files.discoverHint")}
-            className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -1134,14 +1152,14 @@ export function Files() {
             <button
               onClick={handleAddPreset}
               title={t("files.addPresetHint")}
-              className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+              className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
             >
               {t("files.addPreset")}
             </button>
           )}
           <button
             onClick={handleAddBlank}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
           >
             {t("files.addSet")}
           </button>
@@ -1156,20 +1174,21 @@ export function Files() {
       {/* Empty state — the "no separate file-backup tool needed" pitch */}
       {!loading && !error && sets.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <EmptyStateIcon icon={IconFiles} />
           <p className="text-sm text-carbon-textMuted max-w-xl">{t("files.empty")}</p>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {preset?.offered && (
               <button
                 onClick={handleAddPreset}
                 title={t("files.addPresetHint")}
-                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
               >
                 {t("files.addPreset")}
               </button>
             )}
             <button
               onClick={handleAddBlank}
-              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
             >
               {t("files.addSet")}
             </button>
@@ -1183,7 +1202,7 @@ export function Files() {
           <button
             onClick={() => void handleBackupAll()}
             disabled={backupAllBusy || running.active || backupableIds.length === 0}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("files.backupAll")}
           </button>

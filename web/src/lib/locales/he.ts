@@ -34,6 +34,7 @@ const he: Partial<Translations> = {
   "dashboard.allOk": "כל המערכות תקינות",
   "dashboard.degraded": "פגום",
   "dashboard.checking": "בודק…",
+  "dashboard.noContainers": "לא נמצאו קונטיינרים.",
   // Dashboard customize (#46)
   "dashboard.customize": "התאמה אישית",
   "dashboard.customizeDone": "סיום",
@@ -60,6 +61,7 @@ const he: Partial<Translations> = {
   "spike.colDetail": "פרטים",
   "spike.ok": "OK",
   "spike.fail": "כשל",
+  "spike.info": "מידע",
   "spike.bestEffort": "אופציונלי",
   "spike.checkNow": "בדוק עכשיו",
   "spike.probeFailed": "הבדיקה נכשלה (ראה לוגי שרת)",
@@ -186,6 +188,8 @@ const he: Partial<Translations> = {
   "settings.appearance": "מראה",
   "settings.accentColor": "צבע הדגשה",
   "settings.accentPresets": "ערכות מוגדרות מראש",
+  "settings.quietToasts": "התראות שקטות",
+  "settings.quietToastsHint": "הצג הודעות קופצות רק בעת כשלים. אישורי שמירה והעתקה שגרתיים יישארו שקטים.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -440,6 +444,7 @@ const he: Partial<Translations> = {
   "vm.ssh.publicKey": "מפתח ציבורי — הוסף ל-‎/root/.ssh/authorized_keys של Unraid",
   "vm.ssh.copy": "העתק",
   "vm.ssh.copied": "הועתק",
+  "vm.ssh.copyFailed": "ההעתקה נכשלה",
   "vm.ssh.test": "בדוק חיבור",
   "vm.ssh.testing": "בודק…",
   "vm.ssh.testOk": "מחובר — libvirt נגיש",
@@ -458,6 +463,12 @@ const he: Partial<Translations> = {
   "common.restoreRunning": "מתבצע שחזור…",
   "common.backupRunning": "מתבצע גיבוי…",
   "common.replicateRunning": "מתבצע שכפול…",
+  "common.showValue": "הצג ערך",
+  "common.hideValue": "הסתר ערך",
+  "confirmDialog.title": "אשר",
+  "toast.dismiss": "סגור התראה",
+  "common.confirm": "אשר",
+  "common.cancel": "ביטול",
   "common.close": "סגור",
 
   // Backup folders selector
@@ -1171,7 +1182,7 @@ const he: Partial<Translations> = {
   "receiver.edit": "ערוך",
   "receiver.remove": "הסר",
   "receiver.removing": "מסיר…",
-  "receiver.removeConfirm": "להסיר את המאגר שהתקבל מהניטור? המאגר בדיסק לעולם אינו נוגע, רק רשומת הניטור מוסרת.",
+  "receiver.confirmRemove": "אישור הסרה",
   "receiver.inventoryTitle": "מלאי לפי מקור",
   "receiver.inventoryLoading": "טוען מלאי…",
   "receiver.inventoryError": "לא ניתן לטעון את המלאי.",
@@ -1217,7 +1228,7 @@ const he: Partial<Translations> = {
   "fleet.edit": "עריכה",
   "fleet.remove": "הסרה",
   "fleet.removing": "מסיר…",
-  "fleet.removeConfirm": "להסיר מופע זה מהניטור? המופע עצמו לעולם לא נוצר איתו קשר לצורך זה, רק רשומת הניטור מוסרת.",
+  "fleet.confirmRemove": "אישור הסרה",
   "fleet.scorecardTitle": "כרטיס הגנה",
   "fleet.noScorecard": "עדיין אין כרטיס שמור במטמון — שאל את המופע הזה כדי לקבל אחד.",
   "fleet.lastBackup": "גיבוי אחרון {time}",

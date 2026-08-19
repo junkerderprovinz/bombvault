@@ -2,7 +2,8 @@
    A faithful copy of the BombVault app's IBM Carbon UI: a #161616 base, a #262626
    sidebar rail, shaded rather than bordered, with the BombVault sunflower-yellow
    accent (#FCC419) and dark ink on the accent. Dark is the primary, default
-   experience (the app is dark-first); the light toggle mirrors the app's light theme.
+   experience for this site — a choice separate from the app itself, which now
+   follows the visitor's system theme; the light toggle mirrors the app's light theme.
 
    Every hex below is copied verbatim from the app's palette
    (web/src/index.css and web/src/lib/accent.ts) so the site and the app match. */

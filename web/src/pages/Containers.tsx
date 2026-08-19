@@ -12,11 +12,15 @@ import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { EmptyStateIcon } from "../components/EmptyStateIcon";
+import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
+import { Badge, type BadgeTone } from "../components/Badge";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
+import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -30,23 +34,15 @@ function formatTs(unix: number | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// State chip
+// State chip — stateTone maps a raw container state to the shared Badge's
+// tone; stateLabel (lib/i18n) still does the actual state->text translation.
 // ---------------------------------------------------------------------------
 
-function StateChip({ state }: { state: string }) {
-  const { t } = useT();
+function stateTone(state: string): BadgeTone {
   const lower = state.toLowerCase();
-  const cls =
-    lower === "running"
-      ? "bg-statusOkBg text-statusOk"
-      : lower === "exited" || lower === "stopped"
-      ? "bg-statusFailBg text-statusFail"
-      : "bg-carbon-surface2 text-carbon-textSub";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${cls}`}>
-      {stateLabel(t, state)}
-    </span>
-  );
+  if (lower === "running") return "ok";
+  if (lower === "exited" || lower === "stopped") return "fail";
+  return "neutral";
 }
 
 // ---------------------------------------------------------------------------
@@ -130,7 +126,7 @@ function SortControl({
         <button
           key={k}
           onClick={() => onChange(k)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === k
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -178,7 +174,7 @@ function FilterControl({
         <button
           key={k}
           onClick={() => onChange(k)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === k
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -234,7 +230,7 @@ function ChipFilter<K extends string>({
         <button
           key={o.key}
           onClick={() => onChange(o.key)}
-          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
             value === o.key
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -264,9 +260,16 @@ function DeleteBackupsButton({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
-    if (!window.confirm(t("containers.deleteBackupsConfirm"))) return;
+    // TODO(#follow-up): once richer stake-detail copy ("N snapshots, X GB")
+    // ships (deferred — needs new interpolated i18n keys across all 25
+    // non-English locales, out of scope for the window.confirm() → dialog
+    // mechanism swap, form-engine Task 7), it renders here as extra body
+    // content passed to confirm(), same as the two other flagged sites in
+    // VMs.tsx's deleteAllConfirm and Files.tsx's deleteBackupsConfirm.
+    if (!(await confirm(t("containers.deleteBackupsConfirm")))) return;
     setPending(true);
     setError(null);
     try {
@@ -285,11 +288,12 @@ function DeleteBackupsButton({
       <button
         onClick={() => void handleDelete()}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
       >
         {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
       </button>
       {error && <p className="text-xs text-statusFail">{error}</p>}
+      {confirmDialog}
     </div>
   );
 }
@@ -324,7 +328,7 @@ function ExportButton({ name, t }: { name: string; t: T }) {
       <button
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -375,7 +379,7 @@ function HooksEditor({
   }
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
   return (
     <div className="mt-1">
@@ -390,7 +394,7 @@ function HooksEditor({
         {(initialPre || initialPost) && <span className="text-statusOk">●</span>}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
@@ -404,7 +408,7 @@ function HooksEditor({
           </label>
           <div className="flex items-center gap-3 pt-0.5">
             <button onClick={() => void save()} disabled={state === "saving"}
-              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
+              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
               {state === "saving" ? "…" : t("settings.save")}
             </button>
             {state === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
@@ -456,7 +460,7 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
         aria-checked={enabled}
         disabled={busy}
         onClick={() => void handle(!enabled)}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid disabled:opacity-50 ${
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
           enabled ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >
@@ -561,7 +565,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
         {t("folders.title")}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
           {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
           {!loading && mounts.length === 0 && custom.length === 0 && (
@@ -613,7 +617,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
             </div>
             <button
               onClick={addCustom}
-              className="rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
             >
               {t("folders.add")}
             </button>
@@ -622,7 +626,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
             <button
               onClick={() => void save()}
               disabled={state === "saving" || loading}
-              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {state === "saving" ? "…" : t("folders.save")}
             </button>
@@ -666,7 +670,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
   }
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
   return (
     <div className="mt-1">
@@ -681,7 +685,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
         {initial.length > 0 && <span className="text-statusOk">●</span>}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
           <textarea
             value={text}
@@ -695,7 +699,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
             <button
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {state === "saving" ? "…" : t("settings.save")}
             </button>
@@ -830,7 +834,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   const openSuggestions = (suggestions ?? []).filter((sg) => !currentLines.includes(sg.line));
 
   const inputCls =
-    "rounded-sm bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
   return (
     <div className="mt-1">
@@ -845,7 +849,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         {initial.length > 0 && <span className="text-statusOk">●</span>}
       </button>
       {open && (
-        <div className="mt-2 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("excludes.hint")}</p>
           <textarea
             value={text}
@@ -890,7 +894,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
             <button
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {state === "saving" ? "…" : t("excludes.save")}
             </button>
@@ -916,7 +920,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                   <button
                     onClick={() => void scan()}
                     disabled={scanning}
-                    className="rounded-lg bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                    className="rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
                   >
                     {scanning
                       ? t("excludes.assistScanning")
@@ -938,11 +942,11 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                       <div
                         key={sg.line}
                         title={sg.line}
-                        className="flex items-center gap-2 rounded-sm bg-carbon-surface2 px-2 py-1.5"
+                        className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5"
                       >
                         <span className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text">{sg.path}</span>
                         <span
-                          className={`inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-medium ${
+                          className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
                             sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusInfoBg text-statusInfo"
                           }`}
                         >
@@ -952,7 +956,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                         <button
                           onClick={() => void addExclude(sg.line)}
                           disabled={state === "saving"}
-                          className="rounded-lg bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                          className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
                         >
                           {t("excludes.assistExclude")}
                         </button>
@@ -968,7 +972,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                     {currentLines.map((line) => (
                       <span
                         key={line}
-                        className="inline-flex items-center gap-1.5 rounded-sm bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
+                        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
                       >
                         {line}
                         <button
@@ -1049,11 +1053,9 @@ function ContainerRow({
               {container.name}
             </span>
             {installed ? (
-              <StateChip state={container.state} />
+              <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
-                {t("containers.notInstalled")}
-              </span>
+              <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
             {container.ip && (
               <span className="text-xs text-carbon-textMuted font-mono">{container.ip}</span>
@@ -1177,14 +1179,14 @@ function ScheduleIncludeAllControl({
       <button
         onClick={() => void run(true)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {t("schedule.includeAll")}
       </button>
       <button
         onClick={() => void run(false)}
         disabled={busy}
-        className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+        className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
       >
         {t("schedule.excludeAll")}
       </button>
@@ -1267,6 +1269,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   // grace window longer than that gap — otherwise the cancel button flickered out
   // between members and the "runs in background" banner stayed sticky forever.
   const sawActive = useRef(false);
+  const { confirm, confirmDialog } = useConfirm();
   useEffect(() => {
     if (!started) return;
     if (anyMemberActive) {
@@ -1283,7 +1286,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   }, [started, anyMemberActive]);
 
   async function run() {
-    if (!window.confirm(t("stack.restoreConfirm"))) return;
+    if (!(await confirm(t("stack.restoreConfirm")))) return;
     setBusy(true);
     setError(null);
     setStarted(false);
@@ -1323,7 +1326,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           aria-expanded={open}
           aria-label={t("stack.restore")}
           title={t("stack.restore")}
-          className="shrink-0 inline-flex items-center rounded-lg p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
             <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1332,7 +1335,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
       </div>
 
       {open && (
-        <div className="mt-1 rounded-lg bg-carbon-background p-3 flex flex-col gap-2">
+        <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
           <div className="flex items-center gap-2">
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
@@ -1352,7 +1355,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
             <button
               onClick={() => void run()}
               disabled={busy}
-              className="rounded-lg bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {busy ? t("stack.restoring") : t("stack.restore")}
             </button>
@@ -1377,6 +1380,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }
@@ -1577,7 +1581,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
                 <li
                   key={name}
                   {...rowProps(i)}
-                  className={`flex items-center gap-2 rounded-lg bg-carbon-surface2 px-3 py-1.5 ${
+                  className={`flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${
                     dragIndex === i ? "opacity-40" : ""
                   }`}
                 >
@@ -1604,7 +1608,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
                     disabled={i === 0 || saveState === "saving"}
                     aria-label={t("backupOrder.moveUp")}
                     title={t("backupOrder.moveUp")}
-                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1615,7 +1619,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
                     disabled={i === names.length - 1 || saveState === "saving"}
                     aria-label={t("backupOrder.moveDown")}
                     title={t("backupOrder.moveDown")}
-                    className="shrink-0 inline-flex items-center rounded-md p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1628,14 +1632,14 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
               <button
                 onClick={() => void persist(names)}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {t("backupOrder.save")}
               </button>
               <button
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-lg bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
               >
                 {t("backupOrder.reset")}
               </button>
@@ -1658,6 +1662,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
 
 export function Containers() {
   const { t } = useT();
+  const { confirm, confirmDialog } = useConfirm();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1833,8 +1838,8 @@ export function Containers() {
   // loop must fire one restore and WAIT for its recorded run before the next
   // (firing them in a tight loop would make every call after the first hit
   // "already running"). fireAndWaitRun handles the fire/retry/wait cycle.
-  function restoreSelected() {
-    if (!window.confirm(t("containers.restoreSelectedConfirm"))) return;
+  async function restoreSelected() {
+    if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
     void runBulk((name) =>
       fireAndWaitRun({
         kind: "restore",
@@ -1883,7 +1888,7 @@ export function Containers() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("containers.discoverHint")}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -1893,7 +1898,7 @@ export function Containers() {
       {/* Server-side batch-backup banner — visible while a "back up all" run is in
           flight, even if it was started from another tab/session. */}
       {batchActive && (
-        <div className="flex items-center gap-3 rounded-lg bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 rounded-card bg-carbon-surface2 px-3 py-2">
           <span
             className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
             style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
@@ -1912,7 +1917,13 @@ export function Containers() {
         <p className="text-sm text-statusFail">{error}</p>
       )}
       {!loading && !error && containers.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center">
+        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          {/* No "Add" action here (unlike Receiver/Fleet/Files): this list is a
+              live enumeration of what Docker actually reports, not a
+              BombVault-managed list to add to. The page's own Discover button
+              above (disaster-recovery re-scan) is already the relevant action
+              for an empty result, so a second button here would be redundant. */}
+          <EmptyStateIcon icon={IconContainers} />
           <p className="text-sm text-carbon-textMuted">
             {t("containers.emptyDocker")}
           </p>
@@ -1929,7 +1940,7 @@ export function Containers() {
               placeholder={t("containers.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="rounded-lg bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
             />
             <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
             <ChipFilter<ScheduleFilterKey>
@@ -1976,23 +1987,23 @@ export function Containers() {
 
       {/* Bulk action bar — appears when one or more containers are selected. */}
       {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-lg bg-carbon-surface2 px-3 py-2">
+        <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>
           <button
             onClick={() => void backupSelected()}
             disabled={bulkBusy || batchActive || running.active}
-            className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {t("containers.backupSelected")}
           </button>
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
             <button
-              onClick={restoreSelected}
+              onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
-              className="inline-flex items-center rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {t("containers.restoreSelected")}
             </button>
@@ -2067,6 +2078,7 @@ export function Containers() {
       {!loading && !error && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
+      {confirmDialog}
     </div>
   );
 }

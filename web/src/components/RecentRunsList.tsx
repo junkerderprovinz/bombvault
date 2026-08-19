@@ -12,7 +12,7 @@ type T = ReturnType<typeof useT>["t"];
 const MAX_RUNS = 8;
 
 // statusDotClass maps a run status to a small coloured dot, matching the
-// dashboard's StatusChip palette (green success, red fail, blue running).
+// dashboard's Badge palette (green success, red fail, blue running).
 function statusDotClass(status: string): string {
   switch (status.toLowerCase()) {
     case "success":

@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 //   - pointer-events:none on the bubble — it must never eat a click meant for
 //     whatever is underneath it.
 //   - The help text is also the icon's aria-label; Escape closes it.
-export function InfoBubble({ text }: { text: string }) {
+export function InfoBubble({ tip }: { tip: string }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const iconRef = useRef<HTMLSpanElement>(null);
@@ -49,14 +49,14 @@ export function InfoBubble({ text }: { text: string }) {
     <>
       <span
         ref={iconRef}
-        aria-label={text}
+        aria-label={tip}
         aria-describedby={open ? tooltipId : undefined}
         tabIndex={0}
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
-        className="inline-flex h-[15px] w-[15px] flex-none cursor-help items-center justify-center text-carbon-textMuted opacity-80 hover:opacity-100 focus:opacity-100 focus:outline-none"
+        className="inline-flex h-[15px] w-[15px] flex-none cursor-help items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
           <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.3" />
@@ -70,16 +70,10 @@ export function InfoBubble({ text }: { text: string }) {
           <div
             role="tooltip"
             id={tooltipId}
-            style={{
-              position: "fixed",
-              left: pos.left,
-              top: pos.top,
-              transform: "translateX(-50%)",
-              pointerEvents: "none",
-            }}
-            className="z-50 w-64 max-w-[80vw] rounded-lg bg-carbon-surface3 px-2.5 py-1.5 text-xs leading-relaxed text-carbon-text shadow-lg"
+            style={{ left: pos.left, top: pos.top }}
+            className="glim-bubble glim-fade"
           >
-            {text}
+            {tip}
           </div>,
           document.body
         )}
