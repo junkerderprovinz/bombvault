@@ -62,15 +62,16 @@ func TestZvolDatasetFromDevPath(t *testing.T) {
 // pool, is ok=false, never an invented or partially-rebased name).
 func TestRebaseZvolDatasetPool(t *testing.T) {
 	cases := []struct {
-		name    string
-		dataset string
+		name     string
+		dataset  string
 		destPool string
-		want    string
-		wantOK  bool
+		want     string
+		wantOK   bool
 	}{
 		{"simple rebase", "tank/vm-disk1", "flashpool", "flashpool/vm-disk1", true},
 		{"nested dataset path preserved", "tank/vms/win10/disk0", "flashpool", "flashpool/vms/win10/disk0", true},
 		{"same pool name is a no-op rebase", "tank/vm-disk1", "tank", "tank/vm-disk1", true},
+		{"deeper segment sharing the pool's name is left alone", "tank/vms/tank/disk0", "flashpool", "flashpool/vms/tank/disk0", true},
 
 		{"empty destPool", "tank/vm-disk1", "", "", false},
 		{"whitespace-only destPool", "tank/vm-disk1", "   ", "", false},
@@ -78,6 +79,10 @@ func TestRebaseZvolDatasetPool(t *testing.T) {
 		{"destPool with embedded whitespace", "tank/vm-disk1", "flash pool", "", false},
 		{"destPool with embedded quote", "tank/vm-disk1", "flash'pool", "", false},
 		{"destPool with traversal", "tank/vm-disk1", "..", "", false},
+		{"destPool with leading dash (zfs receive getopt trap)", "tank/vm-disk1", "-F", "", false},
+		{"destPool with leading @", "tank/vm-disk1", "@flashpool", "", false},
+		{"destPool with leading #", "tank/vm-disk1", "#flashpool", "", false},
+		{"destPool with leading %", "tank/vm-disk1", "%flashpool", "", false},
 		{"dataset with no segment past its own pool", "tank", "flashpool", "", false},
 		{"empty dataset", "", "flashpool", "", false},
 	}

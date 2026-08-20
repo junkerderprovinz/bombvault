@@ -610,6 +610,27 @@ func (e *platformMismatchErr) Error() string { return e.msg }
 
 func (e *platformMismatchErr) Is(target error) bool { return target == errUnraidPlatformMismatch }
 
+// errZvolRebaseFailed is the scrubber-bypass sentinel a rebase-failure error
+// from prepareRestoreVMForTarget's cross-instance zvol rebase loop satisfies
+// via Is, matched by handlers.go's scrubError. The dataset/pool names ARE
+// the message — RebaseZvolDatasetPool's own doc comment names them as the
+// whole point of this error path — and a ZFS dataset name is "<pool>/<rest>",
+// so it necessarily contains "/" characters handlers.go's absPathRe would
+// otherwise mistake for a filesystem path and mangle (e.g. turning
+// `dataset "tank/vm-disk1"` into `dataset "tank[path]"`, destroying exactly
+// the information the message exists to convey). Same bypass pattern as
+// errRestoreDestination/errUnraidPlatformMismatch, for the identical reason.
+var errZvolRebaseFailed = errors.New("zvol dataset rebase failed")
+
+// zvolRebaseErr carries a zvol-rebase failure's ready-to-show message (see
+// errZvolRebaseFailed) while still satisfying
+// errors.Is(err, errZvolRebaseFailed) for the scrubber bypass.
+type zvolRebaseErr struct{ msg string }
+
+func (e *zvolRebaseErr) Error() string { return e.msg }
+
+func (e *zvolRebaseErr) Is(target error) bool { return target == errZvolRebaseFailed }
+
 // progBegin marks a backup/restore as started for key/phase and returns a
 // context carrying a restic sink that republishes each percentage. Percent
 // updates are throttled to whole-percent steps to avoid flooding subscribers.
@@ -6983,14 +7004,29 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// before any restic/SSH work starts, when destZvolPool wasn't supplied;
 	// when it was, rebase every zvol disk's dataset onto it now so the plan's
 	// blockDisks already carry the correct destination target.
+	//
+	// destZvolPool is trimmed before the emptiness check so a whitespace-only
+	// value ("   ", e.g. a stray space pasted into a direct API call) hits
+	// THIS clear refusal rather than slipping through to
+	// RebaseZvolDatasetPool's own less-actionable error below (it trims
+	// internally too, so a whitespace-only pool reads there as empty and
+	// fails the "no segment past its own pool" check instead of naming the
+	// real problem).
 	if destBase != "" && len(vmRestoreBlockDisks) > 0 {
-		if destZvolPool == "" {
-			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified — the destination pool cannot be inferred from the chosen destination folder. Specify a destination pool for the zvol disk(s) (foreign restore's zvolPool parameter), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
+		if strings.TrimSpace(destZvolPool) == "" {
+			// The web UI has NO field for zvolPool yet (Recovery page — see
+			// this repo's tracked follow-up); an operator hitting this
+			// through the UI has no in-app way to act on this error, so the
+			// message spells out the only path that currently exists: a
+			// direct API call. Keep this in sync with
+			// docs/vm-backup-ssh-setup.md's TrueNAS section, which carries
+			// the same guidance for someone reading ahead of time.
+			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified — the destination pool cannot be inferred from the chosen destination folder. There is no web UI field for this yet: call POST /api/foreign/restore directly with its zvolPool parameter set to the destination pool name (see docs/vm-backup-ssh-setup.md's TrueNAS section), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
 		}
 		for i := range vmRestoreBlockDisks {
 			rebased, ok := virshcli.RebaseZvolDatasetPool(vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
 			if !ok {
-				return vmRestorePlan{}, fmt.Errorf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
+				return vmRestorePlan{}, &zvolRebaseErr{msg: fmt.Sprintf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, vmRestoreBlockDisks[i].SourceDataset, destZvolPool)}
 			}
 			vmRestoreBlockDisks[i].RestoreBaseDataset = rebased
 		}
