@@ -117,7 +117,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
-          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+          dir="ltr"
+          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
         />
         <button
           onClick={handleOpen}
@@ -130,7 +131,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
 
       {/* Absolute path preview */}
       {resolved && (
-        <p className="text-xs text-carbon-textMuted font-mono break-all">→ {resolved}</p>
+        <p dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">→ {resolved}</p>
       )}
       {!resolved && trimmed && (
         <p className="text-xs text-statusFail">
@@ -143,7 +144,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           {/* Header: current path + close */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-mono text-carbon-textSub min-w-0 truncate">
+            <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
               {hostMountRoot}/{browsePath || ""}
             </span>
             <button
@@ -174,7 +175,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               {browsePath !== "" && (
                 <button
                   onClick={handleUp}
-                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                  dir="ltr"
+                  className="text-start text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
                 >
                   ..
                 </button>
@@ -186,7 +188,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 <button
                   key={d.path}
                   onClick={() => doFetch(d.path)}
-                  className="text-left text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                  dir="ltr"
+                  className="text-start text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
                 >
                   {d.name}/
                 </button>
@@ -209,7 +212,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 }}
                 spellCheck={false}
                 placeholder={t("folder.newFolderPlaceholder")}
-                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 bv-field-focus"
+                dir="ltr"
+                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 bv-field-focus text-start"
               />
               <button
                 onClick={handleCreate}
@@ -231,7 +235,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               >
                 {t("folder.use")}
               </button>
-              <span className="text-xs text-carbon-textMuted font-mono min-w-0 truncate">
+              <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 truncate text-start">
                 {browsePath || "(root)"}
               </span>
             </div>

@@ -41,7 +41,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
       className={
         inline
           ? "relative h-1 w-full overflow-hidden rounded-pill"
-          : "absolute bottom-0 left-0 right-0 h-1 overflow-hidden"
+          : "absolute bottom-0 start-0 end-0 h-1 overflow-hidden"
       }
       style={{ background: "var(--carbon-border)" }}
       role="progressbar"

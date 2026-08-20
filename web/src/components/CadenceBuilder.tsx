@@ -384,7 +384,8 @@ function CronEditor({
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
-          className={`${inputCls} font-mono w-56 max-w-full`}
+          dir="ltr"
+          className={`${inputCls} font-mono w-56 max-w-full text-start`}
         />
       </div>
 
@@ -409,8 +410,8 @@ function CronEditor({
             onClick={() => onChange(ex.expr)}
             className="self-start rounded px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
-            <code className="font-mono text-carbon-text">{ex.expr}</code>
-            <span className="ml-2">{t(ex.key)}</span>
+            <code dir="ltr" className="font-mono text-carbon-text text-start">{ex.expr}</code>
+            <span className="ms-2">{t(ex.key)}</span>
           </button>
         ))}
       </div>

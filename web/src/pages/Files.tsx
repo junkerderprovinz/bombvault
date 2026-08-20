@@ -111,7 +111,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         />
       </button>
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}
@@ -174,7 +174,7 @@ function FileSetBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("common.done")}
           {state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
           )}
@@ -542,7 +542,7 @@ function FileSetSnapshotRow({
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
         </span>
         <span className="text-carbon-textMuted text-xs flex-1">
@@ -563,7 +563,7 @@ function FileSetSnapshotRow({
         </button>
       </div>
       {/* Restore control, indented under the id column to match the row. */}
-      <div className="pl-24">
+      <div className="ps-24">
         <FileSetRestoreControl
           set={set}
           snapshotId={snap.id}
@@ -574,7 +574,7 @@ function FileSetSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -657,7 +657,7 @@ function FileSetRestorePanel({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform ${open ? "rotate-90" : ""}`}
+          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
         >
           <path
             d="M4 2l4 4-4 4"
@@ -691,7 +691,7 @@ function FileSetRestorePanel({
                   disabled={deletingAll || loading}
                   tone="fail"
                   size="small"
-                  className="ml-auto"
+                  className="ms-auto"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </Badge>
@@ -839,7 +839,8 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+            dir="ltr"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
           />
           <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
@@ -968,7 +969,7 @@ function FileSetRow({
             )}
           </div>
           {!noPath && (
-            <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">
+            <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">
               {hostMountRoot}/{set.path}
             </p>
           )}
@@ -978,7 +979,7 @@ function FileSetRow({
         </div>
 
         {/* Last backup */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
           <p className="text-xs text-carbon-textSub">
             {set.lastBackup ? formatTs(set.lastBackup) : t("containers.never")}
@@ -1008,7 +1009,7 @@ function FileSetRow({
           </button>
           {removeErr && <span className="text-xs text-statusFail">{removeErr}</span>}
         </div>
-        <div className="ml-auto flex flex-col items-end">
+        <div className="ms-auto flex flex-col items-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
         </div>
       </div>

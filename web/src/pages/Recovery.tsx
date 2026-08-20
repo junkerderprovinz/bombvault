@@ -549,7 +549,7 @@ function ForeignItemRow({
                     hand-find this file's two "grep-invisible" call sites after the
                     sweep missed them. */}
                 {warnings.map((wn) => (
-                  <li key={wn.host + "\u0000" + wn.container} className="font-mono wrap-break-word" dir="ltr">
+                  <li key={wn.host + "\u0000" + wn.container} className="font-mono wrap-break-word text-start" dir="ltr">
                     {wn.host} → {wn.container}
                   </li>
                 ))}
@@ -1230,7 +1230,7 @@ export default function Recovery() {
 
         {/* The raw (scrubbed) backend message for a warn/other error, as a hint. */}
         {readableState === "warn" && lastError && (
-          <p className="text-xs text-carbon-textMuted font-mono break-all">{lastError}</p>
+          <p dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{lastError}</p>
         )}
       </StepCard>
 
@@ -1275,7 +1275,8 @@ export default function Recovery() {
                         setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))
                       }
                       placeholder="rest:http://host:8000/repo"
-                      className={offsiteInput}
+                      dir="ltr"
+                      className={`${offsiteInput} text-start`}
                     />
                   </div>
                 )}
@@ -1397,7 +1398,8 @@ export default function Recovery() {
                   spellCheck={false}
                   onChange={(e) => setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
                   placeholder="rest:http://host:8000/repo"
-                  className={offsiteInput}
+                  dir="ltr"
+                  className={`${offsiteInput} text-start`}
                 />
               </div>
             ))}

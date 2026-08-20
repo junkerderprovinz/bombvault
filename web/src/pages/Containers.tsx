@@ -327,10 +327,12 @@ function ExportButton({ name, t }: { name: string; t: T }) {
         {state === "pending" ? "…" : t("export.button")}
       </button>
       {state === "done" && msg && (
-        <span className="text-xs text-statusOk break-all text-right">{t("export.exportedTo")} {msg}</span>
+        <span className="text-xs text-statusOk break-all text-end">
+          {t("export.exportedTo")} <span dir="ltr" className="text-start">{msg}</span>
+        </span>
       )}
       {state === "error" && msg && (
-        <span className="text-xs text-statusFail wrap-break-word text-right">{msg}</span>
+        <span dir="ltr" className="text-xs text-statusFail wrap-break-word text-start">{msg}</span>
       )}
     </div>
   );
@@ -381,7 +383,7 @@ function HooksEditor({
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("hooks.title")}
@@ -553,7 +555,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("folders.title")}
@@ -578,7 +580,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
                 className="mt-0.5 accent-(--accent)"
               />
               <span className="flex flex-col">
-                <span className="font-mono break-all">{m.dest} ← {m.source}</span>
+                <span dir="ltr" className="font-mono break-all text-start">{m.dest} ← {m.source}</span>
                 {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
                 {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
               </span>
@@ -588,7 +590,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
             <div key={cp.path} className="flex items-start gap-2 text-xs text-carbon-text">
               <input type="checkbox" checked readOnly className="mt-0.5 accent-(--accent)" />
               <span className="flex flex-col flex-1 min-w-0">
-                <span className="font-mono break-all">{cp.path}</span>
+                <span dir="ltr" className="font-mono break-all text-start">{cp.path}</span>
                 {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
               </span>
               <button
@@ -672,7 +674,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("stophook.title")}
@@ -687,7 +689,8 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
             spellCheck={false}
             rows={3}
             placeholder={"mariadb\nredis"}
-            className={inputCls}
+            dir="ltr"
+            className={`${inputCls} text-start`}
           />
           <div className="flex items-center gap-3 pt-0.5">
             <button
@@ -836,7 +839,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("excludes.title")}
@@ -851,7 +854,8 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
             spellCheck={false}
             rows={3}
             placeholder={t("excludes.placeholder")}
-            className={inputCls}
+            dir="ltr"
+            className={`${inputCls} text-start`}
           />
           {preview.length > 0 && (
             <div className="flex flex-col gap-1">
@@ -875,7 +879,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                     className="text-xs wrap-break-word leading-snug flex items-baseline gap-1.5"
                     title={row.status === "translated" ? row.resolved : undefined}
                   >
-                    <span className="font-mono text-carbon-textSub">{row.raw}</span>
+                    <span dir="ltr" className="font-mono text-carbon-textSub text-start">{row.raw}</span>
                     <span className={good ? "text-statusOk" : "text-statusFail"}>
                       {good ? "✓" : "⚠"} {msg}
                     </span>
@@ -902,7 +906,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
               onClick={toggleAssistant}
               className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : ""}`}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
                 <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {t("excludes.assistTitle")}
@@ -938,7 +942,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                         title={sg.line}
                         className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5"
                       >
-                        <span className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text">{sg.path}</span>
+                        <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text text-start">{sg.path}</span>
                         <span
                           className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
                             sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusInfoBg text-statusInfo"
@@ -1071,16 +1075,16 @@ function ContainerRow({
               <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
             {container.ip && (
-              <span className="text-xs text-carbon-textMuted font-mono">{container.ip}</span>
+              <span dir="ltr" className="text-xs text-carbon-textMuted font-mono text-start">{container.ip}</span>
             )}
           </div>
           {container.image && (
-            <p className="text-xs text-carbon-textMuted mt-0.5 truncate">{container.image}</p>
+            <p dir="ltr" className="text-xs text-carbon-textMuted mt-0.5 truncate text-start">{container.image}</p>
           )}
         </div>
 
         {/* Last backup */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
           <p className="text-xs text-carbon-textSub">
             {container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}
@@ -1110,9 +1114,9 @@ function ContainerRow({
 
             {/* Backup + plain export (right) — backup refreshes the list so "last backup" updates.
                 BombVault's own container has no backup action: backing it up would stop itself. */}
-            <div className="ml-auto flex flex-col items-end gap-2">
+            <div className="ms-auto flex flex-col items-end gap-2">
               {container.self ? (
-                <span className="text-xs text-carbon-textMuted max-w-[18rem] text-right">
+                <span className="text-xs text-carbon-textMuted max-w-[18rem] text-end">
                   {t("containers.selfNote")}
                 </span>
               ) : (
@@ -1325,7 +1329,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <span className="font-semibold text-carbon-text text-sm wrap-break-word">{group.project}</span>
-          <span className="ml-2 text-xs text-carbon-textMuted">
+          <span className="ms-2 text-xs text-carbon-textMuted">
             {t("stack.members").replace("{n}", String(group.members.length))}
           </span>
           <p className="mt-0.5 text-[11px] text-carbon-textMuted truncate">
@@ -1341,7 +1345,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           title={t("stack.restore")}
           className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
             <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -1558,7 +1562,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
         type="button"
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
-        className="flex w-full items-start gap-2 text-left"
+        className="flex w-full items-start gap-2 text-start"
       >
         <svg
           width="14"
@@ -1566,7 +1570,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
           viewBox="0 0 12 12"
           fill="none"
           aria-hidden="true"
-          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "" : "rotate-90"}`}
+          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
         >
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -1574,7 +1578,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
           <span className="font-semibold text-carbon-text text-sm">
             {t("backupOrder.title")}
             {names.length > 0 && (
-              <span className="ml-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
+              <span className="ms-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
                 ({names.length})
               </span>
             )}
@@ -1995,7 +1999,7 @@ export function Containers() {
             </label>
           )}
           {live.length > 0 && (
-            <div className="ml-auto">
+            <div className="ms-auto">
               <ScheduleIncludeAllControl t={t} onChanged={() => void loadContainers()} />
             </div>
           )}

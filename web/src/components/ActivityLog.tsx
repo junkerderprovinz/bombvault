@@ -296,7 +296,7 @@ export function ActivityLog({
           <button
             type="button"
             onClick={jumpToLatest}
-            className="absolute bottom-3 right-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
+            className="absolute bottom-3 end-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
           >
             ↓ {t("activityLog.jumpToLatest")}
           </button>

@@ -443,7 +443,7 @@ function CompareSnapshots({
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("snapshot.compare")}
@@ -457,7 +457,10 @@ function CompareSnapshots({
                 <option key={s.id} value={s.id}>{snapLabel(s)}</option>
               ))}
             </select>
-            <span className="text-xs text-carbon-textMuted">→</span>
+            {/* Compare-direction arrow: implies reading order (from → to), so
+                it mirrors under RTL — an inline-block wrapper so scaleX(-1)
+                flips the glyph shape itself, not the layout position. */}
+            <span className="inline-block text-xs text-carbon-textMuted rtl:-scale-x-100">→</span>
             <select value={to} onChange={(e) => setTo(e.target.value)} disabled={loading} className={selectCls}>
               {snapshots.map((s) => (
                 <option key={s.id} value={s.id}>{snapLabel(s)}</option>
@@ -639,7 +642,7 @@ function SnapshotRow({
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         {/* Snapshot ID */}
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
         </span>
         {/* Time */}
@@ -673,7 +676,7 @@ function SnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
       {showRestore && (
@@ -826,7 +829,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform ${open ? "rotate-90" : ""}`}
+          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
         >
           <path
             d="M4 2l4 4-4 4"

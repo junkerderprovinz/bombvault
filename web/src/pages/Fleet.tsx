@@ -219,9 +219,9 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
         <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
-        <span className="text-xs text-carbon-textMuted ml-auto">{relativeTime(t, offer.receivedAt)}</span>
+        <span className="text-xs text-carbon-textMuted ms-auto">{relativeTime(t, offer.receivedAt)}</span>
       </div>
-      <p className="text-xs font-mono text-carbon-textMuted truncate">{offer.repo}</p>
+      <p dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate text-start">{offer.repo}</p>
       {pending && (
         <div className="flex items-center gap-2 flex-wrap">
           <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
@@ -320,7 +320,8 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
                 spellCheck={false}
                 autoComplete="off"
                 placeholder="http://192.168.1.50:8000"
-                className={`${inputCls} font-mono`}
+                dir="ltr"
+                className={`${inputCls} font-mono text-start`}
               />
               <p className="text-[11px] text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
             </div>
@@ -439,7 +440,7 @@ function FleetPeerCard({
             {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
             <Badge tone={pollTone}>{pollLabel}</Badge>
           </div>
-          <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">{peer.url}</p>
+          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{peer.url}</p>
         </div>
         {peer.lastPollVersion && (
           <span className="text-xs text-carbon-textMuted shrink-0">v{peer.lastPollVersion}</span>
@@ -474,7 +475,7 @@ function FleetPeerCard({
           )}
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <button
             onClick={() => setShowPropose(true)}
             className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
@@ -490,7 +491,7 @@ function FleetPeerCard({
               height="12"
               viewBox="0 0 12 12"
               fill="none"
-              className={`transition-transform ${open ? "rotate-90" : ""}`}
+              className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
             >
               <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -630,7 +631,8 @@ function FleetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="https://192.168.1.50:3443"
-            className={`${inputCls} font-mono`}
+            dir="ltr"
+            className={`${inputCls} font-mono text-start`}
           />
           <p className="text-[11px] text-carbon-textMuted">{t("fleet.urlHint")}</p>
         </div>

@@ -428,7 +428,7 @@ export function CustomizableBlock({
       {/* Drop-target indicator — absolute so it never shifts layout. */}
       {over && (
         <div
-          className="pointer-events-none absolute -top-3 left-0 right-0 h-0.5 rounded-control bg-carbon-text"
+          className="pointer-events-none absolute -top-3 start-0 end-0 h-0.5 rounded-control bg-carbon-text"
           aria-hidden="true"
         />
       )}
