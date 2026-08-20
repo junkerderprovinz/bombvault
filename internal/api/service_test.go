@@ -3625,6 +3625,37 @@ type fakeResticEngine struct {
 	dumpRawCalls []string
 	dumpRawErr   error
 	dumpRawData  []byte
+	// backupPanic, when true, makes Backup panic for every call — the
+	// container-backup counterpart of copyPanic, used to exercise
+	// recoverOperation/failStuckRun on the StartBackup goroutine: unlike
+	// copyToOffsite's own already-deferred finish, backup.BackupContainer's
+	// Runs.Start/Finish are plain sequential calls (not deferred), so a panic
+	// here would otherwise leave the run stuck "running" forever without the
+	// fix. Set synchronously before launching the goroutine under test — NOT
+	// concurrently with it — to avoid a data race on this field.
+	backupPanic bool
+	// backupPanicTag, when non-empty, makes Backup panic ONLY for a call whose
+	// tags include this exact string (e.g. "container:plex") — lets a batch
+	// test make ONE queued item panic deterministically while the others still
+	// run normally, without racing backupPanic against the batch goroutine.
+	backupPanicTag string
+	// restorePanic, when true, makes RestoreInclude AND RestorePath (the two
+	// restic restore entry points a real restore can reach — RestorePath for
+	// an in-place whole-container/stack restore, RestoreInclude for a
+	// foreign/file-set restore) panic for every call — the restore counterpart
+	// of backupPanic, used to exercise recoverOperation on the
+	// StartForeignRestore and StartRestoreStack goroutines (the two sites the
+	// f5b3286 sweep's plain `go func` grep of service.go missed:
+	// internal/api/foreign.go and internal/api/stacks.go both launch their
+	// own). Set synchronously before launching the goroutine under test, like
+	// backupPanic.
+	restorePanic bool
+	// restorePanicSnapshot, when non-empty, makes RestoreInclude/RestorePath
+	// panic ONLY for a call whose snapshotID matches — lets a stack-restore
+	// test make ONE member panic deterministically while the others still
+	// restore normally, without racing restorePanic against the batch
+	// goroutine (mirrors backupPanicTag).
+	restorePanicSnapshot string
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -3659,6 +3690,16 @@ func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m rest
 }
 
 func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+	if f.backupPanic {
+		panic("boom during backup")
+	}
+	if f.backupPanicTag != "" {
+		for _, tg := range tags {
+			if tg == f.backupPanicTag {
+				panic("boom during backup: " + tg)
+			}
+		}
+	}
 	if f.block != nil {
 		<-f.block
 	}
@@ -3711,6 +3752,12 @@ func (f *fakeResticEngine) blockIfArmed() {
 }
 
 func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path string, _ restic.Mode) error {
+	if f.restorePanic {
+		panic("boom during restore")
+	}
+	if f.restorePanicSnapshot != "" && snapshotID == f.restorePanicSnapshot {
+		panic("boom during restore: " + snapshotID)
+	}
 	f.blockIfArmed()
 	if f.restoreErr != nil {
 		return f.restoreErr
@@ -3787,6 +3834,12 @@ func (f *fakeResticEngine) LsPath(_ context.Context, _, _, dirPath string, _ res
 }
 
 func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+	if f.restorePanic {
+		panic("boom during restore")
+	}
+	if f.restorePanicSnapshot != "" && snapshotID == f.restorePanicSnapshot {
+		panic("boom during restore: " + snapshotID)
+	}
 	f.restoreCtxErrs = append(f.restoreCtxErrs, ctx.Err())
 	f.callLog = append(f.callLog, "RestoreInclude")
 	f.blockIfArmed()

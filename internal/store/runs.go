@@ -63,6 +63,43 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	return nil
 }
 
+// FailRunningRun marks targetID's still-'running' run (if any) as failed, with
+// errMsg as its recorded error. It is the single-target counterpart of
+// ReapInterruptedRuns: that one only ever runs once at process startup (a
+// 'running' row can only be an orphan of a PREVIOUS lifetime, since BombVault
+// is a single process). This one lets a caller close out a run immediately,
+// without waiting for a restart, the moment it knows a specific target's
+// operation ended abnormally — namely api.Service's panic recovery, where the
+// very goroutine that would have finished the run is the one that panicked,
+// so nothing else will ever call FinishRun for it. Scoped to targetID (never
+// global, unlike ReapInterruptedRuns) so it can never disturb a genuinely
+// in-flight run for a DIFFERENT target. Returns the number of rows updated —
+// 0 is a normal, harmless outcome (nothing was running for this target, e.g.
+// the panic happened before StartRun was even reached), not an error.
+//
+// This assumes at most one operation is ever "running" against a given
+// targetID at a time — true everywhere batchActive or a domain lock guards
+// whatever called StartRun, which is every caller today except one known,
+// accepted exception: api.Service.DownloadFlashZip holds a "restore" run open
+// on store.FlashTargetID for the whole streamed-download duration WITHOUT
+// taking either guard, so a concurrent StartBackupFlash panic's failStuckRun
+// could in theory mark that still-in-flight download's run row failed instead
+// of the backup's own. It self-heals — the download's own FinishRun overwrites
+// the row by id once it completes — so the only real damage is a transiently
+// wrong Activity Log entry, never lost data.
+func (r *Repo) FailRunningRun(targetID, errMsg string) (int64, error) {
+	res, err := r.db.Exec(`
+		UPDATE runs SET status = 'failed', finished_at = ?, error = ?
+		WHERE target_id = ? AND status = 'running'`,
+		time.Now().Unix(), errMsg, targetID,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("FailRunningRun: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}
+
 // ReapInterruptedRuns marks any run still in 'running' as failed. It is meant to
 // be called once at startup: BombVault is a single process, so a run left in
 // 'running' is necessarily an orphan from a previous lifetime (the process
