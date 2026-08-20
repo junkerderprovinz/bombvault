@@ -2310,7 +2310,7 @@ func (h *Handler) handleSpikeCached(w http.ResponseWriter, _ *http.Request) {
 type runView struct {
 	store.Run
 	Target string `json:"target"`
-	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | ""
+	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | "everything" | ""
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
