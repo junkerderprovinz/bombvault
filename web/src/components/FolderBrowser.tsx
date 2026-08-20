@@ -164,10 +164,17 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               fifth hue). Genuine activity (the directory listing IS being
               fetched right now), matching OffsiteIndicator.tsx's own plain
               border-color: var(--accent) spinner for the identical
-              not-inside-a-button case. */}
+              not-inside-a-button case. border-accentText, not the flat
+              border-accent: a spec-compliance review measured the flat
+              accent gold at 1.61:1 in light theme here — badly under SC
+              1.4.11's 3:1 non-text-indicator minimum. This wasn't a fresh
+              regression from this task (OffsiteIndicator.tsx's own spinner,
+              the precedent this matched, had the identical unverified gap
+              already) — fixed here anyway since it's the same root cause;
+              see index.css's --accent-text comment for the fix. */}
           {loading && (
             <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
-              <span className="h-3 w-3 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+              <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
               {t("folder.loading")}
             </div>
           )}
