@@ -37,11 +37,16 @@ type Handler struct {
 	spikeAllOK  bool
 	spikeRan    bool
 
-	// login brute-force throttle: timestamps of recent failed logins. A global
-	// (not per-IP) window is enough for this single-operator LAN tool — it just
-	// slows password guessing on the optional auth gate.
+	// login brute-force throttle: timestamps of recent failed logins, keyed by
+	// client IP (see loginClientKey) so one source locking itself out can't also
+	// lock out every other client — including the legitimate operator logging in
+	// from a different address. A single shared counter would let an
+	// unauthenticated caller with no credentials permanently deny the real
+	// password from anywhere else, which is worse than having no throttle at
+	// all for the "reachable beyond the LAN, behind a reverse proxy" case this
+	// gate exists to cover (see docs/configuration.md).
 	loginMu    sync.Mutex
-	loginFails []time.Time
+	loginFails map[string][]time.Time
 }
 
 // NewHandler constructs the API handler.
