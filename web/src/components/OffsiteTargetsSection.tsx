@@ -12,6 +12,7 @@ import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { useToast } from "../lib/toast";
 
 // The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
 // target row render through Badge at this ONE shared stage, so their heights
@@ -79,49 +80,45 @@ function emptyDraft(domain: Domain): OffsiteTarget {
 // TargetTestButton probes ONE additional target. The primary editor's "Test
 // connection" only ever probes the PRIMARY target, so without this an extra
 // destination could sit broken behind that button's green verdict (issue #138).
+//
+// GlimStone follow-up pass (v8.0.0): the ok/uninit/fail verdict below moved to
+// toasts — this button is the exact near-duplicate of Settings.tsx's
+// TestConnectionButton (same ok/uninit/fail shape, just probing an additional
+// target instead of the primary), which already made this move; this button
+// was apparently just missed in that pass.
 function TargetTestButton({ id, t }: { id: string; t: T }) {
-  const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
-  const [err, setErr] = useState<string | null>(null);
+  const { push } = useToast();
+  const [busy, setBusy] = useState(false);
 
   async function go() {
-    setSt("busy");
-    setErr(null);
+    setBusy(true);
     try {
       const r = await testOffsiteTarget(id);
-      if (r.ok && r.reachable && r.initialized) setSt("ok");
-      else if (r.ok && r.reachable) setSt("uninit");
-      else {
-        setSt("fail");
-        setErr(r.error ?? null);
+      if (r.ok && r.reachable && r.initialized) {
+        push(t("offsite.testOk"), "success");
+      } else if (r.ok && r.reachable) {
+        push(t("offsite.testUninitialized"), "warn");
+      } else {
+        push(r.error ?? t("offsite.testFailed"), "fail");
       }
     } catch (e) {
-      setSt("fail");
-      setErr(e instanceof Error ? e.message : null);
+      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <span className="inline-flex flex-col items-end gap-1">
-      <Badge
-        as="button"
-        tone="neutral"
-        size={ROW_BADGE_SIZE}
-        onClick={() => void go()}
-        disabled={st === "busy"}
-        title={t("offsite.test")}
-      >
-        {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
-      </Badge>
-      {st === "ok" && <span className="text-caption text-statusOk">{t("offsite.testOk")}</span>}
-      {st === "uninit" && (
-        <span className="text-caption text-statusWarn">{t("offsite.testUninitialized")}</span>
-      )}
-      {st === "fail" && (
-        <span className="text-caption text-statusFail max-w-[18rem] wrap-break-word text-end">
-          {err ?? t("offsite.testFailed")}
-        </span>
-      )}
-    </span>
+    <Badge
+      as="button"
+      tone="neutral"
+      size={ROW_BADGE_SIZE}
+      onClick={() => void go()}
+      disabled={busy}
+      title={t("offsite.test")}
+    >
+      {busy ? t("offsite.testing") : t("offsite.targets.test")}
+    </Badge>
   );
 }
 

@@ -23,8 +23,19 @@ type T = ReturnType<typeof useT>["t"];
 // Backup button — fire-and-watch, mirroring the flash domain (see useBackupWatch:
 // the config backup runs detached on the server and the POST returns immediately,
 // so we watch the "config" progress + recorded run for the outcome).
-// ---------------------------------------------------------------------------
-
+//
+// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
+// "error" result below is deliberately NOT migrated to a toast, even though
+// this file's ConfigSettingsCard (further down) already uses useToast() for
+// its own settings save — same shared-hook reasoning as Containers.tsx's
+// BackupButton / VMs.tsx's VMBackupButton / Flash.tsx's FlashBackupButton:
+// it's driven by lib/backupWatch.ts's useBackupWatch hook (kind defaults to
+// "backup", which already self-clears after 4s — SUCCESS_CLEAR_MS,
+// effectively already toast-like), but the identical state shape also backs
+// RESTORE outcomes elsewhere, which are explicitly STICKY BY DESIGN.
+// Splitting that shared, cross-file state machine's rendering by kind is a
+// hook-level architecture change, not the local flash-swap this pass does
+// everywhere else — left as its own deliberate follow-up.
 function ConfigBackupButton({
   t,
   onBackedUp,

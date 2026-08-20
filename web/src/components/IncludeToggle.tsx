@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { setInclude } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
+import { useToast } from "../lib/toast";
 
 interface IncludeToggleProps {
   name: string;
@@ -10,9 +11,9 @@ interface IncludeToggleProps {
 
 export function IncludeToggle({ name, initial }: IncludeToggleProps) {
   const { t } = useT();
+  const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Re-seed when the parent passes a fresh value (e.g. after "Include all in
   // schedule" reloads the list). Rows are keyed by name and do not remount, so
@@ -21,18 +22,17 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
 
   async function handleChange(next: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await setInclude(name, next);
       if (res.ok) {
         setEnabled(next);
       } else {
-        // Server returned a graceful failure — revert and show the message.
-        setError(res.error ?? t("schedule.updateFailed"));
+        // Server returned a graceful failure — revert and toast the message.
+        push(res.error ?? t("schedule.updateFailed"), "fail");
       }
     } catch (err) {
-      // Network error — revert and show a brief message.
-      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
+      // Network error — revert and toast a brief message.
+      push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -47,11 +47,6 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
         onChange={(next) => void handleChange(next)}
         disabled={busy}
       />
-      {error && (
-        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
-          {error}
-        </span>
-      )}
     </div>
   );
 }

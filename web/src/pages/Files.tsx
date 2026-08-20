@@ -49,6 +49,7 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
 import { Toggle } from "../components/Toggle";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -67,9 +68,9 @@ function formatTs(unix: number | null | undefined): string {
 
 function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean }) {
   const { t } = useT();
+  const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Re-seed when the parent passes a fresh value (rows are keyed by id and do
   // not remount, so a list reload must reach the toggle).
@@ -77,16 +78,15 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 
   async function handleChange(next: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await patchFileSet(id, { enabled: next });
       if (res.ok) {
         setEnabled(next);
       } else {
-        setError(res.error ?? t("schedule.updateFailed"));
+        push(res.error ?? t("schedule.updateFailed"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
+      push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -101,11 +101,6 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         onChange={(next) => void handleChange(next)}
         disabled={busy}
       />
-      {error && (
-        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
-          {error}
-        </span>
-      )}
     </div>
   );
 }
@@ -114,6 +109,17 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 // Backup button (fire-and-watch, mirrors VMBackupButton)
 // ---------------------------------------------------------------------------
 
+// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
+// "error" result below is deliberately NOT migrated to a toast, unlike this
+// file's other flash sites (FileSetEnabledToggle/FileSetDialog above). Exact
+// same reasoning as Containers.tsx's BackupButton / VMs.tsx's VMBackupButton:
+// it's driven by the SHARED lib/backupWatch.ts useBackupWatch hook (kind
+// defaults to "backup" here, which already self-clears after 4s —
+// SUCCESS_CLEAR_MS, effectively already toast-like), but the identical state
+// shape also backs RESTORE outcomes elsewhere, which are explicitly STICKY BY
+// DESIGN. Splitting that shared, cross-file state machine's rendering by kind
+// is a hook-level architecture change, not the local flash-swap this pass
+// does everywhere else — left as its own deliberate follow-up.
 function FileSetBackupButton({
   set,
   t,
@@ -743,6 +749,7 @@ function FileSetDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? presetSeed?.name ?? "");
   const [path, setPath] = useState(initial?.path ?? presetSeed?.path ?? "");
   const [excludesText, setExcludesText] = useState(
@@ -750,14 +757,16 @@ function FileSetDialog({
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
 
+  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a toast
+  // — same shape as Settings.tsx's CloudCredSetsCard.save() (a dialog editor
+  // that closes on success via onSaved(), so a toast is the only outcome
+  // notice left, success or failure).
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
-    setError(null);
     const excludes = excludesText
       .split("\n")
       .map((line) => line.trim())
@@ -767,12 +776,13 @@ function FileSetDialog({
         ? await patchFileSet(initial.id, { name: name.trim(), path: path.trim(), excludes, enabled })
         : await createFileSet({ name: name.trim(), path: path.trim(), excludes, enabled });
       if (res.ok) {
+        push(t("settings.saved"), "success");
         onSaved();
       } else {
-        setError(res.error ?? t("settings.error"));
+        push(res.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setSaving(false);
     }
@@ -851,8 +861,6 @@ function FileSetDialog({
           />
           {t("files.enabled")}
         </label>
-
-        {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button

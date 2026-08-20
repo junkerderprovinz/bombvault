@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useT } from "../lib/i18n";
 import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
 import { Badge } from "./Badge";
+import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
 // Per-item schedule override (#121)
@@ -30,11 +31,10 @@ export function ItemScheduleOverride({
   onSave: (cadence: string) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const { t, lang } = useT();
+  const { push } = useToast();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // A non-empty, non-"off" cadence is an active override; anything else means the
   // item follows its domain schedule.
@@ -43,20 +43,18 @@ export function ItemScheduleOverride({
 
   async function handleSave() {
     setBusy(true);
-    setError(null);
-    setSaved(false);
     try {
       // Normalize "off" to an empty override: the backend treats "off" as a valid
       // cadence, but for a per-item override the intent of "off" is "no override".
       const toStore = value.trim() === "off" ? "" : value.trim();
       const res = await onSave(toStore);
       if (res.ok) {
-        setSaved(true);
+        push(t("schedule.overrideSaved"), "success");
       } else {
-        setError(res.error ?? t("schedule.updateFailed"));
+        push(res.error ?? t("schedule.updateFailed"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
+      push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -80,10 +78,7 @@ export function ItemScheduleOverride({
           <CadenceBuilder
             label={`${t("schedule.overrideTitle")}: ${name}`}
             value={value}
-            onChange={(v) => {
-              setValue(v);
-              setSaved(false);
-            }}
+            onChange={setValue}
           />
           <p className="text-xs text-carbon-textMuted">{t("schedule.overrideHint")}</p>
           <div className="flex items-center gap-3">
@@ -94,8 +89,6 @@ export function ItemScheduleOverride({
             >
               {busy ? t("common.saving") : t("schedule.overrideSave")}
             </button>
-            {saved && <span className="text-xs text-statusOk">{t("schedule.overrideSaved")}</span>}
-            {error && <span className="text-xs text-statusFail">{error}</span>}
           </div>
         </div>
       )}
