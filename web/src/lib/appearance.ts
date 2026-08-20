@@ -50,6 +50,37 @@ export const RAINBOW: string[] = [
   "#FF7EB6", // magenta 30
 ];
 
+/**
+ * KNOWN LIMITATION, documented on purpose (Phase 2 whole-branch review item
+ * 3, not fixed here — same "accepted, not a bug" style as index.css's own
+ * --status-warn-text KNOWN LIMITATION comment, for the sibling collision
+ * that one documents): positions 0 and 3 above are byte-identical, in DARK
+ * theme, to two of index.css's fixed state hues — #FF8389 (RAINBOW[0]) is
+ * dark theme's --status-fail-text/--status-fail-solid; #6FDC8C (RAINBOW[3])
+ * is dark theme's --status-ok-text/--status-ok-solid. A rainbow-hued row can
+ * therefore coincidentally render in exactly the same colour as an unrelated
+ * status chip elsewhere on the page — a healthy container washed in the same
+ * red a "failed" status chip uses, say. Light theme is NOT affected the same
+ * way: its own status hues (--status-fail-text #da1e28/--status-fail-solid
+ * #da1e28, --status-ok-text #198038/--status-ok-solid #24a148) are Carbon
+ * light-theme counterparts, not this fixed palette, so none of them match
+ * RAINBOW[0]/[3] there.
+ *
+ * NOT a contrast/accessibility bug: every status chip still carries its own
+ * text, so colour is never the only signal (SC 1.4.1 is not in play) — this
+ * is a coherence gap, not a WCAG failure.
+ *
+ * NOT fixed by moving either position: RAINBOW is meant to be byte-identical
+ * across every app sharing the GlimStone design language
+ * (glimstone/reference/appearance.ts's own RAINBOW — verified identical,
+ * same eight hexes in the same order). "Someone who set a colour in one app
+ * finds the same colour in the next" is the whole point of a SHARED palette;
+ * a BombVault-local shift here would quietly break that guarantee for this
+ * one app while every other adopter's palette stayed put. Accepted per the
+ * shared-palette contract, left here for whichever future task next touches
+ * either the palette or the state-hue tokens.
+ */
+
 export interface RainbowState {
   on: boolean;
   /** Rest neutral, colour on hover, keep the colour on the active item. */
