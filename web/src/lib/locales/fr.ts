@@ -157,6 +157,7 @@ const fr: Partial<Translations> = {
   "settings.encryptionWarning":
     "Le chiffrement est fixé par dépôt à l'initialisation. Le modifier nécessite un nouveau chemin vide.",
   "settings.paths": "Chemins de sauvegarde",
+  "settings.pathsHint": "Sous-chemins relatifs sous la racine du montage hôte ({root}). Cliquez sur Parcourir pour naviguer dans les dossiers, ou saisissez un chemin directement.",
   "settings.containersPath": "Chemin des conteneurs",
   "settings.vmsPath": "Chemin des VMs",
   "settings.flashPath": "Chemin Flash",
@@ -173,6 +174,7 @@ const fr: Partial<Translations> = {
   "offsite.replicating": "Réplication…",
   "offsite.replicateFailed": "Échec de la réplication",
   "settings.domains": "Domaines",
+  "settings.domainsHint": "Activez ou désactivez chaque domaine de sauvegarde. Activer les VM ou Flash fait apparaître leur onglet dans la barre latérale.",
   "settings.containersEnabled": "Conteneurs",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

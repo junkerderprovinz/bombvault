@@ -49,6 +49,7 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
 import { Toggle } from "../components/Toggle";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -67,9 +68,9 @@ function formatTs(unix: number | null | undefined): string {
 
 function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean }) {
   const { t } = useT();
+  const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Re-seed when the parent passes a fresh value (rows are keyed by id and do
   // not remount, so a list reload must reach the toggle).
@@ -77,16 +78,15 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 
   async function handleChange(next: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await patchFileSet(id, { enabled: next });
       if (res.ok) {
         setEnabled(next);
       } else {
-        setError(res.error ?? t("schedule.updateFailed"));
+        push(res.error ?? t("schedule.updateFailed"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
+      push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -101,11 +101,6 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         onChange={(next) => void handleChange(next)}
         disabled={busy}
       />
-      {error && (
-        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
-          {error}
-        </span>
-      )}
     </div>
   );
 }
@@ -114,6 +109,17 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 // Backup button (fire-and-watch, mirrors VMBackupButton)
 // ---------------------------------------------------------------------------
 
+// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
+// "error" result below is deliberately NOT migrated to a toast, unlike this
+// file's other flash sites (FileSetEnabledToggle/FileSetDialog above). Exact
+// same reasoning as Containers.tsx's BackupButton / VMs.tsx's VMBackupButton:
+// it's driven by the SHARED lib/backupWatch.ts useBackupWatch hook (kind
+// defaults to "backup" here, which already self-clears after 4s —
+// SUCCESS_CLEAR_MS, effectively already toast-like), but the identical state
+// shape also backs RESTORE outcomes elsewhere, which are explicitly STICKY BY
+// DESIGN. Splitting that shared, cross-file state machine's rendering by kind
+// is a hook-level architecture change, not the local flash-swap this pass
+// does everywhere else — left as its own deliberate follow-up.
 function FileSetBackupButton({
   set,
   t,
@@ -512,19 +518,18 @@ function FileSetSnapshotRow({
   // any global activity (mirrors the VM panel's rationale).
   const busy = progressMap[`files:${set.name}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
-  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
-    setDeleteErr(null);
     try {
       const res = await deleteSnapshot("files", snap.id, source);
       if (res.ok) onDeleted();
-      else setDeleteErr(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setDeleting(false);
     }
@@ -565,7 +570,6 @@ function FileSetSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -589,10 +593,18 @@ function FileSetRestorePanel({
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
+  // Section-load error (list failed to load) — NOT migrated to a toast
+  // (GlimStone follow-up pass, v8.0.0 audit note): it replaces the whole
+  // snapshot-list content area, the same "the section failed to load"
+  // structural condition as Files()'s own page-level `error`, not a one-shot
+  // button-click confirmation. handleDeleteAll's own one-shot failure below
+  // is the bug fix — it used to share this exact state slot (see comment
+  // there).
   const [error, setError] = useState<string | null>(null);
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -608,6 +620,15 @@ function FileSetRestorePanel({
       .finally(() => setLoading(false));
   }, [open, set.id, source, reloadTick]);
 
+  // BUG FIX (GlimStone follow-up pass, v8.0.0): "Delete all" is a one-shot
+  // action failure — it used to be routed through the section-load `error`
+  // above via setError(), but the failure branch below also bumps
+  // reloadTick to refresh the (still-existing) snapshot list, which re-fires
+  // the load effect above and clears `error` again almost immediately
+  // (setError(null) at the top of that effect) — so a delete-all failure was
+  // already near-invisible before this fix, the EXACT same dead-error-
+  // display bug 43c6b49 found and fixed in VMs.tsx's
+  // VMRestorePanel.handleDeleteAll. A toast survives that reload.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25
@@ -618,11 +639,10 @@ function FileSetRestorePanel({
     // VMs.tsx's deleteAllConfirm.
     if (!(await confirm(t("files.deleteBackupsConfirm")))) return;
     setDeletingAll(true);
-    setError(null);
     deleteFileSetBackups(set.id)
       .then((res) => {
         if (!res.ok) {
-          setError(res.error ?? "Failed to delete backups");
+          push(res.error ?? "Failed to delete backups", "fail");
           setReloadTick((n) => n + 1);
           return;
         }
@@ -631,7 +651,7 @@ function FileSetRestorePanel({
         onSetsChanged();
       })
       .catch(() => {
-        setError("Failed to delete backups");
+        push("Failed to delete backups", "fail");
         setReloadTick((n) => n + 1);
       })
       .finally(() => setDeletingAll(false));
@@ -743,6 +763,7 @@ function FileSetDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? presetSeed?.name ?? "");
   const [path, setPath] = useState(initial?.path ?? presetSeed?.path ?? "");
   const [excludesText, setExcludesText] = useState(
@@ -750,14 +771,16 @@ function FileSetDialog({
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
 
+  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a toast
+  // — same shape as Settings.tsx's CloudCredSetsCard.save() (a dialog editor
+  // that closes on success via onSaved(), so a toast is the only outcome
+  // notice left, success or failure).
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
-    setError(null);
     const excludes = excludesText
       .split("\n")
       .map((line) => line.trim())
@@ -767,12 +790,13 @@ function FileSetDialog({
         ? await patchFileSet(initial.id, { name: name.trim(), path: path.trim(), excludes, enabled })
         : await createFileSet({ name: name.trim(), path: path.trim(), excludes, enabled });
       if (res.ok) {
+        push(t("settings.saved"), "success");
         onSaved();
       } else {
-        setError(res.error ?? t("settings.error"));
+        push(res.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setSaving(false);
     }
@@ -792,8 +816,12 @@ function FileSetDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">
-          {initial ? t("files.editSet") : t("files.addSet")}
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby pointing at
+            this heading, so there's no id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{initial ? t("files.editSet") : t("files.addSet")}</Badge>
         </h2>
 
         {/* Name — feeds the restic tag, so the server validates it strictly. */}
@@ -848,8 +876,6 @@ function FileSetDialog({
           {t("files.enabled")}
         </label>
 
-        {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
-
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             onClick={onClose}
@@ -900,7 +926,7 @@ function FileSetRow({
   const progress = progressMap[`files:${set.name}`];
   const running = anyActive(progressMap);
   const [removing, setRemoving] = useState(false);
-  const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   const noPath = set.path === "";
@@ -909,13 +935,12 @@ function FileSetRow({
   async function handleRemove() {
     if (!(await confirm(t("files.deleteSetConfirm")))) return;
     setRemoving(true);
-    setRemoveErr(null);
     try {
       const res = await deleteFileSet(set.id);
       if (res.ok) onRefresh();
-      else setRemoveErr(res.error ?? "Remove failed");
+      else push(res.error ?? "Remove failed", "fail");
     } catch (err) {
-      setRemoveErr(err instanceof Error ? err.message : "Remove failed");
+      push(err instanceof Error ? err.message : "Remove failed", "fail");
     } finally {
       setRemoving(false);
     }
@@ -998,7 +1023,6 @@ function FileSetRow({
           >
             {removing ? t("dashboard.checking") : t("files.deleteSet")}
           </button>
-          {removeErr && <span className="text-xs text-statusFail">{removeErr}</span>}
         </div>
         <div className="ms-auto flex flex-col items-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />

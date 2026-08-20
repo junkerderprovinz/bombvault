@@ -182,17 +182,16 @@ function meshStatusLabelKey(status: string): TranslationKey {
 function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChanged: () => void }) {
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
 
   async function handleAccept() {
     setBusy(true);
-    setError(null);
     try {
       const res = await acceptMeshOffer(offer.id, domain);
       if (res.ok) onChanged();
-      else setError(res.error ?? t("fleet.mesh.saveError"));
+      else push(res.error ?? t("fleet.mesh.saveError"), "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("fleet.mesh.saveError"));
+      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
     } finally {
       setBusy(false);
     }
@@ -200,13 +199,12 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
 
   async function handleDecline() {
     setBusy(true);
-    setError(null);
     try {
       const res = await declineMeshOffer(offer.id);
       if (res.ok) onChanged();
-      else setError(res.error ?? t("fleet.mesh.saveError"));
+      else push(res.error ?? t("fleet.mesh.saveError"), "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("fleet.mesh.saveError"));
+      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
     } finally {
       setBusy(false);
     }
@@ -252,7 +250,6 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
           </button>
         </div>
       )}
-      {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
     </div>
   );
 }
@@ -265,22 +262,29 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   const [domain, setDomain] = useState<string>("containers");
   const [baseUrl, setBaseUrl] = useState("");
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
   const [snippet, setSnippet] = useState<(DeploySnippetData & { repo: string }) | null>(null);
 
+  // GlimStone follow-up pass (v8.0.0): the form-stage "error" flash below is
+  // now a toast (matches this file's already-migrated CopyBlock/MeshOfferRow
+  // shape) — the client-side baseUrlRequired check is reachable through the
+  // UI (Send isn't disabled while baseUrl is blank), so it gets the same
+  // push() treatment as the API failure. The POST-send `snippet` view further
+  // down is deliberately UNCHANGED: "Offer sent" + the docker-run/compose
+  // blocks are a persistent reference the user copies down, not a one-shot
+  // ping — same reasoning as ExportButton/RestoreProgress's reference values.
   async function handleSend() {
     if (baseUrl.trim() === "") {
-      setError(t("fleet.mesh.baseUrlRequired"));
+      push(t("fleet.mesh.baseUrlRequired"), "fail");
       return;
     }
     setSending(true);
-    setError(null);
     try {
       const res = await proposeMeshOffer(peer.id, domain, baseUrl.trim());
       if (res.ok && res.snippet) setSnippet(res.snippet);
-      else setError(res.error ?? t("fleet.mesh.saveError"));
+      else push(res.error ?? t("fleet.mesh.saveError"), "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("fleet.mesh.saveError"));
+      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
     } finally {
       setSending(false);
     }
@@ -298,7 +302,13 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">{t("fleet.mesh.proposeTitle")}</h2>
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby, so there's no
+            id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
+        </h2>
         <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
 
         {!snippet ? (
@@ -325,7 +335,6 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
               />
               <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
             </div>
-            {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
             <div className="flex items-center justify-end gap-2 pt-1">
               <button
                 onClick={onClose}
@@ -389,7 +398,7 @@ function FleetPeerCard({
   const [open, setOpen] = useState(false);
   const [polling, setPolling] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const { push } = useToast();
   const [showPropose, setShowPropose] = useState(false);
   // Reversible action: removing a monitoring entry never contacts the peer
   // instance (re-addable in one step), so per the design-language's
@@ -400,11 +409,23 @@ function FleetPeerCard({
   // Task 7).
   const [confirmRemove, setConfirmRemove] = useState(false);
 
+  // BUG FIX (found alongside this card's handleRemove migration below,
+  // GlimStone follow-up pass v8.0.0): this never checked pollFleetPeer's
+  // `res.ok`, and had no catch at all — a server-reported poll failure was
+  // silently ignored, and a network-level failure threw past the missing
+  // catch as an unhandled rejection, skipping onRefresh() with zero feedback
+  // to the user either way. Now both are surfaced; onRefresh() still only
+  // runs when the request itself resolved (preserving the original "reload
+  // only on a real response" behavior), so the persistent pollTone/pollLabel
+  // badge below picks up the server-recorded outcome exactly as before.
   async function handlePoll() {
     setPolling(true);
     try {
-      await pollFleetPeer(peer.id);
+      const res = await pollFleetPeer(peer.id);
+      if (!res.ok) push(res.error ?? t("fleet.saveError"), "fail");
       onRefresh();
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
     } finally {
       setPolling(false);
     }
@@ -412,13 +433,12 @@ function FleetPeerCard({
 
   async function handleRemove() {
     setRemoving(true);
-    setRemoveErr(null);
     try {
       const res = await deleteFleetPeer(peer.id);
       if (res.ok) onRefresh();
-      else setRemoveErr(res.error ?? t("fleet.saveError"));
+      else push(res.error ?? t("fleet.saveError"), "fail");
     } catch (err) {
-      setRemoveErr(err instanceof Error ? err.message : t("fleet.saveError"));
+      push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
     } finally {
       setRemoving(false);
       setConfirmRemove(false);
@@ -521,7 +541,6 @@ function FleetPeerCard({
           )}
         </div>
       </div>
-      {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}
 
       {open && (
         <div className="rounded-card bg-carbon-background px-3 py-2">
@@ -550,28 +569,34 @@ function FleetDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [url, setUrl] = useState(initial?.url ?? "");
   const [token, setToken] = useState("");
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const revealToken = useReveal();
 
   const editing = initial !== null;
   const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
 
+  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a
+  // toast — same shape as Files.tsx's FileSetDialog.handleSave (a dialog
+  // editor that closes on success via onSaved(), so a toast is the only
+  // outcome notice left, success or failure). The two client-side
+  // nameRequired/urlRequired checks are effectively unreachable through the
+  // UI (canSave already disables Save for the same conditions), but get the
+  // same push() treatment as the API failure below for consistency.
   async function handleSave() {
     if (name.trim() === "") {
-      setError(t("fleet.nameRequired"));
+      push(t("fleet.nameRequired"), "fail");
       return;
     }
     if (url.trim() === "") {
-      setError(t("fleet.urlRequired"));
+      push(t("fleet.urlRequired"), "fail");
       return;
     }
     setSaving(true);
-    setError(null);
     const input: FleetPeerInput = {
       name: name.trim(),
       url: url.trim(),
@@ -581,10 +606,14 @@ function FleetDialog({
     };
     try {
       const res = editing ? await updateFleetPeer(initial.id, input) : await createFleetPeer(input);
-      if (res.ok) onSaved();
-      else setError(res.error ?? t("fleet.saveError"));
+      if (res.ok) {
+        push(t("settings.saved"), "success");
+        onSaved();
+      } else {
+        push(res.error ?? t("fleet.saveError"), "fail");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("fleet.saveError"));
+      push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
     } finally {
       setSaving(false);
     }
@@ -605,8 +634,12 @@ function FleetDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">
-          {editing ? t("fleet.editTitle") : t("fleet.addTitle")}
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby, so there's no
+            id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
         </h2>
 
         <div className="flex flex-col gap-1.5">
@@ -662,8 +695,6 @@ function FleetDialog({
           />
           {t("fleet.enabledLabel")}
         </label>
-
-        {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button

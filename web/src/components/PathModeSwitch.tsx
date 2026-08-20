@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Settings, PrimaryRemoteDomain } from "../lib/api";
 import { FolderBrowser } from "./FolderBrowser";
 import { OffsiteWizard } from "./OffsiteWizard";
+import { Selector } from "./Selector";
 import { useT } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
@@ -17,6 +18,32 @@ import { useT } from "../lib/i18n";
 // SAME dialog off-site destinations already use — to configure bandwidth
 // limits, append-only protection and a growth-budget alarm for it, in place
 // rather than duplicated.
+//
+// The Local/Remote pair itself renders on the shared Selector component
+// (GlimStone form-engine Phase 2, Task 3 follow-up — this file landed via an
+// unrelated PR that merged around the same time as Task 3 and never got
+// swept into it). Was two hand-rolled `<button>`s sharing one
+// `bg-carbon-background` pill behind them, styled independently of
+// Selector's twelve other call sites and — because a plain `<button>`'s
+// focus/hover/roving-tabindex behaviour isn't free the way Selector's is —
+// the one segmented control in the app with no arrow-key navigation. Same
+// shape as SourceToggle.tsx's Local/Off-site toggle (a bare two-item
+// `select="one"` strip, no leading caption, `plain`/`hue` left at their
+// defaults), so this follows that call site rather than the captioned
+// SortControl/ChipFilter ones: the shared wrapper pill is dropped exactly
+// as SourceToggle's own migration dropped its shared `bg-carbon-surface2`
+// pill (Selector.tsx's own header comment, point 2) — Selector's default
+// `plain={false}` chip look already carries that visual weight per segment,
+// nothing else needs to. `label` doubles as the strip's accessible name
+// (Selector's `label` prop is required and never rendered as visible text
+// here, same as SourceToggle's own `t("source.label")`) — reusing the
+// caller's own per-domain string ("Containers path", "VMs path", ...)
+// rather than adding one new generic i18n key shared by all five call
+// sites, since that string is already translated everywhere and gives each
+// instance a more specific accessible name than a single shared "Path mode"
+// ever could. No `disabled` prop existed on this component before the
+// migration and none was added — the original two buttons were never
+// wired to any busy/disabled state, so there is nothing to carry over.
 // ---------------------------------------------------------------------------
 
 // Mirrors restic's remoteRepoRe (internal/restic/restic.go): a leading
@@ -69,22 +96,19 @@ export function PathModeSwitch({
     if (isRemotePath(value)) onChange(""); // a remote URL is meaningless as a local subpath
   }
 
-  const pillCls = (active: boolean) =>
-    `rounded-control px-2.5 py-1 text-xs transition-colors ${
-      active ? "bg-accent text-accentContrast" : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover"
-    }`;
-
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-end gap-2 -mb-1">
-        <span className="inline-flex items-center gap-1 rounded-control bg-carbon-background p-0.5">
-          <button type="button" onClick={switchToLocal} className={pillCls(!remoteMode)}>
-            {t("settings.pathMode.local")}
-          </button>
-          <button type="button" onClick={() => setRemoteMode(true)} className={pillCls(remoteMode)}>
-            {t("settings.pathMode.remote")}
-          </button>
-        </span>
+        <Selector
+          items={[
+            { id: "local", label: t("settings.pathMode.local") },
+            { id: "remote", label: t("settings.pathMode.remote") },
+          ]}
+          label={label}
+          select="one"
+          active={remoteMode ? "remote" : "local"}
+          onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
+        />
       </div>
 
       {remoteMode ? (

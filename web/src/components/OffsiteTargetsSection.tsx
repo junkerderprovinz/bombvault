@@ -12,6 +12,7 @@ import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { useToast } from "../lib/toast";
 
 // The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
 // target row render through Badge at this ONE shared stage, so their heights
@@ -39,7 +40,11 @@ const ROW_BADGE_SIZE: BadgeSize = "medium";
 
 type Domain = "containers" | "vms" | "flash" | "files";
 type T = ReturnType<typeof useT>["t"];
-type SaveState = "idle" | "saving" | "error";
+// "error" was removed from this type — the toast migration below (GlimStone
+// follow-up pass, v8.0.0) replaced that inline-flash outcome with a real
+// toast (push(), further down), so setSaveState now only ever sets
+// "idle"/"saving".
+type SaveState = "idle" | "saving";
 
 // The restore-readable storage-class whitelist (mirrors CloudCard); "" renders as
 // the provider-default option.
@@ -79,60 +84,56 @@ function emptyDraft(domain: Domain): OffsiteTarget {
 // TargetTestButton probes ONE additional target. The primary editor's "Test
 // connection" only ever probes the PRIMARY target, so without this an extra
 // destination could sit broken behind that button's green verdict (issue #138).
+//
+// GlimStone follow-up pass (v8.0.0): the ok/uninit/fail verdict below moved to
+// toasts — this button is the exact near-duplicate of Settings.tsx's
+// TestConnectionButton (same ok/uninit/fail shape, just probing an additional
+// target instead of the primary), which already made this move; this button
+// was apparently just missed in that pass.
 function TargetTestButton({ id, t }: { id: string; t: T }) {
-  const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
-  const [err, setErr] = useState<string | null>(null);
+  const { push } = useToast();
+  const [busy, setBusy] = useState(false);
 
   async function go() {
-    setSt("busy");
-    setErr(null);
+    setBusy(true);
     try {
       const r = await testOffsiteTarget(id);
-      if (r.ok && r.reachable && r.initialized) setSt("ok");
-      else if (r.ok && r.reachable) setSt("uninit");
-      else {
-        setSt("fail");
-        setErr(r.error ?? null);
+      if (r.ok && r.reachable && r.initialized) {
+        push(t("offsite.testOk"), "success");
+      } else if (r.ok && r.reachable) {
+        push(t("offsite.testUninitialized"), "warn");
+      } else {
+        push(r.error ?? t("offsite.testFailed"), "fail");
       }
     } catch (e) {
-      setSt("fail");
-      setErr(e instanceof Error ? e.message : null);
+      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <span className="inline-flex flex-col items-end gap-1">
-      <Badge
-        as="button"
-        tone="neutral"
-        size={ROW_BADGE_SIZE}
-        onClick={() => void go()}
-        disabled={st === "busy"}
-        title={t("offsite.test")}
-      >
-        {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
-      </Badge>
-      {st === "ok" && <span className="text-caption text-statusOk">{t("offsite.testOk")}</span>}
-      {st === "uninit" && (
-        <span className="text-caption text-statusWarn">{t("offsite.testUninitialized")}</span>
-      )}
-      {st === "fail" && (
-        <span className="text-caption text-statusFail max-w-[18rem] wrap-break-word text-end">
-          {err ?? t("offsite.testFailed")}
-        </span>
-      )}
-    </span>
+    <Badge
+      as="button"
+      tone="neutral"
+      size={ROW_BADGE_SIZE}
+      onClick={() => void go()}
+      disabled={busy}
+      title={t("offsite.test")}
+    >
+      {busy ? t("offsite.testing") : t("offsite.targets.test")}
+    </Badge>
   );
 }
 
 export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
+  const { push } = useToast();
   const [targets, setTargets] = useState<OffsiteTarget[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   // The target being edited: null = editor closed; id "" = a new target.
   const [draft, setDraft] = useState<OffsiteTarget | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [saveErr, setSaveErr] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   // Additional named credential sets (#141 stage 2) this target's CredsRef can
@@ -167,30 +168,32 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
   function openNew() {
     setDraft(emptyDraft(domain));
     setSaveState("idle");
-    setSaveErr(null);
   }
 
   function openEdit(tgt: OffsiteTarget) {
     setDraft({ ...tgt });
     setSaveState("idle");
-    setSaveErr(null);
   }
 
   function closeEditor() {
     setDraft(null);
     setSaveState("idle");
-    setSaveErr(null);
   }
 
+  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a
+  // toast — same shape as Files.tsx's FileSetDialog.handleSave (a dialog
+  // editor that closes on success via closeEditor(), so a toast is the only
+  // outcome notice left, success or failure). The client-side repoRequired
+  // check is reachable through the UI (unlike Fleet.tsx/Receiver.tsx's own
+  // dialogs, the Save button here isn't disabled while repo is blank), so it
+  // gets the same push() treatment as the API failure below it.
   async function saveDraft() {
     if (!draft) return;
     if (draft.repo.trim() === "") {
-      setSaveState("error");
-      setSaveErr(t("offsite.targets.repoRequired"));
+      push(t("offsite.targets.repoRequired"), "fail");
       return;
     }
     setSaveState("saving");
-    setSaveErr(null);
     try {
       if (draft.id === "") {
         // New target: give it a sortOrder strictly greater than 0 (and above any
@@ -224,22 +227,34 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
         });
         if (!r.ok) throw new Error(r.error ?? t("settings.error"));
       }
+      push(t("settings.saved"), "success");
       closeEditor();
       refresh();
     } catch (e) {
-      setSaveState("error");
-      setSaveErr(e instanceof Error ? e.message : t("settings.error"));
+      setSaveState("idle");
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
     }
   }
 
+  // BUG FIX (found alongside the saveDraft migration above, GlimStone
+  // follow-up pass v8.0.0): deleteOffsiteTarget resolves {ok:false, error}
+  // rather than throwing on a server-reported failure (e.g. an append-only/
+  // immutable target the backend refuses to remove) — this never checked
+  // `res.ok`, so a refused delete was silently treated as a success:
+  // confirmRemove closed and refresh() ran, with nothing telling the user why
+  // the target reappeared in the reloaded list. Now checked and surfaced.
   async function remove(id: string) {
     setRemovingId(id);
     try {
-      await deleteOffsiteTarget(id);
+      const r = await deleteOffsiteTarget(id);
+      if (!r.ok) {
+        push(r.error ?? t("settings.error"), "fail");
+        return;
+      }
       setConfirmRemove(null);
       refresh();
-    } catch {
-      /* best-effort: refresh() below re-syncs the visible list */
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
     } finally {
       setRemovingId(null);
     }
@@ -455,9 +470,6 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
             >
               {t("offsite.targets.cancel")}
             </button>
-            {saveState === "error" && saveErr && (
-              <span className="text-xs text-statusFail wrap-break-word">{saveErr}</span>
-            )}
           </div>
         </div>
       )}

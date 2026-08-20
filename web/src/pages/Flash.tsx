@@ -9,6 +9,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -16,6 +17,17 @@ type T = ReturnType<typeof useT>["t"];
 // Backup button
 // ---------------------------------------------------------------------------
 
+// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
+// "error" result below is deliberately NOT migrated to a toast. Same shared-
+// hook reasoning as Containers.tsx's BackupButton / VMs.tsx's VMBackupButton
+// / Config.tsx's ConfigBackupButton: it's driven by lib/backupWatch.ts's
+// useBackupWatch hook (kind defaults to "backup", which already self-clears
+// after 4s — SUCCESS_CLEAR_MS, effectively already toast-like), but the
+// identical state shape also backs RESTORE outcomes elsewhere, which are
+// explicitly STICKY BY DESIGN. Splitting that shared, cross-file state
+// machine's rendering by kind is a hook-level architecture change, not the
+// local flash-swap this pass does everywhere else — left as its own
+// deliberate follow-up.
 function FlashBackupButton({
   t,
   onBackedUp,
@@ -94,20 +106,19 @@ const DOWNLOAD_PREPARING_MS = 20_000;
 
 function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; source: RepoSource; onDeleted: () => void; t: T }) {
   const [deleting, setDeleting] = useState(false);
-  const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
-    setDeleteErr(null);
     try {
       const res = await deleteSnapshot("flash", snap.id, source);
       if (res.ok) onDeleted();
-      else setDeleteErr(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setDeleting(false);
     }
@@ -160,7 +171,6 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );

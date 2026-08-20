@@ -156,6 +156,7 @@ const ro: Partial<Translations> = {
   "settings.encryptionWarning":
     "Criptarea este fixată pe depozit la momentul inițializării. Modificarea necesită o cale nouă și goală.",
   "settings.paths": "Căi de copiere de rezervă",
+  "settings.pathsHint": "Subcăi relative sub rădăcina montării gazdei ({root}). Apasă pe Răsfoiește pentru a naviga prin directoare, sau introdu o cale direct.",
   "settings.containersPath": "Cale containere",
   "settings.vmsPath": "Cale VM-uri",
   "settings.flashPath": "Cale Flash",
@@ -172,6 +173,7 @@ const ro: Partial<Translations> = {
   "offsite.replicating": "Se replică…",
   "offsite.replicateFailed": "Replicarea a eșuat",
   "settings.domains": "Domenii",
+  "settings.domainsHint": "Activează sau dezactivează fiecare domeniu de backup separat. Activarea VM-urilor sau Flash dezvăluie fila sa în bara laterală.",
   "settings.containersEnabled": "Containere",
   "settings.vmsEnabled": "VM-uri",
   "settings.flashEnabled": "Flash",

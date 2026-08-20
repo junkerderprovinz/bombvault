@@ -156,6 +156,7 @@ const pt: Partial<Translations> = {
   "settings.encryptionWarning":
     "A encriptação é definida por repositório no momento da inicialização. Alterá-la requer um novo caminho vazio.",
   "settings.paths": "Caminhos de backup",
+  "settings.pathsHint": "Subcaminhos relativos sob a raiz do mount do host ({root}). Clique em Procurar para navegar pelos diretórios ou digite um caminho diretamente.",
   "settings.containersPath": "Caminho dos containers",
   "settings.vmsPath": "Caminho das VMs",
   "settings.flashPath": "Caminho Flash",
@@ -172,6 +173,7 @@ const pt: Partial<Translations> = {
   "offsite.replicating": "Replicando…",
   "offsite.replicateFailed": "Falha na replicação",
   "settings.domains": "Domínios",
+  "settings.domainsHint": "Ative ou desative cada domínio de backup. Ativar VMs ou Flash revela sua aba na barra lateral.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

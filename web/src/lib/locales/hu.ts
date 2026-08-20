@@ -157,6 +157,7 @@ const hu: Partial<Translations> = {
   "settings.encryptionWarning":
     "A titkosítás az adattár inicializálásakor rögzül. A módosítás új, üres elérési utat igényel.",
   "settings.paths": "Mentési útvonalak",
+  "settings.pathsHint": "Relatív alútvonalak a gazdagép csatolási gyökere alatt ({root}). Kattints a Tallózás gombra a könyvtárak közötti navigáláshoz, vagy írj be egy útvonalat közvetlenül.",
   "settings.containersPath": "Konténerek útvonala",
   "settings.vmsPath": "VM-ek útvonala",
   "settings.flashPath": "Flash útvonala",
@@ -173,6 +174,7 @@ const hu: Partial<Translations> = {
   "offsite.replicating": "Replikálás…",
   "offsite.replicateFailed": "A replikálás sikertelen",
   "settings.domains": "Tartományok",
+  "settings.domainsHint": "Kapcsold be vagy ki egyenként az egyes biztonsági mentési tartományokat. A VM-ek vagy a Flash bekapcsolása megjeleníti a hozzá tartozó lapot az oldalsávban.",
   "settings.containersEnabled": "Konténerek",
   "settings.vmsEnabled": "VM-ek",
   "settings.flashEnabled": "Flash",

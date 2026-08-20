@@ -157,6 +157,7 @@ const ar: Partial<Translations> = {
   "settings.encryptionWarning":
     "التشفير ثابت لكل مستودع عند التهيئة. تغييره يتطلب مساراً فارغاً جديداً.",
   "settings.paths": "مسارات النسخ الاحتياطي",
+  "settings.pathsHint": "مسارات فرعية نسبية ضمن جذر نقطة تركيب المضيف ({root}). انقر على استعراض للتنقل بين المجلدات، أو اكتب المسار مباشرة.",
   "settings.containersPath": "مسار Containers",
   "settings.vmsPath": "مسار VMs",
   "settings.flashPath": "مسار Flash",
@@ -173,6 +174,7 @@ const ar: Partial<Translations> = {
   "offsite.replicating": "جارٍ النسخ…",
   "offsite.replicateFailed": "فشل النسخ",
   "settings.domains": "النطاقات",
+  "settings.domainsHint": "قم بتفعيل أو إلغاء تفعيل كل نطاق نسخ احتياطي على حدة. تفعيل الأجهزة الافتراضية أو Flash يُظهر علامة تبويبه في الشريط الجانبي.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

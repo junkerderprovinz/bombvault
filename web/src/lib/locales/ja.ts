@@ -157,6 +157,7 @@ const ja: Partial<Translations> = {
   "settings.encryptionWarning":
     "暗号化は初期化時にリポジトリに対して固定されます。変更するには新しい空のパスが必要です。",
   "settings.paths": "バックアップパス",
+  "settings.pathsHint": "ホストマウントのルート（{root}）配下の相対サブパスです。参照をクリックしてディレクトリを移動するか、パスを直接入力してください。",
   "settings.containersPath": "コンテナパス",
   "settings.vmsPath": "VM パス",
   "settings.flashPath": "フラッシュパス",
@@ -173,6 +174,7 @@ const ja: Partial<Translations> = {
   "offsite.replicating": "複製中…",
   "offsite.replicateFailed": "複製に失敗しました",
   "settings.domains": "ドメイン",
+  "settings.domainsHint": "各バックアップドメインを個別にオン・オフできます。VMまたはFlashを有効にすると、サイドバーに対応するタブが表示されます。",
   "settings.containersEnabled": "コンテナ",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "フラッシュ",
