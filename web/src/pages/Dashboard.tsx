@@ -296,9 +296,12 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 // Left unresolved rather than force a disproportionate fix (recolouring warn off Carbon's
 // actual yellow token, changing the app's default accent, or adding a new
 // icon system to Badge all reach well past a contrast-arithmetic bugfix) —
-// flagged for a future task, most naturally Task 8 (focus system), which
-// already works this same hue-vs-accent boundary via [data-rainbow]
-// .glim-hue's --item-hue-ring mechanism.
+// flagged for a future task. Task 8 (focus system) was checked against this,
+// since it also works the hue-vs-accent boundary via [data-rainbow]
+// .glim-hue's --item-hue-ring — no shared fix: that mechanism only ever
+// touches outline colour on :focus-visible, never badge fill/text colour,
+// so it doesn't reach statusTone's tone="warn"/tone="active" at all. Still
+// open for whichever task picks it up next.
 // ---------------------------------------------------------------------------
 
 function statusTone(status: string): BadgeTone {
