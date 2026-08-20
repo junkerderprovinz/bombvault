@@ -326,10 +326,14 @@
          real icon/glyph system to Badge (new component surface area, not a
          one-line fix) — all disproportionate scope increases for this task.
      Left unresolved on purpose, flagged here (and at Dashboard.tsx's
-     statusTone/chipForRpo) for a future task — Task 8 (complete the focus
-     system) already touches this exact hue-vs-accent boundary via
-     [data-rainbow] .glim-hue's --item-hue-ring mechanism and is the natural
-     place to revisit this. */
+     statusTone/chipForRpo) for a future task. Task 8 (complete the focus
+     system) was checked against this on the theory the two might share a
+     fix, since it also touches the hue-vs-accent boundary via
+     [data-rainbow] .glim-hue's --item-hue-ring — they don't: --item-hue-ring
+     and --focus-ring only ever set outline colour on :focus-visible, never
+     badge fill/text colour, so nothing in Task 8's actual scope reaches
+     --status-warn-text or --accent-text. Still open, still needs one of the
+     three fixes above, from whichever task picks it up next. */
 
   /* TASK 7 (GlimStone form-engine Phase 2, design-language.md rule 4) removed
      --status-info-* entirely — it was a de-facto fifth hue (blue), not one of
@@ -364,9 +368,10 @@
      never touched them) now point at --focus-ring directly instead — see
      the .bv-field-focus comment below for the full "where does --focus-ring
      reach today" note, updated to match. Task 8 (focus system completion)
-     no longer needs to touch those 7 call sites; it still needs to add the
-     universal `:focus-visible` base rule and verify it composes correctly
-     with the [data-rainbow] .glim-hue --focus-ring override above.
+     did not need to touch those 7 call sites again; it added the universal
+     `:focus-visible` base rule (below, right after .bv-field-focus-well) and
+     verified it composes correctly with the [data-rainbow] .glim-hue
+     --focus-ring override further down this file.
 
      SPEC-COMPLIANCE FOLLOW-UP: a later review found the "genuine activity"
      bullet above's plain flat --accent text/graphics (Badge's "active" tone,
@@ -722,38 +727,36 @@ body {
    the rest of the field already has. --focus-ring itself is untouched —
    this class is additive, not a replacement for that token.
 
-   WHERE --focus-ring ACTUALLY REACHES TODAY (stated precisely, because an
-   earlier draft of this comment over-claimed it): every shared control this
-   branch added or reworked opts into it by hand — Toggle's switch track,
-   RevealInput's eye, InfoBubble's icon, Toast's dismiss X. TASK 7 (resolve
-   the fifth hue) additionally moved the 7 pre-existing sites that used to
-   paint `outline-statusInfoSolid` directly (Settings.tsx's accent
-   colour-input, Dashboard.tsx's stat card button + heatmap cell,
-   Containers.tsx's 4 exclusion-assistant controls) onto `outline-(--focus-ring)`
-   by hand, the same opt-in pattern as the controls above — that token no
-   longer exists (see the dark block's TASK 7 comment), so there was nowhere
-   else for them to point. --focus-ring still does NOT reach ordinary buttons
-   and links generally: ~215 of them declare no focus utility at all and fall
-   through to the browser's native ring. So the app currently has TWO focus
-   appearances (opted-in amber, and native default), not one — down from
-   three now that no site paints the old blue.
+   WHERE --focus-ring REACHED BEFORE TASK 8 (kept as history, because an
+   earlier draft of this comment over-claimed it and the correction is worth
+   preserving): every shared control this branch added or reworked opted
+   into it by hand — Toggle's switch track, RevealInput's eye, InfoBubble's
+   icon, Toast's dismiss X. TASK 7 (resolve the fifth hue) additionally moved
+   the 7 pre-existing sites that used to paint `outline-statusInfoSolid`
+   directly (Settings.tsx's accent colour-input, Dashboard.tsx's stat card
+   button + heatmap cell, Containers.tsx's 4 exclusion-assistant controls)
+   onto `outline-(--focus-ring)` by hand, the same opt-in pattern as the
+   controls above — that token no longer exists (see the dark block's TASK 7
+   comment), so there was nowhere else for them to point. Past that point,
+   --focus-ring reached NO ordinary button or link: ~215 of them declared no
+   focus utility at all and fell through to the browser's native ring — TWO
+   focus appearances in the app (opted-in amber, and native default), not
+   one.
 
-   Closing the remaining gap is deliberately NOT done here. The reference
-   (glimstone/reference/tokens.css) resolves it with a single base rule —
-   `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px }`
-   — and its adoption checklist says to copy it. Adopting it is Phase 2 Task 8
-   work: in the reference that same rule is what the rainbow/reactive colour
-   mode reaches through, rebinding --focus-ring per item via
-   `[data-rainbow] .glim-hue` (see that block further down — already written
-   and already correct, just not reached by anything until the base rule
-   exists). TASK 7 (this comment's own task) is what audit item 19 (resolving
-   the fifth hue) needed to unblock Task 8 — it's now done: --status-info-*
-   is gone, every real call site was re-read and resolved individually (fold
-   into --accent for genuine activity, --status-neutral-* for pure
-   informational prose/categorisation, or Badge tone="neutral" for link/
-   action badges — see the dark block's TASK 7 comment for the full list and
-   reasoning). Task 8 has nothing further to do here beyond adding the base
-   rule and verifying it composes correctly with the hue-subtree override.
+   TASK 8 (complete the focus system) closed that gap: see the base
+   `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset:
+   2px }` rule, adopted verbatim from the reference (glimstone/reference/
+   tokens.css) further down this file, right after .bv-field-focus-well
+   below — that rule's own comment covers what it reaches, how it composes
+   with `[data-rainbow] .glim-hue` (below) and with the two field-focus rules
+   immediately below it, and why none of the hand-opted-in controls above
+   needed to change. TASK 7 (this comment's own task) is what audit item 19
+   (resolving the fifth hue) needed to unblock Task 8 — it was done first:
+   --status-info-* is gone, every real call site was re-read and resolved
+   individually (fold into --accent for genuine activity, --status-neutral-*
+   for pure informational prose/categorisation, or Badge tone="neutral" for
+   link/action badges — see the dark block's TASK 7 comment for the full
+   list and reasoning).
 
    Two variants, chosen by what the field already rests on:
    - .bv-field-focus — the common case (most fields in the app): resting
@@ -806,6 +809,60 @@ body {
   background-color: var(--field-focus-well);
   outline: 1px solid var(--field-focus-ring);
   outline-offset: -1px;
+}
+
+/* Base focus ring (design-language.md "Focus"; GlimStone form-engine Phase 2
+   Task 8, "complete the focus system") — the reference's own base rule
+   (glimstone/reference/tokens.css), adopted verbatim. Before this rule
+   existed, --focus-ring reached only the handful of shared controls that
+   opted in by hand plus the 7 sites Task 7 moved off the old blue outline
+   (see the .bv-field-focus comment above for that full history); ~215
+   ordinary buttons and links across the app fell through to the browser's
+   own native default focus outline instead of this app's token. This one
+   rule closes that gap for all of them at once — no per-component change
+   needed, and safe to add with nothing to remove first: nothing in the app
+   sets `outline: none`, so there was no earlier suppression to undo (see
+   the .bv-field-focus comment above for why that distinction matters — the
+   field rules DO have to fight a native default this way).
+
+   Composition with rainbow (`[data-rainbow] .glim-hue` further down this
+   file): that block already redefines --focus-ring to var(--item-hue-ring)
+   on any element carrying .glim-hue — written during Task 2/3, ahead of
+   this rule existing, specifically so this rule would compose correctly the
+   moment it landed. Because this rule reads var(--focus-ring) rather than a
+   hardcoded colour, and custom properties cascade normally through the DOM,
+   a focused .glim-hue element (e.g. a Selector segment with hue enabled)
+   automatically resolves its own hue's ring here — no separate
+   `[data-rainbow] .glim-hue:focus-visible` override was needed, the
+   ordinary custom-property cascade already does the composing. Outside any
+   .glim-hue subtree, --focus-ring is whatever the active theme block set
+   (the flat amber default). Verified live, both themes, rainbow
+   on/off/reactive: a plain button/link gets the flat ring, a hue-enabled
+   Selector segment gets its own position's ring instead.
+
+   Composition with form fields (.bv-field-focus/-well immediately above,
+   Phase 1 Task 8): NOT a double ring. Both field rules key off `:focus`
+   (not `:focus-visible`) and declare their own explicit
+   `outline`/`outline-offset` at (0,2,0) specificity — one class plus one
+   pseudo-class beats this rule's bare `:focus-visible` at (0,1,0)
+   regardless of source order, so a field's own inset brightness-step
+   outline always wins outright. (The browser does not layer competing
+   declarations of the same property; the higher-specificity one fully
+   replaces the lower one.) Verified live: no second ring appears on any
+   text input/select/textarea, either theme.
+
+   Deliberately duplicated, not conflicting, at the shared-control sites
+   named above (Toggle's switch, RevealInput's eye, InfoBubble's icon,
+   Toast's dismiss X): each already carries its own explicit
+   `focus-visible:outline-solid outline-2 outline-offset-2
+   outline-(--focus-ring)` utility class, functionally identical to what
+   this rule now also provides at lower specificity. Left as-is — pruning
+   them is a separate simplification, not this task's job, and the overlap
+   is inert (same computed value either way; the higher-specificity
+   declaration is simply the one that happens to apply). */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 /* Toast chrome (GlimStone form-engine #9, design-language.md "Toasts") —
@@ -883,11 +940,11 @@ body {
      around the element that owns the colour. Reactive mode deliberately does
      not reset this: the ring only ever paints while the element has focus,
      and [data-rainbow="reactive"] .glim-hue:focus-within below already
-     brings the hue back for reactive mode regardless. This token only
-     actually reaches a visible ring once Task 8 adopts the base
-     `:focus-visible { outline: 2px solid var(--focus-ring) }` rule (see the
-     .bv-field-focus comment above for why that adoption is deliberately not
-     done here) — written now so it is already correct once that rule lands. */
+     brings the hue back for reactive mode regardless. This token was written
+     during Task 2/3, ahead of anything reading it, specifically for the base
+     `:focus-visible { outline: 2px solid var(--focus-ring) }` rule (Task 8,
+     see the .bv-field-focus-well comment above) to reach through once it
+     existed — it now does; verified live. */
   --focus-ring: var(--item-hue-ring);
 }
 
