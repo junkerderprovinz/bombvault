@@ -1011,6 +1011,93 @@ body {
   --focus-ring: var(--item-hue-ring, var(--focus-ring-flat));
 }
 
+/* LIGHT-THEME OVERRIDE (spec-compliance fix — a Task 1 x Task 8 interaction
+   bug, not something either task alone could have caught: --item-hue-ring
+   above was written in Task 2/3 while still inert, and only started
+   painting anything once Task 8's base `:focus-visible` rule landed).
+   hueVars() (lib/appearance.ts) sets --item-hue-ring as a plain
+   rgba(r,g,b,0.55) inline style, with no idea which theme is active — it
+   can't be, it runs once per hue assignment, not once per theme change.
+   Composited against a hued row's own wash, that fixed 0.55 alpha measured
+   live at only 1.25-1.76:1 in light theme for all 8 rainbow hues, badly
+   under WCAG 1.4.11's 3:1 non-text-UI minimum — the exact failure mode
+   --focus-ring's own light block above (see its comment near this file's
+   [data-theme="light"] block) already solved once for the FLAT ring, by
+   swapping in a separate, darker, theme-specific value instead of reusing
+   the dark rgba verbatim. This is that same fix, extended to the hue ring.
+
+   Because --item-hue-ring is an inline style (hueVars() sets it directly on
+   the element via root.style.setProperty-equivalent React style props),
+   this rule does NOT try to override that custom property's own value —
+   inline beats any selector, --item-hue-ring-light guard further down this
+   file notwithstanding. Instead it redefines --focus-ring (NOT set inline
+   anywhere) to point at a NEW, genuinely theme-scoped mix instead of the
+   raw inline rgba: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text))
+   blends the position's hue toward this theme's own dark ink rather than
+   alpha-blending a lighter tint over a light surface — the same "darker AND
+   more opaque, not just more transparent" move --focus-ring's own light
+   value already made for the flat ring, applied to the hue ring's --item-hue
+   input instead of a fixed amber.
+
+   [data-theme="light"][data-rainbow] .glim-hue — no descendant combinator
+   between the two attribute selectors. data-theme (theme.ts) and
+   data-rainbow (applyRainbow() above) are BOTH set on document.documentElement,
+   the SAME element, never an ancestor/descendant pair, so
+   `[data-theme="light"] [data-rainbow] ...` (with a space) would silently
+   never match anything — this compound form is required to actually reach
+   a real element. Matches this file's [data-theme="dark"] { --egg-logo }
+   / [data-theme="light"] scoping convention (see this file's opening Carbon
+   palette section) applied to an attribute compound instead of a bare
+   selector, since [data-rainbow] .glim-hue is itself already scoped past
+   the theme-selector-only case those blocks handle.
+
+   Guarded the same shape as the base rule above (--item-hue-ring-light, not
+   --focus-ring itself, as the intermediate token) for the identical reason:
+   hueVars() emits --item-hue whenever it emits anything, so this isn't
+   reachable today, but a --item-hue-ring-light that ever went guaranteed-
+   invalid (--item-hue missing) must still resolve to a real ring
+   (--focus-ring-flat) rather than losing the outline outright — see the
+   base rule's own FALLBACK GUARD comment for why the target must be this
+   distinctly-named token, not a self-referencing var(--focus-ring).
+
+   Verified live (Chromium, a real built binary, keyboard-focused so
+   :focus-visible actually engages — not just computed from the formula):
+   on the Settings tab strip (a real .glim-hue Selector segment; no
+   .glim-tint row could be driven live in this pass — the dev instance has
+   no Docker/libvirt host to list real containers/VMs against, so
+   ContainerRow/VMRow never render), light theme's worst offenders (red
+   #FF8389, purple #BE95FF, blue #1D99F3) measured via getComputedStyle's
+   RESOLVED outline-color, standard WCAG relative-luminance contrast:
+     red    5.25:1 vs. the real panel background, 5.45:1 vs. that same
+            hue's own --item-hue-wash composited over --carbon-surface
+     blue   6.27:1 / 6.41:1 (same two comparisons)
+     purple 5.18:1 / 5.40:1
+   All six comfortably clear 3:1 (four of them clear 4.5:1 too) — real
+   margin, not a knife-edge pass. Dark theme is UNTOUCHED by this block on
+   purpose: re-measured the same way on the same red segment after
+   switching themes, --focus-ring still resolves to the original
+   rgba(255,131,137,.55) verbatim (3.13:1 vs. panel, 2.75:1 vs. its own
+   wash — both close to the review's own dark-theme range, "already
+   borderline-acceptable" and not this fix's scope, not regressed by it). */
+[data-theme="light"][data-rainbow] .glim-hue {
+  --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
+  --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
+}
+
+/* Same override, restated for the one case with no explicit data-theme
+   attribute to select on (JS-disabled system-light fallback) — identical
+   reasoning to why [data-theme="light"]'s own --focus-ring/--focus-ring-flat
+   get restated in the matching @media block near this file's Carbon-palette
+   section: :root:not([data-theme]) does not inherit from [data-theme="light"],
+   so without this the system-light/no-JS case would fall through to the
+   base rule's raw inline rgba instead. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme])[data-rainbow] .glim-hue {
+    --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
+    --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
+  }
+}
+
 /* Opt-in: the element's glyph takes the hue too. A list row owns a colour
    but its action icons must stay quiet, hence the second class. The active
    item is excluded via :not(.glim-active): it's FILLED with the hue already,
