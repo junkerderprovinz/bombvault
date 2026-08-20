@@ -243,7 +243,7 @@ func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) 
 	// fallback calls RestoreInclude("/") — exactly the call shape
 	// TestForeignRestoreRoute already pins — so restorePanic reaches it.
 	eng.restorePanic = true
-	started, err := svc.StartForeignRestore(context.Background(), sessionID, "files", "docs", "latest", true, "restore-here/docs", nil, false)
+	started, err := svc.StartForeignRestore(context.Background(), sessionID, "files", "docs", "latest", true, "restore-here/docs", nil, false, "")
 	if err != nil || !started {
 		t.Fatalf("foreign restore should start: started=%v err=%v", started, err)
 	}

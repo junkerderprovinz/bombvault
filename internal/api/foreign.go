@@ -328,11 +328,20 @@ func foreignItems(m map[string][]restic.Snapshot) []ForeignItem {
 // so a bad request fails immediately and no goroutine starts. Shares
 // batchActive with backups and the other restores; returns (false, nil) when
 // one is already running.
-func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool) (bool, error) {
+//
+// zvolPool is a VMS-DOMAIN-ONLY, OPTIONAL destination ZFS pool name for a VM
+// whose domain XML carries TrueNAS zvol-backed (block-device) disks —
+// destBase (derived from targetSubPath, see foreignVMDestBase) is a
+// filesystem path and carries no ZFS pool information, so a zvol disk's `zfs
+// receive` target cannot be rebased from it the way a file-backed disk's path
+// is. See prepareRestoreVMForTarget's destZvolPool doc comment for the full
+// rebase/refusal behavior. Ignored for every other domain and for a VM with
+// no zvol disks.
+func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	key, run, onPanic, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite)
+	key, run, onPanic, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite, zvolPool)
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
@@ -380,8 +389,9 @@ func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, it
 // declared alongside its run closure, exactly as StartRestoreFileSet does).
 // The confirm guard fires FIRST (the familiar sentinel, same discipline as
 // prepareRestore); the item name is boundary-checked here because it feeds
-// restic tags, def filenames and progress keys.
-func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool) (string, func(context.Context) error, func(string), error) {
+// restic tags, def filenames and progress keys. zvolPool is StartForeignRestore's
+// own parameter, passed straight through — see its doc comment.
+func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool string) (string, func(context.Context) error, func(string), error) {
 	if !confirm {
 		return "", nil, nil, backup.ErrNotConfirmed
 	}
@@ -460,12 +470,17 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// there would fill the host's RAM and brick it, #122). targetSubPath (the
 		// request Target) chooses the destination; empty falls back to the local VM
 		// domains path. prepareRestoreVMForTarget remaps disks + XML and guards the
-		// destination before any restic write.
+		// destination before any restic write. zvolPool is the SEPARATE destination
+		// ZFS pool a TrueNAS zvol-backed disk needs (destBase carries no ZFS pool
+		// information — see prepareRestoreVMForTarget's destZvolPool doc comment);
+		// prepareRestoreVMForTarget refuses cleanly if the VM has zvol disks and
+		// zvolPool was left empty, rather than attempting `zfs receive` against the
+		// source box's pool name on this host.
 		destBase, err := s.foreignVMDestBase(targetSubPath)
 		if err != nil {
 			return "", nil, nil, err
 		}
-		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, destBase)
+		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, destBase, zvolPool)
 		if err != nil {
 			return "", nil, nil, err
 		}

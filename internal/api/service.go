@@ -6762,9 +6762,10 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 	if err != nil {
 		return vmRestorePlan{}, errors.New("vm has not been backed up yet")
 	}
-	// Same-instance restore: no destination base, so disks go back to their own
-	// paths and the domain XML is used verbatim (byte-for-byte historical behaviour).
-	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, "")
+	// Same-instance restore: no destination base and no destination zvol pool,
+	// so disks go back to their own paths and the domain XML is used verbatim
+	// (byte-for-byte historical behaviour).
+	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, "", "")
 }
 
 // prepareRestoreVMForTarget builds a VM restore plan for an ALREADY-RESOLVED VM
@@ -6775,14 +6776,31 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 // adopts it only once this returns a plan, never on a validation failure). The
 // caller runs the confirm / explicit-snapshot-id-shape guards first.
 //
-// destBase, when non-empty, REMAPS every disk (and the NVRAM) to
+// destBase, when non-empty, REMAPS every FILE-backed disk (and the NVRAM) to
 // <destBase>/<name>/<basename>: the restic restore target, the domain XML
 // <disk><source file> / <nvram> paths, and the SSH NVRAM write all point at the
-// destination pool instead of the source server's paths. A remap ALSO gates the
-// restore behind guardVMRestoreDestination, so it can never write a multi-GB
-// disk onto an unmounted path (the RAM rootfs) and brick the host (#122). An
-// empty destBase leaves the same-instance restore byte-for-byte unchanged.
-func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, destBase string) (vmRestorePlan, error) {
+// destination FOLDER instead of the source server's paths. A remap ALSO gates
+// the restore behind guardVMRestoreDestination, so it can never write a
+// multi-GB disk onto an unmounted path (the RAM rootfs) and brick the host
+// (#122). An empty destBase leaves the same-instance restore byte-for-byte
+// unchanged.
+//
+// destZvolPool is the SEPARATE remap a BLOCK-DEVICE (zvol) disk needs: destBase
+// is a filesystem path under the host mount and carries no ZFS pool
+// information at all, so it cannot rebase a zvol's `zfs receive` target the
+// way it rebases a file-backed disk's path. When destBase is non-empty (a
+// cross-instance restore) and the domain has recognizable zvol disks,
+// destZvolPool MUST be supplied — every such disk's dataset is rebased onto it
+// via virshcli.RebaseZvolDatasetPool, so `zfs receive` lands on the
+// DESTINATION box's pool rather than the source box's. An empty destZvolPool
+// on a cross-instance restore with zvol disks REFUSES here, before any
+// restic/SSH work starts (a destination pool cannot be guessed from destBase),
+// rather than silently attempting `zfs receive` against the source pool's name
+// and failing deep inside that call once the restore is already underway.
+// Ignored (never validated) for a same-instance restore or a VM with no zvol
+// disks — same-instance zvol restore keeps deriving its target from
+// SourceDataset exactly as before this parameter existed.
+func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, destBase, destZvolPool string) (vmRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
@@ -6899,7 +6917,10 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// call. Neither is affected by the destBase remap above: RewriteDiskSources
 	// only rewrites <source file=...> (file-backed disks); a <tpm> element and
 	// a <source dev=...> (block-device disk) are left untouched either way
-	// (v8.0.0 VM service-layer integration, Task 2).
+	// (v8.0.0 VM service-layer integration, Task 2). A zvol disk's DATASET
+	// (as opposed to the XML's device path, which stays the source box's for
+	// the operator's own reference) is rebased separately, below — see the
+	// "CROSS-INSTANCE zvol rebase" block after the SSH guard.
 	var tpmPath string
 	var vmRestoreBlockDisks []backup.VMRestoreBlockDisk
 	if parsed, perr := virshcli.ParseDomain(domainXML); perr == nil {
@@ -6950,6 +6971,29 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// returned, exactly like the backup-side check in BackupVM.
 	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
 		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol restore requires SSH", name)
+	}
+
+	// CROSS-INSTANCE zvol rebase: destBase remaps a FILE-backed disk onto the
+	// destination's FILESYSTEM PATH, but that path carries no ZFS pool
+	// information — RestoreZvolDisk would otherwise always derive its `zfs
+	// receive` target from SourceDataset (the SOURCE box's pool, re-derived
+	// unchanged from the domain XML above), which almost certainly does not
+	// exist on the destination box under that name, and fail deep inside a
+	// `zfs receive` call once the restore is already underway. REFUSE here,
+	// before any restic/SSH work starts, when destZvolPool wasn't supplied;
+	// when it was, rebase every zvol disk's dataset onto it now so the plan's
+	// blockDisks already carry the correct destination target.
+	if destBase != "" && len(vmRestoreBlockDisks) > 0 {
+		if destZvolPool == "" {
+			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified — the destination pool cannot be inferred from the chosen destination folder. Specify a destination pool for the zvol disk(s) (foreign restore's zvolPool parameter), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
+		}
+		for i := range vmRestoreBlockDisks {
+			rebased, ok := virshcli.RebaseZvolDatasetPool(vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
+			if !ok {
+				return vmRestorePlan{}, fmt.Errorf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
+			}
+			vmRestoreBlockDisks[i].RestoreBaseDataset = rebased
+		}
 	}
 
 	// preDefine writes the captured NVRAM/TPM state back to the host over SSH

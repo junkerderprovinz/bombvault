@@ -122,7 +122,7 @@ func TestPrepareRestoreVMRemapsDisksAndXML(t *testing.T) {
 		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore")
+		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -165,7 +165,7 @@ func TestPrepareRestoreVMGuardAbortsWhenNotMounted(t *testing.T) {
 		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore")
+		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore", "")
 	if err == nil || !strings.Contains(err.Error(), "not on a mounted") {
 		t.Fatalf("want the not-mounted brick-guard abort, got %v", err)
 	}
@@ -193,7 +193,7 @@ func TestPrepareRestoreVMGuardAbortsWhenTooSmall(t *testing.T) {
 		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore")
+		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore", "")
 	if err == nil || !strings.Contains(err.Error(), "free space") {
 		t.Fatalf("want the free-space brick-guard abort, got %v", err)
 	}
@@ -218,7 +218,7 @@ func TestPrepareRestoreVMSameInstanceUnchanged(t *testing.T) {
 	tg := vmTargetJSON(t, "win10", vmDomainXML, disks, "/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "")
+		repoRef{repo: repoDir}, "win10", "latest", tg, "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -265,12 +265,121 @@ func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "", "")
 	if err == nil {
 		t.Fatal("want a clean error for block-device disks with no SSH configured, got nil (plan would panic later in RestoreZvolDisk)")
 	}
 	if !strings.Contains(err.Error(), "SSH") {
 		t.Fatalf("error = %v, want it to mention SSH", err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Cross-instance zvol restore: destination-pool refusal/rebase.
+//
+// A cross-instance VM restore (destBase set) remaps a FILE-backed disk onto
+// the destination's FILESYSTEM PATH, but a TrueNAS zvol-backed disk's
+// `zfs receive` target is a ZFS DATASET — destBase carries no pool
+// information, so it cannot rebase one. Before this fix, RestoreVM always
+// derived a zvol restore's target purely from the SOURCE dataset (re-derived
+// unchanged from the domain XML), so a cross-instance restore would silently
+// attempt `zfs receive` against the SOURCE box's pool name on a destination
+// that doesn't have it, failing deep inside that call. These tests pin the
+// fix: an explicit destination pool rebases every zvol disk's dataset onto it
+// (TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool); its absence
+// refuses HERE, before any restic/SSH work starts, with a clear, actionable
+// error (TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool); and a
+// same-instance restore never even looks at a destination pool
+// (TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck).
+// ---------------------------------------------------------------------------
+
+// TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool pins the
+// EARLY-CLEAR-REFUSAL half of the fix: see this section's header comment.
+func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	s := vmRestoreSvc(t, eng)
+	s.ssh = &fakeHostSSH{}
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	// The destination /host/user/vmrestore is a mounted share → the brick guard
+	// passes, so the test proves the destination-POOL refusal specifically, not
+	// the (unrelated) mount guard.
+	writeMountFixture(t, "/", "/host/user", "/host/user/vmrestore")
+
+	disks := []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}
+	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
+
+	_, err := s.prepareRestoreVMForTarget(context.Background(),
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "")
+	if err == nil {
+		t.Fatal("want a clear refusal for a cross-instance zvol restore with no destination pool, got nil (would otherwise silently attempt `zfs receive` against the source pool's name)")
+	}
+	if !strings.Contains(err.Error(), "pool") {
+		t.Fatalf("error = %v, want it to mention the missing destination pool", err)
+	}
+	if len(eng.restores) != 0 {
+		t.Fatalf("nothing may be restored when the refusal fires, got %v", eng.restores)
+	}
+}
+
+// TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool pins the
+// FULL-REMAP half of the fix: with an explicit destination pool, every zvol
+// disk's dataset is rebased onto it, ready for RestoreZvolDisk to `zfs
+// receive` into the DESTINATION pool instead of the source box's.
+func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	s := vmRestoreSvc(t, eng)
+	s.ssh = &fakeHostSSH{}
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	writeMountFixture(t, "/", "/host/user", "/host/user/vmrestore")
+
+	disks := []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}
+	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
+
+	plan, err := s.prepareRestoreVMForTarget(context.Background(),
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "flashpool")
+	if err != nil {
+		t.Fatalf("prepareRestoreVMForTarget: %v", err)
+	}
+	if len(plan.blockDisks) != 1 {
+		t.Fatalf("blockDisks = %+v, want 1 entry", plan.blockDisks)
+	}
+	bd := plan.blockDisks[0]
+	if bd.SourceDataset != "tank/vms/zvolvm/disk1" {
+		t.Fatalf("SourceDataset = %q, want the ORIGINAL source dataset left unchanged (still used for logging)", bd.SourceDataset)
+	}
+	if bd.RestoreBaseDataset != "flashpool/vms/zvolvm/disk1" {
+		t.Fatalf("RestoreBaseDataset = %q, want it rebased onto the destination pool flashpool", bd.RestoreBaseDataset)
+	}
+}
+
+// TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck pins that the
+// destination-pool guard is SCOPED to a cross-instance restore only: a
+// same-instance restore (destBase empty) of a VM with a zvol disk must NOT
+// require a destination pool — RestoreBaseDataset stays empty, so
+// RestoreZvolDisk falls back to SourceDataset exactly as it did before this
+// task (the pre-existing, already-correct same-instance behavior).
+func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	s := vmRestoreSvc(t, eng)
+	s.ssh = &fakeHostSSH{}
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+
+	disks := []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}
+	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
+
+	plan, err := s.prepareRestoreVMForTarget(context.Background(),
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "", "")
+	if err != nil {
+		t.Fatalf("prepareRestoreVMForTarget: %v", err)
+	}
+	if len(plan.blockDisks) != 1 || plan.blockDisks[0].RestoreBaseDataset != "" {
+		t.Fatalf("blockDisks = %+v, want RestoreBaseDataset empty for a same-instance restore", plan.blockDisks)
+	}
+	if plan.blockDisks[0].SourceDataset != "tank/vms/zvolvm/disk1" {
+		t.Fatalf("SourceDataset = %q, want it resolved from the domain XML unchanged", plan.blockDisks[0].SourceDataset)
 	}
 }
 
@@ -412,7 +521,7 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
-	started, err := s.StartForeignRestore(context.Background(), id, "vms", "win10", "latest", true, "vmrestore", nil, false)
+	started, err := s.StartForeignRestore(context.Background(), id, "vms", "win10", "latest", true, "vmrestore", nil, false, "")
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}

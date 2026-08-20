@@ -289,6 +289,63 @@ func TestRestoreZvolDiskNeverTargetsSourceDataset(t *testing.T) {
 	}
 }
 
+// TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet is THE fix this task pins:
+// a CROSS-INSTANCE restore (internal/api/service.go's prepareRestoreVMForTarget
+// rebases the zvol dataset's pool onto the destination pool and sets
+// RestoreBaseDataset) must issue `zfs receive` against a target derived from
+// RestoreBaseDataset — the DESTINATION pool — not from SourceDataset, the
+// SOURCE box's pool, which does not exist on the destination host. Before this
+// fix, RestoreZvolDisk always derived its target from SourceDataset alone, so
+// a cross-instance zvol restore would attempt `zfs receive` into the source
+// pool's name on a box that doesn't have it — this test proves the fake host
+// actually receives against the REBASED pool's dataset instead.
+func TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet(t *testing.T) {
+	host := &fakeZFSHost{}
+	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
+
+	deps := sampleRestoreZvolDeps(host, r)
+	deps.RestoreBaseDataset = "flashpool/vms/truenasvm/disk0" // rebased onto the DESTINATION pool
+
+	target, err := backup.RestoreZvolDisk(context.Background(), deps)
+	if err != nil {
+		t.Fatalf("RestoreZvolDisk: %v", err)
+	}
+	if !strings.HasPrefix(target, deps.RestoreBaseDataset+"-bombvault-restore-") {
+		t.Fatalf("target dataset %q must be derived from RestoreBaseDataset %q, not SourceDataset %q", target, deps.RestoreBaseDataset, deps.SourceDataset)
+	}
+	if strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
+		t.Fatalf("target dataset %q was derived from the SOURCE dataset %q — the cross-instance rebase did not take effect", target, deps.SourceDataset)
+	}
+	if host.streamReceiveTarget != target {
+		t.Fatalf("RestoreZvolDisk returned target %q but issued `zfs receive` against %q", target, host.streamReceiveTarget)
+	}
+	if strings.HasPrefix(host.streamReceiveTarget, "tank/") {
+		t.Fatalf("the actual StreamReceive call targeted the SOURCE pool %q — this is the exact wrong-pool bug the fix closes", host.streamReceiveTarget)
+	}
+}
+
+// TestRestoreZvolDiskFallsBackToSourceDatasetWhenRestoreBaseDatasetEmpty pins
+// the SAME-INSTANCE restore's behavior stays byte-for-byte unchanged: an empty
+// RestoreBaseDataset (the zero value every pre-existing caller/test uses, and
+// the value prepareRestoreVMForTarget leaves it at for a same-instance
+// restore) must fall back to deriving the target from SourceDataset exactly as
+// RestoreZvolDisk always did before this field existed.
+func TestRestoreZvolDiskFallsBackToSourceDatasetWhenRestoreBaseDatasetEmpty(t *testing.T) {
+	host := &fakeZFSHost{}
+	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
+
+	deps := sampleRestoreZvolDeps(host, r)
+	deps.RestoreBaseDataset = "" // explicit zero value — the same-instance case
+
+	target, err := backup.RestoreZvolDisk(context.Background(), deps)
+	if err != nil {
+		t.Fatalf("RestoreZvolDisk: %v", err)
+	}
+	if !strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
+		t.Fatalf("target dataset %q must fall back to SourceDataset %q when RestoreBaseDataset is empty", target, deps.SourceDataset)
+	}
+}
+
 // TestRestoreZvolDiskPropagatesDumpFailure: if restic's dump fails, the
 // restore must fail cleanly (never attempt zfs receive with partial/garbage
 // data as if it were the real stream).
