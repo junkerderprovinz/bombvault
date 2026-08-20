@@ -197,6 +197,12 @@ type Service struct {
 	// this package's existing tests) gets, reproducing bombvault's original
 	// Unraid-only behavior exactly rather than panicking on a nil interface.
 	platform platform.Platform
+	// platformMismatchOnce guards warnUnraidPlatformMismatch: an operator whose
+	// notify.Config.Unraid is on but whose platform detection did not resolve
+	// to Unraid gets exactly ONE diagnostic log line per process, not one per
+	// notification (a busy day with many failed backups would otherwise drown
+	// the log in copies of the same explanation). Zero value is ready to use.
+	platformMismatchOnce sync.Once
 	// resticCacheDir is the on-disk location of restic's persistent cache — the
 	// same path main.go exports to the engine as RESTIC_CACHE_DIR (set via
 	// SetResticCacheDir). Empty means the cache lives at restic's default
@@ -502,6 +508,105 @@ func (s *Service) platformFn() platform.Platform {
 	}
 	return platform.Unraid{}
 }
+
+// unraidGate reports whether an Unraid-only, best-effort host-SSH step (the
+// webGUI notification mirror — every sendUnraidNotify call site) should run:
+// the caller wants it (unraidWanted, always notify.Config.Unraid today), SSH
+// is configured, AND the detected/overridden platform genuinely is Unraid.
+//
+// Why the platform check stays a hard requirement rather than trusting
+// unraidWanted on its own (Platform expansion PR #149, Task 6 — see
+// platform_gate_internal_test.go's failIfCalledSSH fakes, which fail the
+// test the instant one of these steps is attempted on a non-Unraid
+// platform): notify.Config.Unraid can be stale — e.g. a settings.json copied
+// from an old Unraid box onto a genuinely different TrueNAS or
+// generic-Docker host — and BombVault must never run an Unraid-only command
+// (the webGUI notify script, the #116 PHP-over-SSH reconcile, the `plugin`
+// CLI) against a host where it has no meaning. Trusting the toggle blindly
+// would reintroduce exactly the noisy, meaningless SSH attempts Task 6
+// eliminated.
+//
+// Why a platform mismatch is NOT just silently treated as "feature off"
+// either: internal/platform.Detect's only Unraid signal is one filesystem
+// marker (config/plugins/dockerMan) under the container's /host/boot mount —
+// a mount BombVault's own shipped template did not wire until months after
+// this gate shipped. A genuinely Unraid host whose mount is missing (an old
+// template, or a hand-edited container config) resolves to KindGeneric
+// despite being real Unraid with SSH fully configured, and every gate here
+// used to go dark with no way to tell "the user turned this off" apart from
+// "detection is wrong". warnUnraidPlatformMismatch logs the specific,
+// actionable diagnostic instead.
+func (s *Service) unraidGate(unraidWanted bool) bool {
+	if !unraidWanted || s.ssh == nil {
+		return false
+	}
+	if s.platformFn().Kind() == platform.KindUnraid {
+		return true
+	}
+	s.warnUnraidPlatformMismatch()
+	return false
+}
+
+// warnUnraidPlatformMismatch logs, once per process (platformMismatchOnce),
+// that notify.Config.Unraid is enabled but platform detection did not
+// resolve to Unraid — naming the detected Kind and the most likely fix so an
+// operator can tell "I turned this off" apart from "BombVault misdetected my
+// host" without reading source. See unraidGate's doc comment for why the
+// underlying gate does not just trust the toggle instead.
+func (s *Service) warnUnraidPlatformMismatch() {
+	s.platformMismatchOnce.Do(func() {
+		log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q) — "+
+			"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
+			"plugin) stay disabled. If this IS an Unraid host, verify the container's /boot host path is "+
+			"bind-mounted to /host/boot (see the BombVault Unraid template) and restart the container — "+
+			"detection looks for %s.",
+			s.platformFn().Kind(), platform.KindUnraid, filepath.Join(s.cfg.FlashDir, "config/plugins/dockerMan"))
+	})
+}
+
+// unraidPlatformMismatchError builds the user-facing refusal for a
+// request-scoped, Unraid-only action (TestNotify's Unraid channel, the
+// dashboard-tile plugin's install/remove — see runDashPluginCmd) attempted
+// while platform detection did not resolve to Unraid. feature names the
+// specific thing being refused (e.g. "the Unraid notification channel").
+//
+// Unlike unraidGate's best-effort background paths (which log
+// warnUnraidPlatformMismatch instead — nobody is waiting on those), these
+// are explicit, synchronous user actions: the caller must see the reason
+// immediately in the response, including the same actionable /host/boot
+// hint, not go dig through the container log for it.
+//
+// Returns a *platformMismatchErr (not a plain fmt.Errorf) so the message
+// bypasses handlers.go's scrubError: that scrubber strips every absolute
+// path from an error before it reaches the client (defense-in-depth against
+// leaking a repo path or secret), which would otherwise reduce this whole
+// hint to "the ... is only available on Unraid hosts (BombVault detected
+// platform=\"generic\" — if this IS an Unraid host, verify the container's
+// [path] host path is bind-mounted to [path] ...)" — useless. /boot and
+// /host/boot are BombVault's own fixed, publicly-documented mount points
+// (see the Unraid template), never a repo path or secret, so this is the
+// same bypass errRestoreDestination/errRepoPathGuidance (handlers.go,
+// repo_path.go) already use for the identical reason.
+func (s *Service) unraidPlatformMismatchError(feature string) error {
+	return &platformMismatchErr{msg: fmt.Sprintf(
+		"%s is only available on Unraid hosts (BombVault detected platform=%q — "+
+			"if this IS an Unraid host, verify the container's /boot host path is bind-mounted to "+
+			"/host/boot, see the BombVault Unraid template, and restart the container)",
+		feature, s.platformFn().Kind())}
+}
+
+// errUnraidPlatformMismatch is the scrubber-bypass sentinel unraidPlatformMismatchError's
+// *platformMismatchErr satisfies via Is, matched by handlers.go's scrubError.
+var errUnraidPlatformMismatch = errors.New("unraid platform mismatch")
+
+// platformMismatchErr carries unraidPlatformMismatchError's ready-to-show
+// message (see its doc comment) while still satisfying
+// errors.Is(err, errUnraidPlatformMismatch) for the scrubber bypass.
+type platformMismatchErr struct{ msg string }
+
+func (e *platformMismatchErr) Error() string { return e.msg }
+
+func (e *platformMismatchErr) Is(target error) bool { return target == errUnraidPlatformMismatch }
 
 // progBegin marks a backup/restore as started for key/phase and returns a
 // context carrying a restic sink that republishes each percentage. Percent
@@ -1045,7 +1150,7 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 	subject := "Retention prune FAILED for " + tag
 	msg := fmt.Sprintf("Applying the retention policy for %s failed — old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
 	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2350,7 +2455,7 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 	}
 	msg := fmt.Sprintf("The %s repository for %s has grown to %s, over the configured growth budget of %s. %s", kind, domain, humanBytes(size), humanBytes(budget), action)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2542,7 +2647,7 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 	subject := "Off-site replication FAILED for " + domain
 	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -3470,7 +3575,7 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		msg := fmt.Sprintf("Updated container %q to a newer image. Please verify it still works.", name)
 		notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 			notify.Event{Title: "BombVault", Message: msg, OK: true})
-		if c.Unraid && s.ssh != nil && c.On == "always" && s.platformFn().Kind() == platform.KindUnraid {
+		if s.unraidGate(c.Unraid) && c.On == "always" {
 			if e := s.sendUnraidNotify(ctx, "BombVault: container updated", msg, "normal"); e != nil {
 				log.Printf("notify: unraid: %v", e)
 			}
@@ -9601,7 +9706,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	}
 	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -10652,7 +10757,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) &&
+	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
@@ -10718,7 +10823,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	// warning must reach the user even in summary mode (like the update notice).
 	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 		notify.Event{Title: "BombVault: backup target skipped", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backup target skipped", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -10831,7 +10936,7 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	// an all-success summary out under On="failure").
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: summary, OK: ok})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) {
+	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) {
 		level := "normal"
 		if !ok {
 			level = "warning"
@@ -10897,7 +11002,7 @@ func (s *Service) TestNotify(ctx context.Context, c notify.Config) error {
 		// non-Unraid platform gets a clear, immediate refusal instead of an SSH
 		// attempt that could only fail on the far end.
 		if s.platformFn().Kind() != platform.KindUnraid {
-			return errors.New("unraid: the Unraid notification channel is only available when BombVault detects an Unraid host")
+			return fmt.Errorf("unraid: %w", s.unraidPlatformMismatchError("the Unraid notification channel"))
 		}
 		if err := s.sendUnraidNotify(ctx, "BombVault test notification",
 			"If you see this in Unraid, BombVault notifications are working.", "normal"); err != nil {

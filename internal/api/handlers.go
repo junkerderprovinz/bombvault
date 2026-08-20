@@ -108,6 +108,11 @@ func scrubError(err error) string {
 		// Same deal: the rejected location AND the relative form to use instead
 		// are the whole point of the message (see errRepoPathGuidance).
 		return err.Error()
+	case errors.Is(err, errUnraidPlatformMismatch):
+		// Same deal again: /boot and /host/boot ARE the actionable content of
+		// a platform-mismatch refusal (TestNotify's Unraid channel, the
+		// dashboard-tile plugin) — see unraidPlatformMismatchError.
+		return err.Error()
 	}
 	msg := err.Error()
 	// Map restic's password/key mismatch to an actionable hint: the repo was

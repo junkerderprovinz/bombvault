@@ -70,13 +70,6 @@ const dashPluginOutputMax = 1500
 // nil-guard wording (VMSSHInfo / sendUnraidNotify).
 var errDashPluginNoSSH = errors.New("host SSH is not configured (set it up in Settings → VM Backup over SSH)")
 
-// errDashPluginNotUnraid is the clean refusal on a non-Unraid platform: the
-// companion plugin is an Unraid `plugin install`/`plugin remove` operation
-// with no meaning anywhere else, so BombVault refuses before ever opening
-// the SSH connection instead of attempting a command that could only fail
-// (or worse, silently no-op) on the far end.
-var errDashPluginNotUnraid = errors.New("the companion dashboard plugin is only available on Unraid hosts")
-
 // dashOutputTail returns the LAST dashPluginOutputMax bytes of a command
 // transcript (the failure reason is at the end of a plugin install log).
 func dashOutputTail(out string) string {
@@ -132,8 +125,15 @@ func (s *Service) RemoveDashboardPlugin(_ context.Context) (output string, err e
 // InstallDashboardPlugin and RemoveDashboardPlugin funnel through here, so
 // the platform check guards both with one edit.
 func (s *Service) runDashPluginCmd(cmd string, timeout time.Duration) (string, error) {
+	// The companion plugin is an Unraid `plugin install`/`plugin remove`
+	// operation with no meaning anywhere else, so BombVault refuses before
+	// ever opening the SSH connection instead of attempting a command that
+	// could only fail (or worse, silently no-op) on the far end.
+	// unraidPlatformMismatchError names the detected platform and the
+	// /host/boot mount check, for the exact "I AM on Unraid, why is this
+	// refusing" case a mount-less genuine Unraid host hits.
 	if s.platformFn().Kind() != platform.KindUnraid {
-		return "", errDashPluginNotUnraid
+		return "", s.unraidPlatformMismatchError("the companion dashboard plugin")
 	}
 	if s.ssh == nil {
 		return "", errDashPluginNoSSH
