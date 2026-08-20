@@ -274,19 +274,18 @@ function ConfigSnapshotRow({
   t: T;
 }) {
   const [deleting, setDeleting] = useState(false);
-  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
-    setDeleteErr(null);
     try {
       const res = await deleteSnapshot("config", snap.id, source);
       if (res.ok) onDeleted();
-      else setDeleteErr(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setDeleting(false);
     }
@@ -308,7 +307,6 @@ function ConfigSnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );

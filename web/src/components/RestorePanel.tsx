@@ -13,6 +13,7 @@ import { RecentRunsList } from "./RecentRunsList";
 import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -409,6 +410,18 @@ function CompareSnapshots({
     setError(null);
   }, [snapshots]);
 
+  // GlimStone follow-up pass (v8.0.0) audit note: `diff`/`error` below are
+  // deliberately NOT migrated to a toast, unlike this file's SnapshotRow.
+  // handleDelete / SnapshotTags.submit siblings. A successful compare renders
+  // a real comparison RESULT the user reads at their own pace — added/changed/
+  // removed file counts and byte totals — not a one-shot completion ping; the
+  // same "reference value" reasoning ExportButton and RestoreProgress's
+  // restored-to path already established. `error` stays paired with it for
+  // the same reason ExportButton/VMExportButton's own error stays inline next
+  // to their "done" result: the two are mutually exclusive views of the SAME
+  // last-compare outcome (a fresh run clears whichever one is showing), so
+  // splitting them onto different UI surfaces (one ephemeral toast, one
+  // sticky inline result) would read as inconsistent.
   async function run() {
     if (!from || !to || from === to) return;
     setLoading(true);
@@ -507,7 +520,7 @@ function SnapshotTags({
   const [adding, setAdding] = useState(false);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const { push } = useToast();
   const tags = displayTags(snap, containerName);
 
   async function submit() {
@@ -517,7 +530,6 @@ function SnapshotTags({
       return;
     }
     setBusy(true);
-    setErr(null);
     try {
       const res = await tagSnapshot(containerName, snap.id, [tag], source);
       if (res.ok) {
@@ -525,10 +537,10 @@ function SnapshotTags({
         setAdding(false);
         onTagged();
       } else {
-        setErr(res.error ?? "Failed");
+        push(res.error ?? "Failed", "fail");
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Network error");
+      push(e instanceof Error ? e.message : "Network error", "fail");
     } finally {
       setBusy(false);
     }
@@ -572,7 +584,6 @@ function SnapshotTags({
           + {t("snapshot.tags")}
         </button>
       )}
-      {err && <span className="text-caption text-statusFail">{err}</span>}
     </div>
   );
 }
@@ -617,19 +628,18 @@ function SnapshotRow({
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
   const [deleting, setDeleting] = useState(false);
-  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
-    setDeleteErr(null);
     try {
       const res = await deleteSnapshot("containers", snap.id, source);
       if (res.ok) onDeleted();
-      else setDeleteErr(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setDeleting(false);
     }
@@ -676,7 +686,6 @@ function SnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
       {showRestore && (
@@ -779,6 +788,9 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
+  // Section-load error — NOT migrated to a toast (GlimStone follow-up pass,
+  // v8.0.0 audit note): same structural "the section failed to load"
+  // condition as Files.tsx's FileSetRestorePanel, not a one-shot action.
   const [error, setError] = useState<string | null>(null);
   // Restore-to-folder needs the default folder + host mount root to seed the
   // FolderBrowser. Fetched once the panel is opened (not on mount).
