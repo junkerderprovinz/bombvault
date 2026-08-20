@@ -48,7 +48,7 @@ export function IncludeToggle({ name, initial }: IncludeToggleProps) {
         disabled={busy}
       />
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}

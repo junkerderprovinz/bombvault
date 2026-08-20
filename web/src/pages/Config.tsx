@@ -73,7 +73,7 @@ function ConfigBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("settings.saved")}
           {state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
           )}
         </span>
       )}
@@ -112,7 +112,8 @@ function labelledInput(
         spellCheck={false}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+        dir="ltr"
+        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
       />
       {hint && <p className="text-xs text-carbon-textMuted">{hint}</p>}
     </div>
@@ -283,7 +284,7 @@ function ConfigSnapshotRow({
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
@@ -296,7 +297,7 @@ function ConfigSnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );

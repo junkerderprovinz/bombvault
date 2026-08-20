@@ -53,6 +53,24 @@ import type { InputHTMLAttributes } from "react";
 //     landing on the RTL reader's leading edge instead. `dir` flips on
 //     document.documentElement per the active locale (lib/i18n.ts), so the
 //     logical utilities resolve correctly with no JS/conditional needed.
+//   - `dir="ltr"` + `text-start` on the <input> itself (RTL sweep, form-engine
+//     Phase 2 Task 6): every value this component ever holds — a login
+//     password, a cloud secret, a fleet/receiver token, an APP_KEY-equivalent
+//     recovery key — is technical data per design-language.md's RTL section,
+//     never language, so it must stay pinned left-to-right and NOT get bidi-
+//     reordered under dir="rtl" (Arabic, Hebrew). Fixing it once here, at the
+//     single shared component every secret field renders through, covers
+//     every call site (Login, Settings' cloud/S3/rest/matrix/smtp/registry/
+//     metrics/account-password fields, Recovery's recovery key, Receiver's
+//     app key, Fleet's token, OffsiteWizard's rest password) instead of
+//     patching each one individually. `text-start` (not the bare default)
+//     because several call sites build their `className` from a shared
+//     `inputCls` constant that may carry its own text-align — `text-start`
+//     resolves to "left" for THIS element specifically since its own `dir` is
+//     now "ltr", regardless of what the surrounding page's direction is, so
+//     the value always reads left-to-right from the field's own left edge.
+//     The field's POSITION in the page still follows the surrounding RTL
+//     layout untouched — only the text inside it is pinned.
 // ---------------------------------------------------------------------------
 
 export interface RevealInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -87,7 +105,8 @@ export function RevealInput({
       <input
         {...rest}
         type={visible ? "text" : "password"}
-        className={`w-full pe-8!${className ? ` ${className}` : ""}`}
+        dir="ltr"
+        className={`w-full pe-8! text-start${className ? ` ${className}` : ""}`}
       />
       <button
         type="button"

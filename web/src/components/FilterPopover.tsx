@@ -70,7 +70,7 @@ export function FilterPopover({
         <div
           role="dialog"
           aria-label={label}
-          className="absolute left-0 top-full z-20 mt-2 w-max min-w-[16rem] max-w-[min(90vw,26rem)] rounded-card bg-carbon-surface p-4 shadow-xl flex flex-col gap-4"
+          className="absolute start-0 top-full z-20 mt-2 w-max min-w-[16rem] max-w-[min(90vw,26rem)] rounded-card bg-carbon-surface p-4 shadow-xl flex flex-col gap-4"
         >
           {children}
         </div>

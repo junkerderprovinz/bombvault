@@ -142,7 +142,7 @@ function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className={`${base} text-left cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid`}
+        className={`${base} text-start cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid`}
       >
         {inner}
       </button>
@@ -593,7 +593,7 @@ function ProtectionCard({
                       </span>
                       {/* Col 4 — last successful run. */}
                       <span
-                        className="col-start-4 text-left @[44rem]:text-right text-carbon-textMuted text-xs"
+                        className="col-start-4 text-start @[44rem]:text-end text-carbon-textMuted text-xs"
                         title={formatTs(d.lastSuccess)}
                       >
                         {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
@@ -683,7 +683,7 @@ function ProtectionCard({
                     Only the off-site DR row drives that red — a local subset pass
                     can't clear it, so we run {offsite,dr} explicitly. */}
                 {!off && drCapable && (drFailed || d.offsiteConfigured) && (
-                  <div className="flex flex-wrap items-center gap-2 pl-1">
+                  <div className="flex flex-wrap items-center gap-2 ps-1">
                     {drFailed && d.drillDetail && (
                       <span className="text-xs text-statusFail wrap-break-word" title={d.drillDetail}>
                         {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
@@ -876,7 +876,7 @@ function RansomwareCard({
                 <Badge tone={statusTone(protectionChip(d.protection))}>{protectionChip(d.protection)}</Badge>
                 <span className="text-sm text-carbon-textSub">{protLabel(d.protection)}</span>
               </div>
-              <div className="flex flex-col gap-0.5 pl-1">
+              <div className="flex flex-col gap-0.5 ps-1">
                 {rows.map((row) => {
                   const icon =
                     row.state === "ok" ? "✓" : row.state === "amber" ? "!" : row.state === "bad" ? "✗" : "—";
@@ -927,7 +927,7 @@ function RansomwareCard({
                       </div>
                       {/* WHICH check + WHY it failed (off-site DR reason from /api/status). */}
                       {row.detail && (
-                        <span className="text-xs text-statusFail wrap-break-word pl-6" title={row.detail}>
+                        <span className="text-xs text-statusFail wrap-break-word ps-6" title={row.detail}>
                           {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {row.detail}
                         </span>
                       )}
@@ -998,7 +998,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </select>
           </div>
           {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pr-2">
+          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pe-2">
             {shown.map((run) => {
               const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
               return (
@@ -1015,7 +1015,12 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
                     <span className="text-carbon-textSub whitespace-nowrap">
                       {formatTs(run.startedAt)}
-                      {run.finishedAt != null ? ` → ${formatTs(run.finishedAt)}` : ""}
+                      {run.finishedAt != null && (
+                        <>
+                          {" "}
+                          <span className="inline-block rtl:-scale-x-100">→</span> {formatTs(run.finishedAt)}
+                        </>
+                      )}
                     </span>
                     <span className="text-carbon-textMuted whitespace-nowrap">
                       {dur ? `(${dur}) · ` : ""}
@@ -1024,10 +1029,10 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
-                  <p className="pl-16 text-xs text-statusFail wrap-break-word">{run.error}</p>
+                  <p dir="ltr" className="ps-16 text-xs text-statusFail wrap-break-word text-start">{run.error}</p>
                 )}
                 {run.status === "skipped" && run.error && (
-                  <p className="pl-16 text-xs text-carbon-textMuted wrap-break-word">{run.error}</p>
+                  <p dir="ltr" className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start">{run.error}</p>
                 )}
               </div>
               );
@@ -1089,10 +1094,10 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 <div className="w-2 h-2 rounded-full bg-statusOkSolid shrink-0" />
                 <span className="text-carbon-text font-medium flex-1 truncate min-w-0">{c.name}</span>
                 {hasStart ? (
-                  <span className="text-carbon-textMuted text-xs shrink-0 text-right">
-                    {formatTs(c.lastBackupStarted)} → {formatTs(c.lastBackup)}
+                  <span className="text-carbon-textMuted text-xs shrink-0 text-end">
+                    {formatTs(c.lastBackupStarted)} <span className="inline-block rtl:-scale-x-100">→</span> {formatTs(c.lastBackup)}
                     {duration && (
-                      <span className="ml-1" title={t("dashboard.duration")} aria-label={t("dashboard.duration")}>
+                      <span className="ms-1" title={t("dashboard.duration")} aria-label={t("dashboard.duration")}>
                         ({duration})
                       </span>
                     )}
@@ -1464,7 +1469,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   </span>
                   {has && d.latest ? (
                     <>
-                      <span className="text-carbon-text tabular-nums w-20 shrink-0 text-right">
+                      <span className="text-carbon-text tabular-nums w-20 shrink-0 text-end">
                         {humanBytes(d.latest.rawSize)}
                       </span>
                       <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
@@ -1473,7 +1478,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                       <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
                         {d.latest.snapshots} {t("dashboard.snapshotsLabel")}
                       </span>
-                      <span className="ml-auto shrink-0">
+                      <span className="ms-auto shrink-0">
                         <Sparkline values={d.stats.map((s) => s.rawSize)} />
                       </span>
                     </>
@@ -1484,7 +1489,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   )}
                 </div>
                 {forecastLine && (
-                  <p className="pl-1 text-xs text-carbon-textSub wrap-break-word">
+                  <p className="ps-1 text-xs text-carbon-textSub wrap-break-word">
                     {forecastLine.growth}
                     {forecastLine.growth && (forecastLine.projection || forecastLine.free) ? " · " : ""}
                     {forecastLine.projection && (

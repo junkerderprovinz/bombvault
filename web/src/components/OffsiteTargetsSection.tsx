@@ -116,7 +116,7 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
         <span className="text-[11px] text-statusWarn">{t("offsite.testUninitialized")}</span>
       )}
       {st === "fail" && (
-        <span className="text-[11px] text-statusFail max-w-[18rem] wrap-break-word text-right">
+        <span className="text-[11px] text-statusFail max-w-[18rem] wrap-break-word text-end">
           {err ?? t("offsite.testFailed")}
         </span>
       )}
@@ -273,7 +273,7 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
         >
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
-            <span className="text-xs text-carbon-textMuted font-mono break-all">{tgt.repo}</span>
+            <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
             {/* `wrap` on BOTH chips, for the same reason the Dashboard
                 protection badges carry it: they sit in a min-w-0 column that a
                 long `repo` string (rendered break-all above) lets collapse to a
@@ -343,7 +343,8 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               onChange={(e) => setDraft((d) => (d ? { ...d, repo: e.target.value } : d))}
               spellCheck={false}
               placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-              className={inputCls}
+              dir="ltr"
+              className={`${inputCls} text-start`}
             />
             <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
           </label>

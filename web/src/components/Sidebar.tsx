@@ -327,7 +327,7 @@ function SidebarControls() {
           <div
             role="listbox"
             aria-label={t("language.label")}
-            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
+            className="absolute start-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
             style={{ scrollbarColor: "var(--carbon-border) transparent" }}
           >
             {languages.map((l) => (
@@ -336,7 +336,7 @@ function SidebarControls() {
                 role="option"
                 aria-selected={l.code === lang}
                 onClick={() => { setLanguage(l.code); setOpen(false); }}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors ${
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-start transition-colors ${
                   l.code === lang
                     ? "bg-carbon-surface3 text-carbon-text"
                     : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -470,7 +470,7 @@ export function Sidebar({ settings }: SidebarProps) {
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
         onContextMenu={(e) => e.preventDefault()}
-        className="bv-logo-btn flex items-center gap-2.5 px-4 py-5 w-full text-left cursor-pointer select-none hover:opacity-90 transition-opacity"
+        className="bv-logo-btn flex items-center gap-2.5 px-4 py-5 w-full text-start cursor-pointer select-none hover:opacity-90 transition-opacity"
       >
         <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
           <span className={`bv-logo-mark flex h-16 w-16 items-center justify-center ${eggClass}`}>

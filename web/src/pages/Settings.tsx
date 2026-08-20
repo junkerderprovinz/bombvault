@@ -372,7 +372,7 @@ chmod 600 /root/.ssh/authorized_keys`
       <div className="flex flex-col gap-3">
         <p className="text-sm text-carbon-textSub">{t("vm.ssh.desc")}</p>
         <div className="text-sm text-carbon-text">
-          {t("vm.ssh.host")}: <span className="font-mono">{host || "—"}</span>
+          {t("vm.ssh.host")}: <span dir="ltr" className="font-mono text-start">{host || "—"}</span>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
@@ -395,7 +395,7 @@ chmod 600 /root/.ssh/authorized_keys`
           <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("vm.ssh.setupTitle")}
           </span>
-          <ol className="list-decimal pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+          <ol className="list-decimal ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
             <li>{t("vm.ssh.step1")}</li>
             <li>{t("vm.ssh.step2")}</li>
             <li>{t("vm.ssh.step3")}</li>
@@ -618,19 +618,19 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <dl className="flex flex-col gap-1.5 text-xs text-carbon-text">
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewExportedAt")}</dt>
-                <dd className="font-mono text-right wrap-break-word">{preview.exportedAt || "-"}</dd>
+                <dd className="font-mono text-end wrap-break-word">{preview.exportedAt || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewAppVersion")}</dt>
-                <dd className="font-mono text-right wrap-break-word">{preview.appVersion || "-"}</dd>
+                <dd className="font-mono text-end wrap-break-word">{preview.appVersion || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewOffsiteTargets")}</dt>
-                <dd className="font-mono">{preview.offsiteTargets}</dd>
+                <dd dir="ltr" className="font-mono text-start">{preview.offsiteTargets}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewCredentials")}</dt>
-                <dd className="text-right">
+                <dd className="text-end">
                   {preview.credentials.present
                     ? t("settingsIO.previewCredsIncluded")
                     : t("settingsIO.previewCredsNotIncluded")}
@@ -638,7 +638,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted shrink-0">{t("settingsIO.previewSettingsAreas")}</dt>
-                <dd className="text-right wrap-break-word">
+                <dd className="text-end wrap-break-word">
                   {preview.settingsGroups.length > 0
                     ? preview.settingsGroups
                         .map((g) => (IMPORT_GROUP_KEYS[g] ? t(IMPORT_GROUP_KEYS[g]) : g))
@@ -938,7 +938,7 @@ function DashboardWidgetCard({
     <Card title={t("settings.widget")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.widgetHint")}</p>
 
-      <ul className="list-disc pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+      <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
         <li>{t("settings.widgetHow")}</li>
         <li>{t("settings.widgetAccess")}</li>
         <li>{t("settings.widgetEnglish")}</li>
@@ -1129,7 +1129,7 @@ function FleetSettingsCard({
         />
       </div>
 
-      <ul className="list-disc pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+      <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
         <li>{t("settings.fleetHow")}</li>
         <li>{t("settings.fleetAccess")}</li>
       </ul>
@@ -1250,7 +1250,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <p className="text-xs text-carbon-textMuted -mt-1">{t("rclone.hint")}</p>
       <div className="text-sm text-carbon-text">
         {t("rclone.configured")}:{" "}
-        <span className="font-mono">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
+        <span dir="ltr" className="font-mono text-start">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
       </div>
       <textarea
         value={conf}
@@ -1258,7 +1258,8 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus"
+        dir="ltr"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus text-start"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
@@ -1336,7 +1337,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
         <label className={fieldCls}>AWS_ACCESS_KEY_ID
-          <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
+          <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
         <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
           <RevealInput {...revealS3Secret} value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
             placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1357,7 +1358,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
         <label className={fieldCls}>RESTIC_REST_USERNAME
-          <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
+          <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
         <label className={fieldCls}>RESTIC_REST_PASSWORD
           <RevealInput {...revealRestPassword} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
             placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1491,7 +1492,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
-            <span className="text-xs text-carbon-textMuted font-mono break-all">
+            <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
               {s.s3KeyId || s.restUser || "—"}
             </span>
           </div>
@@ -1532,7 +1533,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
             <label className={fieldCls}>AWS_ACCESS_KEY_ID
-              <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
+              <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
             <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
               <RevealInput {...revealS3Secret} value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
                 placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1551,7 +1552,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
             <label className={fieldCls}>RESTIC_REST_USERNAME
-              <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
+              <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
             <label className={fieldCls}>RESTIC_REST_PASSWORD
               <RevealInput {...revealRestPassword} value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
                 placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1781,7 +1782,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.webhook")}
           <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
-            placeholder="https://discord.com/api/webhooks/..." className={inputCls} />
+            placeholder="https://discord.com/api/webhooks/..." dir="ltr" className={`${inputCls} text-start`} />
         </label>
         <label className={labelCls}>
           {t("notify.webhookFormat")}
@@ -1806,7 +1807,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.appriseUrl")}
           <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
-            placeholder="http://apprise:8000/notify/bombvault" className={inputCls} />
+            placeholder="http://apprise:8000/notify/bombvault" dir="ltr" className={`${inputCls} text-start`} />
         </label>
         <label className={labelCls}>
           {t("notify.appriseTags")}
@@ -1820,7 +1821,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.matrixHomeserver")}
           <input value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
-            placeholder="https://matrix.org" className={inputCls} />
+            placeholder="https://matrix.org" dir="ltr" className={`${inputCls} text-start`} />
         </label>
         <label className={labelCls}>
           {t("notify.matrixToken")}
@@ -1830,7 +1831,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.matrixRoom")}
           <input value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
-            placeholder="!abcdef:matrix.org" className={inputCls} />
+            placeholder="!abcdef:matrix.org" dir="ltr" className={`${inputCls} text-start`} />
         </label>
       </div>
 
@@ -1872,7 +1873,8 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               }
               spellCheck={false}
               placeholder="https://hc-ping.com/your-uuid"
-              className={inputCls}
+              dir="ltr"
+              className={`${inputCls} text-start`}
             />
           </label>
         ))}
@@ -1895,7 +1897,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpHost")}
               <input value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
-                placeholder="smtp.example.com" className={inputCls} />
+                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} text-start`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpPort")}
@@ -1913,7 +1915,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpUser")}
               <input value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
-                className={inputCls} />
+                dir="ltr" className={`${inputCls} text-start`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpPass")}
@@ -1923,12 +1925,12 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpFrom")}
               <input value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
-                placeholder="bombvault@example.com" className={inputCls} />
+                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} text-start`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpTo")}
               <input value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
-                placeholder="admin@example.com" className={inputCls} />
+                placeholder="admin@example.com" dir="ltr" className={`${inputCls} text-start`} />
             </label>
           </>
         )}
@@ -2863,7 +2865,7 @@ function FilesSection({
               />
               <span className="font-medium text-carbon-text flex-1 min-w-0 truncate">{s.name}</span>
               {s.path && (
-                <span className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs">
+                <span dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs text-start">
                   {s.path}
                 </span>
               )}
@@ -3643,7 +3645,8 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+                  dir="ltr"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
                 />
               </div>
             ))}
@@ -3660,7 +3663,8 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+                dir="ltr"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -3873,7 +3877,7 @@ export function SettingsPage() {
       <Card title={t("settings.paths")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           Relative subpaths under the host mount root (
-          <span className="font-mono">{hostMountRoot}</span>). Click Browse to
+          <span dir="ltr" className="font-mono text-start">{hostMountRoot}</span>). Click Browse to
           navigate directories or type a path directly.
         </p>
         <FolderBrowser
@@ -4418,7 +4422,8 @@ export function SettingsPage() {
                 setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
               }
               placeholder={t("export.encrypt.recipientsPlaceholder")}
-              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+              dir="ltr"
+              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
             />
             <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
             {!settings.exportAgeRecipients.trim() && (
@@ -4502,7 +4507,8 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                   }
                   placeholder="rest:http://host:8000/repo"
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+                  dir="ltr"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
@@ -5055,7 +5061,7 @@ export function SettingsPage() {
                       setAccentHex(DEFAULT_ACCENT);
                       setAccent(DEFAULT_ACCENT);
                     }}
-                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1"
+                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
                   >
                     {t("common.reset")}
                   </button>
@@ -5184,7 +5190,7 @@ export function SettingsPage() {
                 type="button"
                 disabled={!rainbow.on}
                 onClick={() => updateRainbow({ palette: RAINBOW })}
-                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1 disabled:opacity-50 disabled:pointer-events-none"
+                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1 disabled:opacity-50 disabled:pointer-events-none"
               >
                 {t("common.reset")}
               </button>

@@ -102,7 +102,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
             <span>{t("spike.colCheck")}</span>
             <span>{t("spike.colStatus")}</span>
             <span>{t("spike.colDetail")}</span>
-            <span className="text-right">{t("spike.bestEffort")}</span>
+            <span className="text-end">{t("spike.bestEffort")}</span>
           </div>
           {checks.map((c) => (
             <div
@@ -114,7 +114,7 @@ export function SpikePanel({ t }: SpikePanelProps) {
               <span className="text-carbon-textMuted text-xs wrap-break-word">
                 {c.Detail || "—"}
               </span>
-              <span className="text-right text-xs text-carbon-textMuted">
+              <span className="text-end text-xs text-carbon-textMuted">
                 {c.BestEffort ? "optional" : "required"}
               </span>
             </div>

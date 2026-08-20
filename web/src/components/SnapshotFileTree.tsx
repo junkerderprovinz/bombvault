@@ -74,7 +74,7 @@ function FileRow({
         className="shrink-0"
         style={{ accentColor: "var(--accent)" }}
       />
-      <span className="font-mono text-carbon-textSub flex-1 min-w-0 truncate" title={file.path}>
+      <span dir="ltr" className="font-mono text-carbon-textSub flex-1 min-w-0 truncate text-start" title={file.path}>
         {file.type === "dir" ? "📁 " : ""}
         {file.path}
       </span>
@@ -112,7 +112,7 @@ function TreeRow({
             className="w-4 shrink-0 text-carbon-textMuted hover:text-carbon-text"
             aria-label={expanded ? "collapse" : "expand"}
           >
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`transition-transform ${expanded ? "rotate-90" : ""}`}>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`transition-transform ${expanded ? "rotate-90" : "rtl:rotate-180"}`}>
               <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -128,7 +128,7 @@ function TreeRow({
           aria-label={node.path}
         />
         <span className="shrink-0">{isDir ? "📁" : "📄"}</span>
-        <span className="font-mono text-carbon-textSub flex-1 truncate" title={node.path}>
+        <span dir="ltr" className="font-mono text-carbon-textSub flex-1 truncate text-start" title={node.path}>
           {node.name}
         </span>
       </div>

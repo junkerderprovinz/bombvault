@@ -425,7 +425,8 @@ export function OffsiteWizard({
             spellCheck={false}
             onChange={(e) => patchRepo(e.target.value)}
             placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-            className={inputCls}
+            dir="ltr"
+            className={`${inputCls} text-start`}
           />
           <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
         </label>
@@ -456,16 +457,16 @@ export function OffsiteWizard({
         {urlBackend === "rest" && (
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-3 mt-1">
             <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
-            <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
+            <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
               RESTIC_REST_USERNAME
               <input
                 value={cloud.restUser}
                 onChange={(e) => setCloudState((p) => ({ ...p, restUser: e.target.value }))}
                 spellCheck={false}
-                className={inputCls}
+                className={`${inputCls} text-start`}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
+            <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
               RESTIC_REST_PASSWORD
               <RevealInput
                 {...revealRestPassword}

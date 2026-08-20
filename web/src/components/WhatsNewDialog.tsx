@@ -94,7 +94,7 @@ function renderMarkdown(md: string): ReactNode[] {
     const items = list;
     const k = key++;
     blocks.push(
-      <ul key={`ul${k}`} className="my-2 ml-5 list-disc space-y-1 text-sm leading-relaxed text-carbon-textSub">
+      <ul key={`ul${k}`} className="my-2 ms-5 list-disc space-y-1 text-sm leading-relaxed text-carbon-textSub">
         {items.map((it, idx) => (
           <li key={idx}>{renderInline(it, `ul${k}-${idx}`)}</li>
         ))}

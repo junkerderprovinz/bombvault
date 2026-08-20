@@ -213,7 +213,7 @@ function VMMethodSelect({
         <option value="live">{t("vm.method.live")}</option>
       </select>
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}
@@ -275,7 +275,7 @@ function VMIncludeToggle({
         />
       </button>
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}
@@ -377,7 +377,7 @@ function VMBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("common.done")}
           {state.phase === "success" && state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
           )}
@@ -448,7 +448,7 @@ function VMSnapshotRow({
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
         </span>
         <span className="text-carbon-textMuted text-xs flex-1">
@@ -479,10 +479,12 @@ function VMSnapshotRow({
         </button>
       </div>
       {/* Restore control (confirm + leave-stopped + progress banner), indented
-          under the id column (pl-24) to match the row's content alignment.
-          Only rendered once the user opts in via the toggle above. */}
+          under the id column (ps-24, LOGICAL — the row's content column sits
+          at the reading-direction start, not a fixed physical left) to match
+          the row's content alignment. Only rendered once the user opts in via
+          the toggle above. */}
       {showRestore && (
-        <div className="pl-24">
+        <div className="ps-24">
           <RestoreAction
             domain="vm"
             name={vmName}
@@ -495,7 +497,7 @@ function VMSnapshotRow({
           />
         </div>
       )}
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -568,7 +570,18 @@ function VMRestorePanel({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform ${open ? "rotate-90" : ""}`}
+          // Disclosure chevron (RTL sweep, form-engine Phase 2 Task 6):
+          // closed points to the reading-direction start — right in LTR
+          // (the base, unrotated path), left in RTL via `rtl:rotate-180`
+          // (Tailwind v4's built-in `:dir(rtl)` variant, no config needed).
+          // Open always rotates to straight-down (`rotate-90`) in BOTH
+          // directions — "there is more below" has no reading direction, so
+          // it never gets the rtl: treatment. This is plain rotation, not
+          // scaleX mirroring: mirroring the closed glyph and then rotating
+          // it 90° lands on "pointing up", not "pointing down" (transform
+          // functions compose right-to-left), so a second rtl:-only rotate
+          // angle is the correct fix, not a mirror.
+          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
         >
           <path
             d="M4 2l4 4-4 4"
@@ -600,7 +613,7 @@ function VMRestorePanel({
                   disabled={deletingAll || loading}
                   tone="fail"
                   size="small"
-                  className="ml-auto"
+                  className="ms-auto"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </Badge>
@@ -709,7 +722,7 @@ export function VMRow({
         </div>
 
         {/* Last backup */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
           <p className="text-xs text-carbon-textSub">
             {vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}
@@ -733,7 +746,7 @@ export function VMRow({
               <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </label>
           </div>
-          <div className="ml-auto flex flex-col items-end">
+          <div className="ms-auto flex flex-col items-end">
             <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
           </div>
         </div>
@@ -1000,7 +1013,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
         type="button"
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
-        className="flex w-full items-start gap-2 text-left"
+        className="flex w-full items-start gap-2 text-start"
       >
         <svg
           width="14"
@@ -1008,7 +1021,11 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
           viewBox="0 0 12 12"
           fill="none"
           aria-hidden="true"
-          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "" : "rotate-90"}`}
+          // Disclosure chevron — same RTL rotation scheme as the identical
+          // icon above (form-engine Phase 2 Task 6): closed points start
+          // (right in LTR, `rtl:rotate-180` flips it left), open always
+          // rotates to straight-down in both directions.
+          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
         >
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -1016,7 +1033,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
           <span className="font-semibold text-carbon-text text-sm">
             {t("vmBackupOrder.title")}
             {names.length > 0 && (
-              <span className="ml-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
+              <span className="ms-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
                 ({names.length})
               </span>
             )}
@@ -1386,7 +1403,7 @@ export function VMs() {
             </label>
           )}
           {live.length > 0 && (
-            <div className="ml-auto">
+            <div className="ms-auto">
               <ScheduleIncludeAllControl t={t} onChanged={() => void loadVMs()} />
             </div>
           )}

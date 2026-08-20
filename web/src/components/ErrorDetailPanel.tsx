@@ -276,7 +276,7 @@ export function ErrorDetailPanel({
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-0.5 pl-4 text-xs text-carbon-textMuted">
+                  <div className="flex flex-col gap-0.5 ps-4 text-xs text-carbon-textMuted">
                     <span className="wrap-break-word">
                       <span className="text-carbon-textSub">{t("errorPanel.affected")}: </span>
                       {g.targets.join(", ")}
