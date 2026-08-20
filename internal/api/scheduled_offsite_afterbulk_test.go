@@ -94,7 +94,7 @@ func TestScheduledFilesRunReplicatesOffsite(t *testing.T) {
 	// A stale last-run makes the files entry "missed", so CatchUpMissed fires the
 	// SAME wrapped cron job a real 06:00 trigger would run.
 	stale := func() (time.Time, error) { return time.Now().Add(-72 * time.Hour), nil }
-	if err := sched.ReloadWithDueChecks(mustSettings(t, st), nil, nil, nil, nil, stale); err != nil {
+	if err := sched.ReloadWithDueChecks(mustSettings(t, st), nil, nil, nil, nil, stale, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	if ran := sched.CatchUpMissed(time.Now()); len(ran) != 1 || ran[0] != "files" {
