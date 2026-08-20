@@ -16,6 +16,17 @@ type T = ReturnType<typeof useT>["t"];
 // Backup button
 // ---------------------------------------------------------------------------
 
+// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
+// "error" result below is deliberately NOT migrated to a toast. Same shared-
+// hook reasoning as Containers.tsx's BackupButton / VMs.tsx's VMBackupButton
+// / Config.tsx's ConfigBackupButton: it's driven by lib/backupWatch.ts's
+// useBackupWatch hook (kind defaults to "backup", which already self-clears
+// after 4s — SUCCESS_CLEAR_MS, effectively already toast-like), but the
+// identical state shape also backs RESTORE outcomes elsewhere, which are
+// explicitly STICKY BY DESIGN. Splitting that shared, cross-file state
+// machine's rendering by kind is a hook-level architecture change, not the
+// local flash-swap this pass does everywhere else — left as its own
+// deliberate follow-up.
 function FlashBackupButton({
   t,
   onBackedUp,

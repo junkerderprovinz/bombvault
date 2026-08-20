@@ -12,6 +12,33 @@
 // sets `cancelledRef.current = true` on a successful cancel and the watch's
 // no-run fallback reads that exact ref to report a neutral "cancelled" instead
 // of a phantom green success.
+//
+// GlimStone follow-up pass (v8.0.0) audit note: the success/cancelled/error
+// banners below are deliberately NOT migrated to toasts, unlike most of this
+// pass's other inline-flash sites. Every current call site (RestoreAction.tsx
+// — Containers.tsx/VMs.tsx/Recovery.tsx's in-place restore; RestorePanel.tsx's
+// SnapshotFileBrowser/RecreateButton/RestoreToFolder; Files.tsx's
+// FileSetRestoreControl/FileSetFileBrowser — 6 in total, matching this file's
+// own header comment) feeds it a `state` from a useBackupWatch({kind:
+// "restore", ...}) call, never "backup". lib/backupWatch.ts's own header
+// comment already makes this a deliberate, pre-existing design decision, not
+// a leftover flash: "a restore is a rare, destructive action whose outcome
+// the user must actually see" — a restore success/error banner is STICKY BY
+// DESIGN (no SUCCESS_CLEAR_MS auto-clear, reset only via reset(), wired to
+// the caller's own selection/destination changes so a stale banner can never
+// misdescribe a different, unrun choice). The error banner in particular is
+// often a raw backend error string (state.message, no fallback default) the
+// user may need to read and copy, not a one-shot ping — the exact
+// long-lived-error case this pass's task brief called out as a reason to
+// leave a shared component alone. And several success messages embed a
+// restored-to PATH (restore.restoredTo), a reference value to copy down —
+// the same "not a one-shot ping" reasoning as VMExportButton/ExportButton
+// staying inline. Since 100% of call sites are restore-kind, there is no
+// per-consumer split to make here (unlike, say, BackupButton/VMBackupButton,
+// which mix backup- and restore-kind renders in the SAME component and were
+// left as their own follow-up for that reason). If a future call site ever
+// feeds this component a "backup"-kind state, revisit this reasoning for
+// that one call site specifically.
 // ---------------------------------------------------------------------------
 
 import type { MutableRefObject } from "react";
