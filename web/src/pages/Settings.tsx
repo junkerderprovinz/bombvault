@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin, backupEverythingNow, ApiError } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { useOffsiteTargets } from "../lib/useOffsiteTargets";
@@ -3000,6 +3000,114 @@ function RestoreChecksSection({
   );
 }
 
+// Domain section — "Backup Everything": a 6th, independent pseudo-domain
+// cadence that runs containers → VMs → flash → folders → self-backup in
+// sequence, bracketed by a global pre/post shell hook (the post-hook is the
+// dead-man's-switch ping point — see docs/superpowers/specs/
+// 2026-08-20-backup-everything-design.md). It does NOT gate or replace the
+// five domain schedules above, so the overlap warning below is always shown,
+// not conditionally computed (a static warning, not a live conflict
+// detector — see the design spec's Decision 1). The hook inputs mirror
+// Containers.tsx's HooksEditor field style (monospace, shell-command
+// placeholders); the manual trigger button mirrors Containers.tsx's
+// backupSelected()'s simple busy/409/error text pattern — this cross-domain
+// pass has no single existing SSE progress key to hook a live bar to, so a
+// plain started/error message is enough (per the plan).
+function EverythingSection({
+  settings,
+  update,
+  t,
+}: {
+  settings: Settings;
+  update: (patch: Partial<Settings>) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function runNow() {
+    if (busy) return; // guard the in-flight window (button also disables)
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await backupEverythingNow();
+      if (res.ok) {
+        setMsg(t("settings.everythingStarted"));
+      } else {
+        setMsg(res.error ?? t("settings.error"));
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setMsg(t("settings.everythingAlreadyRunning"));
+      } else {
+        setMsg(err instanceof Error ? err.message : t("settings.error"));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const inputCls =
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
+
+  return (
+    <Card title={t("settings.everythingTitle")}>
+      <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.everythingHint")}</p>
+      <div className="rounded-card bg-carbon-surface2 p-4">
+        <CadenceBuilder
+          label={t("settings.everythingTitle")}
+          value={settings.everythingSchedule}
+          onChange={(v) => update({ everythingSchedule: v })}
+        />
+        {/* Static overlap warning — ALWAYS shown, not gated behind a computed
+            condition (unlike the tamper-schedule-inactive warning above it
+            mirrors the markup of): a "smart" live conflict detector was
+            explicitly rejected as v1 over-engineering in the design spec. */}
+        <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+          {t("settings.everythingOverlapWarning")}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-carbon-textMuted">{t("settings.everythingHooksHint")}</p>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
+          <input
+            value={settings.everythingPreHook}
+            onChange={(e) => update({ everythingPreHook: e.target.value })}
+            spellCheck={false}
+            placeholder="echo starting"
+            className={inputCls}
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
+          <input
+            value={settings.everythingPostHook}
+            onChange={(e) => update({ everythingPostHook: e.target.value })}
+            spellCheck={false}
+            placeholder="curl -fsS https://hc-ping.com/your-uuid"
+            className={inputCls}
+          />
+        </label>
+      </div>
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          onClick={() => void runNow()}
+          disabled={busy}
+          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {t("settings.everythingRunNow")}
+        </button>
+        {(busy || msg) && (
+          <span className="text-xs text-carbon-textSub wrap-break-word">
+            {busy ? t("settings.everythingBusy") : msg}
+          </span>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 // TabKey enumerates the 7 Settings tabs. The active tab is the single source of
 // truth for which card group renders; SettingsPage owns all shared state so every
 // tab shares one `settings`/`save()` instance regardless of which tab is visible.
@@ -3469,6 +3577,10 @@ export function SettingsPage() {
     // Self-backup cadence + scheduled off-site tamper test.
     patch.configSchedule = settings.configSchedule;
     patch.tamperTestSchedule = settings.tamperTestSchedule;
+    // Backup Everything: 6th pseudo-domain cadence + its global hooks.
+    patch.everythingSchedule = settings.everythingSchedule;
+    patch.everythingPreHook = settings.everythingPreHook;
+    patch.everythingPostHook = settings.everythingPostHook;
     // Anacron-style catch-up toggle (Missed schedules card on this tab).
     patch.catchUpMissed = settings.catchUpMissed;
     // Per-item schedules opt-in (#121).
@@ -3840,6 +3952,17 @@ export function SettingsPage() {
               )}
             </div>
           </Card>
+
+          {/* Backup Everything (schedulesEverything): a 6th, independent pass over
+              all five domains above + a manual trigger. See EverythingSection's
+              own doc comment for why the overlap warning is unconditional. */}
+          <EverythingSection
+            settings={settings}
+            update={(patch) =>
+              setSettings((prev) => (prev ? { ...prev, ...patch } : prev))
+            }
+            t={t}
+          />
 
           {/* One Save persists every schedule field via the shared save(). */}
           <SaveBar

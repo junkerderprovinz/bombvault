@@ -287,6 +287,7 @@ export function ActivityLog({
           <option value="flash">{t("activityLog.domainFlash")}</option>
           <option value="config">{t("activityLog.domainConfig")}</option>
           <option value="files">{t("activityLog.domainFiles")}</option>
+          <option value="everything">{t("activityLog.domainEverything")}</option>
         </select>
         <select
           value={filterType}

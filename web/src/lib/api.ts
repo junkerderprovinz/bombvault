@@ -147,6 +147,20 @@ export interface Settings {
   flashSchedule: string;
   configSchedule: string;
   filesSchedule: string;
+  /** "Backup Everything" pass: a 6th, independent cadence that runs
+   *  every domain in sequence (containers, VMs, flash, folders, self-backup),
+   *  then fires everythingPostHook exactly once — a dead-man's-switch ping
+   *  point. 'off' by default; does NOT gate or replace the five domain
+   *  schedules above, so a user with both on will double-back-up (the
+   *  Settings UI carries a static warning about this). */
+  everythingSchedule: string;
+  /** Shell commands (sh -c) run on BombVault's OWN server (not inside a
+   *  container — there is no single target for a whole-pass hook) around the
+   *  "Backup Everything" sequence. Pre is best-effort and never blocks the
+   *  pass; post always fires exactly once after every domain was attempted,
+   *  success or failure. */
+  everythingPreHook: string;
+  everythingPostHook: string;
   defaultLanguage: string;
   retentionKeepLast: number;
   retentionKeepDaily: number;
@@ -2020,6 +2034,25 @@ export function backupConfigNow(): Promise<BackupResponse> {
 /** GET /api/config/snapshots — list BombVault's own config self-backups. */
 export function listConfigSnapshots(source?: string): Promise<ListSnapshotsResponse> {
   return fetchJSON(`/api/config/snapshots${srcParam(source)}`);
+}
+
+// ---------------------------------------------------------------------------
+// Backup Everything (a 6th, pseudo-domain sequential pass over the five
+// domains above — see everythingSchedule/everythingPreHook/everythingPostHook
+// on Settings)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/backup-everything — start a "Backup Everything" pass: containers,
+ * VMs, flash, folders and the self-backup run in sequence, bracketed by the
+ * global pre/post hooks. ASYNC — mirrors backupAll: the server fires it
+ * detached and answers immediately ({ok:true, started:true}); throws
+ * ApiError(409) if a pass is already running (scheduled or manual). Watch the
+ * recorded run (target "Backup Everything", domain "everything") for the
+ * outcome — there is no dedicated SSE progress key for the pass as a whole.
+ */
+export function backupEverythingNow(): Promise<OkEnvelope & { started?: boolean }> {
+  return fetchJSON("/api/backup-everything", { method: "POST" });
 }
 
 /**
