@@ -1336,6 +1336,110 @@ func TestDeleteBackupsVMPrimaryImmutableRefused(t *testing.T) {
 	}
 }
 
+// TestDeleteBackupsPrimaryImmutableRefused pins issue #152's SECOND gate for
+// DeleteBackups (the containers bulk delete), mirroring
+// TestDeleteSnapshotPrimaryImmutableRefused above: a remote PRIMARY flagged
+// immutable must refuse the bulk purge too. Unlike DeleteSnapshot/
+// DeleteBackupsVM, DeleteBackups has no source parameter — it always targets
+// the primary/local repo — so only the primary half of the gate applies here;
+// there is no offsite half to check. This path is especially severe left
+// unguarded: it runs Forget with prune=true (irreversible, immediate space
+// reclaim) against a repo the operator explicitly flagged append-only.
+func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/containers"
+	s.ContainersPath = repo // the PRIMARY itself is remote — no separate off-site destination
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err := svc.DeleteBackups(context.Background(), "plex")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
+	}
+	if _, err := st.GetTargetByContainer("plex"); err != nil {
+		t.Fatalf("a refused delete must not drop the container target: %v", err)
+	}
+
+	// Control: the SAME remote repo, but the saved safety row is NOT flagged
+	// immutable, stays deletable exactly as it always has (proves the new gate
+	// doesn't over-trigger on every remote primary, only an immutable one).
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected exactly one forget to reach the engine, got %v", eng.forgotten)
+	}
+}
+
+// TestDeleteBackupsFileSetPrimaryImmutableRefused pins issue #152's SECOND
+// gate for DeleteBackupsFileSet, mirroring TestDeleteBackupsPrimaryImmutableRefused
+// above: like DeleteBackups, this function has no source parameter (it always
+// targets the primary/local repo via domainRepo's "local" default), so only the
+// primary half of the gate applies. It runs Forget with prune=true, the same
+// destructive shape as DeleteBackups/DeleteBackupsVM.
+func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/files"
+	s.FilesPath = repo // the PRIMARY itself is remote — no separate off-site destination
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"fileset:docs"}}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err = svc.DeleteBackupsFileSet(context.Background(), set.ID)
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
+	}
+	if _, err := st.GetFileSet(set.ID); err != nil {
+		t.Fatalf("a refused delete must not drop the file set: %v", err)
+	}
+
+	// Control: the SAME remote repo, but the saved safety row is NOT flagged
+	// immutable, stays deletable exactly as it always has (proves the new gate
+	// doesn't over-trigger on every remote primary, only an immutable one).
+	if _, err := st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteBackupsFileSet(context.Background(), set.ID); err != nil {
+		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected exactly one forget to reach the engine, got %v", eng.forgotten)
+	}
+}
+
 // TestUnlockDomainOffsiteImmutableAllowed pins that Unlock stays allowed on an
 // immutable off-site repo: rest-server permits lock removal in append-only
 // mode, and clearing a stale lock is operationally required.
