@@ -95,10 +95,14 @@ func ZvolDatasetFromDevPath(devPath string) (string, bool) {
 // (a pool name is one segment, not a nested dataset path — a caller wanting
 // to also pin a destination PARENT dataset gets that for free from the
 // source's own remaining segments), ".." traversal, or shell-unsafe
-// whitespace/quote characters. ok=false on any violation — a caller MUST
-// treat that as "cannot safely rebase this restore" and refuse, NEVER fall
-// back to the unrebased dataset (which would silently reintroduce the exact
-// wrong-pool bug this function exists to close).
+// whitespace/quote characters — PLUS a leading '-'/'@'/'#'/'%', none of
+// which a ZFS pool name may legally start with (not exploitable — SSH args
+// are shell-quoted regardless — just a cleaner rejection than the getopt
+// error `zfs receive` would otherwise produce for something like "-F").
+// ok=false on any violation — a caller MUST treat that as "cannot safely
+// rebase this restore" and refuse, NEVER fall back to the unrebased dataset
+// (which would silently reintroduce the exact wrong-pool bug this function
+// exists to close).
 func RebaseZvolDatasetPool(dataset, destPool string) (string, bool) {
 	destPool = strings.TrimSpace(destPool)
 	if destPool == "" {
@@ -109,6 +113,16 @@ func RebaseZvolDatasetPool(dataset, destPool string) (string, bool) {
 	}
 	if strings.Contains(destPool, "..") {
 		return "", false // defensive: never let a traversal-looking segment through
+	}
+	if strings.IndexByte("-@#%", destPool[0]) >= 0 {
+		// Not exploitable (SSH args are shell-quoted regardless), just a
+		// clean-rejection nicety: zfs(8) reserves '@'/'#' as the
+		// snapshot/bookmark delimiter and a pool name can't start with them,
+		// and a leading '-' is the sharper practical trap — it gets read as
+		// an option flag by `zfs receive`'s own getopt parsing, turning a
+		// bad pool name like "-F" into a cryptic getopt error deep inside
+		// that call instead of this clean rejection.
+		return "", false
 	}
 	_, rest, ok := strings.Cut(dataset, "/")
 	if !ok || rest == "" {

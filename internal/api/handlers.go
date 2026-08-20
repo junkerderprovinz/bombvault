@@ -113,6 +113,10 @@ func scrubError(err error) string {
 		// a platform-mismatch refusal (TestNotify's Unraid channel, the
 		// dashboard-tile plugin) — see unraidPlatformMismatchError.
 		return err.Error()
+	case errors.Is(err, errZvolRebaseFailed):
+		// Same deal again: the ZFS dataset/pool names ARE the message, and
+		// necessarily contain "/" — see errZvolRebaseFailed.
+		return err.Error()
 	}
 	msg := err.Error()
 	// Map restic's password/key mismatch to an actionable hint: the repo was

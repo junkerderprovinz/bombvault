@@ -314,8 +314,48 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
 	if err == nil {
 		t.Fatal("want a clear refusal for a cross-instance zvol restore with no destination pool, got nil (would otherwise silently attempt `zfs receive` against the source pool's name)")
 	}
-	if !strings.Contains(err.Error(), "pool") {
-		t.Fatalf("error = %v, want it to mention the missing destination pool", err)
+	// Sharpened assertion (code-review followup): a bare strings.Contains(...,
+	// "pool") here passed even with the entire `destZvolPool == ""` refusal
+	// block deleted, because RebaseZvolDatasetPool's own fallback error (and
+	// even the unrelated mount-guard message) also happen to contain "pool".
+	// Assert on the literal phrase that ONLY this early-refusal message
+	// carries, so deleting the block this test exists to pin actually fails
+	// it.
+	const wantPhrase = "no destination ZFS pool was specified"
+	if !strings.Contains(err.Error(), wantPhrase) {
+		t.Fatalf("error = %v, want it to contain %q (the early-refusal message, not just any mention of \"pool\")", err, wantPhrase)
+	}
+	if len(eng.restores) != 0 {
+		t.Fatalf("nothing may be restored when the refusal fires, got %v", eng.restores)
+	}
+}
+
+// TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool pins
+// the trim fix (code-review followup): the guard above checks destZvolPool
+// raw, but RebaseZvolDatasetPool trims internally — so a whitespace-only
+// zvolPool ("   ", e.g. a stray space in a direct API call) used to slip
+// past the clear early refusal and land in RebaseZvolDatasetPool's own less
+// actionable error instead. It must hit the SAME early-refusal message as a
+// truly empty destZvolPool.
+func TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	s := vmRestoreSvc(t, eng)
+	s.ssh = &fakeHostSSH{}
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	writeMountFixture(t, "/", "/host/user", "/host/user/vmrestore")
+
+	disks := []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}
+	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
+
+	_, err := s.prepareRestoreVMForTarget(context.Background(),
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "   ")
+	if err == nil {
+		t.Fatal("want a clear refusal for a whitespace-only destination pool, got nil")
+	}
+	const wantPhrase = "no destination ZFS pool was specified"
+	if !strings.Contains(err.Error(), wantPhrase) {
+		t.Fatalf("error = %v, want it to contain %q (the early-refusal message, not RebaseZvolDatasetPool's own error)", err, wantPhrase)
 	}
 	if len(eng.restores) != 0 {
 		t.Fatalf("nothing may be restored when the refusal fires, got %v", eng.restores)
