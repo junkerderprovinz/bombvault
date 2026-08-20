@@ -279,6 +279,7 @@ export const en = {
   "recovery.stored": "I've stored it safely",
 
   "settings.paths": "Backup Paths",
+  "settings.pathsHint": "Relative subpaths under the host mount root ({root}). Click Browse to navigate directories or type a path directly.",
   "settings.containersPath": "Containers path",
   "settings.vmsPath": "VMs path",
   "settings.flashPath": "Flash path",
@@ -388,6 +389,7 @@ export const en = {
   "offsite.targets.retentionTitle": "Retention (0 = keep all)",
 
   "settings.domains": "Domains",
+  "settings.domainsHint": "Turn each backup domain on or off. Enabling VMs or Flash reveals its tab in the sidebar.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
@@ -1659,6 +1661,7 @@ export const de: Translations = {
   "recovery.stored": "Sicher aufbewahrt",
 
   "settings.paths": "Backup-Pfade",
+  "settings.pathsHint": "Relative Unterpfade unter dem Host-Mount-Root ({root}). Auf Durchsuchen klicken, um Verzeichnisse zu navigieren, oder direkt einen Pfad eingeben.",
   "settings.containersPath": "Container-Pfad",
   "settings.vmsPath": "VMs-Pfad",
   "settings.flashPath": "Flash-Pfad",
@@ -1757,6 +1760,7 @@ export const de: Translations = {
   "offsite.targets.retentionTitle": "Aufbewahrung (0 = alle behalten)",
 
   "settings.domains": "Domänen",
+  "settings.domainsHint": "Jede Backup-Domäne einzeln ein- oder ausschalten. Aktivieren von VMs oder Flash blendet die zugehörige Registerkarte in der Seitenleiste ein.",
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

@@ -157,6 +157,7 @@ const th: Partial<Translations> = {
   "settings.encryptionWarning":
     "การเข้ารหัสถูกกำหนดตายตัวต่อรีพอสิทอรีตั้งแต่การเริ่มต้น การเปลี่ยนแปลงต้องใช้พาธว่างใหม่",
   "settings.paths": "พาธการสำรองข้อมูล",
+  "settings.pathsHint": "พาธย่อยแบบสัมพัทธ์ภายใต้รากการเมานต์ของโฮสต์ ({root}) คลิกเรียกดูเพื่อไปยังไดเรกทอรี หรือพิมพ์พาธโดยตรง",
   "settings.containersPath": "พาธ Containers",
   "settings.vmsPath": "พาธ VMs",
   "settings.flashPath": "พาธ Flash",
@@ -173,6 +174,7 @@ const th: Partial<Translations> = {
   "offsite.replicating": "กำลังจำลอง…",
   "offsite.replicateFailed": "การจำลองล้มเหลว",
   "settings.domains": "โดเมน",
+  "settings.domainsHint": "เปิดหรือปิดแต่ละโดเมนสำรองข้อมูลแยกกัน การเปิดใช้งาน VM หรือ Flash จะแสดงแท็บของมันในแถบด้านข้าง",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

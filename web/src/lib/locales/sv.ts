@@ -157,6 +157,7 @@ const sv: Partial<Translations> = {
   "settings.encryptionWarning":
     "Kryptering fastställs per arkiv vid initieringen. En ändring kräver en ny tom sökväg.",
   "settings.paths": "Säkerhetskopiesökvägar",
+  "settings.pathsHint": "Relativa undersökvägar under host-monteringens rot ({root}). Klicka på Bläddra för att navigera i mappar, eller skriv en sökväg direkt.",
   "settings.containersPath": "Containers-sökväg",
   "settings.vmsPath": "VM-sökväg",
   "settings.flashPath": "Flash-sökväg",
@@ -173,6 +174,7 @@ const sv: Partial<Translations> = {
   "offsite.replicating": "Replikerar…",
   "offsite.replicateFailed": "Replikering misslyckades",
   "settings.domains": "Domäner",
+  "settings.domainsHint": "Slå på eller av varje backupdomän separat. Att aktivera VM eller Flash visar dess flik i sidofältet.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

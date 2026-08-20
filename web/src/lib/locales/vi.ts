@@ -157,6 +157,7 @@ const vi: Partial<Translations> = {
   "settings.encryptionWarning":
     "Mã hóa được cố định theo kho lưu trữ khi khởi tạo. Thay đổi yêu cầu đường dẫn mới trống.",
   "settings.paths": "Đường dẫn sao lưu",
+  "settings.pathsHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host ({root}). Nhấp Duyệt để điều hướng thư mục, hoặc nhập đường dẫn trực tiếp.",
   "settings.containersPath": "Đường dẫn Containers",
   "settings.vmsPath": "Đường dẫn VMs",
   "settings.flashPath": "Đường dẫn Flash",
@@ -173,6 +174,7 @@ const vi: Partial<Translations> = {
   "offsite.replicating": "Đang sao chép…",
   "offsite.replicateFailed": "Sao chép thất bại",
   "settings.domains": "Miền",
+  "settings.domainsHint": "Bật hoặc tắt từng miền sao lưu riêng lẻ. Bật VM hoặc Flash sẽ hiện thẻ tương ứng trên thanh bên.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",
