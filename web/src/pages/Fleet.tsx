@@ -298,7 +298,13 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">{t("fleet.mesh.proposeTitle")}</h2>
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby, so there's no
+            id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
+        </h2>
         <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
 
         {!snippet ? (
@@ -605,8 +611,12 @@ function FleetDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">
-          {editing ? t("fleet.editTitle") : t("fleet.addTitle")}
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby, so there's no
+            id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
         </h2>
 
         <div className="flex flex-col gap-1.5">

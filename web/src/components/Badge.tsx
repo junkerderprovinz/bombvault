@@ -169,17 +169,32 @@
 // badged; it was actually a missed OUTERMOST heading and is now converted
 // at its own call site, same as every other Card heading on that page.)
 //
-// Also deliberately NOT converted: the ~7 modal dialog titles (Files.tsx,
-// Fleet.tsx x2, Receiver.tsx, WhatsNewDialog.tsx, ConfirmDialog.tsx,
-// ErrorDetailPanel.tsx — all `text-lg font-semibold`). A dialog's <h2> is a
-// different element class from a page's section heading: it names the
-// MODAL WINDOW itself (rule 15 territory, "title as a badge" for a window
-// chrome), not a content section inside a page (rule 11). Several of these
-// also wire their `id` to the dialog's own `aria-labelledby` for the
-// accessible name (ConfirmDialog, WhatsNewDialog, ErrorDetailPanel) — Badge
-// has no `id` prop today, so converting them would mean either dropping
-// that wiring or growing Badge's public API in the same pass, neither of
-// which belongs in a section-heading fix. Left for a dedicated rule-15 pass.
+// RESOLVED (GlimStone follow-up pass, folded into v8.0.0): the ~7 modal
+// dialog titles (Files.tsx, Fleet.tsx x2, Receiver.tsx, WhatsNewDialog.tsx,
+// ConfirmDialog.tsx, ErrorDetailPanel.tsx) are now `tone="heading"
+// size="heading"` Badges too. Rule 15 ("a window is a window... same
+// surface, same radius, same elevation, title as a badge, button row at the
+// bottom") is explicit about this: "title as a badge" is one clause in a
+// list of concrete window-chrome requirements sitting alongside surface,
+// radius and elevation — it is a prescription, not a placeholder for "figure
+// this out later." It doesn't say WHICH badge, so this reuses rule 11's
+// already-reasoned `tone="heading"`/`size="heading"` stage rather than
+// inventing a second heading treatment the spec never asked for — a dialog
+// title and a section heading are both "the name of the thing the reader is
+// looking at," just at different scopes.
+//
+// Badge growing an `id` prop turned out unnecessary: the `<h2 id="…">`
+// wrapper stays exactly where it was in the three sites that wire
+// `aria-labelledby` to it (ConfirmDialog, WhatsNewDialog, ErrorDetailPanel)
+// — only the h2's INNER content changed from bare text to `<Badge>`. An
+// `aria-labelledby` reference resolves to the target element's computed
+// text content, which still includes the Badge's rendered text regardless
+// of the span nested inside it, so the accessible name is byte-identical to
+// before. The other four dialogs (Files.tsx, Fleet.tsx x2, Receiver.tsx)
+// name themselves via `aria-label` on the `role="dialog"` div directly, not
+// via this heading at all, so there was nothing to preserve there either.
+// Verified live in both themes with a screen reader against all 7 — see the
+// PR/commit description for the accessibility-check writeup.
 //
 // Also deliberately NOT converted, and the only outermost <h2> in the app
 // that stays bare text: an ALERT/CALLOUT heading whose panel is itself a
@@ -198,11 +213,43 @@
 // in the app is a badge; if a future pass adds a real "badge on a status
 // surface" tone pair, this is the one site waiting for it.
 //
-// Page titles (the `<h1 text-2xl font-semibold>` at the top of each page,
-// plus Recovery.tsx's `text-lg` one) are out of rule 11's scope for the same
-// reason the dialog titles above are: an <h1> names the WHOLE VIEW, it is
-// not a section inside one. All 11 are consistently left plain today; they
-// belong to the same future rule-15 "title as a badge" pass as the dialogs.
+// RESOLVED, exempted (GlimStone follow-up pass, folded into v8.0.0): the 11
+// page titles (the `<h1 text-2xl font-semibold>` at the top of each page,
+// plus Recovery.tsx's `text-lg` one) were filed by the ORIGINAL Task 5 pass
+// as "belongs to the same future rule-15 pass as the dialogs" — that framing
+// doesn't survive actually reading rule 15's text. Rule 15 opens "A WINDOW
+// is a window" and every clause under it (surface, radius, elevation, a
+// button row at the bottom, an anchored title with only the middle region
+// scrolling) describes MODAL chrome specifically — a floating, elevated
+// card with its own button row. A page's root <h1> isn't inside a window by
+// this app's own vocabulary (rule 1: `.glim-card` is the one elevation, and
+// a page's own top-level content sits on the page ground, not raised); rule
+// 15 has nothing to say about it either way.
+//
+// What DOES govern an <h1> is rule 2 ("one hero per page — exactly one
+// element carries weight, everything else is supporting detail") plus the
+// type scale's own explicit carve-out: "a page's one hero figure (rule 2) is
+// sized on its own merits case by case, not from a repeated 'display' step —
+// forcing every hero into one fixed size would fight the same rule that says
+// there's exactly one hero and everything else is quiet." Each of these 11
+// `<h1>`s IS that page's one hero (the single largest, heaviest text on the
+// page, everything else — including every rule-11/rule-15 badge on the same
+// page — deliberately quieter than it). Converting it to the SAME
+// `tone="heading" size="heading"` Badge every section heading and dialog
+// title now uses would make the page's one hero visually indistinguishable
+// from the section badges nested underneath it, which is exactly the
+// "everything else is quiet, exactly one thing carries weight" hierarchy
+// rule 2 exists to protect — collapsing that hierarchy would be a rule-2
+// regression dressed up as rule-15 compliance.
+//
+// So: NOT converted, and this is a considered exemption, not a re-deferral.
+// All 11 stay exactly as they render today (`text-2xl font-semibold` /
+// Recovery.tsx's `text-lg font-semibold` — already "sized on its own
+// merits," per the type scale's own words, and already the loudest thing on
+// each page). If a future page ever grows a genuinely bigger hero element
+// (a stat figure, a chart headline) that outweighs its own <h1>, that page's
+// <h1> would need re-examination on its own merits — but no page in this
+// app has that shape today, so there's no live case to design against.
 // ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";

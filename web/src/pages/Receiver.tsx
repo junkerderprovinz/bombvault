@@ -409,8 +409,12 @@ function ReceiverDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">
-          {editing ? t("receiver.editTitle") : t("receiver.addTitle")}
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby, so there's no
+            id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{editing ? t("receiver.editTitle") : t("receiver.addTitle")}</Badge>
         </h2>
 
         {/* Name */}
