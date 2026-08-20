@@ -1314,9 +1314,15 @@ export default function Recovery() {
                   <div className="flex flex-col gap-1">
                     {/* Task 7: was text-statusInfo (the old fifth hue) — genuine
                         activity (the app really is restarting right now), a
-                        single occurrence on this page, so plain --accent text
-                        is safe (no competing solid-accent elements at once). */}
-                    <p className="text-sm text-accent">{t("recovery.configRestarting")}</p>
+                        single occurrence on this page, so plain accent-derived
+                        text is safe (no competing solid-accent elements at
+                        once). text-accentText, not the flat text-accent: a
+                        spec-compliance review measured the flat accent gold
+                        at 1.61:1 in light theme here (was ~8.6:1 as
+                        text-statusInfo before this task) — badly under the
+                        4.5:1 text minimum. See index.css's --accent-text
+                        comment for the fix and the measured numbers. */}
+                    <p className="text-sm text-accentText">{t("recovery.configRestarting")}</p>
                     {/* Task 5 (rule 13): same shape as ItemScheduleOverride's
                         converted button — a plain underlined text link. */}
                     <Badge as="button" onClick={() => window.location.reload()} tone="neutral" size="small" className="self-start">

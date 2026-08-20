@@ -206,8 +206,13 @@ describe("Badge — tone/status-color mapping", () => {
     // not the softer tone full-width warning panels use.
     ["warn", "bg-statusWarnBgStrong", "text-statusWarn"],
     // active replaces the old "info" tone (Task 7: resolve the fifth hue) —
-    // a soft accent wash, not one of the four real state hues.
-    ["active", "bg-accentSoft", "text-accent"],
+    // a soft accent wash, not one of the four real state hues. text-accentText,
+    // not the flat text-accent: a spec-compliance review measured the flat
+    // accent gold at only 1.50:1 on this exact accent-soft-tinted background
+    // in light theme (badly fails the 4.5:1 text minimum, though dark theme
+    // was fine) — see index.css's --accent-text comment for the fix and the
+    // measured numbers.
+    ["active", "bg-accentSoft", "text-accentText"],
     ["neutral", "bg-carbon-surface2", "text-carbon-textSub"],
     // heading (rule 11): accent-soft WASH, never solid accent (rule 3 is
     // activity-only) and never one of the four state hues (rule 4 — see the

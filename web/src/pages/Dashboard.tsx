@@ -276,6 +276,25 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 // tone; the raw string itself is still shown verbatim (these are backend-
 // sourced run-status words, not prose to translate here — see StatusChip's
 // former inline comment on the #57 "skipped" case, preserved in the map below).
+//
+// KNOWN LIMITATION, documented on purpose (spec-compliance review of Task 7,
+// not fixed in that task — see index.css's matching comment on
+// --status-warn-text's dark value for the full writeup): tone="warn" and
+// tone="active" render as near-identical amber in dark theme with the
+// DEFAULT accent (RGB-distance ~11, 1.05:1 contrast between them).
+// SummaryTier below is a real, live site where both can appear in the same
+// row at once — the "Overall health" cell showing tone="warn" (an RPO
+// lapsing) next to "Last result" showing tone="active" (a run literally
+// running). Not a bare SC 1.4.1 violation (each badge's own text still
+// differs), but a real glance-level regression on the default accent.
+// Confirmed this is default-accent-specific: 4 of Settings.tsx's 5
+// ACCENT_PRESETS aren't gold/yellow and don't collide. Left unresolved
+// rather than force a disproportionate fix (recolouring warn off Carbon's
+// actual yellow token, changing the app's default accent, or adding a new
+// icon system to Badge all reach well past a contrast-arithmetic bugfix) —
+// flagged for a future task, most naturally Task 8 (focus system), which
+// already works this same hue-vs-accent boundary via [data-rainbow]
+// .glim-hue's --item-hue-ring mechanism.
 // ---------------------------------------------------------------------------
 
 function statusTone(status: string): BadgeTone {
@@ -1364,8 +1383,12 @@ function Sparkline({
     // design-language.md's Charts section is explicit here — "one colour
     // source: the accent, never rainbow or status hues" — so this isn't a
     // semantic judgment call like the rest of Task 7, it's the spec's own
-    // fixed rule for every hand-drawn chart in the app.
-    <span className="text-accent shrink-0">
+    // fixed rule for every hand-drawn chart in the app. text-accentText, not
+    // the flat text-accent: a spec-compliance review measured the flat
+    // accent gold at 1.61:1 against this card's light-theme background —
+    // the trend line effectively disappeared, badly under the 3:1 non-text
+    // minimum. See index.css's --accent-text comment for the fix.
+    <span className="text-accentText shrink-0">
       <svg
         width={width}
         height={height}

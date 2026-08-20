@@ -21,7 +21,24 @@ const MAX_RUNS = 8;
 // scoped to ONE target's history (filtered by domain+name), so in practice
 // at most one dot is ever "running" at a time — a solid dot doesn't
 // compete with rule 3's "at most one solid accent" the way a repeated
-// solid accent BUTTON would.
+// solid accent BUTTON would. bg-accentText, not the flat bg-accent: a
+// spec-compliance review measured the flat accent gold at 1.61:1 in light
+// theme here (was ~5.2:1 as bg-statusInfoSolid before this task) — badly
+// under SC 1.4.11's 3:1 non-text-indicator minimum. See index.css's
+// --accent-text comment for the fix and the measured numbers.
+//
+// NOTE for whoever next touches rainbow/hue rows (Task 8 territory): this
+// component sometimes renders inside a .glim-hue row (via RestorePanel/
+// FileSetRestorePanel), but --color-accentText is deliberately NOT
+// redefined by index.css's [data-rainbow] .glim-hue block the way
+// --color-accent is — so this dot always shows the fixed, contrast-verified
+// global accent-text colour, never a rainbow row's own hue, even inside a
+// hue-enabled subtree. That's on purpose, not an oversight: individual
+// rainbow palette hues aren't WCAG-verified the way --accent-text is (this
+// task only fixed the DEFAULT accent's contrast), so a genuine
+// activity/status indicator keeping guaranteed contrast wins over matching
+// its row's identity colour. If a future task WCAG-verifies the full
+// rainbow palette, revisit whether this should follow the hue after all.
 function statusDotClass(status: string): string {
   switch (status.toLowerCase()) {
     case "success":
@@ -29,7 +46,7 @@ function statusDotClass(status: string): string {
     case "failed":
       return "bg-statusFailSolid";
     case "running":
-      return "bg-accent";
+      return "bg-accentText";
     case "skipped":
       return "bg-statusNeutralSolid";
     default:

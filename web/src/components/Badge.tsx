@@ -114,6 +114,12 @@
 //     schedule's warning). Painting a heading "neutral" would borrow the
 //     literal "waiting" state hue for a label that isn't waiting on
 //     anything; painting it any of the other three invents a false status.
+//     (This is specifically about rule 4's STATUS reading of neutral, on a
+//     structural element that has no status. It doesn't conflict with
+//     tone="neutral" being this same file's generic no-real-status default
+//     for actual chips/badges elsewhere — see the TONE_CLASSES comment below
+//     on the Task 7 "→ neutral" sites, which lands in that other,
+//     pre-existing role instead.)
 //   - IS `--accent-soft`: the spec's own vocabulary already has a distinct
 //     register for "identity, not activity" — rule 5's "what is selected is
 //     filled with the accent; what owns a rainbow position is washed with
@@ -231,20 +237,37 @@ export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 // "info" was a de-facto fifth hue, not a real state). Every call site that
 // used tone="info" for genuine, currently-happening activity (Dashboard's
 // statusTone: a run whose status is literally "running") now uses this
-// instead — --accent-soft wash + --accent text, the SAME soft/tinted
+// instead — --accent-soft wash + accent-derived text, the SAME soft/tinted
 // register every other tone here already uses, deliberately not a solid
 // accent fill: Dashboard's run-history list can legitimately show several
 // "running" rows at once (independent domains backing up concurrently), and
 // rule 3 caps SOLID accent at one thing per page — a soft chip carries no
 // such cap, it reads at the same visual weight as an ok/fail/warn chip
 // sitting next to it. Sites that meant something else entirely (pure
-// informational prose, a link/action badge) did NOT become "active" — see
-// index.css's TASK 7 comment for where those actually landed.
+// informational prose, a link/action badge) did NOT become "active" — those
+// use --status-neutral-*/tone="neutral" instead, in its pre-existing role as
+// this file's generic "no real status, muted default" tone (the same role
+// BadgeProps' own `tone = "neutral"` default already plays, per that prop's
+// doc comment below) — NOT rule 4's literal "skipped/waiting" state
+// semantics, which is specifically what the file header's tone="heading"
+// reasoning above declines to borrow for a structural element that isn't a
+// status at all. Same word, two pre-existing and non-conflicting jobs; see
+// index.css's TASK 7 comment for exactly which "→ neutral" sites landed here
+// and why.
+//
+// text-accentText, not the flat text-accent: a spec-compliance review
+// measured the flat accent gold at only 1.50:1 against this exact
+// accent-soft-tinted background in light theme (WCAG needs 4.5:1 for text;
+// dark theme measured fine). This is the identical failure mode
+// --field-focus-ring already solved once for this same accent hue (flat
+// accent gold has no contrast on a light surface, so light theme needs a
+// separate, darker value) — text-accentText (--accent-text, see index.css)
+// applies that same fix here rather than inventing a new mechanism.
 const TONE_CLASSES: Record<BadgeTone, string> = {
   ok: "bg-statusOkBg text-statusOk",
   fail: "bg-statusFailBg text-statusFail",
   warn: "bg-statusWarnBgStrong text-statusWarn",
-  active: "bg-accentSoft text-accent",
+  active: "bg-accentSoft text-accentText",
   neutral: "bg-carbon-surface2 text-carbon-textSub",
   // See the file header's long-form reasoning: accent-soft wash (identity,
   // matching rule 5's "washed" vocabulary), not solid accent (rule 3,

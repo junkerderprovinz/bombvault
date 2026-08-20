@@ -51,12 +51,17 @@ function glyphFor(status: LogStatus): string {
 //
 // "running"/"offsite" (Task 7: resolve the fifth hue) — was text-statusInfo,
 // the old fifth hue. Both mean genuine activity happening right now, so
-// --accent — but plain colour on text in a scrolling list, never a solid
-// fill: this log routinely shows several "running"/"offsite" lines at once
-// (independent domains backing up concurrently all merge into one list),
-// and rule 3's "at most one solid accent" cap is specifically about SOLID
-// accent claiming the page's one primary-action weight. Coloured text reads
-// at the same register as the success/failed lines right next to it.
+// accent-derived text — but plain colour on text in a scrolling list, never
+// a solid fill: this log routinely shows several "running"/"offsite" lines
+// at once (independent domains backing up concurrently all merge into one
+// list), and rule 3's "at most one solid accent" cap is specifically about
+// SOLID accent claiming the page's one primary-action weight. Coloured text
+// reads at the same register as the success/failed lines right next to it.
+// text-accentText, not the flat text-accent: this same commit's spec-
+// compliance follow-up found the flat accent gold measures ~1.6:1 in light
+// theme against this log's surfaces — badly under the 4.5:1 text minimum
+// (dark theme is fine). Same fix as Recovery.tsx's identical pattern; see
+// index.css's --accent-text comment for the measured numbers.
 function colorFor(status: LogStatus): string {
   switch (status) {
     case "success":
@@ -65,7 +70,7 @@ function colorFor(status: LogStatus): string {
       return "text-statusFail";
     case "running":
     case "offsite":
-      return "text-accent";
+      return "text-accentText";
     case "info":
       return "text-statusWarn";
   }

@@ -17,6 +17,7 @@
   --color-accent: var(--accent);
   --color-accentContrast: var(--accent-contrast);
   --color-accentSoft: var(--accent-soft);
+  --color-accentText: var(--accent-text);
 
   /* Status tokens (#105) — semantic ok/fail/warn/info/neutral colors that flip
      with the theme. text = plain colored text, Bg/Border = tinted chip surfaces,
@@ -159,6 +160,21 @@
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
+  /* accent-text (spec-compliance fix, GlimStone form-engine Phase 2 Task 7
+     follow-up) — accent-derived TEXT/graphics (Badge's tone="active",
+     Recovery/ActivityLog's "running" text, the Sparkline stroke,
+     RecentRunsList's running dot, FolderBrowser's loading spinner) all read
+     this instead of --accent directly. Dark theme just aliases --accent
+     verbatim: measured live (standard WCAG relative-luminance formula) at
+     7.18–11.24:1 against every real dark surface these sites render on
+     (--carbon-bg/--carbon-surface/--carbon-surface2) and 6.80–8.37:1
+     composited under --accent-soft (the Badge case) — the flat accent
+     already has real contrast margin here, so this token doesn't need its
+     own dark-theme value. (The light theme override lives in the
+     [data-theme="light"] block below — that one DOES need a separate value,
+     for the exact reason --focus-ring below already does.) */
+  --accent-text:      var(--accent);
+
   /* Shape and type scale live once, on a bare :root above (theme-invariant —
      see the comment there). */
 
@@ -244,6 +260,41 @@
   --status-warn-border-strong:#5a4a2a;
   --status-warn-solid:        #f1c21b;
 
+  /* KNOWN LIMITATION, documented on purpose (spec-compliance review of TASK
+     7, not fixed in that task): this token (#f1c21b) and the DEFAULT
+     --accent (#FCC419 above) are only RGB-distance ~11 apart — 1.05:1
+     contrast between them, i.e. functionally the same hue in dark theme.
+     Real, live collision: Dashboard's SummaryTier can show a "warn" health
+     chip (chipForRpo("warn") -> statusTone -> tone="warn", this token) and a
+     "last result" chip for a run that's literally "running" right now
+     (statusTone -> tone="active", --accent-text above, which is a plain
+     alias for --accent in dark theme) side by side in the same row — two
+     opposite meanings ("something needs attention" vs. "something healthy
+     is in progress") reading as the same amber. Checked before accepting
+     this as a limitation rather than fixing it:
+       - It's the DEFAULT accent specifically, not a fundamental hue clash:
+         4 of the 5 built-in accent presets (Settings.tsx's ACCENT_PRESETS —
+         Blue/Green/Red/Purple) aren't in the yellow/gold family and don't
+         collide with warn at all. A user who has moved off "Sunflower"
+         already doesn't see this.
+       - It is NOT a bare SC 1.4.1 "conveys meaning by colour alone"
+         violation: every real call site pairs the colour with distinct text
+         (the badge's own label), so colour is never the ONLY signal — but
+         it's still a real, visible glance-level regression for anyone on
+         the default accent, which is most installs.
+       - A real fix would mean either moving --status-warn-text/-solid off
+         Carbon's actual yellow-30/-60 tokens (breaking the "matches IBM
+         Carbon" precedent every other status colour in this file follows)
+         or changing BombVault's default accent away from gold (a brand
+         decision well outside a contrast-arithmetic bugfix) or adding a
+         real icon/glyph system to Badge (new component surface area, not a
+         one-line fix) — all disproportionate scope increases for this task.
+     Left unresolved on purpose, flagged here (and at Dashboard.tsx's
+     statusTone/chipForRpo) for a future task — Task 8 (complete the focus
+     system) already touches this exact hue-vs-accent boundary via
+     [data-rainbow] .glim-hue's --item-hue-ring mechanism and is the natural
+     place to revisit this. */
+
   /* TASK 7 (GlimStone form-engine Phase 2, design-language.md rule 4) removed
      --status-info-* entirely — it was a de-facto fifth hue (blue), not one of
      the four real state hues, and never should have been a persistent CSS
@@ -279,7 +330,25 @@
      reach today" note, updated to match. Task 8 (focus system completion)
      no longer needs to touch those 7 call sites; it still needs to add the
      universal `:focus-visible` base rule and verify it composes correctly
-     with the [data-rainbow] .glim-hue --focus-ring override above. */
+     with the [data-rainbow] .glim-hue --focus-ring override above.
+
+     SPEC-COMPLIANCE FOLLOW-UP: a later review found the "genuine activity"
+     bullet above's plain flat --accent text/graphics (Badge's "active" tone,
+     Recovery's/ActivityLog's running text, the Sparkline stroke,
+     RecentRunsList's running dot, FolderBrowser's spinner) measured
+     1.46:1–1.61:1 in LIGHT theme — badly under WCAG's 4.5:1 text / 3:1
+     non-text minimums (dark theme measured fine, 6.80:1+). Nobody had
+     checked, even though this file already solved the identical "flat
+     accent gold has no contrast on a light surface" problem once before, for
+     --focus-ring above. Fixed by routing every one of those sites through
+     the new --accent-text token (declared next to --accent-soft above and
+     in the [data-theme="light"] block below) instead of --accent directly —
+     same value as --accent in dark theme (see --accent-text's own comment
+     above), a separate darker gold in light theme (see that token's comment
+     in the light block for the measured numbers). The semantic resolution
+     above (what became --accent vs. --status-neutral-* vs. tone="neutral")
+     was not wrong and did not change — this was pure colour arithmetic that
+     was never checked against WCAG contrast at the time. */
   --status-neutral-text:      #a8a8b0;  /* skipped/neutral chip */
   --status-neutral-bg:        #2a2a2e;
   --status-neutral-border:    #3a3a40;
@@ -330,6 +399,35 @@
      see that comment for why. */
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
+
+  /* accent-text — spec-compliance fix (spec review of GlimStone form-engine
+     Phase 2 Task 7's Badge tone="active"/Recovery/ActivityLog/Sparkline/
+     RecentRunsList/FolderBrowser call sites): unlike --accent-soft just
+     above, this does NOT inherit the dark block's `var(--accent)` alias.
+     Measured live (standard WCAG relative-luminance formula), the flat
+     --accent (#FCC419) against this theme's real surfaces:
+       1.61:1 on --carbon-surface (#ffffff) / 1.46:1 on --carbon-bg (#f4f4f4)
+       1.50:1 on Badge's own accent-soft-tinted card background (~#fff7df)
+     — all badly under the 4.5:1 text / 3:1 non-text-indicator minimums, the
+     exact same failure --focus-ring above already solved once for this same
+     accent hue (flat gold has no contrast on a light surface, needs a
+     separate darker value here rather than reused verbatim). #7a5c00 — one
+     step darker than --focus-ring's own #8e6a00-family gold, chosen (not
+     reused verbatim) because the sites reading this token include PLAIN
+     TEXT at the stricter 4.5:1 bar, not just --focus-ring's 3:1
+     non-text-indicator bar — measures:
+       6.25:1 on #ffffff, 5.69:1 on #f4f4f4, 5.10:1 on --carbon-surface2
+       (#e8e8e8, the darkest surface any of these sites plausibly renders
+       on), and 5.84:1 / 5.35:1 / 4.88:1 against those same three surfaces
+       composited under --accent-soft (the Badge case)
+     — every real site clears both the 4.5:1 text and 3:1 non-text minimum
+     with real margin, worst case (surface2 under accent-soft) still 4.88:1.
+     Same simplification as --focus-ring below: a STATIC per-theme value, not
+     derived from whatever custom hex the user picked via Settings' native
+     colour input — that token doesn't re-derive for a custom accent either,
+     so this isn't new scope, it's the existing precedent applied
+     consistently. */
+  --accent-text: #7a5c00;
 
   /* --focus-ring, unlike --accent-soft above, does NOT inherit the dark
      block's value — measured live against this theme's real Card surface
@@ -471,6 +569,10 @@
        --field-focus-well above. */
     --field-focus-ring: rgba(142, 106, 0, 1);
     --field-focus-well: #cdcdcd;
+    /* Same reasoning as [data-theme="light"]'s --accent-text above — needs
+       restating here for the identical no-explicit-attribute reason as
+       --focus-ring above. */
+    --accent-text: #7a5c00;
   }
 }
 
