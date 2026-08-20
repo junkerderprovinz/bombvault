@@ -739,6 +739,12 @@ const fr: Partial<Translations> = {
   "stack.memberStarted": "démarré",
   "settings.restoreFolder": "Dossier de restauration par défaut",
   "settings.restoreFolderHint": "Où « restaurer dans un dossier » extrait les instantanés par défaut.",
+  "settings.configPath": "Chemin Auto-sauvegarde",
+  "settings.pathMode.local": "Local",
+  "settings.pathMode.remote": "Distant",
+  "settings.primaryRemote.title": "Paramètres de sécurité du dépôt primaire distant",
+  "settings.primaryRemote.hint": "Ce chemin de sauvegarde est un dépôt restic distant — il EST la copie primaire, pas une réplique. Configurez ici les limites de bande passante, la protection append-only et une alerte de budget de croissance, les mêmes protections qu'une copie hors site.",
+  "settings.primaryRemote.budgetHint": "Alerte lorsque ce dépôt dépasse un budget en octets (0 = désactivé).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Tester la connexion",

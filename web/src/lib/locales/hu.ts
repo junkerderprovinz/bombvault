@@ -742,6 +742,12 @@ const hu: Partial<Translations> = {
   "stack.memberStarted": "elindítva",
   "settings.restoreFolder": "Alapértelmezett visszaállítási mappa",
   "settings.restoreFolderHint": "Hová csomagolja ki a „visszaállítás mappába” a pillanatképeket alapértelmezetten.",
+  "settings.configPath": "Önmentés útvonala",
+  "settings.pathMode.local": "Helyi",
+  "settings.pathMode.remote": "Távoli",
+  "settings.primaryRemote.title": "Távoli elsődleges tároló biztonsági beállításai",
+  "settings.primaryRemote.hint": "Ez a biztonsági mentési útvonal egy távoli restic tároló — ez az elsődleges másolat, nem replika. Itt állítsd be a sávszélesség-korlátokat, a csak hozzáfűzhető védelmet és a növekedési költségvetési riasztást, ugyanazt a védelmet, amit egy külső helyszíni másolat kap.",
+  "settings.primaryRemote.budgetHint": "Riasztás, ha ez a tároló túllépi a byte-költségvetést (0 = kikapcsolva).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Kapcsolat tesztelése",

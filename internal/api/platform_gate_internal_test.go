@@ -78,7 +78,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 		if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
 			t.Fatal(err)
 		}
-		s.notifyOverBudget(context.Background(), "containers", 100, 50)
+		s.notifyOverBudget(context.Background(), "containers", 100, 50, "off-site")
 	})
 
 	t.Run("notifyReplicationFailed", func(t *testing.T) {

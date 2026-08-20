@@ -764,6 +764,12 @@ const da: Partial<Translations> = {
   "stack.memberStarted": "startet",
   "settings.restoreFolder": "Standardmappe til gendannelse",
   "settings.restoreFolderHint": "Hvor »gendan til en mappe« som standard pakker øjebliksbilleder ud.",
+  "settings.configPath": "Auto-sikkerhedskopi-sti",
+  "settings.pathMode.local": "Lokal",
+  "settings.pathMode.remote": "Fjern",
+  "settings.primaryRemote.title": "Sikkerhedsindstillinger for fjern primær-repo",
+  "settings.primaryRemote.hint": "Denne backupsti er et fjernt restic-repo — det ER primærkopien, ikke en replika. Konfigurer båndbreddegrænser, append-only-beskyttelse og en vækstbudgetalarm her, den samme beskyttelse som en offsite-kopi får.",
+  "settings.primaryRemote.budgetHint": "Alarmér, når dette repo vokser forbi et bytebudget (0 = fra).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Test forbindelse",

@@ -762,6 +762,12 @@ const es: Partial<Translations> = {
   "stack.memberStarted": "iniciado",
   "settings.restoreFolder": "Carpeta de restauración predeterminada",
   "settings.restoreFolderHint": "Dónde «restaurar en una carpeta» extrae las instantáneas de forma predeterminada.",
+  "settings.configPath": "Ruta de autocopia",
+  "settings.pathMode.local": "Local",
+  "settings.pathMode.remote": "Remoto",
+  "settings.primaryRemote.title": "Ajustes de seguridad del repositorio primario remoto",
+  "settings.primaryRemote.hint": "Esta ruta de copia de seguridad es un repositorio restic remoto: ES la copia primaria, no una réplica. Configure aquí los límites de ancho de banda, la protección de solo anexado y una alarma de presupuesto de crecimiento, las mismas protecciones que recibe una copia externa.",
+  "settings.primaryRemote.budgetHint": "Alertar cuando este repositorio supere un presupuesto de bytes (0 = desactivado).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Probar conexión",

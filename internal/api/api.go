@@ -183,6 +183,18 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)
 	mux.HandleFunc("GET /api/offsite/{domain}/deploy-snippet", h.handleDeploySnippet)
 	mux.HandleFunc("POST /api/offsite/{domain}/tamper-test", h.handleTamperTest)
+	// Remote-primary safety settings (issue #152): a domain's own backup path
+	// (Settings.<Domain>Path, edited on the Storage tab) may itself be a remote
+	// restic repo — these configure the same safety net (bandwidth limits,
+	// append-only, growth budget) an off-site DESTINATION gets, reusing the
+	// off-site target schema with role="primary" (see internal/api/primary_remote.go).
+	// Distinct from the /api/offsite/... routes above: a "primary" row is never a
+	// replication destination and is never reachable through them.
+	mux.HandleFunc("GET /api/settings/primary-remote/{domain}", h.handleGetPrimaryRemote)
+	mux.HandleFunc("PUT /api/settings/primary-remote/{domain}", h.handleSetPrimaryRemote)
+	mux.HandleFunc("DELETE /api/settings/primary-remote/{domain}", h.handleDeletePrimaryRemote)
+	mux.HandleFunc("POST /api/settings/primary-remote/{domain}/test", h.handleTestPrimaryRemote)
+	mux.HandleFunc("POST /api/settings/primary-remote/{domain}/tamper-test", h.handlePrimaryRemoteTamperTest)
 	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)

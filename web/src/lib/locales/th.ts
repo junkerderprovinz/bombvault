@@ -767,6 +767,12 @@ const th: Partial<Translations> = {
   "stack.memberStarted": "เริ่มทำงานแล้ว",
   "settings.restoreFolder": "โฟลเดอร์กู้คืนเริ่มต้น",
   "settings.restoreFolderHint": "ตำแหน่งที่ «กู้คืนไปยังโฟลเดอร์» แตกสแนปช็อตตามค่าเริ่มต้น",
+  "settings.configPath": "พาธสำรองข้อมูลตัวเอง",
+  "settings.pathMode.local": "ในเครื่อง",
+  "settings.pathMode.remote": "ระยะไกล",
+  "settings.primaryRemote.title": "การตั้งค่าความปลอดภัยของที่เก็บหลักระยะไกล",
+  "settings.primaryRemote.hint": "เส้นทางสำรองข้อมูลนี้เป็นที่เก็บ restic ระยะไกล — มันคือสำเนาหลักเอง ไม่ใช่สำเนาซ้ำ กำหนดค่าขีดจำกัดแบนด์วิดท์ การป้องกันแบบเพิ่มข้อมูลอย่างเดียว และการแจ้งเตือนงบประมาณการเติบโตได้ที่นี่ ซึ่งเป็นการป้องกันแบบเดียวกับที่สำเนานอกสถานที่ได้รับ",
+  "settings.primaryRemote.budgetHint": "แจ้งเตือนเมื่อที่เก็บนี้เติบโตเกินงบประมาณไบต์ (0 = ปิด)",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "ทดสอบการเชื่อมต่อ",

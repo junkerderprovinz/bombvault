@@ -764,6 +764,12 @@ const el: Partial<Translations> = {
   "stack.memberStarted": "ξεκίνησε",
   "settings.restoreFolder": "Προεπιλεγμένος φάκελος επαναφοράς",
   "settings.restoreFolderHint": "Πού εξάγει τα στιγμιότυπα από προεπιλογή η «επαναφορά σε φάκελο».",
+  "settings.configPath": "Διαδρομή αυτο-αντιγράφου",
+  "settings.pathMode.local": "Τοπικό",
+  "settings.pathMode.remote": "Απομακρυσμένο",
+  "settings.primaryRemote.title": "Ρυθμίσεις ασφαλείας απομακρυσμένου κύριου αποθετηρίου",
+  "settings.primaryRemote.hint": "Αυτή η διαδρομή αντιγράφου ασφαλείας είναι ένα απομακρυσμένο αποθετήριο restic — ΕΙΝΑΙ το κύριο αντίγραφο, όχι ρέπλικα. Ρυθμίστε εδώ τα όρια εύρους ζώνης, την προστασία append-only και έναν συναγερμό προϋπολογισμού ανάπτυξης, την ίδια προστασία που λαμβάνει ένα εκτός τοποθεσίας αντίγραφο.",
+  "settings.primaryRemote.budgetHint": "Ειδοποίηση όταν αυτό το αποθετήριο ξεπεράσει έναν προϋπολογισμό byte (0 = απενεργοποιημένο).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Δοκιμή σύνδεσης",

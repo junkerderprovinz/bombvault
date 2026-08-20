@@ -736,6 +736,12 @@ const no: Partial<Translations> = {
   "stack.memberStarted": "startet",
   "settings.restoreFolder": "Standard gjenopprettingsmappe",
   "settings.restoreFolderHint": "Hvor «gjenopprett til en mappe» pakker ut snapshots som standard.",
+  "settings.configPath": "Auto-sikkerhetskopi-sti",
+  "settings.pathMode.local": "Lokal",
+  "settings.pathMode.remote": "Ekstern",
+  "settings.primaryRemote.title": "Sikkerhetsinnstillinger for ekstern primærrepo",
+  "settings.primaryRemote.hint": "Denne sikkerhetskopistien er et eksternt restic-repo — det ER primærkopien, ikke en replikk. Konfigurer båndbreddegrenser, append-only-beskyttelse og en vekstbudsjettalarm her, den samme beskyttelsen som en ekstern kopi får.",
+  "settings.primaryRemote.budgetHint": "Varsle når dette repoet vokser forbi et bytebudsjett (0 = av).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Test tilkobling",
