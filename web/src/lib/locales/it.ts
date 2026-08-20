@@ -117,7 +117,6 @@ const it: Partial<Translations> = {
   "restore.confirmTitle": "Conferma ripristino",
   "restore.confirmBody":
     "Il container verrà fermato, i suoi dati sostituiti e ricreato dal backup. Continuare?",
-  "restore.confirm": "Conferma",
   "restore.cancel": "Annulla ripristino",
   "restore.cancelConfirmSafe": "Annullare il ripristino? La cartella di output parziale viene lasciata così com'è.",
   "restore.cancelConfirmInPlace": "{name} è a metà ripristino. Annullando questo ripristino resta incompleto — potrebbe essere necessario eseguirlo di nuovo. Annullare comunque?",
@@ -139,6 +138,7 @@ const it: Partial<Translations> = {
   "run.statusRunning": "In corso",
   "run.statusSuccess": "Riuscito",
   "run.statusFailed": "Fallito",
+  "run.statusSkipped": "Saltato",
   "run.historyTitle": "Cronologia esecuzioni",
   "run.filterDay": "Giorno:",
   "run.allDays": "Tutti i giorni",

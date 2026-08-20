@@ -117,7 +117,6 @@ const zh: Partial<Translations> = {
   "restore.confirmTitle": "确认还原",
   "restore.confirmBody":
     "此操作将停止容器、替换其 appdata 并从备份中重新创建。是否继续？",
-  "restore.confirm": "确认",
   "restore.cancel": "取消还原",
   "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
   "restore.cancelConfirmInPlace": "{name} 正在还原中。取消会使本次还原处于未完成状态——可能需要再次运行。仍要取消吗？",
@@ -139,6 +138,7 @@ const zh: Partial<Translations> = {
   "run.statusRunning": "运行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失败",
+  "run.statusSkipped": "已跳过",
   "run.historyTitle": "运行历史",
   "run.filterDay": "日期：",
   "run.allDays": "所有日期",

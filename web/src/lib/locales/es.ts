@@ -117,7 +117,6 @@ const es: Partial<Translations> = {
   "restore.confirmTitle": "Confirmar restauración",
   "restore.confirmBody":
     "Se detendrá el contenedor, se reemplazarán sus datos y se recreará desde la copia. ¿Continuar?",
-  "restore.confirm": "Confirmar",
   "restore.cancel": "Cancelar restauración",
   "restore.cancelConfirmSafe": "¿Cancelar la restauración? La carpeta de salida parcial se deja tal cual.",
   "restore.cancelConfirmInPlace": "{name} está a medio restaurar. Cancelar deja esta restauración incompleta — puede que tengas que volver a ejecutarla. ¿Cancelar de todos modos?",
@@ -139,6 +138,7 @@ const es: Partial<Translations> = {
   "run.statusRunning": "En curso",
   "run.statusSuccess": "Completado",
   "run.statusFailed": "Fallido",
+  "run.statusSkipped": "Omitido",
   "run.historyTitle": "Historial de ejecuciones",
   "run.filterDay": "Día:",
   "run.allDays": "Todos los días",

@@ -197,7 +197,6 @@ export const en = {
   "restore.confirmTitle": "Confirm restore",
   "restore.confirmBody":
     "This will stop the container, replace its appdata and recreate it from the backup. Continue?",
-  "restore.confirm": "Confirm",
   "restore.cancel": "Cancel restore",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
@@ -250,6 +249,7 @@ export const en = {
   "run.statusRunning": "Running",
   "run.statusSuccess": "Success",
   "run.statusFailed": "Failed",
+  "run.statusSkipped": "Skipped",
   "run.historyTitle": "Run History",
   "run.filterDay": "Day:",
   "run.allDays": "All days",
@@ -1570,7 +1570,6 @@ export const de: Translations = {
   "restore.confirmTitle": "Wiederherstellung bestätigen",
   "restore.confirmBody":
     "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
-  "restore.confirm": "Bestätigen",
   "restore.cancel": "Wiederherstellung abbrechen",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":
@@ -1622,6 +1621,7 @@ export const de: Translations = {
   "run.statusRunning": "Läuft",
   "run.statusSuccess": "Erfolgreich",
   "run.statusFailed": "Fehlgeschlagen",
+  "run.statusSkipped": "Übersprungen",
   "run.historyTitle": "Ausführungsverlauf",
   "run.filterDay": "Tag:",
   "run.allDays": "Alle Tage",

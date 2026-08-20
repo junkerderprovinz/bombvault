@@ -106,19 +106,19 @@ export function RecentRunsList({
   }, [name, domain]);
 
   if (loading) {
-    return <p className="py-2 text-[11px] text-carbon-textMuted">{t("common.loadingBackups")}</p>;
+    return <p className="py-2 text-caption text-carbon-textMuted">{t("common.loadingBackups")}</p>;
   }
   if (runs.length === 0) return null;
 
   return (
     <div className="py-2 border-b border-carbon-border flex flex-col gap-1">
-      <p className="text-[11px] uppercase tracking-wide text-carbon-textMuted">
+      <p className="text-caption uppercase tracking-wide text-carbon-textMuted">
         {t("run.recentTitle")}
       </p>
       {runs.map((run) => {
         const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
         return (
-          <div key={run.id} className="flex items-center gap-2 text-[11px]">
+          <div key={run.id} className="flex items-center gap-2 text-caption">
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass(run.status)}`} />
             <span className="text-carbon-textSub whitespace-nowrap">
               {formatTs(run.startedAt)}

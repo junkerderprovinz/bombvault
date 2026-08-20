@@ -117,7 +117,6 @@ const cs: Partial<Translations> = {
   "restore.confirmTitle": "Potvrdit obnovu",
   "restore.confirmBody":
     "Kontejner bude zastaven, jeho appdata nahrazena a kontejner obnoven ze zálohy. Pokračovat?",
-  "restore.confirm": "Potvrdit",
   "restore.cancel": "Zrušit obnovu",
   "restore.cancelConfirmSafe": "Zrušit obnovu? Částečně zapsaná cílová složka zůstane beze změny.",
   "restore.cancelConfirmInPlace": "{name} se právě obnovuje. Zrušení ponechá tuto obnovu neúplnou — možná ji bude nutné spustit znovu. Přesto zrušit?",
@@ -139,6 +138,7 @@ const cs: Partial<Translations> = {
   "run.statusRunning": "Probíhá",
   "run.statusSuccess": "Úspěch",
   "run.statusFailed": "Selhalo",
+  "run.statusSkipped": "Přeskočeno",
   "run.historyTitle": "Historie běhů",
   "run.filterDay": "Den:",
   "run.allDays": "Všechny dny",

@@ -402,7 +402,7 @@ chmod 600 /root/.ssh/authorized_keys`
             <li>{t("vm.ssh.step3")}</li>
           </ol>
           <div className="flex items-start gap-2">
-            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
             <button
               onClick={handleCopyCmd}
               disabled={!pub}
@@ -854,7 +854,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="flex flex-col gap-2">
           <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
           {status.output && (
-            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
+            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap">
               {status.output}
             </pre>
           )}
@@ -1203,7 +1203,7 @@ function FleetSettingsCard({
               {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
           </div>
-          <p className="text-[11px] text-carbon-textMuted">
+          <p className="text-caption text-carbon-textMuted">
             {t("settings.fleetUrlHint").replace("{url}", window.location.origin)}
           </p>
         </div>
@@ -2876,27 +2876,13 @@ function FilesSection({
                   {s.path}
                 </span>
               )}
-              <button
-                role="switch"
-                aria-checked={s.enabled}
-                aria-label={`${t("files.enabled")}: ${s.name}`}
+              <Toggle
+                hideLabel
+                label={`${t("files.enabled")}: ${s.name}`}
+                checked={s.enabled}
+                onChange={() => void toggle(s)}
                 disabled={!!busy[s.id]}
-                onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-                  s.enabled ? "bg-accent" : "bg-carbon-surface3"
-                }`}
-              >
-                <span
-                  // Physical `translate-x`, so it needs an explicit `rtl:`
-                  // sign flip to land on the mirrored side of the track
-                  // instead of pushing the thumb outside it — see
-                  // Toggle.tsx's header comment for the full reasoning (RTL
-                  // sweep, form-engine Phase 2 Task 6 follow-up fix).
-                  className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                    s.enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
-                  }`}
-                />
-              </button>
+              />
             </div>
           ))}
         </div>

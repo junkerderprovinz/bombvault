@@ -397,7 +397,7 @@ export function Config() {
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
             <SourceToggle source={source} onChange={setSource} disabled={loading} domain="config" />
           </div>
-          <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
         </div>
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}

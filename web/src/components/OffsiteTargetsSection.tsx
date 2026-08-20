@@ -112,12 +112,12 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
       >
         {st === "busy" ? t("offsite.testing") : t("offsite.targets.test")}
       </Badge>
-      {st === "ok" && <span className="text-[11px] text-statusOk">{t("offsite.testOk")}</span>}
+      {st === "ok" && <span className="text-caption text-statusOk">{t("offsite.testOk")}</span>}
       {st === "uninit" && (
-        <span className="text-[11px] text-statusWarn">{t("offsite.testUninitialized")}</span>
+        <span className="text-caption text-statusWarn">{t("offsite.testUninitialized")}</span>
       )}
       {st === "fail" && (
-        <span className="text-[11px] text-statusFail max-w-[18rem] wrap-break-word text-end">
+        <span className="text-caption text-statusFail max-w-[18rem] wrap-break-word text-end">
           {err ?? t("offsite.testFailed")}
         </span>
       )}

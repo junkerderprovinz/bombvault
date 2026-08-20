@@ -142,7 +142,7 @@ function SnapshotFileBrowser({
 
   return (
     <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-2">
-      <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
+      <p className="text-caption text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
         loading={loading}
@@ -196,7 +196,7 @@ function SnapshotFileBrowser({
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
             {blockedByOther && (
-              <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+              <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
             )}
           </div>
           <RestoreProgress
@@ -264,7 +264,7 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
         {isPending ? t("common.restoring") : t("snapshots.recreate")}
       </button>
       {blockedByOther && (
-        <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+        <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
       )}
       <RestoreProgress
         state={state}
@@ -336,7 +336,7 @@ function RestoreToFolder({
   const done = state.phase === "success";
   return (
     <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-1.5">
-      <p className="text-[11px] text-carbon-textMuted">{t("restore.toFolderHint")}</p>
+      <p className="text-caption text-carbon-textMuted">{t("restore.toFolderHint")}</p>
       <FolderBrowser
         label={t("restore.targetPath")}
         value={path}
@@ -349,10 +349,10 @@ function RestoreToFolder({
           disabled={!path.trim() || isPending || blockedByOther || done}
           className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isPending ? t("common.restoring") : t("restore.confirm")}
+          {isPending ? t("common.restoring") : t("common.confirm")}
         </button>
         {blockedByOther && (
-          <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+          <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
         )}
       </div>
       <RestoreProgress
@@ -450,7 +450,7 @@ function CompareSnapshots({
       </button>
       {open && (
         <div className="mt-2 rounded-card bg-carbon-surface2 p-2 flex flex-col gap-2">
-          <p className="text-[11px] text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
           <div className="flex items-center gap-2 flex-wrap">
             <select value={from} onChange={(e) => setFrom(e.target.value)} disabled={loading} className={selectCls}>
               {snapshots.map((s) => (
@@ -721,7 +721,7 @@ function SnapshotRow({
           {/* In place — the destructive recreate (confirm-gated). */}
           {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
-              <p className="text-[11px] text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
               <RestoreAction
                 domain="container"
                 name={containerName}
@@ -851,7 +851,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
                 <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
               </div>
-              <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
             </div>
           </Advanced>
           <RecentRunsList name={name} domain="container" t={t} />
