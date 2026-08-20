@@ -227,8 +227,15 @@ const navBase =
   "flex items-center gap-3 px-3.5 py-2.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
 const navActive =
   "bg-accent text-accentContrast";
+// `rtl:-translate-x-0.5!` — physical `translate-x`, same trap as the Toggle
+// thumb (RTL sweep, form-engine Phase 2 Task 6 follow-up fix): a positive
+// nudge always moves right on screen, which reaches toward the main content
+// area only when the sidebar sits on the LEFT (LTR). Negating it under `rtl:`
+// keeps the nudge pointed at the content instead of away from it once the
+// sidebar sits on the right. `!` beats the base rule regardless of Tailwind's
+// generated declaration order, same reasoning as the Toggle thumb fix.
 const navInactive =
-  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5";
+  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
 function NavItem({ to, label, icon }: NavItem) {
   return (

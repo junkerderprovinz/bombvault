@@ -1647,7 +1647,7 @@ function FreshInstallNudge({
           to="/recovery"
           className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
-          {t("recovery.freshNudgeCta")} →
+          {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
       </div>
       <button

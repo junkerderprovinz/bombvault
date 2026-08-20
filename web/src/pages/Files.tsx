@@ -105,8 +105,12 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         }`}
       >
         <span
+          // Physical `translate-x`, so it needs an explicit `rtl:` sign flip
+          // to land on the mirrored side of the track instead of pushing the
+          // thumb outside it — see Toggle.tsx's header comment for the full
+          // reasoning (RTL sweep, form-engine Phase 2 Task 6 follow-up fix).
           className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+            enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
           }`}
         />
       </button>

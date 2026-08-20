@@ -5,6 +5,7 @@ import { useT } from "../lib/i18n";
 import { RevealInput } from "./RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { Badge } from "./Badge";
+import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -360,7 +361,9 @@ export function OffsiteWizard({
             RELATIVE to the Host Data mount, which is the one thing nothing in
             this flow used to say (issue #138). */}
         {backend === "path" && (
-          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.repoLocalHint")}</p>
+          <p className="text-xs text-carbon-textMuted leading-relaxed">
+            {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+          </p>
         )}
       </div>
 
@@ -428,7 +431,9 @@ export function OffsiteWizard({
             dir="ltr"
             className={`${inputCls} text-start`}
           />
-          <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+          <span className="text-xs text-carbon-textMuted">
+            {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+          </span>
         </label>
         {/* The off-site schedule is edited in Settings › Schedules now; the wizard
             saves only the repo URL so it can never clobber that cadence. */}
@@ -532,8 +537,13 @@ export function OffsiteWizard({
             }`}
           >
             <span
+              // Physical `translate-x`, so it needs an explicit `rtl:` sign
+              // flip to land on the mirrored side of the track instead of
+              // pushing the thumb outside it — see Toggle.tsx's header
+              // comment for the full reasoning (RTL sweep, form-engine
+              // Phase 2 Task 6 follow-up fix).
               className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                immutable ? "translate-x-[18px]" : "translate-x-[3px]"
+                immutable ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
               }`}
             />
           </button>

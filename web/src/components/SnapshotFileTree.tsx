@@ -104,7 +104,17 @@ function TreeRow({
     <div>
       <div
         className="flex items-center gap-1 py-0.5 text-xs rounded-control hover:bg-carbon-hover"
-        style={{ paddingLeft: depth * 14 }}
+        // `paddingInlineStart`, not `paddingLeft` — a physical inline style
+        // (a plain `style` prop, not a Tailwind class) is exactly what the
+        // class-based `pl-`/`pr-`/etc. grep sweep couldn't see (RTL sweep,
+        // form-engine Phase 2 Task 6 follow-up fix). This row carries no
+        // `dir` override of its own, so the logical property correctly
+        // resolves against the surrounding page's real direction: the
+        // indent piles up on the reading-start edge (left in LTR, right in
+        // RTL) either way, instead of always visually hugging the left
+        // regardless of direction — which made every depth in RTL look the
+        // same distance from the RTL reading edge, hiding the hierarchy.
+        style={{ paddingInlineStart: depth * 14 }}
       >
         {isDir ? (
           <button

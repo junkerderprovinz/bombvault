@@ -37,22 +37,19 @@ import type { InputHTMLAttributes } from "react";
 //     an unconditional `w-full` so it fills that wrapper exactly like the
 //     original bare input filled ITS parent — swapping <input> for
 //     <RevealInput> never shrinks or grows the field's own footprint.
-//   - Reserves trailing room with `pe-8!`. Several call sites build their
+//   - Reserves trailing room for the eye. Several call sites build their
 //     className from a shared `inputCls`/`offsiteInput` const also reused by
 //     OTHER, non-secret fields in the same file/function; appending a plain
-//     `pe-8` after that constant in the className string is NOT guaranteed
-//     to win the cascade against the constant's own `px-*` (Tailwind's
-//     generated utility order is not the order classes appear in the
-//     `class` attribute). The `!` important modifier pins the override
+//     padding utility after that constant in the className string is NOT
+//     guaranteed to win the cascade against the constant's own `px-*`
+//     (Tailwind's generated utility order is not the order classes appear in
+//     the `class` attribute). The `!` important modifier pins the override
 //     without having to fork or string-edit the shared constant.
-//   - `pe-8`/`end-2` (LOGICAL, writing-mode-aware Tailwind utilities), not
-//     `pr-8`/`right-2` — the eye sits on the field's TRAILING edge, which is
-//     the right in LTR (English, German, ...) but the LEFT in RTL (Arabic,
-//     Hebrew — both shipped locales here, see lib/i18n.ts's isRtl). Physical
-//     `right-*` would pin the eye to the same visual side in both directions,
-//     landing on the RTL reader's leading edge instead. `dir` flips on
-//     document.documentElement per the active locale (lib/i18n.ts), so the
-//     logical utilities resolve correctly with no JS/conditional needed.
+//   - The eye button itself uses `end-2` (LOGICAL, writing-mode-aware) —
+//     it sits on the field's TRAILING edge, the right in LTR but the LEFT in
+//     RTL (Arabic, Hebrew — both shipped locales here, see lib/i18n.ts's
+//     isRtl). `end-2` has no `dir` of its own, so it simply inherits the
+//     surrounding page's direction and resolves correctly with no JS.
 //   - `dir="ltr"` + `text-start` on the <input> itself (RTL sweep, form-engine
 //     Phase 2 Task 6): every value this component ever holds — a login
 //     password, a cloud secret, a fleet/receiver token, an APP_KEY-equivalent
@@ -71,6 +68,36 @@ import type { InputHTMLAttributes } from "react";
 //     the value always reads left-to-right from the field's own left edge.
 //     The field's POSITION in the page still follows the surrounding RTL
 //     layout untouched — only the text inside it is pinned.
+//   - The padding reservation is `pr-8! rtl:pr-0! rtl:pl-8!` — PHYSICAL
+//     properties gated by the `rtl:` variant, deliberately NOT the logical
+//     `pe-8` this used to be (form-engine Phase 2 Task 6 follow-up fix: that
+//     was a real regression, not a style nit). A logical property resolves
+//     against the direction of the ELEMENT IT'S APPLIED TO — and this
+//     specific element's direction is permanently pinned to "ltr" one line
+//     above, for the text-content reason above. So `pe-8` on this input
+//     doesn't track the PAGE's direction the way `end-2` on the button
+//     (which carries no `dir` of its own) does — it tracks the INPUT's own,
+//     forced-ltr direction, i.e. it always resolves to padding-right,
+//     full stop. Under an RTL page the eye (following the page) sits on the
+//     left while the reserved padding (following the input's own forced ltr)
+//     stayed on the right — dead space on one side, secret text rendering
+//     UNDERNEATH the eye on the other. Tailwind's compiled `rtl:` selector
+//     here (see the generated CSS) is `:where(:is(:lang(ar),:lang(he),…),
+//     [dir=rtl], [dir=rtl] *)` — an OR of an inherited-`:lang()` clause and
+//     two `dir`-attribute clauses, and crucially NEITHER depends on this
+//     specific element's own `dir`: the language list matches on the
+//     INHERITED page language regardless of this input's forced `dir="ltr"`,
+//     and `[dir="rtl"] *` matches on an ANCESTOR carrying `dir="rtl"` (the
+//     `<html>` element, per lib/i18n.ts), never on the element itself. Both
+//     independently and correctly detect the PAGE's direction on this
+//     descendant even though the descendant's own `dir` disagrees — which is
+//     exactly what's needed here. (Only `rtl:` is used, deliberately never
+//     paired with `ltr:` on this element: an `ltr:` variant built the same
+//     way would ALSO match here whenever the page's language isn't in the
+//     RTL list — which, for an LTR page, is always — so it wouldn't
+//     conflict in practice, but a single unconditional physical base plus
+//     only an `rtl:` override is simpler to reason about than two
+//     direction-conditional classes racing for the same property.)
 // ---------------------------------------------------------------------------
 
 export interface RevealInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -106,7 +133,7 @@ export function RevealInput({
         {...rest}
         type={visible ? "text" : "password"}
         dir="ltr"
-        className={`w-full pe-8! text-start${className ? ` ${className}` : ""}`}
+        className={`w-full pr-8! rtl:pr-0! rtl:pl-8! text-start${className ? ` ${className}` : ""}`}
       />
       <button
         type="button"

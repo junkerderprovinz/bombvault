@@ -122,7 +122,7 @@ describe("RevealInput", () => {
     expect(cls).not.toContain("accent");
   });
 
-  it("reserves trailing padding with an important, LOGICAL pe-8 so a shared inputCls's px-* can't win the cascade", () => {
+  it("reserves trailing padding with important, direction-aware PHYSICAL utilities so a shared inputCls's px-* can't win the cascade", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -134,11 +134,20 @@ describe("RevealInput", () => {
     });
     const input = findOne(tree, "input");
     const cls = input.props.className as string;
-    // pe-8 (logical "padding-end"), not pr-8 — the eye sits on the field's
-    // TRAILING edge, which flips sides between LTR and RTL, so a PHYSICAL
-    // pr-8 would reserve the wrong side's room once dir="rtl" is active.
-    expect(cls).toContain("pe-8!");
-    expect(cls).not.toMatch(/(?:^|\s)pr-8!/);
+    // NOT the logical `pe-8` this used to be: this <input> carries its own
+    // `dir="ltr"` (see below), and a logical property resolves against the
+    // direction of the element it's on — so `pe-8` here would always
+    // resolve to padding-right, regardless of the PAGE's direction, landing
+    // the reserved room on the wrong side once dir="rtl" is active (a real,
+    // shipped regression from form-engine Phase 2 Task 6 — see the
+    // follow-up fix). `pr-8!` is the unconditional LTR-default base; the
+    // `rtl:` pair swaps it to the left once an ancestor has dir="rtl" —
+    // that variant's ancestor-only match clause still fires correctly even
+    // though this element's OWN direction is pinned to ltr.
+    expect(cls).toContain("pr-8!");
+    expect(cls).toContain("rtl:pr-0!");
+    expect(cls).toContain("rtl:pl-8!");
+    expect(cls).not.toMatch(/(?:^|\s)pe-8!/);
     expect(cls).toContain("w-full");
     // The caller's own visual classes (background, vertical padding) still
     // pass through untouched — only the trailing padding is pinned.
