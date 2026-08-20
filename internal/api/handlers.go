@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
@@ -2452,36 +2453,85 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 // Body: {password string}
 // login brute-force throttle: lock out after loginMaxFails failures within
 // loginWindow, so the optional password gate can't be guessed at full speed.
+//
+// The throttle is checked BEFORE secret.VerifyPassword runs, deliberately: a
+// throttled key is rejected without ever hashing the submitted password, not
+// merely denied credit for a correct guess afterwards. VerifyPassword is a
+// cheap HMAC today, but keying the check to "have we already seen too many
+// failures" and running it first keeps that true even if the hash ever gets
+// more expensive, and it matches the throttle's actual purpose — capping
+// *attempts*, not just successes. The tradeoff is that a client which is
+// currently throttled gets a 429 even on a correct password rather than
+// having it be honored immediately; see loginClientKey's doc for why that
+// tradeoff is now scoped to the offending client instead of every client.
 const (
 	loginMaxFails = 5
 	loginWindow   = time.Minute
 )
 
-// loginThrottled prunes the failed-attempt window and reports whether logins are
-// currently locked out.
-func (h *Handler) loginThrottled() bool {
+// loginClientKey returns the throttle key for r: the connecting peer's IP,
+// with any port stripped.
+//
+// This deliberately reads net/http's RemoteAddr — the actual TCP peer — and
+// NOT a client-supplied header such as X-Forwarded-For. This codebase has no
+// trusted-proxy configuration (no allowlisted proxy CIDR, no "trust this hop"
+// setting anywhere), so honoring a forwarded-for header here would let any
+// caller pick their own throttle bucket at will, which defeats the point of
+// keying by client in the first place. When BombVault does sit behind a
+// reverse proxy (the documented remote-access setup, see
+// docs/configuration.md), every request the proxy forwards shares the
+// proxy's address here — clients behind it share one throttle bucket, same as
+// they would for any other per-IP limiter with no trusted-proxy support. That
+// is a coarser bucket than per-real-client, but it is still strictly better
+// than the single global bucket this replaces, and it can't be spoofed by an
+// unauthenticated caller.
+func loginClientKey(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// No port present (or an otherwise unparseable value, e.g. in tests
+		// that set RemoteAddr directly) — fall back to the raw value rather
+		// than collapsing every such caller onto one shared "" bucket.
+		return r.RemoteAddr
+	}
+	return host
+}
+
+// loginThrottled prunes key's failed-attempt window and reports whether
+// logins from it are currently locked out. An empty window after pruning
+// deletes the map entry so a flood of one-off distinct keys (e.g. a botnet
+// trying to grow this map) can't accumulate unbounded memory: only clients
+// throttled within the last loginWindow keep an entry.
+func (h *Handler) loginThrottled(key string) bool {
 	h.loginMu.Lock()
 	defer h.loginMu.Unlock()
 	cutoff := time.Now().Add(-loginWindow)
-	kept := h.loginFails[:0]
-	for _, ts := range h.loginFails {
+	fails := h.loginFails[key]
+	kept := fails[:0]
+	for _, ts := range fails {
 		if ts.After(cutoff) {
 			kept = append(kept, ts)
 		}
 	}
-	h.loginFails = kept
-	return len(h.loginFails) >= loginMaxFails
+	if len(kept) == 0 {
+		delete(h.loginFails, key)
+	} else {
+		h.loginFails[key] = kept
+	}
+	return len(kept) >= loginMaxFails
 }
 
-func (h *Handler) recordLoginFail() {
+func (h *Handler) recordLoginFail(key string) {
 	h.loginMu.Lock()
-	h.loginFails = append(h.loginFails, time.Now())
+	if h.loginFails == nil {
+		h.loginFails = make(map[string][]time.Time)
+	}
+	h.loginFails[key] = append(h.loginFails[key], time.Now())
 	h.loginMu.Unlock()
 }
 
-func (h *Handler) recordLoginSuccess() {
+func (h *Handler) recordLoginSuccess(key string) {
 	h.loginMu.Lock()
-	h.loginFails = nil
+	delete(h.loginFails, key)
 	h.loginMu.Unlock()
 }
 
@@ -2491,7 +2541,8 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
 		return
 	}
-	if h.loginThrottled() {
+	key := loginClientKey(r)
+	if h.loginThrottled(key) {
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts — wait a minute and try again"})
 		return
 	}
@@ -2504,11 +2555,11 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !secret.VerifyPassword(h.cfg.AppKey, body.Password, hash) {
-		h.recordLoginFail()
+		h.recordLoginFail(key)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid password"})
 		return
 	}
-	h.recordLoginSuccess()
+	h.recordLoginSuccess(key)
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
 	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
