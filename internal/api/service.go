@@ -3800,18 +3800,25 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		s.setUpdateCheck(name, "up-to-date")
 		return
 	}
-	runID, rErr := runsAdapter{st: s.store, ctx: ctx}.Start(targetID, "update")
+	// context.Background(), not ctx: an "update" run is a side effect of the
+	// container backup, not one of the five domain steps a "Backup Everything"
+	// pass groups (see runGroupKey's doc comment) — deliberately excluded here,
+	// same as recordUpdateFailure's failure path, so whether an "update" run
+	// gets grouped never depends on which of the two paths happens to fire.
+	// Applies to all three runsAdapter sites below; ctx itself is still the live
+	// context and stays in use above for the Docker calls.
+	runID, rErr := runsAdapter{st: s.store, ctx: context.Background()}.Start(targetID, "update")
 	if rErr != nil {
 		log.Printf("api: update-after-backup: start run for %q: %v", name, rErr) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
 	if err := s.recreateForUpdate(ctx, name, in); err != nil {
-		_ = runsAdapter{st: s.store, ctx: ctx}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(err))
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: ctx}.Finish(runID, "success", "", 0, "")
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", "", 0, "")
 	s.setUpdateCheck(name, "updated")
 
 	// #116: BombVault just recreated the container, so its image tag moved to the
