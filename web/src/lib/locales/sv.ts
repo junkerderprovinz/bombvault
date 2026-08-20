@@ -515,7 +515,7 @@ const sv: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lämna ett fält tomt för att använda den globala URL:en ovan. En domän med en egen URL får en egen kontroll, med egen körtid och historik.",
   "notify.unraid": "Unraid-aviseringar",
   "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord, …). Körs via SSH-anslutningen från Inställningar → VM Backup over SSH, så nyckeln måste vara auktoriserad där — men libvirt/VMs krävs INTE (ignorera ett ”libvirt not reachable”-resultat om du inte säkerhetskopierar VMs). Kontrollera med ”Skicka test” nedan.",
-  "notify.unraidPlatformMismatch": "BombVault upptäckte den här värden som \"{platform}\", inte Unraid — Unraid-aviseringar förblir avstängda även om detta är påslaget. Om detta FAKTISKT är en Unraid-värd, kontrollera att containerns /boot-sökväg är bind-mountad till /host/boot (se BombVaults Unraid-mall) och starta om containern.",
+  "notify.unraidPlatformMismatch": "BombVault upptäckte den här värden som \"{platform}\", inte Unraid — Unraid-aviseringar förblir avstängda även om detta är påslaget. Om detta FAKTISKT är en Unraid-värd, kontrollera att värdens /boot är bind-mountad till /host/boot inuti containern (se BombVaults Unraid-mall) och starta om containern.",
   "notify.save": "Spara",
   "notify.test": "Skicka test",
   "notify.tested": "Test skickat",

@@ -520,11 +520,13 @@ func (s *Service) platformFn() platform.Platform {
 // test the instant one of these steps is attempted on a non-Unraid
 // platform): notify.Config.Unraid can be stale — e.g. a settings.json copied
 // from an old Unraid box onto a genuinely different TrueNAS or
-// generic-Docker host — and BombVault must never run an Unraid-only command
-// (the webGUI notify script, the #116 PHP-over-SSH reconcile, the `plugin`
-// CLI) against a host where it has no meaning. Trusting the toggle blindly
-// would reintroduce exactly the noisy, meaningless SSH attempts Task 6
-// eliminated.
+// generic-Docker host — and an Unraid-only command (the webGUI notify
+// script, the #116 PHP-over-SSH reconcile, the `plugin` CLI) attempted
+// against a host where it has no meaning would only fail predictably,
+// adding noisy log spam on every run rather than accomplishing anything.
+// Task 6's whole point was to skip that attempt entirely instead of letting
+// it fail loudly every time; trusting the toggle blindly would reintroduce
+// exactly that noise.
 //
 // Why a platform mismatch is NOT just silently treated as "feature off"
 // either: internal/platform.Detect's only Unraid signal is one filesystem
@@ -557,8 +559,8 @@ func (s *Service) warnUnraidPlatformMismatch() {
 	s.platformMismatchOnce.Do(func() {
 		log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q) — "+
 			"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
-			"plugin) stay disabled. If this IS an Unraid host, verify the container's /boot host path is "+
-			"bind-mounted to /host/boot (see the BombVault Unraid template) and restart the container — "+
+			"plugin) stay disabled. If this IS an Unraid host, verify the host's /boot is bind-mounted to "+
+			"/host/boot inside the container (see the BombVault Unraid template) and restart the container — "+
 			"detection looks for %s.",
 			s.platformFn().Kind(), platform.KindUnraid, filepath.Join(s.cfg.FlashDir, "config/plugins/dockerMan"))
 	})
@@ -581,17 +583,17 @@ func (s *Service) warnUnraidPlatformMismatch() {
 // path from an error before it reaches the client (defense-in-depth against
 // leaking a repo path or secret), which would otherwise reduce this whole
 // hint to "the ... is only available on Unraid hosts (BombVault detected
-// platform=\"generic\" — if this IS an Unraid host, verify the container's
-// [path] host path is bind-mounted to [path] ...)" — useless. /boot and
-// /host/boot are BombVault's own fixed, publicly-documented mount points
-// (see the Unraid template), never a repo path or secret, so this is the
-// same bypass errRestoreDestination/errRepoPathGuidance (handlers.go,
+// platform=\"generic\" — if this IS an Unraid host, verify the host's
+// [path] is bind-mounted to [path] inside the container ...)" — useless.
+// /boot and /host/boot are BombVault's own fixed, publicly-documented mount
+// points (see the Unraid template), never a repo path or secret, so this is
+// the same bypass errRestoreDestination/errRepoPathGuidance (handlers.go,
 // repo_path.go) already use for the identical reason.
 func (s *Service) unraidPlatformMismatchError(feature string) error {
 	return &platformMismatchErr{msg: fmt.Sprintf(
 		"%s is only available on Unraid hosts (BombVault detected platform=%q — "+
-			"if this IS an Unraid host, verify the container's /boot host path is bind-mounted to "+
-			"/host/boot, see the BombVault Unraid template, and restart the container)",
+			"if this IS an Unraid host, verify the host's /boot is bind-mounted to /host/boot "+
+			"inside the container, see the BombVault Unraid template, and restart the container)",
 		feature, s.platformFn().Kind())}
 }
 
