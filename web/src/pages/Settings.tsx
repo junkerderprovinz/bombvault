@@ -18,6 +18,7 @@ import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, 
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
+import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -2880,8 +2881,13 @@ function FilesSection({
                 }`}
               >
                 <span
+                  // Physical `translate-x`, so it needs an explicit `rtl:`
+                  // sign flip to land on the mirrored side of the track
+                  // instead of pushing the thumb outside it — see
+                  // Toggle.tsx's header comment for the full reasoning (RTL
+                  // sweep, form-engine Phase 2 Task 6 follow-up fix).
                   className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                    s.enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+                    s.enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
                   }`}
                 />
               </button>
@@ -4513,7 +4519,9 @@ export function SettingsPage() {
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
                     operator a bare relative path works here (issue #138). */}
-                <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+                <span className="text-xs text-carbon-textMuted">
+                  {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+                </span>
               </>
             )}
             {/* Additional off-site targets (multi-off-site): extra copies of this

@@ -9,7 +9,8 @@
 //
 // Determinate: the fill width tracks `percent` with a smooth transition.
 // Indeterminate (active but no number yet): a small accent segment loops
-// left→right (keyframes `bv-indeterminate` live in index.css).
+// start→end, RTL-aware via a `[dir="rtl"]`-scoped custom property (keyframes
+// `bv-indeterminate` live in index.css).
 // When inactive, it renders nothing.
 //
 // `label` adds a small caption naming the phase/percentage (e.g. "Restoring… 42%")

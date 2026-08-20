@@ -723,11 +723,20 @@ body {
    variant (dark mark on the light surface, light mark on the dark surface), so the
    logo always reads on --carbon-sidebar without any frame, glow or tile. */
 
-/* Indeterminate progress bar — a small accent segment sliding left→right on
-   loop, used by ProgressBar.tsx when restic reports no numeric percentage. */
+/* Indeterminate progress bar — a small accent segment sliding start→end on
+   loop, used by ProgressBar.tsx when restic reports no numeric percentage.
+   `left` is a PHYSICAL offset (missed by the class-based RTL sweep since
+   it's set via keyframes, not a Tailwind class — RTL sweep, form-engine
+   Phase 2 Task 6 follow-up fix); `[dir="rtl"]` swaps which extreme is the
+   sweep's start vs end so it still travels start→end under RTL instead of
+   always physically left→right regardless of reading direction. The track's
+   own bounds (ProgressBar.tsx's `start-0 end-0`) already follow direction
+   correctly — only this animation's two endpoints needed the override. */
+:root { --bv-indet-from: -35%; --bv-indet-to: 100%; }
+[dir="rtl"] { --bv-indet-from: 100%; --bv-indet-to: -35%; }
 @keyframes bv-indeterminate {
-  0%   { left: -35%; }
-  100% { left: 100%; }
+  0%   { left: var(--bv-indet-from); }
+  100% { left: var(--bv-indet-to); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -821,11 +830,25 @@ body {
 }
 
 /* Toast entrance (GlimStone form-engine #9) — reference/tokens.css's
-   glim-toast-in, verbatim. The reduced-motion fallback reuses glim-fade-in
-   above rather than defining a second identical opacity-only keyframe (see
-   the @media (prefers-reduced-motion: reduce) block further down). */
+   glim-toast-in. The reduced-motion fallback reuses glim-fade-in above
+   rather than defining a second identical opacity-only keyframe (see the
+   @media (prefers-reduced-motion: reduce) block further down).
+   The reference's `translateX(12px)` is a PHYSICAL offset (RTL sweep,
+   form-engine Phase 2 Task 6 follow-up fix: this wasn't actually
+   direction-aware before, despite the viewport corner itself — `bottom-0
+   end-0` in Toast.tsx — correctly following writing direction). The
+   viewport sits at the LOGICAL end corner, right in LTR, left in RTL
+   (Toast.tsx's own header comment), so a toast should slide in FROM the
+   trailing/outer edge of whichever corner that is: +12px (from further
+   right, sliding left into place) when that corner is on the right, -12px
+   (from further left, sliding right into place) when it's on the left.
+   Unconditional +12px meant an RTL toast slid in from further LEFT than
+   its LEFT-anchored resting place — i.e. from the page's interior toward
+   the edge, not from off-canvas toward the edge like every other toast. */
+:root { --glim-toast-slide: 12px; }
+[dir="rtl"] { --glim-toast-slide: -12px; }
 @keyframes glim-toast-in {
-  from { opacity: 0; transform: translateX(12px); }
+  from { opacity: 0; transform: translateX(var(--glim-toast-slide)); }
   to   { opacity: 1; transform: none; }
 }
 

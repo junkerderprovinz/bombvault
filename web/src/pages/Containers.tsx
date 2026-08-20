@@ -17,6 +17,7 @@ import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ProgressBar } from "../components/ProgressBar";
+import { withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
@@ -461,8 +462,12 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
         }`}
       >
         <span
+          // Physical `translate-x`, so it needs an explicit `rtl:` sign flip
+          // to land on the mirrored side of the track instead of pushing the
+          // thumb outside it — see Toggle.tsx's header comment for the full
+          // reasoning (RTL sweep, form-engine Phase 2 Task 6 follow-up fix).
           className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+            enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
           }`}
         />
       </button>
@@ -847,7 +852,9 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
       </button>
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">{t("excludes.hint")}</p>
+          <p className="text-xs text-carbon-textMuted">
+            {withLtrFragments(t("excludes.hint"), EXCLUDES_HINT_LTR_FRAGMENTS)}
+          </p>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

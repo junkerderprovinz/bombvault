@@ -11,6 +11,7 @@ import {
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
+import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 
 // The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
 // target row render through Badge at this ONE shared stage, so their heights
@@ -346,7 +347,9 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
               dir="ltr"
               className={`${inputCls} text-start`}
             />
-            <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+            <span className="text-xs text-carbon-textMuted">
+              {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+            </span>
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.credsLabel")}</span>

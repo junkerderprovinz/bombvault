@@ -64,8 +64,24 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
         }`}
       >
         <span
+          // `translate-x` is a PHYSICAL transform — always a rightward pixel
+          // shift for a positive value, regardless of `direction` (there is
+          // no logical "translate toward the inline-end" primitive Tailwind
+          // maps this onto). The track's flex layout DOES auto-mirror under
+          // RTL (flex main-start follows `direction`), so the thumb's
+          // untransformed rest position already flips to the right edge —
+          // but the physical translate then pushes it EVEN FURTHER right on
+          // top of that, landing the "on" state's thumb outside the track
+          // entirely instead of at its mirrored left edge. `rtl:` negates the
+          // sign so the shift lands on the correct side of the now-mirrored
+          // base position either way (RTL sweep, form-engine Phase 2 Task 6
+          // follow-up fix). The `!` on the override isn't stylistic — both
+          // classes set the same single `translate` property with equal
+          // selector specificity, so without it the winner would depend on
+          // Tailwind's generated declaration order rather than being
+          // guaranteed by the cascade.
           className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            checked ? "translate-x-[18px]" : "translate-x-[3px]"
+            checked ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
           }`}
         />
       </button>

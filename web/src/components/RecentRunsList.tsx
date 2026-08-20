@@ -83,7 +83,12 @@ export function RecentRunsList({
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass(run.status)}`} />
             <span className="text-carbon-textSub whitespace-nowrap">
               {formatTs(run.startedAt)}
-              {run.finishedAt != null ? ` → ${formatTs(run.finishedAt)}` : ""}
+              {run.finishedAt != null && (
+                <>
+                  {" "}
+                  <span className="inline-block rtl:-scale-x-100">→</span> {formatTs(run.finishedAt)}
+                </>
+              )}
             </span>
             {dur && <span className="text-carbon-textMuted whitespace-nowrap">({dur})</span>}
           </div>

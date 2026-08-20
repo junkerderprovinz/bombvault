@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
+import { withLtrFragments, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -523,7 +524,7 @@ function ForeignItemRow({
             placeholder="user/appdata"
           />
           <p className="text-xs text-carbon-textMuted max-w-2xl">
-            {t("recovery.foreignAppdataDestHint")}
+            {withLtrFragments(t("recovery.foreignAppdataDestHint"), FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS)}
           </p>
           <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer">
             <input
