@@ -3008,6 +3008,71 @@ func TestRestoreHoldsDomainLockAgainstScheduledBackup(t *testing.T) {
 	}
 }
 
+// TestDeleteBackupsRefusedWhileDomainLocked pins the fix for the finding that
+// DeleteBackups (the containers bulk-delete) was the sole destructive
+// repo-mutating function in this file that never serialized against the
+// "containers" domain lock — every sibling (DeleteBackupsVM,
+// DeleteBackupsFileSet, DeleteSnapshot, PruneDomain) does. A live container
+// Backup holds that lock for its whole run (potentially hours); without the
+// fix, an unlocked bulk delete could race a concurrent `restic forget --prune`
+// against the same repo files, especially on the FUSE/NFS/SMB shares this app
+// targets where restic's own file lock isn't fully reliable.
+//
+// Mirrors TestRestoreHoldsDomainLockAgainstScheduledBackup's proof style: the
+// lock is held by a REAL in-flight operation reached through the exported
+// StartRestoreToPath (not an internal test-only lock helper), so this proves
+// the lock is genuinely acquired end-to-end, not merely that some internal
+// flag is set. tryLockDomainFor is a non-blocking TryLock, so a genuinely
+// checked lock must refuse DeleteBackups AT ONCE — it must not hang waiting
+// for the restore, and it must not silently proceed either.
+func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Start a detached restore and wait until it is INSIDE the engine — at that
+	// point the restore execute path already holds the "containers" domain lock.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	// DeleteBackups must be refused IMMEDIATELY while the restore holds the
+	// domain lock — proving the lock is genuinely checked (before the fix this
+	// call went straight through to Forget with zero serialization).
+	deleteErr := make(chan error, 1)
+	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex") }()
+	select {
+	case err := <-deleteErr:
+		if err == nil || !strings.Contains(err.Error(), "currently running") {
+			t.Fatalf("expected an immediate domain-busy refusal, got %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("DeleteBackups should refuse at once (TryLock never blocks), not hang")
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine while the domain is locked, got %v", eng.forgotten)
+	}
+
+	// Once the restore releases the domain lock, DeleteBackups must succeed
+	// normally — the fix serializes, it does not permanently wedge the domain.
+	close(eng.blockRestore)
+	waitForBackupDone(t, svc)
+	if err := svc.DeleteBackups(ctx, "plex"); err != nil {
+		t.Fatalf("DeleteBackups after the lock was released: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected the delete to reach the engine once the lock was free, got %v", eng.forgotten)
+	}
+}
+
 // diffTagTestService builds a service with an initialised containers repo and the
 // given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
 func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
