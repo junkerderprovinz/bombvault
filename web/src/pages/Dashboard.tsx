@@ -280,16 +280,20 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 // KNOWN LIMITATION, documented on purpose (spec-compliance review of Task 7,
 // not fixed in that task — see index.css's matching comment on
 // --status-warn-text's dark value for the full writeup): tone="warn" and
-// tone="active" render as near-identical amber in dark theme with the
-// DEFAULT accent (RGB-distance ~11, 1.05:1 contrast between them).
+// tone="active" render as near-identical amber in BOTH themes — dark with
+// the DEFAULT accent (#f1c21b vs #FCC419, RGB-distance ~11, 1.05:1 between
+// them), light on EVERY accent (#8e6a00 vs a static #7a5c00, hue 44.8° vs
+// 45.2°, 1.25:1, with chip backgrounds only ~10 apart).
 // SummaryTier below is a real, live site where both can appear in the same
 // row at once — the "Overall health" cell showing tone="warn" (an RPO
 // lapsing) next to "Last result" showing tone="active" (a run literally
 // running). Not a bare SC 1.4.1 violation (each badge's own text still
-// differs), but a real glance-level regression on the default accent.
-// Confirmed this is default-accent-specific: 4 of Settings.tsx's 5
-// ACCENT_PRESETS aren't gold/yellow and don't collide. Left unresolved
-// rather than force a disproportionate fix (recolouring warn off Carbon's
+// differs), but a real glance-level regression.
+// Only DARK theme has a mitigation: 4 of Settings.tsx's 5 ACCENT_PRESETS
+// aren't gold/yellow and don't collide, and dark's --accent-text follows
+// whichever the user picked. Light's --accent-text is a static #7a5c00 that
+// does NOT follow the accent, so light-theme users see this on every preset.
+// Left unresolved rather than force a disproportionate fix (recolouring warn off Carbon's
 // actual yellow token, changing the app's default accent, or adding a new
 // icon system to Badge all reach well past a contrast-arithmetic bugfix) —
 // flagged for a future task, most naturally Task 8 (focus system), which

@@ -14,6 +14,12 @@
   --color-carbon-border: var(--carbon-border);
   --color-carbon-hover: var(--carbon-hover);
 
+  /* accent = the raw accent, used as a SOLID fill; accentContrast = the
+     computed black/white ink that goes ON that solid fill; accentSoft = a
+     14%-alpha wash of it; accentText = accent-coloured TEXT/graphics on an
+     ordinary (non-accent) surface, which needs its own light-theme value to
+     clear WCAG. accentContrast and accentText sound alike but are opposites
+     — see --accent-text's own comment in the dark block below. */
   --color-accent: var(--accent);
   --color-accentContrast: var(--accent-contrast);
   --color-accentSoft: var(--accent-soft);
@@ -165,14 +171,27 @@
      Recovery/ActivityLog's "running" text, the Sparkline stroke,
      RecentRunsList's running dot, FolderBrowser's loading spinner) all read
      this instead of --accent directly. Dark theme just aliases --accent
-     verbatim: measured live (standard WCAG relative-luminance formula) at
+     verbatim: measured (standard WCAG relative-luminance formula) at
      7.18–11.24:1 against every real dark surface these sites render on
-     (--carbon-bg/--carbon-surface/--carbon-surface2) and 6.80–8.37:1
-     composited under --accent-soft (the Badge case) — the flat accent
-     already has real contrast margin here, so this token doesn't need its
-     own dark-theme value. (The light theme override lives in the
-     [data-theme="light"] block below — that one DOES need a separate value,
-     for the exact reason --focus-ring below already does.) */
+     (--carbon-bg #161616 11.24:1, --carbon-surface #262626 9.40:1,
+     --carbon-surface2 #393939 7.18:1) and 5.30–8.37:1 composited under
+     --accent-soft (the Badge case: 8.37 / 6.80 / 5.30 against those same
+     three) — the flat accent already clears 4.5:1 everywhere here with real
+     margin, so this token doesn't need its own dark-theme value. (The light
+     theme override lives in the [data-theme="light"] block below — that one
+     DOES need a separate value, for the exact reason --focus-ring below
+     already does.)
+
+     NOT the same thing as --accent-contrast above, despite the similar
+     name — the two are near-opposites and are easy to reach for wrongly:
+       --accent-contrast = the INK that goes ON TOP OF a solid --accent fill
+         (computed black/white by lib/accent.ts's contrastOn()). Pairs with
+         `bg-accent`.
+       --accent-text     = accent-COLOURED text/graphics sitting on an
+         ordinary neutral or accent-soft surface. Pairs with
+         `bg-carbon-*`/`bg-accentSoft`, never with `bg-accent`.
+     Badge.tsx's file header already spells out the same distinction for its
+     tone="heading" case. */
   --accent-text:      var(--accent);
 
   /* Shape and type scale live once, on a bare :root above (theme-invariant —
@@ -261,9 +280,12 @@
   --status-warn-solid:        #f1c21b;
 
   /* KNOWN LIMITATION, documented on purpose (spec-compliance review of TASK
-     7, not fixed in that task): this token (#f1c21b) and the DEFAULT
-     --accent (#FCC419 above) are only RGB-distance ~11 apart — 1.05:1
-     contrast between them, i.e. functionally the same hue in dark theme.
+     7, not fixed in that task): "warn" and "active" read as the same amber
+     in BOTH themes. Dark: this token (#f1c21b) and the DEFAULT --accent
+     (#FCC419 above) are only RGB-distance ~11 apart — 1.05:1 contrast
+     between them. Light: #8e6a00 vs. a static #7a5c00, literally the same
+     hue (44.8° vs. 45.2°). See the per-theme breakdown below — the two
+     themes have DIFFERENT blast radii and only one of them has a mitigation.
      Real, live collision: Dashboard's SummaryTier can show a "warn" health
      chip (chipForRpo("warn") -> statusTone -> tone="warn", this token) and a
      "last result" chip for a run that's literally "running" right now
@@ -272,11 +294,25 @@
      opposite meanings ("something needs attention" vs. "something healthy
      is in progress") reading as the same amber. Checked before accepting
      this as a limitation rather than fixing it:
-       - It's the DEFAULT accent specifically, not a fundamental hue clash:
-         4 of the 5 built-in accent presets (Settings.tsx's ACCENT_PRESETS —
-         Blue/Green/Red/Purple) aren't in the yellow/gold family and don't
-         collide with warn at all. A user who has moved off "Sunflower"
-         already doesn't see this.
+       - In DARK theme it's the DEFAULT accent specifically, not a
+         fundamental hue clash: 4 of the 5 built-in accent presets
+         (Settings.tsx's ACCENT_PRESETS — Blue/Green/Red/Purple) aren't in
+         the yellow/gold family and don't collide with warn at all
+         (RGB-distance 128–305 vs. Sunflower's 11). A dark-theme user who has
+         moved off "Sunflower" already doesn't see this, because dark's
+         --accent-text is a plain `var(--accent)` alias and therefore follows
+         whatever hex they picked.
+       - LIGHT theme is WORSE, and that preset escape hatch does NOT apply
+         there. Light's --status-warn-text is #8e6a00 and light's
+         --accent-text is a STATIC #7a5c00 (see that token's own comment in
+         the [data-theme="light"] block below for why it doesn't re-derive
+         per accent) — hue 44.8° vs. 45.2°, i.e. the SAME hue, 1.25:1
+         between them, and the two chip backgrounds (--status-warn-bg-strong
+         #fcf4d6 vs. --accent-soft over a card, ~#fff7df) are only
+         RGB-distance ~10 apart, CLOSER than the dark pair's ~18. So in light
+         theme the warn/active collision is unconditional: every user sees
+         it, on every accent preset, not just the default. Do not read the
+         dark-theme "most users are fine" line above as covering light too.
        - It is NOT a bare SC 1.4.1 "conveys meaning by colour alone"
          violation: every real call site pairs the colour with distinct text
          (the badge's own label), so colour is never the ONLY signal — but
@@ -426,8 +462,52 @@
      derived from whatever custom hex the user picked via Settings' native
      colour input — that token doesn't re-derive for a custom accent either,
      so this isn't new scope, it's the existing precedent applied
-     consistently. */
+     consistently.
+
+     KNOWN CONSEQUENCE of that static choice, stated because the --focus-ring
+     precedent does NOT actually cover it: --focus-ring is a standalone
+     outline that never sits against an accent-derived background, whereas
+     this token is PAIRED with --accent-soft inside the same Badge — and
+     lib/accent.ts's applyAccent() DOES re-derive --accent-soft inline for a
+     custom accent while leaving this one alone. So in light theme with a
+     non-default accent, Badge's tone="active" renders a wash in the user's
+     hue behind text in this fixed gold (e.g. Blue accent -> #dff1fd wash +
+     #7a5c00 text, ~160° of hue mismatch). Contrast still passes in every
+     preset (5.40–5.79:1, measured), so this is an aesthetic defect, not an
+     accessibility one — accepted here because the alternative (deriving a
+     WCAG-safe darkened text colour from an arbitrary user hex at runtime) is
+     real new colour-math surface area in accent.ts, well past this
+     contrast-arithmetic fix. If a future task adds that derivation, this
+     token and --focus-ring should both move onto it together.
+
+     Note this also means the dark-theme "4 of 5 accent presets dodge the
+     warn/active collision" mitigation (see --status-warn-text's KNOWN
+     LIMITATION comment above) does NOT hold in light theme: a static
+     #7a5c00 collides with light's #8e6a00 warn on every preset. */
   --accent-text: #7a5c00;
+
+  /* NOT-YET-MIGRATED INVENTORY (complete as of this fix — the sites that
+     still paint flat --accent as text or as a non-text graphic and so still
+     measure 1.31–1.61:1 in light theme). All four PRE-DATE Task 7 and none
+     were touched by it, which is the only reason they weren't fixed with the
+     five that were; they are listed here rather than left to be rediscovered:
+       - WhatsNewDialog.tsx's `text-accent underline` external link — the
+         worst of the four: real TEXT at the 4.5:1 bar, 1.61:1 on a card.
+       - Containers.tsx's batch-backup banner spinner
+         (borderColor: var(--accent)) on bg-carbon-surface2 — 1.31:1.
+       - OffsiteIndicator.tsx's spinner (borderColor: var(--accent)) — the
+         precedent FolderBrowser's now-fixed spinner was originally copied
+         from, so the two have diverged on purpose; see FolderBrowser.tsx.
+       - FilterPopover.tsx's `bg-accent` active dot — 1.46–1.61:1.
+     Each is a one-word swap to the accentText token (border-accentText /
+     text-accentText / bg-accentText). Deliberately left out of the
+     contrast-arithmetic fix to keep its blast radius equal to Task 7's own;
+     pick them up in whichever task next owns those files.
+
+     Solid `bg-accent` fills are NOT in this list and are fine as they are:
+     they pair with --accent-contrast, whose whole job is to stay readable on
+     them. Native controls' `accentColor: var(--accent)` are likewise out of
+     scope — the browser draws those. */
 
   /* --focus-ring, unlike --accent-soft above, does NOT inherit the dark
      block's value — measured live against this theme's real Card surface
