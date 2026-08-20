@@ -8642,13 +8642,31 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 // runs on THIS goroutine, but against a context detached from ctx
 // (context.WithoutCancel) and capped by restoreTimeout — so a browser tab close or
 // reverse-proxy idle timeout on the HTTP request can no longer reach into restic
-// and kill a still-in-flight restore mid-write (it stages blind into a directory
-// the NEXT boot swaps in for the live config without re-checking it — a truncated
-// restore there corrupts the live config on that swap). A panic anywhere in this
-// call graph is now recovered like every other manual op on this branch: since
-// RestoreConfig's own run-record id is local to it (never returned here), the
-// fallback is FailRunningRun keyed by store.ConfigTargetID — the same fallback
-// StartBackupConfig's sibling goroutine already uses for this domain.
+// and kill a still-in-flight restore mid-write. This does NOT mean a truncated
+// restore corrupts the live config on the next boot's swap: selfrestore.ApplyPending
+// is marker-gated and runs validSQLite (PRAGMA quick_check) on the staged DB BEFORE
+// touching the live one, moving a bad/truncated staged DB to <root>.bad and leaving
+// the live DB untouched — the swap was never blind. The real, narrower residual risk
+// (pre-existing, not introduced by this fix) is that RestoreConfig clears the
+// staging dir on entry but never clears a stale marker: a successful restore #1
+// (autoRestart=false, so the marker sits pending until a manual restart) followed
+// by a FAILED restore #2 can leave that old marker pointing at restore #2's partial
+// staging. validSQLite still catches a truncated bombvault.sqlite, but not a
+// complete DB sitting beside a truncated rclone.conf or a partial ssh/ directory —
+// ApplyPending only checks fileExists/dirExists for those, not their content, so
+// that combination would still get swapped in. This fix reduces how often that
+// window is hit (fewer restores now get killed mid-write) but doesn't close it;
+// closing it fully is out of scope here. Separately: on a client disconnect during
+// a config restore, the restore now runs to completion and self-restarts
+// server-side, but the SPA's fetch rejects into its error branch and reports a
+// failure to the user anyway — a real but minor reporting gap (not a correctness
+// bug), also out of scope: closing it would mean moving outcome reporting off the
+// synchronous HTTP response (e.g. polling or SSE), a bigger refactor than detaching
+// the context. A panic anywhere in this call graph is now recovered like every
+// other manual op on this branch: since RestoreConfig's own run-record id is local
+// to it (never returned here), the fallback is FailRunningRun keyed by
+// store.ConfigTargetID — the same fallback StartBackupConfig's sibling goroutine
+// already uses for this domain.
 func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source string) (started bool, autoRestart bool, err error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, false, nil
