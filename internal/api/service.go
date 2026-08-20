@@ -5682,6 +5682,17 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, "vms", source) {
 		return errOffsiteAppendOnly
 	}
+	// Issue #152: the SAME refusal applies when the "local" source IS actually a
+	// remote primary flagged append-only in its saved safety settings (same gate
+	// as pruneDomain) — there is no separate off-site copy in that shape, so
+	// refusing here is the only thing standing between an on-box credential and
+	// deleting the sole backup. This path also runs Forget with prune=true, so
+	// skipping it here (unlike PruneDomain/DeleteSnapshot) would have let a
+	// compromised on-box credential irreversibly reclaim space on an immutable
+	// primary.
+	if !isOffsiteSource(source) && s.primaryIsImmutable("vms", repo) {
+		return errOffsiteAppendOnly
+	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
 	}
@@ -9889,6 +9900,14 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	// off-site history. The local repo is unaffected. Per-target: bare "offsite"
 	// uses the primary target's flag (== today), "offsite:<id>" that target's.
 	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, domain, source) {
+		return errOffsiteAppendOnly
+	}
+	// Issue #152: the SAME refusal applies when the "local" source IS actually a
+	// remote primary flagged append-only in its saved safety settings (same gate
+	// as pruneDomain) — there is no separate off-site copy in that shape, so
+	// refusing here is the only thing standing between an on-box credential and
+	// deleting backup history.
+	if !isOffsiteSource(source) && s.primaryIsImmutable(domain, repo) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
