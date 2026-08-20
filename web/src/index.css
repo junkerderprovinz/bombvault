@@ -206,6 +206,23 @@
   --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
   --focus-ring: rgba(252, 196, 25, .55);
 
+  /* Self-reference-free fallback target for [data-rainbow] .glim-hue's
+     --item-hue-ring guard (further down this file) — a byte-identical copy
+     of --focus-ring above, restated under its own name. It exists because
+     `--focus-ring: var(--item-hue-ring, var(--focus-ring))` LOOKS like it
+     would fall back to this theme's flat ring when --item-hue-ring is
+     missing, but it doesn't: on a .glim-hue element, --focus-ring's own
+     cascaded value IS that same declaration, so the fallback's inner
+     var(--focus-ring) resolves against itself — a genuine cycle, not a
+     lookup of "the value from before this declaration" (custom properties
+     have no such concept to fall back to). Verified live in Chromium: the
+     self-referencing form computes to the guaranteed-invalid value on the
+     missing-input element, not this theme's amber — exactly the silent
+     failure the guard is meant to prevent, reproduced by the "fix" itself.
+     Referencing this distinctly-named token instead sidesteps the cycle
+     entirely. */
+  --focus-ring-flat: rgba(252, 196, 25, .55);
+
   /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
      see the .bv-field-focus/.bv-field-focus-well comment further down for
      what this is. A spec-compliance review found the brightness-step-only
@@ -527,6 +544,11 @@
      page background (3.48:1) — both clear 3:1 with real margin. */
   --focus-ring: rgba(142, 106, 0, .85);
 
+  /* Same reasoning as the dark block's --focus-ring-flat above — a
+     self-reference-free copy of --focus-ring for [data-rainbow] .glim-hue's
+     --item-hue-ring guard to fall back to. */
+  --focus-ring-flat: rgba(142, 106, 0, .85);
+
   /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
      same reasoning as the dark block's --field-focus-ring above. --focus-ring
      itself (rgba(142,106,0,.85), composited to ~#98791f on --carbon-surface3
@@ -650,6 +672,10 @@
        on a light surface. See the comment on [data-theme="light"]'s
        --focus-ring for the measured numbers. */
     --focus-ring: rgba(142, 106, 0, .85);
+    /* Same reasoning as [data-theme="light"]'s --focus-ring-flat above —
+       needs restating here for the identical no-explicit-attribute reason
+       as --focus-ring above. */
+    --focus-ring-flat: rgba(142, 106, 0, .85);
     /* Same reasoning as [data-theme="light"]'s --field-focus-ring/
        --field-focus-well above. */
     --field-focus-ring: rgba(142, 106, 0, 1);
@@ -856,10 +882,25 @@ body {
    Toast's dismiss X): each already carries its own explicit
    `focus-visible:outline-solid outline-2 outline-offset-2
    outline-(--focus-ring)` utility class, functionally identical to what
-   this rule now also provides at lower specificity. Left as-is — pruning
-   them is a separate simplification, not this task's job, and the overlap
-   is inert (same computed value either way; the higher-specificity
-   declaration is simply the one that happens to apply). */
+   this rule now also provides.
+
+   CORRECTION: an earlier draft of this comment credited the non-conflict
+   to specificity ("the higher-specificity declaration wins"). That's not
+   the real mechanism, though it happened not to matter — the two forms
+   compute the same value either way. Tailwind compiles utility classes
+   into `@layer utilities` (confirmed in the built dist CSS: the
+   `focus-visible:outline-(--focus-ring)` utility's own declaration lands
+   inside that layer block); this rule was added unlayered, outside any
+   `@layer`. Per the CSS cascade layers spec, layer position is resolved
+   BEFORE specificity is ever compared — an unlayered declaration always
+   beats a layered one for the same property, no matter which side has the
+   higher selector specificity. So at these four sites it is actually THIS
+   rule's declaration that wins, the reverse of what "higher specificity"
+   would predict, not the utility class's. Still inert either way, because
+   both forms resolve to the identical `outline: 2px solid
+   var(--focus-ring); outline-offset: 2px` — whichever the cascade picks,
+   nothing visible changes. Left as-is — pruning the now-redundant utility
+   classes is a separate simplification, not this task's job. */
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
@@ -944,8 +985,30 @@ body {
      during Task 2/3, ahead of anything reading it, specifically for the base
      `:focus-visible { outline: 2px solid var(--focus-ring) }` rule (Task 8,
      see the .bv-field-focus-well comment above) to reach through once it
-     existed — it now does; verified live. */
-  --focus-ring: var(--item-hue-ring);
+     existed — it now does; verified live.
+
+     FALLBACK GUARD (code-quality follow-up, not part of Task 8's own
+     scope): not reachable today — hueVars() (lib/appearance.ts) always
+     emits --item-hue-ring whenever it emits anything, verified — but every
+     consumer of --item-hue-ring here is a single point of failure with no
+     guard, per this project's own "a guard applied once is a guard missing
+     twice" convention. Without the fallback, a .glim-hue element that ever
+     lost --item-hue-ring would break the whole chain silently:
+     --item-hue-ring invalid -> --focus-ring invalid -> the base rule's
+     `outline: 2px solid var(--focus-ring)` invalid at computed-value time
+     -> the outline disappears outright (outline-style: none) instead of
+     degrading to the flat ring. The fallback target is --focus-ring-flat
+     (declared per-theme next to --focus-ring above), a distinctly-named
+     token, NOT var(--focus-ring) itself — `var(--item-hue-ring,
+     var(--focus-ring))` looks safer but isn't: see --focus-ring-flat's own
+     comment for why that particular shape is a genuine cascade cycle on
+     this exact element, not a working "fall back to the value before this
+     declaration." Verified live in both themes: the normal case (an
+     element with --item-hue-ring set) is unaffected, computes the same hue
+     ring as before; the degraded case (--item-hue-ring stripped via
+     devtools) now resolves to the flat amber/gold ring instead of losing
+     the outline entirely. */
+  --focus-ring: var(--item-hue-ring, var(--focus-ring-flat));
 }
 
 /* Opt-in: the element's glyph takes the hue too. A list row owns a colour
