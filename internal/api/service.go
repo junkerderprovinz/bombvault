@@ -5563,6 +5563,10 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 	if runID == "" {
 		return
 	}
+	// No ctx reaches this function — same as beginRestoreRunForTarget above, a
+	// restore run is never part of a "Backup Everything" pass's group-stamped
+	// children (see runGroupKey's doc comment), so context.Background() is a
+	// genuine no-op in every branch below.
 	var err error
 	switch {
 	case rerr == nil:
@@ -5589,6 +5593,10 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 	if runID == "" {
 		return
 	}
+	// No ctx reaches this function — same as beginRestoreRunForTarget above, a
+	// restore run is never part of a "Backup Everything" pass's group-stamped
+	// children (see runGroupKey's doc comment), so context.Background() is a
+	// genuine no-op here.
 	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, warn)
 	if err != nil {
 		log.Printf("api: restore: record run finish (warning) failed: %v", err)
