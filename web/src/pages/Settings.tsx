@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -19,10 +19,13 @@ import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, 
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
+import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
+import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
+import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -38,26 +41,35 @@ function AboutFooter() {
     return () => { active = false; };
   }, []);
   return (
-    <div className="pt-6 pb-4 flex flex-col items-center gap-1 text-xs text-carbon-textMuted">
+    // Task 5 (rule 13, "everything clickable is a badge — including links"):
+    // both footer links were plain underline-on-hover text. `as="a"` (not
+    // "button") keeps real anchor semantics — right-click "copy link",
+    // middle-click to open in a new tab, the browser's own status-bar URL
+    // preview — none of which a synthetic onClick reproduces.
+    <div className="pt-6 pb-4 flex flex-col items-center gap-1.5 text-xs text-carbon-textMuted">
       {version && (
-        <a
+        <Badge
+          as="a"
           href="https://github.com/junkerderprovinz/bombvault/releases"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-carbon-text transition-colors"
+          tone="neutral"
+          size="small"
           title={`BombVault ${version}`}
         >
           BombVault {version}
-        </a>
+        </Badge>
       )}
-      <a
+      <Badge
+        as="a"
         href="https://github.com/junkerderprovinz/bombvault/issues"
         target="_blank"
         rel="noopener noreferrer"
-        className="hover:text-carbon-text transition-colors"
+        tone="neutral"
+        size="small"
       >
         {t("nav.reportBug")}
-      </a>
+      </Badge>
     </div>
   );
 }
@@ -68,15 +80,42 @@ function AboutFooter() {
 
 function Card({
   title,
+  hint,
   children,
 }: {
   title: string;
+  /** Optional one-line explanation of what this whole Card does, rendered as
+   *  a neutral (i) beside the title (design-language.md rule 8, "explanations
+   *  live in a bubble, not on the page") instead of a permanent grey <p>
+   *  under it — GlimStone form-engine Phase 2 Task 4's hint→bubble content
+   *  migration. Optional, but not byte-for-byte additive: the <h2> below
+   *  changed className for EVERY Card, hint or not (block → `flex items-
+   *  center gap-1.5`, so a bubble can sit inline next to the title when one
+   *  is passed). That's visually inert for the 35+ Cards that don't pass a
+   *  hint — a flex row with a single text child lays out identically to a
+   *  block element, confirmed with no pixel difference across several
+   *  viewport widths — but it is a real className change, not a no-op. */
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {title}
+      {/* Task 5 (design-language.md rule 11, "every heading is a filled
+          section badge") resolution, for whoever finds this next: the <h2>
+          tag stays (screen readers still get a real heading, e.g. "heading
+          level 2: Off-site Copy"), but its VISIBLE content is now a Badge
+          (tone="heading" size="heading" — see Badge.tsx's file header for
+          the full colour/size reasoning). The InfoBubble, when present, sits
+          as a SIBLING outside the badge, not nested inside its coloured
+          fill — the option this comment used to leave open. Chosen over
+          computing a contrast-aware icon colour per badge fill because it
+          keeps InfoBubble's rule-8 contract ("neutral, never the accent")
+          true with zero per-instance exceptions: the icon still sits on the
+          Card's own plain bg-carbon-surface, never on the badge's
+          accent-soft wash, so no contrast math is needed at all. */}
+      <h2 className="flex items-center gap-1.5">
+        <Badge tone="heading" size="heading" wrap>{title}</Badge>
+        {hint && <InfoBubble tip={hint} />}
       </h2>
       {children}
     </div>
@@ -209,6 +248,54 @@ const ACCENT_PRESETS = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// Palette swatch — one editable colour in the rainbow palette editor
+// (GlimStone form-engine Phase 2, Task 1). Deliberately matches the existing
+// accent-preset swatches' own visual language above (a rounded-full circle
+// showing the colour, a border) rather than introducing a new component
+// family: a native <input type="color"> is a real, always-valid-hex colour
+// picker, layered transparently over the circle so a click opens the OS
+// picker directly on the swatch itself. `disabled` dims the control on its
+// OWN element (native `disabled` + `disabled:opacity-50`), never via a
+// wrapping container's opacity (rule 15 / this branch's own established
+// "dimmed via disabled, not opacity-on-container" fix from Phase 1 Task 4).
+// ---------------------------------------------------------------------------
+function PaletteSwatch({
+  hex,
+  index,
+  disabled,
+  onChange,
+  t,
+}: {
+  hex: string;
+  index: number;
+  disabled?: boolean;
+  onChange: (hex: string) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const label = `${t("settings.rainbowPalette")} ${index + 1}`;
+  return (
+    // A plain <label> has no :disabled pseudo-class of its own (only the
+    // form control it wraps does), so the dimming is an inline style keyed
+    // off the same `disabled` prop passed to the real control below it,
+    // not a Tailwind disabled: utility that would silently never match here.
+    <label
+      title={label}
+      className="relative h-7 w-7 shrink-0 rounded-full border-2 border-carbon-border overflow-hidden"
+      style={{ backgroundColor: hex, opacity: disabled ? 0.5 : undefined }}
+    >
+      <input
+        type="color"
+        value={hex}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+      />
+    </label>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Settings page
 // ---------------------------------------------------------------------------
 
@@ -287,7 +374,7 @@ chmod 600 /root/.ssh/authorized_keys`
       <div className="flex flex-col gap-3">
         <p className="text-sm text-carbon-textSub">{t("vm.ssh.desc")}</p>
         <div className="text-sm text-carbon-text">
-          {t("vm.ssh.host")}: <span className="font-mono">{host || "—"}</span>
+          {t("vm.ssh.host")}: <span dir="ltr" className="font-mono text-start">{host || "—"}</span>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
@@ -310,13 +397,13 @@ chmod 600 /root/.ssh/authorized_keys`
           <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("vm.ssh.setupTitle")}
           </span>
-          <ol className="list-decimal pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+          <ol className="list-decimal ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
             <li>{t("vm.ssh.step1")}</li>
             <li>{t("vm.ssh.step2")}</li>
             <li>{t("vm.ssh.step3")}</li>
           </ol>
           <div className="flex items-start gap-2">
-            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
             <button
               onClick={handleCopyCmd}
               disabled={!pub}
@@ -325,14 +412,22 @@ chmod 600 /root/.ssh/authorized_keys`
               {t("vm.ssh.copyCmd")}
             </button>
           </div>
-          <a
+          {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
+              tone was "info" (the old fifth hue) only because it was the
+              nearest tone available at the time — a plain doc-link badge
+              isn't activity or a state, it's the same kind of element as
+              Recovery.tsx's own tone="neutral" reload-link badge. */}
+          <Badge
+            as="a"
             href="https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md"
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-statusInfo hover:underline"
+            tone="neutral"
+            size="small"
+            className="self-start"
           >
             {t("vm.ssh.guide")} →
-          </a>
+          </Badge>
         </div>
 
         <div className="flex items-center gap-3">
@@ -529,19 +624,19 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <dl className="flex flex-col gap-1.5 text-xs text-carbon-text">
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewExportedAt")}</dt>
-                <dd className="font-mono text-right wrap-break-word">{preview.exportedAt || "-"}</dd>
+                <dd className="font-mono text-end wrap-break-word">{preview.exportedAt || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewAppVersion")}</dt>
-                <dd className="font-mono text-right wrap-break-word">{preview.appVersion || "-"}</dd>
+                <dd className="font-mono text-end wrap-break-word">{preview.appVersion || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewOffsiteTargets")}</dt>
-                <dd className="font-mono">{preview.offsiteTargets}</dd>
+                <dd dir="ltr" className="font-mono text-start">{preview.offsiteTargets}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewCredentials")}</dt>
-                <dd className="text-right">
+                <dd className="text-end">
                   {preview.credentials.present
                     ? t("settingsIO.previewCredsIncluded")
                     : t("settingsIO.previewCredsNotIncluded")}
@@ -549,7 +644,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted shrink-0">{t("settingsIO.previewSettingsAreas")}</dt>
-                <dd className="text-right wrap-break-word">
+                <dd className="text-end wrap-break-word">
                   {preview.settingsGroups.length > 0
                     ? preview.settingsGroups
                         .map((g) => (IMPORT_GROUP_KEYS[g] ? t(IMPORT_GROUP_KEYS[g]) : g))
@@ -708,14 +803,20 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <span className="text-sm text-carbon-text">{t("settings.dashTileNotInstalled")}</span>
           {/* Transparency BEFORE the call: what Install does, and where the code lives. */}
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileConfirm")}</p>
-          <a
+          {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
+              same reasoning as vm.ssh.guide's badge above — plain doc-link,
+              tone="neutral" not the old fifth hue. */}
+          <Badge
+            as="a"
             href={DASH_PLUGIN_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-statusInfo hover:underline self-start"
+            tone="neutral"
+            size="small"
+            className="self-start"
           >
             {t("settings.dashTileRepo")} →
-          </a>
+          </Badge>
           <button
             type="button"
             onClick={() => void run("install")}
@@ -754,7 +855,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="flex flex-col gap-2">
           <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
           {status.output && (
-            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre-wrap">
+            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap">
               {status.output}
             </pre>
           )}
@@ -845,7 +946,7 @@ function DashboardWidgetCard({
     <Card title={t("settings.widget")}>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.widgetHint")}</p>
 
-      <ul className="list-disc pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+      <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
         <li>{t("settings.widgetHow")}</li>
         <li>{t("settings.widgetAccess")}</li>
         <li>{t("settings.widgetEnglish")}</li>
@@ -1036,7 +1137,7 @@ function FleetSettingsCard({
         />
       </div>
 
-      <ul className="list-disc pl-5 text-xs text-carbon-textSub flex flex-col gap-1">
+      <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
         <li>{t("settings.fleetHow")}</li>
         <li>{t("settings.fleetAccess")}</li>
       </ul>
@@ -1103,7 +1204,7 @@ function FleetSettingsCard({
               {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
             </button>
           </div>
-          <p className="text-[11px] text-carbon-textMuted">
+          <p className="text-caption text-carbon-textMuted">
             {t("settings.fleetUrlHint").replace("{url}", window.location.origin)}
           </p>
         </div>
@@ -1157,7 +1258,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <p className="text-xs text-carbon-textMuted -mt-1">{t("rclone.hint")}</p>
       <div className="text-sm text-carbon-text">
         {t("rclone.configured")}:{" "}
-        <span className="font-mono">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
+        <span dir="ltr" className="font-mono text-start">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
       </div>
       <textarea
         value={conf}
@@ -1165,7 +1266,8 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         spellCheck={false}
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus"
+        dir="ltr"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus text-start"
       />
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
@@ -1243,7 +1345,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
         <label className={fieldCls}>AWS_ACCESS_KEY_ID
-          <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
+          <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
         <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
           <RevealInput {...revealS3Secret} value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
             placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1264,7 +1366,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
         <label className={fieldCls}>RESTIC_REST_USERNAME
-          <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
+          <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
         <label className={fieldCls}>RESTIC_REST_PASSWORD
           <RevealInput {...revealRestPassword} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
             placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1398,7 +1500,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
-            <span className="text-xs text-carbon-textMuted font-mono break-all">
+            <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
               {s.s3KeyId || s.restUser || "—"}
             </span>
           </div>
@@ -1439,7 +1541,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
             <label className={fieldCls}>AWS_ACCESS_KEY_ID
-              <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} className={inputCls} /></label>
+              <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
             <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
               <RevealInput {...revealS3Secret} value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
                 placeholder={sets.find((s) => s.id === editing.id)?.s3SecretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1458,7 +1560,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
             <label className={fieldCls}>RESTIC_REST_USERNAME
-              <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} className={inputCls} /></label>
+              <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
             <label className={fieldCls}>RESTIC_REST_PASSWORD
               <RevealInput {...revealRestPassword} value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
                 placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
@@ -1520,6 +1622,29 @@ const emptyNotify: NotifyConfig = {
 // NotifyCard configures backup notifications (webhook / Matrix / Healthchecks).
 // Stored encrypted at rest; the form pre-fills from the saved config and Test
 // sends to the CURRENT form values (no save needed).
+// NotifyCard's own hint→bubble pass (GlimStone form-engine Phase 2, Task 4):
+// this Card, plus the Weekly-digest and Overdue-watchdog Cards further down
+// (the whole "notifications" tab — the only complete, self-contained tab
+// migrated by this task; every OTHER Settings tab's permanent hint <p>s are
+// untouched, deliberately, same scope discipline as Phase 1 Task 9's toast
+// adoption), moved these 7 disposable-after-first-read hints into
+// InfoBubble: three card-level intros — NotifyCard's own, the Weekly-digest
+// Card's, and the Overdue-watchdog Card's (all three now Card's own `hint`
+// prop) — plus four inline ones: the "scheduled summary" and "notify on
+// update" checkbox captions, the Apprise section intro, and the
+// per-domain-Healthchecks section intro.
+//
+// Two hints in THIS card were deliberately left as permanent text, not
+// bubbled, because they read as reference a user consults again later
+// rather than a one-time "what does this do" explainer (the spec's own
+// test): notify.unraidHint names the EXACT error string ("libvirt not
+// reachable") to ignore when VMs aren't backed up — someone hitting that
+// message while debugging needs it findable on the page, not behind a hover
+// target they have to already know exists; notify.healthchecksLifecycle
+// documents a non-obvious cross-setting interaction (Healthchecks pings
+// regardless of the "notify on" policy above it) that's exactly the kind of
+// "why is this behaving unexpectedly" answer someone comes back to, not
+// something read once and never needed again. Both stay as-is below.
 function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
   // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
@@ -1595,9 +1720,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
-    <Card title={t("notify.title")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.hint")}</p>
-
+    <Card title={t("notify.title")} hint={t("notify.hint")}>
       <label className={labelCls}>
         {t("notify.on")}
         <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCardCls}>
@@ -1617,8 +1740,10 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           style={{ accentColor: "var(--accent)" }}
         />
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm text-carbon-text">{t("notify.scheduledSummary")}</span>
-          <span className="text-xs text-carbon-textMuted">{t("notify.scheduledSummaryHint")}</span>
+          <span className="flex items-center gap-1 text-sm text-carbon-text">
+            {t("notify.scheduledSummary")}
+            <InfoBubble tip={t("notify.scheduledSummaryHint")} />
+          </span>
         </span>
       </label>
 
@@ -1632,12 +1757,19 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           style={{ accentColor: "var(--accent)" }}
         />
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm text-carbon-text">{t("notify.notifyOnUpdate")}</span>
-          <span className="text-xs text-carbon-textMuted">{t("notify.notifyOnUpdateHint")}</span>
+          <span className="flex items-center gap-1 text-sm text-carbon-text">
+            {t("notify.notifyOnUpdate")}
+            <InfoBubble tip={t("notify.notifyOnUpdateHint")} />
+          </span>
         </span>
       </label>
 
-      {/* Unraid native notifications (delivered over the host SSH connection). */}
+      {/* Unraid native notifications (delivered over the host SSH connection).
+          notify.unraidHint stays permanent text, NOT a bubble — see this
+          Card's own header comment above for why (it names the exact
+          "libvirt not reachable" error string to ignore, which needs to stay
+          findable on the page for someone debugging that message, not
+          hidden behind a hover target). */}
       <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
         <input
           type="checkbox"
@@ -1658,7 +1790,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.webhook")}
           <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
-            placeholder="https://discord.com/api/webhooks/..." className={inputCls} />
+            placeholder="https://discord.com/api/webhooks/..." dir="ltr" className={`${inputCls} text-start`} />
         </label>
         <label className={labelCls}>
           {t("notify.webhookFormat")}
@@ -1676,18 +1808,20 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           100+ services without bundling Python. Shares the card's Save + Test bar
           like the other channels. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-medium text-carbon-textSub">{t("notify.apprise")}</span>
+        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
+          {t("notify.apprise")}
+          <InfoBubble tip={t("notify.appriseHint")} />
+        </span>
         <label className={labelCls}>
           {t("notify.appriseUrl")}
           <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
-            placeholder="http://apprise:8000/notify/bombvault" className={inputCls} />
+            placeholder="http://apprise:8000/notify/bombvault" dir="ltr" className={`${inputCls} text-start`} />
         </label>
         <label className={labelCls}>
           {t("notify.appriseTags")}
           <input value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
             placeholder="backups,homelab" className={inputCls} />
         </label>
-        <p className="text-xs text-carbon-textMuted">{t("notify.appriseHint")}</p>
       </div>
 
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
@@ -1695,7 +1829,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.matrixHomeserver")}
           <input value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
-            placeholder="https://matrix.org" className={inputCls} />
+            placeholder="https://matrix.org" dir="ltr" className={`${inputCls} text-start`} />
         </label>
         <label className={labelCls}>
           {t("notify.matrixToken")}
@@ -1705,7 +1839,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <label className={labelCls}>
           {t("notify.matrixRoom")}
           <input value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
-            placeholder="!abcdef:matrix.org" className={inputCls} />
+            placeholder="!abcdef:matrix.org" dir="ltr" className={`${inputCls} text-start`} />
         </label>
       </div>
 
@@ -1714,11 +1848,18 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
           placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
       </label>
+      {/* notify.healthchecksLifecycle stays permanent text, NOT a bubble —
+          see this Card's own header comment above for why (it documents a
+          non-obvious cross-setting interaction someone comes back to when
+          debugging an unexpected check status, not a one-time explainer). */}
       <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
 
       {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-medium text-carbon-textSub">{t("notify.hcPerDomain")}</span>
+        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
+          {t("notify.hcPerDomain")}
+          <InfoBubble tip={t("notify.hcPerDomainHint")} />
+        </span>
         {(
           [
             ["container", t("nav.containers")],
@@ -1740,11 +1881,11 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               }
               spellCheck={false}
               placeholder="https://hc-ping.com/your-uuid"
-              className={inputCls}
+              dir="ltr"
+              className={`${inputCls} text-start`}
             />
           </label>
         ))}
-        <p className="text-xs text-carbon-textMuted">{t("notify.hcPerDomainHint")}</p>
       </div>
 
       {/* Email (SMTP), sent via the configured mail server. */}
@@ -1764,7 +1905,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpHost")}
               <input value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
-                placeholder="smtp.example.com" className={inputCls} />
+                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} text-start`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpPort")}
@@ -1782,7 +1923,7 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpUser")}
               <input value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
-                className={inputCls} />
+                dir="ltr" className={`${inputCls} text-start`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpPass")}
@@ -1792,12 +1933,12 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <label className={labelCls}>
               {t("notify.smtpFrom")}
               <input value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
-                placeholder="bombvault@example.com" className={inputCls} />
+                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} text-start`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpTo")}
               <input value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
-                placeholder="admin@example.com" className={inputCls} />
+                placeholder="admin@example.com" dir="ltr" className={`${inputCls} text-start`} />
             </label>
           </>
         )}
@@ -2181,35 +2322,29 @@ function IntegrityCard({
         />
       </div>
 
-      {/* Drill-type toggle: subset integrity check vs a real off-site DR restore. */}
+      {/* Drill-type toggle: subset integrity check vs a real off-site DR
+          restore — on the shared Selector component (GlimStone form-engine
+          Phase 2, Task 3; found only by re-grepping the current codebase,
+          not on the original Phase 1 audit's own 11-site list). */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
-        <div className="inline-flex rounded-control bg-carbon-surface2 overflow-hidden">
-          {([
-            ["subset", t("drill.kindSubset")],
-            ["dr", t("drill.kindDR")],
-          ] as const).map(([val, label]) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => {
-                // Clear any lingering per-domain result so a subset "healthy"
-                // doesn't read as a DR pass (or vice versa) after switching kind.
-                setKind(val);
-                setState({});
-                setMsg({});
-              }}
-              disabled={Object.values(state).some((v) => v === "busy")}
-              className={`px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
-                kind === val
-                  ? "bg-accent text-accentContrast"
-                  : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Selector
+          items={[
+            { id: "subset", label: t("drill.kindSubset") },
+            { id: "dr", label: t("drill.kindDR") },
+          ]}
+          label={t("drill.kindLabel")}
+          select="one"
+          active={kind}
+          onChange={(val) => {
+            // Clear any lingering per-domain result so a subset "healthy"
+            // doesn't read as a DR pass (or vice versa) after switching kind.
+            setKind(val as DrillKind);
+            setState({});
+            setMsg({});
+          }}
+          disabled={Object.values(state).some((v) => v === "busy")}
+        />
       </div>
 
       {/* DR-drill controls: an explainer + the container/VM target pickers. Each
@@ -2738,26 +2873,17 @@ function FilesSection({
               />
               <span className="font-medium text-carbon-text flex-1 min-w-0 truncate">{s.name}</span>
               {s.path && (
-                <span className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs">
+                <span dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs text-start">
                   {s.path}
                 </span>
               )}
-              <button
-                role="switch"
-                aria-checked={s.enabled}
-                aria-label={`${t("files.enabled")}: ${s.name}`}
+              <Toggle
+                hideLabel
+                label={`${t("files.enabled")}: ${s.name}`}
+                checked={s.enabled}
+                onChange={() => void toggle(s)}
                 disabled={!!busy[s.id]}
-                onClick={() => void toggle(s)}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-                  s.enabled ? "bg-accent" : "bg-carbon-surface3"
-                }`}
-              >
-                <span
-                  className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                    s.enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-                  }`}
-                />
-              </button>
+              />
             </div>
           ))}
         </div>
@@ -2836,6 +2962,104 @@ type TabKey =
   | "integrity"
   | "system";
 
+// ---------------------------------------------------------------------------
+// Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
+// "top, with an icon": "Settings pages line their tabs up horizontally at the
+// top, each with a glyph. A tab with no label is a gap; a tab with the wrong
+// glyph is a lie — no icon beats the wrong one."). 16×16, stroke-based,
+// matching Sidebar.tsx's own icon weight/style but at the tab strip's smaller
+// scale. Local to Settings.tsx, not Sidebar.tsx's exported icon set: these
+// name Settings' own SECTIONS (domain toggles, storage paths, cadences,
+// off-site targets, alerts, integrity checks, system/SSH), which is a
+// different taxonomy than the sidebar's page destinations, and none of the
+// seven map onto an existing sidebar glyph without lying about what it is.
+// ---------------------------------------------------------------------------
+function IconTabGeneral() {
+  // Two stacked switches — the domain on/off toggles this tab actually holds.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden="true">
+      <rect x="1" y="3" width="10" height="4" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="8" cy="5" r="1.15" fill="currentColor" />
+      <rect x="5" y="9" width="10" height="4" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="8" cy="11" r="1.15" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconTabStorage() {
+  // A drive/disk stack — backup storage paths.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <ellipse cx="8" cy="4" rx="6" ry="2.2" />
+      <path d="M2 4v8c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V4" strokeLinecap="round" />
+      <path d="M2 8c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTabSchedules() {
+  // A clock — cadence/timing.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.2" />
+      <path d="M8 4.5V8l3 1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTabOffsite() {
+  // A cloud — the remote/off-site replica target.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTabNotifications() {
+  // A bell — alerts.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" strokeLinejoin="round" />
+      <path d="M6.6 12.5a1.5 1.5 0 0 0 2.8 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTabIntegrity() {
+  // A checked shield — repo/backup integrity checks.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z" strokeLinejoin="round" />
+      <path d="M5.8 8 7.3 9.5l3-3.1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTabSystem() {
+  // Sliders — system/advanced/SSH knobs. Distinct from IconTabGeneral's
+  // rounded toggle switches (a discrete on/off pair) — these are inline
+  // continuous sliders, matching Sidebar.tsx's own IconConfig-vs-IconSettings
+  // "deliberately distinct so the two never read alike" precedent.
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M2 5h5.5M10 5h4M2 11h2.5M7 11h7" strokeLinecap="round" />
+      <circle cx="8.5" cy="5" r="1.4" fill="var(--carbon-surface, transparent)" />
+      <circle cx="5" cy="11" r="1.4" fill="var(--carbon-surface, transparent)" />
+    </svg>
+  );
+}
+
+const TAB_ICON: Record<TabKey, ReactNode> = {
+  general: <IconTabGeneral />,
+  storage: <IconTabStorage />,
+  schedules: <IconTabSchedules />,
+  offsite: <IconTabOffsite />,
+  notifications: <IconTabNotifications />,
+  integrity: <IconTabIntegrity />,
+  system: <IconTabSystem />,
+};
+
 export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
@@ -2889,6 +3113,16 @@ export function SettingsPage() {
 
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
+
+  // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
+  // localStorage via appearance.ts, the same pattern as accentHex above.
+  // setRainbow() persists + applies + returns the new (validated) state in
+  // one call, so this only ever needs updating from that return value, never
+  // a second localStorage read.
+  const [rainbow, setRainbowLocal] = useState<RainbowState>(() => getRainbow());
+  function updateRainbow(patch: Partial<RainbowState>) {
+    setRainbowLocal(setRainbow(patch));
+  }
 
   // Per-section save state
   const [encSaveState, setEncSaveState] = useState<SaveState>("idle");
@@ -3270,11 +3504,21 @@ export function SettingsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Segmented tab bar (7 tabs). `tab` is the single owner of which card  */}
-      {/* group renders; it wraps/scrolls gracefully for narrow widths.        */}
+      {/* Tab strip (7 tabs), on the shared Selector component (GlimStone     */}
+      {/* form-engine Phase 2, Task 3 — design-language's "top, with an       */}
+      {/* icon" rule for a settings-style tab row). `tab` is the single owner */}
+      {/* of which card group renders. Each tab still owns a rainbow         */}
+      {/* position by its LIST INDEX (never a hash of `key`) — Selector's     */}
+      {/* default hue=true carries over exactly the rainbow wiring this strip */}
+      {/* had before the migration (see Task 2's own audit comment, now      */}
+      {/* removed from here since Selector owns the useRainbow() subscription */}
+      {/* itself). Icons are new: the pre-migration hand-rolled strip had     */}
+      {/* none — TAB_ICON above is this task's own addition, satisfying the   */}
+      {/* "no icon beats the wrong one" rule with a per-section glyph rather  */}
+      {/* than a placeholder.                                                */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-wrap gap-1">
-        {([
+      <Selector
+        items={([
           ["general", t("settings.tab.general")],
           ["storage", t("settings.tab.storage")],
           ["schedules", t("settings.tab.schedules")],
@@ -3282,30 +3526,23 @@ export function SettingsPage() {
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
           ["system", t("settings.tab.system")],
-        ] as const).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => {
-              setTab(key);
-              // Keep the URL hash in sync so reload/bookmark restores the tab
-              // (replaceState avoids polluting history and won't re-fire applyHash).
-              try {
-                window.history.replaceState(null, "", `#${key}`);
-              } catch {
-                /* history unavailable — tab state still switches */
-              }
-            }}
-            className={`rounded-control px-3 py-1.5 text-sm transition-colors ${
-              tab === key
-                ? "bg-accent text-accentContrast"
-                : "text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key] }))}
+        label={t("settings.title")}
+        select="one"
+        active={tab}
+        onChange={(key) => {
+          setTab(key as TabKey);
+          // Keep the URL hash in sync so reload/bookmark restores the tab
+          // (replaceState avoids polluting history and won't re-fire applyHash).
+          try {
+            window.history.replaceState(null, "", `#${key}`);
+          } catch {
+            /* history unavailable — tab state still switches */
+          }
+        }}
+        size="lg"
+        plain
+      />
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
@@ -3317,9 +3554,12 @@ export function SettingsPage() {
         <>
           {/* Backup schedules (schedulesBackup): Containers + sync + VMs + Flash.
               A group heading (Card-title style) labels the three domain cards,
-              matching the single-Card off-site / self-backup / checks groups. */}
-          <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-            {t("settings.schedulesBackup")}
+              matching the single-Card off-site / self-backup / checks groups.
+              Task 5 (rule 11): same Badge treatment as Card's own <h2> above,
+              since this IS a Card-title-equivalent heading, just labelling
+              three sibling Cards instead of sitting inside one. */}
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{t("settings.schedulesBackup")}</Badge>
           </h2>
           {/* Per-item schedules toggle (#121): opt in to per-container/VM overrides.
               Off by default — while off, the member lists below are unchanged. */}
@@ -3404,7 +3644,8 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
                   }
                   placeholder={t("offsite.schedulePlaceholder")}
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+                  dir="ltr"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
                 />
               </div>
             ))}
@@ -3421,7 +3662,8 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
                 }
                 placeholder={t("config.schedulePlaceholder")}
-                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+                dir="ltr"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
               />
               <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
@@ -3634,7 +3876,7 @@ export function SettingsPage() {
       <Card title={t("settings.paths")}>
         <p className="text-xs text-carbon-textMuted -mt-1">
           Relative subpaths under the host mount root (
-          <span className="font-mono">{hostMountRoot}</span>). Click Browse to
+          <span dir="ltr" className="font-mono text-start">{hostMountRoot}</span>). Click Browse to
           navigate directories or type a path directly.
         </p>
         <PathModeSwitch
@@ -4208,7 +4450,8 @@ export function SettingsPage() {
                 setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
               }
               placeholder={t("export.encrypt.recipientsPlaceholder")}
-              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+              dir="ltr"
+              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
             />
             <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
             {!settings.exportAgeRecipients.trim() && (
@@ -4243,8 +4486,8 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <div id="offsite">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("offsite.sectionTitle")}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("offsite.sectionTitle")}</Badge>
       </h2>
       <Card title={t("settings.offsiteTitle")}>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
@@ -4292,12 +4535,15 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
                   }
                   placeholder="rest:http://host:8000/repo"
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+                  dir="ltr"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
                     operator a bare relative path works here (issue #138). */}
-                <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+                <span className="text-xs text-carbon-textMuted">
+                  {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+                </span>
               </>
             )}
             {/* Additional off-site targets (multi-off-site): extra copies of this
@@ -4612,10 +4858,7 @@ export function SettingsPage() {
           tamper cadence editors (CadenceBuilder's own <fieldset disabled>
           handles the dimming — no opacity gate on the wrapping container). */}
       {tab === "notifications" && (
-        <Card title={t("settings.digestTitle")}>
-          <p className="text-xs text-carbon-textMuted -mt-1">
-            {t("settings.digestHint")}
-          </p>
+        <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")}>
           <ToggleRow
             hideLabel
             label={t("settings.digestToggle")}
@@ -4656,8 +4899,7 @@ export function SettingsPage() {
           that pushes ONE notification per overdue episode through the channels
           configured above; a new successful backup re-arms it. */}
       {tab === "notifications" && (
-        <Card title={t("settings.watchdogTitle")}>
-          <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.watchdogHint")}</p>
+        <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")}>
           <ToggleRow
             label={t("settings.watchdogToggle")}
             checked={settings.watchdogEnabled}
@@ -4819,7 +5061,7 @@ export function SettingsPage() {
                   setAccentHex(e.target.value);
                   setAccent(e.target.value);
                 }}
-                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)"
                 title={t("settings.accentColor")}
               />
               {/* Preset swatches */}
@@ -4849,12 +5091,139 @@ export function SettingsPage() {
                       setAccentHex(DEFAULT_ACCENT);
                       setAccent(DEFAULT_ACCENT);
                     }}
-                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ml-1"
+                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
                   >
                     {t("common.reset")}
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent,
+              plural: an eight-colour palette handed out by list position
+              instead of one accent everywhere (design-language.md, "The
+              colour engine" / "Rainbow"). Lives right below the single
+              accent above, the same section, since both are the same kind
+              of setting (client-only, applied at the app root — see
+              lib/appearance.ts's header comment for why this stays
+              localStorage like every other appearance preference in this
+              app rather than round-tripping through the server). As of
+              Task 3 this switch genuinely repaints the app: every hue-enabled
+              Selector segment (components/Selector.tsx, its own default —
+              twelve call sites across seven files, including the Settings
+              tab strip above and the drill-type toggle further down) and the
+              container/VM/file-set list rows all read a rainbow position
+              now, so turning this on sets data-rainbow + --rb-0..--rb-7 on
+              <html> AND immediately recolours those real call sites — not
+              just the CSS variables Task 1 verified. The sidebar nav is
+              deliberately NOT a consumer (Sidebar.tsx carries the reasoning),
+              so flipping this switch never changes the rail's own colours. */}
+          <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+            {/* The master switch shares the section heading's own row rather
+                than sitting on a row of its own.
+                  - Tracks flush right, never label-then-track: BombVault's
+                    Toggle renders label-then-track (the GlimStone reference/
+                    KnightLoader render track-then-label), so a bare Toggle's
+                    track x-position drifts with that switch's own label
+                    length — three different x-positions for three different
+                    label lengths, the exact trap the design language's
+                    Switches rule and KnightLoader's own code comment call
+                    out. `justify-between` (what ToggleRow uses for the two
+                    sub-switches below and "Quiet toasts" further down) pins
+                    every track to the same right edge regardless of label
+                    length.
+                  - No caption of its OWN: the heading beside it already says
+                    "Rainbow" — a switch captioned "use the palette" next to
+                    it would say the same decision twice (design language's
+                    Switches section). The words survive as the accessible
+                    name via Toggle's unconditional aria-label.
+                But a `hideLabel` ToggleRow would then leave this row's left
+                half empty, stranding a caption-less track ~900px from the
+                heading that names it (that IS the pattern for a single-
+                purpose Card whose TITLE is the decision — see the metrics
+                ToggleRow — but this heading is a plain in-card sub-heading,
+                not a Card title, so the association has to survive being
+                read across one row). Hence ToggleRow's exact markup inlined
+                here with the heading (plus its InfoBubble, a node ToggleRow's
+                string `label` cannot carry) as the row's left half: same
+                shape, same track x-position, one row instead of two, and the
+                switch sits next to the words it belongs to. */}
+            <div className="flex items-start justify-between gap-4">
+              <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+                {t("settings.rainbow")}
+                <InfoBubble tip={t("settings.rainbowHint")} />
+              </span>
+              <Toggle
+                hideLabel
+                label={t("settings.rainbowOn")}
+                checked={rainbow.on}
+                onChange={(v) => updateRainbow({ on: v })}
+                className="mt-0.5"
+              />
+            </div>
+
+            {/* ToggleRow, so these two land on the same track column as the
+                master above and "Quiet toasts" below. Dimmed via each
+                control's OWN `disabled` — ToggleRow dims its switch AND its
+                caption together (rule 15, and the exact fix this branch's own
+                ToggleRow carries from Phase 1 Task 4 — see its own header
+                comment above). "Switched off, not hidden": these stay visible
+                and reachable even while off, so nobody has to guess what the
+                mode does. */}
+            <ToggleRow
+              label={t("settings.rainbowReactive")}
+              checked={rainbow.reactive}
+              disabled={!rainbow.on}
+              onChange={(v) => updateRainbow({ reactive: v })}
+            />
+            <ToggleRow
+              label={t("settings.rainbowRotate")}
+              checked={rainbow.rotate}
+              disabled={!rainbow.on}
+              onChange={(v) =>
+                // Turning rotation on draws a fresh offset immediately, so
+                // the switch does something visible instead of silently
+                // re-applying whatever rotation the palette already had.
+                updateRainbow({
+                  rotate: v,
+                  seed: v ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0,
+                })
+              }
+            />
+
+            {/* The very same row shape as the accent swatches above it,
+                because it is the very same job: pick colours. Each of the 8
+                is independently editable; setRainbow()/isValidPalette()
+                enforce all-or-nothing validation on the resulting palette
+                before it ever reaches document.documentElement.style — see
+                lib/appearance.ts. */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs text-carbon-textMuted${rainbow.on ? "" : " opacity-50"}`}>
+                {t("settings.rainbowPalette")}:
+              </span>
+              {rainbow.palette.map((hex, i) => (
+                <PaletteSwatch
+                  key={i}
+                  hex={hex}
+                  index={i}
+                  disabled={!rainbow.on}
+                  t={t}
+                  onChange={(v) => {
+                    const next = rainbow.palette.slice();
+                    next[i] = v;
+                    updateRainbow({ palette: next });
+                  }}
+                />
+              ))}
+              <button
+                type="button"
+                disabled={!rainbow.on}
+                onClick={() => updateRainbow({ palette: RAINBOW })}
+                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {t("common.reset")}
+              </button>
             </div>
           </div>
 

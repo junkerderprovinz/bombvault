@@ -117,7 +117,6 @@ const tr: Partial<Translations> = {
   "restore.confirmTitle": "Geri yüklemeyi onayla",
   "restore.confirmBody":
     "Bu işlem konteyneri durduracak, appdata'yı değiştirecek ve yedekten yeniden oluşturacak. Devam edilsin mi?",
-  "restore.confirm": "Onayla",
   "restore.cancel": "Geri yüklemeyi iptal et",
   "restore.cancelConfirmSafe": "Geri yükleme iptal edilsin mi? Kısmen yazılan hedef klasör olduğu gibi bırakılır.",
   "restore.cancelConfirmInPlace": "{name} geri yükleme aşamasında. İptal etmek bu geri yüklemeyi yarım bırakır — onu yeniden çalıştırmanız gerekebilir. Yine de iptal edilsin mi?",
@@ -139,6 +138,7 @@ const tr: Partial<Translations> = {
   "run.statusRunning": "Çalışıyor",
   "run.statusSuccess": "Başarılı",
   "run.statusFailed": "Başarısız",
+  "run.statusSkipped": "Atlandı",
   "run.historyTitle": "Çalışma Geçmişi",
   "run.filterDay": "Gün:",
   "run.allDays": "Tüm günler",
@@ -188,6 +188,12 @@ const tr: Partial<Translations> = {
   "settings.appearance": "Görünüm",
   "settings.accentColor": "Vurgu rengi",
   "settings.accentPresets": "Ön ayarlar",
+  "settings.rainbow": "Gökkuşağı",
+  "settings.rainbowHint": "Tek vurgu yerine konuma göre dağıtılan sekiz renklik bir palet; uzun bir liste ayrı satırlar olarak okunur.",
+  "settings.rainbowOn": "Paleti kullan",
+  "settings.rainbowReactive": "Dokunulana kadar sakin: üzerine gelince ve çalışanda renk",
+  "settings.rainbowRotate": "Paletin nereden başladığını karıştır",
+  "settings.rainbowPalette": "Palet rengi",
   "settings.quietToasts": "Sessiz bildirimler",
   "settings.quietToastsHint": "Açılır bildirimleri yalnızca hatalarda göster. Rutin kaydetme ve kopyalama onayları sessiz kalır.",
 

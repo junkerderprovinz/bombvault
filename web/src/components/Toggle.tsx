@@ -8,11 +8,15 @@
 //
 // The focus ring is `--focus-ring`, NOT the `outline-statusInfoSolid` blue every
 // one of those three copies carried. Two reasons, both only visible ACROSS tasks:
-//   - Task 1's own plan note about `--status-info-solid` — whose hue is still
-//     deliberately unresolved (audit item 19, deferred to Phase 2) — is "just
-//     don't add MORE dependencies on it." A new shared component is precisely a
-//     new dependency, and the single point through which a later hue change
-//     would reach every switch in the app at once.
+//   - Task 1's own plan note about `--status-info-solid` — whose hue was then
+//     still deliberately unresolved (audit item 19, deferred to Phase 2) — was
+//     "just don't add MORE dependencies on it." A new shared component is
+//     precisely a new dependency, and the single point through which a later
+//     hue change would reach every switch in the app at once. Phase 2 Task 7
+//     has since resolved it: `--status-info-solid` no longer exists at all
+//     (see index.css's TASK 7 comment for what every real call site became) —
+//     this comment stays as the historical reason THIS component never took
+//     the dependency in the first place, not a forward-looking warning anymore.
 //   - `--focus-ring` is already what the other shared controls this branch added
 //     or reworked use: RevealInput's eye, InfoBubble's icon, Toast's dismiss X.
 //     A switch focusing blue while the reveal eye in the same form focuses amber
@@ -64,8 +68,39 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
         }`}
       >
         <span
+          // `translate-x` is a PHYSICAL transform — always a rightward pixel
+          // shift for a positive value, regardless of `direction` (there is
+          // no logical "translate toward the inline-end" primitive Tailwind
+          // maps this onto). The track's flex layout DOES auto-mirror under
+          // RTL (flex main-start follows `direction`), so the thumb's
+          // untransformed rest position already flips to the right edge —
+          // but the physical translate then pushes it EVEN FURTHER right on
+          // top of that, landing the "on" state's thumb outside the track
+          // entirely instead of at its mirrored left edge. `rtl:` negates the
+          // sign so the shift lands on the correct side of the now-mirrored
+          // base position either way (RTL sweep, form-engine Phase 2 Task 6
+          // follow-up fix). The `!` on the override isn't stylistic — both
+          // classes set the same single `translate` property with equal
+          // selector specificity, so without it the winner would depend on
+          // Tailwind's generated declaration order rather than being
+          // guaranteed by the cascade.
+          //
+          // INVARIANT this relies on: the `rtl:` variant resolves against the
+          // PAGE (its compiled selector is an inherited-`:lang()` list OR
+          // `[dir=rtl] *`), while the flex base position it corrects resolves
+          // against the nearest `dir` ANCESTOR. Those agree everywhere today,
+          // but they would diverge if a call site ever nested a Toggle inside
+          // its own `dir="ltr"`/`dir="rtl"` island — the base would mirror one
+          // way and the sign flip the other, putting the thumb outside its
+          // track again. RevealInput hit exactly that (see its header comment)
+          // via OffsiteWizard's `<label dir="ltr">`; there the fix was to make
+          // BOTH halves page-gated. Here there is nothing to make page-gated —
+          // flex direction is not overridable per-property — so the rule is
+          // simply: do not put a Toggle inside a dir-overriding container.
+          // Pin only the technical TEXT with `dir="ltr"` (a `<span>` around
+          // the literal), never a container that also holds layout.
           className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            checked ? "translate-x-[18px]" : "translate-x-[3px]"
+            checked ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
           }`}
         />
       </button>

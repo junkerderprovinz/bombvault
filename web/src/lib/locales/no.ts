@@ -116,7 +116,6 @@ const no: Partial<Translations> = {
   "restore.confirmTitle": "Bekreft gjenoppretting",
   "restore.confirmBody":
     "Dette vil stoppe kontaineren, erstatte appdata og gjenopprette den fra sikkerhetskopien. Fortsette?",
-  "restore.confirm": "Bekreft",
   "restore.cancel": "Avbryt gjenoppretting",
   "restore.cancelConfirmSafe": "Avbryte gjenopprettingen? Den delvis skrevne målmappen beholdes som den er.",
   "restore.cancelConfirmInPlace": "{name} er midt i en gjenoppretting. Å avbryte etterlater denne gjenopprettingen ufullstendig — du må kanskje kjøre den på nytt. Avbryte likevel?",
@@ -138,6 +137,7 @@ const no: Partial<Translations> = {
   "run.statusRunning": "Kjører",
   "run.statusSuccess": "Vellykket",
   "run.statusFailed": "Mislyktes",
+  "run.statusSkipped": "Hoppet over",
   "run.historyTitle": "Kjørehistorikk",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dager",
@@ -186,6 +186,12 @@ const no: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Aksentfarge",
   "settings.accentPresets": "Forhåndsinnstillinger",
+  "settings.rainbow": "Regnbue",
+  "settings.rainbowHint": "I stedet for én aksent en palett med åtte farger etter posisjon, så en lang liste leses som enkeltrader.",
+  "settings.rainbowOn": "Bruk paletten",
+  "settings.rainbowReactive": "Rolig til du tar på det: farge ved peking og på det som kjører",
+  "settings.rainbowRotate": "Stokk hvor paletten starter",
+  "settings.rainbowPalette": "Palettfarge",
   "settings.quietToasts": "Stille varsler",
   "settings.quietToastsHint": "Vis kun sprettoppvarsler ved feil. Rutinemessige lagre- og kopieringsbekreftelser forblir stille.",
 

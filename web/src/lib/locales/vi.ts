@@ -117,7 +117,6 @@ const vi: Partial<Translations> = {
   "restore.confirmTitle": "Xác nhận khôi phục",
   "restore.confirmBody":
     "Thao tác này sẽ dừng container, thay thế dữ liệu và tạo lại từ bản sao lưu. Tiếp tục?",
-  "restore.confirm": "Xác nhận",
   "restore.cancel": "Hủy khôi phục",
   "restore.cancelConfirmSafe": "Hủy khôi phục? Thư mục đầu ra đã ghi một phần sẽ được giữ nguyên.",
   "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến lần khôi phục này không hoàn tất — bạn có thể cần chạy lại. Vẫn hủy chứ?",
@@ -139,6 +138,7 @@ const vi: Partial<Translations> = {
   "run.statusRunning": "Đang chạy",
   "run.statusSuccess": "Thành công",
   "run.statusFailed": "Thất bại",
+  "run.statusSkipped": "Đã bỏ qua",
   "run.historyTitle": "Lịch sử chạy",
   "run.filterDay": "Ngày:",
   "run.allDays": "Tất cả các ngày",
@@ -188,6 +188,12 @@ const vi: Partial<Translations> = {
   "settings.appearance": "Giao diện",
   "settings.accentColor": "Màu nhấn",
   "settings.accentPresets": "Cài đặt sẵn",
+  "settings.rainbow": "Cầu vồng",
+  "settings.rainbowHint": "Thay vì một màu nhấn, một bảng tám màu chia theo vị trí, để danh sách dài đọc ra từng dòng riêng.",
+  "settings.rainbowOn": "Dùng bảng màu",
+  "settings.rainbowReactive": "Yên cho tới khi chạm: có màu khi rê chuột và ở mục đang chạy",
+  "settings.rainbowRotate": "Xáo vị trí bắt đầu của bảng màu",
+  "settings.rainbowPalette": "Màu trong bảng",
   "settings.quietToasts": "Thông báo im lặng",
   "settings.quietToastsHint": "Chỉ hiển thị thông báo bật lên khi có lỗi. Các xác nhận lưu và sao chép thông thường sẽ không hiển thị.",
 

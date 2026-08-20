@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
@@ -13,9 +13,13 @@ import { RecentRunsList } from "../components/RecentRunsList";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM } from "../components/Sidebar";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { Toggle } from "../components/Toggle";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
+import { Selector } from "../components/Selector";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -78,6 +82,11 @@ const SORT_KEYS = {
   status: "sort.status",
 } as const;
 
+// SortControl/ChipFilter below are thin, page-specific adapters onto the
+// shared Selector component (GlimStone form-engine Phase 2, Task 3) — the
+// actual button rendering, keyboard nav (roving tabindex, arrow keys/Home/
+// End, RTL) and rainbow hueing all live in Selector now, mirroring
+// Containers.tsx's own identical adapter pair.
 function SortControl({
   value,
   onChange,
@@ -90,19 +99,13 @@ function SortControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{t("sort.label")}</span>
-      {(["name", "status"] as SortKey[]).map((k) => (
-        <button
-          key={k}
-          onClick={() => onChange(k)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === k
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {t(SORT_KEYS[k])}
-        </button>
-      ))}
+      <Selector
+        items={(["name", "status"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
+        label={t("sort.label")}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as SortKey)}
+      />
     </div>
   );
 }
@@ -148,19 +151,13 @@ function ChipFilter<K extends string>({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{label}</span>
-      {options.map((o) => (
-        <button
-          key={o.key}
-          onClick={() => onChange(o.key)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === o.key
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
+      <Selector
+        items={options.map((o) => ({ id: o.key, label: o.label }))}
+        label={label}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as K)}
+      />
     </div>
   );
 }
@@ -217,7 +214,7 @@ function VMMethodSelect({
         <option value="live">{t("vm.method.live")}</option>
       </select>
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}
@@ -261,25 +258,15 @@ function VMIncludeToggle({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        role="switch"
-        aria-label={t("containers.includeInSchedule")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("containers.includeInSchedule")}
+        checked={enabled}
+        onChange={(next) => void handleChange(next)}
         disabled={busy}
-        onClick={() => void handleChange(!enabled)}
-        title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      />
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}
@@ -381,7 +368,7 @@ function VMBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("common.done")}
           {state.phase === "success" && state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
           )}
@@ -452,7 +439,7 @@ function VMSnapshotRow({
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
         </span>
         <span className="text-carbon-textMuted text-xs flex-1">
@@ -483,10 +470,12 @@ function VMSnapshotRow({
         </button>
       </div>
       {/* Restore control (confirm + leave-stopped + progress banner), indented
-          under the id column (pl-24) to match the row's content alignment.
-          Only rendered once the user opts in via the toggle above. */}
+          under the id column (ps-24, LOGICAL — the row's content column sits
+          at the reading-direction start, not a fixed physical left) to match
+          the row's content alignment. Only rendered once the user opts in via
+          the toggle above. */}
       {showRestore && (
-        <div className="pl-24">
+        <div className="ps-24">
           <RestoreAction
             domain="vm"
             name={vmName}
@@ -499,7 +488,7 @@ function VMSnapshotRow({
           />
         </div>
       )}
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -572,7 +561,18 @@ function VMRestorePanel({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform ${open ? "rotate-90" : ""}`}
+          // Disclosure chevron (RTL sweep, form-engine Phase 2 Task 6):
+          // closed points to the reading-direction start — right in LTR
+          // (the base, unrotated path), left in RTL via `rtl:rotate-180`
+          // (Tailwind v4's built-in `:dir(rtl)` variant, no config needed).
+          // Open always rotates to straight-down (`rotate-90`) in BOTH
+          // directions — "there is more below" has no reading direction, so
+          // it never gets the rtl: treatment. This is plain rotation, not
+          // scaleX mirroring: mirroring the closed glyph and then rotating
+          // it 90° lands on "pointing up", not "pointing down" (transform
+          // functions compose right-to-left), so a second rtl:-only rotate
+          // angle is the correct fix, not a mirror.
+          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
         >
           <path
             d="M4 2l4 4-4 4"
@@ -595,16 +595,22 @@ function VMRestorePanel({
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
               </Advanced>
               {snapshots.length > 0 && (
-                <button
+                // Task 5 (rule 13): was a plain underline-on-hover text
+                // button; already correctly fault-red per "the destructive
+                // control is always the fault colour" (Destructive actions).
+                <Badge
+                  as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
+                  tone="fail"
+                  size="small"
+                  className="ms-auto"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
-                </button>
+                </Badge>
               )}
             </div>
-            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+            <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
           </div>
           <RecentRunsList name={name} domain="vm" t={t} />
           {loading && (
@@ -648,12 +654,17 @@ export function VMRow({
   onRefresh,
   selected,
   onToggleSelect,
+  index,
 }: {
   vm: VM;
   t: T;
   onRefresh: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
+   *  `vm.libvirtName` — see the callers below. */
+  index: number;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
@@ -664,7 +675,16 @@ export function VMRow({
   // backup (its OWN in-flight backup is handled by isPending inside the button).
   const running = anyActive(progressMap);
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-tint washes the card (trap #2 — without it this card shows
+      // almost no colour at rest); glim-active while THIS row's own
+      // backup/restore is actively running, so reactive mode shows the hue
+      // without needing hover — mirrors ContainerRow's identical treatment.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+        progress?.active ? "glim-active" : ""
+      }`}
+    >
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed VMs only) */}
@@ -693,7 +713,7 @@ export function VMRow({
         </div>
 
         {/* Last backup */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
           <p className="text-xs text-carbon-textSub">
             {vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}
@@ -717,7 +737,7 @@ export function VMRow({
               <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </label>
           </div>
-          <div className="ml-auto flex flex-col items-end">
+          <div className="ms-auto flex flex-col items-end">
             <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
           </div>
         </div>
@@ -984,7 +1004,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
         type="button"
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
-        className="flex w-full items-start gap-2 text-left"
+        className="flex w-full items-start gap-2 text-start"
       >
         <svg
           width="14"
@@ -992,7 +1012,11 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
           viewBox="0 0 12 12"
           fill="none"
           aria-hidden="true"
-          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "" : "rotate-90"}`}
+          // Disclosure chevron — same RTL rotation scheme as the identical
+          // icon above (form-engine Phase 2 Task 6): closed points start
+          // (right in LTR, `rtl:rotate-180` flips it left), open always
+          // rotates to straight-down in both directions.
+          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
         >
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -1000,7 +1024,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
           <span className="font-semibold text-carbon-text text-sm">
             {t("vmBackupOrder.title")}
             {names.length > 0 && (
-              <span className="ml-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
+              <span className="ms-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
                 ({names.length})
               </span>
             )}
@@ -1093,6 +1117,9 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
 export function VMs() {
   const { t } = useT();
+  // One subscription for the whole list rather than one per row — see
+  // Containers.tsx's identical call for the same reasoning.
+  useRainbow();
   const { confirm, confirmDialog } = useConfirm();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
@@ -1367,7 +1394,7 @@ export function VMs() {
             </label>
           )}
           {live.length > 0 && (
-            <div className="ml-auto">
+            <div className="ms-auto">
               <ScheduleIncludeAllControl t={t} onChanged={() => void loadVMs()} />
             </div>
           )}
@@ -1421,7 +1448,7 @@ export function VMs() {
       {/* Live VMs */}
       {!loading && live.length > 0 && (
         <div className="flex flex-col gap-3">
-          {live.map((v) => (
+          {live.map((v, i) => (
             <VMRow
               key={v.libvirtName}
               vm={v}
@@ -1429,6 +1456,7 @@ export function VMs() {
               onRefresh={() => void loadVMs()}
               selected={selected.has(v.libvirtName)}
               onToggleSelect={() => toggleSelect(v.libvirtName)}
+              index={i}
             />
           ))}
         </div>
@@ -1438,15 +1466,26 @@ export function VMs() {
       {!loading && orphans.length > 0 && (
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("containers.notInstalledTitle")}
+            <h2 className="flex items-center">
+              <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("vms.notInstalledHint")}
             </p>
           </div>
-          {orphans.map((v) => (
-            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} />
+          {/* Continues the live list's index sequence (live.length + i)
+              instead of restarting at 0. Both sections render on the same
+              page at once, so a second sequence starting at 0 would hand the
+              first orphan the first live row's colour, the second orphan the
+              second live row's, and so on down the overlap — a colour
+              repeating inside what a reader takes for one list. Offsetting
+              makes the two sections one continuous sequence instead. Past the
+              eighth row the 8-colour palette still cycles, here as in any
+              long list (rainbowColorAt in lib/appearance.ts is
+              i % palette.length); that is intended, because a repeat then
+              lands a full palette apart rather than adjacent. */}
+          {orphans.map((v, i) => (
+            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} index={live.length + i} />
           ))}
         </div>
       )}

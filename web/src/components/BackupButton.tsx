@@ -58,7 +58,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
         (state.snapshotId ? (
           <span className="text-xs text-statusOk">
             ✓ {t("common.done")}
-            <span className="font-mono ml-1 text-carbon-textMuted">
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
           </span>

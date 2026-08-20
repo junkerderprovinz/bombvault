@@ -117,7 +117,6 @@ const sv: Partial<Translations> = {
   "restore.confirmTitle": "Bekräfta återställning",
   "restore.confirmBody":
     "Containern stoppas, dess appdata ersätts och den återskapas från säkerhetskopian. Fortsätta?",
-  "restore.confirm": "Bekräfta",
   "restore.cancel": "Avbryt återställning",
   "restore.cancelConfirmSafe": "Avbryta återställningen? Den delvis skrivna målmappen lämnas som den är.",
   "restore.cancelConfirmInPlace": "{name} håller på att återställas. Att avbryta lämnar den här återställningen ofullständig — du kan behöva köra den igen. Avbryta ändå?",
@@ -139,6 +138,7 @@ const sv: Partial<Translations> = {
   "run.statusRunning": "Körs",
   "run.statusSuccess": "Lyckades",
   "run.statusFailed": "Misslyckades",
+  "run.statusSkipped": "Överhoppad",
   "run.historyTitle": "Körningshistorik",
   "run.filterDay": "Dag:",
   "run.allDays": "Alla dagar",
@@ -188,6 +188,12 @@ const sv: Partial<Translations> = {
   "settings.appearance": "Utseende",
   "settings.accentColor": "Accentfärg",
   "settings.accentPresets": "Förinställningar",
+  "settings.rainbow": "Regnbåge",
+  "settings.rainbowHint": "I stället för en accent en palett med åtta färger efter position, så att en lång lista läses som skilda rader.",
+  "settings.rainbowOn": "Använd paletten",
+  "settings.rainbowReactive": "Stilla tills du rör vid det: färg vid hovring och på det som körs",
+  "settings.rainbowRotate": "Blanda var paletten börjar",
+  "settings.rainbowPalette": "Palettfärg",
   "settings.quietToasts": "Tysta aviseringar",
   "settings.quietToastsHint": "Visa popup-aviseringar endast vid fel. Rutinmässiga bekräftelser för sparande och kopiering förblir tysta.",
 

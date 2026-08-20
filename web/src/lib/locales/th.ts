@@ -117,7 +117,6 @@ const th: Partial<Translations> = {
   "restore.confirmTitle": "ยืนยันการกู้คืน",
   "restore.confirmBody":
     "การดำเนินการนี้จะหยุด container แทนที่ข้อมูล และสร้างใหม่จากการสำรองข้อมูล ดำเนินการต่อ?",
-  "restore.confirm": "ยืนยัน",
   "restore.cancel": "ยกเลิกการกู้คืน",
   "restore.cancelConfirmSafe": "ยกเลิกการกู้คืนหรือไม่? โฟลเดอร์ผลลัพธ์ที่กู้คืนบางส่วนจะยังคงอยู่ตามเดิม",
   "restore.cancelConfirmInPlace": "{name} กำลังกู้คืนอยู่ การยกเลิกจะทำให้การกู้คืนนี้ไม่สมบูรณ์ — คุณอาจต้องกู้คืนอีกครั้ง ยกเลิกต่อไปหรือไม่?",
@@ -139,6 +138,7 @@ const th: Partial<Translations> = {
   "run.statusRunning": "กำลังทำงาน",
   "run.statusSuccess": "สำเร็จ",
   "run.statusFailed": "ล้มเหลว",
+  "run.statusSkipped": "ข้ามไป",
   "run.historyTitle": "ประวัติการทำงาน",
   "run.filterDay": "วัน:",
   "run.allDays": "ทุกวัน",
@@ -188,6 +188,12 @@ const th: Partial<Translations> = {
   "settings.appearance": "รูปลักษณ์",
   "settings.accentColor": "สีเน้น",
   "settings.accentPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.rainbow": "สายรุ้ง",
+  "settings.rainbowHint": "แทนที่จะใช้สีเน้นเดียว ใช้จานแปดสีแจกตามตำแหน่ง รายการยาวจึงอ่านแยกเป็นแถวได้",
+  "settings.rainbowOn": "ใช้จานสี",
+  "settings.rainbowReactive": "เงียบจนกว่าจะแตะ: มีสีเมื่อชี้และในรายการที่กำลังทำงาน",
+  "settings.rainbowRotate": "สลับตำแหน่งเริ่มต้นของจานสี",
+  "settings.rainbowPalette": "สีในจานสี",
   "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
   "settings.quietToastsHint": "แสดงการแจ้งเตือนแบบป๊อปอัปเฉพาะเมื่อล้มเหลวเท่านั้น การยืนยันการบันทึกและคัดลอกตามปกติจะไม่แสดง",
 

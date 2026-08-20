@@ -8,6 +8,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useConfirm } from "../lib/useConfirm";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -66,7 +67,7 @@ function FlashBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("settings.saved")}
           {state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
           )}
         </span>
       )}
@@ -133,7 +134,7 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
@@ -159,7 +160,7 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -210,8 +211,9 @@ export function Flash() {
 
       {/* Backup card */}
       <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("flash.backupTitle")}
+        {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("flash.backupTitle")}</Badge>
         </h2>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
         <FlashBackupButton
@@ -229,11 +231,14 @@ export function Flash() {
 
       {/* Restore card */}
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("snapshots.title")}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("snapshots.title")}</Badge>
         </h2>
         {/* Safe-restore explainer */}
-        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
+            same reasoning as Config.tsx's snapshotsHint banner: pure
+            informational prose, folds into --status-neutral-*. */}
+        <div className="rounded-card bg-statusNeutralBg px-3 py-2.5 text-xs text-statusNeutral leading-relaxed">
           {t("flash.restoreNote")}
         </div>
 
@@ -242,7 +247,7 @@ export function Flash() {
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
             <SourceToggle source={source} onChange={setSource} disabled={loading} domain="flash" />
           </div>
-          <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
         </div>
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}

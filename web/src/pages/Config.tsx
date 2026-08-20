@@ -15,6 +15,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { ToggleRow } from "./Settings";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
+import { Badge } from "../components/Badge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -72,7 +73,7 @@ function ConfigBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("settings.saved")}
           {state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
           )}
         </span>
       )}
@@ -111,7 +112,8 @@ function labelledInput(
         spellCheck={false}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus"
+        dir="ltr"
+        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
       />
       {hint && <p className="text-xs text-carbon-textMuted">{hint}</p>}
     </div>
@@ -179,8 +181,11 @@ function ConfigSettingsCard({
 
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("config.settingsTitle")}
+      {/* Task 5 (rule 11): same Badge-in-<h2> pattern as Settings.tsx's own
+          Card component — this hand-rolled Card equivalent never shared
+          Card's component, so it needed its own copy of the conversion. */}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("config.settingsTitle")}</Badge>
       </h2>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("config.settingsHint")}</p>
 
@@ -279,7 +284,7 @@ function ConfigSnapshotRow({
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
@@ -292,7 +297,7 @@ function ConfigSnapshotRow({
           {deleting ? "…" : t("snapshots.delete")}
         </button>
       </div>
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -358,8 +363,8 @@ export function Config() {
 
       {/* Backup card */}
       <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("config.backupTitle")}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("config.backupTitle")}</Badge>
         </h2>
         <p className="text-xs text-carbon-textMuted -mt-1">{t("config.backupHint")}</p>
         <ConfigBackupButton
@@ -377,10 +382,13 @@ export function Config() {
 
       {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("config.snapshotsTitle")}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("config.snapshotsTitle")}</Badge>
         </h2>
-        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
+            pure informational prose about how the feature works, no activity
+            or pass/fail/warn meaning, so it folds into --status-neutral-*. */}
+        <div className="rounded-card bg-statusNeutralBg px-3 py-2.5 text-xs text-statusNeutral leading-relaxed">
           {t("config.snapshotsHint")}
         </div>
 
@@ -389,7 +397,7 @@ export function Config() {
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
             <SourceToggle source={source} onChange={setSource} disabled={loading} domain="config" />
           </div>
-          <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
         </div>
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}

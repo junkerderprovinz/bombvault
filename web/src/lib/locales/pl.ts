@@ -115,7 +115,6 @@ const pl: Partial<Translations> = {
   // Restore
   "restore.confirmTitle": "Potwierdź przywracanie",
   "restore.confirmBody": "Kontener zostanie zatrzymany, appdata zastąpione i odtworzone z kopii zapasowej. Kontynuować?",
-  "restore.confirm": "Potwierdź",
   "restore.cancel": "Anuluj przywracanie",
   "restore.cancelConfirmSafe": "Anulować przywracanie? Częściowo zapisany folder docelowy pozostanie bez zmian.",
   "restore.cancelConfirmInPlace": "{name} jest w trakcie przywracania. Anulowanie pozostawi to przywracanie niedokończone — być może trzeba będzie je uruchomić ponownie. Anulować mimo to?",
@@ -137,6 +136,7 @@ const pl: Partial<Translations> = {
   "run.statusRunning": "W toku",
   "run.statusSuccess": "Sukces",
   "run.statusFailed": "Niepowodzenie",
+  "run.statusSkipped": "Pominięto",
   "run.historyTitle": "Historia uruchomień",
   "run.filterDay": "Dzień:",
   "run.allDays": "Wszystkie dni",
@@ -184,6 +184,12 @@ const pl: Partial<Translations> = {
   "settings.appearance": "Wygląd",
   "settings.accentColor": "Kolor akcentu",
   "settings.accentPresets": "Ustawienia wstępne",
+  "settings.rainbow": "Tęcza",
+  "settings.rainbowHint": "Zamiast jednego akcentu paleta ośmiu barw przydzielanych według pozycji, więc długa lista czyta się jako osobne wiersze.",
+  "settings.rainbowOn": "Użyj palety",
+  "settings.rainbowReactive": "Spokojnie, dopóki nie dotkniesz: kolor po najechaniu i na tym, co działa",
+  "settings.rainbowRotate": "Przetasuj początek palety",
+  "settings.rainbowPalette": "Kolor palety",
   "settings.quietToasts": "Ciche powiadomienia",
   "settings.quietToastsHint": "Pokazuj powiadomienia tylko przy błędach. Rutynowe potwierdzenia zapisu i kopiowania pozostają wyciszone.",
 

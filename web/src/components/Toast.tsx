@@ -180,9 +180,10 @@ export interface ToastViewportProps {
 // forces `overflow-x` to compute to `auto` too, so a flush box clips
 // everything that paints outside the cards: each card's `--elevation` drop
 // shadow, and — visibly — the first ~100ms of the `glim-toast-in` entrance,
-// which starts at `translateX(12px)` and so got its trailing edge sliced
-// square against the boundary on every single toast. max-h-screen minus that
-// 2rem of padding leaves exactly the same content height as before.
+// which starts offset by `translateX(±12px)` (sign follows direction, see
+// index.css's `--glim-toast-slide`) and so got its outer edge sliced square
+// against the boundary on every single toast. max-h-screen minus that 2rem
+// of padding leaves exactly the same content height as before.
 export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur }: ToastViewportProps) {
   return (
     <div className="pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">

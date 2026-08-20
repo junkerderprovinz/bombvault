@@ -116,7 +116,6 @@ const uk: Partial<Translations> = {
   // Restore
   "restore.confirmTitle": "Підтвердити відновлення",
   "restore.confirmBody": "Контейнер буде зупинено, appdata замінено та відтворено з резервної копії. Продовжити?",
-  "restore.confirm": "Підтвердити",
   "restore.cancel": "Скасувати відновлення",
   "restore.cancelConfirmSafe": "Скасувати відновлення? Частково записана цільова папка залишиться без змін.",
   "restore.cancelConfirmInPlace": "{name} перебуває в процесі відновлення. Скасування залишить це відновлення незавершеним — можливо, доведеться запустити його ще раз. Усе одно скасувати?",
@@ -138,6 +137,7 @@ const uk: Partial<Translations> = {
   "run.statusRunning": "Виконується",
   "run.statusSuccess": "Успішно",
   "run.statusFailed": "Помилка",
+  "run.statusSkipped": "Пропущено",
   "run.historyTitle": "Історія запусків",
   "run.filterDay": "День:",
   "run.allDays": "Усі дні",
@@ -186,6 +186,12 @@ const uk: Partial<Translations> = {
   "settings.appearance": "Зовнішній вигляд",
   "settings.accentColor": "Акцентний колір",
   "settings.accentPresets": "Передустановки",
+  "settings.rainbow": "Райдуга",
+  "settings.rainbowHint": "Замість одного акценту палітра з восьми кольорів за позицією, щоб довгий список читався як окремі рядки.",
+  "settings.rainbowOn": "Використовувати палітру",
+  "settings.rainbowReactive": "Тихо, доки не торкнешся: колір при наведенні та в того, що працює",
+  "settings.rainbowRotate": "Перемішати, з якого кольору починається палітра",
+  "settings.rainbowPalette": "Колір палітри",
   "settings.quietToasts": "Тихі сповіщення",
   "settings.quietToastsHint": "Показувати спливаючі сповіщення лише про помилки. Звичайні підтвердження збереження й копіювання лишаються без сповіщень.",
 

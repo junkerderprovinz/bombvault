@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useT } from "../lib/i18n";
 import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
+import { Badge } from "./Badge";
 
 // ---------------------------------------------------------------------------
 // Per-item schedule override (#121)
@@ -68,12 +69,10 @@ export function ItemScheduleOverride({
         <span className={`text-xs ${active ? "text-carbon-textSub" : "text-carbon-textMuted italic"}`}>
           {summary}
         </span>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="text-xs text-carbon-textSub hover:text-carbon-text underline underline-offset-2"
-        >
+        {/* Task 5 (rule 13): was a plain underlined text button. */}
+        <Badge as="button" onClick={() => setOpen((o) => !o)} tone="neutral" size="small">
           {open ? t("common.close") : t("schedule.overrideEdit")}
-        </button>
+        </Badge>
       </div>
 
       {open && (

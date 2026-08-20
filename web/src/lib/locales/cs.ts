@@ -117,7 +117,6 @@ const cs: Partial<Translations> = {
   "restore.confirmTitle": "Potvrdit obnovu",
   "restore.confirmBody":
     "Kontejner bude zastaven, jeho appdata nahrazena a kontejner obnoven ze zálohy. Pokračovat?",
-  "restore.confirm": "Potvrdit",
   "restore.cancel": "Zrušit obnovu",
   "restore.cancelConfirmSafe": "Zrušit obnovu? Částečně zapsaná cílová složka zůstane beze změny.",
   "restore.cancelConfirmInPlace": "{name} se právě obnovuje. Zrušení ponechá tuto obnovu neúplnou — možná ji bude nutné spustit znovu. Přesto zrušit?",
@@ -139,6 +138,7 @@ const cs: Partial<Translations> = {
   "run.statusRunning": "Probíhá",
   "run.statusSuccess": "Úspěch",
   "run.statusFailed": "Selhalo",
+  "run.statusSkipped": "Přeskočeno",
   "run.historyTitle": "Historie běhů",
   "run.filterDay": "Den:",
   "run.allDays": "Všechny dny",
@@ -188,6 +188,12 @@ const cs: Partial<Translations> = {
   "settings.appearance": "Vzhled",
   "settings.accentColor": "Barva zvýraznění",
   "settings.accentPresets": "Předvolby",
+  "settings.rainbow": "Duha",
+  "settings.rainbowHint": "Místo jednoho akcentu paleta osmi barev podle pozice, aby se dlouhý seznam četl jako jednotlivé řádky.",
+  "settings.rainbowOn": "Použít paletu",
+  "settings.rainbowReactive": "Klid, dokud se toho nedotkneš: barva při najetí a u toho, co běží",
+  "settings.rainbowRotate": "Zamíchat, kde paleta začíná",
+  "settings.rainbowPalette": "Barva palety",
   "settings.quietToasts": "Tichá oznámení",
   "settings.quietToastsHint": "Zobrazovat vyskakovací oznámení jen při chybách. Běžná potvrzení uložení a kopírování zůstanou bez oznámení.",
 

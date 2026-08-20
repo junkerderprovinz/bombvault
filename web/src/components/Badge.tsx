@@ -44,6 +44,34 @@
 // one component at the same stage, so nothing downstream can drift them
 // apart independently again.
 //
+// `as="a"` (Task 5, rule 13 — "everything clickable is a badge, including
+// links") renders a real <a href> instead of onClick-on-a-span: a plain-text
+// link still needs native anchor behaviour (right-click "copy link address",
+// middle-click/ctrl-click to open in a new tab, the status-bar URL preview,
+// screen-reader "link" role vs. "button" role) that a synthetic onClick
+// handler degrades. `href`/`target`/`rel` are only meaningful with `as="a"`
+// and pass straight through. Resolves to the identical box as span/button at
+// the same stage — see `badgeClassName` below, which all three branches
+// share so nothing can drift them apart independently.
+//
+// react-router's <Link> is a fourth clickable element considered for this
+// task (it needs router context Badge has no reason to depend on, so
+// teaching Badge to render one directly would be real added machinery) —
+// but both of this app's two actual <Link>-as-plain-text sites turned out
+// NOT to want the Badge treatment on inspection: Dashboard.tsx's offsite-
+// fault row link stays plain text (converting only the one clickable ROW
+// STATE in an otherwise-plain-text list would make row height/typography
+// jump depending on which domain is faulted — see that call site's own
+// comment), and its "go to Recovery" nudge link instead adopted the app's
+// existing primary-action button idiom directly (rule 3's one-solid-accent-
+// action allowance, matching every other primary button already in the
+// app — also documented at that call site). `badgeClassName` stays a
+// private, non-exported helper for now: exporting a public escape hatch
+// with zero real call sites is speculative API surface, not a needed one —
+// if the same "must render as a router <Link>, but look like a Badge" need
+// turns up at a genuine future site, exporting this one-line function is a
+// one-line change.
+//
 // `wrap` — a stage's height is a fixed pixel floor for the common one-line
 // case, but some call sites (the Dashboard protection-card badges: local
 // verify shield / off-site subset / off-site DR, all icon+label+relative-
@@ -66,12 +94,121 @@
 // OffsiteTargetsSection's two chips wrap onto separate flex lines before either
 // grows), but a new call site that wants a short wrap badge to stay short next
 // to a tall one needs `className="self-start"`.
+//
+// `tone="heading"` / `size="heading"` (Task 5, rule 11 — "every heading is a
+// filled section badge, never bare text... always coloured: it is a heading,
+// not a control, so rule 9 [the three-way reactive colour mode] does not
+// apply to it"). Colour choice, reasoned from the rest of the spec rather
+// than copied from an example (no adopting app — including this plan's own
+// KnightLoader reference implementation — has actually built rule 11 yet, so
+// there was no existing call site to match):
+//   - NOT solid `--accent`: rule 3 reserves the accent for ACTIVITY ("the
+//     active nav item, the single primary action, progress fills... a page
+//     has at most one solid accent button") — a page with a dozen Settings
+//     Cards would need a dozen solid-accent headings, which turns "activity"
+//     into "everything", and the one real primary action on the page would
+//     stop reading as special.
+//   - NOT any of the four state hues (ok/fail/warn/neutral): rule 4's hues
+//     are load-bearing semantic signals elsewhere on the same pages these
+//     headings live on (a container's running/settled/fault state, a
+//     schedule's warning). Painting a heading "neutral" would borrow the
+//     literal "waiting" state hue for a label that isn't waiting on
+//     anything; painting it any of the other three invents a false status.
+//     (This is specifically about rule 4's STATUS reading of neutral, on a
+//     structural element that has no status. It doesn't conflict with
+//     tone="neutral" being this same file's generic no-real-status default
+//     for actual chips/badges elsewhere — see the TONE_CLASSES comment below
+//     on the Task 7 "→ neutral" sites, which lands in that other,
+//     pre-existing role instead.)
+//   - IS `--accent-soft`: the spec's own vocabulary already has a distinct
+//     register for "identity, not activity" — rule 5's "what is selected is
+//     filled with the accent; what owns a rainbow position is washed with
+//     it" and the colour engine's `.glim-tint` (a 7% wash, not a solid fill,
+//     for a settled row that still needs to read as coloured without
+//     re-triggering the running/activity read). A heading badge borrows that
+//     same wash vocabulary: `--accent-soft` ties every heading to the app's
+//     own chosen brand colour — "coloured", genuinely, and consistent with
+//     whichever accent preset the user picked — without ever reading as
+//     "this is currently active" the way a solid fill would. Every heading
+//     gets the SAME flat accent-soft wash (not a rainbow position): a badge
+//     is not a list row with an identity to distinguish from its neighbours,
+//     and cycling 21+ headings through 8 rainbow hues would fight rule 2
+//     ("one hero, everything else quiet") far worse than a uniform wash does.
+//   - Text stays `text-carbon-textSub` (not full-strength `text-carbon-text`
+//     and not `--accent-contrast`, which assumes a SOLID accent background
+//     dark/light enough to need a computed-contrast partner — accent-soft is
+//     11-14% opacity, so the card surface underneath still dominates the
+//     actual contrast ratio): this keeps a heading badge reading at the same
+//     quiet register the eyebrow treatment always used, rather than
+//     brightening 20+ headings per page to full text strength.
+//   - Sizing is a dedicated stage, not a reuse of `large` (the existing
+//     tallest stage, already the visual weight of a real status/count chip —
+//     ErrorDetailPanel's count badge, a "Resolve" button): giving headings
+//     that SAME stage would make a passive section label compete pixel-for-
+//     pixel with a genuine activity/status indicator for attention, exactly
+//     backwards from what a heading should do. `heading`'s own stage keeps
+//     the source uppercase+letter-spaced treatment the app's headings always
+//     had (so this reads as an evolution of the existing convention, not a
+//     wholesale redesign) with roomier padding sized for a title's worth of
+//     text rather than a two-character status word.
+//
+// Deliberately NOT converted to this stage: a SECOND, nested heading level
+// (an <h3>/<span> sub-label already living inside a Card/panel this stage
+// already gave its own badge — e.g. Settings.tsx's "Export"/"Import"
+// sub-headings inside the Settings I/O Card, OffsiteWizard's per-step
+// labels inside its one wizard card). Badging every nesting level would
+// stack multiple equally-loud badges inside one another and read as a wall
+// of chips, not a hierarchy — rule 5 ("hierarchy from type and colour step")
+// still applies one level down even though rule 11 exempts the outer
+// heading from rule 9. Those sub-labels keep the plain eyebrow-style
+// treatment on purpose; see each call site.
+//
+// (An earlier pass of this task filed Dashboard.tsx's SummaryCell labels
+// here too — that was wrong. Each SummaryCell is its own standalone
+// bg-carbon-surface rounded-card box, not nested inside anything already
+// badged; it was actually a missed OUTERMOST heading and is now converted
+// at its own call site, same as every other Card heading on that page.)
+//
+// Also deliberately NOT converted: the ~7 modal dialog titles (Files.tsx,
+// Fleet.tsx x2, Receiver.tsx, WhatsNewDialog.tsx, ConfirmDialog.tsx,
+// ErrorDetailPanel.tsx — all `text-lg font-semibold`). A dialog's <h2> is a
+// different element class from a page's section heading: it names the
+// MODAL WINDOW itself (rule 15 territory, "title as a badge" for a window
+// chrome), not a content section inside a page (rule 11). Several of these
+// also wire their `id` to the dialog's own `aria-labelledby` for the
+// accessible name (ConfirmDialog, WhatsNewDialog, ErrorDetailPanel) — Badge
+// has no `id` prop today, so converting them would mean either dropping
+// that wiring or growing Badge's public API in the same pass, neither of
+// which belongs in a section-heading fix. Left for a dedicated rule-15 pass.
+//
+// Also deliberately NOT converted, and the only outermost <h2> in the app
+// that stays bare text: an ALERT/CALLOUT heading whose panel is itself a
+// filled status surface — today exactly one site, Dashboard.tsx's
+// RecoveryNag (`bg-statusWarnBg` + `recovery.nagTitle`). Rule 11's "filled
+// section badge" silently assumes a neutral card surface underneath for the
+// fill to register against; a status callout has already spent that budget
+// on its own background. Measured live at that site, badge-fill vs. the
+// panel it would sit on: accent-soft 1.06:1 light / 1.39:1 dark, and
+// warn-strong 1.00:1 light (index.css gives --status-warn-bg and
+// --status-warn-bg-strong the same value in light mode) / 1.11:1 dark. So
+// the badge would read as plain text with extra padding, while also
+// discarding the text-statusWarn colour that currently carries the alert's
+// meaning at 8.62:1. Left plain on purpose — this is a token gap, not an
+// oversight, and the call site says so too. Every OTHER outermost heading
+// in the app is a badge; if a future pass adds a real "badge on a status
+// surface" tone pair, this is the one site waiting for it.
+//
+// Page titles (the `<h1 text-2xl font-semibold>` at the top of each page,
+// plus Recovery.tsx's `text-lg` one) are out of rule 11's scope for the same
+// reason the dialog titles above are: an <h1> names the WHOLE VIEW, it is
+// not a section inside one. All 11 are consistently left plain today; they
+// belong to the same future rule-15 "title as a badge" pass as the dialogs.
 // ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";
 
-export type BadgeTone = "ok" | "fail" | "warn" | "info" | "neutral";
-export type BadgeSize = "small" | "medium" | "large";
+export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading";
+export type BadgeSize = "small" | "medium" | "large" | "heading";
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
 // inline badges — the default, matching every predecessor's rounded-control),
@@ -95,12 +232,48 @@ export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 // tone here would have silently weakened their warn chips (invisible in
 // light mode today, where the two tokens happen to share one value, but a
 // real regression in dark mode).
+// active replaces the old "info" tone (GlimStone form-engine Phase 2 Task 7,
+// design-language.md rule 4: "four state hues... never a fifth" — blue
+// "info" was a de-facto fifth hue, not a real state). Every call site that
+// used tone="info" for genuine, currently-happening activity (Dashboard's
+// statusTone: a run whose status is literally "running") now uses this
+// instead — --accent-soft wash + accent-derived text, the SAME soft/tinted
+// register every other tone here already uses, deliberately not a solid
+// accent fill: Dashboard's run-history list can legitimately show several
+// "running" rows at once (independent domains backing up concurrently), and
+// rule 3 caps SOLID accent at one thing per page — a soft chip carries no
+// such cap, it reads at the same visual weight as an ok/fail/warn chip
+// sitting next to it. Sites that meant something else entirely (pure
+// informational prose, a link/action badge) did NOT become "active" — those
+// use --status-neutral-*/tone="neutral" instead, in its pre-existing role as
+// this file's generic "no real status, muted default" tone (the same role
+// BadgeProps' own `tone = "neutral"` default already plays, per that prop's
+// doc comment below) — NOT rule 4's literal "skipped/waiting" state
+// semantics, which is specifically what the file header's tone="heading"
+// reasoning above declines to borrow for a structural element that isn't a
+// status at all. Same word, two pre-existing and non-conflicting jobs; see
+// index.css's TASK 7 comment for exactly which "→ neutral" sites landed here
+// and why.
+//
+// text-accentText, not the flat text-accent: a spec-compliance review
+// measured the flat accent gold at only 1.50:1 against this exact
+// accent-soft-tinted background in light theme (WCAG needs 4.5:1 for text;
+// dark theme measured fine). This is the identical failure mode
+// --field-focus-ring already solved once for this same accent hue (flat
+// accent gold has no contrast on a light surface, so light theme needs a
+// separate, darker value) — text-accentText (--accent-text, see index.css)
+// applies that same fix here rather than inventing a new mechanism.
 const TONE_CLASSES: Record<BadgeTone, string> = {
   ok: "bg-statusOkBg text-statusOk",
   fail: "bg-statusFailBg text-statusFail",
   warn: "bg-statusWarnBgStrong text-statusWarn",
-  info: "bg-statusInfoBg text-statusInfo",
+  active: "bg-accentSoft text-accentText",
   neutral: "bg-carbon-surface2 text-carbon-textSub",
+  // See the file header's long-form reasoning: accent-soft wash (identity,
+  // matching rule 5's "washed" vocabulary), not solid accent (rule 3,
+  // activity-only) and not one of the four state hues (rule 4, semantic
+  // elsewhere on the same page).
+  heading: "bg-accentSoft text-carbon-textSub",
 };
 
 const RADIUS_CLASSES: Record<BadgeShape, string> = {
@@ -123,7 +296,66 @@ const SIZE_TOKENS: Record<BadgeSize, { height: string; minHeight: string; text: 
   small: { height: "h-[18px]", minHeight: "min-h-[18px]", text: "text-caption", padding: "px-1.5" },
   medium: { height: "h-5", minHeight: "min-h-5", text: "text-dense", padding: "px-2" },
   large: { height: "h-6", minHeight: "min-h-6", text: "text-dense", padding: "px-2.5" },
+  // Deliberately its own height (22px — between medium and large), not a
+  // reuse of either: same height as a real status chip would make a passive
+  // heading compete with genuine activity/status indicators for attention
+  // (see file header); a fixed size distinct from all three status-chip
+  // stages keeps a heading visually identifiable as "a heading" on sight,
+  // separate from whether it happens to render at a similar footprint.
+  // uppercase+tracking-widest preserves the source eyebrow treatment's
+  // typographic character; roomier px-3 padding fits a title's worth of
+  // text rather than a two-character status word.
+  heading: { height: "h-[22px]", minHeight: "min-h-[22px]", text: "text-dense uppercase tracking-widest", padding: "px-3" },
 };
+
+interface BadgeStyleOptions {
+  tone?: BadgeTone;
+  size?: BadgeSize;
+  shape?: BadgeShape;
+  wrap?: boolean;
+  className?: string;
+}
+
+/**
+ * The exact class list a Badge stage resolves to. Not exported — Badge's own
+ * span/button/a branches below are its only callers today, so this stays a
+ * private implementation-sharing helper rather than public API with no real
+ * consumer (see the file header's note on why this app's two react-router
+ * `<Link>` sites didn't end up needing it after all).
+ */
+function badgeClassName({
+  tone = "neutral",
+  size = "medium",
+  shape = "rounded",
+  wrap,
+  className,
+}: BadgeStyleOptions = {}): string {
+  const { height, minHeight, text, padding } = SIZE_TOKENS[size];
+  // circle is icon/glyph-only: zero horizontal padding + a locked 1:1 aspect
+  // ratio against the stage's own height turns it into a true circle rather
+  // than an oval widened by the stage's normal text padding.
+  const isCircle = shape === "circle";
+  // wrap swaps the fixed one-line `h-*`+`leading-none`+`min-h-0` sizing for a
+  // `min-h-*` floor + real vertical padding + normal line-height, so a
+  // second wrapped line grows the box instead of overflowing it — see the
+  // file header. Never emit both `height` and `minHeight` (same CSS
+  // property, same specificity — exactly the two-conflicting-utilities
+  // hazard the padding/circle split above already guards against).
+  const sizing = wrap
+    ? `${minHeight} py-0.5 leading-tight wrap-break-word`
+    : `${height} min-h-0 leading-none`;
+  return [
+    "inline-flex box-border items-center justify-center gap-1 font-medium",
+    sizing,
+    text,
+    isCircle ? "px-0 aspect-square" : padding,
+    RADIUS_CLASSES[shape],
+    TONE_CLASSES[tone],
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 export interface BadgeProps {
   children: ReactNode;
@@ -134,13 +366,17 @@ export interface BadgeProps {
    *  which predecessor weight each one replaces. */
   size?: BadgeSize;
   shape?: BadgeShape;
-  /** Render as a clickable <button> instead of a plain <span>, resolving to
-   *  the identical box (height/padding/font/radius) as a <span> at the same
-   *  stage — see the file header. */
-  as?: "span" | "button";
+  /** Render as a clickable <button> or a real <a href> instead of a plain
+   *  <span>, resolving to the identical box (height/padding/font/radius) at
+   *  the same stage either way — see the file header. */
+  as?: "span" | "button" | "a";
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
+  /** `as="a"` only: passed straight through to the underlying <a>. */
+  href?: string;
+  target?: string;
+  rel?: string;
   /** Grow-to-fit instead of clipping: the stage's height becomes a floor
    *  (`min-h-*`) rather than a fixed `h-*`, so content that wraps to more
    *  than one line grows the box instead of overflowing it. For a badge
@@ -162,34 +398,13 @@ export function Badge({
   onClick,
   disabled,
   title,
+  href,
+  target,
+  rel,
   wrap,
   className,
 }: BadgeProps) {
-  const { height, minHeight, text, padding } = SIZE_TOKENS[size];
-  // circle is icon/glyph-only: zero horizontal padding + a locked 1:1 aspect
-  // ratio against the stage's own height turns it into a true circle rather
-  // than an oval widened by the stage's normal text padding.
-  const isCircle = shape === "circle";
-  // wrap swaps the fixed one-line `h-*`+`leading-none`+`min-h-0` sizing for a
-  // `min-h-*` floor + real vertical padding + normal line-height, so a
-  // second wrapped line grows the box instead of overflowing it — see the
-  // file header. Never emit both `height` and `minHeight` (same CSS
-  // property, same specificity — exactly the two-conflicting-utilities
-  // hazard the padding/circle split above already guards against).
-  const sizing = wrap
-    ? `${minHeight} py-0.5 leading-tight wrap-break-word`
-    : `${height} min-h-0 leading-none`;
-  const shared = [
-    "inline-flex box-border items-center justify-center gap-1 font-medium",
-    sizing,
-    text,
-    isCircle ? "px-0 aspect-square" : padding,
-    RADIUS_CLASSES[shape],
-    TONE_CLASSES[tone],
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const shared = badgeClassName({ tone, size, shape, wrap, className });
 
   if (as === "button") {
     return (
@@ -202,6 +417,14 @@ export function Badge({
       >
         {children}
       </button>
+    );
+  }
+
+  if (as === "a") {
+    return (
+      <a href={href} target={target} rel={rel} title={title} className={`transition-opacity hover:opacity-80 ${shared}`}>
+        {children}
+      </a>
     );
   }
 

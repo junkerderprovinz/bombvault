@@ -117,7 +117,6 @@ const he: Partial<Translations> = {
   "restore.confirmTitle": "אשר שחזור",
   "restore.confirmBody":
     "פעולה זו תעצור את ה-container, תחליף את הנתונים שלו ותיצור אותו מחדש מהגיבוי. להמשיך?",
-  "restore.confirm": "אשר",
   "restore.cancel": "ביטול השחזור",
   "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
   "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר את השחזור הזה חלקי — ייתכן שיהיה צורך להריץ אותו שוב. לבטל בכל זאת?",
@@ -139,6 +138,7 @@ const he: Partial<Translations> = {
   "run.statusRunning": "פועל",
   "run.statusSuccess": "הצלחה",
   "run.statusFailed": "כשל",
+  "run.statusSkipped": "דולג",
   "run.historyTitle": "היסטוריית הרצות",
   "run.filterDay": "יום:",
   "run.allDays": "כל הימים",
@@ -188,6 +188,12 @@ const he: Partial<Translations> = {
   "settings.appearance": "מראה",
   "settings.accentColor": "צבע הדגשה",
   "settings.accentPresets": "ערכות מוגדרות מראש",
+  "settings.rainbow": "קשת",
+  "settings.rainbowHint": "במקום צבע הדגשה אחד, לוח של שמונה צבעים לפי מיקום, כך שרשימה ארוכה נקראת כשורות נפרדות.",
+  "settings.rainbowOn": "להשתמש בלוח",
+  "settings.rainbowReactive": "שקט עד שנוגעים: צבע במעבר עכבר ועל מה שרץ",
+  "settings.rainbowRotate": "ערבוב נקודת ההתחלה של הלוח",
+  "settings.rainbowPalette": "צבע בלוח",
   "settings.quietToasts": "התראות שקטות",
   "settings.quietToastsHint": "הצג הודעות קופצות רק בעת כשלים. אישורי שמירה והעתקה שגרתיים יישארו שקטים.",
 

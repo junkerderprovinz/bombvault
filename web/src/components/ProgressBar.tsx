@@ -9,7 +9,8 @@
 //
 // Determinate: the fill width tracks `percent` with a smooth transition.
 // Indeterminate (active but no number yet): a small accent segment loops
-// left→right (keyframes `bv-indeterminate` live in index.css).
+// start→end, RTL-aware via a `[dir="rtl"]`-scoped custom property (keyframes
+// `bv-indeterminate` live in index.css).
 // When inactive, it renders nothing.
 //
 // `label` adds a small caption naming the phase/percentage (e.g. "Restoring… 42%")
@@ -41,7 +42,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
       className={
         inline
           ? "relative h-1 w-full overflow-hidden rounded-pill"
-          : "absolute bottom-0 left-0 right-0 h-1 overflow-hidden"
+          : "absolute bottom-0 start-0 end-0 h-1 overflow-hidden"
       }
       style={{ background: "var(--carbon-border)" }}
       role="progressbar"
@@ -70,7 +71,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
   if (inline) {
     return (
       <div className="flex flex-col gap-0.5">
-        {label && <span className="text-[11px] text-carbon-textMuted">{label}</span>}
+        {label && <span className="text-caption text-carbon-textMuted">{label}</span>}
         {track}
       </div>
     );

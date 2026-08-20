@@ -8,7 +8,7 @@
 // FolderBrowser path picker and an excludes textarea (one pattern per line).
 // ---------------------------------------------------------------------------
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   listFileSets,
@@ -39,11 +39,16 @@ import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFiles } from "../components/Sidebar";
 import { useT } from "../lib/i18n";
-import { Advanced } from "../lib/advanced";
+import { Advanced, useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { Selector, type SelectorItem } from "../components/Selector";
+import { useRainbow } from "../lib/useRainbow";
+import { Badge } from "../components/Badge";
+import { Toggle } from "../components/Toggle";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -89,25 +94,15 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        role="switch"
-        aria-label={t("containers.includeInSchedule")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("containers.includeInSchedule")}
+        checked={enabled}
+        onChange={(next) => void handleChange(next)}
         disabled={busy}
-        onClick={() => void handleChange(!enabled)}
-        title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      />
       {error && (
-        <span className="text-xs text-statusFail max-w-48 text-right leading-tight">
+        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
         </span>
       )}
@@ -170,7 +165,7 @@ function FileSetBackupButton({
         <span className="text-xs text-statusOk">
           ✓ {t("common.done")}
           {state.snapshotId && (
-            <span className="font-mono ml-1 text-carbon-textMuted">
+            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
           )}
@@ -275,7 +270,7 @@ function FileSetFileBrowser({
 
   return (
     <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-2">
-      <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
+      <p className="text-caption text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
         loading={loading}
@@ -305,7 +300,7 @@ function FileSetFileBrowser({
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
             {blockedByOther && (
-              <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
+              <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
             )}
           </div>
           <RestoreProgress
@@ -357,6 +352,13 @@ function FileSetRestoreControl({
   // server refuses an in-place restore when it doesn't know the original path.
   const noPath = set.path === "";
   const [dest, setDest] = useState<RestoreDest>(noPath ? "folder" : "original");
+  // "Select files" (the #65 selective restore) is an advanced option; basic
+  // mode keeps the whole-set original / to-folder pair. Read directly (rather
+  // than staying inside an <Advanced> JSX wrapper) because the destination
+  // Selector below needs to decide, in JS, whether "select" belongs in its
+  // items array at all — Selector renders a flat items list, not children a
+  // wrapper component could conditionally swallow.
+  const { advanced } = useAdvanced();
   // Seeded from the operator's global "Default restore folder" setting, exactly
   // like the container restore panel — was hardcoded to "" (#69), which left the
   // FolderBrowser showing only its generic placeholder example text instead of
@@ -389,29 +391,34 @@ function FileSetRestoreControl({
     void fire();
   }
 
-  const destChip = (key: RestoreDest, label: string, disabled = false) => (
-    <button
-      onClick={() => setDest(key)}
-      disabled={disabled || isPending}
-      title={disabled ? t("files.noPathHint") : undefined}
-      className={`rounded-control px-3 py-1 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-        dest === key
-          ? "bg-accent text-accentContrast"
-          : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-      }`}
-    >
-      {label}
-    </button>
-  );
+  // Destination choice, on the shared Selector component (GlimStone
+  // form-engine Phase 2, Task 3). "select" only enters the items array in
+  // advanced mode — see the `advanced` comment above.
+  const destItems: SelectorItem[] = [
+    { id: "original", label: t("files.restoreOriginal"), disabled: noPath, title: noPath ? t("files.noPathHint") : undefined },
+    { id: "folder", label: t("files.restoreToFolder") },
+    ...(advanced ? [{ id: "select", label: t("files.restoreSelectFiles") }] : []),
+  ];
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Destination choice. "Select files" (the #65 selective restore) is an
-          advanced option; basic mode keeps the whole-set original / to-folder pair. */}
       <div className="flex items-center gap-2 flex-wrap">
-        {destChip("original", t("files.restoreOriginal"), noPath)}
-        {destChip("folder", t("files.restoreToFolder"))}
-        <Advanced>{destChip("select", t("files.restoreSelectFiles"))}</Advanced>
+        {/* label reuses the existing "Restore" string rather than a new
+            aria-only i18n key: this strip's own three item labels already
+            describe the actual choice ("Restore to original location" /
+            "Restore to a folder" / "Select files"), and this repo's i18n
+            convention (see lib/i18n.ts's 26-locale parity test) requires a
+            brand-new key to land in every locale in the same pass — not
+            worth doing for a screen-reader-only group name that "Restore"
+            already names clearly enough in context. */}
+        <Selector
+          items={destItems}
+          label={t("snapshots.restore")}
+          select="one"
+          active={dest}
+          onChange={(id) => setDest(id as RestoreDest)}
+          disabled={isPending}
+        />
         {/* The whole-set restore button + its own picker/progress; the selective
             mode renders its own controls below (FileSetFileBrowser). */}
         {dest !== "select" && (
@@ -434,7 +441,7 @@ function FileSetRestoreControl({
           </button>
         )}
         {blockedByOther && dest !== "select" && (
-          <span className="text-[11px] text-carbon-textMuted shrink-0">
+          <span className="text-caption text-carbon-textMuted shrink-0">
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
@@ -526,7 +533,7 @@ function FileSetSnapshotRow({
   return (
     <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
-        <span className="font-mono text-carbon-text text-xs w-20 shrink-0">
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
         </span>
         <span className="text-carbon-textMuted text-xs flex-1">
@@ -547,7 +554,7 @@ function FileSetSnapshotRow({
         </button>
       </div>
       {/* Restore control, indented under the id column to match the row. */}
-      <div className="pl-24">
+      <div className="ps-24">
         <FileSetRestoreControl
           set={set}
           snapshotId={snap.id}
@@ -558,7 +565,7 @@ function FileSetSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-statusFail pl-24 wrap-break-word">{deleteErr}</p>}
+      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -641,7 +648,7 @@ function FileSetRestorePanel({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform ${open ? "rotate-90" : ""}`}
+          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
         >
           <path
             d="M4 2l4 4-4 4"
@@ -666,16 +673,22 @@ function FileSetRestorePanel({
               {/* Delete-all acts on the LOCAL repo (and forgets the set), so it
                   is only offered while the local source is shown. */}
               {source === "local" && snapshots.length > 0 && (
-                <button
+                // Task 5 (rule 13): was a plain underline-on-hover text
+                // button; already correctly fault-red per "the destructive
+                // control is always the fault colour" (Destructive actions).
+                <Badge
+                  as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  className="ml-auto text-[11px] text-statusFail hover:underline disabled:opacity-50 disabled:no-underline"
+                  tone="fail"
+                  size="small"
+                  className="ms-auto"
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
-                </button>
+                </Badge>
               )}
             </div>
-            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+            <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
           </div>
           <RecentRunsList name={set.name} domain="files" t={t} />
           {loading && (
@@ -805,7 +818,7 @@ function FileSetDialog({
             hostMountRoot={hostMountRoot}
             onChange={setPath}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("files.pathHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("files.pathHint")}</p>
         </div>
 
         {/* Exclude patterns, one per line */}
@@ -817,9 +830,10 @@ function FileSetDialog({
             spellCheck={false}
             rows={4}
             placeholder={"*.tmp\ncache/"}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+            dir="ltr"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
 
         {/* Include in schedule */}
@@ -869,6 +883,7 @@ function FileSetRow({
   t,
   onRefresh,
   onEdit,
+  index,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -876,6 +891,10 @@ function FileSetRow({
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
+   *  `set.id`/name — see the caller below. */
+  index: number;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`files:${set.name}`];
@@ -903,7 +922,15 @@ function FileSetRow({
   }
 
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-tint washes the card (trap #2 — without it this card shows
+      // almost no colour at rest); glim-active while THIS set's own
+      // backup/restore is actively running — mirrors ContainerRow/VMRow.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+        progress?.active ? "glim-active" : ""
+      }`}
+    >
       {/* Top row: name + chips, path, last backup */}
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -933,7 +960,7 @@ function FileSetRow({
             )}
           </div>
           {!noPath && (
-            <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">
+            <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">
               {hostMountRoot}/{set.path}
             </p>
           )}
@@ -943,7 +970,7 @@ function FileSetRow({
         </div>
 
         {/* Last backup */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
           <p className="text-xs text-carbon-textSub">
             {set.lastBackup ? formatTs(set.lastBackup) : t("containers.never")}
@@ -973,7 +1000,7 @@ function FileSetRow({
           </button>
           {removeErr && <span className="text-xs text-statusFail">{removeErr}</span>}
         </div>
-        <div className="ml-auto flex flex-col items-end">
+        <div className="ms-auto flex flex-col items-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
         </div>
       </div>
@@ -1006,6 +1033,9 @@ function FileSetRow({
 
 export function Files() {
   const { t } = useT();
+  // One subscription for the whole list rather than one per row — see
+  // Containers.tsx's identical call for the same reasoning.
+  useRainbow();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
   const running = anyActive(useProgress());
@@ -1220,7 +1250,7 @@ export function Files() {
       {/* File-set cards */}
       {!loading && sets.length > 0 && (
         <div className="flex flex-col gap-3">
-          {sets.map((s) => (
+          {sets.map((s, i) => (
             <FileSetRow
               key={s.id}
               set={s}
@@ -1229,6 +1259,7 @@ export function Files() {
               t={t}
               onRefresh={() => void loadSets()}
               onEdit={() => setDialog(s)}
+              index={i}
             />
           ))}
         </div>

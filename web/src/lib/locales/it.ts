@@ -117,7 +117,6 @@ const it: Partial<Translations> = {
   "restore.confirmTitle": "Conferma ripristino",
   "restore.confirmBody":
     "Il container verrà fermato, i suoi dati sostituiti e ricreato dal backup. Continuare?",
-  "restore.confirm": "Conferma",
   "restore.cancel": "Annulla ripristino",
   "restore.cancelConfirmSafe": "Annullare il ripristino? La cartella di output parziale viene lasciata così com'è.",
   "restore.cancelConfirmInPlace": "{name} è a metà ripristino. Annullando questo ripristino resta incompleto — potrebbe essere necessario eseguirlo di nuovo. Annullare comunque?",
@@ -139,6 +138,7 @@ const it: Partial<Translations> = {
   "run.statusRunning": "In corso",
   "run.statusSuccess": "Riuscito",
   "run.statusFailed": "Fallito",
+  "run.statusSkipped": "Saltato",
   "run.historyTitle": "Cronologia esecuzioni",
   "run.filterDay": "Giorno:",
   "run.allDays": "Tutti i giorni",
@@ -188,6 +188,12 @@ const it: Partial<Translations> = {
   "settings.appearance": "Aspetto",
   "settings.accentColor": "Colore di accento",
   "settings.accentPresets": "Predefiniti",
+  "settings.rainbow": "Arcobaleno",
+  "settings.rainbowHint": "Invece di un solo accento, una tavolozza di otto assegnata per posizione: un elenco lungo si legge come righe distinte.",
+  "settings.rainbowOn": "Usa la tavolozza",
+  "settings.rainbowReactive": "Silenzioso finché non lo tocchi: colore al passaggio e su ciò che è in corso",
+  "settings.rainbowRotate": "Mescola da dove parte la tavolozza",
+  "settings.rainbowPalette": "Colore della tavolozza",
   "settings.quietToasts": "Notifiche silenziose",
   "settings.quietToastsHint": "Mostra gli avvisi pop-up solo per gli errori. Le conferme di routine di salvataggio e copia restano silenziose.",
 

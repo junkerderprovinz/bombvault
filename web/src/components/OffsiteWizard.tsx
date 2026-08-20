@@ -13,7 +13,10 @@ import {
 } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "./RevealInput";
+import { Toggle } from "./Toggle";
 import { useReveal } from "../lib/useReveal";
+import { Badge } from "./Badge";
+import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -100,7 +103,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
@@ -494,7 +497,9 @@ export function OffsiteWizard({
             RELATIVE to the Host Data mount, which is the one thing nothing in
             this flow used to say (issue #138). */}
         {backend === "path" && (
-          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.repoLocalHint")}</p>
+          <p className="text-xs text-carbon-textMuted leading-relaxed">
+            {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+          </p>
         )}
       </div>
 
@@ -537,13 +542,21 @@ export function OffsiteWizard({
               <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
               </div>
-              <button
-                type="button"
+              {/* Task 5 (rule 13): was a plain underline-on-hover text button.
+                  Task 7: tone was "info" (the old fifth hue) only because it
+                  was the nearest tone available at the time — a plain action
+                  badge, not activity or a state, same as Recovery.tsx's own
+                  tone="neutral" reload badge and Settings.tsx's two doc-link
+                  badges. */}
+              <Badge
+                as="button"
                 onClick={() => void genSnippet()}
-                className="self-start text-xs text-statusInfo hover:underline"
+                tone="neutral"
+                size="small"
+                className="self-start"
               >
                 {t("offsite.wizard.regenerate")}
-              </button>
+              </Badge>
             </div>
           )}
         </div>
@@ -559,7 +572,14 @@ export function OffsiteWizard({
           // about the right URL.
           <div className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
-            <p className="rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 break-all">
+            {/* Task 6 (RTL sweep): a read-only repo URL is a technical value,
+                pinned LTR exactly like OffsiteTargetsSection's own repo cell —
+                otherwise a leading `/` (a weak bidi character) migrates to the
+                trailing edge in ar/he. */}
+            <p
+              dir="ltr"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 break-all text-start"
+            >
               {repoURL || "—"}
             </p>
             <span className="text-xs text-carbon-textMuted">{t("settings.primaryRemote.hint")}</span>
@@ -574,9 +594,12 @@ export function OffsiteWizard({
                 spellCheck={false}
                 onChange={(e) => patchRepo(e.target.value)}
                 placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-                className={inputCls}
+                dir="ltr"
+                className={`${inputCls} text-start`}
               />
-              <span className="text-xs text-carbon-textMuted">{t("offsite.repoLocalHint")}</span>
+              <span className="text-xs text-carbon-textMuted">
+                {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+              </span>
             </label>
             {/* The off-site schedule is edited in Settings › Schedules now; the wizard
                 saves only the repo URL so it can never clobber that cadence. */}
@@ -607,16 +630,16 @@ export function OffsiteWizard({
         {urlBackend === "rest" && (
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-3 mt-1">
             <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
-            <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
+            <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
               RESTIC_REST_USERNAME
               <input
                 value={cloud.restUser}
                 onChange={(e) => setCloudState((p) => ({ ...p, restUser: e.target.value }))}
                 spellCheck={false}
-                className={inputCls}
+                className={`${inputCls} text-start`}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub">
+            <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
               RESTIC_REST_PASSWORD
               <RevealInput
                 {...revealRestPassword}
@@ -667,26 +690,17 @@ export function OffsiteWizard({
         <span className={stepTitle}>{t("offsite.wizard.step4")}</span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
-            <span id={`imm-label-${domain}`} className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
+            <span className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
             <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={immutable}
-            aria-labelledby={`imm-label-${domain}`}
+          <Toggle
+            hideLabel
+            label={t("offsite.immutable")}
+            checked={immutable}
+            onChange={(next) => void toggleImmutable(next)}
             disabled={immState === "saving"}
-            onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-              immutable ? "bg-accent" : "bg-carbon-surface3"
-            }`}
-          >
-            <span
-              className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                immutable ? "translate-x-[18px]" : "translate-x-[3px]"
-              }`}
-            />
-          </button>
+            className="mt-0.5"
+          />
         </div>
         {immState === "error" && immErr && <span className="text-xs text-statusFail">{immErr}</span>}
 

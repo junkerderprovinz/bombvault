@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useT } from "../lib/i18n";
 import { isValidCronExpression, nextCronFires } from "../lib/cron";
+import { Selector } from "./Selector";
 
 // ---------------------------------------------------------------------------
 // Schedule cadence builder (shared by the Plans tab and the Settings drills card)
@@ -241,19 +242,16 @@ export function CadenceBuilder({
         {label}
       </legend>
 
-      {/* Mode pills */}
-      <div className="flex flex-wrap gap-2">
-        {(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => update({ mode: m })}
-            className={`rounded-control px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-              state.mode === m
-                ? "bg-accent text-accentContrast"
-                : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-            }`}
-          >
-            {m === "off"
+      {/* Mode pills — the shared Selector component (GlimStone form-engine
+          Phase 2, Task 3). Disabling still comes from the ancestor
+          <fieldset disabled> above, not a prop here: Selector renders real
+          <button> elements, which a native fieldset already disables
+          regardless of the wrapping <div> between them. */}
+      <Selector
+        items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => ({
+          id: m,
+          label:
+            m === "off"
               ? t("cadence.off")
               : m === "daily"
                 ? t("cadence.daily")
@@ -261,10 +259,13 @@ export function CadenceBuilder({
                   ? t("cadence.weekly")
                   : m === "everyN"
                     ? t("cadence.everyN")
-                    : t("cadence.cron")}
-          </button>
-        ))}
-      </div>
+                    : t("cadence.cron"),
+        }))}
+        label={label}
+        select="one"
+        active={state.mode}
+        onChange={(id) => update({ mode: id as CadenceMode })}
+      />
 
       {/* Time picker — shown for all non-off modes except cron (the expression carries its own times) */}
       {state.mode !== "off" && state.mode !== "cron" && (
@@ -279,25 +280,20 @@ export function CadenceBuilder({
         </div>
       )}
 
-      {/* Weekly: weekday checkboxes */}
+      {/* Weekly: weekday multi-select — select="many" (toggling a day never
+          replaces the others, "at least one" is still enforced by
+          toggleWeekday itself, unchanged). */}
       {state.mode === "weekly" && (
         <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.days")}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {WEEKDAYS.map((d) => (
-              <button
-                key={d}
-                onClick={() => toggleWeekday(d)}
-                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                  state.weekdays.includes(d)
-                    ? "bg-accent text-accentContrast"
-                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+          <Selector
+            items={WEEKDAYS.map((d) => ({ id: d, label: d }))}
+            label={t("cadence.days")}
+            select="many"
+            active={new Set(state.weekdays)}
+            onChange={toggleWeekday}
+            size="sm"
+          />
         </div>
       )}
 
@@ -388,7 +384,8 @@ function CronEditor({
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
-          className={`${inputCls} font-mono w-56 max-w-full`}
+          dir="ltr"
+          className={`${inputCls} font-mono w-56 max-w-full text-start`}
         />
       </div>
 
@@ -413,8 +410,8 @@ function CronEditor({
             onClick={() => onChange(ex.expr)}
             className="self-start rounded px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
-            <code className="font-mono text-carbon-text">{ex.expr}</code>
-            <span className="ml-2">{t(ex.key)}</span>
+            <code dir="ltr" className="font-mono text-carbon-text text-start">{ex.expr}</code>
+            <span className="ms-2">{t(ex.key)}</span>
           </button>
         ))}
       </div>

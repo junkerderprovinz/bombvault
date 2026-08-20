@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
+import { Badge } from "./Badge";
 
 // ---------------------------------------------------------------------------
 // WhatsNewDialog (#48) — a "What's new" modal shown once when a NEW BombVault
@@ -39,6 +40,19 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
     if (m[0].startsWith("[")) {
       const href = safeHref(m[2]);
       if (href) {
+        // Task 5 (rule 13) deliberate exception, documented rather than
+        // converted: this link is rendered MID-SENTENCE inside dynamically
+        // fetched GitHub release-note prose, interleaved with plain text and
+        // **bold** runs from the same regex pass. A Badge is a block-ish
+        // filled chip built for a standalone action ("View on GitHub" below,
+        // now converted); dropping a filled pill into the middle of a
+        // flowing paragraph breaks the reading flow far worse than an inline
+        // underlined link does — this is exactly the spec's own escape
+        // hatch ("if something cannot be explained in a bubble, the control
+        // is wrong, not the label" — the inverse case here: if a link can't
+        // become a badge without breaking the thing it's part of, the link
+        // stays a link). The dialog's own standalone "View on GitHub" footer
+        // link (not inline prose) IS converted, immediately below.
         nodes.push(
           <a
             key={`${keyBase}-a${i}`}
@@ -80,7 +94,7 @@ function renderMarkdown(md: string): ReactNode[] {
     const items = list;
     const k = key++;
     blocks.push(
-      <ul key={`ul${k}`} className="my-2 ml-5 list-disc space-y-1 text-sm leading-relaxed text-carbon-textSub">
+      <ul key={`ul${k}`} className="my-2 ms-5 list-disc space-y-1 text-sm leading-relaxed text-carbon-textSub">
         {items.map((it, idx) => (
           <li key={idx}>{renderInline(it, `ul${k}-${idx}`)}</li>
         ))}
@@ -277,16 +291,23 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             ))}
         </div>
 
-        {/* Footer — the prominent "view full release" link is always present. */}
+        {/* Footer — the prominent "view full release" link is always present.
+            Task 5 (rule 13): was a plain underlined text link sitting right
+            next to the already badge-shaped Close button — literally the
+            "plain blue text link between badges is a foreign object" example
+            rule 13 names. size="large" matches Close's own visual weight
+            (px-4 py-2 text-sm) so the two don't read as mismatched siblings. */}
         <div className="flex items-center justify-between gap-3 border-t border-carbon-border px-5 py-4">
-          <a
+          <Badge
+            as="a"
             href={fullUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-accent underline hover:no-underline"
+            tone="neutral"
+            size="large"
           >
             {t("whatsnew.viewOnGitHub")}
-          </a>
+          </Badge>
           <button
             type="button"
             onClick={onClose}

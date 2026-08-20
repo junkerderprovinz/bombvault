@@ -75,7 +75,7 @@ export function RestoreProgress({
           {showStartedHint && (
             <>
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-              <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("restore.bgHint")}</p>
             </>
           )}
           {prog?.phase === "restore" && prog.active && (

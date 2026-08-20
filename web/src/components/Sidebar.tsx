@@ -15,6 +15,33 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
+// Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 — decided
+// in the spec-compliance review of the first attempt, which had wired every
+// NavItem to a palette position). Task 2's brief is explicitly "decide which
+// candidates genuinely benefit"; the nav rail does not, on two counts:
+//
+//  1. Colour buys nothing here. Every destination already carries a
+//     permanent, always-visible identity in its label + icon, so rainbow's
+//     actual job ("tell apart several members of a set that otherwise look
+//     alike") has nothing to do on a rail where no two entries look alike in
+//     the first place.
+//  2. Colour could not be stable here even if it were wanted. The visible set
+//     is user-configured — 4 to 10 entries, depending on which domains are on
+//     (vmsEnabled etc.) — so a destination's position, and with it its
+//     colour, moves whenever a domain is toggled in Settings; at full config
+//     the 10 entries also wrap RAINBOW's 8 colours (lib/appearance.ts) and
+//     two of them repeat. A nav rail is the one surface where a colour would
+//     have to be LEARNED to be worth anything, and a learned colour that
+//     moves is worse than no colour at all.
+//
+// The wrap on its own is NOT the disqualifier: a container/VM list wraps the
+// same way past its eighth row and keeps rainbow on purpose (see
+// Containers.tsx/VMs.tsx) — there the colour only has to separate rows that
+// are on screen together, and a repeat lands a full palette apart, never
+// beside its twin. KnightLoader's Sidebar.tsx does hue its nav, but off 6
+// hard-coded destinations, so neither point above applies to it; that
+// precedent doesn't transfer to a rail whose length changes.
+
 // Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
 type EggState = "idle" | "wobble" | "boom";
 
@@ -200,8 +227,15 @@ const navBase =
   "flex items-center gap-3 px-3.5 py-2.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
 const navActive =
   "bg-accent text-accentContrast";
+// `rtl:-translate-x-0.5!` — physical `translate-x`, same trap as the Toggle
+// thumb (RTL sweep, form-engine Phase 2 Task 6 follow-up fix): a positive
+// nudge always moves right on screen, which reaches toward the main content
+// area only when the sidebar sits on the LEFT (LTR). Negating it under `rtl:`
+// keeps the nudge pointed at the content instead of away from it once the
+// sidebar sits on the right. `!` beats the base rule regardless of Tailwind's
+// generated declaration order, same reasoning as the Toggle thumb fix.
 const navInactive =
-  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5";
+  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
 function NavItem({ to, label, icon }: NavItem) {
   return (
@@ -300,7 +334,7 @@ function SidebarControls() {
           <div
             role="listbox"
             aria-label={t("language.label")}
-            className="absolute left-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
+            className="absolute start-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
             style={{ scrollbarColor: "var(--carbon-border) transparent" }}
           >
             {languages.map((l) => (
@@ -309,7 +343,7 @@ function SidebarControls() {
                 role="option"
                 aria-selected={l.code === lang}
                 onClick={() => { setLanguage(l.code); setOpen(false); }}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors ${
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-start transition-colors ${
                   l.code === lang
                     ? "bg-carbon-surface3 text-carbon-text"
                     : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -443,7 +477,7 @@ export function Sidebar({ settings }: SidebarProps) {
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
         onContextMenu={(e) => e.preventDefault()}
-        className="bv-logo-btn flex items-center gap-2.5 px-4 py-5 w-full text-left cursor-pointer select-none hover:opacity-90 transition-opacity"
+        className="bv-logo-btn flex items-center gap-2.5 px-4 py-5 w-full text-start cursor-pointer select-none hover:opacity-90 transition-opacity"
       >
         <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
           <span className={`bv-logo-mark flex h-16 w-16 items-center justify-center ${eggClass}`}>

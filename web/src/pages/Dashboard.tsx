@@ -14,6 +14,7 @@ import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { Selector } from "../components/Selector";
 // humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
 // storage forecast line shares the exact formatter of the size column.
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
@@ -146,7 +147,7 @@ function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className={`${base} text-left cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid`}
+        className={`${base} text-start cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)`}
       >
         {inner}
       </button>
@@ -277,9 +278,54 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 
 // ---------------------------------------------------------------------------
 // Status chip — statusTone maps a raw status string to the shared Badge's
-// tone; the raw string itself is still shown verbatim (these are backend-
-// sourced run-status words, not prose to translate here — see StatusChip's
-// former inline comment on the #57 "skipped" case, preserved in the map below).
+// tone; statusLabel (defined right after it) maps that same string to
+// translated, badge-length text. Every call site renders both together —
+// `<Badge tone={statusTone(s)}>{statusLabel(s, t)}</Badge>` — instead of the
+// tone alone.
+//
+// Task 9 fix: until this task, every one of these Badges rendered the raw
+// English status word verbatim (`{overallStatus}` / `{chipFor(c)}` /
+// `{chipForRpo(...)}` / `{protectionChip(...)}` / `{run.status}` /
+// `{newestRun.status}`) — the exact untranslated-badge-text bug class Phase 1
+// Task 5 already fixed for SpikePanel.tsx's OK/FAIL/INFO chips, sitting the
+// whole time right next to an already-translated sibling label
+// (overallLabel/rpoLabel/protLabel/healthLabel) that made the raw word's
+// presence obvious on close reading. A prior version of this exact comment
+// claimed the opposite — that showing the raw word was deliberate because
+// "these are backend-sourced run-status words, not prose to translate" — but
+// that rationale doesn't hold: `run.statusRunning`/`Success`/`Failed` already
+// existed as real, fully-translated keys in all 26 locales (added for this
+// exact fix, then never wired up), and `chipFor`/`chipForRpo`/`protectionChip`
+// below don't return backend text at all — they're this file's own derived
+// vocabulary. Task 7 (fifth hue) only ever touched statusTone's tone mapping,
+// never what the Badge's children rendered, so the bug (and the incorrect
+// comment defending it) survived that task untouched.
+//
+// KNOWN LIMITATION, documented on purpose (spec-compliance review of Task 7,
+// not fixed in that task — see index.css's matching comment on
+// --status-warn-text's dark value for the full writeup): tone="warn" and
+// tone="active" render as near-identical amber in BOTH themes — dark with
+// the DEFAULT accent (#f1c21b vs #FCC419, RGB-distance ~11, 1.05:1 between
+// them), light on EVERY accent (#8e6a00 vs a static #7a5c00, hue 44.8° vs
+// 45.2°, 1.25:1, with chip backgrounds only ~10 apart).
+// SummaryTier below is a real, live site where both can appear in the same
+// row at once — the "Overall health" cell showing tone="warn" (an RPO
+// lapsing) next to "Last result" showing tone="active" (a run literally
+// running). Not a bare SC 1.4.1 violation (each badge's own text still
+// differs), but a real glance-level regression.
+// Only DARK theme has a mitigation: 4 of Settings.tsx's 5 ACCENT_PRESETS
+// aren't gold/yellow and don't collide, and dark's --accent-text follows
+// whichever the user picked. Light's --accent-text is a static #7a5c00 that
+// does NOT follow the accent, so light-theme users see this on every preset.
+// Left unresolved rather than force a disproportionate fix (recolouring warn off Carbon's
+// actual yellow token, changing the app's default accent, or adding a new
+// icon system to Badge all reach well past a contrast-arithmetic bugfix) —
+// flagged for a future task. Task 8 (focus system) was checked against this,
+// since it also works the hue-vs-accent boundary via [data-rainbow]
+// .glim-hue's --item-hue-ring — no shared fix: that mechanism only ever
+// touches outline colour on :focus-visible, never badge fill/text colour,
+// so it doesn't reach statusTone's tone="warn"/tone="active" at all. Still
+// open for whichever task picks it up next.
 // ---------------------------------------------------------------------------
 
 function statusTone(status: string): BadgeTone {
@@ -290,9 +336,21 @@ function statusTone(status: string): BadgeTone {
     case "failed":
     case "degraded":
       return "fail";
+    // Genuine activity (Task 7: resolve the fifth hue) — a run that is
+    // literally in progress right now. "active" is the accent-soft Badge
+    // tone, not a solid fill: this list can show several running rows at
+    // once (independent domains backing up concurrently), and rule 3's
+    // "at most one solid accent" cap doesn't apply to a soft/tinted chip
+    // reading at the same weight as its ok/fail/warn siblings.
     case "running":
     case "checking":
-      return "info";
+      return "active";
+    // The literal backend/derived string "info" (chipForRpo's "warn" SLA
+    // lapse, protectionChip's "amber" aggregate, chipFor's best-effort
+    // check failure) always meant a real caution, never activity — routes
+    // to warn, matching SpikePanel.tsx's own hard-coded tone="warn" for the
+    // identical best-effort-fail case. Unaffected by the "active" rename
+    // above; this is a separate switch arm.
     case "info":
       return "warn";
     // A skip is neither success nor failure: a muted, neutral chip so a removed
@@ -302,6 +360,33 @@ function statusTone(status: string): BadgeTone {
       return "neutral";
     default:
       return "neutral";
+  }
+}
+
+// statusLabel is statusTone's translation-side twin (Task 9). It keys off
+// the SAME tone bucket statusTone already computes — not the raw string a
+// second time — so every raw word any helper below can produce (chipFor:
+// ok/info/failed — chipForRpo: success/info/failed/neutral — protectionChip:
+// ok/info/failed/neutral — run.status/newestRun.status: success/failed/
+// running/skipped) resolves to translated, badge-length text without a
+// second switch to keep in sync. Reuses spike.ok/spike.fail/spike.info —
+// SpikePanel.tsx's own OK/FAIL/INFO wording (Phase 1 Task 5) — for the
+// ok/fail/warn buckets, and run.statusRunning for active (added alongside
+// statusSuccess/statusFailed back when this bug was first anticipated, then
+// never wired up until now). neutral/default gets the one genuinely new key
+// this task adds, run.statusSkipped, translated into all 26 locales.
+function statusLabel(status: string, t: ReturnType<typeof useT>["t"]): string {
+  switch (statusTone(status)) {
+    case "ok":
+      return t("spike.ok");
+    case "fail":
+      return t("spike.fail");
+    case "warn":
+      return t("spike.info");
+    case "active":
+      return t("run.statusRunning");
+    default:
+      return t("run.statusSkipped");
   }
 }
 
@@ -320,9 +405,12 @@ function Card({
 }) {
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
+      {/* Task 5 (rule 11): this is Dashboard's own equivalent of Settings.tsx's
+          Card — same Badge-in-<h2> treatment, see Badge.tsx's file header for
+          the tone/size reasoning shared across every converted heading. */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-          {title}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{title}</Badge>
         </h2>
         {action}
       </div>
@@ -381,7 +469,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {hasRun && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>
-          <Badge tone={statusTone(overallStatus)}>{overallStatus}</Badge>
+          <Badge tone={statusTone(overallStatus)}>{statusLabel(overallStatus, t)}</Badge>
           <span className="text-sm text-carbon-text">{overallLabel}</span>
         </div>
       )}
@@ -394,7 +482,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="divide-y divide-carbon-border">
           {checks.map((c) => (
             <div key={c.Name} className="flex items-center gap-3 py-2 text-sm">
-              <Badge tone={statusTone(chipFor(c))}>{chipFor(c)}</Badge>
+              <Badge tone={statusTone(chipFor(c))}>{statusLabel(chipFor(c), t)}</Badge>
               <span className="font-mono text-carbon-text w-32 shrink-0">{c.Name}</span>
               <span className="text-carbon-textMuted truncate flex-1">{c.Detail}</span>
               {c.BestEffort && (
@@ -582,7 +670,7 @@ function ProtectionCard({
                           pill never drifts from the words it qualifies. */}
                       <div className="col-start-2 flex min-w-0 items-center gap-2">
                         <span className="shrink-0">
-                          <Badge tone={statusTone(chipForRpo(d.status))}>{chipForRpo(d.status)}</Badge>
+                          <Badge tone={statusTone(chipForRpo(d.status))}>{statusLabel(chipForRpo(d.status), t)}</Badge>
                         </span>
                         <span className="min-w-0 truncate text-carbon-text">
                           {rpoLabel(d.status)}
@@ -594,7 +682,7 @@ function ProtectionCard({
                       </span>
                       {/* Col 4 — last successful run. */}
                       <span
-                        className="col-start-4 text-left @[44rem]:text-right text-carbon-textMuted text-xs"
+                        className="col-start-4 text-start @[44rem]:text-end text-carbon-textMuted text-xs"
                         title={formatTs(d.lastSuccess)}
                       >
                         {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
@@ -684,7 +772,7 @@ function ProtectionCard({
                     Only the off-site DR row drives that red — a local subset pass
                     can't clear it, so we run {offsite,dr} explicitly. */}
                 {!off && drCapable && (drFailed || d.offsiteConfigured) && (
-                  <div className="flex flex-wrap items-center gap-2 pl-1">
+                  <div className="flex flex-wrap items-center gap-2 ps-1">
                     {drFailed && d.drillDetail && (
                       <span className="text-xs text-statusFail wrap-break-word" title={d.drillDetail}>
                         {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
@@ -874,10 +962,10 @@ function RansomwareCard({
                 <span className="font-medium text-carbon-text w-28 shrink-0 truncate">
                   {domainLabel(d.domain)}
                 </span>
-                <Badge tone={statusTone(protectionChip(d.protection))}>{protectionChip(d.protection)}</Badge>
+                <Badge tone={statusTone(protectionChip(d.protection))}>{statusLabel(protectionChip(d.protection), t)}</Badge>
                 <span className="text-sm text-carbon-textSub">{protLabel(d.protection)}</span>
               </div>
-              <div className="flex flex-col gap-0.5 pl-1">
+              <div className="flex flex-col gap-0.5 ps-1">
                 {rows.map((row) => {
                   const icon =
                     row.state === "ok" ? "✓" : row.state === "amber" ? "!" : row.state === "bad" ? "✗" : "—";
@@ -900,6 +988,22 @@ function RansomwareCard({
                       <div className="flex items-center gap-2 text-sm">
                         <span className={`w-4 shrink-0 text-center ${iconColor}`}>{icon}</span>
                         {row.state === "bad" ? (
+                          // Task 5 (rule 13) deliberate exception, documented
+                          // rather than converted: this is a status-LIST-ROW
+                          // label that only sometimes (state === "bad") also
+                          // navigates — its non-clickable siblings above/below
+                          // render at the SAME plain text-sm size (the `else`
+                          // branch right below). Forcing only the clickable
+                          // state into a fixed-height Badge chip would make
+                          // row height/typography jump depending on which
+                          // domain is currently faulted — a worse, more
+                          // visible inconsistency than the plain-link issue
+                          // rule 13 targets (which is about a link sitting
+                          // among ALREADY-badge-styled siblings; nothing else
+                          // in this row is a badge). The semantic fault-red
+                          // colour + hover underline already signals both
+                          // "this is wrong" and "this is clickable" without
+                          // breaking row alignment.
                           <Link to="/settings#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0">
                             {row.label}
                           </Link>
@@ -912,7 +1016,7 @@ function RansomwareCard({
                       </div>
                       {/* WHICH check + WHY it failed (off-site DR reason from /api/status). */}
                       {row.detail && (
-                        <span className="text-xs text-statusFail wrap-break-word pl-6" title={row.detail}>
+                        <span className="text-xs text-statusFail wrap-break-word ps-6" title={row.detail}>
                           {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {row.detail}
                         </span>
                       )}
@@ -983,13 +1087,13 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             </select>
           </div>
           {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pr-2">
+          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pe-2">
             {shown.map((run) => {
               const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
               return (
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
-                  <Badge tone={statusTone(run.status)}>{run.status}</Badge>
+                  <Badge tone={statusTone(run.status)}>{statusLabel(run.status, t)}</Badge>
                   <span className="text-carbon-text font-medium w-16 shrink-0 truncate">
                     {runKindLabel(t, run.kind)}
                   </span>
@@ -1000,7 +1104,12 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
                     <span className="text-carbon-textSub whitespace-nowrap">
                       {formatTs(run.startedAt)}
-                      {run.finishedAt != null ? ` → ${formatTs(run.finishedAt)}` : ""}
+                      {run.finishedAt != null && (
+                        <>
+                          {" "}
+                          <span className="inline-block rtl:-scale-x-100">→</span> {formatTs(run.finishedAt)}
+                        </>
+                      )}
                     </span>
                     <span className="text-carbon-textMuted whitespace-nowrap">
                       {dur ? `(${dur}) · ` : ""}
@@ -1009,10 +1118,10 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   </span>
                 </div>
                 {run.status === "failed" && run.error && (
-                  <p className="pl-16 text-xs text-statusFail wrap-break-word">{run.error}</p>
+                  <p dir="ltr" className="ps-16 text-xs text-statusFail wrap-break-word text-start">{run.error}</p>
                 )}
                 {run.status === "skipped" && run.error && (
-                  <p className="pl-16 text-xs text-carbon-textMuted wrap-break-word">{run.error}</p>
+                  <p dir="ltr" className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start">{run.error}</p>
                 )}
               </div>
               );
@@ -1074,10 +1183,10 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                 <div className="w-2 h-2 rounded-full bg-statusOkSolid shrink-0" />
                 <span className="text-carbon-text font-medium flex-1 truncate min-w-0">{c.name}</span>
                 {hasStart ? (
-                  <span className="text-carbon-textMuted text-xs shrink-0 text-right">
-                    {formatTs(c.lastBackupStarted)} → {formatTs(c.lastBackup)}
+                  <span className="text-carbon-textMuted text-xs shrink-0 text-end">
+                    {formatTs(c.lastBackupStarted)} <span className="inline-block rtl:-scale-x-100">→</span> {formatTs(c.lastBackup)}
                     {duration && (
-                      <span className="ml-1" title={t("dashboard.duration")} aria-label={t("dashboard.duration")}>
+                      <span className="ms-1" title={t("dashboard.duration")} aria-label={t("dashboard.duration")}>
                         ({duration})
                       </span>
                     )}
@@ -1215,23 +1324,29 @@ function HealthHeatmapCard({
     }
   };
 
+  // Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 audit,
+  // carried into Task 3's migration to Selector via hue={false}): this is a
+  // small, fixed set of 5 where each entry already has its own durable
+  // identity (a domain name, not "one of several similar rows"), and the
+  // cells it filters sit right beside it painted in the four FIXED state
+  // hues (cellColor() above — red/green shades, rule 4). A 5-way rainbow
+  // strip competing for attention directly next to a red/green heatmap would
+  // hurt legibility for no tracking benefit nobody needs help telling
+  // "Containers" apart from "VMs" by label alone.
   const toggle = (
-    <div className="flex items-center gap-1">
-      {(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => (
-        <button
-          key={d}
-          type="button"
-          onClick={() => setDomain(d)}
-          className={`px-2 py-0.5 rounded text-xs font-medium ${
-            domain === d
-              ? "bg-accent text-accentContrast"
-              : "text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {domainLabel(d)}
-        </button>
-      ))}
-    </div>
+    <Selector
+      items={(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => ({
+        id: d,
+        label: domainLabel(d),
+      }))}
+      label={t("dashboard.healthTitle")}
+      select="one"
+      active={domain}
+      onChange={(id) => setDomain(id as HeatDomain)}
+      size="sm"
+      plain
+      hue={false}
+    />
   );
 
   return (
@@ -1262,7 +1377,7 @@ function HealthHeatmapCard({
                       type="button"
                       onClick={() => onSelectDay(date)}
                       aria-pressed={active}
-                      className={`w-[11px] h-[11px] rounded-xs cursor-pointer focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid ${
+                      className={`w-[11px] h-[11px] rounded-xs cursor-pointer focus:outline-solid focus:outline-2 focus:outline-(--focus-ring) ${
                         active ? "outline-solid outline-2 outline-accent" : ""
                       }`}
                       style={{ backgroundColor: cellColor(cell.stat) }}
@@ -1322,7 +1437,16 @@ function Sparkline({
     .join(" ");
 
   return (
-    <span className="text-statusInfo shrink-0">
+    // Task 7: was text-statusInfo (the old fifth hue). glimstone/docs/
+    // design-language.md's Charts section is explicit here — "one colour
+    // source: the accent, never rainbow or status hues" — so this isn't a
+    // semantic judgment call like the rest of Task 7, it's the spec's own
+    // fixed rule for every hand-drawn chart in the app. text-accentText, not
+    // the flat text-accent: a spec-compliance review measured the flat
+    // accent gold at 1.61:1 against this card's light-theme background —
+    // the trend line effectively disappeared, badly under the 3:1 non-text
+    // minimum. See index.css's --accent-text comment for the fix.
+    <span className="text-accentText shrink-0">
       <svg
         width={width}
         height={height}
@@ -1443,7 +1567,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   </span>
                   {has && d.latest ? (
                     <>
-                      <span className="text-carbon-text tabular-nums w-20 shrink-0 text-right">
+                      <span className="text-carbon-text tabular-nums w-20 shrink-0 text-end">
                         {humanBytes(d.latest.rawSize)}
                       </span>
                       <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
@@ -1452,7 +1576,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                       <span className="text-carbon-textMuted text-xs shrink-0 w-24 truncate">
                         {d.latest.snapshots} {t("dashboard.snapshotsLabel")}
                       </span>
-                      <span className="ml-auto shrink-0">
+                      <span className="ms-auto shrink-0">
                         <Sparkline values={d.stats.map((s) => s.rawSize)} />
                       </span>
                     </>
@@ -1463,7 +1587,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
                   )}
                 </div>
                 {forecastLine && (
-                  <p className="pl-1 text-xs text-carbon-textSub wrap-break-word">
+                  <p className="ps-1 text-xs text-carbon-textSub wrap-break-word">
                     {forecastLine.growth}
                     {forecastLine.growth && (forecastLine.projection || forecastLine.free) ? " · " : ""}
                     {forecastLine.projection && (
@@ -1527,6 +1651,20 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
 
   return (
     <div className="rounded-card bg-statusWarnBg px-4 py-3 flex flex-col gap-2">
+      {/* Task 5 (rule 11): deliberately NOT a heading badge, and the one
+          outermost <h2> on this page that isn't — see Badge.tsx's file header
+          for the shared reasoning. Short version: this panel's own surface is
+          already a filled status wash (bg-statusWarnBg), so a "filled" badge
+          on top of it has nothing to fill against. Measured on the live page,
+          badge-fill vs. this panel: accent-soft 1.06:1 light / 1.39:1 dark,
+          warn-strong 1.00:1 light (the two warn-bg tokens share one value in
+          light mode) / 1.11:1 dark. Either way the fill reads as invisible,
+          so the badge would look like plain text wearing extra padding while
+          also throwing away the text-statusWarn colour that currently carries
+          the alert's meaning (8.62:1 against the panel). Rule 11's filled
+          badge presumes a neutral card surface underneath; this alert isn't
+          one. Revisit only if a genuine "badge on a status surface" token
+          pair ever exists. */}
       <h2 className="text-sm font-semibold text-statusWarn">
         {t("recovery.nagTitle")}
       </h2>
@@ -1593,12 +1731,21 @@ function FreshInstallNudge({
     <div className="bg-carbon-surface rounded-card p-5 flex items-center gap-4">
       <div className="flex-1 flex flex-col gap-1.5">
         <p className="text-sm text-carbon-text">{t("recovery.freshNudge")}</p>
+        {/* Task 5 (rule 13): was a plain underline-on-hover text link, styled
+            with the raw accent colour and no fill at all. This card's own one
+            call-to-action functions as a primary action (rule 3 allows
+            exactly one solid-accent primary action per page/card), so it
+            takes the SAME filled rounded-control/bg-accent/text-accentContrast
+            treatment every other primary button in this app already uses
+            (e.g. Config.tsx's Save button) — matching an established idiom
+            rather than routing through Badge's tone system, which has no
+            "primary CTA" tone of its own and isn't the right place to invent
+            one for a single call site. */}
         <Link
           to="/recovery"
-          className="self-start text-sm font-medium hover:underline"
-          style={{ color: "var(--accent)" }}
+          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
-          {t("recovery.freshNudgeCta")} →
+          {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
       </div>
       <button
@@ -1654,7 +1801,15 @@ function minutesOfDay(hhmm: string): number {
 function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
-      <span className="text-xs text-carbon-textMuted uppercase tracking-widest truncate">{label}</span>
+      {/* Task 5 (rule 11): each SummaryCell is its own standalone
+          bg-carbon-surface rounded-card box — not nested inside an
+          already-badged heading — so it gets the same Badge-in-<h2>
+          treatment as every other outermost Card heading on this page (see
+          Card just above and Badge.tsx's file header). `wrap` + max-w-full
+          because this sits in a narrow sm:grid-cols-3 cell. */}
+      <h2 className="flex items-center min-w-0">
+        <Badge tone="heading" size="heading" wrap className="max-w-full">{label}</Badge>
+      </h2>
       {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
           relative time in a narrow half-width cell) drops to a second line and stays
           fully readable, instead of being hard-clipped by overflow-hidden (#98). */}
@@ -1722,7 +1877,7 @@ function SummaryTier({
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
           <>
-            {health !== "off" && <Badge tone={statusTone(chipForRpo(health))}>{chipForRpo(health)}</Badge>}
+            {health !== "off" && <Badge tone={statusTone(chipForRpo(health))}>{statusLabel(chipForRpo(health), t)}</Badge>}
             <span className="text-sm text-carbon-text truncate min-w-0">{healthLabel}</span>
           </>
         )}
@@ -1743,7 +1898,7 @@ function SummaryTier({
       <SummaryCell label={t("dashboard.summaryLastResult")}>
         {newestRun ? (
           <>
-            <Badge tone={statusTone(newestRun.status)}>{newestRun.status}</Badge>
+            <Badge tone={statusTone(newestRun.status)}>{statusLabel(newestRun.status, t)}</Badge>
             <span className="text-sm text-carbon-text flex-1 truncate min-w-0">
               {runTargetText(t, newestRun)}
             </span>
@@ -2122,8 +2277,8 @@ export function Dashboard() {
       {/* Hidden-cards tray — only while editing and something is hidden. */}
       {editing && hiddenBlocks.length > 0 && (
         <div className="flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-carbon-textSub">
-            {t("dashboard.hiddenCards")}
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
           </h2>
           <div className="flex flex-wrap gap-2">
             {hiddenBlocks.map((b) => (
