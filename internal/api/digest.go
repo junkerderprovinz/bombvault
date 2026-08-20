@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
-	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -286,7 +285,7 @@ func (s *Service) SendDigest(ctx context.Context) error {
 	msg := composeDigest(stats)
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "digest",
 		notify.Event{Title: "BombVault", Message: msg, OK: ok})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) {
+	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) {
 		level := "normal"
 		if !ok {
 			level = "warning"

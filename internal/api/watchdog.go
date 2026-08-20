@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
-	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -139,7 +138,7 @@ func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, doma
 		domain, digestAge(now, lastSuccess), watchdogPeriod(period))
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backups overdue for "+domain, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
