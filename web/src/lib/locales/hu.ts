@@ -515,6 +515,7 @@ const hu: Partial<Translations> = {
   "notify.hcPerDomainHint": "Hagyjon egy mezőt üresen a fenti globális URL használatához. A saját URL-lel rendelkező tartomány saját ellenőrzést kap, saját futásidővel és előzményekkel.",
   "notify.unraid": "Unraid-értesítések",
   "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra, …). A Beállítások → VM Backup over SSH SSH-kapcsolatán keresztül fut, ezért a kulcsot ott engedélyezni kell — de a libvirt/VMs NEM szükséges (hagyd figyelmen kívül a „libvirt not reachable” eredményt, ha nem mentesz VMs-t). Az ellenőrzéshez használd a lenti „Teszt küldése” gombot.",
+  "notify.unraidPlatformMismatch": "A BombVault ezt a hosztot \"{platform}\" típusúnak érzékelte, nem Unraidnek — az Unraid-értesítések így kikapcsolva maradnak, még ha ez a kapcsoló be is van kapcsolva. Ha ez valóban Unraid hoszt, ellenőrizd, hogy a konténer /boot útvonala be van-e kötve (bind-mount) a /host/boot alá (lásd a BombVault Unraid sablonját), majd indítsd újra a konténert.",
   "notify.save": "Mentés",
   "notify.test": "Teszt küldése",
   "notify.tested": "Teszt elküldve",

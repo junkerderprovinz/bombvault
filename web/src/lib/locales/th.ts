@@ -515,6 +515,7 @@ const th: Partial<Translations> = {
   "notify.hcPerDomainHint": "เว้นช่องว่างไว้เพื่อใช้ URL ส่วนกลางด้านบน โดเมนที่มี URL ของตัวเองจะได้รับการตรวจสอบของตัวเอง พร้อมด้วยรันไทม์และประวัติของตัวเอง",
   "notify.unraid": "การแจ้งเตือน Unraid",
   "notify.unraidHint": "ส่งไปยังระบบแจ้งเตือนของ Unraid เอง (ซึ่งสามารถส่งต่อไปยัง Pushover อีเมล Discord, …) ทำงานผ่านการเชื่อมต่อ SSH จาก ตั้งค่า → VM Backup over SSH ดังนั้นต้องอนุญาตคีย์ที่นั่น — แต่ไม่จำเป็นต้องมี libvirt/VMs (ให้เพิกเฉยต่อผลลัพธ์ “libvirt not reachable” หากคุณไม่ได้สำรองข้อมูล VMs) ตรวจสอบได้โดยใช้ “ส่งทดสอบ” ด้านล่าง",
+  "notify.unraidPlatformMismatch": "BombVault ตรวจพบว่าโฮสต์นี้เป็น \"{platform}\" ไม่ใช่ Unraid — การแจ้งเตือน Unraid จึงยังคงปิดอยู่แม้ว่าตัวเลือกนี้จะเปิดใช้งาน หากนี่เป็นโฮสต์ Unraid จริง ให้ตรวจสอบว่าพาธ /boot ของคอนเทนเนอร์ถูก bind-mount ไปยัง /host/boot แล้ว (ดูเทมเพลต Unraid ของ BombVault) แล้วรีสตาร์ทคอนเทนเนอร์",
   "notify.save": "บันทึก",
   "notify.test": "ส่งทดสอบ",
   "notify.tested": "ส่งการทดสอบแล้ว",

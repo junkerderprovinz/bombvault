@@ -515,6 +515,7 @@ const he: Partial<Translations> = {
   "notify.hcPerDomainHint": "השאירו שדה ריק כדי להשתמש בכתובת ה-URL הגלובלית שלמעלה. דומיין עם כתובת URL משלו מקבל בדיקה משלו, עם זמן ריצה והיסטוריה משלו.",
   "notify.unraid": "התראות Unraid",
   "notify.unraidHint": "שלח למערכת ההתראות של Unraid עצמו (שיכולה להעביר ל-Pushover, אימייל, Discord, …). פועל דרך חיבור ה-SSH מתוך הגדרות → VM Backup over SSH, ולכן המפתח חייב להיות מורשה שם — אך libvirt/VMs אינם נדרשים (התעלם מתוצאת “libvirt not reachable” אם אינך מגבה VMs). כדי לבדוק, השתמש ב“שלח בדיקה” למטה.",
+  "notify.unraidPlatformMismatch": "BombVault זיהה את המארח הזה כ-\"{platform}\", לא כ-Unraid — לכן התראות Unraid נשארות כבויות גם כשהאפשרות הזו מופעלת. אם זהו אכן מארח Unraid, בדוק שהנתיב /boot של הקונטיינר מחובר (bind-mount) אל /host/boot (ראה את תבנית ה-Unraid של BombVault), והפעל מחדש את הקונטיינר.",
   "notify.save": "שמור",
   "notify.test": "שלח בדיקה",
   "notify.tested": "הבדיקה נשלחה",

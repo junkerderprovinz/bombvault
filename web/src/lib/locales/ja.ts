@@ -507,6 +507,7 @@ const ja: Partial<Translations> = {
   "notify.hcPerDomainHint": "フィールドを空欄のままにすると、上のグローバル URL が使用されます。独自の URL を持つドメインは、独自の実行時間と履歴を備えた専用のチェックを取得します。",
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord、… へ転送可能）。設定 → VM Backup over SSH の SSH 接続経由で動作するため、キーはそこで承認されている必要があります — ただし libvirt/VMs は不要です（VMs をバックアップしない場合は「libvirt not reachable」の結果を無視してください）。確認するには下の「テスト送信」を使用してください。",
+  "notify.unraidPlatformMismatch": "BombVault はこのホストを Unraid ではなく \"{platform}\" として検出しました — このオプションが有効でも Unraid 通知は無効のままです。実際に Unraid ホストである場合は、コンテナの /boot パスが /host/boot にバインドマウントされているか確認し（BombVault の Unraid テンプレートを参照）、コンテナを再起動してください。",
   "notify.save": "保存",
   "notify.test": "テスト送信",
   "notify.tested": "テストを送信しました",

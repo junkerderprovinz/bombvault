@@ -513,6 +513,7 @@ const cs: Partial<Translations> = {
   "notify.hcPerDomainHint": "Nechte pole prázdné, chcete-li použít globální URL výše. Doména s vlastní URL získá vlastní kontrolu, s vlastní dobou běhu a historií.",
   "notify.unraid": "Oznámení Unraid",
   "notify.unraidHint": "Odeslat do vlastního systému oznámení Unraidu (který umí přeposlat do Pushover, e-mailu, Discordu, …). Běží přes připojení SSH z Nastavení → VM Backup over SSH, takže klíč tam musí být autorizovaný — ale libvirt/VMs NEJSOU vyžadovány (pokud nezálohujete VMs, ignorujte výsledek „libvirt not reachable“). Pro ověření použijte „Odeslat test“ níže.",
+  "notify.unraidPlatformMismatch": "BombVault rozpoznal tento hostitel jako \"{platform}\", nikoli jako Unraid — oznámení Unraid tak zůstávají vypnutá, i když je tato možnost zapnutá. Pokud je to skutečně hostitel Unraid, zkontrolujte, že cesta /boot v kontejneru je připojena (bind-mount) na /host/boot (viz šablona BombVault pro Unraid), a kontejner restartujte.",
   "notify.save": "Uložit",
   "notify.test": "Odeslat test",
   "notify.tested": "Test odeslán",

@@ -510,6 +510,7 @@ const nl: Partial<Translations> = {
   "notify.hcPerDomainHint": "Laat een veld leeg om de globale URL hierboven te gebruiken. Een domein met een eigen URL krijgt een eigen controle, met eigen looptijd en geschiedenis.",
   "notify.unraid": "Unraid-meldingen",
   "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord, …). Werkt via de SSH-verbinding uit Instellingen → VM Backup over SSH, dus de sleutel moet daar geautoriseerd zijn — maar libvirt/VMs zijn NIET vereist (negeer een “libvirt not reachable”-resultaat als je geen VMs back-upt). Controleer het met “Test versturen” hieronder.",
+  "notify.unraidPlatformMismatch": "BombVault heeft deze host gedetecteerd als \"{platform}\", niet als Unraid — Unraid-meldingen blijven uit, ook als deze optie aan staat. Als dit ECHT een Unraid-host is, controleer dan of het /boot-pad van de container is bind-mounted naar /host/boot (zie de BombVault Unraid-template) en start de container opnieuw.",
   "notify.save": "Opslaan",
   "notify.test": "Test versturen",
   "notify.tested": "Test verstuurd",
