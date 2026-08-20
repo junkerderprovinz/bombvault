@@ -1446,7 +1446,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validResourceName(dt) {
+	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validVMName(dt) { // VM names may contain spaces ("Windows 11"); validResourceName wrongly rejected them (#127)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok": false, "error": "invalid DR-drill target",
 		})
