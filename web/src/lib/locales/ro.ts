@@ -513,6 +513,7 @@ const ro: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lasă un câmp gol pentru a folosi URL-ul global de mai sus. Un domeniu cu propriul URL primește propria verificare, cu propriul timp de execuție și istoric.",
   "notify.unraid": "Notificări Unraid",
   "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord, …). Funcționează prin conexiunea SSH din Setări → VM Backup over SSH, deci cheia trebuie autorizată acolo — dar libvirt/VMs NU sunt necesare (ignoră un rezultat „libvirt not reachable” dacă nu faci backup pentru VMs). Pentru verificare, folosește „Trimite test” de mai jos.",
+  "notify.unraidPlatformMismatch": "BombVault a detectat această gazdă ca fiind \"{platform}\", nu Unraid — notificările Unraid rămân dezactivate chiar dacă această opțiune este activată. Dacă aceasta ESTE într-adevăr o gazdă Unraid, verifică dacă traseul /boot al containerului este montat (bind-mount) la /host/boot (vezi șablonul Unraid al BombVault) și repornește containerul.",
   "notify.save": "Salvează",
   "notify.test": "Trimite test",
   "notify.tested": "Test trimis",

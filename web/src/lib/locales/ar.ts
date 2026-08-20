@@ -515,6 +515,7 @@ const ar: Partial<Translations> = {
   "notify.hcPerDomainHint": "اترك الحقل فارغاً لاستخدام الرابط العام أعلاه. يحصل النطاق الذي له رابطه الخاص على فحصه الخاص، بمدة تشغيله وسجله الخاصّين.",
   "notify.unraid": "إشعارات Unraid",
   "notify.unraidHint": "أرسل إلى نظام إشعارات Unraid نفسه (الذي يمكنه إعادة التوجيه إلى Pushover والبريد الإلكتروني وDiscord، …). يعمل عبر اتصال SSH من الإعدادات → VM Backup over SSH، لذا يجب أن يكون المفتاح مُصرّحًا به هناك — لكن libvirt/VMs غير مطلوبة (تجاهل نتيجة «libvirt not reachable» إذا كنت لا تنسخ VMs احتياطيًا). للتحقق، استخدم «إرسال اختبار» بالأسفل.",
+  "notify.unraidPlatformMismatch": "اكتشف BombVault أن هذا المضيف هو \"{platform}\"، وليس Unraid — لذا تظل إشعارات Unraid متوقفة حتى مع تفعيل هذا الخيار. إذا كان هذا فعلاً مضيف Unraid، تحقق من أن مسار /boot في الحاوية مربوط (bind-mounted) بـ /host/boot (راجع قالب BombVault لـ Unraid)، ثم أعد تشغيل الحاوية.",
   "notify.save": "حفظ",
   "notify.test": "إرسال اختبار",
   "notify.tested": "تم إرسال الاختبار",
