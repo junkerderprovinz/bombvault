@@ -33,6 +33,20 @@ import (
 // attempt to recognize; see zvolDatasetFromDevPath's doc comment).
 const zvolDevPrefix = "/dev/zvol/"
 
+// hasUnsafeZFSNameChars reports whether s contains characters that must never
+// reach a `zfs` argv unescaped: a ".." substring (looks like path traversal,
+// even though ZFS dataset/pool names aren't filesystem paths) or whitespace/
+// quote characters (would break shell-quoting downstream). Shared by
+// ZvolDatasetFromDevPath (applied to a dataset's remainder) and
+// RebaseZvolDatasetPool (applied to a destination pool name) — both apply
+// this SAME defensive rule to their respective input; see each function's own
+// doc comment for the additional, input-specific rules layered on top (a
+// bare-pool/no-dataset-segment check, a path-separator check, a
+// leading-getopt-character check).
+func hasUnsafeZFSNameChars(s string) bool {
+	return strings.Contains(s, "..") || strings.ContainsAny(s, " \t\n\r'\"")
+}
+
 // ZvolDatasetFromDevPath extracts the "<pool>/<dataset>" ZFS dataset path
 // from a block-device disk's source dev path, following ZFS/TrueNAS's
 // documented /dev/zvol/<pool>/<dataset> device-node convention.
@@ -62,11 +76,8 @@ func ZvolDatasetFromDevPath(devPath string) (string, bool) {
 	if !strings.Contains(rest, "/") {
 		return "", false // a bare pool name with no dataset segment is not a valid zvol path
 	}
-	if strings.Contains(rest, "..") {
-		return "", false // defensive: never let a traversal-looking segment through
-	}
-	if strings.ContainsAny(rest, " \t\n\r'\"") {
-		return "", false // defensive: never splice whitespace/quotes into a `zfs` argv
+	if hasUnsafeZFSNameChars(rest) {
+		return "", false // defensive: never splice a traversal-looking or shell-unsafe segment into a `zfs` argv
 	}
 	return rest, true
 }
@@ -108,11 +119,8 @@ func RebaseZvolDatasetPool(dataset, destPool string) (string, bool) {
 	if destPool == "" {
 		return "", false
 	}
-	if strings.ContainsAny(destPool, " \t\n\r'\"/") {
-		return "", false // a pool name is a single segment — never a nested path or unsafe shell character
-	}
-	if strings.Contains(destPool, "..") {
-		return "", false // defensive: never let a traversal-looking segment through
+	if strings.Contains(destPool, "/") || hasUnsafeZFSNameChars(destPool) {
+		return "", false // a pool name is a single segment — never a nested path, traversal-looking, or shell-unsafe
 	}
 	if strings.IndexByte("-@#%", destPool[0]) >= 0 {
 		// Not exploitable (SSH args are shell-quoted regardless), just a
