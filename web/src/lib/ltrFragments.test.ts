@@ -15,12 +15,15 @@
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
+import * as ltrFragmentsModule from "./ltrFragments";
 import {
   withLtrFragments,
+  LTR_FRAGMENTS_BY_KEY,
   REPO_LOCAL_HINT_LTR_FRAGMENTS,
   EXCLUDES_HINT_LTR_FRAGMENTS,
   FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
 } from "./ltrFragments";
+import { locales, type TranslationKey } from "./i18n";
 
 interface ElementNode {
   type?: unknown;
@@ -144,4 +147,72 @@ describe("withLtrFragments", () => {
       expect(ltrPieces).toEqual(["/mnt/zfs"]);
     });
   });
+});
+
+// ---------------------------------------------------------------------------
+// Locale drift guard — the ONLY way this mechanism can fail in production.
+//
+// The cases above prove the function does the right thing to strings that are
+// copies of today's translations. They cannot notice a translator editing the
+// REAL table tomorrow: a literal-substring matcher that stops matching just
+// returns the sentence untouched, silently, in that one locale. Since the
+// whole reason offsite.repoLocalHint is wrapped at all is that it TEACHES
+// exact path syntax, an unprotected locale is a correctness bug, not a
+// cosmetic one — so it has to fail the build, loudly, the moment it happens.
+//
+// This runs against the live registry (lib/i18n's `locales`), not a copy.
+// ---------------------------------------------------------------------------
+describe("declared fragments vs. the real locale tables", () => {
+  it("registers every fragment list this module exports", () => {
+    const exported = Object.keys(ltrFragmentsModule).filter((n) => n.endsWith("_LTR_FRAGMENTS"));
+    const registered = Object.values(LTR_FRAGMENTS_BY_KEY);
+    for (const name of exported) {
+      const list = (ltrFragmentsModule as unknown as Record<string, readonly string[]>)[name];
+      expect(registered, `${name} is not registered in LTR_FRAGMENTS_BY_KEY`).toContain(list);
+    }
+    expect(exported.length).toBe(Object.keys(LTR_FRAGMENTS_BY_KEY).length);
+  });
+
+  it("lists longer fragments before any shorter one they contain (match order matters)", () => {
+    for (const [key, frags] of Object.entries(LTR_FRAGMENTS_BY_KEY)) {
+      frags.forEach((frag, i) => {
+        for (const later of frags.slice(i + 1)) {
+          expect(
+            frag.includes(later) || !later.includes(frag),
+            `${key}: "${later}" contains "${frag}" but is listed after it, so the shorter one eats it first`
+          ).toBe(true);
+        }
+      });
+    }
+  });
+
+  for (const [key, frags] of Object.entries(LTR_FRAGMENTS_BY_KEY)) {
+    describe(key, () => {
+      const defining = Object.entries(locales).filter(
+        ([, table]) => typeof table[key as TranslationKey] === "string"
+      );
+
+      it("is translated in more than just English (sanity floor for the sweep below)", () => {
+        expect(defining.length).toBeGreaterThan(20);
+      });
+
+      it.each(defining.map(([code]) => code))(
+        "still contains every declared technical fragment, verbatim, in %s",
+        (code) => {
+          const value = locales[code][key as TranslationKey] as string;
+          for (const frag of frags) {
+            expect(
+              value.includes(frag),
+              `locales.${code}["${key}"] no longer contains "${frag}" — withLtrFragments() would silently stop pinning it LTR for this locale`
+            ).toBe(true);
+          }
+          // And the wrap must round-trip: every declared fragment actually
+          // becomes its own dir="ltr" span, with no text lost or duplicated.
+          const { text, ltrPieces } = flattenAndCheckSpans(withLtrFragments(value, frags));
+          expect(text).toBe(value);
+          for (const frag of frags) expect(ltrPieces).toContain(frag);
+        }
+      );
+    });
+  }
 });

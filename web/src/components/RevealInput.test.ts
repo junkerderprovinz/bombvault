@@ -154,7 +154,7 @@ describe("RevealInput", () => {
     expect(cls).toContain("bg-carbon-surface2");
   });
 
-  it("positions the eye on the LOGICAL trailing edge (end-2), not the physical right, so it flips correctly under dir=\"rtl\"", () => {
+  it("positions the eye on the trailing edge with the SAME page-gated physical pattern as the input's padding, never the logical end-2", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -165,8 +165,47 @@ describe("RevealInput", () => {
     });
     const btn = findOne(tree, "button");
     const cls = btn.props.className as string;
-    expect(cls).toContain("end-2");
-    expect(cls).not.toMatch(/(?:^|\s)right-2(?:\s|$)/);
+    // The eye still lands on the field's trailing edge (right in LTR, left in
+    // RTL) — but via `rtl:`-gated PHYSICAL offsets, not the logical `end-2`
+    // this used to be. `end-2` resolves against the nearest `dir` ANCESTOR
+    // while `rtl:` resolves against the PAGE, and a call site is free to nest
+    // this component inside its own `dir="ltr"` island (OffsiteWizard's
+    // `<label dir="ltr">RESTIC_REST_PASSWORD</label>` does exactly that) —
+    // there the two disagreed and the eye ended up on the opposite side from
+    // the padding that reserves room for it, secret text under the icon.
+    expect(cls).toContain("right-2");
+    expect(cls).toContain("rtl:right-auto!");
+    expect(cls).toContain("rtl:left-2");
+    expect(cls).not.toMatch(/(?:^|\s)end-2(?:\s|$)/);
+  });
+
+  it("drives the eye's offset and the input's padding reservation off the SAME direction signal", () => {
+    // The regression this guards is not either class list on its own — each
+    // looked right in isolation — it is the two halves resolving direction
+    // against DIFFERENT things (element/ancestor `dir` vs. the page). Assert
+    // the pairing itself: the reserved room and the icon must always be on
+    // the same side, so both must be `rtl:`-gated physical properties.
+    const tree = RevealInput({
+      visible: false,
+      onToggleVisible: noop,
+      showLabel: "Show value",
+      hideLabel: "Hide value",
+      value: "",
+      onChange: noop,
+    });
+    const input = findOne(tree, "input").props.className as string;
+    const btn = findOne(tree, "button").props.className as string;
+    // LTR default: padding reserved on the right, eye on the right.
+    expect(input).toContain("pr-8!");
+    expect(btn).toContain("right-2");
+    // RTL override: padding moves to the left, eye moves to the left.
+    expect(input).toContain("rtl:pl-8!");
+    expect(btn).toContain("rtl:left-2");
+    // Neither half may use a logical property, which would resolve against
+    // the element's own / its nearest ancestor's `dir` instead of the page's.
+    for (const cls of [input, btn]) {
+      expect(cls).not.toMatch(/(?:^|\s)(?:p[se]-|inset-inline|start-|end-)/);
+    }
   });
 
   it("wrapperClassName carries the field's layout footprint on the outer box, not the input", () => {
