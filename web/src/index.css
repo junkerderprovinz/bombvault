@@ -1009,6 +1009,25 @@ body {
      devtools) now resolves to the flat amber/gold ring instead of losing
      the outline entirely. */
   --focus-ring: var(--item-hue-ring, var(--focus-ring-flat));
+
+  /* Follow-up to the above (Phase 2 whole-branch review item 1): a FIELD
+     inside a hued row (e.g. VMs.tsx's Method <select>, also Containers.tsx/
+     Files.tsx) still focused with the flat amber --field-focus-ring
+     (.bv-field-focus/.bv-field-focus-well further up this file both read
+     that token, not --focus-ring) while sibling buttons in the same row
+     correctly picked up --item-hue-ring via the redefinition above — two
+     different ring colours in one visually-hued row. Same var chain as
+     --focus-ring just above, not a separate hue token: --item-hue-ring is
+     already the exact colour --focus-ring resolves to here, so pointing
+     --field-focus-ring at it too makes the two rings compute to the
+     IDENTICAL value in a hued row, not merely a similar one. Guarded the
+     same way and for the same reason as --focus-ring's own fallback just
+     above — reuses --focus-ring-flat (not a separate field-flat token)
+     because this fallback only ever matters in the same unreachable
+     degraded case that guard already covers (hueVars() always emits
+     --item-hue-ring whenever it emits anything); a plain flat amber ring is
+     a fine landing spot there, the same as it is for --focus-ring itself. */
+  --field-focus-ring: var(--item-hue-ring, var(--focus-ring-flat));
 }
 
 /* LIGHT-THEME OVERRIDE (spec-compliance fix — a Task 1 x Task 8 interaction
@@ -1082,6 +1101,13 @@ body {
 [data-theme="light"][data-rainbow] .glim-hue {
   --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
   --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
+  /* Item 1 follow-up (see the base [data-rainbow] .glim-hue block's own
+     --field-focus-ring comment above for the full reasoning) — same
+     var(--item-hue-ring-light, var(--focus-ring-flat)) chain as this
+     block's own --focus-ring line just above, so a field's ring and a
+     button's ring inside a hued row compute to the identical light-theme
+     value too, not just in dark. */
+  --field-focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
 }
 
 /* Same override, restated for the one case with no explicit data-theme
@@ -1095,6 +1121,10 @@ body {
   :root:not([data-theme])[data-rainbow] .glim-hue {
     --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
     --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
+    /* Item 1 follow-up — same reasoning as the matching
+       [data-theme="light"][data-rainbow] .glim-hue block's --field-focus-ring
+       above, restated here for the identical no-explicit-attribute case. */
+    --field-focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
   }
 }
 
