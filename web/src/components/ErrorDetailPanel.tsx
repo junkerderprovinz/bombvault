@@ -176,8 +176,11 @@ export function ErrorDetailPanel({
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
-          <h2 id="errorpanel-title" className="text-lg font-semibold text-carbon-text">
-            {t("errorPanel.title")}
+          {/* Task 5 follow-up (rule 15, "title as a badge" for window
+              chrome) — see ConfirmDialog.tsx for the aria-labelledby-safety
+              reasoning; identical here. */}
+          <h2 id="errorpanel-title" className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{t("errorPanel.title")}</Badge>
           </h2>
           <div className="flex items-center gap-2">
             <button

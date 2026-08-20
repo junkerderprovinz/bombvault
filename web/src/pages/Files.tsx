@@ -792,8 +792,12 @@ function FileSetDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-carbon-text">
-          {initial ? t("files.editSet") : t("files.addSet")}
+        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
+            This dialog's accessible name comes from aria-label on the
+            role="dialog" div (see above), not aria-labelledby pointing at
+            this heading, so there's no id/association to preserve here. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{initial ? t("files.editSet") : t("files.addSet")}</Badge>
         </h2>
 
         {/* Name — feeds the restic tag, so the server validates it strictly. */}

@@ -35,6 +35,7 @@
 // hand-written test builds, and no test here exercises it.
 // ---------------------------------------------------------------------------
 import type { Ref } from "react";
+import { Badge } from "./Badge";
 
 export type ConfirmTone = "fail" | "warn";
 
@@ -107,8 +108,16 @@ export function ConfirmDialog({
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
-          <h2 id="confirmdialog-title" className="text-lg font-semibold text-carbon-text">
-            {title}
+          {/* Task 5 follow-up (rule 15 — "a window is a window... title as a
+              badge"): a dialog's <h2> names the WINDOW CHROME itself, so it
+              gets the same tone="heading" Badge treatment as a page's section
+              headings (rule 11), just applied to a different element class.
+              The <h2>+id stays exactly where it was — aria-labelledby reads
+              the referenced element's computed text content, which still
+              includes the Badge's text regardless of the span nested inside,
+              so the accessible name is unaffected by this markup change. */}
+          <h2 id="confirmdialog-title" className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{title}</Badge>
           </h2>
           <button
             type="button"
