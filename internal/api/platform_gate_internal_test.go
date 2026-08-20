@@ -392,8 +392,8 @@ func TestDashboardPluginPlatformMismatchErrorIsActionable(t *testing.T) {
 // TestScrubErrorKeepsUnraidPlatformMismatchPaths pins the scrubber bypass
 // unraidPlatformMismatchError relies on (found via live verification: without
 // it, handlers.go's generic absolute-path scrubber reduced the whole
-// actionable hint to "...verify the container's [path] host path is
-// bind-mounted to [path]...", exactly as useless as the pre-fix
+// actionable hint to "...verify the host's [path] is bind-mounted to
+// [path] inside the container...", exactly as useless as the pre-fix
 // errRestoreDestination/errRepoPathGuidance bugs that pattern already fixes
 // elsewhere). Mirrors TestScrubErrorKeepsRestoreDestinationPath's shape.
 func TestScrubErrorKeepsUnraidPlatformMismatchPaths(t *testing.T) {

@@ -507,7 +507,7 @@ const vi: Partial<Translations> = {
   "notify.hcPerDomainHint": "Để trống một trường để dùng URL toàn cục ở trên. Một miền có URL riêng sẽ có phần kiểm tra riêng, với thời gian chạy và lịch sử riêng.",
   "notify.unraid": "Thông báo Unraid",
   "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord, …). Chạy qua kết nối SSH từ Cài đặt → VM Backup over SSH, nên khóa phải được ủy quyền ở đó — nhưng KHÔNG bắt buộc phải có libvirt/VMs (bỏ qua kết quả “libvirt not reachable” nếu bạn không sao lưu VMs). Để kiểm tra, dùng “Gửi thử” bên dưới.",
-  "notify.unraidPlatformMismatch": "BombVault đã phát hiện máy chủ này là \"{platform}\", không phải Unraid — thông báo Unraid vẫn tắt dù tùy chọn này đang bật. Nếu đây THỰC SỰ là máy chủ Unraid, hãy kiểm tra xem đường dẫn /boot của container đã được bind-mount tới /host/boot chưa (xem mẫu Unraid của BombVault), rồi khởi động lại container.",
+  "notify.unraidPlatformMismatch": "BombVault đã phát hiện máy chủ này là \"{platform}\", không phải Unraid — thông báo Unraid vẫn tắt dù tùy chọn này đang bật. Nếu đây THỰC SỰ là máy chủ Unraid, hãy kiểm tra xem /boot của máy chủ đã được bind-mount tới /host/boot bên trong container chưa (xem mẫu Unraid của BombVault), rồi khởi động lại container.",
   "notify.save": "Lưu",
   "notify.test": "Gửi thử",
   "notify.tested": "Đã gửi thử",

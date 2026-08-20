@@ -515,7 +515,7 @@ const fi: Partial<Translations> = {
   "notify.hcPerDomainHint": "Jätä kenttä tyhjäksi käyttääksesi yllä olevaa yleistä URL-osoitetta. Toimialue, jolla on oma URL-osoite, saa oman tarkistuksensa, jolla on oma suoritusaika ja historia.",
   "notify.unraid": "Unraid-ilmoitukset",
   "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin, …). Toimii Asetukset → VM Backup over SSH -kohdan SSH-yhteyden kautta, joten avain on valtuutettava siellä — mutta libvirt/VMs EIVÄT ole pakollisia (ohita ”libvirt not reachable” -tulos, jos et varmuuskopioi VMs). Tarkista se alla olevalla ”Lähetä testi” -painikkeella.",
-  "notify.unraidPlatformMismatch": "BombVault tunnisti tämän isännän tyypiksi \"{platform}\", ei Unraidiksi — Unraid-ilmoitukset pysyvät pois päältä, vaikka tämä on päällä. Jos kyseessä ON oikeasti Unraid-isäntä, tarkista, että kontin /boot-polku on bind-mountattu kohteeseen /host/boot (katso BombVaultin Unraid-mallipohja), ja käynnistä kontti uudelleen.",
+  "notify.unraidPlatformMismatch": "BombVault tunnisti tämän isännän tyypiksi \"{platform}\", ei Unraidiksi — Unraid-ilmoitukset pysyvät pois päältä, vaikka tämä on päällä. Jos kyseessä ON oikeasti Unraid-isäntä, tarkista, että isännän /boot on bind-mountattu kontin sisällä kohteeseen /host/boot (katso BombVaultin Unraid-mallipohja), ja käynnistä kontti uudelleen.",
   "notify.save": "Tallenna",
   "notify.test": "Lähetä testi",
   "notify.tested": "Testi lähetetty",

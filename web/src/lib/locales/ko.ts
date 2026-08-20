@@ -507,7 +507,7 @@ const ko: Partial<Translations> = {
   "notify.hcPerDomainHint": "위의 전역 URL을 사용하려면 필드를 비워 두세요. 자체 URL이 있는 도메인은 자체 실행 시간과 기록을 가진 전용 검사를 받습니다.",
   "notify.unraid": "Unraid 알림",
   "notify.unraidHint": "Unraid 자체 알림 시스템으로 전송합니다(Pushover, 이메일, Discord, … 로 전달 가능). 설정 → VM Backup over SSH의 SSH 연결을 통해 실행되므로 키가 그곳에서 승인되어 있어야 합니다 — 하지만 libvirt/VMs는 필요하지 않습니다(VMs를 백업하지 않는다면 “libvirt not reachable” 결과는 무시하세요). 확인하려면 아래의 “테스트 보내기”를 사용하세요.",
-  "notify.unraidPlatformMismatch": "BombVault가 이 호스트를 Unraid가 아닌 \"{platform}\"(으)로 감지했습니다 — 이 옵션이 켜져 있어도 Unraid 알림은 꺼진 상태로 유지됩니다. 실제로 Unraid 호스트라면 컨테이너의 /boot 경로가 /host/boot에 바인드 마운트되어 있는지 확인하고(BombVault Unraid 템플릿 참고) 컨테이너를 다시 시작하세요.",
+  "notify.unraidPlatformMismatch": "BombVault가 이 호스트를 Unraid가 아닌 \"{platform}\"(으)로 감지했습니다 — 이 옵션이 켜져 있어도 Unraid 알림은 꺼진 상태로 유지됩니다. 실제로 Unraid 호스트라면 호스트의 /boot가 컨테이너 내부의 /host/boot에 바인드 마운트되어 있는지 확인하고(BombVault Unraid 템플릿 참고) 컨테이너를 다시 시작하세요.",
   "notify.save": "저장",
   "notify.test": "테스트 보내기",
   "notify.tested": "테스트 전송됨",

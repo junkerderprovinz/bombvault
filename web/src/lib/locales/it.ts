@@ -515,7 +515,7 @@ const it: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lascia vuoto un campo per usare l'URL globale qui sopra. Un dominio con un proprio URL ottiene un controllo dedicato, con tempo di esecuzione e cronologia propri.",
   "notify.unraid": "Notifiche Unraid",
   "notify.unraidHint": "Invia al sistema di notifiche di Unraid (che può inoltrare a Pushover, email, Discord, …). Funziona tramite la connessione SSH da Impostazioni → VM Backup over SSH, quindi la chiave deve essere autorizzata lì — ma libvirt/VMs NON sono necessari (ignora un risultato «libvirt not reachable» se non esegui il backup delle VMs). Per verificare, usa «Invia test» qui sotto.",
-  "notify.unraidPlatformMismatch": "BombVault ha rilevato questo host come \"{platform}\", non come Unraid — le notifiche Unraid restano disattivate anche con questa opzione attiva. Se questo È davvero un host Unraid, verifica che il percorso /boot del container sia montato (bind-mount) su /host/boot (vedi il template Unraid di BombVault) e riavvia il container.",
+  "notify.unraidPlatformMismatch": "BombVault ha rilevato questo host come \"{platform}\", non come Unraid — le notifiche Unraid restano disattivate anche con questa opzione attiva. Se questo È davvero un host Unraid, verifica che il /boot dell'host sia montato (bind-mount) su /host/boot all'interno del container (vedi il template Unraid di BombVault) e riavvia il container.",
   "notify.save": "Salva",
   "notify.test": "Invia test",
   "notify.tested": "Test inviato",
