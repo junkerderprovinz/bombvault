@@ -157,6 +157,7 @@ const fi: Partial<Translations> = {
   "settings.encryptionWarning":
     "Salaus on kiinnitetty arkistokohtaisesti alustuksen yhteydessä. Muutos edellyttää uutta tyhjää polkua.",
   "settings.paths": "Varmuuskopiopolut",
+  "settings.pathsHint": "Suhteelliset alipolut isäntäkoneen liitosjuuren alla ({root}). Napsauta Selaa siirtyäksesi kansioissa, tai kirjoita polku suoraan.",
   "settings.containersPath": "Konttien polku",
   "settings.vmsPath": "VM-polku",
   "settings.flashPath": "Flash-polku",
@@ -173,6 +174,7 @@ const fi: Partial<Translations> = {
   "offsite.replicating": "Replikoidaan…",
   "offsite.replicateFailed": "Replikointi epäonnistui",
   "settings.domains": "Toimialueet",
+  "settings.domainsHint": "Kytke jokainen varmuuskopiointialue päälle tai pois erikseen. VM:ien tai Flashin käyttöönotto tuo sen välilehden näkyviin sivupalkkiin.",
   "settings.containersEnabled": "Kontit",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

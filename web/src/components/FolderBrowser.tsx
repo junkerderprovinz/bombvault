@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { InfoBubble } from "./InfoBubble";
+import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
 // Folder browser (shared)
@@ -18,22 +20,36 @@ export interface FolderBrowserProps {
   // The old hardcoded "user/bombvault/container" example named a path that does
   // not exist and read as a real chosen default (#125).
   placeholder?: string;
+  /** Optional one-line explanation of what THIS field is for, rendered as a
+   *  neutral (i) beside the label (design-language.md rule 8) instead of a
+   *  separate permanent grey <p> under the whole field — same additive,
+   *  every-other-call-site-unchanged shape as Card's own `hint` prop
+   *  (GlimStone form-engine Phase 2 Task 4). Optional: omitted call sites
+   *  (Recovery.tsx, Files.tsx, Containers.tsx, RestorePanel.tsx,
+   *  PathModeSwitch's own internal Local-mode use) render byte-for-byte the
+   *  same as before. */
+  hint?: string;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint }: FolderBrowserProps) {
   const { t } = useT();
+  const { push } = useToast();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
   const [open, setOpen] = useState(false);
   const [browsePath, setBrowsePath] = useState(value);
   const [dirs, setDirs] = useState<{ name: string; path: string }[]>([]);
+  // Directory-listing failure — NOT migrated to a toast (GlimStone follow-up
+  // pass, v8.0.0 audit note): it replaces the whole browser panel content
+  // (falls back to manualFallback below), the same structural "the section
+  // failed to load" condition every other page-level list-load error gets
+  // left inline for, not a one-shot action.
   const [browseError, setBrowseError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [manualFallback, setManualFallback] = useState(false);
   // New-folder creation inside the current browsePath.
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
 
   const doFetch = useCallback((path: string) => {
     setLoading(true);
@@ -82,11 +98,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
     const name = newName.trim();
     if (!name || creating) return;
     setCreating(true);
-    setCreateError(null);
     createFolder(browsePath, name)
       .then((res) => {
         if (!res.ok) {
-          setCreateError(res.error ?? t("folder.createFailed"));
+          push(res.error ?? t("folder.createFailed"), "fail");
           return;
         }
         setNewName("");
@@ -94,7 +109,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         doFetch(res.path ?? browsePath);
       })
       .catch((err: unknown) => {
-        setCreateError(err instanceof Error ? err.message : t("folder.createFailed"));
+        push(err instanceof Error ? err.message : t("folder.createFailed"), "fail");
       })
       .finally(() => setCreating(false));
   }
@@ -107,7 +122,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs text-carbon-textSub">{label}</label>
+      <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+        {label}
+        {hint && <InfoBubble tip={hint} />}
+      </label>
 
       {/* Current value + browser trigger */}
       <div className="flex items-center gap-2">
@@ -238,7 +256,6 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               </button>
             </div>
           )}
-          {createError && <p className="text-xs text-statusFail">{createError}</p>}
 
           {/* Action buttons */}
           {!manualFallback && (

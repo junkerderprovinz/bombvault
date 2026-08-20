@@ -157,6 +157,7 @@ const ko: Partial<Translations> = {
   "settings.encryptionWarning":
     "암호화는 초기화 시 리포지토리에 고정됩니다. 변경하려면 새로운 빈 경로가 필요합니다.",
   "settings.paths": "백업 경로",
+  "settings.pathsHint": "호스트 마운트 루트({root}) 아래의 상대 하위 경로입니다. 찾아보기를 클릭해 디렉터리를 탐색하거나 경로를 직접 입력하세요.",
   "settings.containersPath": "컨테이너 경로",
   "settings.vmsPath": "VM 경로",
   "settings.flashPath": "플래시 경로",
@@ -173,6 +174,7 @@ const ko: Partial<Translations> = {
   "offsite.replicating": "복제 중…",
   "offsite.replicateFailed": "복제 실패",
   "settings.domains": "도메인",
+  "settings.domainsHint": "각 백업 도메인을 개별적으로 켜거나 끌 수 있습니다. VM 또는 Flash를 활성화하면 사이드바에 해당 탭이 표시됩니다.",
   "settings.containersEnabled": "컨테이너",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "플래시",

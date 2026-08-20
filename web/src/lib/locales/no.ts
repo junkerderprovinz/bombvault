@@ -156,6 +156,7 @@ const no: Partial<Translations> = {
   "settings.encryptionWarning":
     "Kryptering er fastlåst per repository ved initialisering. Endring krever en ny tom sti.",
   "settings.paths": "Sikkerhetskopistier",
+  "settings.pathsHint": "Relative understier under host-monteringens rot ({root}). Klikk på Bla gjennom for å navigere i mapper, eller skriv inn en sti direkte.",
   "settings.containersPath": "Kontainersti",
   "settings.vmsPath": "VM-sti",
   "settings.flashPath": "Flash-sti",
@@ -172,6 +173,7 @@ const no: Partial<Translations> = {
   "offsite.replicating": "Replikerer…",
   "offsite.replicateFailed": "Replikering mislyktes",
   "settings.domains": "Domener",
+  "settings.domainsHint": "Slå hvert backup-domene av eller på for seg. Å aktivere VM-er eller Flash viser fanen deres i sidefeltet.",
   "settings.containersEnabled": "Kontainere",
   "settings.vmsEnabled": "VM-er",
   "settings.flashEnabled": "Flash",

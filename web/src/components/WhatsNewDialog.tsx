@@ -244,8 +244,11 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
-          <h2 id="whatsnew-title" className="text-lg font-semibold text-carbon-text">
-            {t("whatsnew.title").replace("{version}", version)}
+          {/* Task 5 follow-up (rule 15, "title as a badge" for window
+              chrome) — see ConfirmDialog.tsx for the aria-labelledby-safety
+              reasoning; identical here. */}
+          <h2 id="whatsnew-title" className="flex items-center">
+            <Badge tone="heading" size="heading" wrap>{t("whatsnew.title").replace("{version}", version)}</Badge>
           </h2>
           <button
             ref={closeRef}
