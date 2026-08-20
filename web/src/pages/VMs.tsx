@@ -20,6 +20,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Selector } from "../components/Selector";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -179,11 +180,10 @@ function VMMethodSelect({
 }) {
   const [method, setMethod] = useState(initial || "graceful");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
 
   async function handleChange(next: string) {
     setBusy(true);
-    setError(null);
     try {
       const res = await setVMMethod(name, next);
       if (res.ok) {
@@ -192,10 +192,10 @@ function VMMethodSelect({
         // Surface the failure instead of silently reverting — a swallowed error
         // here means the user thinks they switched to live (no downtime) when the
         // VM will actually be shut down at backup time.
-        setError(res.error ?? t("vm.method.saveFailed"));
+        push(res.error ?? t("vm.method.saveFailed"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("vm.method.saveFailed"));
+      push(err instanceof Error ? err.message : t("vm.method.saveFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -213,11 +213,6 @@ function VMMethodSelect({
         <option value="graceful">{t("vm.method.graceful")}</option>
         <option value="live">{t("vm.method.live")}</option>
       </select>
-      {error && (
-        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
-          {error}
-        </span>
-      )}
     </div>
   );
 }
@@ -232,7 +227,7 @@ function VMIncludeToggle({
   const { t } = useT();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
 
   // Re-seed when the parent passes a fresh value (e.g. after "Include all in
   // schedule" reloads the list). Rows are keyed by name and do not remount, so
@@ -241,16 +236,15 @@ function VMIncludeToggle({
 
   async function handleChange(next: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await setVMInclude(name, next);
       if (res.ok) {
         setEnabled(next);
       } else {
-        setError(res.error ?? t("schedule.updateFailed"));
+        push(res.error ?? t("schedule.updateFailed"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("schedule.updateFailed"));
+      push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -265,11 +259,6 @@ function VMIncludeToggle({
         onChange={(next) => void handleChange(next)}
         disabled={busy}
       />
-      {error && (
-        <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
-          {error}
-        </span>
-      )}
     </div>
   );
 }
@@ -278,6 +267,11 @@ function VMIncludeToggle({
 // VM-aware BackupButton variant
 // ---------------------------------------------------------------------------
 
+// GlimStone follow-up pass (v8.0.0) audit note: deliberately NOT migrated to a
+// toast — same reasoning as Containers.tsx's ExportButton, its exact twin.
+// The "done"/"error" result below shows the actual export destination path (or
+// the raw error), neither of which auto-dismissed before this pass; it's a
+// reference value to copy down, not a one-shot ping.
 function VMExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
@@ -315,6 +309,19 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
   );
 }
 
+// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
+// "error" result below is deliberately NOT migrated to a toast, unlike this
+// file's other flash sites. It's driven by the SHARED lib/backupWatch.ts
+// useBackupWatch hook (the same one components/BackupButton.tsx uses for
+// Containers.tsx), whose header comment documents a deliberate asymmetry: a
+// BACKUP success already self-clears after 4s (SUCCESS_CLEAR_MS, effectively
+// already toast-like), but the identical state shape also backs RESTORE
+// outcomes elsewhere (RestoreAction.tsx), which are explicitly STICKY BY
+// DESIGN — "a restore is a rare, destructive action whose outcome the user
+// must actually see" — and reset only via reset(), not a timer. Splitting
+// that shared, cross-file state machine's rendering by kind (backup vs.
+// restore) is a hook-level architecture change, not the local flash-swap this
+// pass does everywhere else, so it's left as its own deliberate follow-up.
 function VMBackupButton({
   name,
   t,
@@ -414,7 +421,7 @@ function VMSnapshotRow({
   // available while VM B is backing up.
   const busy = progressMap[`vm:${vmName}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
-  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { push } = useToast();
   // Collapsed by default so the list stays compact (mirrors Containers'
   // SnapshotRow) — the restore controls (confirm + leave-stopped + progress
   // banner) only render once the user opts in.
@@ -424,13 +431,12 @@ function VMSnapshotRow({
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
-    setDeleteErr(null);
     try {
       const res = await deleteSnapshot("vms", snap.id, source);
       if (res.ok) onDeleted();
-      else setDeleteErr(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setDeleting(false);
     }
@@ -488,7 +494,6 @@ function VMSnapshotRow({
           />
         </div>
       )}
-      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -511,10 +516,16 @@ function VMRestorePanel({
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
+  // Section-load error (list failed to load) — NOT migrated to a toast
+  // (GlimStone follow-up pass, v8.0.0 audit note): it replaces the whole
+  // snapshot-list content area, the same "the section failed to load"
+  // structural condition as the page-level `error` in VMs()/Containers(), not
+  // a one-shot button-click confirmation.
   const [error, setError] = useState<string | null>(null);
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -530,6 +541,13 @@ function VMRestorePanel({
       .finally(() => setLoading(false));
   }, [open, name, source, reloadTick]);
 
+  // GlimStone follow-up pass (v8.0.0): "Delete all" is a one-shot action
+  // failure — was ALSO routed through the section-load `error` above, but the
+  // .finally() below unconditionally bumps reloadTick, which re-fires the
+  // effect and clears `error` again almost immediately (setError(null) at the
+  // top of that effect) — so this failure was already near-invisible before
+  // this pass, a latent dead branch this migration also resolves (same shape
+  // as 0d4d195's CloudCredSetsCard fix). A toast survives that reload.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25
@@ -538,12 +556,11 @@ function VMRestorePanel({
     // deleteBackupsConfirm and Files.tsx's deleteBackupsConfirm.
     if (!(await confirm(t("snapshots.deleteAllConfirm")))) return;
     setDeletingAll(true);
-    setError(null);
     deleteBackupsVM(name, source)
       .then((res) => {
-        if (!res.ok) setError(res.error ?? "Failed to delete backups");
+        if (!res.ok) push(res.error ?? "Failed to delete backups", "fail");
       })
-      .catch(() => setError("Failed to delete backups"))
+      .catch(() => push("Failed to delete backups", "fail"))
       .finally(() => {
         setDeletingAll(false);
         setReloadTick((n) => n + 1);
@@ -778,19 +795,18 @@ function VMForgetButton({
   onForgotten: () => void;
 }) {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleForget() {
     if (!(await confirm(t("vms.removeEntryConfirm")))) return;
     setPending(true);
-    setError(null);
     try {
       const res = await forgetVM(name);
       if (res.ok) onForgotten();
-      else setError(res.error ?? "Remove failed");
+      else push(res.error ?? "Remove failed", "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Remove failed");
+      push(err instanceof Error ? err.message : "Remove failed", "fail");
     } finally {
       setPending(false);
     }
@@ -805,7 +821,6 @@ function VMForgetButton({
       >
         {pending ? t("dashboard.checking") : t("vms.removeEntry")}
       </button>
-      {error && <p className="text-xs text-statusFail">{error}</p>}
       {confirmDialog}
     </div>
   );
@@ -822,17 +837,16 @@ function ScheduleIncludeAllControl({
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
 
   async function run(include: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await setVMIncludeAll(include);
       if (res.ok) onChanged();
-      else setError(res.error ?? t("settings.error"));
+      else push(res.error ?? t("settings.error"), "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
@@ -854,7 +868,6 @@ function ScheduleIncludeAllControl({
       >
         {t("schedule.excludeAll")}
       </button>
-      {error && <span className="text-xs text-statusFail">{error}</span>}
     </div>
   );
 }
@@ -882,8 +895,8 @@ const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
 function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
   const [savedOrder, setSavedOrder] = useState<VmOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
+  const { push } = useToast();
   const hydrated = useRef(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -969,20 +982,18 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
 
   async function persist(order: string[]) {
     setSaveState("saving");
-    setError(null);
     try {
       const res = await setVmBackupOrder(order);
       if (res.ok) {
         setSavedOrder(order.map((vm, i) => ({ vm, order: i + 1 })));
-        setSaveState("saved");
-        setTimeout(() => setSaveState("idle"), 3000);
+        push(t("backupOrder.saved"), "success");
       } else {
-        setError(res.error ?? t("backupOrder.saveError"));
-        setSaveState("error");
+        push(res.error ?? t("backupOrder.saveError"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("backupOrder.saveError"));
-      setSaveState("error");
+      push(err instanceof Error ? err.message : t("backupOrder.saveError"), "fail");
+    } finally {
+      setSaveState("idle");
     }
   }
 
@@ -1102,8 +1113,6 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
               >
                 {t("backupOrder.reset")}
               </button>
-              {saveState === "saved" && <span className="text-xs text-statusOk">{t("backupOrder.saved")}</span>}
-              {saveState === "error" && error && <span className="text-xs text-statusFail">{error}</span>}
             </div>
           </>
         ))}
@@ -1121,11 +1130,16 @@ export function VMs() {
   // Containers.tsx's identical call for the same reasoning.
   useRainbow();
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
   // Broader "something is running" signal: any backup/restore/replication in
   // flight disables the bulk start buttons + shows a hint.
   const running = anyActive(useProgress());
   const [vms, setVMs] = useState<VM[]>([]);
   const [loading, setLoading] = useState(true);
+  // Page-level load failure — NOT migrated to a toast (GlimStone follow-up
+  // pass, v8.0.0 audit note): matches Containers.tsx's identical page-level
+  // `error` — a structural "the page failed" condition, not a one-shot
+  // confirmation of a button click.
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
   const [search, setSearch] = useState("");
@@ -1133,23 +1147,23 @@ export function VMs() {
   const [backupFilter, setBackupFilter] = useState<BackupFilterKey>(loadBackupFilterKey);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
   const [discovering, setDiscovering] = useState(false);
-  const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
 
+  // GlimStone follow-up pass (v8.0.0): the "+N" / error note never
+  // auto-cleared (stuck next to the Discover button until the next click) —
+  // now a toast, mirroring Containers.tsx's identical handleDiscover.
   async function handleDiscover() {
     setDiscovering(true);
-    setDiscoverMsg(null);
     try {
       const res = await discoverVMs();
       if (res.ok) {
-        setDiscoverMsg(`+${res.discovered ?? 0}`);
+        push(`+${res.discovered ?? 0}`, "success");
         await loadVMs();
       } else {
-        setDiscoverMsg(res.error ?? "Discover failed");
+        push(res.error ?? "Discover failed", "fail");
       }
     } catch (err) {
-      setDiscoverMsg(err instanceof Error ? err.message : "Discover failed");
+      push(err instanceof Error ? err.message : "Discover failed", "fail");
     } finally {
       setDiscovering(false);
     }
@@ -1245,9 +1259,11 @@ export function VMs() {
     });
   }, [search, scheduleFilter, backupFilter, vms]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // GlimStone follow-up pass (v8.0.0): the "N ok, N failed" summary was a
+  // persistent inline note (no auto-dismiss); now a one-shot toast, mirroring
+  // Containers.tsx's identical runBulk. Severity follows the result.
   async function runBulk(action: (name: string) => Promise<{ ok: boolean }>) {
     setBulkBusy(true);
-    setBulkMsg(null);
     let ok = 0;
     let fail = 0;
     for (const name of selected) {
@@ -1260,7 +1276,7 @@ export function VMs() {
       }
     }
     setBulkBusy(false);
-    setBulkMsg(`${ok} ok, ${fail} failed`);
+    push(`${ok} ok, ${fail} failed`, fail > 0 ? "warn" : "success");
     setSelected(new Set());
     void loadVMs();
   }
@@ -1306,9 +1322,6 @@ export function VMs() {
           <div className="mt-2"><OffsiteIndicator domain="vms" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {discoverMsg && (
-            <span className="text-xs text-carbon-textSub">{discoverMsg}</span>
-          )}
           <button
             onClick={() => void handleDiscover()}
             disabled={discovering}
@@ -1438,9 +1451,6 @@ export function VMs() {
             <span className="text-xs text-carbon-textMuted">
               {t(busyPhraseKey(running.phase))}
             </span>
-          )}
-          {!bulkBusy && bulkMsg && (
-            <span className="text-xs text-carbon-textSub">{bulkMsg}</span>
           )}
         </div>
       )}
