@@ -595,10 +595,18 @@ function FileSetRestorePanel({
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
+  // Section-load error (list failed to load) — NOT migrated to a toast
+  // (GlimStone follow-up pass, v8.0.0 audit note): it replaces the whole
+  // snapshot-list content area, the same "the section failed to load"
+  // structural condition as Files()'s own page-level `error`, not a one-shot
+  // button-click confirmation. handleDeleteAll's own one-shot failure below
+  // is the bug fix — it used to share this exact state slot (see comment
+  // there).
   const [error, setError] = useState<string | null>(null);
 
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -614,6 +622,15 @@ function FileSetRestorePanel({
       .finally(() => setLoading(false));
   }, [open, set.id, source, reloadTick]);
 
+  // BUG FIX (GlimStone follow-up pass, v8.0.0): "Delete all" is a one-shot
+  // action failure — it used to be routed through the section-load `error`
+  // above via setError(), but the failure branch below also bumps
+  // reloadTick to refresh the (still-existing) snapshot list, which re-fires
+  // the load effect above and clears `error` again almost immediately
+  // (setError(null) at the top of that effect) — so a delete-all failure was
+  // already near-invisible before this fix, the EXACT same dead-error-
+  // display bug 43c6b49 found and fixed in VMs.tsx's
+  // VMRestorePanel.handleDeleteAll. A toast survives that reload.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25
@@ -624,11 +641,10 @@ function FileSetRestorePanel({
     // VMs.tsx's deleteAllConfirm.
     if (!(await confirm(t("files.deleteBackupsConfirm")))) return;
     setDeletingAll(true);
-    setError(null);
     deleteFileSetBackups(set.id)
       .then((res) => {
         if (!res.ok) {
-          setError(res.error ?? "Failed to delete backups");
+          push(res.error ?? "Failed to delete backups", "fail");
           setReloadTick((n) => n + 1);
           return;
         }
@@ -637,7 +653,7 @@ function FileSetRestorePanel({
         onSetsChanged();
       })
       .catch(() => {
-        setError("Failed to delete backups");
+        push("Failed to delete backups", "fail");
         setReloadTick((n) => n + 1);
       })
       .finally(() => setDeletingAll(false));
