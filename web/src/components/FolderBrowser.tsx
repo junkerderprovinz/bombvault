@@ -171,7 +171,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               regression from this task (OffsiteIndicator.tsx's own spinner,
               the precedent this matched, had the identical unverified gap
               already) — fixed here anyway since it's the same root cause;
-              see index.css's --accent-text comment for the fix. */}
+              see index.css's --accent-text comment for the fix. That comment
+              also carries the full inventory of the four still-unmigrated
+              flat --accent sites, OffsiteIndicator's spinner among them, so
+              the two spinners have now diverged on purpose. */}
           {loading && (
             <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
               <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />

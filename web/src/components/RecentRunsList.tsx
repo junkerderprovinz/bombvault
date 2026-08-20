@@ -23,22 +23,35 @@ const MAX_RUNS = 8;
 // compete with rule 3's "at most one solid accent" the way a repeated
 // solid accent BUTTON would. bg-accentText, not the flat bg-accent: a
 // spec-compliance review measured the flat accent gold at 1.61:1 in light
-// theme here (was ~5.2:1 as bg-statusInfoSolid before this task) — badly
-// under SC 1.4.11's 3:1 non-text-indicator minimum. See index.css's
+// theme here (5.00:1 as bg-statusInfoSolid #0f62fe before this task) —
+// badly under SC 1.4.11's 3:1 non-text-indicator minimum. See index.css's
 // --accent-text comment for the fix and the measured numbers.
 //
 // NOTE for whoever next touches rainbow/hue rows (Task 8 territory): this
-// component sometimes renders inside a .glim-hue row (via RestorePanel/
-// FileSetRestorePanel), but --color-accentText is deliberately NOT
-// redefined by index.css's [data-rainbow] .glim-hue block the way
-// --color-accent is — so this dot always shows the fixed, contrast-verified
-// global accent-text colour, never a rainbow row's own hue, even inside a
-// hue-enabled subtree. That's on purpose, not an oversight: individual
-// rainbow palette hues aren't WCAG-verified the way --accent-text is (this
-// task only fixed the DEFAULT accent's contrast), so a genuine
-// activity/status indicator keeping guaranteed contrast wins over matching
-// its row's identity colour. If a future task WCAG-verifies the full
-// rainbow palette, revisit whether this should follow the hue after all.
+// component sometimes renders inside a .glim-hue row (Files.tsx's
+// FileSetRow and the VMs/Containers equivalents wrap the restore panel that
+// renders this list), but --color-accentText is deliberately NOT redefined
+// by index.css's [data-rainbow] .glim-hue block the way --color-accent is —
+// so this dot always shows the fixed, contrast-verified global accent-text
+// colour, never a rainbow row's own hue, even inside a hue-enabled subtree.
+// That's on purpose, not an oversight. Three reasons, in increasing order of
+// how much they matter:
+//   1. Contrast: individual rainbow palette hues aren't WCAG-verified the
+//      way --accent-text is (this task only fixed the DEFAULT accent), so a
+//      genuine activity indicator keeping guaranteed contrast wins.
+//   2. Rule 4 vs. rule 5: this is a STATUS dot, not an identity marker. Its
+//      other three states are fixed state hues (ok/fail/neutral) that never
+//      followed the rainbow — "running" defecting to the row's identity
+//      colour was the odd one out, not the rule. The row already carries its
+//      identity through .glim-tint's wash.
+//   3. It removes a real ambiguity in reactive mode. [data-rainbow="reactive"]
+//      .glim-hue rebinds --accent to --carbon-text-muted at rest, so before
+//      this change a "running" dot in a resting reactive row painted #8d8d8d
+//      in dark theme — all but identical to the "skipped" dot's
+//      --status-neutral-solid #8a8a92 (RGB-distance ~7). Two different states
+//      rendered the same grey until you hovered the row.
+// If a future task WCAG-verifies the full rainbow palette, revisit reason 1
+// — but reasons 2 and 3 stand regardless.
 function statusDotClass(status: string): string {
   switch (status.toLowerCase()) {
     case "success":

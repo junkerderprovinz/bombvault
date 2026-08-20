@@ -1318,8 +1318,8 @@ export default function Recovery() {
                         text is safe (no competing solid-accent elements at
                         once). text-accentText, not the flat text-accent: a
                         spec-compliance review measured the flat accent gold
-                        at 1.61:1 in light theme here (was ~8.6:1 as
-                        text-statusInfo before this task) — badly under the
+                        at 1.61:1 in light theme here (7.79:1 as
+                        text-statusInfo #0043ce before this task) — badly under the
                         4.5:1 text minimum. See index.css's --accent-text
                         comment for the fix and the measured numbers. */}
                     <p className="text-sm text-accentText">{t("recovery.configRestarting")}</p>
