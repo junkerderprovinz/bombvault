@@ -142,7 +142,7 @@ function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className={`${base} text-start cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid`}
+        className={`${base} text-start cursor-pointer hover:bg-carbon-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)`}
       >
         {inner}
       </button>
@@ -286,9 +286,21 @@ function statusTone(status: string): BadgeTone {
     case "failed":
     case "degraded":
       return "fail";
+    // Genuine activity (Task 7: resolve the fifth hue) — a run that is
+    // literally in progress right now. "active" is the accent-soft Badge
+    // tone, not a solid fill: this list can show several running rows at
+    // once (independent domains backing up concurrently), and rule 3's
+    // "at most one solid accent" cap doesn't apply to a soft/tinted chip
+    // reading at the same weight as its ok/fail/warn siblings.
     case "running":
     case "checking":
-      return "info";
+      return "active";
+    // The literal backend/derived string "info" (chipForRpo's "warn" SLA
+    // lapse, protectionChip's "amber" aggregate, chipFor's best-effort
+    // check failure) always meant a real caution, never activity — routes
+    // to warn, matching SpikePanel.tsx's own hard-coded tone="warn" for the
+    // identical best-effort-fail case. Unaffected by the "active" rename
+    // above; this is a separate switch arm.
     case "info":
       return "warn";
     // A skip is neither success nor failure: a muted, neutral chip so a removed
@@ -1288,7 +1300,7 @@ function HealthHeatmapCard({
                       type="button"
                       onClick={() => onSelectDay(date)}
                       aria-pressed={active}
-                      className={`w-[11px] h-[11px] rounded-xs cursor-pointer focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid ${
+                      className={`w-[11px] h-[11px] rounded-xs cursor-pointer focus:outline-solid focus:outline-2 focus:outline-(--focus-ring) ${
                         active ? "outline-solid outline-2 outline-accent" : ""
                       }`}
                       style={{ backgroundColor: cellColor(cell.stat) }}
@@ -1348,7 +1360,12 @@ function Sparkline({
     .join(" ");
 
   return (
-    <span className="text-statusInfo shrink-0">
+    // Task 7: was text-statusInfo (the old fifth hue). glimstone/docs/
+    // design-language.md's Charts section is explicit here — "one colour
+    // source: the accent, never rainbow or status hues" — so this isn't a
+    // semantic judgment call like the rest of Task 7, it's the spec's own
+    // fixed rule for every hand-drawn chart in the app.
+    <span className="text-accent shrink-0">
       <svg
         width={width}
         height={height}

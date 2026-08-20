@@ -911,7 +911,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
           <div className="mt-1 flex flex-col gap-2">
             <button
               onClick={toggleAssistant}
-              className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
+              className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
                 <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -925,7 +925,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                   <button
                     onClick={() => void scan()}
                     disabled={scanning}
-                    className="rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                    className="rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
                   >
                     {scanning
                       ? t("excludes.assistScanning")
@@ -951,8 +951,16 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                       >
                         <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text text-start">{sg.path}</span>
                         <span
+                          // Task 7: "cache" was bg-statusInfoBg/text-statusInfo (the
+                          // old fifth hue). This is a categorisation label — "this
+                          // looks like a cache dir" — not activity and not a
+                          // pass/fail/warn outcome, so it folds into --status-neutral-*
+                          // (already documented in index.css as "skipped/neutral
+                          // chip", the same broad "not a real state" bucket this
+                          // chip belongs in, sitting next to its "large" sibling
+                          // which keeps its own real warn meaning unchanged).
                           className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
-                            sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusInfoBg text-statusInfo"
+                            sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusNeutralBg text-statusNeutral"
                           }`}
                         >
                           {sg.reason === "large" ? t("excludes.assistReasonLarge") : t("excludes.assistReasonCache")}
@@ -961,7 +969,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                         <button
                           onClick={() => void addExclude(sg.line)}
                           disabled={state === "saving"}
-                          className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                          className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
                         >
                           {t("excludes.assistExclude")}
                         </button>
@@ -985,7 +993,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                           disabled={state === "saving"}
                           aria-label={t("excludes.assistRemoveLine").replace("{line}", line)}
                           title={t("excludes.assistRemove")}
-                          className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
+                          className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
                         >
                           ×
                         </button>

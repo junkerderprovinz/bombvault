@@ -201,7 +201,7 @@
 
 import type { ReactNode } from "react";
 
-export type BadgeTone = "ok" | "fail" | "warn" | "info" | "neutral" | "heading";
+export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading";
 export type BadgeSize = "small" | "medium" | "large" | "heading";
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
@@ -226,11 +226,25 @@ export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 // tone here would have silently weakened their warn chips (invisible in
 // light mode today, where the two tokens happen to share one value, but a
 // real regression in dark mode).
+// active replaces the old "info" tone (GlimStone form-engine Phase 2 Task 7,
+// design-language.md rule 4: "four state hues... never a fifth" — blue
+// "info" was a de-facto fifth hue, not a real state). Every call site that
+// used tone="info" for genuine, currently-happening activity (Dashboard's
+// statusTone: a run whose status is literally "running") now uses this
+// instead — --accent-soft wash + --accent text, the SAME soft/tinted
+// register every other tone here already uses, deliberately not a solid
+// accent fill: Dashboard's run-history list can legitimately show several
+// "running" rows at once (independent domains backing up concurrently), and
+// rule 3 caps SOLID accent at one thing per page — a soft chip carries no
+// such cap, it reads at the same visual weight as an ok/fail/warn chip
+// sitting next to it. Sites that meant something else entirely (pure
+// informational prose, a link/action badge) did NOT become "active" — see
+// index.css's TASK 7 comment for where those actually landed.
 const TONE_CLASSES: Record<BadgeTone, string> = {
   ok: "bg-statusOkBg text-statusOk",
   fail: "bg-statusFailBg text-statusFail",
   warn: "bg-statusWarnBgStrong text-statusWarn",
-  info: "bg-statusInfoBg text-statusInfo",
+  active: "bg-accentSoft text-accent",
   neutral: "bg-carbon-surface2 text-carbon-textSub",
   // See the file header's long-form reasoning: accent-soft wash (identity,
   // matching rule 5's "washed" vocabulary), not solid accent (rule 3,
