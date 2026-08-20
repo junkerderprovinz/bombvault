@@ -2281,8 +2281,16 @@ type runView struct {
 // for enriching stored runs (handleRuns + the widget feed). Best-effort: an
 // unknown id (e.g. a deleted target) simply stays absent, so lookups yield "".
 func (h *Handler) runTargetMaps() (name, domain map[string]string) {
-	name = map[string]string{store.FlashTargetID: "Unraid flash", store.ConfigTargetID: "App configuration"}
-	domain = map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
+	name = map[string]string{
+		store.FlashTargetID:      "Unraid flash",
+		store.ConfigTargetID:     "App configuration",
+		store.EverythingTargetID: "Backup Everything",
+	}
+	domain = map[string]string{
+		store.FlashTargetID:      "flash",
+		store.ConfigTargetID:     "config",
+		store.EverythingTargetID: "everything",
+	}
 	if cts, lErr := h.store.ListTargets(); lErr == nil {
 		for _, t := range cts {
 			name[t.ID] = t.ContainerName
