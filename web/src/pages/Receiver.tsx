@@ -34,6 +34,7 @@ import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -147,9 +148,8 @@ function ReceivedRepoCard({
   const [open, setOpen] = useState(false);
   const [deepCheck, setDeepCheck] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [checkMsg, setCheckMsg] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
-  const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const { push } = useToast();
   // Reversible action: removing a monitoring entry never touches the repo on
   // disk (re-addable in one step), so per the design-language's "reversible
   // actions don't ask" rule this gets the LIGHTER two-click inline-confirm —
@@ -158,19 +158,27 @@ function ReceivedRepoCard({
   // window.confirm()/ConfirmDialog (form-engine Task 7).
   const [confirmRemove, setConfirmRemove] = useState(false);
 
+  // GlimStone follow-up pass (v8.0.0): the ok/fail checkMsg result below moved
+  // to a toast — found alongside this card's handleRemove migration (same
+  // component). Same ok/uninit/fail shape as the already-migrated
+  // TestConnectionButton/TargetTestButton: onRefresh() reloads the repo,
+  // whose persistent checkTone/checkLabel Badge + "last checked" line already
+  // carry this exact outcome, so the ephemeral checkMsg was pure duplicate
+  // (and, since it never auto-cleared, a stale one could linger next to the
+  // button until the NEXT check).
   async function handleCheck() {
     setChecking(true);
-    setCheckMsg(null);
     try {
       const res = await checkReceivedRepo(repo.id, deepCheck);
       if (res.ok && res.result) {
-        setCheckMsg(res.result.ok ? t("receiver.checkOk") : res.result.error || t("receiver.checkFailed"));
+        if (res.result.ok) push(t("receiver.checkOk"), "success");
+        else push(res.result.error || t("receiver.checkFailed"), "fail");
       } else {
-        setCheckMsg(res.error ?? t("receiver.checkFailed"));
+        push(res.error ?? t("receiver.checkFailed"), "fail");
       }
       onRefresh();
     } catch (err) {
-      setCheckMsg(err instanceof Error ? err.message : t("receiver.checkFailed"));
+      push(err instanceof Error ? err.message : t("receiver.checkFailed"), "fail");
     } finally {
       setChecking(false);
     }
@@ -178,13 +186,12 @@ function ReceivedRepoCard({
 
   async function handleRemove() {
     setRemoving(true);
-    setRemoveErr(null);
     try {
       const res = await deleteReceivedRepo(repo.id);
       if (res.ok) onRefresh();
-      else setRemoveErr(res.error ?? t("receiver.saveError"));
+      else push(res.error ?? t("receiver.saveError"), "fail");
     } catch (err) {
-      setRemoveErr(err instanceof Error ? err.message : t("receiver.saveError"));
+      push(err instanceof Error ? err.message : t("receiver.saveError"), "fail");
     } finally {
       setRemoving(false);
       setConfirmRemove(false);
@@ -269,7 +276,6 @@ function ReceivedRepoCard({
           />
           {t("receiver.deepCheck")}
         </label>
-        {checkMsg && <span className="text-xs text-carbon-textSub wrap-break-word">{checkMsg}</span>}
 
         <div className="ms-auto flex items-center gap-2">
           <button
@@ -311,7 +317,6 @@ function ReceivedRepoCard({
           )}
         </div>
       </div>
-      {removeErr && <p className="text-xs text-statusFail wrap-break-word">{removeErr}</p>}
 
       {/* Inventory disclosure */}
       {open && (
@@ -340,6 +345,7 @@ function ReceiverDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [appKey, setAppKey] = useState("");
@@ -349,28 +355,36 @@ function ReceiverDialog({
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const editing = initial !== null;
   // On edit an empty key keeps the stored one; on create a key is required.
   const keyOk = appKey === "" ? editing : APP_KEY_RE.test(appKey);
   const canSave = name.trim() !== "" && repo.trim() !== "" && keyOk && !saving;
 
+  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a
+  // toast — same shape as Files.tsx's FileSetDialog.handleSave (a dialog
+  // editor that closes on success via onSaved(), so a toast is the only
+  // outcome notice left, success or failure). The three client-side checks
+  // are effectively unreachable through the UI (canSave already disables
+  // Save for the same conditions), but get the same push() treatment as the
+  // API failure below for consistency. The separate appKey-format hint
+  // further down (`appKey !== "" && !APP_KEY_RE.test(appKey)`) is untouched —
+  // that's a live field-validation hint recomputed every render, not a
+  // submit-triggered one-shot notice.
   async function handleSave() {
     if (name.trim() === "") {
-      setError(t("receiver.nameRequired"));
+      push(t("receiver.nameRequired"), "fail");
       return;
     }
     if (repo.trim() === "") {
-      setError(t("receiver.repoRequired"));
+      push(t("receiver.repoRequired"), "fail");
       return;
     }
     if (!keyOk) {
-      setError(t("receiver.appKeyInvalid"));
+      push(t("receiver.appKeyInvalid"), "fail");
       return;
     }
     setSaving(true);
-    setError(null);
     const input: ReceivedRepoInput = {
       name: name.trim(),
       repo: repo.trim(),
@@ -385,10 +399,14 @@ function ReceiverDialog({
       const res = editing
         ? await updateReceivedRepo(initial.id, input)
         : await createReceivedRepo(input);
-      if (res.ok) onSaved();
-      else setError(res.error ?? t("receiver.saveError"));
+      if (res.ok) {
+        push(t("settings.saved"), "success");
+        onSaved();
+      } else {
+        push(res.error ?? t("receiver.saveError"), "fail");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("receiver.saveError"));
+      push(err instanceof Error ? err.message : t("receiver.saveError"), "fail");
     } finally {
       setSaving(false);
     }
@@ -519,8 +537,6 @@ function ReceiverDialog({
           />
           {t("receiver.enabledLabel")}
         </label>
-
-        {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
