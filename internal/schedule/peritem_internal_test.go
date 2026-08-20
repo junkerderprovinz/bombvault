@@ -122,7 +122,7 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 
 	// Feature OFF: exactly one entry (the containers domain job). Overrides ignored.
 	off := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}
-	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (off): %v", err)
 	}
 	if got := len(sc.entries); got != 1 {
@@ -134,7 +134,7 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 	// (not in schedule) get none.
 	on := off
 	on.PerItemSchedules = true
-	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (on): %v", err)
 	}
 	if got := len(sc.entries); got != 3 {
@@ -142,7 +142,7 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 	}
 
 	// Toggling back off removes the per-item entries.
-	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (off again): %v", err)
 	}
 	if got := len(sc.entries); got != 1 {
@@ -163,7 +163,7 @@ func TestPerItemEntryRunsOnlyItsItem(t *testing.T) {
 	sc := New(backup, func() ([]store.Target, error) { return targets, nil })
 
 	on := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00", PerItemSchedules: true}
-	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	if len(sc.entries) != 2 {

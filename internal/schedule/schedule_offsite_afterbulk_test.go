@@ -98,7 +98,7 @@ func TestBatchedOffsiteRunsAfterAllBackups(t *testing.T) {
 				mu.Unlock()
 			})
 
-			if err := sc.ReloadWithDueChecks(tc.settings, nil, nil, nil, nil, nil); err != nil {
+			if err := sc.ReloadWithDueChecks(tc.settings, nil, nil, nil, nil, nil, nil); err != nil {
 				t.Fatalf("ReloadWithDueChecks: %v", err)
 			}
 
@@ -152,7 +152,7 @@ func TestContainersJobNoOffsiteAfterBulkWhenUnwired(t *testing.T) {
 	)
 	// Deliberately NOT calling SetOffsiteAfterBulkJob or SetPruneAfterBulkJob.
 
-	if err := sc.ReloadWithDueChecks(store.Settings{ContainersSchedule: "daily 03:00"}, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(store.Settings{ContainersSchedule: "daily 03:00"}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	for _, e := range sc.entries {
